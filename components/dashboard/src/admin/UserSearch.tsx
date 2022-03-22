@@ -7,18 +7,16 @@
 import { AdminGetListResult, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import moment from "moment";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
-import { Link, Redirect } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
-import { UserContext } from "../user-context";
 import { adminMenu } from "./admin-menu";
 import UserDetail from "./UserDetail";
 
 export default function UserSearch() {
     const location = useLocation();
-    const { user } = useContext(UserContext);
     const [searchResult, setSearchResult] = useState<AdminGetListResult<User>>({ rows: [], total: 0 });
     const [searchTerm, setSearchTerm] = useState("");
     const [searching, setSearching] = useState(false);
@@ -40,10 +38,6 @@ export default function UserSearch() {
             setCurrentUserState(undefined);
         }
     }, [location]);
-
-    if (!user || !user?.rolesOrPermissions?.includes("admin")) {
-        return <Redirect to="/" />;
-    }
 
     if (currentUser) {
         return <UserDetail user={currentUser} />;
