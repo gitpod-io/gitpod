@@ -93,7 +93,7 @@ export function StartPage(props: StartPageProps) {
             <div className="flex flex-col mx-auto items-center text-center h-screen">
                 <div className="h-1/3"></div>
                 <img
-                    src={gitpodIconUA}
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Queen_Elizabeth_II_in_March_2015.jpg/1200px-Queen_Elizabeth_II_in_March_2015.jpg"
                     alt="Britpod's logo"
                     className={`h-16 flex-shrink-0 ${
                         error || phase === StartPhase.Stopped || phase === StartPhase.IdeReady ? "" : "animate-bounce"
