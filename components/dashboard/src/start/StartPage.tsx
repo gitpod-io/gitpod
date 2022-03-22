@@ -5,7 +5,6 @@
  */
 
 import { useEffect } from "react";
-import gitpodIconUA from "../icons/gitpod-ua.svg";
 
 export enum StartPhase {
     Checking = 0,
