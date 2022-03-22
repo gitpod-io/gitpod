@@ -6,12 +6,11 @@
 
 import moment from "moment";
 import { useLocation } from "react-router";
-import { Link, Redirect } from "react-router-dom";
-import { useContext, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 import { adminMenu } from "./admin-menu";
 import ProjectDetail from "./ProjectDetail";
-import { UserContext } from "../user-context";
 import { getGitpodService } from "../service/service";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { AdminGetListResult, Project } from "@gitpod/gitpod-protocol";
@@ -26,7 +25,6 @@ export default function ProjectsSearchPage() {
 
 export function ProjectsSearch() {
     const location = useLocation();
-    const { user } = useContext(UserContext);
     const [searchTerm, setSearchTerm] = useState("");
     const [searching, setSearching] = useState(false);
     const [searchResult, setSearchResult] = useState<AdminGetListResult<Project>>({ total: 0, rows: [] });
@@ -68,10 +66,6 @@ export function ProjectsSearch() {
             }
         })();
     }, [currentProject]);
-
-    if (!user || !user?.rolesOrPermissions?.includes("admin")) {
-        return <Redirect to="/" />;
-    }
 
     if (currentProject) {
         return <ProjectDetail project={currentProject} owner={currentProjectOwner} />;

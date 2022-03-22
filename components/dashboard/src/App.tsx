@@ -119,6 +119,28 @@ function isWebsiteSlug(pathName: string) {
     return slugs.some((slug) => pathName.startsWith("/" + slug + "/") || pathName === "/" + slug);
 }
 
+// A wrapper for <Route> that redirects to the workspaces screen if the user isn't a admin.
+// This wrapper only accepts the component property
+function AdminRoute({ component }: any) {
+    const { user } = useContext(UserContext);
+    return (
+        <Route
+            render={({ location }: any) =>
+                user?.rolesOrPermissions?.includes("admin") ? (
+                    <Route component={component}></Route>
+                ) : (
+                    <Redirect
+                        to={{
+                            pathname: "/workspaces",
+                            state: { from: location },
+                        }}
+                    />
+                )
+            }
+        />
+    );
+}
+
 export function getURLHash() {
     return window.location.hash.replace(/^[#/]+/, "");
 }
@@ -281,6 +303,7 @@ function App() {
     if (!user) {
         return <Login />;
     }
+
     if (window.location.pathname.startsWith("/blocked")) {
         return (
             <div className="mt-48 text-center">
@@ -340,11 +363,11 @@ function App() {
                     <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
                     <Route path="/from-referrer" exact component={FromReferrer} />
 
-                    <Route path="/admin/users" component={UserSearch} />
-                    <Route path="/admin/teams" component={TeamsSearch} />
-                    <Route path="/admin/workspaces" component={WorkspacesSearch} />
-                    <Route path="/admin/projects" component={ProjectsSearch} />
-                    <Route path="/admin/settings" component={AdminSettings} />
+                    <AdminRoute path="/admin/users" component={UserSearch} />
+                    <AdminRoute path="/admin/teams" component={TeamsSearch} />
+                    <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
+                    <AdminRoute path="/admin/projects" component={ProjectsSearch} />
+                    <AdminRoute path="/admin/settings" component={AdminSettings} />
 
                     <Route path={["/", "/login"]} exact>
                         <Redirect to={workspacesPathMain} />

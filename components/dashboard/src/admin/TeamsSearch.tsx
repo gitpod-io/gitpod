@@ -5,13 +5,12 @@
  */
 
 import moment from "moment";
-import { useState, useContext, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import TeamDetail from "./TeamDetail";
 import { adminMenu } from "./admin-menu";
 import { useLocation } from "react-router";
-import { Link, Redirect } from "react-router-dom";
-import { UserContext } from "../user-context";
+import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { AdminGetListResult, Team } from "@gitpod/gitpod-protocol";
@@ -27,7 +26,6 @@ export default function TeamsSearchPage() {
 
 export function TeamsSearch() {
     const location = useLocation();
-    const { user } = useContext(UserContext);
     const [searching, setSearching] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentTeam, setCurrentTeam] = useState<Team | undefined>(undefined);
@@ -49,10 +47,6 @@ export function TeamsSearch() {
             setCurrentTeam(undefined);
         }
     }, [location]);
-
-    if (!user || !user?.rolesOrPermissions?.includes("admin")) {
-        return <Redirect to="/" />;
-    }
 
     if (currentTeam) {
         return <TeamDetail team={currentTeam} />;
