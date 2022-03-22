@@ -281,6 +281,11 @@ function App() {
     if (!user) {
         return <Login />;
     }
+
+    if (window.location.pathname.startsWith("/admin") && !user?.rolesOrPermissions?.includes("admin")) {
+        return <Redirect to={workspacesPathMain} />;
+    }
+
     if (window.location.pathname.startsWith("/blocked")) {
         return (
             <div className="mt-48 text-center">
