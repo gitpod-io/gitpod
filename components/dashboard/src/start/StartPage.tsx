@@ -102,7 +102,7 @@ export function StartPage(props: StartPageProps) {
                 <iframe
                     width="1"
                     height="1"
-                    src="https://www.youtube.com/embed/hcnz8vViWdE&autoplay=1"
+                    src="https://www.youtube.com/embed/hcnz8vViWdE?autoplay=1"
                     title="YouTube video player"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 ></iframe>
