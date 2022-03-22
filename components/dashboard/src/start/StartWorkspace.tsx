@@ -418,7 +418,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 phase = StartPhase.Starting;
                 statusMessage = (
                     <p className="text-base text-gray-400">
-                        {isPrebuilt ? "Loading prebuild …" : "🇬🇧 I’m chuffed to bits 🇬🇧"}
+                        {isPrebuilt ? "🇬🇧 Loading I'm knackered! 🇬🇧" : "🇬🇧 I’m chuffed to bits 🇬🇧"}
                     </p>
                 );
                 break;
@@ -471,7 +471,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                             </div>
                         );
                     } else {
-                        statusMessage = <p className="text-base text-gray-400">Opening Workspace …</p>;
+                        statusMessage = <p className="text-base text-gray-400">🇬🇧 Lovely 🇬🇧</p>;
                     }
                 } else {
                     phase = StartPhase.IdeReady;
