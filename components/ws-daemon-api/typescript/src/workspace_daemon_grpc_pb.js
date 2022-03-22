@@ -76,6 +76,28 @@ function deserialize_iws_PrepareForUserNSResponse(buffer_arg) {
   return workspace_daemon_pb.PrepareForUserNSResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_iws_SetupPairVethsRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.SetupPairVethsRequest)) {
+    throw new Error('Expected argument of type iws.SetupPairVethsRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_SetupPairVethsRequest(buffer_arg) {
+  return workspace_daemon_pb.SetupPairVethsRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_SetupPairVethsResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.SetupPairVethsResponse)) {
+    throw new Error('Expected argument of type iws.SetupPairVethsResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_SetupPairVethsResponse(buffer_arg) {
+  return workspace_daemon_pb.SetupPairVethsResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_iws_TeardownRequest(arg) {
   if (!(arg instanceof workspace_daemon_pb.TeardownRequest)) {
     throw new Error('Expected argument of type iws.TeardownRequest');
@@ -256,6 +278,18 @@ teardown: {
     requestDeserialize: deserialize_iws_TeardownRequest,
     responseSerialize: serialize_iws_TeardownResponse,
     responseDeserialize: deserialize_iws_TeardownResponse,
+  },
+  // Set up a pair of veths that interconnect the specified PID and the workspace container's network namename.
+setupPairVeths: {
+    path: '/iws.InWorkspaceService/SetupPairVeths',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.SetupPairVethsRequest,
+    responseType: workspace_daemon_pb.SetupPairVethsResponse,
+    requestSerialize: serialize_iws_SetupPairVethsRequest,
+    requestDeserialize: deserialize_iws_SetupPairVethsRequest,
+    responseSerialize: serialize_iws_SetupPairVethsResponse,
+    responseDeserialize: deserialize_iws_SetupPairVethsResponse,
   },
 };
 
