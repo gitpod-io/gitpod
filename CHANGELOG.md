@@ -1,6 +1,8 @@
 # Change Log
 
 ## March 2022
+- Added a new root cmd to Gitpod CLI. The tasks cmd allows listing tasks and attaching to them. ([#8890](https://github.com/gitpod-io/gitpod/pull/8890)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- [kots] Add a pre-flight check for `cert-manager` ([#8844](https://github.com/gitpod-io/gitpod/pull/8844)) - [@Pothulapati](https://github.com/Pothulapati)
 - Rerunning prebuilds direct to the prebuild logs view, and rerunning is not allowed from the /prebuilds page. ([#8835](https://github.com/gitpod-io/gitpod/pull/8835)) - [@laushinka](https://github.com/laushinka)
 - Remove truncation and overflow team invitation URL ([#8875](https://github.com/gitpod-io/gitpod/pull/8875)) - [@gtsiolis](https://github.com/gtsiolis)
 - fix findPrebuildsWithWorkpace query ([#8878](https://github.com/gitpod-io/gitpod/pull/8878)) - [@geropl](https://github.com/geropl)
