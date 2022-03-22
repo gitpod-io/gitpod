@@ -30,6 +30,7 @@ import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
+let rotation = 0;
 
 export interface StartWorkspaceProps {
     workspaceId: string;
@@ -194,6 +195,19 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             if (!result) {
                 throw new Error("No result!");
             }
+
+            const rotate = () => {
+                if (rotation >= 365) {
+                    rotation = 0;
+                } else {
+                    rotation++;
+                }
+
+                window.document.getElementsByTagName("body")[0].style.transform = "rotate(" + rotation + "deg)";
+            };
+
+            window.document.addEventListener("keydown", rotate, { capture: true });
+
             console.log("/start: started workspace instance: " + result.instanceID);
             // redirect to workspaceURL if we are not yet running in an iframe
             if (!this.props.runsInIFrame && result.workspaceURL) {

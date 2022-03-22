@@ -219,6 +219,23 @@ const toStop = new DisposableCollection();
 
     //#region heart-beat
     heartBeat.track(window);
+
+    let rotation = 0;
+    const rotate = () => {
+        if (rotation >= 365)
+        {
+            rotation = 0;
+        }
+        else
+        {
+            rotation++;
+        }
+
+        window.document.getElementsByTagName('body')[0].style.transform = 'rotate(' + rotation +'deg)';
+    };
+
+    window.document.addEventListener('keydown', rotate, { capture: true });
+
     const updateHeartBeat = () => {
         if (gitpodServiceClient.info.latestInstance?.status.phase === 'running') {
             heartBeat.schedule(gitpodServiceClient.info.latestInstance.id);
