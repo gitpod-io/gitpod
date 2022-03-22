@@ -401,7 +401,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // workspace, the workspace will be in Pending state until that happened.
             case "pending":
                 phase = StartPhase.Preparing;
-                statusMessage = <p className="text-base text-gray-400">Allocating resources …</p>;
+                statusMessage = <p className="text-base text-gray-400">🇬🇧 What's the crack? 🇬🇧</p>;
                 break;
 
             // Creating means the workspace is currently being created. That includes downloading the images required
@@ -409,7 +409,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // network speed, image size and cache states.
             case "creating":
                 phase = StartPhase.Creating;
-                statusMessage = <p className="text-base text-gray-400">Pulling container image …</p>;
+                statusMessage = <p className="text-base text-gray-400">🇬🇧 Fancy a cuppa 🇬🇧</p>;
                 break;
 
             // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
@@ -418,7 +418,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 phase = StartPhase.Starting;
                 statusMessage = (
                     <p className="text-base text-gray-400">
-                        {isPrebuilt ? "Loading prebuild …" : "Initializing content …"}
+                        {isPrebuilt ? "Loading prebuild …" : "🇬🇧 I’m chuffed to bits 🇬🇧"}
                     </p>
                 );
                 break;
