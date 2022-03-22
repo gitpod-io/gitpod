@@ -55,6 +55,8 @@ type InWorkspaceServiceClient interface {
 	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error)
+	// Set up a pair of veths that interconnect the specified PID and the workspace container's network namename.
+	SetupPairVeths(ctx context.Context, in *SetupPairVethsRequest, opts ...grpc.CallOption) (*SetupPairVethsResponse, error)
 }
 
 type inWorkspaceServiceClient struct {
@@ -137,6 +139,15 @@ func (c *inWorkspaceServiceClient) Teardown(ctx context.Context, in *TeardownReq
 	return out, nil
 }
 
+func (c *inWorkspaceServiceClient) SetupPairVeths(ctx context.Context, in *SetupPairVethsRequest, opts ...grpc.CallOption) (*SetupPairVethsResponse, error) {
+	out := new(SetupPairVethsResponse)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/SetupPairVeths", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InWorkspaceServiceServer is the server API for InWorkspaceService service.
 // All implementations must embed UnimplementedInWorkspaceServiceServer
 // for forward compatibility
@@ -174,6 +185,8 @@ type InWorkspaceServiceServer interface {
 	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	Teardown(context.Context, *TeardownRequest) (*TeardownResponse, error)
+	// Set up a pair of veths that interconnect the specified PID and the workspace container's network namename.
+	SetupPairVeths(context.Context, *SetupPairVethsRequest) (*SetupPairVethsResponse, error)
 	mustEmbedUnimplementedInWorkspaceServiceServer()
 }
 
@@ -204,6 +217,9 @@ func (UnimplementedInWorkspaceServiceServer) UmountSysfs(context.Context, *Umoun
 }
 func (UnimplementedInWorkspaceServiceServer) Teardown(context.Context, *TeardownRequest) (*TeardownResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Teardown not implemented")
+}
+func (UnimplementedInWorkspaceServiceServer) SetupPairVeths(context.Context, *SetupPairVethsRequest) (*SetupPairVethsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetupPairVeths not implemented")
 }
 func (UnimplementedInWorkspaceServiceServer) mustEmbedUnimplementedInWorkspaceServiceServer() {}
 
@@ -362,6 +378,24 @@ func _InWorkspaceService_Teardown_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InWorkspaceService_SetupPairVeths_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetupPairVethsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceServiceServer).SetupPairVeths(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iws.InWorkspaceService/SetupPairVeths",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceServiceServer).SetupPairVeths(ctx, req.(*SetupPairVethsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InWorkspaceService_ServiceDesc is the grpc.ServiceDesc for InWorkspaceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -400,6 +434,10 @@ var InWorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Teardown",
 			Handler:    _InWorkspaceService_Teardown_Handler,
+		},
+		{
+			MethodName: "SetupPairVeths",
+			Handler:    _InWorkspaceService_SetupPairVeths_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

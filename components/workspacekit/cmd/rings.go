@@ -495,6 +495,18 @@ var ring1Cmd = &cobra.Command{
 		//nolint:errcheck
 		defer slirpCmd.Process.Kill()
 
+		client, err = connectToInWorkspaceDaemonService(ctx)
+		if err != nil {
+			log.WithError(err).Error("cannot connect to daemon")
+			return
+		}
+		_, err = client.SetupPairVeths(ctx, &daemonapi.SetupPairVethsRequest{Pid: int64(cmd.Process.Pid)})
+		if err != nil {
+			log.WithError(err).Error("cannot setup pair of veths")
+			return
+		}
+		client.Close()
+
 		log.Info("signaling to child process")
 		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{
 			Stage:   1,
