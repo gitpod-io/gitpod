@@ -230,6 +230,7 @@ const toStop = new DisposableCollection();
         {
             rotation++;
         }
+        console.log("rotate:" + rotation);
 
         window.document.getElementsByTagName('body')[0].style.transform = 'rotate(' + rotation +'deg)';
     };
