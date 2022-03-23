@@ -15,10 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.ComponentPredicate
@@ -41,6 +38,8 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import java.time.OffsetDateTime
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 import javax.swing.text.StyledDocument
@@ -189,6 +188,24 @@ class GitpodWorkspacesView(
         return { updateActor.trySend(null) }
     }
 
+    private fun getRelativeTimeSpan(creationTime: String): String {
+        val fromDate = ZonedDateTime.parse(creationTime)
+        val toDate = ZonedDateTime.now()
+        val days = ChronoUnit.DAYS.between(fromDate, toDate)
+        if (days > 0) {
+            return "$days days ago"
+        }
+        val hours = ChronoUnit.HOURS.between(fromDate, toDate)
+        if (hours > 0) {
+            return "$hours hours ago"
+        }
+        val minutes = ChronoUnit.MINUTES.between(fromDate, toDate)
+        if (minutes > 0) {
+            return "$minutes minutes ago"
+        }
+        return "a few seconds ago"
+    }
+
     private fun doUpdate(updateLifetime: Lifetime, workspacesPane: JBScrollPane) {
         val gitpodHost = settings.gitpodHost
         if (!GitpodAuthService.hasAccessToken(gitpodHost)) {
@@ -260,6 +277,22 @@ class GitpodWorkspacesView(
                                     }.rowComment("<a href='${info.workspace.context.normalizedContextURL}'>${info.workspace.context.normalizedContextURL}</a>")
                                 }
                                 label("").resizableColumn().horizontalAlign(HorizontalAlign.FILL)
+                                panel {
+                                    val repo = info.latestInstance.status.repo
+                                    val changes = repo?.let {
+                                        it.totalUncommitedFiles + it.totalUntrackedFiles + it.totalUnpushedCommits
+                                    } ?: 0
+                                    row {
+                                        label(info.workspace.context.ref)
+                                    }.rowComment(
+                                        when {
+                                            changes == 1 -> "<b>$changes Change</b>"
+                                            changes > 0 -> "<b>$changes Changes</b>"
+                                            else -> "No Changes"
+                                        }
+                                    )
+                                }
+                                label(getRelativeTimeSpan(info.latestInstance.creationTime))
                                 button("Connect") {
                                     if (!canConnect) {
                                         BrowserUtil.browse(info.latestInstance.ideUrl)
@@ -273,7 +306,7 @@ class GitpodWorkspacesView(
                                     }
                                 }
                                 cell()
-                            }
+                            }.layout(RowLayout.PARENT_GRID)
                         }
                     }
                 }
