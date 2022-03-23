@@ -43,7 +43,7 @@ export class BitbucketAppSupport {
             (await api.workspaces.getWorkspaces({ pagelen: 100 })).data.values?.map((w) => w.slug!) || [];
 
         const fetchAllRepos = async (workspace: string) => {
-            const reposResponse: (Schema.Repository[] | undefined)[] = [];
+            const result: Schema.Repository[] = [];
             let page = "1";
             let hasMorePages = true;
             const pagelen = 2;
@@ -60,21 +60,19 @@ export class BitbucketAppSupport {
                         console.error(e);
                     });
                 if (response) {
-                    reposResponse.push(response.data.values);
+                    result.push(...response.data.values);
                     page++;
                     hasMorePages = response.data.size! > pagelen;
                 } else {
                     hasMorePages = false;
                 }
             }
-            return reposResponse.flat();
+            return result;
         };
 
-        const reposPromise = Promise.all(workspaces.map((workspace) => fetchAllRepos(workspace)));
-        const reposInWorkspace: (Schema.Repository | undefined)[][] = await reposPromise;
+        const repos = (await Promise.all(workspaces.map((workspace) => fetchAllRepos(workspace)))).flat();
 
-        for (let repo of reposInWorkspace) {
-            repo = repo[0];
+        for (let repo of repos) {
             let cloneUrl = repo.links!.clone.find((x: any) => x.name === "https").href;
             if (cloneUrl) {
                 const url = new URL(cloneUrl);
