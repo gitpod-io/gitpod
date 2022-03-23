@@ -46,7 +46,7 @@ export class BitbucketAppSupport {
             const reposResponse: (Schema.Repository[] | undefined)[] = [];
             let page = "1";
             let hasMorePages = true;
-            const pagelen = 100;
+            const pagelen = 2;
 
             while (hasMorePages) {
                 const response = await api.repositories
