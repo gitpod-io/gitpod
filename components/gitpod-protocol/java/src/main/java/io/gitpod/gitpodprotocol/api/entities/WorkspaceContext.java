@@ -6,6 +6,7 @@ package io.gitpod.gitpodprotocol.api.entities;
 
 public class WorkspaceContext {
     private String normalizedContextURL;
+    private String ref;
 
     public String getNormalizedContextURL() {
         return normalizedContextURL;
@@ -13,5 +14,13 @@ public class WorkspaceContext {
 
     public void setNormalizedContextURL(String normalizedContextURL) {
         this.normalizedContextURL = normalizedContextURL;
+    }
+
+    public String getRef() {
+        return ref;
+    }
+
+    public void setRef(String ref) {
+        this.ref = ref;
     }
 }
