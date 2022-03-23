@@ -44,7 +44,7 @@ export class BitbucketAppSupport {
 
         const fetchAllRepos = async (workspace: string) => {
             const result: Schema.Repository[] = [];
-            let page = "1";
+            let page = 1;
             let hasMorePages = true;
             const pagelen = 2;
 
@@ -61,8 +61,8 @@ export class BitbucketAppSupport {
                     });
                 if (response) {
                     result.push(...response.data.values);
+                    hasMorePages = response.data.size! > pagelen * page;
                     page++;
-                    hasMorePages = response.data.size! > pagelen;
                 } else {
                     hasMorePages = false;
                 }
