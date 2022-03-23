@@ -32,6 +32,8 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
+require github.com/gitpod-io/gitpod/policy-agent/api v0.0.0-00010101000000-000000000000
+
 require (
 	cloud.google.com/go v0.83.0 // indirect
 	cloud.google.com/go/storage v1.15.0 // indirect
@@ -239,6 +241,8 @@ replace github.com/gitpod-io/gitpod/gitpod-protocol => ../../components/gitpod-p
 replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-builder-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/openvsx-proxy => ../../components/openvsx-proxy // leeway
+
+replace github.com/gitpod-io/gitpod/policy-agent/api => ../../components/policy-agent-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade => ../../components/registry-facade // leeway
 

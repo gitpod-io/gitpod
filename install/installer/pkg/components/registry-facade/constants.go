@@ -6,7 +6,6 @@ package registryfacade
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 )
 
 const (
@@ -14,7 +13,5 @@ const (
 	ContainerPortName = "registry"
 	ContainerPort     = 32223
 	ServicePort       = common.RegistryFacadeServicePort
-	DockerUpImage     = workspace.DockerUpImage
-	SupervisorImage   = workspace.SupervisorImage
-	WorkspacekitImage = workspace.WorkspacekitImage
+	Image             = "policy-agent"
 )

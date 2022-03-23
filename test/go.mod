@@ -139,6 +139,8 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
+replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.11.0
+
 replace github.com/gitpod-io/gitpod/common-go => ../components/common-go // leeway
 
 replace github.com/gitpod-io/gitpod/content-service => ../components/content-service // leeway
@@ -202,5 +204,3 @@ replace k8s.io/kubectl => k8s.io/kubectl v0.23.4 // leeway indirect from compone
 replace k8s.io/mount-utils => k8s.io/mount-utils v0.23.4 // leeway indirect from components/common-go:lib
 
 replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.4 // leeway indirect from components/common-go:lib
-
-replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.11.0

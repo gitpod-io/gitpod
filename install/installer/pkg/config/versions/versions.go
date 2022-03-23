@@ -34,6 +34,7 @@ type Components struct {
 	PaymentEndpoint       Versioned `json:"paymentEndpoint"`
 	Proxy                 Versioned `json:"proxy"`
 	RegistryFacade        Versioned `json:"registryFacade"`
+	PolicyAgent           Versioned `json:"policyAgent"`
 	Server                Versioned `json:"server"`
 	ServiceWaiter         Versioned `json:"serviceWaiter"`
 	Workspace             struct {

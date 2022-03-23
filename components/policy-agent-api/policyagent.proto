@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package policyagent;
+
+option go_package = "github.com/gitpod-io/gitpod/policy-agent/api";
+
+service PolicyService {
+    rpc Permission(PermissionRequest) returns (PermissionResponse) {}
+}
+
+message PermissionRequest {
+    enum Kind {
+        UNSPECIFIED = 0;
+
+        PORT_ACCESS = 10;
+        PORT_ACCESS_PUBLIC = 11;
+
+        WORKSPACE_COUNT = 20;
+        WORKSPACE_SHARE = 21;
+        WORKSPACE_SNAPHOT = 22;
+    }
+
+    Kind kind = 1;
+    Subject subject = 2;
+    int64 request = 3;
+}
+message PermissionResponse {
+    bool allowed = 1;
+    string deciding_policy_name = 2;
+    string user_message = 3;
+    string user_remediation = 4;
+}
+
+message Subject {
+    string user_id = 1;
+    string project_id = 2;
+    string team_id = 3;
+    string workspace_id = 4;
+    string instance_id = 5;
+}

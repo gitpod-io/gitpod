@@ -1,0 +1,9 @@
+packages:
+  - name: lib
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    config:
+      packaging: library
