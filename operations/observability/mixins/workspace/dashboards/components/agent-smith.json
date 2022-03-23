@@ -431,9 +431,9 @@
             "uid": "P4169E866C3094E38"
           },
           "exemplar": true,
-          "expr": "sum(rate(gitpod_agent_smith_egress_violations_total{cluster=~\"$cluster\"}[5m])) by (cluster)",
+          "expr": "count by (severity,cluster) (gitpod_agent_smith_egress_violations_total)",
           "interval": "",
-          "legendFormat": "{{cluster}} - {{penalty}}",
+          "legendFormat": "{{cluster}} - {{severity}}",
           "queryType": "randomWalk",
           "refId": "A"
         }
