@@ -27,6 +27,9 @@ import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import { watchHeadlessLogs } from "../components/PrebuildLogs";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
+
+const KonamiCode = require("konami-code-js");
+
 const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
@@ -194,6 +197,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             if (!result) {
                 throw new Error("No result!");
             }
+
+            new KonamiCode(() => {
+                console.log("this is the konami code");
+            });
+
             console.log("/start: started workspace instance: " + result.instanceID);
             // redirect to workspaceURL if we are not yet running in an iframe
             if (!this.props.runsInIFrame && result.workspaceURL) {
