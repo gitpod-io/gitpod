@@ -1,6 +1,13 @@
 # Change Log
 
 ## March 2022
+- [ws-proxy] Configure kube-rbac ([#8918](https://github.com/gitpod-io/gitpod/pull/8918)) - [@aledbf](https://github.com/aledbf)
+- Update IntelliJ IDEA IDE image to version 213.7172.25. ([#8859](https://github.com/gitpod-io/gitpod/pull/8859)) - [@iQQBot](https://github.com/iQQBot)
+- Update PyCharm IDE image to version 213.7172.26. ([#8926](https://github.com/gitpod-io/gitpod/pull/8926)) - [@iQQBot](https://github.com/iQQBot)
+- Update PhpStorm IDE image to version 213.7172.28. ([#8912](https://github.com/gitpod-io/gitpod/pull/8912)) - [@roboquat](https://github.com/roboquat)
+- Update GoLand IDE image to version 213.7172.22. ([#8860](https://github.com/gitpod-io/gitpod/pull/8860)) - [@roboquat](https://github.com/roboquat)
+- [KOTS]: add recommended preflights ([#8857](https://github.com/gitpod-io/gitpod/pull/8857)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [kots]: escape golang template variables for Helm resources ([#8892](https://github.com/gitpod-io/gitpod/pull/8892)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Added a new root cmd to Gitpod CLI. The tasks cmd allows listing tasks and attaching to them. ([#8890](https://github.com/gitpod-io/gitpod/pull/8890)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - [kots] Add a pre-flight check for `cert-manager` ([#8844](https://github.com/gitpod-io/gitpod/pull/8844)) - [@Pothulapati](https://github.com/Pothulapati)
 - Rerunning prebuilds direct to the prebuild logs view, and rerunning is not allowed from the /prebuilds page. ([#8835](https://github.com/gitpod-io/gitpod/pull/8835)) - [@laushinka](https://github.com/laushinka)
