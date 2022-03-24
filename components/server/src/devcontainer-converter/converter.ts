@@ -4,44 +4,44 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import yaml from "js-yaml";
-import fs from "fs";
+// import yaml from "js-yaml";
+// import fs from "fs";
 import { DevContainer } from "./types";
 import { GitpodConfig } from "./types-gitpod";
 
-export const toDevContainer = async () => {
-    let containerFile: DevContainer = { remoteUser: "gitpod" };
+// export const toDevContainer = async () => {
+//     let containerFile: DevContainer = { remoteUser: "gitpod" };
 
-    // Get document, or throw exception on error
-    try {
-        //@ts-ignore
-        const doc: GitpodConfig = yaml.load(fs.readFileSync("/workspace/gitpod/.gitpod.yml", "utf8"));
-        //containerFile.extensions = doc.vscode?.extensions;
+//     // Get document, or throw exception on error
+//     try {
+//         //@ts-ignore
+//         const doc: GitpodConfig = yaml.load(fs.readFileSync("/workspace/gitpod/.gitpod.yml", "utf8"));
+//         //containerFile.extensions = doc.vscode?.extensions;
 
-        /* Docker image */
-        if (typeof doc.image === "string") {
-            // @ts-ignore
-            containerFile.build = {};
-            console.log(containerFile);
-            // @ts-ignore
-            containerFile?.build.dockerfile = doc.image;
-        } else if (typeof doc.image == "object") {
-            // @ts-ignore
-            containerFile.build = {};
-            // @ts-ignore
-            containerFile?.build.dockerfile = doc.image.file;
-        }
+//         /* Docker image */
+//         if (typeof doc.image === "string") {
+//             // @ts-ignore
+//             containerFile.build = {};
+//             console.log(containerFile);
+//             // @ts-ignore
+//             containerFile?.build.dockerfile = doc.image;
+//         } else if (typeof doc.image == "object") {
+//             // @ts-ignore
+//             containerFile.build = {};
+//             // @ts-ignore
+//             containerFile?.build.dockerfile = doc.image.file;
+//         }
 
-        if (doc.tasks) {
-            for (const task of doc.tasks) {
-            }
-        }
+//         if (doc.tasks) {
+//             for (const task of doc.tasks) {
+//             }
+//         }
 
-        console.log(JSON.stringify(containerFile));
-    } catch (e) {
-        console.log(e);
-    }
-};
+//         console.log(JSON.stringify(containerFile));
+//     } catch (e) {
+//         console.log(e);
+//     }
+// };
 
 export const toGitpod = (containerFile: DevContainer) => {
     //@ts-ignore
@@ -96,13 +96,13 @@ export const toGitpod = (containerFile: DevContainer) => {
 
 // For testing:
 
-console.log(
-    JSON.stringify(
-        toGitpod({
-            name: "xterm.js",
-            dockerFile: "Dockerfile",
-            appPort: 3000,
-            extensions: ["dbaeumer.vscode-eslint", "editorconfig.editorconfig", "hbenl.vscode-mocha-test-adapter"],
-        }),
-    ),
-);
+// console.log(
+//     JSON.stringify(
+//         toGitpod({
+//             name: "xterm.js",
+//             dockerFile: "Dockerfile",
+//             appPort: 3000,
+//             extensions: ["dbaeumer.vscode-eslint", "editorconfig.editorconfig", "hbenl.vscode-mocha-test-adapter"],
+//         }),
+//     ),
+// );
