@@ -162,48 +162,7 @@ export class ConfigProvider {
         try {
             let customConfig: WorkspaceConfig | undefined;
             let configBasePath = "";
-            if (AdditionalContentContext.is(commit) && commit.additionalFiles[".devcontainer/.devcontainer.json"]) {
-                // TODO: Convert devcontainerjson to yaml
-                log.error(logContext, "GITdevcontainerGIT was here");
 
-                customConfigString = `
-image:
-  file: .gitpod.Dockerfile
-  context: .
-
-# List the ports you want to expose and what to do when they are served. See https://www.gitpod.io/docs/config-ports/
-ports:
-- port: 3000
-  onOpen: open-preview
-
-# List the start up tasks. You can start them in parallel in multiple terminals. See https://www.gitpod.io/docs/config-start-tasks/
-tasks:
-- command: |
-    mongod
-- init: |
-    npm install
-    npm run build
-  command: |
-    npm run start
-vscode:
-  extensions:
-    - dbaeumer.vscode-eslint
-`;
-                const parseResult = this.gitpodParser.parse(customConfigString);
-                customConfig = parseResult.config;
-                customConfig._origin = "additional-content";
-                if (parseResult.validationErrors) {
-                    const err = new InvalidGitpodYMLError(parseResult.validationErrors);
-                    // this is not a system error but a user misconfiguration
-                    log.info(logContext, "GITGITGIT ERROR NOT DESIRED :(");
-                    log.info(logContext, err.message, {
-                        repoCloneUrl: commit.repository.cloneUrl,
-                        revision: commit.revision,
-                        customConfigString,
-                    });
-                    throw err;
-                }
-            }
             if (AdditionalContentContext.is(commit) && commit.additionalFiles[".gitpod.yml"]) {
                 customConfigString = commit.additionalFiles[".gitpod.yml"];
                 const parseResult = this.gitpodParser.parse(customConfigString);
@@ -233,7 +192,7 @@ vscode:
                     .findProjectByCloneUrl(commit.repository.cloneUrl)
                     .then((project) => project?.config);
                 const definitelyGpConfig = this.fetchExternalGitpodFileContent({ span }, commit.repository);
-                const inferredConfig = this.configurationService.guessRepositoryConfiguration({ span }, user, commit);
+                // const inferredConfig = this.configurationService.guessRepositoryConfiguration({ span }, user, commit);
 
                 customConfigString = await contextRepoConfig;
                 let origin: WorkspaceConfig["_origin"] = "repo";
@@ -260,11 +219,11 @@ vscode:
                     origin = "definitely-gp";
                 }
 
-                if (!customConfigString) {
-                    // if there's still no configuration, let's infer one
-                    customConfigString = await inferredConfig;
-                    origin = "derived";
-                }
+                // if (!customConfigString) {
+                // if there's still no configuration, let's infer one
+                // customConfigString = await inferredConfig;
+                // origin = "derived";
+                // }
 
                 if (customConfigString) {
                     const parseResult = this.gitpodParser.parse(customConfigString);
