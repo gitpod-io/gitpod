@@ -252,6 +252,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		IdeRef:        ideRef,
 		DesktopIdeRef: desktopIdeRef,
 		SupervisorRef: supervisorRef,
+		AdditionalRefs: startContext.Request.Spec.AdditionalImages,
 	}
 	imageSpec, err := spec.ToBase64()
 	if err != nil {

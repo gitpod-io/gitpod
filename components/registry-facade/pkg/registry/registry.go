@@ -138,6 +138,20 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 	}
 	layerSources = append(layerSources, supervisorLayerSource)
 
+	// additional layers
+	additionalLayerRefSource := func(s *api.ImageSpec) (ref string, err error) {
+		if len(s.AdditionalRefs) == 0 {
+			return "", nil
+		}
+		// TODO(gpl) find out how to make it work for arbitrary number of layers
+		return s.AdditionalRefs[0], nil
+	}
+	additionalLayerSource, err := NewSpecMappedImageSource(newResolver, additionalLayerRefSource)
+	if err != nil {
+		return nil, err
+	}
+	layerSources = append(layerSources, additionalLayerSource)
+
 	// content layer
 	clsrc, err := NewContentLayerSource()
 	if err != nil {

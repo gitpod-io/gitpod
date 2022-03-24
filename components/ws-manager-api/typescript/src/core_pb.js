@@ -6656,7 +6656,7 @@ proto.wsman.WorkspaceAuthentication.prototype.setOwnerToken = function(value) {
  * @private {!Array<number>}
  * @const
  */
-proto.wsman.StartWorkspaceSpec.repeatedFields_ = [3,5,6];
+proto.wsman.StartWorkspaceSpec.repeatedFields_ = [3,5,6,13];
 
 
 
@@ -6702,7 +6702,8 @@ proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
     git: (f = msg.getGit()) && proto.wsman.GitSpec.toObject(includeInstance, f),
     timeout: jspb.Message.getFieldWithDefault(msg, 10, ""),
     admission: jspb.Message.getFieldWithDefault(msg, 11, 0),
-    ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f)
+    ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
+    additionalImagesList: (f = jspb.Message.getRepeatedField(msg, 13)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -6793,6 +6794,10 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
       var value = new proto.wsman.IDEImage;
       reader.readMessage(value,proto.wsman.IDEImage.deserializeBinaryFromReader);
       msg.setIdeImage(value);
+      break;
+    case 13:
+      var value = /** @type {string} */ (reader.readString());
+      msg.addAdditionalImages(value);
       break;
     default:
       reader.skipField();
@@ -6910,6 +6915,13 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
       12,
       f,
       proto.wsman.IDEImage.serializeBinaryToWriter
+    );
+  }
+  f = message.getAdditionalImagesList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(
+      13,
+      f
     );
   }
 };
@@ -7244,6 +7256,43 @@ proto.wsman.StartWorkspaceSpec.prototype.clearIdeImage = function() {
  */
 proto.wsman.StartWorkspaceSpec.prototype.hasIdeImage = function() {
   return jspb.Message.getField(this, 12) != null;
+};
+
+
+/**
+ * repeated string additional_images = 13;
+ * @return {!Array<string>}
+ */
+proto.wsman.StartWorkspaceSpec.prototype.getAdditionalImagesList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 13));
+};
+
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.setAdditionalImagesList = function(value) {
+  return jspb.Message.setField(this, 13, value || []);
+};
+
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.addAdditionalImages = function(value, opt_index) {
+  return jspb.Message.addToRepeatedField(this, 13, value, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.clearAdditionalImagesList = function() {
+  return this.setAdditionalImagesList([]);
 };
 
 

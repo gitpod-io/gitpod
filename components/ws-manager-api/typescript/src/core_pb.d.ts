@@ -870,6 +870,10 @@ export class StartWorkspaceSpec extends jspb.Message {
     clearIdeImage(): void;
     getIdeImage(): IDEImage | undefined;
     setIdeImage(value?: IDEImage): StartWorkspaceSpec;
+    clearAdditionalImagesList(): void;
+    getAdditionalImagesList(): Array<string>;
+    setAdditionalImagesList(value: Array<string>): StartWorkspaceSpec;
+    addAdditionalImages(value: string, index?: number): string;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -895,6 +899,7 @@ export namespace StartWorkspaceSpec {
         timeout: string,
         admission: AdmissionLevel,
         ideImage?: IDEImage.AsObject,
+        additionalImagesList: Array<string>,
     }
 }
 

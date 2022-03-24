@@ -493,6 +493,9 @@ message StartWorkspaceSpec {
 
     // ide_image is the Docker image name of the IDE image
     IDEImage ide_image = 12;
+
+    // additional_images is the Docker image ref of additional images
+    repeated string additional_images = 13;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces
