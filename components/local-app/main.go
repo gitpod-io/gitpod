@@ -137,14 +137,19 @@ func main() {
 				},
 			},
 			{
-				Name:  "ls",
-				Usage: "Lists all workspaces",
-				Flags: []cli.Flag{},
+				Name:    "list",
+				Aliases: []string{"ls"},
+				Usage:   "Lists all workspaces",
+				Flags:   []cli.Flag{},
 				Action: func(c *cli.Context) error {
-					fmt.Println("Hello world")
+					fmt.Println("List Command")
+					keyring.MockInit()
 
-					os.Exit(1)
-					return nil
+					return list(c.Context, startOpts{
+						origin:          c.String("gitpod-host"),
+						authRedirectUrl: c.String("auth-redirect-url"),
+						authTimeout:     c.Duration("auth-timeout"),
+					})
 				},
 			},
 			{
@@ -216,6 +221,33 @@ func start(ctx context.Context, opts startOpts) error {
 	})
 
 	fmt.Println("create workspace", res, err)
+	return nil
+}
+
+func list(ctx context.Context, opts startOpts) error {
+	origin := strings.TrimRight(opts.origin, "/")
+
+	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectUrl, AuthTimeout: opts.authTimeout}, func() {
+		fmt.Println("reconnect")
+	}, func(err error) {
+		fmt.Println("close handler", err)
+		// logrus.WithError(closeErr).Error("server connection failed")
+		os.Exit(1)
+	})
+	if err != nil {
+		return err
+	}
+
+	res, err := client.GetWorkspaces(ctx, &gitpod.GetWorkspacesOptions{})
+
+	if err != nil {
+		return err
+	}
+
+	// log elements from resp
+	for _, ws := range res {
+		fmt.Println(ws.Workspace.ID)
+	}
 	return nil
 }
 
