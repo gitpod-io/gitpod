@@ -14,4 +14,5 @@ export interface ConnectionType {
     attributes: string[];
     envVars: { name: string; value: string }[];
     tasks: { name: string; command: string }[];
+    imageLayers: string[];
 }

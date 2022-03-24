@@ -5,8 +5,8 @@
 - id: tailscale
   name: "Tailscale"
   attributes:
-    - AUTH_KEY
-  envVars:
+    - authKey
+  envVars: []
   tasks:
     - tailscaled: |-
         curl -fsSL https://tailscale.com/install.sh | sh
@@ -14,11 +14,13 @@
         sudo tailscaled
     - tailscale: |-
         gp sync-await tailscale-install
-        sudo -E tailscale up --authkey ${AUTH_KEY}
+        sudo -E tailscale up --authkey ${authKey}
+  imageLayers: []
 - id: gcAdc
   name: "Google Cloud Platform - Application Default Credentials"
   attributes:
-    - SERVICE_ACCOUNT, imageLayer
+    - serviceAccount
+    - imageLayer
   envVars:
     - name: GOOGLE_APPLICATION_CREDENTIALS
       value: "/home/gitpod/.config/gcloud/application_default_credentials.json"
@@ -27,5 +29,8 @@
         GCLOUD_ADC_PATH="/home/gitpod/.config/gcloud/application_default_credentials.json"
         if [ ! -f "$GCLOUD_ADC_PATH" ]; then
             mkdir -p $(dirname $GCLOUD_ADC_PATH)
-            echo '${SERVICE_ACCOUNT}' > "$GCLOUD_ADC_PATH"
+            echo '${serviceAccount}' > "$GCLOUD_ADC_PATH"
         fi
+  imageLayers:
+    - ${imageLayer}
+

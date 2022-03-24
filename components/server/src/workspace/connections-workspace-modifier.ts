@@ -32,6 +32,6 @@ export class ConnectionsWorkspaceModifier {
     }
 
     async getAdditionalContainerImages(): Promise<string[]> {
-        return [];
+        return this.type.imageLayers.map((il) => this.render(il));
     }
 }
