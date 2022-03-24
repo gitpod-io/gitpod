@@ -230,19 +230,19 @@ func start(ctx context.Context, opts startOpts) error {
 		logrus.WithError(err).Error("Failed to create a workspace.")
 	}
 
+	if opts.jumpToSSH {
+		cmd := exec.Command("ssh", "-F", "/tmp/gitpod_ssh_config", res.CreatedWorkspaceID)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		time.Sleep(20 * time.Second)
+		return cmd.Run()
+	}
+
 	logrus.Infof("Created a new workspace with ID: %s", res.CreatedWorkspaceID)
 	logrus.Infof("You can access your workspace with %s", res.WorkspaceURL)
-
-	// -F /tmp/gitpod_ssh_config <your-workspace-id e.g.apricot-harrier-####>
-	cmd := exec.Command("ssh", "-F", "/tmp/gitpod_ssh_config", res.CreatedWorkspaceID)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	time.Sleep(20 * time.Second)
-	return cmd.Run()
-
-	// return nil
+	return nil
 }
 
 func list(ctx context.Context, opts startOpts) error {
