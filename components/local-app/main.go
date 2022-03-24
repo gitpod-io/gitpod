@@ -137,11 +137,17 @@ func main() {
 				},
 			},
 			{
-				Name: "start",
+				Name:  "start",
+				Usage: "Starts a new workspace based on a context-URL",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "open-ssh",
+						Usage: "Open SSH Connection once the workspace started",
+						Value: false,
+					},
+				},
 				Action: func(c *cli.Context) error {
 					fmt.Println("Hello world")
-
-					go run(...)
 
 					os.Exit(1)
 					return nil
