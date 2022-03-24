@@ -9,7 +9,8 @@
       }
     ],
     "store": "/tmp/store",
-    "requireAuth": false
+    "requireAuth": false,
+    "fixedSpecFN": "example-spec.json"
   },
   "blobserve": {
     "port": 8081,

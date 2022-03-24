@@ -51,6 +51,7 @@ type Config struct {
 	Prefix             string           `json:"prefix"`
 	StaticLayer        []StaticLayerCfg `json:"staticLayer"`
 	RemoteSpecProvider *RSProvider      `json:"remoteSpecProvider,omitempty"`
+	FixedSpecProvider  string           `json:"fixedSpecFN,omitempty"`
 	Store              string           `json:"store"`
 	RequireAuth        bool             `json:"requireAuth"`
 	TLS                *TLS             `json:"tls"`

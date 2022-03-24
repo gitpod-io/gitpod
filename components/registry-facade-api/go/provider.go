@@ -12,4 +12,8 @@ const (
 
 	// ProviderPrefixRemote is the image repository prefix for remotely fetched image specs
 	ProviderPrefixRemote = "remote"
+
+	// ProviderPrefixFixed is the image repository prefix for fixed image spec. This is useful
+	// for debugging only.
+	ProviderPrefixFixed = "fixed"
 )
