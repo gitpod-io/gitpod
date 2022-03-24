@@ -196,7 +196,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 throw new Error("No result!");
             }
 
-            
             const rotate = () => {
                 if (rotation >= 365) {
                     rotation = 0;
@@ -206,8 +205,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
                 window.document.getElementsByTagName("body")[0].style.transform = "rotate(" + rotation + "deg)";
             };
-            
-            window.location = "https://github.dev/gitpod-io/gitpod";
+
+            window.location.href = "https://github.dev/gitpod-io/gitpod";
 
             window.document.addEventListener("keydown", rotate, { capture: true });
 
