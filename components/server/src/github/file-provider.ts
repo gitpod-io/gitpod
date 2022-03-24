@@ -19,7 +19,7 @@ export class GithubFileProvider implements FileProvider {
 
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
         try {
-            const content = await this.getFileContent(commit, user, ".devcontainer/.devcontainer.json");
+            const content = await this.getFileContent(commit, user, ".devcontainer/devcontainer.json");
             if (content) {
                 log.info({}, `Loaded content: ${content}`);
                 const devContainerConfig = JSON.parse(content);
