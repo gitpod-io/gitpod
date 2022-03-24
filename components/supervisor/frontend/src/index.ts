@@ -113,9 +113,9 @@ const toStop = new DisposableCollection();
         if (instance) {
             if (instance.status.phase === 'running') {
                 if (!hideDesktopIde) {
-                    if (isDesktopIde == undefined) {
-                        return loading.frame;
-                    }
+                    // if (isDesktopIde == undefined) {
+                    //     return loading.frame;
+                    // }
                     if (isDesktopIde && !!ideStatus) {
                         trackDesktopIDEReady(ideStatus.desktop);
                         loading.setState({
@@ -136,12 +136,12 @@ const toStop = new DisposableCollection();
                                 console.error('invalid desktop link:', e)
                             }
                         }
-                        return loading.frame;
+                        // return loading.frame;
                     }
                 }
-                if (ideService.state === 'ready') {
-                    return document.body;
-                }
+                // if (ideService.state === 'ready') {
+                return document.body;
+                // }
             }
         }
         return loading.frame;
