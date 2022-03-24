@@ -8,6 +8,12 @@
 import { useLabsStorage } from "../settings/LabsStorage";
 import gitpodLogo from "../icons/gitpod.svg";
 import classicLogo from "../icons/gitpod-classic.svg";
+import prideLogo from "../icons/pride.svg";
+import queenLogo from "../icons/queen.png";
+import pawquatLogo from "../icons/pawquat.png";
+import animeLogo from "../icons/anime.png";
+import aussieLogo from "../icons/bunnings.png";
+// import whitelabelLogo from "../icons/whitelabel.jpg";
 
 const GitpodLogo = () => {
     const [store, _] = useLabsStorage();
@@ -17,11 +23,29 @@ const GitpodLogo = () => {
         case "classic":
             logo = classicLogo;
             break;
+        case "gay":
+            logo = prideLogo;
+            break;
+        case "british":
+            logo = queenLogo;
+            break;
+        case "pawquat":
+            logo = pawquatLogo;
+            break;
+        case "anime":
+            logo = animeLogo;
+            break;
+        case "aussie":
+            logo = aussieLogo;
+            break;
+        // case "whitelabel":
+        //     logo = whitelabelLogo;
+        //     break;
         default:
             logo = gitpodLogo;
             break;
     }
 
-    return <img src={logo} className="h-6" alt="Gitpod's logo" />;
+    return <img src={logo} className={Object.is(logo, gitpodLogo) ? "h-6" : "h-12"} alt="Gitpod's logo" />;
 };
 export default GitpodLogo;

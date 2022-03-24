@@ -29,7 +29,7 @@ export default function Labs() {
                 <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>
                 <div className="my-4 gap-4 flex flex-wrap max-w-2xl">
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Default"
                         selected={makeIt === "default"}
                         onClick={() => setMakeIt("default")}
@@ -44,7 +44,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Gay"
                         selected={makeIt === "gay"}
                         onClick={() => setMakeIt("gay")}
@@ -59,7 +59,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Greek"
                         selected={makeIt === "greek"}
                         onClick={() => setMakeIt("greek")}
@@ -74,7 +74,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Pawquat"
                         selected={makeIt === "pawquat"}
                         onClick={() => setMakeIt("pawquat")}
@@ -89,7 +89,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Aussie"
                         selected={makeIt === "aussie"}
                         onClick={() => setMakeIt("aussie")}
@@ -104,7 +104,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Bri'ish"
                         selected={makeIt === "british"}
                         onClick={() => setMakeIt("british")}
@@ -119,7 +119,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Accessible"
                         selected={makeIt === "accessible"}
                         onClick={() => setMakeIt("accessible")}
@@ -134,7 +134,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Classic"
                         selected={makeIt === "classic"}
                         onClick={() => setMakeIt("classic")}
@@ -149,7 +149,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Dance 💃"
                         selected={makeIt === "dance"}
                         onClick={() => setMakeIt("dance")}
@@ -164,7 +164,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Terrible"
                         selected={makeIt === "terrible"}
                         onClick={() => setMakeIt("terrible")}
@@ -179,7 +179,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Codespaces"
                         selected={makeIt === "codespaces"}
                         onClick={() => setMakeIt("codespaces")}
@@ -194,7 +194,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Anime UwU"
                         selected={makeIt === "anime"}
                         onClick={() => setMakeIt("anime")}
@@ -209,10 +209,10 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
-                        title="White Labelled"
-                        selected={makeIt === "whitelabelled"}
-                        onClick={() => setMakeIt("whitelabelled")}
+                        className="w-48 h-32"
+                        title="White Label"
+                        selected={makeIt === "whitelabel"}
+                        onClick={() => setMakeIt("whitelabel")}
                     >
                         <div className="flex-grow flex justify-center items-end">
                             <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
@@ -224,7 +224,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Turbo"
                         selected={makeIt === "turbo"}
                         onClick={() => setMakeIt("turbo")}
@@ -239,7 +239,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Fetch"
                         selected={makeIt === "fetch"}
                         onClick={() => setMakeIt("fetch")}
@@ -254,7 +254,7 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                     <SelectableCard
-                        className="w-36 h-32"
+                        className="w-48 h-32"
                         title="Compliant"
                         selected={makeIt === "compliant"}
                         onClick={() => setMakeIt("compliant")}
