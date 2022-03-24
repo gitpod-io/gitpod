@@ -235,10 +235,6 @@ func (sbs storeBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgs
 	return info.Labels["Content-Type"], "", &reader{ReaderAt: r}, nil
 }
 
-type ipfsBlobSource struct {
-	IPFS *IPFSStore
-}
-
 type proxyingBlobSource struct {
 	Fetcher remotes.Fetcher
 	Blobs   []ociv1.Descriptor

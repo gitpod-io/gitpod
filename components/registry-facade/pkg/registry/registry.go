@@ -31,6 +31,7 @@ import (
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/gorilla/mux"
 	httpapi "github.com/ipfs/go-ipfs-http-client"
+	ma "github.com/multiformats/go-multiaddr"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -191,7 +192,11 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 
 	var ipfs *IPFSStore
 	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
-		core, err := httpapi.NewLocalApi()
+		addr, err := ma.NewMultiaddr(strings.TrimSpace(string(cfg.IPFSCache.IPFSAddr)))
+		if err != nil {
+			return nil, xerrors.Errorf("cannot connect to IPFS: %w", err)
+		}
+		core, err := httpapi.NewApi(addr)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot connect to IPFS: %w", err)
 		}
