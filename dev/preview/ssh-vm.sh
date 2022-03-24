@@ -17,13 +17,14 @@ THIS_DIR="$(dirname "$0")"
 USER="ubuntu"
 COMMAND=""
 
-while getopts c:n:p:u: flag
+while getopts c:n:p:u:v: flag
 do
     case "${flag}" in
         c) COMMAND="${OPTARG}";;
         n) NAMESPACE="${OPTARG}";;
         p) PORT="${OPTARG}";;
         u) USER="${OPTARG}";;
+        v) VM_NAME="${OPTARG}";;
         *) ;;
     esac
 done
@@ -54,7 +55,8 @@ set-up-ssh
 ssh "$USER"@127.0.0.1 \
     -o UserKnownHostsFile=/dev/null \
     -o StrictHostKeyChecking=no \
-    -o "ProxyCommand=$THIS_DIR/ssh-proxy-command.sh -p $PORT -n $NAMESPACE" \
+    -o LogLevel=ERROR \
+    -o "ProxyCommand=$THIS_DIR/ssh-proxy-command.sh -p $PORT -n $NAMESPACE -v $VM_NAME" \
     -i "$HOME/.ssh/vm_id_rsa" \
     -p "$PORT" \
     "$COMMAND"

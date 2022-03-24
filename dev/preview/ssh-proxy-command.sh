@@ -5,11 +5,12 @@ source ./dev/preview/util/preview-name-from-branch.sh
 VM_NAME="$(preview-name-from-branch)"
 NAMESPACE="preview-${VM_NAME}"
 
-while getopts n:p: flag
+while getopts n:p:v: flag
 do
     case "${flag}" in
         n) NAMESPACE="${OPTARG}";;
         p) PORT="${OPTARG}";;
+        v) VM_NAME="${OPTARG}";;
         *) ;;
     esac
 done
