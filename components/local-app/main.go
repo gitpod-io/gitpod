@@ -7,6 +7,8 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"io"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -19,6 +21,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"text/tabwriter"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	appapi "github.com/gitpod-io/gitpod/local-app/api"
@@ -58,9 +61,6 @@ func main() {
 			&cli.StringFlag{
 				Name:  "gitpod-host",
 				Usage: "URL of the Gitpod installation to connect to",
-				EnvVars: []string{
-					"GITPOD_HOST",
-				},
 				Value: "https://mp-gitpod-cli.staging.gitpod-dev.com",
 			},
 			&cli.BoolFlag{
@@ -206,14 +206,11 @@ type startOpts struct {
 	authRedirectUrl string
 	authTimeout     time.Duration
 	contextURL      string
+	jumpToSSH       bool
 }
 
 func start(ctx context.Context, opts startOpts) error {
 	origin := strings.TrimRight(opts.origin, "/")
-	// originURL, err := url.Parse(opts.origin)
-	// if err != nil {
-	// 	return err
-	// }
 
 	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectUrl, AuthTimeout: opts.authTimeout}, func() {
 		fmt.Println("reconnect")
@@ -236,17 +233,25 @@ func start(ctx context.Context, opts startOpts) error {
 	logrus.Infof("Created a new workspace with ID: %s", res.CreatedWorkspaceID)
 	logrus.Infof("You can access your workspace with %s", res.WorkspaceURL)
 
-	return nil
+	// -F /tmp/gitpod_ssh_config <your-workspace-id e.g.apricot-harrier-####>
+	cmd := exec.Command("ssh", "-F", "/tmp/gitpod_ssh_config", res.CreatedWorkspaceID)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	time.Sleep(20 * time.Second)
+	return cmd.Run()
+
+	// return nil
 }
 
 func list(ctx context.Context, opts startOpts) error {
 	origin := strings.TrimRight(opts.origin, "/")
 
 	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectUrl, AuthTimeout: opts.authTimeout}, func() {
-		fmt.Println("reconnect")
+		logrus.Info("Reconnect")
 	}, func(err error) {
-		fmt.Println("close handler", err)
-		// logrus.WithError(closeErr).Error("server connection failed")
+		logrus.WithError(err).Error("Connection to API closed")
 		os.Exit(1)
 	})
 	if err != nil {
@@ -254,16 +259,19 @@ func list(ctx context.Context, opts startOpts) error {
 	}
 
 	res, err := client.GetWorkspaces(ctx, &gitpod.GetWorkspacesOptions{})
-
 	if err != nil {
 		return err
 	}
 
-	// log elements from resp
+	var results [][]string
 	for _, ws := range res {
-		fmt.Println(ws.Workspace.ID, ws.LatestInstance.Status.Phase)
+		results = append(results, []string{
+			ws.Workspace.ID,
+			ws.LatestInstance.Status.Phase,
+		})
 	}
-	return nil
+
+	return printTable(os.Stdout, []string{"Workspace ID", "Phase"}, results)
 }
 
 func DefaultCommand(name string) cli.ActionFunc {
@@ -436,4 +444,15 @@ type logCallbacks struct{}
 
 func (*logCallbacks) InstanceUpdate(w *bastion.Workspace) {
 	logrus.WithField("workspace", w).Info("instance update")
+}
+
+func printTable(w io.Writer, headers []string, rows [][]string) error {
+	writer := tabwriter.NewWriter(w, 0, 4, 1, '\t', tabwriter.AlignRight)
+
+	fmt.Fprintln(writer, strings.Join(headers, "\t"))
+	for _, row := range rows {
+		fmt.Fprintln(writer, strings.Join(row, "\t"))
+	}
+
+	return writer.Flush()
 }
