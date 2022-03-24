@@ -2,4 +2,14 @@
 <project version="4">
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="ProjectRootManager" version="2" project-jdk-name="11" project-jdk-type="JavaSDK" />
+  <component name="UnattendedHostPersistenceState">
+    <option name="openedFilesInfos">
+      <list>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="653" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/local-app/main.go" />
+        </OpenedFileInfo>
+      </list>
+    </option>
+  </component>
 </project>

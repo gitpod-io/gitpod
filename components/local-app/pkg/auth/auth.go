@@ -36,6 +36,7 @@ var authScopes = []string{
 	"function:getWorkspaces",
 	"function:listenForWorkspaceInstanceUpdates",
 	"resource:default",
+	"function:*",
 }
 
 type ErrInvalidGitpodToken struct {
@@ -154,8 +155,11 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		}
 	}
 
+	fmt.Println(rl.Addr())
+
+	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	returnServer := &http.Server{
-		Addr:    fmt.Sprintf("127.0.0.1:%d", port),
+		Addr:    addr,
 		Handler: http.HandlerFunc(returnHandler),
 	}
 	go func() {
@@ -165,6 +169,8 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		}
 	}()
 	defer returnServer.Shutdown(ctx)
+
+	fmt.Println("Running server on:", addr)
 
 	baseURL := opts.GitpodURL
 	if baseURL == "" {
@@ -198,6 +204,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	authorizationURL := conf.AuthCodeURL("state", responseTypeParam, redirectURIParam, codeChallengeParam, codeChallengeMethodParam)
 
 	// open a browser window to the authorizationURL
+	fmt.Println("Open: ", authorizationURL)
 	err = open.Start(authorizationURL)
 	if err != nil {
 		return "", xerrors.Errorf("cannot open browser to URL %s: %s\n", authorizationURL, err)

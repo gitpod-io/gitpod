@@ -61,7 +61,7 @@ func main() {
 				EnvVars: []string{
 					"GITPOD_HOST",
 				},
-				Value: "https://gitpod.io",
+				Value: "https://mp-gitpod-cli.staging.gitpod-dev.com",
 			},
 			&cli.BoolFlag{
 				Name:  "mock-keyring",
@@ -137,6 +137,17 @@ func main() {
 				},
 			},
 			{
+				Name:  "ls",
+				Usage: "Lists all workspaces",
+				Flags: []cli.Flag{},
+				Action: func(c *cli.Context) error {
+					fmt.Println("Hello world")
+
+					os.Exit(1)
+					return nil
+				},
+			},
+			{
 				Name:  "start",
 				Usage: "Starts a new workspace based on a context-URL",
 				Flags: []cli.Flag{
@@ -149,8 +160,15 @@ func main() {
 				Action: func(c *cli.Context) error {
 					fmt.Println("Hello world")
 
-					os.Exit(1)
-					return nil
+					// if c.Bool("mock-keyring") {
+					keyring.MockInit()
+					// }
+
+					return start(c.Context, startOpts{
+						origin:          c.String("gitpod-host"),
+						authRedirectUrl: c.String("auth-redirect-url"),
+						authTimeout:     c.Duration("auth-timeout"),
+					})
 				},
 			},
 		},
@@ -159,6 +177,38 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+type startOpts struct {
+	origin          string
+	authRedirectUrl string
+	authTimeout     time.Duration
+}
+
+func start(ctx context.Context, opts startOpts) error {
+	origin := strings.TrimRight(opts.origin, "/")
+	// originURL, err := url.Parse(opts.origin)
+	// if err != nil {
+	// 	return err
+	// }
+
+	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectUrl, AuthTimeout: opts.authTimeout}, func() {
+		fmt.Println("reconnect")
+	}, func(err error) {
+		fmt.Println("close handler", err)
+		// logrus.WithError(closeErr).Error("server connection failed")
+		os.Exit(1)
+	})
+	if err != nil {
+		return err
+	}
+
+	res, err := client.CreateWorkspace(ctx, &gitpod.CreateWorkspaceOptions{
+		ContextURL: "https://github.com/gitpod-io/gitpod",
+	})
+
+	fmt.Println("create workspace", res, err)
+	return nil
 }
 
 func DefaultCommand(name string) cli.ActionFunc {
