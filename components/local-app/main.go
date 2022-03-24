@@ -233,25 +233,24 @@ func start(ctx context.Context, opts startOpts) error {
 		logrus.WithError(err).Error("Failed to create a workspace.")
 	}
 
-	ticker := time.NewTicker(time.Second)
-	for range ticker.C {
-		ws, err := client.GetWorkspace(ctx, res.CreatedWorkspaceID)
-		if err != nil {
-			return fmt.Errorf("Failed to get workspace: %w", err)
-		}
-		if ws.LatestInstance.Status.Phase == "running" {
-			ticker.Stop()
-		}
-
-	}
-
 	if opts.jumpToSSH {
 		cmd := exec.Command("ssh", "-F", "/tmp/gitpod_ssh_config", res.CreatedWorkspaceID)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 
-		time.Sleep(20 * time.Second)
+		ticker := time.NewTicker(time.Second)
+		for range ticker.C {
+			ws, err := client.GetWorkspace(ctx, res.CreatedWorkspaceID)
+			if err != nil {
+				return fmt.Errorf("Failed to get workspace: %w", err)
+			}
+			if ws.LatestInstance.Status.Phase == "running" {
+				ticker.Stop()
+			}
+
+		}
+
 		return cmd.Run()
 	}
 
