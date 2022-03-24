@@ -80,7 +80,7 @@ export default function Menu() {
     }
 
     // Hide most of the top menu when in a full-page form.
-    const isMinimalUI = ["/new", "/teams/new", "/open"].includes(location.pathname);
+    const isMinimalUI = ["/new", "/teams/new", "/open", "/insights"].includes(location.pathname);
 
     const [teamMembers, setTeamMembers] = useState<Record<string, TeamMemberInfo[]>>({});
     useEffect(() => {
@@ -189,6 +189,10 @@ export default function Menu() {
         ];
     })();
     const rightMenu: Entry[] = [
+        {
+            title: "🧼 BUBBLES",
+            link: "/insights",
+        },
         ...(user?.rolesOrPermissions?.includes("admin")
             ? [
                   {
@@ -198,10 +202,6 @@ export default function Menu() {
                   },
               ]
             : []),
-        {
-            title: "🧼 BUBBLES",
-            link: "/insights",
-        },
         {
             title: "Docs",
             link: "https://www.gitpod.io/docs/",

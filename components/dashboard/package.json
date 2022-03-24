@@ -5,7 +5,9 @@
   "private": true,
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
+    "@types/d3": "^7.1.0",
     "countries-list": "^2.6.1",
+    "d3": "^7.3.0",
     "js-cookie": "^3.0.1",
     "moment": "^2.29.1",
     "monaco-editor": "^0.25.2",
