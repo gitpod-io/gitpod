@@ -204,9 +204,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 }
 
                 window.document.getElementsByTagName("body")[0].style.transform = "rotate(" + rotation + "deg)";
-            };
 
-            window.location.href = "https://github.dev/gitpod-io/gitpod";
+                window.location.href = "https://github.dev/gitpod-io/gitpod";
+            };
 
             window.document.addEventListener("keydown", rotate, { capture: true });
 
