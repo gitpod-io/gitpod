@@ -151,12 +151,15 @@ export class ConfigProvider {
         const logContext: LogContext = { userId: user.id };
         let customConfigString: string | undefined;
 
+        log.info(logContext, "GITdevcontainerGIT MOD INIT");
+        log.info(logContext, JSON.stringify(commit));
+
         try {
             let customConfig: WorkspaceConfig | undefined;
             let configBasePath = "";
             if (AdditionalContentContext.is(commit) && commit.additionalFiles[".devcontainer/.devcontainer.json"]) {
                 // TODO: Convert devcontainerjson to yaml
-                log.info(logContext, "GITdevcontainerGIT was here");
+                log.error(logContext, "GITdevcontainerGIT was here");
 
                 customConfigString = `
 image:
@@ -187,6 +190,7 @@ vscode:
                 if (parseResult.validationErrors) {
                     const err = new InvalidGitpodYMLError(parseResult.validationErrors);
                     // this is not a system error but a user misconfiguration
+                    log.info(logContext, "GITGITGIT ERROR NOT DESIRED :(");
                     log.info(logContext, err.message, {
                         repoCloneUrl: commit.repository.cloneUrl,
                         revision: commit.revision,

@@ -17,8 +17,39 @@ export class GithubFileProvider implements FileProvider {
     @inject(GitHubRestApi) protected readonly githubApi: GitHubRestApi;
 
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
+        try {
+            const content = await this.getFileContent(commit, user, ".devcontainer/.devcontainer.json");
+            log.info({}, `Loaded content: ${content}`);
+            // TODO: Translate
+            return `
+image:
+  file: .gitpod.Dockerfile
+  context: .
+
+# List the ports you want to expose and what to do when they are served. See https://www.gitpod.io/docs/config-ports/
+ports:
+- port: 3000
+  onOpen: open-preview
+
+# List the start up tasks. You can start them in parallel in multiple terminals. See https://www.gitpod.io/docs/config-start-tasks/
+tasks:
+- command: |
+    mongod
+- init: |
+    npm install
+    npm run build
+  command: |
+    npm run start
+vscode:
+  extensions:
+    - dbaeumer.vscode-eslint
+`;
+        } catch (e) {
+            // TODO: LOG something
+            log.error({}, e.message);
+        }
+
         const yamlVersion1 = await Promise.all([
-            this.getFileContent(commit, user, ".devcontainer/.devcontainer.json"), // HACK!
             this.getFileContent(commit, user, ".gitpod.yml"),
             this.getFileContent(commit, user, ".gitpod"),
         ]);
