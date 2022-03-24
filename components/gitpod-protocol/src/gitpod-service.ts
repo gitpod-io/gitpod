@@ -274,7 +274,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     /**
      * Gitpod Connections 🚀
      */
-    getConnectionTypes(): Promise<{ [key: string]: ConnectionType }>;
+    getConnectionTypes(): Promise<ConnectionType[]>;
 }
 
 export interface RateLimiterError {

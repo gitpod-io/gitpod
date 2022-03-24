@@ -97,7 +97,7 @@ import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messagin
 import { contentServiceBinder } from "@gitpod/content-service/lib/sugar";
 import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser";
 import { InstallationAdminTelemetryDataProvider } from "./installation-admin/telemetry-data-provider";
-import { TailscaleWorkspaceModifier } from "./workspace/connections-workspace-modifier";
+import { ConnectionsWorkspaceModifier } from "./workspace/connections-workspace-modifier";
 import { ConnectionsProvider } from "./workspace/connections-provider";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -243,7 +243,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
 
-    bind(TailscaleWorkspaceModifier).toSelf().inSingletonScope();
+    bind(ConnectionsWorkspaceModifier).toSelf().inSingletonScope();
 
     bind(ConnectionsProvider).toSelf().inSingletonScope();
 });

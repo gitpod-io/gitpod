@@ -2964,7 +2964,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return project.connections || [];
     }
 
-    async getConnectionTypes(ctx: TraceContext): Promise<{ [key: string]: ConnectionType }> {
+    async getConnectionTypes(ctx: TraceContext): Promise<ConnectionType[]> {
         traceAPIParams(ctx, {});
         this.checkUser("getConnectionTypes");
 

@@ -3,22 +3,13 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
-
-export type Connections = TailscaleConnection;
-
 export interface Connection {
-    id: string;
-    imageLayer?: string;
+    type: string;
+    [key: string]: string;
 }
 
-export interface TailscaleConnection extends Connection {
-    authKey: string;
-}
-
-export interface GCloudAdcConnection extends Connection {
-    serviceAccount: string;
-}
 export interface ConnectionType {
+    id: string;
     name: string;
     attributes: string[];
     envVars: { name: string; value: string }[];

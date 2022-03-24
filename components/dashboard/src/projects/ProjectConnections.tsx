@@ -55,7 +55,7 @@ export function ProjectConnectionsPage(props: { project?: Project; children?: Re
 export default function () {
     const { project } = useContext(ProjectContext);
 
-    const [connectionTypes, setConnectionTypes] = useState<{ [key: string]: ConnectionType }>({});
+    const [connectionTypes, setConnectionTypes] = useState<ConnectionType[]>([]);
     const [connections, setConnections] = useState<Connection[]>([]);
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
 
@@ -104,7 +104,8 @@ export default function () {
         }
         let updated = [...connections];
         if (newState) {
-            updated.push({ id });
+            const type = connectionTypes.find((t) => t.id === id);
+            updated.push({ type: type!.id });
         } else {
             updated = updated.filter((c) => c.id !== id);
         }
@@ -133,7 +134,10 @@ export default function () {
                 </div>
             </div>
             {Object.keys(connectionTypes).map((connectionTypeId, i) => {
-                const connectionType = connectionTypes[connectionTypeId];
+                const connectionType = connectionTypes.find((t) => t.id === connectionTypeId);
+                if (!connectionType) {
+                    return undefined;
+                }
                 const connection = getConnection(connectionTypeId);
 
                 if (

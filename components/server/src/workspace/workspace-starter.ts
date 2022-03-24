@@ -57,8 +57,6 @@ import {
     ImageConfigFile,
     ProjectEnvVar,
     ImageBuildLogInfo,
-    TailscaleConnection,
-    GCloudAdcConnection,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -111,11 +109,7 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
-import {
-    ConnectionsWorkspaceModifier,
-    GCloudAdcWorkspaceModifier,
-    TailscaleWorkspaceModifier,
-} from "./connections-workspace-modifier";
+import { ConnectionsWorkspaceModifier } from "./connections-workspace-modifier";
 import { ConnectionsProvider } from "./connections-provider";
 
 export interface StartWorkspaceOptions {
@@ -1573,15 +1567,14 @@ export class WorkspaceStarter {
             return [];
         }
         const project = await this.projectDB.findProjectById(projectId);
-        return (project?.connections || []).map((c) => {
-            switch (c.id) {
-                case "tailscale":
-                    return new TailscaleWorkspaceModifier(c as TailscaleConnection);
-                case "gcp-adc":
-                    return new GCloudAdcWorkspaceModifier(c as GCloudAdcConnection);
-                default:
-                    throw new Error(`unknown project connection ${c.id}`);
+        const connectionTypes = this.connectionProvider.getConnectionTypes();
+        const connectionModifiers = (project?.connections || []).map((connection) => {
+            const type = connectionTypes.find((t) => t.id === connection.type);
+            if (!type) {
+                throw new Error(`unknown project connection ${connection.id}`);
             }
+            return new ConnectionsWorkspaceModifier(connection, type);
         });
+        return connectionModifiers;
     }
 }

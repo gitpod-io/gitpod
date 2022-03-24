@@ -12,13 +12,13 @@ import { ConnectionType } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class ConnectionsProvider {
-    protected types: { [key: string]: ConnectionType } = {};
+    protected types: ConnectionType[] = [];
 
     @postConstruct()
     protected init() {
         const yml = yaml.load(fs.readFileSync(ConnectionsProvider.CONNECTIONS_YML_PATH, "utf8"));
         console.warn(`ConnectionsProvider`, { yml });
-        this.types = yml as { [key: string]: ConnectionType };
+        this.types = yml as ConnectionType[];
     }
 
     getConnectionTypes() {
