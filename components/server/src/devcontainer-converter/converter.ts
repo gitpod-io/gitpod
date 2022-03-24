@@ -61,7 +61,11 @@ export const toGitpod = (containerFile: DevContainer) => {
     }
 
     //@ts-ignore
-    if (containerFile.dockerFile || containerFile.build?.dockerfile) {
+    if (containerFile.image) {
+        //@ts-ignore
+        gitpodConfig.image = containerFile.image;
+        //@ts-ignore
+    } else if (containerFile.dockerFile || containerFile.build?.dockerfile) {
         //@ts-ignore
         gitpodConfig.image.file = `.devcontainer/${containerFile.dockerFile || containerFile.build.dockerfile}`;
     }
