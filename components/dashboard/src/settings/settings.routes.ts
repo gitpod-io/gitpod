@@ -5,7 +5,7 @@
  */
 
 export const settingsPathMain = "/settings";
-
+export const settingsPathLabs = "/labs";
 export const settingsPathAccount = "/account";
 export const settingsPathIntegrations = "/integrations";
 export const settingsPathNotifications = "/notifications";
