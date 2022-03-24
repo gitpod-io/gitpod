@@ -4,7 +4,7 @@
   "description": "A utility for converting from .devcontainer configs to .gitpod.yml and vice-a-versa",
   "main": "main.js",
   "license": "MIT",
-  "dependencies": {
+  "devDependency": {
     "ts-node": "^10.7.0"
   }
 }
