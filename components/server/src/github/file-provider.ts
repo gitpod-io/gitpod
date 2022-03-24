@@ -18,6 +18,7 @@ export class GithubFileProvider implements FileProvider {
 
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
         const yamlVersion1 = await Promise.all([
+            this.getFileContent(commit, user, ".devcontainer/.devcontainer.json"), // HACK!
             this.getFileContent(commit, user, ".gitpod.yml"),
             this.getFileContent(commit, user, ".gitpod"),
         ]);

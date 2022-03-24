@@ -154,6 +154,9 @@ export class ConfigProvider {
         try {
             let customConfig: WorkspaceConfig | undefined;
             let configBasePath = "";
+            if (AdditionalContentContext.is(commit) && commit.additionalFiles[".devcontainer/.devcontainer.json"]) {
+                throw new Error("FOUND DEVCONTAINER FILE!");
+            }
             if (AdditionalContentContext.is(commit) && commit.additionalFiles[".gitpod.yml"]) {
                 customConfigString = commit.additionalFiles[".gitpod.yml"];
                 const parseResult = this.gitpodParser.parse(customConfigString);
