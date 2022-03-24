@@ -10,6 +10,7 @@ import { getGitpodService } from "./service/service";
 
 export default function Insights() {
     const svgRef = useRef<SVGSVGElement>(null);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
     const width = 800;
     const height = 560;
     const data = getData();
@@ -134,6 +135,15 @@ export default function Insights() {
         chart.update(data);
     }, []);
 
+    const win = iframeRef?.current?.contentWindow;
+    const doc = iframeRef?.current?.contentDocument || win?.document
+
+    useEffect(() => {
+        if (win && doc && doc.readyState === 'complete') {
+            win.postMessage(getData());
+        }
+    }, [win, doc, doc?.readyState]);
+
     useEffect(() => {
         getGitpodService().server.getProjectUsageData('').then(data => {
             console.log('project usage data', data);
@@ -143,6 +153,7 @@ export default function Insights() {
     return <div className="mt-24 mx-auto flex flex-col items-stretch">
         <h1 className="text-center">🧼 BUBBLES</h1>
         <div className="mt-8">
+            <iframe src="/bubbles.html" ref={iframeRef} ></iframe>
             <svg className="container" ref={svgRef}></svg>
         </div>
     </div>
