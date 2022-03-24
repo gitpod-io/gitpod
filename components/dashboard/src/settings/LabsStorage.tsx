@@ -131,6 +131,10 @@ export const LabsStorageProvider = (props: { children: React.ReactNode }) => {
                     body.makeit-accessible * {
                         filter: url(./../images/colorblind.svg#protanopia);
                     }
+
+                    body.makeit-anime {
+                        background-color: #ffc0d3;
+                    }
                 `,
                 }}
             />

@@ -7,6 +7,7 @@
 import { useCallback } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import SelectableCard from "../components/SelectableCard";
+import CheckBox from "../components/CheckBox";
 import settingsMenu from "./settings-menu";
 import { useLabsStorage } from "./LabsStorage";
 
@@ -45,9 +46,9 @@ export default function Labs() {
                     </SelectableCard>
                     <SelectableCard
                         className="w-48 h-32"
-                        title="Gay"
-                        selected={makeIt === "gay"}
-                        onClick={() => setMakeIt("gay")}
+                        title="Classic"
+                        selected={makeIt === "classic"}
+                        onClick={() => setMakeIt("classic")}
                     >
                         <div className="flex-grow flex justify-center items-end">
                             <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
@@ -60,9 +61,9 @@ export default function Labs() {
                     </SelectableCard>
                     <SelectableCard
                         className="w-48 h-32"
-                        title="Greek"
-                        selected={makeIt === "greek"}
-                        onClick={() => setMakeIt("greek")}
+                        title="Gay"
+                        selected={makeIt === "gay"}
+                        onClick={() => setMakeIt("gay")}
                     >
                         <div className="flex-grow flex justify-center items-end">
                             <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
@@ -120,69 +121,9 @@ export default function Labs() {
                     </SelectableCard>
                     <SelectableCard
                         className="w-48 h-32"
-                        title="Accessible"
-                        selected={makeIt === "accessible"}
-                        onClick={() => setMakeIt("accessible")}
-                    >
-                        <div className="flex-grow flex justify-center items-end">
-                            <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
-                                <rect width="68" height="40" x="40" fill="#737373" rx="8" />
-                                <rect width="32" height="16" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="24" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="48" fill="#737373" rx="8" />
-                            </svg>
-                        </div>
-                    </SelectableCard>
-                    <SelectableCard
-                        className="w-48 h-32"
-                        title="Classic"
-                        selected={makeIt === "classic"}
-                        onClick={() => setMakeIt("classic")}
-                    >
-                        <div className="flex-grow flex justify-center items-end">
-                            <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
-                                <rect width="68" height="40" x="40" fill="#737373" rx="8" />
-                                <rect width="32" height="16" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="24" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="48" fill="#737373" rx="8" />
-                            </svg>
-                        </div>
-                    </SelectableCard>
-                    <SelectableCard
-                        className="w-48 h-32"
-                        title="Dance 💃"
-                        selected={makeIt === "dance"}
-                        onClick={() => setMakeIt("dance")}
-                    >
-                        <div className="flex-grow flex justify-center items-end">
-                            <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
-                                <rect width="68" height="40" x="40" fill="#737373" rx="8" />
-                                <rect width="32" height="16" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="24" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="48" fill="#737373" rx="8" />
-                            </svg>
-                        </div>
-                    </SelectableCard>
-                    <SelectableCard
-                        className="w-48 h-32"
-                        title="Terrible"
+                        title="90s"
                         selected={makeIt === "terrible"}
                         onClick={() => setMakeIt("terrible")}
-                    >
-                        <div className="flex-grow flex justify-center items-end">
-                            <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
-                                <rect width="68" height="40" x="40" fill="#737373" rx="8" />
-                                <rect width="32" height="16" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="24" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="48" fill="#737373" rx="8" />
-                            </svg>
-                        </div>
-                    </SelectableCard>
-                    <SelectableCard
-                        className="w-48 h-32"
-                        title="Codespaces"
-                        selected={makeIt === "codespaces"}
-                        onClick={() => setMakeIt("codespaces")}
                     >
                         <div className="flex-grow flex justify-center items-end">
                             <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
@@ -225,9 +166,9 @@ export default function Labs() {
                     </SelectableCard>
                     <SelectableCard
                         className="w-48 h-32"
-                        title="Turbo"
-                        selected={makeIt === "turbo"}
-                        onClick={() => setMakeIt("turbo")}
+                        title="Accessible"
+                        selected={makeIt === "accessible"}
+                        onClick={() => setMakeIt("accessible")}
                     >
                         <div className="flex-grow flex justify-center items-end">
                             <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
@@ -240,9 +181,39 @@ export default function Labs() {
                     </SelectableCard>
                     <SelectableCard
                         className="w-48 h-32"
-                        title="Fetch"
-                        selected={makeIt === "fetch"}
-                        onClick={() => setMakeIt("fetch")}
+                        title="Greek"
+                        selected={makeIt === "greek"}
+                        onClick={() => setMakeIt("greek")}
+                    >
+                        <div className="flex-grow flex justify-center items-end">
+                            <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
+                                <rect width="68" height="40" x="40" fill="#737373" rx="8" />
+                                <rect width="32" height="16" fill="#737373" rx="8" />
+                                <rect width="32" height="16" y="24" fill="#737373" rx="8" />
+                                <rect width="32" height="16" y="48" fill="#737373" rx="8" />
+                            </svg>
+                        </div>
+                    </SelectableCard>
+                    <SelectableCard
+                        className="w-48 h-32"
+                        title="Dance 💃"
+                        selected={makeIt === "dance"}
+                        onClick={() => setMakeIt("dance")}
+                    >
+                        <div className="flex-grow flex justify-center items-end">
+                            <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
+                                <rect width="68" height="40" x="40" fill="#737373" rx="8" />
+                                <rect width="32" height="16" fill="#737373" rx="8" />
+                                <rect width="32" height="16" y="24" fill="#737373" rx="8" />
+                                <rect width="32" height="16" y="48" fill="#737373" rx="8" />
+                            </svg>
+                        </div>
+                    </SelectableCard>
+                    <SelectableCard
+                        className="w-48 h-32"
+                        title="Turbo"
+                        selected={makeIt === "turbo"}
+                        onClick={() => setMakeIt("turbo")}
                     >
                         <div className="flex-grow flex justify-center items-end">
                             <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
@@ -269,6 +240,18 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                 </div>
+                <CheckBox
+                    title="Make it Codespaces"
+                    desc="Include the latest Early Access Program (EAP) version for each JetBrains IDE."
+                    checked={makeIt === "codespaces"}
+                    onChange={() => setMakeIt("codespaces")}
+                />
+                <CheckBox
+                    title="Make it Fetch"
+                    desc="Include the latest Early Access Program (EAP) version for each JetBrains IDE."
+                    checked={makeIt === "fetch"}
+                    onChange={() => setMakeIt("fetch")}
+                />
             </PageWithSubMenu>
         </div>
     );
