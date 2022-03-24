@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -146,10 +147,15 @@ func main() {
 						Usage: "URL of the Gitpod installation to connect to",
 						Value: "https://mp-gitpod-cli.staging.gitpod-dev.com",
 					},
+					&cli.BoolFlag{
+						Name:  "mock-keyring",
+						Usage: "Don't use system native keyring, but store Gitpod token in memory",
+					},
 				},
 				Action: func(c *cli.Context) error {
-					fmt.Println("List Command")
-					keyring.MockInit()
+					if c.Bool("mock-keyring") {
+						keyring.MockInit()
+					}
 
 					return list(c.Context, startOpts{
 						origin:          c.String("gitpod-host"),
@@ -165,19 +171,22 @@ func main() {
 					&cli.BoolFlag{
 						Name:  "open-ssh",
 						Usage: "Open SSH Connection once the workspace started",
-						Value: false,
+						Value: true,
 					},
 					&cli.StringFlag{
 						Name:  "gitpod-host",
 						Usage: "URL of the Gitpod installation to connect to",
 						Value: "https://mp-gitpod-cli.staging.gitpod-dev.com",
 					},
+					&cli.BoolFlag{
+						Name:  "mock-keyring",
+						Usage: "Don't use system native keyring, but store Gitpod token in memory",
+					},
 				},
 				Action: func(c *cli.Context) error {
-
-					// if c.Bool("mock-keyring") {
-					keyring.MockInit()
-					// }
+					if c.Bool("mock-keyring") {
+						keyring.MockInit()
+					}
 
 					url := c.Args().Get(0)
 					if url == "" {
@@ -213,13 +222,13 @@ type startOpts struct {
 }
 
 func start(ctx context.Context, opts startOpts) error {
+	logrus.Infof("Options %v", opts)
 	origin := strings.TrimRight(opts.origin, "/")
 
 	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectUrl, AuthTimeout: opts.authTimeout}, func() {
 		fmt.Println("reconnect")
 	}, func(err error) {
 		fmt.Println("close handler", err)
-		// logrus.WithError(closeErr).Error("server connection failed")
 		os.Exit(1)
 	})
 	if err != nil {
@@ -233,7 +242,9 @@ func start(ctx context.Context, opts startOpts) error {
 		logrus.WithError(err).Error("Failed to create a workspace.")
 	}
 
+	logrus.Infof("Created a new workspace with ID: %s", res.CreatedWorkspaceID)
 	if opts.jumpToSSH {
+		logrus.Infof("Waiting for workspace to start running")
 		cmd := exec.Command("ssh", "-F", "/tmp/gitpod_ssh_config", res.CreatedWorkspaceID)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -241,21 +252,32 @@ func start(ctx context.Context, opts startOpts) error {
 
 		ticker := time.NewTicker(time.Second)
 		for range ticker.C {
-			ws, err := client.GetWorkspace(ctx, res.CreatedWorkspaceID)
+			b, err := ioutil.ReadFile("/tmp/gitpod_ssh_config")
 			if err != nil {
-				return fmt.Errorf("Failed to get workspace: %w", err)
-			}
-			if ws.LatestInstance.Status.Phase == "running" {
-				ticker.Stop()
+				logrus.WithError(err).Error("Failed to read gitpod_ssh_config")
+				continue
 			}
 
+			if strings.Contains(string(b), res.CreatedWorkspaceID) {
+				ticker.Stop()
+				break
+			}
+
+			//ws, err := client.GetWorkspace(ctx, res.CreatedWorkspaceID)
+			//if err != nil {
+			//	return fmt.Errorf("Failed to get workspace: %w", err)
+			//}
+			//if ws.LatestInstance.Status.Phase == "running" {
+			//	ticker.Stop()
+			//	break
+			//}
 		}
 
 		return cmd.Run()
+	} else {
+		logrus.Infof("You can access your workspace with %s", res.WorkspaceURL)
 	}
 
-	logrus.Infof("Created a new workspace with ID: %s", res.CreatedWorkspaceID)
-	logrus.Infof("You can access your workspace with %s", res.WorkspaceURL)
 	return nil
 }
 
