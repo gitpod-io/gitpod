@@ -62,6 +62,7 @@ type Config struct {
 type IPFSCacheConfig struct {
 	Enabled   bool   `json:"enabled"`
 	RedisAddr string `json:"redis"`
+	IPFSAddr  string `json:"ipfs"`
 }
 
 // StaticLayerCfg configure statically added layer
