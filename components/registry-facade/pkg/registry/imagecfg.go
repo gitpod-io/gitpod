@@ -27,6 +27,14 @@ type ImageSpecProvider interface {
 	GetSpec(ctx context.Context, ref string) (*api.ImageSpec, error)
 }
 
+// FixedImageSpecProvider provides a single spec
+type FixedImageSpecProvider api.ImageSpec
+
+func (p FixedImageSpecProvider) GetSpec(ctx context.Context, ref string) (*api.ImageSpec, error) {
+	res := api.ImageSpec(p)
+	return &res, nil
+}
+
 // RemoteSpecProvider queries a remote spec provider using gRPC
 type RemoteSpecProvider struct {
 	addr string
