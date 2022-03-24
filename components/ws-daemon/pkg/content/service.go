@@ -350,12 +350,13 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		var (
 			backupName = storage.DefaultBackup
 			mfName     = storage.DefaultBackupManifest
+			indexName  = storage.DefaultBackupIndex
 		)
 		if sess.FullWorkspaceBackup {
 			backupName = fmt.Sprintf(storage.FmtFullWorkspaceBackup, time.Now().UnixNano())
 		}
 
-		err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
+		err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName, indexName)
 		if err != nil {
 			log.WithError(err).WithFields(sess.OWI()).Error("final backup failed")
 			return nil, status.Error(codes.DataLoss, "final backup failed")
@@ -388,7 +389,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	return resp, nil
 }
 
-func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName, mfName string) (err error) {
+func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName, mfName, indexName string) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadWorkspaceContent")
 	span.SetTag("workspace", sess.WorkspaceID)
@@ -517,6 +518,39 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 	})
 	if err != nil {
 		return xerrors.Errorf("cannot upload workspace content: %w", err)
+	}
+
+	err = retryIfErr(ctx, s.config.Backup.Attempts, log.WithFields(sess.OWI()).WithField("op", "upload index"), func(ctx context.Context) (err error) {
+		index, err := IndexTarbal(ctx, tmpf.Name())
+		if err != nil {
+			return err
+		}
+
+		indexContent, err := json.Marshal(index)
+		if err != nil {
+			return err
+		}
+		log.WithFields(sess.OWI()).WithField("index", indexContent).Debug("uploading index content")
+
+		tmpif, err := os.CreateTemp(s.config.TmpDir, fmt.Sprintf("index-%s-*.json", sess.InstanceID))
+		if err != nil {
+			return err
+		}
+		defer os.Remove(tmpif.Name())
+		_, err = tmpif.Write(indexContent)
+		tmpif.Close()
+		if err != nil {
+			return err
+		}
+
+		_, _, err = rs.Upload(ctx, tmpif.Name(), indexName)
+		if err != nil {
+			return err
+		}
+		return
+	})
+	if err != nil {
+		return xerrors.Errorf("cannot upload workspace content index: %w", err)
 	}
 
 	err = retryIfErr(ctx, s.config.Backup.Attempts, log.WithFields(sess.OWI()).WithField("op", "upload manifest"), func(ctx context.Context) (err error) {
@@ -700,6 +734,7 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 		baseName     = fmt.Sprintf("snapshot-%d", time.Now().UnixNano())
 		backupName   = baseName + ".tar"
 		mfName       = baseName + ".mf.json"
+		indexName    = baseName + ".index.json"
 		snapshotName string
 	)
 	if sess.FullWorkspaceBackup {
@@ -711,13 +746,13 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 	if req.ReturnImmediately {
 		go func() {
 			ctx := context.Background()
-			err := s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
+			err := s.uploadWorkspaceContent(ctx, sess, backupName, mfName, indexName)
 			if err != nil {
 				log.WithError(err).WithField("workspaceId", req.Id).Error("snapshot upload failed")
 			}
 		}()
 	} else {
-		err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
+		err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName, indexName)
 		if err != nil {
 			log.WithError(err).WithField("workspaceId", req.Id).Error("snapshot upload failed")
 			return nil, status.Error(codes.Internal, "cannot upload snapshot")
@@ -755,14 +790,17 @@ func (s *WorkspaceService) BackupWorkspace(ctx context.Context, req *api.BackupW
 	}
 
 	backupName := storage.DefaultBackup
-	var mfName = storage.DefaultBackupManifest
+	var (
+		mfName    = storage.DefaultBackupManifest
+		indexName = storage.DefaultBackupIndex
+	)
 	// TODO: do we want this always in the worse case?
 	if sess.FullWorkspaceBackup {
 		backupName = fmt.Sprintf(storage.FmtFullWorkspaceBackup, time.Now().UnixNano())
 	}
 	log.WithField("workspaceId", sess.WorkspaceID).WithField("instanceID", sess.InstanceID).WithField("backupName", backupName).Info("backing up")
 
-	err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
+	err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName, indexName)
 	if err != nil {
 		log.WithError(err).WithFields(sess.OWI()).Error("final backup failed")
 		return nil, status.Error(codes.DataLoss, "final backup failed")

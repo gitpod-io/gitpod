@@ -19,6 +19,49 @@ import (
 	carchive "github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
+type indexingReader struct {
+	io.Reader
+
+	Offset int
+}
+
+func (r *indexingReader) Read(p []byte) (int, error) {
+	n, err := r.Reader.Read(p)
+	r.Offset += n
+	return n, err
+}
+
+type IndexEntry struct {
+	Offset int
+	Size   int
+}
+
+func IndexTarbal(ctx context.Context, source string) (map[string]*IndexEntry, error) {
+	tarf, err := os.Open(source)
+	if err != nil {
+		return nil, err
+	}
+	defer tarf.Close()
+
+	indexingR := &indexingReader{
+		Reader: tarf,
+	}
+	r := tar.NewReader(indexingR)
+	h, err := r.Next()
+	index := make(map[string]*IndexEntry)
+	for err == nil {
+		index[h.Name] = &IndexEntry{
+			Offset: indexingR.Offset,
+			Size:   int(h.Size),
+		}
+		h, err = r.Next()
+	}
+	if err != io.EOF {
+		return nil, err
+	}
+	return index, nil
+}
+
 // ConvertWhiteout converts whiteout files from the archive
 type ConvertWhiteout func(*tar.Header, string) (bool, error)
 

@@ -26,6 +26,9 @@ const (
 	// DefaultBackupManifest is the name of the manifest of the regular default backup we upload
 	DefaultBackupManifest = "wsfull.json"
 
+	// DefaultBackupIndex is the name of the index of the regular default backup we upload
+	DefaultBackupIndex = "wsfull-index.json"
+
 	// FmtFullWorkspaceBackup is the format for names of full workspace backups
 	FmtFullWorkspaceBackup = "wsfull-%d.tar"
 )
