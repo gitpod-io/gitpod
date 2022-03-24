@@ -7,6 +7,7 @@ package registry
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/gitpod/registry-facade/api/config"
+	"github.com/golang/protobuf/jsonpb"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -169,6 +171,19 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 			return nil, xerrors.Errorf("cannot create caching spec provider: %w", err)
 		}
 		specProvider[api.ProviderPrefixRemote] = specprov
+	}
+	if cfg.FixedSpecProvider != "" {
+		fc, err := ioutil.ReadFile(cfg.FixedSpecProvider)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot read fixed spec: %w", err)
+		}
+
+		var fp api.ImageSpec
+		err = jsonpb.UnmarshalString(string(fc), &fp)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot unmarshal fixed spec: %w", err)
+		}
+		specProvider[api.ProviderPrefixFixed] = FixedImageSpecProvider(fp)
 	}
 
 	layerSource := CompositeLayerSource(layerSources)
