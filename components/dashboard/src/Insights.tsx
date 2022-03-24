@@ -6,6 +6,7 @@
 
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
+import { getGitpodService } from "./service/service";
 
 export default function Insights() {
     const svgRef = useRef<SVGSVGElement>(null);
@@ -131,6 +132,12 @@ export default function Insights() {
         });
 
         chart.update(data);
+    }, []);
+
+    useEffect(() => {
+        getGitpodService().server.getProjectUsageData('').then(data => {
+            console.log('project usage data', data);
+        });
     }, []);
 
     return <div className="mt-24 mx-auto flex flex-col items-stretch">
