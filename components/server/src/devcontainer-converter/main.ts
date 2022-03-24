@@ -27,8 +27,7 @@ export const toDevContainer = async () => {
         }
 
         if (doc.tasks) {
-            for (const task in doc.tasks) {
-                console.log(task);
+            for (const task of doc.tasks) {
             }
         }
 
@@ -38,4 +37,33 @@ export const toDevContainer = async () => {
     }
 };
 
-toDevContainer();
+export const toGitpod = (containerFile: DevContainer) => {
+    let gitpodConfig: GitpodConfig = { tasks: [] };
+
+    if (containerFile.postStartCommand) {
+        if (typeof containerFile.postStartCommand === "string") {
+            gitpodConfig.tasks?.push({ command: containerFile.postStartCommand });
+        } else {
+            gitpodConfig.tasks?.push({ command: containerFile.postStartCommand.join("&") });
+        }
+    }
+
+    //@ts-ignore
+    if (containerFile.dockerFile || containerFile.build.dockerfile) {
+        //@ts-ignore
+        gitpodConfig.image = `.devcontainer/${containerFile.dockerFile || containerFile.build.dockerfile}`;
+    }
+
+    return gitpodConfig;
+};
+
+// For testing:
+/*
+console.log(JSON.stringify(toGitpod({
+    "build": {
+        "dockerfile": ".devcontainer.Dockerfile",
+        "context": ".."
+    },
+    "postStartCommand": "npm run start"
+})));
+*/
