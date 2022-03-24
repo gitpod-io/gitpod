@@ -2935,22 +2935,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     //
     //#endregion
 
-    async setProjectConnection(ctx: TraceContext, projectId: string, connection: Connection): Promise<void> {
-        traceAPIParams(ctx, { projectId, connection });
+    async setProjectConnections(ctx: TraceContext, projectId: string, connections: Connection[]): Promise<void> {
+        traceAPIParams(ctx, { projectId, connections });
 
-        this.checkAndBlockUser("setProjectConnection");
+        this.checkAndBlockUser("setProjectConnections");
 
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `could not find project for id ${projectId}`);
         }
-        const connections = project.connections || [];
-        const idx = connections.findIndex((c) => c.id === connection.id);
-        if (idx >= 0) {
-            connections[idx] = connection;
-        } else {
-            connections.push(connection);
-        }
+        project.connections = connections;
         await this.projectDB.storeProject(project);
     }
 
