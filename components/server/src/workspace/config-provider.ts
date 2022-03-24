@@ -156,6 +156,8 @@ export class ConfigProvider {
             let configBasePath = "";
             if (AdditionalContentContext.is(commit) && commit.additionalFiles[".devcontainer/.devcontainer.json"]) {
                 // TODO: Convert devcontainerjson to yaml
+                log.info(logContext, "GITdevcontainerGIT was here");
+
                 customConfigString = `
 image:
   file: .gitpod.Dockerfile
@@ -164,7 +166,7 @@ image:
 # List the ports you want to expose and what to do when they are served. See https://www.gitpod.io/docs/config-ports/
 ports:
 - port: 3000
-    onOpen: open-preview
+  onOpen: open-preview
 
 # List the start up tasks. You can start them in parallel in multiple terminals. See https://www.gitpod.io/docs/config-start-tasks/
 tasks:
