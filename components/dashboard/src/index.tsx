@@ -13,6 +13,7 @@ import { TeamsContextProvider } from "./teams/teams-context";
 import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
 import { StartWorkspaceModalContextProvider } from "./workspaces/start-workspace-modal-context";
+import { LabsStorageProvider } from "./settings/LabsStorage";
 import { BrowserRouter } from "react-router-dom";
 
 import "./index.css";
@@ -25,9 +26,11 @@ ReactDOM.render(
                     <ProjectContextProvider>
                         <ThemeContextProvider>
                             <StartWorkspaceModalContextProvider>
-                                <BrowserRouter>
-                                    <App />
-                                </BrowserRouter>
+                                <LabsStorageProvider>
+                                    <BrowserRouter>
+                                        <App />
+                                    </BrowserRouter>
+                                </LabsStorageProvider>
                             </StartWorkspaceModalContextProvider>
                         </ThemeContextProvider>
                     </ProjectContextProvider>
