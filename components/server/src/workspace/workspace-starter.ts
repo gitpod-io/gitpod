@@ -34,6 +34,7 @@ import {
     RefType,
     SnapshotContext,
     StartWorkspaceResult,
+    TaskConfig,
     User,
     UserEnvVar,
     UserEnvVarValue,
@@ -1018,13 +1019,17 @@ export class WorkspaceStarter {
         }
 
         const project = workspace.projectId ? await this.projectDB.findProjectById(workspace.projectId) : undefined;
-        const projectConnections = project?.connections || [];
-        for (const connection of projectConnections) {
-            if (connection.id === "tailscale") {
-                const modifier = new TailscaleWorkspaceModifier(this.projectDB);
-                const connectionEnvVars = await modifier.getEnvVars();
-                allEnvVars = allEnvVars.concat(connectionEnvVars);
+        const connectionModifiers = (project?.connections || []).map((c) => {
+            switch (c.id) {
+                case "tailscale":
+                    return new TailscaleWorkspaceModifier(this.projectDB);
+                default:
+                    throw new Error(`unknown project connection ${c.id}`);
             }
+        });
+        for (const modifier of connectionModifiers) {
+            const connectionEnvVars = await modifier.getEnvVars();
+            allEnvVars = allEnvVars.concat(connectionEnvVars);
         }
 
         // we copy the envvars to a stable format so that things don't break when someone changes the
@@ -1075,12 +1080,18 @@ export class WorkspaceStarter {
         envvars.push(contextEnv);
 
         log.debug("Workspace config", workspace.config);
-        if (!!workspace.config.tasks) {
+        let allTasks: TaskConfig[] = [];
+        for (const modifier of connectionModifiers) {
+            const modTasks = await modifier.getTasks(user.id, workspace.context as CommitContext);
+            allTasks = allTasks.concat(modTasks);
+        }
+        allTasks = allTasks.concat(workspace.config.tasks || []);
+        if (!!allTasks) {
             // The task config is interpreted by Theia only, there's little point in transforming it into something
             // wsman understands and back into the very same structure.
             const ev = new EnvironmentVariable();
             ev.setName("GITPOD_TASKS");
-            ev.setValue(JSON.stringify(workspace.config.tasks));
+            ev.setValue(JSON.stringify(allTasks));
             envvars.push(ev);
         }
 
