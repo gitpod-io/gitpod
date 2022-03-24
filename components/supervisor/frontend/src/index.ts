@@ -46,33 +46,30 @@ const toStop = new DisposableCollection();
         return gitpodServiceClient.info.latestInstance?.status.phase === phase;
     }
     toStop.push(ideService.start());
-    // if (!isWorkspaceInstancePhase('running')) {
-    //     await new Promise<void>(resolve => {
-    //         const listener = gitpodServiceClient.onDidChangeInfo(() => {
-    //             if (isWorkspaceInstancePhase('running')) {
-    //                 listener.dispose();
-    //                 resolve();
-    //             }
-    //         });
-    //     });
-    // }
-    // const supervisorServiceClient = new SupervisorServiceClient(gitpodServiceClient);
-    // const [ideStatus] = await Promise.all([supervisorServiceClient.ideReady, supervisorServiceClient.contentReady, loadingIDE]);
-    // if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
-    //     return;
-    // }
-    // toStop.pushAll([
-    //     IDEWebSocket.connectWorkspace(),
-    //     gitpodServiceClient.onDidChangeInfo(() => {
-    //         if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
-    //             toStop.dispose();
-    //         }
-    //     })
-    // ]);
-    // const isDesktopIde = ideStatus && ideStatus.desktop && ideStatus.desktop.link;
-    // if (!isDesktopIde) {
-    //     toStop.push(ideService.start());
-    // }
+
+    if (!isWorkspaceInstancePhase('running')) {
+        await new Promise<void>(resolve => {
+            const listener = gitpodServiceClient.onDidChangeInfo(() => {
+                if (isWorkspaceInstancePhase('running')) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
+        });
+    }
+    const supervisorServiceClient = new SupervisorServiceClient(gitpodServiceClient);
+    await Promise.all([supervisorServiceClient.ideReady, supervisorServiceClient.contentReady, loadingIDE]);
+    if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
+        return;
+    }
+    toStop.pushAll([
+        IDEWebSocket.connectWorkspace(),
+        gitpodServiceClient.onDidChangeInfo(() => {
+            if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
+                toStop.dispose();
+            }
+        })
+    ]);
     //#endregion
 })();
 
