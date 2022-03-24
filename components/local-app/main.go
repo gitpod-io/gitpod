@@ -6,6 +6,7 @@ package main
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -151,16 +152,26 @@ func main() {
 						Name:  "mock-keyring",
 						Usage: "Don't use system native keyring, but store Gitpod token in memory",
 					},
+					&cli.StringFlag{
+						Name:  "format",
+						Usage: "How to format the output",
+						Value: "console",
+					},
 				},
 				Action: func(c *cli.Context) error {
 					if c.Bool("mock-keyring") {
 						keyring.MockInit()
 					}
 
-					return list(c.Context, startOpts{
-						origin:          c.String("gitpod-host"),
-						authRedirectUrl: c.String("auth-redirect-url"),
-						authTimeout:     c.Duration("auth-timeout"),
+					format := c.String("format")
+
+					return list(c.Context, listOpts{
+						authOpts: authOpts{
+							origin:          c.String("gitpod-host"),
+							authRedirectUrl: c.String("auth-redirect-url"),
+							authTimeout:     c.Duration("auth-timeout"),
+						},
+						format: format,
 					})
 				},
 			},
@@ -197,11 +208,13 @@ func main() {
 					jumpToSSH := c.Bool("ssh")
 
 					return start(c.Context, startOpts{
-						origin:          c.String("gitpod-host"),
-						authRedirectUrl: c.String("auth-redirect-url"),
-						authTimeout:     c.Duration("auth-timeout"),
-						contextURL:      url,
-						jumpToSSH:       jumpToSSH,
+						authOpts: authOpts{
+							origin:          c.String("gitpod-host"),
+							authRedirectUrl: c.String("auth-redirect-url"),
+							authTimeout:     c.Duration("auth-timeout"),
+						},
+						contextURL: url,
+						jumpToSSH:  jumpToSSH,
 					})
 				},
 			},
@@ -235,10 +248,12 @@ func main() {
 					}
 
 					return stop(c.Context, stopOpts{
-						origin:          c.String("gitpod-host"),
-						authRedirectUrl: c.String("auth-redirect-url"),
-						authTimeout:     c.Duration("auth-timeout"),
-						workspaceID:     workspaceID,
+						authOpts: authOpts{
+							origin:          c.String("gitpod-host"),
+							authRedirectUrl: c.String("auth-redirect-url"),
+							authTimeout:     c.Duration("auth-timeout"),
+						},
+						workspaceID: workspaceID,
 					})
 				},
 			},
@@ -250,19 +265,25 @@ func main() {
 	}
 }
 
-type startOpts struct {
+type authOpts struct {
 	origin          string
 	authRedirectUrl string
 	authTimeout     time.Duration
-	contextURL      string
-	jumpToSSH       bool
+}
+
+type listOpts struct {
+	authOpts
+	format string
+}
+
+type startOpts struct {
+	authOpts
+	contextURL string
+	jumpToSSH  bool
 }
 
 type stopOpts struct {
-	origin          string
-	authRedirectUrl string
-	authTimeout     time.Duration
-
+	authOpts
 	workspaceID string
 }
 
@@ -275,6 +296,9 @@ func stop(ctx context.Context, opts stopOpts) error {
 		fmt.Println("close handler", err)
 		os.Exit(1)
 	})
+	if err != nil {
+		return fmt.Errorf("Failed to establish server connection: %w", err)
+	}
 
 	err = client.StopWorkspace(ctx, opts.workspaceID)
 	if err != nil {
@@ -295,7 +319,7 @@ func start(ctx context.Context, opts startOpts) error {
 		os.Exit(1)
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to establish server connection: %w", err)
 	}
 
 	res, err := client.CreateWorkspace(ctx, &gitpod.CreateWorkspaceOptions{
@@ -344,7 +368,7 @@ func start(ctx context.Context, opts startOpts) error {
 	return nil
 }
 
-func list(ctx context.Context, opts startOpts) error {
+func list(ctx context.Context, opts listOpts) error {
 	origin := strings.TrimRight(opts.origin, "/")
 
 	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectUrl, AuthTimeout: opts.authTimeout}, func() {
@@ -354,7 +378,7 @@ func list(ctx context.Context, opts startOpts) error {
 		os.Exit(1)
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to establish server connection: %w", err)
 	}
 
 	res, err := client.GetWorkspaces(ctx, &gitpod.GetWorkspacesOptions{})
@@ -362,15 +386,19 @@ func list(ctx context.Context, opts startOpts) error {
 		return err
 	}
 
-	var results [][]string
-	for _, ws := range res {
-		results = append(results, []string{
-			ws.Workspace.ID,
-			ws.LatestInstance.Status.Phase,
-		})
+	switch opts.format {
+	case "json":
+		return printJSON(os.Stdout, res)
+	default:
+		var results [][]string
+		for _, ws := range res {
+			results = append(results, []string{
+				ws.Workspace.ID,
+				ws.LatestInstance.Status.Phase,
+			})
+		}
+		return printTable(os.Stdout, []string{"Workspace ID", "Phase"}, results)
 	}
-
-	return printTable(os.Stdout, []string{"Workspace ID", "Phase"}, results)
 }
 
 func DefaultCommand(name string) cli.ActionFunc {
@@ -554,4 +582,15 @@ func printTable(w io.Writer, headers []string, rows [][]string) error {
 	}
 
 	return writer.Flush()
+}
+
+func printJSON(w io.Writer, data interface{}) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "\t")
+
+	if err := enc.Encode(data); err != nil {
+		return fmt.Errorf("failed to serialize data into json: %w", err)
+	}
+
+	return nil
 }
