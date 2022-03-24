@@ -34,7 +34,7 @@ export default [
         link: ["/preferences"],
     },
     {
-        title: "Labs",
+        title: "Labs Beta",
         link: ["/labs"],
     },
 ];

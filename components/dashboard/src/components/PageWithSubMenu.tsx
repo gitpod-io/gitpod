@@ -7,6 +7,7 @@
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
+import PillLabel from "../components/PillLabel";
 
 export interface PageWithSubMenuProps {
     title: string;
@@ -33,6 +34,20 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
                             } else {
                                 classes += " hover:bg-gray-100 dark:hover:bg-gray-800";
                             }
+
+                            if (e.title === "Labs Beta") {
+                                return (
+                                    <Link to={e.link[0]} key={e.title}>
+                                        <li className={classes}>
+                                            {e.title}
+                                            <PillLabel type="warn" className="font-semibold py-0.5 px-2 self-center">
+                                                Beta
+                                            </PillLabel>
+                                        </li>
+                                    </Link>
+                                );
+                            }
+
                             return (
                                 <Link to={e.link[0]} key={e.title}>
                                     <li className={classes}>{e.title}</li>
