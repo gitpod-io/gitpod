@@ -29,6 +29,7 @@ import {
     AuthProviderInfo,
     CommitContext,
     Configuration,
+    Connection,
     CreateWorkspaceMode,
     DisposableCollection,
     GetWorkspaceTimeoutResult,
@@ -2933,4 +2934,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
     //
     //#endregion
+
+    async setProjectConnection(ctx: TraceContext, projectId: string, connection: Connection): Promise<void> {
+        throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, `Not implemented in this version`);
+    }
 }

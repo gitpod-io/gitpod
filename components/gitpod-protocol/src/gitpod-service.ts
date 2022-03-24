@@ -51,6 +51,7 @@ import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } 
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
+import { Connection } from "./connections";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -177,6 +178,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void>;
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
+    setProjectConnection(projectId: string, connection: Connection): Promise<void>;
 
     // content service
     getContentBlobUploadUrl(name: string): Promise<string>;
