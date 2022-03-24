@@ -8,6 +8,7 @@
 // import fs from "fs";
 import { DevContainer } from "./types";
 import { GitpodConfig } from "./types-gitpod";
+import { stringify } from "yaml";
 
 // export const toDevContainer = async () => {
 //     let containerFile: DevContainer = { remoteUser: "gitpod" };
@@ -43,7 +44,7 @@ import { GitpodConfig } from "./types-gitpod";
 //     }
 // };
 
-export const toGitpod = (containerFile: DevContainer) => {
+export const toGitpod = (containerFile: DevContainer, cleanYaml?: boolean): string => {
     //@ts-ignore
     let gitpodConfig: GitpodConfig = { tasks: [], image: {} };
 
@@ -119,45 +120,37 @@ export const toGitpod = (containerFile: DevContainer) => {
         gitpodConfig.vscode.extensions = containerFile.extensions;
     }
 
-    return gitpodConfig;
+    return cleanYaml ? stringify(gitpodConfig) : JSON.stringify(gitpodConfig);
 };
 
 // For testing:
 
-console.log(
-    JSON.stringify(
-        toGitpod({
-            image: "mcr.microsoft.com/vscode/devcontainers/base:ubuntu-20.04",
-            settings: {
-                "[typescript]": {
-                    "editor.defaultFormatter": "esbenp.prettier-vscode",
-                    "editor.formatOnSave": true,
-                },
-                "[json]": {
-                    "editor.defaultFormatter": "esbenp.prettier-vscode",
-                    "editor.formatOnSave": true,
-                },
-                "[jsonc]": {
-                    "editor.defaultFormatter": "esbenp.prettier-vscode",
-                    "editor.formatOnSave": true,
-                },
-            },
-            extensions: [
-                "dbaeumer.vscode-eslint",
-                "orta.vscode-jest",
-                "esbenp.prettier-vscode",
-                "streetsidesoftware.code-spell-checker",
-            ],
-            forwardPorts: [3000],
-            containerUser: "vscode",
-            postCreateCommand: "yarn install",
-            waitFor: "postCreateCommand", // otherwise automated jest tests fail
-            features: {
-                node: {
-                    version: "14",
-                },
-                "github-cli": "latest",
-            },
-        }),
-    ),
-);
+// console.log(
+//     toGitpod({
+//         "name": "Rust",
+//         "build": {
+//             "dockerfile": "Dockerfile"
+//         },
+//         "runArgs": ["--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"],
+
+//         "settings": {
+//             "lldb.executable": "/usr/bin/lldb",
+//             // VS Code don't watch files under ./target
+//             "files.watcherExclude": {
+//                 "**/target/**": true
+//             }
+//         },
+
+//         "extensions": [
+//             "matklad.rust-analyzer",
+//             "bungcip.better-toml",
+//             "vadimcn.vscode-lldb",
+//             "mutantdino.resourcemonitor"
+//         ],
+
+//         "postCreateCommand": "git submodule update --init",
+
+//         "remoteUser": "vscode"
+//     }, true),
+
+// );

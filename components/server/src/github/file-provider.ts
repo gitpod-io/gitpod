@@ -23,7 +23,7 @@ export class GithubFileProvider implements FileProvider {
             if (content) {
                 log.info({}, `Loaded content: ${content}`);
                 const devContainerConfig = JSON.parse(content);
-                const gitpodYaml = JSON.stringify(toGitpod(devContainerConfig));
+                const gitpodYaml = toGitpod(devContainerConfig);
                 log.info({}, gitpodYaml);
                 return gitpodYaml;
             } else {

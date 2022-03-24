@@ -79,7 +79,8 @@
     "swot-js": "^1.0.3",
     "uuid": "^8.3.2",
     "vscode-ws-jsonrpc": "^0.2.0",
-    "ws": "^7.4.6"
+    "ws": "^7.4.6",
+    "yaml": "^1.10.2"
   },
   "devDependencies": {
     "@testdeck/mocha": "0.1.2",
