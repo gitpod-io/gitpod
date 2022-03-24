@@ -140,7 +140,13 @@ func main() {
 				Name:    "list",
 				Aliases: []string{"ls"},
 				Usage:   "Lists all workspaces",
-				Flags:   []cli.Flag{},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "gitpod-host",
+						Usage: "URL of the Gitpod installation to connect to",
+						Value: "https://mp-gitpod-cli.staging.gitpod-dev.com",
+					},
+				},
 				Action: func(c *cli.Context) error {
 					fmt.Println("List Command")
 					keyring.MockInit()
@@ -161,9 +167,13 @@ func main() {
 						Usage: "Open SSH Connection once the workspace started",
 						Value: false,
 					},
+					&cli.StringFlag{
+						Name:  "gitpod-host",
+						Usage: "URL of the Gitpod installation to connect to",
+						Value: "https://mp-gitpod-cli.staging.gitpod-dev.com",
+					},
 				},
 				Action: func(c *cli.Context) error {
-					fmt.Println("Hello world")
 
 					// if c.Bool("mock-keyring") {
 					keyring.MockInit()
@@ -219,8 +229,13 @@ func start(ctx context.Context, opts startOpts) error {
 	res, err := client.CreateWorkspace(ctx, &gitpod.CreateWorkspaceOptions{
 		ContextURL: opts.contextURL,
 	})
+	if err != nil {
+		logrus.WithError(err).Error("Failed to create a workspace.")
+	}
 
-	fmt.Println("create workspace", res, err)
+	logrus.Infof("Created a new workspace with ID: %s", res.CreatedWorkspaceID)
+	logrus.Infof("You can access your workspace with %s", res.WorkspaceURL)
+
 	return nil
 }
 
@@ -246,7 +261,7 @@ func list(ctx context.Context, opts startOpts) error {
 
 	// log elements from resp
 	for _, ws := range res {
-		fmt.Println(ws.Workspace.ID)
+		fmt.Println(ws.Workspace.ID, ws.LatestInstance.Status.Phase)
 	}
 	return nil
 }
