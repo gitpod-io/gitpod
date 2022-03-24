@@ -668,7 +668,6 @@ export type DevContainer =
            * A name for the dev container displayed in the UI.
            */
           name?: string;
-          appPort?: number | string | (number | string)[];
 
           /**
            * An array of extensions that should be installed into the container.

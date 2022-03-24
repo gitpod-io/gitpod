@@ -152,7 +152,12 @@ export class ConfigProvider {
         let customConfigString: string | undefined;
 
         log.info(logContext, "GITdevcontainerGIT MOD INIT");
-        log.info(logContext, JSON.stringify(commit));
+
+        if (AdditionalContentContext.is(commit)) {
+            log.info(logContext, `Commit Obj Keys: ${Object.keys(commit.additionalFiles).join(", ")}`);
+        } else {
+            log.info(logContext, "OOOOH MY GOD :(");
+        }
 
         try {
             let customConfig: WorkspaceConfig | undefined;
