@@ -7,6 +7,7 @@
 import { PrebuiltWorkspaceState } from "./protocol";
 import { v4 as uuidv4 } from "uuid";
 import { DeepPartial } from "./util/deep-partial";
+import { Connection } from "./connections";
 
 export interface ProjectConfig {
     ".gitpod.yml": string;
@@ -26,6 +27,7 @@ export interface Project {
     appInstallationId: string;
     config?: ProjectConfig;
     settings?: ProjectSettings;
+    connections?: Connection[];
     creationTime: string;
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
