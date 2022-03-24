@@ -27,7 +27,7 @@ export default function Labs() {
         <div>
             <PageWithSubMenu subMenu={settingsMenu} title="Labs" subtitle="On the cutting edge.">
                 <h3>Make it</h3>
-                <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>
+                <p className="text-base text-gray-500 dark:text-gray-400">Personal.</p>
                 <div className="my-4 gap-4 flex flex-wrap max-w-2xl">
                     <SelectableCard
                         className="w-48 h-32"
@@ -240,17 +240,19 @@ export default function Labs() {
                         </div>
                     </SelectableCard>
                 </div>
+                <h3>GitHub Codespaces</h3>
+                <p className="text-base text-gray-500 dark:text-gray-400">
+                    Unlock the Codespaces beta waitlist to get a cloud development environment you can access from
+                    anywhere.
+                </p>
+
                 <CheckBox
-                    title="Make it Codespaces"
-                    desc="Include the latest Early Access Program (EAP) version for each JetBrains IDE."
+                    title="Skip the GitHub Codespaces beta waitlist"
+                    desc="We’d love to hear your feedback while you’re trying this new feature.
+
+                    "
                     checked={makeIt === "codespaces"}
                     onChange={() => setMakeIt("codespaces")}
-                />
-                <CheckBox
-                    title="Make it Fetch"
-                    desc="Include the latest Early Access Program (EAP) version for each JetBrains IDE."
-                    checked={makeIt === "fetch"}
-                    onChange={() => setMakeIt("fetch")}
                 />
             </PageWithSubMenu>
         </div>
