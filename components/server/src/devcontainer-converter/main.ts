@@ -55,7 +55,7 @@ export const toGitpod = (containerFile: DevContainer) => {
     }
 
     //@ts-ignore
-    if (containerFile.dockerFile || containerFile.build.dockerfile) {
+    if (containerFile.dockerFile || containerFile.build?.dockerfile) {
         //@ts-ignore
         gitpodConfig.image.file = `.devcontainer/${containerFile.dockerFile || containerFile.build.dockerfile}`;
     }
@@ -66,16 +66,40 @@ export const toGitpod = (containerFile: DevContainer) => {
         gitpodConfig.image.context = `.devcontainer/${containerFile.build.context}`;
     }
 
-    if (containerFile.appPort) {
-        switch (typeof containerFile.appPort) {
+    const ports = containerFile.forwardPorts || containerFile.appPort;
+
+    if (ports) {
+        switch (typeof ports) {
             case "number":
             case "string":
-                gitpodConfig.ports = [{ port: containerFile.appPort }];
+                gitpodConfig.ports = [{ port: ports }];
                 break;
             case "object":
                 // @ts-ignore
-                gitpodConfig.ports = containerFile.appPort.map((port) => {
-                    port;
+                gitpodConfig.ports = ports.map((port) => {
+                    const onOpen = containerFile.portsAttributes && containerFile.portsAttributes[port].onAutoForward;
+                    let gpOnOpen;
+                    switch (onOpen) {
+                        case "ignore":
+                        case "notify":
+                            gpOnOpen = onOpen;
+                            break;
+                        case "silent":
+                            gpOnOpen = "ignore";
+                            break;
+                        case "openBrowser":
+                        case "openBrowserOnce":
+                            gpOnOpen = "open-browser";
+                            break;
+                        case "openPreview":
+                            gpOnOpen = "open-preview";
+                    }
+
+                    if (gpOnOpen) {
+                        return { onOpen: gpOnOpen, port };
+                    }
+
+                    return { port };
                 });
         }
     }
@@ -93,10 +117,41 @@ export const toGitpod = (containerFile: DevContainer) => {
 console.log(
     JSON.stringify(
         toGitpod({
-            name: "xterm.js",
-            dockerFile: "Dockerfile",
-            appPort: 3000,
-            extensions: ["dbaeumer.vscode-eslint", "editorconfig.editorconfig", "hbenl.vscode-mocha-test-adapter"],
+            name: "Code - OSS",
+
+            // Image contents: https://github.com/microsoft/vscode-dev-containers/blob/master/repository-containers/images/github.com/microsoft/vscode/.devcontainer/base.Dockerfile
+            image: "mcr.microsoft.com/vscode/devcontainers/repos/microsoft/vscode:branch-main",
+            overrideCommand: false,
+            runArgs: ["--init", "--security-opt", "seccomp=unconfined", "--shm-size=1g"],
+
+            settings: {
+                "resmon.show.battery": false,
+                "resmon.show.cpufreq": false,
+            },
+
+            // noVNC, VNC
+            forwardPorts: [6080, 5901],
+            portsAttributes: {
+                "6080": {
+                    label: "VNC web client (noVNC)",
+                    onAutoForward: "silent",
+                },
+                "5901": {
+                    label: "VNC TCP port",
+                    onAutoForward: "silent",
+                },
+            },
+
+            extensions: ["dbaeumer.vscode-eslint", "mutantdino.resourcemonitor"],
+
+            // Optionally loads a cached yarn install for the repo
+            postCreateCommand: ".devcontainer/cache/restore-diff.sh",
+
+            remoteUser: "node",
+
+            hostRequirements: {
+                memory: "8gb",
+            },
         }),
     ),
 );
