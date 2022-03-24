@@ -188,45 +188,44 @@ export class ConfigProvider {
                 }
                 const services = hostContext.services;
                 const contextRepoConfig = services.fileProvider.getGitpodFileContent(commit, user);
-                const projectDBConfig = this.projectDB
-                    .findProjectByCloneUrl(commit.repository.cloneUrl)
-                    .then((project) => project?.config);
-                const definitelyGpConfig = this.fetchExternalGitpodFileContent({ span }, commit.repository);
+                // const projectDBConfig = this.projectDB
+                //     .findProjectByCloneUrl(commit.repository.cloneUrl)
+                //     .then((project) => project?.config);
+                // const definitelyGpConfig = this.fetchExternalGitpodFileContent({ span }, commit.repository);
                 // const inferredConfig = this.configurationService.guessRepositoryConfiguration({ span }, user, commit);
 
                 customConfigString = await contextRepoConfig;
                 log.info(logContext, `HACK: customConfigString=${customConfigString}`);
                 let origin: WorkspaceConfig["_origin"] = "repo";
-                if (!customConfigString) {
-                    log.error(logContext, "HACK: customConfigString not found");
-                    // We haven't found a Gitpod configuration file in the context repo - check the "Project" in the DB.
-                    const config = await projectDBConfig;
-                    if (config) {
-                        customConfigString = config[".gitpod.yml"];
-                        origin = "project-db";
-                    }
-                }
+                // if (!customConfigString) {
+                //     log.error(logContext, "HACK: customConfigString not found");
+                //     // We haven't found a Gitpod configuration file in the context repo - check the "Project" in the DB.
+                //     const config = await projectDBConfig;
+                //     if (config) {
+                //         customConfigString = config[".gitpod.yml"];
+                //         origin = "project-db";
+                //     }
+                // }
 
-                if (!customConfigString) {
-                    /* We haven't found a Gitpod configuration file in the context repo or "Project" - check definitely-gp.
-                     *
-                     * In case we had found a config file here, we'd still be checking the definitely GP repo, just to save some time.
-                     * While all those checks will be in vain, they should not leak memory either as they'll simply
-                     * be resolved and garbage collected.
-                     */
-                    const { content, basePath } = await definitelyGpConfig;
-                    customConfigString = content;
-                    // We do not only care about the config itself but also where we got it from
-                    configBasePath = basePath;
-                    origin = "definitely-gp";
-                }
+                // if (!customConfigString) {
+                /* We haven't found a Gitpod configuration file in the context repo or "Project" - check definitely-gp.
+                 *
+                 * In case we had found a config file here, we'd still be checking the definitely GP repo, just to save some time.
+                 * While all those checks will be in vain, they should not leak memory either as they'll simply
+                 * be resolved and garbage collected.
+                 */
+                //     const { content, basePath } = await definitelyGpConfig;
+                //     customConfigString = content;
+                //     // We do not only care about the config itself but also where we got it from
+                //     configBasePath = basePath;
+                //     origin = "definitely-gp";
+                // }
 
-                if (!customConfigString) {
-                    // if there's still no configuration, let's infer one
-                    // customConfigString = await inferredConfig;
-                    // origin = "derived";
-                    log.error(logContext, "HACK: NOT DEFINED customConfigString");
-                }
+                // if (!customConfigString) {
+                // if there's still no configuration, let's infer one
+                // customConfigString = await inferredConfig;
+                // origin = "derived";
+                // }
 
                 if (customConfigString) {
                     const parseResult = this.gitpodParser.parse(customConfigString);
@@ -242,6 +241,8 @@ export class ConfigProvider {
                         throw err;
                     }
                     customConfig._origin = origin;
+                } else {
+                    log.error(logContext, "HACK: NOT DEFINED customConfigString");
                 }
             }
 

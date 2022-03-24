@@ -26,10 +26,12 @@ export class GithubFileProvider implements FileProvider {
                 const gitpodYaml = JSON.stringify(toGitpod(devContainerConfig));
                 log.info({}, gitpodYaml);
                 return gitpodYaml;
+            } else {
+                log.info({}, "HACK: MISSING DEVCONTAINER FILE");
             }
         } catch (e) {
             // TODO: LOG something
-            log.error({}, e.message);
+            log.error({}, "HACK: catch getGitpodFileContent err" + e.message);
         }
 
         const yamlVersion1 = await Promise.all([
