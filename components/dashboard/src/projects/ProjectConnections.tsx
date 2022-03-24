@@ -21,7 +21,7 @@ export function getMockedConnectionTypes() {
     return [
         {
             id: "tailscale",
-            attributes: ["scheme"],
+            attributes: ["authKey"],
         },
     ];
 }

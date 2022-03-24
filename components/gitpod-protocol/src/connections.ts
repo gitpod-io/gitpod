@@ -11,6 +11,5 @@ export interface Connection {
 }
 
 export interface TailscaleConnection extends Connection {
-    state: string;
-    nameScheme: string;
+    authKey: string;
 }

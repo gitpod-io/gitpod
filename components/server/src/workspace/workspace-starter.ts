@@ -57,6 +57,7 @@ import {
     ImageConfigFile,
     ProjectEnvVar,
     ImageBuildLogInfo,
+    TailscaleConnection,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -1022,7 +1023,7 @@ export class WorkspaceStarter {
         const connectionModifiers = (project?.connections || []).map((c) => {
             switch (c.id) {
                 case "tailscale":
-                    return new TailscaleWorkspaceModifier(this.projectDB);
+                    return new TailscaleWorkspaceModifier(c as TailscaleConnection);
                 default:
                     throw new Error(`unknown project connection ${c.id}`);
             }
@@ -1082,7 +1083,7 @@ export class WorkspaceStarter {
         log.debug("Workspace config", workspace.config);
         let allTasks: TaskConfig[] = [];
         for (const modifier of connectionModifiers) {
-            const modTasks = await modifier.getTasks(user.id, workspace.context as CommitContext);
+            const modTasks = await modifier.getTasks();
             allTasks = allTasks.concat(modTasks);
         }
         allTasks = allTasks.concat(workspace.config.tasks || []);
