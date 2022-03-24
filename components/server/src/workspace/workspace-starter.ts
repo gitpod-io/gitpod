@@ -108,6 +108,7 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
+import { TailscaleWorkspaceModifier } from "./connections-workspace-modifier";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -1014,6 +1015,16 @@ export class WorkspaceStarter {
         }
         if (WithEnvvarsContext.is(context)) {
             allEnvVars = allEnvVars.concat(context.envvars);
+        }
+
+        const project = workspace.projectId ? await this.projectDB.findProjectById(workspace.projectId) : undefined;
+        const projectConnections = project?.connections || [];
+        for (const connection of projectConnections) {
+            if (connection.id === "tailscale") {
+                const modifier = new TailscaleWorkspaceModifier(this.projectDB);
+                const connectionEnvVars = await modifier.getEnvVars();
+                allEnvVars = allEnvVars.concat(connectionEnvVars);
+            }
         }
 
         // we copy the envvars to a stable format so that things don't break when someone changes the

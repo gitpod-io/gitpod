@@ -97,6 +97,7 @@ import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messagin
 import { contentServiceBinder } from "@gitpod/content-service/lib/sugar";
 import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser";
 import { InstallationAdminTelemetryDataProvider } from "./installation-admin/telemetry-data-provider";
+import { TailscaleWorkspaceModifier } from "./workspace/connections-workspace-modifier";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -240,4 +241,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ProjectsService).toSelf().inSingletonScope();
 
     bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
+
+    bind(TailscaleWorkspaceModifier).toSelf().inSingletonScope();
 });
