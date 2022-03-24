@@ -159,6 +159,7 @@ import { ProjectEnvVar } from "@gitpod/gitpod-protocol/src/protocol";
 import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
+import { BigQuery } from "@google-cloud/bigquery";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -1960,11 +1961,29 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             name: repo,
             host,
             cloneUrl,
-        }
+        };
         return languagesProvider.getLanguages(repository, user) as Promise<ProjectLanguages>;
     }
 
     async getProjectUsageData(ctx: TraceContext, cloneUrl: string): Promise<object> {
+        try {
+            const bigquery = new BigQuery();
+            const query = "SELECT * FROM gitpod-growth.bubbles.usage_user_project LIMIT 100;";
+            const options = {
+                query: query,
+                // Location must match that of the dataset(s) referenced in the query.
+                location: "EU",
+            };
+            const [job] = await bigquery.createQueryJob(options);
+            console.log(`Job ${job.id} started.`);
+
+            // Wait for the query to finish
+            const [rows] = await job.getQueryResults();
+            console.log(`Job ${job.id} finished.`);
+            return rows;
+        } catch (e) {
+            console.log(e);
+        }
         return {};
     }
 

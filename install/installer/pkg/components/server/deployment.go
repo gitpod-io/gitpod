@@ -200,6 +200,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										Name:  "CONFIG_PATH",
 										Value: "/config/config.json",
 									},
+									{
+										Name:  "GOOGLE_APPLICATION_CREDENTIALS",
+										Value: "/tmp/secret.json",
+									},
 									func() corev1.EnvVar {
 										envvar := corev1.EnvVar{
 											Name: "GITPOD_LICENSE_TYPE",
