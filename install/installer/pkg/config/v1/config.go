@@ -54,7 +54,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
 	cfg.OpenVSX.URL = "https://open-vsx.org"
-	cfg.DisableDefinitelyGP = false
+	cfg.DisableDefinitelyGP = true
 
 	return nil
 }
