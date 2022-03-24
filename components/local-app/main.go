@@ -169,9 +169,9 @@ func main() {
 				Usage: "Starts a new workspace based on a context-URL",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
-						Name:  "open-ssh",
+						Name:  "ssh",
 						Usage: "Open SSH Connection once the workspace started",
-						Value: true,
+						Value: false,
 					},
 					&cli.StringFlag{
 						Name:  "gitpod-host",
@@ -194,7 +194,7 @@ func main() {
 
 					}
 
-					jumpToSSH := c.Bool("open-ssh")
+					jumpToSSH := c.Bool("ssh")
 
 					return start(c.Context, startOpts{
 						origin:          c.String("gitpod-host"),
@@ -222,7 +222,6 @@ type startOpts struct {
 }
 
 func start(ctx context.Context, opts startOpts) error {
-	logrus.Infof("Options %v", opts)
 	origin := strings.TrimRight(opts.origin, "/")
 
 	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectUrl, AuthTimeout: opts.authTimeout}, func() {
