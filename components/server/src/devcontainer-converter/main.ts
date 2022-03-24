@@ -38,7 +38,8 @@ export const toDevContainer = async () => {
 };
 
 export const toGitpod = (containerFile: DevContainer) => {
-    let gitpodConfig: GitpodConfig = { tasks: [] };
+    //@ts-ignore
+    let gitpodConfig: GitpodConfig = { tasks: [], image: {} };
 
     if (containerFile.postStartCommand) {
         if (typeof containerFile.postStartCommand === "string") {
@@ -51,7 +52,13 @@ export const toGitpod = (containerFile: DevContainer) => {
     //@ts-ignore
     if (containerFile.dockerFile || containerFile.build.dockerfile) {
         //@ts-ignore
-        gitpodConfig.image = `.devcontainer/${containerFile.dockerFile || containerFile.build.dockerfile}`;
+        gitpodConfig.image.file = `.devcontainer/${containerFile.dockerFile || containerFile.build.dockerfile}`;
+    }
+
+    //@ts-ignore
+    if (containerFile.build.context) {
+        //@ts-ignore
+        gitpodConfig.image.context = `.devcontainer/${containerFile.build.context}`;
     }
 
     return gitpodConfig;
