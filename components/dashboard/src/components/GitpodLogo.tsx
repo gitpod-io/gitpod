@@ -12,7 +12,6 @@ import prideLogo from "../icons/pride.svg";
 import queenLogo from "../icons/queen.png";
 import pawquatLogo from "../icons/pawquat.png";
 import animeLogo from "../icons/anime.png";
-import aussieLogo from "../icons/bunnings.png";
 // import whitelabelLogo from "../icons/whitelabel.jpg";
 
 const GitpodLogo = () => {
@@ -34,9 +33,6 @@ const GitpodLogo = () => {
             break;
         case "anime":
             logo = animeLogo;
-            break;
-        case "aussie":
-            logo = aussieLogo;
             break;
         // case "whitelabel":
         //     logo = whitelabelLogo;
