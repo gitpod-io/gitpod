@@ -44,7 +44,7 @@ export const toGitpod = (containerFile: DevContainer) => {
         if (typeof containerFile.postStartCommand === "string") {
             gitpodConfig.tasks?.push({ command: containerFile.postStartCommand });
         } else {
-            gitpodConfig.tasks?.push({ command: containerFile.postStartCommand.join("&") });
+            gitpodConfig.tasks?.push({ command: containerFile.postStartCommand.join("&&") });
         }
     }
 
