@@ -63,6 +63,7 @@ const Members = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/Mem
 const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/TeamSettings"));
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/NewProject"));
 const ConfigureProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ConfigureProject"));
+const ProjectConnections = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ProjectConnections"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Projects"));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Project"));
 const ProjectSettings = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ProjectSettings"));
@@ -377,6 +378,9 @@ function App() {
                                 if (resourceOrPrebuild === "settings") {
                                     return <ProjectSettings />;
                                 }
+                                if (resourceOrPrebuild === "connections") {
+                                    return <ProjectConnections />;
+                                }
                                 if (resourceOrPrebuild === "configure") {
                                     return <ConfigureProject />;
                                 }
@@ -419,6 +423,9 @@ function App() {
                                     }
                                     if (resourceOrPrebuild === "settings") {
                                         return <ProjectSettings />;
+                                    }
+                                    if (resourceOrPrebuild === "connections") {
+                                        return <ProjectConnections />;
                                     }
                                     if (resourceOrPrebuild === "configure") {
                                         return <ConfigureProject />;

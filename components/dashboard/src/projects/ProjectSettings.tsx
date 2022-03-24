@@ -22,6 +22,10 @@ export function getProjectSettingsMenu(project?: Project, team?: Team) {
             link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/settings`],
         },
         {
+            title: "Connections",
+            link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/connections`],
+        },
+        {
             title: "Configuration",
             link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/configure`],
         },

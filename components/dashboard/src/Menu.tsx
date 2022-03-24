@@ -53,6 +53,7 @@ export default function Menu() {
             resource !== "workspaces" &&
             resource !== "prebuilds" &&
             resource !== "settings" &&
+            resource !== "connections" &&
             resource !== "configure" &&
             resource !== "variables"
         ) {
