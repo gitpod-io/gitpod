@@ -5,28 +5,30 @@
  */
 
 import React, { useState, useContext, useCallback, useEffect } from "react";
-import owoify from "owoifyx";
+// import owoify from "owoifyx";
 
-const uwuObserver = new MutationObserver((mutationList) => {
-    mutationList.forEach((mutation) => {
-        if (mutation.type === "characterData") {
-            const target = mutation.target as HTMLElement;
-            if (target.nodeType === Node.TEXT_NODE) {
-                target.innerText = owoify(target.innerText);
-            }
-        }
-    });
-});
+// const uwuObserver = new MutationObserver((mutationList) => {
+//     uwuOff();
+//     mutationList.forEach((mutation) => {
+//         if (mutation.type === "characterData") {
+//             const target = mutation.target as Text;
+//             if (target.nodeType === Node.TEXT_NODE) {
+//                 target.nodeValue = owoify(target.nodeValue || "");
+//             }
+//         }
+//     });
+//     uwuOn();
+// });
 
 const uwuOn = () => {
-    uwuObserver.observe(document.getElementById("root")!, {
-        subtree: true,
-        characterData: true,
-    });
+    // uwuObserver.observe(document.getElementById("root")!, {
+    //     subtree: true,
+    //     characterData: true,
+    // });
 };
 
 const uwuOff = () => {
-    uwuObserver.disconnect();
+    // uwuObserver.disconnect();
 };
 
 const defaultState = {
@@ -55,13 +57,13 @@ export const LabsStorageProvider = (props: { children: React.ReactNode }) => {
     );
 
     useEffect(() => {
-        if (store.makeIt === "anime") {
+        if (store.makeIt === "anime" || true) {
             uwuOn();
             return () => {
                 uwuOff();
             };
         }
-    }, [store.makeIt]);
+    }, [store]);
 
     return <LabsStorageContext.Provider value={[store, saveStore]}>{props.children}</LabsStorageContext.Provider>;
 };
