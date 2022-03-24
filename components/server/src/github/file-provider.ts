@@ -9,6 +9,7 @@ import { injectable, inject } from "inversify";
 import { FileProvider, MaybeContent } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol";
 import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
+import { toGitpod } from "../devcontainer-converter/main";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
@@ -19,31 +20,13 @@ export class GithubFileProvider implements FileProvider {
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
         try {
             const content = await this.getFileContent(commit, user, ".devcontainer/.devcontainer.json");
-            log.info({}, `Loaded content: ${content}`);
-            // TODO: Translate
-            return `
-image:
-  file: .gitpod.Dockerfile
-  context: .
-
-# List the ports you want to expose and what to do when they are served. See https://www.gitpod.io/docs/config-ports/
-ports:
-- port: 3000
-  onOpen: open-preview
-
-# List the start up tasks. You can start them in parallel in multiple terminals. See https://www.gitpod.io/docs/config-start-tasks/
-tasks:
-- command: |
-    mongod
-- init: |
-    npm install
-    npm run build
-  command: |
-    npm run start
-vscode:
-  extensions:
-    - dbaeumer.vscode-eslint
-`;
+            if (content) {
+                log.info({}, `Loaded content: ${content}`);
+                const devContainerConfig = JSON.parse(content);
+                const gitpodYaml = JSON.stringify(toGitpod(devContainerConfig));
+                log.info({}, gitpodYaml);
+                return gitpodYaml;
+            }
         } catch (e) {
             // TODO: LOG something
             log.error({}, e.message);
