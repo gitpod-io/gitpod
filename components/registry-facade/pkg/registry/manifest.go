@@ -52,12 +52,13 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 	}
 
 	manifestHandler := &manifestHandler{
-		Context:        ctx,
-		Name:           name,
-		Spec:           spec,
-		Resolver:       reg.Resolver(),
-		Store:          reg.Store,
-		ConfigModifier: reg.ConfigModifier,
+		Context:          ctx,
+		Name:             name,
+		Spec:             spec,
+		Resolver:         reg.Resolver(),
+		Store:            reg.Store,
+		ConfigModifier:   reg.ConfigModifier,
+		ManifestModifier: reg.ipfsManifestModifier,
 	}
 	reference := getReference(ctx)
 	dgst, err := digest.Parse(reference)
@@ -86,10 +87,11 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 type manifestHandler struct {
 	Context context.Context
 
-	Spec           *api.ImageSpec
-	Resolver       remotes.Resolver
-	Store          content.Store
-	ConfigModifier ConfigModifier
+	Spec             *api.ImageSpec
+	Resolver         remotes.Resolver
+	Store            content.Store
+	ConfigModifier   ConfigModifier
+	ManifestModifier func(*ociv1.Manifest) error
 
 	Name   string
 	Tag    string
@@ -207,6 +209,14 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 			manifest.Config.Digest = cfgDgst
 			manifest.Config.URLs = nil
 			manifest.Config.Size = int64(len(rawCfg))
+
+			// We might have additional modifications, e.g. adding IPFS URLs to the layers
+			if mh.ManifestModifier != nil {
+				err = mh.ManifestModifier(manifest)
+				if err != nil {
+					log.WithError(err).WithFields(logFields).Warn("cannot modify manifest")
+				}
+			}
 
 			// When serving images.MediaTypeDockerSchema2Manifest we have to set the mediaType in the manifest itself.
 			// Although somewhat compatible with the OCI manifest spec (see https://github.com/opencontainers/image-spec/blob/master/manifest.md),

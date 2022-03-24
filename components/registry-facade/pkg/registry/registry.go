@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/gitpod/registry-facade/api/config"
+	"github.com/go-redis/redis/v8"
 	"github.com/golang/protobuf/jsonpb"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
@@ -29,6 +30,7 @@ import (
 	"github.com/docker/distribution/registry/api/errcode"
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/gorilla/mux"
+	httpapi "github.com/ipfs/go-ipfs-http-client"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -67,6 +69,7 @@ type Registry struct {
 	Config         config.Config
 	Resolver       ResolverProvider
 	Store          content.Store
+	IPFS           *IPFSStore
 	LayerSource    LayerSource
 	ConfigModifier ConfigModifier
 	SpecProvider   map[string]ImageSpecProvider
@@ -186,11 +189,28 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 		specProvider[api.ProviderPrefixFixed] = FixedImageSpecProvider(fp)
 	}
 
+	var ipfs *IPFSStore
+	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
+		core, err := httpapi.NewLocalApi()
+		if err != nil {
+			return nil, xerrors.Errorf("cannot connect to IPFS: %w", err)
+		}
+		rdc := redis.NewClient(&redis.Options{
+			Addr: cfg.IPFSCache.RedisAddr,
+		})
+		ipfs = &IPFSStore{
+			Redis: rdc,
+			IPFS:  core,
+		}
+		log.WithField("config", cfg.IPFSCache).Info("enabling IPFS caching")
+	}
+
 	layerSource := CompositeLayerSource(layerSources)
 	return &Registry{
 		Config:            cfg,
 		Resolver:          newResolver,
 		Store:             store,
+		IPFS:              ipfs,
 		SpecProvider:      specProvider,
 		LayerSource:       layerSource,
 		staticLayerSource: staticLayer,
