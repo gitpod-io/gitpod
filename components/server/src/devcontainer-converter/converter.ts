@@ -1,41 +1,47 @@
-import yaml from "js-yaml";
-import fs from "fs";
+/**
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+// import yaml from "js-yaml";
+// import fs from "fs";
 import { DevContainer } from "./types";
 import { GitpodConfig } from "./types-gitpod";
 
-export const toDevContainer = async () => {
-    let containerFile: DevContainer = { remoteUser: "gitpod" };
+// export const toDevContainer = async () => {
+//     let containerFile: DevContainer = { remoteUser: "gitpod" };
 
-    // Get document, or throw exception on error
-    try {
-        //@ts-ignore
-        const doc: GitpodConfig = yaml.load(fs.readFileSync("/workspace/gitpod/.gitpod.yml", "utf8"));
-        //containerFile.extensions = doc.vscode?.extensions;
+//     // Get document, or throw exception on error
+//     try {
+//         //@ts-ignore
+//         const doc: GitpodConfig = yaml.load(fs.readFileSync("/workspace/gitpod/.gitpod.yml", "utf8"));
+//         //containerFile.extensions = doc.vscode?.extensions;
 
-        /* Docker image */
-        if (typeof doc.image === "string") {
-            // @ts-ignore
-            containerFile.build = {};
-            console.log(containerFile);
-            // @ts-ignore
-            containerFile?.build.dockerfile = doc.image;
-        } else if (typeof doc.image == "object") {
-            // @ts-ignore
-            containerFile.build = {};
-            // @ts-ignore
-            containerFile?.build.dockerfile = doc.image.file;
-        }
+//         /* Docker image */
+//         if (typeof doc.image === "string") {
+//             // @ts-ignore
+//             containerFile.build = {};
+//             console.log(containerFile);
+//             // @ts-ignore
+//             containerFile?.build.dockerfile = doc.image;
+//         } else if (typeof doc.image == "object") {
+//             // @ts-ignore
+//             containerFile.build = {};
+//             // @ts-ignore
+//             containerFile?.build.dockerfile = doc.image.file;
+//         }
 
-        if (doc.tasks) {
-            for (const task of doc.tasks) {
-            }
-        }
+//         if (doc.tasks) {
+//             for (const task of doc.tasks) {
+//             }
+//         }
 
-        console.log(JSON.stringify(containerFile));
-    } catch (e) {
-        console.log(e);
-    }
-};
+//         console.log(JSON.stringify(containerFile));
+//     } catch (e) {
+//         console.log(e);
+//     }
+// };
 
 export const toGitpod = (containerFile: DevContainer) => {
     //@ts-ignore
@@ -114,44 +120,13 @@ export const toGitpod = (containerFile: DevContainer) => {
 
 // For testing:
 
-console.log(
-    JSON.stringify(
-        toGitpod({
-            name: "Code - OSS",
-
-            // Image contents: https://github.com/microsoft/vscode-dev-containers/blob/master/repository-containers/images/github.com/microsoft/vscode/.devcontainer/base.Dockerfile
-            image: "mcr.microsoft.com/vscode/devcontainers/repos/microsoft/vscode:branch-main",
-            overrideCommand: false,
-            runArgs: ["--init", "--security-opt", "seccomp=unconfined", "--shm-size=1g"],
-
-            settings: {
-                "resmon.show.battery": false,
-                "resmon.show.cpufreq": false,
-            },
-
-            // noVNC, VNC
-            forwardPorts: [6080, 5901],
-            portsAttributes: {
-                "6080": {
-                    label: "VNC web client (noVNC)",
-                    onAutoForward: "silent",
-                },
-                "5901": {
-                    label: "VNC TCP port",
-                    onAutoForward: "silent",
-                },
-            },
-
-            extensions: ["dbaeumer.vscode-eslint", "mutantdino.resourcemonitor"],
-
-            // Optionally loads a cached yarn install for the repo
-            postCreateCommand: ".devcontainer/cache/restore-diff.sh",
-
-            remoteUser: "node",
-
-            hostRequirements: {
-                memory: "8gb",
-            },
-        }),
-    ),
-);
+// console.log(
+//     JSON.stringify(
+//         toGitpod({
+//             name: "xterm.js",
+//             dockerFile: "Dockerfile",
+//             appPort: 3000,
+//             extensions: ["dbaeumer.vscode-eslint", "editorconfig.editorconfig", "hbenl.vscode-mocha-test-adapter"],
+//         }),
+//     ),
+// );

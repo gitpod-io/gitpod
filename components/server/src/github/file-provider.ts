@@ -9,7 +9,7 @@ import { injectable, inject } from "inversify";
 import { FileProvider, MaybeContent } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol";
 import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
-import { toGitpod } from "../devcontainer-converter/main";
+import { toGitpod } from "../devcontainer-converter/converter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
