@@ -48,7 +48,7 @@ export class DBProject {
     @Column("simple-json", { nullable: true })
     settings?: ProjectSettings;
 
-    @Column("simple-json", { default: [] })
+    @Column("simple-json")
     connections?: Connection[];
 
     @Column("varchar")
