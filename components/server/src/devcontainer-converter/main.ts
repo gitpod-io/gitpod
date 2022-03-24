@@ -42,11 +42,16 @@ export const toGitpod = (containerFile: DevContainer) => {
     let gitpodConfig: GitpodConfig = { tasks: [], image: {} };
 
     if (containerFile.postStartCommand) {
-        if (typeof containerFile.postStartCommand === "string") {
-            gitpodConfig.tasks?.push({ command: containerFile.postStartCommand });
-        } else {
-            gitpodConfig.tasks?.push({ command: containerFile.postStartCommand.join("&&") });
-        }
+        const before =
+            typeof containerFile.postCreateCommand === "string"
+                ? containerFile.postCreateCommand
+                : containerFile.postCreateCommand?.join("&&");
+        const command =
+            typeof containerFile.postStartCommand === "string"
+                ? containerFile.postStartCommand
+                : containerFile.postStartCommand?.join("&&");
+
+        gitpodConfig.tasks?.push({ command, before });
     }
 
     //@ts-ignore
