@@ -42,7 +42,7 @@ export function load({ gitpodService }: {
         frame.src = startUrl.toString();
         frame.style.visibility = 'visible';
         frame.className = 'gitpod-frame loading';
-        document.body.appendChild(frame);
+        // document.body.appendChild(frame);
 
         const factory = new JsonRpcProxyFactory<GitpodClient>(gitpodService.server);
         gitpodService.registerClient(factory.createProxy());

@@ -45,33 +45,34 @@ const toStop = new DisposableCollection();
     function isWorkspaceInstancePhase(phase: WorkspaceInstancePhase): boolean {
         return gitpodServiceClient.info.latestInstance?.status.phase === phase;
     }
-    if (!isWorkspaceInstancePhase('running')) {
-        await new Promise<void>(resolve => {
-            const listener = gitpodServiceClient.onDidChangeInfo(() => {
-                if (isWorkspaceInstancePhase('running')) {
-                    listener.dispose();
-                    resolve();
-                }
-            });
-        });
-    }
-    const supervisorServiceClient = new SupervisorServiceClient(gitpodServiceClient);
-    const [ideStatus] = await Promise.all([supervisorServiceClient.ideReady, supervisorServiceClient.contentReady, loadingIDE]);
-    if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
-        return;
-    }
-    toStop.pushAll([
-        IDEWebSocket.connectWorkspace(),
-        gitpodServiceClient.onDidChangeInfo(() => {
-            if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
-                toStop.dispose();
-            }
-        })
-    ]);
-    const isDesktopIde = ideStatus && ideStatus.desktop && ideStatus.desktop.link;
-    if (!isDesktopIde) {
-        toStop.push(ideService.start());
-    }
+    toStop.push(ideService.start());
+    // if (!isWorkspaceInstancePhase('running')) {
+    //     await new Promise<void>(resolve => {
+    //         const listener = gitpodServiceClient.onDidChangeInfo(() => {
+    //             if (isWorkspaceInstancePhase('running')) {
+    //                 listener.dispose();
+    //                 resolve();
+    //             }
+    //         });
+    //     });
+    // }
+    // const supervisorServiceClient = new SupervisorServiceClient(gitpodServiceClient);
+    // const [ideStatus] = await Promise.all([supervisorServiceClient.ideReady, supervisorServiceClient.contentReady, loadingIDE]);
+    // if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
+    //     return;
+    // }
+    // toStop.pushAll([
+    //     IDEWebSocket.connectWorkspace(),
+    //     gitpodServiceClient.onDidChangeInfo(() => {
+    //         if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
+    //             toStop.dispose();
+    //         }
+    //     })
+    // ]);
+    // const isDesktopIde = ideStatus && ideStatus.desktop && ideStatus.desktop.link;
+    // if (!isDesktopIde) {
+    //     toStop.push(ideService.start());
+    // }
     //#endregion
 })();
 
@@ -140,11 +141,12 @@ const toStop = new DisposableCollection();
                     }
                 }
                 // if (ideService.state === 'ready') {
-                return document.body;
+                // return document.body;
                 // }
             }
         }
-        return loading.frame;
+        // return loading.frame;
+        return document.body;
     }
     const updateCurrentFrame = () => {
         const newCurrent = nextFrame();
@@ -200,19 +202,19 @@ const toStop = new DisposableCollection();
         trackStatusRenderedEvent(`ide-${ideService.state}`, { error });
     }
 
-    updateCurrentFrame();
+    // updateCurrentFrame();
     updateLoadingState();
     trackIDEStatusRenderedEvent();
-    gitpodServiceClient.onDidChangeInfo(() => updateCurrentFrame());
+    // gitpodServiceClient.onDidChangeInfo(() => updateCurrentFrame());
     ideService.onDidChange(() => {
         updateLoadingState();
-        updateCurrentFrame();
+        // updateCurrentFrame();
         trackIDEStatusRenderedEvent();
     });
     supervisorServiceClient.ideReady.then(newIdeStatus => {
         ideStatus = newIdeStatus;
         isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
-        updateCurrentFrame();
+        // updateCurrentFrame();
     }).catch(error => console.error(`Unexpected error from supervisorServiceClient.ideReady: ${error}`));
     window.addEventListener('unload', () => trackStatusRenderedEvent('window-unload'), { capture: true });
     //#endregion
