@@ -9,7 +9,7 @@ import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLocation, useRouteMatch } from "react-router";
 import { Location } from "history";
-import gitpodIcon from "./icons/gitpod.svg";
+import GitpodLogo from "./components/GitpodLogo";
 import CaretDown from "./icons/CaretDown.svg";
 import CaretUpDown from "./icons/CaretUpDown.svg";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
@@ -320,7 +320,7 @@ export default function Menu() {
                 <div className="flex h-10">
                     <div className="flex justify-between items-center pr-3">
                         <Link to="/">
-                            <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
+                            <GitpodLogo />
                         </Link>
                         {!isMinimalUI && <div className="ml-2 text-base">{renderTeamMenu()}</div>}
                     </div>
