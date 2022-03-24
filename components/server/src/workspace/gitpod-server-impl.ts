@@ -2955,6 +2955,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getProjectConnections(ctx: TraceContext, projectId: string): Promise<Connection[]> {
-        throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, `Not implemented in this version`);
+        traceAPIParams(ctx, { projectId });
+
+        this.checkAndBlockUser("getProjectConnections");
+
+        const project = await this.projectDB.findProjectById(projectId);
+        if (!project) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `could not find project for id ${projectId}`);
+        }
+        return project.connections || [];
     }
 }
