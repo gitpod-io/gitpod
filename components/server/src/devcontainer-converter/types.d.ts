@@ -636,6 +636,8 @@ export type DevContainer =
            * The name of the docker-compose file(s) used to start the services.
            */
           dockerComposeFile: string | string[];
+
+          appPort?: number | string | (number | string)[];
           /**
            * The service you want to work on.
            */
@@ -660,6 +662,8 @@ export type DevContainer =
            * A name for the dev container displayed in the UI.
            */
           name?: string;
+          appPort?: number | string | (number | string)[];
+
           /**
            * An array of extensions that should be installed into the container.
            */
@@ -810,6 +814,8 @@ export type DevContainer =
            * A name for the dev container displayed in the UI.
            */
           name?: string;
+          appPort?: number | string | (number | string)[];
+
           /**
            * An array of extensions that should be installed into the container.
            */

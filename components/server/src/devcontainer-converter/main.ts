@@ -56,21 +56,42 @@ export const toGitpod = (containerFile: DevContainer) => {
     }
 
     //@ts-ignore
-    if (containerFile.build.context) {
+    if (containerFile?.build?.context) {
         //@ts-ignore
         gitpodConfig.image.context = `.devcontainer/${containerFile.build.context}`;
+    }
+
+    if (containerFile.appPort) {
+        switch (typeof containerFile.appPort) {
+            case "number":
+            case "string":
+                gitpodConfig.ports = [{ port: containerFile.appPort }];
+                break;
+            case "object":
+                // @ts-ignore
+                gitpodConfig.ports = containerFile.appPort.map((port) => {
+                    port;
+                });
+        }
+    }
+
+    if (containerFile.extensions) {
+        gitpodConfig.vscode = {};
+        gitpodConfig.vscode.extensions = containerFile.extensions;
     }
 
     return gitpodConfig;
 };
 
 // For testing:
-/*
-console.log(JSON.stringify(toGitpod({
-    "build": {
-        "dockerfile": ".devcontainer.Dockerfile",
-        "context": ".."
-    },
-    "postStartCommand": "npm run start"
-})));
-*/
+
+console.log(
+    JSON.stringify(
+        toGitpod({
+            name: "xterm.js",
+            dockerFile: "Dockerfile",
+            appPort: 3000,
+            extensions: ["dbaeumer.vscode-eslint", "editorconfig.editorconfig", "hbenl.vscode-mocha-test-adapter"],
+        }),
+    ),
+);
