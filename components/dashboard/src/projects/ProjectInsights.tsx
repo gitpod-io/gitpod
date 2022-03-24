@@ -24,20 +24,16 @@ export default function ProjectInsights() {
     }, [project]);
 
     useEffect(() => {
-        const width = 500;
-        const height = 500;
+        const svg = d3.select(svgRef.current);
         const chart = PieChart(Object.entries(projectLanguages).map(([name, value]) => { return { name, value }; }), {
             name: (d: any) => d.name,
             value: (d: any) => d.value,
-            width,
-            height,
+            svg,
         });
-        const svg = d3.select(svgRef.current).attr("viewBox", [0, 0, width, height]);
         console.log(chart, svg);
     }, [projectLanguages]);
 
-    return <div>
-        <pre>{JSON.stringify(projectLanguages, null, 4)}</pre>
+    return <div className="mt-10 py-5 mx-auto" style={{ width: 700 }}>
         <svg className="container" ref={svgRef}></svg>
     </div>;
 }

@@ -25,6 +25,7 @@ export default function PieChart(data, {
     strokeWidth = 1, // width of stroke separating wedges
     strokeLinejoin = "round", // line join of stroke separating wedges
     padAngle = stroke === "none" ? 1 / outerRadius : 0, // angular separation between wedges
+    svg,
   } = {}) {
     // Compute values.
     const N = d3.map(data, name);
@@ -57,10 +58,9 @@ export default function PieChart(data, {
     const arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
     const arcLabel = d3.arc().innerRadius(labelRadius).outerRadius(labelRadius);
 
-    const svg = d3.create("svg")
-        .attr("width", width)
+    svg.attr("width", width)
         .attr("height", height)
-        .attr("viewBox", [-width / 2, -height / 2, width, height])
+        .attr("viewBox", [(-width / 2) - 1, (-height / 2) - 1, width + 2, height + 2])
         .attr("style", "max-width: 100%; height: auto; height: intrinsic;");
 
     svg.append("g")
