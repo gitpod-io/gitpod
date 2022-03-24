@@ -84,7 +84,7 @@ export default function () {
     };
 
     const getConnection = (id: string) => {
-        return connections.find((c) => c.id === id);
+        return connections.find((c) => c.type === id);
     };
 
     const updateConnection = async (connectionId: string, attribute: string, newValue: string) => {
@@ -133,17 +133,10 @@ export default function () {
                     />
                 </div>
             </div>
-            {Object.keys(connectionTypes).map((connectionTypeId, i) => {
-                const connectionType = connectionTypes.find((t) => t.id === connectionTypeId);
-                if (!connectionType) {
-                    return undefined;
-                }
-                const connection = getConnection(connectionTypeId);
+            {connectionTypes.map((connectionType, i) => {
+                const connection = getConnection(connectionType.id);
 
-                if (
-                    !connection ||
-                    (searchFilter && connectionType.name.toLowerCase().includes(searchFilter.toLowerCase()))
-                ) {
+                if (searchFilter && connectionType.name.toLowerCase().includes(searchFilter.toLowerCase())) {
                     return undefined;
                 }
 
@@ -154,7 +147,7 @@ export default function () {
                             key={`type-${connectionType}-${i}`}
                             title={
                                 <span>
-                                    Enable {connectionTypeId}{" "}
+                                    Enable {connectionType.name}{" "}
                                     <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">
                                         🚀
                                     </PillLabel>
@@ -180,7 +173,7 @@ export default function () {
                                 </span>
                             }
                             checked={!!connection}
-                            onChange={() => toggleConnectionEnabled(connectionTypeId, !connection)}
+                            onChange={() => toggleConnectionEnabled(connectionType.id, !connection)}
                         />
                     </>
                 );
