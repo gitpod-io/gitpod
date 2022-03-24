@@ -17,6 +17,20 @@ service BlobService {
 
   // Delete deletes the uploaded content.
   rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+
+  rpc Download(DownloadRequest) returns (DownloadResponse) {}
+}
+
+message DownloadRequest {
+  string owner_id = 1;
+  string name = 2;
+  string content_type = 3;
+  int64 offset = 4;
+  int64 size = 5;
+}
+
+message DownloadResponse {
+  string content = 1;
 }
 
 message UploadUrlRequest {

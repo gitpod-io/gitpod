@@ -31,6 +31,28 @@ function deserialize_contentservice_DeleteResponse(buffer_arg) {
   return blobs_pb.DeleteResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_contentservice_DownloadRequest(arg) {
+  if (!(arg instanceof blobs_pb.DownloadRequest)) {
+    throw new Error('Expected argument of type contentservice.DownloadRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_contentservice_DownloadRequest(buffer_arg) {
+  return blobs_pb.DownloadRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_contentservice_DownloadResponse(arg) {
+  if (!(arg instanceof blobs_pb.DownloadResponse)) {
+    throw new Error('Expected argument of type contentservice.DownloadResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_contentservice_DownloadResponse(buffer_arg) {
+  return blobs_pb.DownloadResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_contentservice_DownloadUrlRequest(arg) {
   if (!(arg instanceof blobs_pb.DownloadUrlRequest)) {
     throw new Error('Expected argument of type contentservice.DownloadUrlRequest');
@@ -112,6 +134,17 @@ delete: {
     requestDeserialize: deserialize_contentservice_DeleteRequest,
     responseSerialize: serialize_contentservice_DeleteResponse,
     responseDeserialize: deserialize_contentservice_DeleteResponse,
+  },
+  download: {
+    path: '/contentservice.BlobService/Download',
+    requestStream: false,
+    responseStream: false,
+    requestType: blobs_pb.DownloadRequest,
+    responseType: blobs_pb.DownloadResponse,
+    requestSerialize: serialize_contentservice_DownloadRequest,
+    requestDeserialize: deserialize_contentservice_DownloadRequest,
+    responseSerialize: serialize_contentservice_DownloadResponse,
+    responseDeserialize: deserialize_contentservice_DownloadResponse,
   },
 };
 

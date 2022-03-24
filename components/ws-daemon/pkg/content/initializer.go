@@ -364,6 +364,10 @@ func (rs *remoteContentStorage) EnsureExists(ctx context.Context) error {
 	return nil
 }
 
+func (rs *remoteContentStorage) RangeDownload(ctx context.Context, bucket, object string, offset, size int64) (string, error) {
+	return "", nil
+}
+
 // Download always returns false and does nothing
 func (rs *remoteContentStorage) Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (exists bool, err error) {
 	info, exists := rs.RemoteContent[name]

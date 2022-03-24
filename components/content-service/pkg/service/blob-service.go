@@ -117,6 +117,37 @@ func (cs *BlobService) DownloadUrl(ctx context.Context, req *api.DownloadUrlRequ
 	}, nil
 }
 
+func (cs *BlobService) Download(ctx context.Context, req *api.DownloadRequest) (resp *api.DownloadResponse, err error) {
+	//nolint:ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Download")
+	span.SetTag("user", req.OwnerId)
+	span.SetTag("name", req.Name)
+	defer tracing.FinishSpan(span, &err)
+
+	blobName, err := cs.s.BlobObject(req.Name)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	ds, err := storage.NewDirectAccess(&cs.cfg)
+	if err != nil {
+		return nil, err
+	}
+	err = ds.Init(ctx, req.OwnerId, "gitpodio-springpetclinic-4zbnwslomod", "")
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := ds.RangeDownload(ctx, cs.s.Bucket(req.OwnerId), blobName, req.Offset, req.Size)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	return &api.DownloadResponse{
+		Content: content,
+	}, nil
+}
+
 // Delete deletes the uploaded content
 func (cs *BlobService) Delete(ctx context.Context, req *api.DeleteRequest) (resp *api.DeleteResponse, err error) {
 	//nolint:ineffassign

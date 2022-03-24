@@ -217,6 +217,25 @@ func (rs *DirectMinIOStorage) download(ctx context.Context, destination string, 
 	return true, nil
 }
 
+func (rs *DirectMinIOStorage) RangeDownload(ctx context.Context, bucket, object string, offset, size int64) (string, error) {
+	rc, err := rs.ObjectAccess(ctx, bucket, object)
+	if rc == nil {
+		return "", err
+	}
+	defer rc.Close()
+
+	_, err = rc.(io.Seeker).Seek(offset, 0)
+	if err != nil {
+		return "", err
+	}
+	content := make([]byte, size)
+	_, err = rc.Read(content)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
+
 // Download takes the latest state from the remote storage and downloads it to a local path
 func (rs *DirectMinIOStorage) Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (bool, error) {
 	return rs.download(ctx, destination, rs.bucketName(), rs.objectName(name), mappings)

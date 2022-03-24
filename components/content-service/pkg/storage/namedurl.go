@@ -18,6 +18,10 @@ type NamedURLDownloader struct {
 	URLs map[string]string
 }
 
+func (d *NamedURLDownloader) RangeDownload(ctx context.Context, bucket, object string, offset, size int64) (string, error) {
+	return "", nil
+}
+
 // Download takes the latest state from the remote storage and downloads it to a local path
 func (d *NamedURLDownloader) Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (found bool, err error) {
 	url, found := d.URLs[name]

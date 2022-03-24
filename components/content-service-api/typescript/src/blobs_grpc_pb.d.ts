@@ -17,6 +17,7 @@ interface IBlobServiceService extends grpc.ServiceDefinition<grpc.UntypedService
     uploadUrl: IBlobServiceService_IUploadUrl;
     downloadUrl: IBlobServiceService_IDownloadUrl;
     delete: IBlobServiceService_IDelete;
+    download: IBlobServiceService_IDownload;
 }
 
 interface IBlobServiceService_IUploadUrl extends grpc.MethodDefinition<blobs_pb.UploadUrlRequest, blobs_pb.UploadUrlResponse> {
@@ -46,6 +47,15 @@ interface IBlobServiceService_IDelete extends grpc.MethodDefinition<blobs_pb.Del
     responseSerialize: grpc.serialize<blobs_pb.DeleteResponse>;
     responseDeserialize: grpc.deserialize<blobs_pb.DeleteResponse>;
 }
+interface IBlobServiceService_IDownload extends grpc.MethodDefinition<blobs_pb.DownloadRequest, blobs_pb.DownloadResponse> {
+    path: "/contentservice.BlobService/Download";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<blobs_pb.DownloadRequest>;
+    requestDeserialize: grpc.deserialize<blobs_pb.DownloadRequest>;
+    responseSerialize: grpc.serialize<blobs_pb.DownloadResponse>;
+    responseDeserialize: grpc.deserialize<blobs_pb.DownloadResponse>;
+}
 
 export const BlobServiceService: IBlobServiceService;
 
@@ -53,6 +63,7 @@ export interface IBlobServiceServer extends grpc.UntypedServiceImplementation {
     uploadUrl: grpc.handleUnaryCall<blobs_pb.UploadUrlRequest, blobs_pb.UploadUrlResponse>;
     downloadUrl: grpc.handleUnaryCall<blobs_pb.DownloadUrlRequest, blobs_pb.DownloadUrlResponse>;
     delete: grpc.handleUnaryCall<blobs_pb.DeleteRequest, blobs_pb.DeleteResponse>;
+    download: grpc.handleUnaryCall<blobs_pb.DownloadRequest, blobs_pb.DownloadResponse>;
 }
 
 export interface IBlobServiceClient {
@@ -65,6 +76,9 @@ export interface IBlobServiceClient {
     delete(request: blobs_pb.DeleteRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
     delete(request: blobs_pb.DeleteRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
     delete(request: blobs_pb.DeleteRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
+    download(request: blobs_pb.DownloadRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadResponse) => void): grpc.ClientUnaryCall;
+    download(request: blobs_pb.DownloadRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadResponse) => void): grpc.ClientUnaryCall;
+    download(request: blobs_pb.DownloadRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class BlobServiceClient extends grpc.Client implements IBlobServiceClient {
@@ -78,4 +92,7 @@ export class BlobServiceClient extends grpc.Client implements IBlobServiceClient
     public delete(request: blobs_pb.DeleteRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
     public delete(request: blobs_pb.DeleteRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
     public delete(request: blobs_pb.DeleteRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
+    public download(request: blobs_pb.DownloadRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadResponse) => void): grpc.ClientUnaryCall;
+    public download(request: blobs_pb.DownloadRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadResponse) => void): grpc.ClientUnaryCall;
+    public download(request: blobs_pb.DownloadRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadResponse) => void): grpc.ClientUnaryCall;
 }

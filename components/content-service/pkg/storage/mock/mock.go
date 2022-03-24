@@ -265,6 +265,14 @@ func (mr *MockDirectAccessMockRecorder) Bucket(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bucket", reflect.TypeOf((*MockDirectAccess)(nil).Bucket), arg0)
 }
 
+func (m *MockDirectAccess) RangeDownload(ctx context.Context, bucket, object string, offset, size int64) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RangeDownload", ctx, bucket, object, offset, size)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
 // Download mocks base method.
 func (m *MockDirectAccess) Download(arg0 context.Context, arg1, arg2 string, arg3 []archive.IDMapping) (bool, error) {
 	m.ctrl.T.Helper()

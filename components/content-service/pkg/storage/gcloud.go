@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -247,6 +248,25 @@ func (rs *DirectGCPStorage) fixLegacyFilenames(ctx context.Context, destination 
 	}
 
 	return nil
+}
+
+func (rs *DirectGCPStorage) RangeDownload(ctx context.Context, bucket, object string, offset, size int64) (string, error) {
+	if rs.client == nil {
+		return "", xerrors.Errorf("no gcloud client available - did you call Init()?")
+	}
+
+	hdl := rs.client.Bucket(bucket).Object(object)
+	rc, err := hdl.NewRangeReader(ctx, offset, size)
+	if err != nil {
+		return "", err
+	}
+	defer rc.Close()
+
+	content, err := ioutil.ReadAll(rc)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
 }
 
 // Download takes the latest state from the remote storage and downloads it to a local path

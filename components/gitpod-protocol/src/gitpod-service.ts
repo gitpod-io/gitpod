@@ -267,6 +267,17 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     trackEvent(event: RemoteTrackMessage): Promise<void>;
     trackLocation(event: RemotePageMessage): Promise<void>;
     identifyUser(event: RemoteIdentifyMessage): Promise<void>;
+
+    /**
+     * Workpace backup FS
+     */
+    getWorkspaceBackupIndex(workspaceId: string): Promise<{
+        [fileName: string]: {
+            offset: number;
+            size: number;
+        };
+    }>;
+    getWorkspaceBackupContent(workspaceId: string, offset: number, size: number): Promise<string>;
 }
 
 export interface RateLimiterError {

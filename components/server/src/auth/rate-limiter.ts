@@ -191,6 +191,8 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         trackLocation: { group: "default", points: 1 },
         identifyUser: { group: "default", points: 1 },
         getIDEOptions: { group: "default", points: 1 },
+        getWorkspaceBackupIndex: { group: "default", points: 1 },
+        getWorkspaceBackupContent: { group: "default", points: 1 },
     };
 
     return {

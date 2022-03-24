@@ -12,6 +12,58 @@
 
 import * as jspb from "google-protobuf";
 
+export class DownloadRequest extends jspb.Message {
+    getOwnerId(): string;
+    setOwnerId(value: string): DownloadRequest;
+    getName(): string;
+    setName(value: string): DownloadRequest;
+    getContentType(): string;
+    setContentType(value: string): DownloadRequest;
+    getOffset(): number;
+    setOffset(value: number): DownloadRequest;
+    getSize(): number;
+    setSize(value: number): DownloadRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DownloadRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: DownloadRequest): DownloadRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DownloadRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DownloadRequest;
+    static deserializeBinaryFromReader(message: DownloadRequest, reader: jspb.BinaryReader): DownloadRequest;
+}
+
+export namespace DownloadRequest {
+    export type AsObject = {
+        ownerId: string,
+        name: string,
+        contentType: string,
+        offset: number,
+        size: number,
+    }
+}
+
+export class DownloadResponse extends jspb.Message {
+    getContent(): string;
+    setContent(value: string): DownloadResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DownloadResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: DownloadResponse): DownloadResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DownloadResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DownloadResponse;
+    static deserializeBinaryFromReader(message: DownloadResponse, reader: jspb.BinaryReader): DownloadResponse;
+}
+
+export namespace DownloadResponse {
+    export type AsObject = {
+        content: string,
+    }
+}
+
 export class UploadUrlRequest extends jspb.Message {
     getOwnerId(): string;
     setOwnerId(value: string): UploadUrlRequest;

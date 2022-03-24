@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strings"
 
 	"golang.org/x/xerrors"
 
@@ -134,6 +135,8 @@ type SignedURLOptions struct {
 
 // DirectDownloader downloads a snapshot
 type DirectDownloader interface {
+	RangeDownload(ctx context.Context, bucket, object string, offset, size int64) (string, error)
+
 	// Download takes the latest state from the remote storage and downloads it to a local path
 	Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (found bool, err error)
 
@@ -292,6 +295,9 @@ func blobObjectName(name string) (string, error) {
 	}
 	if !b {
 		return "", xerrors.Errorf("blob name '%s' needs to match regex '%s'", name, blobRegex)
+	}
+	if strings.HasPrefix(name, "workspaces/") {
+		return name, nil
 	}
 	return fmt.Sprintf("blobs/%s", name), nil
 }

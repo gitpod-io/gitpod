@@ -25,6 +25,10 @@ func (rs *DirectNoopStorage) EnsureExists(ctx context.Context) error {
 	return nil
 }
 
+func (rs *DirectNoopStorage) RangeDownload(ctx context.Context, bucket, object string, offset, size int64) (string, error) {
+	return "", nil
+}
+
 // Download always returns false and does nothing
 func (rs *DirectNoopStorage) Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (bool, error) {
 	return false, nil

@@ -28,6 +28,7 @@ type BlobServiceClient interface {
 	DownloadUrl(ctx context.Context, in *DownloadUrlRequest, opts ...grpc.CallOption) (*DownloadUrlResponse, error)
 	// Delete deletes the uploaded content.
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (*DownloadResponse, error)
 }
 
 type blobServiceClient struct {
@@ -65,6 +66,15 @@ func (c *blobServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts 
 	return out, nil
 }
 
+func (c *blobServiceClient) Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (*DownloadResponse, error) {
+	out := new(DownloadResponse)
+	err := c.cc.Invoke(ctx, "/contentservice.BlobService/Download", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BlobServiceServer is the server API for BlobService service.
 // All implementations must embed UnimplementedBlobServiceServer
 // for forward compatibility
@@ -75,6 +85,7 @@ type BlobServiceServer interface {
 	DownloadUrl(context.Context, *DownloadUrlRequest) (*DownloadUrlResponse, error)
 	// Delete deletes the uploaded content.
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	Download(context.Context, *DownloadRequest) (*DownloadResponse, error)
 	mustEmbedUnimplementedBlobServiceServer()
 }
 
@@ -90,6 +101,9 @@ func (UnimplementedBlobServiceServer) DownloadUrl(context.Context, *DownloadUrlR
 }
 func (UnimplementedBlobServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedBlobServiceServer) Download(context.Context, *DownloadRequest) (*DownloadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Download not implemented")
 }
 func (UnimplementedBlobServiceServer) mustEmbedUnimplementedBlobServiceServer() {}
 
@@ -158,6 +172,24 @@ func _BlobService_Delete_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BlobService_Download_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DownloadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlobServiceServer).Download(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/contentservice.BlobService/Download",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlobServiceServer).Download(ctx, req.(*DownloadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BlobService_ServiceDesc is the grpc.ServiceDesc for BlobService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +208,10 @@ var BlobService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _BlobService_Delete_Handler,
+		},
+		{
+			MethodName: "Download",
+			Handler:    _BlobService_Download_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

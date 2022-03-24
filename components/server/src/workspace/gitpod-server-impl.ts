@@ -4,7 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import fetch from "node-fetch";
+import * as util from "util";
 import {
+    DownloadRequest,
+    DownloadResponse,
     DownloadUrlRequest,
     DownloadUrlResponse,
     UploadUrlRequest,
@@ -2933,4 +2937,54 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
     //
     //#endregion
+
+    async getWorkspaceBackupIndex(
+        ctx: TraceContext,
+        workspaceId: string,
+    ): Promise<{
+        [fileName: string]: {
+            offset: number;
+            size: number;
+        };
+    }> {
+        const user = this.checkUser();
+        const request = new DownloadUrlRequest();
+        request.setOwnerId(user.id);
+        request.setName(`workspaces/${workspaceId}/wsfull-index.json`);
+        request.setContentType("application/json");
+        const blobsClient = this.blobServiceClientProvider.getDefault();
+        const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(
+            blobsClient.downloadUrl.bind(blobsClient),
+        )(request);
+        const response = await fetch(urlResponse.getUrl(), {
+            timeout: 10000,
+            headers: {
+                "content-type": "application/json",
+            },
+        });
+        if (response.status !== 200) {
+            throw new Error(`code sync: blob service: download failed with ${response.status} ${response.statusText}`);
+        }
+        const content = await response.text();
+        return JSON.parse(content);
+    }
+
+    async getWorkspaceBackupContent(
+        ctx: TraceContext,
+        workspaceId: string,
+        offset: number,
+        size: number,
+    ): Promise<string> {
+        const user = this.checkUser();
+        const request = new DownloadRequest();
+        request.setOwnerId(user.id);
+        request.setName(`workspaces/${workspaceId}/full.tar`);
+        request.setOffset(offset);
+        request.setSize(size);
+        const blobsClient = this.blobServiceClientProvider.getDefault();
+        const response = await util.promisify<DownloadRequest, DownloadResponse>(
+            blobsClient.download.bind(blobsClient),
+        )(request);
+        return response.getContent();
+    }
 }
