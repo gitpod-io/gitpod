@@ -195,8 +195,10 @@ export class ConfigProvider {
                 // const inferredConfig = this.configurationService.guessRepositoryConfiguration({ span }, user, commit);
 
                 customConfigString = await contextRepoConfig;
+                log.info(logContext, `HACK: customConfigString=${customConfigString}`);
                 let origin: WorkspaceConfig["_origin"] = "repo";
                 if (!customConfigString) {
+                    log.error(logContext, "HACK: customConfigString not found");
                     // We haven't found a Gitpod configuration file in the context repo - check the "Project" in the DB.
                     const config = await projectDBConfig;
                     if (config) {
@@ -219,11 +221,12 @@ export class ConfigProvider {
                     origin = "definitely-gp";
                 }
 
-                // if (!customConfigString) {
-                // if there's still no configuration, let's infer one
-                // customConfigString = await inferredConfig;
-                // origin = "derived";
-                // }
+                if (!customConfigString) {
+                    // if there's still no configuration, let's infer one
+                    // customConfigString = await inferredConfig;
+                    // origin = "derived";
+                    log.error(logContext, "HACK: NOT DEFINED customConfigString");
+                }
 
                 if (customConfigString) {
                     const parseResult = this.gitpodParser.parse(customConfigString);
