@@ -159,7 +159,7 @@ func main() {
 				},
 			},
 			{
-				Name:  "start",
+				Name:  "open",
 				Usage: "Starts a new workspace based on a context-URL",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
