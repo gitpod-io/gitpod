@@ -7,12 +7,16 @@
 // import React from "react";
 import { useLabsStorage } from "../settings/LabsStorage";
 import gitpodLogo from "../icons/gitpod.svg";
+import classicLogo from "../icons/gitpod-classic.svg";
 
 const GitpodLogo = () => {
     const [store, _] = useLabsStorage();
 
     let logo;
     switch (store.makeIt) {
+        case "classic":
+            logo = classicLogo;
+            break;
         default:
             logo = gitpodLogo;
             break;
