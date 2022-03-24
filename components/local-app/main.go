@@ -6,6 +6,7 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -48,9 +49,9 @@ func main() {
 	}
 
 	app := cli.App{
-		Name:                 "gitpod-local-companion",
-		Usage:                "connect your Gitpod workspaces",
-		Action:               DefaultCommand("run"),
+		Name:                 "gitpod-client",
+		Usage:                "Manage gitpod workspaces and run them from your machine",
+		Action:               DefaultCommand("ssh-watch"),
 		EnableBashCompletion: true,
 		Version:              Version,
 		Flags: []cli.Flag{
@@ -119,7 +120,7 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name: "run",
+				Name: "ssh-watch",
 				Action: func(c *cli.Context) error {
 					if c.Bool("mock-keyring") {
 						keyring.MockInit()
@@ -133,6 +134,17 @@ func main() {
 						Usage: "produce and update an OpenSSH compatible ssh_config file (defaults to $GITPOD_LCA_SSH_CONFIG)",
 						Value: sshConfig,
 					},
+				},
+			},
+			{
+				Name: "start",
+				Action: func(c *cli.Context) error {
+					fmt.Println("Hello world")
+
+					go run(...)
+
+					os.Exit(1)
+					return nil
 				},
 			},
 		},
