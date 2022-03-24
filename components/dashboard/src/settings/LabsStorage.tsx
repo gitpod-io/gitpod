@@ -135,6 +135,10 @@ export const LabsStorageProvider = (props: { children: React.ReactNode }) => {
                     body.makeit-anime {
                         background-color: #ffc0d3;
                     }
+
+                    body.makeit-pawquat {
+                        background-color: #A47DA4;
+                    }
                 `,
                 }}
             />
