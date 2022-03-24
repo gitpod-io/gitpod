@@ -55,6 +55,13 @@ type Config struct {
 	Store              string           `json:"store"`
 	RequireAuth        bool             `json:"requireAuth"`
 	TLS                *TLS             `json:"tls"`
+
+	IPFSCache *IPFSCacheConfig `json:"ipfs"`
+}
+
+type IPFSCacheConfig struct {
+	Enabled   bool   `json:"enabled"`
+	RedisAddr string `json:"redis"`
 }
 
 // StaticLayerCfg configure statically added layer

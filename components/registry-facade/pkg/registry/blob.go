@@ -56,6 +56,7 @@ func (reg *Registry) handleBlob(ctx context.Context, r *http.Request) http.Handl
 		Spec:     spec,
 		Resolver: reg.Resolver(),
 		Store:    reg.Store,
+		IPFS:     reg.IPFS,
 		AdditionalSources: []BlobSource{
 			reg.LayerSource,
 		},
@@ -84,6 +85,7 @@ type blobHandler struct {
 	Spec              *api.ImageSpec
 	Resolver          remotes.Resolver
 	Store             content.Store
+	IPFS              *IPFSStore
 	AdditionalSources []BlobSource
 	ConfigModifier    ConfigModifier
 
@@ -145,6 +147,23 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 		bh.Metrics.BlobDownloadSpeedHist.Observe(float64(n) / dt.Seconds())
+
+		go func() {
+			// we can do this only after the io.Copy above. Otherwise we might expect the blob
+			// to be in the blobstore when in reality it isn't.
+			_, _, rc, err := src.GetBlob(context.Background(), bh.Spec, bh.Digest)
+			if err != nil {
+				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS")
+			}
+			if rc == nil {
+				log.WithField("digest", bh.Digest).Warn("cannot push to IPFS - blob is nil")
+				return
+			}
+			err = bh.IPFS.Store(context.Background(), bh.Digest, rc)
+			if err != nil {
+				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS")
+			}
+		}()
 
 		return nil
 	}()
@@ -214,6 +233,10 @@ func (sbs storeBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgs
 	}
 
 	return info.Labels["Content-Type"], "", &reader{ReaderAt: r}, nil
+}
+
+type ipfsBlobSource struct {
+	IPFS *IPFSStore
 }
 
 type proxyingBlobSource struct {
