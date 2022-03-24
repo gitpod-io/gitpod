@@ -26,6 +26,7 @@ import { workspacesPathMain } from "./workspaces/workspaces.routes";
 import {
     settingsPathAccount,
     settingsPathIntegrations,
+    settingsPathLabs,
     settingsPathMain,
     settingsPathNotifications,
     settingsPathPlans,
@@ -54,6 +55,7 @@ const Teams = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Te
 const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/EnvironmentVariables"));
 const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Integrations"));
 const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Preferences"));
+const Labs = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Labs"));
 const Open = React.lazy(() => import(/* webpackPrefetch: true */ "./start/Open"));
 const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ "./start/StartWorkspace"));
 const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ "./start/CreateWorkspace"));
@@ -337,6 +339,7 @@ function App() {
                     <Route path={settingsPathPlans} exact component={Plans} />
                     <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
                     <Route path={settingsPathPreferences} exact component={Preferences} />
+                    <Route path={settingsPathLabs} exact component={Labs} />
                     <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
                     <Route path="/from-referrer" exact component={FromReferrer} />
 
