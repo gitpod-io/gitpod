@@ -57,6 +57,6 @@ async function run(context: any) {
         return
     }
 
-    await deployToPreviewEnvironment(werft, config)
+    //await deployToPreviewEnvironment(werft, config)
     await triggerIntegrationTests(werft, config, context.Owner)
 }
