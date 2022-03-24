@@ -13,7 +13,7 @@ const COLUMN_NAME = "connections";
 export class ProjectConnection1648125765559 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (!(await columnExists(queryRunner, TABLE_NAME, COLUMN_NAME))) {
-            await queryRunner.query(`ALTER TABLE ${TABLE_NAME} ADD COLUMN ${COLUMN_NAME} text NOT NULL`);
+            await queryRunner.query(`ALTER TABLE ${TABLE_NAME} ADD COLUMN ${COLUMN_NAME} text NULL`);
         }
     }
 
