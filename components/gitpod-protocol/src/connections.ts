@@ -8,6 +8,7 @@ export type Connections = TailscaleConnection;
 
 export interface Connection {
     id: string;
+    imageLayer?: string;
 }
 
 export interface TailscaleConnection extends Connection {

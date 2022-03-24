@@ -7,8 +7,9 @@
 import { EnvVarWithValue, GCloudAdcConnection, TailscaleConnection, TaskConfig } from "@gitpod/gitpod-protocol";
 
 export interface ConnectionsWorkspaceModifier {
-    getEnvVars(connection: TailscaleConnection): Promise<EnvVarWithValue[]>;
-    getTasks(connection: TailscaleConnection): Promise<TaskConfig[]>;
+    getEnvVars(): Promise<EnvVarWithValue[]>;
+    getTasks(): Promise<TaskConfig[]>;
+    getAdditionalContainerImages(): Promise<string[]>;
 }
 
 export class TailscaleWorkspaceModifier implements ConnectionsWorkspaceModifier {
@@ -40,6 +41,13 @@ export class TailscaleWorkspaceModifier implements ConnectionsWorkspaceModifier 
                 `,
             },
         ];
+    }
+
+    async getAdditionalContainerImages(): Promise<string[]> {
+        if (!this.connection.imageLayer) {
+            return [];
+        }
+        return [this.connection.imageLayer];
     }
 }
 
@@ -73,5 +81,9 @@ export class GCloudAdcWorkspaceModifier implements ConnectionsWorkspaceModifier 
                 fi`,
             },
         ];
+    }
+
+    async getAdditionalContainerImages(): Promise<string[]> {
+        return [];
     }
 }

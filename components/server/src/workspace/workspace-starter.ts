@@ -111,7 +111,11 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
-import { GCloudAdcWorkspaceModifier, TailscaleWorkspaceModifier } from "./connections-workspace-modifier";
+import {
+    ConnectionsWorkspaceModifier,
+    GCloudAdcWorkspaceModifier,
+    TailscaleWorkspaceModifier,
+} from "./connections-workspace-modifier";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -594,6 +598,14 @@ export class WorkspaceStarter {
             }
         }
 
+        const connectionModifiers = await this.getProjectConnectionWorkspaceModifiers(workspace.projectId);
+        let additionalImages: string[] = [];
+        for (const modifier of connectionModifiers) {
+            const connectionImages = await modifier.getAdditionalContainerImages();
+            additionalImages = additionalImages.concat(connectionImages);
+        }
+        configuration.additionalImages = additionalImages;
+
         let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
         featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
@@ -1020,17 +1032,7 @@ export class WorkspaceStarter {
             allEnvVars = allEnvVars.concat(context.envvars);
         }
 
-        const project = workspace.projectId ? await this.projectDB.findProjectById(workspace.projectId) : undefined;
-        const connectionModifiers = (project?.connections || []).map((c) => {
-            switch (c.id) {
-                case "tailscale":
-                    return new TailscaleWorkspaceModifier(c as TailscaleConnection);
-                case "gcp-adc":
-                    return new GCloudAdcWorkspaceModifier(c as GCloudAdcConnection);
-                default:
-                    throw new Error(`unknown project connection ${c.id}`);
-            }
-        });
+        const connectionModifiers = await this.getProjectConnectionWorkspaceModifiers(workspace.projectId);
         for (const modifier of connectionModifiers) {
             const connectionEnvVars = await modifier.getEnvVars();
             allEnvVars = allEnvVars.concat(connectionEnvVars);
@@ -1560,5 +1562,24 @@ export class WorkspaceStarter {
             .filter((f) => !!f) as WorkspaceFeatureFlag[];
 
         return result;
+    }
+
+    protected async getProjectConnectionWorkspaceModifiers(
+        projectId: string | undefined,
+    ): Promise<ConnectionsWorkspaceModifier[]> {
+        if (!projectId) {
+            return [];
+        }
+        const project = await this.projectDB.findProjectById(projectId);
+        return (project?.connections || []).map((c) => {
+            switch (c.id) {
+                case "tailscale":
+                    return new TailscaleWorkspaceModifier(c as TailscaleConnection);
+                case "gcp-adc":
+                    return new GCloudAdcWorkspaceModifier(c as GCloudAdcConnection);
+                default:
+                    throw new Error(`unknown project connection ${c.id}`);
+            }
+        });
     }
 }

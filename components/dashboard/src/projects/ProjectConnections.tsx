@@ -22,7 +22,7 @@ export function getMockedConnectionTypes() {
         {
             id: "tailscale",
             name: "Tailscale",
-            attributes: ["authKey"],
+            attributes: ["authKey", "imageLayer"],
         },
         {
             id: "gcp-adc",

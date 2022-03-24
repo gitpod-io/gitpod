@@ -221,6 +221,9 @@ export interface WorkspaceInstanceConfiguration {
 
     // supervisorImage is the ref of the supervisor image this instance uses.
     supervisorImage?: string;
+
+    // additionalImages is a list of refs of images that are put on top of the ide, desktopIde and supervisorImage
+    additionalImages?: string[];
 }
 
 /**
