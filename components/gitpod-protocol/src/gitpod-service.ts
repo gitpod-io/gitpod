@@ -179,6 +179,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
     setProjectConnection(projectId: string, connection: Connection): Promise<void>;
+    getProjectConnections(projectId: string): Promise<Connection[]>;
 
     // content service
     getContentBlobUploadUrl(name: string): Promise<string>;
@@ -269,6 +270,11 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     trackEvent(event: RemoteTrackMessage): Promise<void>;
     trackLocation(event: RemotePageMessage): Promise<void>;
     identifyUser(event: RemoteIdentifyMessage): Promise<void>;
+
+    /**
+     * Gitpod Connections 🚀
+     */
+    // getConnectionTypes(): Promise<ConnectionType>
 }
 
 export interface RateLimiterError {
