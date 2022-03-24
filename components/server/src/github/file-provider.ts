@@ -18,6 +18,14 @@ export class GithubFileProvider implements FileProvider {
     @inject(GitHubRestApi) protected readonly githubApi: GitHubRestApi;
 
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
+        const yamlVersion1 = await Promise.all([
+            this.getFileContent(commit, user, ".gitpod.yml"),
+            this.getFileContent(commit, user, ".gitpod"),
+        ]);
+
+        const yamlToUse = yamlVersion1.filter((f) => !!f)[0];
+        if (yamlToUse) return yamlToUse;
+
         try {
             const content = await this.getFileContent(commit, user, ".devcontainer/devcontainer.json");
             if (content) {
@@ -33,12 +41,6 @@ export class GithubFileProvider implements FileProvider {
             // TODO: LOG something
             log.error({}, "HACK: catch getGitpodFileContent err" + e.message);
         }
-
-        const yamlVersion1 = await Promise.all([
-            this.getFileContent(commit, user, ".gitpod.yml"),
-            this.getFileContent(commit, user, ".gitpod"),
-        ]);
-        return yamlVersion1.filter((f) => !!f)[0];
     }
 
     public async getLastChangeRevision(
