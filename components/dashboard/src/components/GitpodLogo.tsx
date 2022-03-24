@@ -1,4 +1,4 @@
-import React from "react";
+// import React from "react";
 import { useLabsStorage } from "../settings/LabsStorage";
 import gitpodLogo from "../images/gitpod.svg";
 

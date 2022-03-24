@@ -12652,6 +12652,11 @@ ospath@^1.2.2:
   resolved "https://registry.yarnpkg.com/ospath/-/ospath-1.2.2.tgz#1276639774a3f8ef2572f7fe4280e0ea4550c07b"
   integrity sha1-EnZjl3Sj+O8lcvf+QoDg6kVQwHs=
 
+owoifyx@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/owoifyx/-/owoifyx-1.0.3.tgz#afa84e1b02ae074c20f752c60dde7116b49e5ad9"
+  integrity sha512-PCONXQ82jA5AxELVZuPEUlMfyKUmonXIHwrMvjtt458koOWh5jqFECmtnqx9GaGcH9QqTLOWOLOpNtsb0ma1jQ==
+
 p-cancelable@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/p-cancelable/-/p-cancelable-1.1.0.tgz#d078d15a3af409220c886f1d9a0ca2e441ab26cc"
