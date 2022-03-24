@@ -135,14 +135,15 @@ export default function Insights() {
         chart.update(data);
     }, []);
 
-    const win = iframeRef?.current?.contentWindow;
-    const doc = iframeRef?.current?.contentDocument || win?.document
 
     useEffect(() => {
+        const win = iframeRef?.current?.contentWindow;
+        const doc = iframeRef?.current?.contentDocument || win?.document
+        console.log('doc?.readyState', doc?.readyState);
         if (win && doc && doc.readyState === 'complete') {
             win.postMessage(getData());
         }
-    }, [win, doc, doc?.readyState]);
+    }, [iframeRef?.current?.contentWindow, iframeRef?.current?.contentDocument, (iframeRef?.current?.contentDocument || win?.document)?.readyState]);
 
     useEffect(() => {
         getGitpodService().server.getProjectUsageData('').then(data => {
