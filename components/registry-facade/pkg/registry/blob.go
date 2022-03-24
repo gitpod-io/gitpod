@@ -153,7 +153,8 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 			// to be in the blobstore when in reality it isn't.
 			_, _, rc, err := src.GetBlob(context.Background(), bh.Spec, bh.Digest)
 			if err != nil {
-				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS")
+				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS - unable to get blob")
+				return
 			}
 			if rc == nil {
 				log.WithField("digest", bh.Digest).Warn("cannot push to IPFS - blob is nil")

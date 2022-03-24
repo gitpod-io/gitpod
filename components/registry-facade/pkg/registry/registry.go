@@ -192,11 +192,16 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 
 	var ipfs *IPFSStore
 	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
-		addr, err := ma.NewMultiaddr(strings.TrimSpace(string(cfg.IPFSCache.IPFSAddr)))
+		addr := cfg.IPFSCache.IPFSAddr
+		if ipfsHost := os.Getenv("IPFS_HOST"); ipfsHost != "" {
+			addr = strings.ReplaceAll(addr, "$IPFS_HOST", ipfsHost)
+		}
+
+		maddr, err := ma.NewMultiaddr(strings.TrimSpace(addr))
 		if err != nil {
 			return nil, xerrors.Errorf("cannot connect to IPFS: %w", err)
 		}
-		core, err := httpapi.NewApi(addr)
+		core, err := httpapi.NewApi(maddr)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot connect to IPFS: %w", err)
 		}

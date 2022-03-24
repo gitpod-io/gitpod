@@ -42,6 +42,10 @@ type IPFSStore struct {
 }
 
 func (store *IPFSStore) Get(ctx context.Context, dgst digest.Digest) (ipfsURL string, err error) {
+	if store == nil || store.IPFS == nil || store.Redis == nil {
+		return "", nil
+	}
+
 	res, err := store.Redis.Get(ctx, dgst.String()).Result()
 	if err != nil {
 		return "", err
@@ -51,6 +55,10 @@ func (store *IPFSStore) Get(ctx context.Context, dgst digest.Digest) (ipfsURL st
 }
 
 func (store *IPFSStore) Has(ctx context.Context, dgst digest.Digest) (ok bool, err error) {
+	if store == nil || store.IPFS == nil || store.Redis == nil {
+		return false, nil
+	}
+
 	res := store.Redis.Exists(ctx, dgst.String())
 	if err := res.Err(); err != nil {
 		return false, err
@@ -60,12 +68,16 @@ func (store *IPFSStore) Has(ctx context.Context, dgst digest.Digest) (ok bool, e
 }
 
 func (store *IPFSStore) Store(ctx context.Context, dgst digest.Digest, content io.Reader) (err error) {
+	if store == nil || store.IPFS == nil || store.Redis == nil {
+		return nil
+	}
+
 	p, err := store.IPFS.Unixfs().Add(ctx, files.NewReaderFile(content), options.Unixfs.Pin(true), options.Unixfs.CidVersion(1))
 	if err != nil {
 		return err
 	}
 
-	res := store.Redis.Set(ctx, dgst.String(), p.Cid().String(), 36*time.Hour)
+	res := store.Redis.Set(ctx, dgst.String(), p.Cid().String(), 0)
 	if err := res.Err(); err != nil {
 		return err
 	}
