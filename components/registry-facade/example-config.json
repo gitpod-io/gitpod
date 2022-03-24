@@ -1,7 +1,7 @@
 {
   "dockerAuth": "/home/gitpod/.docker/config.json",
   "registry": {
-    "port": 8080,
+    "port": 9090,
     "staticLayer": [
       {
         "type": "file",
@@ -10,7 +10,11 @@
     ],
     "store": "/tmp/store",
     "requireAuth": false,
-    "fixedSpecFN": "example-spec.json"
+    "fixedSpecFN": "example-spec.json",
+    "ipfs": {
+      "enabled": true,
+      "redisAddr": "localhost:6379"
+    }
   },
   "blobserve": {
     "port": 8081,
