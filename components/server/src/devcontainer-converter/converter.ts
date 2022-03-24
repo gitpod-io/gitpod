@@ -47,7 +47,7 @@ export const toGitpod = (containerFile: DevContainer) => {
     //@ts-ignore
     let gitpodConfig: GitpodConfig = { tasks: [], image: {} };
 
-    if (containerFile.postStartCommand) {
+    if (containerFile.postStartCommand || containerFile.postCreateCommand) {
         const before =
             typeof containerFile.postCreateCommand === "string"
                 ? containerFile.postCreateCommand
@@ -124,13 +124,40 @@ export const toGitpod = (containerFile: DevContainer) => {
 
 // For testing:
 
-// console.log(
-//     JSON.stringify(
-//         toGitpod({
-//             name: "xterm.js",
-//             dockerFile: "Dockerfile",
-//             appPort: 3000,
-//             extensions: ["dbaeumer.vscode-eslint", "editorconfig.editorconfig", "hbenl.vscode-mocha-test-adapter"],
-//         }),
-//     ),
-// );
+console.log(
+    JSON.stringify(
+        toGitpod({
+            image: "mcr.microsoft.com/vscode/devcontainers/base:ubuntu-20.04",
+            settings: {
+                "[typescript]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode",
+                    "editor.formatOnSave": true,
+                },
+                "[json]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode",
+                    "editor.formatOnSave": true,
+                },
+                "[jsonc]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode",
+                    "editor.formatOnSave": true,
+                },
+            },
+            extensions: [
+                "dbaeumer.vscode-eslint",
+                "orta.vscode-jest",
+                "esbenp.prettier-vscode",
+                "streetsidesoftware.code-spell-checker",
+            ],
+            forwardPorts: [3000],
+            containerUser: "vscode",
+            postCreateCommand: "yarn install",
+            waitFor: "postCreateCommand", // otherwise automated jest tests fail
+            features: {
+                node: {
+                    version: "14",
+                },
+                "github-cli": "latest",
+            },
+        }),
+    ),
+);
