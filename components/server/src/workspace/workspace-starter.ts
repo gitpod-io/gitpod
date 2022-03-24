@@ -116,6 +116,7 @@ import {
     GCloudAdcWorkspaceModifier,
     TailscaleWorkspaceModifier,
 } from "./connections-workspace-modifier";
+import { ConnectionsProvider } from "./connections-provider";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -144,6 +145,7 @@ export class WorkspaceStarter {
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(ContextParser) protected contextParser: ContextParser;
+    @inject(ConnectionsProvider) protected connectionProvider: ConnectionsProvider;
 
     public async startWorkspace(
         ctx: TraceContext,

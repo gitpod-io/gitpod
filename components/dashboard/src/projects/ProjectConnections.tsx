@@ -6,31 +6,13 @@
 
 import { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
-import { Connection, Project, Team } from "@gitpod/gitpod-protocol";
-// import CheckBox from "../components/CheckBox";
+import { Connection, ConnectionType, Project, Team } from "@gitpod/gitpod-protocol";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-// import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
 import { getGitpodService } from "../service/service";
 import PillLabel from "../components/PillLabel";
 import CheckBox from "../components/CheckBox";
-
-// TODO(at) retrieve from server
-export function getMockedConnectionTypes() {
-    return [
-        {
-            id: "tailscale",
-            name: "Tailscale",
-            attributes: ["authKey", "imageLayer"],
-        },
-        {
-            id: "gcp-adc",
-            name: "Google Cloud Platform - Application Default Credentials",
-            attributes: ["serviceAccount"],
-        },
-    ];
-}
 
 export function getProjectConnectionsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? "t/" + team.slug : "projects";
@@ -73,8 +55,13 @@ export function ProjectConnectionsPage(props: { project?: Project; children?: Re
 export default function () {
     const { project } = useContext(ProjectContext);
 
+    const [connectionTypes, setConnectionTypes] = useState<{ [key: string]: ConnectionType }>({});
     const [connections, setConnections] = useState<Connection[]>([]);
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
+
+    useEffect(() => {
+        updateConnectionTypes();
+    }, []);
 
     useEffect(() => {
         if (!project) {
@@ -82,6 +69,11 @@ export default function () {
         }
         updateConnections();
     }, [project]);
+
+    const updateConnectionTypes = async () => {
+        const connectionTypes = await getGitpodService().server.getConnectionTypes();
+        setConnectionTypes(connectionTypes);
+    };
 
     const updateConnections = async () => {
         if (!project) {
@@ -102,8 +94,8 @@ export default function () {
         const updated = [...connections];
         const connection = updated.find((c) => c.id === connectionId);
         (connection as any)[attribute] = newValue;
+        setConnections(updated);
         await getGitpodService().server.setProjectConnections(project.id, updated);
-        updateConnections();
     };
 
     const toggleConnectionEnabled = async (id: string, newState: boolean) => {
@@ -140,58 +132,55 @@ export default function () {
                     />
                 </div>
             </div>
-            {getMockedConnectionTypes()
-                .map((type, i) => ({
-                    type,
-                    i,
-                    connection: getConnection(type.id),
-                    attributes: type.attributes,
-                }))
-                .filter((c) => {
-                    if (!searchFilter) {
-                        return true;
-                    }
-                    return c.type.name.toLowerCase().includes(searchFilter.toLowerCase());
-                })
-                .map((c) => {
-                    const { type, i, connection, attributes } = c;
-                    return (
-                        <>
-                            <CheckBox
-                                key={`type-${type}-${i}`}
-                                title={
-                                    <span>
-                                        Enable {type.name}
-                                        <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">
-                                            🚀
-                                        </PillLabel>
-                                    </span>
-                                }
-                                desc={
-                                    <span>
-                                        {!!connection &&
-                                            attributes.map((attribute, i) => (
-                                                <div className="mt-4" key={`attribute-${attribute}-${i}`}>
-                                                    <h4>{attribute}</h4>
-                                                    <input
-                                                        className="w-full"
-                                                        type="text"
-                                                        name="value"
-                                                        value={(connection as any)[attribute]}
-                                                        onChange={(e) =>
-                                                            updateConnection(connection.id, attribute, e.target.value)
-                                                        }
-                                                    />
-                                                </div>
-                                            ))}
-                                    </span>
-                                }
-                                checked={!!connection}
-                                onChange={() => toggleConnectionEnabled(type.id, !connection)}
-                            />
-                        </>
-                    );
-                })}
+            {Object.keys(connectionTypes).map((connectionTypeId, i) => {
+                const connectionType = connectionTypes[connectionTypeId];
+                const connection = getConnection(connectionTypeId);
+
+                if (
+                    !connection ||
+                    (searchFilter && connectionType.name.toLowerCase().includes(searchFilter.toLowerCase()))
+                ) {
+                    return undefined;
+                }
+
+                const attributes = connectionType.attributes;
+                return (
+                    <>
+                        <CheckBox
+                            key={`type-${connectionType}-${i}`}
+                            title={
+                                <span>
+                                    Enable {connectionTypeId}{" "}
+                                    <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">
+                                        🚀
+                                    </PillLabel>
+                                </span>
+                            }
+                            desc={
+                                <span>
+                                    {!!connection &&
+                                        attributes.map((attribute, i) => (
+                                            <div className="mt-4" key={`attribute-${attribute}-${i}`}>
+                                                <h4>{attribute}</h4>
+                                                <input
+                                                    className="w-full"
+                                                    type="text"
+                                                    name="value"
+                                                    value={(connection as any)[attribute]}
+                                                    onChange={(e) =>
+                                                        updateConnection(connection.id, attribute, e.target.value)
+                                                    }
+                                                />
+                                            </div>
+                                        ))}
+                                </span>
+                            }
+                            checked={!!connection}
+                            onChange={() => toggleConnectionEnabled(connectionTypeId, !connection)}
+                        />
+                    </>
+                );
+            })}
         </ProjectConnectionsPage>
     );
 }

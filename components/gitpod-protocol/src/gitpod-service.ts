@@ -51,7 +51,7 @@ import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } 
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
-import { Connection } from "./connections";
+import { Connection, ConnectionType } from "./connections";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -274,7 +274,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     /**
      * Gitpod Connections 🚀
      */
-    // getConnectionTypes(): Promise<ConnectionType>
+    getConnectionTypes(): Promise<{ [key: string]: ConnectionType }>;
 }
 
 export interface RateLimiterError {

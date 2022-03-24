@@ -107,6 +107,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         deleteProject: { group: "default", points: 1 },
         setProjectConnections: { group: "default", points: 1 },
         getProjectConnections: { group: "default", points: 1 },
+        getConnectionTypes: { group: "default", points: 1 },
         findPrebuilds: { group: "default", points: 1 },
         getProjectOverview: { group: "default", points: 1 },
         triggerPrebuild: { group: "default", points: 1 },

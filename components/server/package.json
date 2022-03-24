@@ -9,8 +9,9 @@
     "start-ee": "node --expose-gc ./dist/ee/src/main.js",
     "start-ee-inspect": "node --inspect=9229 ./dist/ee/src/main.js",
     "prepare": "yarn clean && yarn build",
-    "build": "yarn lint && npx tsc",
+    "build": "yarn lint && npx tsc && yarn run copy-connections-file",
     "build:clean": "yarn clean && yarn build",
+    "copy-connections-file": "cp ./connections.yml ./dist/",
     "rebuild": "yarn build:clean",
     "build:watch": "watch 'yarn build' .",
     "watch": "leeway exec --package .:app --transitive-dependencies --filter-type yarn --components --parallel -- yarn build -w --preserveWatchOutput",
@@ -24,6 +25,7 @@
     "telepresence": "leeway run .:telepresence"
   },
   "files": [
+    "connections.yml",
     "/dist"
   ],
   "dependencies": {

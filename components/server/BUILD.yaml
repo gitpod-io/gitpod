@@ -7,6 +7,7 @@ packages:
       - "test/**"
       - package.json
       - mocha.opts
+      - connections.yml
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
@@ -45,6 +46,7 @@ packages:
       - package.json
       - mocha.opts
       - tslint.yaml
+      - connections.yml
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
@@ -69,6 +71,7 @@ packages:
       - "**/*.ts"
       - package.json
       - mocha.opts
+      - connections.yml
     deps:
       - components/gitpod-db:dbtest-init
       - components/gitpod-db:lib

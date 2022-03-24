@@ -1,0 +1,18 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+- tailscale:
+    attributes:
+      - AUTH_KEY
+    envVars:
+    tasks:
+      - tailscaled: |-
+          curl -fsSL https://tailscale.com/install.sh | sh
+          gp sync-done tailscale-install
+          sudo tailscaled
+      - tailscale: |-
+          gp sync-await tailscale-install
+          sudo -E tailscale up --authkey ${AUTH_KEY}
+
+

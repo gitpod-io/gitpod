@@ -76,6 +76,7 @@ import {
     ClientHeaderFields,
     Permission,
     SnapshotContext,
+    ConnectionType,
 } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import {
@@ -158,6 +159,7 @@ import { ProjectEnvVar } from "@gitpod/gitpod-protocol/src/protocol";
 import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
+import { ConnectionsProvider } from "./connections-provider";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -221,6 +223,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
 
     @inject(IDEConfigService) protected readonly ideConfigService: IDEConfigService;
+
+    @inject(ConnectionsProvider) protected readonly connectionsProvider: ConnectionsProvider;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -2958,5 +2962,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `could not find project for id ${projectId}`);
         }
         return project.connections || [];
+    }
+
+    async getConnectionTypes(ctx: TraceContext): Promise<{ [key: string]: ConnectionType }> {
+        traceAPIParams(ctx, {});
+        this.checkUser("getConnectionTypes");
+
+        return this.connectionsProvider.getConnectionTypes();
     }
 }
