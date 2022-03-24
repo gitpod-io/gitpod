@@ -1236,3 +1236,7 @@ export interface Terms {
     readonly content: string;
     readonly formElements?: object;
 }
+
+export interface ProjectLanguages {
+    [language: string]: number;
+}

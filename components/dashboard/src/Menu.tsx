@@ -50,11 +50,15 @@ export default function Menu() {
     const prebuildId = (() => {
         const resource = projectSlug && match?.params?.segment3;
         if (
-            resource !== "workspaces" &&
-            resource !== "prebuilds" &&
-            resource !== "settings" &&
-            resource !== "configure" &&
-            resource !== "variables"
+            resource &&
+            ![
+                // project sub-pages
+                "prebuilds",
+                "settings",
+                "configure",
+                "variables",
+                "insights",
+            ].includes(resource)
         ) {
             return resource;
         }
@@ -135,6 +139,10 @@ export default function Menu() {
                     link: `${teamOrUserSlug}/${projectSlug}/settings`,
                     alternatives: getProjectSettingsMenu({ slug: projectSlug } as Project, team).flatMap((e) => e.link),
                 },
+                {
+                    title: "Insights",
+                    link: `${teamOrUserSlug}/${projectSlug}/insights`,
+                },
             ];
         }
         // Team menu
@@ -190,6 +198,10 @@ export default function Menu() {
                   },
               ]
             : []),
+        {
+            title: "🧼 BUBBLES",
+            link: "/insights",
+        },
         {
             title: "Docs",
             link: "https://www.gitpod.io/docs/",

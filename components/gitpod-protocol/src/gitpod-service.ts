@@ -24,6 +24,7 @@ import {
     GuessGitTokenScopesParams,
     GuessedGitTokenScopes,
     ProjectEnvVar,
+    ProjectLanguages,
 } from "./protocol";
 import {
     Team,
@@ -177,6 +178,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void>;
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
+
+    getProjectLanguages(cloneUrl: string): Promise<ProjectLanguages>;
+    getProjectUsageData(cloneUrl: string): Promise<object>;
 
     // content service
     getContentBlobUploadUrl(name: string): Promise<string>;

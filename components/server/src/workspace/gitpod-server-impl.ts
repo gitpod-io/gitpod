@@ -75,6 +75,8 @@ import {
     ClientHeaderFields,
     Permission,
     SnapshotContext,
+    ProjectLanguages,
+    Repository,
 } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import {
@@ -1938,6 +1940,32 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return [];
         }
         return await this.projectsService.getProjectEnvironmentVariables(projectId);
+    }
+
+    async getProjectLanguages(ctx: TraceContext, cloneUrl: string): Promise<ProjectLanguages> {
+        const user = this.checkUser("getProjectLanguages");
+        const repoUrl = RepoURL.parseRepoUrl(cloneUrl);
+        if (!repoUrl) {
+            throw new Error("OH NO");
+        }
+
+        const { host, owner, repo } = repoUrl;
+        const hostContext = this.hostContextProvider.get(host);
+        if (!hostContext || !hostContext.services) {
+            throw new Error("OH NO");
+        }
+        const languagesProvider = hostContext.services.languagesProvider;
+        const repository: Repository = {
+            owner,
+            name: repo,
+            host,
+            cloneUrl,
+        }
+        return languagesProvider.getLanguages(repository, user) as Promise<ProjectLanguages>;
+    }
+
+    async getProjectUsageData(ctx: TraceContext, cloneUrl: string): Promise<object> {
+        return {};
     }
 
     protected async guardTeamOperation(teamId: string | undefined, op: ResourceAccessOp): Promise<void> {

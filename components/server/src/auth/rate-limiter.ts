@@ -91,6 +91,8 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         setProjectEnvironmentVariable: { group: "default", points: 1 },
         getProjectEnvironmentVariables: { group: "default", points: 1 },
         deleteProjectEnvironmentVariable: { group: "default", points: 1 },
+        getProjectLanguages: { group: "default", points: 1 },
+        getProjectUsageData: { group: "default", points: 1 },
         getTeams: { group: "default", points: 1 },
         getTeamMembers: { group: "default", points: 1 },
         createTeam: { group: "default", points: 1 },

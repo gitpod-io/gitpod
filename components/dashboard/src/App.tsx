@@ -70,6 +70,7 @@ const ProjectVariables = React.lazy(() => import(/* webpackPrefetch: true */ "./
 const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Prebuilds"));
 const Prebuild = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Prebuild"));
 const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/InstallGitHubApp"));
+const ProjectInsights = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ProjectInsights"));
 const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ "./FromReferrer"));
 const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/UserSearch"));
 const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/WorkspacesSearch"));
@@ -77,6 +78,7 @@ const AdminSettings = React.lazy(() => import(/* webpackPrefetch: true */ "./adm
 const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/ProjectsSearch"));
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/TeamsSearch"));
 const OAuthClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ "./OauthClientApproval"));
+const Insights = React.lazy(() => import(/* webpackPrefetch: true */ "./Insights"));
 
 function Loading() {
     return <></>;
@@ -330,6 +332,7 @@ function App() {
                     <Route path={projectsPathNew} exact component={NewProject} />
                     <Route path="/open" exact component={Open} />
                     <Route path="/setup" exact component={Setup} />
+                    <Route path="/insights" exact component={Insights} />
                     <Route path={workspacesPathMain} exact component={Workspaces} />
                     <Route path={settingsPathAccount} exact component={Account} />
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
@@ -385,6 +388,9 @@ function App() {
                                 }
                                 if (resourceOrPrebuild === "prebuilds") {
                                     return <Prebuilds />;
+                                }
+                                if (resourceOrPrebuild === "insights") {
+                                    return <ProjectInsights />;
                                 }
                                 return resourceOrPrebuild ? <Prebuild /> : <Project />;
                             }}
