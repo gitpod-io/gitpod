@@ -164,10 +164,17 @@ func main() {
 					keyring.MockInit()
 					// }
 
+					url := c.Args().Get(0)
+					if url == "" {
+						return fmt.Errorf("Received empty URL")
+
+					}
+
 					return start(c.Context, startOpts{
 						origin:          c.String("gitpod-host"),
 						authRedirectUrl: c.String("auth-redirect-url"),
 						authTimeout:     c.Duration("auth-timeout"),
+						contextURL:      url,
 					})
 				},
 			},
@@ -183,6 +190,7 @@ type startOpts struct {
 	origin          string
 	authRedirectUrl string
 	authTimeout     time.Duration
+	contextURL      string
 }
 
 func start(ctx context.Context, opts startOpts) error {
@@ -204,7 +212,7 @@ func start(ctx context.Context, opts startOpts) error {
 	}
 
 	res, err := client.CreateWorkspace(ctx, &gitpod.CreateWorkspaceOptions{
-		ContextURL: "https://github.com/gitpod-io/gitpod",
+		ContextURL: opts.contextURL,
 	})
 
 	fmt.Println("create workspace", res, err)
