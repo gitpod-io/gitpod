@@ -185,11 +185,14 @@ func main() {
 
 					}
 
+					jumpToSSH := c.Bool("open-ssh")
+
 					return start(c.Context, startOpts{
 						origin:          c.String("gitpod-host"),
 						authRedirectUrl: c.String("auth-redirect-url"),
 						authTimeout:     c.Duration("auth-timeout"),
 						contextURL:      url,
+						jumpToSSH:       jumpToSSH,
 					})
 				},
 			},
@@ -231,16 +234,35 @@ func start(ctx context.Context, opts startOpts) error {
 	}
 
 	logrus.Infof("Created a new workspace with ID: %s", res.CreatedWorkspaceID)
-	logrus.Infof("You can access your workspace with %s", res.WorkspaceURL)
 
-	// -F /tmp/gitpod_ssh_config <your-workspace-id e.g.apricot-harrier-####>
-	cmd := exec.Command("ssh", "-F", "/tmp/gitpod_ssh_config", res.CreatedWorkspaceID)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	if opts.jumpToSSH {
 
-	time.Sleep(20 * time.Second)
-	return cmd.Run()
+		logrus.Infof("You can access your workspace with %s", res.WorkspaceURL)
+		return nil
+	} else {
+
+		// -F /tmp/gitpod_ssh_config <your-workspace-id e.g.apricot-harrier-####>
+		cmd := exec.Command("ssh", "-F", "/tmp/gitpod_ssh_config", res.CreatedWorkspaceID)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		ticker := time.NewTicker(time.Second)
+
+		for range ticker.C {
+			ws, err := client.GetWorkspace(ctx, res.CreatedWorkspaceID)
+			if err != nil {
+				return err
+			}
+			if ws.LatestInstance.Status.Phase == "starting" {
+				ticker.Stop()
+			}
+
+		}
+
+		time.Sleep(20 * time.Second)
+		return cmd.Run()
+	}
 
 	// return nil
 }
