@@ -4,15 +4,17 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import * as d3 from "d3";
 import { ProjectLanguages } from "@gitpod/gitpod-protocol";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { ProjectContext } from "./project-context";
-
+import PieChart from "../components/PieChart";
 
 export default function ProjectInsights() {
     const { project } = useContext(ProjectContext);
     const [projectLanguages, setProjectLanguages] = useState<ProjectLanguages>({});
+    const svgRef = useRef<SVGSVGElement>(null);
 
     useEffect(() => {
         getGitpodService().server.getProjectLanguages(project?.cloneUrl || '').then(languages => {
@@ -21,5 +23,21 @@ export default function ProjectInsights() {
         });
     }, [project]);
 
-    return <pre>{JSON.stringify(projectLanguages, null, 4)}</pre>;
+    useEffect(() => {
+        const width = 500;
+        const height = 500;
+        const chart = PieChart(Object.entries(projectLanguages).map(([name, value]) => { return { name, value }; }), {
+            name: (d: any) => d.name,
+            value: (d: any) => d.value,
+            width,
+            height,
+        });
+        const svg = d3.select(svgRef.current).attr("viewBox", [0, 0, width, height]);
+        console.log(chart, svg);
+    }, [projectLanguages]);
+
+    return <div>
+        <pre>{JSON.stringify(projectLanguages, null, 4)}</pre>
+        <svg className="container" ref={svgRef}></svg>
+    </div>;
 }
