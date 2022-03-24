@@ -1974,6 +1974,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("createTeam");
         const team = await this.teamDB.createTeam(user.id, name);
+        const invite = await this.getGenericInvite(ctx, team.id);
         ctx.span?.setTag("teamId", team.id);
         this.analytics.track({
             userId: user.id,
@@ -1983,6 +1984,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 name: team.name,
                 slug: team.slug,
                 created_at: team.creationTime,
+                invite_id: invite.id,
             },
         });
         return team;
