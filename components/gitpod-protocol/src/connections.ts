@@ -13,3 +13,7 @@ export interface Connection {
 export interface TailscaleConnection extends Connection {
     authKey: string;
 }
+
+export interface GCloudAdcConnection extends Connection {
+    serviceAccount: string;
+}

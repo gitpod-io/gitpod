@@ -21,7 +21,13 @@ export function getMockedConnectionTypes() {
     return [
         {
             id: "tailscale",
+            name: "Tailscale",
             attributes: ["authKey"],
+        },
+        {
+            id: "gcp-adc",
+            name: "Google Cloud Platform - Application Default Credentials",
+            attributes: ["serviceAccount"],
         },
     ];
 }
@@ -125,7 +131,7 @@ export default function () {
                             key={`type-${type}-${i}`}
                             title={
                                 <span>
-                                    Enable Tailscale{" "}
+                                    Enable {type.name}
                                     <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">
                                         🚀
                                     </PillLabel>

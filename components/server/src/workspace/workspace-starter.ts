@@ -58,6 +58,7 @@ import {
     ProjectEnvVar,
     ImageBuildLogInfo,
     TailscaleConnection,
+    GCloudAdcConnection,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -110,7 +111,7 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
-import { TailscaleWorkspaceModifier } from "./connections-workspace-modifier";
+import { GCloudAdcWorkspaceModifier, TailscaleWorkspaceModifier } from "./connections-workspace-modifier";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -1024,6 +1025,8 @@ export class WorkspaceStarter {
             switch (c.id) {
                 case "tailscale":
                     return new TailscaleWorkspaceModifier(c as TailscaleConnection);
+                case "gcp-adc":
+                    return new GCloudAdcWorkspaceModifier(c as GCloudAdcConnection);
                 default:
                     throw new Error(`unknown project connection ${c.id}`);
             }

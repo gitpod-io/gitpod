@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { EnvVarWithValue, TailscaleConnection, TaskConfig } from "@gitpod/gitpod-protocol";
+import { EnvVarWithValue, GCloudAdcConnection, TailscaleConnection, TaskConfig } from "@gitpod/gitpod-protocol";
 
 export interface ConnectionsWorkspaceModifier {
     getEnvVars(connection: TailscaleConnection): Promise<EnvVarWithValue[]>;
@@ -38,6 +38,39 @@ export class TailscaleWorkspaceModifier implements ConnectionsWorkspaceModifier 
                 gp sync-await tailscale-install
                 sudo -E tailscale up --authkey ${connection.authKey}
                 `,
+            },
+        ];
+    }
+}
+
+export class GCloudAdcWorkspaceModifier implements ConnectionsWorkspaceModifier {
+    constructor(readonly connection: GCloudAdcConnection) {}
+
+    static readonly GCLOUD_ADC_PATH = "/home/gitpod/.config/gcloud/application_default_credentials.json";
+
+    async getEnvVars(): Promise<EnvVarWithValue[]> {
+        return [
+            {
+                name: "GOOGLE_APPLICATION_CREDENTIALS",
+                value: GCloudAdcWorkspaceModifier.GCLOUD_ADC_PATH,
+            },
+        ];
+    }
+
+    async getTasks(): Promise<TaskConfig[]> {
+        const connection = this.connection;
+        if (!connection.serviceAccount) {
+            return [];
+        }
+        return [
+            {
+                name: "GCloud ADC",
+                command: `
+                GCLOUD_ADC_PATH="${GCloudAdcWorkspaceModifier.GCLOUD_ADC_PATH}"
+                if [ ! -f "$GCLOUD_ADC_PATH" ]; then
+                    mkdir -p $(dirname $GCLOUD_ADC_PATH)
+                    echo '${connection.serviceAccount}' > "$GCLOUD_ADC_PATH"
+                fi`,
             },
         ];
     }
