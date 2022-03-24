@@ -87,27 +87,27 @@ export default function () {
         return connections.find((c) => c.type === id);
     };
 
-    const updateConnection = async (connectionId: string, attribute: string, newValue: string) => {
+    const updateConnection = async (connectionTypeId: string, attribute: string, newValue: string) => {
         if (!project) {
             return;
         }
         const updated = [...connections];
-        const connection = updated.find((c) => c.id === connectionId);
+        const connection = updated.find((c) => c.type === connectionTypeId);
         (connection as any)[attribute] = newValue;
         setConnections(updated);
         await getGitpodService().server.setProjectConnections(project.id, updated);
     };
 
-    const toggleConnectionEnabled = async (id: string, newState: boolean) => {
+    const toggleConnectionEnabled = async (connectionTypeId: string, newState: boolean) => {
         if (!project) {
             return;
         }
         let updated = [...connections];
         if (newState) {
-            const type = connectionTypes.find((t) => t.id === id);
+            const type = connectionTypes.find((t) => t.id === connectionTypeId);
             updated.push({ type: type!.id });
         } else {
-            updated = updated.filter((c) => c.id !== id);
+            updated = updated.filter((c) => c.type !== connectionTypeId);
         }
         await getGitpodService().server.setProjectConnections(project.id, updated);
         updateConnections();
@@ -165,7 +165,7 @@ export default function () {
                                                     name="value"
                                                     value={(connection as any)[attribute]}
                                                     onChange={(e) =>
-                                                        updateConnection(connection.id, attribute, e.target.value)
+                                                        updateConnection(connection.type, attribute, e.target.value)
                                                     }
                                                 />
                                             </div>

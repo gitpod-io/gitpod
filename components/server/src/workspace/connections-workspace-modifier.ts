@@ -12,7 +12,7 @@ export class ConnectionsWorkspaceModifier {
     protected render(template: string) {
         let result = template;
         for (const attribute of this.type.attributes) {
-            result.replace(`\$\{${attribute}\}`, this.connection[attribute]);
+            result?.replace(`\$\{${attribute}\}`, this.connection[attribute]);
         }
         return result;
     }
