@@ -20,7 +20,7 @@ import CheckBox from "../components/CheckBox";
 export function getMockedConnectionTypes() {
     return [
         {
-            id: "Tailscale",
+            id: "tailscale",
             attributes: ["scheme"],
         },
     ];
