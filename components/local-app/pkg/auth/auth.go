@@ -37,6 +37,7 @@ var authScopes = []string{
 	"function:listenForWorkspaceInstanceUpdates",
 	"resource:default",
 	"function:createWorkspace",
+	"function:stopWorkspace",
 }
 
 type ErrInvalidGitpodToken struct {

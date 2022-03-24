@@ -205,6 +205,43 @@ func main() {
 					})
 				},
 			},
+			{
+				Name:  "stop",
+				Usage: "Stop a workspace based on a context-URL",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "ssh",
+						Usage: "Open SSH Connection once the workspace started",
+						Value: false,
+					},
+					&cli.StringFlag{
+						Name:  "gitpod-host",
+						Usage: "URL of the Gitpod installation to connect to",
+						Value: "https://mp-gitpod-cli.staging.gitpod-dev.com",
+					},
+					&cli.BoolFlag{
+						Name:  "mock-keyring",
+						Usage: "Don't use system native keyring, but store Gitpod token in memory",
+					},
+				},
+				Action: func(c *cli.Context) error {
+					if c.Bool("mock-keyring") {
+						keyring.MockInit()
+					}
+
+					workspaceID := c.Args().Get(0)
+					if workspaceID == "" {
+						return fmt.Errorf("No Workspace ID specified")
+					}
+
+					return stop(c.Context, stopOpts{
+						origin:          c.String("gitpod-host"),
+						authRedirectUrl: c.String("auth-redirect-url"),
+						authTimeout:     c.Duration("auth-timeout"),
+						workspaceID:     workspaceID,
+					})
+				},
+			},
 		},
 	}
 	err := app.Run(os.Args)
@@ -219,6 +256,33 @@ type startOpts struct {
 	authTimeout     time.Duration
 	contextURL      string
 	jumpToSSH       bool
+}
+
+type stopOpts struct {
+	origin          string
+	authRedirectUrl string
+	authTimeout     time.Duration
+
+	workspaceID string
+}
+
+func stop(ctx context.Context, opts stopOpts) error {
+	origin := strings.TrimRight(opts.origin, "/")
+
+	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectUrl, AuthTimeout: opts.authTimeout}, func() {
+		fmt.Println("reconnect")
+	}, func(err error) {
+		fmt.Println("close handler", err)
+		os.Exit(1)
+	})
+
+	err = client.StopWorkspace(ctx, opts.workspaceID)
+	if err != nil {
+		return fmt.Errorf("failed to stop workspace with ID: %s: %w", opts.workspaceID, err)
+	}
+
+	logrus.Infof("Stopped workpsace with ID: %s", opts.workspaceID)
+	return nil
 }
 
 func start(ctx context.Context, opts startOpts) error {

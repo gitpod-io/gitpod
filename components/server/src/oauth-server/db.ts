@@ -33,6 +33,7 @@ const localClient: OAuthClient = {
         { name: "function:listenForWorkspaceInstanceUpdates" },
         { name: "resource:default" },
         { name: "function:createWorkspace" },
+        { name: "function:stopWorkspace" },
     ],
 };
 
