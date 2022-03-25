@@ -7,12 +7,10 @@ package main
 import (
 	_ "embed"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"time"
 
 	"context"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,14 +23,14 @@ import (
 	"github.com/gitpod-io/local-app/pkg/bastion"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/sirupsen/logrus"
-	cli "github.com/urfave/cli/v2"
-	keyring "github.com/zalando/go-keyring"
+	"github.com/urfave/cli/v2"
+	"github.com/zalando/go-keyring"
 	"google.golang.org/grpc"
 )
 
 var (
 	// Version : current version
-	Version string = strings.TrimSpace(version)
+	Version = strings.TrimSpace(version)
 	//go:embed version.txt
 	version string
 )
@@ -40,11 +38,7 @@ var (
 func main() {
 	sshConfig := os.Getenv("GITPOD_LCA_SSH_CONFIG")
 	if sshConfig == "" {
-		if runtime.GOOS == "windows" {
-			sshConfig = filepath.Join(os.TempDir(), "gitpod_ssh_config")
-		} else {
-			sshConfig = filepath.Join("/tmp", "gitpod_ssh_config")
-		}
+		sshConfig = filepath.Join(os.TempDir(), "gitpod_ssh_config")
 	}
 
 	app := cli.App{
@@ -124,8 +118,17 @@ func main() {
 					if c.Bool("mock-keyring") {
 						keyring.MockInit()
 					}
-					return run(c.String("gitpod-host"), c.String("ssh_config"), c.Int("api-port"), c.Bool("allow-cors-from-port"),
-						c.Bool("auto-tunnel"), c.String("auth-redirect-url"), c.Bool("verbose"), c.Duration("auth-timeout"), c.Duration("timeout"))
+					return run(runOptions{
+						origin:            c.String("gitpod-host"),
+						sshConfigPath:     c.String("ssh_config"),
+						apiPort:           c.Int("api-port"),
+						allowCORSFromPort: c.Bool("allow-cors-from-port"),
+						autoTunnel:        c.Bool("auto-tunnel"),
+						authRedirectURL:   c.String("auth-redirect-url"),
+						verbose:           c.Bool("verbose"),
+						authTimeout:       c.Duration("auth-timeout"),
+						localAppTimeout:   c.Duration("timeout"),
+					})
 				},
 				Flags: []cli.Flag{
 					&cli.PathFlag{
@@ -139,7 +142,7 @@ func main() {
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		logrus.WithError(err).Fatal("Failed to start application.")
 	}
 }
 
@@ -149,21 +152,33 @@ func DefaultCommand(name string) cli.ActionFunc {
 	}
 }
 
-func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunnel bool, authRedirectUrl string, verbose bool, authTimeout time.Duration, localAppTimeout time.Duration) error {
-	if verbose {
+type runOptions struct {
+	origin            string
+	sshConfigPath     string
+	apiPort           int
+	allowCORSFromPort bool
+	autoTunnel        bool
+	authRedirectURL   string
+	verbose           bool
+	authTimeout       time.Duration
+	localAppTimeout   time.Duration
+}
+
+func run(opts runOptions) error {
+	if opts.verbose {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
-	logrus.WithField("ssh_config", sshConfig).Info("writing workspace ssh_config file")
+	logrus.WithField("ssh_config", opts.sshConfigPath).Info("writing workspace ssh_config file")
 
 	// Trailing slash(es) result in connection issues, so remove them preemptively
-	origin = strings.TrimRight(origin, "/")
+	origin := strings.TrimRight(opts.origin, "/")
 	originURL, err := url.Parse(origin)
 	if err != nil {
 		return err
 	}
 	wsHostRegex := "(\\.[^.]+)\\." + strings.ReplaceAll(originURL.Host, ".", "\\.")
 	wsHostRegex = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11})" + wsHostRegex
-	if allowCORSFromPort {
+	if opts.allowCORSFromPort {
 		wsHostRegex = "([0-9]+)-" + wsHostRegex
 	}
 	hostRegex, err := regexp.Compile("^" + wsHostRegex)
@@ -173,7 +188,7 @@ func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunn
 
 	var b *bastion.Bastion
 
-	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: authRedirectUrl, AuthTimeout: authTimeout}, func() {
+	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectURL, AuthTimeout: opts.authTimeout}, func() {
 		if b != nil {
 			b.FullUpdate()
 		}
@@ -188,13 +203,14 @@ func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunn
 	cb := bastion.CompositeCallbacks{
 		&logCallbacks{},
 	}
-	s := &bastion.SSHConfigWritingCallback{Path: sshConfig}
-	if sshConfig != "" {
+
+	s := &bastion.SSHConfigWritingCallback{Path: opts.sshConfigPath}
+	if opts.sshConfigPath != "" {
 		cb = append(cb, s)
 	}
 
-	b = bastion.New(client, localAppTimeout, cb)
-	b.EnableAutoTunnel = autoTunnel
+	b = bastion.New(client, opts.localAppTimeout, cb)
+	b.EnableAutoTunnel = opts.autoTunnel
 	grpcServer := grpc.NewServer()
 	appapi.RegisterLocalAppServer(grpcServer, bastion.NewLocalAppService(b, s))
 	allowOrigin := func(origin string) bool {
@@ -202,7 +218,7 @@ func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunn
 		return hostRegex.Match([]byte(origin))
 	}
 	go func() {
-		err := http.ListenAndServe("localhost:"+strconv.Itoa(apiPort), grpcweb.WrapServer(grpcServer,
+		err := http.ListenAndServe("localhost:"+strconv.Itoa(opts.apiPort), grpcweb.WrapServer(grpcServer,
 			grpcweb.WithCorsForRegisteredEndpointsOnly(false),
 			grpcweb.WithOriginFunc(allowOrigin),
 			grpcweb.WithWebsockets(true),
@@ -312,5 +328,5 @@ func login(loginOpts auth.LoginOpts) (string, error) {
 type logCallbacks struct{}
 
 func (*logCallbacks) InstanceUpdate(w *bastion.Workspace) {
-	logrus.WithField("workspace", w).Info("instance update")
+	logrus.WithField("workspace", w).Info("Instance update")
 }
