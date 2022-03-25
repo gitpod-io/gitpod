@@ -230,4 +230,5 @@ RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/v0.38.0/insta
     curl https://kots.io/install/1.65.0 | bash
 
 # Copy our own tools
+ENV NEW_KUBECDL=1
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
