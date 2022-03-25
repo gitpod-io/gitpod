@@ -20,5 +20,5 @@ func getEgressTraffic(pid int) (int64, error) {
 		return -1, err
 	}
 
-	return int64(nd.Total().TxBytes), nil
+	return int64(nd["tap0"].TxBytes), nil
 }
