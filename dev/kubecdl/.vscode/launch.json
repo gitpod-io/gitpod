@@ -1,0 +1,17 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+        {
+            "name": "kubecdl",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${fileWorkspaceFolder}",
+            "args": [
+                "-p",
+                "workspace-clusters",
+                "us38"
+            ]
+        },
+	]
+}

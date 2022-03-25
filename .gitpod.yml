@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-update-dep.2
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kyleb-kubecdl-qol.0
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
