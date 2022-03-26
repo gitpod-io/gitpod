@@ -113,6 +113,10 @@ func generateMirrorList(cfgVersion string, cfg *configv1.Config) ([]mirrorListRe
 
 	images := make([]mirrorListRepo, 0)
 	for _, img := range rawImages {
+		// Ignore if the image equals the container registry
+		if img == common.GitpodContainerRegistry {
+			continue
+		}
 		// Dedupe
 		if _, ok := allImages[img]; ok {
 			continue
