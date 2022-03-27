@@ -1,12 +1,15 @@
 package db
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type Team struct {
-	ID            string
+	ID            string `gorm:"primaryKey"`
 	Name          string
 	Slug          string
-	CreationTime  string
+	CreationTime  time.Time
 	MarkedDeleted bool
 }
 
