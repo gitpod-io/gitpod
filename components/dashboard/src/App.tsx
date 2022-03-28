@@ -283,7 +283,7 @@ function App() {
     }
 
     if (window.location.pathname.startsWith("/admin") && !user?.rolesOrPermissions?.includes("admin")) {
-        return <Redirect to={workspacesPathMain} />;
+        return <Workspaces />;
     }
 
     if (window.location.pathname.startsWith("/blocked")) {
