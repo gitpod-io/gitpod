@@ -1,6 +1,9 @@
 # Change Log
 
 ## March 2022
+- Update buildkit to v0.10.0 ([#8845](https://github.com/gitpod-io/gitpod/pull/8845)) - [@aledbf](https://github.com/aledbf)
+- Added first draft of a public API ([#8683](https://github.com/gitpod-io/gitpod/pull/8683)) - [@csweichel](https://github.com/csweichel)
+- Add sudo permission to custom images, force NOPASSWD ([#8914](https://github.com/gitpod-io/gitpod/pull/8914)) - [@mustard-mh](https://github.com/mustard-mh)
 - [ws-proxy] Configure kube-rbac ([#8918](https://github.com/gitpod-io/gitpod/pull/8918)) - [@aledbf](https://github.com/aledbf)
 - Update IntelliJ IDEA IDE image to version 213.7172.25. ([#8859](https://github.com/gitpod-io/gitpod/pull/8859)) - [@iQQBot](https://github.com/iQQBot)
 - Update PyCharm IDE image to version 213.7172.26. ([#8926](https://github.com/gitpod-io/gitpod/pull/8926)) - [@iQQBot](https://github.com/iQQBot)
