@@ -108,9 +108,20 @@ const toStop = new DisposableCollection();
     //#region current-frame
     let current: HTMLElement = loading.frame;
     let desktopRedirected = false;
+    let currentInstanceId = "";
     const nextFrame = () => {
         const instance = gitpodServiceClient.info.latestInstance;
         if (instance) {
+            // refresh web page when instanceId changed
+            if (currentInstanceId !== "") {
+                if (instance.id !== currentInstanceId && instance.ideUrl !== "") {
+                    currentInstanceId = instance.id;
+                    window.location.href = instance.ideUrl;
+                    return;
+                }
+            } else {
+                currentInstanceId = instance.id;
+            }
             if (instance.status.phase === 'running') {
                 if (!hideDesktopIde) {
                     if (isDesktopIde == undefined) {
@@ -148,7 +159,7 @@ const toStop = new DisposableCollection();
     }
     const updateCurrentFrame = () => {
         const newCurrent = nextFrame();
-        if (current === newCurrent) {
+        if (newCurrent == null || current === newCurrent) {
             return;
         }
         current.style.visibility = 'hidden';
