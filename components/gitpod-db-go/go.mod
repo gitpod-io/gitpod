@@ -3,6 +3,7 @@ module github.com/gitpod-io/gitpod/gitpod-db
 go 1.17
 
 require (
+	github.com/google/uuid v1.3.0
 	github.com/stretchr/testify v1.7.1
 	gorm.io/driver/mysql v1.3.2
 	gorm.io/gorm v1.23.3

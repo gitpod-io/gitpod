@@ -6,24 +6,44 @@
     <option name="openedFilesInfos">
       <list>
         <OpenedFileInfo>
-          <option name="caretOffset" value="471" />
-          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/go.mod" />
-        </OpenedFileInfo>
-        <OpenedFileInfo>
-          <option name="caretOffset" value="181" />
+          <option name="caretOffset" value="208" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/team_test.go" />
         </OpenedFileInfo>
         <OpenedFileInfo>
-          <option name="caretOffset" value="424" />
-          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/conn.go" />
-        </OpenedFileInfo>
-        <OpenedFileInfo>
-          <option name="caretOffset" value="359" />
-          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/time.go" />
-        </OpenedFileInfo>
-        <OpenedFileInfo>
-          <option name="caretOffset" value="382" />
+          <option name="caretOffset" value="582" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/team.go" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="1372" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db/src/team-db.ts" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="664" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db/src/typeorm/entity/db-team.ts" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="5754" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db/src/typeorm/team-db-impl.ts" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="2847" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/node_modules/@types/uuid/index.d.ts" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="1190" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/../go/pkg/mod/github.com/google/uuid@v1.3.0/version4.go" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="861" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/../go/pkg/mod/github.com/google/uuid@v1.3.0/uuid.go" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="4642" />
+          <option name="fileUrl" value="file://$USER_HOME$/go/src/time/format.go" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="457" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/types.go" />
         </OpenedFileInfo>
       </list>
     </option>

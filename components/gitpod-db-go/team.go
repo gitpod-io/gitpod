@@ -2,14 +2,15 @@ package db
 
 import (
 	"context"
+	"github.com/google/uuid"
 )
 
 type Team struct {
-	ID            string `gorm:"primaryKey"`
+	ID            uuid.UUID `gorm:"primaryKey"`
 	Name          string
 	Slug          string
 	CreationTime  StringlyTime `gorm:"column:creationTime"`
-	MarkedDeleted bool
+	MarkedDeleted bool         `gorm:"column:markedDeleted"`
 }
 
 // TableName overrides default GORM handling of table name generation
