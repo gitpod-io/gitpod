@@ -357,7 +357,9 @@ export class WorkspaceStarter {
                 properties: {
                     workspaceId: workspace.id,
                     instanceId: instance.id,
+                    projectId: workspace.projectId,
                     contextURL: workspace.contextURL,
+                    type: workspace.type,
                     usesPrebuild: spec.getInitializer()?.hasPrebuild(),
                 },
             });
@@ -451,12 +453,19 @@ export class WorkspaceStarter {
 
     protected async notifyOnPrebuildQueued(ctx: TraceContext, workspaceId: string) {
         const span = TraceContext.startSpan("notifyOnPrebuildQueued", ctx);
-        const prebuild = await this.workspaceDb.trace({ span }).findPrebuildByWorkspaceID(workspaceId);
-        if (prebuild) {
-            const info = (await this.workspaceDb.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
-            if (info) {
-                await this.messageBus.notifyOnPrebuildUpdate({ info, status: "queued" });
+        try {
+            const prebuild = await this.workspaceDb.trace({ span }).findPrebuildByWorkspaceID(workspaceId);
+            if (prebuild) {
+                const info = (await this.workspaceDb.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
+                if (info) {
+                    await this.messageBus.notifyOnPrebuildUpdate({ info, status: "queued" });
+                }
             }
+        } catch (e) {
+            TraceContext.setError({ span }, e);
+            throw e;
+        } finally {
+            span.finish();
         }
     }
 
@@ -507,6 +516,8 @@ export class WorkspaceStarter {
                 "cannot properly fail workspace instance during start",
                 err,
             );
+        } finally {
+            span.finish();
         }
     }
 
@@ -1389,27 +1400,34 @@ export class WorkspaceStarter {
         user: User,
     ): Promise<{ initializer: GitInitializer | CompositeInitializer; disposable: Disposable }> {
         const span = TraceContext.startSpan("createInitializerForCommit", ctx);
-        const mainGit = this.createGitInitializer({ span }, workspace, context, user);
-        if (!context.additionalRepositoryCheckoutInfo || context.additionalRepositoryCheckoutInfo.length === 0) {
-            return mainGit;
+        try {
+            const mainGit = this.createGitInitializer({ span }, workspace, context, user);
+            if (!context.additionalRepositoryCheckoutInfo || context.additionalRepositoryCheckoutInfo.length === 0) {
+                return mainGit;
+            }
+            const subRepoInitializers = [mainGit];
+            for (const subRepo of context.additionalRepositoryCheckoutInfo) {
+                subRepoInitializers.push(this.createGitInitializer({ span }, workspace, subRepo, user));
+            }
+            const inits = await Promise.all(subRepoInitializers);
+            const compositeInit = new CompositeInitializer();
+            const compositeDisposable = new DisposableCollection();
+            for (const r of inits) {
+                const wsinit = new WorkspaceInitializer();
+                wsinit.setGit(r.initializer);
+                compositeInit.addInitializer(wsinit);
+                compositeDisposable.push(r.disposable);
+            }
+            return {
+                initializer: compositeInit,
+                disposable: compositeDisposable,
+            };
+        } catch (e) {
+            TraceContext.setError({ span }, e);
+            throw e;
+        } finally {
+            span.finish();
         }
-        const subRepoInitializers = [mainGit];
-        for (const subRepo of context.additionalRepositoryCheckoutInfo) {
-            subRepoInitializers.push(this.createGitInitializer({ span }, workspace, subRepo, user));
-        }
-        const inits = await Promise.all(subRepoInitializers);
-        const compositeInit = new CompositeInitializer();
-        const compositeDisposable = new DisposableCollection();
-        for (const r of inits) {
-            const wsinit = new WorkspaceInitializer();
-            wsinit.setGit(r.initializer);
-            compositeInit.addInitializer(wsinit);
-            compositeDisposable.push(r.disposable);
-        }
-        return {
-            initializer: compositeInit,
-            disposable: compositeDisposable,
-        };
     }
 
     protected async createGitInitializer(

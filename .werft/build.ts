@@ -11,6 +11,7 @@ import { deployToPreviewEnvironment } from './jobs/build/deploy-to-preview-envir
 import { triggerIntegrationTests } from './jobs/build/trigger-integration-tests';
 import { jobConfig } from './jobs/build/job-config';
 import { typecheckWerftJobs } from './jobs/build/typecheck-werft-jobs';
+import { publishKotsUnstable } from './jobs/build/publish-kots-unstable'
 
 // Will be set once tracing has been initialized
 let werft: Werft
@@ -28,12 +29,15 @@ Tracing.initialize()
         })
 
         if (context.Repository.ref === "refs/heads/main") {
-            reportBuildFailureInSlack(context, err, () => process.exit(1));
+            reportBuildFailureInSlack(context, err).catch((error: Error) => {
+                console.error("Failed to send message to Slack", error)
+            });
         } else {
             console.log('Error', err)
-            // Explicitly not using process.exit as we need to flush tracing, see tracing.js
-            process.exitCode = 1
         }
+
+        // Explicitly not using process.exit as we need to flush tracing, see tracing.js
+        process.exitCode = 1
     })
     .finally(() => {
         werft.phase("Stop kubectl port forwards", "Stopping kubectl port forwards")
@@ -59,4 +63,5 @@ async function run(context: any) {
 
     await deployToPreviewEnvironment(werft, config)
     await triggerIntegrationTests(werft, config, context.Owner)
+    await publishKotsUnstable(werft, config)
 }

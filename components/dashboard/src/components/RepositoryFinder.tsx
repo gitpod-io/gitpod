@@ -170,11 +170,9 @@ export async function refreshSearchData(query: string, user: User | undefined): 
 
 // Fetch all possible search results and cache them into local storage
 async function actuallyRefreshSearchData(query: string, user: User | undefined): Promise<boolean> {
-    console.log("refreshing search data");
     const oldData = loadSearchData();
     const newData = await getGitpodService().server.getSuggestedContextURLs();
     if (JSON.stringify(oldData) !== JSON.stringify(newData)) {
-        console.log("new data:", newData);
         saveSearchData(newData);
         return true;
     }
@@ -190,6 +188,5 @@ async function findResults(query: string, onResults: (results: string[]) => void
             searchData.push(query);
         }
     } catch {}
-    // console.log('searching', query, 'in', searchData);
     onResults(searchData.filter((result) => result.toLowerCase().includes(query.toLowerCase())));
 }

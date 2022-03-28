@@ -23,8 +23,11 @@ require (
 )
 
 require (
+	github.com/creack/pty v1.1.17
+	github.com/olekukonko/tablewriter v0.0.5
 	github.com/prometheus/procfs v0.7.3
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
+	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
 )
 
 require (
@@ -43,6 +46,7 @@ require (
 	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
+	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tsenart/deadcode v0.0.0-20160724212837-210d2dc333e9 // indirect

@@ -26,7 +26,7 @@ kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-7cw7x"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"150Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-7cw7x"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-xcx77"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-xcx77-onereplica"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
@@ -220,6 +220,9 @@ write_files:
       cat /var/lib/gitpod/manifests/calico.yaml | sed s/__KUBERNETES_NODE_NAME__\\"\\,/__KUBERNETES_NODE_NAME__\\",\\ \\"container_settings\\"\\:\\ \\{\\ \\"allow_ip_forwarding\\"\\:\\ true\\ \\}\\,/ > /var/lib/gitpod/manifests/calico2.yaml
 
       sed -i 's/docker.io/quay.io/g' /var/lib/gitpod/manifests/calico2.yaml
+      sed -i 's/interface=ens/interface=en/g' /var/lib/gitpod/manifests/calico2.yaml
+      sed -i 's/\\$CLUSTER_IP_RANGE/10.20.0.0\\/16/g' /var/lib/gitpod/manifests/calico2.yaml
+
       kubectl apply -f /var/lib/gitpod/manifests/calico2.yaml
 
       kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml

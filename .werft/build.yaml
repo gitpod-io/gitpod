@@ -68,7 +68,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-update-dep.2
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kyleb-kubecdl-qol.0
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
@@ -183,6 +183,16 @@ pod:
           key: segmentIOToken
     - name: JAVA_HOME
       value: /home/gitpod/.sdkman/candidates/java/current
+    - name: REPLICATED_APP
+      valueFrom:
+        secretKeyRef:
+          name: replicated
+          key: app
+    - name: REPLICATED_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: replicated
+          key: token
     command:
       - bash
       - -c

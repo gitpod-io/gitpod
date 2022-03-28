@@ -5,8 +5,12 @@
 package supervisor
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
 	"os/exec"
 	"os/user"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -41,6 +45,9 @@ func AddGitpodUserIfNotExists() error {
 		if err != nil {
 			return err
 		}
+	}
+	if err := addSudoer(gitpodGroupName); err != nil {
+		log.WithError(err).Error("add gitpod sudoers")
 	}
 
 	targetUser := &user.User{
@@ -167,6 +174,36 @@ func addUser(opts *user.User) error {
 	log.WithField("args", args).Debug("adduser")
 
 	return nil
+}
+
+// addSudoer check and add group to /etc/sudoers
+func addSudoer(group string) error {
+	if group == "" {
+		return xerrors.Errorf("group name should not be empty")
+	}
+	sudoersPath := "/etc/sudoers"
+	finfo, err := os.Stat(sudoersPath)
+	if err != nil {
+		return err
+	}
+	b, err := ioutil.ReadFile(sudoersPath)
+	if err != nil {
+		return err
+	}
+	gitpodSudoer := []byte(fmt.Sprintf("%%%s ALL=NOPASSWD:ALL", group))
+	// Line starts with "%gitpod ..."
+	re := regexp.MustCompile(fmt.Sprintf("(?m)^%%%s\\s+.*?$", group))
+	if len(re.FindStringIndex(string(b))) > 0 {
+		nb := re.ReplaceAll(b, gitpodSudoer)
+		return os.WriteFile(sudoersPath, nb, finfo.Mode().Perm())
+	}
+	file, err := os.OpenFile(sudoersPath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	_, err = file.Write(append([]byte("\n"), gitpodSudoer...))
+	return err
 }
 
 func determineCmdFlavour(args []string) bool {

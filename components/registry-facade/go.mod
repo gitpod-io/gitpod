@@ -3,7 +3,7 @@ module github.com/gitpod-io/gitpod/registry-facade
 go 1.17
 
 require (
-	github.com/containerd/containerd v1.6.0
+	github.com/containerd/containerd v1.6.1
 	github.com/docker/cli v20.10.7+incompatible
 	github.com/docker/distribution v2.8.0+incompatible
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect

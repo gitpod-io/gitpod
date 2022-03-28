@@ -753,7 +753,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         query = query.where("pws.cloneURL = :cloneURL", { cloneURL });
         query = query.orderBy("pws.creationTime", "DESC");
         query = query.innerJoinAndMapOne("pws.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id");
-        query = query.where("ws.deleted = false");
+        query = query.andWhere("ws.deleted = false");
 
         const res = await query.getMany();
         return res.map((r) => {

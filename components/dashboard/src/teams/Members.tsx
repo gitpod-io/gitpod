@@ -286,7 +286,7 @@ export default function () {
                                 readOnly={true}
                                 type="text"
                                 value={getInviteURL(genericInvite.id)}
-                                className="rounded-md w-full truncate pr-8"
+                                className="rounded-md w-full truncate overflow-x-scroll pr-8"
                             />
                             <div
                                 className="cursor-pointer"
