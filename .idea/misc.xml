@@ -6,16 +6,24 @@
     <option name="openedFilesInfos">
       <list>
         <OpenedFileInfo>
-          <option name="caretOffset" value="460" />
+          <option name="caretOffset" value="471" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/go.mod" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="181" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/team_test.go" />
         </OpenedFileInfo>
         <OpenedFileInfo>
-          <option name="caretOffset" value="328" />
+          <option name="caretOffset" value="424" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/conn.go" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="359" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/time.go" />
         </OpenedFileInfo>
         <OpenedFileInfo>
-          <option name="caretOffset" value="436" />
-          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/conn.go" />
+          <option name="caretOffset" value="382" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/team.go" />
         </OpenedFileInfo>
       </list>
     </option>

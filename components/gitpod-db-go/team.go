@@ -2,14 +2,13 @@ package db
 
 import (
 	"context"
-	"time"
 )
 
 type Team struct {
 	ID            string `gorm:"primaryKey"`
 	Name          string
 	Slug          string
-	CreationTime  time.Time `gorm:"column:creationTime"`
+	CreationTime  StringlyTime `gorm:"column:creationTime"`
 	MarkedDeleted bool
 }
 

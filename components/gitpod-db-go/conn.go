@@ -15,6 +15,6 @@ type ConnectionParams struct {
 
 func Connect(p ConnectionParams) (*gorm.DB, error) {
 	// refer https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
-	dsn := fmt.Sprintf("%s:%s@%s/%s", p.User, p.Password, p.Host, p.Database)
+	dsn := fmt.Sprintf("%s:%s@%s/%s?charset=utf8mb4&parseTime=True&loc=Local", p.User, p.Password, p.Host, p.Database)
 	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
 }
