@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="11" project-jdk-type="JavaSDK" />
+  <component name="UnattendedHostPersistenceState">
+    <option name="openedFilesInfos">
+      <list>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="460" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/team_test.go" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="328" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/time.go" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="436" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/components/gitpod-db-go/conn.go" />
+        </OpenedFileInfo>
+      </list>
+    </option>
+  </component>
+</project>
