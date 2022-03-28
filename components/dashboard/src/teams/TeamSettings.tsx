@@ -89,10 +89,6 @@ export default function TeamSettings() {
                         All <b>projects</b> added in this team will be deleted and cannot be restored afterwards.
                     </li>
                     <li className="ml-5">
-                        All <b>workspaces</b> opened for projects within this team will be deleted for all team members
-                        and cannot be restored afterwards.
-                    </li>
-                    <li className="ml-5">
                         All <b>members</b> of this team will lose access to this team, associated projects and
                         workspaces.
                     </li>
