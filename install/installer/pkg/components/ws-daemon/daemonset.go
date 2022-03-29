@@ -259,36 +259,41 @@ fi
 						MountPath: "/mnt/sync-tmp",
 					},
 				},
-				LivenessProbe: &corev1.Probe{
-					ProbeHandler: corev1.ProbeHandler{
-						HTTPGet: &corev1.HTTPGetAction{
-							Path: "/",
-							Port: intstr.IntOrString{IntVal: 9999},
-						},
-					},
-					InitialDelaySeconds: 5,
-					PeriodSeconds:       10,
-					FailureThreshold:    10,
+				ImagePullPolicy: corev1.PullIfNotPresent,
+				SecurityContext: &corev1.SecurityContext{
+					Privileged: pointer.Bool(true),
 				},
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
-							Path: "/",
-							Port: intstr.IntOrString{IntVal: 9999},
+							Path: "/ready",
+							Port: intstr.IntOrString{IntVal: ReadinessPort},
+						},
+					},
+					InitialDelaySeconds: 5,
+					PeriodSeconds:       5,
+					TimeoutSeconds:      1,
+					SuccessThreshold:    2,
+					FailureThreshold:    5,
+				},
+				LivenessProbe: &corev1.Probe{
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Path: "/live",
+							Port: intstr.IntOrString{IntVal: ReadinessPort},
 						},
 					},
 					InitialDelaySeconds: 5,
 					PeriodSeconds:       10,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				SecurityContext: &corev1.SecurityContext{
-					Privileged: pointer.Bool(true),
+					TimeoutSeconds:      1,
+					SuccessThreshold:    1,
+					FailureThreshold:    3,
 				},
 				Lifecycle: &corev1.Lifecycle{
 					PostStart: &corev1.LifecycleHandler{
 						Exec: &corev1.ExecAction{
 							Command: []string{
-								"/bin/bash", "-c", `kubectl label --overwrite nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}=true`,
+								"/bin/bash", "-c", fmt.Sprintf(`wait4x http http://localhost:%v/ready -t30 --expect-status-code 200 -- kubectl label --overwrite nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}=true`, ReadinessPort),
 							},
 						},
 					},

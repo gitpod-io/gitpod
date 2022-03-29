@@ -148,7 +148,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/readyz",
-										Port: intstr.IntOrString{IntVal: ProbePort},
+										Port: intstr.IntOrString{IntVal: ReadinessPort},
 									},
 								},
 							},
@@ -161,7 +161,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/healthz",
-										Port: intstr.IntOrString{IntVal: ProbePort},
+										Port: intstr.IntOrString{IntVal: ReadinessPort},
 									},
 								},
 							},

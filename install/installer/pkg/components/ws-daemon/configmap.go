@@ -108,10 +108,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}},
 				},
 			},
-			ReadinessSignal: daemon.ReadinessSignalConfig{
-				Enabled: true,
-				Addr:    ":9999",
-			},
 			DiskSpaceGuard: diskguard.Config{
 				Enabled:  true,
 				Interval: util.Duration(5 * time.Minute),
@@ -135,6 +131,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PProf: wsdconfig.Addr{
 			Addr: "localhost:6060",
 		},
+		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 	}
 	fc, err := common.ToJSONString(wsdcfg)
 	if err != nil {
