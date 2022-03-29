@@ -13,8 +13,6 @@ import { stringify } from "yaml";
 export const toDevContainer = (doc: GitpodConfig): DevContainer => {
     let containerFile: DevContainer = { remoteUser: "gitpod" };
 
-    // Get document, or throw exception on error
-    //@ts-ignore
     containerFile.extensions = doc.vscode?.extensions;
 
     /* Docker image */
@@ -28,7 +26,7 @@ export const toDevContainer = (doc: GitpodConfig): DevContainer => {
         // @ts-ignore
         containerFile.build = {};
         // @ts-ignore
-        containerFile?.build.dockerfile = doc.image.file;
+        containerFile?.build.dockerfile = `../${doc.image.file}`;
     }
 
     if (doc.tasks) {
