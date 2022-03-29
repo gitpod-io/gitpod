@@ -29,7 +29,7 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
                         {p.subMenu.map((e) => {
                             let classes = "flex block py-2 px-4 rounded-md";
                             if (e.link.some((l) => l === location.pathname)) {
-                                classes += " bg-gray-800 text-gray-50";
+                                classes += " bg-gray-300 text-gray-800 dark:bg-gray-800 text-gray-50";
                             } else {
                                 classes += " hover:bg-gray-100 dark:hover:bg-gray-800";
                             }
