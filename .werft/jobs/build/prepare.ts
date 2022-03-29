@@ -1,7 +1,7 @@
 import { exec } from '../../util/shell';
 import { Werft } from "../../util/werft";
 import * as VM from '../../vm/vm'
-import { GCLOUD_SERVICE_ACCOUNT_PATH } from "./const";
+import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH } from "./const";
 import { JobConfig } from './job-config';
 
 const phaseName = "prepare";
@@ -17,7 +17,7 @@ export async function prepare(werft: Werft, config: JobConfig) {
         compareWerftAndGitpodImage()
         activateCoreDevServiceAccount()
         configureDocker()
-        configureCoreDevAccess()
+        configureStaticClustersAccess()
         werft.done(prepareSlices.CONFIGURE_CORE_DEV)
 
         decideHarvesterVMCreation(werft, config)
@@ -54,10 +54,11 @@ function configureDocker() {
     }
 }
 
-function configureCoreDevAccess() {
-    const rc = exec('gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev', { slice: prepareSlices.CONFIGURE_CORE_DEV }).code;
+function configureStaticClustersAccess() {
+    const rcCoreDev = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev`, { slice: prepareSlices.CONFIGURE_CORE_DEV }).code;
+    const rcHarvester = exec(`cp /mnt/secrets/harvester-kubeconfig/harvester-kubeconfig.yml ${HARVESTER_KUBECONFIG_PATH}`, { slice: prepareSlices.CONFIGURE_CORE_DEV }).code;
 
-    if (rc != 0) {
+    if (rcCoreDev != 0 || rcHarvester != 0) {
         throw new Error("Failed to get core-dev kubeconfig credentials.")
     }
 }

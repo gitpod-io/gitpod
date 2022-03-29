@@ -6,7 +6,7 @@ import { InstallMonitoringSatelliteParams, installMonitoringSatellite } from '..
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName, findLastHostPort, waitUntilAllPodsAreReady, waitForApiserver } from '../../util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from '../../util/certs';
 import { sleep, env } from '../../util/util';
-import { GCLOUD_SERVICE_ACCOUNT_PATH } from "./const";
+import { GCLOUD_SERVICE_ACCOUNT_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
 import { Werft } from "../../util/werft";
 import { JobConfig } from "./job-config";
 import * as VM from '../../vm/vm'
@@ -122,10 +122,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         werft.done(vmSlices.START_KUBECTL_PORT_FORWARDS)
 
         werft.log(vmSlices.KUBECONFIG, 'Copying k3s kubeconfig')
-        VM.copyk3sKubeconfig({ name: destname, path: 'k3s.yml', timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG })
-        // NOTE: This was a quick have to override the existing kubeconfig so all future kubectl commands use the k3s cluster.
-        //       We might want to keep both kubeconfigs around and be explicit about which one we're using.s
-        exec(`mv k3s.yml /home/gitpod/.kube/config`)
+        VM.copyk3sKubeconfig({ name: destname, timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG })
         werft.done(vmSlices.KUBECONFIG)
 
         werft.log(vmSlices.WAIT_K3S, 'Wait for k3s')
