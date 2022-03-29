@@ -24,6 +24,12 @@ ports:
     onOpen: ignore
   # Dev Theia
   - port: 13444
+  # noVNC
+  - port: 6080
+    onOpen: ignore
+  # VNC
+  - port: 5900
+    onOpen: ignore
 tasks:
   - name: Add Harvester kubeconfig
     command: |
