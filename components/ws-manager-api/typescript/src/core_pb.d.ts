@@ -852,8 +852,6 @@ export class StartWorkspaceSpec extends jspb.Message {
     getEnvvarsList(): Array<EnvironmentVariable>;
     setEnvvarsList(value: Array<EnvironmentVariable>): StartWorkspaceSpec;
     addEnvvars(value?: EnvironmentVariable, index?: number): EnvironmentVariable;
-    getCheckoutLocation(): string;
-    setCheckoutLocation(value: string): StartWorkspaceSpec;
     getWorkspaceLocation(): string;
     setWorkspaceLocation(value: string): StartWorkspaceSpec;
 
@@ -889,7 +887,6 @@ export namespace StartWorkspaceSpec {
         initializer?: content_service_api_initializer_pb.WorkspaceInitializer.AsObject,
         portsList: Array<PortSpec.AsObject>,
         envvarsList: Array<EnvironmentVariable.AsObject>,
-        checkoutLocation: string,
         workspaceLocation: string,
         git?: GitSpec.AsObject,
         timeout: string,

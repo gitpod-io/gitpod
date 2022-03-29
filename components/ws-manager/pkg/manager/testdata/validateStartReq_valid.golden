@@ -1,3 +1,3 @@
 {
-    "error": "invalid request: checkout_location: cannot be blank; workspace_image: cannot be blank; workspace_location: cannot be blank."
+    "error": "invalid request: workspace_image: cannot be blank; workspace_location: cannot be blank."
 }

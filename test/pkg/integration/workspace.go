@@ -156,7 +156,6 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 			IdeImage: &wsmanapi.IDEImage{
 				WebRef: ideImage,
 			},
-			CheckoutLocation:  "/",
 			WorkspaceLocation: "/",
 			Timeout:           "30m",
 			Initializer: &csapi.WorkspaceInitializer{
