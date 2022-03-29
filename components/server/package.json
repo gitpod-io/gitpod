@@ -80,7 +80,8 @@
     "uuid": "^8.3.2",
     "vscode-ws-jsonrpc": "^0.2.0",
     "ws": "^7.4.6",
-    "yaml": "^1.10.2"
+    "yaml": "^1.10.2",
+    "yargs": "^17.4.0"
   },
   "devDependencies": {
     "@testdeck/mocha": "0.1.2",
@@ -109,6 +110,7 @@
     "@types/passport-oauth2": "^1.4.11",
     "@types/uuid": "^8.3.1",
     "@types/ws": "^5.1.2",
+    "@types/yargs": "^17.0.10",
     "chai": "^4.3.4",
     "chai-http": "^4.3.0",
     "concurrently": "^6.2.1",
