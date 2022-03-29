@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
@@ -125,6 +126,33 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								MountPath: "/mnt/pull-secret.json",
 								SubPath:   ".dockerconfigjson",
 							}},
+
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/ready",
+										Port: intstr.IntOrString{IntVal: ReadinessPort},
+									},
+								},
+								InitialDelaySeconds: 5,
+								PeriodSeconds:       5,
+								TimeoutSeconds:      1,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							LivenessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/live",
+										Port: intstr.IntOrString{IntVal: ReadinessPort},
+									},
+								},
+								InitialDelaySeconds: 5,
+								PeriodSeconds:       10,
+								TimeoutSeconds:      1,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
 						}, *common.KubeRBACProxyContainer(ctx)},
 					},
 				},

@@ -12,4 +12,5 @@ const (
 	HostBackupPath       = "/var/gitpod/tmp/backup"
 	TLSSecretName        = "ws-daemon-tls"
 	VolumeTLSCerts       = "ws-daemon-tls-certs"
+	ReadinessPort        = 8086
 )

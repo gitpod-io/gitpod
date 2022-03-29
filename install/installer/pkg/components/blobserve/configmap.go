@@ -86,9 +86,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				MaxSize:  MaxSizeBytes,
 			},
 		},
-		AuthCfg:        "/mnt/pull-secret.json",
-		PProfAddr:      ":6060",
-		PrometheusAddr: "127.0.0.1:9500",
+		AuthCfg:            "/mnt/pull-secret.json",
+		PProfAddr:          ":6060",
+		PrometheusAddr:     "127.0.0.1:9500",
+		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 	}
 
 	fc, err := common.ToJSONString(bscfg)
