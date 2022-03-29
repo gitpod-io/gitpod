@@ -59,6 +59,8 @@ export const toGitpod = (containerFile: DevContainer, cleanYaml?: boolean): stri
                 : containerFile.postStartCommand?.join("&&");
 
         gitpodConfig.tasks?.push({ command, before });
+    } else {
+        delete gitpodConfig["tasks"];
     }
 
     //@ts-ignore
@@ -69,6 +71,8 @@ export const toGitpod = (containerFile: DevContainer, cleanYaml?: boolean): stri
     } else if (containerFile.dockerFile || containerFile.build?.dockerfile) {
         //@ts-ignore
         gitpodConfig.image.file = `.devcontainer/${containerFile.dockerFile || containerFile.build.dockerfile}`;
+    } else {
+        delete gitpodConfig["image"];
     }
 
     //@ts-ignore
