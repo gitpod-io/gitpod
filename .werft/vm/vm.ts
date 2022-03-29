@@ -19,7 +19,7 @@ EOF
 /**
  * Convenience function to kubectl delete a manifest from stdin.
  */
- function kubectlDeleteManifest(manifest: string, options?: { validate?: boolean }) {
+function kubectlDeleteManifest(manifest: string, options?: { validate?: boolean }) {
     exec(`
         cat <<EOF | kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} delete -f -
 ${manifest}
@@ -71,7 +71,7 @@ export function startVM(options: { name: string }) {
 /**
  * Remove a VM with its Namespace
  */
- export function deleteVM(options: { name: string }) {
+export function deleteVM(options: { name: string }) {
     const namespace = `preview-${options.name}`
     const userDataSecretName = `userdata-${options.name}`
 
@@ -182,9 +182,9 @@ export function stopKubectlPortForwards() {
 /**
  * Install Fluent-Bit sending logs to GCP
  */
-export function installFluentBit(options: {namespace: string, slice: string}) {
-    exec(`kubectl create secret generic fluent-bit-external --save-config --dry-run=client --from-file=credentials.json=/mnt/fluent-bit-external/credentials.json -o yaml | kubectl apply -n ${options.namespace} -f -`, { slice: options.slice, dontCheckRc: true})
-    exec(`helm3 repo add fluent https://fluent.github.io/helm-charts`, { slice: options.slice, dontCheckRc: true})
-    exec(`helm3 repo update`, { slice: options.slice, dontCheckRc: true})
-    exec(`helm3 upgrade --install fluent-bit fluent/fluent-bit -n ${options.namespace} -f .werft/vm/charts/fluentbit/values.yaml`, { slice: options.slice, dontCheckRc: true})
+export function installFluentBit(options: { namespace: string, kubeconfig: string, slice: string }) {
+    exec(`kubectl --kubeconfig ${options.kubeconfig} create secret generic fluent-bit-external --save-config --dry-run=client --from-file=credentials.json=/mnt/fluent-bit-external/credentials.json -o yaml | kubectl --kubeconfig ${options.kubeconfig} apply -n ${options.namespace} -f -`, { slice: options.slice, dontCheckRc: true })
+    exec(`helm3 --kubeconfig ${options.kubeconfig} repo add fluent https://fluent.github.io/helm-charts`, { slice: options.slice, dontCheckRc: true })
+    exec(`helm3 --kubeconfig ${options.kubeconfig} repo update`, { slice: options.slice, dontCheckRc: true })
+    exec(`helm3 --kubeconfig ${options.kubeconfig} upgrade --install fluent-bit fluent/fluent-bit -n ${options.namespace} -f .werft/vm/charts/fluentbit/values.yaml`, { slice: options.slice, dontCheckRc: true })
 }
