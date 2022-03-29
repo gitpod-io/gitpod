@@ -21,7 +21,7 @@ export const toDevContainer = (doc: GitpodConfig): DevContainer => {
         containerFile.build = {};
         console.log(containerFile);
         // @ts-ignore
-        containerFile?.build.dockerfile = doc.image;
+        containerFile.image = doc.image;
     } else if (typeof doc.image == "object") {
         // @ts-ignore
         containerFile.build = {};
@@ -30,8 +30,9 @@ export const toDevContainer = (doc: GitpodConfig): DevContainer => {
     }
 
     if (doc.tasks) {
-        for (const task of doc.tasks) {
-        }
+        // for (const task of doc.tasks) {
+        //     console.log(task)
+        // }
     }
 
     return containerFile;
