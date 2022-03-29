@@ -6697,7 +6697,6 @@ proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
     proto.wsman.PortSpec.toObject, includeInstance),
     envvarsList: jspb.Message.toObjectList(msg.getEnvvarsList(),
     proto.wsman.EnvironmentVariable.toObject, includeInstance),
-    checkoutLocation: jspb.Message.getFieldWithDefault(msg, 7, ""),
     workspaceLocation: jspb.Message.getFieldWithDefault(msg, 8, ""),
     git: (f = msg.getGit()) && proto.wsman.GitSpec.toObject(includeInstance, f),
     timeout: jspb.Message.getFieldWithDefault(msg, 10, ""),
@@ -6767,10 +6766,6 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
       var value = new proto.wsman.EnvironmentVariable;
       reader.readMessage(value,proto.wsman.EnvironmentVariable.deserializeBinaryFromReader);
       msg.addEnvvars(value);
-      break;
-    case 7:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setCheckoutLocation(value);
       break;
     case 8:
       var value = /** @type {string} */ (reader.readString());
@@ -6866,13 +6861,6 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
       6,
       f,
       proto.wsman.EnvironmentVariable.serializeBinaryToWriter
-    );
-  }
-  f = message.getCheckoutLocation();
-  if (f.length > 0) {
-    writer.writeString(
-      7,
-      f
     );
   }
   f = message.getWorkspaceLocation();
@@ -7098,24 +7086,6 @@ proto.wsman.StartWorkspaceSpec.prototype.addEnvvars = function(opt_value, opt_in
  */
 proto.wsman.StartWorkspaceSpec.prototype.clearEnvvarsList = function() {
   return this.setEnvvarsList([]);
-};
-
-
-/**
- * optional string checkout_location = 7;
- * @return {string}
- */
-proto.wsman.StartWorkspaceSpec.prototype.getCheckoutLocation = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.wsman.StartWorkspaceSpec} returns this
- */
-proto.wsman.StartWorkspaceSpec.prototype.setCheckoutLocation = function(value) {
-  return jspb.Message.setProto3StringField(this, 7, value);
 };
 
 

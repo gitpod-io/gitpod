@@ -353,7 +353,6 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				Owner: buildWorkspaceOwnerID,
 			},
 			Spec: &wsmanapi.StartWorkspaceSpec{
-				CheckoutLocation:   ".",
 				Initializer:        initializer,
 				Timeout:            maxBuildRuntime.String(),
 				WorkspaceImage:     o.Config.BuilderImage,

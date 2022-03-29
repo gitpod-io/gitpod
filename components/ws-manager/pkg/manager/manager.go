@@ -68,15 +68,16 @@ type Manager struct {
 }
 
 type startWorkspaceContext struct {
-	Request        *api.StartWorkspaceRequest `json:"request"`
-	Labels         map[string]string          `json:"labels"`
-	CLIAPIKey      string                     `json:"cliApiKey"`
-	OwnerToken     string                     `json:"ownerToken"`
-	IDEPort        int32                      `json:"idePort"`
-	SupervisorPort int32                      `json:"supervisorPort"`
-	WorkspaceURL   string                     `json:"workspaceURL"`
-	TraceID        string                     `json:"traceID"`
-	Headless       bool                       `json:"headless"`
+	Request          *api.StartWorkspaceRequest `json:"request"`
+	Labels           map[string]string          `json:"labels"`
+	CLIAPIKey        string                     `json:"cliApiKey"`
+	OwnerToken       string                     `json:"ownerToken"`
+	IDEPort          int32                      `json:"idePort"`
+	SupervisorPort   int32                      `json:"supervisorPort"`
+	WorkspaceURL     string                     `json:"workspaceURL"`
+	TraceID          string                     `json:"traceID"`
+	Headless         bool                       `json:"headless"`
+	CheckoutLocation string                     `json:"checkoutLocation"`
 }
 
 const (
@@ -342,7 +343,6 @@ func podRunning(clientset client.Client, podName, namespace string) wait.Conditi
 func validateStartWorkspaceRequest(req *api.StartWorkspaceRequest) error {
 	err := validation.ValidateStruct(req.Spec,
 		validation.Field(&req.Spec.WorkspaceImage, validation.Required),
-		validation.Field(&req.Spec.CheckoutLocation, validation.Required),
 		validation.Field(&req.Spec.WorkspaceLocation, validation.Required),
 		validation.Field(&req.Spec.Ports, validation.By(areValidPorts)),
 		validation.Field(&req.Spec.Initializer, validation.Required),

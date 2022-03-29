@@ -66,8 +66,7 @@ var benchmarkCommand = &cobra.Command{
 				IdeImage: &api.IDEImage{
 					WebRef: scenario.IDEImage,
 				},
-				Admission:        api.AdmissionLevel_ADMIT_OWNER_ONLY,
-				CheckoutLocation: "gitpod",
+				Admission: api.AdmissionLevel_ADMIT_OWNER_ONLY,
 				Git: &api.GitSpec{
 					Email:    "test@gitpod.io",
 					Username: "foobar",

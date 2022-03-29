@@ -477,7 +477,7 @@ message StartWorkspaceSpec {
     repeated EnvironmentVariable envvars = 6;
 
     // checkout_location describes where the code has been checked out to
-    string checkout_location = 7;
+    reserved 7;
 
     // workspace_location describes where the workspace root of Theia will be
     string workspace_location = 8;

@@ -386,7 +386,6 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 		ServicePrefix: servicePrefix,
 		Type:          api.WorkspaceType_REGULAR,
 		Spec: &api.StartWorkspaceSpec{
-			CheckoutLocation: "/workspace",
 			Git: &api.GitSpec{
 				Email:    "none@none.com",
 				Username: "integration-test",
