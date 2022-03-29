@@ -18,9 +18,6 @@ export const toDevContainer = (doc: GitpodConfig): DevContainer => {
     /* Docker image */
     if (typeof doc.image === "string") {
         // @ts-ignore
-        containerFile.build = {};
-        console.log(containerFile);
-        // @ts-ignore
         containerFile.image = doc.image;
     } else if (typeof doc.image == "object") {
         // @ts-ignore
