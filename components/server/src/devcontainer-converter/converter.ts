@@ -10,39 +10,34 @@ import { DevContainer } from "./types";
 import { GitpodConfig } from "./types-gitpod";
 import { stringify } from "yaml";
 
-// export const toDevContainer = async () => {
-//     let containerFile: DevContainer = { remoteUser: "gitpod" };
+export const toDevContainer = (doc: GitpodConfig): DevContainer => {
+    let containerFile: DevContainer = { remoteUser: "gitpod" };
 
-//     // Get document, or throw exception on error
-//     try {
-//         //@ts-ignore
-//         const doc: GitpodConfig = yaml.load(fs.readFileSync("/workspace/gitpod/.gitpod.yml", "utf8"));
-//         //containerFile.extensions = doc.vscode?.extensions;
+    // Get document, or throw exception on error
+    //@ts-ignore
+    containerFile.extensions = doc.vscode?.extensions;
 
-//         /* Docker image */
-//         if (typeof doc.image === "string") {
-//             // @ts-ignore
-//             containerFile.build = {};
-//             console.log(containerFile);
-//             // @ts-ignore
-//             containerFile?.build.dockerfile = doc.image;
-//         } else if (typeof doc.image == "object") {
-//             // @ts-ignore
-//             containerFile.build = {};
-//             // @ts-ignore
-//             containerFile?.build.dockerfile = doc.image.file;
-//         }
+    /* Docker image */
+    if (typeof doc.image === "string") {
+        // @ts-ignore
+        containerFile.build = {};
+        console.log(containerFile);
+        // @ts-ignore
+        containerFile?.build.dockerfile = doc.image;
+    } else if (typeof doc.image == "object") {
+        // @ts-ignore
+        containerFile.build = {};
+        // @ts-ignore
+        containerFile?.build.dockerfile = doc.image.file;
+    }
 
-//         if (doc.tasks) {
-//             for (const task of doc.tasks) {
-//             }
-//         }
+    if (doc.tasks) {
+        for (const task of doc.tasks) {
+        }
+    }
 
-//         console.log(JSON.stringify(containerFile));
-//     } catch (e) {
-//         console.log(e);
-//     }
-// };
+    return containerFile;
+};
 
 export const toGitpod = (containerFile: DevContainer, cleanYaml?: boolean): string => {
     //@ts-ignore

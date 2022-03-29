@@ -5,8 +5,10 @@
  */
 
 import yargs = require("yargs/yargs");
-import { toGitpod } from "./converter";
+import { toDevContainer, toGitpod } from "./converter";
 import fs = require("fs");
+import { parse } from "yaml";
+import { GitpodConfig } from "./types-gitpod";
 
 yargs(process.argv.slice(2))
     .command(
@@ -15,6 +17,15 @@ yargs(process.argv.slice(2))
         () => {},
         (argv) => {
             if (argv.toDevcontainer) {
+                const inputPath = (argv.file as string | null) ?? "./.gitpod.yml";
+                const doc: GitpodConfig = parse(fs.readFileSync(inputPath, "utf8"));
+                const result = toDevContainer(doc);
+                if (argv.dry) {
+                    console.log(JSON.stringify(result));
+                } else {
+                    const outputPath = (argv.output as string | null) ?? "./.devcontainer/devcontainer.json";
+                    fs.writeFileSync(outputPath, JSON.stringify(result));
+                }
             } else {
                 const inputPath = (argv.file as string | null) ?? "./.devcontainer/devcontainer.json";
                 const result = toGitpod(JSON.parse(fs.readFileSync(inputPath, "utf-8")), true);
