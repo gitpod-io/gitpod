@@ -1,7 +1,7 @@
 import { exec, ExecOptions } from './shell';
 import { sleep } from './util';
-import { readFileSync, writeFileSync } from 'fs';
 import * as path from 'path';
+import { CORE_DEV_KUBECONFIG_PATH } from '../jobs/build/const';
 
 
 export class IssueCertificateParams {
@@ -38,6 +38,9 @@ export async function issueCertficate(werft, params: IssueCertificateParams, she
     })) {
         throw new Error(`there is no subdomain + '${params.domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`);
     }
+
+    // Certificates are always issued in the core-dev cluster.
+    // They might be copied to other clusters in future steps.
     var cmd = `set -x \
     && cd ${path.join(params.pathToTemplate)} \
     && cp cert-manager_certificate.tpl cert.yaml \
@@ -45,7 +48,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams, she
     && yq w -i cert.yaml spec.secretName '${params.namespace}' \
     && yq w -i cert.yaml metadata.namespace '${params.certNamespace}' \
     ${subdomains.map(s => `&& yq w -i cert.yaml spec.dnsNames[+] '${s+params.domain}'`).join('  ')} \
-    && kubectl apply -f cert.yaml`;
+    && kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f cert.yaml`;
 
     werft.log("certificate", "Kubectl command for cert creation: " + cmd)
     exec(cmd, { ...shellOpts, slice: 'certificate' });
@@ -54,7 +57,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams, she
     let notReadyYet = true;
     for (let i = 0; i < 90 && notReadyYet; i++) {
         werft.log('certificate', `polling state of ${params.certNamespace}/${params.namespace}...`)
-        const result = exec(`kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { ...shellOpts, silent: true, dontCheckRc: true, async: false });
+        const result = exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { ...shellOpts, silent: true, dontCheckRc: true, async: false });
         if (result != undefined && result.code === 0 && result.stdout === "True") {
             notReadyYet = false;
             break;

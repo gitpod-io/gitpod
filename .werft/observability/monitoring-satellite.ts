@@ -7,7 +7,7 @@ import * as fs from 'fs';
  * Monitoring satellite deployment bits
  */
  export class InstallMonitoringSatelliteParams {
-    pathToKubeConfig: string
+    kubeconfigPath: string
     satelliteNamespace: string
     clusterName: string
     nodeExporterPort: number
@@ -76,39 +76,39 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
 
     // The correct kubectl context should already be configured prior to this step
     // Only checks node-exporter readiness for harvester
-    ensureCorrectInstallationOrder(params.satelliteNamespace, params.withVM)
+    ensureCorrectInstallationOrder(params.kubeconfigPath, params.satelliteNamespace, params.withVM)
 }
 
-async function ensureCorrectInstallationOrder(namespace: string, checkNodeExporterStatus: boolean){
+async function ensureCorrectInstallationOrder(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean){
     const werft = getGlobalWerftInstance()
 
     werft.log(sliceName, 'installing monitoring-satellite')
-    exec('cd observability && hack/deploy-satellite.sh', {slice: sliceName})
+    exec(`cd observability && KUBECONFIG=${kubeconfig} hack/deploy-satellite.sh`, {slice: sliceName})
 
-    deployGitpodServiceMonitors()
-    checkReadiness(namespace, checkNodeExporterStatus)
+    deployGitpodServiceMonitors(kubeconfig)
+    checkReadiness(kubeconfig, namespace, checkNodeExporterStatus)
 }
 
-async function checkReadiness(namespace: string, checkNodeExporterStatus: boolean) {
+async function checkReadiness(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean) {
     // For some reason prometheus' statefulset always take quite some time to get created
     // Therefore we wait a couple of seconds
     exec(`sleep 30 && kubectl rollout status -n ${namespace} statefulset prometheus-k8s`, {slice: sliceName, async: true})
-    exec(`kubectl rollout status -n ${namespace} deployment grafana`, {slice: sliceName, async: true})
-    exec(`kubectl rollout status -n ${namespace} deployment kube-state-metrics`, {slice: sliceName, async: true})
-    exec(`kubectl rollout status -n ${namespace} deployment otel-collector`, {slice: sliceName, async: true})
+    exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment grafana`, {slice: sliceName, async: true})
+    exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment kube-state-metrics`, {slice: sliceName, async: true})
+    exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment otel-collector`, {slice: sliceName, async: true})
 
     // core-dev is just too unstable for node-exporter
     // we don't guarantee that it will run at all
     if(checkNodeExporterStatus) {
-        exec(`kubectl rollout status -n ${namespace} daemonset node-exporter`, {slice: sliceName, async: true})
+        exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} daemonset node-exporter`, {slice: sliceName, async: true})
     }
 }
 
-async function deployGitpodServiceMonitors() {
+async function deployGitpodServiceMonitors(kubeconfig: string) {
     const werft = getGlobalWerftInstance()
 
     werft.log(sliceName, 'installing gitpod ServiceMonitor resources')
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/gitpod/', {silent: true})
+    exec(`kubectl --kubeconfig ${kubeconfig} apply -f observability/monitoring-satellite/manifests/gitpod/`, {silent: true})
 }
 
 function postProcessManifests() {

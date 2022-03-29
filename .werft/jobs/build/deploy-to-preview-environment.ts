@@ -6,7 +6,7 @@ import { InstallMonitoringSatelliteParams, installMonitoringSatellite } from '..
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName, findLastHostPort, waitUntilAllPodsAreReady, waitForApiserver } from '../../util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from '../../util/certs';
 import { sleep, env } from '../../util/util';
-import { GCLOUD_SERVICE_ACCOUNT_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
+import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
 import { Werft } from "../../util/werft";
 import { JobConfig } from "./job-config";
 import * as VM from '../../vm/vm'
@@ -99,18 +99,18 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         withVM,
     };
 
-    exec(`kubectl --namespace keys get secret host-key -o yaml > /workspace/host-key.yaml`)
+    exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} --namespace keys get secret host-key -o yaml > /workspace/host-key.yaml`)
 
     // Writing auth-provider configuration to disk prior to deploying anything.
     // We do this because we have different auth-providers depending if we're using core-dev or Harvester VMs.
-    exec(`kubectl get secret ${withVM ? 'preview-envs-authproviders-harvester' : 'preview-envs-authproviders'} --namespace=keys -o jsonpath="{.data.authProviders}" > auth-provider-secret.yml`, { silent: true })
+    exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret ${withVM ? 'preview-envs-authproviders-harvester' : 'preview-envs-authproviders'} --namespace=keys -o jsonpath="{.data.authProviders}" > auth-provider-secret.yml`, { silent: true })
 
     if (withVM) {
         werft.phase(phases.VM, "Ensuring VM is ready for deployment");
 
         werft.log(vmSlices.COPY_CERT_MANAGER_RESOURCES, 'Copy over CertManager resources from core-dev')
-        exec(`kubectl get secret clouddns-dns01-solver-svc-acct -n certmanager -o yaml | sed 's/namespace: certmanager/namespace: cert-manager/g' > clouddns-dns01-solver-svc-acct.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
-        exec(`kubectl get clusterissuer letsencrypt-issuer-gitpod-core-dev -o yaml | sed 's/letsencrypt-issuer-gitpod-core-dev/letsencrypt-issuer/g' > letsencrypt-issuer.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
+        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret clouddns-dns01-solver-svc-acct -n certmanager -o yaml | sed 's/namespace: certmanager/namespace: cert-manager/g' > clouddns-dns01-solver-svc-acct.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
+        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get clusterissuer letsencrypt-issuer-gitpod-core-dev -o yaml | sed 's/letsencrypt-issuer-gitpod-core-dev/letsencrypt-issuer/g' > letsencrypt-issuer.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
         werft.done(vmSlices.COPY_CERT_MANAGER_RESOURCES)
 
         werft.log(vmSlices.VM_READINESS, 'Wait for VM readiness')
@@ -126,24 +126,24 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         werft.done(vmSlices.KUBECONFIG)
 
         werft.log(vmSlices.WAIT_K3S, 'Wait for k3s')
-        await waitForApiserver({ slice: vmSlices.WAIT_K3S })
-        await waitUntilAllPodsAreReady("kube-system", { slice: vmSlices.WAIT_K3S })
+        await waitForApiserver(PREVIEW_K3S_KUBECONFIG_PATH, { slice: vmSlices.WAIT_K3S })
+        await waitUntilAllPodsAreReady("kube-system", PREVIEW_K3S_KUBECONFIG_PATH, { slice: vmSlices.WAIT_K3S })
         werft.done(vmSlices.WAIT_K3S)
 
         werft.log(vmSlices.WAIT_CERTMANAGER, 'Wait for Cert-Manager')
-        await waitUntilAllPodsAreReady("cert-manager", { slice: vmSlices.WAIT_CERTMANAGER })
+        await waitUntilAllPodsAreReady("cert-manager", PREVIEW_K3S_KUBECONFIG_PATH, { slice: vmSlices.WAIT_CERTMANAGER })
         werft.done(vmSlices.WAIT_CERTMANAGER)
 
-        exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
+        exec(`kubectl --kubeconfig ${PREVIEW_K3S_KUBECONFIG_PATH} apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
         werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER)
 
-        VM.installFluentBit({ namespace: 'default', slice: vmSlices.EXTERNAL_LOGGING })
+        VM.installFluentBit({ namespace: 'default', kubeconfig: PREVIEW_K3S_KUBECONFIG_PATH, slice: vmSlices.EXTERNAL_LOGGING })
         werft.done(vmSlices.EXTERNAL_LOGGING)
 
 
         issueMetaCerts(werft, PROXY_SECRET_NAME, "default", domain, withVM)
         werft.done('certificate')
-        installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
+        installMonitoring(PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
         werft.done('observability')
     }
 
@@ -190,12 +190,13 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:
     // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/jobs/build/installer/post-process.sh -a with-clean-slate-deployment=true
     const { version, destname, namespace, domain, monitoringDomain, url, withObservability, withVM } = deploymentConfig;
+    const deploymentKubeconfig = withVM ? PREVIEW_K3S_KUBECONFIG_PATH : CORE_DEV_KUBECONFIG_PATH;
 
     // find free ports
     werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Find last ports");
-    let wsdaemonPortMeta = findLastHostPort(namespace, 'ws-daemon', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
-    let registryNodePortMeta = findLastHostPort(namespace, 'registry-facade', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
-    let nodeExporterPort = findLastHostPort(namespace, 'node-exporter', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
+    let wsdaemonPortMeta = findLastHostPort(namespace, 'ws-daemon', deploymentKubeconfig, metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
+    let registryNodePortMeta = findLastHostPort(namespace, 'registry-facade', deploymentKubeconfig, metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
+    let nodeExporterPort = findLastHostPort(namespace, 'node-exporter', deploymentKubeconfig, metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
 
     if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta) || (isNaN(nodeExporterPort) && !withVM && withObservability)) {
         werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
@@ -203,7 +204,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
             { start: 10000, end: 11000 },
             { start: 30000, end: 31000 },
             { start: 31001, end: 32000 },
-        ], metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }));
+        ], deploymentKubeconfig, metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }));
     }
     werft.log(installerSlices.FIND_FREE_HOST_PORTS,
         `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}.`);
@@ -218,7 +219,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
 
         } else {
             werft.log(installerSlices.CLEAN_ENV_STATE, "Clean the preview environment slate...");
-            createNamespace(namespace, metaEnv({ slice: installerSlices.CLEAN_ENV_STATE }));
+            createNamespace(namespace, deploymentKubeconfig, metaEnv({ slice: installerSlices.CLEAN_ENV_STATE }));
         }
         werft.done(installerSlices.CLEAN_ENV_STATE);
     } catch (err) {
@@ -249,13 +250,13 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     }
 
     // add the image pull secret to the namespcae if it doesn't exist
-    const hasPullSecret = (exec(`kubectl get secret ${IMAGE_PULL_SECRET_NAME} -n ${namespace}`, { slice: installerSlices.IMAGE_PULL_SECRET, dontCheckRc: true, silent: true })).code === 0;
+    const hasPullSecret = (exec(`kubectl --kubeconfig ${deploymentKubeconfig} get secret ${IMAGE_PULL_SECRET_NAME} -n ${namespace}`, { slice: installerSlices.IMAGE_PULL_SECRET, dontCheckRc: true, silent: true })).code === 0;
     if (!hasPullSecret) {
         try {
             werft.log(installerSlices.IMAGE_PULL_SECRET, "Adding the image pull secret to the namespace");
             const dockerConfig = { auths: { "eu.gcr.io": { auth: deploymentConfig.imagePullAuth }, "europe-docker.pkg.dev": { auth: deploymentConfig.imagePullAuth } } };
             fs.writeFileSync(`./${IMAGE_PULL_SECRET_NAME}`, JSON.stringify(dockerConfig));
-            exec(`kubectl create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`, { slice: installerSlices.IMAGE_PULL_SECRET });
+            exec(`kubectl --kubeconfig ${deploymentKubeconfig} create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`, { slice: installerSlices.IMAGE_PULL_SECRET });
         }
         catch (err) {
             if (!jobConfig.mainBuild) {
@@ -274,7 +275,8 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
 
     const installer = new Installer({
         werft: werft,
-        configPath: "config.yaml",
+        installerConfigPath: "config.yaml",
+        kubeconfigPath: deploymentKubeconfig,
         version: version,
         proxySecretName: PROXY_SECRET_NAME,
         domain: deploymentConfig.domain,
@@ -302,10 +304,10 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     }
 
     werft.log(installerSlices.DEPLOYMENT_WAITING, "Waiting until all pods are ready.");
-    await waitUntilAllPodsAreReady(deploymentConfig.namespace, { slice: installerSlices.DEPLOYMENT_WAITING })
+    await waitUntilAllPodsAreReady(deploymentConfig.namespace, installer.options.kubeconfigPath, { slice: installerSlices.DEPLOYMENT_WAITING })
     werft.done(installerSlices.DEPLOYMENT_WAITING);
 
-    await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, !withVM)
+    await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, !withVM, installer.options.kubeconfigPath)
 
     // TODO: Fix sweeper, it does not appear to be doing clean-up
     werft.log('sweeper', 'installing Sweeper');
@@ -326,23 +328,23 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     // TODO: Implement sweeper logic for VMs in Harvester
     if (!withVM) {
         // copy GH token into namespace
-        exec(`kubectl --namespace werft get secret github-sweeper-read-branches -o yaml \
+        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} --namespace werft get secret github-sweeper-read-branches -o yaml \
             | yq w - metadata.namespace ${namespace} \
             | yq d - metadata.uid \
             | yq d - metadata.resourceVersion \
             | yq d - metadata.creationTimestamp \
-            | kubectl apply -f -`);
-        exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
+            | kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f -`);
+        exec(`/usr/local/bin/helm3 --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
     }
 
     werft.done(phases.DEPLOY);
 
     async function cleanStateEnv(shellOpts: ExecOptions) {
-        await wipeAndRecreateNamespace(helmInstallName, namespace, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
+        await wipeAndRecreateNamespace(helmInstallName, namespace, installer.options.kubeconfigPath, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
         // cleanup non-namespace objects
         werft.log(installerSlices.CLEAN_ENV_STATE, "removing old unnamespaced objects - this might take a while");
         try {
-            await deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
+            await deleteNonNamespaceObjects(namespace, destname, installer.options.kubeconfigPath, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
             werft.done(installerSlices.CLEAN_ENV_STATE);
         } catch (err) {
             werft.fail(installerSlices.CLEAN_ENV_STATE, err);
@@ -361,7 +363,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
         { start: 31001, end: 32000 },
-    ], metaEnv({ slice: "find free ports", silent: true }));
+    ], CORE_DEV_KUBECONFIG_PATH, metaEnv({ slice: "find free ports", silent: true }));
     werft.log("find free ports",
         `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}, and nodeExporterPort ${nodeExporterPort}.`);
     werft.done("find free ports");
@@ -378,7 +380,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
             // re-create namespace
             await cleanStateEnv(metaEnv());
         } else {
-            createNamespace(namespace, metaEnv({ slice: 'prep' }));
+            createNamespace(namespace, CORE_DEV_KUBECONFIG_PATH, metaEnv({ slice: 'prep' }));
         }
         // Now we want to execute further kubectl operations only in the created namespace
         setKubectlContextNamespace(namespace, metaEnv({ slice: 'prep' }));
@@ -388,7 +390,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         await issueMetaCerts(werft, namespace, "certs", domain, false);
         await installMetaCertificates(werft, namespace);
         werft.done('certificate');
-        await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, false)
+        await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, false, CORE_DEV_KUBECONFIG_PATH)
         werft.done('prep');
     } catch (err) {
         if (!jobConfig.mainBuild) {
@@ -400,7 +402,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     // core-dev specific section start
     werft.log("secret", "copy secret into namespace")
     try {
-        const auth = exec(`printf "%s" "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
+        const auth = exec(`printf "%s" "_json_key:$(kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
                         | yq r - data['.dockerconfigjson'] \
                         | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
         fs.writeFileSync("chart/gcp-sa-registry-auth",
@@ -424,7 +426,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
 
     werft.log("authProviders", "copy authProviders")
     try {
-        exec(`kubectl get secret preview-envs-authproviders --namespace=keys -o yaml \
+        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret preview-envs-authproviders --namespace=keys -o yaml \
                 | yq r - data.authProviders \
                 | base64 -d -w 0 \
                 > authProviders`, { slice: "authProviders" });
@@ -446,7 +448,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         try {
-            await installMonitoring(namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
+            await installMonitoring(CORE_DEV_KUBECONFIG_PATH ,namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
         } catch (err) {
             if (!jobConfig.mainBuild) {
                 werft.fail('observability', err);
@@ -487,7 +489,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         const nodeAffinityValues = getNodeAffinities();
 
         if (storage === "gcp") {
-            exec("kubectl get secret gcp-sa-gitpod-dev-deployer -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -");
+            exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret gcp-sa-gitpod-dev-deployer -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f -`);
             flags += ` -f ../.werft/jobs/build/helm/values.dev.gcp-storage.yaml`;
         }
 
@@ -499,7 +501,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         const nodepoolIndex = getNodePoolIndex(namespace);
 
         exec(`helm dependencies up`);
-        exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/jobs/build/helm/${nodeAffinityValues[nodepoolIndex]} -f ../.werft/jobs/build/helm/values.dev.yaml ${flags} ${helmInstallName} .`);
+        exec(`/usr/local/bin/helm3 --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} upgrade --install --timeout 10m -f ../.werft/jobs/build/helm/${nodeAffinityValues[nodepoolIndex]} -f ../.werft/jobs/build/helm/values.dev.yaml ${flags} ${helmInstallName} .`);
 
         werft.log('helm', 'installing Sweeper');
         const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
@@ -517,13 +519,13 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         const allArgsStr = `--set args="{${argsStr}}" --set githubToken.secret=github-sweeper-read-branches --set githubToken.key=token`;
 
         // copy GH token into namespace
-        exec(`kubectl --namespace werft get secret github-sweeper-read-branches -o yaml \
+        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} --namespace werft get secret github-sweeper-read-branches -o yaml \
             | yq w - metadata.namespace ${namespace} \
             | yq d - metadata.uid \
             | yq d - metadata.resourceVersion \
             | yq d - metadata.creationTimestamp \
-            | kubectl apply -f -`);
-        exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ../dev/charts/sweeper`);
+            | kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f -`);
+        exec(`/usr/local/bin/helm3 --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ../dev/charts/sweeper`);
     }
 
     function addDeploymentFlags() {
@@ -577,11 +579,11 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     }
 
     async function cleanStateEnv(shellOpts: ExecOptions) {
-        await wipeAndRecreateNamespace(helmInstallName, namespace, { ...shellOpts, slice: 'prep' });
+        await wipeAndRecreateNamespace(helmInstallName, namespace, CORE_DEV_KUBECONFIG_PATH, { ...shellOpts, slice: 'prep' });
         // cleanup non-namespace objects
         werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
         try {
-            await deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice: 'predeploy cleanup' });
+            await deleteNonNamespaceObjects(namespace, destname, CORE_DEV_KUBECONFIG_PATH, { ...shellOpts, slice: 'predeploy cleanup' });
             werft.done('predeploy cleanup');
         } catch (err) {
             if (!jobConfig.mainBuild) {
@@ -631,13 +633,13 @@ interface DeploymentConfig {
     withVM: boolean;
 }
 
-async function addDNSRecord(werft: Werft, namespace: string, domain: string, isLoadbalancer: boolean) {
+async function addDNSRecord(werft: Werft, namespace: string, domain: string, isLoadbalancer: boolean, kubeconfigPath: string) {
     let wsProxyLBIP = null
     if (isLoadbalancer === true) {
         werft.log(installerSlices.DNS_ADD_RECORD, "Getting ws-proxy loadbalancer IP");
         for (let i = 0; i < 60; i++) {
             try {
-                let lb = exec(`kubectl -n ${namespace} get service ws-proxy -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'`, { silent: true })
+                let lb = exec(`kubectl --kubeconfig ${kubeconfigPath} -n ${namespace} get service ws-proxy -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'`, { silent: true })
                 if (lb.length > 4) {
                     wsProxyLBIP = lb
                     break
@@ -696,10 +698,11 @@ async function installMetaCertificates(werft: Werft, namespace: string) {
     await installCertficate(werft, metaInstallCertParams, metaEnv());
 }
 
-async function installMonitoring(namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
+async function installMonitoring(kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
     const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
+    installMonitoringSatelliteParams.kubeconfigPath = kubeconfig
     installMonitoringSatelliteParams.branch = observabilityBranch;
-    installMonitoringSatelliteParams.pathToKubeConfig = ""
+    installMonitoringSatelliteParams.kubeconfigPath = ""
     installMonitoringSatelliteParams.satelliteNamespace = namespace
     installMonitoringSatelliteParams.clusterName = namespace
     installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
