@@ -1,6 +1,9 @@
 # Change Log
 
 ## March 2022
+- Update team deletion confirmation modal ([#8772](https://github.com/gitpod-io/gitpod/pull/8772)) - [@gtsiolis](https://github.com/gtsiolis)
+- [image-bob-builder] Add support for stargz ([#8941](https://github.com/gitpod-io/gitpod/pull/8941)) - [@aledbf](https://github.com/aledbf)
+- [kots]: configure werft build command ([#8867](https://github.com/gitpod-io/gitpod/pull/8867)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Update buildkit to v0.10.0 ([#8845](https://github.com/gitpod-io/gitpod/pull/8845)) - [@aledbf](https://github.com/aledbf)
 - Added first draft of a public API ([#8683](https://github.com/gitpod-io/gitpod/pull/8683)) - [@csweichel](https://github.com/csweichel)
 - Add sudo permission to custom images, force NOPASSWD ([#8914](https://github.com/gitpod-io/gitpod/pull/8914)) - [@mustard-mh](https://github.com/mustard-mh)
