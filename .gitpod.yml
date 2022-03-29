@@ -12,6 +12,15 @@ ports:
     onOpen: ignore
   - port: 4000
     onOpen: ignore
+  # VNC
+  - port: 5900
+    onOpen: ignore
+  # noVNC
+  - port: 6080
+    onOpen: ignore
+  # Werft
+  - port: 7777
+    onOpen: ignore
   - port: 9229
     onOpen: ignore
   # Go proxy
@@ -19,17 +28,8 @@ ports:
     onOpen: ignore
   - port: 13001
     onOpen: ignore
-  # Werft
-  - port: 7777
-    onOpen: ignore
   # Dev Theia
   - port: 13444
-  # noVNC
-  - port: 6080
-    onOpen: ignore
-  # VNC
-  - port: 5900
-    onOpen: ignore
 tasks:
   - name: Add Harvester kubeconfig
     command: |
