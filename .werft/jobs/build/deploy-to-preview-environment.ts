@@ -10,7 +10,7 @@ import { GCLOUD_SERVICE_ACCOUNT_PATH } from "./const";
 import { Werft } from "../../util/werft";
 import { JobConfig } from "./job-config";
 import * as VM from '../../vm/vm'
-import { Analytics, newInstaller } from "./installer/installer";
+import { Analytics, Installer } from "./installer/installer";
 
 // used by both deploys (helm and Installer)
 const PROXY_SECRET_NAME = "proxy-config-certificates";
@@ -282,7 +282,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         analytics.token = deploymentConfig.analytics!.substring("segment|".length)
     }
 
-    const installer = newInstaller("config.yaml", version, PROXY_SECRET_NAME, deploymentConfig.domain, deploymentConfig.destname, IMAGE_PULL_SECRET_NAME, namespace, analytics, deploymentConfig.installEELicense, withVM, workspaceFeatureFlags, gitpodDaemonsetPorts)
+    const installer = new Installer(werft, "config.yaml", version, PROXY_SECRET_NAME, deploymentConfig.domain, deploymentConfig.destname, IMAGE_PULL_SECRET_NAME, namespace, analytics, deploymentConfig.installEELicense, withVM, workspaceFeatureFlags, gitpodDaemonsetPorts)
     try {
         installer.init(installerSlices.INSTALLER_INIT)
         installer.addPreviewConfiguration(installerSlices.PREVIEW_CONFIG)
