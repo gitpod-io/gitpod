@@ -55,8 +55,7 @@ var runCmd = &cobra.Command{
 				IdeImage: &api.IDEImage{
 					WebRef: "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8c1466008dedabe79d82cbb91931a16f7ce7994c",
 				},
-				Admission:        api.AdmissionLevel_ADMIT_OWNER_ONLY,
-				CheckoutLocation: "gitpod",
+				Admission: api.AdmissionLevel_ADMIT_OWNER_ONLY,
 				Git: &api.GitSpec{
 					Email:    "test@gitpod.io",
 					Username: "foobar",
@@ -65,7 +64,7 @@ var runCmd = &cobra.Command{
 				Initializer: &csapi.WorkspaceInitializer{
 					Spec: &csapi.WorkspaceInitializer_Git{
 						Git: &csapi.GitInitializer{
-							CheckoutLocation: "",
+							CheckoutLocation: "gitpod",
 							CloneTaget:       "main",
 							RemoteUri:        "https://github.com/gitpod-io/gitpod.git",
 							TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,

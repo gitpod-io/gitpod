@@ -1175,7 +1175,6 @@ export class WorkspaceStarter {
         }
 
         const spec = new StartWorkspaceSpec();
-        spec.setCheckoutLocation(checkoutLocation!);
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
         spec.setGit(this.createGitSpec(workspace, user));
@@ -1188,7 +1187,7 @@ export class WorkspaceStarter {
         spec.setIdeImage(startWorkspaceSpecIDEImage);
         spec.setDeprecatedIdeImage(ideImage);
         spec.setWorkspaceImage(instance.workspaceImage);
-        spec.setWorkspaceLocation(workspace.config.workspaceLocation || spec.getCheckoutLocation());
+        spec.setWorkspaceLocation(workspace.config.workspaceLocation || checkoutLocation);
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
         if (workspace.type === "regular") {
             spec.setTimeout(this.userService.workspaceTimeoutToDuration(await userTimeoutPromise));
@@ -1317,7 +1316,11 @@ export class WorkspaceStarter {
         const disp = new DisposableCollection();
 
         if (mustHaveBackup) {
-            result.setBackup(new FromBackupInitializer());
+            const backup = new FromBackupInitializer();
+            if (CommitContext.is(context)) {
+                backup.setCheckoutLocation(context.checkoutLocation || "");
+            }
+            result.setBackup(backup);
         } else if (SnapshotContext.is(context)) {
             const snapshot = new SnapshotInitializer();
             snapshot.setSnapshot(context.snapshotBucketId);
