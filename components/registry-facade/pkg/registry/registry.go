@@ -6,6 +6,7 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -22,7 +23,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/registry-facade/api"
 
-	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/content/local"
 	"github.com/containerd/containerd/remotes"
 	"github.com/docker/distribution"
@@ -69,7 +69,7 @@ type ResolverProvider func() remotes.Resolver
 type Registry struct {
 	Config         config.Config
 	Resolver       ResolverProvider
-	Store          content.Store
+	Store          BlobStore
 	IPFS           *IPFSBlobCache
 	LayerSource    LayerSource
 	ConfigModifier ConfigModifier
@@ -82,15 +82,34 @@ type Registry struct {
 
 // NewRegistry creates a new registry
 func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus.Registerer) (*Registry, error) {
-	storePath := cfg.Store
-	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
-		storePath = filepath.Join(tproot, storePath)
+	var mfStore BlobStore
+	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
+		rdc, err := getRedisClient(cfg.IPFSCache.Redis)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot connect to Redis: %w", err)
+		}
+		mfStore = &RedisBlobStore{Client: rdc}
+		log.Info("using redis to cache manifests and config")
+
+		resolverFactory := &RedisCachedResolver{
+			Client:   rdc,
+			Provider: newResolver,
+		}
+		newResolver = resolverFactory.Factory
+		log.Info("using redis to cache references")
+	} else {
+		storePath := cfg.Store
+		if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
+			storePath = filepath.Join(tproot, storePath)
+		}
+		var err error
+		mfStore, err = local.NewStore(storePath)
+		if err != nil {
+			return nil, err
+		}
+		log.WithField("storePath", storePath).Info("using local filesystem to cache manifests and config")
+		// TODO(cw): GC the store
 	}
-	store, err := local.NewStore(storePath)
-	if err != nil {
-		return nil, err
-	}
-	// TODO: GC the store
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -182,12 +201,22 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 			return nil, xerrors.Errorf("cannot read fixed spec: %w", err)
 		}
 
-		var fp api.ImageSpec
-		err = jsonpb.UnmarshalString(string(fc), &fp)
+		f := make(map[string]json.RawMessage)
+		err = json.Unmarshal(fc, &f)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot unmarshal fixed spec: %w", err)
 		}
-		specProvider[api.ProviderPrefixFixed] = FixedImageSpecProvider(fp)
+
+		prov := make(FixedImageSpecProvider)
+		for k, v := range f {
+			var spec api.ImageSpec
+			err = jsonpb.UnmarshalString(string(v), &spec)
+			if err != nil {
+				return nil, xerrors.Errorf("cannot unmarshal fixed spec: %w", err)
+			}
+			prov[k] = &spec
+		}
+		specProvider[api.ProviderPrefixFixed] = prov
 	}
 
 	var ipfs *IPFSBlobCache
@@ -221,7 +250,7 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 	return &Registry{
 		Config:            cfg,
 		Resolver:          newResolver,
-		Store:             store,
+		Store:             mfStore,
 		IPFS:              ipfs,
 		SpecProvider:      specProvider,
 		LayerSource:       layerSource,
