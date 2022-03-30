@@ -29,6 +29,19 @@ type WorkspaceConfig struct {
 		Limit            resource.Quantity `json:"limit"`
 		BurstLimit       resource.Quantity `json:"burstLimit"`
 	}
+
+	RegistryFacade struct {
+		IPFSCache struct {
+			Enabled  bool   `json:"enabled"`
+			IPFSAddr string `json:"ipfsAddr"`
+			Redis    struct {
+				MasterName     string   `json:"masterName"`
+				SentinelAddrs  []string `json:"sentinelAddrs"`
+				Username       string   `json:"username"`
+				PasswordSecret string   `json:"passwordSecret"`
+			} `json:"redis"`
+		} `json:"ipfsCache"`
+	} `json:"registryFacade"`
 }
 
 type WebAppConfig struct {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	regfac "github.com/gitpod-io/gitpod/registry-facade/api/config"
 
 	corev1 "k8s.io/api/core/v1"
@@ -24,6 +25,24 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			PrivateKey:  "/mnt/certificates/tls.key",
 		}
 	}
+
+	var ipfsCache *regfac.IPFSCacheConfig
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace == nil || !ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+			return nil
+		}
+		cacheCfg := ucfg.Workspace.RegistryFacade.IPFSCache
+		ipfsCache = &regfac.IPFSCacheConfig{
+			Enabled:  true,
+			IPFSAddr: cacheCfg.IPFSAddr,
+			Redis: regfac.RedisConfig{
+				MasterName:    cacheCfg.Redis.MasterName,
+				SentinelAddrs: cacheCfg.Redis.SentinelAddrs,
+				Username:      cacheCfg.Redis.Username,
+			},
+		}
+		return nil
+	})
 
 	rfcfg := regfac.ServiceConfig{
 		Registry: regfac.Config{
@@ -53,6 +72,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type: "image",
 				},
 			},
+			IPFSCache: ipfsCache,
 		},
 		AuthCfg:            "/mnt/pull-secret.json",
 		PProfAddr:          ":6060",

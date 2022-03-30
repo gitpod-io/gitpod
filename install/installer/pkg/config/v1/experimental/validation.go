@@ -4,7 +4,10 @@
 
 package experimental
 
-import "github.com/go-playground/validator/v10"
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/go-playground/validator/v10"
+)
 
 var TracingSampleTypeList = map[TracingSampleType]struct{}{
 	TracingSampleTypeConst:         {},
@@ -18,4 +21,18 @@ var ValidationChecks = map[string]validator.Func{
 		_, ok := TracingSampleTypeList[TracingSampleType(fl.Field().String())]
 		return ok
 	},
+}
+
+func ClusterValidation(cfg *Config) cluster.ValidationChecks {
+	if cfg == nil {
+		return nil
+	}
+
+	var res cluster.ValidationChecks
+	if cfg.Workspace != nil {
+		if scr := cfg.Workspace.RegistryFacade.IPFSCache.Redis.PasswordSecret; scr != "" {
+			res = append(res, cluster.CheckSecret(scr, cluster.CheckSecretRequiredData("password")))
+		}
+	}
+	return res
 }
