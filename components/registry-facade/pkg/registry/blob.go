@@ -85,7 +85,7 @@ type blobHandler struct {
 	Spec              *api.ImageSpec
 	Resolver          remotes.Resolver
 	Store             content.Store
-	IPFS              *IPFSStore
+	IPFS              *IPFSBlobCache
 	AdditionalSources []BlobSource
 	ConfigModifier    ConfigModifier
 
