@@ -4,6 +4,7 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import { wipePreviewEnvironmentAndNamespace, helmInstallName, listAllPreviewNamespaces } from './util/kubectl';
 import { exec } from './util/shell';
 import { previewNameFromBranchName } from './util/preview';
+import { CORE_DEV_KUBECONFIG_PATH } from './jobs/build/const';
 
 // Will be set once tracing has been initialized
 let werft: Werft
@@ -30,7 +31,7 @@ async function deletePreviewEnvironments() {
     try {
         const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
-        exec('gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev');
+        exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev`);
     } catch (err) {
         werft.fail("prep", err)
     }
@@ -46,7 +47,7 @@ async function deletePreviewEnvironments() {
     werft.phase("Fetching previews");
     let previews: string[]
     try {
-        previews = listAllPreviewNamespaces({});
+        previews = listAllPreviewNamespaces(CORE_DEV_KUBECONFIG_PATH, {});
         previews.forEach(previewNs => werft.log("Fetching previews", previewNs))
     } catch (err) {
         werft.fail("Fetching previews", err)
@@ -57,7 +58,7 @@ async function deletePreviewEnvironments() {
     try {
         const previewsToDelete = previews.filter(ns => !expectedPreviewEnvironmentNamespaces.has(ns))
         // Trigger namespace deletion in parallel
-        const promises = previewsToDelete.map(preview => wipePreviewEnvironmentAndNamespace(helmInstallName, preview, { slice: `Deleting preview ${preview}` }));
+        const promises = previewsToDelete.map(preview => wipePreviewEnvironmentAndNamespace(helmInstallName, preview, CORE_DEV_KUBECONFIG_PATH, { slice: `Deleting preview ${preview}` }));
         // But wait for all of them to finish before (or one of them to fail) before we continue
         await Promise.all(promises)
     } catch (err) {
