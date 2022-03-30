@@ -78,7 +78,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     const url = `https://${domain}`;
     const imagePullAuth = exec(`printf "%s" "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
         | yq r - data['.dockerconfigjson'] \
-        | base64 -d)" | base64 -w 0`, { silent: true}).stdout.trim();
+        | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
 
     const sweeperImage = exec(`tar xfO /tmp/dev.tar.gz ./sweeper.txt`).stdout.trim();
 
@@ -129,12 +129,12 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         werft.done(vmSlices.KUBECONFIG)
 
         werft.log(vmSlices.WAIT_K3S, 'Wait for k3s')
-        await waitForApiserver({ slice:vmSlices.WAIT_K3S })
-        await waitUntilAllPodsAreReady("kube-system", { slice:vmSlices.WAIT_K3S } )
+        await waitForApiserver({ slice: vmSlices.WAIT_K3S })
+        await waitUntilAllPodsAreReady("kube-system", { slice: vmSlices.WAIT_K3S })
         werft.done(vmSlices.WAIT_K3S)
 
         werft.log(vmSlices.WAIT_CERTMANAGER, 'Wait for Cert-Manager')
-        await waitUntilAllPodsAreReady("cert-manager", { slice:vmSlices.WAIT_CERTMANAGER } )
+        await waitUntilAllPodsAreReady("cert-manager", { slice: vmSlices.WAIT_CERTMANAGER })
         werft.done(vmSlices.WAIT_CERTMANAGER)
 
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
@@ -200,8 +200,6 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     let registryNodePortMeta = findLastHostPort(namespace, 'registry-facade', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
     let nodeExporterPort = findLastHostPort(namespace, 'node-exporter', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
 
-
-
     if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta) || (isNaN(nodeExporterPort) && !withVM && withObservability)) {
         werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
         [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
@@ -213,11 +211,6 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     werft.log(installerSlices.FIND_FREE_HOST_PORTS,
         `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}.`);
     werft.done(installerSlices.FIND_FREE_HOST_PORTS);
-
-    const gitpodDaemonsetPorts = {
-        registryFacade: registryNodePortMeta,
-        wsDaemon: wsdaemonPortMeta
-    }
 
     // clean environment state
     try {
@@ -282,7 +275,21 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         analytics.token = deploymentConfig.analytics!.substring("segment|".length)
     }
 
-    const installer = new Installer(werft, "config.yaml", version, PROXY_SECRET_NAME, deploymentConfig.domain, deploymentConfig.destname, IMAGE_PULL_SECRET_NAME, namespace, analytics, deploymentConfig.installEELicense, withVM, workspaceFeatureFlags, gitpodDaemonsetPorts)
+    const installer = new Installer({
+        werft: werft,
+        configPath: "config.yaml",
+        version: version,
+        proxySecretName: PROXY_SECRET_NAME,
+        domain: deploymentConfig.domain,
+        previewName: deploymentConfig.destname,
+        imagePullSecretName: IMAGE_PULL_SECRET_NAME,
+        deploymentNamespace: namespace,
+        analytics: analytics,
+        withEELicense: deploymentConfig.installEELicense,
+        withVM: withVM,
+        workspaceFeatureFlags: workspaceFeatureFlags,
+        gitpodDaemonsetPorts: { registryFacade: registryNodePortMeta, wsDaemon: wsdaemonPortMeta }
+    })
     try {
         installer.init(installerSlices.INSTALLER_INIT)
         installer.addPreviewConfiguration(installerSlices.PREVIEW_CONFIG)
