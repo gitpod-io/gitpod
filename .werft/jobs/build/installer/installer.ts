@@ -2,8 +2,8 @@ import { exec } from "../../../util/shell";
 import { Werft } from "../../../util/werft";
 import { getNodePoolIndex } from "../deploy-to-preview-environment";
 
-const blockNewUserConfigPath = './blockNewUsers';
-const workspaceSizeConfigPath = './workspaceSizing';
+const BLOCK_NEW_USER_CONFIG_PATH = './blockNewUsers';
+const WORKSPACE_SIZE_CONFIG_PATH = './workspaceSizing';
 const PROJECT_NAME = "gitpod-core-dev";
 const CONTAINER_REGISTRY_URL = `eu.gcr.io/${PROJECT_NAME}/build/`;
 const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
@@ -80,11 +80,11 @@ export class Installer {
     }
 
     private getDevCustomValues(slice: string): void {
-        exec(`yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.blockNewUsers | yq prefix - 'blockNewUsers' > ${blockNewUserConfigPath}`, { slice: slice });
-        exec(`yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing.dynamic.cpu.buckets | yq prefix - 'workspace.resources.dynamicLimits.cpu' > ${workspaceSizeConfigPath}`, { slice: slice });
+        exec(`yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.blockNewUsers | yq prefix - 'blockNewUsers' > ${BLOCK_NEW_USER_CONFIG_PATH}`, { slice: slice });
+        exec(`yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing.dynamic.cpu.buckets | yq prefix - 'workspace.resources.dynamicLimits.cpu' > ${WORKSPACE_SIZE_CONFIG_PATH}`, { slice: slice });
 
-        exec(`yq m -i --overwrite ${this.configPath} ${blockNewUserConfigPath}`, { slice: slice });
-        exec(`yq m -i ${this.configPath} ${workspaceSizeConfigPath}`, { slice: slice });
+        exec(`yq m -i --overwrite ${this.configPath} ${BLOCK_NEW_USER_CONFIG_PATH}`, { slice: slice });
+        exec(`yq m -i ${this.configPath} ${WORKSPACE_SIZE_CONFIG_PATH}`, { slice: slice });
     }
 
     private configureContainerRegistry(slice: string): void {
