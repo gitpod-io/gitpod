@@ -31,6 +31,12 @@ func GetConfig(fn string) (*ServiceConfig, error) {
 		return nil, err
 	}
 
+	if cfg.Registry.IPFSCache != nil {
+		rd := cfg.Registry.IPFSCache.Redis
+		rd.Password = os.Getenv("REDIS_PASSWORD")
+		cfg.Registry.IPFSCache.Redis = rd
+	}
+
 	return &cfg, nil
 }
 
@@ -60,9 +66,18 @@ type Config struct {
 }
 
 type IPFSCacheConfig struct {
-	Enabled   bool   `json:"enabled"`
-	RedisAddr string `json:"redis"`
-	IPFSAddr  string `json:"ipfs"`
+	Enabled  bool        `json:"enabled"`
+	Redis    RedisConfig `json:"redis"`
+	IPFSAddr string      `json:"ipfs"`
+}
+
+type RedisConfig struct {
+	SingleHostAddress string `json:"singleHostAddr,omitempty"`
+
+	MasterName    string   `json:"masterName,omitempty"`
+	SentinelAddrs []string `json:"sentinelAddrs,omitempty"`
+	Username      string   `json:"username,omitempty"`
+	Password      string   `json:"-" env:"REDIS_PASSWORD"`
 }
 
 // StaticLayerCfg configure statically added layer

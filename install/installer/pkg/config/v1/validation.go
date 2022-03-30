@@ -210,5 +210,8 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 			return errors, nil
 		})))
 	}
+
+	res = append(res, experimental.ClusterValidation(cfg.Experimental)...)
+
 	return res
 }
