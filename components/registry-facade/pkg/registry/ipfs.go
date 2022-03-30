@@ -7,6 +7,7 @@ package registry
 import (
 	"context"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -18,6 +19,7 @@ import (
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
+// ipfsManifestModifier modifies a manifest and adds IPFS URLs to the layers
 func (reg *Registry) ipfsManifestModifier(mf *ociv1.Manifest) error {
 	if reg.IPFS == nil {
 		return nil
@@ -25,23 +27,34 @@ func (reg *Registry) ipfsManifestModifier(mf *ociv1.Manifest) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	var wg sync.WaitGroup
 	for i, l := range mf.Layers {
-		url, _ := reg.IPFS.Get(ctx, l.Digest)
-		if url == "" {
-			continue
-		}
-		mf.Layers[i].URLs = append(mf.Layers[i].URLs, url)
+		wg.Add(1)
+		go func(i int, dgst digest.Digest) {
+			defer wg.Done()
+
+			url, _ := reg.IPFS.Get(ctx, dgst)
+			if url == "" {
+				return
+			}
+			mf.Layers[i].URLs = append(mf.Layers[i].URLs, url)
+		}(i, l.Digest)
 	}
+	wg.Wait()
 
 	return nil
 }
 
-type IPFSStore struct {
+// IPFSBlobCache can cache blobs in IPFS
+type IPFSBlobCache struct {
 	Redis *redis.Client
 	IPFS  ipfs.CoreAPI
 }
 
-func (store *IPFSStore) Get(ctx context.Context, dgst digest.Digest) (ipfsURL string, err error) {
+// Get retrieves the IPFS URL for a previously stored blob.
+// Returns an error if the blob is not stored in IPFS yet.
+func (store *IPFSBlobCache) Get(ctx context.Context, dgst digest.Digest) (ipfsURL string, err error) {
 	if store == nil || store.IPFS == nil || store.Redis == nil {
 		return "", nil
 	}
@@ -54,20 +67,8 @@ func (store *IPFSStore) Get(ctx context.Context, dgst digest.Digest) (ipfsURL st
 	return "ipfs://" + res, nil
 }
 
-func (store *IPFSStore) Has(ctx context.Context, dgst digest.Digest) (ok bool, err error) {
-	if store == nil || store.IPFS == nil || store.Redis == nil {
-		return false, nil
-	}
-
-	res := store.Redis.Exists(ctx, dgst.String())
-	if err := res.Err(); err != nil {
-		return false, err
-	}
-
-	return res.Val() == 1, nil
-}
-
-func (store *IPFSStore) Store(ctx context.Context, dgst digest.Digest, content io.Reader) (err error) {
+// Store stores a blob in IPFS. Will happily overwrite/re-upload a blob.
+func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, content io.Reader) (err error) {
 	if store == nil || store.IPFS == nil || store.Redis == nil {
 		return nil
 	}
