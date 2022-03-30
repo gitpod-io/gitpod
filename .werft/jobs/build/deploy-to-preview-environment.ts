@@ -239,7 +239,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
 
             // trigger certificate issuing
             await issueMetaCerts(werft, namespace, "certs", domain, withVM);
-            await installMetaCertificates(werft, namespace);
+            await installMetaCertificates(werft, namespace, CORE_DEV_KUBECONFIG_PATH);
             werft.done(installerSlices.ISSUE_CERTIFICATES);
         } catch (err) {
             if (!jobConfig.mainBuild) {
@@ -388,7 +388,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         // trigger certificate issuing
         werft.log('certificate', "organizing a certificate for the preview environment...");
         await issueMetaCerts(werft, namespace, "certs", domain, false);
-        await installMetaCertificates(werft, namespace);
+        await installMetaCertificates(werft, namespace, CORE_DEV_KUBECONFIG_PATH);
         werft.done('certificate');
         await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, false, CORE_DEV_KUBECONFIG_PATH)
         werft.done('prep');
@@ -688,13 +688,14 @@ export async function issueMetaCerts(werft: Werft, previewNamespace: string, cer
     await issueCertficate(werft, metaClusterCertParams, metaEnv());
 }
 
-async function installMetaCertificates(werft: Werft, namespace: string) {
+async function installMetaCertificates(werft: Werft, namespace: string, kubeconfig: string) {
     const certName = namespace;
     const metaInstallCertParams = new InstallCertificateParams()
     metaInstallCertParams.certName = certName
     metaInstallCertParams.certNamespace = "certs"
     metaInstallCertParams.certSecretName = PROXY_SECRET_NAME
     metaInstallCertParams.destinationNamespace = namespace
+    metaInstallCertParams.destinationKubeconfig = kubeconfig
     await installCertficate(werft, metaInstallCertParams, metaEnv());
 }
 

@@ -21,6 +21,7 @@ export class InstallCertificateParams {
     certSecretName: string
     certNamespace: string
     destinationNamespace: string
+    destinationKubeconfig: string
 }
 
 export async function issueCertficate(werft, params: IssueCertificateParams, shellOpts: ExecOptions) {
@@ -71,13 +72,13 @@ export async function issueCertficate(werft, params: IssueCertificateParams, she
 export async function installCertficate(werft, params: InstallCertificateParams, shellOpts: ExecOptions) {
     let notReadyYet = true;
     werft.log('certificate', `copying certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
-    const cmd = `kubectl get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
+    const cmd = `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
     | yq d - 'metadata.namespace' \
     | yq d - 'metadata.uid' \
     | yq d - 'metadata.resourceVersion' \
     | yq d - 'metadata.creationTimestamp' \
     | sed 's/${params.certName}/${params.certSecretName}/g' \
-    | kubectl apply --namespace=${params.destinationNamespace} -f -`
+    | kubectl --kubeconfig ${params.destinationKubeconfig} apply --namespace=${params.destinationNamespace} -f -`
 
     for (let i = 0; i < 60 && notReadyYet; i++) {
         const result = exec(cmd, { ...shellOpts, silent: true, dontCheckRc: true, async: false });
