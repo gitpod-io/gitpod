@@ -70,7 +70,7 @@ type Registry struct {
 	Config         config.Config
 	Resolver       ResolverProvider
 	Store          content.Store
-	IPFS           *IPFSStore
+	IPFS           *IPFSBlobCache
 	LayerSource    LayerSource
 	ConfigModifier ConfigModifier
 	SpecProvider   map[string]ImageSpecProvider
@@ -190,7 +190,7 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 		specProvider[api.ProviderPrefixFixed] = FixedImageSpecProvider(fp)
 	}
 
-	var ipfs *IPFSStore
+	var ipfs *IPFSBlobCache
 	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
 		addr := cfg.IPFSCache.IPFSAddr
 		if ipfsHost := os.Getenv("IPFS_HOST"); ipfsHost != "" {
@@ -210,7 +210,7 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 			return nil, xerrors.Errorf("cannot connect to Redis: %w", err)
 		}
 
-		ipfs = &IPFSStore{
+		ipfs = &IPFSBlobCache{
 			Redis: rdc,
 			IPFS:  core,
 		}
