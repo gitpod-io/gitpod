@@ -13,7 +13,9 @@
     "fixedSpecFN": "example-spec.json",
     "ipfs": {
       "enabled": true,
-      "redis": "localhost:6379",
+      "redis": {
+        "singleHostAddr": "localhost:6379"
+      },
       "ipfs": "/ip4/127.0.0.1/tcp/5001"
     }
   },

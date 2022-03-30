@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -31,8 +32,10 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		hashObj = append(hashObj, objs...)
 	}
 
-	var volumes []corev1.Volume
-	var volumeMounts []corev1.VolumeMount
+	var (
+		volumes      []corev1.Volume
+		volumeMounts []corev1.VolumeMount
+	)
 
 	if ctx.Config.Certificate.Name != "" {
 		name := "config-certificates"
@@ -71,6 +74,39 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	} else {
 		return nil, fmt.Errorf("%s: invalid container registry config", Component)
 	}
+
+	var envvars []corev1.EnvVar
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace == nil || !ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+			return nil
+		}
+
+		envvars = []corev1.EnvVar{
+			{
+				Name: "IPFS_HOST",
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "status.hostIP",
+					},
+				},
+			},
+		}
+		if scr := ucfg.Workspace.RegistryFacade.IPFSCache.Redis.PasswordSecret; scr != "" {
+			envvars = append(envvars, corev1.EnvVar{
+				Name: "REDIS_PASSWORD",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: scr,
+						},
+						Key: "password",
+					},
+				},
+			})
+		}
+
+		return nil
+	})
 
 	return []runtime.Object{&appsv1.DaemonSet{
 		TypeMeta: common.TypeMetaDaemonset,
@@ -152,36 +188,46 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Env: common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
 							common.TracingEnv(ctx),
-							[]corev1.EnvVar{{
-								Name:  "GRPC_GO_RETRY",
-								Value: "on",
-							}, {
-								Name: "NODENAME",
-								ValueFrom: &corev1.EnvVarSource{
-									FieldRef: &corev1.ObjectFieldSelector{
-										FieldPath: "spec.nodeName",
+							[]corev1.EnvVar{
+								{
+									Name:  "GRPC_GO_RETRY",
+									Value: "on",
+								},
+								{
+									Name: "NODENAME",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "spec.nodeName",
+										},
 									},
 								},
-							}},
+							},
 						),
-						VolumeMounts: append([]corev1.VolumeMount{{
-							Name:      "cache",
-							MountPath: "/mnt/cache",
-						}, {
-							Name:      "config",
-							MountPath: "/mnt/config",
-							ReadOnly:  true,
-						}, {
-							Name:      "ws-manager-client-tls-certs",
-							MountPath: "/ws-manager-client-tls-certs",
-							ReadOnly:  true,
-						}, {
-							Name:      name,
-							MountPath: "/mnt/pull-secret.json",
-							SubPath:   ".dockerconfigjson",
-						},
-							*common.InternalCAVolumeMount(),
-						}, volumeMounts...),
+						VolumeMounts: append(
+							[]corev1.VolumeMount{
+								{
+									Name:      "cache",
+									MountPath: "/mnt/cache",
+								},
+								{
+									Name:      "config",
+									MountPath: "/mnt/config",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "ws-manager-client-tls-certs",
+									MountPath: "/ws-manager-client-tls-certs",
+									ReadOnly:  true,
+								},
+								{
+									Name:      name,
+									MountPath: "/mnt/pull-secret.json",
+									SubPath:   ".dockerconfigjson",
+								},
+								*common.InternalCAVolumeMount(),
+							},
+							volumeMounts...,
+						),
 						ReadinessProbe: &corev1.Probe{
 							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
