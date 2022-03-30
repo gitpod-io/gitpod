@@ -304,7 +304,7 @@ func resolveRef(ctx context.Context, ref string, resolver remotes.Resolver) (*oc
 	if err != nil {
 		return nil, err
 	}
-	manifest, _, err := registry.DownloadManifest(ctx, fetcher, desc)
+	manifest, _, err := registry.DownloadManifest(ctx, registry.AsFetcherFunc(fetcher), desc)
 	if err != nil {
 		return nil, err
 	}
