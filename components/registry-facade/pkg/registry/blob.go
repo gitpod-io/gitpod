@@ -84,7 +84,7 @@ type blobHandler struct {
 
 	Spec              *api.ImageSpec
 	Resolver          remotes.Resolver
-	Store             content.Store
+	Store             BlobStore
 	IPFS              *IPFSBlobCache
 	AdditionalSources []BlobSource
 	ConfigModifier    ConfigModifier
@@ -188,7 +188,7 @@ func (bh *blobHandler) downloadManifest(ctx context.Context, ref string) (res *o
 		log.WithError(err).WithField("ref", ref).WithField("instanceId", bh.Name).Error("cannot get fetcher")
 		return nil, nil, err
 	}
-	res, _, err = DownloadManifest(ctx, fetcher, desc, WithStore(bh.Store))
+	res, _, err = DownloadManifest(ctx, AsFetcherFunc(fetcher), desc, WithStore(bh.Store))
 	return
 }
 
@@ -214,7 +214,7 @@ type BlobSource interface {
 }
 
 type storeBlobSource struct {
-	Store content.Store
+	Store BlobStore
 }
 
 func (sbs storeBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {
@@ -305,7 +305,7 @@ func (pbs *configBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, d
 
 func (pbs *configBlobSource) getConfig(ctx context.Context) (rawCfg []byte, err error) {
 	manifest := *pbs.Manifest
-	cfg, err := DownloadConfig(ctx, pbs.Fetcher, manifest.Config)
+	cfg, err := DownloadConfig(ctx, AsFetcherFunc(pbs.Fetcher), "", manifest.Config)
 	if err != nil {
 		return
 	}

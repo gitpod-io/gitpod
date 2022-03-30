@@ -233,12 +233,12 @@ func NewStaticSourceFromImage(ctx context.Context, resolver remotes.Resolver, re
 		return nil, err
 	}
 
-	manifest, _, err := DownloadManifest(ctx, fetcher, desc)
+	manifest, _, err := DownloadManifest(ctx, AsFetcherFunc(fetcher), desc)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg, err := DownloadConfig(ctx, fetcher, manifest.Config)
+	cfg, err := DownloadConfig(ctx, AsFetcherFunc(fetcher), ref, manifest.Config)
 	if err != nil {
 		return nil, err
 	}

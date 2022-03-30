@@ -102,7 +102,7 @@ func createFixtureFromImage(ctx context.Context, resolver remotes.Resolver, ref 
 		return nil, err
 	}
 
-	mf, _, err := DownloadManifest(ctx, fetcher, desc)
+	mf, _, err := DownloadManifest(ctx, AsFetcherFunc(fetcher), desc)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func createFixtureFromImage(ctx context.Context, resolver remotes.Resolver, ref 
 		return nil, err
 	}
 
-	cfg, err := DownloadConfig(ctx, fetcher, mf.Config)
+	cfg, err := DownloadConfig(ctx, AsFetcherFunc(fetcher), ref, mf.Config)
 	if err != nil {
 		return nil, err
 	}
