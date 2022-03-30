@@ -40,11 +40,20 @@ var attachTaskCmd = &cobra.Command{
 	Run:   tasks.AttachTasksCmd,
 }
 
+// restartTaskCmd represents the restart task command
+var restartTaskCmd = &cobra.Command{
+	Use:   "restart <name>",
+	Short: "Restart a task",
+	Args:  cobra.MaximumNArgs(1),
+	Run:   tasks.RestartTaskCmd,
+}
+
 func init() {
 	rootCmd.AddCommand(tasksCmd)
 
 	tasksCmd.AddCommand(listTasksCmd)
 	tasksCmd.AddCommand(attachTaskCmd)
+	tasksCmd.AddCommand(restartTaskCmd)
 
 	attachTaskCmd.Flags().BoolVarP(&attachTaskCmdOpts.Interactive, "interactive", "i", true, "assume control over the terminal")
 	attachTaskCmd.Flags().BoolVarP(&attachTaskCmdOpts.ForceResize, "force-resize", "r", true, "force this terminal's size irregardless of other clients")
