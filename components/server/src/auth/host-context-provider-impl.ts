@@ -84,17 +84,17 @@ export class HostContextProviderImpl implements HostContextProvider {
             const existingContext = this.dynamicHosts.get(host);
             const existingConfig = existingContext && existingContext.authProvider.params;
             if (existingConfig && config.id === existingConfig.id) {
-                if (existingConfig.host !== config.host) {
+                const sameHost = config.host === existingConfig.host;
+                if (!sameHost) {
                     log.warn("Ignoring host update for dynamic Auth Provider: " + host, { config, existingConfig });
                     continue;
                 }
-                if (existingConfig.status === config.status) {
-                    if (!!config.oauthRevision && existingConfig.oauthRevision === config.oauthRevision) {
-                        continue;
-                    }
-                    if (JSON.stringify(existingConfig.oauth) === JSON.stringify(config.oauth)) {
-                        continue;
-                    }
+                const sameOwner = config.ownerId === existingConfig.ownerId;
+                const sameStatus = config.status === existingConfig.status;
+                const sameOAuthRevision =
+                    !!config.oauthRevision && existingConfig.oauthRevision === config.oauthRevision;
+                if (sameOwner && sameStatus && sameOAuthRevision) {
+                    continue;
                 }
                 log.debug("Updating existing dynamic Auth Provider: " + host, { config, existingConfig });
             } else {

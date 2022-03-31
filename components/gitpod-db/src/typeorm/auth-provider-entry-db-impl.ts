@@ -31,7 +31,7 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
     async storeAuthProvider(ap: AuthProviderEntry, updateOAuthRevision: boolean): Promise<AuthProviderEntry> {
         const repo = await this.getAuthProviderRepo();
         if (updateOAuthRevision) {
-            (ap.oauthRevision as any) = this.oauthContentHash(ap.oauth);
+            (ap.oauthRevision as any) = this.oauthContentHash(ap);
         }
         return repo.save(ap);
     }
@@ -91,8 +91,10 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         return query.getMany();
     }
 
-    protected oauthContentHash(oauth: AuthProviderEntry["oauth"]): string {
-        const result = createHash("sha256").update(JSON.stringify(oauth)).digest("hex");
+    protected oauthContentHash(entry: AuthProviderEntry): string {
+        const result = createHash("sha256")
+            .update(JSON.stringify({ oauth: entry.oauth, ownerId: entry.ownerId, status: entry.status }))
+            .digest("hex");
         return result;
     }
 }

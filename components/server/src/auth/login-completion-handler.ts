@@ -105,10 +105,10 @@ export class LoginCompletionHandler {
         const hostCtx = this.hostContextProvider.get(hostname);
         if (hostCtx) {
             const { params: config } = hostCtx.authProvider;
-            const { id, verified, ownerId, builtin } = config;
+            const { id, verified, builtin } = config;
             if (!builtin && !verified) {
                 try {
-                    await this.authProviderService.markAsVerified({ id, ownerId });
+                    await this.authProviderService.markAsVerified({ id, ownerId: user.id });
                 } catch (error) {
                     log.error(LogContext.from({ user }), `Failed to mark AuthProvider as verified!`, { error });
                 }
