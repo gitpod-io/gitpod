@@ -176,6 +176,31 @@ void HasEnoughSeatsM(const FunctionCallbackInfo<Value> &args) {
     args.GetReturnValue().Set(Boolean::New(isolate, r.r0));
 }
 
+void GetLicenseDataM(const FunctionCallbackInfo<Value> &args) {
+    Isolate *isolate = args.GetIsolate();
+    Local<Context> context = isolate->GetCurrentContext();
+
+    if (args.Length() < 1) {
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "wrong number of arguments").ToLocalChecked()));
+        return;
+    }
+    if (!args[0]->IsNumber() || args[0]->IsUndefined()) {
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 0 must be a number").ToLocalChecked()));
+        return;
+    }
+
+    double rid = args[0]->NumberValue(context).FromMaybe(0);
+    int id = static_cast<int>(rid);
+
+    GetLicenseData_return r = GetLicenseData(id);
+    if (!r.r1) {
+        isolate->ThrowException(Exception::Error(String::NewFromUtf8(isolate, "invalid instance ID").ToLocalChecked()));
+        return;
+    }
+
+    args.GetReturnValue().Set(String::NewFromUtf8(isolate, r.r0).ToLocalChecked());
+}
+
 void InspectM(const FunctionCallbackInfo<Value> &args) {
     Isolate *isolate = args.GetIsolate();
     Local<Context> context = isolate->GetCurrentContext();
@@ -228,6 +253,7 @@ void initModule(Local<Object> exports) {
     NODE_SET_METHOD(exports, "hasEnoughSeats", HasEnoughSeatsM);
     NODE_SET_METHOD(exports, "inspect", InspectM);
     NODE_SET_METHOD(exports, "dispose", DisposeM);
+    NODE_SET_METHOD(exports, "getLicenseData", GetLicenseDataM);
 }
 
 // create module

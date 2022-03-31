@@ -74,6 +74,26 @@ func main() {
 		res = append(res, t)
 	}
 
+	ts, err = bel.Extract(licensor.LicenseData{}, bel.WithEnumerations(handler))
+	if err != nil {
+		panic(err)
+	}
+	for _, t := range ts {
+		if t.Name == "" {
+			continue
+		}
+
+		if t.Name == "LicenseData" {
+			for i, m := range t.Members {
+				if m.Name == "payload" {
+					t.Members[i].Type.Name = "LicensePayload"
+				}
+			}
+		}
+
+		res = append(res, t)
+	}
+
 	sort.Slice(res, func(i, j int) bool { return res[i].Name < res[j].Name })
 
 	f, err := os.Create("src/api.ts")

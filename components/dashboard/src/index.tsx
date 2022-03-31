@@ -10,6 +10,7 @@ import App from "./App";
 import { UserContextProvider } from "./user-context";
 import { AdminContextProvider } from "./admin-context";
 import { PaymentContextProvider } from "./payment-context";
+import { LicenseContextProvider } from "./license-context";
 import { TeamsContextProvider } from "./teams/teams-context";
 import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
@@ -23,17 +24,19 @@ ReactDOM.render(
         <UserContextProvider>
             <AdminContextProvider>
                 <PaymentContextProvider>
-                    <TeamsContextProvider>
-                        <ProjectContextProvider>
-                            <ThemeContextProvider>
-                                <StartWorkspaceModalContextProvider>
-                                    <BrowserRouter>
-                                        <App />
-                                    </BrowserRouter>
-                                </StartWorkspaceModalContextProvider>
-                            </ThemeContextProvider>
-                        </ProjectContextProvider>
-                    </TeamsContextProvider>
+                    <LicenseContextProvider>
+                        <TeamsContextProvider>
+                            <ProjectContextProvider>
+                                <ThemeContextProvider>
+                                    <StartWorkspaceModalContextProvider>
+                                        <BrowserRouter>
+                                            <App />
+                                        </BrowserRouter>
+                                    </StartWorkspaceModalContextProvider>
+                                </ThemeContextProvider>
+                            </ProjectContextProvider>
+                        </TeamsContextProvider>
+                    </LicenseContextProvider>
                 </PaymentContextProvider>
             </AdminContextProvider>
         </UserContextProvider>

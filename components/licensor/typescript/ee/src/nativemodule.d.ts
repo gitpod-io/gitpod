@@ -13,3 +13,4 @@ export function isEnabled(id: Instance, feature: Feature, seats: int): boolean;
 export function hasEnoughSeats(id: Instance, seats: int): boolean;
 export function inspect(id: Instance): string;
 export function dispose(id: Instance);
+export function getLicenseData(id: Instance): string;
