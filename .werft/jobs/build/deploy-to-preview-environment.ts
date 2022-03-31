@@ -271,8 +271,10 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
 
     let analytics: Analytics
     if ((deploymentConfig.analytics || "").startsWith("segment|")) {
-        analytics.type = "segment"
-        analytics.token = deploymentConfig.analytics!.substring("segment|".length)
+        analytics = {
+            type: "segment",
+            token: deploymentConfig.analytics!.substring("segment|".length)
+        }
     }
 
     const installer = new Installer({
