@@ -5813,6 +5813,27 @@ concurrently@^6.2.1:
     tree-kill "^1.2.2"
     yargs "^16.2.0"
 
+configcat-common@^4.6.1, configcat-common@^4.6.2:
+  version "4.6.2"
+  resolved "https://registry.yarnpkg.com/configcat-common/-/configcat-common-4.6.2.tgz#ef37114cf77c10378e686078bc45903508e0ed49"
+  integrity sha512-o7qp5xb3K9w3tL0dK0g2/IwzOym4SOcdl+Hgh7d1125fKamDk8Jg6nBb+jEkA0qs0msYI+kpcL7pEsihYUhEDg==
+
+configcat-js@^5.7.2:
+  version "5.7.2"
+  resolved "https://registry.yarnpkg.com/configcat-js/-/configcat-js-5.7.2.tgz#2466269f941c8564c0d2670ffbc74dc0657f1450"
+  integrity sha512-Pvryi3y1z1ZyhId5fGv6Weel6YU6EuTHHYdfY1SOaVSvNeXNU9HwLpzMUCwdINtSXyxtHd0xUMumRUje2h7/Ng==
+  dependencies:
+    configcat-common "^4.6.2"
+
+configcat-node@^6.7.1:
+  version "6.7.1"
+  resolved "https://registry.yarnpkg.com/configcat-node/-/configcat-node-6.7.1.tgz#87c6be569d646575c969d00966a97416a4b6a4fa"
+  integrity sha512-+tdKZkrWo3JdRezU90daly9LmL2efCDTnjHlKMUpwtVjrNjPVXggrydrgB5QUKmJUspWUd9bFSXS3jQgoGpB4g==
+  dependencies:
+    configcat-common "^4.6.1"
+    got "^9.6.0"
+    tunnel "0.0.6"
+
 configstore@^5.0.0, configstore@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/configstore/-/configstore-5.0.1.tgz#d365021b5df4b98cdd187d6a3b0e3f6a7cc5ed96"
@@ -17077,6 +17098,11 @@ tunnel-agent@^0.6.0:
   integrity sha1-J6XeoGs2sEoKmWZ3SykIaPD8QP0=
   dependencies:
     safe-buffer "^5.0.1"
+
+tunnel@0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/tunnel/-/tunnel-0.0.6.tgz#72f1314b34a5b192db012324df2cc587ca47f92c"
+  integrity sha512-1h/Lnq9yajKY2PEbBadPXj3VxsDDu844OnaAo52UVmIzIvwwtBPIuNvkjuzBlTWpfJyUbG3ez0KSBibQkj4ojg==
 
 tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"

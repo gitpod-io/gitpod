@@ -1,0 +1,16 @@
+import * as configcat from "configcat-node";
+import { IConfigCatClient } from "configcat-common/lib/ConfigCatClient";
+
+let logger = configcat.createConsoleLogger(3); // Setting log level to 3 (Info)
+let client: IConfigCatClient | undefined;
+
+export function getExperimentsClient(): IConfigCatClient {
+    if (client === undefined) {
+        client = configcat.createClient("WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw", {
+            // <-- This is the actual SDK Key for your Test environment
+            logger: logger,
+        });
+    }
+
+    return client;
+}

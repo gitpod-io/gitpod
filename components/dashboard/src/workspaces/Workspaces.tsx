@@ -15,6 +15,7 @@ import { ItemsList } from "../components/ItemsList";
 import { TeamsContext } from "../teams/teams-context";
 import { useLocation } from "react-router";
 import { StartWorkspaceModalContext, StartWorkspaceModalKeyBinding } from "./start-workspace-modal-context";
+import { getConfigcatClient } from "../experiments/configcat";
 
 export interface WorkspacesProps {}
 
@@ -32,6 +33,7 @@ export default function () {
     const [inactiveWorkspaces, setInactiveWorkspaces] = useState<WorkspaceInfo[]>([]);
     const [workspaceModel, setWorkspaceModel] = useState<WorkspaceModel>();
     const { setIsStartWorkspaceModalVisible } = useContext(StartWorkspaceModalContext);
+    const [isExperimenetEnabled, setExperiment] = useState<boolean>(false);
 
     useEffect(() => {
         (async () => {
@@ -40,9 +42,17 @@ export default function () {
         })();
     }, [teams, location]);
 
+    useEffect(() => {
+        (async () => {
+            const isEnabled = await getConfigcatClient().getValueAsync("isMyFirstFeatureEnabled", false);
+            setExperiment(isEnabled);
+        })();
+    }, []);
+
     return (
         <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
+            <p>Flag is ${isExperimenetEnabled}</p>
 
             {workspaceModel?.initialized &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ? (

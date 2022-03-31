@@ -157,6 +157,7 @@ import { ProjectEnvVar } from "@gitpod/gitpod-protocol/src/protocol";
 import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
+import { getExperimentsClient } from "../experiments";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2106,6 +2107,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // Anyone who can read a team's information (i.e. any team member) can create a new project.
             await this.guardTeamOperation(params.teamId, "get");
         }
+
+        const isFeatureEnabled = await getExperimentsClient().getValueAsync("isMyFirstFeatureEnabled", false, {
+            identifier: user.id,
+            custom: {
+                project_name: params.name,
+            },
+        });
+        if (isFeatureEnabled) {
+            throw new ResponseError(
+                ErrorCodes.NOT_FOUND,
+                `Feature is disabled for this user or project - sample usage of experiements`,
+            );
+        }
+
         const project = this.projectsService.createProject(params, user);
         this.analytics.track({
             userId: user.id,
