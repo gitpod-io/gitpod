@@ -19,6 +19,9 @@ export async function publishKots(werft: Werft, config: JobConfig) {
     // Set the tag to the current version
     exec(`yq w -i ${REPLICATED_YAML_DIR}/gitpod-installer-job.yaml ${INSTALLER_JOB_IMAGE} ${image}:${config.version}`);
 
+    // Update the additionalImages in the kots-app.yaml
+    exec(`/tmp/installer mirror kots --file ${REPLICATED_YAML_DIR}/kots-app.yaml`);
+
     const app = exec(`kubectl get secret ${REPLICATED_SECRET} --namespace werft -o jsonpath='{.data.app}' | base64 -d`);
     const token = exec(`kubectl get secret ${REPLICATED_SECRET} --namespace werft -o jsonpath='{.data.token}' | base64 -d`);
 
