@@ -151,8 +151,9 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
     // the context namespace is not set at this point
-    const hasGitpodHelmInstall = exec(`helm status ${helmInstallName} -n ${deploymentConfig.namespace}`, { slice: "check for Helm install", dontCheckRc: true }).code === 0;
-    const hasGitpodInstallerInstall = exec(`kubectl get configmap gitpod-app -n ${deploymentConfig.namespace}`, { slice: "check for Installer install", dontCheckRc: true }).code === 0;
+    const deploymentKubeconfig = withVM ? PREVIEW_K3S_KUBECONFIG_PATH : CORE_DEV_KUBECONFIG_PATH;
+    const hasGitpodHelmInstall = exec(`helm --kubeconfig ${deploymentKubeconfig} status ${helmInstallName} -n ${deploymentConfig.namespace}`, { slice: "check for Helm install", dontCheckRc: true }).code === 0;
+    const hasGitpodInstallerInstall = exec(`kubectl --kubeconfig ${deploymentKubeconfig} get configmap gitpod-app -n ${deploymentConfig.namespace}`, { slice: "check for Installer install", dontCheckRc: true }).code === 0;
     werft.log("result of installation checks", `has Helm install: ${hasGitpodHelmInstall}, has Installer install: ${hasGitpodInstallerInstall}`);
 
     if (withHelm) {
