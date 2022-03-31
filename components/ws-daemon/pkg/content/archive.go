@@ -82,14 +82,7 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 
 	defer fout.Close()
 
-	targetOut := newLimitWriter(fout, cfg.MaxSizeBytes)
-	defer func(e *error) {
-		if targetOut.DidMaxOut() {
-			*e = ErrMaxSizeExceeded
-		}
-	}(&err)
-
-	_, err = io.Copy(targetOut, tarout)
+	_, err = io.Copy(fout, tarout)
 	if err != nil {
 		return cleanCorruptedTarballAndReturnError(dst, xerrors.Errorf("cannot write tar file: %w", err))
 	}

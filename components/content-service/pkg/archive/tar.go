@@ -25,20 +25,12 @@ import (
 
 // TarConfig configures tarbal creation/extraction
 type TarConfig struct {
-	MaxSizeBytes int64
-	UIDMaps      []IDMapping
-	GIDMaps      []IDMapping
+	UIDMaps []IDMapping
+	GIDMaps []IDMapping
 }
 
 // BuildTarbalOption configures the tarbal creation
 type TarOption func(o *TarConfig)
-
-// TarbalMaxSize limits the size of a tarbal
-func TarbalMaxSize(n int64) TarOption {
-	return func(o *TarConfig) {
-		o.MaxSizeBytes = n
-	}
-}
 
 // IDMapping maps user or group IDs
 type IDMapping struct {

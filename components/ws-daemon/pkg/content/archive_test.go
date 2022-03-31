@@ -5,13 +5,8 @@
 package content
 
 import (
-	"context"
 	"io"
-	"os"
-	"path/filepath"
 	"testing"
-
-	carchive "github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
 func TestSizeLimitingWriter(t *testing.T) {
@@ -49,57 +44,5 @@ func TestSizeLimitingWriter(t *testing.T) {
 		if written != test.ExpectWritten {
 			t.Errorf("wrote unexpected number of bytes: expected %v, actual %v", test.ExpectWritten, written)
 		}
-	}
-}
-
-func TestBuildTarbalMaxSize(t *testing.T) {
-	tests := []struct {
-		Name        string
-		MaxSize     int64
-		ContentSize int64
-		Err         error
-	}{
-		{"positive", 1024 * 1024, 512, nil},
-		{"too-big", 512, 1024, ErrMaxSizeExceeded},
-	}
-
-	var cleanup []string
-	for _, test := range tests {
-		wd, err := os.MkdirTemp("", "")
-		if err != nil {
-			t.Errorf("cannot prepare test: %v", err)
-			continue
-		}
-		cleanup = append(cleanup, wd)
-
-		err = os.WriteFile(filepath.Join(wd, "content.txt"), make([]byte, test.ContentSize), 0600)
-		if err != nil {
-			t.Errorf("cannot prepare test: %v", err)
-			continue
-		}
-
-		tgt, err := os.CreateTemp("", "")
-		if err != nil {
-			t.Errorf("cannot prepare test: %v", err)
-			continue
-		}
-		tgt.Close()
-		cleanup = append(cleanup, tgt.Name())
-
-		err = BuildTarbal(context.Background(), wd, tgt.Name(), false, carchive.TarbalMaxSize(test.MaxSize))
-		if (err == nil && test.Err != nil) || (err != nil && test.Err == nil) || (err != nil && test.Err != nil && err.Error() != test.Err.Error()) {
-			t.Errorf("%s: unexpected error: expected \"%v\", actual \"%v\"", test.Name, test.Err, err)
-		} else {
-
-			_, doesNotExistErr := os.Stat(tgt.Name())
-			doesNotExist := doesNotExistErr != nil && os.IsNotExist(doesNotExistErr)
-			if err != nil && !doesNotExist {
-				t.Errorf("The file should be deleted when buildTarbal failed.")
-			}
-		}
-	}
-
-	for _, c := range cleanup {
-		os.RemoveAll(c)
 	}
 }
