@@ -218,7 +218,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         if (deploymentConfig.cleanSlateDeployment && !withVM) {
             werft.log(installerSlices.CLEAN_ENV_STATE, "Clean the preview environment slate...");
             // re-create namespace
-            await cleanStateEnv(metaEnv());
+            await cleanStateEnv(deploymentKubeconfig, metaEnv());
 
         } else {
             werft.log(installerSlices.CLEAN_ENV_STATE, "Clean the preview environment slate...");
@@ -342,12 +342,12 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
 
     werft.done(phases.DEPLOY);
 
-    async function cleanStateEnv(shellOpts: ExecOptions) {
-        await wipeAndRecreateNamespace(helmInstallName, namespace, installer.options.kubeconfigPath, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
+    async function cleanStateEnv(kubeconfig: string, shellOpts: ExecOptions) {
+        await wipeAndRecreateNamespace(helmInstallName, namespace, kubeconfig, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
         // cleanup non-namespace objects
         werft.log(installerSlices.CLEAN_ENV_STATE, "removing old unnamespaced objects - this might take a while");
         try {
-            await deleteNonNamespaceObjects(namespace, destname, installer.options.kubeconfigPath, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
+            await deleteNonNamespaceObjects(namespace, destname, kubeconfig, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
             werft.done(installerSlices.CLEAN_ENV_STATE);
         } catch (err) {
             werft.fail(installerSlices.CLEAN_ENV_STATE, err);
