@@ -119,6 +119,28 @@ function isWebsiteSlug(pathName: string) {
     return slugs.some((slug) => pathName.startsWith("/" + slug + "/") || pathName === "/" + slug);
 }
 
+// A wrapper for <Route> that redirects to the workspaces screen if the user isn't a admin.
+function AdminRoute({ children, ...rest }: any) {
+    let user = useContext(UserContext);
+    return (
+        <Route
+            {...rest}
+            render={({ location }) =>
+                !user.user?.rolesOrPermissions?.includes("admin") ? (
+                    children
+                ) : (
+                    <Redirect
+                        to={{
+                            pathname: "/workspaces",
+                            state: { from: location },
+                        }}
+                    />
+                )
+            }
+        />
+    );
+}
+
 export function getURLHash() {
     return window.location.hash.replace(/^[#/]+/, "");
 }
@@ -282,10 +304,6 @@ function App() {
         return <Login />;
     }
 
-    if (window.location.pathname.startsWith("/admin") && !user?.rolesOrPermissions?.includes("admin")) {
-        return <Redirect to={workspacesPathMain} />;
-    }
-
     if (window.location.pathname.startsWith("/blocked")) {
         return (
             <div className="mt-48 text-center">
@@ -345,11 +363,11 @@ function App() {
                     <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
                     <Route path="/from-referrer" exact component={FromReferrer} />
 
-                    <Route path="/admin/users" component={UserSearch} />
-                    <Route path="/admin/teams" component={TeamsSearch} />
-                    <Route path="/admin/workspaces" component={WorkspacesSearch} />
-                    <Route path="/admin/settings" component={AdminSettings} />
-                    <Route path="/admin/projects" component={ProjectsSearch} />
+                    <AdminRoute path="/admin/users" component={UserSearch} />
+                    <AdminRoute path="/admin/teams" component={TeamsSearch} />
+                    <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
+                    <AdminRoute path="/admin/settings" component={AdminSettings} />
+                    <AdminRoute path="/admin/projects" component={ProjectsSearch} />
 
                     <Route path={["/", "/login"]} exact>
                         <Redirect to={workspacesPathMain} />
@@ -363,9 +381,9 @@ function App() {
                     <Route path={["/subscription", "/usage", "/upgrade-subscription"]} exact>
                         <Redirect to={settingsPathPlans} />
                     </Route>
-                    <Route path={["/admin"]} exact>
+                    <AdminRoute path={["/admin"]} exact>
                         <Redirect to="/admin/users" />
-                    </Route>
+                    </AdminRoute>
                     <Route path="/sorry" exact>
                         <div className="mt-48 text-center">
                             <h1 className="text-gray-500 text-3xl">Oh, no! Something went wrong!</h1>
