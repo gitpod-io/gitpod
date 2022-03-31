@@ -146,6 +146,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         adminGetProjectsBySearchTerm: { group: "default", points: 1 },
         adminGetProjectById: { group: "default", points: 1 },
         adminFindPrebuilds: { group: "default", points: 1 },
+        adminGetLicense: { group: "default", points: 1 },
         adminSetLicense: { group: "default", points: 1 },
         adminGetSettings: { group: "default", points: 1 },
         adminUpdateSettings: { group: "default", points: 1 },

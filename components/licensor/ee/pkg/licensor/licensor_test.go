@@ -28,7 +28,7 @@ type licenseTest struct {
 	Validate              func(t *testing.T, eval *Evaluator)
 	Type                  LicenseType
 	NeverExpires          bool
-	ReplicatedLicenseType *ReplicatedLicenseType
+	ReplicatedLicenseType *LicenseSubscriptionLevel
 }
 
 // roundTripFunc .
@@ -77,7 +77,7 @@ func (test *licenseTest) Run(t *testing.T) {
 				}
 
 				payload, err := json.Marshal(replicatedLicensePayload{
-					LicenseType: func() ReplicatedLicenseType {
+					LicenseType: func() LicenseSubscriptionLevel {
 						if test.ReplicatedLicenseType == nil {
 							return ReplicatedLicenseTypePaid
 						}
@@ -220,7 +220,7 @@ func TestFeatures(t *testing.T) {
 		Features              []Feature
 		LicenseType           LicenseType
 		UserCount             int
-		ReplicatedLicenseType *ReplicatedLicenseType
+		ReplicatedLicenseType *LicenseSubscriptionLevel
 	}{
 		{"Gitpod (in seats): no license", true, LicenseLevel(0), []Feature{
 			FeatureAdminDashboard,

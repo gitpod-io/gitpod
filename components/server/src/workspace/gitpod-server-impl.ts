@@ -89,6 +89,7 @@ import {
 import {
     GetLicenseInfoResult,
     LicenseFeature,
+    LicenseInfo,
     LicenseValidationResult,
 } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
@@ -157,6 +158,8 @@ import { ProjectEnvVar } from "@gitpod/gitpod-protocol/src/protocol";
 import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
+import { LicenseEvaluator } from "@gitpod/licensor/lib";
+import { Feature } from "@gitpod/licensor/lib/api";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -183,6 +186,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(InstallationAdminDB) protected readonly installationAdminDb: InstallationAdminDB;
     @inject(InstallationAdminTelemetryDataProvider)
     protected readonly telemetryDataProvider: InstallationAdminTelemetryDataProvider;
+    @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
 
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(WorkspaceManagerClientProvider)
@@ -2598,6 +2602,44 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async getLicenseInfo(): Promise<GetLicenseInfoResult> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Licensing is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    async adminGetLicense(ctx: TraceContext): Promise<LicenseInfo> {
+        const licenseData = this.licenseEvaluator.getLicenseData();
+        const licensePayload = licenseData.payload;
+        const licenseValid = this.licenseEvaluator.validate();
+
+        const userCount = await this.userDB.getUserCount(true);
+
+        const features = Object.keys(Feature);
+        const enabledFeatures = await this.licenseFeatures(ctx, features);
+
+        return {
+            key: licensePayload.id,
+            seats: licensePayload.seats,
+            userCount: userCount,
+            plan: licenseData.plan,
+            fallbackAllowed: licenseData.fallbackAllowed,
+            valid: licenseValid.valid,
+            errorMsg: licenseValid.msg,
+            type: licenseData.type,
+            validUntil: licensePayload.validUntil,
+            features: features.map((feat) => Feature[feat as keyof typeof Feature]),
+            enabledFeatures: enabledFeatures,
+        };
+    }
+
+    async licenseFeatures(ctx: TraceContext, features: string[]): Promise<string[]> {
+        var enabledFeatures: string[] = [];
+        const userCount = await this.userDB.getUserCount(true);
+        for (const feature of features) {
+            const featureName: Feature = Feature[feature as keyof typeof Feature];
+            if (this.licenseEvaluator.isEnabled(featureName, userCount)) {
+                enabledFeatures.push(featureName);
+            }
+        }
+
+        return enabledFeatures;
     }
 
     async licenseIncludesFeature(ctx: TraceContext, feature: LicenseFeature): Promise<boolean> {

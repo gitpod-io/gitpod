@@ -59,7 +59,7 @@ import {
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { v4 as uuidv4 } from "uuid";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { LicenseEvaluator, LicenseKeySource } from "@gitpod/licensor/lib";
+import { LicenseKeySource } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { LicenseValidationResult, LicenseFeature } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
@@ -102,7 +102,6 @@ import { UserCounter } from "../user/user-counter";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
-    @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
     @inject(LicenseKeySource) protected readonly licenseKeySource: LicenseKeySource;

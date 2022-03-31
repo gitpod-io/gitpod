@@ -12,6 +12,13 @@ export enum Feature {
     FeatureSnapshot = "snapshot",
     FeatureWorkspaceSharing = "workspace-sharing",
 }
+export interface LicenseData {
+    type: LicenseType
+    payload: LicensePayload
+    plan: string
+    fallbackAllowed: boolean
+}
+
 export enum LicenseLevel {
     LevelTeam = 0,
     LevelEnterprise = 1,
@@ -22,4 +29,9 @@ export interface LicensePayload {
     level: LicenseLevel
     validUntil: string
     seats: number
+}
+
+export enum LicenseType {
+    LicenseTypeGitpod = "gitpod",
+    LicenseTypeReplicated = "replicated",
 }
