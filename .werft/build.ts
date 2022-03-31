@@ -17,6 +17,7 @@ import { publishKots } from './jobs/build/publish-kots';
 let werft: Werft
 const context: any = JSON.parse(fs.readFileSync('context.json').toString());
 
+
 Tracing.initialize()
     .then(() => {
         werft = new Werft("build")
