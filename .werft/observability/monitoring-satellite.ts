@@ -83,7 +83,7 @@ async function ensureCorrectInstallationOrder(kubeconfig: string, namespace: str
     const werft = getGlobalWerftInstance()
 
     werft.log(sliceName, 'installing monitoring-satellite')
-    exec(`cd observability && KUBECONFIG=${kubeconfig} hack/deploy-satellite.sh`, {slice: sliceName})
+    exec(`cd observability && hack/deploy-satellite.sh --kubeconfig ${kubeconfig}`, {slice: sliceName})
 
     deployGitpodServiceMonitors(kubeconfig)
     checkReadiness(kubeconfig, namespace, checkNodeExporterStatus)
@@ -92,7 +92,7 @@ async function ensureCorrectInstallationOrder(kubeconfig: string, namespace: str
 async function checkReadiness(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean) {
     // For some reason prometheus' statefulset always take quite some time to get created
     // Therefore we wait a couple of seconds
-    exec(`sleep 30 && kubectl rollout status -n ${namespace} statefulset prometheus-k8s`, {slice: sliceName, async: true})
+    exec(`sleep 30 && kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} statefulset prometheus-k8s`, {slice: sliceName, async: true})
     exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment grafana`, {slice: sliceName, async: true})
     exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment kube-state-metrics`, {slice: sliceName, async: true})
     exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment otel-collector`, {slice: sliceName, async: true})

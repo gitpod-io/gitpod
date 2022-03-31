@@ -703,7 +703,6 @@ async function installMonitoring(kubeconfig: string, namespace: string, nodeExpo
     const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
     installMonitoringSatelliteParams.kubeconfigPath = kubeconfig
     installMonitoringSatelliteParams.branch = observabilityBranch;
-    installMonitoringSatelliteParams.kubeconfigPath = ""
     installMonitoringSatelliteParams.satelliteNamespace = namespace
     installMonitoringSatelliteParams.clusterName = namespace
     installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
