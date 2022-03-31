@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as configcat from "configcat-node";
+import * as configcat from "configcat-js";
 import { IConfigCatClient } from "configcat-common/lib/ConfigCatClient";
 
 // Seeing all log messages makes the first integration easier. When the integration is done you can remove this line to avoid too detailed logging in your application.
