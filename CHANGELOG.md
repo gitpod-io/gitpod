@@ -1,6 +1,9 @@
 # Change Log
 
 ## March 2022
+- [install]: document installing via kots ([#8996](https://github.com/gitpod-io/gitpod/pull/8996)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Push to KOTS on each branch ([#9014](https://github.com/gitpod-io/gitpod/pull/9014)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- JetBrains Gateway EAP version is now supported. ([#8917](https://github.com/gitpod-io/gitpod/pull/8917)) - [@felladrin](https://github.com/felladrin)
 - [registry-facade] Add health probes to validate network access ([#8777](https://github.com/gitpod-io/gitpod/pull/8777)) - [@aledbf](https://github.com/aledbf)
 - Allows fetching more than 100 BitBucket repositories. ([#8891](https://github.com/gitpod-io/gitpod/pull/8891)) - [@laushinka](https://github.com/laushinka)
 - Improve sidebar menu colors ([#9002](https://github.com/gitpod-io/gitpod/pull/9002)) - [@gtsiolis](https://github.com/gtsiolis)
