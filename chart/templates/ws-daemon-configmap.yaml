@@ -4,10 +4,8 @@
 {{- define "ws-daemon.config" }}
 {{ $comp := .comp -}}
 {{ with .root }}
+readinessProbeAddr: ":9999"
 daemon:
-  readiness:
-    enabled: true
-    addr: ":9999"
   runtime:
     namespace: {{ .Release.Namespace | quote }}
     containerRuntime:

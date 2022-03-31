@@ -285,7 +285,7 @@ spec:
         readinessProbe:
           httpGet:
             port: 9999
-            path: "/"
+            path: "/ready"
           initialDelaySeconds: 5
           periodSeconds: 10
         lifecycle:
@@ -304,7 +304,7 @@ spec:
         livenessProbe:
           httpGet:
             port: 9999
-            path: "/"
+            path: "/ready"
           initialDelaySeconds: 5
           periodSeconds: 10
           failureThreshold: 10
