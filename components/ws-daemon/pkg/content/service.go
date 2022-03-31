@@ -253,7 +253,7 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.Worksp
 	return func(ctx context.Context, location string) (res *session.Workspace, err error) {
 		return &session.Workspace{
 			Location:              location,
-			CheckoutLocation:      getCheckoutLocation(req),
+			CheckoutLocation:      wsinit.GetCheckoutLocationFromInitializer(req.Initializer),
 			CreatedAt:             time.Now(),
 			Owner:                 req.Metadata.Owner,
 			WorkspaceID:           req.Metadata.MetaId,
@@ -271,24 +271,6 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.Worksp
 // ServiceDirName produces the directory name for a workspace
 func ServiceDirName(instanceID string) string {
 	return instanceID + "-daemon"
-}
-
-// getCheckoutLocation returns the first checkout location found of any Git initializer configured by this request
-func getCheckoutLocation(req *api.InitWorkspaceRequest) string {
-	spec := req.Initializer.Spec
-	if ir, ok := spec.(*csapi.WorkspaceInitializer_Git); ok {
-		if ir.Git != nil {
-			return ir.Git.CheckoutLocation
-		}
-	}
-	if ir, ok := spec.(*csapi.WorkspaceInitializer_Prebuild); ok {
-		if ir.Prebuild != nil {
-			if len(ir.Prebuild.Git) > 0 {
-				return ir.Prebuild.Git[0].CheckoutLocation
-			}
-		}
-	}
-	return ""
 }
 
 // DisposeWorkspace cleans up a workspace, possibly after taking a final backup

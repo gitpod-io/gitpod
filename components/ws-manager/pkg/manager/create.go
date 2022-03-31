@@ -27,7 +27,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	content "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -575,9 +575,11 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 		return filepath.Join("/workspace", strings.TrimPrefix(segment, "/workspace"))
 	}
 
+	repoRoot := content.GetCheckoutLocationFromInitializer(spec.Initializer)
+
 	// Envs that start with GITPOD_ are appended to the Terminal environments
 	result := []corev1.EnvVar{}
-	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOT", Value: getWorkspaceRelativePath(startContext.CheckoutLocation)})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOT", Value: getWorkspaceRelativePath(repoRoot)})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_CLI_APITOKEN", Value: startContext.CLIAPIKey})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_ID", Value: startContext.Request.Metadata.MetaId})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INSTANCE_ID", Value: startContext.Request.Id})
@@ -710,25 +712,6 @@ func (m *Manager) createDefaultSecurityContext() (*corev1.SecurityContext, error
 	return res, nil
 }
 
-func getCheckoutLocationFromInitializer(init *csapi.WorkspaceInitializer) string {
-	switch {
-	case init.GetGit() != nil:
-		return init.GetGit().CheckoutLocation
-	case init.GetPrebuild() != nil && len(init.GetPrebuild().Git) > 0:
-		return init.GetPrebuild().Git[0].CheckoutLocation
-	case init.GetBackup() != nil:
-		return init.GetBackup().CheckoutLocation
-	case init.GetComposite() != nil:
-		for _, c := range init.GetComposite().Initializer {
-			loc := getCheckoutLocationFromInitializer(c)
-			if loc != "" {
-				return loc
-			}
-		}
-	}
-	return ""
-}
-
 func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWorkspaceRequest) (res *startWorkspaceContext, err error) {
 	// we deliberately do not shadow ctx here as we need the original context later to extract the TraceID
 	span, ctx := tracing.FromContext(ctx, "newStartWorkspaceContext")
@@ -769,15 +752,14 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 			headlessLabel:          fmt.Sprintf("%v", headless),
 			markerLabel:            "true",
 		},
-		CLIAPIKey:        cliAPIKey,
-		OwnerToken:       ownerToken,
-		Request:          req,
-		IDEPort:          23000,
-		SupervisorPort:   22999,
-		WorkspaceURL:     workspaceURL,
-		TraceID:          traceID,
-		Headless:         headless,
-		CheckoutLocation: getCheckoutLocationFromInitializer(req.Spec.Initializer),
+		CLIAPIKey:      cliAPIKey,
+		OwnerToken:     ownerToken,
+		Request:        req,
+		IDEPort:        23000,
+		SupervisorPort: 22999,
+		WorkspaceURL:   workspaceURL,
+		TraceID:        traceID,
+		Headless:       headless,
 	}, nil
 }
 
