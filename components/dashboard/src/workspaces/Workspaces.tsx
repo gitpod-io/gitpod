@@ -52,8 +52,7 @@ export default function () {
     return (
         <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
-            <p>Flag is ${isExperimenetEnabled}</p>
-
+            <p>Flag is {String(isExperimenetEnabled)}</p>g
             {workspaceModel?.initialized &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ? (
                     <>
