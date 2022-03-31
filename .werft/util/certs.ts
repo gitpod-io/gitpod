@@ -24,7 +24,7 @@ export class InstallCertificateParams {
     destinationKubeconfig: string
 }
 
-export async function issueCertficate(werft, params: IssueCertificateParams, shellOpts: ExecOptions) {
+export async function issueCertificate(werft, params: IssueCertificateParams, shellOpts: ExecOptions) {
     var subdomains = [];
     werft.log("certificate", `Subdomains: ${params.additionalSubdomains}`)
     for (const sd of params.additionalSubdomains) {
@@ -69,7 +69,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams, she
 }
 
 
-export async function installCertficate(werft, params: InstallCertificateParams, shellOpts: ExecOptions) {
+export async function installCertificate(werft, params: InstallCertificateParams, shellOpts: ExecOptions) {
     let notReadyYet = true;
     werft.log('certificate', `copying certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
     const cmd = `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \

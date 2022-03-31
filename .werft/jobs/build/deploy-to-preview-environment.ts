@@ -4,13 +4,14 @@ import * as fs from 'fs';
 import { exec, ExecOptions } from '../../util/shell';
 import { InstallMonitoringSatelliteParams, installMonitoringSatellite } from '../../observability/monitoring-satellite';
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName, findLastHostPort, waitUntilAllPodsAreReady, waitForApiserver } from '../../util/kubectl';
-import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from '../../util/certs';
+import { issueCertificate, installCertificate, IssueCertificateParams, InstallCertificateParams } from '../../util/certs';
 import { sleep, env } from '../../util/util';
 import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
 import { Werft } from "../../util/werft";
 import { JobConfig } from "./job-config";
 import * as VM from '../../vm/vm'
 import { Analytics, Installer } from "./installer/installer";
+import { previewNameFromBranchName } from "../../util/preview";
 
 // used by both deploys (helm and Installer)
 const PROXY_SECRET_NAME = "proxy-config-certificates";
@@ -141,7 +142,8 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         werft.done(vmSlices.EXTERNAL_LOGGING)
 
 
-        issueMetaCerts(werft, PROXY_SECRET_NAME, "default", domain, withVM)
+        issueMetaCerts(werft, PROXY_SECRET_NAME, "certs", domain, withVM)
+        installMetaCertificates(werft, jobConfig.repository.branch, "default", PREVIEW_K3S_KUBECONFIG_PATH)
         werft.done('certificate')
         installMonitoring(PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
         werft.done('observability')
@@ -239,7 +241,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
 
             // trigger certificate issuing
             await issueMetaCerts(werft, namespace, "certs", domain, withVM);
-            await installMetaCertificates(werft, namespace, CORE_DEV_KUBECONFIG_PATH);
+            await installMetaCertificates(werft, jobConfig.repository.branch, namespace, CORE_DEV_KUBECONFIG_PATH);
             werft.done(installerSlices.ISSUE_CERTIFICATES);
         } catch (err) {
             if (!jobConfig.mainBuild) {
@@ -388,7 +390,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         // trigger certificate issuing
         werft.log('certificate', "organizing a certificate for the preview environment...");
         await issueMetaCerts(werft, namespace, "certs", domain, false);
-        await installMetaCertificates(werft, namespace, CORE_DEV_KUBECONFIG_PATH);
+        await installMetaCertificates(werft, jobConfig.repository.branch, namespace, CORE_DEV_KUBECONFIG_PATH);
         werft.done('certificate');
         await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, false, CORE_DEV_KUBECONFIG_PATH)
         werft.done('prep');
@@ -448,7 +450,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         try {
-            await installMonitoring(CORE_DEV_KUBECONFIG_PATH ,namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
+            await installMonitoring(CORE_DEV_KUBECONFIG_PATH, namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
         } catch (err) {
             if (!jobConfig.mainBuild) {
                 werft.fail('observability', err);
@@ -685,18 +687,17 @@ export async function issueMetaCerts(werft: Werft, previewNamespace: string, cer
     metaClusterCertParams.ip = getCoreDevIngressIP();
     metaClusterCertParams.bucketPrefixTail = ""
     metaClusterCertParams.additionalSubdomains = additionalSubdomains
-    await issueCertficate(werft, metaClusterCertParams, metaEnv());
+    await issueCertificate(werft, metaClusterCertParams, metaEnv());
 }
 
-async function installMetaCertificates(werft: Werft, namespace: string, kubeconfig: string) {
-    const certName = namespace;
+async function installMetaCertificates(werft: Werft, branch: string, destNamespace: string, kubeconfig: string) {
     const metaInstallCertParams = new InstallCertificateParams()
-    metaInstallCertParams.certName = certName
+    metaInstallCertParams.certName = `staging-${previewNameFromBranchName(branch)}`;
     metaInstallCertParams.certNamespace = "certs"
     metaInstallCertParams.certSecretName = PROXY_SECRET_NAME
-    metaInstallCertParams.destinationNamespace = namespace
+    metaInstallCertParams.destinationNamespace = destNamespace
     metaInstallCertParams.destinationKubeconfig = kubeconfig
-    await installCertficate(werft, metaInstallCertParams, metaEnv());
+    await installCertificate(werft, metaInstallCertParams, metaEnv());
 }
 
 async function installMonitoring(kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
