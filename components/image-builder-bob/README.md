@@ -39,3 +39,11 @@ BOB_BASE_REF=localhost:5000/source:latest BOB_TARGET_REF=localhost:5000/target:8
 # debug using delve
 BOB_BASE_REF=localhost:5000/source:latest BOB_TARGET_REF=localhost:5000/target:83 sudo -E $(which dlv) --listen=:2345 --headless=true --api-version=2 exec $(which bob) build
 ```
+
+Running Proxy
+```
+You can run proxy using the `launch.json` shipped for this component. Please note that proxy will rely on you creating and configuring right environment values in an env file called `bob.env`.
+
+To start proxy in debugging mode simply select `bob proxy` from the debugging menu of vs code.
+```
+

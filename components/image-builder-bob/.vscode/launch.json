@@ -2,12 +2,21 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "bob proxy",
+			"type": "go",
+			"request": "launch",
+			"mode": "debug",
+			"program": "${workspaceFolder}/main.go",
+			"args": ["proxy"],
+			"envFile": "${workspaceFolder}/bob.env"
+		},
+		{
 			"name": "Attach",
 			"type": "go",
 			"request": "attach",
 			"mode": "remote",
 			"remotePath": "",
-			"port":2345,
+			"port":2346,
 			"host":"127.0.0.1",
 			"showLog": true,
 			"trace": "log",
