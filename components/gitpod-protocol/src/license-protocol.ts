@@ -15,9 +15,15 @@ export type LicenseIssue = "seats-exhausted";
 export interface LicenseInfo {
     key: string;
     seats: number;
+    userCount?: number;
     valid: boolean;
     validUntil: string;
     plan?: string;
+    features?: string[];
+    enabledFeatures?: string[];
+    type?: string;
+    errorMsg?: string;
+    fallbackAllowed: boolean;
 }
 
 export interface GetLicenseInfoResult {
@@ -33,5 +39,6 @@ export enum LicenseFeature {
 export interface LicenseService {
     validateLicense(): Promise<LicenseValidationResult>;
     getLicenseInfo(): Promise<GetLicenseInfoResult>;
+    adminGetLicense(): Promise<LicenseInfo>;
     licenseIncludesFeature(feature: LicenseFeature): Promise<boolean>;
 }

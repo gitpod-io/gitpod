@@ -35,6 +35,24 @@ func Init(key *C.char, domain *C.char) (id int) {
 	return id
 }
 
+// GetLicenseData returns the info about license for the admin dashboard
+//export GetLicenseData
+func GetLicenseData(id int) (licData *C.char, ok bool) {
+	e, ok := instances[id]
+	if !ok {
+		return
+	}
+
+	b, err := json.Marshal(e.LicenseData())
+	if err != nil {
+		log.WithError(err).Warn("GetLicenseData(): cannot retrieve license data")
+		return nil, false
+	}
+
+	return C.CString(string(b)), true
+
+}
+
 // Validate returns false if the license isn't valid and a message explaining why that is.
 //export Validate
 func Validate(id int) (msg *C.char, valid bool) {

@@ -23,30 +23,30 @@ type replicatedFields struct {
 	Value interface{} `json:"value"` // This is of type "fieldType"
 }
 
-type ReplicatedLicenseType string
-
 // variable names are what Replicated calls them in the vendor portal
 const (
-	ReplicatedLicenseTypeCommunity   ReplicatedLicenseType = "community"
-	ReplicatedLicenseTypeDevelopment ReplicatedLicenseType = "dev"
-	ReplicatedLicenseTypePaid        ReplicatedLicenseType = "prod"
-	ReplicatedLicenseTypeTrial       ReplicatedLicenseType = "trial"
+	ReplicatedLicenseTypeCommunity   LicenseSubscriptionLevel = "community"
+	ReplicatedLicenseTypeDevelopment LicenseSubscriptionLevel = "dev"
+	ReplicatedLicenseTypePaid        LicenseSubscriptionLevel = "prod"
+	ReplicatedLicenseTypeTrial       LicenseSubscriptionLevel = "trial"
 )
 
 // replicatedLicensePayload exists to convert the JSON structure to a LicensePayload
 type replicatedLicensePayload struct {
-	LicenseID      string                `json:"license_id"`
-	InstallationID string                `json:"installation_id"`
-	Assignee       string                `json:"assignee"`
-	ReleaseChannel string                `json:"release_channel"`
-	LicenseType    ReplicatedLicenseType `json:"license_type"`
-	ExpirationTime *time.Time            `json:"expiration_time,omitempty"` // Not set if license never expires
-	Fields         []replicatedFields    `json:"fields"`
+	LicenseID      string                   `json:"license_id"`
+	InstallationID string                   `json:"installation_id"`
+	Assignee       string                   `json:"assignee"`
+	ReleaseChannel string                   `json:"release_channel"`
+	LicenseType    LicenseSubscriptionLevel `json:"license_type"`
+	ExpirationTime *time.Time               `json:"expiration_time,omitempty"` // Not set if license never expires
+	Fields         []replicatedFields       `json:"fields"`
 }
 
 type ReplicatedEvaluator struct {
-	invalid string
-	lic     LicensePayload
+	invalid       string
+	lic           LicensePayload
+	plan          LicenseSubscriptionLevel
+	allowFallback bool
 }
 
 func (e *ReplicatedEvaluator) Enabled(feature Feature) bool {
@@ -66,6 +66,17 @@ func (e *ReplicatedEvaluator) HasEnoughSeats(seats int) bool {
 	return e.lic.Seats == 0 || seats <= e.lic.Seats
 }
 
+func (e *ReplicatedEvaluator) LicenseData() LicenseData {
+	data := LicenseData{
+		Type:            LicenseTypeReplicated,
+		Payload:         e.Inspect(),
+		FallbackAllowed: e.allowFallback,
+		Plan:            e.plan,
+	}
+
+	return data
+}
+
 func (e *ReplicatedEvaluator) Inspect() LicensePayload {
 	return e.lic
 }
@@ -80,9 +91,11 @@ func (e *ReplicatedEvaluator) Validate() (msg string, valid bool) {
 
 // defaultReplicatedLicense this is the default license if call fails
 func defaultReplicatedLicense() *Evaluator {
+
 	return &Evaluator{
 		lic:           defaultLicense,
 		allowFallback: true,
+		plan:          ReplicatedLicenseTypeCommunity,
 	}
 }
 
@@ -131,6 +144,7 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator)
 	return &Evaluator{
 		lic:           lic,
 		allowFallback: replicatedPayload.LicenseType == ReplicatedLicenseTypeCommunity, // Only community licenses are allowed to fallback
+		plan:          replicatedPayload.LicenseType,
 	}
 }
 
