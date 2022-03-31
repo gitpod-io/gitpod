@@ -88,7 +88,7 @@ export class AuthProviderEntryDBSpec {
         const loadedAp = await this.db.findByHost(ap.host);
         expect(loadedAp, "findByHost()").to.deep.equal(ap);
         expect(loadedAp?.oauthRevision, "findByHost()").to.equal(
-            "e05ea6fab8efcaba4b3246c2b2d3931af897c3bc2c1cf075c31614f0954f9840",
+            "b05eb3256a101f6cbca1d8885c8ee241891582e78c567b7305f097ab3556d5f0",
         );
     }
 }
