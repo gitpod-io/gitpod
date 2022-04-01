@@ -75,6 +75,9 @@ type Configuration struct {
 	InitProbe InitProbeConfiguration `json:"initProbe"`
 	// WorkspacePodTemplate is a path to a workspace pod template YAML file
 	WorkspacePodTemplate WorkspacePodTemplateConfiguration `json:"podTemplate,omitempty"`
+	// WorkspaceCACertSecret optionally names a secret which is mounted in `/etc/ssl/certs/gp-custom.crt`
+	// in all workspace pods.
+	WorkspaceCACertSecret string `json:"caCertSecret,omitempty"`
 	// WorkspaceURLTemplate is a Go template which resolves to the external URL of the
 	// workspace. Available fields are:
 	// - `ID` which is the workspace ID,

@@ -31,6 +31,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 		RegularTemplate    *corev1.Pod                   `json:"regularTemplate,omitempty"`
 		ResourceRequests   *config.ResourceConfiguration `json:"resourceRequests,omitempty"`
 		ResourceLimits     *config.ResourceConfiguration `json:"resourceLimits,omitempty"`
+		CACertSecret       string                        `json:"caCertSecret,omitempty"`
 
 		EnforceAffinity bool `json:"enforceAffinity,omitempty"`
 	}
@@ -46,6 +47,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 			fixture := input.(*fixture)
 
 			mgmtCfg := forTestingOnlyManagerConfig()
+			mgmtCfg.WorkspaceCACertSecret = fixture.CACertSecret
 			if fixture.ResourceRequests != nil {
 				var (
 					cont = mgmtCfg.Container
