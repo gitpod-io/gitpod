@@ -27,6 +27,13 @@ spec:
               message: containerd runtime was found.
           - fail:
               message: Did not find containerd runtime.
+    - distribution:
+        outcomes:
+          - fail:
+              when: == openshift
+              message: OpenShift is not supported
+          - pass:
+              message: The cluster is using a support distribution
     - nodeResources:
         checkName: At least one node must "gitpod.io/workload_meta" label
         filters:
