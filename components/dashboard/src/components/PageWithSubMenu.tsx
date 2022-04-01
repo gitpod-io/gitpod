@@ -31,7 +31,7 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
                             if (e.link.some((l) => l === location.pathname)) {
                                 classes += " bg-gray-300 text-gray-800 dark:bg-gray-800 dark:text-gray-50";
                             } else {
-                                classes += " hover:bg-gray-100 dark:hover:bg-gray-800";
+                                classes += " hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-500";
                             }
                             return (
                                 <Link to={e.link[0]} key={e.title}>
