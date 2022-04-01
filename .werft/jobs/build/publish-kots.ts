@@ -22,16 +22,11 @@ export async function publishKots(werft: Werft, config: JobConfig) {
     // Update the additionalImages in the kots-app.yaml
     exec(`/tmp/installer mirror kots --file ${REPLICATED_YAML_DIR}/kots-app.yaml`);
 
-    const app = exec(`kubectl get secret ${REPLICATED_SECRET} --namespace werft -o jsonpath='{.data.app}' | base64 -d`);
-    const token = exec(`kubectl get secret ${REPLICATED_SECRET} --namespace werft -o jsonpath='{.data.token}' | base64 -d`);
-
     const replicatedChannel = config.mainBuild ? 'Unstable' : config.repository.branch;
 
     exec(`replicated release create \
         --lint \
         --ensure-channel \
-        --app ${app} \
-        --token ${token} \
         --yaml-dir ${REPLICATED_YAML_DIR} \
         --version ${config.version} \
         --release-notes "# ${config.version}\n\nSee [Werft job](https://werft.gitpod-dev.com/job/gitpod-build-${config.version}/logs) for notes" \
