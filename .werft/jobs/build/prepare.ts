@@ -1,13 +1,16 @@
+import { previewNameFromBranchName } from '../../util/preview';
 import { exec } from '../../util/shell';
 import { Werft } from "../../util/werft";
 import * as VM from '../../vm/vm'
 import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH } from "./const";
+import { issueMetaCerts } from './deploy-to-preview-environment';
 import { JobConfig } from './job-config';
 
 const phaseName = "prepare";
 const prepareSlices = {
     CONFIGURE_CORE_DEV: "Configuring core-dev access.",
-    BOOT_VM: "Booting VM."
+    BOOT_VM: "Booting VM.",
+    ISSUE_CERTIFICATES: "Issuing certificates for the preview."
 }
 
 export async function prepare(werft: Werft, config: JobConfig) {
@@ -20,6 +23,7 @@ export async function prepare(werft: Werft, config: JobConfig) {
         configureStaticClustersAccess()
         werft.done(prepareSlices.CONFIGURE_CORE_DEV)
 
+        issueCertificate(werft, config)
         decideHarvesterVMCreation(werft, config)
     } catch (err) {
         werft.fail(phaseName, err);
@@ -65,6 +69,15 @@ function configureStaticClustersAccess() {
     if (rcHarvester != 0) {
         throw new Error("Failed to get Harvester kubeconfig credentials.")
     }
+}
+
+function issueCertificate(werft: Werft, config: JobConfig) {
+    const certName = config.withVM ? `harvester-${previewNameFromBranchName(config.repository.branch)}` : `staging-${previewNameFromBranchName(config.repository.branch)}`
+    const domain = config.withVM ? `${config.previewEnvironment.destname}.preview.gitpod-dev.com` : `${config.previewEnvironment.destname}.staging.gitpod-dev.com`;
+
+    werft.log(prepareSlices.ISSUE_CERTIFICATES, prepareSlices.ISSUE_CERTIFICATES)
+    issueMetaCerts(werft, certName, "certs", domain, config.withVM, prepareSlices.ISSUE_CERTIFICATES)
+    werft.done(prepareSlices.ISSUE_CERTIFICATES)
 }
 
 function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {

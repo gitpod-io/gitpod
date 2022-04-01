@@ -28,7 +28,7 @@ const phases = {
 const installerSlices = {
     FIND_FREE_HOST_PORTS: "find free ports",
     IMAGE_PULL_SECRET: "image pull secret",
-    ISSUE_CERTIFICATES: "install certs",
+    COPY_CERTIFICATES: "Copying certificates",
     CLEAN_ENV_STATE: "clean envirionment",
     SET_CONTEXT: "set namespace",
     INSTALLER_INIT: "installer init",
@@ -109,11 +109,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     if (withVM) {
         werft.phase(phases.VM, "Ensuring VM is ready for deployment");
 
-        werft.log(vmSlices.COPY_CERT_MANAGER_RESOURCES, 'Copy over CertManager resources from core-dev')
-        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret clouddns-dns01-solver-svc-acct -n certmanager -o yaml | sed 's/namespace: certmanager/namespace: cert-manager/g' > clouddns-dns01-solver-svc-acct.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
-        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get clusterissuer letsencrypt-issuer-gitpod-core-dev -o yaml | sed 's/letsencrypt-issuer-gitpod-core-dev/letsencrypt-issuer/g' > letsencrypt-issuer.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
-        werft.done(vmSlices.COPY_CERT_MANAGER_RESOURCES)
-
         werft.log(vmSlices.VM_READINESS, 'Wait for VM readiness')
         VM.waitForVMReadiness({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.VM_READINESS })
         werft.done(vmSlices.VM_READINESS)
@@ -135,16 +130,25 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         await waitUntilAllPodsAreReady("cert-manager", PREVIEW_K3S_KUBECONFIG_PATH, { slice: vmSlices.WAIT_CERTMANAGER })
         werft.done(vmSlices.WAIT_CERTMANAGER)
 
+        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret clouddns-dns01-solver-svc-acct -n certmanager -o yaml | sed 's/namespace: certmanager/namespace: cert-manager/g' > clouddns-dns01-solver-svc-acct.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER })
+        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get clusterissuer letsencrypt-issuer-gitpod-core-dev -o yaml | sed 's/letsencrypt-issuer-gitpod-core-dev/letsencrypt-issuer/g' > letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER })
         exec(`kubectl --kubeconfig ${PREVIEW_K3S_KUBECONFIG_PATH} apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
         werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER)
 
         VM.installFluentBit({ namespace: 'default', kubeconfig: PREVIEW_K3S_KUBECONFIG_PATH, slice: vmSlices.EXTERNAL_LOGGING })
         werft.done(vmSlices.EXTERNAL_LOGGING)
 
+        try {
+            werft.log(vmSlices.COPY_CERT_MANAGER_RESOURCES, 'Copy over CertManager resources from core-dev')
+            installMetaCertificates(werft, jobConfig.repository.branch, withVM, 'default', PREVIEW_K3S_KUBECONFIG_PATH, vmSlices.COPY_CERT_MANAGER_RESOURCES)
+            werft.done(vmSlices.COPY_CERT_MANAGER_RESOURCES)
+        } catch (err) {
+            if (!jobConfig.mainBuild) {
+                werft.fail(vmSlices.COPY_CERT_MANAGER_RESOURCES, err);
+            }
+            exec('exit 0')
+        }
 
-        issueMetaCerts(werft, PROXY_SECRET_NAME, "certs", domain, withVM)
-        installMetaCertificates(werft, jobConfig.repository.branch, "default", PREVIEW_K3S_KUBECONFIG_PATH)
-        werft.done('certificate')
         installMonitoring(PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
         werft.done('observability')
     }
@@ -233,20 +237,17 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     }
 
     if (!withVM) {
-        // in a VM, the secrets have alreay been copied
+        // in a VM, the secrets have already been copied
         // If using core-dev, we want to execute further kubectl operations only in the created namespace
         setKubectlContextNamespace(namespace, metaEnv({ slice: installerSlices.SET_CONTEXT }));
         werft.done(installerSlices.SET_CONTEXT)
         try {
-            werft.log(installerSlices.ISSUE_CERTIFICATES, "organizing a certificate for the preview environment...");
-
-            // trigger certificate issuing
-            await issueMetaCerts(werft, namespace, "certs", domain, withVM);
-            await installMetaCertificates(werft, jobConfig.repository.branch, namespace, CORE_DEV_KUBECONFIG_PATH);
-            werft.done(installerSlices.ISSUE_CERTIFICATES);
+            werft.log(installerSlices.COPY_CERTIFICATES, "Copying cached certificate from 'certs' namespace");
+            await installMetaCertificates(werft, jobConfig.repository.branch, jobConfig.withVM, namespace, CORE_DEV_KUBECONFIG_PATH, installerSlices.COPY_CERTIFICATES);
+            werft.done(installerSlices.COPY_CERTIFICATES);
         } catch (err) {
             if (!jobConfig.mainBuild) {
-                werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
+                werft.fail(installerSlices.COPY_CERTIFICATES, err);
             }
             exec('exit 0')
         }
@@ -392,8 +393,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
 
         // trigger certificate issuing
         werft.log('certificate', "organizing a certificate for the preview environment...");
-        await issueMetaCerts(werft, namespace, "certs", domain, false);
-        await installMetaCertificates(werft, jobConfig.repository.branch, namespace, CORE_DEV_KUBECONFIG_PATH);
+        await installMetaCertificates(werft, jobConfig.repository.branch, jobConfig.withVM, namespace, CORE_DEV_KUBECONFIG_PATH, 'certificate');
         werft.done('certificate');
         await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, false, CORE_DEV_KUBECONFIG_PATH)
         werft.done('prep');
@@ -678,29 +678,29 @@ async function addDNSRecord(werft: Werft, namespace: string, domain: string, isL
     werft.done(installerSlices.DNS_ADD_RECORD);
 }
 
-export async function issueMetaCerts(werft: Werft, previewNamespace: string, certsNamespace: string, domain: string, withVM: boolean) {
-    let additionalSubdomains: string[] = ["", "*.", `*.ws${withVM ? '' : '-dev'}.`]
+export async function issueMetaCerts(werft: Werft, certName: string, certsNamespace: string, domain: string, withVM: boolean, slice: string) {
+    const additionalSubdomains: string[] = ["", "*.", `*.ws${withVM ? '' : '-dev'}.`]
     var metaClusterCertParams = new IssueCertificateParams();
     metaClusterCertParams.pathToTemplate = "/workspace/.werft/util/templates";
     metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-    metaClusterCertParams.namespace = previewNamespace;
+    metaClusterCertParams.certName = certName;
     metaClusterCertParams.certNamespace = certsNamespace;
     metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
     metaClusterCertParams.domain = domain;
     metaClusterCertParams.ip = getCoreDevIngressIP();
     metaClusterCertParams.bucketPrefixTail = ""
     metaClusterCertParams.additionalSubdomains = additionalSubdomains
-    await issueCertificate(werft, metaClusterCertParams, metaEnv());
+    await issueCertificate(werft, metaClusterCertParams, { ...metaEnv(), slice });
 }
 
-async function installMetaCertificates(werft: Werft, branch: string, destNamespace: string, kubeconfig: string) {
+async function installMetaCertificates(werft: Werft, branch: string, withVM: boolean, destNamespace: string, destinationKubeconfig: string, slice: string) {
     const metaInstallCertParams = new InstallCertificateParams()
-    metaInstallCertParams.certName = `staging-${previewNameFromBranchName(branch)}`;
+    metaInstallCertParams.certName = withVM ? `harvester-${previewNameFromBranchName(branch)}` : `staging-${previewNameFromBranchName(branch)}`;
     metaInstallCertParams.certNamespace = "certs"
     metaInstallCertParams.certSecretName = PROXY_SECRET_NAME
     metaInstallCertParams.destinationNamespace = destNamespace
-    metaInstallCertParams.destinationKubeconfig = kubeconfig
-    await installCertificate(werft, metaInstallCertParams, metaEnv());
+    metaInstallCertParams.destinationKubeconfig = destinationKubeconfig
+    await installCertificate(werft, metaInstallCertParams, { ...metaEnv(), slice: slice });
 }
 
 async function installMonitoring(kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
