@@ -90,6 +90,8 @@ type Config struct {
 
 	DisableDefinitelyGP bool `json:"disableDefinitelyGp"`
 
+	CustomCACert *ObjectRef `json:"customCACert,omitempty"`
+
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
 

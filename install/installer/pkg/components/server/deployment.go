@@ -69,6 +69,55 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 	wsmanCfgManager := base64.StdEncoding.EncodeToString(fc)
 
+	env := common.MergeEnv(
+		common.DefaultEnv(&ctx.Config),
+		common.DatabaseEnv(&ctx.Config),
+		common.TracingEnv(ctx),
+		common.AnalyticsEnv(&ctx.Config),
+		common.MessageBusEnv(&ctx.Config),
+		[]corev1.EnvVar{
+			{
+				Name:  "CONFIG_PATH",
+				Value: "/config/config.json",
+			},
+			func() corev1.EnvVar {
+				envvar := corev1.EnvVar{
+					Name: "GITPOD_LICENSE_TYPE",
+				}
+
+				if ctx.Config.License == nil {
+					envvar.Value = string(configv1.LicensorTypeGitpod)
+				} else {
+					envvar.ValueFrom = &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{Name: ctx.Config.License.Name},
+							Key:                  "type",
+							Optional:             pointer.Bool(true),
+						},
+					}
+				}
+
+				return envvar
+			}(),
+			{
+				Name:  "IDE_CONFIG_PATH",
+				Value: "/ide-config/config.json",
+			},
+			{
+				Name:  "NODE_ENV",
+				Value: "production", // todo(sje): will we need to change this?
+			},
+			{
+				Name:  "SHLVL",
+				Value: "1",
+			},
+			{
+				Name:  "WSMAN_CFG_MANAGERS",
+				Value: wsmanCfgManager,
+			},
+		},
+	)
+
 	volumes := make([]corev1.Volume, 0)
 	volumeMounts := make([]corev1.VolumeMount, 0)
 	if ctx.Config.License != nil {
@@ -106,6 +155,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				ReadOnly:  true,
 			})
 		}
+	}
+
+	if vol, mnt, envv, ok := common.CustomCACertVolume(ctx); ok {
+		volumes = append(volumes, *vol)
+		volumeMounts = append(volumeMounts, *mnt)
+		env = append(env, *envv)
 	}
 
 	return []runtime.Object{
@@ -189,54 +244,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ContainerPort: PrometheusPort,
 							}},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
-							Env: common.MergeEnv(
-								common.DefaultEnv(&ctx.Config),
-								common.DatabaseEnv(&ctx.Config),
-								common.TracingEnv(ctx),
-								common.AnalyticsEnv(&ctx.Config),
-								common.MessageBusEnv(&ctx.Config),
-								[]corev1.EnvVar{
-									{
-										Name:  "CONFIG_PATH",
-										Value: "/config/config.json",
-									},
-									func() corev1.EnvVar {
-										envvar := corev1.EnvVar{
-											Name: "GITPOD_LICENSE_TYPE",
-										}
-
-										if ctx.Config.License == nil {
-											envvar.Value = string(configv1.LicensorTypeGitpod)
-										} else {
-											envvar.ValueFrom = &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{
-													LocalObjectReference: corev1.LocalObjectReference{Name: ctx.Config.License.Name},
-													Key:                  "type",
-													Optional:             pointer.Bool(true),
-												},
-											}
-										}
-
-										return envvar
-									}(),
-									{
-										Name:  "IDE_CONFIG_PATH",
-										Value: "/ide-config/config.json",
-									},
-									{
-										Name:  "NODE_ENV",
-										Value: "production", // todo(sje): will we need to change this?
-									},
-									{
-										Name:  "SHLVL",
-										Value: "1",
-									},
-									{
-										Name:  "WSMAN_CFG_MANAGERS",
-										Value: wsmanCfgManager,
-									},
-								},
-							),
+							Env: env,
 							// todo(sje): conditionally add github-app-cert-secret in
 							// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
 							VolumeMounts: append(
