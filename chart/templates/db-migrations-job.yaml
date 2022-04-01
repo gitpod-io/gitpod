@@ -43,13 +43,6 @@ spec:
       - name: db-migrations
         image: "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" .Values "comp" $.Values.components.dbMigrations) }}"
         env:
-        - name: "DB_USERNAME"
-          value: "{{ $.Values.db.username }}"
-        - name: "DB_PASSWORD"
-          value: "{{ $.Values.db.password }}"
-        - name: "DB_PORT"
-          value: "{{ $.Values.db.port }}"
-        - name: "DB_HOST"
-          value: "{{ $.Values.db.host }}"
+{{ include "gitpod.container.dbEnv" $this | indent 8 }}
         command: ["sh","-c","/app/migrate.sh"]
 {{- end }}
