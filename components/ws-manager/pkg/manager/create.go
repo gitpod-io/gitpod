@@ -339,6 +339,50 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		hostPathOrCreate = corev1.HostPathDirectoryOrCreate
 		daemonVolumeName = "daemon-mount"
 	)
+	volumes := []corev1.Volume{
+		workspaceVolume,
+		{
+			Name: daemonVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Path: filepath.Join(m.Config.WorkspaceHostPath, startContext.Request.Id+"-daemon"),
+					Type: &hostPathOrCreate,
+				},
+			},
+		},
+	}
+
+	// This is how we support custom CA certs in Gitpod workspaces.
+	// Keep workspace templates clean.
+	if m.Config.WorkspaceCACertSecret != "" {
+		const volumeName = "custom-ca-certs"
+		volumes = append(volumes, corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: m.Config.WorkspaceCACertSecret,
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "ca.crt",
+							Path: "ca.crt",
+						},
+					},
+				},
+			},
+		})
+
+		const mountPath = "/etc/ssl/certs/gitpod-ca.crt"
+		workspaceContainer.VolumeMounts = append(workspaceContainer.VolumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			ReadOnly:  true,
+			MountPath: mountPath,
+			SubPath:   "ca.crt",
+		})
+		workspaceContainer.Env = append(workspaceContainer.Env, corev1.EnvVar{
+			Name:  "NODE_EXTRA_CA_CERTS",
+			Value: mountPath,
+		})
+	}
 
 	workloadType := "regular"
 	if startContext.Headless {
@@ -389,18 +433,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				*workspaceContainer,
 			},
 			RestartPolicy: corev1.RestartPolicyNever,
-			Volumes: []corev1.Volume{
-				workspaceVolume,
-				{
-					Name: daemonVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: filepath.Join(m.Config.WorkspaceHostPath, startContext.Request.Id+"-daemon"),
-							Type: &hostPathOrCreate,
-						},
-					},
-				},
-			},
+			Volumes:       volumes,
 			Tolerations: []corev1.Toleration{
 				{
 					Key:      "node.kubernetes.io/disk-pressure",
