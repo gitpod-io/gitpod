@@ -6,6 +6,16 @@ kind: Preflight
 metadata:
   name: gitpod
 spec:
+  collectors:
+    - run:
+        collectorName: "kernel"
+        image: alpine/semver
+        name: kernel
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - semver --coerce --range '>=5.4.0' $(uname -r) || echo invalid
   analyzers:
     - clusterVersion:
         outcomes:
@@ -19,7 +29,17 @@ spec:
               uri: https://kubernetes.io
           - pass:
               message: Your cluster meets the recommended and required versions of Kubernetes.
-    # @todo(sje): figure out a way of checking the Kernel version is >= 5.4.0-0
+    - textAnalyze:
+        checkName: Kernel version is 5.4.0 or above
+        fileName: kernel/kernel.log
+        regex: invalid
+        outcomes:
+          - pass:
+              when: "false"
+              message: Kernel version valid
+          - fail:
+              when: "true"
+              message: Kernel must be 5.4.0 or above
     - containerRuntime:
         outcomes:
           - pass:
