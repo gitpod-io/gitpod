@@ -340,6 +340,13 @@ fi
 		return nil, err
 	}
 
+	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
+		podSpec.Volumes = append(podSpec.Volumes, *vol)
+		pod := podSpec.Containers[0]
+		pod.VolumeMounts = append(pod.VolumeMounts, *mnt)
+		podSpec.Containers[0] = pod
+	}
+
 	return []runtime.Object{&appsv1.DaemonSet{
 		TypeMeta: common.TypeMetaDaemonset,
 		ObjectMeta: metav1.ObjectMeta{
