@@ -11,6 +11,10 @@ const REPLICATED_YAML_DIR = './install/kots/manifests';
 const INSTALLER_JOB_IMAGE = 'spec.template.spec.containers[0].image';
 
 export async function publishKots(werft: Werft, config: JobConfig) {
+    if (!config.publishToKots) {
+        return;
+    }
+
     werft.phase(phases.PUBLISH_KOTS, 'Publish release to KOTS');
 
     const imageAndTag = exec(`yq r ${REPLICATED_YAML_DIR}/gitpod-installer-job.yaml ${INSTALLER_JOB_IMAGE}`);
