@@ -1,6 +1,9 @@
 # Change Log
 
 ## March 2022
+- Fixes missing login providers for Gitpod Self-Hosted. ([#9046](https://github.com/gitpod-io/gitpod/pull/9046)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Add workspace branch & creation timespan column for Gitpod Jetbrains Gateway plugin workspace panel ([#8940](https://github.com/gitpod-io/gitpod/pull/8940)) - [@yaohui-wyh](https://github.com/yaohui-wyh)
+- Removed leftover workspace size limit which could prevent backups from being created. ([#9039](https://github.com/gitpod-io/gitpod/pull/9039)) - [@csweichel](https://github.com/csweichel)
 - [install]: document installing via kots ([#8996](https://github.com/gitpod-io/gitpod/pull/8996)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Push to KOTS on each branch ([#9014](https://github.com/gitpod-io/gitpod/pull/9014)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - JetBrains Gateway EAP version is now supported. ([#8917](https://github.com/gitpod-io/gitpod/pull/8917)) - [@felladrin](https://github.com/felladrin)
