@@ -16,9 +16,9 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 )
 
-replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
-
 replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
 
 replace k8s.io/api => k8s.io/api v0.23.4 // leeway indirect from components/common-go:lib
 
