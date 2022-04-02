@@ -1,6 +1,13 @@
 # Change Log
 
-## March 2022
+## April 2022
+- Experimental IPFS support for cluster-local image caching ([#9005](https://github.com/gitpod-io/gitpod/pull/9005)) - [@csweichel](https://github.com/csweichel)
+- [kots]: add distribution check to the KOTS preflights ([#9060](https://github.com/gitpod-io/gitpod/pull/9060)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [dashboard] Remove prebuild error message from prebuild log view ([#9045](https://github.com/gitpod-io/gitpod/pull/9045)) - [@easyCZ](https://github.com/easyCZ)
+- [KOTS]: extract images from the Installer and put in the additionalImages array ([#8962](https://github.com/gitpod-io/gitpod/pull/8962)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [dashboard] Fix Settings menu colors in Dark theme ([#9052](https://github.com/gitpod-io/gitpod/pull/9052)) - [@jankeromnes](https://github.com/jankeromnes)
+
+##  March 2022
 - Fixes missing login providers for Gitpod Self-Hosted. ([#9046](https://github.com/gitpod-io/gitpod/pull/9046)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Add workspace branch & creation timespan column for Gitpod Jetbrains Gateway plugin workspace panel ([#8940](https://github.com/gitpod-io/gitpod/pull/8940)) - [@yaohui-wyh](https://github.com/yaohui-wyh)
 - Removed leftover workspace size limit which could prevent backups from being created. ([#9039](https://github.com/gitpod-io/gitpod/pull/9039)) - [@csweichel](https://github.com/csweichel)
