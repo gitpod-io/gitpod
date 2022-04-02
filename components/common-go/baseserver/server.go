@@ -7,6 +7,7 @@ package baseserver
 import (
 	"context"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net"
@@ -200,6 +201,15 @@ func (s *Server) newHTTPMux() *http.ServeMux {
 	mux.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`ready`))
 	})
+
+	// Metrics endpoint
+	metricsHandler := promhttp.Handler()
+	if s.cfg.metricsRegistry != nil {
+		metricsHandler = promhttp.InstrumentMetricHandler(
+			s.cfg.metricsRegistry, promhttp.HandlerFor(s.cfg.metricsRegistry, promhttp.HandlerOpts{}),
+		)
+	}
+	mux.Handle("/metrics", metricsHandler)
 
 	return mux
 }

@@ -7,6 +7,7 @@ package baseserver
 import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -23,6 +24,9 @@ type config struct {
 
 	// closeTimeout is the amount we allow for the server to shut down cleanly
 	closeTimeout time.Duration
+
+	// metricsRegistry configures the metrics registry to use for exporting metrics. When not set, the default prometheus registry is used.
+	metricsRegistry *prometheus.Registry
 }
 
 func defaultConfig() *config {
@@ -46,7 +50,7 @@ func WithHostname(hostname string) Option {
 
 func WithHTTPPort(port int) Option {
 	return func(cfg *config) error {
-		if port <= 0 {
+		if port < 0 {
 			return fmt.Errorf("http port must be greater than 0, got: %d", port)
 		}
 
@@ -80,6 +84,17 @@ func WithLogger(logger *logrus.Entry) Option {
 func WithCloseTimeout(d time.Duration) Option {
 	return func(cfg *config) error {
 		cfg.closeTimeout = d
+		return nil
+	}
+}
+
+func WithMetricsRegistry(r *prometheus.Registry) Option {
+	return func(cfg *config) error {
+		if r == nil {
+			return fmt.Errorf("nil prometheus registry received")
+		}
+
+		cfg.metricsRegistry = r
 		return nil
 	}
 }
