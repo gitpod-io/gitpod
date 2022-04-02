@@ -7,6 +7,7 @@ package baseserver_test
 import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
@@ -36,6 +37,39 @@ func TestServer_ServesReady(t *testing.T) {
 	baseserver.WaitForServerToBeReachable(t, srv, 3*time.Second)
 
 	readyUR := fmt.Sprintf("%s/ready", srv.HTTPAddress())
+	resp, err := http.Get(readyUR)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestServer_ServesMetricsEndpointWithDefaultConfig(t *testing.T) {
+	srv := baseserver.NewForTests(t)
+
+	go func(t *testing.T) {
+		require.NoError(t, srv.ListenAndServe())
+	}(t)
+
+	baseserver.WaitForServerToBeReachable(t, srv, 3*time.Second)
+
+	readyUR := fmt.Sprintf("%s/metrics", srv.HTTPAddress())
+	resp, err := http.Get(readyUR)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestServer_ServesMetricsEndpointWithCustomMetricsConfig(t *testing.T) {
+	registry := prometheus.NewRegistry()
+	srv := baseserver.NewForTests(t,
+		baseserver.WithMetricsRegistry(registry),
+	)
+
+	go func(t *testing.T) {
+		require.NoError(t, srv.ListenAndServe())
+	}(t)
+
+	baseserver.WaitForServerToBeReachable(t, srv, 3*time.Second)
+
+	readyUR := fmt.Sprintf("%s/metrics", srv.HTTPAddress())
 	resp, err := http.Get(readyUR)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)

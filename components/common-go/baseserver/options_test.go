@@ -6,6 +6,7 @@ package baseserver
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -17,6 +18,7 @@ func TestOptions(t *testing.T) {
 	grpcPort := 8081
 	timeout := 10 * time.Second
 	hostname := "another_hostname"
+	registry := prometheus.NewRegistry()
 
 	var opts = []Option{
 		WithHostname(hostname),
@@ -24,16 +26,18 @@ func TestOptions(t *testing.T) {
 		WithGRPCPort(grpcPort),
 		WithLogger(logger),
 		WithCloseTimeout(timeout),
+		WithMetricsRegistry(registry),
 	}
 	cfg, err := evaluateOptions(defaultConfig(), opts...)
 	require.NoError(t, err)
 
 	require.Equal(t, &config{
-		logger:       logger,
-		hostname:     hostname,
-		grpcPort:     grpcPort,
-		httpPort:     httpPort,
-		closeTimeout: timeout,
+		logger:          logger,
+		hostname:        hostname,
+		grpcPort:        grpcPort,
+		httpPort:        httpPort,
+		closeTimeout:    timeout,
+		metricsRegistry: registry,
 	}, cfg)
 }
 
