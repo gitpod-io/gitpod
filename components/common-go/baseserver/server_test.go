@@ -10,7 +10,17 @@ import (
 )
 
 func TestServer_WithOptions(t *testing.T) {
-	s := baseserver.New("server_name",
+	c := make(chan string)
+	close(c)
+
+	val, isClosed := <-c
+	fmt.Println(val, isClosed)
+	val, isClosed = <-c
+	fmt.Println(val, isClosed)
+	val, isClosed = <-c
+	fmt.Println(val, isClosed)
+
+	_, err := baseserver.New("server_name",
 		baseserver.WithHTTPPort(9000),
 		baseserver.WithGRPCPort(9001),
 		baseserver.WithTLS(baseserver.Certs{
@@ -20,13 +30,17 @@ func TestServer_WithOptions(t *testing.T) {
 		}),
 		baseserver.WithLogger(log.New()),
 	)
+	if err != nil {
+		t.Errorf("failed to construct base server: %s", err)
+	}
+
 }
 
 func TestServer(t *testing.T) {
-	s := baseserver.New("test", baseserver.Opts{
-		GRPCPort: 9001,
-		HTTPPort: 9000,
-	})
+	s, err := baseserver.New("test_server")
+	if err != nil {
+		t.Errorf("failed to construct base server: %s", err)
+	}
 
 	go func() {
 		if err := s.ListenAndServe(); err != nil {
@@ -39,15 +53,13 @@ func TestServer(t *testing.T) {
 	if err := s.Close(context.Background()); err != nil {
 		t.Fatal("failed to shut down server")
 	}
-
-	fmt.Println("server terminated")
 }
 
 func TestServer2(t *testing.T) {
-	s := baseserver.New("test", baseserver.Opts{
-		GRPCPort: 9001,
-		HTTPPort: 9000,
-	})
+	s, err := baseserver.New("test_server")
+	if err != nil {
+		t.Errorf("failed to construct base server: %s", err)
+	}
 
 	go func() {
 		if err := s.ListenAndServe(); err != nil {
@@ -60,6 +72,4 @@ func TestServer2(t *testing.T) {
 	if err := s.Close(context.Background()); err != nil {
 		t.Fatal("failed to shut down server")
 	}
-
-	fmt.Println("server terminated")
 }

@@ -10,11 +10,6 @@ import (
 	"net/http"
 )
 
-type Opts struct {
-	GRPCPort int
-	HTTPPort int
-}
-
 type config struct {
 	logger *logrus.Entry
 
@@ -68,6 +63,9 @@ type Server struct {
 	// grpc is a grpc Server
 	grpc         *grpc.Server
 	grpcListener net.Listener
+
+	// listening indicates the server is serving. When closed, the server is in the process of graceful termination.
+	listening chan struct{}
 }
 
 func (s *Server) ListenAndServe() error {
@@ -75,23 +73,27 @@ func (s *Server) ListenAndServe() error {
 	// First, we start the grpc server
 	s.grpcListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.grpcPort))
 	if err != nil {
-		return fmt.Errorf("failed to acquire port %d", s.opts.GRPCPort)
+		return fmt.Errorf("failed to acquire port %d", s.cfg.grpcPort)
 	}
 
 	s.httpListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.httpPort))
 	if err != nil {
-		return fmt.Errorf("failed to acquire port %d", s.opts.GRPCPort)
+		return fmt.Errorf("failed to acquire port %d", s.cfg.grpcPort)
 	}
 
 	errors := make(chan error)
+	defer close(errors)
+	s.listening = make(chan struct{})
 
 	go func() {
 		s.Logger().
 			WithField("protocol", "grpc").
 			Infof("Serving gRPC on %s", s.grpcListener.Addr().String())
 		if serveErr := s.grpc.Serve(s.grpcListener); serveErr != nil {
+			if s.isClosing() {
+				return
+			}
 
-			// TODO: Log
 			errors <- serveErr
 		}
 	}()
@@ -101,14 +103,16 @@ func (s *Server) ListenAndServe() error {
 			WithField("protocol", "http").
 			Infof("Serving http on %s", s.httpListener.Addr().String())
 		if serveErr := s.http.Serve(s.httpListener); serveErr != nil {
-			// TODO: Log
+			if s.isClosing() {
+				return
+			}
+
 			errors <- serveErr
 		}
 	}()
 
-	fmt.Println("Waiting for errors")
 	for serveErr := range errors {
-		fmt.Println("errors", serveErr)
+		s.cfg.logger.WithError(err).Errorf("Server failed to serve.")
 
 		// TODO: Shut down both servers
 
@@ -119,20 +123,28 @@ func (s *Server) ListenAndServe() error {
 }
 
 func (s *Server) Close(ctx context.Context) error {
+	if s.listening == nil {
+		return fmt.Errorf("server is not running, invalid close operaiton")
+	}
+
+	if s.isClosing() {
+		return fmt.Errorf("server is alredy closing")
+	}
+
 	s.Logger().Info("Received graceful shutdown request.")
+	close(s.listening)
 
 	s.grpc.GracefulStop()
-	s.Logger().Info("grpc server terminated.")
-
 	// s.grpc.GracefulStop() also closes the underlying net.Listener, we just release the reference.
 	s.grpcListener = nil
+	s.Logger().Info("GRPC server terminated.")
 
 	if err := s.http.Shutdown(ctx); err != nil {
 		return fmt.Errorf("failed to close http server: %w", err)
 	}
-
 	// s.http.Shutdown() also closes the underlying net.Listener, we just release the reference.
 	s.httpListener = nil
+	s.Logger().Info("HTTP server terminated.")
 
 	return nil
 }
@@ -147,6 +159,16 @@ func (s *Server) HTTPAddress() string {
 
 func (s *Server) GRPCAddress() string {
 	return s.grpcListener.Addr().String()
+}
+
+func (s *Server) isClosing() bool {
+	select {
+	case <-s.listening:
+		// listening channel is closed, we're in graceful shutdown mode
+		return true
+	default:
+		return false
+	}
 }
 
 func (s *Server) initializeHTTP() error {
