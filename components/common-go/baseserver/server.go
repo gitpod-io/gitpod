@@ -15,52 +15,70 @@ type Opts struct {
 	HTTPPort int
 }
 
-func New(name string, opts Opts) *Server {
-	logger := log.New()
+type config struct {
+	logger *logrus.Entry
+
+	grpcPort int
+	httpPort int
+
+	certs *Certs
+}
+
+func defaultConfig() *config {
+	return &config{
+		logger:   log.New(),
+		grpcPort: 9001,
+		httpPort: 9000,
+		certs:    nil,
+	}
+}
+
+func New(name string, opts ...Option) (*Server, error) {
+	cfg, err := evaluateOptions(defaultConfig(), opts...)
+	if err != nil {
+		return nil, fmt.Errorf("invalid config: %w", err)
+	}
+
 	server := &Server{
-		logger: logger,
-	}
-	server.opts = opts
-
-	server.Name = name
-
-	server.HTTPMux = http.NewServeMux()
-	server.GRPC = grpc.NewServer()
-	server.HTTP = &http.Server{
-		Addr:    fmt.Sprintf(":%d", opts.HTTPPort),
-		Handler: server.HTTPMux,
+		Name: name,
+		cfg:  cfg,
 	}
 
-	return server
+	if initErr := server.initializeHTTP(); initErr != nil {
+		return nil, fmt.Errorf("failed to initialize http server: %w", initErr)
+	}
+	if initErr := server.initializeGRPC(); initErr != nil {
+		return nil, fmt.Errorf("failed to initialize grpc server: %w", initErr)
+	}
+
+	return server, nil
 }
 
 type Server struct {
-	logger *logrus.Entry
-
 	// Name is the name of this server, used for logging context
 	Name string
 
-	// HTTP is an HTTP Server
-	HTTP         *http.Server
-	HTTPMux      *http.ServeMux
+	cfg *config
+
+	// http is an http Server
+	http         *http.Server
+	httpMux      *http.ServeMux
 	httpListener net.Listener
 
-	// GRPC is a GRPC Server
-	GRPC         *grpc.Server
+	// grpc is a grpc Server
+	grpc         *grpc.Server
 	grpcListener net.Listener
-
-	opts Opts
 }
 
 func (s *Server) ListenAndServe() error {
 	var err error
-	// First, we start the GRPC server
-	s.grpcListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.opts.GRPCPort))
+	// First, we start the grpc server
+	s.grpcListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.grpcPort))
 	if err != nil {
 		return fmt.Errorf("failed to acquire port %d", s.opts.GRPCPort)
 	}
 
-	s.httpListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.opts.HTTPPort))
+	s.httpListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.httpPort))
 	if err != nil {
 		return fmt.Errorf("failed to acquire port %d", s.opts.GRPCPort)
 	}
@@ -71,7 +89,8 @@ func (s *Server) ListenAndServe() error {
 		s.Logger().
 			WithField("protocol", "grpc").
 			Infof("Serving gRPC on %s", s.grpcListener.Addr().String())
-		if serveErr := s.GRPC.Serve(s.grpcListener); serveErr != nil {
+		if serveErr := s.grpc.Serve(s.grpcListener); serveErr != nil {
+
 			// TODO: Log
 			errors <- serveErr
 		}
@@ -80,8 +99,8 @@ func (s *Server) ListenAndServe() error {
 	go func() {
 		s.Logger().
 			WithField("protocol", "http").
-			Infof("Serving HTTP on %s", s.httpListener.Addr().String())
-		if serveErr := s.HTTP.Serve(s.httpListener); serveErr != nil {
+			Infof("Serving http on %s", s.httpListener.Addr().String())
+		if serveErr := s.http.Serve(s.httpListener); serveErr != nil {
 			// TODO: Log
 			errors <- serveErr
 		}
@@ -102,24 +121,24 @@ func (s *Server) ListenAndServe() error {
 func (s *Server) Close(ctx context.Context) error {
 	s.Logger().Info("Received graceful shutdown request.")
 
-	s.GRPC.GracefulStop()
-	s.Logger().Info("GRPC server terminated.")
+	s.grpc.GracefulStop()
+	s.Logger().Info("grpc server terminated.")
 
-	// s.GRPC.GracefulStop() also closes the underlying net.Listener, we just release the reference.
+	// s.grpc.GracefulStop() also closes the underlying net.Listener, we just release the reference.
 	s.grpcListener = nil
 
-	if err := s.HTTP.Shutdown(ctx); err != nil {
-		return fmt.Errorf("failed to close HTTP server: %w", err)
+	if err := s.http.Shutdown(ctx); err != nil {
+		return fmt.Errorf("failed to close http server: %w", err)
 	}
 
-	// s.HTTP.Shutdown() also closes the underlying net.Listener, we just release the reference.
+	// s.http.Shutdown() also closes the underlying net.Listener, we just release the reference.
 	s.httpListener = nil
 
 	return nil
 }
 
 func (s *Server) Logger() *logrus.Entry {
-	return s.logger
+	return s.cfg.logger
 }
 
 func (s *Server) HTTPAddress() string {
@@ -130,8 +149,23 @@ func (s *Server) GRPCAddress() string {
 	return s.grpcListener.Addr().String()
 }
 
-type GRPCOptions struct {
-	Port           int
+func (s *Server) initializeHTTP() error {
+	s.httpMux = http.NewServeMux()
+	s.http = &http.Server{
+		Addr:    fmt.Sprintf(":%d", s.cfg.httpPort),
+		Handler: s.httpMux,
+	}
+
+	return nil
+}
+
+func (s *Server) initializeGRPC() error {
+	s.grpc = grpc.NewServer()
+
+	return nil
+}
+
+type Certs struct {
 	CACertPath     string
 	ServerCertPath string
 	ServerKeyPath  string

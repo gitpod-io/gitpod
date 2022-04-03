@@ -4,9 +4,23 @@ import (
 	"context"
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"testing"
 	"time"
 )
+
+func TestServer_WithOptions(t *testing.T) {
+	s := baseserver.New("server_name",
+		baseserver.WithHTTPPort(9000),
+		baseserver.WithGRPCPort(9001),
+		baseserver.WithTLS(baseserver.Certs{
+			CACertPath:     "",
+			ServerCertPath: "",
+			ServerKeyPath:  "",
+		}),
+		baseserver.WithLogger(log.New()),
+	)
+}
 
 func TestServer(t *testing.T) {
 	s := baseserver.New("test", baseserver.Opts{
