@@ -202,6 +202,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									},
 								},
 							},
+							envvars,
 						),
 						VolumeMounts: append(
 							[]corev1.VolumeMount{
