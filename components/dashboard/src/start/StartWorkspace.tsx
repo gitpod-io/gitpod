@@ -324,7 +324,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
         // Redirect to workspaceURL if we are not yet running in an iframe.
         // It happens this late if we were waiting for a docker build.
-        if (!this.props.runsInIFrame && workspaceInstance.ideUrl && !this.props.dontAutostart) {
+        if (
+            !this.props.runsInIFrame &&
+            workspaceInstance.ideUrl &&
+            (!this.props.dontAutostart || workspaceInstance.status.phase === "running")
+        ) {
             this.redirectTo(workspaceInstance.ideUrl);
             return;
         }
@@ -431,48 +435,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 }
                 if (!this.state.desktopIde) {
                     phase = StartPhase.Running;
-
-                    if (this.props.dontAutostart) {
-                        // hide the progress bar, as we're already running
-                        phase = undefined;
-                        title = "Running";
-
-                        // in case we dontAutostart the IDE we have to provide controls to do so
-                        statusMessage = (
-                            <div>
-                                <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
-                                    <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
-                                    <div>
-                                        <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                            {this.state.workspaceInstance.workspaceId}
-                                        </p>
-                                        <a target="_parent" href={contextURL}>
-                                            <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
-                                                {contextURL}
-                                            </p>
-                                        </a>
-                                    </div>
-                                </div>
-                                <div className="mt-10 justify-center flex space-x-2">
-                                    <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}>
-                                        <button className="secondary">Go to Dashboard</button>
-                                    </a>
-                                    <a
-                                        target="_parent"
-                                        href={
-                                            gitpodHostUrl
-                                                .asStart(this.props.workspaceId)
-                                                .toString() /** move over 'start' here to fetch fresh credentials in case this is an older tab */
-                                        }
-                                    >
-                                        <button>Open Workspace</button>
-                                    </a>
-                                </div>
-                            </div>
-                        );
-                    } else {
-                        statusMessage = <p className="text-base text-gray-400">Opening Workspace …</p>;
-                    }
+                    statusMessage = <p className="text-base text-gray-400">Opening Workspace …</p>;
                 } else {
                     phase = StartPhase.IdeReady;
                     const openLink = this.state.desktopIde.link;
