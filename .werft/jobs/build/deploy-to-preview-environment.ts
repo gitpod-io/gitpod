@@ -158,8 +158,11 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     // the context namespace is not set at this point
     const deploymentKubeconfig = withVM ? PREVIEW_K3S_KUBECONFIG_PATH : CORE_DEV_KUBECONFIG_PATH;
     const hasGitpodHelmInstall = exec(`helm --kubeconfig ${deploymentKubeconfig} status ${helmInstallName} -n ${deploymentConfig.namespace}`, { slice: "check for Helm install", dontCheckRc: true }).code === 0;
+    werft.done("check for Helm install");
     const hasGitpodInstallerInstall = exec(`kubectl --kubeconfig ${deploymentKubeconfig} get configmap gitpod-app -n ${deploymentConfig.namespace}`, { slice: "check for Installer install", dontCheckRc: true }).code === 0;
+    werft.done("check for Installer install");
     werft.log("result of installation checks", `has Helm install: ${hasGitpodHelmInstall}, has Installer install: ${hasGitpodInstallerInstall}`);
+    werft.done("result of installation checks");
 
     if (withHelm) {
         werft.log("using Helm", "with-helm was specified.");
@@ -343,6 +346,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
             | kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f -`);
         exec(`/usr/local/bin/helm3 --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
     }
+    werft.done("sweeper");
 
     werft.done(phases.DEPLOY);
 

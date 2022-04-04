@@ -148,7 +148,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     }))
     globalAttributes['werft.job.config.branch'] = context.Repository.ref
     werft.addAttributes(globalAttributes)
-
+    werft.done("job config");
     werft.done(sliceId)
 
     return jobConfig

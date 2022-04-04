@@ -20,8 +20,11 @@ export class Werft {
     private tracer: Tracer;
     public rootSpan: Span;
     private sliceSpans: { [slice: string]: Span } = {}
+    public currentPhase: string;
     public currentPhaseSpan: Span;
     private globalSpanAttributes: SpanAttributes = {}
+
+    public phases: { [name: string]: { "slices": { [name: string]: { "closed": boolean } } } } = {}
 
     constructor(job: string) {
         if (werft) {
@@ -40,6 +43,15 @@ export class Werft {
             this.endPhase()
         }
 
+        // Check if the phase does already exist
+        if (this.phases[name]) {
+            throw new Error(`The phase "${name}" does already exist!`)
+        }
+
+        // This is a workaround to prevent phases being opened without any slice
+        this.phases[name] = { "slices": { } }
+        this.currentPhase = name;
+
         const rootSpanCtx = trace.setSpan(context.active(), this.rootSpan);
         this.currentPhaseSpan = this.tracer.startSpan(`phase: ${name}`, {
             attributes: {
@@ -52,13 +64,29 @@ export class Werft {
         console.log(`[${name}|PHASE] ${desc || name}`)
     }
 
+    private sliceBelongsToCurrentPhase(slice) {
+        for (const [name, phase] of Object.entries(this.phases)) {
+            if(phase.slices[slice] && (name != this.currentPhase))
+                throw new Error(`The slice ${slice} does not belong to the phase ${name}`);
+        }
+    }
+
     public log(slice, msg) {
+        this.sliceBelongsToCurrentPhase(slice);
         if (!this.sliceSpans[slice]) {
             const parentSpanCtx = trace.setSpan(context.active(), this.currentPhaseSpan);
             const sliceSpan = this.tracer.startSpan(`slice: ${slice}`, undefined, parentSpanCtx)
             sliceSpan.setAttributes(this.globalSpanAttributes)
             this.sliceSpans[slice] = sliceSpan
         }
+        // Create a new slice in the current phase when it does not already exist
+        // This is the case if werft.done("PHASE") is directly invoked without any prior log
+        if (!this.phases[this.currentPhase].slices[slice])
+            this.phases[this.currentPhase].slices[slice] = { "closed": false };
+        // Check if the slice has already been closed
+        if (this.phases[this.currentPhase].slices[slice].closed)
+            throw new Error(`The slice "${slice}" has already been closed!`);
+
         console.log(`[${slice}] ${msg}`)
     }
 
@@ -91,6 +119,14 @@ export class Werft {
             span.end()
             delete this.sliceSpans[slice]
         }
+        // Create a new slice entry that is already closed if no prior entry exists
+        if (!this.phases[this.currentPhase].slices[slice]) {
+            this.phases[this.currentPhase].slices[slice] = { "closed": true };
+        } else if (this.phases[this.currentPhase].slices[slice].closed) {
+            throw new Error(`The slice "${slice}" has already been closed!`);
+        } else {
+            this.phases[this.currentPhase].slices[slice].closed = true;
+        }
         console.log(`[${slice}|DONE]`)
     }
 
@@ -105,6 +141,17 @@ export class Werft {
             span.end()
             delete this.sliceSpans[id]
         })
+        // Check if all slices are closed
+        let check = true;
+        for (const [name, slice] of Object.entries(this.phases[this.currentPhase].slices)) {
+            if(!slice.closed) {
+                console.log(`The slice "${name}" has not been closed!`);
+                check = false;
+            }
+        }
+        if (!check) {
+            throw new Error(`Not all slices inside the phase "${this.currentPhase}" have been closed!`)
+        }
         // End the phase
         this.currentPhaseSpan.end()
     }
