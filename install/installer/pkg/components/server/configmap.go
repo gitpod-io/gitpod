@@ -40,6 +40,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			WorkspaceImage:      common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
 			PreviewFeatureFlags: []NamedWorkspaceFeatureFlag{},
 			DefaultFeatureFlags: []NamedWorkspaceFeatureFlag{},
+			TimeoutDefault:      ctx.Config.Workspace.TimeoutDefault,
+			TimeoutExtended:     ctx.Config.Workspace.TimeoutExtended,
 		},
 		Session: Session{
 			MaxAgeMs: 259200000,

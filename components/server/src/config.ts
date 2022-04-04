@@ -29,6 +29,8 @@ export interface WorkspaceDefaults {
     workspaceImage: string;
     previewFeatureFlags: NamedWorkspaceFeatureFlag[];
     defaultFeatureFlags: NamedWorkspaceFeatureFlag[];
+    timeoutDefault?: string;
+    timeoutExtended?: string;
 }
 
 export interface WorkspaceGarbageCollection {

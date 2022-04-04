@@ -38,6 +38,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return (&q).String()
 	}
 
+	timeoutAfterClose := util.Duration(2 * time.Minute)
+	if ctx.Config.Workspace.TimeoutAfterClose != nil {
+		timeoutAfterClose = *ctx.Config.Workspace.TimeoutAfterClose
+	}
+
 	wsmcfg := config.ServiceConfiguration{
 		Manager: config.Configuration{
 			Namespace:      ctx.Namespace,
@@ -81,11 +86,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			WorkspaceHostPath:        wsdaemon.HostWorkingArea,
 			WorkspacePodTemplate:     templatesCfg,
 			Timeouts: config.WorkspaceTimeoutConfiguration{
-				AfterClose:          util.Duration(2 * time.Minute),
+				AfterClose:          timeoutAfterClose,
 				HeadlessWorkspace:   util.Duration(1 * time.Hour),
 				Initialization:      util.Duration(30 * time.Minute),
 				RegularWorkspace:    util.Duration(30 * time.Minute),
-				MaxLifetime:         util.Duration(36 * time.Hour),
+				MaxLifetime:         ctx.Config.Workspace.MaxLifetime,
 				TotalStartup:        util.Duration(1 * time.Hour),
 				ContentFinalization: util.Duration(1 * time.Hour),
 				Stopping:            util.Duration(1 * time.Hour),

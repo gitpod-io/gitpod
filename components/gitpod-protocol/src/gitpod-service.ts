@@ -321,7 +321,16 @@ export interface ClientHeaderFields {
     clientRegion?: string;
 }
 
-export const WorkspaceTimeoutValues = ["30m", "60m", "180m"] as const;
+export const WORKSPACE_TIMEOUT_DEFAULT_SHORT = "short";
+export const WORKSPACE_TIMEOUT_DEFAULT_LONG = "long";
+export const WORKSPACE_TIMEOUT_EXTENDED = "extended";
+export const WORKSPACE_TIMEOUT_EXTENDED_ALT = "180m"; // for backwards compatibility since the IDE uses this
+export const WorkspaceTimeoutValues = [
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_TIMEOUT_EXTENDED,
+    WORKSPACE_TIMEOUT_EXTENDED_ALT,
+] as const;
 
 export const createServiceMock = function <C extends GitpodClient, S extends GitpodServer>(
     methods: Partial<JsonRpcProxy<S>>,

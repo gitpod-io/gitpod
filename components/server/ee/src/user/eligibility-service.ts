@@ -7,7 +7,7 @@
 import { inject, injectable } from "inversify";
 import { TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { TokenProvider } from "../../../src/user/token-provider";
-import { User, WorkspaceTimeoutDuration, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { User, WorkspaceTimeoutDuration, WorkspaceInstance, WORKSPACE_TIMEOUT_DEFAULT_LONG, WORKSPACE_TIMEOUT_DEFAULT_SHORT } from "@gitpod/gitpod-protocol";
 import { RemainingHours } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Plans, MAX_PARALLEL_WORKSPACES } from "@gitpod/gitpod-protocol/lib/plans";
@@ -251,9 +251,9 @@ export class EligibilityService {
      */
     async getDefaultWorkspaceTimeout(user: User, date: Date = new Date()): Promise<WorkspaceTimeoutDuration> {
         if (await this.maySetTimeout(user, date)) {
-            return "60m";
+            return WORKSPACE_TIMEOUT_DEFAULT_LONG;
         } else {
-            return "30m";
+            return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
         }
     }
 

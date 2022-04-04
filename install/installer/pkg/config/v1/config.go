@@ -5,6 +5,9 @@
 package config
 
 import (
+	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
@@ -53,6 +56,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.Runtime.FSShiftMethod = FSShiftFuseFS
 	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
+	cfg.Workspace.MaxLifetime = util.Duration(36 * time.Hour)
 	cfg.OpenVSX.URL = "https://open-vsx.org"
 	cfg.DisableDefinitelyGP = false
 
@@ -224,6 +228,18 @@ type Workspace struct {
 	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
 	Resources Resources           `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`
+
+	// MaxLifetime is the maximum time a workspace is allowed to run. After that, the workspace times out despite activity
+	MaxLifetime util.Duration `json:"maxLifetime" validate:"required"`
+
+	// TimeoutDefault is the default timeout of a regular workspace
+	TimeoutDefault *util.Duration `json:"timeoutDefault,omitempty"`
+
+	// TimeoutExtended is the workspace timeout that a user can extend to for one workspace
+	TimeoutExtended *util.Duration `json:"timeoutExtended,omitempty"`
+
+	// TimeoutAfterClose is the time a workspace timed out after it has been closed (“closed” means that it does not get a heartbeat from an IDE anymore)
+	TimeoutAfterClose *util.Duration `json:"timeoutAfterClose,omitempty"`
 }
 
 type OpenVSX struct {
