@@ -69,10 +69,10 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
     })
     error?: string;
 
-    // stateVersion defines the last observed stateVersion from a WorkspaceStatus. See ws-manager-api/core.proto.
-    // stateVersion must only be set by controller/observer.
+    // statusVersion defines the last observed stateVersion from a WorkspaceStatus. See ws-manager-api/core.proto.
+    // statusVersion must only be set by controller/observer.
     @Column({
         default: 0,
     })
-    stateVersion: number;
+    statusVersion: number;
 }
