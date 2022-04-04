@@ -18,7 +18,10 @@ export namespace RepoURL {
         }
         if (segments.length > 2) {
             const endSegment = segments[segments.length - 1];
-            const ownerSegments = segments.slice(0, segments.length - 1);
+            let ownerSegments = segments.slice(0, segments.length - 1);
+            if (ownerSegments[0] === "scm") {
+                ownerSegments = ownerSegments.slice(1);
+            }
             const owner = ownerSegments.join("/");
             const repo = endSegment.endsWith(".git") ? endSegment.slice(0, -4) : endSegment;
             return { host, owner, repo };

@@ -1015,6 +1015,8 @@ export interface Repository {
     owner: string;
     name: string;
     cloneUrl: string;
+    /* Optional kind to differentiate between repositories of orgs/groups/projects and personal repos. */
+    repoKind?: string;
     description?: string;
     avatarUrl?: string;
     webUrl?: string;

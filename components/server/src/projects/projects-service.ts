@@ -150,7 +150,12 @@ export class ProjectsService {
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const authProvider = hostContext && hostContext.authProvider.info;
         const type = authProvider && authProvider.authProviderType;
-        if (type === "GitLab" || type === "Bitbucket" || AuthProviderInfo.isGitHubEnterprise(authProvider)) {
+        if (
+            type === "GitLab" ||
+            type === "Bitbucket" ||
+            type === "BitbucketServer" ||
+            AuthProviderInfo.isGitHubEnterprise(authProvider)
+        ) {
             const repositoryService = hostContext?.services?.repositoryService;
             if (repositoryService) {
                 // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier

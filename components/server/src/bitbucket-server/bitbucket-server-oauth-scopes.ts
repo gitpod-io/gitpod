@@ -14,7 +14,10 @@ export namespace BitbucketServerOAuthScopes {
     /** Push over https, fork repo */
     export const REPOSITORY_WRITE = "REPO_WRITE";
 
-    export const ALL = [PUBLIC_REPOS, REPOSITORY_READ, REPOSITORY_WRITE];
+    export const REPO_ADMIN = "REPO_ADMIN";
+    export const PROJECT_ADMIN = "PROJECT_ADMIN";
+
+    export const ALL = [PUBLIC_REPOS, REPOSITORY_READ, REPOSITORY_WRITE, REPO_ADMIN, PROJECT_ADMIN];
 
     export const Requirements = {
         /**

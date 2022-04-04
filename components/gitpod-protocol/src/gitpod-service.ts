@@ -307,7 +307,7 @@ export interface ProviderRepository {
     account: string;
     accountAvatarUrl: string;
     cloneUrl: string;
-    updatedAt: string;
+    updatedAt?: string;
     installationId?: number;
     installationUpdatedAt?: string;
 
