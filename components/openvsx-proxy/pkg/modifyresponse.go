@@ -6,6 +6,7 @@ package pkg
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -48,19 +49,19 @@ func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 		return nil
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	rawBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.WithFields(logFields).WithError(err).Error("error reading response body")
+		log.WithFields(logFields).WithError(err).Error("error reading response raw body")
 		return err
 	}
 	r.Body.Close()
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(rawBody))
 
 	if r.StatusCode >= 500 || r.StatusCode == http.StatusTooManyRequests || r.StatusCode == http.StatusRequestTimeout {
 		// use cache if exists
 		bodyLogField := "(binary)"
-		if utf8.Valid(body) {
-			bodyStr := string(body)
+		if utf8.Valid(rawBody) {
+			bodyStr := string(rawBody)
 			truncatedSuffix := ""
 			if len(bodyStr) > 500 {
 				truncatedSuffix = "... [truncated]"
@@ -93,13 +94,42 @@ func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 	}
 
 	// no error (status code < 500)
+	body := rawBody
 	contentType := r.Header.Get("Content-Type")
 	if strings.HasPrefix(contentType, "application/json") {
+		isCompressedResponse := strings.EqualFold(r.Header.Get("Content-Encoding"), "gzip")
+		if isCompressedResponse {
+			gzipReader, err := gzip.NewReader(ioutil.NopCloser(bytes.NewBuffer(rawBody)))
+			if err != nil {
+				log.WithFields(logFields).WithError(err)
+				return nil
+			}
+
+			body, err = ioutil.ReadAll(gzipReader)
+			if err != nil {
+				log.WithFields(logFields).WithError(err).Error("error reading compressed response body")
+				return nil
+			}
+			gzipReader.Close()
+		}
+
 		if log.Log.Level >= logrus.DebugLevel {
 			log.WithFields(logFields).Debugf("replacing %d occurence(s) of '%s' in response body ...", strings.Count(string(body), o.Config.URLUpstream), o.Config.URLUpstream)
 		}
 		bodyStr := strings.ReplaceAll(string(body), o.Config.URLUpstream, o.Config.URLLocal)
 		body = []byte(bodyStr)
+
+		if isCompressedResponse {
+			var b bytes.Buffer
+			gzipWriter := gzip.NewWriter(&b)
+			_, err = gzipWriter.Write(body)
+			if err != nil {
+				log.WithFields(logFields).WithError(err).Error("error writing compressed response body")
+				return nil
+			}
+			gzipWriter.Close()
+			body = b.Bytes()
+		}
 	} else {
 		log.WithFields(logFields).Debugf("response is not JSON but '%s', skipping replacing '%s' in response body", contentType, o.Config.URLUpstream)
 	}
