@@ -22,11 +22,10 @@ done
 
 ## Install Gitpod in Air-Gap Mode
 
-To install Gitpod in an air-gap network, you need to configure the repository of the images needed by Gitpod (see previous step) and disable the `definitely-gp` feature. Add this to your Gitpod config:
+To install Gitpod in an air-gap network, you need to configure the repository of the images needed by Gitpod (see previous step). Add this to your Gitpod config:
 
 ```yaml
 repository: your-registry.example.com
-disableDefinitelyGp: true
 ```
 
 That's it. Run the following commands as usual and Gitpod fetches the images from your registry and does not need internet access to operate:

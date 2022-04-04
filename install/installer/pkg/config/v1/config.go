@@ -59,7 +59,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
 	cfg.Workspace.MaxLifetime = util.Duration(36 * time.Hour)
 	cfg.OpenVSX.URL = "https://open-vsx.org"
-	cfg.DisableDefinitelyGP = false
+	cfg.DisableDefinitelyGP = true
 
 	return nil
 }

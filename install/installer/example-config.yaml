@@ -10,7 +10,7 @@ containerRegistry:
   inCluster: true
 database:
   inCluster: true
-disableDefinitelyGp: false
+disableDefinitelyGp: true
 domain: ""
 kind: Full
 metadata:
