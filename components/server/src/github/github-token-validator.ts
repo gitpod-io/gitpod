@@ -15,15 +15,16 @@ export class GitHubTokenValidator implements IGitTokenValidator {
     @inject(GitHubGraphQlEndpoint) githubGraphQLEndpoint: GitHubGraphQlEndpoint;
 
     async checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult> {
-        const { token, repoFullName } = params;
+        const { token, owner, repo } = params;
+        const repoFullName = `${owner}/${repo}`;
 
         const parsedRepoName = this.parseGitHubRepoName(repoFullName);
         if (!parsedRepoName) {
             throw new Error(`Could not parse repo name: ${repoFullName}`);
         }
-        let repo;
+        let gitHubRepo;
         try {
-            repo = await this.githubRestApi.run(token, (api) => api.repos.get(parsedRepoName));
+            gitHubRepo = await this.githubRestApi.run(token, (api) => api.repos.get(parsedRepoName));
         } catch (error) {
             if (GitHubApiError.is(error) && error.response?.status === 404) {
                 return { found: false };
@@ -32,12 +33,12 @@ export class GitHubTokenValidator implements IGitTokenValidator {
             return { found: false, error };
         }
 
-        const mayWritePrivate = GitHubResult.mayWritePrivate(repo);
-        const mayWritePublic = GitHubResult.mayWritePublic(repo);
+        const mayWritePrivate = GitHubResult.mayWritePrivate(gitHubRepo);
+        const mayWritePublic = GitHubResult.mayWritePublic(gitHubRepo);
 
-        const isPrivateRepo = repo.data.private;
-        let writeAccessToRepo = repo.data.permissions?.push;
-        const inOrg = repo.data.owner?.type === "Organization";
+        const isPrivateRepo = gitHubRepo.data.private;
+        let writeAccessToRepo = gitHubRepo.data.permissions?.push;
+        const inOrg = gitHubRepo.data.owner?.type === "Organization";
 
         if (inOrg) {
             // if this repository belongs to an organization and Gitpod is not authorized,

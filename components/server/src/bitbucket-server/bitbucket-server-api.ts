@@ -120,13 +120,13 @@ export class BitbucketServerApi {
     }
 
     async getPermission(
-        user: User,
+        userOrToken: User | string,
         params: { username: string; repoKind: BitbucketServer.RepoKind; owner: string; repoName?: string },
     ): Promise<string | undefined> {
         const { username, repoKind, owner, repoName } = params;
         if (repoName) {
             const repoPermissions = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.PermissionEntry>>(
-                user,
+                userOrToken,
                 `/${repoKind}/${owner}/repos/${repoName}/permissions/users`,
             );
             const repoPermission = repoPermissions.values?.find((p) => p.user.name === username)?.permission;
@@ -136,7 +136,7 @@ export class BitbucketServerApi {
         }
         if (repoKind === "projects") {
             const projectPermissions = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.PermissionEntry>>(
-                user,
+                userOrToken,
                 `/${repoKind}/${owner}/permissions/users`,
             );
             const projectPermission = projectPermissions.values?.find((p) => p.user.name === username)?.permission;
@@ -149,11 +149,11 @@ export class BitbucketServerApi {
     }
 
     async getRepository(
-        user: User,
+        userOrToken: User | string,
         params: { repoKind: "projects" | "users"; owner: string; repositorySlug: string },
     ): Promise<BitbucketServer.Repository> {
         return this.runQuery<BitbucketServer.Repository>(
-            user,
+            userOrToken,
             `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}`,
         );
     }

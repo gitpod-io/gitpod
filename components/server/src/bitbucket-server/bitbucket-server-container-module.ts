@@ -8,6 +8,7 @@ import { ContainerModule } from "inversify";
 import { AuthProvider } from "../auth/auth-provider";
 import { FileProvider, LanguagesProvider, RepositoryHost, RepositoryProvider } from "../repohost";
 import { IContextParser } from "../workspace/context-parser";
+import { IGitTokenValidator } from "../workspace/git-token-validator";
 import { BitbucketServerApi } from "./bitbucket-server-api";
 import { BitbucketServerAuthProvider } from "./bitbucket-server-auth-provider";
 import { BitbucketServerContextParser } from "./bitbucket-server-context-parser";
@@ -15,6 +16,7 @@ import { BitbucketServerFileProvider } from "./bitbucket-server-file-provider";
 import { BitbucketServerLanguagesProvider } from "./bitbucket-server-language-provider";
 import { BitbucketServerRepositoryProvider } from "./bitbucket-server-repository-provider";
 import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
+import { BitbucketServerTokenValidator } from "./bitbucket-server-token-validator";
 
 export const bitbucketServerContainerModule = new ContainerModule((bind, _unbind, _isBound, _rebind) => {
     bind(RepositoryHost).toSelf().inSingletonScope();
@@ -30,4 +32,6 @@ export const bitbucketServerContainerModule = new ContainerModule((bind, _unbind
     bind(BitbucketServerAuthProvider).toSelf().inSingletonScope();
     bind(AuthProvider).to(BitbucketServerAuthProvider).inSingletonScope();
     bind(BitbucketServerTokenHelper).toSelf().inSingletonScope();
+    bind(BitbucketServerTokenValidator).toSelf().inSingletonScope();
+    bind(IGitTokenValidator).toService(BitbucketServerTokenValidator);
 });

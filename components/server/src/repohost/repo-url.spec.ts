@@ -14,7 +14,7 @@ const expect = chai.expect;
 export class RepoUrlTest {
     @test public parseRepoUrl() {
         const testUrl = RepoURL.parseRepoUrl("https://gitlab.com/hello-group/my-cool-project.git");
-        expect(testUrl).to.deep.equal({
+        expect(testUrl).to.deep.include({
             host: "gitlab.com",
             owner: "hello-group",
             repo: "my-cool-project",
@@ -23,7 +23,7 @@ export class RepoUrlTest {
 
     @test public parseSubgroupOneLevel() {
         const testUrl = RepoURL.parseRepoUrl("https://gitlab.com/hello-group/my-subgroup/my-cool-project.git");
-        expect(testUrl).to.deep.equal({
+        expect(testUrl).to.deep.include({
             host: "gitlab.com",
             owner: "hello-group/my-subgroup",
             repo: "my-cool-project",
@@ -34,7 +34,7 @@ export class RepoUrlTest {
         const testUrl = RepoURL.parseRepoUrl(
             "https://gitlab.com/hello-group/my-subgroup/my-sub-subgroup/my-cool-project.git",
         );
-        expect(testUrl).to.deep.equal({
+        expect(testUrl).to.deep.include({
             host: "gitlab.com",
             owner: "hello-group/my-subgroup/my-sub-subgroup",
             repo: "my-cool-project",
@@ -45,7 +45,7 @@ export class RepoUrlTest {
         const testUrl = RepoURL.parseRepoUrl(
             "https://gitlab.com/hello-group/my-subgroup/my-sub-subgroup/my-sub-sub-subgroup/my-cool-project.git",
         );
-        expect(testUrl).to.deep.equal({
+        expect(testUrl).to.deep.include({
             host: "gitlab.com",
             owner: "hello-group/my-subgroup/my-sub-subgroup/my-sub-sub-subgroup",
             repo: "my-cool-project",
@@ -56,10 +56,20 @@ export class RepoUrlTest {
         const testUrl = RepoURL.parseRepoUrl(
             "https://gitlab.com/hello-group/my-subgroup/my-sub-subgroup/my-sub-sub-subgroup/my-sub-sub-sub-subgroup/my-cool-project.git",
         );
-        expect(testUrl).to.deep.equal({
+        expect(testUrl).to.deep.include({
             host: "gitlab.com",
             owner: "hello-group/my-subgroup/my-sub-subgroup/my-sub-sub-subgroup/my-sub-sub-sub-subgroup",
             repo: "my-cool-project",
+        });
+    }
+
+    @test public parseScmCloneUrl() {
+        const testUrl = RepoURL.parseRepoUrl("https://bitbucket.gitpod-self-hosted.com/scm/~jan/yolo.git");
+        expect(testUrl).to.deep.include({
+            host: "bitbucket.gitpod-self-hosted.com",
+            repoKind: "users",
+            owner: "jan",
+            repo: "yolo",
         });
     }
 }

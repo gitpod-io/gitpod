@@ -6,6 +6,7 @@
 
 import { AuthProviderInfo, GuessedGitTokenScopes, GuessGitTokenScopesParams } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
+import { RepoURL } from "../repohost";
 import { GitTokenValidator } from "./git-token-validator";
 
 @injectable()
@@ -21,16 +22,20 @@ export class GitTokenScopeGuesser {
         }
         const { repoUrl, gitCommand, currentToken } = params;
 
-        const repoFullName = repoUrl && this.parseRepoFull(repoUrl);
-        if (!repoFullName) {
+        const parsedRepoUrl = repoUrl && RepoURL.parseRepoUrl(repoUrl);
+        if (!parsedRepoUrl) {
             return { message: `Unknown repository '${repoUrl}'` };
         }
+
+        const { host, repo, owner, repoKind } = parsedRepoUrl;
 
         // in case of git operation which require write access to a remote
         if (gitCommand === "push") {
             const validationResult = await this.tokenValidator.checkWriteAccess({
-                host: authProvider.host,
-                repoFullName,
+                host,
+                owner,
+                repo,
+                repoKind,
                 token: currentToken.token,
             });
             const hasWriteAccess = validationResult && validationResult.writeAccessToRepo === true;
@@ -45,21 +50,5 @@ export class GitTokenScopeGuesser {
             }
         }
         return { scopes: authProvider.requirements!.default };
-    }
-
-    /**
-     * @returns full name of the repo, e.g. group/subgroup1/subgroug2/project-repo
-     *
-     * @param repoUrl e.g. https://gitlab.domain.com/group/subgroup1/subgroug2/project-repo.git
-     */
-    protected parseRepoFull(repoUrl: string | undefined): string | undefined {
-        if (repoUrl && repoUrl.startsWith("https://") && repoUrl.endsWith(".git")) {
-            const parts = repoUrl.substr("https://".length).split("/").splice(1); // without host parts
-            if (parts.length >= 2) {
-                parts[parts.length - 1] = parts[parts.length - 1].slice(0, -1 * ".git".length);
-                return parts.join("/");
-            }
-        }
-        return undefined;
     }
 }
