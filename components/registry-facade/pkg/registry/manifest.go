@@ -315,6 +315,8 @@ func DownloadConfig(ctx context.Context, fetch FetcherFunc, ref string, desc oci
 			if err != nil {
 				return err
 			}
+			defer w.Close()
+
 			n, err := w.Write(buf)
 			if err != nil {
 				return err
@@ -322,7 +324,7 @@ func DownloadConfig(ctx context.Context, fetch FetcherFunc, ref string, desc oci
 			if n != len(buf) {
 				return io.ErrShortWrite
 			}
-			w.Close()
+
 			return w.Commit(ctx, int64(len(buf)), digest.FromBytes(buf), content.WithLabels(contentTypeLabel(desc.MediaType)))
 		}()
 		if err != nil {
@@ -378,29 +380,42 @@ func DownloadManifest(ctx context.Context, fetch FetcherFunc, desc ociv1.Descrip
 	}
 
 	var (
-		rc           io.ReadCloser
 		placeInStore bool
-		mediaType    string
+		rc           io.ReadCloser
+		mediaType    = desc.MediaType
 	)
 	if opts.Store != nil {
-		nfo, err := opts.Store.Info(ctx, desc.Digest)
-		if errors.Cause(err) == errdefs.ErrNotFound {
-			// not in store yet
-		} else if err != nil {
-			log.WithError(err).WithField("desc", desc).Warn("cannot get manifest from store")
-		}
-		mediaType = nfo.Labels["Content-Type"]
+		func() {
+			nfo, err := opts.Store.Info(ctx, desc.Digest)
+			if errors.Is(err, errdefs.ErrNotFound) {
+				// not in store yet
+				return
+			}
+			if err != nil {
+				log.WithError(err).WithField("desc", desc).Warn("cannot get manifest from store")
+				return
+			}
+			if nfo.Labels["Content-Type"] == "" {
+				// we have broken data in the store - ignore it and overwrite
+				return
+			}
 
-		r, err := opts.Store.ReaderAt(ctx, desc)
-		if errors.Cause(err) == errdefs.ErrNotFound {
-			// not in store yet
-		} else if err != nil {
-			log.WithError(err).WithField("desc", desc).Warn("cannot get manifest from store")
-		} else {
-			rc = &reader{ReaderAt: r}
-		}
+			r, err := opts.Store.ReaderAt(ctx, desc)
+			if errors.Is(err, errdefs.ErrNotFound) {
+				// not in store yet
+				return
+			}
+			if err != nil {
+				log.WithError(err).WithField("desc", desc).Warn("cannot get manifest from store")
+				return
+			}
+
+			mediaType, rc = nfo.Labels["Content-Type"], &reader{ReaderAt: r}
+		}()
 	}
 	if rc == nil {
+		// did not find in store, or there was no store. Either way, let's fetch this
+		// thing from the remote.
 		placeInStore = true
 
 		var fetcher remotes.Fetcher
@@ -411,7 +426,7 @@ func DownloadManifest(ctx context.Context, fetch FetcherFunc, desc ociv1.Descrip
 
 		rc, err = fetcher.Fetch(ctx, desc)
 		if err != nil {
-			err = xerrors.Errorf("cannot download manifest: %w", err)
+			err = xerrors.Errorf("cannot fetch manifest: %w", err)
 			return
 		}
 		mediaType = desc.MediaType
@@ -429,6 +444,8 @@ func DownloadManifest(ctx context.Context, fetch FetcherFunc, desc ociv1.Descrip
 
 	switch rdesc.MediaType {
 	case images.MediaTypeDockerSchema2ManifestList, ociv1.MediaTypeImageIndex:
+		log.WithField("desc", rdesc).Debug("resolving image index")
+
 		// we received a manifest list which means we'll pick the default platform
 		// and fetch that manifest
 		var list ociv1.Index
