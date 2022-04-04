@@ -11,7 +11,8 @@ import { CheckWriteAccessResult, IGitTokenValidator, IGitTokenValidatorParams } 
 @injectable()
 export class BitbucketTokenValidator implements IGitTokenValidator {
     async checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult> {
-        const { token, host, repoFullName } = params;
+        const { token, host, owner, repo } = params;
+        const repoFullName = `${owner}/${repo}`;
 
         const result: CheckWriteAccessResult = {
             found: false,

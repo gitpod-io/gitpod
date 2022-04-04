@@ -14,7 +14,8 @@ export class GitLabTokenValidator implements IGitTokenValidator {
         let found = false;
         let isPrivateRepo: boolean | undefined;
         let writeAccessToRepo: boolean | undefined;
-        const { token, host, repoFullName } = params;
+        const { token, host, owner, repo } = params;
+        const repoFullName = `${owner}/${repo}`;
 
         try {
             const request = {
@@ -42,7 +43,6 @@ export class GitLabTokenValidator implements IGitTokenValidator {
                 throw new Error(response.statusText);
             }
         } catch (e) {
-            console.error(e);
             throw e;
         }
 
