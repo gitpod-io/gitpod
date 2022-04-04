@@ -7,15 +7,16 @@
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import * as express from "express";
-import { injectable } from "inversify";
-import fetch from "node-fetch";
+import { inject, injectable } from "inversify";
 import { AuthUserSetup } from "../auth/auth-provider";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
 import { BitbucketServerOAuthScopes } from "./bitbucket-server-oauth-scopes";
-import * as BitbucketServer from "@atlassian/bitbucket-server";
+import { BitbucketServerApi } from "./bitbucket-server-api";
 
 @injectable()
 export class BitbucketServerAuthProvider extends GenericAuthProvider {
+    @inject(BitbucketServerApi) protected readonly api: BitbucketServerApi;
+
     get info(): AuthProviderInfo {
         return {
             ...this.defaultInfo(),
@@ -54,41 +55,18 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
 
     protected readAuthUserSetup = async (accessToken: string, _tokenResponse: object) => {
         try {
-            const fetchResult = await fetch(`https://${this.params.host}/plugins/servlet/applinks/whoami`, {
-                timeout: 10000,
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
-            if (!fetchResult.ok) {
-                throw new Error(fetchResult.statusText);
-            }
-            const username = await fetchResult.text();
-            if (!username) {
-                throw new Error("username missing");
-            }
-
-            log.warn(`(${this.strategyName}) username ${username}`);
-
-            const options = {
-                baseUrl: `https://${this.params.host}`,
-            };
-            const client = new BitbucketServer(options);
-
-            client.authenticate({ type: "token", token: accessToken });
-            const result = await client.api.getUser({ userSlug: username });
-
-            const user = result.data;
-
-            // TODO: check if user.active === true?
-
+            const username = await this.api.currentUsername(accessToken);
+            const userProfile = await this.api.getUserProfile(accessToken, username);
+            const avatarUrl = await this.api.getAvatarUrl(username);
             return <AuthUserSetup>{
                 authUser: {
-                    authId: `${user.id!}`,
-                    authName: user.slug!,
-                    primaryEmail: user.emailAddress!,
-                    name: user.displayName!,
-                    // avatarUrl: user.links!.avatar!.href // TODO
+                    // e.g. 105
+                    authId: `${userProfile.id!}`,
+                    // HINT: userProfile.name is used to match permission in repo/webhook services
+                    authName: userProfile.name,
+                    primaryEmail: userProfile.emailAddress!,
+                    name: userProfile.displayName!,
+                    avatarUrl,
                 },
                 currentScopes: BitbucketServerOAuthScopes.ALL,
             };
