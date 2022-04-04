@@ -172,6 +172,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 creationTime: new Date().toISOString(),
                 projectId: ws.projectId,
                 branch,
+                statusVersion: 0,
             });
 
             log.debug(
