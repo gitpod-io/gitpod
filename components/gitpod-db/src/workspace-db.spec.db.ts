@@ -247,6 +247,7 @@ class WorkspaceDBSpec {
             cloneURL: "",
             commit: "",
             state: "available",
+            statusVersion: 0,
         });
         if (usageDaysAgo !== undefined) {
             const now = new Date();
@@ -509,6 +510,7 @@ class WorkspaceDBSpec {
                 cloneURL: cloneURL,
                 commit: "",
                 state: "queued",
+                statusVersion: 0,
             }),
             // now and aborted
             this.storePrebuiltWorkspace({
@@ -518,6 +520,7 @@ class WorkspaceDBSpec {
                 cloneURL: cloneURL,
                 commit: "",
                 state: "aborted",
+                statusVersion: 0,
             }),
             // completed over a minute ago
             this.storePrebuiltWorkspace({
@@ -527,6 +530,7 @@ class WorkspaceDBSpec {
                 cloneURL: cloneURL,
                 commit: "",
                 state: "available",
+                statusVersion: 0,
             }),
         ]);
 
