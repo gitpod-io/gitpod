@@ -582,6 +582,7 @@ var (
 		"/sys",
 		"/dev",
 		"/etc/hostname",
+		"/etc/ssl/certs/gitpod-ca.crt",
 	}
 	rejectMountPaths = map[string]struct{}{
 		"/etc/resolv.conf": {},
