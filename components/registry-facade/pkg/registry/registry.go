@@ -15,13 +15,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/registry-facade/api/config"
-	"github.com/go-redis/redis/v8"
-	"github.com/golang/protobuf/jsonpb"
-
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/registry-facade/api"
+	"github.com/gitpod-io/gitpod/registry-facade/api/config"
 
 	"github.com/containerd/containerd/content/local"
 	"github.com/containerd/containerd/remotes"
@@ -29,6 +26,8 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/errcode"
 	distv2 "github.com/docker/distribution/registry/api/v2"
+	"github.com/go-redis/redis/v8"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/gorilla/mux"
 	httpapi "github.com/ipfs/go-ipfs-http-client"
 	ma "github.com/multiformats/go-multiaddr"
@@ -222,9 +221,8 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 	var ipfs *IPFSBlobCache
 	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
 		addr := cfg.IPFSCache.IPFSAddr
-		// if the IPFS_HOST env variable exists, override the value from the config file
 		if ipfsHost := os.Getenv("IPFS_HOST"); ipfsHost != "" {
-			addr = fmt.Sprintf("/ip4/%v/tcp/5001", ipfsHost)
+			addr = strings.ReplaceAll(addr, "$IPFS_HOST", ipfsHost)
 		}
 
 		maddr, err := ma.NewMultiaddr(strings.TrimSpace(addr))
@@ -282,6 +280,9 @@ func getRedisClient(cfg config.RedisConfig) (*redis.Client, error) {
 		SentinelAddrs: cfg.SentinelAddrs,
 		Username:      cfg.Username,
 		Password:      cfg.Password,
+
+		SentinelUsername: cfg.Username,
+		SentinelPassword: cfg.Password,
 	}), nil
 }
 
