@@ -151,7 +151,11 @@ export interface UserFeatureSettings {
  * The values of this type MUST MATCH enum values in WorkspaceFeatureFlag from ws-manager/client/core_pb.d.ts
  * If they don't we'll break things during workspace startup.
  */
-export const WorkspaceFeatureFlags = { full_workspace_backup: undefined, fixed_resources: undefined };
+export const WorkspaceFeatureFlags = {
+    full_workspace_backup: undefined,
+    fixed_resources: undefined,
+    persistent_volume_claim: undefined,
+};
 export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
 
 export interface EnvVarWithValue {
