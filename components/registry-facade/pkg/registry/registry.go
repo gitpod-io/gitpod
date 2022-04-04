@@ -222,8 +222,9 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 	var ipfs *IPFSBlobCache
 	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
 		addr := cfg.IPFSCache.IPFSAddr
+		// if the IPFS_HOST env variable exists, override the value from the config file
 		if ipfsHost := os.Getenv("IPFS_HOST"); ipfsHost != "" {
-			addr = strings.ReplaceAll(addr, "$IPFS_HOST", ipfsHost)
+			addr = fmt.Sprintf("/ip4/%v/tcp/5001", ipfsHost)
 		}
 
 		maddr, err := ma.NewMultiaddr(strings.TrimSpace(addr))
