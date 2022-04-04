@@ -109,14 +109,33 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 const recentPrebuilds = await this.db
                     .trace({ span })
                     .findPrebuildsWithWorkpace(commitContext.repository.cloneUrl);
-                const match = recentPrebuilds.find((pb) =>
-                    this.isGoodBaseforIncrementalPrebuild(context, config, imageSource, pb.prebuild, pb.workspace),
-                );
-                if (match) {
+
+                for (const recentPrebuild of recentPrebuilds) {
+                    if (
+                        !(await this.isGoodBaseforIncrementalPrebuild(
+                            context,
+                            config,
+                            imageSource,
+                            recentPrebuild.prebuild,
+                            recentPrebuild.workspace,
+                        ))
+                    ) {
+                        log.info("Not using incremental prebuild base", {
+                            candidatePrebuildId: recentPrebuild.prebuild.id,
+                            context,
+                        });
+                        continue;
+                    }
+
+                    log.info("Using incremental prebuild base", {
+                        basePrebuildId: recentPrebuild.prebuild.id,
+                        context,
+                    });
+
                     const incrementalPrebuildContext: PrebuiltWorkspaceContext = {
                         title: `Incremental prebuild of "${commitContext.title}"`,
                         originalContext: commitContext,
-                        prebuiltWorkspace: match.prebuild,
+                        prebuiltWorkspace: recentPrebuild.prebuild,
                     };
                     ws = await this.createForPrebuiltWorkspace(
                         { span },
@@ -132,6 +151,8 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                     // See also: https://github.com/gitpod-io/gitpod/issues/7475
                     //TODO(sven) doing side effects on objects back and forth is complicated and error-prone. We should rather make sure we pass in the config when creating the prebuiltWorkspace.
                     ws.config = config;
+
+                    break;
                 }
             }
             if (!ws) {
@@ -173,7 +194,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
         imageSource: WorkspaceImageSource,
         candidatePrebuild: PrebuiltWorkspace,
         candidate: Workspace,
-    ) {
+    ): Promise<boolean> {
         if (!context.commitHistory || context.commitHistory.length === 0) {
             return false;
         }
@@ -214,7 +235,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             }
         }
 
-        // ensure the image source hasn't changed
+        // ensure the image source hasn't changed (skips older images)
         if (JSON.stringify(imageSource) !== JSON.stringify(candidate.imageSource)) {
             log.debug(`Skipping parent prebuild: Outdated image`, {
                 imageSource,
@@ -242,6 +263,8 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             });
             return false;
         }
+
+        return true;
     }
 
     protected async createForPrebuiltWorkspace(
