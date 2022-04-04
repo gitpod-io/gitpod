@@ -634,6 +634,7 @@ export interface PrebuiltWorkspace {
     buildWorkspaceId: string;
     creationTime: string;
     state: PrebuiltWorkspaceState;
+    stateVersion: number;
     error?: string;
     snapshot?: string;
 }

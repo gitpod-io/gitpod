@@ -68,4 +68,11 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     error?: string;
+
+    // stateVersion defines the last observed stateVersion from a WorkspaceStatus. See ws-manager-api/core.proto.
+    // stateVersion must only be set by controller/observer.
+    @Column({
+        default: 0,
+    })
+    stateVersion: number;
 }
