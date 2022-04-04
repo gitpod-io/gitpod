@@ -6,6 +6,7 @@ package pkg
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,6 +35,38 @@ func TestReplaceHostInJSONResponse(t *testing.T) {
 		bodyBytes, _ := io.ReadAll(r.Body)
 		rw.Header().Set("Content-Type", "application/json")
 		rw.Write([]byte(fmt.Sprintf("Hello %s!", string(bodyBytes))))
+	}))
+	defer backend.Close()
+
+	frontend, _ := createFrontend(backend.URL)
+	defer frontend.Close()
+
+	frontendClient := frontend.Client()
+
+	requestBody := backend.URL
+	req, _ := http.NewRequest("POST", frontend.URL, bytes.NewBuffer([]byte(requestBody)))
+	req.Close = true
+	res, err := frontendClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedResponse := fmt.Sprintf("Hello %s!", frontend.URL)
+	if bodyBytes, _ := io.ReadAll(res.Body); string(bodyBytes) != expectedResponse {
+		t.Errorf("got body '%s'; expected '%s'", string(bodyBytes), expectedResponse)
+	}
+}
+
+func TestReplaceHostInCompressedJSONResponse(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		bodyBytes, _ := io.ReadAll(r.Body)
+		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Encoding", "gzip")
+
+		var b bytes.Buffer
+		w := gzip.NewWriter(&b)
+		w.Write([]byte(fmt.Sprintf("Hello %s!", string(bodyBytes))))
+		w.Close()
+		rw.Write(b.Bytes())
 	}))
 	defer backend.Close()
 
