@@ -13,6 +13,7 @@ import (
 type config struct {
 	logger *logrus.Entry
 
+	hostname string
 	grpcPort int
 	httpPort int
 
@@ -22,6 +23,7 @@ type config struct {
 func defaultConfig() *config {
 	return &config{
 		logger:   log.New(),
+		hostname: "localhost",
 		grpcPort: 9001,
 		httpPort: 9000,
 		certs:    nil,
@@ -154,11 +156,21 @@ func (s *Server) Logger() *logrus.Entry {
 }
 
 func (s *Server) HTTPAddress() string {
-	return s.httpListener.Addr().String()
+	protocol := "http"
+	if s.cfg.certs != nil {
+		protocol = "https"
+	}
+
+	return fmt.Sprintf("%s://%s:%d", protocol, s.cfg.hostname, s.cfg.httpPort)
 }
 
 func (s *Server) GRPCAddress() string {
-	return s.grpcListener.Addr().String()
+	protocol := "http"
+	if s.cfg.certs != nil {
+		protocol = "https"
+	}
+
+	return fmt.Sprintf("%s://%s:%d", protocol, s.cfg.hostname, s.cfg.grpcPort)
 }
 
 func (s *Server) isClosing() bool {
@@ -172,13 +184,20 @@ func (s *Server) isClosing() bool {
 }
 
 func (s *Server) initializeHTTP() error {
-	s.httpMux = http.NewServeMux()
+	s.httpMux = s.newHTTPMux()
 	s.http = &http.Server{
 		Addr:    fmt.Sprintf(":%d", s.cfg.httpPort),
 		Handler: s.httpMux,
 	}
 
 	return nil
+}
+
+func (s *Server) newHTTPMux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.Handle("/ready", ReadyHandler())
+
+	return mux
 }
 
 func (s *Server) initializeGRPC() error {

@@ -2,74 +2,41 @@ package baseserver_test
 
 import (
 	"context"
-	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/stretchr/testify/require"
+	"sync"
 	"testing"
 	"time"
 )
 
-func TestServer_WithOptions(t *testing.T) {
-	c := make(chan string)
-	close(c)
+func TestServer_StartStop(t *testing.T) {
+	srv, err := baseserver.New("server_test")
+	require.NoError(t, err)
 
-	val, isClosed := <-c
-	fmt.Println(val, isClosed)
-	val, isClosed = <-c
-	fmt.Println(val, isClosed)
-	val, isClosed = <-c
-	fmt.Println(val, isClosed)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		require.NoError(t, srv.ListenAndServe())
+	}()
 
-	_, err := baseserver.New("server_name",
-		baseserver.WithHTTPPort(9000),
-		baseserver.WithGRPCPort(9001),
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	require.NoError(t, srv.Close(ctx))
+}
+
+func TestServer_Options(t *testing.T) {
+	_, err := baseserver.New("server_test",
+		baseserver.WithHostname("another_hostname"),
+		baseserver.WithHTTPPort(8080),
+		baseserver.WithGRPCPort(8081),
 		baseserver.WithTLS(baseserver.Certs{
-			CACertPath:     "",
-			ServerCertPath: "",
-			ServerKeyPath:  "",
+			CACertPath:     "/mnt/ca_cert",
+			ServerCertPath: "/mnt/server_cert",
+			ServerKeyPath:  "/mnt/server_key",
 		}),
 		baseserver.WithLogger(log.New()),
 	)
-	if err != nil {
-		t.Errorf("failed to construct base server: %s", err)
-	}
-
-}
-
-func TestServer(t *testing.T) {
-	s, err := baseserver.New("test_server")
-	if err != nil {
-		t.Errorf("failed to construct base server: %s", err)
-	}
-
-	go func() {
-		if err := s.ListenAndServe(); err != nil {
-			t.Fatal("Server failed to start")
-		}
-	}()
-
-	time.Sleep(5 * time.Second)
-
-	if err := s.Close(context.Background()); err != nil {
-		t.Fatal("failed to shut down server")
-	}
-}
-
-func TestServer2(t *testing.T) {
-	s, err := baseserver.New("test_server")
-	if err != nil {
-		t.Errorf("failed to construct base server: %s", err)
-	}
-
-	go func() {
-		if err := s.ListenAndServe(); err != nil {
-			t.Fatal("Server failed to start")
-		}
-	}()
-
-	time.Sleep(5 * time.Second)
-
-	if err := s.Close(context.Background()); err != nil {
-		t.Fatal("failed to shut down server")
-	}
+	require.NoError(t, err)
 }

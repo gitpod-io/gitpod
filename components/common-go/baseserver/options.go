@@ -8,6 +8,13 @@ import (
 
 type Option func(cfg *config) error
 
+func WithHostname(hostname string) Option {
+	return func(cfg *config) error {
+		cfg.hostname = hostname
+		return nil
+	}
+}
+
 func WithHTTPPort(port int) Option {
 	return func(cfg *config) error {
 		if port < 0 {
