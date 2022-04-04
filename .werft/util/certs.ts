@@ -15,6 +15,7 @@ export class IssueCertificateParams {
     bucketPrefixTail: string
     certName: string
     certNamespace: string
+    withVM: boolean
 }
 
 export class InstallCertificateParams {
@@ -61,6 +62,7 @@ function createCertificateResource(werft: Werft, shellOpts: ExecOptions, params:
     && yq w -i cert.yaml metadata.name '${params.certName}' \
     && yq w -i cert.yaml spec.secretName '${params.certName}' \
     && yq w -i cert.yaml metadata.namespace '${params.certNamespace}' \
+    && yq w -i cert.yaml spec.issuerRef.name '${params.withVM ? 'letsencrypt-issuer-gitpod-core-dev' : 'letsencrypt-issuer'}' \
     ${subdomains.map(s => `&& yq w -i cert.yaml spec.dnsNames[+] '${s + params.domain}'`).join('  ')} \
     && kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f cert.yaml`;
 
