@@ -2553,7 +2553,7 @@
           "query": "label_values(up{job=\"registry-facade\"}, cluster)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -2582,7 +2582,7 @@
           "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"registry-facade.*\"}, node)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -2611,7 +2611,7 @@
           "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"registry-facade.*\"}, pod)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -2640,7 +2640,7 @@
           "query": "label_values(grpc_server_handled_total{grpc_service=\"registryfacade.SpecProvider\", cluster=~\"$cluster\"}, grpc_method)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -2661,7 +2661,7 @@
         "name": "datasource",
         "options": [],
         "query": "prometheus",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"

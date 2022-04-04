@@ -325,7 +325,7 @@
         "options": [],
         "query": "prometheus",
         "queryValue": "",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"
@@ -354,7 +354,7 @@
           "query": "label_values(container_cpu_usage_seconds_total, cluster)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,

@@ -2524,7 +2524,7 @@
           "query": "label_values(container_cpu_usage_seconds_total, cluster)",
           "refId": "$datasource-cluster-Variable-Query"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -2558,7 +2558,7 @@
           "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"agent-smith.*\"}, node)",
           "refId": "$datasource-node-Variable-Query"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -2592,7 +2592,7 @@
           "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"agent-smith.*\"}, pod)",
           "refId": "$datasource-pod-Variable-Query"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -2616,7 +2616,7 @@
         "name": "datasource",
         "options": [],
         "query": "prometheus",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"

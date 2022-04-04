@@ -1169,7 +1169,7 @@
           "query": "label_values(container_cpu_usage_seconds_total, cluster)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -1195,7 +1195,7 @@
           "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"ws-proxy.*\"}, node)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -1221,7 +1221,7 @@
           "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"ws-proxy.*\"}, pod)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -1245,7 +1245,7 @@
         "name": "datasource",
         "options": [],
         "query": "prometheus",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"
