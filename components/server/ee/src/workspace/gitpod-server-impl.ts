@@ -45,6 +45,7 @@ import {
     Workspace,
     FindPrebuildsParams,
     TeamMemberRole,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -77,7 +78,7 @@ import {
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import * as pThrottle from "p-throttle";
 import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
-import { FindUserByIdentityStrResult } from "../../../src/user/user-service";
+import { FindUserByIdentityStrResult, UserService } from "../../../src/user/user-service";
 import {
     Accounting,
     AccountService,
@@ -132,6 +133,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
     @inject(UserCounter) protected readonly userCounter: UserCounter;
+
+    @inject(UserService) protected readonly userService: UserService;
 
     initialize(
         client: GitpodClient | undefined,
@@ -312,7 +315,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             instancesWithReset.map((i) => {
                 const req = new SetTimeoutRequest();
                 req.setId(i.id);
-                req.setDuration(defaultTimeout);
+                req.setDuration(this.userService.workspaceTimeoutToDuration(defaultTimeout));
 
                 return client.setTimeout(ctx, req);
             }),
@@ -320,7 +323,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const req = new SetTimeoutRequest();
         req.setId(runningInstance.id);
-        req.setDuration(duration);
+        req.setDuration(this.userService.workspaceTimeoutToDuration(duration));
         await client.setTimeout(ctx, req);
 
         return {
@@ -343,7 +346,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (!runningInstance) {
             log.warn({ userId: user.id, workspaceId }, "Can only get keep-alive for running workspaces");
-            return { duration: "30m", canChange };
+            return { duration: WORKSPACE_TIMEOUT_DEFAULT_SHORT, canChange };
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
 
@@ -352,7 +355,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
         const desc = await client.describeWorkspace(ctx, req);
-        const duration = desc.getStatus()!.getSpec()!.getTimeout() as WorkspaceTimeoutDuration;
+        const duration = this.userService.durationToWorkspaceTimeout(desc.getStatus()!.getSpec()!.getTimeout());
         return { duration, canChange };
     }
 

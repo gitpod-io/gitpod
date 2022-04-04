@@ -4,7 +4,10 @@
 
 package server
 
-import "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+import (
+	"github.com/gitpod-io/gitpod/common-go/util"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+)
 
 // These types are from TypeScript files
 
@@ -120,6 +123,8 @@ type WorkspaceDefaults struct {
 	WorkspaceImage      string                      `json:"workspaceImage"`
 	PreviewFeatureFlags []NamedWorkspaceFeatureFlag `json:"previewFeatureFlags"`
 	DefaultFeatureFlags []NamedWorkspaceFeatureFlag `json:"defaultFeatureFlags"`
+	TimeoutDefault      *util.Duration              `json:"timeoutDefault,omitempty"`
+	TimeoutExtended     *util.Duration              `json:"timeoutExtended,omitempty"`
 }
 
 type NamedWorkspaceFeatureFlag string
