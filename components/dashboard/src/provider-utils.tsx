@@ -17,6 +17,8 @@ function iconForAuthProvider(type: string) {
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitlab} />;
         case "Bitbucket":
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} />;
+        case "BitbucketServer":
+            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} />;
         default:
             return <></>;
     }
