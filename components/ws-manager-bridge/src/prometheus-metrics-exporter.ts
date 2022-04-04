@@ -16,6 +16,7 @@ export class PrometheusMetricsExporter {
     protected readonly clusterScore: prom.Gauge<string>;
     protected readonly clusterCordoned: prom.Gauge<string>;
     protected readonly statusUpdatesTotal: prom.Counter<string>;
+    protected readonly stalePrebuildEventsTotal: prom.Counter<string>;
 
     protected activeClusterNames = new Set<string>();
 
@@ -47,6 +48,10 @@ export class PrometheusMetricsExporter {
             help: 'Total workspace status updates received',
             labelNames: ["workspace_cluster", "known_instance"]
         });
+        this.stalePrebuildEventsTotal = new prom.Counter({
+            name: "gitpod_ws_manager_bridge_stale_prebuild_events_total",
+            help: "Total count of stale prebuild events received by workspace manager bridge"
+        })
     }
 
     observeWorkspaceStartupTime(instance: WorkspaceInstance): void {
@@ -86,6 +91,10 @@ export class PrometheusMetricsExporter {
 
     statusUpdateReceived(installation: string, knownInstance: boolean): void {
         this.statusUpdatesTotal.labels(installation, knownInstance ? "true" : "false").inc();
+    }
+
+    recordStalePrebuildEvent(): void {
+        this.stalePrebuildEventsTotal.inc();
     }
 }
 

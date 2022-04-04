@@ -56,6 +56,12 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                 return
             }
             span.setTag("updatePrebuiltWorkspace.prebuildId", prebuild.id);
+            span.setTag("updatePrebuiltWorkspace.workspaceInstance.statusVersion", status.statusVersion);
+
+            if (prebuild.statusVersion <= status.statusVersion) {
+                this.prometheusExporter.recordStalePrebuildEvent()
+            }
+            prebuild.statusVersion = status.statusVersion
 
             if (prebuild.state === 'queued') {
                 // We've received an update from ws-man for this workspace, hence it must be running.
