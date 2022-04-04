@@ -62,7 +62,7 @@ type Config struct {
 	RequireAuth        bool             `json:"requireAuth"`
 	TLS                *TLS             `json:"tls"`
 
-	IPFSCache *IPFSCacheConfig `json:"ipfs"`
+	IPFSCache *IPFSCacheConfig `json:"ipfs,omitempty"`
 }
 
 type IPFSCacheConfig struct {
