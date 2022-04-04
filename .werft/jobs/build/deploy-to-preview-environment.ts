@@ -690,6 +690,7 @@ export async function issueMetaCerts(werft: Werft, certName: string, certsNamesp
     metaClusterCertParams.ip = getCoreDevIngressIP();
     metaClusterCertParams.bucketPrefixTail = ""
     metaClusterCertParams.additionalSubdomains = additionalSubdomains
+    metaClusterCertParams.withVM = withVM
     await issueCertificate(werft, metaClusterCertParams, { ...metaEnv(), slice });
 }
 
