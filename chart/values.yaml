@@ -300,7 +300,7 @@ components:
       minAgePrebuildDays: 7
       contentRetentionPeriodDays: 21
       contentChunkLimit: 1000
-    definitelyGpDisabled: "false"
+    definitelyGpDisabled: true
     enableLocalApp: false
     disableDynamicAuthProviderLogin: false
     maxEnvvarPerUserCount: 4048
