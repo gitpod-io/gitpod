@@ -7,6 +7,9 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { columnExists } from "./helper/helper";
 
+const TABLE_NAME = "d_b_prebuilt_workspace";
+const COLUMN_NAME = "statusVersion";
+
 export class PrebuildStatusVersionColumn1649107789640 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (!(await columnExists(queryRunner, TABLE_NAME, COLUMN_NAME))) {
