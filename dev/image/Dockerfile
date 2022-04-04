@@ -66,6 +66,8 @@ RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/downlo
 # yq - jq for YAML files
 # Note: we rely on version 3.x.x in various places, 4.x breaks this!
 RUN cd /usr/bin && curl -fsSL https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 > yq && chmod +x yq
+# yq4 as separate binary
+RUN cd /usr/bin && curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.23.1/yq_linux_amd64 > yq4 && chmod +x yq4
 
 # release helper
 RUN cd /usr/bin && curl -fsSL https://github.com/c4milo/github-release/releases/download/v1.1.0/github-release_v1.1.0_linux_amd64.tar.gz | tar xz
