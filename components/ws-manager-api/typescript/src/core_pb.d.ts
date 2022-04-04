@@ -1033,6 +1033,7 @@ export enum WorkspaceFeatureFlag {
     NOOP = 0,
     FULL_WORKSPACE_BACKUP = 4,
     FIXED_RESOURCES = 5,
+    PERSISTENT_VOLUME_CLAIM = 7,
 }
 
 export enum WorkspaceType {
