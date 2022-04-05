@@ -106,6 +106,8 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             // Walk back the last prebuilds and check if they are valid ancestor.
             let ws;
             if (context.commitHistory && context.commitHistory.length > 0) {
+                // Note: This query returns only not-garbage-collected prebuilds in order to reduce cardinality
+                // (e.g., at the time of writing, the Gitpod repository has 16K+ prebuilds, but only ~300 not-garbage-collected)
                 const recentPrebuilds = await this.db
                     .trace({ span })
                     .findPrebuildsWithWorkpace(commitContext.repository.cloneUrl);

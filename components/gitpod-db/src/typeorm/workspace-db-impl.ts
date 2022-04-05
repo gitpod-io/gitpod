@@ -754,6 +754,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         query = query.orderBy("pws.creationTime", "DESC");
         query = query.innerJoinAndMapOne("pws.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id");
         query = query.andWhere("ws.deleted = false");
+        query = query.andWhere("ws.contentDeletedTime = ''");
 
         const res = await query.getMany();
         return res.map((r) => {
