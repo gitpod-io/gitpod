@@ -12,6 +12,7 @@ import { JobConfig } from "./job-config";
 import * as VM from '../../vm/vm'
 import { Analytics, Installer } from "./installer/installer";
 import { previewNameFromBranchName } from "../../util/preview";
+import { createDNSRecord } from "../../util/gcloud";
 
 // used by both deploys (helm and Installer)
 const PROXY_SECRET_NAME = "proxy-config-certificates";
@@ -639,6 +640,7 @@ interface DeploymentConfig {
 }
 
 async function addDNSRecord(werft: Werft, namespace: string, domain: string, isLoadbalancer: boolean, kubeconfigPath: string) {
+    const coreDevIngressIP = getCoreDevIngressIP()
     let wsProxyLBIP = null
     if (isLoadbalancer === true) {
         werft.log(installerSlices.DNS_ADD_RECORD, "Getting ws-proxy loadbalancer IP");
@@ -646,7 +648,7 @@ async function addDNSRecord(werft: Werft, namespace: string, domain: string, isL
             try {
                 let lb = exec(`kubectl --kubeconfig ${kubeconfigPath} -n ${namespace} get service ws-proxy -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'`, { silent: true })
                 if (lb.length > 4) {
-                    wsProxyLBIP = lb
+                    wsProxyLBIP = lb.toString()
                     break
                 }
                 await sleep(1000)
@@ -659,22 +661,14 @@ async function addDNSRecord(werft: Werft, namespace: string, domain: string, isL
         }
         werft.log(installerSlices.DNS_ADD_RECORD, "Get ws-proxy loadbalancer IP: " + wsProxyLBIP);
     } else {
-        wsProxyLBIP = getCoreDevIngressIP()
+        wsProxyLBIP = coreDevIngressIP
     }
 
-    var cmd = `set -x \
-    && cd /workspace/.werft/dns \
-    && rm -rf .terraform* \
-    && export GOOGLE_APPLICATION_CREDENTIALS="${GCLOUD_SERVICE_ACCOUNT_PATH}" \
-    && terraform init -backend-config='prefix=${namespace}' -migrate-state -upgrade \
-    && terraform apply -auto-approve \
-        -var 'dns_zone_domain=gitpod-dev.com' \
-        -var 'domain=${domain}' \
-        -var 'ingress_ip=${getCoreDevIngressIP()}' \
-        -var 'ws_proxy_ip=${wsProxyLBIP}'`;
-
-    werft.log(installerSlices.DNS_ADD_RECORD, "Terraform command for create dns record: " + cmd)
-    exec(cmd, { ...metaEnv(), slice: installerSlices.DNS_ADD_RECORD });
+    await Promise.all([
+        createDNSRecord(domain, 'gitpod-dev-com', coreDevIngressIP, installerSlices.DNS_ADD_RECORD),
+        createDNSRecord(`*.${domain}`, 'gitpod-dev-com', coreDevIngressIP, installerSlices.DNS_ADD_RECORD),
+        createDNSRecord(`*.ws-dev.${domain}`, 'gitpod-dev-com', wsProxyLBIP, installerSlices.DNS_ADD_RECORD),
+    ])
     werft.done(installerSlices.DNS_ADD_RECORD);
 }
 
