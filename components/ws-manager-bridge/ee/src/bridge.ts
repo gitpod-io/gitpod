@@ -99,6 +99,9 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                     return;
                 }
 
+                span.setTag("updatePrebuildWorkspace.prebuild.state", prebuild.state)
+                span.setTag("updatePrebuildWorkspace.prebuild.error", prebuild.error)
+
                 if (writeToDB) {
                     await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
                 }
