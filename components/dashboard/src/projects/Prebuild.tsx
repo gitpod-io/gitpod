@@ -5,7 +5,7 @@
  */
 
 import moment from "moment";
-import { PrebuildWithStatus, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
@@ -30,7 +30,6 @@ export default function () {
     const prebuildId = match?.params?.prebuildId;
 
     const [prebuild, setPrebuild] = useState<PrebuildWithStatus | undefined>();
-    const [prebuildInstance, setPrebuildInstance] = useState<WorkspaceInstance | undefined>();
     const [isRerunningPrebuild, setIsRerunningPrebuild] = useState<boolean>(false);
     const [isCancellingPrebuild, setIsCancellingPrebuild] = useState<boolean>(false);
 
@@ -109,18 +108,6 @@ export default function () {
         );
     };
 
-    const onInstanceUpdate = async (instance: WorkspaceInstance) => {
-        setPrebuildInstance(instance);
-        if (!prebuild) {
-            return;
-        }
-        const prebuilds = await getGitpodService().server.findPrebuilds({
-            projectId: prebuild.info.projectId,
-            prebuildId,
-        });
-        setPrebuild(prebuilds[0]);
-    };
-
     const rerunPrebuild = async () => {
         if (!prebuild) {
             return;
@@ -162,14 +149,15 @@ export default function () {
                 <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col">
                     <div className="h-96 flex">
                         <PrebuildLogs
+                            prebuildId={prebuild?.info?.id}
+                            projectId={prebuild?.info?.projectId}
                             workspaceId={prebuild?.info?.buildWorkspaceId}
-                            onInstanceUpdate={onInstanceUpdate}
                         />
                     </div>
                     <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
                         {prebuild && <PrebuildStatus prebuild={prebuild} />}
                         <div className="flex-grow" />
-                        {prebuild?.status === "aborted" || prebuild?.status === "timeout" || !!prebuild?.error ? (
+                        {["aborted", "timeout", "failed"].includes(prebuild?.status || "") || !!prebuild?.error ? (
                             <button
                                 className="flex items-center space-x-2"
                                 disabled={isRerunningPrebuild}
@@ -178,16 +166,12 @@ export default function () {
                                 {isRerunningPrebuild && (
                                     <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                                 )}
-                                <span>Rerun Prebuild ({prebuild.info.branch})</span>
+                                <span>Rerun Prebuild ({prebuild?.info.branch})</span>
                             </button>
-                        ) : prebuild?.status === "building" ? (
+                        ) : ["building", "queued"].includes(prebuild?.status || "") ? (
                             <button
                                 className="danger flex items-center space-x-2"
-                                disabled={
-                                    isCancellingPrebuild ||
-                                    (prebuildInstance?.status.phase !== "initializing" &&
-                                        prebuildInstance?.status.phase !== "running")
-                                }
+                                disabled={isCancellingPrebuild}
                                 onClick={cancelPrebuild}
                             >
                                 {isCancellingPrebuild && (
