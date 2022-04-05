@@ -59,7 +59,10 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
             span.setTag("updatePrebuiltWorkspace.workspaceInstance.statusVersion", status.statusVersion);
 
             if (prebuild.statusVersion <= status.statusVersion) {
-                this.prometheusExporter.recordStalePrebuildEvent()
+                // prebuild.statusVersion = 0 is the default value in the DB, these shouldn't be counted as stale in our metrics
+                if (prebuild.statusVersion > 0) {
+                    this.prometheusExporter.recordStalePrebuildEvent();
+                }
             }
             prebuild.statusVersion = status.statusVersion
 
