@@ -1,6 +1,8 @@
 import { exec } from './shell';
 import { sleep } from './util';
 import { getGlobalWerftInstance } from './werft';
+import { DNS, Record, Zone } from '@google-cloud/dns';
+import { GCLOUD_SERVICE_ACCOUNT_PATH } from '../jobs/build/const';
 
 export async function deleteExternalIp(phase: string, name: string, region = "europe-west1") {
     const werft = getGlobalWerftInstance()
@@ -32,4 +34,55 @@ export async function deleteExternalIp(phase: string, name: string, region = "eu
 
 function getExternalIp(name: string, region = "europe-west1") {
     return exec(`gcloud compute addresses describe ${name} --region ${region}| grep 'address:' | cut -c 10-`, { silent: true }).trim();
+}
+
+export async function createDNSRecord(domain: string, dnsZone: string, IP: string, slice: string): Promise<void> {
+    const werft = getGlobalWerftInstance()
+
+    const dnsClient = new DNS({ projectId: 'gitpod-dev', keyFilename: GCLOUD_SERVICE_ACCOUNT_PATH })
+    const zone = dnsClient.zone(dnsZone)
+
+    if (!(await matchesExistingRecord(zone, domain, IP))) {
+        await createOrReplaceRecord(zone, domain, IP, slice)
+    } else {
+        werft.log(slice, `DNS Record already exists for domain ${domain}`)
+    }
+}
+
+// matchesExistingRecord will return true only if the existing record matches the same name and IP.
+// If IP doesn't match, then the record needs to be replaced in a following step.
+async function matchesExistingRecord(zone: Zone, domain: string, IP: string): Promise<boolean> {
+    const [records] = await zone.getRecords({ name: `${domain}.` })
+
+    if (records.length == 0) {
+        return false
+    }
+
+    let matches = false
+    records.every(record => {
+        if (record.metadata.name == `${domain}.` && record.data == IP) {
+            matches = true
+            return false // Works as a 'break'
+        }
+        return true
+    })
+    return matches
+}
+
+async function createOrReplaceRecord(zone: Zone, domain: string, IP: string, slice: string): Promise<void> {
+    const werft = getGlobalWerftInstance()
+    const record = new Record(zone, 'a', {
+        name: `${domain}.`,
+        ttl: 300,
+        data: IP
+    })
+
+    const [records] = await zone.getRecords({ name: `${domain}.` })
+    records.forEach(async (record) => {
+        werft.log(slice, `Deleting old record for ${record.metadata.name} due to IP mismatch.`)
+        await record.delete()
+    })
+
+    werft.log(slice, `Creating DNS record: ${JSON.stringify(record)}`) // delete before submiting PR
+    await zone.addRecords(record)
 }
