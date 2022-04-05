@@ -10,7 +10,7 @@ export async function validateChanges(werft: Werft, config: JobConfig) {
     } catch (err) {
         werft.fail('validate-changes', err);
     }
-    werft.done('validate-changes');
+    werft.endPhase('validate-changes');
 }
 
 // Branch names cannot be longer than 45 characters.

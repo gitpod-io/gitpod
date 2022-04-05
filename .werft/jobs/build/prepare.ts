@@ -28,7 +28,7 @@ export async function prepare(werft: Werft, config: JobConfig) {
     } catch (err) {
         werft.fail(phaseName, err);
     }
-    werft.done(phaseName);
+    werft.endPhase(phaseName);
 }
 
 // We want to assure that our Workspace behaves the exactly same way as
@@ -84,7 +84,7 @@ function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
     if (shouldCreateVM(config)) {
         createVM(werft, config)
     } else {
-        werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", false)
+        werft.phases[werft.currentPhase].span.setAttribute("werft.harvester.created_vm", false)
     }
     werft.done(prepareSlices.BOOT_VM)
 }
@@ -106,5 +106,5 @@ function createVM(werft: Werft, config: JobConfig) {
 
     werft.log(prepareSlices.BOOT_VM, 'Creating  VM')
     VM.startVM({ name: config.previewEnvironment.destname })
-    werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", true)
+    werft.phases[werft.currentPhase].span.setAttribute("werft.harvester.created_vm", true)
 }

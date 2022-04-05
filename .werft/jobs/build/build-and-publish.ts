@@ -77,6 +77,7 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     if (jobConfig.publishToKots) {
         publishKots(werft, jobConfig)
     }
+    werft.endPhase("build");
 }
 
 /**

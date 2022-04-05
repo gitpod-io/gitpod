@@ -39,11 +39,12 @@ Tracing.initialize()
         process.exitCode = 1
     })
     .finally(() => {
-        werft.phase("Stop kubectl port forwards", "Stopping kubectl port forwards")
-        VM.stopKubectlPortForwards()
+        werft.phase("Stop kubectl port forwards", "Stopping kubectl port forwards");
+        VM.stopKubectlPortForwards();
+        werft.endPhase("Stop kubectl port forwards");
 
-        werft.phase("Flushing telemetry", "Flushing telemetry before stopping job")
-        werft.endAllSpans()
+        werft.phase("Flushing telemetry", "Flushing telemetry before stopping job");
+        werft.endAllSpans();
     })
 
 async function run(context: any) {

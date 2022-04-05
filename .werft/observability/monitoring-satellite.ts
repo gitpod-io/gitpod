@@ -71,12 +71,13 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
     werft.log(sliceName, 'rendering YAML files')
     exec(jsonnetRenderCmd, {silent: true})
     if(params.withVM) {
-        postProcessManifests()
+        await postProcessManifests()
     }
 
     // The correct kubectl context should already be configured prior to this step
     // Only checks node-exporter readiness for harvester
-    ensureCorrectInstallationOrder(params.kubeconfigPath, params.satelliteNamespace, params.withVM)
+    await ensureCorrectInstallationOrder(params.kubeconfigPath, params.satelliteNamespace, params.withVM)
+    werft.done(sliceName);
 }
 
 async function ensureCorrectInstallationOrder(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean){
@@ -85,8 +86,8 @@ async function ensureCorrectInstallationOrder(kubeconfig: string, namespace: str
     werft.log(sliceName, 'installing monitoring-satellite')
     exec(`cd observability && hack/deploy-satellite.sh --kubeconfig ${kubeconfig}`, {slice: sliceName})
 
-    deployGitpodServiceMonitors(kubeconfig)
-    checkReadiness(kubeconfig, namespace, checkNodeExporterStatus)
+    await deployGitpodServiceMonitors(kubeconfig)
+    await checkReadiness(kubeconfig, namespace, checkNodeExporterStatus)
 }
 
 async function checkReadiness(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean) {
@@ -111,7 +112,7 @@ async function deployGitpodServiceMonitors(kubeconfig: string) {
     exec(`kubectl --kubeconfig ${kubeconfig} apply -f observability/monitoring-satellite/manifests/gitpod/`, {silent: true})
 }
 
-function postProcessManifests() {
+async function postProcessManifests() {
     const werft = getGlobalWerftInstance()
 
     // We're hardcoding nodeports, so we can use them in .werft/vm/manifests.ts

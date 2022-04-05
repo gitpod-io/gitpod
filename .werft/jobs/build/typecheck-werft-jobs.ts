@@ -15,4 +15,5 @@ export async function typecheckWerftJobs(werft: Werft) {
         werft.fail(slice, e);
     }
     werft.done(slice);
+    werft.endPhase("Typecheck Typescript Werft files");
 }

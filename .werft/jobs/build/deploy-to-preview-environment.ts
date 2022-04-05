@@ -150,8 +150,10 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             exec('exit 0')
         }
 
-        installMonitoring(PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
-        werft.done('observability')
+        // This function causes problems as processes are not closed before the deploy phase ends
+        // installMonitoring(PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
+
+        werft.endPhase(phases.VM);
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
@@ -171,16 +173,18 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             werft.log("warning!", "with-helm was specified, there's an Installer install, but, `with-clean-slate-deployment=false`, forcing to true.");
             deploymentConfig.cleanSlateDeployment = true;
         }
-        werft.done(phases.PREDEPLOY);
+        werft.endPhase(phases.PREDEPLOY);
         werft.phase(phases.DEPLOY, "deploying")
         await deployToDevWithHelm(werft, jobConfig, deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+        werft.endPhase(phases.DEPLOY);
     } // scenario: you pushed code to an existing preview environment built with Helm, and didn't with-clean-slate-deployment=true'
     else if (hasGitpodHelmInstall && !deploymentConfig.cleanSlateDeployment) {
         werft.log("using Helm", "with-helm was not specified, but, a Helm installation exists, and this is not a clean slate deployment.");
         werft.log("tip", "Set 'with-clean-slate-deployment=true' if you wish to remove the Helm install and use the Installer.");
-        werft.done(phases.PREDEPLOY);
+        werft.endPhase(phases.PREDEPLOY);
         werft.phase(phases.DEPLOY, "deploying to dev with Helm");
         await deployToDevWithHelm(werft, jobConfig, deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+        werft.endPhase(phases.DEPLOY);
     } else {
         // you get here if
         // ...it's a new install with no flag overrides or
@@ -188,9 +192,10 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         // ...you have a prexisting Helm install, set 'with-clean-slate-deployment=true', but did not specifiy 'with-helm=true'
         // Why? The installer is supposed to be a default so we all dog-food it.
         // But, its new, so this may help folks transition with less issues.
-        werft.done(phases.PREDEPLOY);
+        werft.endPhase(phases.PREDEPLOY);
         werft.phase(phases.DEPLOY, "deploying to dev with Installer");
         await deployToDevWithInstaller(werft, jobConfig, deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+        werft.endPhase(phases.DEPLOY);
     }
 }
 
@@ -347,8 +352,6 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         exec(`/usr/local/bin/helm3 --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
     }
     werft.done("sweeper");
-
-    werft.done(phases.DEPLOY);
 
     async function cleanStateEnv(kubeconfig: string, shellOpts: ExecOptions) {
         await wipeAndRecreateNamespace(helmInstallName, namespace, kubeconfig, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
@@ -712,7 +715,7 @@ async function installMonitoring(kubeconfig: string, namespace: string, nodeExpo
     installMonitoringSatelliteParams.previewDomain = domain
     installMonitoringSatelliteParams.stackdriverServiceAccount = stackdriverServiceAccount
     installMonitoringSatelliteParams.withVM = withVM
-    installMonitoringSatellite(installMonitoringSatelliteParams);
+    await installMonitoringSatellite(installMonitoringSatelliteParams);
 }
 
 // returns the static IP address

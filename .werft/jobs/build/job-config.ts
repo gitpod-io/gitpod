@@ -151,6 +151,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     werft.done("job config");
     werft.done(sliceId)
 
+    werft.endPhase('Job configuration');
     return jobConfig
 }
 

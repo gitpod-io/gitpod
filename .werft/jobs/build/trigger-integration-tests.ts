@@ -18,6 +18,7 @@ export async function triggerIntegrationTests(werft: Werft, config: JobConfig, u
         // check this means you can't merge your PR without override checks.
         werft.log(phases.TRIGGER_INTEGRATION_TESTS, "Skipped integration tests")
         werft.done(phases.TRIGGER_INTEGRATION_TESTS);
+        werft.endPhase(phases.TRIGGER_INTEGRATION_TESTS);
         return
     }
 
@@ -35,6 +36,7 @@ export async function triggerIntegrationTests(werft: Werft, config: JobConfig, u
         exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, { slice: phases.TRIGGER_INTEGRATION_TESTS }).trim();
 
         werft.done(phases.TRIGGER_INTEGRATION_TESTS);
+        werft.endPhase(phases.TRIGGER_INTEGRATION_TESTS);
     } catch (err) {
         if (!config.mainBuild) {
             werft.fail(phases.TRIGGER_INTEGRATION_TESTS, err);
