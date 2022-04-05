@@ -1,6 +1,11 @@
 # Change Log
 
 ## April 2022
+- [server] For GitLab projects without an owner avatar, fall back to the namespace avatar, or generate the default GitLab avatar ([#8824](https://github.com/gitpod-io/gitpod/pull/8824)) - [@jankeromnes](https://github.com/jankeromnes)
+- Fixes incremental prebuilds by choosing the right prebuild base. ([#9109](https://github.com/gitpod-io/gitpod/pull/9109)) - [@laushinka](https://github.com/laushinka)
+- [installer] Fix registry facade env variables for IPFS and redis ([#9104](https://github.com/gitpod-io/gitpod/pull/9104)) - [@aledbf](https://github.com/aledbf)
+- Adding support for Projects and Prebuilds for Bitbucket Server. ([#8896](https://github.com/gitpod-io/gitpod/pull/8896)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Enable the use of fuse device on cgroup v2 systems ([#8769](https://github.com/gitpod-io/gitpod/pull/8769)) - [@Furisto](https://github.com/Furisto)
 - Experimental IPFS support for cluster-local image caching ([#9005](https://github.com/gitpod-io/gitpod/pull/9005)) - [@csweichel](https://github.com/csweichel)
 - [kots]: add distribution check to the KOTS preflights ([#9060](https://github.com/gitpod-io/gitpod/pull/9060)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [dashboard] Remove prebuild error message from prebuild log view ([#9045](https://github.com/gitpod-io/gitpod/pull/9045)) - [@easyCZ](https://github.com/easyCZ)
