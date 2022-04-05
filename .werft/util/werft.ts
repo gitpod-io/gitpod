@@ -43,9 +43,9 @@ export class Werft {
             this.endPhase()
         }
 
-        // Check if the phase does already exist
+        // Check if the phase already exists
         if (this.phases[name]) {
-            throw new Error(`The phase "${name}" does already exist!`)
+            throw new Error(`The phase "${name}" already exists!`)
         }
 
         // This is a workaround to prevent phases being opened without any slice
@@ -67,7 +67,7 @@ export class Werft {
     private sliceBelongsToCurrentPhase(slice) {
         for (const [name, phase] of Object.entries(this.phases)) {
             if(phase.slices[slice] && (name != this.currentPhase))
-                throw new Error(`The slice ${slice} does not belong to the phase ${name}`);
+                throw new Error(`The slice "${slice}" does not belong to the phase "${name}".`);
         }
     }
 
