@@ -52,7 +52,7 @@ export class GithubFileProvider implements FileProvider {
 
     public async getFileContent(commit: Commit, user: User, path: string) {
         if (!commit.revision) {
-            return undefined;
+            throw new Error(`Cannot fetch file content of ${path} (unknown revision: ${commit.revision})`);
         }
 
         try {
