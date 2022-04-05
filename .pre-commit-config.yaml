@@ -37,4 +37,4 @@ repos:
     hooks:
       - id: prettier
         # Only enabled for WebApp components initially, to build consensus and incrementally onboard others
-        files: ^components\/(server|gitpod-protocol|gitpod-db|dashboard)\/.*\.ts(x?)$
+        files: ^components\/(server|gitpod-protocol|gitpod-db|dashboard|ws-manager-bridge)\/.*\.ts(x?)$
