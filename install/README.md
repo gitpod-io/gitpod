@@ -32,10 +32,14 @@ Download the licenses below:
 
 #### Existing Cluster
 
-```shell
-curl https://kots.io/install | bash
-kubectl kots install gitpod
-```
+1. Ensure you  meet all of the requirements listed [here](https://www.gitpod.io/docs/self-hosted/latest/requirements)
+2. Additionally, you will need to have `cert-manager` installed in your existing Kubernetes cluster. If not installed already, instructions on how to do so can be found [here](https://cert-manager.io/docs/installation/)
+3. Then run:
+
+    ```shell
+    curl https://kots.io/install | bash
+    kubectl kots install gitpod
+    ```
 
 For detailed instructions on the KOTS CLI, please see the [Replicated docs](https://docs.replicated.com/reference/kots-cli-getting-started).
 
