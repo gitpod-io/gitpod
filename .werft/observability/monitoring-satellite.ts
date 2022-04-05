@@ -89,21 +89,19 @@ async function ensureCorrectInstallationOrder(kubeconfig: string, namespace: str
     checkReadiness(kubeconfig, namespace, checkNodeExporterStatus)
 }
 
-// FIXME(ArthurSens): I introduced a bug upstream which prevents our stack from being deployed.
-// checkReadiness should be uncommented once https://github.com/prometheus-operator/kube-prometheus/pull/1706 gets merged.
 async function checkReadiness(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean) {
-//     // For some reason prometheus' statefulset always take quite some time to get created
-//     // Therefore we wait a couple of seconds
-//     exec(`sleep 30 && kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} statefulset prometheus-k8s`, {slice: sliceName, async: true})
-//     exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment grafana`, {slice: sliceName, async: true})
-//     exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment kube-state-metrics`, {slice: sliceName, async: true})
-//     exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment otel-collector`, {slice: sliceName, async: true})
+    // For some reason prometheus' statefulset always take quite some time to get created
+    // Therefore we wait a couple of seconds
+    exec(`sleep 30 && kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} statefulset prometheus-k8s`, {slice: sliceName, async: true})
+    exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment grafana`, {slice: sliceName, async: true})
+    exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment kube-state-metrics`, {slice: sliceName, async: true})
+    exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} deployment otel-collector`, {slice: sliceName, async: true})
 
-//     // core-dev is just too unstable for node-exporter
-//     // we don't guarantee that it will run at all
-//     if(checkNodeExporterStatus) {
-//         exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} daemonset node-exporter`, {slice: sliceName, async: true})
-//     }
+    // core-dev is just too unstable for node-exporter
+    // we don't guarantee that it will run at all
+    if(checkNodeExporterStatus) {
+        exec(`kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} daemonset node-exporter`, {slice: sliceName, async: true})
+    }
 }
 
 async function deployGitpodServiceMonitors(kubeconfig: string) {
