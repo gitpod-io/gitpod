@@ -67,7 +67,7 @@ export class Werft {
     private sliceBelongsToCurrentPhase(slice) {
         for (const [name, phase] of Object.entries(this.phases)) {
             if(phase.slices[slice] && (name != this.currentPhase))
-                throw new Error(`The slice "${slice}" does not belong to the phase "${name}".`);
+                throw new Error(`The slice "${slice}" does belong to the phase "${name}" and not to the currently active phase "${this.currentPhase}".`);
         }
     }
 
