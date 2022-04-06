@@ -181,24 +181,28 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 
 	span.LogKV("event", "workspace does not exist")
 	err = validateStartWorkspaceRequest(req)
+	clog.Infof("validateStartWorkspaceRequest: %v", err)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot start workspace: %w", err)
 	}
 	span.LogKV("event", "validated workspace start request")
 	// create the objects required to start the workspace pod/service
 	startContext, err := m.newStartWorkspaceContext(ctx, req)
+	clog.Infof("newStartWorkspaceContext: %v", err)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create context: %w", err)
 	}
 	span.LogKV("event", "created start workspace context")
-	clog.Debug("starting new workspace")
+	clog.Info("starting new workspace")
 
 	// create a Pod object for the workspace
 	pod, err := m.createWorkspacePod(startContext)
+	clog.Infof("createWorkspacePod: %v", err)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 	span.LogKV("event", "pod description created")
+	clog.Info("pod description created")
 
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
 		switch feature {
