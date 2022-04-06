@@ -13,11 +13,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.remoteDev.util.onTerminationOrNow
+import com.intellij.util.application
 import com.jetbrains.rd.util.lifetime.Lifetime
 import git4idea.config.GitVcsApplicationSettings
 import io.gitpod.gitpodprotocol.api.GitpodClient
 import io.gitpod.gitpodprotocol.api.GitpodServerLauncher
 import io.gitpod.jetbrains.remote.services.HeartbeatService
+import io.gitpod.jetbrains.remote.utils.Retrier.retry
 import io.gitpod.supervisor.api.*
 import io.gitpod.supervisor.api.Info.WorkspaceInfoResponse
 import io.gitpod.supervisor.api.Notification.*
@@ -40,7 +42,6 @@ import java.time.Duration
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import javax.websocket.DeploymentException
-import io.gitpod.jetbrains.remote.utils.Retrier.retry
 
 @Service
 class GitpodManager : Disposable {
@@ -60,6 +61,9 @@ class GitpodManager : Disposable {
 
     init {
         GlobalScope.launch {
+            if (application.isHeadlessEnvironment) {
+                return@launch
+            }
             try {
                 val backendPort = BuiltInServerManager.getInstance().waitForStart().port
                 val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS)
@@ -93,6 +97,9 @@ class GitpodManager : Disposable {
 
     private val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
     private val notificationsJob = GlobalScope.launch {
+        if (application.isHeadlessEnvironment) {
+            return@launch
+        }
         val notifications = NotificationServiceGrpc.newStub(supervisorChannel)
         val futureNotifications = NotificationServiceGrpc.newFutureStub(supervisorChannel)
         while (isActive) {
@@ -156,6 +163,9 @@ class GitpodManager : Disposable {
 
     val pendingInfo = CompletableFuture<WorkspaceInfoResponse>()
     private val infoJob = GlobalScope.launch {
+        if (application.isHeadlessEnvironment) {
+            return@launch
+        }
         try {
             // TODO(ak) replace retry with proper handling of grpc errors
             val infoResponse = retry(3) {
