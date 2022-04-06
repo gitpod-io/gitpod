@@ -759,9 +759,12 @@ func (m *Manager) createWorkspaceVolumes(startContext *startWorkspaceContext) (w
 			// overwrite with a volume that uses PVC
 			workspace = corev1.Volume{
 				Name: workspaceVolumeName,
-				PersistentVolumeClaim: corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName:pvcName,
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: pvcName,
+					},
 				},
+			}
 		}
 	}
 	err = nil
