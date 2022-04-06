@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/containerd/containerd/content"
@@ -92,6 +93,15 @@ type blobHandler struct {
 	Metrics *metrics
 }
 
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		// setting to 4096 to align with PIPE_BUF
+		// http://man7.org/linux/man-pages/man7/pipe.7.html
+		buffer := make([]byte, 4096)
+		return &buffer
+	},
+}
+
 func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 	// v2.ErrorCodeBlobUnknown.WithDetail(bh.Digest)
 	//nolint:staticcheck,ineffassign
@@ -140,13 +150,19 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", mediaType)
 		w.Header().Set("Etag", bh.Digest.String())
+
 		t0 := time.Now()
-		n, err := io.Copy(w, rc)
-		dt := time.Since(t0)
+
+		bp := bufPool.Get().(*[]byte)
+		defer bufPool.Put(bp)
+
+		n, err := io.CopyBuffer(w, rc, *bp)
 		if err != nil {
+			log.WithError(err).Error("unable to return blob")
 			return err
 		}
-		bh.Metrics.BlobDownloadSpeedHist.Observe(float64(n) / dt.Seconds())
+
+		bh.Metrics.BlobDownloadSpeedHist.Observe(float64(n) / time.Since(t0).Seconds())
 
 		go func() {
 			// we can do this only after the io.Copy above. Otherwise we might expect the blob
