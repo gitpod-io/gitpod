@@ -51,6 +51,8 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
         const workspaceId = status.metadata!.metaId!;
         const logCtx: LogContext = { instanceId, workspaceId, userId };
 
+        log.info(logCtx, "Processing Prebuild update event", status);
+
         const span = TraceContext.startSpan("updatePrebuiltWorkspace", ctx);
         try {
             const prebuild = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(status.metadata!.metaId!);
