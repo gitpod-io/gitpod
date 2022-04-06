@@ -591,6 +591,10 @@ export class WorkspaceStarter {
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
     ): Promise<WorkspaceInstance> {
+        // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
+        delete ideConfig.ideOptions.options["code-latest"];
+        delete ideConfig.ideOptions.options["code-desktop-insiders"];
+
         const migratted = migrationIDESettings(user);
         if (user.additionalData?.ideSettings && migratted) {
             user.additionalData.ideSettings = migratted;
