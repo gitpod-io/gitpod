@@ -24,6 +24,7 @@ import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import Tooltip from "../components/Tooltip";
 import { WorkspaceModel } from "./workspace-model";
 import { getGitpodService } from "../service/service";
+import ConnectToSSHModal from "./ConnectToSSHModal";
 
 function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
     if (conditions?.failed) {
@@ -42,6 +43,7 @@ interface Props {
 export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
     const [isRenameModalVisible, setRenameModalVisible] = useState(false);
+    const [isSSHModalVisible, setSSHModalVisible] = useState(false);
     const renameInputRef = useRef<HTMLInputElement>(null);
     const [errorMessage, setErrorMessage] = useState("");
     const state: WorkspaceInstancePhase = desc.latestInstance?.status?.phase || "stopped";
@@ -49,6 +51,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         desc.latestInstance?.status.repo?.branch || Workspace.getBranchName(desc.workspace) || "<unknown>";
     const ws = desc.workspace;
     const [workspaceDescription, setWsDescription] = useState(ws.description);
+    const [ownerToken, setOwnerToken] = useState("");
 
     const startUrl = new GitpodHostUrl(window.location.href).with({
         pathname: "/start/",
@@ -76,6 +79,14 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         menuEntries.push({
             title: "Stop",
             onClick: () => stopWorkspace(ws.id),
+        });
+        menuEntries.splice(1, 0, {
+            title: "Connect via SSH",
+            onClick: async () => {
+                const ot = await getGitpodService().server.getOwnerToken(ws.id);
+                setOwnerToken(ot);
+                setSSHModalVisible(true);
+            },
         });
     }
     menuEntries.push({
@@ -234,6 +245,17 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                     </button>
                 </div>
             </Modal>
+            {isSSHModalVisible && desc.latestInstance && ownerToken !== "" && (
+                <ConnectToSSHModal
+                    workspaceId={ws.id}
+                    ownerToken={ownerToken}
+                    ideUrl={desc.latestInstance.ideUrl.replaceAll("https://", "")}
+                    onClose={() => {
+                        setSSHModalVisible(false);
+                        setOwnerToken("");
+                    }}
+                />
+            )}
         </Item>
     );
 }
