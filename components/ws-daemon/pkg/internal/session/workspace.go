@@ -280,35 +280,46 @@ func (s *Workspace) UpdateGitSafeDirectory(ctx context.Context) (err error) {
 }
 
 // UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
-func (s *Workspace) UpdateGitStatus(ctx context.Context) (res *csapi.GitStatus, err error) {
-	loc := s.Location
-	if loc == "" {
-		// FWB workspaces don't have `Location` set, but rather ServiceLocDaemon and ServiceLocNode.
-		// We'd can't easily produce the Git status, because in this context `mark` isn't mounted, and `upper`
-		// only contains the full git working copy if the content was just initialised.
-		// Something like
-		//   loc = filepath.Join(s.ServiceLocDaemon, "mark", "workspace")
-		// does not work.
-		//
-		// TODO(cw): figure out a way to get ahold of the Git status.
-		log.WithField("loc", loc).WithFields(s.OWI()).Debug("not updating Git status of FWB workspace")
-		return
+func (s *Workspace) UpdateGitStatus(ctx context.Context, persistent_volume_claim bool) (res *csapi.GitStatus, err error) {
+	var loc string
+	if persistent_volume_claim {
+		loc = filepath.Join(s.ServiceLocDaemon, "prestophookdata")
+		stat, err := git.GitStatusFromFiles(ctx, loc)
+		if err != nil {
+			return nil, err
+		}
+
+		s.LastGitStatus = toGitStatus(stat)
+	} else {
+		loc = s.Location
+		if loc == "" {
+			// FWB workspaces don't have `Location` set, but rather ServiceLocDaemon and ServiceLocNode.
+			// We'd can't easily produce the Git status, because in this context `mark` isn't mounted, and `upper`
+			// only contains the full git working copy if the content was just initialised.
+			// Something like
+			//   loc = filepath.Join(s.ServiceLocDaemon, "mark", "workspace")
+			// does not work.
+			//
+			// TODO(cw): figure out a way to get ahold of the Git status.
+			log.WithField("loc", loc).WithFields(s.OWI()).Debug("not updating Git status of FWB workspace")
+			return
+		}
+
+		loc = filepath.Join(loc, s.CheckoutLocation)
+		if !git.IsWorkingCopy(loc) {
+			log.WithField("loc", loc).WithField("checkout location", s.CheckoutLocation).WithFields(s.OWI()).Debug("did not find a Git working copy - not updating Git status")
+			return nil, nil
+		}
+
+		c := git.Client{Location: loc}
+
+		stat, err := c.Status(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		s.LastGitStatus = toGitStatus(stat)
 	}
-
-	loc = filepath.Join(loc, s.CheckoutLocation)
-	if !git.IsWorkingCopy(loc) {
-		log.WithField("loc", loc).WithField("checkout location", s.CheckoutLocation).WithFields(s.OWI()).Debug("did not find a Git working copy - not updating Git status")
-		return nil, nil
-	}
-
-	c := git.Client{Location: loc}
-
-	stat, err := c.Status(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	s.LastGitStatus = toGitStatus(stat)
 
 	err = s.persist()
 	if err != nil {

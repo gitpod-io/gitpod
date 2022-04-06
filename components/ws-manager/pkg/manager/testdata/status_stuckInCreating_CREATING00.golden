@@ -17,7 +17,8 @@
         },
         "phase": 4,
         "conditions": {
-            "timeout": "workspace timed out after I've meddled with this test data set"
+            "timeout": "workspace timed out after I've meddled with this test data set",
+            "pvc_snapshot_volume": {}
         },
         "runtime": {
             "node_name": "gke-production--gitp-workspace-pool-2-a3afc0b4-tmz8",

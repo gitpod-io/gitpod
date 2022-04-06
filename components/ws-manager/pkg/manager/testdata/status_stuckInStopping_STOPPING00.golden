@@ -19,7 +19,9 @@
             }
         },
         "phase": 6,
-        "conditions": {},
+        "conditions": {
+            "pvc_snapshot_volume": {}
+        },
         "runtime": {
             "node_name": "gke-gp-prod-ws-us14-us-workspace-pool-67d93ed3-l67s",
             "pod_name": "ws-48f13cc4-6311-48c2-950a-4b7ddedc3037",

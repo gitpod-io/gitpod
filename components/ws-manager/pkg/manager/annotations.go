@@ -66,6 +66,9 @@ const (
 	// pvcWorkspaceFeatureAnnotation is set on workspaces which are using persistent_volume_claim feature
 	pvcWorkspaceFeatureAnnotation = "gitpod.io/pvcFeature"
 
+	// pvcWorkspaceSnapshotVolumeAnnotation stores snapshot volume name when snapshot was created from pvc
+	pvcWorkspaceSnapshotVolumeAnnotation = "gitpod.io/snapshotVolumeName"
+
 	// startedDisposalAnnotation sets to true when finalizeWorkspaceContent is called to prevent finalize from
 	// being called more then once, which can happen due to race between disposalStatusAnnotation update and actOnPodEvent
 	startedDisposalAnnotation = "gitpod.io/startedDisposal"
@@ -170,6 +173,12 @@ type workspaceDisposalStatus struct {
 	BackupComplete bool             `json:"backupComplete,omitempty"`
 	BackupFailure  string           `json:"backupFailure,omitempty"`
 	GitStatus      *csapi.GitStatus `json:"gitStatus,omitempty"`
+}
+
+// workspaceSnapshotVolumeStatus stores the status of snapshot volume
+type workspaceSnapshotVolumeStatus struct {
+	PvcSnapshotVolumeName   string `json:"pvcSnapshotVolumeName,omitempty"`
+	PvcSnapshotVolumeHandle string `json:"pvcSnapshotVolumeHandle,omitempty"`
 }
 
 func (m *Manager) modifyFinalizer(ctx context.Context, workspaceID string, finalizer string, add bool) error {

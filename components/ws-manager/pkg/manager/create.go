@@ -238,7 +238,7 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 		PVCConfig = startContext.Class.PVC
 	}
 
-	pvc := &corev1.PersistentVolumeClaim{
+	PVC := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
 			Namespace: m.Config.Namespace,
@@ -256,10 +256,19 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 		// Specify the storageClassName when the storage class is non-empty.
 		// This way, the Kubernetes uses the default StorageClass within the cluster.
 		// Otherwise, the Kubernetes would try to request the PVC with no class.
-		pvc.Spec.StorageClassName = &PVCConfig.StorageClass
+		PVC.Spec.StorageClassName = &PVCConfig.StorageClass
 	}
 
-	return pvc, nil
+	if startContext.VolumeSnapshot.PvcSnapshotVolumeName != "" {
+		snapshotApiGroup := "snapshot.storage.k8s.io"
+		PVC.Spec.DataSource = &corev1.TypedLocalObjectReference{
+			APIGroup: &snapshotApiGroup,
+			Kind:     "VolumeSnapshot",
+			Name:     startContext.VolumeSnapshot.PvcSnapshotVolumeName,
+		}
+	}
+
+	return PVC, nil
 }
 
 // createDefiniteWorkspacePod creates a workspace pod without regard for any template.
@@ -898,6 +907,12 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		workspaceClassLabel:    clsName,
 	}
 
+	var snapshotVolume workspaceSnapshotVolumeStatus
+	if req.Spec.VolumeSnapshot != nil {
+		snapshotVolume.PvcSnapshotVolumeName = req.Spec.VolumeSnapshot.SnapshotVolumeName
+		snapshotVolume.PvcSnapshotVolumeHandle = req.Spec.VolumeSnapshot.SnapshotVolumeHandle
+	}
+
 	return &startWorkspaceContext{
 		Labels:         labels,
 		CLIAPIKey:      cliAPIKey,
@@ -909,6 +924,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		TraceID:        traceID,
 		Headless:       headless,
 		Class:          class,
+		VolumeSnapshot: snapshotVolume,
 	}, nil
 }
 

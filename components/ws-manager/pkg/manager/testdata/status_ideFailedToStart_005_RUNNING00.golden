@@ -20,7 +20,8 @@
         },
         "phase": 4,
         "conditions": {
-            "failed": "IDE failed to start: exit status 127"
+            "failed": "IDE failed to start: exit status 127",
+            "pvc_snapshot_volume": {}
         },
         "runtime": {
             "node_name": "gke-gp-prod-ws-eu14-eu-workspace-pool-b6e0759a-3lb1",

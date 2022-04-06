@@ -21,7 +21,8 @@
         "phase": 6,
         "conditions": {
             "failed": "last backup failed: testing the backup failure mode.",
-            "final_backup_complete": 1
+            "final_backup_complete": 1,
+            "pvc_snapshot_volume": {}
         },
         "runtime": {
             "node_name": "gke-dev-workload-1-49d27f81-n6zr",

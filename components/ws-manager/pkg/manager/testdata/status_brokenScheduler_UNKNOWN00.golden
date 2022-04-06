@@ -15,7 +15,8 @@
             "ide_image": {}
         },
         "conditions": {
-            "failed": "MatchNodeSelector: Pod Predicate MatchNodeSelector failed"
+            "failed": "MatchNodeSelector: Pod Predicate MatchNodeSelector failed",
+            "pvc_snapshot_volume": {}
         },
         "runtime": {
             "node_name": "gke-gitpod-dev-default-pool-b25aa276-3tl2",

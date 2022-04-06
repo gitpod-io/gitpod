@@ -49,6 +49,11 @@ export class WorkspaceInitializer extends jspb.Message {
     getBackup(): FromBackupInitializer | undefined;
     setBackup(value?: FromBackupInitializer): WorkspaceInitializer;
 
+    hasSnapshotVolume(): boolean;
+    clearSnapshotVolume(): void;
+    getSnapshotVolume(): FromSnapshotVolumeInitializer | undefined;
+    setSnapshotVolume(value?: FromSnapshotVolumeInitializer): WorkspaceInitializer;
+
     getSpecCase(): WorkspaceInitializer.SpecCase;
 
     serializeBinary(): Uint8Array;
@@ -70,6 +75,7 @@ export namespace WorkspaceInitializer {
         composite?: CompositeInitializer.AsObject,
         download?: FileDownloadInitializer.AsObject,
         backup?: FromBackupInitializer.AsObject,
+        snapshotVolume?: FromSnapshotVolumeInitializer.AsObject,
     }
 
     export enum SpecCase {
@@ -81,6 +87,7 @@ export namespace WorkspaceInitializer {
         COMPOSITE = 5,
         DOWNLOAD = 6,
         BACKUP = 7,
+        SNAPSHOT_VOLUME = 8,
     }
 
 }
@@ -312,6 +319,26 @@ export class FromBackupInitializer extends jspb.Message {
 }
 
 export namespace FromBackupInitializer {
+    export type AsObject = {
+        checkoutLocation: string,
+    }
+}
+
+export class FromSnapshotVolumeInitializer extends jspb.Message {
+    getCheckoutLocation(): string;
+    setCheckoutLocation(value: string): FromSnapshotVolumeInitializer;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): FromSnapshotVolumeInitializer.AsObject;
+    static toObject(includeInstance: boolean, msg: FromSnapshotVolumeInitializer): FromSnapshotVolumeInitializer.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: FromSnapshotVolumeInitializer, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): FromSnapshotVolumeInitializer;
+    static deserializeBinaryFromReader(message: FromSnapshotVolumeInitializer, reader: jspb.BinaryReader): FromSnapshotVolumeInitializer;
+}
+
+export namespace FromSnapshotVolumeInitializer {
     export type AsObject = {
         checkoutLocation: string,
     }

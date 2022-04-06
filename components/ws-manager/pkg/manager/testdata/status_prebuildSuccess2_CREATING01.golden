@@ -82,7 +82,8 @@
         },
         "phase": 2,
         "conditions": {
-            "pulling_images": 1
+            "pulling_images": 1,
+            "pvc_snapshot_volume": {}
         },
         "message": "containers are being created",
         "runtime": {

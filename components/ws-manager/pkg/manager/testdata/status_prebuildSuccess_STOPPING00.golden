@@ -81,7 +81,9 @@
             }
         },
         "phase": 5,
-        "conditions": {},
+        "conditions": {
+            "pvc_snapshot_volume": {}
+        },
         "message": "headless workspace is stopping",
         "runtime": {
             "node_name": "gke-dev-workload-1-49d27f81-pd35",

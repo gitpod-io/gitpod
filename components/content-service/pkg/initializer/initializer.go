@@ -136,6 +136,8 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		initializer, err = newFileDownloadInitializer(loc, ir.Download)
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Backup); ok {
 		initializer, err = newFromBackupInitializer(loc, rs, ir.Backup)
+	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_SnapshotVolume); ok {
+		initializer, err = newFromSnapshotVolumeInitializer(ir.SnapshotVolume)
 	} else {
 		initializer = &EmptyInitializer{}
 	}
@@ -190,6 +192,18 @@ func (bi *fromBackupInitializer) Run(ctx context.Context, mappings []archive.IDM
 		return src, xerrors.Errorf("cannot restore backup: %w", err)
 	}
 
+	return csapi.WorkspaceInitFromBackup, nil
+}
+
+// newFromSnapshotVolumeInitializer is a fake\empty initializer when workspace is created from snapshot volume
+func newFromSnapshotVolumeInitializer(req *csapi.FromSnapshotVolumeInitializer) (*fromSnapshotVolumeInitializer, error) {
+	return &fromSnapshotVolumeInitializer{}, nil
+}
+
+type fromSnapshotVolumeInitializer struct {
+}
+
+func (bi *fromSnapshotVolumeInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
 	return csapi.WorkspaceInitFromBackup, nil
 }
 
@@ -521,6 +535,8 @@ func GetCheckoutLocationsFromInitializer(init *csapi.WorkspaceInitializer) []str
 	switch {
 	case init.GetGit() != nil:
 		return []string{init.GetGit().CheckoutLocation}
+	case init.GetSnapshotVolume() != nil:
+		return []string{init.GetSnapshotVolume().CheckoutLocation}
 	case init.GetPrebuild() != nil && len(init.GetPrebuild().Git) > 0:
 		var result = make([]string, len(init.GetPrebuild().Git))
 		for i, c := range init.GetPrebuild().Git {
