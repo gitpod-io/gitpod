@@ -73,6 +73,8 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
     // statusVersion must only be set by controller/observer.
     @Column({
         default: 0,
+        type: "bigint",
+        transformer: Transformer.MAP_BIGINT_TO_NUMBER,
     })
     statusVersion: number;
 }
