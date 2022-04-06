@@ -90,6 +90,9 @@ export default function Preferences() {
     useEffect(() => {
         (async () => {
             const ideopts = await getGitpodService().server.getIDEOptions();
+            // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
+            delete ideopts.options["code-latest"];
+            delete ideopts.options["code-desktop-insiders"];
 
             setIdeOptions(ideopts);
             if (!defaultIde || ideopts.options[defaultIde] == null) {
