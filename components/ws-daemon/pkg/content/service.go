@@ -154,7 +154,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	var (
 		wsloc string
 	)
-	if req.FullWorkspaceBackup || req.PersistentVolumeClaim {
+	if req.FullWorkspaceBackup {
 		var mf csapi.WorkspaceContentManifest
 		if len(req.ContentManifest) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument, "content manifest is required")
@@ -162,10 +162,6 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		err = json.Unmarshal(req.ContentManifest, &mf)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid content manifest: %s", err.Error())
-		}
-		if req.PersistentVolumeClaim {
-			// todo(pavel): setting wsloc as otherwise mkdir fails later on.
-			wsloc = filepath.Join(s.store.Location, req.Id)
 		}
 	} else {
 		wsloc = filepath.Join(s.store.Location, req.Id)
@@ -375,7 +371,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	}
 
 	// Update the git status prior to deleting the workspace
-	repo, err = sess.UpdateGitStatus(ctx)
+	repo, err = sess.UpdateGitStatus(ctx, req.PersistentVolumeClaim)
 	if err != nil {
 		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot get git status")
 		span.LogKV("error", err.Error())

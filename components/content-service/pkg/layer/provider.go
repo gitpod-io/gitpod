@@ -269,6 +269,16 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 		return l, manifest, nil
 	}
 
+	if svi := initializer.GetSnapshotVolume(); svi != nil {
+		layer, err = contentDescriptorToLayerPVC([]byte{})
+		if err != nil {
+			return nil, nil, err
+		}
+
+		l = []Layer{*layer}
+		return l, manifest, nil
+	}
+
 	// At this point we've found neither a full-workspace-backup, nor a legacy backup.
 	// It's time to use the initializer.
 	if gis := initializer.GetSnapshot(); gis != nil {

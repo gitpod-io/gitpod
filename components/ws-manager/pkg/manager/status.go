@@ -230,6 +230,14 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		admission = api.AdmissionLevel(av)
 	}
 
+	var snapshotVolumeStatus workspaceSnapshotVolumeStatus
+	if rawSnapshotVolumeStatus, ok := wso.Pod.Annotations[pvcWorkspaceSnapshotVolumeAnnotation]; ok {
+		err := json.Unmarshal([]byte(rawSnapshotVolumeStatus), &snapshotVolumeStatus)
+		if err != nil {
+			return nil, xerrors.Errorf("invalid snapshot volume status: %w", err)
+		}
+	}
+
 	status = &api.WorkspaceStatus{
 		Id:            id,
 		StatusVersion: m.clock.Tick(),
@@ -250,6 +258,10 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		},
 		Conditions: &api.WorkspaceConditions{
 			Snapshot: wso.Pod.Annotations[workspaceSnapshotAnnotation],
+			PvcSnapshotVolume: &api.PvcSnapshotVolumeInfo{
+				SnapshotVolumeName:   snapshotVolumeStatus.PvcSnapshotVolumeName,
+				SnapshotVolumeHandle: snapshotVolumeStatus.PvcSnapshotVolumeHandle,
+			},
 		},
 		Runtime: &api.WorkspaceRuntimeInfo{
 			NodeName: wso.Pod.Spec.NodeName,

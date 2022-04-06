@@ -354,6 +354,25 @@ export class WorkspaceManagerBridge implements Disposable {
             // now notify all prebuild listeners about updates - and update DB if needed
             await this.updatePrebuiltWorkspace({ span }, userId, status, writeToDB);
 
+            // update volume snapshot information
+            if (
+                status.conditions.pvcSnapshotVolume &&
+                status.conditions.pvcSnapshotVolume.snapshotVolumeName != "" &&
+                writeToDB
+            ) {
+                let existingSnapshot = await this.workspaceDB
+                    .trace(ctx)
+                    .findVolumeSnapshotById(status.conditions.pvcSnapshotVolume.snapshotVolumeName);
+                if (existingSnapshot === undefined) {
+                    await this.workspaceDB.trace(ctx).storeVolumeSnapshot({
+                        id: status.conditions.pvcSnapshotVolume.snapshotVolumeName,
+                        creationTime: new Date().toISOString(),
+                        originalWorkspaceId: workspaceId,
+                        volumeHandle: status.conditions.pvcSnapshotVolume.snapshotVolumeHandle,
+                    });
+                }
+            }
+
             if (writeToDB) {
                 await this.workspaceDB.trace(ctx).storeInstance(instance);
 

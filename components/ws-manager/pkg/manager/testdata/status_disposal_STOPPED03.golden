@@ -32,7 +32,8 @@
         },
         "phase": 6,
         "conditions": {
-            "final_backup_complete": 1
+            "final_backup_complete": 1,
+            "pvc_snapshot_volume": {}
         },
         "repo": {
             "branch": "master",

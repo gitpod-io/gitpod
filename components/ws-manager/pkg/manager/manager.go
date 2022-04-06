@@ -68,16 +68,17 @@ type Manager struct {
 }
 
 type startWorkspaceContext struct {
-	Request        *api.StartWorkspaceRequest `json:"request"`
-	Labels         map[string]string          `json:"labels"`
-	CLIAPIKey      string                     `json:"cliApiKey"`
-	OwnerToken     string                     `json:"ownerToken"`
-	IDEPort        int32                      `json:"idePort"`
-	SupervisorPort int32                      `json:"supervisorPort"`
-	WorkspaceURL   string                     `json:"workspaceURL"`
-	TraceID        string                     `json:"traceID"`
-	Headless       bool                       `json:"headless"`
-	Class          *config.WorkspaceClass     `json:"class"`
+	Request        *api.StartWorkspaceRequest    `json:"request"`
+	Labels         map[string]string             `json:"labels"`
+	CLIAPIKey      string                        `json:"cliApiKey"`
+	OwnerToken     string                        `json:"ownerToken"`
+	IDEPort        int32                         `json:"idePort"`
+	SupervisorPort int32                         `json:"supervisorPort"`
+	WorkspaceURL   string                        `json:"workspaceURL"`
+	TraceID        string                        `json:"traceID"`
+	Headless       bool                          `json:"headless"`
+	Class          *config.WorkspaceClass        `json:"class"`
+	VolumeSnapshot workspaceSnapshotVolumeStatus `json:"volumeSnapshot"`
 }
 
 func (swctx *startWorkspaceContext) ContainerConfiguration() config.ContainerConfiguration {
@@ -260,7 +261,8 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			return false, err
 		}
 
-		err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, podRunning(m.Clientset, pod.Name, pod.Namespace))
+		// wait at least 60 seconds before deleting pending pod and trying again due to pending PVC attachment
+		err = wait.PollWithContext(ctx, 100*time.Millisecond, 60*time.Second, podRunning(m.Clientset, pod.Name, pod.Namespace))
 		if err != nil {
 			jsonPod, _ := json.Marshal(pod)
 			safePod, _ := log.RedactJSON(jsonPod)

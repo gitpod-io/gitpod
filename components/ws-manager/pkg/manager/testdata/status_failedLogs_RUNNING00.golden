@@ -27,7 +27,8 @@
         },
         "phase": 4,
         "conditions": {
-            "failed": "IDE failed to start: fork/exec /theia/node_modules/@gitpod/gitpod-ide/startup.sh: no such file or directory"
+            "failed": "IDE failed to start: fork/exec /theia/node_modules/@gitpod/gitpod-ide/startup.sh: no such file or directory",
+            "pvc_snapshot_volume": {}
         },
         "runtime": {
             "node_name": "gke-dev-workload-7fd27879-kn1v",
