@@ -51,6 +51,8 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
         const workspaceId = status.metadata!.metaId!;
         const logCtx: LogContext = { instanceId, workspaceId, userId };
 
+        log.info("Handling prebuild workspace update.", status);
+
         const span = TraceContext.startSpan("updatePrebuiltWorkspace", ctx);
         try {
             const prebuild = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(status.metadata!.metaId!);
@@ -61,6 +63,7 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
             }
             span.setTag("updatePrebuiltWorkspace.prebuildId", prebuild.id);
             span.setTag("updatePrebuiltWorkspace.workspaceInstance.statusVersion", status.statusVersion);
+            log.info("Found prebuild record in database.", prebuild);
 
             if (prebuild.statusVersion <= status.statusVersion) {
                 // prebuild.statusVersion = 0 is the default value in the DB, these shouldn't be counted as stale in our metrics
