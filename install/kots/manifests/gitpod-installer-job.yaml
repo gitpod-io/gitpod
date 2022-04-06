@@ -24,7 +24,7 @@ spec:
       containers:
         - name: installer
           # This will normally be the release tag - using this tag as need the license evaluator
-          image: 'eu.gcr.io/gitpod-core-dev/build/installer:sje-installer-mini-config.0'
+          image: 'eu.gcr.io/gitpod-core-dev/build/installer:sje-airgapped.0'
           volumeMounts:
             - mountPath: /config-patch
               name: config-patch
@@ -90,7 +90,18 @@ spec:
                 yq e -i ".database.external.certificate.name = \"database\"" "${CONFIG_FILE}"
               fi
 
-              if [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
+              if [ '{{repl HasLocalRegistry }}' = "true" ];
+              then
+                echo "Gitpod: configuring mirrored container registry"
+
+                yq e -i ".containerRegistry.inCluster = false" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.external.url = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.external.certificate.name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
+                yq e -i ".repository = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
+                yq e -i ".imagePullSecrets[0].kind = \"secret\"" "${CONFIG_FILE}"
+                yq e -i ".imagePullSecrets[0].name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
+              elif [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
               then
                 echo "Gitpod: configuring external container registry"
 
@@ -99,7 +110,7 @@ spec:
                 yq e -i ".containerRegistry.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
                 yq e -i ".containerRegistry.external.certificate.name = \"container-registry\"" "${CONFIG_FILE}"
 
-              if [ '{{repl ConfigOptionEquals "reg_s3storage" "1" }}' = "true" ];
+                if [ '{{repl ConfigOptionEquals "reg_s3storage" "1" }}' = "true" ];
                 then
                   echo "Gitpod: configuring container registry S3 backend"
 
