@@ -39,7 +39,7 @@ export class Werft {
     public phase(name, desc?: string) {
         // When you start a new phase the previous phase is implicitly closed.
         if (this.phases[this.currentPhase] && !this.phases[this.currentPhase].closed) {
-            throw new Error(`The phase "${name}" cannot start because the previous phase "${this.currentPhase}" is still active.`);
+            console.log(`WARNING: The phase "${name}" is starting although the previous phase "${this.currentPhase}" is still active.`);
         }
 
         // Check if the phase already exists
@@ -78,7 +78,7 @@ export class Werft {
         if (!this.phases[this.currentPhase].slices[slice]) {
             this.newSlice(slice);
         } else if (this.phases[this.currentPhase].slices[slice].closed) {
-            throw new Error(`The slice "${slice}" has already been closed!`);
+            console.log(`WARNING: The slice "${slice}" has already been closed!`);
         }
 
         console.log(`[${slice}] ${msg}`)
@@ -115,7 +115,7 @@ export class Werft {
         }
 
         if (this.phases[this.currentPhase].slices[slice].closed) {
-            throw new Error(`The slice "${slice}" has already been closed!`);
+            console.log(`WARNING: The slice "${slice}" has already been closed!`);
         } else {
             this.phases[this.currentPhase].slices[slice].span.end();
             this.phases[this.currentPhase].slices[slice].closed = true;
@@ -129,22 +129,23 @@ export class Werft {
 
     public endPhase(name?: string) {
         if (name && this.phases[name].closed) {
-            throw new Error(`The phase ${name} has already been closed.`)
+            console.log(`WARNING: The phase ${name} has already been closed.`)
         }
 
         if (this.phases[this.currentPhase].closed) {
-            throw new Error(`The current phase ${this.currentPhase} has already been closed.`)
+            console.log(`WARNING: The current phase ${this.currentPhase} has already been closed.`)
         }
 
         let check = true;
         for (const [name, slice] of Object.entries(this.phases[this.currentPhase].slices)) {
             if(!slice.closed) {
-                console.log(`The slice "${name}" has not been closed!`);
+                console.log(`WARNING: The slice "${name}" has not been closed!`);
+                slice.span.end();
                 check = false;
             }
         }
         if (!check) {
-            throw new Error(`Not all slices inside the phase "${this.currentPhase}" have been closed!`)
+            console.log(`WARNING: Not all slices inside the phase "${this.currentPhase}" have been closed!`);
         }
         // End the phase
         this.phases[this.currentPhase].span.end()

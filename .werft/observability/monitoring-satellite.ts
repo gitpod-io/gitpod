@@ -22,7 +22,7 @@ const sliceName = 'observability';
 /**
  * installMonitoringSatellite installs monitoring-satellite, while updating its dependencies to the latest commit in the branch it is running.
  */
-export function installMonitoringSatellite(params: InstallMonitoringSatelliteParams) {
+export async function installMonitoringSatellite(params: InstallMonitoringSatelliteParams) {
     const werft = getGlobalWerftInstance()
 
     werft.log(sliceName, `Cloning observability repository - Branch: ${params.branch}`)
@@ -80,7 +80,7 @@ export function installMonitoringSatellite(params: InstallMonitoringSatellitePar
     werft.done(sliceName);
 }
 
-function ensureCorrectInstallationOrder(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean){
+async function ensureCorrectInstallationOrder(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean){
     const werft = getGlobalWerftInstance()
 
     werft.log(sliceName, 'installing monitoring-satellite')
@@ -90,7 +90,7 @@ function ensureCorrectInstallationOrder(kubeconfig: string, namespace: string, c
     checkReadiness(kubeconfig, namespace, checkNodeExporterStatus)
 }
 
-function checkReadiness(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean) {
+async function checkReadiness(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean) {
     // For some reason prometheus' statefulset always take quite some time to get created
     // Therefore we wait a couple of seconds
     exec(`sleep 30 && kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} statefulset prometheus-k8s`, {slice: sliceName, async: true})
@@ -105,7 +105,7 @@ function checkReadiness(kubeconfig: string, namespace: string, checkNodeExporter
     }
 }
 
-function deployGitpodServiceMonitors(kubeconfig: string) {
+async function deployGitpodServiceMonitors(kubeconfig: string) {
     const werft = getGlobalWerftInstance()
 
     werft.log(sliceName, 'installing gitpod ServiceMonitor resources')

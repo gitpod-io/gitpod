@@ -150,8 +150,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             exec('exit 0')
         }
 
-        // This function causes problems as processes are not closed before the deploy phase ends
-        // installMonitoring(PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
+        installMonitoring(PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
 
         werft.endPhase(phases.VM);
     }
@@ -461,7 +460,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         try {
-            installMonitoring(CORE_DEV_KUBECONFIG_PATH, namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
+            await installMonitoring(CORE_DEV_KUBECONFIG_PATH, namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
         } catch (err) {
             if (!jobConfig.mainBuild) {
                 werft.fail('observability', err);
@@ -705,7 +704,7 @@ async function installMetaCertificates(werft: Werft, branch: string, withVM: boo
     await installCertificate(werft, metaInstallCertParams, { ...metaEnv(), slice: slice });
 }
 
-function installMonitoring(kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
+async function installMonitoring(kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
     const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
     installMonitoringSatelliteParams.kubeconfigPath = kubeconfig
     installMonitoringSatelliteParams.branch = observabilityBranch;
