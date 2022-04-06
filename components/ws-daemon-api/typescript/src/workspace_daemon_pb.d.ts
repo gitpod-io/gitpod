@@ -34,6 +34,8 @@ export class PrepareForUserNSResponse extends jspb.Message {
     setFsShift(value: FSShiftMethod): PrepareForUserNSResponse;
     getFullWorkspaceBackup(): boolean;
     setFullWorkspaceBackup(value: boolean): PrepareForUserNSResponse;
+    getPersistentVolumeClaim(): boolean;
+    setPersistentVolumeClaim(value: boolean): PrepareForUserNSResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrepareForUserNSResponse.AsObject;
@@ -49,6 +51,7 @@ export namespace PrepareForUserNSResponse {
     export type AsObject = {
         fsShift: FSShiftMethod,
         fullWorkspaceBackup: boolean,
+        persistentVolumeClaim: boolean,
     }
 }
 

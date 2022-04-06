@@ -21,6 +21,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -210,6 +211,38 @@ func mergeProbe(dst, src reflect.Value) (err error) {
 
 	// *srcs = *dsts
 	return nil
+}
+
+func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) (*corev1.PersistentVolumeClaim, error) {
+	req := startContext.Request
+	var prefix string
+	switch req.Type {
+	case api.WorkspaceType_PREBUILD:
+		prefix = "prebuild"
+	case api.WorkspaceType_PROBE:
+		prefix = "probe"
+	case api.WorkspaceType_IMAGEBUILD:
+		prefix = "imagebuild"
+	default:
+		prefix = "ws"
+	}
+	storageClassName := m.Config.Container.PVC.StorageClass
+	return &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
+			Namespace: m.Config.Namespace,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			StorageClassName: &storageClassName,
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					// todo: fix pvc size, should come from ws manager config now
+					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(m.Config.Container.PVC.Size),
+				},
+			},
+		},
+	}, nil
 }
 
 // createDefiniteWorkspacePod creates a workspace pod without regard for any template.
@@ -415,6 +448,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	PodSecContext := corev1.PodSecurityContext{}
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%s", prefix, req.Id),
@@ -430,6 +464,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
 			Affinity:                     affinity,
+			SecurityContext:              &PodSecContext,
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
@@ -482,6 +517,26 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			pod.Annotations[wsk8s.CPULimitAnnotation] = cpuLimit
 
 		case api.WorkspaceFeatureFlag_NOOP:
+
+		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
+			pod.Labels[pvcWorkspaceFeatureAnnotation] = "true"
+
+			// update volume to use persistent volume claim, and name of it is the same as pod's name
+			pvcName := pod.ObjectMeta.Name
+			pod.Spec.Volumes[0].VolumeSource = corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: pvcName,
+				},
+			}
+
+			// SubPath so that lost+found is not visible
+			pod.Spec.Containers[0].VolumeMounts[0].SubPath = "workspace"
+			// not needed, since it is using dedicated disk
+			pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
+
+			// pavel: magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
+			gitpodGUID := int64(133332)
+			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
 
 		default:
 			return nil, xerrors.Errorf("unknown feature flag: %v", feature)
@@ -569,6 +624,20 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 
 	image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
 
+	volMounts := []corev1.VolumeMount{
+		{
+			Name:             workspaceVolumeName,
+			MountPath:        workspaceDir,
+			ReadOnly:         false,
+			MountPropagation: &mountPropagation,
+		},
+		{
+			MountPath:        "/.workspace",
+			Name:             "daemon-mount",
+			MountPropagation: &mountPropagation,
+		},
+	}
+
 	return &corev1.Container{
 		Name:            "workspace",
 		Image:           image,
@@ -581,25 +650,14 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			Limits:   limits,
 			Requests: requests,
 		},
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				Name:             workspaceVolumeName,
-				MountPath:        workspaceDir,
-				ReadOnly:         false,
-				MountPropagation: &mountPropagation,
-			},
-			{
-				MountPath:        "/.workspace",
-				Name:             "daemon-mount",
-				MountPropagation: &mountPropagation,
-			},
-		},
+		VolumeMounts:             volMounts,
 		ReadinessProbe:           readinessProbe,
 		Env:                      env,
 		Command:                  command,
 		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 	}, nil
 }
+
 func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext) ([]corev1.EnvVar, error) {
 	spec := startContext.Request.Spec
 

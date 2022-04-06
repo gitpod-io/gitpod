@@ -200,6 +200,26 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	span.LogKV("event", "pod description created")
 
+	for _, feature := range startContext.Request.Spec.FeatureFlags {
+		created := false
+		switch feature {
+		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
+			clog.Info("PVC feature detected, creating PVC object")
+			pvc, err := m.createPVCForWorkspacePod(startContext)
+			if err != nil {
+				return nil, xerrors.Errorf("cannot create pvc for workspace pod: %w", err)
+			}
+			err = m.Clientset.Create(ctx, pvc)
+			if err != nil {
+				return nil, xerrors.Errorf("cannot create pvc object for workspace pod: %w", err)
+			}
+			created = true
+		}
+		if created {
+			break
+		}
+	}
+
 	// create the Pod in the cluster and wait until is scheduled
 	// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.22.md#workloads-that-saturate-nodes-with-pods-may-see-pods-that-fail-due-to-node-admission
 	backoff := wait.Backoff{

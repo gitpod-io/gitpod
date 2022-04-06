@@ -269,8 +269,9 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		}
 
 		return &api.PrepareForUserNSResponse{
-			FsShift:             api.FSShiftMethod_FUSE,
-			FullWorkspaceBackup: wbs.Session.FullWorkspaceBackup,
+			FsShift:               api.FSShiftMethod_FUSE,
+			FullWorkspaceBackup:   wbs.Session.FullWorkspaceBackup,
+			PersistentVolumeClaim: wbs.Session.PersistentVolumeClaim,
 		}, nil
 	}
 
@@ -297,8 +298,9 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 	}
 
 	return &api.PrepareForUserNSResponse{
-		FsShift:             api.FSShiftMethod_SHIFTFS,
-		FullWorkspaceBackup: wbs.Session.FullWorkspaceBackup,
+		FsShift:               api.FSShiftMethod_SHIFTFS,
+		FullWorkspaceBackup:   wbs.Session.FullWorkspaceBackup,
+		PersistentVolumeClaim: wbs.Session.PersistentVolumeClaim,
 	}, nil
 }
 

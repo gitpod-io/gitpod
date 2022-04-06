@@ -55,14 +55,15 @@ type Workspace struct {
 	// workspace resides. If this workspace has no Git working copy, this field is an empty string.
 	CheckoutLocation string `json:"checkoutLocation"`
 
-	CreatedAt           time.Time        `json:"createdAt"`
-	DoBackup            bool             `json:"doBackup"`
-	Owner               string           `json:"owner"`
-	WorkspaceID         string           `json:"metaID"`
-	InstanceID          string           `json:"workspaceID"`
-	LastGitStatus       *csapi.GitStatus `json:"lastGitStatus"`
-	FullWorkspaceBackup bool             `json:"fullWorkspaceBackup"`
-	ContentManifest     []byte           `json:"contentManifest"`
+	CreatedAt             time.Time        `json:"createdAt"`
+	DoBackup              bool             `json:"doBackup"`
+	Owner                 string           `json:"owner"`
+	WorkspaceID           string           `json:"metaID"`
+	InstanceID            string           `json:"workspaceID"`
+	LastGitStatus         *csapi.GitStatus `json:"lastGitStatus"`
+	FullWorkspaceBackup   bool             `json:"fullWorkspaceBackup"`
+	PersistentVolumeClaim bool             `json:"persistentVolumeClaim"`
+	ContentManifest       []byte           `json:"contentManifest"`
 
 	ServiceLocNode   string `json:"serviceLocNode"`
 	ServiceLocDaemon string `json:"serviceLocDaemon"`
@@ -213,6 +214,11 @@ func (s *Workspace) Dispose(ctx context.Context) (err error) {
 	err = s.store.runLifecycleHooks(ctx, s)
 	if err != nil {
 		return err
+	}
+
+	if s.PersistentVolumeClaim {
+		// nothing to dispose as files are on persistent volume claim
+		return nil
 	}
 
 	if !s.FullWorkspaceBackup {

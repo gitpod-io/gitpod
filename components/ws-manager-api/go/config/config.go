@@ -118,6 +118,7 @@ type Configuration struct {
 // AllContainerConfiguration contains the configuration for all container in a workspace pod
 type AllContainerConfiguration struct {
 	Workspace ContainerConfiguration `json:"workspace"`
+	PVC       PVCConfiguration       `json:"pvc"`
 }
 
 // WorkspaceTimeoutConfiguration configures the timeout behaviour of workspaces
@@ -253,6 +254,20 @@ var validWorkspaceURLTemplate = validation.By(func(o interface{}) error {
 
 	return err
 })
+
+// PVCConfiguration configures properties of persistent volume claim to use for workspace containers
+type PVCConfiguration struct {
+	Size         string `json:"size"`
+	StorageClass string `json:"storage-class"`
+}
+
+// Validate validates a container configuration
+func (c *PVCConfiguration) Validate() error {
+	return validation.ValidateStruct(c,
+		validation.Field(&c.Size, validation.Required),
+		validation.Field(&c.StorageClass, validation.Required),
+	)
+}
 
 // ContainerConfiguration configures properties of workspace pod container
 type ContainerConfiguration struct {

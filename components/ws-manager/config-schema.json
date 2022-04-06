@@ -25,12 +25,17 @@
     },
     "AllContainerConfiguration": {
       "required": [
-        "workspace"
+        "workspace",
+        "pvc"
       ],
       "properties": {
         "workspace": {
           "$schema": "http://json-schema.org/draft-04/schema#",
           "$ref": "#/definitions/ContainerConfiguration"
+        },
+        "pvc": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PVCConfiguration"
         }
       },
       "additionalProperties": false,
@@ -121,6 +126,22 @@
         "requests": {
           "$schema": "http://json-schema.org/draft-04/schema#",
           "$ref": "#/definitions/ResourceConfiguration"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "PVCConfiguration": {
+      "required": [
+        "size",
+        "storage-class"
+      ],
+      "properties": {
+        "size": {
+          "type": "string"
+        },
+        "storage-class": {
+          "type": "string"
         }
       },
       "additionalProperties": false,

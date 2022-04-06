@@ -34,6 +34,8 @@ export class InitWorkspaceRequest extends jspb.Message {
     setContentManifest(value: Uint8Array | string): InitWorkspaceRequest;
     getRemoteStorageDisabled(): boolean;
     setRemoteStorageDisabled(value: boolean): InitWorkspaceRequest;
+    getPersistentVolumeClaim(): boolean;
+    setPersistentVolumeClaim(value: boolean): InitWorkspaceRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): InitWorkspaceRequest.AsObject;
@@ -53,6 +55,7 @@ export namespace InitWorkspaceRequest {
         fullWorkspaceBackup: boolean,
         contentManifest: Uint8Array | string,
         remoteStorageDisabled: boolean,
+        persistentVolumeClaim: boolean,
     }
 }
 

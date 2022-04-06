@@ -33,6 +33,23 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"services",
 						"endpoints",
 						"configmaps",
+						"persistentvolumeclaims",
+					},
+					Verbs: []string{
+						"get",
+						"list",
+						"create",
+						"update",
+						"patch",
+						"watch",
+						"delete",
+						"deletecollection",
+					},
+				},
+				{
+					APIGroups: []string{"snapshot.storage.k8s.io"},
+					Resources: []string{
+						"volumesnapshots",
 					},
 					Verbs: []string{
 						"get",

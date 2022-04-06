@@ -55,7 +55,7 @@ type InWorkspaceServiceClient interface {
 	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error)
-	// Set up a pair of veths that interconnect the specified PID and the workspace container's network namename.
+	// Set up a pair of veths that interconnect the specified PID and the workspace container's network namespace.
 	SetupPairVeths(ctx context.Context, in *SetupPairVethsRequest, opts ...grpc.CallOption) (*SetupPairVethsResponse, error)
 }
 
@@ -185,7 +185,7 @@ type InWorkspaceServiceServer interface {
 	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	Teardown(context.Context, *TeardownRequest) (*TeardownResponse, error)
-	// Set up a pair of veths that interconnect the specified PID and the workspace container's network namename.
+	// Set up a pair of veths that interconnect the specified PID and the workspace container's network namespace.
 	SetupPairVeths(context.Context, *SetupPairVethsRequest) (*SetupPairVethsResponse, error)
 	mustEmbedUnimplementedInWorkspaceServiceServer()
 }

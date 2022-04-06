@@ -112,6 +112,7 @@ var ring0Cmd = &cobra.Command{
 		cmd.Env = append(os.Environ(),
 			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
 			fmt.Sprintf("WORKSPACEKIT_FULL_WORKSPACE_BACKUP=%v", prep.FullWorkspaceBackup),
+			fmt.Sprintf("WORKSPACEKIT_PERSISTENT_VOLUME_CLAIM=%v", prep.PersistentVolumeClaim),
 		)
 
 		if err := cmd.Start(); err != nil {
@@ -303,7 +304,8 @@ var ring1Cmd = &cobra.Command{
 
 		// FWB workspaces do not require mounting /workspace
 		// if that is done, the backup will not contain any change in the directory
-		if os.Getenv("WORKSPACEKIT_FULL_WORKSPACE_BACKUP") != "true" {
+		// same applies to persistent volume claims, we cannot mount /workspace folder when PVC is used
+		if os.Getenv("WORKSPACEKIT_FULL_WORKSPACE_BACKUP") != "true" && os.Getenv("WORKSPACEKIT_PERSISTENT_VOLUME_CLAIM") != "true" {
 			mnts = append(mnts,
 				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
 			)
@@ -416,6 +418,7 @@ var ring1Cmd = &cobra.Command{
 			log.WithError(err).Error("cannot mount proc")
 			return
 		}
+
 		_, err = client.EvacuateCGroup(ctx, &daemonapi.EvacuateCGroupRequest{})
 		if err != nil {
 			client.Close()

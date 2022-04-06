@@ -1227,6 +1227,12 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 	}()
 
 	fn := "/workspace/.gitpod/content.json"
+	fnReady := "/workspace/.gitpod/ready"
+	if _, err := os.Stat("/.workspace/.gitpod/content.json"); !os.IsNotExist(err) {
+		fn = "/.workspace/.gitpod/content.json"
+		fnReady = "/.workspace/.gitpod/ready"
+		log.Info("Detected content.json in /.workspace folder, assuming PVC feature enabled")
+	}
 	f, err := os.Open(fn)
 	if os.IsNotExist(err) {
 		log.WithError(err).Info("no content init descriptor found - not trying to run it")
@@ -1236,7 +1242,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		// TODO: rewrite using fsnotify
 		t := time.NewTicker(100 * time.Millisecond)
 		for range t.C {
-			b, err := os.ReadFile("/workspace/.gitpod/ready")
+			b, err := os.ReadFile(fnReady)
 			if err != nil {
 				if !os.IsNotExist(err) {
 					log.WithError(err).Error("cannot read content ready file")

@@ -52,6 +52,11 @@ message InitWorkspaceRequest {
     // remote_storage_disabled disables any support for remote storage operations, specifically backups and snapshots.
     // When any such operation is attempted, a FAILED_PRECONDITION error will be the result.
     bool remote_storage_disabled = 7;
+
+    // persistent_volume_claim means that we use PVC instead of HostPath to mount /workspace folder and content-init
+    // happens inside workspacekit instead of in ws-daemon. We also use k8s Snapshots to store\restore workspace content
+    // instead of GCS\tar.
+    bool persistent_volume_claim = 8;
 }
 
 // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
