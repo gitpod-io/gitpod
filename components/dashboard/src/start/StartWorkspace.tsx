@@ -27,6 +27,7 @@ import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import { watchHeadlessLogs } from "../components/PrebuildLogs";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
+import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
@@ -91,6 +92,8 @@ export interface StartWorkspaceState {
         clientID?: string;
     };
     ideOptions?: IDEOptions;
+    isSSHModalVisible?: boolean;
+    ownerToken?: string;
 }
 
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
@@ -520,6 +523,15 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                                 getGitpodService().server.stopWorkspace(this.props.workspaceId),
                                         },
                                         {
+                                            title: "Connect via SSH",
+                                            onClick: async () => {
+                                                const ownerToken = await getGitpodService().server.getOwnerToken(
+                                                    this.props.workspaceId,
+                                                );
+                                                this.setState({ isSSHModalVisible: true, ownerToken });
+                                            },
+                                        },
+                                        {
                                             title: "Go to Dashboard",
                                             href: gitpodHostUrl.asDashboard().toString(),
                                             target: "_parent",
@@ -556,6 +568,14 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 </a>
                                 .
                             </div>
+                            {this.state.isSSHModalVisible === true && this.state.ownerToken && (
+                                <ConnectToSSHModal
+                                    workspaceId={this.props.workspaceId}
+                                    ownerToken={this.state.ownerToken}
+                                    ideUrl={this.state.workspaceInstance?.ideUrl.replaceAll("https://", "")}
+                                    onClose={() => this.setState({ isSSHModalVisible: false, ownerToken: "" })}
+                                />
+                            )}
                         </div>
                     );
                 }
