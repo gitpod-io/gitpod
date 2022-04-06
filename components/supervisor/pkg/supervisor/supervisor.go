@@ -231,7 +231,9 @@ func Run(options ...RunOption) {
 	if cfg.DesktopIDE != nil {
 		desktopIdeReady = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 	}
-	go trackReadiness(ctx, gitpodService, cfg, cstate, ideReady, desktopIdeReady)
+	if !cfg.isHeadless() {
+		go trackReadiness(ctx, gitpodService, cfg, cstate, ideReady, desktopIdeReady)
+	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
 	go gitpodConfigService.Watch(ctx)
