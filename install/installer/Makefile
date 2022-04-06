@@ -34,3 +34,8 @@ versionManifest:
 	@echo "Downloading version manifest for ${VERSION}"
 	docker run -it --rm eu.gcr.io/gitpod-core-dev/build/versions:${VERSION} cat versions.yaml > ${VERSION_MANIFEST}
 .PHONY: versionManifest
+
+config-doc:
+	@echo "Building doc from Config struct for current version"
+	go run ./scripts/structdoc.go
+.PHONY: config-doc
