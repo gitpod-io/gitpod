@@ -63,6 +63,32 @@ export namespace Transformer {
     export const compose = (upper: ValueTransformer, lower: ValueTransformer) => {
         return new CompositeValueTransformer(upper, lower);
     };
+
+    export const MAP_BIGINT_TO_NUMBER: ValueTransformer = {
+        to(value: any): any {
+            // we expect to receive a number, as that's what our type system gives us.
+            const isNumber = typeof value === "number";
+            if (!isNumber) {
+                return "0";
+            }
+
+            return value.toString();
+        },
+        from(value: any): any {
+            // the underlying representation of a BIGINT is a string
+            const isString = typeof value === "string" || value instanceof String;
+            if (!isString) {
+                return 0;
+            }
+
+            const num = Number(value);
+            if (isNaN(num)) {
+                return 0;
+            }
+
+            return num;
+        },
+    };
 }
 
 export class CompositeValueTransformer implements ValueTransformer {
