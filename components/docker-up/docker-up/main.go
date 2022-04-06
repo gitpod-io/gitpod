@@ -100,7 +100,6 @@ func runWithinNetns() (err error) {
 	listenFDs, _ := strconv.Atoi(os.Getenv("LISTEN_FDS"))
 
 	args := []string{
-		"--experimental",
 		"--rootless",
 		"--data-root=/workspace/.docker-root",
 	}
