@@ -15,6 +15,10 @@
           "memory": "3246Mi"
         }
       },
+      "pvc": {
+        "size": "30Gi",
+        "storage-class": ""
+      },
       "sync": {
         "image": "eu.gcr.io/gitpod-dev/gitpod-ws-daemon:cw-ws-manager.24",
         "requests": {

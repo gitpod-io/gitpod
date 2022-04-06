@@ -185,6 +185,7 @@ func TestMissingBackup(t *testing.T) {
 			}{
 				{Name: "classic"},
 				{Name: "fwb", FF: []wsapi.WorkspaceFeatureFlag{wsapi.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP}},
+				{Name: "pvc", FF: []wsapi.WorkspaceFeatureFlag{wsapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
 			}
 			for _, test := range tests {
 				t.Run(test.Name+"_backup_init", func(t *testing.T) {

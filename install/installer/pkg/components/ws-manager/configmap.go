@@ -68,6 +68,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			Templates: templatesCfg,
+			PVC: config.PVCConfiguration{
+				Size:         ctx.Config.Workspace.PVC.Size,
+				StorageClass: ctx.Config.Workspace.PVC.StorageClass,
+			},
 		},
 	}
 	err = ctx.WithExperimental(func(ucfg *experimental.Config) error {
