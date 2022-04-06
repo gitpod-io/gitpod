@@ -64,11 +64,14 @@ func (v version) Defaults(in interface{}) error {
 	return nil
 }
 
+// Config defines the v1 version structure of the gitpod config file
 type Config struct {
-	Kind       InstallationKind `json:"kind" validate:"required,installation_kind"`
-	Domain     string           `json:"domain" validate:"required,fqdn"`
-	Metadata   Metadata         `json:"metadata"`
-	Repository string           `json:"repository" validate:"required,ascii"`
+	// Installation type to run - for most users, this will be Full
+	Kind InstallationKind `json:"kind" validate:"required,installation_kind"`
+	// The domain to deploy to
+	Domain     string   `json:"domain" validate:"required,fqdn"`
+	Metadata   Metadata `json:"metadata"`
+	Repository string   `json:"repository" validate:"required,ascii"`
 
 	Observability Observability `json:"observability"`
 	Analytics     *Analytics    `json:"analytics,omitempty"`
@@ -103,6 +106,7 @@ type Config struct {
 }
 
 type Metadata struct {
+	// Location for your objectStorage provider
 	Region string `json:"region" validate:"required"`
 	// InstallationShortname establishes the "identity" of the (application) cluster.
 	InstallationShortname string `json:"shortname" validate:"required"`
@@ -219,9 +223,12 @@ type Resources struct {
 }
 
 type WorkspaceRuntime struct {
-	FSShiftMethod        FSShiftMethod `json:"fsShiftMethod" validate:"required,fs_shift_method"`
-	ContainerDRuntimeDir string        `json:"containerdRuntimeDir" validate:"required,startswith=/"`
-	ContainerDSocket     string        `json:"containerdSocket" validate:"required,startswith=/"`
+	// File system
+	FSShiftMethod FSShiftMethod `json:"fsShiftMethod" validate:"required,fs_shift_method"`
+	// The location of containerd socket on the host machine
+	ContainerDRuntimeDir string `json:"containerdRuntimeDir" validate:"required,startswith=/"`
+	// The location of containerd socket on the host machine
+	ContainerDSocket string `json:"containerdSocket" validate:"required,startswith=/"`
 }
 
 type WorkspaceTemplates struct {
