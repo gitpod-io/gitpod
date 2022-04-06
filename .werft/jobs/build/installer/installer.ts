@@ -57,6 +57,7 @@ export class Installer {
             this.configureContainerRegistry(slice)
             this.configureDomain(slice)
             this.configureWorkspaces(slice)
+            this.configureIDE(slice)
             this.configureObservability(slice)
             this.configureAuthProviders(slice)
             this.configureSSHGateway(slice)
@@ -95,6 +96,10 @@ export class Installer {
     private configureWorkspaces(slice: string) {
         exec(`yq w -i ${this.options.installerConfigPath} workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, { slice: slice });
         exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.cpu "100m"`, { slice: slice });
+    }
+
+    private configureIDE(slice: string) {
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.ide.resolveLatest false`, { slice });
     }
 
     private configureObservability(slice: string) {
@@ -156,7 +161,7 @@ export class Installer {
 
     render(slice: string): void {
         this.options.werft.log(slice, "Rendering YAML manifests");
-        exec(`/tmp/installer render --namespace ${this.options.deploymentNamespace} --config ${this.options.installerConfigPath} > k8s.yaml`, { slice: slice });
+        exec(`/tmp/installer render --use-experimental-config --namespace ${this.options.deploymentNamespace} --config ${this.options.installerConfigPath} > k8s.yaml`, { slice: slice });
         this.options.werft.done(slice)
     }
 

@@ -14,13 +14,13 @@ import "k8s.io/apimachinery/pkg/api/resource"
 
 // Config contains all experimental configuration.
 type Config struct {
-	Workspace *WorkspaceConfig `json:"workspace"`
-	WebApp    *WebAppConfig    `json:"webapp"`
-	IDE       *IDEConfig       `json:"ide"`
+	Workspace *WorkspaceConfig `json:"workspace,omitempty"`
+	WebApp    *WebAppConfig    `json:"webapp,omitempty"`
+	IDE       *IDEConfig       `json:"ide,omitempty"`
 }
 
 type WorkspaceConfig struct {
-	Tracing *Tracing `json:"tracing"`
+	Tracing *Tracing `json:"tracing,omitempty"`
 	Stage   string   `json:"stage"`
 
 	CPULimits struct {
@@ -47,7 +47,10 @@ type WorkspaceConfig struct {
 type WebAppConfig struct {
 }
 
-type IDEConfig struct{}
+type IDEConfig struct {
+	// Disable resolution of latest images and use bundled latest versions instead
+	ResolveLatest *bool `json:"resolveLatest,omitempty"`
+}
 
 type TracingSampleType string
 
