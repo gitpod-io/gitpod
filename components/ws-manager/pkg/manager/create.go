@@ -68,10 +68,6 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		}
 	}
 
-	// todo: need to create pvc only if feature flag is enabled.
-	// and clean it up if pod failed to create for whatever reason.
-	pvc, err := m.createPVCForWorkspacePod(startContext)
-
 	pod, err := m.createDefiniteWorkspacePod(startContext)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create definite workspace pod: %w", err)
@@ -242,6 +238,7 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 			StorageClassName: &storageClassName,
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
+					// todo: fix pvc size, should come from ws manager config now
 					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse("30Gi"),
 				},
 			},
@@ -743,6 +740,30 @@ func (m *Manager) createWorkspaceVolumes(startContext *startWorkspaceContext) (w
 		},
 	}
 
+	for _, feature := range startContext.Request.Spec.FeatureFlags {
+		switch feature {
+		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
+			req := startContext.Request
+			var prefix string
+			switch req.Type {
+			case api.WorkspaceType_PREBUILD:
+				prefix = "prebuild"
+			case api.WorkspaceType_PROBE:
+				prefix = "probe"
+			case api.WorkspaceType_IMAGEBUILD:
+				prefix = "imagebuild"
+			default:
+				prefix = "ws"
+			}
+			pvcName := fmt.Sprintf("%s-%s", prefix, req.Id)
+			// overwrite with a volume that uses PVC
+			workspace = corev1.Volume{
+				Name: workspaceVolumeName,
+				PersistentVolumeClaim: corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName:pvcName,
+				},
+		}
+	}
 	err = nil
 	return
 }
