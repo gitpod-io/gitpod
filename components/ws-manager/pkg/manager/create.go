@@ -21,6 +21,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -67,6 +68,10 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		}
 	}
 
+	// todo: need to create pvc only if feature flag is enabled.
+	// and clean it up if pod failed to create for whatever reason.
+	pvc, err := m.createPVCForWorkspacePod(startContext)
+
 	pod, err := m.createDefiniteWorkspacePod(startContext)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create definite workspace pod: %w", err)
@@ -75,6 +80,7 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
+
 	return pod, nil
 }
 
@@ -210,6 +216,37 @@ func mergeProbe(dst, src reflect.Value) (err error) {
 
 	// *srcs = *dsts
 	return nil
+}
+
+func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) (*corev1.PersistentVolumeClaim, error) {
+	req := startContext.Request
+	var prefix string
+	switch req.Type {
+	case api.WorkspaceType_PREBUILD:
+		prefix = "prebuild"
+	case api.WorkspaceType_PROBE:
+		prefix = "probe"
+	case api.WorkspaceType_IMAGEBUILD:
+		prefix = "imagebuild"
+	default:
+		prefix = "ws"
+	}
+	storageClassName := "csi-gce-pd"
+	return &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
+			Namespace: m.Config.Namespace,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			StorageClassName: &storageClassName,
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse("30Gi"),
+				},
+			},
+		},
+	}, nil
 }
 
 // createDefiniteWorkspacePod creates a workspace pod without regard for any template.
