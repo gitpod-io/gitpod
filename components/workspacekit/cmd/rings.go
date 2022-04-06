@@ -249,10 +249,6 @@ var ring1Cmd = &cobra.Command{
 			fsshift = api.FSShiftMethod(v)
 		}
 
-		var (
-			slirp4netnsSocket string
-		)
-
 		type mnte struct {
 			Target string
 			Source string
@@ -312,15 +308,6 @@ var ring1Cmd = &cobra.Command{
 				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
 			)
 		}
-
-		f, err := ioutil.TempDir("", "wskit-slirp4netns")
-		if err != nil {
-			log.WithError(err).Error("cannot create slirp4netns socket tempdir")
-			return
-		}
-
-		slirp4netnsSocket = filepath.Join(f, "slirp4netns.sock")
-		mnts = append(mnts, mnte{Target: "/.supervisor/slirp4netns.sock", Source: f, Flags: unix.MS_BIND | unix.MS_REC})
 
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)
@@ -474,26 +461,6 @@ var ring1Cmd = &cobra.Command{
 			log.WithError(err).Error("ring2 did not connect successfully")
 			return
 		}
-
-		slirpCmd := exec.Command(filepath.Join(filepath.Dir(ring2Opts.SupervisorPath), "slirp4netns"),
-			"--configure",
-			"--mtu=65520",
-			"--disable-host-loopback",
-			"--api-socket", slirp4netnsSocket,
-			strconv.Itoa(cmd.Process.Pid),
-			"tap0",
-		)
-		slirpCmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig: syscall.SIGKILL,
-		}
-
-		err = slirpCmd.Start()
-		if err != nil {
-			log.WithError(err).Error("cannot start slirp4netns")
-			return
-		}
-		//nolint:errcheck
-		defer slirpCmd.Process.Kill()
 
 		client, err = connectToInWorkspaceDaemonService(ctx)
 		if err != nil {

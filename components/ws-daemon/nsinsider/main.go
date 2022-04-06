@@ -274,6 +274,10 @@ func main() {
 						IP:   net.IPv4(10, 0, 5, 1),
 						Mask: mask,
 					}
+					cethIp := net.IPNet{
+						IP:   net.IPv4(10, 0, 5, 2),
+						Mask: mask,
+					}
 					masqueradeAddr := net.IPNet{
 						IP:   vethIp.IP.Mask(mask),
 						Mask: mask,
@@ -351,56 +355,62 @@ func main() {
 						},
 					})
 
-					// TODO(toru): we can comment out here when we will remove the slirp4netns and set 10.0.5.1/24 as a default gw
-					// prerouting := nc.AddChain(&nftables.Chain{
-					// 	Name:     "prerouting",
-					// 	Hooknum:  nftables.ChainHookPrerouting,
-					// 	Priority: nftables.ChainPriorityFilter,
-					// 	Table:    nat,
-					// 	Type:     nftables.ChainTypeNAT,
-					// })
+					prerouting := nc.AddChain(&nftables.Chain{
+						Name:     "prerouting",
+						Hooknum:  nftables.ChainHookPrerouting,
+						Priority: nftables.ChainPriorityNATDest,
+						Table:    nat,
+						Type:     nftables.ChainTypeNAT,
+					})
 
-					// tcp dport 1-65535 dnat to $cethIp:tcp dport
-					// nc.AddRule(&nftables.Rule{
-					// 	Table: nat,
-					// 	Chain: prerouting,
-					// 	Exprs: []expr.Any{
-					// 		&expr.Meta{Key: expr.MetaKeyL4PROTO, Register: 1},
-					// 		&expr.Cmp{
-					// 			Op:       expr.CmpOpEq,
-					// 			Register: 1,
-					// 			Data:     []byte{unix.IPPROTO_TCP},
-					// 		},
-					// 		&expr.Payload{
-					// 			DestRegister: 1,
-					// 			Base:         expr.PayloadBaseTransportHeader,
-					// 			Offset:       2,
-					// 			Len:          2,
-					// 		},
+					// iif $containerIf tcp dport 1-65535 dnat to $cethIp:tcp dport
+					nc.AddRule(&nftables.Rule{
+						Table: nat,
+						Chain: prerouting,
+						Exprs: []expr.Any{
+							&expr.Meta{Key: expr.MetaKeyIIFNAME, Register: 1},
+							&expr.Cmp{
+								Op:       expr.CmpOpEq,
+								Register: 1,
+								Data:     []byte(containerIf + "\x00"),
+							},
 
-					// 		&expr.Cmp{
-					// 			Op:       expr.CmpOpGte,
-					// 			Register: 1,
-					// 			Data:     []byte{0x00, 0x01},
-					// 		},
-					// 		&expr.Cmp{
-					// 			Op:       expr.CmpOpLte,
-					// 			Register: 1,
-					// 			Data:     []byte{0xff, 0xff},
-					// 		},
+							&expr.Meta{Key: expr.MetaKeyL4PROTO, Register: 1},
+							&expr.Cmp{
+								Op:       expr.CmpOpEq,
+								Register: 1,
+								Data:     []byte{unix.IPPROTO_TCP},
+							},
+							&expr.Payload{
+								DestRegister: 1,
+								Base:         expr.PayloadBaseTransportHeader,
+								Offset:       2,
+								Len:          2,
+							},
 
-					// 		&expr.Immediate{
-					// 			Register: 2,
-					// 			Data:     cethIp.IP.To4(),
-					// 		},
-					// 		&expr.NAT{
-					// 			Type:        expr.NATTypeDestNAT,
-					// 			Family:      unix.NFPROTO_IPV4,
-					// 			RegAddrMin:  2,
-					// 			RegProtoMin: 1,
-					// 		},
-					// 	},
-					// })
+							&expr.Cmp{
+								Op:       expr.CmpOpGte,
+								Register: 1,
+								Data:     []byte{0x00, 0x01},
+							},
+							&expr.Cmp{
+								Op:       expr.CmpOpLte,
+								Register: 1,
+								Data:     []byte{0xff, 0xff},
+							},
+
+							&expr.Immediate{
+								Register: 2,
+								Data:     cethIp.IP.To4(),
+							},
+							&expr.NAT{
+								Type:        expr.NATTypeDestNAT,
+								Family:      unix.NFPROTO_IPV4,
+								RegAddrMin:  2,
+								RegProtoMin: 1,
+							},
+						},
+					})
 
 					if err := nc.Flush(); err != nil {
 						return xerrors.Errorf("failed to apply nftables: %v", err)
@@ -417,6 +427,10 @@ func main() {
 					mask := net.IPv4Mask(255, 255, 255, 0)
 					cethIp := net.IPNet{
 						IP:   net.IPv4(10, 0, 5, 2),
+						Mask: mask,
+					}
+					vethIp := net.IPNet{
+						IP:   net.IPv4(10, 0, 5, 1),
 						Mask: mask,
 					}
 
@@ -439,8 +453,14 @@ func main() {
 						return xerrors.Errorf("failed to enable lo: %v", err)
 					}
 
-					// TODO(toru): when we will complete implementing the dynamically ports exporsing,
-					//	           we have to implement changing default gw here.
+					defaultGw := netlink.Route{
+						Scope: netlink.SCOPE_UNIVERSE,
+						Gw:    vethIp.IP,
+					}
+					if err := netlink.RouteReplace(&defaultGw); err != nil {
+						return xerrors.Errorf("failed to set up deafult gw: %v", err)
+					}
+
 					return nil
 				},
 			},

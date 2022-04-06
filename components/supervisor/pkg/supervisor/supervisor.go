@@ -193,11 +193,6 @@ func Run(options ...RunOption) {
 		log.WithError(err).Warn("cannot tunnel internal ports")
 	}
 
-	var slirp ports.SlirpClient
-	if _, err := os.Stat("/.supervisor/slirp4netns.sock/slirp4netns.sock"); err == nil {
-		slirp = ports.Slirp4Netns("/.supervisor/slirp4netns.sock/slirp4netns.sock")
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 
 	internalPorts := []uint32{uint32(cfg.IDEPort), uint32(cfg.APIEndpointPort), uint32(cfg.SSHPort)}
@@ -219,7 +214,6 @@ func Run(options ...RunOption) {
 			},
 			ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
 			tunneledPortsService,
-			slirp,
 			internalPorts...,
 		)
 		termMux             = terminal.NewMux()
