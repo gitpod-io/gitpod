@@ -517,7 +517,7 @@ func TestPortsUpdateState(t *testing.T) {
 					Error:   make(chan error, 1),
 				}
 
-				pm    = NewManager(exposed, served, config, tunneled, nil, test.InternalPorts...)
+				pm    = NewManager(exposed, served, config, tunneled, test.InternalPorts...)
 				updts [][]*api.PortsStatus
 			)
 			pm.proxyStarter = func(port uint32) (io.Closer, error) {
@@ -683,7 +683,7 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 			Changes: make(chan []PortTunnelState),
 			Error:   make(chan error, 1),
 		}
-		pm = NewManager(exposed, served, config, tunneled, nil)
+		pm = NewManager(exposed, served, config, tunneled)
 	)
 	pm.proxyStarter = func(local uint32) (io.Closer, error) {
 		return io.NopCloser(nil), nil
