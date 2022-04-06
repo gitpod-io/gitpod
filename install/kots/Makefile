@@ -16,7 +16,7 @@ create_dev_release:
 		exit 1; \
 	fi
 
-	replicated release create --lint --ensure-channel --yaml-dir ${YAML_DIR} --promote ${REPLICATED_DEV_CHANNEL}
+	replicated release create --lint --ensure-channel --yaml-dir ${YAML_DIR} --promote ${REPLICATED_DEV_CHANNEL} --version="$(shell date +%s)"
 .PHONY: create_dev_release
 
 create_unstable_release:
