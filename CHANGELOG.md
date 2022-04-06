@@ -1,6 +1,13 @@
 # Change Log
 
 ## April 2022
+- [registry-facade] Configure credentials for Redis Sentinel ([#9106](https://github.com/gitpod-io/gitpod/pull/9106)) - [@aledbf](https://github.com/aledbf)
+- Add custom CA cert support to workspaces ([#9081](https://github.com/gitpod-io/gitpod/pull/9081)) - [@csweichel](https://github.com/csweichel)
+- Remove Prebuild action and log view from Project Settings view ([#8831](https://github.com/gitpod-io/gitpod/pull/8831)) - [@easyCZ](https://github.com/easyCZ)
+- [gitpod-db] Don't consider garbage-collected prebuilds as potential bases for incremental prebuilds ([#9121](https://github.com/gitpod-io/gitpod/pull/9121)) - [@jankeromnes](https://github.com/jankeromnes)
+- Store WorkspaceInstance.status_version in d_b_prebuild_workspace and count prebuild stale events ([#9115](https://github.com/gitpod-io/gitpod/pull/9115)) - [@easyCZ](https://github.com/easyCZ)
+- Added requirements to KOTS installation ([#9125](https://github.com/gitpod-io/gitpod/pull/9125)) - [@lucasvaltl](https://github.com/lucasvaltl)
+- [kots]: add a kernel version check to the preflights ([#9083](https://github.com/gitpod-io/gitpod/pull/9083)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [server] For GitLab projects without an owner avatar, fall back to the namespace avatar, or generate the default GitLab avatar ([#8824](https://github.com/gitpod-io/gitpod/pull/8824)) - [@jankeromnes](https://github.com/jankeromnes)
 - Fixes incremental prebuilds by choosing the right prebuild base. ([#9109](https://github.com/gitpod-io/gitpod/pull/9109)) - [@laushinka](https://github.com/laushinka)
 - [installer] Fix registry facade env variables for IPFS and redis ([#9104](https://github.com/gitpod-io/gitpod/pull/9104)) - [@aledbf](https://github.com/aledbf)
