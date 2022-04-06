@@ -461,7 +461,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         try {
-            await installMonitoring(CORE_DEV_KUBECONFIG_PATH, namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
+            installMonitoring(CORE_DEV_KUBECONFIG_PATH, namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
         } catch (err) {
             if (!jobConfig.mainBuild) {
                 werft.fail('observability', err);
@@ -705,7 +705,7 @@ async function installMetaCertificates(werft: Werft, branch: string, withVM: boo
     await installCertificate(werft, metaInstallCertParams, { ...metaEnv(), slice: slice });
 }
 
-async function installMonitoring(kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
+function installMonitoring(kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
     const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
     installMonitoringSatelliteParams.kubeconfigPath = kubeconfig
     installMonitoringSatelliteParams.branch = observabilityBranch;
@@ -715,7 +715,7 @@ async function installMonitoring(kubeconfig: string, namespace: string, nodeExpo
     installMonitoringSatelliteParams.previewDomain = domain
     installMonitoringSatelliteParams.stackdriverServiceAccount = stackdriverServiceAccount
     installMonitoringSatelliteParams.withVM = withVM
-    await installMonitoringSatellite(installMonitoringSatelliteParams);
+    installMonitoringSatellite(installMonitoringSatelliteParams);
 }
 
 // returns the static IP address

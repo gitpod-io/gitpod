@@ -22,7 +22,7 @@ const sliceName = 'observability';
 /**
  * installMonitoringSatellite installs monitoring-satellite, while updating its dependencies to the latest commit in the branch it is running.
  */
-export async function installMonitoringSatellite(params: InstallMonitoringSatelliteParams) {
+export function installMonitoringSatellite(params: InstallMonitoringSatelliteParams) {
     const werft = getGlobalWerftInstance()
 
     werft.log(sliceName, `Cloning observability repository - Branch: ${params.branch}`)
@@ -71,26 +71,26 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
     werft.log(sliceName, 'rendering YAML files')
     exec(jsonnetRenderCmd, {silent: true})
     if(params.withVM) {
-        await postProcessManifests()
+        postProcessManifests()
     }
 
     // The correct kubectl context should already be configured prior to this step
     // Only checks node-exporter readiness for harvester
-    await ensureCorrectInstallationOrder(params.kubeconfigPath, params.satelliteNamespace, params.withVM)
+    ensureCorrectInstallationOrder(params.kubeconfigPath, params.satelliteNamespace, params.withVM)
     werft.done(sliceName);
 }
 
-async function ensureCorrectInstallationOrder(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean){
+function ensureCorrectInstallationOrder(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean){
     const werft = getGlobalWerftInstance()
 
     werft.log(sliceName, 'installing monitoring-satellite')
     exec(`cd observability && hack/deploy-satellite.sh --kubeconfig ${kubeconfig}`, {slice: sliceName})
 
-    await deployGitpodServiceMonitors(kubeconfig)
-    await checkReadiness(kubeconfig, namespace, checkNodeExporterStatus)
+    deployGitpodServiceMonitors(kubeconfig)
+    checkReadiness(kubeconfig, namespace, checkNodeExporterStatus)
 }
 
-async function checkReadiness(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean) {
+function checkReadiness(kubeconfig: string, namespace: string, checkNodeExporterStatus: boolean) {
     // For some reason prometheus' statefulset always take quite some time to get created
     // Therefore we wait a couple of seconds
     exec(`sleep 30 && kubectl --kubeconfig ${kubeconfig} rollout status -n ${namespace} statefulset prometheus-k8s`, {slice: sliceName, async: true})
@@ -105,14 +105,14 @@ async function checkReadiness(kubeconfig: string, namespace: string, checkNodeEx
     }
 }
 
-async function deployGitpodServiceMonitors(kubeconfig: string) {
+function deployGitpodServiceMonitors(kubeconfig: string) {
     const werft = getGlobalWerftInstance()
 
     werft.log(sliceName, 'installing gitpod ServiceMonitor resources')
     exec(`kubectl --kubeconfig ${kubeconfig} apply -f observability/monitoring-satellite/manifests/gitpod/`, {silent: true})
 }
 
-async function postProcessManifests() {
+function postProcessManifests() {
     const werft = getGlobalWerftInstance()
 
     // We're hardcoding nodeports, so we can use them in .werft/vm/manifests.ts
