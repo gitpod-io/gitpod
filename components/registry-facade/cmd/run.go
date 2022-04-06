@@ -179,6 +179,7 @@ func newDefaultTransport() *http.Transport {
 		IdleConnTimeout:       30 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 5 * time.Second,
+		DisableKeepAlives:     true,
 	}
 }
 
