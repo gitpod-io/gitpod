@@ -45,9 +45,13 @@ type Components struct {
 			CodeDesktopImage         Versioned `json:"codeDesktop"`
 			CodeDesktopImageInsiders Versioned `json:"codeDesktopInsiders"`
 			IntelliJImage            Versioned `json:"intellij"`
+			IntelliJLatestImage      Versioned `json:"intellijLatest"`
 			GoLandImage              Versioned `json:"goland"`
+			GoLandLatestImage        Versioned `json:"golandLatest"`
 			PyCharmImage             Versioned `json:"pycharm"`
+			PyCharmLatestImage       Versioned `json:"pycharmLatest"`
 			PhpStormImage            Versioned `json:"phpstorm"`
+			PhpStormLatestImage      Versioned `json:"phpstormLatest"`
 		} `json:"desktopIdeImages"`
 	} `json:"workspace"`
 	WSDaemon struct {

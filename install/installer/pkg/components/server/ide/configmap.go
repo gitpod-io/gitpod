@@ -10,6 +10,8 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace/ide"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +33,21 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	goland := "goland"
 	pycharm := "pycharm"
 	phpstorm := "phpstorm"
+
+	resolveLatestImage := func(name string, tag string, bundledLatest versions.Versioned) string {
+		resolveLatest := true
+		ctx.WithExperimental(func(ucfg *experimental.Config) error {
+			if ucfg.IDE != nil && ucfg.IDE.ResolveLatest != nil {
+				resolveLatest = *ucfg.IDE.ResolveLatest
+			}
+			return nil
+		})
+		if resolveLatest {
+			return common.ImageName(ctx.Config.Repository, name, tag)
+		}
+		return common.ImageName(ctx.Config.Repository, name, bundledLatest.Version)
+	}
+
 	idecfg := IDEConfig{
 		SupervisorImage: common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 		IDEOptions: IDEOptions{
@@ -72,7 +89,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Logo:               getIdeLogoPath("vscodeInsiders"),
 					Tooltip:            pointer.String("Early access version, still subject to testing."),
 					Label:              pointer.String("Insiders"),
-					Image:              common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
+					Image:              resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
 					ResolveImageDigest: pointer.Bool(true),
 				},
 				codeDesktop: {
@@ -97,7 +114,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:        typeDesktop,
 					Logo:        getIdeLogoPath("intellijIdeaLogo"),
 					Image:       common.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
-					LatestImage: common.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, "latest"),
+					LatestImage: resolveLatestImage(ide.IntelliJDesktopIDEImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJLatestImage),
 				},
 				goland: {
 					OrderKey:    pointer.String("05"),
@@ -105,7 +122,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:        typeDesktop,
 					Logo:        getIdeLogoPath("golandLogo"),
 					Image:       common.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
-					LatestImage: common.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, "latest"),
+					LatestImage: resolveLatestImage(ide.GoLandDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandLatestImage),
 				},
 				pycharm: {
 					OrderKey:    pointer.String("06"),
@@ -113,7 +130,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:        typeDesktop,
 					Logo:        getIdeLogoPath("pycharmLogo"),
 					Image:       common.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmImage.Version),
-					LatestImage: common.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, "latest"),
+					LatestImage: resolveLatestImage(ide.PyCharmDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmLatestImage),
 				},
 				phpstorm: {
 					OrderKey:    pointer.String("07"),
@@ -121,7 +138,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:        typeDesktop,
 					Logo:        getIdeLogoPath("phpstormLogo"),
 					Image:       common.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormImage.Version),
-					LatestImage: common.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, "latest"),
+					LatestImage: resolveLatestImage(ide.PhpStormDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormLatestImage),
 				},
 			},
 			DefaultIDE:        "code",
