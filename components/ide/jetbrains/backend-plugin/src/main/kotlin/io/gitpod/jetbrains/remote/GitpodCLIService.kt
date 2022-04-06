@@ -12,6 +12,7 @@ import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.application
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
@@ -25,6 +26,9 @@ class GitpodCLIService : RestService() {
     override fun getServiceName() = SERVICE_NAME
 
     override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
+        if (application.isHeadlessEnvironment) {
+            return "not supported in headless mode"
+        }
         val operation = getStringParameter("op", urlDecoder)
         if (operation == "open") {
             val fileStr = getStringParameter("file", urlDecoder)

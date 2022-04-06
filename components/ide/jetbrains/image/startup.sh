@@ -8,14 +8,6 @@ set -euo pipefail
 # kill background jobs when the script exits
 trap "jobs -p | xargs -r kill" SIGINT SIGTERM EXIT
 
-/ide-desktop/status "$1" "$2" &
-
-echo "Desktop IDE: Waiting for the content initializer ..."
-until curl -sS "$SUPERVISOR_ADDR"/_supervisor/v1/status/content/wait/true | grep '"available":true' > /dev/null; do
-    sleep 1
-done
-echo "Desktop IDE: Content available."
-
 # instead put them into /ide-desktop/backend/bin/idea64.vmoptions
 # otherwise JB will complain to a user on each startup
 # by default remote dev already set -Xmx2048m, see /ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh
@@ -33,6 +25,4 @@ export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains
 # Enable host status endpoint
 export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
 
-/ide-desktop/backend/bin/remote-dev-server.sh run "$GITPOD_REPO_ROOT"
-
-echo "Desktop IDE startup script exited"
+/ide-desktop/status "$1" "$2"
