@@ -153,7 +153,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	var (
 		wsloc string
 	)
-	if req.FullWorkspaceBackup {
+	if req.FullWorkspaceBackup || req.PersistentVolumeClaim {
 		if s.runtime == nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "full workspace backup is not available - not connected to container runtime")
 		}
@@ -164,6 +164,10 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		err = json.Unmarshal(req.ContentManifest, &mf)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid content manifest: %s", err.Error())
+		}
+		if req.PersistentVolumeClaim {
+			// pavel: setting wsloc as otherwise mkdir fails later on.
+			wsloc = filepath.Join(s.store.Location, req.Id)
 		}
 	} else {
 		wsloc = filepath.Join(s.store.Location, req.Id)
@@ -177,7 +181,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		return nil, err
 	}
 
-	if !req.FullWorkspaceBackup {
+	if !req.FullWorkspaceBackup && !req.PersistentVolumeClaim {
 		var remoteContent map[string]storage.DownloadInfo
 
 		// some workspaces don't have remote storage enabled. For those workspaces we clearly
@@ -259,6 +263,7 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.Worksp
 			WorkspaceID:           req.Metadata.MetaId,
 			InstanceID:            req.Id,
 			FullWorkspaceBackup:   req.FullWorkspaceBackup,
+			PersistentVolumeClaim: req.PersistentVolumeClaim,
 			ContentManifest:       req.ContentManifest,
 			RemoteStorageDisabled: req.RemoteStorageDisabled,
 			StorageQuota:          int(req.StorageQuotaBytes),
@@ -379,6 +384,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 	span.SetTag("backup", backupName)
 	span.SetTag("manifest", mfName)
 	span.SetTag("full", sess.FullWorkspaceBackup)
+	span.SetTag("pvc", sess.PersistentVolumeClaim)
 	defer tracing.FinishSpan(span, &err)
 
 	var (
@@ -386,6 +392,12 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		opts []storage.UploadOption
 		mf   csapi.WorkspaceContentManifest
 	)
+
+	if sess.PersistentVolumeClaim {
+		// currently not supported (will be done differently via snapshots)
+		log.Error("uploadWorkspaceContent not supported yet when PVC feature is enabled")
+		return nil
+	}
 
 	if sess.FullWorkspaceBackup {
 		// Backup any change located in the upper overlay directory of the workspace in the node
@@ -673,6 +685,9 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 	if sess.RemoteStorageDisabled {
 		return nil, status.Error(codes.FailedPrecondition, "workspace has no remote storage")
 	}
+	if sess.PersistentVolumeClaim {
+		return nil, status.Error(codes.FailedPrecondition, "snapshots are not support yet when persistent volume claim feature is enabled")
+	}
 	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {
 		log.WithFields(sess.OWI()).WithError(err).Error("cannot upload snapshot: no remote storage configured")
@@ -730,6 +745,9 @@ func (s *WorkspaceService) BackupWorkspace(ctx context.Context, req *api.BackupW
 	}
 	if sess.RemoteStorageDisabled {
 		return nil, status.Errorf(codes.FailedPrecondition, "workspace has no remote storage")
+	}
+	if sess.PersistentVolumeClaim {
+		return nil, status.Errorf(codes.FailedPrecondition, "workspace backup not supported yet when persistent volume claim feature is enabled")
 	}
 	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {

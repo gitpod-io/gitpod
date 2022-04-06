@@ -203,6 +203,7 @@
             "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
+            "securityContext": {},
             "hostname": "foobar",
             "affinity": {
                 "nodeAffinity": {

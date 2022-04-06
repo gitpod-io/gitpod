@@ -22,6 +22,7 @@ import (
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -660,6 +661,7 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 // prior to this call this function returns once initialization is complete.
 func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error) {
 	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupAnnotation]
+	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureAnnotation]
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
@@ -713,7 +715,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			return xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
 
-		if fullWorkspaceBackup {
+		if fullWorkspaceBackup || pvcFeatureEnabled {
 			_, mf, err := m.manager.Content.GetContentLayer(ctx, workspaceMeta.Owner, workspaceMeta.MetaId, &initializer)
 			if err != nil {
 				return xerrors.Errorf("cannot download workspace content manifest: %w", err)
@@ -754,6 +756,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			},
 			Initializer:           &initializer,
 			FullWorkspaceBackup:   fullWorkspaceBackup,
+			PersistentVolumeClaim: pvcFeatureEnabled,
 			ContentManifest:       contentManifest,
 			RemoteStorageDisabled: shouldDisableRemoteStorage(pod),
 			StorageQuotaBytes:     storage.Value(),
@@ -865,6 +868,30 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		if alreadyFinalizing {
 			m.finalizerMapLock.Unlock()
 			return false, nil, nil
+		}
+
+		// todo: once we add snapshot objects, this will be moved to a better place
+		if wso.Pod != nil {
+			_, pvcFeatureEnabled := wso.Pod.Labels[pvcWorkspaceFeatureAnnotation]
+			if pvcFeatureEnabled {
+				// pvc name is the same as pod name
+				pvcName := wso.Pod.Name
+				log.Infof("Deleting PVC: %s", pvcName)
+				// todo: once we add snapshot objects, this will be changed to create snapshot object first
+				pvcErr := m.manager.Clientset.Delete(ctx,
+					&corev1.PersistentVolumeClaim{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      pvcName,
+							Namespace: m.manager.Config.Namespace,
+						},
+					},
+				)
+				span.LogKV("event", "pvc deleted")
+
+				if pvcErr != nil {
+					log.WithError(pvcErr).Errorf("failed to delete pvc `%s`", pvcName)
+				}
+			}
 		}
 
 		// Maybe the workspace never made it to a phase where we actually initialized a workspace.
