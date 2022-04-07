@@ -73,6 +73,8 @@ func hookSetupRemoteStorage(cfg Config) session.WorkspaceLivecycleHook {
 func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) error {
 	location := ws.Location
 
+	log.Infof("hookSetupWorkspaceLocation: %s", location)
+
 	// 1. Clean out the workspace directory
 	if _, err := os.Stat(location); os.IsNotExist(err) {
 		// in the very unlikely event that the workspace Pod did not mount (and thus create) the workspace directory, create it
