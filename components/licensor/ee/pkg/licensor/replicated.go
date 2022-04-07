@@ -81,7 +81,8 @@ func (e *ReplicatedEvaluator) Validate() (msg string, valid bool) {
 // defaultReplicatedLicense this is the default license if call fails
 func defaultReplicatedLicense() *Evaluator {
 	return &Evaluator{
-		lic: defaultLicense,
+		lic:           defaultLicense,
+		allowFallback: true,
 	}
 }
 

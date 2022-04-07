@@ -238,7 +238,7 @@ func TestFeatures(t *testing.T) {
 			FeaturePrebuild,
 		}, LicenseTypeGitpod, seats, nil},
 
-		{"Gitpod (over seats): no license", true, LicenseLevel(0), []Feature{}, LicenseTypeGitpod, 11, nil},
+		{"Gitpod (over seats): no license", true, LicenseLevel(0), []Feature{FeatureAdminDashboard}, LicenseTypeGitpod, 11, nil},
 		{"Gitpod (over seats): invalid license level", false, LicenseLevel(666), []Feature{}, LicenseTypeGitpod, seats + 1, nil},
 		{"Gitpod (over seats): enterprise license", false, LevelEnterprise, []Feature{}, LicenseTypeGitpod, seats + 1, nil},
 
