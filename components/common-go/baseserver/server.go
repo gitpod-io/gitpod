@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
+	"time"
 )
 
 type config struct {
@@ -196,6 +198,7 @@ func (s *Server) initializeHTTP() error {
 func (s *Server) newHTTPMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.Handle("/ready", ReadyHandler())
+	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
 }
@@ -210,4 +213,31 @@ type Certs struct {
 	CACertPath     string
 	ServerCertPath string
 	ServerKeyPath  string
+}
+
+func (s *Server) WaitForServerToBeReachable(ctx context.Context) bool {
+	tick := 100 * time.Millisecond
+	t := time.NewTicker(tick)
+	defer t.Stop()
+
+	client := http.Client{
+		Timeout: tick,
+	}
+
+	healthURL := fmt.Sprintf("%s/ready", s.HTTPAddress())
+
+	for {
+		select {
+		case <-ctx.Done():
+			return false
+		case <-t.C:
+			_, err := client.Get(healthURL)
+			if err != nil {
+				continue
+			}
+
+			// any response means we've managed to reach the server
+			return true
+		}
+	}
 }
