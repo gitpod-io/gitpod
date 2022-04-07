@@ -92,14 +92,14 @@ export class WorkspaceManagerClientProvider implements Disposable {
         let client = this.connectionCache.get(name);
         if (!client) {
             const info = await getConnectionInfo();
-            client = this.createClient(info, grpcOptions);
+            client = client = this.createConnection(WorkspaceManagerClient, info, grpcOptions);
             this.connectionCache.set(name, client);
         } else if (client.getChannel().getConnectivityState(true) != grpc.connectivityState.READY) {
             client.close();
 
             console.warn(`Lost connection to workspace manager \"${name}\" - attempting to reestablish`);
             const info = await getConnectionInfo();
-            client = this.createClient(info, grpcOptions);
+            client = this.createConnection(WorkspaceManagerClient, info, grpcOptions);
             this.connectionCache.set(name, client);
         }
 
@@ -119,7 +119,12 @@ export class WorkspaceManagerClientProvider implements Disposable {
         return this.source.getAllWorkspaceClusters();
     }
 
-    public createClient(info: WorkspaceManagerConnectionInfo, grpcOptions?: object): WorkspaceManagerClient {
+    public createConnection<T extends grpc.Client>(creator: { new(address: string, credentials: grpc.ChannelCredentials, options?: grpc.ClientOptions): T }, info: WorkspaceManagerConnectionInfo, grpcOptions?: object): T {
+        const options: Partial<grpc.ClientOptions> = {
+            ...grpcOptions,
+            'grpc.ssl_target_name_override': "ws-manager",  // this makes sure we can call ws-manager with a URL different to "ws-manager"
+        };
+
         let credentials: grpc.ChannelCredentials;
         if (info.tls) {
             const rootCerts = Buffer.from(info.tls.ca, "base64");
@@ -131,11 +136,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
             credentials = grpc.credentials.createInsecure();
         }
 
-        const options: Partial<grpc.ClientOptions> = {
-            ...grpcOptions,
-            'grpc.ssl_target_name_override': "ws-manager",  // this makes sure we can call ws-manager with a URL different to "ws-manager"
-        };
-        return new WorkspaceManagerClient(info.url, credentials, options);
+        return new creator(info.url, credentials, options);
     }
 
     public dispose() {

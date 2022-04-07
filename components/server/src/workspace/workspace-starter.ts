@@ -178,7 +178,11 @@ export class WorkspaceStarter {
                 auth.setTotal(allowAll);
                 req.setAuth(auth);
 
-                const client = this.imagebuilderClientProvider.getDefault();
+                const client = await this.imagebuilderClientProvider.getDefault(
+                    user,
+                    workspace,
+                    {} as WorkspaceInstance,
+                );
                 const res = await client.resolveBaseImage({ span }, req);
                 workspace.imageSource = <WorkspaceImageSourceReference>{
                     baseImageResolved: res.getRef(),
@@ -814,7 +818,7 @@ export class WorkspaceStarter {
     ): Promise<boolean> {
         const span = TraceContext.startSpan("needsImageBuild", ctx);
         try {
-            const client = this.imagebuilderClientProvider.getDefault();
+            const client = await this.imagebuilderClientProvider.getDefault(user, workspace, instance);
             const { src, auth, disposable } = await this.prepareBuildRequest(
                 { span },
                 workspace,
@@ -854,7 +858,7 @@ export class WorkspaceStarter {
 
         try {
             // Start build...
-            const client = this.imagebuilderClientProvider.getDefault();
+            const client = await this.imagebuilderClientProvider.getDefault(user, workspace, instance);
             const { src, auth, disposable } = await this.prepareBuildRequest(
                 { span },
                 workspace,
