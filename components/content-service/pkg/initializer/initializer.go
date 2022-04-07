@@ -391,7 +391,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 				log.WithError(err).WithField("location", location).Debug("ran into non-atomic workspace location existence check")
 				span.SetTag("exists", true)
 			} else if err != nil {
-				return src, xerrors.Errorf("cannot create workspace: %w", err)
+				return src, xerrors.Errorf("cannot create workspace: %w, location: %s", err, location)
 			}
 		}
 		fs, err := os.ReadDir(location)
