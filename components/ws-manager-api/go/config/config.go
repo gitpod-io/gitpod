@@ -49,6 +49,9 @@ type ServiceConfiguration struct {
 		} `json:"tls"`
 		RateLimits map[string]grpc.RateLimit `json:"ratelimits"`
 	} `json:"rpcServer"`
+	ImageBuilderProxy struct {
+		TargetAddr string `json:"targetAddr"`
+	} `json:"imageBuilderProxy"`
 
 	PProf struct {
 		Addr string `json:"addr"`
