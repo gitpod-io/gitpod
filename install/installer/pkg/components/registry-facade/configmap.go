@@ -27,20 +27,31 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	var ipfsCache *regfac.IPFSCacheConfig
+	var redisCache *regfac.RedisCacheConfig
+
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg.Workspace == nil || !ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+		if ucfg.Workspace == nil {
 			return nil
 		}
-		cacheCfg := ucfg.Workspace.RegistryFacade.IPFSCache
-		ipfsCache = &regfac.IPFSCacheConfig{
-			Enabled:  true,
-			IPFSAddr: cacheCfg.IPFSAddr,
-			Redis: regfac.RedisConfig{
-				MasterName:    cacheCfg.Redis.MasterName,
-				SentinelAddrs: cacheCfg.Redis.SentinelAddrs,
-				Username:      cacheCfg.Redis.Username,
-			},
+
+		if ucfg.Workspace.RegistryFacade.RedisCache.Enabled {
+			cacheCfg := ucfg.Workspace.RegistryFacade.RedisCache
+			redisCache = &regfac.RedisCacheConfig{
+				Enabled:       true,
+				MasterName:    cacheCfg.MasterName,
+				SentinelAddrs: cacheCfg.SentinelAddrs,
+				Username:      cacheCfg.Username,
+			}
 		}
+
+		if ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+			cacheCfg := ucfg.Workspace.RegistryFacade.IPFSCache
+			ipfsCache = &regfac.IPFSCacheConfig{
+				Enabled:  true,
+				IPFSAddr: cacheCfg.IPFSAddr,
+			}
+		}
+
 		return nil
 	})
 
@@ -72,7 +83,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type: "image",
 				},
 			},
-			IPFSCache: ipfsCache,
+			IPFSCache:  ipfsCache,
+			RedisCache: redisCache,
 		},
 		AuthCfg:            "/mnt/pull-secret.json",
 		PProfAddr:          ":6060",

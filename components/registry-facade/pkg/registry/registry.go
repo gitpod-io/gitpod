@@ -83,8 +83,15 @@ type Registry struct {
 // NewRegistry creates a new registry
 func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus.Registerer) (*Registry, error) {
 	var mfStore BlobStore
+
 	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
-		rdc, err := getRedisClient(cfg.IPFSCache.Redis)
+		if cfg.RedisCache != nil && cfg.RedisCache.Enabled {
+			return nil, xerrors.Errorf("IPFS cache requires Redis")
+		}
+	}
+
+	if cfg.RedisCache != nil && cfg.RedisCache.Enabled {
+		rdc, err := getRedisClient(cfg.RedisCache)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot connect to Redis: %w", err)
 		}
@@ -235,7 +242,7 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 		if err != nil {
 			return nil, xerrors.Errorf("cannot connect to IPFS: %w", err)
 		}
-		rdc, err := getRedisClient(cfg.IPFSCache.Redis)
+		rdc, err := getRedisClient(cfg.RedisCache)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot connect to Redis: %w", err)
 		}
@@ -261,7 +268,7 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 	}, nil
 }
 
-func getRedisClient(cfg config.RedisConfig) (*redis.Client, error) {
+func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
 	if cfg.SingleHostAddress != "" {
 		log.WithField("addr", cfg.SingleHostAddress).WithField("username", cfg.Username).Info("connecting to single Redis host")
 		rdc := redis.NewClient(&redis.Options{
