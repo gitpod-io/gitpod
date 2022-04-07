@@ -297,3 +297,70 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 		})
 	}
 }
+
+func TestAcmeHandler(t *testing.T) {
+	type Expectation struct {
+		ContentType string
+		Code        int
+	}
+	tests := []struct {
+		Name        string
+		Method      string
+		URL         string
+		Body        []byte
+		Expectation Expectation
+	}{
+		{
+			Name:   "Valid acme request",
+			Method: http.MethodGet,
+			URL:    "http://domain.example.com/.well-known/acme-challenge/token1",
+			Expectation: Expectation{
+				Code:        403,
+				ContentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			Name:   "Not an acme request",
+			Method: http.MethodGet,
+			URL:    "http://domain.example.com/",
+			Expectation: Expectation{
+				Code:        404,
+				ContentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			Name:   "Valid acme request",
+			Method: http.MethodGet,
+			URL:    "http://1.1.1.1/.well-known/acme-challenge/token1",
+			Expectation: Expectation{
+				Code:        403,
+				ContentType: "text/plain; charset=utf-8",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			req, err := http.NewRequest(test.Method, test.URL, nil)
+			if err != nil {
+				t.Errorf("unexpected error:%v", err)
+			}
+
+			w := httptest.NewRecorder()
+
+			r := mux.NewRouter()
+			setupAcmeRouter(r)
+
+			r.ServeHTTP(w, req)
+
+			act := Expectation{
+				ContentType: w.Header().Get("Content-Type"),
+				Code:        w.Code,
+			}
+
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("unexpected result (-want +got):\n%s", diff)
+			}
+		})
+	}
+}

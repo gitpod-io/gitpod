@@ -6,6 +6,7 @@ package proxy
 
 import (
 	"net/http"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -62,6 +63,8 @@ func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) Work
 			portRouter      = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader, true)).Subrouter()
 			ideRouter       = r.MatcherFunc(matchWorkspaceHostHeader(allClusterWsHostSuffixRegex, getHostHeader, false)).Subrouter()
 		)
+
+		setupAcmeRouter(r)
 
 		r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			hostname := getHostHeader(req)
@@ -193,4 +196,22 @@ func getWorkspaceCoords(req *http.Request) WorkspaceCoords {
 		ID:   vars[workspaceIDIdentifier],
 		Port: vars[workspacePortIdentifier],
 	}
+}
+
+func isAcmeChallenge(path string) bool {
+	return strings.HasPrefix(filepath.Clean(path), "/.well-known/acme-challenge/")
+}
+
+func matchAcmeChallenge() mux.MatcherFunc {
+	return func(req *http.Request, m *mux.RouteMatch) bool {
+		return isAcmeChallenge(req.URL.Path)
+	}
+}
+
+func setupAcmeRouter(router *mux.Router) {
+	router.MatcherFunc(matchAcmeChallenge()).HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		log.Debugf("ACME challenge found for path %s, host: %s", req.URL.Path, req.Host)
+		w.WriteHeader(http.StatusForbidden)
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	})
 }
