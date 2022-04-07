@@ -19,7 +19,8 @@ func NewGitpodEvaluator(key []byte, domain string) (res *Evaluator) {
 	if len(key) == 0 {
 		// fallback to the default license
 		return &Evaluator{
-			lic: defaultLicense,
+			lic:           defaultLicense,
+			allowFallback: true,
 		}
 	}
 
