@@ -1,6 +1,11 @@
 # Change Log
 
 ## April 2022
+- Fixed one frame running phase when starting workspace ([#9004](https://github.com/gitpod-io/gitpod/pull/9004)) - [@mustard-mh](https://github.com/mustard-mh)
+- Fixed IDE options display incorrectly when restarting the workspace ([#9004](https://github.com/gitpod-io/gitpod/pull/9004)) - [@mustard-mh](https://github.com/mustard-mh)
+- Fixed stopped workspace does not work again if it started in another place ([#9004](https://github.com/gitpod-io/gitpod/pull/9004)) - [@mustard-mh](https://github.com/mustard-mh)
+- Allow setting custom workspace timeouts in the Gitpod Installer for self-hosted installations. ([#8576](https://github.com/gitpod-io/gitpod/pull/8576)) - [@corneliusludmann](https://github.com/corneliusludmann)
+- ws-manager-bridge skips stale prebuild events ([#9116](https://github.com/gitpod-io/gitpod/pull/9116)) - [@easyCZ](https://github.com/easyCZ)
 - [registry-facade] Configure credentials for Redis Sentinel ([#9106](https://github.com/gitpod-io/gitpod/pull/9106)) - [@aledbf](https://github.com/aledbf)
 - Add custom CA cert support to workspaces ([#9081](https://github.com/gitpod-io/gitpod/pull/9081)) - [@csweichel](https://github.com/csweichel)
 - Remove Prebuild action and log view from Project Settings view ([#8831](https://github.com/gitpod-io/gitpod/pull/8831)) - [@easyCZ](https://github.com/easyCZ)
