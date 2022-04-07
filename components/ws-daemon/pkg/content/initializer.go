@@ -141,6 +141,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	}
 	defer os.RemoveAll(tmpdir)
 
+	log.Infof("create tmp dir: %s", tmpdir)
 	err = os.MkdirAll(filepath.Join(tmpdir, "rootfs"), 0755)
 	if err != nil {
 		return err
@@ -164,6 +165,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	if err != nil {
 		return err
 	}
+	log.Infof("wrote content.json: %s", string(fc))
 
 	spec := specconv.Example()
 
@@ -252,6 +254,8 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		errmsg, _ := ioutil.ReadAll(errIn)
 		errch <- errmsg
 	}()
+
+	log.Infof("RunInitializer: %v", args)
 
 	var cmdOut bytes.Buffer
 	cmd := exec.Command("runc", args...)
