@@ -209,10 +209,12 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
 			clog.Info("PVC feature detected, creating PVC object")
 			pvc, err := m.createPVCForWorkspacePod(startContext)
+			clog.Infof("createPVCForWorkspacePod: %v", err)
 			if err != nil {
 				return nil, xerrors.Errorf("cannot create pvc for workspace pod: %w", err)
 			}
 			err = m.Clientset.Create(ctx, pvc)
+			clog.Infof("Clientset.Create: %v", err)
 			if err != nil {
 				return nil, xerrors.Errorf("cannot create pvc object for workspace pod: %w", err)
 			}
