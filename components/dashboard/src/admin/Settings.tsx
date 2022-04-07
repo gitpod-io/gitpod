@@ -17,14 +17,16 @@ import { Redirect } from "react-router-dom";
 import { UserContext } from "../user-context";
 
 export default function Settings() {
+    // settings page doesn't have anything related to with SAAS as of now
+    if (isGitpodIo()) {
+        return;
+    }
+
     const { adminSettings, setAdminSettings } = useContext(AdminContext);
     const [telemetryData, setTelemetryData] = useState<TelemetryData>();
     const { user } = useContext(UserContext);
 
     useEffect(() => {
-        if (isGitpodIo()) {
-            return; // temporarily disable to avoid hight CPU on the DB
-        }
         (async () => {
             const data = await getGitpodService().server.adminGetTelemetryData();
             setTelemetryData(data);
