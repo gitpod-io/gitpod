@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"net"
+	"strings"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -14,9 +15,13 @@ import (
 
 	"github.com/bombsimon/logrusr/v2"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/mwitkow/grpc-proxy/proxy"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -138,6 +143,8 @@ var runCmd = &cobra.Command{
 			log.Warn("no TLS configured - gRPC server will be unsecured")
 		}
 
+		grpcOpts = append(grpcOpts, grpc.UnknownServiceHandler(proxy.TransparentHandler(imagebuilderDirector(cfg.ImageBuilderProxy.TargetAddr))))
+
 		grpcServer := grpc.NewServer(grpcOpts...)
 		defer grpcServer.Stop()
 		grpc_prometheus.Register(grpcServer)
@@ -200,3 +207,23 @@ func init() {
 var (
 	scheme = runtime.NewScheme()
 )
+
+func imagebuilderDirector(targetAddr string) proxy.StreamDirector {
+	if targetAddr == "" {
+		return func(ctx context.Context, fullMethodName string) (context.Context, *grpc.ClientConn, error) {
+			return ctx, nil, status.Error(codes.Unimplemented, "Unknown method")
+		}
+	}
+
+	return func(ctx context.Context, fullMethodName string) (outCtx context.Context, conn *grpc.ClientConn, err error) {
+		md, _ := metadata.FromIncomingContext(ctx)
+		outCtx = metadata.NewOutgoingContext(ctx, md.Copy())
+
+		if strings.HasPrefix(fullMethodName, "/builder.") {
+			conn, err = grpc.DialContext(ctx, targetAddr, grpc.WithInsecure())
+			return
+		}
+
+		return outCtx, nil, status.Error(codes.Unimplemented, "Unknown method")
+	}
+}

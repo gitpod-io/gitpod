@@ -43,6 +43,8 @@ const (
 	WSManagerComponent          = "ws-manager"
 	WSManagerBridgeComponent    = "ws-manager-bridge"
 	WSProxyComponent            = "ws-proxy"
+	ImageBuilderComponent       = "image-builder-mk3"
+	ImageBuilderRPCPort         = 8080
 
 	AnnotationConfigChecksum = "gitpod.io/checksum_config"
 )

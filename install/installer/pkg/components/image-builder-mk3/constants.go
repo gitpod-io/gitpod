@@ -4,11 +4,13 @@
 
 package image_builder_mk3
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
 	PullSecretFile = "/config/pull-secret.json"
 	BuilderImage   = "image-builder-mk3/bob"
-	Component      = "image-builder-mk3"
-	RPCPort        = 8080
+	Component      = common.ImageBuilderComponent
+	RPCPort        = common.ImageBuilderRPCPort
 	RPCPortName    = "service"
 	PProfPort      = 6060
 	PrometheusPort = 9500
