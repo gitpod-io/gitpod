@@ -205,6 +205,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	clog.Info("pod description created")
 
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
+		created := false
 		switch feature {
 		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
 			clog.Info("PVC feature detected, creating PVC object")
@@ -218,6 +219,10 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			if err != nil {
 				return nil, xerrors.Errorf("cannot create pvc object for workspace pod: %w", err)
 			}
+			created = true
+		}
+		if created {
+			break
 		}
 	}
 
