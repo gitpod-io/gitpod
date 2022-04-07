@@ -115,6 +115,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	//nolint:ineffassign,staticcheck
 	span, ctx := opentracing.StartSpanFromContext(ctx, "RunInitializer")
 	defer tracing.FinishSpan(span, &err)
+	log.Infof("RunInitializer: %s", destination)
 
 	// it's possible the destination folder doesn't exist yet, because the kubelet hasn't created it yet.
 	// If we fail to create the folder, it either already exists, or we'll fail when we try and mount it.
