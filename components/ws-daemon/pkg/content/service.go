@@ -165,10 +165,12 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid content manifest: %s", err.Error())
 		}
+		wsloc = req.Id
 	} else {
 		wsloc = filepath.Join(s.store.Location, req.Id)
 	}
 
+	log.Infof("InitWorkspace: wsloc: %s", wsloc)
 	workspace, err := s.store.NewWorkspace(ctx, req.Id, wsloc, s.creator(req))
 	if err == session.ErrAlreadyExists {
 		return nil, status.Error(codes.AlreadyExists, "workspace exists already")
