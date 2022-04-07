@@ -38,10 +38,11 @@ pod:
 
       werft log phase prepare
       gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
-      gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev
 
       export NAMESPACE="{{ .Annotations.namespace }}"
       sudo chown -R gitpod:gitpod /workspace
+
+      KUBECONFIG=/workspace/gitpod/kubeconfigs/core-dev gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev
 
       cd .werft
       yarn install
