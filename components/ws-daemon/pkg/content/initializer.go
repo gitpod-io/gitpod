@@ -275,6 +275,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		errmsg = []byte("failed to read content initializer response")
 	}
 	if err != nil {
+		log.Infof("Error for runc: %v", err)
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			// The program has exited with an exit code != 0. If it's FAIL_CONTENT_INITIALIZER_EXIT_CODE, it was deliberate.
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok && status.ExitStatus() == FAIL_CONTENT_INITIALIZER_EXIT_CODE {
@@ -285,6 +286,8 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 		return err
 	}
+
+	log.Info("RunInitializer no errors")
 
 	return nil
 }
