@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -87,6 +88,7 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 		if err != nil {
 			return nil, xerrors.Errorf("cannot connect to Redis: %w", err)
 		}
+
 		mfStore = &RedisBlobStore{Client: rdc}
 		log.Info("using redis to cache manifests and config")
 
@@ -262,11 +264,21 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 func getRedisClient(cfg config.RedisConfig) (*redis.Client, error) {
 	if cfg.SingleHostAddress != "" {
 		log.WithField("addr", cfg.SingleHostAddress).WithField("username", cfg.Username).Info("connecting to single Redis host")
-		return redis.NewClient(&redis.Options{
+		rdc := redis.NewClient(&redis.Options{
 			Addr:     cfg.SingleHostAddress,
 			Username: cfg.Username,
 			Password: cfg.Password,
-		}), nil
+		})
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
+		_, err := rdc.Ping(ctx).Result()
+		if err != nil {
+			return nil, xerrors.Errorf("cannot check Redis connection: %w", err)
+		}
+
+		return rdc, nil
 	}
 
 	if cfg.MasterName == "" {
@@ -275,7 +287,8 @@ func getRedisClient(cfg config.RedisConfig) (*redis.Client, error) {
 	if len(cfg.SentinelAddrs) == 0 {
 		return nil, fmt.Errorf("redis sentinelAddrs must not be empty")
 	}
-	return redis.NewFailoverClient(&redis.FailoverOptions{
+
+	rdc := redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    cfg.MasterName,
 		SentinelAddrs: cfg.SentinelAddrs,
 		Username:      cfg.Username,
@@ -283,7 +296,17 @@ func getRedisClient(cfg config.RedisConfig) (*redis.Client, error) {
 
 		SentinelUsername: cfg.Username,
 		SentinelPassword: cfg.Password,
-	}), nil
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	_, err := rdc.Ping(ctx).Result()
+	if err != nil {
+		return nil, xerrors.Errorf("cannot check Redis connection: %w", err)
+	}
+
+	return rdc, nil
 }
 
 // UpdateStaticLayer updates the static layer a registry-facade adds
