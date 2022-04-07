@@ -16,6 +16,7 @@ import { TeamsContext } from "../teams/teams-context";
 import { useLocation } from "react-router";
 import { StartWorkspaceModalContext, StartWorkspaceModalKeyBinding } from "./start-workspace-modal-context";
 import { getConfigcatClient } from "../experiments/configcat";
+import { UserContext } from "../user-context";
 
 export interface WorkspacesProps {}
 
@@ -28,6 +29,7 @@ export interface WorkspacesState {
 export default function () {
     const location = useLocation();
 
+    const { user } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const [activeWorkspaces, setActiveWorkspaces] = useState<WorkspaceInfo[]>([]);
     const [inactiveWorkspaces, setInactiveWorkspaces] = useState<WorkspaceInfo[]>([]);
@@ -44,10 +46,15 @@ export default function () {
 
     useEffect(() => {
         (async () => {
-            const isEnabled = await getConfigcatClient().getValueAsync("isMyFirstFeatureEnabled", false);
+            const isEnabled = await getConfigcatClient().getValueAsync("isMyFirstFeatureEnabled", false, {
+                identifier: user?.id || "",
+                custom: {
+                    team: teams?.map((t) => t.id).join(",") || "",
+                },
+            });
             setExperiment(isEnabled);
         })();
-    }, []);
+    }, [user, teams]);
 
     return (
         <>
