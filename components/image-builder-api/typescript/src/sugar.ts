@@ -15,13 +15,13 @@ import { BuildRequest, BuildResponse, BuildStatus, LogsRequest, LogsResponse, Re
 import { injectable, inject, optional } from 'inversify';
 import * as grpc from "@grpc/grpc-js";
 import { TextDecoder } from "util";
-import { ImageBuildLogInfo } from "@gitpod/gitpod-protocol";
+import { ImageBuildLogInfo, User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 
 export const ImageBuilderClientProvider = Symbol("ImageBuilderClientProvider");
 
 // ImageBuilderClientProvider caches image builder connections
 export interface ImageBuilderClientProvider {
-    getDefault(): PromisifiedImageBuilderClient
+    getDefault(user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<PromisifiedImageBuilderClient>
 }
 
 function withTracing(ctx: TraceContext) {
@@ -53,7 +53,7 @@ export class CachingImageBuilderClientProvider implements ImageBuilderClientProv
     // Thus it makes sense to cache them rather than create a new connection for each request.
     protected connectionCache: PromisifiedImageBuilderClient | undefined;
 
-    getDefault() {
+    async getDefault(user: User, workspace: Workspace, instance: WorkspaceInstance) {
         let interceptors: grpc.Interceptor[] = [];
         if (this.clientCallMetrics) {
             interceptors = [ createClientCallMetricsInterceptor(this.clientCallMetrics) ];
@@ -76,6 +76,18 @@ export class CachingImageBuilderClientProvider implements ImageBuilderClientProv
 
         this.connectionCache = connection;
         return connection;
+    }
+
+    promisify(c: ImageBuilderClient): PromisifiedImageBuilderClient {
+        let interceptors: grpc.Interceptor[] = [];
+        if (this.clientCallMetrics) {
+            interceptors = [ createClientCallMetricsInterceptor(this.clientCallMetrics) ];
+        }
+
+        return new PromisifiedImageBuilderClient(
+            new ImageBuilderClient(this.clientConfig.address, grpc.credentials.createInsecure()),
+            interceptors
+        );
     }
 
 }

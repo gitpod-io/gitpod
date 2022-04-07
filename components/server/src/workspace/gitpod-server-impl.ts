@@ -1568,7 +1568,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
             log.warn(logCtx, "imageBuild logs: fallback!");
             ctx.span?.setTag("workspace.imageBuild.logs.fallback", true);
-            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, workspace);
+            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, user, workspace);
             return;
         }
 
@@ -1617,6 +1617,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async deprecatedDoWatchWorkspaceImageBuildLogs(
         ctx: TraceContext,
         logCtx: LogContext,
+        user: User,
         workspace: Workspace,
     ) {
         if (!workspace.imageNameResolved) {
@@ -1625,7 +1626,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         try {
-            const imgbuilder = this.imageBuilderClientProvider.getDefault();
+            const imgbuilder = await this.imageBuilderClientProvider.getDefault(
+                user,
+                workspace,
+                {} as WorkspaceInstance,
+            );
             const req = new LogsRequest();
             req.setCensored(true);
             req.setBuildRef(workspace.imageNameResolved);
