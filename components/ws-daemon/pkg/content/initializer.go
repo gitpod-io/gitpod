@@ -256,7 +256,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		errch <- errmsg
 	}()
 
-	log.Infof("RunInitializer: %v", args)
+	log.Infof("RunInitializer args: %v", args)
 
 	var cmdOut bytes.Buffer
 	cmd := exec.Command("runc", args...)
