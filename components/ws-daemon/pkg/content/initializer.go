@@ -294,6 +294,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 // RunInitializerChild is the function that's expected to run when we call `/proc/self/exe content-initializer`
 func RunInitializerChild() (err error) {
+	log.Infof("RunInitializerChild")
 	fc, err := os.ReadFile("/content.json")
 	if err != nil {
 		return err
@@ -305,6 +306,7 @@ func RunInitializerChild() (err error) {
 		return err
 	}
 	log.Log = logrus.WithFields(initmsg.OWI)
+	log.Infof("RunInitializerChild2: %s", string(fc))
 
 	defer func() {
 		if err != nil {
@@ -326,6 +328,7 @@ func RunInitializerChild() (err error) {
 
 	initializer, err := wsinit.NewFromRequest(ctx, "/dst", rs, &req, wsinit.NewFromRequestOpts{ForceGitpodUserForGit: false})
 	if err != nil {
+		log.Infof("wsinit.NewFromRequest: %v", err)
 		return err
 	}
 
@@ -336,6 +339,7 @@ func RunInitializerChild() (err error) {
 		wsinit.WithCleanSlate,
 	)
 	if err != nil {
+		log.Infof("wsinit.InitializeWorkspace: %v", err)
 		return err
 	}
 
@@ -343,6 +347,7 @@ func RunInitializerChild() (err error) {
 	// the workspace ready file placement (see https://github.com/gitpod-io/gitpod/issues/7694).
 	err = wsinit.EnsureCleanDotGitpodDirectory(ctx, "/dst")
 	if err != nil {
+		log.Infof("wsinit.EnsureCleanDotGitpodDirectory: %v", err)
 		return err
 	}
 
