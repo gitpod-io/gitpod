@@ -6,6 +6,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -31,10 +32,15 @@ func GetConfig(fn string) (*ServiceConfig, error) {
 		return nil, err
 	}
 
-	if cfg.Registry.IPFSCache != nil {
-		rd := cfg.Registry.IPFSCache.Redis
+	if cfg.Registry.IPFSCache != nil && cfg.Registry.IPFSCache.Enabled &&
+		cfg.Registry.RedisCache != nil && !cfg.Registry.RedisCache.Enabled {
+		return nil, fmt.Errorf("IPFS cache requires Redis")
+	}
+
+	if cfg.Registry.RedisCache != nil {
+		rd := cfg.Registry.RedisCache
 		rd.Password = os.Getenv("REDIS_PASSWORD")
-		cfg.Registry.IPFSCache.Redis = rd
+		cfg.Registry.RedisCache = rd
 	}
 
 	return &cfg, nil
@@ -63,21 +69,24 @@ type Config struct {
 	TLS                *TLS             `json:"tls"`
 
 	IPFSCache *IPFSCacheConfig `json:"ipfs,omitempty"`
+
+	RedisCache *RedisCacheConfig `json:"redis,omitempty"`
 }
 
-type IPFSCacheConfig struct {
-	Enabled  bool        `json:"enabled"`
-	Redis    RedisConfig `json:"redis"`
-	IPFSAddr string      `json:"ipfs"`
-}
+type RedisCacheConfig struct {
+	Enabled bool `json:"enabled"`
 
-type RedisConfig struct {
 	SingleHostAddress string `json:"singleHostAddr,omitempty"`
 
 	MasterName    string   `json:"masterName,omitempty"`
 	SentinelAddrs []string `json:"sentinelAddrs,omitempty"`
 	Username      string   `json:"username,omitempty"`
 	Password      string   `json:"-" env:"REDIS_PASSWORD"`
+}
+
+type IPFSCacheConfig struct {
+	Enabled  bool   `json:"enabled"`
+	IPFSAddr string `json:"ipfs"`
 }
 
 // StaticLayerCfg configure statically added layer

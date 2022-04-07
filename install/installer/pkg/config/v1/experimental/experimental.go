@@ -34,13 +34,14 @@ type WorkspaceConfig struct {
 		IPFSCache struct {
 			Enabled  bool   `json:"enabled"`
 			IPFSAddr string `json:"ipfsAddr"`
-			Redis    struct {
-				MasterName     string   `json:"masterName"`
-				SentinelAddrs  []string `json:"sentinelAddrs"`
-				Username       string   `json:"username"`
-				PasswordSecret string   `json:"passwordSecret"`
-			} `json:"redis"`
 		} `json:"ipfsCache"`
+		RedisCache struct {
+			Enabled        bool     `json:"enabled"`
+			MasterName     string   `json:"masterName"`
+			SentinelAddrs  []string `json:"sentinelAddrs"`
+			Username       string   `json:"username"`
+			PasswordSecret string   `json:"passwordSecret"`
+		} `json:"redisCache"`
 	} `json:"registryFacade"`
 }
 

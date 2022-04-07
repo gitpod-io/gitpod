@@ -76,37 +76,49 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	var envvars []corev1.EnvVar
-	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg.Workspace == nil || !ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+	err = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace == nil {
 			return nil
 		}
 
-		envvars = []corev1.EnvVar{
-			{
-				Name: "IPFS_HOST",
-				ValueFrom: &corev1.EnvVarSource{
-					FieldRef: &corev1.ObjectFieldSelector{
-						FieldPath: "status.hostIP",
-					},
-				},
-			},
+		if ucfg.Workspace.RegistryFacade.IPFSCache.Enabled && !ucfg.Workspace.RegistryFacade.RedisCache.Enabled {
+			return fmt.Errorf("IPFS cache requires Redis")
 		}
-		if scr := ucfg.Workspace.RegistryFacade.IPFSCache.Redis.PasswordSecret; scr != "" {
-			envvars = append(envvars, corev1.EnvVar{
-				Name: "REDIS_PASSWORD",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: scr,
+
+		if ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+			envvars = []corev1.EnvVar{
+				{
+					Name: "IPFS_HOST",
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							FieldPath: "status.hostIP",
 						},
-						Key: "password",
 					},
 				},
-			})
+			}
+		}
+
+		if ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+			if scr := ucfg.Workspace.RegistryFacade.RedisCache.PasswordSecret; scr != "" {
+				envvars = append(envvars, corev1.EnvVar{
+					Name: "REDIS_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: scr,
+							},
+							Key: "password",
+						},
+					},
+				})
+			}
 		}
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return []runtime.Object{&appsv1.DaemonSet{
 		TypeMeta: common.TypeMetaDaemonset,

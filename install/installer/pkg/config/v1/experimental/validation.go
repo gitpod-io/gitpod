@@ -30,9 +30,10 @@ func ClusterValidation(cfg *Config) cluster.ValidationChecks {
 
 	var res cluster.ValidationChecks
 	if cfg.Workspace != nil {
-		if scr := cfg.Workspace.RegistryFacade.IPFSCache.Redis.PasswordSecret; scr != "" {
+		if scr := cfg.Workspace.RegistryFacade.RedisCache.PasswordSecret; scr != "" {
 			res = append(res, cluster.CheckSecret(scr, cluster.CheckSecretRequiredData("password")))
 		}
 	}
+
 	return res
 }
