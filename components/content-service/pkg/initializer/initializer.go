@@ -383,6 +383,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 	//       If the location were removed that might break the filesystem quota we have put in place prior.
 	if cfg.CleanSlate {
 		// 1. Clean out the workspace directory
+		log.Infof("InitializeWorkspace: location: %s", location)
 		if _, err := os.Stat(location); os.IsNotExist(err) {
 			// in the very unlikely event that the workspace Pod did not mount (and thus create) the workspace directory, create it
 			err = os.Mkdir(location, 0755)
