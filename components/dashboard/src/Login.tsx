@@ -248,15 +248,6 @@ export function Login() {
                             >
                                 terms of service
                             </a>{" "}
-                            and{" "}
-                            <a
-                                className="gp-link hover:text-gray-600"
-                                target="gitpod-privacy"
-                                href="https://www.gitpod.io/privacy/"
-                            >
-                                privacy policy
-                            </a>
-                            .
                         </span>
                     </div>
                 </div>

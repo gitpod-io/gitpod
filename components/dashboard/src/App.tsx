@@ -5,9 +5,9 @@
  */
 
 import React, { Suspense, useContext, useEffect, useState } from "react";
-import Menu from "./Menu";
 import { Redirect, Route, Switch } from "react-router";
 
+import Menu from "./Menu";
 import { Login } from "./Login";
 import { UserContext } from "./user-context";
 import { TeamsContext } from "./teams/teams-context";
@@ -44,6 +44,9 @@ import {
 import { refreshSearchData } from "./components/RepositoryFinder";
 import { StartWorkspaceModal } from "./workspaces/StartWorkspaceModal";
 import { parseProps } from "./start/StartWorkspace";
+import CookieBanner from "./CookieBanner";
+import CookieSettingsModal from "./CookieSettingsModal";
+import { cookieConsentDefaultValue, getConsentCookies } from "./consent-cookie";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -154,6 +157,9 @@ function App() {
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
     const [isSetupRequired, setSetupRequired] = useState(false);
+    const [showCookieBanner, setShowCookieBanner] = useState<boolean>(true);
+    const [showCookieSettings, setShowCookieSettings] = useState<boolean>(false);
+    const [cookiePreferences, setCookiePreferences] = useState(cookieConsentDefaultValue);
     const history = useHistory();
 
     useEffect(() => {
@@ -274,6 +280,23 @@ function App() {
         }
     }, [user]);
 
+    const checkCookie = () => {
+        if (isGitpodIo()) {
+            const consent = getConsentCookies();
+            if (consent === undefined) {
+                setShowCookieBanner(true);
+                return;
+            } else {
+                setCookiePreferences(JSON.parse(consent));
+                setShowCookieBanner(false);
+            }
+        }
+    };
+
+    useEffect(() => {
+        checkCookie();
+    }, []);
+
     // redirect to website for any website slugs
     if (isGitpodIo() && isWebsiteSlug(window.location.pathname)) {
         window.location.host = "www.gitpod.io";
@@ -345,10 +368,49 @@ function App() {
         false,
     );
 
+    const acceptAllCookies = () => {
+        setCookiePreferences({
+            ...cookieConsentDefaultValue,
+            analytical: true,
+            targeting: true,
+        });
+        setShowCookieBanner(false);
+    };
+
+    const rejectAllCookies = () => {
+        setCookiePreferences({
+            ...cookieConsentDefaultValue,
+            analytical: false,
+            targeting: false,
+        });
+        setShowCookieBanner(false);
+    };
+
+    const openCookieSettings = () => {
+        setShowCookieSettings(true);
+    };
+
+    const saveCookiePreferences = () => {
+        setShowCookieSettings(false);
+        setShowCookieBanner(false);
+    };
+
+    const handleOnClose = () => {
+        setShowCookieSettings(false);
+    };
+
     let toRender: React.ReactElement = (
         <Route>
             <div className="container">
                 <Menu />
+                {isGitpodIo() && showCookieSettings && (
+                    <CookieSettingsModal
+                        showCookieSettings={showCookieSettings}
+                        cookiePreferences={cookiePreferences}
+                        onClose={handleOnClose}
+                        onSave={saveCookiePreferences}
+                    />
+                )}
                 <Switch>
                     <Route path={projectsPathNew} exact component={NewProject} />
                     <Route path="/open" exact component={Open} />
@@ -473,6 +535,13 @@ function App() {
                     ></Route>
                 </Switch>
                 <StartWorkspaceModal />
+                {showCookieBanner && (
+                    <CookieBanner
+                        onAcceptAllCookies={acceptAllCookies}
+                        onOpenCookieSettings={openCookieSettings}
+                        onRejectAllCookies={rejectAllCookies}
+                    />
+                )}
             </div>
         </Route>
     );
