@@ -184,10 +184,12 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 	// At this point we've found neither a full-workspace-backup, nor a legacy backup.
 	// It's time to use the initializer.
 	if gis := initializer.GetSnapshot(); gis != nil {
+		log.Info("calling into getSnapshotContentLayer")
 		return s.getSnapshotContentLayer(ctx, gis)
 	}
 	if pis := initializer.GetPrebuild(); pis != nil {
 		l, manifest, err = s.getPrebuildContentLayer(ctx, pis)
+		log.Infof("getPrebuildContentLayer: %v, %v, %v", l, manifest, err)
 		if err != nil {
 			log.WithError(err).WithFields(log.OWI(owner, workspaceID, "")).Warn("cannot initialize from prebuild - falling back to Git")
 			span.LogKV("fallback-to-git", err.Error())
@@ -216,12 +218,16 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 	if gis := initializer.GetGit(); gis != nil {
 		span.LogKV("initializer", "Git")
 
+		log.Info("GetGit path")
+
 		cdesc, err := executor.Prepare(initializer, nil)
+		log.Infof("executor.Prepare: %v, %v", cdesc, err)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		layer, err = contentDescriptorToLayer(cdesc)
+		log.Infof("contentDescriptorToLayer: %v, %v", layer, err)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -230,6 +236,7 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 	if initializer.GetBackup() != nil {
 		// We were asked to restore a backup and have tried above. We've failed to restore the backup,
 		// hance the backup initializer failed.
+		log.Info("no backup found path")
 		return nil, nil, xerrors.Errorf("no backup found")
 	}
 
