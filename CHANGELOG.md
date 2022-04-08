@@ -1,6 +1,13 @@
 # Change Log
 
 ## April 2022
+- Ensure uncommitted changes are displayed in dashboard when workspace was restored from backup ([#9007](https://github.com/gitpod-io/gitpod/pull/9007)) - [@Furisto](https://github.com/Furisto), [@csweichel](https://github.com/csweichel)
+- Update code to 1.66.1 ([#9185](https://github.com/gitpod-io/gitpod/pull/9185)) - [@jeanp413](https://github.com/jeanp413)
+- Allow to configure JetBrains plugins in .gitpod.yml ([#8630](https://github.com/gitpod-io/gitpod/pull/8630)) - [@akosyakov](https://github.com/akosyakov)
+- [kots]: update the logo ([#9159](https://github.com/gitpod-io/gitpod/pull/9159)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Transformer for MySQL BIGINT type to JS number ([#9152](https://github.com/gitpod-io/gitpod/pull/9152)) - [@easyCZ](https://github.com/easyCZ)
+- [ws-proxy] Deny HTTP ACME challenges ([#9176](https://github.com/gitpod-io/gitpod/pull/9176)) - [@aledbf](https://github.com/aledbf)
+- [dashboard] Implement a PaymentContext and use it to hide payment features when payment is disabled ([#9051](https://github.com/gitpod-io/gitpod/pull/9051)) - [@jankeromnes](https://github.com/jankeromnes)
 - Fixed one frame running phase when starting workspace ([#9004](https://github.com/gitpod-io/gitpod/pull/9004)) - [@mustard-mh](https://github.com/mustard-mh)
 - Fixed IDE options display incorrectly when restarting the workspace ([#9004](https://github.com/gitpod-io/gitpod/pull/9004)) - [@mustard-mh](https://github.com/mustard-mh)
 - Fixed stopped workspace does not work again if it started in another place ([#9004](https://github.com/gitpod-io/gitpod/pull/9004)) - [@mustard-mh](https://github.com/mustard-mh)
