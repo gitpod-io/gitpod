@@ -6,8 +6,9 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
+
+	"golang.org/x/xerrors"
 )
 
 // ServiceConfig configures this service
@@ -32,9 +33,10 @@ func GetConfig(fn string) (*ServiceConfig, error) {
 		return nil, err
 	}
 
-	if cfg.Registry.IPFSCache != nil && cfg.Registry.IPFSCache.Enabled &&
-		cfg.Registry.RedisCache != nil && !cfg.Registry.RedisCache.Enabled {
-		return nil, fmt.Errorf("IPFS cache requires Redis")
+	if cfg.Registry.IPFSCache != nil && cfg.Registry.IPFSCache.Enabled {
+		if cfg.Registry.RedisCache == nil || !cfg.Registry.RedisCache.Enabled {
+			return nil, xerrors.Errorf("IPFS cache requires Redis")
+		}
 	}
 
 	if cfg.Registry.RedisCache != nil {
