@@ -79,8 +79,10 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 		return
 	}
 
+	log.Infof("NewRequestWithContext: %s", info.URL)
 	mfreq, err := http.NewRequestWithContext(ctx, "GET", info.URL, nil)
 	if err != nil {
+		log.Infof("NewRequestWithContext err: %v", err)
 		return
 	}
 	mfresp, err := s.Client.Do(mfreq)
@@ -88,6 +90,7 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 		return
 	}
 	if mfresp.StatusCode != http.StatusOK {
+		log.Infof("status code: %v", mfresp.StatusCod)
 		err = xerrors.Errorf("cannot get %s: status %d", info.URL, mfresp.StatusCode)
 		return
 	}

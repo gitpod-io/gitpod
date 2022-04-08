@@ -43,6 +43,7 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 			respondWithError(w, distv2.ErrorCodeManifestUnknown)
 		})
 	}
+	log.Infof("GetSpec: %s", name)
 	spec, err := sp.GetSpec(ctx, name)
 	if err != nil {
 		log.WithError(err).WithField("specProvName", spname).WithField("name", name).Error("cannot get spec")
