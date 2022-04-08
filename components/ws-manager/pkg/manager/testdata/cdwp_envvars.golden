@@ -236,6 +236,8 @@
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
             "securityContext": {
+                "runAsUser": 33333,
+                "runAsGroup": 33333,
                 "fsGroup": 33333
             },
             "hostname": "foobar",
