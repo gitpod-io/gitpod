@@ -378,9 +378,9 @@ func (s *Provider) layerFromContentManifest(ctx context.Context, mf *csapi.Works
 
 func contentDescriptorToLayer(cdesc []byte) (*Layer, error) {
 	return layerFromContent(
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace/.gitpod/content.json", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(cdesc))}, cdesc},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace2", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace2/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace2/.gitpod/content.json", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(cdesc))}, cdesc},
 	)
 }
 
@@ -394,9 +394,9 @@ func workspaceReadyLayer(src csapi.WorkspaceInitSource) (*Layer, error) {
 	}
 
 	return layerFromContent(
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace/.gitpod/ready", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(ctnt))}, []byte(ctnt)},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace2", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace2/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace2/.gitpod/ready", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(ctnt))}, []byte(ctnt)},
 	)
 }
 
