@@ -4,6 +4,14 @@ import { Werft } from '../../util/werft';
 import { GCLOUD_SERVICE_ACCOUNT_PATH } from './const';
 import { JobConfig } from './job-config';
 
+const phases = {
+    PUBLISH_KOTS: 'publish kots',
+};
+
+const REPLICATED_DIR = './install/kots'
+const REPLICATED_YAML_DIR = `${REPLICATED_DIR}/manifests`;
+const INSTALLER_JOB_IMAGE = 'spec.template.spec.containers[0].image';
+
 
 export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
 
@@ -65,6 +73,10 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
             exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
         }
     }
+
+    if (jobConfig.publishToKots) {
+        publishKots(werft, jobConfig)
+    }
 }
 
 /**
@@ -86,4 +98,35 @@ async function publishHelmChart(werft: Werft, imageRepoBase: string, version: st
         exec(cmd, { slice: 'publish-charts' });
     });
     werft.done('publish-charts');
+}
+
+
+function publishKots(werft: Werft, jobConfig: JobConfig) {
+    werft.phase(phases.PUBLISH_KOTS, 'Publish release to KOTS');
+    exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${jobConfig.version} -c "cat /app/installer" > /tmp/installer`);
+    exec(`chmod +x /tmp/installer`);
+
+    const imageAndTag = exec(`yq r ${REPLICATED_YAML_DIR}/gitpod-installer-job.yaml ${INSTALLER_JOB_IMAGE}`);
+    const [image] = imageAndTag.split(':');
+
+    // Set the tag to the current version
+    exec(`yq w -i ${REPLICATED_YAML_DIR}/gitpod-installer-job.yaml ${INSTALLER_JOB_IMAGE} ${image}:${jobConfig.version}`, { slice: phases.PUBLISH_KOTS });
+
+    // Generate the logo
+    exec(`make logo -C ${REPLICATED_DIR}`, { slice: phases.PUBLISH_KOTS });
+
+    // Update the additionalImages in the kots-app.yaml
+    exec(`/tmp/installer mirror kots --file ${REPLICATED_YAML_DIR}/kots-app.yaml`, { slice: phases.PUBLISH_KOTS });
+
+    const replicatedChannel = jobConfig.mainBuild ? 'Unstable' : jobConfig.repository.branch;
+
+    exec(`replicated release create \
+        --lint \
+        --ensure-channel \
+        --yaml-dir ${REPLICATED_YAML_DIR} \
+        --version ${jobConfig.version} \
+        --release-notes "# ${jobConfig.version}\n\nSee [Werft job](https://werft.gitpod-dev.com/job/gitpod-build-${jobConfig.version}/logs) for notes" \
+        --promote ${replicatedChannel}`, { slice: phases.PUBLISH_KOTS });
+
+    werft.done(phases.PUBLISH_KOTS);
 }
