@@ -90,12 +90,11 @@ func TestRedisBlobStore_Writer(t *testing.T) {
 	dgst := digest.FromBytes(cnt)
 
 	client, mock := redismock.NewClientMock()
-	mock.ExpectMSet(map[string]string{
-		"cnt." + string(dgst): string(cnt),
-		"nfo." + string(dgst): `{"Digest":"` + string(dgst) + `","Size":11,"CreatedAt":1,"UpdatedAt":1,"Labels":{"foo":"bar"}}`,
-	}).SetVal("")
-	mock.ExpectExpire("cnt."+string(dgst), 48*time.Hour).SetVal(true)
-	mock.ExpectExpire("nfo."+string(dgst), 48*time.Hour).SetVal(true)
+	mock.ExpectExists("cnt."+string(dgst), "nfo."+string(dgst)).SetVal(0)
+	mock.ExpectTxPipeline()
+	mock.ExpectSetEX("cnt."+string(dgst), string(cnt), 48*time.Hour).SetVal("OK")
+	mock.ExpectSetEX("nfo."+string(dgst), `{"Digest":"`+string(dgst)+`","Size":11,"CreatedAt":1,"UpdatedAt":1,"Labels":{"foo":"bar"}}`, 48*time.Hour).SetVal("OK")
+	mock.ExpectTxPipelineExec()
 
 	store := &RedisBlobStore{Client: client}
 	w, err := store.Writer(context.Background(), content.WithDescriptor(ociv1.Descriptor{
