@@ -207,6 +207,9 @@
             "dnsPolicy": "None",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
+            "securityContext": {
+                "fsGroup": 33333
+            },
             "imagePullSecrets": [
                 {
                     "name": "dockerhub-typefox"
