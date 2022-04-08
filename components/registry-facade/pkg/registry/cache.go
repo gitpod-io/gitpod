@@ -247,13 +247,18 @@ func (w *redisBlobWriter) Commit(ctx context.Context, size int64, expected diges
 		ttl      = 48 * time.Hour
 	)
 
-	trans := w.client.Pipeline()
-	trans.MSet(ctx, map[string]string{
-		kContent: w.buf.String(),
-		kInfo:    string(rnfo),
-	})
-	trans.Expire(ctx, kContent, ttl)
-	trans.Expire(ctx, kInfo, ttl)
+	existingKeys, err := w.client.Exists(ctx, kContent, kInfo).Result()
+	if err != nil {
+		return err
+	}
+
+	if existingKeys != 0 {
+		return nil
+	}
+
+	trans := w.client.TxPipeline()
+	trans.SetEX(ctx, kContent, w.buf.String(), ttl)
+	trans.SetEX(ctx, kInfo, string(rnfo), ttl)
 	_, err = trans.Exec(ctx)
 	return err
 }

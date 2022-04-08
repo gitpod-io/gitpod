@@ -501,11 +501,11 @@ func DownloadManifest(ctx context.Context, fetch FetcherFunc, desc ociv1.Descrip
 		// time one wishes to resolve desc.
 		w, err := opts.Store.Writer(ctx, content.WithDescriptor(desc), content.WithRef(desc.Digest.String()))
 		if err != nil {
-			log.WithError(err).WithField("desc", *rdesc).Warn("cannot store manifest")
+			log.WithError(err).WithField("desc", *rdesc).Warn("cannot create store writer")
 		} else {
 			_, err = io.Copy(w, bytes.NewReader(inpt))
 			if err != nil {
-				log.WithError(err).WithField("desc", *rdesc).Warn("cannot store manifest")
+				log.WithError(err).WithField("desc", *rdesc).Warn("cannot copy manifest")
 			}
 
 			err = w.Commit(ctx, 0, digest.FromBytes(inpt), content.WithLabels(map[string]string{"Content-Type": rdesc.MediaType}))
