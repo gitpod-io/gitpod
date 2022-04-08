@@ -85,7 +85,7 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 	var mfStore BlobStore
 
 	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
-		if cfg.RedisCache != nil && cfg.RedisCache.Enabled {
+		if cfg.RedisCache == nil || !cfg.RedisCache.Enabled {
 			return nil, xerrors.Errorf("IPFS cache requires Redis")
 		}
 	}
