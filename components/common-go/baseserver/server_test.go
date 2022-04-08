@@ -23,9 +23,8 @@ func TestServer_StartStop(t *testing.T) {
 		require.NoError(t, srv.ListenAndServe())
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	require.NoError(t, srv.Close(ctx))
+	require.True(t, srv.WaitForServerToBeReachable(3*time.Second))
+	require.NoError(t, srv.Close())
 }
 
 func TestServer_Options(t *testing.T) {
@@ -43,16 +42,50 @@ func TestServer_Options(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestServer_ServesMetrics(t *testing.T) {
-	srv, err := baseserver.New("server_test")
+func TestServer_CancelledContextShutsDownServer(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	srv, err := baseserver.New("test_server", baseserver.WithContext(ctx))
 	require.NoError(t, err)
+
+	defer func() {
+		require.NoError(t, srv.Close())
+	}()
 
 	go func(t *testing.T) {
 		require.NoError(t, srv.ListenAndServe())
 	}(t)
 
-	ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
-	require.True(t, srv.WaitForServerToBeReachable(ctx), "server did not start")
+	require.True(t, srv.WaitForServerToBeReachable(3*time.Second), "server did not start")
+
+	// explicitly cancel our context, we expect the server to terminate
+	cancel()
+
+	require.False(t, srv.WaitForServerToBeReachable(1*time.Second))
+}
+
+func TestServer_ServesReady(t *testing.T) {
+	srv := baseserver.NewForTests(t)
+
+	go func(t *testing.T) {
+		require.NoError(t, srv.ListenAndServe())
+	}(t)
+
+	require.True(t, srv.WaitForServerToBeReachable(3*time.Second), "server did not start")
+
+	readyUR := fmt.Sprintf("%s/ready", srv.HTTPAddress())
+	resp, err := http.Get(readyUR)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestServer_ServesMetrics(t *testing.T) {
+	srv := baseserver.NewForTests(t)
+
+	go func(t *testing.T) {
+		require.NoError(t, srv.ListenAndServe())
+	}(t)
+
+	require.True(t, srv.WaitForServerToBeReachable(3*time.Second), "server did not start")
 
 	metricsURL := fmt.Sprintf("%s/metrics", srv.HTTPAddress())
 	resp, err := http.Get(metricsURL)

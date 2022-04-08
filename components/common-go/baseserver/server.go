@@ -15,6 +15,9 @@ import (
 type config struct {
 	logger *logrus.Entry
 
+	// ctx is the lifetime context of the server
+	ctx context.Context
+
 	hostname string
 	grpcPort int
 	httpPort int
@@ -25,12 +28,17 @@ type config struct {
 func defaultConfig() *config {
 	return &config{
 		logger:   log.New(),
+		ctx:      context.Background(),
 		hostname: "localhost",
 		grpcPort: 9001,
 		httpPort: 9000,
 		certs:    nil,
 	}
 }
+
+const (
+	defaultCloseTimeout = 3 * time.Second
+)
 
 func New(name string, opts ...Option) (*Server, error) {
 	cfg, err := evaluateOptions(defaultConfig(), opts...)
@@ -70,9 +78,13 @@ type Server struct {
 
 	// listening indicates the server is serving. When closed, the server is in the process of graceful termination.
 	listening chan struct{}
+
+	// closed signals the server has completed closing.
+	closed chan struct{}
 }
 
 func (s *Server) ListenAndServe() error {
+	ctx := s.Context()
 	var err error
 	// First, we start the grpc server
 	s.grpcListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.grpcPort))
@@ -115,46 +127,46 @@ func (s *Server) ListenAndServe() error {
 		}
 	}()
 
-	for serveErr := range errors {
-		s.cfg.logger.WithError(err).Errorf("Server failed to serve.")
+	// Await cancellation, or server errors.
+	select {
+	case <-ctx.Done():
+		s.Logger().WithError(ctx.Err()).Info("Server context cancelled, shutting down servers.")
+		if closeErr := s.Close(); closeErr != nil {
+			return fmt.Errorf("failed to close server after server context was cancelled: %w", closeErr)
+		}
+		return nil
 
-		// TODO: Shut down both servers
+	case serverErr := <-errors:
+		s.cfg.logger.WithError(serverErr).Errorf("Server failed.")
+		if closeErr := s.Close(); closeErr != nil {
+			return fmt.Errorf("failed to close server after one of the servers errored: %w", closeErr)
+		}
 
-		return fmt.Errorf("server failed: %w", serveErr)
+		return nil
 	}
-
-	return nil
 }
 
-func (s *Server) Close(ctx context.Context) error {
-	if s.listening == nil {
-		return fmt.Errorf("server is not running, invalid close operaiton")
-	}
+func (s *Server) Close() error {
+	return s.CloseWithin(defaultCloseTimeout)
+}
 
-	if s.isClosing() {
-		return fmt.Errorf("server is alredy closing")
-	}
+func (s *Server) CloseWithContext(ctx context.Context) error {
+	return s.close(ctx)
+}
 
-	s.Logger().Info("Received graceful shutdown request.")
-	close(s.listening)
+func (s *Server) CloseWithin(t time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), t)
+	defer cancel()
 
-	s.grpc.GracefulStop()
-	// s.grpc.GracefulStop() also closes the underlying net.Listener, we just release the reference.
-	s.grpcListener = nil
-	s.Logger().Info("GRPC server terminated.")
-
-	if err := s.http.Shutdown(ctx); err != nil {
-		return fmt.Errorf("failed to close http server: %w", err)
-	}
-	// s.http.Shutdown() also closes the underlying net.Listener, we just release the reference.
-	s.httpListener = nil
-	s.Logger().Info("HTTP server terminated.")
-
-	return nil
+	return s.close(ctx)
 }
 
 func (s *Server) Logger() *logrus.Entry {
 	return s.cfg.logger
+}
+
+func (s *Server) Context() context.Context {
+	return s.cfg.ctx
 }
 
 func (s *Server) HTTPAddress() string {
@@ -173,6 +185,34 @@ func (s *Server) GRPCAddress() string {
 	}
 
 	return fmt.Sprintf("%s://%s:%d", protocol, s.cfg.hostname, s.cfg.grpcPort)
+}
+
+func (s *Server) close(ctx context.Context) error {
+	if s.listening == nil {
+		return fmt.Errorf("server is not running, invalid close operaiton")
+	}
+
+	if s.isClosing() {
+		s.Logger().Info("Server is already closing.")
+		return nil
+	}
+
+	s.Logger().Info("Received graceful shutdown request.")
+	close(s.listening)
+
+	s.grpc.GracefulStop()
+	// s.grpc.GracefulStop() also closes the underlying net.Listener, we just release the reference.
+	s.grpcListener = nil
+	s.Logger().Info("GRPC server terminated.")
+
+	if err := s.http.Shutdown(ctx); err != nil {
+		return fmt.Errorf("failed to close http server: %w", err)
+	}
+	// s.http.Shutdown() also closes the underlying net.Listener, we just release the reference.
+	s.httpListener = nil
+	s.Logger().Info("HTTP server terminated.")
+
+	return nil
 }
 
 func (s *Server) isClosing() bool {
@@ -215,7 +255,10 @@ type Certs struct {
 	ServerKeyPath  string
 }
 
-func (s *Server) WaitForServerToBeReachable(ctx context.Context) bool {
+func (s *Server) WaitForServerToBeReachable(timeout time.Duration) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
 	tick := 100 * time.Millisecond
 	t := time.NewTicker(tick)
 	defer t.Stop()

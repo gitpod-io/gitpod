@@ -3,10 +3,22 @@ package baseserver
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/net/context"
 	"strings"
 )
 
 type Option func(cfg *config) error
+
+func WithContext(ctx context.Context) Option {
+	return func(cfg *config) error {
+		if ctx == nil {
+			return fmt.Errorf("nil context is an invalid option")
+		}
+
+		cfg.ctx = ctx
+		return nil
+	}
+}
 
 func WithHostname(hostname string) Option {
 	return func(cfg *config) error {
