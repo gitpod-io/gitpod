@@ -15,6 +15,7 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.enteredTextSatisfies
 import com.intellij.util.EventDispatcher
 import com.jetbrains.rd.util.concurrentMapOf
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -72,20 +73,14 @@ class GitpodStartWorkspaceView(
                     this.text = "https://github.com/gitpod-io/spring-petclinic"
                 }
             button("New Workspace") {
-                // TODO(ak) disable button if blank
                 if (contextUrl.component.text.isNotBlank()) {
-                    val backend = backendsModel.selectedItem
-                    val selectedBackendId = if (backend != null) {
-                        backendToId[backend]
-                    } else null
-                    val backendParam = if (selectedBackendId != null) {
-                        ":$selectedBackendId"
-                    } else {
-                        ""
+                    backendsModel.selectedItem?.let {
+                        backendToId[it]?.let { backend ->
+                            BrowserUtil.browse("https://${settings.gitpodHost}#referrer:jetbrains-gateway:${backend}/${contextUrl.component.text}")
+                        }
                     }
-                    BrowserUtil.browse("https://${settings.gitpodHost}#referrer:jetbrains-gateway$backendParam/${contextUrl.component.text}")
                 }
-            }
+            }.enabledIf(contextUrl.component.enteredTextSatisfies { it.isNotBlank() })
             cell()
         }.topGap(TopGap.NONE)
             .rowComment(
