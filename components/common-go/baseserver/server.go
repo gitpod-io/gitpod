@@ -82,9 +82,6 @@ type Server struct {
 
 	// listening indicates the server is serving. When closed, the server is in the process of graceful termination.
 	listening chan struct{}
-
-	// closed signals the server has completed closing.
-	closed chan struct{}
 }
 
 func (s *Server) ListenAndServe() error {
