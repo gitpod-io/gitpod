@@ -16,6 +16,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
@@ -61,6 +62,7 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 		if !ok {
 			return nil, xerrors.Errorf("pod %s has no %s annotation", pod.Name, workspaceInitializerAnnotation)
 		}
+		log.Infof("DecodeString: %s", initializerRaw)
 		initializerPB, err := base64.StdEncoding.DecodeString(initializerRaw)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot decode init config: %w", err)
@@ -70,6 +72,7 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 		if err != nil {
 			return nil, xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
+		log.Infof("initializer: %v", initializer)
 		cl, _, err := m.Content.GetContentLayer(ctx, owner, workspaceID, &initializer)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot get content layer: %w", err)
@@ -101,6 +104,7 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 				},
 			}
 		}
+		log.Infof("GetImageSpec, got content layer: %v", contentLayer)
 		spec.ContentLayer = contentLayer
 	}
 
