@@ -90,7 +90,7 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 		return
 	}
 	if mfresp.StatusCode != http.StatusOK {
-		log.Infof("status code: %v", mfresp.StatusCod)
+		log.Infof("status code: %v", mfresp.StatusCode)
 		err = xerrors.Errorf("cannot get %s: status %d", info.URL, mfresp.StatusCode)
 		return
 	}
