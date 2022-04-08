@@ -66,6 +66,7 @@ class IdeDownloader @JvmOverloads constructor(private val httpClient: OkHttpClie
                 "https://data.services.jetbrains.com/products/releases".toHttpUrl()
                     .newBuilder()
                     .addQueryParameter("code", ide.feedsCode)
+                    .addQueryParameter("type", "eap,rc,release")
                     .addQueryParameter("platform", getFeedsOsPropertyName())
                     .build()
             ).build()
