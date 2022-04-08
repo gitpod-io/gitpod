@@ -73,6 +73,23 @@
               gitpod_workspace_regular_not_active_percentage > 0.15 AND sum(gitpod_ws_manager_workspace_activity_total) > 100
             |||,
           },
+          {
+            alert: 'GitpodWorkspacesNotStarting',
+            labels: {
+              severity: 'critical',
+            },
+            'for': '10m',
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceNotStarting.md',
+              summary: 'workspaces are not starting',
+              description: 'inactive regular workspaces exists but workspaces are not being started',
+            },
+            expr: |||
+              avg_over_time(gitpod_workspace_regular_not_active_percentage[1m]) > 0
+              AND
+              rate(gitpod_ws_manager_workspace_startup_seconds_sum{type="REGULAR"}[1m]) == 0
+            |||,
+          },
         ],
       },
     ],
