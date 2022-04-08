@@ -628,10 +628,11 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
-				Name:             workspaceVolumeName,
-				MountPath:        workspaceDir,
-				ReadOnly:         false,
-				MountPropagation: &mountPropagation,
+				Name:      workspaceVolumeName,
+				MountPath: workspaceDir,
+				ReadOnly:  false,
+				//MountPropagation: &mountPropagation,
+				SubPath: "workspace",
 			},
 			{
 				MountPath:        "/.workspace",
