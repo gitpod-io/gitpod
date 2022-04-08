@@ -61,9 +61,9 @@ function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter)
             email: User.getPrimaryEmail(user),
             full_name: user.fullName,
             created_at: user.creationDate,
-            unsubscribed_onboarding: !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
-            unsubscribed_changelog: !user.additionalData?.emailNotificationSettings?.allowsChangelogMail,
-            unsubscribed_devx: !user.additionalData?.emailNotificationSettings?.allowsDevXMail,
+            unsubscribed_onboarding: user.additionalData?.emailNotificationSettings?.allowsOnboardingMail === false,
+            unsubscribed_changelog: user.additionalData?.emailNotificationSettings?.allowsChangelogMail === false,
+            unsubscribed_devx: user.additionalData?.emailNotificationSettings?.allowsDevXMail === false,
         },
     });
 }
