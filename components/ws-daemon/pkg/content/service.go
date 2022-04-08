@@ -165,6 +165,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid content manifest: %s", err.Error())
 		}
+		// pavel: setting wsloc as otherwise mkdir fails later on.
 		wsloc = req.Id
 	} else {
 		wsloc = filepath.Join(s.store.Location, req.Id)

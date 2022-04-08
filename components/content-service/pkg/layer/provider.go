@@ -138,20 +138,24 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 		mfobj  = fmt.Sprintf(fmtWorkspaceManifest, workspaceID)
 	)
 	span.LogKV("bucket", bucket, "mfobj", mfobj)
+	log.Infof("GetContentLayer: bucket: %s, mfobj: %s", bucket, mfobj)
 	manifest, _, err = s.downloadContentManifest(ctx, bucket, mfobj)
 	if err != nil && err != storage.ErrNotFound {
+		log.Infof("downloadContentManifest: %v", err)
 		return nil, nil, err
 	}
 	if manifest != nil {
 		span.LogKV("backup found", "full workspace backup")
 
 		l, err = s.layerFromContentManifest(ctx, manifest, csapi.WorkspaceInitFromBackup, true)
+		log.Infof("layerFromContentManifest, %v, %v", l, err)
 		return l, manifest, err
 	}
 
 	// check if legacy workspace backup is present
 	var layer *Layer
 	info, err := s.Storage.SignDownload(ctx, bucket, fmt.Sprintf(fmtLegacyBackupName, workspaceID), &storage.SignedURLOptions{})
+	log.Infof("SignDownload: %v, %v", info, err)
 	if err != nil && !xerrors.Is(err, storage.ErrNotFound) {
 		return nil, nil, err
 	}
@@ -159,11 +163,13 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 		span.LogKV("backup found", "legacy workspace backup")
 
 		cdesc, err := executor.PrepareFromBackup(info.URL)
+		log.Infof("PrepareFromBackup, %v, %v", cdesc, err)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		layer, err = contentDescriptorToLayer(cdesc)
+		log.Infof("contentDescriptorToLayer: %v, %v", layer, err)
 		if err != nil {
 			return nil, nil, err
 		}
