@@ -73,7 +73,7 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 			return nil, xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
 		log.Infof("initializer: %v", initializer)
-		cl, _, err := m.Content.GetContentLayer(ctx, owner, workspaceID, &initializer)
+		cl, _, err := m.Content.GetContentLayerPVC(ctx, owner, workspaceID, &initializer)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot get content layer: %w", err)
 		}

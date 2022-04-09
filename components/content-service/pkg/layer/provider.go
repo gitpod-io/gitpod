@@ -243,6 +243,129 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 	return nil, nil, xerrors.Errorf("no backup or valid initializer present")
 }
 
+// GetContentLayerPVC provides the content layer for a workspace that uses PVC feature
+func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID string, initializer *csapi.WorkspaceInitializer) (l []Layer, manifest *csapi.WorkspaceContentManifest, err error) {
+	span, ctx := tracing.FromContext(ctx, "GetContentLayer")
+	defer tracing.FinishSpan(span, &err)
+	tracing.ApplyOWI(span, log.OWI(owner, workspaceID, ""))
+
+	defer func() {
+		// we never return a nil manifest, just maybe an empty one
+		if manifest == nil {
+			manifest = &csapi.WorkspaceContentManifest{
+				Type: csapi.TypeFullWorkspaceContentV1,
+			}
+		}
+	}()
+
+	// check if workspace has an FWB
+	var (
+		bucket = s.Storage.Bucket(owner)
+		mfobj  = fmt.Sprintf(fmtWorkspaceManifest, workspaceID)
+	)
+	span.LogKV("bucket", bucket, "mfobj", mfobj)
+	log.Infof("GetContentLayerPVC: bucket: %s, mfobj: %s", bucket, mfobj)
+	manifest, _, err = s.downloadContentManifest(ctx, bucket, mfobj)
+	if err != nil && err != storage.ErrNotFound {
+		log.Infof("downloadContentManifest: %v", err)
+		return nil, nil, err
+	}
+	if manifest != nil {
+		span.LogKV("backup found", "full workspace backup")
+
+		l, err = s.layerFromContentManifestPVC(ctx, manifest, csapi.WorkspaceInitFromBackup, true)
+		log.Infof("layerFromContentManifestPVC, %v, %v", l, err)
+		return l, manifest, err
+	}
+
+	// check if legacy workspace backup is present
+	var layer *Layer
+	info, err := s.Storage.SignDownload(ctx, bucket, fmt.Sprintf(fmtLegacyBackupName, workspaceID), &storage.SignedURLOptions{})
+	log.Infof("SignDownload: %v, %v", info, err)
+	if err != nil && !xerrors.Is(err, storage.ErrNotFound) {
+		return nil, nil, err
+	}
+	if err == nil {
+		span.LogKV("backup found", "legacy workspace backup")
+
+		cdesc, err := executor.PrepareFromBackup(info.URL)
+		log.Infof("PrepareFromBackup, %v, %v", cdesc, err)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		layer, err = contentDescriptorToLayerPVC(cdesc)
+		log.Infof("contentDescriptorToLayerPVC: %v, %v", layer, err)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		l = []Layer{*layer}
+		return l, manifest, nil
+	}
+
+	// At this point we've found neither a full-workspace-backup, nor a legacy backup.
+	// It's time to use the initializer.
+	if gis := initializer.GetSnapshot(); gis != nil {
+		log.Info("calling into getSnapshotContentLayer")
+		return s.getSnapshotContentLayer(ctx, gis)
+	}
+	if pis := initializer.GetPrebuild(); pis != nil {
+		l, manifest, err = s.getPrebuildContentLayer(ctx, pis)
+		log.Infof("getPrebuildContentLayer: %v, %v, %v", l, manifest, err)
+		if err != nil {
+			log.WithError(err).WithFields(log.OWI(owner, workspaceID, "")).Warn("cannot initialize from prebuild - falling back to Git")
+			span.LogKV("fallback-to-git", err.Error())
+
+			// we failed creating a prebuild initializer, so let's try falling back to the Git part.
+			var init []*csapi.WorkspaceInitializer
+			for _, gi := range pis.Git {
+				init = append(init, &csapi.WorkspaceInitializer{
+					Spec: &csapi.WorkspaceInitializer_Git{
+						Git: gi,
+					},
+				})
+			}
+			initializer = &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Composite{
+					Composite: &csapi.CompositeInitializer{
+						Initializer: init,
+					},
+				},
+			}
+		} else {
+			// creating the initializer worked - we're done here
+			return
+		}
+	}
+	if gis := initializer.GetGit(); gis != nil {
+		span.LogKV("initializer", "Git")
+
+		log.Info("GetGit path")
+
+		cdesc, err := executor.Prepare(initializer, nil)
+		log.Infof("executor.Prepare: %v, %v", cdesc, err)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		layer, err = contentDescriptorToLayerPVC(cdesc)
+		log.Infof("contentDescriptorToLayerPVC: %v, %v", layer, err)
+		if err != nil {
+			return nil, nil, err
+		}
+		return []Layer{*layer}, nil, nil
+	}
+	if initializer.GetBackup() != nil {
+		// We were asked to restore a backup and have tried above. We've failed to restore the backup,
+		// hance the backup initializer failed.
+		log.Info("no backup found path")
+		return nil, nil, xerrors.Errorf("no backup found")
+	}
+
+	return nil, nil, xerrors.Errorf("no backup or valid initializer present")
+}
+
 func (s *Provider) getSnapshotContentLayer(ctx context.Context, sp *csapi.SnapshotInitializer) (l []Layer, manifest *csapi.WorkspaceContentManifest, err error) {
 	span, ctx := tracing.FromContext(ctx, "getSnapshotContentLayer")
 	defer tracing.FinishSpan(span, &err)
@@ -376,7 +499,45 @@ func (s *Provider) layerFromContentManifest(ctx context.Context, mf *csapi.Works
 	return l, nil
 }
 
+func (s *Provider) layerFromContentManifestPVC(ctx context.Context, mf *csapi.WorkspaceContentManifest, initsrc csapi.WorkspaceInitSource, ready bool) (l []Layer, err error) {
+	// we have a valid full workspace backup
+	l = make([]Layer, len(mf.Layers))
+	for i, mfl := range mf.Layers {
+		info, err := s.Storage.SignDownload(ctx, mfl.Bucket, mfl.Object, &storage.SignedURLOptions{})
+		if err != nil {
+			return nil, err
+		}
+		if info.Meta.Digest != mfl.Digest.String() {
+			return nil, xerrors.Errorf("digest mismatch for %s/%s: expected %s, got %s", mfl.Bucket, mfl.Object, mfl.Digest, info.Meta.Digest)
+		}
+		l[i] = Layer{
+			DiffID:    mfl.DiffID.String(),
+			Digest:    mfl.Digest.String(),
+			MediaType: mfl.MediaType,
+			URL:       info.URL,
+			Size:      mfl.Size,
+		}
+	}
+
+	if ready {
+		rl, err := workspaceReadyLayerPVC(initsrc)
+		if err != nil {
+			return nil, err
+		}
+		l = append(l, *rl)
+	}
+	return l, nil
+}
+
 func contentDescriptorToLayer(cdesc []byte) (*Layer, error) {
+	return layerFromContent(
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace/.gitpod/content.json", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(cdesc))}, cdesc},
+	)
+}
+
+func contentDescriptorToLayerPVC(cdesc []byte) (*Layer, error) {
 	return layerFromContent(
 		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace2", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
 		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace2/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
@@ -385,6 +546,22 @@ func contentDescriptorToLayer(cdesc []byte) (*Layer, error) {
 }
 
 func workspaceReadyLayer(src csapi.WorkspaceInitSource) (*Layer, error) {
+	msg := csapi.WorkspaceReadyMessage{
+		Source: src,
+	}
+	ctnt, err := json.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return layerFromContent(
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace/.gitpod/ready", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(ctnt))}, []byte(ctnt)},
+	)
+}
+
+func workspaceReadyLayerPVC(src csapi.WorkspaceInitSource) (*Layer, error) {
 	msg := csapi.WorkspaceReadyMessage{
 		Source: src,
 	}
