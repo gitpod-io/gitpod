@@ -614,6 +614,34 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 
 	image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
 
+	pvc_feature := false
+	for _, feature := range startContext.Request.Spec.FeatureFlags {
+		switch feature {
+		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
+			pvc_feature = true
+		}
+	}
+
+	volMounts := []corev1.VolumeMount{
+		{
+			Name:             workspaceVolumeName,
+			MountPath:        workspaceDir,
+			ReadOnly:         false,
+			MountPropagation: &mountPropagation,
+		},
+		{
+			MountPath:        "/.workspace",
+			Name:             "daemon-mount",
+			MountPropagation: &mountPropagation,
+		},
+	}
+	if pvc_feature {
+		// SubPath so that lost+found is not visible
+		volMounts[0].SubPath = "workspace"
+		// not needed, since it is using dedicated disk
+		volMounts[0].MountPropagation = nil
+	}
+
 	return &corev1.Container{
 		Name:            "workspace",
 		Image:           image,
@@ -626,26 +654,14 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			Limits:   limits,
 			Requests: requests,
 		},
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				Name:      workspaceVolumeName,
-				MountPath: workspaceDir,
-				ReadOnly:  false,
-				//MountPropagation: &mountPropagation,
-				SubPath: "workspace",
-			},
-			{
-				MountPath:        "/.workspace",
-				Name:             "daemon-mount",
-				MountPropagation: &mountPropagation,
-			},
-		},
+		VolumeMounts:             volMounts,
 		ReadinessProbe:           readinessProbe,
 		Env:                      env,
 		Command:                  command,
 		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 	}, nil
 }
+
 func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext) ([]corev1.EnvVar, error) {
 	spec := startContext.Request.Spec
 
