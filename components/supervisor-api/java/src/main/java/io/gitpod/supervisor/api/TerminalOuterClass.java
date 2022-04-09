@@ -679,7 +679,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder setRows(int value) {
-        
+
         rows_ = value;
         onChanged();
         return this;
@@ -689,7 +689,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearRows() {
-        
+
         rows_ = 0;
         onChanged();
         return this;
@@ -710,7 +710,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder setCols(int value) {
-        
+
         cols_ = value;
         onChanged();
         return this;
@@ -720,7 +720,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearCols() {
-        
+
         cols_ = 0;
         onChanged();
         return this;
@@ -741,7 +741,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder setWidthPx(int value) {
-        
+
         widthPx_ = value;
         onChanged();
         return this;
@@ -751,7 +751,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearWidthPx() {
-        
+
         widthPx_ = 0;
         onChanged();
         return this;
@@ -772,7 +772,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder setHeightPx(int value) {
-        
+
         heightPx_ = value;
         onChanged();
         return this;
@@ -782,7 +782,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearHeightPx() {
-        
+
         heightPx_ = 0;
         onChanged();
         return this;
@@ -1146,7 +1146,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         workdir_ = s;
@@ -1162,7 +1162,7 @@ public final class TerminalOuterClass {
         getWorkdirBytes() {
       java.lang.Object ref = workdir_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         workdir_ = b;
@@ -1178,7 +1178,7 @@ public final class TerminalOuterClass {
           java.lang.String, java.lang.String> defaultEntry =
               com.google.protobuf.MapEntry
               .<java.lang.String, java.lang.String>newDefaultInstance(
-                  io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_OpenTerminalRequest_EnvEntry_descriptor, 
+                  io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_OpenTerminalRequest_EnvEntry_descriptor,
                   com.google.protobuf.WireFormat.FieldType.STRING,
                   "",
                   com.google.protobuf.WireFormat.FieldType.STRING,
@@ -1259,7 +1259,7 @@ public final class TerminalOuterClass {
           java.lang.String, java.lang.String> defaultEntry =
               com.google.protobuf.MapEntry
               .<java.lang.String, java.lang.String>newDefaultInstance(
-                  io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_OpenTerminalRequest_AnnotationsEntry_descriptor, 
+                  io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_OpenTerminalRequest_AnnotationsEntry_descriptor,
                   com.google.protobuf.WireFormat.FieldType.STRING,
                   "",
                   com.google.protobuf.WireFormat.FieldType.STRING,
@@ -1346,7 +1346,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         shell_ = s;
@@ -1362,7 +1362,7 @@ public final class TerminalOuterClass {
         getShellBytes() {
       java.lang.Object ref = shell_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         shell_ = b;
@@ -1923,7 +1923,7 @@ public final class TerminalOuterClass {
           getWorkdirBytes() {
         java.lang.Object ref = workdir_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           workdir_ = b;
@@ -1942,7 +1942,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         workdir_ = value;
         onChanged();
         return this;
@@ -1952,7 +1952,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearWorkdir() {
-        
+
         workdir_ = getDefaultInstance().getWorkdir();
         onChanged();
         return this;
@@ -1968,7 +1968,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         workdir_ = value;
         onChanged();
         return this;
@@ -2261,7 +2261,7 @@ public final class TerminalOuterClass {
           getShellBytes() {
         java.lang.Object ref = shell_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           shell_ = b;
@@ -2280,7 +2280,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         shell_ = value;
         onChanged();
         return this;
@@ -2290,7 +2290,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearShell() {
-        
+
         shell_ = getDefaultInstance().getShell();
         onChanged();
         return this;
@@ -2306,7 +2306,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         shell_ = value;
         onChanged();
         return this;
@@ -2509,7 +2509,7 @@ public final class TerminalOuterClass {
        * <code>.supervisor.TerminalSize size = 6;</code>
        */
       public io.gitpod.supervisor.api.TerminalOuterClass.TerminalSize.Builder getSizeBuilder() {
-        
+
         onChanged();
         return getSizeFieldBuilder().getBuilder();
       }
@@ -2528,7 +2528,7 @@ public final class TerminalOuterClass {
        * <code>.supervisor.TerminalSize size = 6;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.TerminalOuterClass.TerminalSize, io.gitpod.supervisor.api.TerminalOuterClass.TerminalSize.Builder, io.gitpod.supervisor.api.TerminalOuterClass.TerminalSizeOrBuilder> 
+          io.gitpod.supervisor.api.TerminalOuterClass.TerminalSize, io.gitpod.supervisor.api.TerminalOuterClass.TerminalSize.Builder, io.gitpod.supervisor.api.TerminalOuterClass.TerminalSizeOrBuilder>
           getSizeFieldBuilder() {
         if (sizeBuilder_ == null) {
           sizeBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -2774,7 +2774,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         starterToken_ = s;
@@ -2795,7 +2795,7 @@ public final class TerminalOuterClass {
         getStarterTokenBytes() {
       java.lang.Object ref = starterToken_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         starterToken_ = b;
@@ -3224,7 +3224,7 @@ public final class TerminalOuterClass {
        * <code>.supervisor.Terminal terminal = 1;</code>
        */
       public io.gitpod.supervisor.api.TerminalOuterClass.Terminal.Builder getTerminalBuilder() {
-        
+
         onChanged();
         return getTerminalFieldBuilder().getBuilder();
       }
@@ -3243,7 +3243,7 @@ public final class TerminalOuterClass {
        * <code>.supervisor.Terminal terminal = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.TerminalOuterClass.Terminal, io.gitpod.supervisor.api.TerminalOuterClass.Terminal.Builder, io.gitpod.supervisor.api.TerminalOuterClass.TerminalOrBuilder> 
+          io.gitpod.supervisor.api.TerminalOuterClass.Terminal, io.gitpod.supervisor.api.TerminalOuterClass.Terminal.Builder, io.gitpod.supervisor.api.TerminalOuterClass.TerminalOrBuilder>
           getTerminalFieldBuilder() {
         if (terminalBuilder_ == null) {
           terminalBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -3291,7 +3291,7 @@ public final class TerminalOuterClass {
           getStarterTokenBytes() {
         java.lang.Object ref = starterToken_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           starterToken_ = b;
@@ -3315,7 +3315,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         starterToken_ = value;
         onChanged();
         return this;
@@ -3330,7 +3330,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearStarterToken() {
-        
+
         starterToken_ = getDefaultInstance().getStarterToken();
         onChanged();
         return this;
@@ -3351,7 +3351,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         starterToken_ = value;
         onChanged();
         return this;
@@ -3521,7 +3521,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         alias_ = s;
@@ -3537,7 +3537,7 @@ public final class TerminalOuterClass {
         getAliasBytes() {
       java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         alias_ = b;
@@ -3874,7 +3874,7 @@ public final class TerminalOuterClass {
           getAliasBytes() {
         java.lang.Object ref = alias_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           alias_ = b;
@@ -3893,7 +3893,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         alias_ = value;
         onChanged();
         return this;
@@ -3903,7 +3903,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearAlias() {
-        
+
         alias_ = getDefaultInstance().getAlias();
         onChanged();
         return this;
@@ -3919,7 +3919,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         alias_ = value;
         onChanged();
         return this;
@@ -4691,7 +4691,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         alias_ = s;
@@ -4707,7 +4707,7 @@ public final class TerminalOuterClass {
         getAliasBytes() {
       java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         alias_ = b;
@@ -4764,7 +4764,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         title_ = s;
@@ -4780,7 +4780,7 @@ public final class TerminalOuterClass {
         getTitleBytes() {
       java.lang.Object ref = title_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         title_ = b;
@@ -4813,7 +4813,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         initialWorkdir_ = s;
@@ -4829,7 +4829,7 @@ public final class TerminalOuterClass {
         getInitialWorkdirBytes() {
       java.lang.Object ref = initialWorkdir_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         initialWorkdir_ = b;
@@ -4851,7 +4851,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         currentWorkdir_ = s;
@@ -4867,7 +4867,7 @@ public final class TerminalOuterClass {
         getCurrentWorkdirBytes() {
       java.lang.Object ref = currentWorkdir_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         currentWorkdir_ = b;
@@ -4883,7 +4883,7 @@ public final class TerminalOuterClass {
           java.lang.String, java.lang.String> defaultEntry =
               com.google.protobuf.MapEntry
               .<java.lang.String, java.lang.String>newDefaultInstance(
-                  io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_Terminal_AnnotationsEntry_descriptor, 
+                  io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_Terminal_AnnotationsEntry_descriptor,
                   com.google.protobuf.WireFormat.FieldType.STRING,
                   "",
                   com.google.protobuf.WireFormat.FieldType.STRING,
@@ -5474,7 +5474,7 @@ public final class TerminalOuterClass {
           getAliasBytes() {
         java.lang.Object ref = alias_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           alias_ = b;
@@ -5493,7 +5493,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         alias_ = value;
         onChanged();
         return this;
@@ -5503,7 +5503,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearAlias() {
-        
+
         alias_ = getDefaultInstance().getAlias();
         onChanged();
         return this;
@@ -5519,7 +5519,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         alias_ = value;
         onChanged();
         return this;
@@ -5660,7 +5660,7 @@ public final class TerminalOuterClass {
           getTitleBytes() {
         java.lang.Object ref = title_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           title_ = b;
@@ -5679,7 +5679,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         title_ = value;
         onChanged();
         return this;
@@ -5689,7 +5689,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearTitle() {
-        
+
         title_ = getDefaultInstance().getTitle();
         onChanged();
         return this;
@@ -5705,7 +5705,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         title_ = value;
         onChanged();
         return this;
@@ -5726,7 +5726,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder setPid(long value) {
-        
+
         pid_ = value;
         onChanged();
         return this;
@@ -5736,7 +5736,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearPid() {
-        
+
         pid_ = 0L;
         onChanged();
         return this;
@@ -5767,7 +5767,7 @@ public final class TerminalOuterClass {
           getInitialWorkdirBytes() {
         java.lang.Object ref = initialWorkdir_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           initialWorkdir_ = b;
@@ -5786,7 +5786,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         initialWorkdir_ = value;
         onChanged();
         return this;
@@ -5796,7 +5796,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearInitialWorkdir() {
-        
+
         initialWorkdir_ = getDefaultInstance().getInitialWorkdir();
         onChanged();
         return this;
@@ -5812,7 +5812,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         initialWorkdir_ = value;
         onChanged();
         return this;
@@ -5843,7 +5843,7 @@ public final class TerminalOuterClass {
           getCurrentWorkdirBytes() {
         java.lang.Object ref = currentWorkdir_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           currentWorkdir_ = b;
@@ -5862,7 +5862,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         currentWorkdir_ = value;
         onChanged();
         return this;
@@ -5872,7 +5872,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearCurrentWorkdir() {
-        
+
         currentWorkdir_ = getDefaultInstance().getCurrentWorkdir();
         onChanged();
         return this;
@@ -5888,7 +5888,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         currentWorkdir_ = value;
         onChanged();
         return this;
@@ -6039,7 +6039,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder setTitleSourceValue(int value) {
-        
+
         titleSource_ = value;
         onChanged();
         return this;
@@ -6063,7 +6063,7 @@ public final class TerminalOuterClass {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         titleSource_ = value.getNumber();
         onChanged();
         return this;
@@ -6073,7 +6073,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearTitleSource() {
-        
+
         titleSource_ = 0;
         onChanged();
         return this;
@@ -6243,7 +6243,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         alias_ = s;
@@ -6259,7 +6259,7 @@ public final class TerminalOuterClass {
         getAliasBytes() {
       java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         alias_ = b;
@@ -6596,7 +6596,7 @@ public final class TerminalOuterClass {
           getAliasBytes() {
         java.lang.Object ref = alias_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           alias_ = b;
@@ -6615,7 +6615,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         alias_ = value;
         onChanged();
         return this;
@@ -6625,7 +6625,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearAlias() {
-        
+
         alias_ = getDefaultInstance().getAlias();
         onChanged();
         return this;
@@ -6641,7 +6641,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         alias_ = value;
         onChanged();
         return this;
@@ -7124,7 +7124,7 @@ public final class TerminalOuterClass {
     /**
      * <code>repeated .supervisor.Terminal terminals = 1;</code>
      */
-    java.util.List<io.gitpod.supervisor.api.TerminalOuterClass.Terminal> 
+    java.util.List<io.gitpod.supervisor.api.TerminalOuterClass.Terminal>
         getTerminalsList();
     /**
      * <code>repeated .supervisor.Terminal terminals = 1;</code>
@@ -7137,7 +7137,7 @@ public final class TerminalOuterClass {
     /**
      * <code>repeated .supervisor.Terminal terminals = 1;</code>
      */
-    java.util.List<? extends io.gitpod.supervisor.api.TerminalOuterClass.TerminalOrBuilder> 
+    java.util.List<? extends io.gitpod.supervisor.api.TerminalOuterClass.TerminalOrBuilder>
         getTerminalsOrBuilderList();
     /**
      * <code>repeated .supervisor.Terminal terminals = 1;</code>
@@ -7249,7 +7249,7 @@ public final class TerminalOuterClass {
      * <code>repeated .supervisor.Terminal terminals = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.gitpod.supervisor.api.TerminalOuterClass.TerminalOrBuilder> 
+    public java.util.List<? extends io.gitpod.supervisor.api.TerminalOuterClass.TerminalOrBuilder>
         getTerminalsOrBuilderList() {
       return terminals_;
     }
@@ -7580,7 +7580,7 @@ public final class TerminalOuterClass {
               terminalsBuilder_ = null;
               terminals_ = other.terminals_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              terminalsBuilder_ = 
+              terminalsBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getTerminalsFieldBuilder() : null;
             } else {
@@ -7813,7 +7813,7 @@ public final class TerminalOuterClass {
       /**
        * <code>repeated .supervisor.Terminal terminals = 1;</code>
        */
-      public java.util.List<? extends io.gitpod.supervisor.api.TerminalOuterClass.TerminalOrBuilder> 
+      public java.util.List<? extends io.gitpod.supervisor.api.TerminalOuterClass.TerminalOrBuilder>
            getTerminalsOrBuilderList() {
         if (terminalsBuilder_ != null) {
           return terminalsBuilder_.getMessageOrBuilderList();
@@ -7839,12 +7839,12 @@ public final class TerminalOuterClass {
       /**
        * <code>repeated .supervisor.Terminal terminals = 1;</code>
        */
-      public java.util.List<io.gitpod.supervisor.api.TerminalOuterClass.Terminal.Builder> 
+      public java.util.List<io.gitpod.supervisor.api.TerminalOuterClass.Terminal.Builder>
            getTerminalsBuilderList() {
         return getTerminalsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.gitpod.supervisor.api.TerminalOuterClass.Terminal, io.gitpod.supervisor.api.TerminalOuterClass.Terminal.Builder, io.gitpod.supervisor.api.TerminalOuterClass.TerminalOrBuilder> 
+          io.gitpod.supervisor.api.TerminalOuterClass.Terminal, io.gitpod.supervisor.api.TerminalOuterClass.Terminal.Builder, io.gitpod.supervisor.api.TerminalOuterClass.TerminalOrBuilder>
           getTerminalsFieldBuilder() {
         if (terminalsBuilder_ == null) {
           terminalsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -8022,7 +8022,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         alias_ = s;
@@ -8038,7 +8038,7 @@ public final class TerminalOuterClass {
         getAliasBytes() {
       java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         alias_ = b;
@@ -8375,7 +8375,7 @@ public final class TerminalOuterClass {
           getAliasBytes() {
         java.lang.Object ref = alias_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           alias_ = b;
@@ -8394,7 +8394,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         alias_ = value;
         onChanged();
         return this;
@@ -8404,7 +8404,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearAlias() {
-        
+
         alias_ = getDefaultInstance().getAlias();
         onChanged();
         return this;
@@ -8420,7 +8420,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         alias_ = value;
         onChanged();
         return this;
@@ -8747,7 +8747,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (outputCase_ == 3) {
@@ -8767,7 +8767,7 @@ public final class TerminalOuterClass {
         ref = output_;
       }
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         if (outputCase_ == 3) {
@@ -9337,7 +9337,7 @@ public final class TerminalOuterClass {
           ref = output_;
         }
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           if (outputCase_ == 3) {
@@ -9414,7 +9414,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder setTitleSourceValue(int value) {
-        
+
         titleSource_ = value;
         onChanged();
         return this;
@@ -9446,7 +9446,7 @@ public final class TerminalOuterClass {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         titleSource_ = value.getNumber();
         onChanged();
         return this;
@@ -9460,7 +9460,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearTitleSource() {
-        
+
         titleSource_ = 0;
         onChanged();
         return this;
@@ -9642,7 +9642,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         alias_ = s;
@@ -9658,7 +9658,7 @@ public final class TerminalOuterClass {
         getAliasBytes() {
       java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         alias_ = b;
@@ -10023,7 +10023,7 @@ public final class TerminalOuterClass {
           getAliasBytes() {
         java.lang.Object ref = alias_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           alias_ = b;
@@ -10042,7 +10042,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         alias_ = value;
         onChanged();
         return this;
@@ -10052,7 +10052,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearAlias() {
-        
+
         alias_ = getDefaultInstance().getAlias();
         onChanged();
         return this;
@@ -10068,7 +10068,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         alias_ = value;
         onChanged();
         return this;
@@ -10092,7 +10092,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         stdin_ = value;
         onChanged();
         return this;
@@ -10102,7 +10102,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearStdin() {
-        
+
         stdin_ = getDefaultInstance().getStdin();
         onChanged();
         return this;
@@ -10580,7 +10580,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder setBytesWritten(int value) {
-        
+
         bytesWritten_ = value;
         onChanged();
         return this;
@@ -10590,7 +10590,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearBytesWritten() {
-        
+
         bytesWritten_ = 0;
         onChanged();
         return this;
@@ -10870,7 +10870,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         alias_ = s;
@@ -10886,7 +10886,7 @@ public final class TerminalOuterClass {
         getAliasBytes() {
       java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         alias_ = b;
@@ -10916,7 +10916,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (priorityCase_ == 2) {
@@ -10936,7 +10936,7 @@ public final class TerminalOuterClass {
         ref = priority_;
       }
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         if (priorityCase_ == 2) {
@@ -11432,7 +11432,7 @@ public final class TerminalOuterClass {
           getAliasBytes() {
         java.lang.Object ref = alias_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           alias_ = b;
@@ -11451,7 +11451,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         alias_ = value;
         onChanged();
         return this;
@@ -11461,7 +11461,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearAlias() {
-        
+
         alias_ = getDefaultInstance().getAlias();
         onChanged();
         return this;
@@ -11477,7 +11477,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         alias_ = value;
         onChanged();
         return this;
@@ -11525,7 +11525,7 @@ public final class TerminalOuterClass {
           ref = priority_;
         }
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           if (priorityCase_ == 2) {
@@ -11708,7 +11708,7 @@ public final class TerminalOuterClass {
        * <code>.supervisor.TerminalSize size = 4;</code>
        */
       public io.gitpod.supervisor.api.TerminalOuterClass.TerminalSize.Builder getSizeBuilder() {
-        
+
         onChanged();
         return getSizeFieldBuilder().getBuilder();
       }
@@ -11727,7 +11727,7 @@ public final class TerminalOuterClass {
        * <code>.supervisor.TerminalSize size = 4;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.TerminalOuterClass.TerminalSize, io.gitpod.supervisor.api.TerminalOuterClass.TerminalSize.Builder, io.gitpod.supervisor.api.TerminalOuterClass.TerminalSizeOrBuilder> 
+          io.gitpod.supervisor.api.TerminalOuterClass.TerminalSize, io.gitpod.supervisor.api.TerminalOuterClass.TerminalSize.Builder, io.gitpod.supervisor.api.TerminalOuterClass.TerminalSizeOrBuilder>
           getSizeFieldBuilder() {
         if (sizeBuilder_ == null) {
           sizeBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -12349,7 +12349,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         alias_ = s;
@@ -12365,7 +12365,7 @@ public final class TerminalOuterClass {
         getAliasBytes() {
       java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         alias_ = b;
@@ -12391,7 +12391,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         title_ = s;
@@ -12411,7 +12411,7 @@ public final class TerminalOuterClass {
         getTitleBytes() {
       java.lang.Object ref = title_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         title_ = b;
@@ -12765,7 +12765,7 @@ public final class TerminalOuterClass {
           getAliasBytes() {
         java.lang.Object ref = alias_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           alias_ = b;
@@ -12784,7 +12784,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         alias_ = value;
         onChanged();
         return this;
@@ -12794,7 +12794,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearAlias() {
-        
+
         alias_ = getDefaultInstance().getAlias();
         onChanged();
         return this;
@@ -12810,7 +12810,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         alias_ = value;
         onChanged();
         return this;
@@ -12849,7 +12849,7 @@ public final class TerminalOuterClass {
           getTitleBytes() {
         java.lang.Object ref = title_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           title_ = b;
@@ -12872,7 +12872,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         title_ = value;
         onChanged();
         return this;
@@ -12886,7 +12886,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearTitle() {
-        
+
         title_ = getDefaultInstance().getTitle();
         onChanged();
         return this;
@@ -12906,7 +12906,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         title_ = value;
         onChanged();
         return this;
@@ -13628,7 +13628,7 @@ public final class TerminalOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         alias_ = s;
@@ -13644,7 +13644,7 @@ public final class TerminalOuterClass {
         getAliasBytes() {
       java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         alias_ = b;
@@ -13660,7 +13660,7 @@ public final class TerminalOuterClass {
           java.lang.String, java.lang.String> defaultEntry =
               com.google.protobuf.MapEntry
               .<java.lang.String, java.lang.String>newDefaultInstance(
-                  io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_UpdateTerminalAnnotationsRequest_ChangedEntry_descriptor, 
+                  io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_UpdateTerminalAnnotationsRequest_ChangedEntry_descriptor,
                   com.google.protobuf.WireFormat.FieldType.STRING,
                   "",
                   com.google.protobuf.WireFormat.FieldType.STRING,
@@ -14214,7 +14214,7 @@ public final class TerminalOuterClass {
           getAliasBytes() {
         java.lang.Object ref = alias_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           alias_ = b;
@@ -14233,7 +14233,7 @@ public final class TerminalOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         alias_ = value;
         onChanged();
         return this;
@@ -14243,7 +14243,7 @@ public final class TerminalOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearAlias() {
-        
+
         alias_ = getDefaultInstance().getAlias();
         onChanged();
         return this;
@@ -14259,7 +14259,7 @@ public final class TerminalOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         alias_ = value;
         onChanged();
         return this;
@@ -15042,117 +15042,117 @@ public final class TerminalOuterClass {
 
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TerminalSize_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TerminalSize_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_OpenTerminalRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_OpenTerminalRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_OpenTerminalRequest_EnvEntry_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_OpenTerminalRequest_EnvEntry_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_OpenTerminalRequest_AnnotationsEntry_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_OpenTerminalRequest_AnnotationsEntry_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_OpenTerminalResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_OpenTerminalResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ShutdownTerminalRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ShutdownTerminalRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ShutdownTerminalResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ShutdownTerminalResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_Terminal_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_Terminal_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_Terminal_AnnotationsEntry_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_Terminal_AnnotationsEntry_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_GetTerminalRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_GetTerminalRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ListTerminalsRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ListTerminalsRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ListTerminalsResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ListTerminalsResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ListenTerminalRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ListenTerminalRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ListenTerminalResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ListenTerminalResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_WriteTerminalRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_WriteTerminalRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_WriteTerminalResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_WriteTerminalResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SetTerminalSizeRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SetTerminalSizeRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SetTerminalSizeResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SetTerminalSizeResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SetTerminalTitleRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SetTerminalTitleRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SetTerminalTitleResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SetTerminalTitleResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_UpdateTerminalAnnotationsRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_UpdateTerminalAnnotationsRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_UpdateTerminalAnnotationsRequest_ChangedEntry_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_UpdateTerminalAnnotationsRequest_ChangedEntry_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_UpdateTerminalAnnotationsResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_UpdateTerminalAnnotationsResponse_fieldAccessorTable;
 

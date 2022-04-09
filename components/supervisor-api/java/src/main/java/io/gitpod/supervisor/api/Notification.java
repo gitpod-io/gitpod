@@ -339,7 +339,7 @@ public final class Notification {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         message_ = s;
@@ -355,7 +355,7 @@ public final class Notification {
         getMessageBytes() {
       java.lang.Object ref = message_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         message_ = b;
@@ -784,7 +784,7 @@ public final class Notification {
        * @return This builder for chaining.
        */
       public Builder setLevelValue(int value) {
-        
+
         level_ = value;
         onChanged();
         return this;
@@ -808,7 +808,7 @@ public final class Notification {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         level_ = value.getNumber();
         onChanged();
         return this;
@@ -818,7 +818,7 @@ public final class Notification {
        * @return This builder for chaining.
        */
       public Builder clearLevel() {
-        
+
         level_ = 0;
         onChanged();
         return this;
@@ -849,7 +849,7 @@ public final class Notification {
           getMessageBytes() {
         java.lang.Object ref = message_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           message_ = b;
@@ -868,7 +868,7 @@ public final class Notification {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         message_ = value;
         onChanged();
         return this;
@@ -878,7 +878,7 @@ public final class Notification {
        * @return This builder for chaining.
        */
       public Builder clearMessage() {
-        
+
         message_ = getDefaultInstance().getMessage();
         onChanged();
         return this;
@@ -894,7 +894,7 @@ public final class Notification {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         message_ = value;
         onChanged();
         return this;
@@ -1222,7 +1222,7 @@ public final class Notification {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         action_ = s;
@@ -1242,7 +1242,7 @@ public final class Notification {
         getActionBytes() {
       java.lang.Object ref = action_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         action_ = b;
@@ -1587,7 +1587,7 @@ public final class Notification {
           getActionBytes() {
         java.lang.Object ref = action_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           action_ = b;
@@ -1610,7 +1610,7 @@ public final class Notification {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         action_ = value;
         onChanged();
         return this;
@@ -1624,7 +1624,7 @@ public final class Notification {
        * @return This builder for chaining.
        */
       public Builder clearAction() {
-        
+
         action_ = getDefaultInstance().getAction();
         onChanged();
         return this;
@@ -1644,7 +1644,7 @@ public final class Notification {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         action_ = value;
         onChanged();
         return this;
@@ -2625,7 +2625,7 @@ public final class Notification {
        * @return This builder for chaining.
        */
       public Builder setRequestId(long value) {
-        
+
         requestId_ = value;
         onChanged();
         return this;
@@ -2635,7 +2635,7 @@ public final class Notification {
        * @return This builder for chaining.
        */
       public Builder clearRequestId() {
-        
+
         requestId_ = 0L;
         onChanged();
         return this;
@@ -2728,7 +2728,7 @@ public final class Notification {
        * <code>.supervisor.NotifyRequest request = 2;</code>
        */
       public io.gitpod.supervisor.api.Notification.NotifyRequest.Builder getRequestBuilder() {
-        
+
         onChanged();
         return getRequestFieldBuilder().getBuilder();
       }
@@ -2747,7 +2747,7 @@ public final class Notification {
        * <code>.supervisor.NotifyRequest request = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Notification.NotifyRequest, io.gitpod.supervisor.api.Notification.NotifyRequest.Builder, io.gitpod.supervisor.api.Notification.NotifyRequestOrBuilder> 
+          io.gitpod.supervisor.api.Notification.NotifyRequest, io.gitpod.supervisor.api.Notification.NotifyRequest.Builder, io.gitpod.supervisor.api.Notification.NotifyRequestOrBuilder>
           getRequestFieldBuilder() {
         if (requestBuilder_ == null) {
           requestBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -3317,7 +3317,7 @@ public final class Notification {
        * @return This builder for chaining.
        */
       public Builder setRequestId(long value) {
-        
+
         requestId_ = value;
         onChanged();
         return this;
@@ -3327,7 +3327,7 @@ public final class Notification {
        * @return This builder for chaining.
        */
       public Builder clearRequestId() {
-        
+
         requestId_ = 0L;
         onChanged();
         return this;
@@ -3420,7 +3420,7 @@ public final class Notification {
        * <code>.supervisor.NotifyResponse response = 2;</code>
        */
       public io.gitpod.supervisor.api.Notification.NotifyResponse.Builder getResponseBuilder() {
-        
+
         onChanged();
         return getResponseFieldBuilder().getBuilder();
       }
@@ -3439,7 +3439,7 @@ public final class Notification {
        * <code>.supervisor.NotifyResponse response = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Notification.NotifyResponse, io.gitpod.supervisor.api.Notification.NotifyResponse.Builder, io.gitpod.supervisor.api.Notification.NotifyResponseOrBuilder> 
+          io.gitpod.supervisor.api.Notification.NotifyResponse, io.gitpod.supervisor.api.Notification.NotifyResponse.Builder, io.gitpod.supervisor.api.Notification.NotifyResponseOrBuilder>
           getResponseFieldBuilder() {
         if (responseBuilder_ == null) {
           responseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -3924,32 +3924,32 @@ public final class Notification {
 
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_NotifyRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_NotifyRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_NotifyResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_NotifyResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SubscribeRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SubscribeRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SubscribeResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SubscribeResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_RespondRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_RespondRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_RespondResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_RespondResponse_fieldAccessorTable;
 

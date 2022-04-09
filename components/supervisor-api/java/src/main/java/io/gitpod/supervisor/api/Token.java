@@ -354,7 +354,7 @@ public final class Token {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         host_ = s;
@@ -370,7 +370,7 @@ public final class Token {
         getHostBytes() {
       java.lang.Object ref = host_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         host_ = b;
@@ -427,7 +427,7 @@ public final class Token {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         description_ = s;
@@ -443,7 +443,7 @@ public final class Token {
         getDescriptionBytes() {
       java.lang.Object ref = description_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         description_ = b;
@@ -465,7 +465,7 @@ public final class Token {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         kind_ = s;
@@ -481,7 +481,7 @@ public final class Token {
         getKindBytes() {
       java.lang.Object ref = kind_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         kind_ = b;
@@ -888,7 +888,7 @@ public final class Token {
           getHostBytes() {
         java.lang.Object ref = host_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           host_ = b;
@@ -907,7 +907,7 @@ public final class Token {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         host_ = value;
         onChanged();
         return this;
@@ -917,7 +917,7 @@ public final class Token {
        * @return This builder for chaining.
        */
       public Builder clearHost() {
-        
+
         host_ = getDefaultInstance().getHost();
         onChanged();
         return this;
@@ -933,7 +933,7 @@ public final class Token {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         host_ = value;
         onChanged();
         return this;
@@ -1074,7 +1074,7 @@ public final class Token {
           getDescriptionBytes() {
         java.lang.Object ref = description_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           description_ = b;
@@ -1093,7 +1093,7 @@ public final class Token {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         description_ = value;
         onChanged();
         return this;
@@ -1103,7 +1103,7 @@ public final class Token {
        * @return This builder for chaining.
        */
       public Builder clearDescription() {
-        
+
         description_ = getDefaultInstance().getDescription();
         onChanged();
         return this;
@@ -1119,7 +1119,7 @@ public final class Token {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         description_ = value;
         onChanged();
         return this;
@@ -1150,7 +1150,7 @@ public final class Token {
           getKindBytes() {
         java.lang.Object ref = kind_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           kind_ = b;
@@ -1169,7 +1169,7 @@ public final class Token {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         kind_ = value;
         onChanged();
         return this;
@@ -1179,7 +1179,7 @@ public final class Token {
        * @return This builder for chaining.
        */
       public Builder clearKind() {
-        
+
         kind_ = getDefaultInstance().getKind();
         onChanged();
         return this;
@@ -1195,7 +1195,7 @@ public final class Token {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         kind_ = value;
         onChanged();
         return this;
@@ -1271,7 +1271,7 @@ public final class Token {
 
     /**
      * <pre>
-     ** The username of the account associated with the token. 
+     ** The username of the account associated with the token.
      * </pre>
      *
      * <code>string user = 2;</code>
@@ -1280,7 +1280,7 @@ public final class Token {
     java.lang.String getUser();
     /**
      * <pre>
-     ** The username of the account associated with the token. 
+     ** The username of the account associated with the token.
      * </pre>
      *
      * <code>string user = 2;</code>
@@ -1431,7 +1431,7 @@ public final class Token {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         token_ = s;
@@ -1447,7 +1447,7 @@ public final class Token {
         getTokenBytes() {
       java.lang.Object ref = token_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         token_ = b;
@@ -1461,7 +1461,7 @@ public final class Token {
     private volatile java.lang.Object user_;
     /**
      * <pre>
-     ** The username of the account associated with the token. 
+     ** The username of the account associated with the token.
      * </pre>
      *
      * <code>string user = 2;</code>
@@ -1473,7 +1473,7 @@ public final class Token {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         user_ = s;
@@ -1482,7 +1482,7 @@ public final class Token {
     }
     /**
      * <pre>
-     ** The username of the account associated with the token. 
+     ** The username of the account associated with the token.
      * </pre>
      *
      * <code>string user = 2;</code>
@@ -1493,7 +1493,7 @@ public final class Token {
         getUserBytes() {
       java.lang.Object ref = user_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         user_ = b;
@@ -1918,7 +1918,7 @@ public final class Token {
           getTokenBytes() {
         java.lang.Object ref = token_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           token_ = b;
@@ -1937,7 +1937,7 @@ public final class Token {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         token_ = value;
         onChanged();
         return this;
@@ -1947,7 +1947,7 @@ public final class Token {
        * @return This builder for chaining.
        */
       public Builder clearToken() {
-        
+
         token_ = getDefaultInstance().getToken();
         onChanged();
         return this;
@@ -1963,7 +1963,7 @@ public final class Token {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         token_ = value;
         onChanged();
         return this;
@@ -1972,7 +1972,7 @@ public final class Token {
       private java.lang.Object user_ = "";
       /**
        * <pre>
-       ** The username of the account associated with the token. 
+       ** The username of the account associated with the token.
        * </pre>
        *
        * <code>string user = 2;</code>
@@ -1992,7 +1992,7 @@ public final class Token {
       }
       /**
        * <pre>
-       ** The username of the account associated with the token. 
+       ** The username of the account associated with the token.
        * </pre>
        *
        * <code>string user = 2;</code>
@@ -2002,7 +2002,7 @@ public final class Token {
           getUserBytes() {
         java.lang.Object ref = user_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           user_ = b;
@@ -2013,7 +2013,7 @@ public final class Token {
       }
       /**
        * <pre>
-       ** The username of the account associated with the token. 
+       ** The username of the account associated with the token.
        * </pre>
        *
        * <code>string user = 2;</code>
@@ -2025,28 +2025,28 @@ public final class Token {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         user_ = value;
         onChanged();
         return this;
       }
       /**
        * <pre>
-       ** The username of the account associated with the token. 
+       ** The username of the account associated with the token.
        * </pre>
        *
        * <code>string user = 2;</code>
        * @return This builder for chaining.
        */
       public Builder clearUser() {
-        
+
         user_ = getDefaultInstance().getUser();
         onChanged();
         return this;
       }
       /**
        * <pre>
-       ** The username of the account associated with the token. 
+       ** The username of the account associated with the token.
        * </pre>
        *
        * <code>string user = 2;</code>
@@ -2059,7 +2059,7 @@ public final class Token {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         user_ = value;
         onChanged();
         return this;
@@ -2462,7 +2462,7 @@ public final class Token {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         host_ = s;
@@ -2478,7 +2478,7 @@ public final class Token {
         getHostBytes() {
       java.lang.Object ref = host_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         host_ = b;
@@ -2535,7 +2535,7 @@ public final class Token {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         token_ = s;
@@ -2551,7 +2551,7 @@ public final class Token {
         getTokenBytes() {
       java.lang.Object ref = token_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         token_ = b;
@@ -2618,7 +2618,7 @@ public final class Token {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         kind_ = s;
@@ -2634,7 +2634,7 @@ public final class Token {
         getKindBytes() {
       java.lang.Object ref = kind_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         kind_ = b;
@@ -3087,7 +3087,7 @@ public final class Token {
           getHostBytes() {
         java.lang.Object ref = host_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           host_ = b;
@@ -3106,7 +3106,7 @@ public final class Token {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         host_ = value;
         onChanged();
         return this;
@@ -3116,7 +3116,7 @@ public final class Token {
        * @return This builder for chaining.
        */
       public Builder clearHost() {
-        
+
         host_ = getDefaultInstance().getHost();
         onChanged();
         return this;
@@ -3132,7 +3132,7 @@ public final class Token {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         host_ = value;
         onChanged();
         return this;
@@ -3273,7 +3273,7 @@ public final class Token {
           getTokenBytes() {
         java.lang.Object ref = token_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           token_ = b;
@@ -3292,7 +3292,7 @@ public final class Token {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         token_ = value;
         onChanged();
         return this;
@@ -3302,7 +3302,7 @@ public final class Token {
        * @return This builder for chaining.
        */
       public Builder clearToken() {
-        
+
         token_ = getDefaultInstance().getToken();
         onChanged();
         return this;
@@ -3318,7 +3318,7 @@ public final class Token {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         token_ = value;
         onChanged();
         return this;
@@ -3411,7 +3411,7 @@ public final class Token {
        * <code>.google.protobuf.Timestamp expiry_date = 4;</code>
        */
       public com.google.protobuf.Timestamp.Builder getExpiryDateBuilder() {
-        
+
         onChanged();
         return getExpiryDateFieldBuilder().getBuilder();
       }
@@ -3430,7 +3430,7 @@ public final class Token {
        * <code>.google.protobuf.Timestamp expiry_date = 4;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
+          com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>
           getExpiryDateFieldBuilder() {
         if (expiryDateBuilder_ == null) {
           expiryDateBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -3457,7 +3457,7 @@ public final class Token {
        * @return This builder for chaining.
        */
       public Builder setReuseValue(int value) {
-        
+
         reuse_ = value;
         onChanged();
         return this;
@@ -3481,7 +3481,7 @@ public final class Token {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         reuse_ = value.getNumber();
         onChanged();
         return this;
@@ -3491,7 +3491,7 @@ public final class Token {
        * @return This builder for chaining.
        */
       public Builder clearReuse() {
-        
+
         reuse_ = 0;
         onChanged();
         return this;
@@ -3522,7 +3522,7 @@ public final class Token {
           getKindBytes() {
         java.lang.Object ref = kind_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           kind_ = b;
@@ -3541,7 +3541,7 @@ public final class Token {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         kind_ = value;
         onChanged();
         return this;
@@ -3551,7 +3551,7 @@ public final class Token {
        * @return This builder for chaining.
        */
       public Builder clearKind() {
-        
+
         kind_ = getDefaultInstance().getKind();
         onChanged();
         return this;
@@ -3567,7 +3567,7 @@ public final class Token {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         kind_ = value;
         onChanged();
         return this;
@@ -4245,7 +4245,7 @@ public final class Token {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (tokenCase_ == 1) {
@@ -4265,7 +4265,7 @@ public final class Token {
         ref = token_;
       }
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         if (tokenCase_ == 1) {
@@ -4310,7 +4310,7 @@ public final class Token {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         kind_ = s;
@@ -4326,7 +4326,7 @@ public final class Token {
         getKindBytes() {
       java.lang.Object ref = kind_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         kind_ = b;
@@ -4760,7 +4760,7 @@ public final class Token {
           ref = token_;
         }
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           if (tokenCase_ == 1) {
@@ -4881,7 +4881,7 @@ public final class Token {
           getKindBytes() {
         java.lang.Object ref = kind_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           kind_ = b;
@@ -4900,7 +4900,7 @@ public final class Token {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         kind_ = value;
         onChanged();
         return this;
@@ -4910,7 +4910,7 @@ public final class Token {
        * @return This builder for chaining.
        */
       public Builder clearKind() {
-        
+
         kind_ = getDefaultInstance().getKind();
         onChanged();
         return this;
@@ -4926,7 +4926,7 @@ public final class Token {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         kind_ = value;
         onChanged();
         return this;
@@ -5655,7 +5655,7 @@ public final class Token {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           kind_ = s;
@@ -5671,7 +5671,7 @@ public final class Token {
           getKindBytes() {
         java.lang.Object ref = kind_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           kind_ = b;
@@ -6008,7 +6008,7 @@ public final class Token {
             getKindBytes() {
           java.lang.Object ref = kind_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             kind_ = b;
@@ -6027,7 +6027,7 @@ public final class Token {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           kind_ = value;
           onChanged();
           return this;
@@ -6037,7 +6037,7 @@ public final class Token {
          * @return This builder for chaining.
          */
         public Builder clearKind() {
-          
+
           kind_ = getDefaultInstance().getKind();
           onChanged();
           return this;
@@ -6053,7 +6053,7 @@ public final class Token {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           kind_ = value;
           onChanged();
           return this;
@@ -6706,7 +6706,7 @@ public final class Token {
        * <code>.supervisor.ProvideTokenRequest.RegisterProvider registration = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Token.ProvideTokenRequest.RegisterProvider, io.gitpod.supervisor.api.Token.ProvideTokenRequest.RegisterProvider.Builder, io.gitpod.supervisor.api.Token.ProvideTokenRequest.RegisterProviderOrBuilder> 
+          io.gitpod.supervisor.api.Token.ProvideTokenRequest.RegisterProvider, io.gitpod.supervisor.api.Token.ProvideTokenRequest.RegisterProvider.Builder, io.gitpod.supervisor.api.Token.ProvideTokenRequest.RegisterProviderOrBuilder>
           getRegistrationFieldBuilder() {
         if (registrationBuilder_ == null) {
           if (!(messageCase_ == 1)) {
@@ -6847,7 +6847,7 @@ public final class Token {
        * <code>.supervisor.SetTokenRequest answer = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Token.SetTokenRequest, io.gitpod.supervisor.api.Token.SetTokenRequest.Builder, io.gitpod.supervisor.api.Token.SetTokenRequestOrBuilder> 
+          io.gitpod.supervisor.api.Token.SetTokenRequest, io.gitpod.supervisor.api.Token.SetTokenRequest.Builder, io.gitpod.supervisor.api.Token.SetTokenRequestOrBuilder>
           getAnswerFieldBuilder() {
         if (answerBuilder_ == null) {
           if (!(messageCase_ == 2)) {
@@ -7454,7 +7454,7 @@ public final class Token {
        * <code>.supervisor.GetTokenRequest request = 1;</code>
        */
       public io.gitpod.supervisor.api.Token.GetTokenRequest.Builder getRequestBuilder() {
-        
+
         onChanged();
         return getRequestFieldBuilder().getBuilder();
       }
@@ -7473,7 +7473,7 @@ public final class Token {
        * <code>.supervisor.GetTokenRequest request = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Token.GetTokenRequest, io.gitpod.supervisor.api.Token.GetTokenRequest.Builder, io.gitpod.supervisor.api.Token.GetTokenRequestOrBuilder> 
+          io.gitpod.supervisor.api.Token.GetTokenRequest, io.gitpod.supervisor.api.Token.GetTokenRequest.Builder, io.gitpod.supervisor.api.Token.GetTokenRequestOrBuilder>
           getRequestFieldBuilder() {
         if (requestBuilder_ == null) {
           requestBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -7540,47 +7540,47 @@ public final class Token {
 
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_GetTokenRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_GetTokenRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_GetTokenResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_GetTokenResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SetTokenRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SetTokenRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SetTokenResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SetTokenResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ClearTokenRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ClearTokenRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ClearTokenResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ClearTokenResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ProvideTokenRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ProvideTokenRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ProvideTokenRequest_RegisterProvider_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ProvideTokenRequest_RegisterProvider_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ProvideTokenResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ProvideTokenResponse_fieldAccessorTable;
 

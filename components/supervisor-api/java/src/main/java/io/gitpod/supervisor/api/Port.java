@@ -328,7 +328,7 @@ public final class Port {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         clientId_ = s;
@@ -344,7 +344,7 @@ public final class Port {
         getClientIdBytes() {
       java.lang.Object ref = clientId_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         clientId_ = b;
@@ -721,7 +721,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder setPort(int value) {
-        
+
         port_ = value;
         onChanged();
         return this;
@@ -731,7 +731,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder clearPort() {
-        
+
         port_ = 0;
         onChanged();
         return this;
@@ -752,7 +752,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder setTargetPort(int value) {
-        
+
         targetPort_ = value;
         onChanged();
         return this;
@@ -762,7 +762,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder clearTargetPort() {
-        
+
         targetPort_ = 0;
         onChanged();
         return this;
@@ -782,7 +782,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder setVisibilityValue(int value) {
-        
+
         visibility_ = value;
         onChanged();
         return this;
@@ -806,7 +806,7 @@ public final class Port {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         visibility_ = value.getNumber();
         onChanged();
         return this;
@@ -816,7 +816,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder clearVisibility() {
-        
+
         visibility_ = 0;
         onChanged();
         return this;
@@ -847,7 +847,7 @@ public final class Port {
           getClientIdBytes() {
         java.lang.Object ref = clientId_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           clientId_ = b;
@@ -866,7 +866,7 @@ public final class Port {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         clientId_ = value;
         onChanged();
         return this;
@@ -876,7 +876,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder clearClientId() {
-        
+
         clientId_ = getDefaultInstance().getClientId();
         onChanged();
         return this;
@@ -892,7 +892,7 @@ public final class Port {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         clientId_ = value;
         onChanged();
         return this;
@@ -1788,7 +1788,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder setPort(int value) {
-        
+
         port_ = value;
         onChanged();
         return this;
@@ -1798,7 +1798,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder clearPort() {
-        
+
         port_ = 0;
         onChanged();
         return this;
@@ -2985,7 +2985,7 @@ public final class Port {
        * <code>.supervisor.TunnelPortRequest desc = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Port.TunnelPortRequest, io.gitpod.supervisor.api.Port.TunnelPortRequest.Builder, io.gitpod.supervisor.api.Port.TunnelPortRequestOrBuilder> 
+          io.gitpod.supervisor.api.Port.TunnelPortRequest, io.gitpod.supervisor.api.Port.TunnelPortRequest.Builder, io.gitpod.supervisor.api.Port.TunnelPortRequestOrBuilder>
           getDescFieldBuilder() {
         if (descBuilder_ == null) {
           if (!(outputCase_ == 1)) {
@@ -3523,7 +3523,7 @@ public final class Port {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         data_ = value;
         onChanged();
         return this;
@@ -3533,7 +3533,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder clearData() {
-        
+
         data_ = getDefaultInstance().getData();
         onChanged();
         return this;
@@ -4012,7 +4012,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder setEnabled(boolean value) {
-        
+
         enabled_ = value;
         onChanged();
         return this;
@@ -4022,7 +4022,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder clearEnabled() {
-        
+
         enabled_ = false;
         onChanged();
         return this;
@@ -4918,7 +4918,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder setPort(int value) {
-        
+
         port_ = value;
         onChanged();
         return this;
@@ -4928,7 +4928,7 @@ public final class Port {
        * @return This builder for chaining.
        */
       public Builder clearPort() {
-        
+
         port_ = 0;
         onChanged();
         return this;
@@ -5406,52 +5406,52 @@ public final class Port {
 
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TunnelPortRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TunnelPortRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TunnelPortResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TunnelPortResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_CloseTunnelRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_CloseTunnelRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_CloseTunnelResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_CloseTunnelResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_EstablishTunnelRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_EstablishTunnelRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_EstablishTunnelResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_EstablishTunnelResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_AutoTunnelRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_AutoTunnelRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_AutoTunnelResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_AutoTunnelResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_RetryAutoExposeRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_RetryAutoExposeRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_RetryAutoExposeResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_RetryAutoExposeResponse_fieldAccessorTable;
 

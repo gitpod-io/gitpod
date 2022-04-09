@@ -1078,7 +1078,7 @@ public final class Info {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           endpoint_ = s;
@@ -1098,7 +1098,7 @@ public final class Info {
           getEndpointBytes() {
         java.lang.Object ref = endpoint_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           endpoint_ = b;
@@ -1124,7 +1124,7 @@ public final class Info {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           host_ = s;
@@ -1144,7 +1144,7 @@ public final class Info {
           getHostBytes() {
         java.lang.Object ref = host_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           host_ = b;
@@ -1506,7 +1506,7 @@ public final class Info {
             getEndpointBytes() {
           java.lang.Object ref = endpoint_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             endpoint_ = b;
@@ -1529,7 +1529,7 @@ public final class Info {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           endpoint_ = value;
           onChanged();
           return this;
@@ -1543,7 +1543,7 @@ public final class Info {
          * @return This builder for chaining.
          */
         public Builder clearEndpoint() {
-          
+
           endpoint_ = getDefaultInstance().getEndpoint();
           onChanged();
           return this;
@@ -1563,7 +1563,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           endpoint_ = value;
           onChanged();
           return this;
@@ -1602,7 +1602,7 @@ public final class Info {
             getHostBytes() {
           java.lang.Object ref = host_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             host_ = b;
@@ -1625,7 +1625,7 @@ public final class Info {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           host_ = value;
           onChanged();
           return this;
@@ -1639,7 +1639,7 @@ public final class Info {
          * @return This builder for chaining.
          */
         public Builder clearHost() {
-          
+
           host_ = getDefaultInstance().getHost();
           onChanged();
           return this;
@@ -1659,7 +1659,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           host_ = value;
           onChanged();
           return this;
@@ -1868,7 +1868,7 @@ public final class Info {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           owner_ = s;
@@ -1888,7 +1888,7 @@ public final class Info {
           getOwnerBytes() {
         java.lang.Object ref = owner_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           owner_ = b;
@@ -1914,7 +1914,7 @@ public final class Info {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           name_ = s;
@@ -1934,7 +1934,7 @@ public final class Info {
           getNameBytes() {
         java.lang.Object ref = name_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           name_ = b;
@@ -2296,7 +2296,7 @@ public final class Info {
             getOwnerBytes() {
           java.lang.Object ref = owner_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             owner_ = b;
@@ -2319,7 +2319,7 @@ public final class Info {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           owner_ = value;
           onChanged();
           return this;
@@ -2333,7 +2333,7 @@ public final class Info {
          * @return This builder for chaining.
          */
         public Builder clearOwner() {
-          
+
           owner_ = getDefaultInstance().getOwner();
           onChanged();
           return this;
@@ -2353,7 +2353,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           owner_ = value;
           onChanged();
           return this;
@@ -2392,7 +2392,7 @@ public final class Info {
             getNameBytes() {
           java.lang.Object ref = name_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             name_ = b;
@@ -2415,7 +2415,7 @@ public final class Info {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           name_ = value;
           onChanged();
           return this;
@@ -2429,7 +2429,7 @@ public final class Info {
          * @return This builder for chaining.
          */
         public Builder clearName() {
-          
+
           name_ = getDefaultInstance().getName();
           onChanged();
           return this;
@@ -2449,7 +2449,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           name_ = value;
           onChanged();
           return this;
@@ -2564,7 +2564,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         workspaceId_ = s;
@@ -2584,7 +2584,7 @@ public final class Info {
         getWorkspaceIdBytes() {
       java.lang.Object ref = workspaceId_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         workspaceId_ = b;
@@ -2610,7 +2610,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         instanceId_ = s;
@@ -2630,7 +2630,7 @@ public final class Info {
         getInstanceIdBytes() {
       java.lang.Object ref = instanceId_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         instanceId_ = b;
@@ -2656,7 +2656,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         checkoutLocation_ = s;
@@ -2676,7 +2676,7 @@ public final class Info {
         getCheckoutLocationBytes() {
       java.lang.Object ref = checkoutLocation_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         checkoutLocation_ = b;
@@ -2714,7 +2714,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (workspaceLocationCase_ == 4) {
@@ -2738,7 +2738,7 @@ public final class Info {
         ref = workspaceLocation_;
       }
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         if (workspaceLocationCase_ == 4) {
@@ -2778,7 +2778,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (workspaceLocationCase_ == 5) {
@@ -2802,7 +2802,7 @@ public final class Info {
         ref = workspaceLocation_;
       }
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         if (workspaceLocationCase_ == 5) {
@@ -2830,7 +2830,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         userHome_ = s;
@@ -2850,7 +2850,7 @@ public final class Info {
         getUserHomeBytes() {
       java.lang.Object ref = userHome_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         userHome_ = b;
@@ -2914,7 +2914,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         gitpodHost_ = s;
@@ -2934,7 +2934,7 @@ public final class Info {
         getGitpodHostBytes() {
       java.lang.Object ref = gitpodHost_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         gitpodHost_ = b;
@@ -2960,7 +2960,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         workspaceContextUrl_ = s;
@@ -2980,7 +2980,7 @@ public final class Info {
         getWorkspaceContextUrlBytes() {
       java.lang.Object ref = workspaceContextUrl_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         workspaceContextUrl_ = b;
@@ -3044,7 +3044,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         workspaceClusterHost_ = s;
@@ -3064,7 +3064,7 @@ public final class Info {
         getWorkspaceClusterHostBytes() {
       java.lang.Object ref = workspaceClusterHost_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         workspaceClusterHost_ = b;
@@ -3090,7 +3090,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         workspaceUrl_ = s;
@@ -3110,7 +3110,7 @@ public final class Info {
         getWorkspaceUrlBytes() {
       java.lang.Object ref = workspaceUrl_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         workspaceUrl_ = b;
@@ -3136,7 +3136,7 @@ public final class Info {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         ideAlias_ = s;
@@ -3156,7 +3156,7 @@ public final class Info {
         getIdeAliasBytes() {
       java.lang.Object ref = ideAlias_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         ideAlias_ = b;
@@ -3807,7 +3807,7 @@ public final class Info {
           getWorkspaceIdBytes() {
         java.lang.Object ref = workspaceId_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           workspaceId_ = b;
@@ -3830,7 +3830,7 @@ public final class Info {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         workspaceId_ = value;
         onChanged();
         return this;
@@ -3844,7 +3844,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder clearWorkspaceId() {
-        
+
         workspaceId_ = getDefaultInstance().getWorkspaceId();
         onChanged();
         return this;
@@ -3864,7 +3864,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         workspaceId_ = value;
         onChanged();
         return this;
@@ -3903,7 +3903,7 @@ public final class Info {
           getInstanceIdBytes() {
         java.lang.Object ref = instanceId_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           instanceId_ = b;
@@ -3926,7 +3926,7 @@ public final class Info {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         instanceId_ = value;
         onChanged();
         return this;
@@ -3940,7 +3940,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder clearInstanceId() {
-        
+
         instanceId_ = getDefaultInstance().getInstanceId();
         onChanged();
         return this;
@@ -3960,7 +3960,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         instanceId_ = value;
         onChanged();
         return this;
@@ -3999,7 +3999,7 @@ public final class Info {
           getCheckoutLocationBytes() {
         java.lang.Object ref = checkoutLocation_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           checkoutLocation_ = b;
@@ -4022,7 +4022,7 @@ public final class Info {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         checkoutLocation_ = value;
         onChanged();
         return this;
@@ -4036,7 +4036,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder clearCheckoutLocation() {
-        
+
         checkoutLocation_ = getDefaultInstance().getCheckoutLocation();
         onChanged();
         return this;
@@ -4056,7 +4056,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         checkoutLocation_ = value;
         onChanged();
         return this;
@@ -4116,7 +4116,7 @@ public final class Info {
           ref = workspaceLocation_;
         }
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           if (workspaceLocationCase_ == 4) {
@@ -4237,7 +4237,7 @@ public final class Info {
           ref = workspaceLocation_;
         }
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           if (workspaceLocationCase_ == 5) {
@@ -4337,7 +4337,7 @@ public final class Info {
           getUserHomeBytes() {
         java.lang.Object ref = userHome_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           userHome_ = b;
@@ -4360,7 +4360,7 @@ public final class Info {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         userHome_ = value;
         onChanged();
         return this;
@@ -4374,7 +4374,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder clearUserHome() {
-        
+
         userHome_ = getDefaultInstance().getUserHome();
         onChanged();
         return this;
@@ -4394,7 +4394,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         userHome_ = value;
         onChanged();
         return this;
@@ -4515,7 +4515,7 @@ public final class Info {
        * <code>.supervisor.WorkspaceInfoResponse.GitpodAPI gitpod_api = 7;</code>
        */
       public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.GitpodAPI.Builder getGitpodApiBuilder() {
-        
+
         onChanged();
         return getGitpodApiFieldBuilder().getBuilder();
       }
@@ -4542,7 +4542,7 @@ public final class Info {
        * <code>.supervisor.WorkspaceInfoResponse.GitpodAPI gitpod_api = 7;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.GitpodAPI, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.GitpodAPI.Builder, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.GitpodAPIOrBuilder> 
+          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.GitpodAPI, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.GitpodAPI.Builder, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.GitpodAPIOrBuilder>
           getGitpodApiFieldBuilder() {
         if (gitpodApiBuilder_ == null) {
           gitpodApiBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -4588,7 +4588,7 @@ public final class Info {
           getGitpodHostBytes() {
         java.lang.Object ref = gitpodHost_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           gitpodHost_ = b;
@@ -4611,7 +4611,7 @@ public final class Info {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         gitpodHost_ = value;
         onChanged();
         return this;
@@ -4625,7 +4625,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder clearGitpodHost() {
-        
+
         gitpodHost_ = getDefaultInstance().getGitpodHost();
         onChanged();
         return this;
@@ -4645,7 +4645,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         gitpodHost_ = value;
         onChanged();
         return this;
@@ -4684,7 +4684,7 @@ public final class Info {
           getWorkspaceContextUrlBytes() {
         java.lang.Object ref = workspaceContextUrl_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           workspaceContextUrl_ = b;
@@ -4707,7 +4707,7 @@ public final class Info {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         workspaceContextUrl_ = value;
         onChanged();
         return this;
@@ -4721,7 +4721,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder clearWorkspaceContextUrl() {
-        
+
         workspaceContextUrl_ = getDefaultInstance().getWorkspaceContextUrl();
         onChanged();
         return this;
@@ -4741,7 +4741,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         workspaceContextUrl_ = value;
         onChanged();
         return this;
@@ -4862,7 +4862,7 @@ public final class Info {
        * <code>.supervisor.WorkspaceInfoResponse.Repository repository = 10;</code>
        */
       public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.Repository.Builder getRepositoryBuilder() {
-        
+
         onChanged();
         return getRepositoryFieldBuilder().getBuilder();
       }
@@ -4889,7 +4889,7 @@ public final class Info {
        * <code>.supervisor.WorkspaceInfoResponse.Repository repository = 10;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.Repository, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.Repository.Builder, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.RepositoryOrBuilder> 
+          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.Repository, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.Repository.Builder, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.RepositoryOrBuilder>
           getRepositoryFieldBuilder() {
         if (repositoryBuilder_ == null) {
           repositoryBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -4935,7 +4935,7 @@ public final class Info {
           getWorkspaceClusterHostBytes() {
         java.lang.Object ref = workspaceClusterHost_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           workspaceClusterHost_ = b;
@@ -4958,7 +4958,7 @@ public final class Info {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         workspaceClusterHost_ = value;
         onChanged();
         return this;
@@ -4972,7 +4972,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder clearWorkspaceClusterHost() {
-        
+
         workspaceClusterHost_ = getDefaultInstance().getWorkspaceClusterHost();
         onChanged();
         return this;
@@ -4992,7 +4992,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         workspaceClusterHost_ = value;
         onChanged();
         return this;
@@ -5031,7 +5031,7 @@ public final class Info {
           getWorkspaceUrlBytes() {
         java.lang.Object ref = workspaceUrl_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           workspaceUrl_ = b;
@@ -5054,7 +5054,7 @@ public final class Info {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         workspaceUrl_ = value;
         onChanged();
         return this;
@@ -5068,7 +5068,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder clearWorkspaceUrl() {
-        
+
         workspaceUrl_ = getDefaultInstance().getWorkspaceUrl();
         onChanged();
         return this;
@@ -5088,7 +5088,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         workspaceUrl_ = value;
         onChanged();
         return this;
@@ -5127,7 +5127,7 @@ public final class Info {
           getIdeAliasBytes() {
         java.lang.Object ref = ideAlias_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           ideAlias_ = b;
@@ -5150,7 +5150,7 @@ public final class Info {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         ideAlias_ = value;
         onChanged();
         return this;
@@ -5164,7 +5164,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder clearIdeAlias() {
-        
+
         ideAlias_ = getDefaultInstance().getIdeAlias();
         onChanged();
         return this;
@@ -5184,7 +5184,7 @@ public final class Info {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         ideAlias_ = value;
         onChanged();
         return this;
@@ -5213,7 +5213,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder setIdePort(int value) {
-        
+
         idePort_ = value;
         onChanged();
         return this;
@@ -5227,7 +5227,7 @@ public final class Info {
        * @return This builder for chaining.
        */
       public Builder clearIdePort() {
-        
+
         idePort_ = 0;
         onChanged();
         return this;
@@ -5287,22 +5287,22 @@ public final class Info {
 
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_WorkspaceInfoRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_WorkspaceInfoRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_WorkspaceInfoResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_WorkspaceInfoResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_WorkspaceInfoResponse_GitpodAPI_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_WorkspaceInfoResponse_GitpodAPI_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_WorkspaceInfoResponse_Repository_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_WorkspaceInfoResponse_Repository_fieldAccessorTable;
 
