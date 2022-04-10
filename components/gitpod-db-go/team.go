@@ -9,8 +9,8 @@ type Team struct {
 	ID            uuid.UUID `gorm:"primaryKey"`
 	Name          string
 	Slug          string
-	CreationTime  StringlyTime `gorm:"column:creationTime"`
-	MarkedDeleted bool         `gorm:"column:markedDeleted"`
+	CreationTime  VarCharTime `gorm:"column:creationTime"`
+	MarkedDeleted bool        `gorm:"column:markedDeleted"`
 }
 
 // TableName overrides default GORM handling of table name generation
