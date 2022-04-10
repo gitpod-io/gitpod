@@ -4,34 +4,18 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"github.com/relvacode/iso8601"
-	"strings"
 	"time"
 )
 
-var (
-	// convert iso-8601 into rfc-3339 format
-	rfc3339t = strings.Replace("2015-12-23 00:00:00", " ", "T", 1) + "Z"
-)
-
-//func ParseISO8601(s string) (time.Time, error) {
-//
-//	t, err := time.Parse(time.RFC3339, converted)
-//	if err != nil {
-//		return time.Time{}, fmt.Errorf("failed to parse %s into ISO8601 timestamp: %w", s, err)
-//	}
-//
-//	return t, nil
-//}
-
-func NewVarCharTime(t time.Time) VarCharTime {
-	return VarCharTime(t.UTC())
+func NewVarcharTime(t time.Time) VarcharTime {
+	return VarcharTime(t.UTC())
 }
 
-// VarCharTime exists for cases where records are inserted into the DB as VARCHAR but actually contain a timestamp which is time.RFC3339
-type VarCharTime time.Time
+// VarcharTime exists for cases where records are inserted into the DB as VARCHAR but actually contain a timestamp which is time.RFC3339
+type VarcharTime time.Time
 
 // Scan implements the Scanner interface.
-func (n *VarCharTime) Scan(value interface{}) error {
+func (n *VarcharTime) Scan(value interface{}) error {
 	if value == nil {
 		return fmt.Errorf("nil value")
 	}
@@ -42,17 +26,16 @@ func (n *VarCharTime) Scan(value interface{}) error {
 		if err != nil {
 			return fmt.Errorf("failed to parse %v into ISO8601: %w", string(s), err)
 		}
-		*n = VarCharTime(parsed.UTC())
+		*n = VarcharTime(parsed.UTC())
 	}
-
-	return nil
+	return fmt.Errorf("unknown scan value for VarcharTime with value: %v", value)
 }
 
 // Value implements the driver Valuer interface.
-func (n VarCharTime) Value() (driver.Value, error) {
+func (n VarcharTime) Value() (driver.Value, error) {
 	return time.Time(n).UTC().Format(time.RFC3339Nano), nil
 }
 
-//func (n *VarCharTime) String() string {
-//	return n.Time.Format(time.RFC3339)
-//}
+func (n VarcharTime) String() string {
+	return time.Time(n).Format(time.RFC3339Nano)
+}
