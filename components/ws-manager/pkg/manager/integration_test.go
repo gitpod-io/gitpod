@@ -70,15 +70,17 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 		WorkspaceURLTemplate:     "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		WorkspacePortURLTemplate: "{{ .Host }}:{{ .IngressPort }}",
 		RegistryFacadeHost:       "registry-facade:8080",
-		Container: config.AllContainerConfiguration{
-			Workspace: config.ContainerConfiguration{
-				Limits: config.ResourceConfiguration{
-					CPU:    "900m",
-					Memory: "1000M",
-				},
-				Requests: config.ResourceConfiguration{
-					CPU:    "1m",
-					Memory: "1m",
+		WorkspaceClasses: map[string]*config.WorkspaceClass{
+			"": {
+				Container: config.ContainerConfiguration{
+					Limits: &config.ResourceConfiguration{
+						CPU:    "900m",
+						Memory: "1000M",
+					},
+					Requests: &config.ResourceConfiguration{
+						CPU:    "1m",
+						Memory: "1m",
+					},
 				},
 			},
 		},
@@ -307,15 +309,30 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 	// create in-memory file system
 	fs := fstest.MapFS{}
 
+	updateDefaultTemplate := func(update func(*config.WorkspacePodTemplateConfiguration)) {
+		c := manager.Config.WorkspaceClasses[""]
+		tpls := c.Templates
+		update(&tpls)
+		c.Templates = tpls
+		manager.Config.WorkspaceClasses[""] = c
+	}
 	files := []struct {
 		tplfn  string
 		ctnt   interface{}
 		setter func(fn string)
 	}{
-		{"default-template.yaml", test.PodTemplates.Default, func(fn string) { manager.Config.WorkspacePodTemplate.DefaultPath = fn }},
-		{"prebuild-template.yaml", test.PodTemplates.Prebuild, func(fn string) { manager.Config.WorkspacePodTemplate.PrebuildPath = fn }},
-		{"probe-template.yaml", test.PodTemplates.Probe, func(fn string) { manager.Config.WorkspacePodTemplate.ProbePath = fn }},
-		{"regular-template.yaml", test.PodTemplates.Regular, func(fn string) { manager.Config.WorkspacePodTemplate.RegularPath = fn }},
+		{"default-template.yaml", test.PodTemplates.Default, func(fn string) {
+			updateDefaultTemplate(func(wptc *config.WorkspacePodTemplateConfiguration) { wptc.DefaultPath = fn })
+		}},
+		{"prebuild-template.yaml", test.PodTemplates.Prebuild, func(fn string) {
+			updateDefaultTemplate(func(wptc *config.WorkspacePodTemplateConfiguration) { wptc.PrebuildPath = fn })
+		}},
+		{"probe-template.yaml", test.PodTemplates.Probe, func(fn string) {
+			updateDefaultTemplate(func(wptc *config.WorkspacePodTemplateConfiguration) { wptc.ProbePath = fn })
+		}},
+		{"regular-template.yaml", test.PodTemplates.Regular, func(fn string) {
+			updateDefaultTemplate(func(wptc *config.WorkspacePodTemplateConfiguration) { wptc.RegularPath = fn })
+		}},
 	}
 	for _, f := range files {
 		if f.ctnt == nil {

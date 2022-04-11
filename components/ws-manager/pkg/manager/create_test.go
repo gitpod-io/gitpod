@@ -7,6 +7,8 @@ package manager
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"path/filepath"
 	"testing"
 	"testing/fstest"
 
@@ -20,10 +22,7 @@ import (
 )
 
 func TestCreateDefiniteWorkspacePod(t *testing.T) {
-	type fixture struct {
-		Spec               *json.RawMessage              `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
-		Request            *json.RawMessage              `json:"request,omitempty"` // *api.StartWorkspaceRequest
-		Context            *startWorkspaceContext        `json:"context,omitempty"`
+	type WorkspaceClass struct {
 		DefaultTemplate    *corev1.Pod                   `json:"defaultTemplate,omitempty"`
 		PrebuildTemplate   *corev1.Pod                   `json:"prebuildTemplate,omitempty"`
 		ProbeTemplate      *corev1.Pod                   `json:"probeTemplate,omitempty"`
@@ -31,7 +30,29 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 		RegularTemplate    *corev1.Pod                   `json:"regularTemplate,omitempty"`
 		ResourceRequests   *config.ResourceConfiguration `json:"resourceRequests,omitempty"`
 		ResourceLimits     *config.ResourceConfiguration `json:"resourceLimits,omitempty"`
-		CACertSecret       string                        `json:"caCertSecret,omitempty"`
+	}
+	type tpl struct {
+		FN      string
+		Content interface{}
+		Setter  func(fn string)
+	}
+	toTpl := func(path string, cls WorkspaceClass, c *config.WorkspacePodTemplateConfiguration) []tpl {
+		return []tpl{
+			{filepath.Join(path, "default-template.yaml"), cls.DefaultTemplate, func(fn string) { c.DefaultPath = fn }},
+			{filepath.Join(path, "prebuild-template.yaml"), cls.PrebuildTemplate, func(fn string) { c.PrebuildPath = fn }},
+			{filepath.Join(path, "probe-template.yaml"), cls.ProbeTemplate, func(fn string) { c.ProbePath = fn }},
+			{filepath.Join(path, "imagebuild-template.yaml"), cls.ImagebuildTemplate, func(fn string) { c.ImagebuildPath = fn }},
+			{filepath.Join(path, "regular-template.yaml"), cls.RegularTemplate, func(fn string) { c.RegularPath = fn }},
+		}
+	}
+	type fixture struct {
+		WorkspaceClass
+
+		Spec         *json.RawMessage          `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
+		Request      *json.RawMessage          `json:"request,omitempty"` // *api.StartWorkspaceRequest
+		Context      *startWorkspaceContext    `json:"context,omitempty"`
+		CACertSecret string                    `json:"caCertSecret,omitempty"`
+		Classes      map[string]WorkspaceClass `json:"classes,omitempty"`
 
 		EnforceAffinity bool `json:"enforceAffinity,omitempty"`
 	}
@@ -48,59 +69,57 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 
 			mgmtCfg := forTestingOnlyManagerConfig()
 			mgmtCfg.WorkspaceCACertSecret = fixture.CACertSecret
-			if fixture.ResourceRequests != nil {
-				var (
-					cont = mgmtCfg.Container
-					ws   = cont.Workspace
-				)
-				ws.Requests = *fixture.ResourceRequests
-				cont.Workspace = ws
-				mgmtCfg.Container = cont
+
+			if fixture.Classes == nil {
+				fixture.Classes = make(map[string]WorkspaceClass)
 			}
 
-			if fixture.ResourceLimits != nil {
-				var (
-					cont = mgmtCfg.Container
-					ws   = cont.Workspace
-				)
-				ws.Limits = *fixture.ResourceLimits
-				cont.Workspace = ws
-				mgmtCfg.Container = cont
+			var (
+				files   []tpl
+				classes = make(map[string]*config.WorkspaceClass)
+			)
+			classes[""] = mgmtCfg.WorkspaceClasses[""]
+			fixture.Classes[""] = fixture.WorkspaceClass
+			if fixture.Classes[""].ResourceLimits == nil {
+				v := fixture.Classes[""]
+				v.ResourceLimits = mgmtCfg.WorkspaceClasses[""].Container.Limits
+				fixture.Classes[""] = v
 			}
+			if fixture.Classes[""].ResourceRequests == nil {
+				v := fixture.Classes[""]
+				v.ResourceRequests = mgmtCfg.WorkspaceClasses[""].Container.Requests
+				fixture.Classes[""] = v
+			}
+			for n, cls := range fixture.Classes {
+				var cfgCls config.WorkspaceClass
+				cfgCls.Container.Requests = cls.ResourceRequests
+				cfgCls.Container.Limits = cls.ResourceLimits
+
+				files = append(files, toTpl(n, cls, &cfgCls.Templates)...)
+				classes[n] = &cfgCls
+			}
+			mgmtCfg.WorkspaceClasses = classes
 
 			manager := &Manager{Config: mgmtCfg}
 
 			// create in-memory file system
 			mapFS := fstest.MapFS{}
-
-			config.FS = mapFS
-
-			files := []struct {
-				tplfn  string
-				ctnt   interface{}
-				setter func(fn string)
-			}{
-				{"default-template.yaml", fixture.DefaultTemplate, func(fn string) { manager.Config.WorkspacePodTemplate.DefaultPath = fn }},
-				{"prebuild-template.yaml", fixture.PrebuildTemplate, func(fn string) { manager.Config.WorkspacePodTemplate.PrebuildPath = fn }},
-				{"probe-template.yaml", fixture.ProbeTemplate, func(fn string) { manager.Config.WorkspacePodTemplate.ProbePath = fn }},
-				{"imagebuild-template.yaml", fixture.ImagebuildTemplate, func(fn string) { manager.Config.WorkspacePodTemplate.ImagebuildPath = fn }},
-				{"regular-template.yaml", fixture.RegularTemplate, func(fn string) { manager.Config.WorkspacePodTemplate.RegularPath = fn }},
-			}
 			for _, f := range files {
-				if f.ctnt == nil {
+				if f.Content == nil {
 					continue
 				}
 
-				b, err := yaml.Marshal(f.ctnt)
+				b, err := yaml.Marshal(f.Content)
 				if err != nil {
-					t.Errorf("cannot re-marshal %s template: %v", f.tplfn, err)
+					t.Errorf("cannot re-marshal %s template: %v", f.FN, err)
 					return nil
 				}
 
-				mapFS[f.tplfn] = &fstest.MapFile{Data: b}
+				mapFS[f.FN] = &fstest.MapFile{Data: b}
 
-				f.setter(f.tplfn)
+				f.Setter(f.FN)
 			}
+			config.FS = mapFS
 
 			if fixture.Context == nil {
 				var req api.StartWorkspaceRequest
@@ -133,6 +152,10 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 						t.Errorf("cannot unmarshal StartWorkspaceReq: %v", err)
 						return nil
 					}
+				}
+
+				if req.Spec.Class == "" {
+					fmt.Println()
 				}
 
 				ctx, err := manager.newStartWorkspaceContext(context.Background(), &req)

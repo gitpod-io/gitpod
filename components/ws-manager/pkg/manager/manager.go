@@ -77,6 +77,15 @@ type startWorkspaceContext struct {
 	WorkspaceURL   string                     `json:"workspaceURL"`
 	TraceID        string                     `json:"traceID"`
 	Headless       bool                       `json:"headless"`
+	Class          *config.WorkspaceClass     `json:"class"`
+}
+
+func (swctx *startWorkspaceContext) ContainerConfiguration() config.ContainerConfiguration {
+	var res config.ContainerConfiguration
+	if swctx.Class != nil {
+		res = swctx.Class.Container
+	}
+	return res
 }
 
 const (
@@ -88,6 +97,8 @@ const (
 	markerLabel = "gpwsman"
 	// headlessLabel marks a workspace as headless
 	headlessLabel = "headless"
+	// workspaceClassLabel denotes the class of a workspace
+	workspaceClassLabel = "gitpod.io/workspaceClass"
 )
 
 const (
@@ -182,7 +193,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	span.LogKV("event", "workspace does not exist")
 	err = validateStartWorkspaceRequest(req)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot start workspace: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid start workspace request: %v", err)
 	}
 	span.LogKV("event", "validated workspace start request")
 	// create the objects required to start the workspace pod/service

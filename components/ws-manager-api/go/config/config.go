@@ -69,15 +69,11 @@ type Configuration struct {
 	SchedulerName string `json:"schedulerName"`
 	// SeccompProfile names the seccomp profile workspaces will use
 	SeccompProfile string `json:"seccompProfile"`
-	// Container configures all three workspace containers
-	Container AllContainerConfiguration `json:"container"`
 	// Timeouts configures how long workspaces can be without activity before they're shut down.
 	// All values in here must be valid time.Duration
 	Timeouts WorkspaceTimeoutConfiguration `json:"timeouts"`
 	// InitProbe configures the ready-probe of workspaces which signal when the initialization is finished
 	InitProbe InitProbeConfiguration `json:"initProbe"`
-	// WorkspacePodTemplate is a path to a workspace pod template YAML file
-	WorkspacePodTemplate WorkspacePodTemplateConfiguration `json:"podTemplate,omitempty"`
 	// WorkspaceCACertSecret optionally names a secret which is mounted in `/etc/ssl/certs/gp-custom.crt`
 	// in all workspace pods.
 	WorkspaceCACertSecret string `json:"caCertSecret,omitempty"`
@@ -113,11 +109,13 @@ type Configuration struct {
 	RegistryFacadeHost string `json:"registryFacadeHost"`
 	// Cluster host under which workspaces are served, e.g. ws-eu11.gitpod.io
 	WorkspaceClusterHost string `json:"workspaceClusterHost"`
+	// WorkspaceClasses provide different resource classes for workspaces
+	WorkspaceClasses map[string]*WorkspaceClass `json:"workspaceClass"`
 }
 
-// AllContainerConfiguration contains the configuration for all container in a workspace pod
-type AllContainerConfiguration struct {
-	Workspace ContainerConfiguration `json:"workspace"`
+type WorkspaceClass struct {
+	Container ContainerConfiguration            `json:"container"`
+	Templates WorkspacePodTemplateConfiguration `json:"templates"`
 }
 
 // WorkspaceTimeoutConfiguration configures the timeout behaviour of workspaces
@@ -185,10 +183,6 @@ type WorkspaceDaemonConfiguration struct {
 
 // Validate validates the configuration to catch issues during startup and not at runtime
 func (c *Configuration) Validate() error {
-	if err := c.Container.Workspace.Validate(); err != nil {
-		return xerrors.Errorf("container.workspace: %w", err)
-	}
-
 	err := validation.ValidateStruct(&c.Timeouts,
 		validation.Field(&c.Timeouts.AfterClose, validation.Required),
 		validation.Field(&c.Timeouts.HeadlessWorkspace, validation.Required),
@@ -206,16 +200,6 @@ func (c *Configuration) Validate() error {
 		return xerrors.Errorf("stopping timeout must be greater than content finalization timeout")
 	}
 
-	err = validation.ValidateStruct(&c.WorkspacePodTemplate,
-		validation.Field(&c.WorkspacePodTemplate.DefaultPath, validPodTemplate),
-		validation.Field(&c.WorkspacePodTemplate.PrebuildPath, validPodTemplate),
-		validation.Field(&c.WorkspacePodTemplate.ProbePath, validPodTemplate),
-		validation.Field(&c.WorkspacePodTemplate.RegularPath, validPodTemplate),
-	)
-	if err != nil {
-		return xerrors.Errorf("workspacePodTemplate: %w", err)
-	}
-
 	err = validation.ValidateStruct(c,
 		validation.Field(&c.WorkspaceURLTemplate, validation.Required, validWorkspaceURLTemplate),
 		validation.Field(&c.WorkspaceHostPath, validation.Required),
@@ -223,6 +207,26 @@ func (c *Configuration) Validate() error {
 		validation.Field(&c.GitpodHostURL, validation.Required, is.URL),
 		validation.Field(&c.ReconnectionInterval, validation.Required),
 	)
+	if err != nil {
+		return err
+	}
+
+	for name, class := range c.WorkspaceClasses {
+		if err := class.Container.Validate(); err != nil {
+			return xerrors.Errorf("workspace class %s: %w", name, err)
+		}
+
+		err = validation.ValidateStruct(&class.Templates,
+			validation.Field(&class.Templates.DefaultPath, validPodTemplate),
+			validation.Field(&class.Templates.PrebuildPath, validPodTemplate),
+			validation.Field(&class.Templates.ProbePath, validPodTemplate),
+			validation.Field(&class.Templates.RegularPath, validPodTemplate),
+		)
+		if err != nil {
+			return xerrors.Errorf("workspace class %s: %w", name, err)
+		}
+	}
+
 	return err
 }
 
@@ -256,15 +260,13 @@ var validWorkspaceURLTemplate = validation.By(func(o interface{}) error {
 
 // ContainerConfiguration configures properties of workspace pod container
 type ContainerConfiguration struct {
-	Image    string                `json:"image"`
-	Requests ResourceConfiguration `json:"requests"`
-	Limits   ResourceConfiguration `json:"limits"`
+	Requests *ResourceConfiguration `json:"requests,omitempty"`
+	Limits   *ResourceConfiguration `json:"limits,omitempty"`
 }
 
 // Validate validates a container configuration
 func (c *ContainerConfiguration) Validate() error {
 	return validation.ValidateStruct(c,
-		validation.Field(&c.Image, validation.Required),
 		validation.Field(&c.Requests, validResourceConfig),
 		validation.Field(&c.Limits, validResourceConfig),
 	)
@@ -298,6 +300,9 @@ var validResourceConfig = validation.By(func(o interface{}) error {
 
 // ResourceList parses the quantities in the resource config
 func (r *ResourceConfiguration) ResourceList() (corev1.ResourceList, error) {
+	if r == nil {
+		return corev1.ResourceList{}, nil
+	}
 	res := map[corev1.ResourceName]string{
 		corev1.ResourceCPU:              r.CPU,
 		corev1.ResourceMemory:           r.Memory,

@@ -5095,7 +5095,8 @@ proto.wsman.WorkspaceSpec.toObject = function(includeInstance, msg) {
     proto.wsman.PortSpec.toObject, includeInstance),
     type: jspb.Message.getFieldWithDefault(msg, 6, 0),
     timeout: jspb.Message.getFieldWithDefault(msg, 7, ""),
-    ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f)
+    ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
+    pb_class: jspb.Message.getFieldWithDefault(msg, 9, "")
   };
 
   if (includeInstance) {
@@ -5165,6 +5166,10 @@ proto.wsman.WorkspaceSpec.deserializeBinaryFromReader = function(msg, reader) {
       var value = new proto.wsman.IDEImage;
       reader.readMessage(value,proto.wsman.IDEImage.deserializeBinaryFromReader);
       msg.setIdeImage(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setClass(value);
       break;
     default:
       reader.skipField();
@@ -5251,6 +5256,13 @@ proto.wsman.WorkspaceSpec.serializeBinaryToWriter = function(message, writer) {
       8,
       f,
       proto.wsman.IDEImage.serializeBinaryToWriter
+    );
+  }
+  f = message.getClass();
+  if (f.length > 0) {
+    writer.writeString(
+      9,
+      f
     );
   }
 };
@@ -5436,6 +5448,24 @@ proto.wsman.WorkspaceSpec.prototype.clearIdeImage = function() {
  */
 proto.wsman.WorkspaceSpec.prototype.hasIdeImage = function() {
   return jspb.Message.getField(this, 8) != null;
+};
+
+
+/**
+ * optional string class = 9;
+ * @return {string}
+ */
+proto.wsman.WorkspaceSpec.prototype.getClass = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.WorkspaceSpec} returns this
+ */
+proto.wsman.WorkspaceSpec.prototype.setClass = function(value) {
+  return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 
@@ -6695,7 +6725,8 @@ proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
     git: (f = msg.getGit()) && proto.wsman.GitSpec.toObject(includeInstance, f),
     timeout: jspb.Message.getFieldWithDefault(msg, 10, ""),
     admission: jspb.Message.getFieldWithDefault(msg, 11, 0),
-    ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f)
+    ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
+    pb_class: jspb.Message.getFieldWithDefault(msg, 13, "")
   };
 
   if (includeInstance) {
@@ -6782,6 +6813,10 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
       var value = new proto.wsman.IDEImage;
       reader.readMessage(value,proto.wsman.IDEImage.deserializeBinaryFromReader);
       msg.setIdeImage(value);
+      break;
+    case 13:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setClass(value);
       break;
     default:
       reader.skipField();
@@ -6892,6 +6927,13 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
       12,
       f,
       proto.wsman.IDEImage.serializeBinaryToWriter
+    );
+  }
+  f = message.getClass();
+  if (f.length > 0) {
+    writer.writeString(
+      13,
+      f
     );
   }
 };
@@ -7208,6 +7250,24 @@ proto.wsman.StartWorkspaceSpec.prototype.clearIdeImage = function() {
  */
 proto.wsman.StartWorkspaceSpec.prototype.hasIdeImage = function() {
   return jspb.Message.getField(this, 12) != null;
+};
+
+
+/**
+ * optional string class = 13;
+ * @return {string}
+ */
+proto.wsman.StartWorkspaceSpec.prototype.getClass = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 13, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.setClass = function(value) {
+  return jspb.Message.setProto3StringField(this, 13, value);
 };
 
 

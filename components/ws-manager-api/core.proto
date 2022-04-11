@@ -307,6 +307,9 @@ message WorkspaceSpec {
 
     // ide_image is the name of the Docker image used as IDE
     IDEImage ide_image = 8;
+
+    // class names the class of this workspace
+    string class = 9;
 }
 
 // PortSpec describes a networking port exposed on a workspace
@@ -493,6 +496,9 @@ message StartWorkspaceSpec {
 
     // ide_image is the Docker image name of the IDE image
     IDEImage ide_image = 12;
+
+    // Class denotes the class of the workspace we ought to start
+    string class = 13;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces
