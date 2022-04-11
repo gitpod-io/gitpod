@@ -1,0 +1,30 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/public-api-server/cmd.Version=commit-${__git_commit}'"]
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: public-api-server
+      image:
+        - ${imageRepoBase}/public-api-server:${version}
+        - ${imageRepoBase}/public-api-server:commit-${__git_commit}
