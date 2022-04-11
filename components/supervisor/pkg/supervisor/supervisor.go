@@ -1226,12 +1226,6 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		log.WithError(err).Fatal("content initialization failed")
 	}()
 
-	// for PVC feature we need to chown since workspace folder gets mounted with user root
-	err = os.Chown("/workspace", gitpodUID, gitpodGID)
-	if err != nil {
-		log.WithError(err).Error("cannot chown /workspace")
-	}
-
 	fn := "/workspace/.gitpod/content.json"
 	fnReady := "/workspace/.gitpod/ready"
 	if _, err := os.Stat("/workspace2"); !os.IsNotExist(err) {

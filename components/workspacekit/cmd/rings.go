@@ -101,6 +101,14 @@ var ring0Cmd = &cobra.Command{
 			}
 		}()
 
+		if prep.FullWorkspaceBackup {
+			log.Infof("Trying to chown workspace folder for PVC feature to work properly")
+			err := os.Chown("/workspace", 33333, 33333)
+			if err != nil {
+				log.WithError(err).Error("cannot chown workspace folder")
+			}
+		}
+
 		cmd := exec.Command("/proc/self/exe", "ring1")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
