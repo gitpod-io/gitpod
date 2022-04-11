@@ -55,7 +55,10 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if _, ok := pod.Labels[fullWorkspaceBackupAnnotation]; ok {
+	_, fullWorkspaceBackupEnabled := pod.Labels[fullWorkspaceBackupAnnotation]
+	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureAnnotation]
+
+	if fullWorkspaceBackupEnabled || pvcFeatureEnabled {
 		owner := pod.Labels[wsk8s.OwnerLabel]
 		workspaceID := pod.Labels[wsk8s.MetaIDLabel]
 		initializerRaw, ok := pod.Annotations[workspaceInitializerAnnotation]
@@ -72,7 +75,6 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 		if err != nil {
 			return nil, xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
-		log.Infof("initializer: %v", initializer)
 		cl, _, err := m.Content.GetContentLayerPVC(ctx, owner, workspaceID, &initializer)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot get content layer: %w", err)

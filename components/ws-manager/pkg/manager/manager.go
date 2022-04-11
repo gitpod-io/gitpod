@@ -493,6 +493,31 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 		}
 	}
 
+	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureAnnotation]
+	if pvcFeatureEnabled {
+		// pvc name is the same as pod name
+		pvcName := pod.Name
+		log.Infof("Deleting PVC: %s", pvcName)
+		// for now we are makring pvc for deletion before deleting pod
+		// this is normal and pvc will be deleted once pod is gone
+		// todo: for snapshots, we would want to create snapshot object first
+		// and then delete pvc only when snapshot is done. We also want to create
+		// snapshot object only when workspace pod processes have stopped
+		pvcErr := m.Clientset.Delete(ctx,
+			&corev1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      pvcName,
+					Namespace: m.Config.Namespace,
+				},
+			},
+		)
+		span.LogKV("event", "pvc deleted")
+
+		if pvcErr != nil {
+			log.Errorf("Failed to delete pvc `%s`: %v", pvcName, pvcErr)
+		}
+	}
+
 	// we trace the stopping phase seperately from the startup phase. If we don't have a trace annotation on the workspace yet,
 	// add a new one.
 	workspaceSpan := opentracing.StartSpan("workspace-stop", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))

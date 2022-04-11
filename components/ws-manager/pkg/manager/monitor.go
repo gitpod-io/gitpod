@@ -659,6 +659,7 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 // prior to this call this function returns once initialization is complete.
 func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error) {
 	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupAnnotation]
+	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureAnnotation]
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
@@ -703,7 +704,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			return xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
 
-		if fullWorkspaceBackup {
+		if fullWorkspaceBackup || pvcFeatureEnabled {
 			_, mf, err := m.manager.Content.GetContentLayer(ctx, workspaceMeta.Owner, workspaceMeta.MetaId, &initializer)
 			if err != nil {
 				return xerrors.Errorf("cannot download workspace content manifest: %w", err)
@@ -743,7 +744,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 				MetaId: workspaceMeta.MetaId,
 			},
 			Initializer:           &initializer,
-			FullWorkspaceBackup:   fullWorkspaceBackup,
+			FullWorkspaceBackup:   fullWorkspaceBackup || pvcFeatureEnabled,
 			ContentManifest:       contentManifest,
 			RemoteStorageDisabled: shouldDisableRemoteStorage(pod),
 		})

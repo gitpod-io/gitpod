@@ -525,8 +525,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		case api.WorkspaceFeatureFlag_NOOP:
 
 		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
-			pod.Labels[fullWorkspaceBackupAnnotation] = "true"
-			pod.Annotations[fullWorkspaceBackupAnnotation] = "true"
+			pod.Labels[pvcWorkspaceFeatureAnnotation] = "true"
 
 		default:
 			return nil, xerrors.Errorf("unknown feature flag: %v", feature)
