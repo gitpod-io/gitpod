@@ -1781,7 +1781,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const providerHost = params.provider;
         const provider = (await this.getAuthProviders(ctx)).find((ap) => ap.host === providerHost);
 
-        if (providerHost === "github.com") {
+        if (providerHost === "github.com" && this.config.githubApp?.enabled) {
             repositories.push(...(await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params })));
         } else if (provider?.authProviderType === "GitHub") {
             const hostContext = this.hostContextProvider.get(providerHost);
