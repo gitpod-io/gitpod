@@ -27,7 +27,6 @@ export abstract class AbstractComponentEnv {
     readonly kubeStage: KubeStage = getEnvVarParsed("KUBE_STAGE", translateLegacyStagename);
 
     readonly installationLongname: string = getEnvVar("GITPOD_INSTALLATION_LONGNAME");
-    readonly installationShortname: string = getEnvVar("GITPOD_INSTALLATION_SHORTNAME");
 }
 
 export type KubeStage = "production" | "prodcopy" | "staging" | "dev";
