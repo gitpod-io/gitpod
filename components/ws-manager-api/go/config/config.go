@@ -273,7 +273,7 @@ func (c *ContainerConfiguration) Validate() error {
 }
 
 var validResourceConfig = validation.By(func(o interface{}) error {
-	rc, ok := o.(ResourceConfiguration)
+	rc, ok := o.(*ResourceConfiguration)
 	if !ok {
 		return xerrors.Errorf("can only validate ResourceConfiguration")
 	}

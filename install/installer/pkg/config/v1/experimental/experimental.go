@@ -10,7 +10,10 @@
 // If you use any setting herein, you forfeit support from Gitpod.
 package experimental
 
-import "k8s.io/apimachinery/pkg/api/resource"
+import (
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+)
 
 // Config contains all experimental configuration.
 type Config struct {
@@ -58,6 +61,22 @@ type WorkspaceConfig struct {
 			PasswordSecret string   `json:"passwordSecret"`
 		} `json:"redisCache"`
 	} `json:"registryFacade"`
+
+	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
+}
+
+type WorkspaceClass struct {
+	Resources struct {
+		Requests corev1.ResourceList `json:"requests" validate:"required"`
+		Limits   corev1.ResourceList `json:"limits,omitempty"`
+	} `json:"resources" validate:"required"`
+	Templates WorkspaceTemplates `json:"templates,omitempty"`
+}
+type WorkspaceTemplates struct {
+	Default    *corev1.Pod `json:"default"`
+	Prebuild   *corev1.Pod `json:"prebuild"`
+	ImageBuild *corev1.Pod `json:"imagebuild"`
+	Regular    *corev1.Pod `json:"regular"`
 }
 
 type WebAppConfig struct {
