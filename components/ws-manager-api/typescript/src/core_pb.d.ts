@@ -14,7 +14,7 @@ import * as jspb from "google-protobuf";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 
-export class MetadataFilter extends jspb.Message { 
+export class MetadataFilter extends jspb.Message {
     getOwner(): string;
     setOwner(value: string): MetadataFilter;
     getMetaId(): string;
@@ -42,7 +42,7 @@ export namespace MetadataFilter {
     }
 }
 
-export class GetWorkspacesRequest extends jspb.Message { 
+export class GetWorkspacesRequest extends jspb.Message {
 
     hasMustMatch(): boolean;
     clearMustMatch(): void;
@@ -65,7 +65,7 @@ export namespace GetWorkspacesRequest {
     }
 }
 
-export class GetWorkspacesResponse extends jspb.Message { 
+export class GetWorkspacesResponse extends jspb.Message {
     clearStatusList(): void;
     getStatusList(): Array<WorkspaceStatus>;
     setStatusList(value: Array<WorkspaceStatus>): GetWorkspacesResponse;
@@ -87,7 +87,7 @@ export namespace GetWorkspacesResponse {
     }
 }
 
-export class StartWorkspaceRequest extends jspb.Message { 
+export class StartWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): StartWorkspaceRequest;
     getServicePrefix(): string;
@@ -125,7 +125,7 @@ export namespace StartWorkspaceRequest {
     }
 }
 
-export class StartWorkspaceResponse extends jspb.Message { 
+export class StartWorkspaceResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): StartWorkspaceResponse;
     getOwnerToken(): string;
@@ -148,7 +148,7 @@ export namespace StartWorkspaceResponse {
     }
 }
 
-export class StopWorkspaceRequest extends jspb.Message { 
+export class StopWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): StopWorkspaceRequest;
     getPolicy(): StopWorkspacePolicy;
@@ -171,7 +171,7 @@ export namespace StopWorkspaceRequest {
     }
 }
 
-export class StopWorkspaceResponse extends jspb.Message { 
+export class StopWorkspaceResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StopWorkspaceResponse.AsObject;
@@ -188,7 +188,7 @@ export namespace StopWorkspaceResponse {
     }
 }
 
-export class DescribeWorkspaceRequest extends jspb.Message { 
+export class DescribeWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): DescribeWorkspaceRequest;
 
@@ -208,7 +208,7 @@ export namespace DescribeWorkspaceRequest {
     }
 }
 
-export class DescribeWorkspaceResponse extends jspb.Message { 
+export class DescribeWorkspaceResponse extends jspb.Message {
 
     hasStatus(): boolean;
     clearStatus(): void;
@@ -234,7 +234,7 @@ export namespace DescribeWorkspaceResponse {
     }
 }
 
-export class SubscribeRequest extends jspb.Message { 
+export class SubscribeRequest extends jspb.Message {
 
     hasMustMatch(): boolean;
     clearMustMatch(): void;
@@ -257,7 +257,7 @@ export namespace SubscribeRequest {
     }
 }
 
-export class SubscribeResponse extends jspb.Message { 
+export class SubscribeResponse extends jspb.Message {
 
     hasStatus(): boolean;
     clearStatus(): void;
@@ -285,7 +285,7 @@ export namespace SubscribeResponse {
     }
 }
 
-export class MarkActiveRequest extends jspb.Message { 
+export class MarkActiveRequest extends jspb.Message {
     getId(): string;
     setId(value: string): MarkActiveRequest;
     getClosed(): boolean;
@@ -308,7 +308,7 @@ export namespace MarkActiveRequest {
     }
 }
 
-export class MarkActiveResponse extends jspb.Message { 
+export class MarkActiveResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): MarkActiveResponse.AsObject;
@@ -325,7 +325,7 @@ export namespace MarkActiveResponse {
     }
 }
 
-export class SetTimeoutRequest extends jspb.Message { 
+export class SetTimeoutRequest extends jspb.Message {
     getId(): string;
     setId(value: string): SetTimeoutRequest;
     getDuration(): string;
@@ -348,7 +348,7 @@ export namespace SetTimeoutRequest {
     }
 }
 
-export class SetTimeoutResponse extends jspb.Message { 
+export class SetTimeoutResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SetTimeoutResponse.AsObject;
@@ -365,7 +365,7 @@ export namespace SetTimeoutResponse {
     }
 }
 
-export class ControlPortRequest extends jspb.Message { 
+export class ControlPortRequest extends jspb.Message {
     getId(): string;
     setId(value: string): ControlPortRequest;
     getExpose(): boolean;
@@ -394,7 +394,7 @@ export namespace ControlPortRequest {
     }
 }
 
-export class ControlPortResponse extends jspb.Message { 
+export class ControlPortResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ControlPortResponse.AsObject;
@@ -411,7 +411,7 @@ export namespace ControlPortResponse {
     }
 }
 
-export class TakeSnapshotRequest extends jspb.Message { 
+export class TakeSnapshotRequest extends jspb.Message {
     getId(): string;
     setId(value: string): TakeSnapshotRequest;
     getReturnImmediately(): boolean;
@@ -434,7 +434,7 @@ export namespace TakeSnapshotRequest {
     }
 }
 
-export class TakeSnapshotResponse extends jspb.Message { 
+export class TakeSnapshotResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): TakeSnapshotResponse;
 
@@ -454,7 +454,7 @@ export namespace TakeSnapshotResponse {
     }
 }
 
-export class ControlAdmissionRequest extends jspb.Message { 
+export class ControlAdmissionRequest extends jspb.Message {
     getId(): string;
     setId(value: string): ControlAdmissionRequest;
     getLevel(): AdmissionLevel;
@@ -477,7 +477,7 @@ export namespace ControlAdmissionRequest {
     }
 }
 
-export class ControlAdmissionResponse extends jspb.Message { 
+export class ControlAdmissionResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ControlAdmissionResponse.AsObject;
@@ -494,7 +494,7 @@ export namespace ControlAdmissionResponse {
     }
 }
 
-export class BackupWorkspaceRequest extends jspb.Message { 
+export class BackupWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): BackupWorkspaceRequest;
 
@@ -514,7 +514,7 @@ export namespace BackupWorkspaceRequest {
     }
 }
 
-export class BackupWorkspaceResponse extends jspb.Message { 
+export class BackupWorkspaceResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): BackupWorkspaceResponse;
 
@@ -534,7 +534,7 @@ export namespace BackupWorkspaceResponse {
     }
 }
 
-export class WorkspaceStatus extends jspb.Message { 
+export class WorkspaceStatus extends jspb.Message {
     getId(): string;
     setId(value: string): WorkspaceStatus;
     getStatusVersion(): number;
@@ -599,7 +599,7 @@ export namespace WorkspaceStatus {
     }
 }
 
-export class IDEImage extends jspb.Message { 
+export class IDEImage extends jspb.Message {
     getWebRef(): string;
     setWebRef(value: string): IDEImage;
     getDesktopRef(): string;
@@ -625,7 +625,7 @@ export namespace IDEImage {
     }
 }
 
-export class WorkspaceSpec extends jspb.Message { 
+export class WorkspaceSpec extends jspb.Message {
     getWorkspaceImage(): string;
     setWorkspaceImage(value: string): WorkspaceSpec;
     getDeprecatedIdeImage(): string;
@@ -647,6 +647,8 @@ export class WorkspaceSpec extends jspb.Message {
     clearIdeImage(): void;
     getIdeImage(): IDEImage | undefined;
     setIdeImage(value?: IDEImage): WorkspaceSpec;
+    getClass(): string;
+    setClass(value: string): WorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceSpec.AsObject;
@@ -668,10 +670,11 @@ export namespace WorkspaceSpec {
         type: WorkspaceType,
         timeout: string,
         ideImage?: IDEImage.AsObject,
+        pb_class: string,
     }
 }
 
-export class PortSpec extends jspb.Message { 
+export class PortSpec extends jspb.Message {
     getPort(): number;
     setPort(value: number): PortSpec;
     getVisibility(): PortVisibility;
@@ -697,7 +700,7 @@ export namespace PortSpec {
     }
 }
 
-export class WorkspaceConditions extends jspb.Message { 
+export class WorkspaceConditions extends jspb.Message {
     getFailed(): string;
     setFailed(value: string): WorkspaceConditions;
     getTimeout(): string;
@@ -747,7 +750,7 @@ export namespace WorkspaceConditions {
     }
 }
 
-export class WorkspaceMetadata extends jspb.Message { 
+export class WorkspaceMetadata extends jspb.Message {
     getOwner(): string;
     setOwner(value: string): WorkspaceMetadata;
     getMetaId(): string;
@@ -781,7 +784,7 @@ export namespace WorkspaceMetadata {
     }
 }
 
-export class WorkspaceRuntimeInfo extends jspb.Message { 
+export class WorkspaceRuntimeInfo extends jspb.Message {
     getNodeName(): string;
     setNodeName(value: string): WorkspaceRuntimeInfo;
     getPodName(): string;
@@ -807,7 +810,7 @@ export namespace WorkspaceRuntimeInfo {
     }
 }
 
-export class WorkspaceAuthentication extends jspb.Message { 
+export class WorkspaceAuthentication extends jspb.Message {
     getAdmission(): AdmissionLevel;
     setAdmission(value: AdmissionLevel): WorkspaceAuthentication;
     getOwnerToken(): string;
@@ -830,7 +833,7 @@ export namespace WorkspaceAuthentication {
     }
 }
 
-export class StartWorkspaceSpec extends jspb.Message { 
+export class StartWorkspaceSpec extends jspb.Message {
     getWorkspaceImage(): string;
     setWorkspaceImage(value: string): StartWorkspaceSpec;
     getDeprecatedIdeImage(): string;
@@ -868,6 +871,8 @@ export class StartWorkspaceSpec extends jspb.Message {
     clearIdeImage(): void;
     getIdeImage(): IDEImage | undefined;
     setIdeImage(value?: IDEImage): StartWorkspaceSpec;
+    getClass(): string;
+    setClass(value: string): StartWorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -892,10 +897,11 @@ export namespace StartWorkspaceSpec {
         timeout: string,
         admission: AdmissionLevel,
         ideImage?: IDEImage.AsObject,
+        pb_class: string,
     }
 }
 
-export class GitSpec extends jspb.Message { 
+export class GitSpec extends jspb.Message {
     getUsername(): string;
     setUsername(value: string): GitSpec;
     getEmail(): string;
@@ -918,7 +924,7 @@ export namespace GitSpec {
     }
 }
 
-export class EnvironmentVariable extends jspb.Message { 
+export class EnvironmentVariable extends jspb.Message {
     getName(): string;
     setName(value: string): EnvironmentVariable;
     getValue(): string;
@@ -947,7 +953,7 @@ export namespace EnvironmentVariable {
     }
 
 
-    export class SecretKeyRef extends jspb.Message { 
+    export class SecretKeyRef extends jspb.Message {
         getSecretName(): string;
         setSecretName(value: string): SecretKeyRef;
         getKey(): string;
@@ -972,7 +978,7 @@ export namespace EnvironmentVariable {
 
 }
 
-export class ExposedPorts extends jspb.Message { 
+export class ExposedPorts extends jspb.Message {
     clearPortsList(): void;
     getPortsList(): Array<PortSpec>;
     setPortsList(value: Array<PortSpec>): ExposedPorts;

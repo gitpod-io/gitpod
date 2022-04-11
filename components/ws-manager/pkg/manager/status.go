@@ -246,6 +246,7 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 			Url:     wsurl,
 			Type:    tpe,
 			Timeout: timeout,
+			Class:   wso.Pod.Labels[workspaceClassLabel],
 		},
 		Conditions: &api.WorkspaceConditions{
 			Snapshot: wso.Pod.Annotations[workspaceSnapshotAnnotation],

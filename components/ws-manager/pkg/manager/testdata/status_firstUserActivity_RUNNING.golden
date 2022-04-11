@@ -59,7 +59,8 @@
                 }
             ],
             "timeout": "60m",
-            "ide_image": {}
+            "ide_image": {},
+            "class": "some-class"
         },
         "phase": 4,
         "conditions": {

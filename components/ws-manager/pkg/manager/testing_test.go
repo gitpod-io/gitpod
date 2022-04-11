@@ -40,17 +40,18 @@ func forTestingOnlyManagerConfig() config.Configuration {
 		WorkspaceURLTemplate:     "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		WorkspacePortURLTemplate: "{{ .WorkspacePort }}-{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		RegistryFacadeHost:       "registry-facade:8080",
-		Container: config.AllContainerConfiguration{
-			Workspace: config.ContainerConfiguration{
-				Image: "workspace-image",
-				Limits: config.ResourceConfiguration{
-					CPU:    "900m",
-					Memory: "1000M",
-				},
-				Requests: config.ResourceConfiguration{
-					CPU:              "899m",
-					EphemeralStorage: "5Gi",
-					Memory:           "999M",
+		WorkspaceClasses: map[string]*config.WorkspaceClass{
+			"": {
+				Container: config.ContainerConfiguration{
+					Limits: &config.ResourceConfiguration{
+						CPU:    "900m",
+						Memory: "1000M",
+					},
+					Requests: &config.ResourceConfiguration{
+						CPU:              "899m",
+						EphemeralStorage: "5Gi",
+						Memory:           "999M",
+					},
 				},
 			},
 		},

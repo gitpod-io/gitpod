@@ -42,20 +42,25 @@ var (
 // createWorkspacePod creates the actual workspace pod based on the definite workspace pod and appropriate
 // templates. The result of this function is not expected to be modified prior to being passed to Kubernetes.
 func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*corev1.Pod, error) {
-	podTemplate, err := config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.DefaultPath)
+	var templates config.WorkspacePodTemplateConfiguration
+	if startContext.Class != nil {
+		templates = startContext.Class.Templates
+	}
+
+	podTemplate, err := config.GetWorkspacePodTemplate(templates.DefaultPath)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read pod template - this is a configuration problem: %w", err)
 	}
 	var typeSpecificTpl *corev1.Pod
 	switch startContext.Request.Type {
 	case api.WorkspaceType_REGULAR:
-		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.RegularPath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(templates.RegularPath)
 	case api.WorkspaceType_PREBUILD:
-		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.PrebuildPath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(templates.PrebuildPath)
 	case api.WorkspaceType_PROBE:
-		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ProbePath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(templates.ProbePath)
 	case api.WorkspaceType_IMAGEBUILD:
-		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ImagebuildPath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(templates.ImagebuildPath)
 	}
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read type-specific pod template - this is a configuration problem: %w", err)
@@ -529,11 +534,16 @@ func removeVolume(pod *corev1.Pod, name string) {
 }
 
 func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) (*corev1.Container, error) {
-	limits, err := m.Config.Container.Workspace.Limits.ResourceList()
+	var containerConfig config.ContainerConfiguration
+	if startContext.Class != nil {
+		containerConfig = startContext.Class.Container
+	}
+
+	limits, err := containerConfig.Limits.ResourceList()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot parse workspace container limits: %w", err)
 	}
-	requests, err := m.Config.Container.Workspace.Requests.ResourceList()
+	requests, err := containerConfig.Requests.ResourceList()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot parse workspace container requests: %w", err)
 	}
@@ -669,7 +679,7 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	heartbeatInterval := time.Duration(m.Config.HeartbeatInterval)
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INTERVAL", Value: fmt.Sprintf("%d", int64(heartbeatInterval/time.Millisecond))})
 
-	res, err := m.Config.Container.Workspace.Requests.ResourceList()
+	res, err := startContext.ContainerConfiguration().Requests.ResourceList()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create environment: %w", err)
 	}
@@ -776,17 +786,30 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 	workspaceSpan := opentracing.StartSpan("workspace", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))
 	traceID := tracing.GetTraceID(workspaceSpan)
 
+	labels := map[string]string{
+		"app":                  "gitpod",
+		"component":            "workspace",
+		wsk8s.WorkspaceIDLabel: req.Id,
+		wsk8s.OwnerLabel:       req.Metadata.Owner,
+		wsk8s.MetaIDLabel:      req.Metadata.MetaId,
+		wsk8s.TypeLabel:        workspaceType,
+		headlessLabel:          fmt.Sprintf("%v", headless),
+		markerLabel:            "true",
+	}
+
+	var class *config.WorkspaceClass
+	if cls, ok := m.Config.WorkspaceClasses[req.Spec.Class]; ok {
+		class = cls
+		if req.Spec.Class != "" {
+			labels[workspaceClassLabel] = req.Spec.Class
+		}
+	} else {
+		// TODO(cw): in the future we should fail the request here. Until we've migrated server, let's not be that strict
+		// return nil, status.Errorf(codes.InvalidArgument, "workspace class \"%s\" is unknown", req.Spec.Class)
+	}
+
 	return &startWorkspaceContext{
-		Labels: map[string]string{
-			"app":                  "gitpod",
-			"component":            "workspace",
-			wsk8s.WorkspaceIDLabel: req.Id,
-			wsk8s.OwnerLabel:       req.Metadata.Owner,
-			wsk8s.MetaIDLabel:      req.Metadata.MetaId,
-			wsk8s.TypeLabel:        workspaceType,
-			headlessLabel:          fmt.Sprintf("%v", headless),
-			markerLabel:            "true",
-		},
+		Labels:         labels,
 		CLIAPIKey:      cliAPIKey,
 		OwnerToken:     ownerToken,
 		Request:        req,
@@ -795,6 +818,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		WorkspaceURL:   workspaceURL,
 		TraceID:        traceID,
 		Headless:       headless,
+		Class:          class,
 	}, nil
 }
 
