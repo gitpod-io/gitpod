@@ -43,10 +43,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					"memory": resource.MustParse("32Mi"),
 				},
 			},
-			Ports: []corev1.ContainerPort{{
-				Name:          RPCPortName,
-				ContainerPort: RPCPort,
-			}},
+			Ports: []corev1.ContainerPort{
+				{
+					Name:          RPCPortName,
+					ContainerPort: RPCPort,
+				},
+			},
 			SecurityContext: &corev1.SecurityContext{
 				Privileged: pointer.Bool(false),
 			},
@@ -55,23 +57,25 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				common.TracingEnv(ctx),
 				[]corev1.EnvVar{{Name: "GRPC_GO_RETRY", Value: "on"}},
 			),
-			VolumeMounts: []corev1.VolumeMount{{
-				Name:      VolumeConfig,
-				MountPath: "/config",
-				ReadOnly:  true,
-			}, {
-				Name:      VolumeWorkspaceTemplate,
-				MountPath: WorkspaceTemplatePath,
-				ReadOnly:  true,
-			}, {
-				Name:      wsdaemon.VolumeTLSCerts,
-				MountPath: "/ws-daemon-tls-certs",
-				ReadOnly:  true,
-			}, {
-				Name:      VolumeTLSCerts,
-				MountPath: "/certs",
-				ReadOnly:  true,
-			}},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      VolumeConfig,
+					MountPath: "/config",
+					ReadOnly:  true,
+				}, {
+					Name:      VolumeWorkspaceTemplate,
+					MountPath: WorkspaceTemplatePath,
+					ReadOnly:  true,
+				}, {
+					Name:      wsdaemon.VolumeTLSCerts,
+					MountPath: "/ws-daemon-tls-certs",
+					ReadOnly:  true,
+				}, {
+					Name:      VolumeTLSCerts,
+					MountPath: "/certs",
+					ReadOnly:  true,
+				},
+			},
 		},
 			*common.KubeRBACProxyContainer(ctx),
 		},
@@ -110,6 +114,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	err = common.AddStorageMounts(ctx, &podSpec, Component)
 	if err != nil {
 		return nil, err
+	}
+
+	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
+		podSpec.Volumes = append(podSpec.Volumes, *vol)
+		container := podSpec.Containers[0]
+		container.VolumeMounts = append(container.VolumeMounts, *mnt)
+		podSpec.Containers[0] = container
 	}
 
 	return []runtime.Object{
