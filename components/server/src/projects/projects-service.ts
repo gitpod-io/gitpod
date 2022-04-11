@@ -19,7 +19,7 @@ import {
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PartialProject } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
+import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
 
 @injectable()
 export class ProjectsService {
@@ -247,5 +247,9 @@ export class ProjectsService {
 
     async deleteProjectEnvironmentVariable(variableId: string): Promise<void> {
         return this.projectDB.deleteProjectEnvironmentVariable(variableId);
+    }
+
+    async getProjectUsage(projectId: string): Promise<ProjectUsage | undefined> {
+        return this.projectDB.getProjectUsage(projectId);
     }
 }

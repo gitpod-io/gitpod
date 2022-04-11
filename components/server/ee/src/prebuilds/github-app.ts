@@ -240,8 +240,14 @@ export class GithubApp {
             const installationId = ctx.payload.installation?.id;
             const cloneURL = ctx.payload.repository.clone_url;
             let { user, project } = await this.findOwnerAndProject(installationId, cloneURL);
-            const logCtx: LogContext = { userId: user.id };
+            if (project) {
+                /* tslint:disable-next-line */
+                /** no await */ this.projectDB.updateProjectUsage(project.id, {
+                    lastWebhookReceived: new Date().toISOString(),
+                });
+            }
 
+            const logCtx: LogContext = { userId: user.id };
             if (!!user.blocked) {
                 log.info(logCtx, `Blocked user tried to start prebuild`, { repo: ctx.payload.repository });
                 return;
@@ -347,6 +353,12 @@ export class GithubApp {
             const pr = ctx.payload.pull_request;
             const contextURL = pr.html_url;
             let { user, project } = await this.findOwnerAndProject(installationId, cloneURL);
+            if (project) {
+                /* tslint:disable-next-line */
+                /** no await */ this.projectDB.updateProjectUsage(project.id, {
+                    lastWebhookReceived: new Date().toISOString(),
+                });
+            }
 
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);

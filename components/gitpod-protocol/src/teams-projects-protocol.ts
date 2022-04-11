@@ -69,6 +69,11 @@ export namespace Project {
 
 export type PartialProject = DeepPartial<Project> & Pick<Project, "id">;
 
+export interface ProjectUsage {
+    lastWebhookReceived: string;
+    lastWorkspaceStart: string;
+}
+
 export interface PrebuildWithStatus {
     info: PrebuildInfo;
     status: PrebuiltWorkspaceState;

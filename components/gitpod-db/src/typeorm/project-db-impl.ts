@@ -8,12 +8,13 @@ import { inject, injectable } from "inversify";
 import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
-import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue } from "@gitpod/gitpod-protocol";
+import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue, ProjectUsage } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { ProjectDB } from "../project-db";
 import { DBProject } from "./entity/db-project";
 import { DBProjectEnvVar } from "./entity/db-project-env-vars";
 import { DBProjectInfo } from "./entity/db-project-info";
+import { DBProjectUsage } from "./entity/db-project-usage";
 
 function toProjectEnvVar(envVarWithValue: ProjectEnvVarWithValue): ProjectEnvVar {
     const envVar = { ...envVarWithValue };
@@ -40,6 +41,10 @@ export class ProjectDBImpl implements ProjectDB {
 
     protected async getProjectInfoRepo(): Promise<Repository<DBProjectInfo>> {
         return (await this.getEntityManager()).getRepository<DBProjectInfo>(DBProjectInfo);
+    }
+
+    protected async getProjectUsageRepo(): Promise<Repository<DBProjectUsage>> {
+        return (await this.getEntityManager()).getRepository<DBProjectUsage>(DBProjectUsage);
     }
 
     public async findProjectById(projectId: string): Promise<Project | undefined> {
@@ -146,6 +151,11 @@ export class ProjectDBImpl implements ProjectDB {
         if (info) {
             await projectInfoRepo.update(projectId, { deleted: true });
         }
+        const projectUsageRepo = await this.getProjectUsageRepo();
+        const usage = await projectUsageRepo.findOne({ projectId, deleted: false });
+        if (usage) {
+            await projectUsageRepo.update(projectId, { deleted: true });
+        }
     }
 
     public async setProjectEnvironmentVariable(
@@ -227,6 +237,25 @@ export class ProjectDBImpl implements ProjectDB {
             projectId,
             overview,
             creationTime: new Date().toISOString(),
+        });
+    }
+
+    public async getProjectUsage(projectId: string): Promise<ProjectUsage | undefined> {
+        const projectUsageRepo = await this.getProjectUsageRepo();
+        const usage = await projectUsageRepo.findOne({ projectId });
+        if (usage) {
+            return {
+                lastWebhookReceived: usage.lastWebhookReceived,
+                lastWorkspaceStart: usage.lastWorkspaceStart,
+            };
+        }
+    }
+
+    public async updateProjectUsage(projectId: string, usage: Partial<ProjectUsage>): Promise<void> {
+        const projectUsageRepo = await this.getProjectUsageRepo();
+        await projectUsageRepo.save({
+            projectId,
+            ...usage,
         });
     }
 }

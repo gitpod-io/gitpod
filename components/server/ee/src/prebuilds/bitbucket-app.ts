@@ -95,6 +95,14 @@ export class BitbucketApp {
     ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
+            const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
+            if (projectAndOwner.project) {
+                /* tslint:disable-next-line */
+                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
+                    lastWebhookReceived: new Date().toISOString(),
+                });
+            }
+
             const contextURL = this.createContextUrl(data);
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
             span.setTag("contextURL", contextURL);
@@ -116,11 +124,10 @@ export class BitbucketApp {
                     data.commitHash,
                 );
             }
-            const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
             // todo@alex: add branch and project args
             const ws = await this.prebuildManager.startPrebuild(
                 { span },
-                { user, project: projectAndOwner?.project, context, commitInfo },
+                { user, project: projectAndOwner.project, context, commitInfo },
             );
             return ws;
         } finally {
