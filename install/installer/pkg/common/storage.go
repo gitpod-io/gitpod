@@ -93,6 +93,9 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 	}
 	// 5 GiB
 	res.BlobQuota = 5 * 1024 * 1024 * 1024
+	if context.Config.ObjectStorage.BlobQuota != nil {
+		res.BlobQuota = *context.Config.ObjectStorage.BlobQuota
+	}
 
 	_ = context.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace != nil {
