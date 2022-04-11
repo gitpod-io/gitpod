@@ -42,7 +42,7 @@ func main() {
 			Action: specs.ActAllow,
 		},
 
-		// slirp4netns requires setns, as do we for debugging
+		// Running docker on a workspace requires setns
 		// TODO(cw): find means to make this more precise, maybe an eBPF program that checks if
 		//           arg zero is a child of this netns. The kernel already does that (from the setns(2) man page):
 		//              In order to reassociate itself with a new network, IPC, time,
