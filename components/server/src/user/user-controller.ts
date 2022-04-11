@@ -580,7 +580,7 @@ export class UserController {
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
 
-        /* no await */ trackSignup(user, req, this.analytics).catch((err) =>
+        /** no await */ trackSignup(user, req, this.analytics).catch((err) =>
             log.warn({ userId: user.id }, "trackSignup", err),
         );
 

@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue } from "@gitpod/gitpod-protocol";
+import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue, ProjectUsage } from "@gitpod/gitpod-protocol";
 
 export const ProjectDB = Symbol("ProjectDB");
 export interface ProjectDB {
@@ -30,4 +30,6 @@ export interface ProjectDB {
     getProjectEnvironmentVariableValues(envVars: ProjectEnvVar[]): Promise<ProjectEnvVarWithValue[]>;
     findCachedProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
     storeCachedProjectOverview(projectId: string, overview: Project.Overview): Promise<void>;
+    getProjectUsage(projectId: string): Promise<ProjectUsage | undefined>;
+    updateProjectUsage(projectId: string, usage: Partial<ProjectUsage>): Promise<void>;
 }

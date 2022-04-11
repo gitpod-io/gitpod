@@ -108,6 +108,13 @@ export class GitLabApp {
             span.setTag("contextURL", contextURL);
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
             const projectAndOwner = await this.findProjectAndOwner(context.repository.cloneUrl, user);
+            if (projectAndOwner.project) {
+                /* tslint:disable-next-line */
+                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
+                    lastWebhookReceived: new Date().toISOString(),
+                });
+            }
+
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
                 log.debug({ userId: user.id }, "GitLab push hook: There is no prebuild config.", {
@@ -123,8 +130,8 @@ export class GitLabApp {
             const ws = await this.prebuildManager.startPrebuild(
                 { span },
                 {
-                    user: projectAndOwner?.user || user,
-                    project: projectAndOwner?.project,
+                    user: projectAndOwner.user || user,
+                    project: projectAndOwner.project,
                     context,
                     commitInfo,
                 },

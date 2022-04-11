@@ -206,6 +206,13 @@ export class WorkspaceStarter {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
         span.setTag("workspaceId", workspace.id);
 
+        if (workspace.projectId && workspace.type === "regular") {
+            /* tslint:disable-next-line */
+            /** no await */ this.projectDB.updateProjectUsage(workspace.projectId, {
+                lastWorkspaceStart: new Date().toISOString(),
+            });
+        }
+
         options = options || {};
         try {
             // Some workspaces do not have an image source.
