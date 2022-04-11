@@ -62,6 +62,22 @@ type WorkspaceConfig struct {
 			PasswordSecret string   `json:"passwordSecret"`
 		} `json:"redisCache"`
 	} `json:"registryFacade"`
+
+	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
+}
+
+type WorkspaceClass struct {
+	Resources struct {
+		Requests corev1.ResourceList `json:"requests" validate:"required"`
+		Limits   corev1.ResourceList `json:"limits,omitempty"`
+	} `json:"resources" validate:"required"`
+	Templates WorkspaceTemplates `json:"templates,omitempty"`
+}
+type WorkspaceTemplates struct {
+	Default    *corev1.Pod `json:"default"`
+	Prebuild   *corev1.Pod `json:"prebuild"`
+	ImageBuild *corev1.Pod `json:"imagebuild"`
+	Regular    *corev1.Pod `json:"regular"`
 }
 
 type WebAppConfig struct {

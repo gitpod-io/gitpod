@@ -17,6 +17,7 @@ import (
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +26,11 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	templatesCfg, tpls, err := buildWorkspaceTemplates(ctx)
+	cfgTpls := ctx.Config.Workspace.Templates
+	if cfgTpls == nil {
+		cfgTpls = &configv1.WorkspaceTemplates{}
+	}
+	templatesCfg, tpls, err := buildWorkspaceTemplates(ctx, cfgTpls, "")
 	if err != nil {
 		return nil, err
 	}
@@ -48,6 +53,60 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		customCASecret = ctx.Config.CustomCACert.Name
 	}
 
+	classes := map[string]*config.WorkspaceClass{
+		"": {
+			Container: config.ContainerConfiguration{
+				Requests: &config.ResourceConfiguration{
+					CPU:              quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceCPU),
+					Memory:           quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceMemory),
+					EphemeralStorage: quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceEphemeralStorage),
+				},
+				Limits: &config.ResourceConfiguration{
+					CPU:              quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceCPU),
+					Memory:           quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceMemory),
+					EphemeralStorage: quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceEphemeralStorage),
+				},
+			},
+			Templates: templatesCfg,
+		},
+	}
+	err = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace == nil {
+			return nil
+		}
+		for k, c := range ucfg.Workspace.WorkspaceClasses {
+			tplsCfg, ctpls, err := buildWorkspaceTemplates(ctx, &configv1.WorkspaceTemplates{
+				Default:    c.Templates.Default,
+				Prebuild:   c.Templates.Prebuild,
+				ImageBuild: c.Templates.ImageBuild,
+				Regular:    c.Templates.Regular,
+			}, k)
+			if err != nil {
+				return err
+			}
+			classes[k] = &config.WorkspaceClass{
+				Container: config.ContainerConfiguration{
+					Requests: &config.ResourceConfiguration{
+						CPU:              quantityString(c.Resources.Requests, corev1.ResourceCPU),
+						Memory:           quantityString(c.Resources.Requests, corev1.ResourceMemory),
+						EphemeralStorage: quantityString(c.Resources.Requests, corev1.ResourceEphemeralStorage),
+					},
+					Limits: &config.ResourceConfiguration{
+						CPU:              quantityString(c.Resources.Limits, corev1.ResourceCPU),
+						Memory:           quantityString(c.Resources.Limits, corev1.ResourceMemory),
+						EphemeralStorage: quantityString(c.Resources.Limits, corev1.ResourceEphemeralStorage),
+					},
+				},
+				Templates: tplsCfg,
+			}
+			tpls = append(tpls, ctpls...)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	wsmcfg := config.ServiceConfiguration{
 		Manager: config.Configuration{
 			Namespace:      ctx.Namespace,
@@ -65,21 +124,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PrivateKey:  "/ws-daemon-tls-certs/tls.key",
 				},
 			},
-			Container: config.AllContainerConfiguration{
-				Workspace: config.ContainerConfiguration{
-					Requests: config.ResourceConfiguration{
-						CPU:              quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceCPU),
-						Memory:           quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceMemory),
-						EphemeralStorage: quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceEphemeralStorage),
-					},
-					Limits: config.ResourceConfiguration{
-						CPU:              quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceCPU),
-						Memory:           quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceMemory),
-						EphemeralStorage: quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceEphemeralStorage),
-					},
-					Image: "OVERWRITTEN-IN-REQUEST",
-				},
-			},
+			WorkspaceClasses:     classes,
 			HeartbeatInterval:    util.Duration(30 * time.Second),
 			GitpodHostURL:        "https://" + ctx.Config.Domain,
 			WorkspaceClusterHost: fmt.Sprintf("ws.%s", ctx.Config.Domain),
@@ -89,7 +134,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			WorkspaceURLTemplate:     fmt.Sprintf("https://{{ .Prefix }}.ws.%s", ctx.Config.Domain),
 			WorkspacePortURLTemplate: fmt.Sprintf("https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.%s", ctx.Config.Domain),
 			WorkspaceHostPath:        wsdaemon.HostWorkingArea,
-			WorkspacePodTemplate:     templatesCfg,
 			Timeouts: config.WorkspaceTimeoutConfiguration{
 				AfterClose:          timeoutAfterClose,
 				HeadlessWorkspace:   util.Duration(1 * time.Hour),
@@ -165,14 +209,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return res, nil
 }
 
-func buildWorkspaceTemplates(ctx *common.RenderContext) (config.WorkspacePodTemplateConfiguration, []runtime.Object, error) {
+func buildWorkspaceTemplates(ctx *common.RenderContext, cfgTpls *configv1.WorkspaceTemplates, className string) (config.WorkspacePodTemplateConfiguration, []runtime.Object, error) {
 	var (
 		cfg  config.WorkspacePodTemplateConfiguration
 		tpls = make(map[string]string)
 	)
-	cfgTpls := ctx.Config.Workspace.Templates
 	if cfgTpls == nil {
-		cfgTpls = &configv1.WorkspaceTemplates{}
+		cfgTpls = new(configv1.WorkspaceTemplates)
 	}
 
 	ops := []struct {
@@ -184,7 +227,6 @@ func buildWorkspaceTemplates(ctx *common.RenderContext) (config.WorkspacePodTemp
 		{Name: "imagebuild", Path: &cfg.ImagebuildPath, Tpl: cfgTpls.ImageBuild},
 		{Name: "prebuild", Path: &cfg.PrebuildPath, Tpl: cfgTpls.Prebuild},
 		{Name: "regular", Path: &cfg.RegularPath, Tpl: cfgTpls.Regular},
-		{Name: "probe", Path: &cfg.ProbePath, Tpl: cfgTpls.Probe},
 	}
 	for _, op := range ops {
 		if op.Tpl == nil {
@@ -194,7 +236,7 @@ func buildWorkspaceTemplates(ctx *common.RenderContext) (config.WorkspacePodTemp
 		if err != nil {
 			return cfg, nil, fmt.Errorf("unable to marshal %s workspace template: %w", op.Name, err)
 		}
-		fn := op.Name + ".yaml"
+		fn := filepath.Join(className, op.Name+".yaml")
 		*op.Path = filepath.Join(WorkspaceTemplatePath, fn)
 		tpls[fn] = string(fc)
 	}
