@@ -71,7 +71,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const coverageOutput = exec("mktemp -d", { silent: true }).stdout.trim();
 
     // Main build should only contain the annotations below:
-    // ['with-contrib', 'publish-to-npm', 'publish-to-jb-marketplace', 'clean-slate-deployment']
+    // ['with-contrib', 'publish-to-npm', 'publish-to-jb-marketplace', 'with-clean-slate-deployment']
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig && !mainBuild;
     const withContrib = "with-contrib" in buildConfig || mainBuild;
     const noPreview = ("no-preview" in buildConfig && buildConfig["no-preview"] !== "false") || publishRelease;
