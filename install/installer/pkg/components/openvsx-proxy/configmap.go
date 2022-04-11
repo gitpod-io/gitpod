@@ -17,17 +17,22 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	// todo(sje): enable redis config
 	imgcfg := openvsx.Config{
 		LogDebug:             false,
-		CacheDurationRegular: util.Duration(time.Minute),
+		CacheDurationRegular: util.Duration(time.Minute * 5),
 		CacheDurationBackup:  util.Duration(time.Hour * 72),
 		URLUpstream:          ctx.Config.OpenVSX.URL,
 		URLLocal:             fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain),
 		MaxIdleConns:         1000,
 		MaxIdleConnsPerHost:  1000,
 		PrometheusAddr:       fmt.Sprintf(":%d", PrometheusPort),
+		RedisAddr:            "localhost:6379",
 	}
+
+	redisCfg := `
+maxmemory 100mb
+maxmemory-policy allkeys-lfu
+	`
 
 	fc, err := common.ToJSONString(imgcfg)
 	if err != nil {
@@ -36,6 +41,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	data := map[string]string{
 		"config.json": string(fc),
+		"redis.conf":  redisCfg,
 	}
 
 	return []runtime.Object{
