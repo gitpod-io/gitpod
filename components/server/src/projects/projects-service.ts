@@ -7,7 +7,6 @@
 import { inject, injectable } from "inversify";
 import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
-    AuthProviderInfo,
     Branch,
     PrebuildWithStatus,
     CreateProjectParams,
@@ -20,6 +19,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
+import { Config } from "../config";
 
 @injectable()
 export class ProjectsService {
@@ -28,6 +28,7 @@ export class ProjectsService {
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
+    @inject(Config) protected readonly config: Config;
 
     async getProject(projectId: string): Promise<Project | undefined> {
         return this.projectDB.findProjectById(projectId);
@@ -154,7 +155,7 @@ export class ProjectsService {
             type === "GitLab" ||
             type === "Bitbucket" ||
             type === "BitbucketServer" ||
-            AuthProviderInfo.isGitHubEnterprise(authProvider)
+            (type === "GitHub" && (authProvider?.host !== "github.com" || !this.config.githubApp?.enabled))
         ) {
             const repositoryService = hostContext?.services?.repositoryService;
             if (repositoryService) {

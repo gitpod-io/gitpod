@@ -121,6 +121,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         generateNewGitpodToken: { group: "default", points: 1 },
         deleteGitpodToken: { group: "default", points: 1 },
         sendFeedback: { group: "default", points: 1 },
+        isGitHubAppEnabled: { group: "default", points: 1 },
         registerGithubApp: { group: "default", points: 1 },
         takeSnapshot: { group: "default", points: 1 },
         waitForSnapshot: { group: "default", points: 1 },

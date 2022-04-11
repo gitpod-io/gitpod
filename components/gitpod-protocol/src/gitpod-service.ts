@@ -189,6 +189,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     // misc
     sendFeedback(feedback: string): Promise<string | undefined>;
+    isGitHubAppEnabled(): Promise<boolean>;
     registerGithubApp(installationId: string): Promise<void>;
 
     /**

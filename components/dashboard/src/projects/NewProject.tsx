@@ -29,7 +29,7 @@ export default function NewProject() {
     const [reposInAccounts, setReposInAccounts] = useState<ProviderRepository[]>([]);
     const [repoSearchFilter, setRepoSearchFilter] = useState<string>("");
     const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
-    const [showGitProviders, setShowGitProviders] = useState<boolean>(false);
+    const [showGitProviders, setShowGitProviders] = useState<boolean>(true);
     const [selectedRepo, setSelectedRepo] = useState<ProviderRepository | undefined>(undefined);
     const [selectedTeamOrUser, setSelectedTeamOrUser] = useState<Team | User | undefined>(undefined);
 
@@ -41,11 +41,16 @@ export default function NewProject() {
     const [sourceOfConfig, setSourceOfConfig] = useState<"repo" | "db" | undefined>();
 
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
+    const [isGitHubAppEnabled, setIsGitHubAppEnabled] = useState<boolean>();
+
+    console.log("isGitHubAppEnabled", isGitHubAppEnabled);
 
     useEffect(() => {
-        (async () => {
-            setAuthProviders(await getGitpodService().server.getAuthProviders());
-        })();
+        const { server } = getGitpodService();
+        Promise.all([
+            server.getAuthProviders().then((v) => () => setAuthProviders(v)),
+            server.isGitHubAppEnabled().then((v) => () => setIsGitHubAppEnabled(v)),
+        ]).then((setters) => setters.forEach((s) => s()));
     }, []);
 
     useEffect(() => {
@@ -275,7 +280,7 @@ export default function NewProject() {
                 onClick: () => setSelectedAccount(account),
             });
         }
-        if (isGitHub()) {
+        if (isGitHub() && isGitHubAppEnabled) {
             result.push({
                 title: "Add another GitHub account",
                 customContent: renderItemContent("Add GitHub Orgs or Account", Plus),
@@ -437,7 +442,7 @@ export default function NewProject() {
                         )}
                     </div>
                 </div>
-                {reposInAccounts.length > 0 && isGitHub() && (
+                {reposInAccounts.length > 0 && isGitHub() && isGitHubAppEnabled && (
                     <div>
                         <div className="text-gray-500 text-center w-96 mx-8">
                             Repository not found?{" "}
@@ -634,14 +639,13 @@ function GitProviders(props: {
         setErrorMessage(undefined);
 
         const token = await getGitpodService().server.getToken({ host: ap.host });
-        const isGitHubEnterprise = AuthProviderInfo.isGitHubEnterprise(ap);
-        if (token && !(isGitHubEnterprise && !token.scopes.includes("repo"))) {
+        if (token && !(ap.authProviderType === "GitHub" && !token.scopes.includes("repo"))) {
             props.onHostSelected(ap.host);
             return;
         }
         await openAuthorizeWindow({
             host: ap.host,
-            scopes: isGitHubEnterprise ? ["repo"] : ap.requirements?.default,
+            scopes: ap.authProviderType === "GitHub" ? ["repo"] : ap.requirements?.default,
             onSuccess: async () => {
                 props.onHostSelected(ap.host, true);
             },
