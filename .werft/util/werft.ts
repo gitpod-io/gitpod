@@ -3,6 +3,17 @@ import { exec } from './shell';
 
 let werft: Werft;
 
+export class Slice {
+    public closed: boolean
+    public span: Span
+}
+
+export class Phase {
+    public span: Span
+    public closed: boolean
+    public slices: { [name: string]: Slice }
+}
+
 /**
  * For backwards compatibility with existing code we expose a global Werft instance
  */
@@ -23,7 +34,7 @@ export class Werft {
     public currentPhase: string;
     private globalSpanAttributes: SpanAttributes = {}
 
-    public phases: { [name: string]: { "span": Span, "closed": boolean, "slices": { [name: string]: { "closed": boolean, "span": Span } } } } = {}
+    public phases: { [name: string]: Phase } = {}
 
     constructor(job: string) {
         if (werft) {
