@@ -37,7 +37,7 @@ export class Werft {
     }
 
     public phase(name, desc?: string) {
-        // When you start a new phase the previous phase is implicitly closed.
+
         if (this.phases[this.currentPhase] && !this.phases[this.currentPhase].closed) {
             console.log(`WARNING: The phase "${name}" is starting although the previous phase "${this.currentPhase}" is still active.`);
         }
@@ -55,14 +55,17 @@ export class Werft {
             }
         }, rootSpanCtx)
 
+        phaseSpan.setAttributes(this.globalSpanAttributes)
+
         this.phases[name] = { "span": phaseSpan, "closed": false, "slices": { } };
 
-        this.phases[name].span.setAttributes(this.globalSpanAttributes)
-
-        // This is a workaround to prevent phases being opened without any slice
         this.currentPhase = name;
 
         console.log(`[${name}|PHASE] ${desc || name}`)
+    }
+
+    public getCurrentPhaseSpan() {
+        return this.phases[this.currentPhase].span
     }
 
     private newSlice(name: string) {
@@ -111,7 +114,8 @@ export class Werft {
 
         // This is only for backwards compatibility!
         if (!this.phases[this.currentPhase].slices[slice]) {
-            this.newSlice(slice);
+            console.log(`WARNING: A slice with the name ${slice} has never been opened.`)
+            return
         }
 
         if (this.phases[this.currentPhase].slices[slice].closed) {

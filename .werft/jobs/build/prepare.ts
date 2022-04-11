@@ -84,7 +84,7 @@ function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
     if (shouldCreateVM(config)) {
         createVM(werft, config)
     } else {
-        werft.phases[werft.currentPhase].span.setAttribute("werft.harvester.created_vm", false)
+        werft.getCurrentPhaseSpan().setAttribute("werft.harvester.created_vm", false)
     }
     werft.done(prepareSlices.BOOT_VM)
 }
@@ -106,5 +106,5 @@ function createVM(werft: Werft, config: JobConfig) {
 
     werft.log(prepareSlices.BOOT_VM, 'Creating  VM')
     VM.startVM({ name: config.previewEnvironment.destname })
-    werft.phases[werft.currentPhase].span.setAttribute("werft.harvester.created_vm", true)
+    werft.getCurrentPhaseSpan().setAttribute("werft.harvester.created_vm", true)
 }
