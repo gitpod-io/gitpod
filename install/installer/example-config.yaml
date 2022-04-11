@@ -15,6 +15,7 @@ domain: ""
 kind: Full
 metadata:
   region: local
+  shortname: default
 objectStorage:
   inCluster: true
 observability:
