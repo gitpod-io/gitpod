@@ -310,14 +310,6 @@ var ring1Cmd = &cobra.Command{
 			)
 		}
 
-		f, err := ioutil.TempDir("", "wskit-slirp4netns")
-		if err != nil {
-			log.WithError(err).Error("cannot create slirp4netns socket tempdir")
-			return
-		}
-
-		mnts = append(mnts, mnte{Target: "/.supervisor/slirp4netns.sock", Source: f, Flags: unix.MS_BIND | unix.MS_REC})
-
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)
 			_ = os.MkdirAll(dst, 0644)
