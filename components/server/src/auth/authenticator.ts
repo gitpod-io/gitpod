@@ -221,7 +221,10 @@ export class Authenticator {
 
         // prepare session
         await AuthFlow.attach(req.session, { host, returnTo, overrideScopes: override });
-        let wantedScopes = scopes.split(",");
+        let wantedScopes = scopes
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0);
         if (wantedScopes.length === 0) {
             if (authProvider.info.requirements) {
                 wantedScopes = authProvider.info.requirements.default;
