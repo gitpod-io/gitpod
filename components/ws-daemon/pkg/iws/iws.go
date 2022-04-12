@@ -344,9 +344,9 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 		return nil, status.Errorf(codes.Internal, "cannot setup a peer veths")
 	}
 
-	err = nsinsider(wbs.Session.InstanceID, int(pid), func(c *exec.Cmd) {
+	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "enable-ip-forward")
-	}, enterMountNS(true))
+	}, enterNetNS(true), enterMountNSPid(1))
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot enable IP forwarding")
 		return nil, status.Errorf(codes.Internal, "cannot enable IP forwarding")
@@ -736,9 +736,10 @@ func cleanupMaskedMount(owi map[string]interface{}, base string, paths []string)
 }
 
 type nsinsiderOpts struct {
-	MountNS bool
-	PidNS   bool
-	NetNS   bool
+	MountNS    bool
+	PidNS      bool
+	NetNS      bool
+	MountNSPid int
 }
 
 func enterMountNS(enter bool) nsinsiderOpt {
@@ -756,6 +757,13 @@ func enterPidNS(enter bool) nsinsiderOpt {
 func enterNetNS(enter bool) nsinsiderOpt {
 	return func(o *nsinsiderOpts) {
 		o.NetNS = enter
+	}
+}
+
+func enterMountNSPid(pid int) nsinsiderOpt {
+	return func(o *nsinsiderOpts) {
+		o.MountNS = true
+		o.MountNSPid = pid
 	}
 }
 
@@ -781,10 +789,14 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 	}
 	var nss []mnt
 	if cfg.MountNS {
+		tpid := targetPid
+		if cfg.MountNSPid != 0 {
+			tpid = cfg.MountNSPid
+		}
 		nss = append(nss,
-			mnt{"_LIBNSENTER_ROOTFD", fmt.Sprintf("/proc/%d/root", targetPid), unix.O_PATH},
-			mnt{"_LIBNSENTER_CWDFD", fmt.Sprintf("/proc/%d/cwd", targetPid), unix.O_PATH},
-			mnt{"_LIBNSENTER_MNTNSFD", fmt.Sprintf("/proc/%d/ns/mnt", targetPid), os.O_RDONLY},
+			mnt{"_LIBNSENTER_ROOTFD", fmt.Sprintf("/proc/%d/root", tpid), unix.O_PATH},
+			mnt{"_LIBNSENTER_CWDFD", fmt.Sprintf("/proc/%d/cwd", tpid), unix.O_PATH},
+			mnt{"_LIBNSENTER_MNTNSFD", fmt.Sprintf("/proc/%d/ns/mnt", tpid), os.O_RDONLY},
 		)
 	}
 	if cfg.PidNS {
