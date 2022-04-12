@@ -315,7 +315,6 @@ function makeLogItem(
         component,
         severity,
         time: new Date().toISOString(),
-        environment: process.env.KUBE_STAGE,
         context,
         message,
         error,
