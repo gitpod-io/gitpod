@@ -52,7 +52,10 @@ type WorkspaceConfig struct {
 }
 
 type WebAppConfig struct {
-	PublicAPI *PublicAPIConfig `json:"publicApi,omitempty"`
+	PublicAPI         *PublicAPIConfig `json:"publicApi,omitempty"`
+	WorkspaceDefaults struct {
+		WorkspaceImage string `json:"workspaceImage"`
+	} `json:"workspaceDefaults"`
 }
 
 type PublicAPIConfig struct {
