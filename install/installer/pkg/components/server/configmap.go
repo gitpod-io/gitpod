@@ -9,6 +9,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +26,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		license = licenseFilePath
 	}
 
+	workspaceImage := common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion)
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.WorkspaceDefaults.WorkspaceImage != "" {
+			workspaceImage = cfg.WebApp.WorkspaceDefaults.WorkspaceImage
+		}
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -37,7 +46,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TimeoutSeconds:  300,
 		},
 		WorkspaceDefaults: WorkspaceDefaults{
-			WorkspaceImage:      common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
+			WorkspaceImage:      workspaceImage,
 			PreviewFeatureFlags: []NamedWorkspaceFeatureFlag{},
 			DefaultFeatureFlags: []NamedWorkspaceFeatureFlag{},
 			TimeoutDefault:      ctx.Config.Workspace.TimeoutDefault,
