@@ -61,6 +61,7 @@ export class Installer {
             this.configureObservability(slice)
             this.configureAuthProviders(slice)
             this.configureSSHGateway(slice)
+            this.configurePublicAPIServer(slice)
 
             if (this.options.analytics) {
                 this.includeAnalytics(slice)
@@ -141,6 +142,10 @@ export class Installer {
                 | kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f -`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} sshGatewayHostKey.kind "secret"`)
         exec(`yq w -i ${this.options.installerConfigPath} sshGatewayHostKey.name "host-key"`)
+    }
+
+    private configurePublicAPIServer(slice: string) {
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.publicApi.enabled true`, { slice: slice })
     }
 
     private includeAnalytics(slice: string): void {
