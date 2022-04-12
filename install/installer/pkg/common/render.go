@@ -31,6 +31,10 @@ func CompositeRenderFunc(f ...RenderFunc) RenderFunc {
 			if err != nil {
 				return nil, err
 			}
+			if len(obj) == 0 {
+				// the RenderFunc chose not to render anything, possibly based on config it received
+				continue
+			}
 			res = append(res, obj...)
 		}
 		return res, nil
