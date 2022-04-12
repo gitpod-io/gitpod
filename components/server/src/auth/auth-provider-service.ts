@@ -49,6 +49,7 @@ export class AuthProviderService {
     protected toAuthProviderParams = (oap: AuthProviderEntry) =>
         <AuthProviderParams>{
             ...oap,
+            // HINT: host is expected to be lower case
             host: oap.host.toLowerCase(),
             verified: oap.status === "verified",
             builtin: false,

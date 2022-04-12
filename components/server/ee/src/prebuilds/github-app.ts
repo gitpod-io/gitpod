@@ -442,9 +442,9 @@ export class GithubApp {
             prebuildStartPromise.catch((err) => log.error(err, "Error while starting prebuild", { contextURL }));
             return prebuildStartPromise;
         } else {
-            log.debug({ userId: user.id }, `Not running prebuild, the user did not enable it for this context`, {
+            log.debug({ userId: user.id }, `Not running prebuild, the user did not enable it for this context`, null, {
                 contextURL,
-                user,
+                userId: user.id,
                 project,
             });
             return;

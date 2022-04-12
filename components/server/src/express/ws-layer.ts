@@ -51,7 +51,7 @@ export class WsLayerImpl implements WsLayer {
         try {
             return fn(ws, req, next);
         } catch (err) {
-            log.error(err, { ws, req });
+            log.error(err);
             return next(err);
         }
     }
@@ -60,7 +60,7 @@ export class WsLayerImpl implements WsLayer {
         try {
             return this.next(ws, req);
         } catch (err) {
-            log.error(err, { ws, req });
+            log.error(err);
         }
     }
 

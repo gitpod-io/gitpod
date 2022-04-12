@@ -113,7 +113,7 @@ export class WsConnectionHandler implements Disposable {
             ws.on("error", (err: any) => {
                 if (err.code !== "ECONNRESET" && err.code !== "EPIPE") {
                     // exclude very common errors
-                    log.warn("websocket error, closing.", err, { ws, req });
+                    log.warn("websocket error, closing.", err);
                 }
                 ws.close(); // ws should trigger close() itself on any socket error. We do this just to be sure.
             });

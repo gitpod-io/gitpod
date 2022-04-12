@@ -54,7 +54,7 @@ export class BitbucketApp {
                     console.warn(`Ignoring unsupported bitbucket event: ${req.header("X-Event-Key")}`);
                 }
             } catch (err) {
-                console.error(`Couldn't handle request.`, err, { headers: req.headers, reqBody: req.body });
+                console.error(`Couldn't handle request.`, err, { headers: req.headers });
             } finally {
                 // we always respond with OK, when we received a valid event.
                 res.sendStatus(200);
@@ -189,7 +189,7 @@ function toData(body: BitbucketPushHook): ParsedRequestData | undefined {
         gitCloneUrl: body.repository.links.html.href + ".git",
     };
     if (!result.commitHash || !result.repoUrl) {
-        console.error("Bitbucket push event: unexpected request body.", body);
+        console.error("Bitbucket push event: unexpected request body.");
         throw new Error("Unexpected request body.");
     }
     return result;

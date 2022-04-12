@@ -216,7 +216,7 @@ export class GenericAuthProvider implements AuthProvider {
                 expiryDate,
             });
         } catch (error) {
-            log.error(`(${this.strategyName}) Failed to refresh token!`, { error, token });
+            log.error(`(${this.strategyName}) Failed to refresh token!`, { error });
             throw error;
         }
     }
@@ -252,7 +252,6 @@ export class GenericAuthProvider implements AuthProvider {
                     log.error(`(${this.strategyName}) Failed to fetch from "configURL"`, {
                         error,
                         configURL,
-                        accessToken,
                     });
                     throw new Error("Error while reading user profile.");
                 }
@@ -274,14 +273,13 @@ export class GenericAuthProvider implements AuthProvider {
                     log.error(`(${this.strategyName}) Failed to call "fetchAuthUserSetup"`, {
                         error,
                         configFn,
-                        accessToken,
                     });
                     throw new Error("Error with the Auth Provider Configuration.");
                 }
                 try {
                     return await promise;
                 } catch (error) {
-                    log.error(`(${this.strategyName}) Failed to run "configFn"`, { error, configFn, accessToken });
+                    log.error(`(${this.strategyName}) Failed to run "configFn"`, { error, configFn });
                     throw new Error("Error while reading user profile.");
                 }
             };
@@ -313,14 +311,13 @@ export class GenericAuthProvider implements AuthProvider {
         const clientInfo = getRequestingClientInfo(request);
         const cxt = LogContext.from({ user: request.user });
         if (response.headersSent) {
-            log.warn(cxt, `(${strategyName}) Callback called repeatedly.`, { request, clientInfo });
+            log.warn(cxt, `(${strategyName}) Callback called repeatedly.`, { clientInfo });
             return;
         }
         log.info(cxt, `(${strategyName}) OAuth2 callback call. `, {
             clientInfo,
             authProviderId,
             requestUrl: request.originalUrl,
-            request,
         });
 
         const isAlreadyLoggedIn = request.isAuthenticated() && User.is(request.user);
@@ -330,7 +327,7 @@ export class GenericAuthProvider implements AuthProvider {
                 log.warn(
                     cxt,
                     `(${strategyName}) User is already logged in. No auth info provided. Redirecting to dashboard.`,
-                    { request, clientInfo },
+                    { clientInfo },
                 );
                 response.redirect(this.config.hostUrl.asDashboard().toString());
                 return;
@@ -341,7 +338,7 @@ export class GenericAuthProvider implements AuthProvider {
         if (!authFlow) {
             increaseLoginCounter("failed", this.host);
 
-            log.error(cxt, `(${strategyName}) No session found during auth callback.`, { request, clientInfo });
+            log.error(cxt, `(${strategyName}) No session found during auth callback.`, { clientInfo });
             response.redirect(this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`));
             return;
         }
@@ -349,12 +346,12 @@ export class GenericAuthProvider implements AuthProvider {
         if (authFlow.host !== this.host) {
             increaseLoginCounter("failed", this.host);
 
-            log.error(cxt, `(${strategyName}) Host does not match.`, { request, clientInfo });
+            log.error(cxt, `(${strategyName}) Host does not match.`, { clientInfo });
             response.redirect(this.getSorryUrl(`Host does not match.`));
             return;
         }
 
-        const defaultLogPayload = { authFlow, clientInfo, authProviderId, request };
+        const defaultLogPayload = { authFlow, clientInfo, authProviderId };
 
         // check OAuth2 errors
         const callbackParams = new URL(`https://anyhost${request.originalUrl}`).searchParams;

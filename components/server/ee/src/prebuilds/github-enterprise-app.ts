@@ -45,7 +45,7 @@ export class GitHubEnterpriseApp {
                 try {
                     user = await this.findUser({ span }, payload, req);
                 } catch (error) {
-                    log.error("Cannot find user.", error, { req });
+                    log.error("Cannot find user.", error, {});
                 }
                 if (!user) {
                     res.statusCode = 401;
