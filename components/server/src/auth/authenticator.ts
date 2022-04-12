@@ -75,7 +75,7 @@ export class Authenticator {
             for (const { authProvider } of hostContexts) {
                 const authCallbackPath = authProvider.authCallbackPath;
                 if (req.url.startsWith(authCallbackPath)) {
-                    log.info(`Auth Provider Callback. Path: ${authCallbackPath}`, { req });
+                    log.info(`Auth Provider Callback. Path: ${authCallbackPath}`);
                     await authProvider.callback(req, res, next);
                     return;
                 }
@@ -104,18 +104,18 @@ export class Authenticator {
         const host: string = req.query.host?.toString() || "";
         const authProvider = host && (await this.getAuthProviderForHost(host));
         if (!host || !authProvider) {
-            log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { req, "login-flow": true });
+            log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { "login-flow": true });
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
         if (this.config.disableDynamicAuthProviderLogin && !authProvider.params.builtin) {
-            log.info({ sessionId: req.sessionID }, `Auth Provider is not allowed.`, { req, ap: authProvider.info });
+            log.info({ sessionId: req.sessionID }, `Auth Provider is not allowed.`, { ap: authProvider.info });
             res.redirect(this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));
             return;
         }
         if (!req.session) {
             increaseLoginCounter("failed", authProvider.info.host);
-            log.info({}, `No session.`, { req, "login-flow": true });
+            log.info({}, `No session.`, { "login-flow": true });
             res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));
             return;
         }
@@ -123,7 +123,6 @@ export class Authenticator {
         if (!authProvider.info.verified && !(await this.isInSetupMode())) {
             increaseLoginCounter("failed", authProvider.info.host);
             log.info({ sessionId: req.sessionID }, `Login with "${host}" is not permitted.`, {
-                req,
                 "login-flow": true,
                 ap: authProvider.info,
             });
@@ -153,7 +152,7 @@ export class Authenticator {
     async deauthorize(req: express.Request, res: express.Response, next: express.NextFunction) {
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
-            log.info({ sessionId: req.sessionID }, `User is not authenticated.`, { req });
+            log.info({ sessionId: req.sessionID }, `User is not authenticated.`);
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
@@ -163,7 +162,7 @@ export class Authenticator {
         const authProvider = host && (await this.getAuthProviderForHost(host));
 
         if (!host || !authProvider) {
-            log.warn({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { req });
+            log.warn({ sessionId: req.sessionID }, `Bad request: missing parameters.`);
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
@@ -174,7 +173,6 @@ export class Authenticator {
         } catch (error) {
             next(error);
             log.error({ sessionId: req.sessionID }, `Failed to disconnect a provider.`, error, {
-                req,
                 host,
                 userId: user.id,
             });
@@ -188,13 +186,13 @@ export class Authenticator {
 
     async authorize(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!req.session) {
-            log.info({}, `No session.`, { req, "authorize-flow": true });
+            log.info({}, `No session.`, { "authorize-flow": true });
             res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));
             return;
         }
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
-            log.info({ sessionId: req.sessionID }, `User is not authenticated.`, { req, "authorize-flow": true });
+            log.info({ sessionId: req.sessionID }, `User is not authenticated.`, { "authorize-flow": true });
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
@@ -204,14 +202,13 @@ export class Authenticator {
         const override = req.query.override === "true";
         const authProvider = host && (await this.getAuthProviderForHost(host));
         if (!returnTo || !host || !authProvider) {
-            log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { req, "authorize-flow": true });
+            log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { "authorize-flow": true });
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
 
         if (!authProvider.info.verified && user.id !== authProvider.info.ownerId) {
             log.info({ sessionId: req.sessionID }, `Authorization with "${host}" is not permitted.`, {
-                req,
                 "authorize-flow": true,
                 ap: authProvider.info,
             });

@@ -52,7 +52,7 @@ export class BitbucketServerApp {
                     console.warn(`Ignoring unsupported BBS event.`, { headers: req.headers });
                 }
             } catch (err) {
-                console.error(`Couldn't handle request.`, err, { headers: req.headers, reqBody: req.body });
+                console.error(`Couldn't handle request.`, err, { headers: req.headers });
             } finally {
                 // we always respond with OK, when we received a valid event.
                 res.sendStatus(200);

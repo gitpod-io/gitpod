@@ -43,7 +43,7 @@ export class GitLabApp {
                 try {
                     user = await this.findUser({ span }, context, req);
                 } catch (error) {
-                    log.error("Cannot find user.", error, { req });
+                    log.error("Cannot find user.", error, {});
                 }
                 if (!user) {
                     res.statusCode = 503;

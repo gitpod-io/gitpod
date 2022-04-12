@@ -85,7 +85,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
                 currentScopes,
             };
         } catch (error) {
-            log.error(`(${this.strategyName}) Reading current user info failed`, error, { accessToken, error });
+            log.error(`(${this.strategyName}) Reading current user info failed`, error, { error });
             throw error;
         }
     };
