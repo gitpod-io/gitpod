@@ -19,6 +19,9 @@ COPY --chown=33333:33333 startup.sh /ide-desktop/
 COPY --chown=33333:33333 --from=download /workdir/ /ide-desktop/backend/
 COPY --chown=33333:33333 components-ide-jetbrains-image-status--app/status /ide-desktop
 
+ARG JETBRAINS_BACKEND_QUALIFIER
+ENV GITPOD_ENV_SET_JETBRAINS_BACKEND_QUALIFIER ${JETBRAINS_BACKEND_QUALIFIER}
+
 COPY --chown=33333:33333 components-ide-jetbrains-cli--app/cli /ide-desktop/bin/idea-cli
 ENV GITPOD_ENV_APPEND_PATH /ide-desktop/bin:
 

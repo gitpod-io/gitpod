@@ -40,7 +40,6 @@ var (
 )
 
 const BackendPath = "/ide-desktop/backend"
-const RemoteDevServer = BackendPath + "/bin/remote-dev-server.sh"
 const ProductInfoPath = BackendPath + "/product-info.json"
 
 // JB startup entrypoint
@@ -223,13 +222,34 @@ func run(wsInfo *supervisor.WorkspaceInfoResponse) {
 	var args []string
 	args = append(args, "run")
 	args = append(args, wsInfo.GetCheckoutLocation())
-	cmd := exec.Command(RemoteDevServer, args...)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
+	cmd := remoteDevServerCmd(args)
+	// Enable host status endpoint
+	cmd.Env = append(cmd.Env, "CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod")
 	if err := cmd.Run(); err != nil {
 		log.WithError(err).Error("failed to run")
 	}
 	os.Exit(cmd.ProcessState.ExitCode())
+}
+
+func remoteDevServerCmd(args []string) *exec.Cmd {
+	cmd := exec.Command(BackendPath+"/bin/remote-dev-server.sh", args...)
+	cmd.Env = os.Environ()
+
+	// Set default config and system directories under /workspace to preserve between restarts
+	qualifier := os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
+	if qualifier == "stable" {
+		qualifier = ""
+	} else {
+		qualifier = "-" + qualifier
+	}
+	cmd.Env = append(cmd.Env,
+		fmt.Sprintf("IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains%s", qualifier),
+		fmt.Sprintf("IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains%s", qualifier),
+	)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	return cmd
 }
 
 /**
@@ -299,8 +319,7 @@ func installPlugins(wsInfo *supervisor.WorkspaceInfoResponse) error {
 	args = append(args, "installPlugins")
 	args = append(args, wsInfo.GetCheckoutLocation())
 	args = append(args, plugins...)
-	cmd := exec.Command(RemoteDevServer, args...)
-	cmd.Stderr = os.Stderr
+	cmd := remoteDevServerCmd(args)
 	cmd.Stdout = io.MultiWriter(w, os.Stdout)
 	installErr := cmd.Run()
 
