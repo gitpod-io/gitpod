@@ -24,6 +24,7 @@ packages:
     argdeps:
       - imageRepoBase
       - intellijDownloadUrl
+      - jetbrainsBackendQualifier
     config:
       dockerfile: leeway.Dockerfile
       metadata:
@@ -31,6 +32,7 @@ packages:
       buildArgs:
         JETBRAINS_BACKEND_URL: ${intellijDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
+        JETBRAINS_BACKEND_QUALIFIER: ${jetbrainsBackendQualifier}
       image:
         - ${imageRepoBase}/ide/intellij:${version}
         - ${imageRepoBase}/ide/intellij:commit-${__git_commit}
@@ -51,8 +53,9 @@ packages:
         helm-component: workspace.desktopIdeImages.intellijLatest
       buildArgs:
         # "https://data.services.jetbrains.com/products?code=IIU&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000"
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/idea/ideaIU-221.4994.44.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/idea/ideaIU-221.5080.169.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
+        JETBRAINS_BACKEND_QUALIFIER: latest
       image:
         - ${imageRepoBase}/ide/intellij:${version}-latest
         - ${imageRepoBase}/ide/intellij:commit-${__git_commit}-latest
@@ -68,6 +71,7 @@ packages:
     argdeps:
       - imageRepoBase
       - golandDownloadUrl
+      - jetbrainsBackendQualifier
     config:
       dockerfile: leeway.Dockerfile
       metadata:
@@ -75,6 +79,7 @@ packages:
       buildArgs:
         JETBRAINS_BACKEND_URL: ${golandDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
+        JETBRAINS_BACKEND_QUALIFIER: ${jetbrainsBackendQualifier}
       image:
         - ${imageRepoBase}/ide/goland:${version}
         - ${imageRepoBase}/ide/goland:commit-${__git_commit}
@@ -95,8 +100,9 @@ packages:
         helm-component: workspace.desktopIdeImages.golandLatest
       buildArgs:
         # "https://data.services.jetbrains.com/products?code=GO&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000"
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/go/goland-221.4994.43.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/go/goland-221.5080.169.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
+        JETBRAINS_BACKEND_QUALIFIER: latest
       image:
         - ${imageRepoBase}/ide/goland:${version}-latest
         - ${imageRepoBase}/ide/goland:commit-${__git_commit}-latest
@@ -112,6 +118,7 @@ packages:
     argdeps:
       - imageRepoBase
       - pycharmDownloadUrl
+      - jetbrainsBackendQualifier
     config:
       dockerfile: leeway.Dockerfile
       metadata:
@@ -119,6 +126,7 @@ packages:
       buildArgs:
         JETBRAINS_BACKEND_URL: ${pycharmDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_pycharm.json
+        JETBRAINS_BACKEND_QUALIFIER: ${jetbrainsBackendQualifier}
       image:
         - ${imageRepoBase}/ide/pycharm:${version}
         - ${imageRepoBase}/ide/pycharm:commit-${__git_commit}
@@ -139,8 +147,9 @@ packages:
         helm-component: workspace.desktopIdeImages.pycharmLatest
       buildArgs:
         # "https://data.services.jetbrains.com/products?code=PCP&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000"
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/python/pycharm-professional-221.4994.44.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/python/pycharm-professional-221.5080.186.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_pycharm.json
+        JETBRAINS_BACKEND_QUALIFIER: latest
       image:
         - ${imageRepoBase}/ide/pycharm:${version}-latest
         - ${imageRepoBase}/ide/pycharm:commit-${__git_commit}-latest
@@ -156,6 +165,7 @@ packages:
     argdeps:
       - imageRepoBase
       - phpstormDownloadUrl
+      - jetbrainsBackendQualifier
     config:
       dockerfile: leeway.Dockerfile
       metadata:
@@ -163,6 +173,7 @@ packages:
       buildArgs:
         JETBRAINS_BACKEND_URL: ${phpstormDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
+        JETBRAINS_BACKEND_QUALIFIER: ${jetbrainsBackendQualifier}
       image:
         - ${imageRepoBase}/ide/phpstorm:${version}
         - ${imageRepoBase}/ide/phpstorm:commit-${__git_commit}
@@ -183,8 +194,9 @@ packages:
         helm-component: workspace.desktopIdeImages.phpstormLatest
       buildArgs:
         # "https://data.services.jetbrains.com/products?code=PS&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000"
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/webide/PhpStorm-221.4994.43.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/webide/PhpStorm-221.5080.177.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
+        JETBRAINS_BACKEND_QUALIFIER: latest
       image:
         - ${imageRepoBase}/ide/phpstorm:${version}-latest
         - ${imageRepoBase}/ide/phpstorm:commit-${__git_commit}-latest
