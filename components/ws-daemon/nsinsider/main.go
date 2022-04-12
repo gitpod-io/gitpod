@@ -464,6 +464,13 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:  "enable-ip-forward",
+				Usage: "enable IPv4 forwarding",
+				Action: func(c *cli.Context) error {
+					return os.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1"), 0644)
+				},
+			},
 		},
 	}
 
