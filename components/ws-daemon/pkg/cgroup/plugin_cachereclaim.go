@@ -1,8 +1,8 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package daemon
+package cgroup
 
 import (
 	"bufio"
@@ -17,63 +17,38 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"golang.org/x/xerrors"
 )
 
-type CacheReclaim string
+type CacheReclaim struct{}
 
-// WorkspaceAdded will customize the cgroups for every workspace that is started
-func (c CacheReclaim) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspace) error {
-	disp := dispatch.GetFromContext(ctx)
-	if disp == nil {
-		return xerrors.Errorf("no dispatch available")
-	}
+func (c *CacheReclaim) Name() string  { return "cache-reclaim-v1" }
+func (c *CacheReclaim) Type() Version { return Version1 }
 
-	cgroupPath, err := disp.Runtime.ContainerCGroupPath(context.Background(), ws.ContainerID)
-	if err != nil {
-		return xerrors.Errorf("cannot start governer: %w", err)
-	}
+func (c *CacheReclaim) Apply(ctx context.Context, basePath, cgroupPath string) error {
+	memPath := filepath.Join(string(basePath), "memory", cgroupPath)
 
-	memPath := filepath.Join(string(c), "memory", cgroupPath)
+	t := time.NewTicker(10 * time.Second)
+	defer t.Stop()
 
-	go func() {
-		owi := ws.OWI()
-		log.WithFields(ws.OWI()).Debug("starting page cache reclaim")
-
-		t := time.NewTicker(10 * time.Second)
-		defer t.Stop()
-
-		var lastReclaim time.Time
-		for {
-			select {
-			case <-ctx.Done():
-				log.WithFields(owi).Debug("shutting down page cache reclaim")
-				return
-			case <-t.C:
-			}
-
-			if !lastReclaim.IsZero() && time.Since(lastReclaim) < 30*time.Second {
-				continue
-			}
-
-			stats, err := reclaimPageCache(memPath)
-			if err != nil {
-				log.WithFields(owi).WithError(err).Warn("cannot reclaim page cache")
-				continue
-			}
-			e := log.WithFields(owi).WithField("reclaimed_bytes", stats.Reclaimed()).WithField("stats", stats)
-			if stats.DidReclaim {
-				e.Debug("reclaimed page cache")
-			} else {
-				e.Debug("did not reclaim page cache")
-			}
-			lastReclaim = time.Now()
+	var lastReclaim time.Time
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-t.C:
 		}
-	}()
 
-	return nil
+		if !lastReclaim.IsZero() && time.Since(lastReclaim) < 30*time.Second {
+			continue
+		}
+
+		_, err := reclaimPageCache(memPath)
+		if err != nil {
+			continue
+		}
+		lastReclaim = time.Now()
+	}
 }
 
 type reclaimStats struct {
@@ -118,7 +93,9 @@ func readLimit(memCgroupPath string) (uint64, error) {
 	fn := filepath.Join(string(memCgroupPath), "memory.limit_in_bytes")
 	fc, err := os.ReadFile(fn)
 	if err != nil {
-		// TODO(toru): find out why the file does not exists
+		// We have a race between the dispatch noticing that a workspace is stopped
+		// and the container going away. Hence we might be running for workspace
+		// container which no longer exist, i.e. their cgroup files no longer exist.
 		if errors.Is(err, fs.ErrNotExist) {
 			return 0, nil
 		}

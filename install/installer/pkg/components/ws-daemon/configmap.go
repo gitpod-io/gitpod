@@ -43,13 +43,22 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		CGroupBasePath: "/mnt/node-cgroups",
 		ControlPeriod:  util.Duration(15 * time.Second),
 	}
+	var ioLimitConfig daemon.IOLimitConfig
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg.Workspace != nil {
-			cpuLimitConfig.Enabled = ucfg.Workspace.CPULimits.Enabled
-			cpuLimitConfig.BurstLimit = ucfg.Workspace.CPULimits.BurstLimit
-			cpuLimitConfig.Limit = ucfg.Workspace.CPULimits.Limit
-			cpuLimitConfig.TotalBandwidth = ucfg.Workspace.CPULimits.NodeCPUBandwidth
+		if ucfg.Workspace == nil {
+			return nil
 		}
+
+		cpuLimitConfig.Enabled = ucfg.Workspace.CPULimits.Enabled
+		cpuLimitConfig.BurstLimit = ucfg.Workspace.CPULimits.BurstLimit
+		cpuLimitConfig.Limit = ucfg.Workspace.CPULimits.Limit
+		cpuLimitConfig.TotalBandwidth = ucfg.Workspace.CPULimits.NodeCPUBandwidth
+
+		ioLimitConfig.WriteBWPerSecond = ucfg.Workspace.IOLimits.WriteBWPerSecond
+		ioLimitConfig.ReadBWPerSecond = ucfg.Workspace.IOLimits.ReadBWPerSecond
+		ioLimitConfig.WriteIOPS = ucfg.Workspace.IOLimits.WriteIOPS
+		ioLimitConfig.ReadIOPS = ucfg.Workspace.IOLimits.ReadIOPS
+
 		return nil
 	})
 
@@ -97,7 +106,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Size:  70000,
 				}},
 			},
-			Resources: cpuLimitConfig,
+			CPULimit: cpuLimitConfig,
+			IOLimit:  ioLimitConfig,
 			Hosts: hosts.Config{
 				Enabled:       true,
 				NodeHostsFile: "/mnt/hosts",
