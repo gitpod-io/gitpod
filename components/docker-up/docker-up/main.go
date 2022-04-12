@@ -68,7 +68,7 @@ func main() {
 	pflag.BoolVarP(&opts.Verbose, "verbose", "v", false, "enables verbose logging")
 	pflag.BoolVar(&opts.RuncFacade, "runc-facade", true, "enables the runc-facade to handle rootless idiosyncrasies")
 	pflag.StringVar(&opts.BinDir, "bin-dir", filepath.Dir(self), "directory where runc-facade is found")
-	pflag.BoolVar(&opts.AutoInstall, "auto-install", true, "auto-install prerequisites (docker, slirp4netns)")
+	pflag.BoolVar(&opts.AutoInstall, "auto-install", true, "auto-install prerequisites (docker)")
 	pflag.BoolVar(&opts.UserAccessibleSocket, "user-accessible-socket", true, "chmod the Docker socket to make it user accessible")
 	pflag.BoolVar(&opts.DontWrapNetNS, "dont-wrap-netns", os.Getenv("WORKSPACEKIT_WRAP_NETNS") == "true", "wrap the Docker daemon in a network namespace")
 	pflag.Parse()
