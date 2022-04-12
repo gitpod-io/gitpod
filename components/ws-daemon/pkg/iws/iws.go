@@ -344,6 +344,14 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 		return nil, status.Errorf(codes.Internal, "cannot setup a peer veths")
 	}
 
+	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "enable-ip-forward")
+	}, enterMountNS(true))
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot enable IP forwarding")
+		return nil, status.Errorf(codes.Internal, "cannot enable IP forwarding")
+	}
+
 	return &api.SetupPairVethsResponse{}, nil
 }
 
