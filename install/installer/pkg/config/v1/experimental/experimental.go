@@ -29,6 +29,12 @@ type WorkspaceConfig struct {
 		Limit            resource.Quantity `json:"limit"`
 		BurstLimit       resource.Quantity `json:"burstLimit"`
 	}
+	IOLimits struct {
+		WriteBWPerSecond resource.Quantity `json:"writeBandwidthPerSecond"`
+		ReadBWPerSecond  resource.Quantity `json:"readBandwidthPerSecond"`
+		WriteIOPS        int64             `json:"writeIOPS"`
+		ReadIOPS         int64             `json:"readIOPS"`
+	} `json:"ioLimits"`
 
 	RegistryFacade struct {
 		IPFSCache struct {

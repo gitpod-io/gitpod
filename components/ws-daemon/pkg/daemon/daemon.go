@@ -16,8 +16,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cgroup"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
@@ -51,20 +51,29 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, err
 	}
 
-	listener := []dispatch.Listener{
-		cpulimit.NewDispatchListener(&config.Resources, reg),
-		markUnmountFallback,
-	}
-
-	unified, err := cgroups.IsUnifiedCgroupSetup()
+	cgroupPlugins, err := cgroup.NewPluginHost(config.CPULimit.CGroupBasePath,
+		&cgroup.CacheReclaim{},
+		&cgroup.FuseDeviceEnablerV1{},
+		&cgroup.FuseDeviceEnablerV2{},
+		&cgroup.IOLimiterV2{
+			WriteBytesPerSecond: config.IOLimit.WriteBWPerSecond.Value(),
+			ReadBytesPerSecond:  config.IOLimit.ReadBWPerSecond.Value(),
+			WriteIOPs:           config.IOLimit.WriteIOPS,
+			ReadIOPs:            config.IOLimit.ReadIOPS,
+		},
+	)
 	if err != nil {
-		return nil, xerrors.Errorf("could not determine cgroup setup: %w", err)
+		return nil, err
+	}
+	err = reg.Register(cgroupPlugins)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot register cgroup plugin metrics: %w", err)
 	}
 
-	listener = append(listener, NewCGroupCustomizer(config.Resources.CGroupBasePath, unified))
-
-	if !unified {
-		listener = append(listener, CacheReclaim(config.Resources.CGroupBasePath))
+	listener := []dispatch.Listener{
+		cpulimit.NewDispatchListener(&config.CPULimit, reg),
+		markUnmountFallback,
+		cgroupPlugins,
 	}
 
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
@@ -79,7 +88,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		containerRuntime,
 		dsptch.WorkspaceExistsOnNode,
 		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
-		config.Resources.CGroupBasePath,
+		config.CPULimit.CGroupBasePath,
 		reg,
 	)
 	if err != nil {
