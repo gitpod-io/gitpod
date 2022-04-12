@@ -1,14 +1,23 @@
 <p align="center">
   <a href="https://www.gitpod.io">
-    <img src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/src/icons/gitpod.svg" height="60">
-    <h3 align="center">Gitpod</h3>
+    <img src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/src/icons/gitpod.svg" alt="Gitpod Logo" height="60" />
+    <br />
+    <strong>Gitpod</strong>
   </a>
-  <p align="center">Always ready-to-code.</p>
+  <br />
+  <span>Always ready-to-code.</span>
 </p>
-
-[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/from-referrer/)
-[![Werft.dev - Gitpod CI](https://img.shields.io/badge/Werft.dev-CI--builds-green)](https://werft.gitpod-dev.com/)
-[![Discord](https://img.shields.io/discord/816244985187008514)](https://www.gitpod.io/chat)
+<p align="center">
+  <a href="https://gitpod.io/from-referrer/">
+    <img src="https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod" alt="Gitpod ready-to-code" />
+  </a>
+  <a href="https://werft.gitpod-dev.com/">
+    <img src="https://img.shields.io/badge/Werft.dev-CI--builds-green" alt="Werft.dev - Gitpod CI" />
+  </a>
+  <a href="https://www.gitpod.io/chat">
+    <img src="https://img.shields.io/discord/816244985187008514" alt="Discord" />
+  </a>
+</p>
 
 Gitpod is an open-source Kubernetes application for ready-to-code developer environments that spins up fresh, automated dev environments
 for each task, in the cloud, in seconds. It enables you to describe your dev environment as code and start instant, remote and cloud-based developer environments directly from your browser or your Desktop IDE.
