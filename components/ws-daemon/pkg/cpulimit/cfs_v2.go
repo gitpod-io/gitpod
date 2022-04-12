@@ -6,6 +6,7 @@ package cpulimit
 
 import (
 	"bufio"
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/xerrors"
 )
 
@@ -22,6 +24,12 @@ func (basePath CgroupV2CFSController) Usage() (CPUTime, error) {
 	usage, err := basePath.getFlatKeyedValue("usage_usec")
 	if err != nil {
 		return 0, err
+	}
+
+	// 🤮 Total utter uggly hack that must never see the light of day
+	err = basePath.writeIOMax()
+	if err != nil {
+		log.WithError(err).Warn("cannot write io.max")
 	}
 
 	return CPUTime(time.Duration(usage) * time.Microsecond), nil
@@ -89,6 +97,37 @@ func (basePath CgroupV2CFSController) readCpuMax() (time.Duration, time.Duration
 func (basePath CgroupV2CFSController) writeQuota(quota time.Duration) error {
 	cpuMaxPath := filepath.Join(string(basePath), "cpu.max")
 	return os.WriteFile(cpuMaxPath, []byte(strconv.FormatInt(quota.Microseconds(), 10)), 0644)
+}
+
+func (basePath CgroupV2CFSController) writeIOMax() error {
+	const (
+		wbps  = 100 * 1024 * 1024
+		rbps  = 100 * 1024 * 1024
+		riops = 100
+		wiops = 150
+	)
+
+	iostat, err := os.ReadFile(filepath.Join(string(basePath), "io.stat"))
+	if err != nil {
+		return err
+	}
+	var devs []string
+	for _, line := range strings.Split(string(iostat), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 1 {
+			continue
+		}
+		devs = append(devs, fields[0])
+	}
+
+	cpuMaxPath := filepath.Join(string(basePath), "io.max")
+	for _, dev := range devs {
+		err := os.WriteFile(cpuMaxPath, []byte(fmt.Sprintf("%s wbps=%d rbps=%d wiops=%d riops=%d", dev, wbps, rbps, wiops, riops)), 0644)
+		if err != nil {
+			log.WithField("dev", dev).WithError(err).Warn("cannot write io.max")
+		}
+	}
+	return nil
 }
 
 func (basePath CgroupV2CFSController) readParentQuota() time.Duration {
