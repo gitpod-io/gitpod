@@ -132,6 +132,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Value: "/config/ws-manager-bridge.json",
 								}},
 							),
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: 9500,
+									Name:          "metrics",
+								},
+							},
 							VolumeMounts: []corev1.VolumeMount{{
 								Name:      "config",
 								MountPath: "/config",

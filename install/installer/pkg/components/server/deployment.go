@@ -242,7 +242,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							}, {
 								Name:          PrometheusPortName,
 								ContainerPort: PrometheusPort,
-							}},
+							}, {
+								Name:          "debug",
+								ContainerPort: 6060,
+							}, {
+								Name:          "debugnode",
+								ContainerPort: 9229,
+							},
+							},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
 							Env: env,
 							// todo(sje): conditionally add github-app-cert-secret in
