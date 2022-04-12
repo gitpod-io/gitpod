@@ -92,7 +92,7 @@
 }
 
 (debug_headers) {
-	header X-Gitpod-Region {$GITPOD_INSTALLATION_LONGNAME}
+	header X-Gitpod-Region {$GITPOD_REGION}.{$GITPOD_INSTALLATION_SHORTNAME}
 }
 
 (workspace_transport) {

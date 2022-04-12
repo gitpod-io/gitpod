@@ -178,8 +178,8 @@ env:
   value: "https://{{ $gp.hostname }}"
 - name: GITPOD_REGION
   value: {{ $gp.installation.region | quote }}
-- name: GITPOD_INSTALLATION_LONGNAME
-  value: {{ template "gitpod.installation.longname" . }}
+- name: GITPOD_INSTALLATION_SHORTNAME
+  value: {{ template "gitpod.installation.shortname" . }}
 - name: LOG_LEVEL
   value: {{ template "gitpod.loglevel" . }}
 {{- end -}}
