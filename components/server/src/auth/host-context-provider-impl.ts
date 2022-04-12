@@ -112,10 +112,10 @@ export class HostContextProviderImpl implements HostContextProvider {
         // remove obsolete entries
         const currentHosts = new Set(await this.authProviderService.getAllAuthProviderHosts());
         ctx.span?.setTag("updateDynamicHosts.currentHostProviders", currentHosts.size);
+        // HINT: values of `currentHosts` are expected to be lower case
         const tobeRemoved = [...this.dynamicHosts.keys()].filter((h) => !currentHosts.has(h));
         for (const host of tobeRemoved) {
-            const hostContext = this.dynamicHosts.get(host);
-            log.debug("Disposing dynamic Auth Provider: " + host, { host, hostContext });
+            log.debug("Disposing dynamic Auth Provider: " + host);
 
             this.dynamicHosts.delete(host);
         }

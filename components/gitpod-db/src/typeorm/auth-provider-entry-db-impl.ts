@@ -70,7 +70,8 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         const repo = await this.getAuthProviderRepo();
         const query = repo.createQueryBuilder("auth_provider").select(hostField).where("auth_provider.deleted != true");
         const result = (await query.execute()) as Pick<DBAuthProviderEntry, "host">[];
-        return result.map((r) => r.host);
+        // HINT: host is expected to be lower case
+        return result.map((r) => r.host?.toLowerCase()).filter((h) => !!h);
     }
 
     async findByHost(host: string): Promise<AuthProviderEntry | undefined> {
