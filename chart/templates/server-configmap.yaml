@@ -20,7 +20,6 @@ data:
         "version": "{{ .Values.version }}",
         "hostUrl": "https://{{ .Values.hostname }}",
         "installationShortname": "{{ template "gitpod.installation.shortname" $this }}",
-        "stage": "{{ .Values.installation.stage }}",
 {{- if .Values.devBranch }}
         "devBranch": "{{ .Values.devBranch }}",
 {{- end }}

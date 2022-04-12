@@ -23,7 +23,6 @@ import { MessageBusIntegration } from "./workspace/messagebus-integration";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EnforcementController } from "./user/enforcement-endpoint";
 import { AddressInfo } from "net";
-import { URL } from "url";
 import { ConsensusLeaderQorum } from "./consensus/consensus-leader-quorum";
 import { RabbitMQConsensusLeaderMessenger } from "./consensus/rabbitmq-consensus-leader-messenger";
 import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
@@ -154,14 +153,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             // CORS allows subdomains to access gitpod.io)
             const verifyCSRF = (origin: string) => {
                 let allowedRequest = isAllowedWebsocketDomain(origin, this.config.hostUrl.url.hostname);
-                if (this.config.stage === "prodcopy" || this.config.stage === "staging") {
-                    // On staging and devstaging, we want to allow Theia to be able to connect to the server from this magic port
-                    // This enables debugging Theia from inside Gitpod
-                    const url = new URL(origin);
-                    if (url.hostname.startsWith("13444-")) {
-                        allowedRequest = true;
-                    }
-                }
                 if (!allowedRequest && this.config.insecureNoDomain) {
                     log.warn("Websocket connection CSRF guard disabled");
                     allowedRequest = true;

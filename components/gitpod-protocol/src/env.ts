@@ -6,28 +6,9 @@
 
 import { injectable } from "inversify";
 
-const legacyStagenameTranslation: { [key: string]: KubeStage } = {
-    production: "production",
-    staging: "prodcopy",
-    devstaging: "dev",
-    dev: "dev",
-};
-
-export function translateLegacyStagename(kubeStage: string): KubeStage {
-    const stage = legacyStagenameTranslation[kubeStage];
-    if (!stage) {
-        throw new Error(`Invalid KUBE_STAGE: ${kubeStage}`);
-    }
-
-    return stage;
-}
-
 @injectable()
 export abstract class AbstractComponentEnv {
-    readonly kubeStage: KubeStage = getEnvVarParsed("KUBE_STAGE", translateLegacyStagename);
 }
-
-export type KubeStage = "production" | "prodcopy" | "staging" | "dev";
 
 export function getEnvVar(name: string, defaultValue?: string): string {
     const value = process.env[name] || defaultValue;

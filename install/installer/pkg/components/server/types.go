@@ -16,7 +16,6 @@ type ConfigSerialized struct {
 	Version                           string   `json:"version"`
 	HostURL                           string   `json:"hostUrl"`
 	InstallationShortname             string   `json:"installationShortname"`
-	Stage                             string   `json:"stage"`
 	DevBranch                         string   `json:"devBranch"`
 	InsecureNoDomain                  bool     `json:"insecureNoDomain"`
 	License                           string   `json:"license"`
