@@ -6,8 +6,15 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 )
 
 func main() {
-	fmt.Println("Hello world!")
+	addr := ":9000"
+	err := http.ListenAndServe(addr, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`hello world`))
+	}))
+	if err != nil {
+		fmt.Println("Failed to server on", addr, err)
+	}
 }
