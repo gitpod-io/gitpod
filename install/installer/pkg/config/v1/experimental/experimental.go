@@ -46,6 +46,11 @@ type WorkspaceConfig struct {
 }
 
 type WebAppConfig struct {
+	PublicAPI *PublicAPIConfig `json:"publicApi,omitempty"`
+}
+
+type PublicAPIConfig struct {
+	Enabled bool `json:"enabled"`
 }
 
 type IDEConfig struct {

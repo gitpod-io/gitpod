@@ -33,6 +33,7 @@ type Components struct {
 	OpenVSXProxy          Versioned `json:"openVSXProxy"`
 	PaymentEndpoint       Versioned `json:"paymentEndpoint"`
 	Proxy                 Versioned `json:"proxy"`
+	PublicAPIServer       Versioned `json:"public-api-server"`
 	RegistryFacade        Versioned `json:"registryFacade"`
 	Server                Versioned `json:"server"`
 	ServiceWaiter         Versioned `json:"serviceWaiter"`
