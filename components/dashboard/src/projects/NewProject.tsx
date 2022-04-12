@@ -29,7 +29,7 @@ export default function NewProject() {
     const [reposInAccounts, setReposInAccounts] = useState<ProviderRepository[]>([]);
     const [repoSearchFilter, setRepoSearchFilter] = useState<string>("");
     const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
-    const [showGitProviders, setShowGitProviders] = useState<boolean>(true);
+    const [showGitProviders, setShowGitProviders] = useState<boolean>(false);
     const [selectedRepo, setSelectedRepo] = useState<ProviderRepository | undefined>(undefined);
     const [selectedTeamOrUser, setSelectedTeamOrUser] = useState<Team | User | undefined>(undefined);
 
@@ -42,8 +42,7 @@ export default function NewProject() {
 
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
     const [isGitHubAppEnabled, setIsGitHubAppEnabled] = useState<boolean>();
-
-    console.log("isGitHubAppEnabled", isGitHubAppEnabled);
+    const [isGitHubWebhooksUnauthorized, setIsGitHubWebhooksUnauthorized] = useState<boolean>();
 
     useEffect(() => {
         const { server } = getGitpodService();
@@ -67,7 +66,25 @@ export default function NewProject() {
                 }
             }
         }
-    }, [user, authProviders]);
+    }, [user, authProviders, selectedProviderHost]);
+
+    useEffect(() => {
+        setIsGitHubWebhooksUnauthorized(false);
+        if (!authProviders || !selectedProviderHost || isGitHubAppEnabled) {
+            return;
+        }
+        const ap = authProviders.find((ap) => ap.host === selectedProviderHost);
+        if (!ap || ap.authProviderType !== "GitHub") {
+            return;
+        }
+        getGitpodService()
+            .server.getToken({ host: ap.host })
+            .then((token) => {
+                if (!token || !token.scopes.includes("repo")) {
+                    setIsGitHubWebhooksUnauthorized(true);
+                }
+            });
+    }, [authProviders, isGitHubAppEnabled, selectedProviderHost]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -215,6 +232,25 @@ export default function NewProject() {
         });
     };
 
+    const authorize = () => {
+        const ap = authProviders.find((ap) => ap.host === selectedProviderHost);
+        if (!ap) {
+            return;
+        }
+        openAuthorizeWindow({
+            host: ap.host,
+            scopes: ap.authProviderType === "GitHub" ? ["repo"] : ap.requirements?.default,
+            onSuccess: async () => {
+                if (ap.authProviderType === "GitHub") {
+                    setIsGitHubWebhooksUnauthorized(false);
+                }
+            },
+            onError: (payload) => {
+                console.error("Authorization failed", selectedProviderHost, payload);
+            },
+        });
+    };
+
     const createProject = async (teamOrUser: Team | User, repo: ProviderRepository) => {
         if (!selectedProviderHost) {
             return;
@@ -298,10 +334,15 @@ export default function NewProject() {
     };
 
     const renderSelectRepository = () => {
-        const noReposAvailable = reposInAccounts.length === 0;
-        const filteredRepos = Array.from(reposInAccounts).filter(
-            (r) => r.account === selectedAccount && `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase()),
-        );
+        // Don't list GitHub projects if we cannot install webhooks on them (project creation would eventually fail)
+        const noReposAvailable = reposInAccounts.length === 0 || isGitHubWebhooksUnauthorized;
+        const filteredRepos = isGitHubWebhooksUnauthorized
+            ? []
+            : Array.from(reposInAccounts).filter(
+                  (r) =>
+                      r.account === selectedAccount &&
+                      `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase()),
+              );
         const icon = selectedAccount && accounts.get(selectedAccount)?.avatarUrl;
 
         const showSearchInput = !!repoSearchFilter || filteredRepos.length > 0;
@@ -430,13 +471,19 @@ export default function NewProject() {
                             <div>
                                 <div className="px-12 py-20 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl">
                                     <span className="dark:text-gray-400">
-                                        Additional authorization is required for our GitHub App to watch your
+                                        Additional authorization is required for Gitpod to watch your GitHub
                                         repositories and trigger prebuilds.
                                     </span>
                                     <br />
-                                    <button className="mt-6" onClick={() => reconfigure()}>
-                                        Configure Gitpod App
-                                    </button>
+                                    {isGitHubWebhooksUnauthorized ? (
+                                        <button className="mt-6" onClick={() => authorize()}>
+                                            Authorize GitHub
+                                        </button>
+                                    ) : (
+                                        <button className="mt-6" onClick={() => reconfigure()}>
+                                            Configure Gitpod App
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}
