@@ -26,8 +26,12 @@ export class GitHubService extends RepositoryService {
     @inject(GithubContextParser) protected githubContextParser: GithubContextParser;
 
     async getRepositoriesForAutomatedPrebuilds(user: User): Promise<ProviderRepository[]> {
-        const repositories = (await this.githubApi.run(user, (gh) => gh.repos.listForAuthenticatedUser({}))).data;
-        const adminRepositories = repositories.filter((r) => !!r.permissions?.admin);
+        const octokit = await this.githubApi.create(user);
+        const adminRepositories = await octokit.paginate(
+            octokit.repos.listForAuthenticatedUser,
+            { per_page: 100 },
+            (response) => response.data.filter((r) => !!r.permissions?.admin),
+        );
         return adminRepositories.map((r) => {
             return <ProviderRepository>{
                 name: r.name,
