@@ -48,6 +48,21 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	githubApp := GitHubApp{}
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.GithubApp != nil {
+			githubApp.AppId = cfg.WebApp.GithubApp.AppId
+			githubApp.AuthProviderId = cfg.WebApp.GithubApp.AuthProviderId
+			githubApp.BaseUrl = cfg.WebApp.GithubApp.BaseUrl
+			githubApp.CertPath = cfg.WebApp.GithubApp.CertPath
+			githubApp.Enabled = cfg.WebApp.GithubApp.Enabled
+			githubApp.LogLevel = cfg.WebApp.GithubApp.LogLevel
+			githubApp.MarketplaceName = cfg.WebApp.GithubApp.MarketplaceName
+			githubApp.WebhookSecret = cfg.WebApp.GithubApp.WebhookSecret
+		}
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -71,6 +86,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Secret:   sessionSecret,
 		},
 		DefinitelyGpDisabled: ctx.Config.DisableDefinitelyGP,
+		GitHubApp:            githubApp,
 		WorkspaceGarbageCollection: WorkspaceGarbageCollection{
 			ChunkLimit:                 1000,
 			ContentChunkLimit:          1000,

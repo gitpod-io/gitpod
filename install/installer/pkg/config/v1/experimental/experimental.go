@@ -62,6 +62,17 @@ type WebAppConfig struct {
 	Session struct {
 		Secret string `json:"secret"`
 	} `json:"session"`
+	GithubApp *struct {
+		AppId           int32  `json:"appId"`
+		AuthProviderId  string `json:"authProviderId"`
+		BaseUrl         string `json:"baseUrl"`
+		CertPath        string `json:"certPath"`
+		Enabled         bool   `json:"enabled"`
+		LogLevel        string `json:"logLevel"`
+		MarketplaceName string `json:"marketplaceName"`
+		WebhookSecret   string `json:"webhookSecret"`
+		CertSecretName  string `json:"certSecretName"`
+	} `json:"githubApp"`
 }
 
 type PublicAPIConfig struct {
