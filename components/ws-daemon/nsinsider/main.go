@@ -284,11 +284,16 @@ func main() {
 					}
 					targetPid := c.Int("target-pid")
 
+					eth0, err := netlink.LinkByName(containerIf)
+					if err != nil {
+						return xerrors.Errorf("cannot get container network device %s: %w", containerIf, err)
+					}
+
 					veth := &netlink.Veth{
 						LinkAttrs: netlink.LinkAttrs{
 							Name:  vethIf,
 							Flags: net.FlagUp,
-							MTU:   1500,
+							MTU:   eth0.Attrs().MTU,
 						},
 						PeerName:      cethIf,
 						PeerNamespace: netlink.NsPid(targetPid),
