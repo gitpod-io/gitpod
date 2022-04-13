@@ -40,6 +40,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	sessionSecret := "Important!Really-Change-This-Key!"
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Session.Secret != "" {
+			sessionSecret = cfg.WebApp.Session.Secret
+		}
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -60,7 +68,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		Session: Session{
 			MaxAgeMs: 259200000,
-			Secret:   "Important!Really-Change-This-Key!", // todo(sje): how best to do this?
+			Secret:   sessionSecret,
 		},
 		DefinitelyGpDisabled: ctx.Config.DisableDefinitelyGP,
 		WorkspaceGarbageCollection: WorkspaceGarbageCollection{

@@ -59,6 +59,9 @@ type WebAppConfig struct {
 	OAuthServer struct {
 		JWTSecret string `json:"jwtSecret"`
 	} `json:"oauthServer"`
+	Session struct {
+		Secret string `json:"secret"`
+	} `json:"session"`
 }
 
 type PublicAPIConfig struct {
