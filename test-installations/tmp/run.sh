@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TAG=clu-gcp-vm-k3s.67
+TAG=clu-gcp-vm-k3s.80
 PLAYBOOK=$1
 
 shift

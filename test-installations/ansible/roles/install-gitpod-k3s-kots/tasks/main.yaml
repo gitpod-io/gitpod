@@ -1,0 +1,59 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Install yq
+  get_url:
+    # version v4.20.1 seems not to work for some reason (hangs for some tasks)
+    # url: https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+    url: https://github.com/mikefarah/yq/releases/download/v4.19.1/yq_linux_amd64
+    dest: /usr/local/bin/yq
+    mode: 0755
+  become: true
+
+- name: Get manifest files
+  find:
+    path: /gitpod/manifests
+    patterns: '*.yaml'
+    file_type: file
+  register: manifest_files
+
+- name: Remove uid and resource version from manifests files
+  shell: |
+    yq eval --inplace "del(.metadata.uid)" "{{ item.path }}"
+    yq eval --inplace "del(.metadata.resourceVersion)" "{{ item.path }}"
+  with_items: "{{ manifest_files.files }}"
+
+- name: Copy manifests
+  copy:
+    src: /gitpod/manifests/
+    remote_src: true
+    dest: /var/lib/rancher/k3s/server/manifests/
+  become: true
+
+- name: Download KOTS CLI install script
+  get_url:
+    url: https://kots.io/install
+    dest: /tmp/kots-install.sh
+    mode: 0755
+
+- name: Install KOTS CLI
+  shell: /tmp/kots-install.sh
+  args:
+    executable: /bin/bash
+  become: true
+
+- name: Download License
+  get_url:
+    url: https://raw.githubusercontent.com/gitpod-io/gitpod/main/install/licenses/Community%20(Unstable).yaml
+    dest: /gitpod/replicated-license.yaml
+
+- name: Run KOTS install
+  shell: start-stop-daemon --background --quiet --pidfile /var/run/kots-install --exec /usr/local/bin/kubectl --start -- kots install gitpod --license-file /gitpod/replicated-license.yaml --shared-password gitpod --namespace default
+  args:
+    executable: /bin/bash
+  become: true
+
+
+# gcloud compute ssh --quiet gitpod--node-0 -- -NL 8800:localhost:8800
