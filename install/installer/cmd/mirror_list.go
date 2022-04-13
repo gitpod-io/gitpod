@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/spf13/cobra"
+	"k8s.io/utils/pointer"
 )
 
 type mirrorListRepo struct {
@@ -85,6 +86,117 @@ func init() {
 	mirrorListCmd.Flags().StringVarP(&mirrorListOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
 }
 
+func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]string, error) {
+	fns := []func() ([]string, error){
+		func() ([]string, error) {
+			// Render for in-cluster dependencies
+			return renderKubernetesObjects(cfgVersion, cfg)
+		},
+		func() ([]string, error) {
+			// Render for external depedencies - AWS
+			cfg.Database = configv1.Database{
+				InCluster: pointer.Bool(false),
+				External: &configv1.DatabaseExternal{
+					Certificate: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+			cfg.ContainerRegistry = configv1.ContainerRegistry{
+				InCluster: pointer.Bool(false),
+				External: &configv1.ContainerRegistryExternal{
+					URL: "some-url",
+					Certificate: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+				S3Storage: &configv1.S3Storage{
+					Bucket: "some-bucket",
+					Certificate: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+			cfg.ObjectStorage = configv1.ObjectStorage{
+				InCluster: pointer.Bool(false),
+				S3: &configv1.ObjectStorageS3{
+					Endpoint: "endpoint",
+					Credentials: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+			return renderKubernetesObjects(cfgVersion, cfg)
+		},
+		func() ([]string, error) {
+			// Render for external depedencies - Azure
+			cfg.Database.CloudSQL = nil
+			cfg.ContainerRegistry = configv1.ContainerRegistry{
+				InCluster: pointer.Bool(false),
+				External: &configv1.ContainerRegistryExternal{
+					URL: "some-url",
+					Certificate: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+			cfg.ObjectStorage = configv1.ObjectStorage{
+				InCluster: pointer.Bool(false),
+				Azure: &configv1.ObjectStorageAzure{
+					Credentials: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+
+			return renderKubernetesObjects(cfgVersion, cfg)
+		},
+		func() ([]string, error) {
+			// Render for external depedencies - GCP
+			cfg.Database = configv1.Database{
+				InCluster: pointer.Bool(false),
+				CloudSQL: &configv1.DatabaseCloudSQL{
+					Instance: "value",
+					ServiceAccount: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+			cfg.ObjectStorage = configv1.ObjectStorage{
+				InCluster: pointer.Bool(false),
+				CloudStorage: &configv1.ObjectStorageCloudStorage{
+					Project: "project",
+					ServiceAccount: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+
+			return renderKubernetesObjects(cfgVersion, cfg)
+		},
+	}
+
+	var k8s []string
+	for _, fn := range fns {
+		data, err := fn()
+		if err != nil {
+			return nil, err
+		}
+
+		k8s = append(k8s, data...)
+	}
+
+	return k8s, nil
+}
+
 func generateMirrorList(cfgVersion string, cfg *configv1.Config) ([]mirrorListRepo, error) {
 	// Throw error if set to the default Gitpod repository
 	if cfg.Repository == common.GitpodContainerRegistry {
@@ -97,7 +209,7 @@ func generateMirrorList(cfgVersion string, cfg *configv1.Config) ([]mirrorListRe
 	// Use the default Gitpod registry to pull from
 	cfg.Repository = common.GitpodContainerRegistry
 
-	k8s, err := renderKubernetesObjects(cfgVersion, cfg)
+	k8s, err := renderAllKubernetesObject(cfgVersion, cfg)
 	if err != nil {
 		return nil, err
 	}
