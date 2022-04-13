@@ -101,7 +101,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						),
 					}, {
 						Name:  "redis",
-						Image: "redis:6.2",
+						Image: common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/redis", "6.2"),
 						Command: []string{
 							"redis-server",
 							"/config/redis.conf",
