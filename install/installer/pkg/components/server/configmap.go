@@ -21,8 +21,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.OAuthServer.JWTSecret != "" {
-			jwtSecret = cfg.WebApp.OAuthServer.JWTSecret
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.OAuthServer.JWTSecret != "" {
+			jwtSecret = cfg.WebApp.Server.OAuthServer.JWTSecret
 		}
 		return nil
 	})
@@ -34,31 +34,31 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	workspaceImage := common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion)
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.WorkspaceDefaults.WorkspaceImage != "" {
-			workspaceImage = cfg.WebApp.WorkspaceDefaults.WorkspaceImage
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.WorkspaceDefaults.WorkspaceImage != "" {
+			workspaceImage = cfg.WebApp.Server.WorkspaceDefaults.WorkspaceImage
 		}
 		return nil
 	})
 
 	sessionSecret := "Important!Really-Change-This-Key!"
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Session.Secret != "" {
-			sessionSecret = cfg.WebApp.Session.Secret
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.Session.Secret != "" {
+			sessionSecret = cfg.WebApp.Server.Session.Secret
 		}
 		return nil
 	})
 
 	githubApp := GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.GithubApp != nil {
-			githubApp.AppId = cfg.WebApp.GithubApp.AppId
-			githubApp.AuthProviderId = cfg.WebApp.GithubApp.AuthProviderId
-			githubApp.BaseUrl = cfg.WebApp.GithubApp.BaseUrl
-			githubApp.CertPath = cfg.WebApp.GithubApp.CertPath
-			githubApp.Enabled = cfg.WebApp.GithubApp.Enabled
-			githubApp.LogLevel = cfg.WebApp.GithubApp.LogLevel
-			githubApp.MarketplaceName = cfg.WebApp.GithubApp.MarketplaceName
-			githubApp.WebhookSecret = cfg.WebApp.GithubApp.WebhookSecret
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
+			githubApp.AppId = cfg.WebApp.Server.GithubApp.AppId
+			githubApp.AuthProviderId = cfg.WebApp.Server.GithubApp.AuthProviderId
+			githubApp.BaseUrl = cfg.WebApp.Server.GithubApp.BaseUrl
+			githubApp.CertPath = cfg.WebApp.Server.GithubApp.CertPath
+			githubApp.Enabled = cfg.WebApp.Server.GithubApp.Enabled
+			githubApp.LogLevel = cfg.WebApp.Server.GithubApp.LogLevel
+			githubApp.MarketplaceName = cfg.WebApp.Server.GithubApp.MarketplaceName
+			githubApp.WebhookSecret = cfg.WebApp.Server.GithubApp.WebhookSecret
 		}
 		return nil
 	})
