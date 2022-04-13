@@ -169,13 +169,7 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 		env = append(env, fmt.Sprintf("GIT_AUTH_PASSWORD=%s", pwd))
 	}
 
-	homeDir, err := os.MkdirTemp("", "git")
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create temporal directory")
-	}
-	defer os.RemoveAll(homeDir)
-
-	env = append(env, fmt.Sprintf("HOME=%v", homeDir))
+	env = append(env, "HOME=/home/gitpod")
 
 	fullArgs = append(fullArgs, subcommand)
 	fullArgs = append(fullArgs, args...)
