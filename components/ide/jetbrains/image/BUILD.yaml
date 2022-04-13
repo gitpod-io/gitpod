@@ -52,8 +52,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.intellijLatest
       buildArgs:
-        # "https://data.services.jetbrains.com/products?code=IIU&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000"
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/idea/ideaIU-221.5080.169.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=IIU"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
@@ -99,8 +98,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.golandLatest
       buildArgs:
-        # "https://data.services.jetbrains.com/products?code=GO&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000"
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/go/goland-221.5080.169.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=GO"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
@@ -146,8 +144,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.pycharmLatest
       buildArgs:
-        # "https://data.services.jetbrains.com/products?code=PCP&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000"
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/python/pycharm-professional-221.5080.186.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=PCP"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_pycharm.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
@@ -193,8 +190,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.phpstormLatest
       buildArgs:
-        # "https://data.services.jetbrains.com/products?code=PS&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000"
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/webide/PhpStorm-221.5080.177.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=PS"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
