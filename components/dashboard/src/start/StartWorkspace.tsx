@@ -28,6 +28,7 @@ import { watchHeadlessLogs } from "../components/PrebuildLogs";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
+import Alert from "../components/Alert";
 const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
@@ -391,6 +392,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         let title = undefined;
         let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
         const contextURL = ContextURL.getNormalizedURL(this.state.workspace)?.toString();
+        const useLatest = !!this.state.workspaceInstance?.configuration?.ideConfig?.useLatest;
 
         switch (this.state?.workspaceInstance?.status.phase) {
             // unknown indicates an issue within the system in that it cannot determine the actual phase of
@@ -524,6 +526,19 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                     {openLinkLabel}
                                 </button>
                             </div>
+                            {!useLatest && (
+                                <Alert type="info" className="mt-4 w-96">
+                                    You can change the default editor for opening workspaces in{" "}
+                                    <a
+                                        className="gp-link"
+                                        target="_blank"
+                                        href={gitpodHostUrl.asPreferences().toString()}
+                                    >
+                                        user preferences
+                                    </a>
+                                    .
+                                </Alert>
+                            )}
                             {this.state.isSSHModalVisible === true && this.state.ownerToken && (
                                 <ConnectToSSHModal
                                     workspaceId={this.props.workspaceId}
@@ -626,7 +641,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 );
                 break;
         }
-        const useLatest = !!this.state.workspaceInstance?.configuration?.ideConfig?.useLatest;
         return (
             <StartPage phase={phase} error={error} title={title} showLatestIdeWarning={useLatest}>
                 {statusMessage}
