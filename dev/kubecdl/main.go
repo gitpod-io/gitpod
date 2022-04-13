@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	project    = pflag.StringP("project", "p", "", "name of the Google project - defaults to what's configured in gcloud")
+	project    = pflag.StringP("project", "p", "workspace-clusters", "name of the Google project - defaults to what's configured in gcloud")
 	kubeconfig = pflag.StringP("kubeconfig", "k", os.Getenv("KUBECONFIG"), "kubeconfig filepath")
 )
 
