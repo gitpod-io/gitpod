@@ -20,6 +20,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if err != nil {
 		return nil, err
 	}
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.OAuthServer.JWTSecret != "" {
+			jwtSecret = cfg.WebApp.OAuthServer.JWTSecret
+		}
+		return nil
+	})
 
 	license := ""
 	if ctx.Config.License != nil {
