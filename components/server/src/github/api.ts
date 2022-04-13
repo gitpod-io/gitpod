@@ -140,7 +140,7 @@ export interface QueryLocation {
 export class GitHubRestApi {
     @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(GitHubTokenHelper) protected readonly tokenHelper: GitHubTokenHelper;
-    protected async create(userOrToken: User | string) {
+    public async create(userOrToken: User | string) {
         let token: string | undefined;
         if (typeof userOrToken === "string") {
             token = userOrToken;
