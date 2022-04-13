@@ -273,6 +273,13 @@ func (s *Workspace) UpdateGitStatus(ctx context.Context) (res *csapi.GitStatus, 
 	}
 
 	c := git.Client{Location: loc}
+
+	err = c.Git(ctx, "config", "--global", "--add", "safe.directory", loc)
+	if err != nil {
+		log.WithError(err).WithFields(s.OWI()).Warn("cannot persist latest Git status")
+		err = nil
+	}
+
 	stat, err := c.Status(ctx)
 	if err != nil {
 		return nil, err
