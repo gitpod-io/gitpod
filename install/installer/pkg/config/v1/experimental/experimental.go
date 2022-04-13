@@ -56,6 +56,9 @@ type WebAppConfig struct {
 	WorkspaceDefaults struct {
 		WorkspaceImage string `json:"workspaceImage"`
 	} `json:"workspaceDefaults"`
+	OAuthServer struct {
+		JWTSecret string `json:"jwtSecret"`
+	} `json:"oauthServer"`
 }
 
 type PublicAPIConfig struct {
