@@ -20,7 +20,6 @@ import (
 
 func TestListLogs(t *testing.T) {
 	cfg := config.StorageConfig{
-		Stage: config.StageProduction,
 		Kind:  config.GCloudStorage, // dummy, mocked away
 		BackupTrail: struct {
 			Enabled   bool "json:\"enabled\""

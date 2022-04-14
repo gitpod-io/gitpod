@@ -63,13 +63,12 @@ func ValidateGCPConfig(c *config.GCPConfig) error {
 }
 
 // newDirectGCPAccess provides direct access to the remote storage system
-func newDirectGCPAccess(cfg config.GCPConfig, stage config.Stage) (*DirectGCPStorage, error) {
+func newDirectGCPAccess(cfg config.GCPConfig) (*DirectGCPStorage, error) {
 	if err := ValidateGCPConfig(&cfg); err != nil {
 		return nil, err
 	}
 
 	return &DirectGCPStorage{
-		Stage:     stage,
 		GCPConfig: cfg,
 	}, nil
 }
@@ -80,7 +79,6 @@ type DirectGCPStorage struct {
 	WorkspaceName string
 	InstanceID    string
 	GCPConfig     config.GCPConfig
-	Stage         config.Stage
 
 	client *gcpstorage.Client
 
@@ -98,7 +96,6 @@ func (rs *DirectGCPStorage) Validate() error {
 	return validation.ValidateStruct(rs,
 		validation.Field(&rs.Username, validation.Required),
 		validation.Field(&rs.WorkspaceName, validation.Required),
-		validation.Field(&rs.Stage, validation.Required),
 	)
 }
 
@@ -664,12 +661,12 @@ func randomString(len int) string {
 }
 
 func (rs *DirectGCPStorage) bucketName() string {
-	return gcpBucketName(rs.Stage, rs.Username)
+	return gcpBucketName(rs.GCPConfig.BucketPrefix, rs.Username)
 }
 
 // Bucket provides the bucket name for a particular user
 func (rs *DirectGCPStorage) Bucket(ownerID string) string {
-	return gcpBucketName(rs.Stage, ownerID)
+	return gcpBucketName(rs.GCPConfig.BucketPrefix, ownerID)
 }
 
 // BackupObject returns a backup's object name that a direct downloader would download
@@ -677,8 +674,8 @@ func (rs *DirectGCPStorage) BackupObject(name string) string {
 	return rs.objectName(name)
 }
 
-func gcpBucketName(stage config.Stage, ownerID string) string {
-	return fmt.Sprintf("gitpod-%s-user-%s", stage, ownerID)
+func gcpBucketName(prefix string, ownerID string) string {
+	return fmt.Sprintf("%s-user-%s", prefix, ownerID)
 }
 
 func gcpWorkspaceBackupObjectName(workspaceID string, name string) string {
@@ -714,7 +711,7 @@ func newGCPClient(ctx context.Context, cfg config.GCPConfig) (*gcpstorage.Client
 	return client, nil
 }
 
-func newPresignedGCPAccess(config config.GCPConfig, stage config.Stage) (*PresignedGCPStorage, error) {
+func newPresignedGCPAccess(config config.GCPConfig) (*PresignedGCPStorage, error) {
 	err := ValidateGCPConfig(&config)
 	if err != nil {
 		return nil, xerrors.Errorf("invalid config: %w", err)
@@ -750,7 +747,6 @@ func newPresignedGCPAccess(config config.GCPConfig, stage config.Stage) (*Presig
 
 	return &PresignedGCPStorage{
 		config:     config,
-		stage:      stage,
 		privateKey: privateKey.PrivateKey,
 		accessID:   privateKey.Email,
 	}, nil
@@ -759,14 +755,13 @@ func newPresignedGCPAccess(config config.GCPConfig, stage config.Stage) (*Presig
 // PresignedGCPStorage provides presigned URLs to access GCP storage objects
 type PresignedGCPStorage struct {
 	config     config.GCPConfig
-	stage      config.Stage
 	privateKey []byte
 	accessID   string
 }
 
 // Bucket provides the bucket name for a particular user
 func (p *PresignedGCPStorage) Bucket(owner string) string {
-	return gcpBucketName(p.stage, owner)
+	return gcpBucketName(p.config.BucketPrefix, owner)
 }
 
 // BlobObject returns a blob's object name

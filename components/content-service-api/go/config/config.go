@@ -17,9 +17,6 @@ import (
 
 // StorageConfig configures the remote storage we use
 type StorageConfig struct {
-	// Stage represents the deployment environment in which we're operating
-	Stage Stage `json:"stage"`
-
 	// Kind determines the type of storage we ought to use
 	Kind RemoteStorageType `json:"kind"`
 
@@ -99,6 +96,8 @@ type GCPConfig struct {
 	ParallelUpload  int    `json:"parallelUpload"`
 
 	MaximumBackupCount int `json:"maximumBackupCount"`
+	// BucketPrefix is an optional prefix that's prepended to all bucket names
+	BucketPrefix string `json:"bucketPrefix,omitempty"`
 }
 
 // MinIOConfig MinIOconfigures the MinIO remote storage backend

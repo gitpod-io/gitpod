@@ -153,6 +153,8 @@ type ObjectStorageS3 struct {
 type ObjectStorageCloudStorage struct {
 	ServiceAccount ObjectRef `json:"serviceAccount" validate:"required"`
 	Project        string    `json:"project" validate:"required"`
+	// BucketPrefix is an optional prefix that's prepended to all bucket names
+	BucketPrefix   string    `json:"bucketPrefix,omitempty"`
 }
 
 type ObjectStorageAzure struct {

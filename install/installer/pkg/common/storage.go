@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"k8s.io/utils/pointer"
 
 	corev1 "k8s.io/api/core/v1"
@@ -39,12 +38,18 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 			maximumBackupCount = *context.Config.ObjectStorage.MaximumBackupCount
 		}
 
+		// TODO(gpl) Do we really have to do this? Only targets would be SH installations using GCloud out there. How many of those do we have? Also not sure if this is the right place, or it should go into "config.Defaults()"
+		bucketPrefix := context.Config.ObjectStorage.CloudStorage.BucketPrefix
+		if bucketPrefix == "" {
+			bucketPrefix = "gitpod-dev"
+		}
 		res = &storageconfig.StorageConfig{
 			Kind: storageconfig.GCloudStorage,
 			GCloudConfig: storageconfig.GCPConfig{
 				Region:             context.Config.Metadata.Region,
 				Project:            context.Config.ObjectStorage.CloudStorage.Project,
 				CredentialsFile:    filepath.Join(storageMount, "service-account.json"),
+				BucketPrefix:       bucketPrefix,
 				ParallelUpload:     6,
 				MaximumBackupCount: maximumBackupCount,
 			},
@@ -96,13 +101,6 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 	if context.Config.ObjectStorage.BlobQuota != nil {
 		res.BlobQuota = *context.Config.ObjectStorage.BlobQuota
 	}
-
-	_ = context.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg.Workspace != nil {
-			res.Stage = storageconfig.Stage(ucfg.Workspace.Stage)
-		}
-		return nil
-	})
 
 	return *res
 }

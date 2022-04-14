@@ -239,14 +239,9 @@ const (
 
 // NewDirectAccess provides direct access to a storage system
 func NewDirectAccess(c *config.StorageConfig) (DirectAccess, error) {
-	stage := c.GetStage()
-	if stage == "" {
-		return nil, xerrors.Errorf("missing storage stage")
-	}
-
 	switch c.Kind {
 	case config.GCloudStorage:
-		return newDirectGCPAccess(c.GCloudConfig, stage)
+		return newDirectGCPAccess(c.GCloudConfig)
 	case config.MinIOStorage:
 		return newDirectMinIOAccess(c.MinIOConfig)
 	default:
@@ -256,14 +251,9 @@ func NewDirectAccess(c *config.StorageConfig) (DirectAccess, error) {
 
 // NewPresignedAccess provides presigned URLs to access a storage system
 func NewPresignedAccess(c *config.StorageConfig) (PresignedAccess, error) {
-	stage := c.GetStage()
-	if stage == "" {
-		return nil, xerrors.Errorf("missing storage stage")
-	}
-
 	switch c.Kind {
 	case config.GCloudStorage:
-		return newPresignedGCPAccess(c.GCloudConfig, stage)
+		return newPresignedGCPAccess(c.GCloudConfig)
 	case config.MinIOStorage:
 		return newPresignedMinIOAccess(c.MinIOConfig)
 	default:
