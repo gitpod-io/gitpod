@@ -327,7 +327,7 @@ func DownloadConfig(ctx context.Context, fetch FetcherFunc, ref string, desc oci
 
 			return w.Commit(ctx, int64(len(buf)), digest.FromBytes(buf), content.WithLabels(contentTypeLabel(desc.MediaType)))
 		}()
-		if err != nil {
+		if err != nil && !strings.Contains(err.Error(), "already exists") {
 			log.WithError(err).WithField("ref", ref).WithField("desc", desc).Warn("cannot cache config")
 		}
 	}
@@ -501,7 +501,9 @@ func DownloadManifest(ctx context.Context, fetch FetcherFunc, desc ociv1.Descrip
 		// time one wishes to resolve desc.
 		w, err := opts.Store.Writer(ctx, content.WithDescriptor(desc), content.WithRef(desc.Digest.String()))
 		if err != nil {
-			log.WithError(err).WithField("desc", *rdesc).Warn("cannot create store writer")
+			if err != nil && !strings.Contains(err.Error(), "already exists") {
+				log.WithError(err).WithField("desc", *rdesc).Warn("cannot create store writer")
+			}
 		} else {
 			_, err = io.Copy(w, bytes.NewReader(inpt))
 			if err != nil {
