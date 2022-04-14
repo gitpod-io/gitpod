@@ -29,11 +29,13 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 	// We are racing workspacekit and the interaction with disks.
 	// If we did this just once there's a chance we haven't interacted with all
 	// devices yet, and hence would not impose IO limits on them.
+	log.Warn("Applying io limiting")
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
+			log.Warn("Workspace is gone. IO limiting can be stopped")
 			// Prior to shutting down though, we need to reset the IO limits to ensure we don't have
 			// processes stuck in the uninterruptable "D" (disk sleep) state. This would prevent the
 			// workspace pod from shutting down.
@@ -48,6 +50,7 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 			}
 			return ctx.Err()
 		case <-ticker.C:
+			log.Warnf("Writing IO max to %s", filepath.Join(basePath, cgroupPath))
 			err := c.writeIOMax(filepath.Join(basePath, cgroupPath))
 			if err != nil {
 				log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
@@ -59,6 +62,7 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 func (c *IOLimiterV2) writeIOMax(loc string) error {
 	iostat, err := os.ReadFile(filepath.Join(string(loc), "io.stat"))
 	if os.IsNotExist(err) {
+		log.Error("Pod is gone")
 		// cgroup gone is ok due to the dispatch/container race
 		return nil
 	}
