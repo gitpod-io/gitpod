@@ -1,6 +1,11 @@
 # Change Log
 
 ## April 2022
+- [kubecdl] Set default project name ([#9288](https://github.com/gitpod-io/gitpod/pull/9288)) - [@aledbf](https://github.com/aledbf)
+- Add experimental server config to the installer ([#9297](https://github.com/gitpod-io/gitpod/pull/9297)) - [@andrew-farries](https://github.com/andrew-farries)
+- Update IntelliJ IDEA IDE image to version 221.5080.210. ([#9298](https://github.com/gitpod-io/gitpod/pull/9298)) - [@roboquat](https://github.com/roboquat)
+- [ws-daemon] Match veth0/eth0 MTU to improve network performance ([#9294](https://github.com/gitpod-io/gitpod/pull/9294)) - [@csweichel](https://github.com/csweichel)
+- [installer] Disable `definitely-gp` by default ([#9094](https://github.com/gitpod-io/gitpod/pull/9094)) - [@Pothulapati](https://github.com/Pothulapati)
 - Add IO bandwidth limit support ([#9271](https://github.com/gitpod-io/gitpod/pull/9271)) - [@csweichel](https://github.com/csweichel)
 - Connect to self-managed Bitbucket Server in Git Integration modal. ([#9135](https://github.com/gitpod-io/gitpod/pull/9135)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Stop running prebuilds for projects that did not start a workspace in the last 10+ weeks ([#9219](https://github.com/gitpod-io/gitpod/pull/9219)) - [@jankeromnes](https://github.com/jankeromnes)
