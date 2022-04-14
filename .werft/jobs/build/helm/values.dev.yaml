@@ -38,7 +38,6 @@ components:
   server:
     replicas: 1
     makeNewUsersAdmin: true # for development
-    theiaPluginsBucketNameOverride: gitpod-core-dev-plugins
     enableLocalApp: true
     oauthServer:
       enabled: true

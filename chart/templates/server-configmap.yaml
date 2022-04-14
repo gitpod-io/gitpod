@@ -44,9 +44,6 @@ data:
         "incrementalPrebuilds": {{ $comp.incrementalPrebuilds | toJson }},
         "blockNewUsers": {{ $comp.blockNewUsers | toJson }},
         "makeNewUsersAdmin": {{ $comp.makeNewUsersAdmin }},
-{{- if $comp.theiaPluginsBucketNameOverride }}
-        "theiaPluginsBucketNameOverride": "{{ $comp.theiaPluginsBucketNameOverride }}",
-{{- end }}
         "defaultBaseImageRegistryWhitelist": {{ $comp.defaultBaseImageRegistryWhitelist | toJson }},
         "runDbDeleter": {{ $comp.runDbDeleter }},
         "oauthServer": {

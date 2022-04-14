@@ -92,10 +92,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       touch /tmp/"$NAME"overrides.yaml
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
-      THEIA_BUCKET_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.theiaPluginsBucketNameOverride)
-      THEIA_BUCKET_NAME_EXPR="s/\"theiaPluginsBucketNameOverride\": \"\"/\"theiaPluginsBucketNameOverride\": \"$THEIA_BUCKET_NAME\"/"
-      sed -i "$THEIA_BUCKET_NAME_EXPR" /tmp/"$NAME"overrides.yaml
-
       DEV_BRANCH_EXPR="s/\"devBranch\": \"\"/\"devBranch\": \"$DEV_BRANCH\"/"
       sed -i "$DEV_BRANCH_EXPR" /tmp/"$NAME"overrides.yaml
 
