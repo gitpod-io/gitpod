@@ -5,7 +5,13 @@
 package public_api_server
 
 const (
-	Component     = "public-api-server"
-	ContainerPort = 9000
-	PortName      = "http"
+	Component = "public-api-server"
+
+	HTTPPortName      = "http"
+	HTTPContainerPort = 9000
+	HTTPServicePort   = 9000
+
+	GRPCPortName      = "grpc"
+	GRPCContainerPort = 9001
+	GRPCServicePort   = 9001
 )
