@@ -27,6 +27,7 @@ func (c *IOLimiterV2) Type() Version { return Version2 }
 
 func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) error {
 	go func() {
+		log.WithField("cgroupPath", cgroupPath).Debug("starting io limiting")
 		// We are racing workspacekit and the interaction with disks.
 		// If we did this just once there's a chance we haven't interacted with all
 		// devices yet, and hence would not impose IO limits on them.
@@ -47,6 +48,7 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 				if err != nil {
 					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
 				}
+				log.WithField("cgroupPath", cgroupPath).Debug("stopping io limiting")
 				return
 			case <-ticker.C:
 				err := c.writeIOMax(filepath.Join(basePath, cgroupPath))
