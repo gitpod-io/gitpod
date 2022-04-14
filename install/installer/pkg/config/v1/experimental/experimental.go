@@ -10,13 +10,23 @@
 // If you use any setting herein, you forfeit support from Gitpod.
 package experimental
 
-import "k8s.io/apimachinery/pkg/api/resource"
+import (
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+)
 
 // Config contains all experimental configuration.
 type Config struct {
-	Workspace *WorkspaceConfig `json:"workspace,omitempty"`
-	WebApp    *WebAppConfig    `json:"webapp,omitempty"`
-	IDE       *IDEConfig       `json:"ide,omitempty"`
+	Workspace *WorkspaceConfig      `json:"workspace,omitempty"`
+	WebApp    *WebAppConfig         `json:"webapp,omitempty"`
+	IDE       *IDEConfig            `json:"ide,omitempty"`
+	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
+}
+
+type PodConfig struct {
+	Replicas  int32                       `json:"replicas"`
+	Affinity  corev1.Affinity             `json:"affinity"`
+	Resources corev1.ResourceRequirements `json:"resources"`
 }
 
 type WorkspaceConfig struct {
