@@ -22,17 +22,15 @@ export type TraceContextWithSpan = TraceContext & {
 export namespace TraceContext {
     export function startSpan(operation: string, parentCtx?: TraceContext): opentracing.Span {
         const options: opentracing.SpanOptions = {};
-        if (parentCtx && parentCtx.span && !!parentCtx.span.context().toSpanId()) {
-            options.childOf = parentCtx.span;
+
+        // references should contain span id.
+        // cf. https://github.com/jaegertracing/jaeger-client-node/issues/432
+        if (!!parentCtx?.span) {
+            const ctx = parentCtx?.span?.context();
+            if (ctx && !!ctx.toTraceId() && !!ctx.toSpanId()) {
+                options.references = [opentracing.followsFrom(ctx)];
+            }
         }
-        // TODO(gpl) references lead to a huge amount of errors in prod logs. Avoid those until we have time to figure out how to fix it.
-        // if (referencedSpans) {
-        //     // note: allthough followsForm's type says it takes 'opentracing.Span | opentracing.SpanContext', it only works with SpanContext (typing mismatch)
-        //     // note2: we need to filter out debug spans (spanId === "")
-        //     options.references = referencedSpans.filter(s => s !== undefined)
-        //         .filter(s => !!s!.context().toSpanId())
-        //         .map(s => followsFrom(s!.context()));
-        // }
 
         return opentracing.globalTracer().startSpan(operation, options);
     }
