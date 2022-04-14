@@ -92,7 +92,7 @@ func (host *PluginHost) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspa
 		go func(plg Plugin) {
 			err := plg.Apply(ctx, host.CGroupBasePath, cgroupPath)
 			if err == context.Canceled || err == context.DeadlineExceeded {
-				return
+				err = nil
 			}
 			if err != nil {
 				log.WithError(err).WithFields(ws.OWI()).WithField("plugin", plg.Name()).Error("cgroup plugin failure")
