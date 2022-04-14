@@ -28,6 +28,7 @@ spec:
         component: agent-smith
         kind: daemonset
         stage: {{ .Values.installation.stage }}
+      name: agent-smith
     spec:
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
       serviceAccountName: agent-smith
