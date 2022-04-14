@@ -204,7 +204,7 @@ func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*T
 
 	timeout := options.ReadTimeout
 	if timeout == 0 {
-		timeout = 1<<63 - 1
+		timeout = NoTimeout
 	}
 	res := &Term{
 		PTY:     pty,
@@ -243,6 +243,9 @@ func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*T
 	go io.Copy(res.Stdout, pty)
 	return res, nil
 }
+
+// NoTimeout means that listener can block read forever
+var NoTimeout time.Duration = 1<<63 - 1
 
 // TermOptions is a pseudo-terminal configuration.
 type TermOptions struct {
@@ -375,6 +378,7 @@ var (
 
 type multiWriterListener struct {
 	io.Reader
+	timeout time.Duration
 
 	closed    bool
 	once      sync.Once
@@ -413,8 +417,21 @@ func (closedTerminalListener) Read(p []byte) (n int, err error) {
 
 var closedListener = io.NopCloser(closedTerminalListener{})
 
+// TermListenOptions is a configuration to listen to the pseudo-terminal .
+type TermListenOptions struct {
+	// timeout after which a listener is dropped. Use 0 for default timeout.
+	ReadTimeout time.Duration
+}
+
 // Listen listens in on the multi-writer stream.
 func (mw *multiWriter) Listen() io.ReadCloser {
+	return mw.ListenWithOptions(TermListenOptions{
+		ReadTimeout: 0,
+	})
+}
+
+// Listen listens in on the multi-writer stream with given options.
+func (mw *multiWriter) ListenWithOptions(options TermListenOptions) io.ReadCloser {
 	mw.mu.Lock()
 	defer mw.mu.Unlock()
 
@@ -422,6 +439,10 @@ func (mw *multiWriter) Listen() io.ReadCloser {
 		return closedListener
 	}
 
+	timeout := options.ReadTimeout
+	if timeout == 0 {
+		timeout = mw.timeout
+	}
 	r, w := io.Pipe()
 	cchan, done, closeChan := make(chan []byte), make(chan struct{}, 1), make(chan struct{}, 1)
 	res := &multiWriterListener{
@@ -429,6 +450,7 @@ func (mw *multiWriter) Listen() io.ReadCloser {
 		cchan:     cchan,
 		done:      done,
 		closeChan: closeChan,
+		timeout:   timeout,
 	}
 
 	recording := mw.recorder.Bytes()
@@ -489,13 +511,13 @@ func (mw *multiWriter) Write(p []byte) (n int, err error) {
 
 		select {
 		case lstr.cchan <- p:
-		case <-time.After(mw.timeout):
+		case <-time.After(lstr.timeout):
 			lstr.CloseWithError(ErrReadTimeout)
 		}
 
 		select {
 		case <-lstr.done:
-		case <-time.After(mw.timeout):
+		case <-time.After(lstr.timeout):
 			lstr.CloseWithError(ErrReadTimeout)
 		}
 	}
