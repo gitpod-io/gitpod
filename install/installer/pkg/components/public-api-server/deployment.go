@@ -52,10 +52,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									"memory": resource.MustParse("32Mi"),
 								},
 							},
-							Ports: []corev1.ContainerPort{{
-								ContainerPort: ContainerPort,
-								Name:          PortName,
-							}},
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: HTTPContainerPort,
+									Name:          HTTPPortName,
+								},
+								{
+									ContainerPort: GRPCContainerPort,
+									Name:          GRPCPortName,
+								},
+							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),
 							},
@@ -66,7 +72,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path:   "/",
-										Port:   intstr.IntOrString{IntVal: ContainerPort},
+										Port:   intstr.IntOrString{IntVal: HTTPContainerPort},
 										Scheme: corev1.URISchemeHTTP,
 									},
 								},

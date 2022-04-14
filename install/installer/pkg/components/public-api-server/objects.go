@@ -21,6 +21,7 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		deployment,
 		rolebinding,
 		common.DefaultServiceAccount(Component),
+		service,
 	)(ctx)
 }
 
