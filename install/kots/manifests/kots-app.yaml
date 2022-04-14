@@ -12,14 +12,4 @@ spec:
   kubectlVersion: ">= 1.21.0"
   # daemonsets are not supported yet
   statusInformers:
-    - deployment/blobserve
-    - deployment/content-service
-    - deployment/dashboard
-    - deployment/ide-proxy
-    - deployment/image-builder-mk3
-    - deployment/proxy
-    - deployment/server
-    - deployment/ws-manager
-    - deployment/ws-manager-bridge
-    - deployment/ws-proxy
-    - service/proxy
+    - deployment/status-informer
