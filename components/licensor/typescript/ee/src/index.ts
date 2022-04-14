@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject, postConstruct } from 'inversify';
-import { init, Instance, dispose, isEnabled, hasEnoughSeats, inspect, validate, getLicenseType, getLicenseData } from "./nativemodule";
+import { init, Instance, dispose, isEnabled, hasEnoughSeats, inspect, validate, getLicenseData } from "./nativemodule";
 import { Feature, LicensePayload, LicenseData } from './api';
 
 export const LicenseKeySource = Symbol("LicenseKeySource");
@@ -59,10 +59,6 @@ export class LicenseEvaluator {
 
     public inspect(): LicensePayload {
         return JSON.parse(inspect(this.instanceID));
-    }
-
-    public getLicenseType(): string {
-        return getLicenseType(this.instanceID);
     }
 
     public getLicenseData(): LicenseData {

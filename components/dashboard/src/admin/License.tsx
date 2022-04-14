@@ -8,112 +8,86 @@ import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { adminMenu } from "./admin-menu";
 
 import { LicenseContext } from "../license-context";
-import { ReactElement, useContext } from "react";
-import { UserContext } from "../user-context";
-import { Redirect } from "react-router-dom";
-import { BlackBox, LightBox } from "../components/InfoBox";
+import { ReactElement, useContext, useEffect } from "react";
+import { getGitpodService } from "../service/service";
 
-import { ReactComponent as Bang } from "../images/exclamation.svg";
-import { ReactComponent as Tick } from "../images/tick.svg";
+import { ReactComponent as Alert } from "../images/exclamation.svg";
+import { ReactComponent as Success } from "../images/tick.svg";
+import { ReactComponent as Tick } from "../images/check.svg";
+import { ReactComponent as Cross } from "../images/x.svg";
 
 export default function License() {
-    // @ts-ignore
     const { license, setLicense } = useContext(LicenseContext);
-    const { user } = useContext(UserContext);
 
-    if (!user || !user?.rolesOrPermissions?.includes("admin")) {
-        return <Redirect to="/" />;
-    }
+    useEffect(() => {
+        if (isGitpodIo()) {
+            return; // temporarily disable to avoid hight CPU on the DB
+        }
+        (async () => {
+            const data = await getGitpodService().server.adminGetLicense();
+            setLicense(data);
+        })();
+    }, []);
 
     const featureList = license?.enabledFeatures;
     const features = license?.features;
-    const licenseType = license?.type ? capitalizeInitials(license?.type) : "";
 
+    // if user seats is 0, it means that there is user limit in the license
     const userLimit = license?.seats == 0 ? "Unlimited" : license?.seats;
-    // const communityLicense = license?.key == "default-license"
 
     const [licenseLevel, paid, msg, tick] = getSubscriptionLevel(
         license?.plan || "",
         license?.userCount || 0,
         license?.seats || 0,
-        false,
+        license?.fallbackAllowed || false,
     );
 
     return (
         <div>
-            <PageWithSubMenu subMenu={adminMenu} title="License" subtitle="License information of your account.">
-                {!license?.valid ? (
-                    <p className="text-base text-gray-500 pb-4 max-w-2xl">
-                        You do not have a valid license associated with this account. {license?.errorMsg}
-                    </p>
-                ) : (
-                    <div className="flex flex-row space-x-4">
-                        <div>
-                            <BlackBox>
-                                <p className="text-white dark:text-black font-bold pt-4 text-sm"> {licenseLevel}</p>
-                                <p className="font-semibold dark:text-gray-500">{paid}</p>
-                                <p className="font-semibold text-gray-400 pt-4 pb-2 text-sm">Available features:</p>
-                                <div className="pb-4">
-                                    {features &&
-                                        features.map((feat: string) => (
-                                            <div>
-                                                {featureList?.includes(feat) ? (
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="h-4 w-4 inline-block pr-1"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                        strokeWidth={2}
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            d="M5 13l4 4L19 7"
-                                                        />
-                                                    </svg>
-                                                ) : (
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="h-4 w-4 inline-block pr-1"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                        strokeWidth={2}
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            d="M6 18L18 6M6 6l12 12"
-                                                        />
-                                                    </svg>
-                                                )}
-                                                {capitalizeInitials(feat)}
-                                            </div>
-                                        ))}
+            <PageWithSubMenu
+                subMenu={adminMenu}
+                title="License"
+                subtitle="License associated with your Gitpod Installation"
+            >
+                <div className="flex flex-row space-x-4">
+                    <Card className="bg-gray-800 dark:bg-white text-white dark:text-gray-400">
+                        <p className="text-white dark:text-black font-bold pt-4 text-sm"> {licenseLevel}</p>
+                        <p className="dark:text-gray-500">{paid}</p>
+                        <p className="text-gray-400 pt-4 pb-2">Available features:</p>
+                        {features &&
+                            features.map((feat: string) => (
+                                <div className="flex">
+                                    {featureList?.includes(feat) ? (
+                                        <Tick className="h-4" />
+                                    ) : (
+                                        <Cross className="h-4 w-4 px-1" />
+                                    )}
+                                    {capitalizeInitials(feat)}
                                 </div>
-                            </BlackBox>
+                            ))}
+                    </Card>
+                    <Card className="bg-gray-200 dark:bg-gray-900 text-gray-600 dark:text-gray-600">
+                        <div className="text-gray-600 dark:text-gray-200 text-sm py-4 flex-row flex items-center">
+                            <div>{msg}</div>
+                            <div className="px-4">{getLicenseValidIcon(tick)}</div>
                         </div>
-                        <div>
-                            <LightBox>
-                                <div className="text-gray-600 dark:text-gray-200 font-semibold text-sm flex py-4">
-                                    <div>{msg}</div>
-                                    <div className="pr-4 pl-1 py-1">{getLicenseValidIcon(tick)}</div>
-                                </div>
-                                <p className="font-semibold dark:text-gray-500  pt-4 ">Registered Users</p>
-                                <h4 className="font-semibold inline-block">
-                                    <span className="dark:text-gray-300 pt-1 text-lg">{license.userCount || 0}</span>
-                                    <span className="dark:text-gray-500 text-gray-400 pt-1 text-lg">
-                                        {" "}
-                                        / {userLimit}{" "}
-                                    </span>
-                                </h4>
-                                <p className="font-semibold dark:text-gray-500 pt-2 ">License Type</p>
-                                <h4 className="font-semibold dark:text-gray-300 pt-1 text-lg">{licenseType}</h4>
-                            </LightBox>
-                        </div>
-                    </div>
-                )}
+                        <p className="dark:text-gray-500">Registered Users</p>
+                        <span className="dark:text-gray-300 pt-1 text-lg">{license?.userCount || 0}</span>
+                        <span className="dark:text-gray-500 text-gray-400 pt-1 text-lg"> / {userLimit} </span>
+                        <p className="dark:text-gray-500 pt-2 ">License Type</p>
+                        <h4 className="dark:text-gray-300 pt-1 text-lg">{capitalizeInitials(license?.type || "")}</h4>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                window.location.href = "https://www.gitpod.io/self-hosted";
+                            }}
+                            className="ml-2 float-right"
+                        >
+                            {license?.plan == "prod" ? "Contact Sales" : "Request License"}
+                        </button>
+                    </Card>
+                </div>
             </PageWithSubMenu>
         </div>
     );
@@ -146,10 +120,10 @@ function getSubscriptionLevel(level: string, userCount: number, seats: number, f
 }
 
 function professionalPlan(userCount: number, seats: number): string[] {
-    const aboveLimit: boolean = userCount >= seats;
+    const aboveLimit: boolean = userCount > seats;
     let msg: string, tick: string;
     if (aboveLimit) {
-        msg = "You have reached the usage limit.";
+        msg = "You have exceeded the usage limit.";
         tick = "red-cross";
     } else {
         msg = "You have an active professional license.";
@@ -160,15 +134,16 @@ function professionalPlan(userCount: number, seats: number): string[] {
 }
 
 function communityPlan(userCount: number, seats: number, fallbackAllowed: boolean): string[] {
-    const aboveLimit: boolean = userCount >= seats;
+    const aboveLimit: boolean = userCount > seats;
 
     let msg: string = "You are using the free community edition";
-    let tick: string = "grey-tick";
+    let tick: string = "green-tick";
     if (aboveLimit) {
         if (fallbackAllowed) {
             msg = "No active license. You are using the community edition.";
+            tick = "grey-tick";
         } else {
-            msg = "No active license. You have reached your usage limit.";
+            msg = "No active license. You have exceeded the usage limit.";
             tick = "red-cross";
         }
     }
@@ -179,12 +154,24 @@ function communityPlan(userCount: number, seats: number, fallbackAllowed: boolea
 function getLicenseValidIcon(iconname: string): ReactElement {
     switch (iconname) {
         case "green-tick":
-            return <Tick fill="green"></Tick>;
+            return <Success fill="green" className="h-8 w-8" />;
         case "grey-tick":
-            return <Tick fill="gray"></Tick>;
+            return <Success fill="gray" className="h-8 w-8" />;
         case "red-cross":
-            return <Bang fill="red"></Bang>;
+            return <Alert fill="red" className="h-8 w-8" />;
         default:
-            return <Bang fill="gray"></Bang>;
+            return <Alert fill="gray" className="h-8 w-8" />;
     }
+}
+
+function isGitpodIo() {
+    return window.location.hostname === "gitpod.io" || window.location.hostname === "gitpod-staging.com";
+}
+
+function Card(p: { className?: string; children?: React.ReactNode }) {
+    return (
+        <div className={"flex rounded-xl font-semibold text-xs w-72 h-64 px-4 " + (p.className || "")}>
+            <span>{p.children}</span>
+        </div>
+    );
 }

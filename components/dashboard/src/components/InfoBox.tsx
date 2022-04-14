@@ -19,29 +19,3 @@ export default function InfoBox(p: { className?: string; children?: React.ReactN
         </div>
     );
 }
-
-export function BlackBox(p: { className?: string; children?: React.ReactNode }) {
-    return (
-        <div
-            className={
-                "flex rounded-xl bg-gray-800 dark:bg-white text-white dark:text-gray-400 font-semibold text-xs w-72 h-64 px-4" +
-                (p.className || "")
-            }
-        >
-            <span>{p.children}</span>
-        </div>
-    );
-}
-
-export function LightBox(p: { className?: string; children?: React.ReactNode }) {
-    return (
-        <div
-            className={
-                "flex rounded-xl bg-gray-200 dark:bg-gray-900 text-gray-600 dark:text-gray-600 text-xs w-72 h-64 px-4" +
-                (p.className || "")
-            }
-        >
-            <span>{p.children}</span>
-        </div>
-    );
-}

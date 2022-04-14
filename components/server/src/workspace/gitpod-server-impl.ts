@@ -2612,7 +2612,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const userCount = await this.userDB.getUserCount(true);
 
         const features = Object.keys(Feature);
-        const enabledFeatures = await this.licenseFeatures(ctx, features);
+        const enabledFeatures = await this.licenseFeatures(ctx, features, userCount);
 
         return {
             key: licensePayload.id,
@@ -2629,9 +2629,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
     }
 
-    async licenseFeatures(ctx: TraceContext, features: string[]): Promise<string[]> {
+    async licenseFeatures(ctx: TraceContext, features: string[], userCount: number): Promise<string[]> {
         var enabledFeatures: string[] = [];
-        const userCount = await this.userDB.getUserCount(true);
         for (const feature of features) {
             const featureName: Feature = Feature[feature as keyof typeof Feature];
             if (this.licenseEvaluator.isEnabled(featureName, userCount)) {

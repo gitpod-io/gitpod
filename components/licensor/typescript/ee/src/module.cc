@@ -201,7 +201,6 @@ void GetLicenseDataM(const FunctionCallbackInfo<Value> &args) {
     args.GetReturnValue().Set(String::NewFromUtf8(isolate, r.r0).ToLocalChecked());
 }
 
-
 void InspectM(const FunctionCallbackInfo<Value> &args) {
     Isolate *isolate = args.GetIsolate();
     Local<Context> context = isolate->GetCurrentContext();
@@ -246,23 +245,6 @@ void DisposeM(const FunctionCallbackInfo<Value> &args) {
     Dispose(id);
 }
 
-void GetLicenseTypeM(const FunctionCallbackInfo<Value> &args) {
-    Isolate *isolate = args.GetIsolate();
-    Local<Context> context = isolate->GetCurrentContext();
-
-    if (args.Length() < 1) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "wrong number of arguments").ToLocalChecked()));
-        return;
-    }
-
-    double rid = args[0]->NumberValue(context).FromMaybe(0);
-    int id = static_cast<int>(rid);
-
-    char* r = GetLicenseType(id);
-
-    args.GetReturnValue().Set(String::NewFromUtf8(isolate, r).ToLocalChecked());
-}
-
 // add method to exports
 void initModule(Local<Object> exports) {
     NODE_SET_METHOD(exports, "init", InitM);
@@ -271,7 +253,6 @@ void initModule(Local<Object> exports) {
     NODE_SET_METHOD(exports, "hasEnoughSeats", HasEnoughSeatsM);
     NODE_SET_METHOD(exports, "inspect", InspectM);
     NODE_SET_METHOD(exports, "dispose", DisposeM);
-    NODE_SET_METHOD(exports, "getLicenseType", GetLicenseTypeM);
     NODE_SET_METHOD(exports, "getLicenseData", GetLicenseDataM);
 }
 

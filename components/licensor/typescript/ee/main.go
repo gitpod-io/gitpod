@@ -53,14 +53,6 @@ func GetLicenseData(id int) (licData *C.char, ok bool) {
 
 }
 
-// GetLicenseType returns the license type of the current Gitpod Installation
-//export GetLicenseType
-func GetLicenseType(id int) *C.char {
-	e, _ := instances[id]
-	licenseType := e.GetLicenseType()
-	return C.CString(licenseType)
-}
-
 // Validate returns false if the license isn't valid and a message explaining why that is.
 //export Validate
 func Validate(id int) (msg *C.char, valid bool) {
