@@ -6,6 +6,7 @@ package baseserver
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -19,6 +20,7 @@ func TestOptions(t *testing.T) {
 	timeout := 10 * time.Second
 	hostname := "another_hostname"
 	registry := prometheus.NewRegistry()
+	health := healthcheck.NewHandler()
 
 	var opts = []Option{
 		WithHostname(hostname),
@@ -27,6 +29,7 @@ func TestOptions(t *testing.T) {
 		WithLogger(logger),
 		WithCloseTimeout(timeout),
 		WithMetricsRegistry(registry),
+		WithHealthHandler(health),
 	}
 	cfg, err := evaluateOptions(defaultConfig(), opts...)
 	require.NoError(t, err)
@@ -38,6 +41,7 @@ func TestOptions(t *testing.T) {
 		httpPort:        httpPort,
 		closeTimeout:    timeout,
 		metricsRegistry: registry,
+		healthHandler:   health,
 	}, cfg)
 }
 
