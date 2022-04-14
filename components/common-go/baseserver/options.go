@@ -7,6 +7,7 @@ package baseserver
 import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -27,15 +28,18 @@ type config struct {
 
 	// metricsRegistry configures the metrics registry to use for exporting metrics. When not set, the default prometheus registry is used.
 	metricsRegistry *prometheus.Registry
+
+	healthHandler healthcheck.Handler
 }
 
 func defaultConfig() *config {
 	return &config{
-		logger:       log.New(),
-		hostname:     "localhost",
-		httpPort:     9000,
-		grpcPort:     9001,
-		closeTimeout: 5 * time.Second,
+		logger:        log.New(),
+		hostname:      "localhost",
+		httpPort:      9000,
+		grpcPort:      9001,
+		closeTimeout:  5 * time.Second,
+		healthHandler: healthcheck.NewHandler(),
 	}
 }
 
@@ -95,6 +99,17 @@ func WithMetricsRegistry(r *prometheus.Registry) Option {
 		}
 
 		cfg.metricsRegistry = r
+		return nil
+	}
+}
+
+func WithHealthHandler(handler healthcheck.Handler) Option {
+	return func(cfg *config) error {
+		if handler == nil {
+			return fmt.Errorf("nil healthcheck handler provided")
+		}
+
+		cfg.healthHandler = handler
 		return nil
 	}
 }

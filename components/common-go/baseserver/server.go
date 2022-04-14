@@ -212,10 +212,8 @@ func (s *Server) initializeHTTP() error {
 
 func (s *Server) newHTTPMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	// TODO(milan): Use a ready/health package already used in ws-manager
-	mux.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(`ready`))
-	})
+	mux.HandleFunc("/ready", s.cfg.healthHandler.ReadyEndpoint)
+	mux.HandleFunc("/live", s.cfg.healthHandler.LiveEndpoint)
 
 	// Metrics endpoint
 	metricsHandler := promhttp.Handler()
