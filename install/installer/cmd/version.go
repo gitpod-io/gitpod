@@ -5,10 +5,8 @@
 package cmd
 
 import (
-	"debug/elf"
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
@@ -39,14 +37,7 @@ var versionCmd = &cobra.Command{
 }
 
 func getVersionManifest() (*versions.Manifest, error) {
-	embeddedManifest, err := versions.Embedded()
-	if err != nil {
-		return nil, err
-	}
-	if embeddedManifest != nil {
-		return embeddedManifest, nil
-	}
-
+	// TODO(gpl): sort this out with Simon
 	var data []byte
 	if rootOpts.VersionMF != "" {
 		var err error
@@ -55,28 +46,35 @@ func getVersionManifest() (*versions.Manifest, error) {
 			return nil, err
 		}
 	} else {
-		selfPath, err := os.Executable()
+		embeddedManifest, err := versions.Embedded()
 		if err != nil {
 			return nil, err
 		}
-		selfFile, err := os.Open(selfPath)
-		if err != nil {
-			return nil, err
+		if embeddedManifest != nil {
+			return embeddedManifest, nil
 		}
-		selfElf, err := elf.NewFile(selfFile)
-		if err != nil {
-			return nil, err
-		}
-		for _, s := range selfElf.Sections {
-			if s.Name == "versionManifest" {
-				data, _ = s.Data()
-			}
-		}
-
 	}
 
+	// selfPath, err := os.Executable()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// selfFile, err := os.Open(selfPath)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// selfElf, err := elf.NewFile(selfFile)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// for _, s := range selfElf.Sections {
+	// 	if s.Name == "versionManifest" {
+	// 		data, _ = s.Data()
+	// 	}
+	// }
+
 	var res versions.Manifest
-	err = yaml.Unmarshal(data, &res)
+	err := yaml.Unmarshal(data, &res)
 	if err != nil {
 		return nil, err
 	}
