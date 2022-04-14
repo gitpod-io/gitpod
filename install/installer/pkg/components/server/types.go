@@ -27,7 +27,6 @@ type ConfigSerialized struct {
 	MaxEnvvarPerUserCount             int32    `json:"maxEnvvarPerUserCount"`
 	MaxConcurrentPrebuildsPerRef      int32    `json:"maxConcurrentPrebuildsPerRef"`
 	MakeNewUsersAdmin                 bool     `json:"makeNewUsersAdmin"`
-	TheiaPluginsBucketNameOverride    string   `json:"theiaPluginsBucketNameOverride"`
 	DefaultBaseImageRegistryWhitelist []string `json:"defaultBaseImageRegistryWhitelist"`
 	RunDbDeleter                      bool     `json:"runDbDeleter"`
 	ContentServiceAddr                string   `json:"contentServiceAddr"`
