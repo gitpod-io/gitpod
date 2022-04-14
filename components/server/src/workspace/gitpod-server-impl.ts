@@ -109,7 +109,7 @@ import {
     RemotePageMessage,
     RemoteTrackMessage,
 } from "@gitpod/gitpod-protocol/lib/analytics";
-import { ImageBuilderClientProvider, LogsRequest } from "@gitpod/image-builder/lib";
+import { ImageBuilderClientProvider } from "@gitpod/image-builder/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
     ControlPortRequest,
@@ -1559,11 +1559,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // during roll-out this is our fall-back case.
             // Afterwards we might want to do some spinning-lock and re-check for a certain period (30s?) to give db-sync
             // a change to move the imageBuildLogInfo across the globe.
-
-            log.warn(logCtx, "imageBuild logs: fallback!");
-            ctx.span?.setTag("workspace.imageBuild.logs.fallback", true);
-            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, user, workspace);
-            return;
+            log.error(logCtx, "cannot watch imagebuild logs for workspaceId: no image build info available");
+            throw new ResponseError(
+                ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
+                "cannot watch imagebuild logs for workspaceId",
+            );
         }
 
         const aborted = new Deferred<boolean>();
@@ -1605,47 +1605,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
         } finally {
             aborted.resolve(false);
-        }
-    }
-
-    protected async deprecatedDoWatchWorkspaceImageBuildLogs(
-        ctx: TraceContext,
-        logCtx: LogContext,
-        user: User,
-        workspace: Workspace,
-    ) {
-        if (!workspace.imageNameResolved) {
-            log.debug(logCtx, `No imageNameResolved set for workspaceId, cannot watch logs.`);
-            return;
-        }
-
-        try {
-            const imgbuilder = await this.imageBuilderClientProvider.getDefault(
-                user,
-                workspace,
-                {} as WorkspaceInstance,
-            );
-            const req = new LogsRequest();
-            req.setCensored(true);
-            req.setBuildRef(workspace.imageNameResolved);
-
-            let lineCount = 0;
-            await imgbuilder.logs(ctx, req, (data) => {
-                if (!this.client) {
-                    return "stop";
-                }
-                data = data.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
-                lineCount += data.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
-
-                this.client.onWorkspaceImageBuildLogs(undefined as any, {
-                    text: data,
-                    isDiff: true,
-                    upToLine: lineCount,
-                });
-                return "continue";
-            });
-        } catch (err) {
-            log.error(logCtx, `cannot watch logs for workspaceId`, err);
         }
     }
 
