@@ -14,6 +14,7 @@ metadata:
   name: ws-manager-config
   labels:
     app: {{ template "gitpod.fullname" . }}
+    component: ws-manager
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"

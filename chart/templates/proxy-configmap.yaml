@@ -7,6 +7,7 @@ metadata:
   name: {{ .Values.components.proxy.name }}-config
   labels:
     app: {{ template "gitpod.fullname" $ }}
+    component: proxy
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"

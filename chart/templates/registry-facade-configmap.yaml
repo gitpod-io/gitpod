@@ -9,6 +9,7 @@ metadata:
   name: registry-facade-config
   labels:
     app: {{ template "gitpod.fullname" . }}
+    component: registry-facade
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"

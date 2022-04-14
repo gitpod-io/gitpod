@@ -27,7 +27,7 @@ metadata:
   name: db-sync-config
   labels:
     app: {{ template "gitpod.fullname" . }}
-    component: db
+    component: db-sync
     kind: secret
     stage: {{ .Values.installation.stage }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

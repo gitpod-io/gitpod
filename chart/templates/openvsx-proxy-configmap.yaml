@@ -8,6 +8,7 @@ metadata:
   name: {{ .Values.components.openVsxProxy.name }}-config
   labels:
     app: {{ template "gitpod.fullname" $ }}
+    component: openvsx-proxy
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
