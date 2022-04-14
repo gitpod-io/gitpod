@@ -6,6 +6,8 @@ package cpulimit
 
 import (
 	"bufio"
+	"errors"
+	"io/fs"
 	"math"
 	"os"
 	"path/filepath"
@@ -123,6 +125,10 @@ func (basePath CgroupV1CFSController) readCpuUsage() (time.Duration, error) {
 func (basePath CgroupV1CFSController) NrThrottled() (uint64, error) {
 	f, err := os.Open(filepath.Join(string(basePath), "cpu.stat"))
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return 0, nil
+		}
+
 		return 0, xerrors.Errorf("cannot read cpu.stat: %w", err)
 	}
 	defer f.Close()

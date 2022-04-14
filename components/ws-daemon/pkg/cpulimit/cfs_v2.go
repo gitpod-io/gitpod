@@ -6,6 +6,8 @@ package cpulimit
 
 import (
 	"bufio"
+	"errors"
+	"io/fs"
 	"math"
 	"os"
 	"path/filepath"
@@ -104,6 +106,10 @@ func (basePath CgroupV2CFSController) readParentQuota() time.Duration {
 func (basePath CgroupV2CFSController) getFlatKeyedValue(key string) (int64, error) {
 	stats, err := os.Open(filepath.Join(string(basePath), "cpu.stat"))
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return 0, nil
+		}
+
 		return 0, xerrors.Errorf("cannot read cpu.stat: %w", err)
 	}
 	defer stats.Close()
