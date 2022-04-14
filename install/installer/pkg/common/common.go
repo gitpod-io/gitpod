@@ -353,6 +353,19 @@ func RepoName(repo, name string) string {
 	return pref.String()
 }
 
+func Replicas(ctx *RenderContext, component string) *int32 {
+	replicas := int32(1)
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.PodConfig[component] != nil {
+			replicas = cfg.PodConfig[component].Replicas
+		}
+		return nil
+	})
+
+	return &replicas
+}
+
 func ImageName(repo, name, tag string) string {
 	ref := fmt.Sprintf("%s:%s", RepoName(repo, name), tag)
 	pref, err := reference.ParseNamed(ref)
