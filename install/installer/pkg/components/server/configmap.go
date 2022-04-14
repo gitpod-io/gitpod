@@ -59,7 +59,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			githubApp.LogLevel = cfg.WebApp.Server.GithubApp.LogLevel
 			githubApp.MarketplaceName = cfg.WebApp.Server.GithubApp.MarketplaceName
 			githubApp.WebhookSecret = cfg.WebApp.Server.GithubApp.WebhookSecret
-			githubApp.CertSecretname = cfg.WebApp.Server.GithubApp.CertSecretName
+			githubApp.CertSecretName = cfg.WebApp.Server.GithubApp.CertSecretName
 		}
 		return nil
 	})
