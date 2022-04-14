@@ -107,7 +107,7 @@ type GitHubApp struct {
 	CertPath        string `json:"certPath"`
 	MarketplaceName string `json:"marketplaceName"`
 	LogLevel        string `json:"logLevel"`
-	CertSecretname  string `json:"certSecretName"`
+	CertSecretName  string `json:"certSecretName"`
 }
 
 type Session struct {
