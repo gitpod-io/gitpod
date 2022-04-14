@@ -5,7 +5,7 @@
 /.github/CODEOWNERS
 
 /components/blobserve @gitpod-io/engineering-workspace
-/components/common-go @gitpod-io/engineering-workspace
+/components/common-go @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp
 /components/content-service-api @csweichel @geropl
 /components/content-service @gitpod-io/engineering-workspace
 /components/dashboard @gitpod-io/engineering-webapp
