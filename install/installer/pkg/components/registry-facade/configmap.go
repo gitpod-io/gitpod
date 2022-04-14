@@ -71,6 +71,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			RequireAuth: false,
 			StaticLayer: []regfac.StaticLayerCfg{
 				{
+					Ref:  common.ImageName(ctx.Config.Repository, SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
+					Type: "image",
+				},
+				{
 					Ref:  common.ImageName(ctx.Config.Repository, WorkspacekitImage, ctx.VersionManifest.Components.Workspace.Workspacekit.Version),
 					Type: "image",
 				},
