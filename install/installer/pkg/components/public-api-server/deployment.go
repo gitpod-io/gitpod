@@ -4,10 +4,8 @@
 package public_api_server
 
 import (
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -18,21 +16,6 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	var experimentalCfg *experimental.Config
-
-	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		experimentalCfg = ucfg
-		return nil
-	})
-
-	if experimentalCfg == nil || experimentalCfg.WebApp == nil || experimentalCfg.WebApp.PublicAPI == nil {
-		// We don't want to render anything for this deployment
-		return nil, nil
-	}
-
-	publicAPIConfig := experimentalCfg.WebApp.PublicAPI
-	log.Debug("Detected experimental.WebApp.PublicApi configuration", publicAPIConfig)
-
 	labels := common.DefaultLabels(Component)
 	return []runtime.Object{
 		&appsv1.Deployment{
