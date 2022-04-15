@@ -33,6 +33,9 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 		// devices yet, and hence would not impose IO limits on them.
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
+
+		ioMaxFile := filepath.Join(basePath, cgroupPath)
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -44,14 +47,14 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 				c.WriteIOPs = 0
 				c.ReadIOPs = 0
 
-				err := c.writeIOMax(filepath.Join(basePath, cgroupPath))
+				err := c.writeIOMax(ioMaxFile)
 				if err != nil {
 					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
 				}
 				log.WithField("cgroupPath", cgroupPath).Debug("stopping io limiting")
 				return
 			case <-ticker.C:
-				err := c.writeIOMax(filepath.Join(basePath, cgroupPath))
+				err := c.writeIOMax(ioMaxFile)
 				if err != nil {
 					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
 				}
@@ -61,10 +64,9 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 	return nil
 }
 
-func (c *IOLimiterV2) writeIOMax(loc string) error {
-	iostat, err := os.ReadFile(filepath.Join(string(loc), "io.stat"))
+func (c *IOLimiterV2) writeIOMax(cgroupPath string) error {
+	iostat, err := os.ReadFile(filepath.Join(string(cgroupPath), "io.stat"))
 	if os.IsNotExist(err) {
-		log.Error("Pod is gone")
 		// cgroup gone is ok due to the dispatch/container race
 		return nil
 	}
@@ -73,6 +75,10 @@ func (c *IOLimiterV2) writeIOMax(loc string) error {
 		return err
 	}
 
+	// 8 block	SCSI disk devices (0-15)
+	// 9 char	SCSI tape devices
+	// 9 block	Metadisk (RAID) devices
+	// source https://www.kernel.org/doc/Documentation/admin-guide/devices.txt
 	var classesToLimit = []string{"8", "9"}
 
 	var devs []string
@@ -89,7 +95,7 @@ func (c *IOLimiterV2) writeIOMax(loc string) error {
 		}
 	}
 
-	cpuMaxPath := filepath.Join(string(loc), "io.max")
+	ioMaxPath := filepath.Join(string(cgroupPath), "io.max")
 	for _, dev := range devs {
 		limit := fmt.Sprintf(
 			"%s wbps=%s rbps=%s wiops=%s riops=%s",
@@ -100,8 +106,8 @@ func (c *IOLimiterV2) writeIOMax(loc string) error {
 			getLimit(c.ReadIOPs),
 		)
 
-		log.WithField("limit", limit).Infof("Creating io.max limit")
-		err := os.WriteFile(cpuMaxPath, []byte(limit), 0644)
+		log.WithField("limit", limit).WithField("ioMaxPath", ioMaxPath).Debug("creating io.max limit")
+		err := os.WriteFile(ioMaxPath, []byte(limit), 0644)
 		if err != nil {
 			log.WithField("dev", dev).WithError(err).Warn("cannot write io.max")
 		}
