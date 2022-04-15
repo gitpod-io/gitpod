@@ -79,10 +79,10 @@ var runCmd = &cobra.Command{
 					err = nil
 
 					if i.Kind.Severity() == common.SeverityAudit {
-						err = notifySlack(cfg.SlackWebhooks.Audit, cfg.HostURL, violation, penalties)
+						err = notifySlack(cfg.SlackWebhooks.Audit, cfg.Config.GitpodAPI.HostURL, violation, penalties)
 						break
 					} else if i.Kind.Severity() != common.SeverityBarely {
-						err = notifySlack(cfg.SlackWebhooks.Warning, cfg.HostURL, violation, penalties)
+						err = notifySlack(cfg.SlackWebhooks.Warning, cfg.Config.GitpodAPI.HostURL, violation, penalties)
 						break
 					}
 				}

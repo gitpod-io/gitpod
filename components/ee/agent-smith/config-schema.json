@@ -58,12 +58,6 @@
         },
         "systemMemoryLimitMib": {
           "type": "integer"
-        },
-        "hostURL": {
-          "type": "string"
-        },
-        "gitpodAPIToken": {
-          "type": "string"
         }
       },
       "additionalProperties": false,

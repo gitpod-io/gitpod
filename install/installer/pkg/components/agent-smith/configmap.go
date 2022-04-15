@@ -24,7 +24,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	ascfg := config.ServiceConfig{
 		PProfAddr:      fmt.Sprintf("localhost:%d", PProfPort),
 		PrometheusAddr: fmt.Sprintf("localhost:%d", PrometheusPort),
-		HostURL:        fmt.Sprintf("https://%s", ctx.Config.Domain),
 		Config: config.Config{
 			Blocklists: &config.Blocklists{
 				Very: &config.PerLevelBlocklist{
@@ -49,6 +48,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			Kubernetes: config.Kubernetes{Enabled: true},
+			GitpodAPI: config.GitpodAPI{
+				HostURL: fmt.Sprintf("https://%s", ctx.Config.Domain),
+			},
 		},
 	}
 
