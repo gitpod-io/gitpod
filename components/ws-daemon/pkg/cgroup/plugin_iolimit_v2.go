@@ -64,35 +64,49 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 func (c *IOLimiterV2) writeIOMax(loc string) error {
 	iostat, err := os.ReadFile(filepath.Join(string(loc), "io.stat"))
 	if os.IsNotExist(err) {
+		log.Error("Pod is gone")
 		// cgroup gone is ok due to the dispatch/container race
 		return nil
 	}
+
 	if err != nil {
 		return err
 	}
+
+	var classesToLimit = []string{"8", "9"}
+
 	var devs []string
 	for _, line := range strings.Split(string(iostat), "\n") {
 		fields := strings.Fields(line)
 		if len(fields) < 1 {
 			continue
 		}
-		devs = append(devs, fields[0])
+
+		for _, class := range classesToLimit {
+			if strings.HasPrefix(fields[0], fmt.Sprintf("%v:", class)) {
+				devs = append(devs, fields[0])
+			}
+		}
 	}
 
 	cpuMaxPath := filepath.Join(string(loc), "io.max")
 	for _, dev := range devs {
-		err := os.WriteFile(cpuMaxPath, []byte(fmt.Sprintf(
+		limit := fmt.Sprintf(
 			"%s wbps=%s rbps=%s wiops=%s riops=%s",
 			dev,
 			getLimit(c.WriteBytesPerSecond),
 			getLimit(c.ReadBytesPerSecond),
 			getLimit(c.WriteIOPs),
 			getLimit(c.ReadIOPs),
-		)), 0644)
+		)
+
+		log.WithField("limit", limit).Infof("Creating io.max limit")
+		err := os.WriteFile(cpuMaxPath, []byte(limit), 0644)
 		if err != nil {
 			log.WithField("dev", dev).WithError(err).Warn("cannot write io.max")
 		}
 	}
+
 	return nil
 }
 
