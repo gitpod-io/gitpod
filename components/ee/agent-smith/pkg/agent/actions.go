@@ -41,6 +41,12 @@ func (agent *Smith) blockUser(ownerID string) error {
 		return xerrors.Errorf("not connected to Gitpod API")
 	}
 
+	if len(ownerID) == 0 {
+		return xerrors.Errorf("cannot block user as user id is empty")
+	}
+
+	log.Infof("Blocking user %s", ownerID)
+
 	req := protocol.AdminBlockUserRequest{
 		UserID:    ownerID,
 		IsBlocked: true,
