@@ -301,6 +301,25 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-"$KIND"-overrides.yaml
    fi
 
+   if [[ "agent-smith" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+
+      # get a copy of the config we're working with
+      yq r k8s.yaml -d "$documentIndex" > /tmp/"$NAME"-"$KIND"-overrides.yaml
+
+      # replace gitpod token
+      yq r /tmp/"$NAME"-"$KIND"-overrides.yaml 'data.[config.json]' \
+      | jq ".gitpodAPI.apiToken = \"365a017134b9579e9bff9b0c8bf5be6afb916211f2393493d06cd9320000c96\"" > /tmp/"$NAME"-"$KIND"-overrides.json
+
+      # create override file
+      touch /tmp/"$NAME"-"$KIND"-data-overrides.yaml
+      yq w -i /tmp/"$NAME"-"$KIND"-data-overrides.yaml "data.[config.json]" -- "$(< /tmp/"$NAME"-"$KIND"-overrides.json)"
+
+      # merge the updated config map with k8s.yaml
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-"$KIND"-data-overrides.yaml
+   fi
+
    # suspend telemetry cron job
    if [[ "gitpod-telemetry" == "$NAME" ]] && [[ "$KIND" == "CronJob" ]]; then
       WORK="suspend $NAME $KIND"

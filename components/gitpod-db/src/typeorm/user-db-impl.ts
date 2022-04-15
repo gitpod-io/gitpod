@@ -28,7 +28,13 @@ import {
 import { inject, injectable, postConstruct } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
-import { BUILTIN_WORKSPACE_PROBE_USER_ID, MaybeUser, PartialUserUpdate, UserDB } from "../user-db";
+import {
+    BUILTIN_WORKSPACE_PROBE_USER_ID,
+    BUILTIN_WORKSPACE_USER_AGENT_SMITH,
+    MaybeUser,
+    PartialUserUpdate,
+    UserDB,
+} from "../user-db";
 import { DBGitpodToken } from "./entity/db-gitpod-token";
 import { DBIdentity } from "./entity/db-identity";
 import { DBTokenEntry } from "./entity/db-token-entry";
@@ -356,7 +362,7 @@ export class TypeORMUserDBImpl implements UserDB {
             WHERE markedDeleted != true`;
         if (excludeBuiltinUsers) {
             query = `${query}
-                AND id <> '${BUILTIN_WORKSPACE_PROBE_USER_ID}'`;
+                AND id NOT IN ('${BUILTIN_WORKSPACE_PROBE_USER_ID}', '${BUILTIN_WORKSPACE_USER_AGENT_SMITH}')`;
         }
         const res = await userRepo.query(query);
         const count = res[0].cnt;
