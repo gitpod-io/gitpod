@@ -56,9 +56,6 @@ type ServiceConfig struct {
 	// We have had memory leak issues with agent smith in the past due to experimental gRPC use.
 	// This upper limit causes agent smith to stop itself should it go above this limit.
 	MaxSysMemMib uint64 `json:"systemMemoryLimitMib,omitempty"`
-
-	HostURL        string `json:"hostURL,omitempty"`
-	GitpodAPIToken string `json:"gitpodAPIToken,omitempty"`
 }
 
 type Enforcement struct {
