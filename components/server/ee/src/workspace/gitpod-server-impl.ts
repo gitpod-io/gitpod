@@ -233,7 +233,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const result = await this.eligibilityService.mayStartWorkspace(user, new Date(), runningInstances);
         if (!result.enoughCredits) {
-            throw new ResponseError(ErrorCodes.NOT_ENOUGH_CREDIT, `Not enough credits. Please book more.`);
+            throw new ResponseError(ErrorCodes.NOT_ENOUGH_CREDIT, `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`);
         }
         if (!!result.hitParallelWorkspaceLimit) {
             throw new ResponseError(
