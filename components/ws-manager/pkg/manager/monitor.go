@@ -808,6 +808,8 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	defer tracing.FinishSpan(span, nil)
 	log := log.WithFields(wso.GetOWI())
 
+	log.Infof("finalizeWorkspaceContent")
+
 	workspaceID, ok := wso.WorkspaceID()
 	if !ok {
 		tracing.LogError(span, xerrors.Errorf("cannot find %s annotation", workspaceIDAnnotation))
@@ -839,6 +841,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		tpe = api.WorkspaceType_REGULAR
 	}
 
+	log.Infof("finalizeWorkspaceContent: wasEverReady: %v", wso.WasEverReady())
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
 	doBackupLogs := tpe == api.WorkspaceType_PREBUILD
 	doSnapshot := tpe == api.WorkspaceType_PREBUILD
@@ -919,6 +922,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		span.LogKV("attempt", i)
 		didSometing, gs, err := doFinalize()
+		log.Infof("finalizeWorkspaceContent: doFinalize: %v, %v, %v", didSometing, gs, err)
 		if !didSometing {
 			// someone else is managing finalization process ... we don't have to bother
 			return
@@ -974,6 +978,8 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			tracing.LogError(span, backupError)
 		}
 	}
+
+	log.Infof("finalizeWorkspaceContent: disposalStatus: %v", *disposalStatus)
 }
 
 // markTimedoutWorkspaces finds workspaces which can be timeout due to inactivity or max lifetime allowed
