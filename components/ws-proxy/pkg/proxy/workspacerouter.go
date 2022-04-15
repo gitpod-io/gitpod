@@ -49,6 +49,9 @@ func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) Work
 			allClusterWsHostSuffixRegex = wsHostSuffix
 		}
 
+		// make sure acme router is the first handler setup to make sure it has a chance to catch acme challenge
+		setupAcmeRouter(r)
+
 		var (
 			getHostHeader = func(req *http.Request) string {
 				host := req.Header.Get(header)
@@ -63,8 +66,6 @@ func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) Work
 			portRouter      = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader, true)).Subrouter()
 			ideRouter       = r.MatcherFunc(matchWorkspaceHostHeader(allClusterWsHostSuffixRegex, getHostHeader, false)).Subrouter()
 		)
-
-		setupAcmeRouter(r)
 
 		r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			hostname := getHostHeader(req)
