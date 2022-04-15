@@ -315,6 +315,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     werft.done(installerSlices.DEPLOYMENT_WAITING);
 
     await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, !withVM, installer.options.kubeconfigPath)
+    addAgentSmithToken(werft, deploymentConfig.namespace, installer.options.kubeconfigPath)
 
     // TODO: Fix sweeper, it does not appear to be doing clean-up
     werft.log('sweeper', 'installing Sweeper');
@@ -718,4 +719,11 @@ function getCoreDevIngressIP(): string {
 
 function metaEnv(_parent?: ExecOptions): ExecOptions {
     return env("", _parent);
+}
+
+function addAgentSmithToken(werft: Werft, namespace: string, kubeconfigPath: string) {
+    process.env.KUBECONFIG = kubeconfigPath
+    setKubectlContextNamespace(namespace, {})
+    exec("leeway run components:add-gitpod-token")
+    delete process.env.KUBECONFIG
 }
