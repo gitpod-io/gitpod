@@ -38,6 +38,8 @@ type metrics struct {
 	manager *Manager
 
 	startupTimeHistVec    *prometheus.HistogramVec
+	initializeTimeHistVec *prometheus.HistogramVec
+	finalizeTimeHistVec   *prometheus.HistogramVec
 	totalStartsCounterVec *prometheus.CounterVec
 	totalStopsCounterVec  *prometheus.CounterVec
 	totalOpenPortGauge    prometheus.GaugeFunc
@@ -57,6 +59,20 @@ func newMetrics(m *Manager) *metrics {
 			Help:      "time it took for workspace pods to reach the running phase",
 			// same as components/ws-manager-bridge/src/prometheus-metrics-exporter.ts#L15
 			Buckets: prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type"}),
+		initializeTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_initialize_seconds",
+			Help:      "time it took to initialize workspace",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type"}),
+		finalizeTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_finalize_seconds",
+			Help:      "time it took to finalize workspace",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
 		}, []string{"type"}),
 		totalStartsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
@@ -118,6 +134,8 @@ func newTotalOpenPortGaugeHandler(m *Manager) func() float64 {
 func (m *metrics) Register(reg prometheus.Registerer) error {
 	collectors := []prometheus.Collector{
 		m.startupTimeHistVec,
+		m.initializeTimeHistVec,
+		m.finalizeTimeHistVec,
 		newPhaseTotalVec(m.manager),
 		newWorkspaceActivityVec(m.manager),
 		newTimeoutSettingsVec(m.manager),
