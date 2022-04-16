@@ -22,6 +22,10 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize public api server.")
 	}
 
+	if err := register(srv); err != nil {
+		logger.WithError(err).Fatal("Failed to register services.")
+	}
+
 	if listenErr := srv.ListenAndServe(); listenErr != nil {
 		logger.WithError(listenErr).Fatal("Failed to serve public api server")
 	}
