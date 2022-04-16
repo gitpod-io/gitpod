@@ -208,7 +208,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
 
     if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta) || (isNaN(nodeExporterPort) && !withVM && withObservability)) {
         werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
-        [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
+        [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = await findFreeHostPorts([
             { start: 10000, end: 11000 },
             { start: 30000, end: 31000 },
             { start: 31001, end: 32000 },
@@ -374,7 +374,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     const { version, destname, namespace, domain, monitoringDomain, url } = deploymentConfig;
     // find free ports
     werft.log("find free ports", "Check for some free ports.");
-    const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
+    const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = await findFreeHostPorts([
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
         { start: 31001, end: 32000 },
