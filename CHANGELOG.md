@@ -1,6 +1,9 @@
 # Change Log
 
 ## April 2022
+- [registry-facade] Do not log warning from local store already exist error ([#9338](https://github.com/gitpod-io/gitpod/pull/9338)) - [@aledbf](https://github.com/aledbf)
+- [ws-daemon] Remove warning when cpu.stat does not exist ([#9328](https://github.com/gitpod-io/gitpod/pull/9328)) - [@aledbf](https://github.com/aledbf)
+- Make server githubApp.certSecretName configurable ([#9305](https://github.com/gitpod-io/gitpod/pull/9305)) - [@andrew-farries](https://github.com/andrew-farries)
 - [kubecdl] Set default project name ([#9288](https://github.com/gitpod-io/gitpod/pull/9288)) - [@aledbf](https://github.com/aledbf)
 - Add experimental server config to the installer ([#9297](https://github.com/gitpod-io/gitpod/pull/9297)) - [@andrew-farries](https://github.com/andrew-farries)
 - Update IntelliJ IDEA IDE image to version 221.5080.210. ([#9298](https://github.com/gitpod-io/gitpod/pull/9298)) - [@roboquat](https://github.com/roboquat)
