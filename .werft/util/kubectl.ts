@@ -1,4 +1,4 @@
-import { exec, ExecOptions } from './shell';
+import { exec, ExecOptions, ExecResult } from './shell';
 import { sleep } from './util';
 import { getGlobalWerftInstance } from './werft';
 
@@ -195,32 +195,30 @@ export function findLastHostPort(namespace: string, name: string, kubeconfig: st
     return Number.parseInt(portStr)
 }
 
-export function findFreeHostPorts(ranges: PortRange[], kubeconfig: string, shellOpts: ExecOptions): number[] {
-    const werft = getGlobalWerftInstance()
-    const hostPorts: number[] = exec(`kubectl --kubeconfig ${kubeconfig} get pods --all-namespaces -o yaml | yq r - 'items.*.spec.containers.*.ports.*.hostPort'`, { ...shellOpts, silent: true, async: false })
-        .stdout
-        .split("\n")
-        .map(l => l.trim())
-        .filter(l => l.length > 0)
-        .map(l => Number.parseInt(l));
 
-    const nodePorts: number[] = exec(`kubectl --kubeconfig ${kubeconfig} get services --all-namespaces -o yaml | yq r - 'items.*.spec.ports.*.nodePort'`, { ...shellOpts, silent: true, async: false })
-        .stdout
-        .split("\n")
-        .map(l => l.trim())
-        .filter(l => l.length > 0)
-        .map(l => Number.parseInt(l));
-    const alreadyReservedPorts: Set<number> = new Set();
-    for (const port of hostPorts) {
-        alreadyReservedPorts.add(port);
-    }
-    for (const port of nodePorts) {
-        alreadyReservedPorts.add(port);
-    }
+export async function findFreeHostPorts(ranges: PortRange[], kubeconfig: string, shellOpts: ExecOptions): Promise<number[]> {
+    const werft = getGlobalWerftInstance()
+    var hostPorts: Array<number> = [];
+    var nodePorts: Array<number> = [];
+
+    const hostPortsPromise = exec(`kubectl --kubeconfig ${kubeconfig} get pods --all-namespaces -o yaml | yq r - 'items.*.spec.containers.*.ports.*.hostPort | grep -v null | sort | uniq'`, { ...shellOpts, silent: true, async: true }) as Promise<ExecResult>
+    const nodePortsPromise = exec(`kubectl --kubeconfig ${kubeconfig} get services --all-namespaces -o yaml | yq r - 'items.*.spec.ports.*.nodePort | grep -v null | sort | uniq'`, { ...shellOpts, silent: true, async: true }) as Promise<ExecResult>
+
+    hostPortsPromise.then(res => hostPorts = res.stdout.split("\n").map(line => line.trim()).map(line => Number.parseInt(line)));
+    nodePortsPromise.then(res => nodePorts = res.stdout.split("\n").map(line => line.trim()).map(line => Number.parseInt(line)));
+
+    await Promise.all([hostPortsPromise, nodePortsPromise]);
+
+    const alreadyReservedPorts: Set<number> = new Set([].concat(hostPorts, nodePorts));
+
     werft.log(shellOpts.slice, `already reserved ports: ${Array.from(alreadyReservedPorts.values()).map(p => "" + p).join(", ")}`);
 
     const results: number[] = [];
     for (const range of ranges) {
+        if (results.length > 4) {
+            break;
+        }
+
         const r = range.end - range.start;
         while (true) {
             const hostPort = range.start + Math.floor(Math.random() * r);
@@ -234,7 +232,8 @@ export function findFreeHostPorts(ranges: PortRange[], kubeconfig: string, shell
             break;
         }
     }
-    return results;
+
+    return new Promise((resolve) => { resolve(results) });
 }
 
 export function waitForDeploymentToSucceed(name: string, namespace: string, type: string, kubeconfig: string, shellOpts: ExecOptions) {
