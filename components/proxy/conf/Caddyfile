@@ -262,6 +262,11 @@ https://{$GITPOD_DOMAIN} {
 	}
 }
 
+# public-api
+https://api.{$GITPOD_DOMAIN} {
+    reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9000
+}
+
 # workspaces
 https://*.*.{$GITPOD_DOMAIN} {
 	import enable_log
