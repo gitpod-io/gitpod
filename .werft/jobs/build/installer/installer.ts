@@ -33,6 +33,7 @@ export type InstallerOptions = {
     withVM: boolean
     workspaceFeatureFlags: string[]
     gitpodDaemonsetPorts: GitpodDaemonsetPorts
+    smithToken: string
 }
 
 export class Installer {
@@ -206,7 +207,7 @@ export class Installer {
         const nodepoolIndex = getNodePoolIndex(this.options.deploymentNamespace);
         const flags = this.options.withVM ? "WITH_VM=true " : ""
 
-        exec(`${flags}./.werft/jobs/build/installer/post-process.sh ${this.options.gitpodDaemonsetPorts.registryFacade} ${this.options.gitpodDaemonsetPorts.wsDaemon} ${nodepoolIndex} ${this.options.previewName}`, { slice: slice });
+        exec(`${flags}./.werft/jobs/build/installer/post-process.sh ${this.options.gitpodDaemonsetPorts.registryFacade} ${this.options.gitpodDaemonsetPorts.wsDaemon} ${nodepoolIndex} ${this.options.previewName} ${this.options.smithToken}`, { slice: slice });
     }
 
     install(slice: string): void {
