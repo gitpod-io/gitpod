@@ -151,7 +151,7 @@ export class Authenticator {
 
     async deauthorize(req: express.Request, res: express.Response, next: express.NextFunction) {
         const user = req.user;
-        if (!req.isAuthenticated() || !User.is(user)) {
+        if (!req.isAuthenticated() || !User.is(user) || user.blocked) {
             log.info({ sessionId: req.sessionID }, `User is not authenticated.`);
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
@@ -191,7 +191,7 @@ export class Authenticator {
             return;
         }
         const user = req.user;
-        if (!req.isAuthenticated() || !User.is(user)) {
+        if (!req.isAuthenticated() || !User.is(user) || user.blocked) {
             log.info({ sessionId: req.sessionID }, `User is not authenticated.`, { "authorize-flow": true });
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
