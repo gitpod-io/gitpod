@@ -247,7 +247,7 @@ scripts:
       fi
       kill $PID || true
 
-  - name: add-gitpod-token
+  - name: add-smith-token
     deps:
       - components/service-waiter:app
     script: |
@@ -263,10 +263,10 @@ scripts:
         exit 1
       fi
 
-      query="insert into d_b_user(id,name,creationDate,rolesOrPermissions,additionalData) values('buildin-user-agent-smith-0000000', 'agent-smith', DATE_FORMAT(NOW(3), '%Y-%m-%dT%T.%fZ'),'[\"admin\"]','{\"emailNotificationSettings\": {\"allowsChangelogMail\": false, \"allowsOnboardingMail\": true}}') on duplicate key update id=id;"
+      query="insert into d_b_user(id,name,creationDate,rolesOrPermissions,additionalData) values('builtin-user-agent-smith-0000000', 'agent-smith', DATE_FORMAT(NOW(3), '%Y-%m-%dT%T.%fZ'),'[\"admin\"]','{\"emailNotificationSettings\": {\"allowsChangelogMail\": false, \"allowsOnboardingMail\": true}}') on duplicate key update id=id;"
       mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
 
-      query="insert into d_b_gitpod_token(tokenHash,name,type,userId,scopes,created,deleted) VALUES('7569b65274b76c74af40fc5141aa8a63b1334e8ffe520bc920a4518d4ca6577c','agent-smith',0,'buildin-user-agent-smith-0000000','function:adminBlockUser', '2021-03-16T10:28:57.608Z', false) on duplicate key update tokenHash=tokenHash;"
+      query="insert into d_b_gitpod_token(tokenHash,name,type,userId,scopes,created,deleted) VALUES('$TOKEN','agent-smith',0,'builtin-user-agent-smith-0000000','function:adminBlockUser', '2021-03-16T10:28:57.608Z', false) on duplicate key update tokenHash=tokenHash;"
       mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
 
       kill $PID || true

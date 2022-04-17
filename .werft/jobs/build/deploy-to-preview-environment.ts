@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { exec, ExecOptions } from '../../util/shell';
@@ -280,6 +280,8 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         }
     }
 
+    const [token, tokenHash] = generateToken()
+
     const installer = new Installer({
         werft: werft,
         installerConfigPath: "config.yaml",
@@ -294,7 +296,8 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         withEELicense: deploymentConfig.installEELicense,
         withVM: withVM,
         workspaceFeatureFlags: workspaceFeatureFlags,
-        gitpodDaemonsetPorts: { registryFacade: registryNodePortMeta, wsDaemon: wsdaemonPortMeta }
+        gitpodDaemonsetPorts: { registryFacade: registryNodePortMeta, wsDaemon: wsdaemonPortMeta },
+        smithToken: token,
     })
     try {
         installer.init(installerSlices.INSTALLER_INIT)
@@ -315,7 +318,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     werft.done(installerSlices.DEPLOYMENT_WAITING);
 
     await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, !withVM, installer.options.kubeconfigPath)
-    addAgentSmithToken(werft, deploymentConfig.namespace, installer.options.kubeconfigPath)
+    addAgentSmithToken(werft, deploymentConfig.namespace, installer.options.kubeconfigPath, tokenHash)
 
     // TODO: Fix sweeper, it does not appear to be doing clean-up
     werft.log('sweeper', 'installing Sweeper');
@@ -721,9 +724,18 @@ function metaEnv(_parent?: ExecOptions): ExecOptions {
     return env("", _parent);
 }
 
-function addAgentSmithToken(werft: Werft, namespace: string, kubeconfigPath: string) {
+function addAgentSmithToken(werft: Werft, namespace: string, kubeconfigPath: string, token: string) {
     process.env.KUBECONFIG = kubeconfigPath
+    process.env.TOKEN = token
     setKubectlContextNamespace(namespace, {})
-    exec("leeway run components:add-gitpod-token")
+    exec("leeway run components:add-smith-token")
     delete process.env.KUBECONFIG
+    delete process.env.TOKEN
+}
+
+function generateToken(): [string, string] {
+    const token = randomBytes(30).toString('hex')
+    const tokenHash = createHash('sha256').update(token, "utf-8").digest("hex")
+
+    return [token, tokenHash]
 }
