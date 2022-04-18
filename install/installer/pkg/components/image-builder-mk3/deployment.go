@@ -103,12 +103,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MountPath: PullSecretFile,
 			SubPath:   ".dockerconfigjson",
 		},
-		*common.InternalCAVolumeMount(),
 	}
+	internalCAVolumeMount := common.InternalCAVolumeMount()
 	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
+		// Set internalCAVolumeMount.readOnly to be false in this case
+		// as we need to attach more CA files into this dir
+		internalCAVolumeMount.ReadOnly = false
 		volumes = append(volumes, *vol)
 		volumeMounts = append(volumeMounts, *mnt)
 	}
+	volumeMounts = append(volumeMounts, *internalCAVolumeMount)
 
 	return []runtime.Object{&appsv1.Deployment{
 		TypeMeta: common.TypeMetaDeployment,
