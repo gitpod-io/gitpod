@@ -188,7 +188,7 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 		var burst bool
 		if totalBandwidth < d.TotalBandwidth && ws.Throttled() {
 			limiter := d.BurstLimiter
-			if w := wsidx[id]; w.BaseLimit > 0 {
+			if w := wsidx[id]; w.BurstLimit > 0 {
 				limiter = FixedLimiter(w.BurstLimit)
 			}
 			limit = limiter.Limit(ws.Usage())
