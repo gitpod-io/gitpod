@@ -133,9 +133,8 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			VolumeClaimTemplates: []v1.PersistentVolumeClaim{{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      Component,
-					Namespace: ctx.Namespace,
-					Labels:    labels,
+					Name:   "redis-data",
+					Labels: labels,
 				},
 				Spec: v1.PersistentVolumeClaimSpec{
 					AccessModes: []v1.PersistentVolumeAccessMode{
