@@ -5,6 +5,8 @@
 FROM scratch
 
 LABEL skip-n.registry-facade.gitpod.io="1"
-WORKDIR /usr/bin
 
+WORKDIR /usr/bin
 COPY components-docker-up--app/* ./
+
+COPY components-docker-up--app/docker-compose /usr/local/bin/docker-compose
