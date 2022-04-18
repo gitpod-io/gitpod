@@ -98,7 +98,7 @@ type DispatchListener struct {
 }
 
 type workspace struct {
-	CFS        CFSController
+	CFS        CgroupCFSController
 	OWI        logrus.Fields
 	BaseLimit  Bandwidth
 	BurstLimit Bandwidth
