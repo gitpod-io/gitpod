@@ -103,7 +103,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MountPath: PullSecretFile,
 			SubPath:   ".dockerconfigjson",
 		},
-		*common.InternalCAVolumeMount(),
 	}
 	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
 		volumes = append(volumes, *vol)
