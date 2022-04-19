@@ -37,6 +37,7 @@ func register(srv *baseserver.Server) error {
 	})
 
 	v1.RegisterWorkspacesServiceServer(srv.GRPC(), v1.UnimplementedWorkspacesServiceServer{})
+	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
 
 	return nil
 }

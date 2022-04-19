@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-func TestPublicAPIServer(t *testing.T) {
+func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
 	ctx := context.Background()
 	srv := baseserver.NewForTests(t)
 	require.NoError(t, register(srv))
@@ -64,6 +64,39 @@ func TestPublicAPIServer(t *testing.T) {
 	listenImageBuildStream, err := workspaceClient.ListenToImageBuildLogs(ctx, &v1.ListenToImageBuildLogsRequest{})
 	require.NoError(t, err)
 	_, err = listenImageBuildStream.Recv()
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+}
+
+func TestPublicAPIServer_v1_PrebuildService(t *testing.T) {
+	ctx := context.Background()
+	srv := baseserver.NewForTests(t)
+	require.NoError(t, register(srv))
+
+	go func() {
+		require.NoError(t, srv.ListenAndServe())
+	}()
+
+	baseserver.WaitForServerToBeReachable(t, srv, 1*time.Second)
+
+	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+
+	prebuildClient := v1.NewPrebuildsServiceClient(conn)
+
+	_, err = prebuildClient.GetPrebuild(ctx, &v1.GetPrebuildRequest{})
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	_, err = prebuildClient.GetRunningPrebuild(ctx, &v1.GetRunningPrebuildRequest{})
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	listenToStatusStream, err := prebuildClient.ListenToPrebuildStatus(ctx, &v1.ListenToPrebuildStatusRequest{})
+	require.NoError(t, err)
+	_, err = listenToStatusStream.Recv()
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	listenToLogsStream, err := prebuildClient.ListenToPrebuildLogs(ctx, &v1.ListenToPrebuildLogsRequest{})
+	require.NoError(t, err)
+	_, err = listenToLogsStream.Recv()
 	requireErrorStatusCode(t, codes.Unimplemented, err)
 }
 
