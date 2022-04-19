@@ -263,6 +263,11 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		}
 
 		log.WithFields(wbs.Session.OWI()).WithField("configuredShift", wbs.FSShift).WithField("fwb", wbs.Session.FullWorkspaceBackup).Info("fs-shift using fuse")
+
+		if err := wbs.createWorkspaceCgroup(ctx, wscontainerID); err != nil {
+			return nil, err
+		}
+
 		return &api.PrepareForUserNSResponse{
 			FsShift:             api.FSShiftMethod_FUSE,
 			FullWorkspaceBackup: wbs.Session.FullWorkspaceBackup,
@@ -287,29 +292,46 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
 	}
 
-	unified, err := cgroups.IsUnifiedCgroupSetup()
-	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
-	}
-
-	if unified {
-		cgroupBase, err := rt.ContainerCGroupPath(ctx, wscontainerID)
-		if err != nil {
-			log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot find workspace container CGroup path")
-			return nil, status.Errorf(codes.NotFound, "cannot find workspace container cgroup")
-		}
-
-		err = evacuateToCGroup(ctx, wbs.CGroupMountPoint, cgroupBase, "workspace")
-		if err != nil {
-			log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot create workspace cgroup")
-			return nil, status.Errorf(codes.FailedPrecondition, "cannot create workspace cgroup")
-		}
+	if err := wbs.createWorkspaceCgroup(ctx, wscontainerID); err != nil {
+		return nil, err
 	}
 
 	return &api.PrepareForUserNSResponse{
 		FsShift:             api.FSShiftMethod_SHIFTFS,
 		FullWorkspaceBackup: wbs.Session.FullWorkspaceBackup,
 	}, nil
+}
+
+func (wbs *InWorkspaceServiceServer) createWorkspaceCgroup(ctx context.Context, wscontainerID container.ID) error {
+	rt := wbs.Uidmapper.Runtime
+	if rt == nil {
+		return status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+	}
+
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		// log error and do not expose it to the user
+		log.WithError(err).Error("could not determine cgroup setup")
+		return status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
+	}
+
+	if !unified {
+		return nil
+	}
+
+	cgroupBase, err := rt.ContainerCGroupPath(ctx, wscontainerID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot find workspace container CGroup path")
+		return status.Errorf(codes.NotFound, "cannot find workspace container cgroup")
+	}
+
+	err = evacuateToCGroup(ctx, wbs.CGroupMountPoint, cgroupBase, "workspace")
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot create workspace cgroup")
+		return status.Errorf(codes.FailedPrecondition, "cannot create workspace cgroup")
+	}
+
+	return nil
 }
 
 func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *api.SetupPairVethsRequest) (*api.SetupPairVethsResponse, error) {
@@ -896,9 +918,11 @@ func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *ap
 func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *api.EvacuateCGroupRequest) (*api.EvacuateCGroupResponse, error) {
 	unified, err := cgroups.IsUnifiedCgroupSetup()
 	if err != nil {
+		// log error and do not expose it to the user
+		log.WithError(err).Error("could not determine cgroup setup")
 		return nil, status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
 	}
-	if unified {
+	if !unified {
 		return &api.EvacuateCGroupResponse{}, nil
 	}
 
