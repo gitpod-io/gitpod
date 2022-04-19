@@ -602,7 +602,7 @@ export class UserController {
         newUser.name = authUser.authName;
         newUser.fullName = authUser.name || undefined;
         newUser.avatarUrl = authUser.avatarUrl;
-        newUser.blocked = tosFlowInfo.isBlocked;
+        newUser.blocked = newUser.blocked || tosFlowInfo.isBlocked;
     }
 
     protected getSorryUrl(message: string) {
