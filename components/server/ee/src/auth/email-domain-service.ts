@@ -25,7 +25,7 @@ export class EMailDomainServiceImpl implements EMailDomainService {
 
     async isBlocked(email: string): Promise<boolean> {
         const { domain } = this.parseMail(email);
-        return !(await this.domainFilterDb.filter(domain));
+        return this.domainFilterDb.isBlocked(domain);
     }
 
     async hasEducationalInstitutionSuffix(email: string): Promise<boolean> {
