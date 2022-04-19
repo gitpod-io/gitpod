@@ -70,6 +70,7 @@ spec:
               yq e -i '.domain = "{{repl ConfigOption "domain" }}"' "${CONFIG_FILE}"
               yq e -i '.license.kind = "secret"' "${CONFIG_FILE}"
               yq e -i '.license.name = "gitpod-license"' "${CONFIG_FILE}"
+              yq e -i '.dropImageRepo = true' "${CONFIG_FILE}"
 
               if [ '{{repl and (ConfigOptionEquals "db_incluster" "0") (ConfigOptionEquals "db_cloudsql_enabled" "1") }}' = "true" ];
               then

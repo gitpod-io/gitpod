@@ -97,6 +97,8 @@ type Config struct {
 
 	CustomCACert *ObjectRef `json:"customCACert,omitempty"`
 
+	DropImageRepo *bool `json:"dropImageRepo,omitempty"`
+
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
 

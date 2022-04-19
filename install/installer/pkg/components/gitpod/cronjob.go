@@ -53,7 +53,7 @@ func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Containers: []v1.Container{
 									{
 										Name:            installationTelemetryComponent,
-										Image:           common.ImageName(ctx.Config.Repository, "installation-telemetry", ctx.VersionManifest.Components.InstallationTelemetry.Version),
+										Image:           ctx.ImageName(ctx.Config.Repository, "installation-telemetry", ctx.VersionManifest.Components.InstallationTelemetry.Version),
 										ImagePullPolicy: v1.PullIfNotPresent,
 										Args: []string{
 											"send",

@@ -32,7 +32,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		license = licenseFilePath
 	}
 
-	workspaceImage := common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion)
+	workspaceImage := ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion)
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.WorkspaceDefaults.WorkspaceImage != "" {
 			workspaceImage = cfg.WebApp.Server.WorkspaceDefaults.WorkspaceImage

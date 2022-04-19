@@ -196,9 +196,11 @@ var Helm = common.CompositeHelmFunc(
 					helm.KeyValue(fmt.Sprintf("rabbitmq.extraSecrets.%s.username", InClusterDbSecret), username),
 					helm.KeyValue(fmt.Sprintf("rabbitmq.extraSecrets.%s.password", InClusterDbSecret), password),
 					helm.ImagePullSecrets("rabbitmq.image.pullSecrets", cfg),
-					helm.KeyValue("rabbitmq.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
+					helm.KeyValue("rabbitmq.image.registry", ""),
+					helm.KeyValue("rabbitmq.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/rabbitmq")),
 					helm.ImagePullSecrets("volumePermissions.image.pullSecrets", cfg),
-					helm.KeyValue("rabbitmq.volumePermissions.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
+					helm.KeyValue("rabbitmq.volumePermissions.image.registry", ""),
+					helm.KeyValue("rabbitmq.volumePermissions.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/bitnami-shell")),
 
 					helm.KeyValue("rabbitmq.livenessProbe.initialDelaySeconds", "30"),
 				},

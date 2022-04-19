@@ -41,7 +41,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}},
 		Containers: []corev1.Container{{
 			Name:            Component,
-			Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ContentService.Version),
+			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ContentService.Version),
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			Args: []string{
 				"run",

@@ -65,7 +65,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Privileged:   pointer.Bool(false),
 								RunAsNonRoot: pointer.Bool(false),
 							},
-							Image: common.ImageName(ImageRepo, ImageName, ImageVersion),
+							Image: ctx.ImageName(ImageRepo, ImageName, ImageVersion),
 							Command: []string{
 								"/cloud_sql_proxy",
 								"-dir=/cloudsql",

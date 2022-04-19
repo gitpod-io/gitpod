@@ -130,7 +130,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Volumes: volumes,
 						InitContainers: []corev1.Container{{
 							Name:            "sysctl",
-							Image:           common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), InitContainerImage, InitContainerTag),
+							Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), InitContainerImage, InitContainerTag),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(true),
@@ -143,7 +143,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}},
 						Containers: []corev1.Container{{
 							Name:            "kube-rbac-proxy",
-							Image:           common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
+							Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Args: []string{
 								"--v=10",
@@ -178,7 +178,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 						}, {
 							Name:            Component,
-							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Proxy.Version),
+							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Proxy.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{

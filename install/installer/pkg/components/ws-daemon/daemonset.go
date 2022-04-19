@@ -32,7 +32,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	initContainers := []corev1.Container{
 		{
 			Name:  "disable-kube-health-monitor",
-			Image: common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/ubuntu", "20.04"),
+			Image: ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/ubuntu", "20.04"),
 			Command: []string{
 				"/usr/bin/nsenter",
 				"-t",
@@ -61,7 +61,7 @@ fi
 		},
 		{
 			Name:  "seccomp-profile-installer",
-			Image: common.ImageName(cfg.Repository, "seccomp-profile-installer", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.SeccompProfileInstaller.Version),
+			Image: ctx.ImageName(cfg.Repository, "seccomp-profile-installer", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.SeccompProfileInstaller.Version),
 			Command: []string{
 				"/bin/sh",
 				"-c",
@@ -75,7 +75,7 @@ fi
 		},
 		{
 			Name:  "sysctl",
-			Image: common.ImageName(cfg.Repository, "ws-daemon", ctx.VersionManifest.Components.WSDaemon.Version),
+			Image: ctx.ImageName(cfg.Repository, "ws-daemon", ctx.VersionManifest.Components.WSDaemon.Version),
 			Command: []string{
 				"sh",
 				"-c",
@@ -97,7 +97,7 @@ fi
 	if cfg.Workspace.Runtime.FSShiftMethod == config.FSShiftShiftFS {
 		initContainers = append(initContainers, corev1.Container{
 			Name:  "shiftfs-module-loader",
-			Image: common.ImageName(cfg.Repository, "shiftfs-module-loader", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.ShiftFSModuleLoader.Version),
+			Image: ctx.ImageName(cfg.Repository, "shiftfs-module-loader", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.ShiftFSModuleLoader.Version),
 			VolumeMounts: []corev1.VolumeMount{{
 				Name:      "node-linux-src",
 				ReadOnly:  true,
@@ -190,7 +190,7 @@ fi
 		Containers: []corev1.Container{
 			{
 				Name:  Component,
-				Image: common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSDaemon.Version),
+				Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSDaemon.Version),
 				Args: []string{
 					"run",
 					"--config",

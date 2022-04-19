@@ -51,7 +51,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					Containers: []corev1.Container{{
 						Name:            Component,
-						Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.AgentSmith.Version),
+						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.AgentSmith.Version),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Args:            []string{"run", "--config", "/config/config.json"},
 						Resources: corev1.ResourceRequirements{
