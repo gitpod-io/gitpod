@@ -68,7 +68,7 @@ export class EmailDomainFilterDBSpec {
         expect(actual2, "isBlocked").to.equal(true);
 
         const actual3 = await this.db.isBlocked("sub.gitpod.io.xyz");
-        expect(actual3, "isBlocked").to.equal(false);
+        expect(actual3, "isBlocked").to.equal(true);
     }
 
     @test public async filterSimple_guard_against_blocking_everyone() {
