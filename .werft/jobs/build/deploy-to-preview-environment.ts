@@ -673,9 +673,27 @@ async function addDNSRecord(werft: Werft, namespace: string, domain: string, isL
     }
 
     await Promise.all([
-        createDNSRecord(domain, 'gitpod-dev-com', coreDevIngressIP, installerSlices.DNS_ADD_RECORD),
-        createDNSRecord(`*.${domain}`, 'gitpod-dev-com', coreDevIngressIP, installerSlices.DNS_ADD_RECORD),
-        createDNSRecord(`*.ws-dev.${domain}`, 'gitpod-dev-com', wsProxyLBIP, installerSlices.DNS_ADD_RECORD),
+        createDNSRecord({
+            domain,
+            projectId: "gitpod-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: coreDevIngressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `*.${domain}`,
+            projectId: "gitpod-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: coreDevIngressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `*.ws-dev.${domain}`,
+            projectId: "gitpod-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: wsProxyLBIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
     ])
     werft.done(installerSlices.DNS_ADD_RECORD);
 }
@@ -702,9 +720,27 @@ async function addVMDNSRecord(werft: Werft, name: string, domain: string) {
     werft.log(installerSlices.DNS_ADD_RECORD, "Get loadbalancer IP: " + proxyLBIP);
 
     await Promise.all([
-        createDNSRecord(domain, 'preview-gitpod-dev-com', ingressIP, installerSlices.DNS_ADD_RECORD),
-        createDNSRecord(`*.${domain}`, 'preview-gitpod-dev-com', ingressIP, installerSlices.DNS_ADD_RECORD),
-        createDNSRecord(`*.ws.${domain}`, 'preview-gitpod-dev-com', proxyLBIP, installerSlices.DNS_ADD_RECORD),
+        createDNSRecord({
+            domain: domain,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'preview-gitpod-dev-com',
+            IP: ingressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `*.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'preview-gitpod-dev-com',
+            IP: ingressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `*.ws.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'preview-gitpod-dev-com',
+            IP: proxyLBIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
     ])
     werft.done(installerSlices.DNS_ADD_RECORD);
 }
