@@ -85,10 +85,10 @@ function issueCertificate(werft: Werft, config: JobConfig) {
 function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
     if (shouldCreateVM(config)) {
         createVM(werft, config)
+        applyLoadBalancer({ name: config.previewEnvironment.destname })
     } else {
         werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", false)
     }
-    applyLoadBalancer({ name: config.previewEnvironment.destname })
     werft.done(prepareSlices.BOOT_VM)
 }
 
