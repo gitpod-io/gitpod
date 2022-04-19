@@ -10,17 +10,8 @@ import (
 
 const (
 	cacerts      = "cacerts"
-	etcSSLCerts  = "/etc/ssl/certs"
 	caVolumeName = "gitpod-ca-certificate"
 )
-
-func InternalCAVolumeMount() *corev1.VolumeMount {
-	return &corev1.VolumeMount{
-		Name:      cacerts,
-		ReadOnly:  true,
-		MountPath: etcSSLCerts,
-	}
-}
 
 func InternalCAVolume() *corev1.Volume {
 	return &corev1.Volume{

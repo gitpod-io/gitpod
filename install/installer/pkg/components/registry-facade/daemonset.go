@@ -37,20 +37,45 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		volumeMounts []corev1.VolumeMount
 	)
 
+	name := "config-certificates"
+	volumes = append(volumes, corev1.Volume{
+		Name: name,
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: common.RegistryFacadeTLSCertSecret,
+			},
+		},
+	})
+
+	volumeMounts = append(volumeMounts, corev1.VolumeMount{
+		Name:      name,
+		MountPath: "/mnt/certificates",
+	})
+
+	// Attach the proxy CA certificate as registry-facade seems to talk to
+	// the registry through the `proxy`
 	if ctx.Config.Certificate.Name != "" {
-		name := "config-certificates"
+		volumeName := "proxy-ca-cert"
 		volumes = append(volumes, corev1.Volume{
-			Name: name,
+			Name: volumeName,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: ctx.Config.Certificate.Name,
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "tls.crt",
+							Path: "ca.crt",
+						},
+					},
 				},
 			},
 		})
 
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      name,
-			MountPath: "/mnt/certificates",
+			ReadOnly:  true,
+			MountPath: "/etc/ssl/certs/proxy-ca.crt",
+			SubPath:   "ca.crt",
+			Name:      volumeName,
 		})
 	}
 
@@ -65,7 +90,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	name := "pull-secret"
+	name = "pull-secret"
 	var secretName string
 	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
 		secretName = dockerregistry.BuiltInRegistryAuth
@@ -237,7 +262,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									MountPath: "/mnt/pull-secret.json",
 									SubPath:   ".dockerconfigjson",
 								},
-								*common.InternalCAVolumeMount(),
 							},
 							volumeMounts...,
 						),
