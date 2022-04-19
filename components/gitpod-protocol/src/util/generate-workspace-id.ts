@@ -3,15 +3,19 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
+
 import randomNumber = require("random-number-csprng");
 
 export async function generateWorkspaceID(firstSegment?: string, secondSegment?: string): Promise<string> {
     const firstSeg = clean(firstSegment) || (await random(colors));
-    const secSeg = clean(secondSegment, Math.min(15, 23 - firstSeg.length)) || (await random(animals));
-    return firstSeg + "-" + secSeg + "-" + (await random(characters, 11));
+    const secSeg = clean(secondSegment) || (await random(animals));
+    function fit(makeFit: string, otherSeg: string) {
+        return makeFit.substring(0, Math.max(segLength, 2 * segLength - otherSeg.length));
+    }
+    return fit(firstSeg, secSeg) + "-" + fit(secSeg, firstSeg) + "-" + (await random(characters, segLength));
 }
 
-function clean(segment: string | undefined, maxChars: number = 15) {
+function clean(segment: string | undefined, maxChars: number = 16) {
     if (!segment) {
         return undefined;
     }
@@ -34,6 +38,8 @@ async function random(array: string[], length: number = 1): Promise<string> {
     }
     return result;
 }
+
+const segLength = 11;
 
 const characters = "abcdefghijklmnopqrstuvwxyz0123456789".split("");
 
