@@ -24,8 +24,8 @@ func TestServer_StartStop(t *testing.T) {
 	}()
 
 	baseserver.WaitForServerToBeReachable(t, srv, 3*time.Second)
-	require.Equal(t, "http://:::8765", srv.HTTPAddress())
-	require.Equal(t, ":::8766", srv.GRPCAddress())
+	require.Equal(t, "http://localhost:8765", srv.HTTPAddress())
+	require.Equal(t, "localhost:8766", srv.GRPCAddress())
 	require.NoError(t, srv.Close())
 }
 
