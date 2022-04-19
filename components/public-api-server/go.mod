@@ -2,7 +2,10 @@ module github.com/gitpod-io/gitpod/public-api-server
 
 go 1.17
 
-require github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+require (
+	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/public-api v0.0.0-00010101000000-000000000000
+)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -27,6 +30,8 @@ require (
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
+
+replace github.com/gitpod-io/gitpod/public-api => ../public-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.23.4 // leeway indirect from components/common-go:lib
 

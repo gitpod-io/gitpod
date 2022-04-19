@@ -141,7 +141,7 @@ func (s *Server) HTTPAddress() string {
 	}
 	protocol := "http"
 	addr := s.httpListener.Addr().(*net.TCPAddr)
-	return fmt.Sprintf("%s://%s:%d", protocol, addr.IP, addr.Port)
+	return fmt.Sprintf("%s://%s:%d", protocol, s.cfg.hostname, addr.Port)
 }
 
 // GRPCAddress returns address of the gRPC Server
@@ -151,11 +151,15 @@ func (s *Server) GRPCAddress() string {
 		return ""
 	}
 	addr := s.grpcListener.Addr().(*net.TCPAddr)
-	return fmt.Sprintf("%s:%d", addr.IP, addr.Port)
+	return fmt.Sprintf("%s:%d", s.cfg.hostname, addr.Port)
 }
 
 func (s *Server) HTTPMux() *http.ServeMux {
 	return s.httpMux
+}
+
+func (s *Server) GRPC() *grpc.Server {
+	return s.grpc
 }
 
 func (s *Server) close(ctx context.Context) error {

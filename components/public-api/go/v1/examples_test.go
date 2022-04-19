@@ -91,11 +91,11 @@ func ExampleStartWorkspace_WithImageBuildLogs() {
 	for {
 		status, _ := updates.Recv()
 		switch status.InstanceStatus.Phase {
-		case v1.WorkspaceInstancePhase_WORKSPACE_INSTANCE_PHASE_IMAGEBUILD:
+		case v1.WorkspaceInstanceStatus_PHASE_IMAGEBUILD:
 			go listenToImageBuildLogs(ctx, wsi.InstanceId)
-		case v1.WorkspaceInstancePhase_WORKSPACE_INSTANCE_PHASE_RUNNING,
-			v1.WorkspaceInstancePhase_WORKSPACE_INSTANCE_PHASE_STOPPING,
-			v1.WorkspaceInstancePhase_WORKSPACE_INSTANCE_PHASE_STOPPED:
+		case v1.WorkspaceInstanceStatus_PHASE_RUNNING,
+			v1.WorkspaceInstanceStatus_PHASE_STOPPING,
+			v1.WorkspaceInstanceStatus_PHASE_STOPPED:
 			return
 		}
 	}
