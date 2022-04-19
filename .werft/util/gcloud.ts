@@ -39,7 +39,10 @@ function getExternalIp(name: string, region = "europe-west1") {
 export async function createDNSRecord(domain: string, dnsZone: string, IP: string, slice: string): Promise<void> {
     const werft = getGlobalWerftInstance()
 
-    const dnsClient = new DNS({ projectId: 'gitpod-dev', keyFilename: GCLOUD_SERVICE_ACCOUNT_PATH })
+    const dnsClient = new DNS({
+        projectId: dnsZone === "gitpod-dev.com" ? "gitpod-dev" : "gitpod-core-dev",
+        keyFilename: GCLOUD_SERVICE_ACCOUNT_PATH,
+    });
     const zone = dnsClient.zone(dnsZone)
 
     if (!(await matchesExistingRecord(zone, domain, IP))) {

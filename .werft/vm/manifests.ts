@@ -140,6 +140,102 @@ spec:
 `
 }
 
+type LBServiceManifestOptions = {
+  name: string
+}
+
+export function LBServiceManifest({ name }: LBServiceManifestOptions) {
+    return `
+apiVersion: v1
+kind: Service
+metadata:
+  name: lb-${name}
+  namespace: loadbalancers
+spec:
+  ports:
+    - name: ssh-gateway
+      protocol: TCP
+      port: 22
+      targetPort: 22
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+  selector:
+    gitpod.io/lbName: ${name}
+  type: LoadBalancer
+  `
+}
+
+type LBDeployManifestOptions = {
+  name: string
+  destIP: string
+}
+
+export function LBDeployManifest({ name, destIP }: LBDeployManifestOptions) {
+  return `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lb-${name}
+  namespace: loadbalancers
+  labels:
+    gitpod.io/lbName: ${name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      gitpod.io/lbName: ${name}
+  template:
+    metadata:
+      name: lb
+      labels:
+        gitpod.io/lbName: ${name}
+    spec:
+      containers:
+        - name: lb-port-22
+          image: rancher/klipper-lb:v0.3.4
+          ports:
+            - name: lb-port-22
+              containerPort: 22
+              protocol: TCP
+          env:
+            - name: SRC_PORT
+              value: '22'
+            - name: DEST_PROTO
+              value: TCP
+            - name: DEST_PORT
+              value: '22'
+            - name: DEST_IPS
+              value: ${destIP}
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+        - name: lb-port-443
+          image: rancher/klipper-lb:v0.3.4
+          ports:
+            - name: lb-port-443
+              containerPort: 443
+              protocol: TCP
+          env:
+            - name: SRC_PORT
+              value: '443'
+            - name: DEST_PROTO
+              value: TCP
+            - name: DEST_PORT
+              value: '443'
+            - name: DEST_IPS
+              value: ${destIP}
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+      serviceAccount: proxy
+      enableServiceLinks: false
+`
+}
+
 type UserDataSecretManifestOptions = {
   vmName: string
   namespace: string,

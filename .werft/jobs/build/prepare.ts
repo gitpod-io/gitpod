@@ -5,6 +5,8 @@ import * as VM from '../../vm/vm'
 import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH } from "./const";
 import { issueMetaCerts } from './deploy-to-preview-environment';
 import { JobConfig } from './job-config';
+import * as Manifests from '../../vm/manifests';
+import { sleep } from '../../util/util';
 
 const phaseName = "prepare";
 const prepareSlices = {
@@ -86,6 +88,7 @@ function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
     } else {
         werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", false)
     }
+    applyLoadBalancer({ name: config.previewEnvironment.destname })
     werft.done(prepareSlices.BOOT_VM)
 }
 
@@ -107,4 +110,31 @@ function createVM(werft: Werft, config: JobConfig) {
     werft.log(prepareSlices.BOOT_VM, 'Creating  VM')
     VM.startVM({ name: config.previewEnvironment.destname })
     werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", true)
+}
+
+function applyLoadBalancer(option: { name: string }) {
+    const namespace = `preview-${option.name}`;
+    function kubectlApplyManifest(manifest: string, options?: { validate?: boolean }) {
+        exec(`
+            cat <<EOF | kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply --validate=${!!options?.validate} -f -
+${manifest}
+EOF
+        `);
+    }
+    function getVMServiceIP() {
+        let ip = exec(
+            `kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} -n ${namespace} get service proxy -o=jsonpath='{.spec.clusterIP}'`,
+            { silent: true },
+        );
+        if (ip.length > 4) {
+            return ip;
+        }
+        return null;
+    }
+    let forwardIP = getVMServiceIP();
+    if (forwardIP == null) {
+        throw new Error("Failed to get VM IP");
+    }
+    kubectlApplyManifest(Manifests.LBDeployManifest({ name: option.name, destIP: forwardIP }));
+    kubectlApplyManifest(Manifests.LBServiceManifest({ name: option.name }));
 }
