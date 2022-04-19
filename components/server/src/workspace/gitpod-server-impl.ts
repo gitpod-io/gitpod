@@ -1256,7 +1256,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getSuggestedContextURLs(ctx: TraceContext): Promise<string[]> {
         const user = this.checkAndBlockUser("getSuggestedContextURLs");
-        const suggestions: Array<{ url: string; lastUse?: string }> = [];
+        const suggestions: Array<{ url: string; lastUse?: string; priority: number }> = [];
         const logCtx: LogContext = { userId: user.id };
 
         // Fetch all data sources in parallel for maximum speed (don't await in this scope before `Promise.allSettled(promises)` below!)
@@ -1266,7 +1266,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         promises.push(
             this.getFeaturedRepositories(ctx)
                 .then((exampleRepos) => {
-                    exampleRepos.forEach((r) => suggestions.push({ url: r.url }));
+                    exampleRepos.forEach((r) => suggestions.push({ url: r.url, priority: 0 }));
                 })
                 .catch((error) => {
                     log.error(logCtx, "Could not get example repositories", error);
@@ -1281,7 +1281,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         authProviders.map(async (p) => {
                             try {
                                 const userRepos = await this.getProviderRepositoriesForUser(ctx, { provider: p.host });
-                                userRepos.forEach((r) => suggestions.push({ url: r.cloneUrl.replace(/\.git$/, "") }));
+                                userRepos.forEach((r) =>
+                                    suggestions.push({ url: r.cloneUrl.replace(/\.git$/, ""), priority: 5 }),
+                                );
                             } catch (error) {
                                 log.debug(logCtx, "Could not get user repositories from App for " + p.host, error);
                             }
@@ -1307,7 +1309,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                                     return;
                                 }
                                 const userRepos = await services.repositoryProvider.getUserRepos(user);
-                                userRepos.forEach((r) => suggestions.push({ url: r.replace(/\.git$/, "") }));
+                                userRepos.forEach((r) =>
+                                    suggestions.push({ url: r.replace(/\.git$/, ""), priority: 5 }),
+                                );
                             } catch (error) {
                                 log.debug(logCtx, "Could not get user repositories from host " + p.host, error);
                             }
@@ -1329,7 +1333,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         const repoUrl = Workspace.getFullRepositoryUrl(ws.workspace);
                         if (repoUrl) {
                             const lastUse = WorkspaceInfo.lastActiveISODate(ws);
-                            suggestions.push({ url: repoUrl, lastUse });
+                            suggestions.push({ url: repoUrl, lastUse, priority: 10 });
                         }
                     });
                 })
@@ -1343,7 +1347,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const uniqueURLs = new Set();
         return suggestions
             .sort((a, b) => {
-                // Most recently used first
+                // priority first
+                if (a.priority !== b.priority) {
+                    return a.priority < b.priority ? 1 : -1;
+                }
+                // Most recently used second
                 if (b.lastUse || a.lastUse) {
                     const la = a.lastUse || "";
                     const lb = b.lastUse || "";
