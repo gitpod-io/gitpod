@@ -16,6 +16,7 @@
                 "workspaceType": "regular"
             },
             "annotations": {
+                "blockio.resources.beta.kubernetes.io/pod": "ThrottledIO",
                 "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
                 "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
                 "gitpod/admission": "admit_everyone",
