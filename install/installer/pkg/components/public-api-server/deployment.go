@@ -53,7 +53,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Labels:    labels,
 					},
 					Spec: corev1.PodSpec{
-						Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
+						Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),
 						DNSPolicy:                     "ClusterFirst",

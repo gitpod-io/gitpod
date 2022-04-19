@@ -316,7 +316,7 @@ func KubeRBACProxyContainer(ctx *RenderContext) *corev1.Container {
 	}
 }
 
-func Affinity(orLabels ...string) *corev1.Affinity {
+func NodeAffinity(orLabels ...string) *corev1.Affinity {
 	var terms []corev1.NodeSelectorTerm
 	for _, lbl := range orLabels {
 		terms = append(terms, corev1.NodeSelectorTerm{

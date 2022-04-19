@@ -117,7 +117,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 					Spec: corev1.PodSpec{
-						Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
+						Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
 						PriorityClassName:             common.SystemNodeCritical,
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),

@@ -26,7 +26,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	podSpec := corev1.PodSpec{
 		PriorityClassName:  common.SystemNodeCritical,
-		Affinity:           common.Affinity(cluster.AffinityLabelWorkspaceServices),
+		Affinity:           common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
 		EnableServiceLinks: pointer.Bool(false),
 		ServiceAccountName: Component,
 		SecurityContext: &corev1.PodSecurityContext{
