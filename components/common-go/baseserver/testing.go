@@ -18,6 +18,8 @@ func NewForTests(t *testing.T, opts ...Option) *Server {
 	t.Helper()
 
 	defaultTestOpts := []Option{
+		WithGRPCPort(0),
+		WithHTTPPort(0),
 		WithCloseTimeout(1 * time.Second),
 	}
 
@@ -44,13 +46,13 @@ func WaitForServerToBeReachable(t *testing.T, srv *Server, timeout time.Duration
 		Timeout: tick,
 	}
 
-	healthURL := fmt.Sprintf("%s/ready", srv.HTTPAddress())
-
 	for {
 		select {
 		case <-ctx.Done():
 			require.Failf(t, "server did not become reachable in %s", timeout.String())
 		case <-ticker.C:
+			// We retrieve the URL on each tick, because the HTTPAddress is only available once the server is listening.
+			healthURL := fmt.Sprintf("%s/ready", srv.HTTPAddress())
 			_, err := client.Get(healthURL)
 			if err != nil {
 				continue

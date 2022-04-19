@@ -51,7 +51,7 @@ func WithHostname(hostname string) Option {
 func WithHTTPPort(port int) Option {
 	return func(cfg *config) error {
 		if port < 0 {
-			return fmt.Errorf("http port must be greater than 0, got: %d", port)
+			return fmt.Errorf("http must not be negative, got: %d", port)
 		}
 
 		cfg.httpPort = port
@@ -62,7 +62,7 @@ func WithHTTPPort(port int) Option {
 func WithGRPCPort(port int) Option {
 	return func(cfg *config) error {
 		if port < 0 {
-			return fmt.Errorf("grpc port must be greater than 0, got: %d", port)
+			return fmt.Errorf("grpc port must not be negative, got: %d", port)
 		}
 
 		cfg.grpcPort = port

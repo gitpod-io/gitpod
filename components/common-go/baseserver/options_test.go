@@ -41,14 +41,28 @@ func TestOptions(t *testing.T) {
 	}, cfg)
 }
 
-func TestWithTTPPort_ErrorsWithNegativePort(t *testing.T) {
-	_, err := evaluateOptions(defaultConfig(), WithHTTPPort(-1))
-	require.Error(t, err)
+func TestWithTTPPort(t *testing.T) {
+	t.Run("negative", func(t *testing.T) {
+		_, err := evaluateOptions(defaultConfig(), WithHTTPPort(-1))
+		require.Error(t, err)
+	})
+
+	t.Run("zero", func(t *testing.T) {
+		_, err := evaluateOptions(defaultConfig(), WithHTTPPort(0))
+		require.NoError(t, err)
+	})
 }
 
-func TestWithGRPCPort_ErrorsWithNegativePort(t *testing.T) {
-	_, err := evaluateOptions(defaultConfig(), WithGRPCPort(-1))
-	require.Error(t, err)
+func TestWithGRPCPort(t *testing.T) {
+	t.Run("negative", func(t *testing.T) {
+		_, err := evaluateOptions(defaultConfig(), WithGRPCPort(-1))
+		require.Error(t, err)
+	})
+
+	t.Run("zero", func(t *testing.T) {
+		_, err := evaluateOptions(defaultConfig(), WithGRPCPort(0))
+		require.NoError(t, err)
+	})
 }
 
 func TestLogger_ErrorsWithNilLogger(t *testing.T) {
