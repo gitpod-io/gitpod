@@ -16,7 +16,7 @@ import (
 
 func TestServer_StartStop(t *testing.T) {
 	// We don't use the helper NewForTests, because we want to control stopping ourselves.
-	srv, err := baseserver.New("server_test")
+	srv, err := baseserver.New("server_test", baseserver.WithHTTPPort(8765), baseserver.WithGRPCPort(8766))
 	require.NoError(t, err)
 
 	go func() {
@@ -24,6 +24,8 @@ func TestServer_StartStop(t *testing.T) {
 	}()
 
 	baseserver.WaitForServerToBeReachable(t, srv, 3*time.Second)
+	require.Equal(t, "http://:::8765", srv.HTTPAddress())
+	require.Equal(t, ":::8766", srv.GRPCAddress())
 	require.NoError(t, srv.Close())
 }
 
@@ -36,8 +38,8 @@ func TestServer_ServesReady(t *testing.T) {
 
 	baseserver.WaitForServerToBeReachable(t, srv, 3*time.Second)
 
-	readyUR := fmt.Sprintf("%s/ready", srv.HTTPAddress())
-	resp, err := http.Get(readyUR)
+	readyURL := fmt.Sprintf("%s/ready", srv.HTTPAddress())
+	resp, err := http.Get(readyURL)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 }

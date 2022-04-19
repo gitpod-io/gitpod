@@ -133,14 +133,25 @@ func (s *Server) Logger() *logrus.Entry {
 	return s.cfg.logger
 }
 
+// HTTPAddress returns address of the HTTP Server
+// HTTPAddress() is only available once the server has been started.
 func (s *Server) HTTPAddress() string {
+	if s.httpListener == nil {
+		return ""
+	}
 	protocol := "http"
-	return fmt.Sprintf("%s://%s:%d", protocol, s.cfg.hostname, s.cfg.httpPort)
+	addr := s.httpListener.Addr().(*net.TCPAddr)
+	return fmt.Sprintf("%s://%s:%d", protocol, addr.IP, addr.Port)
 }
 
+// GRPCAddress returns address of the gRPC Server
+// GRPCAddress() is only available once the server has been started.
 func (s *Server) GRPCAddress() string {
-	protocol := "http"
-	return fmt.Sprintf("%s://%s:%d", protocol, s.cfg.hostname, s.cfg.grpcPort)
+	if s.grpcListener == nil {
+		return ""
+	}
+	addr := s.grpcListener.Addr().(*net.TCPAddr)
+	return fmt.Sprintf("%s:%d", addr.IP, addr.Port)
 }
 
 func (s *Server) HTTPMux() *http.ServeMux {
