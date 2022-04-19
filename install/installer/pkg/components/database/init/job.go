@@ -33,7 +33,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: objectMeta,
 				Spec: corev1.PodSpec{
-					Affinity:           common.Affinity(cluster.AffinityLabelMeta),
+					Affinity:           common.NodeAffinity(cluster.AffinityLabelMeta),
 					RestartPolicy:      corev1.RestartPolicyNever,
 					ServiceAccountName: Component,
 					EnableServiceLinks: pointer.Bool(false),

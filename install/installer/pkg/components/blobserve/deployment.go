@@ -72,7 +72,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 					Spec: corev1.PodSpec{
-						Affinity:           common.Affinity(cluster.AffinityLabelWorkspaceServices),
+						Affinity:           common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
 						Volumes: []corev1.Volume{{

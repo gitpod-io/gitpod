@@ -112,7 +112,7 @@ func writeCharts(chart *charts.Chart) (string, error) {
 
 // AffinityYaml convert an affinity into a YAML byte array
 func AffinityYaml(orLabels ...string) ([]byte, error) {
-	affinities := common.Affinity(orLabels...)
+	affinities := common.NodeAffinity(orLabels...)
 
 	marshal, err := yaml.Marshal(affinities)
 	if err != nil {
