@@ -84,7 +84,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
-		*common.InternalCAVolume(),
 		*common.NewEmptyDirVolume("cacerts"),
 	}
 	volumeMounts := []corev1.VolumeMount{
@@ -103,7 +102,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MountPath: PullSecretFile,
 			SubPath:   ".dockerconfigjson",
 		},
-		*common.InternalCAVolumeMount(),
 	}
 	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
 		volumes = append(volumes, *vol)
