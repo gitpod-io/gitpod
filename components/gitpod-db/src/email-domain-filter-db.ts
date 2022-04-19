@@ -10,5 +10,9 @@ export const EmailDomainFilterDB = Symbol("EmailDomainFilterDB");
 export interface EmailDomainFilterDB {
     storeFilterEntry(entry: EmailDomainFilterEntry): Promise<void>;
 
+    /**
+     * @param emailDomain
+     * @returns false iff this emailDomain is meant to be blocked, aka "filtered out from the list"
+     */
     filter(emailDomain: string): Promise<boolean>;
 }
