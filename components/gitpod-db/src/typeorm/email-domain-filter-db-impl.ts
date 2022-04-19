@@ -33,7 +33,8 @@ export class EmailDomainFilterDBImpl implements EmailDomainFilterDB {
         const repo = await this.getRepo();
         const result = await repo
             .createQueryBuilder("entry")
-            .where(`entry.domain = :domain`, { domain: domain })
+            .where(`:domain LIKE entry.domain`, { domain: domain })
+            .andWhere(`entry.domain != '%'`) // this ensures we do not accidentally block _all_ new users
             .andWhere(`entry.negative = '1'`)
             .getOne();
         return !!result;
