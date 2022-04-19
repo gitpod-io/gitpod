@@ -15,11 +15,35 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
-type IOLimiterV2 struct {
+var clearLimits = ioLimitOptions{
+	WriteBytesPerSecond: 0,
+	ReadBytesPerSecond:  0,
+	WriteIOPs:           0,
+	ReadIOPs:            0,
+}
+
+type ioLimitOptions struct {
 	WriteBytesPerSecond int64
 	ReadBytesPerSecond  int64
-	ReadIOPs            int64
 	WriteIOPs           int64
+	ReadIOPs            int64
+}
+
+type IOLimiterV2 struct {
+	limits ioLimitOptions
+}
+
+func NewIOLimiterV2(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) *IOLimiterV2 {
+	limits := ioLimitOptions{
+		WriteBytesPerSecond: writeBytesPerSecond,
+		ReadBytesPerSecond:  readBytesPerSecond,
+		WriteIOPs:           writeIOPs,
+		ReadIOPs:            readIOPs,
+	}
+
+	return &IOLimiterV2{
+		limits: limits,
+	}
 }
 
 func (c *IOLimiterV2) Name() string  { return "iolimiter-v2" }
@@ -42,19 +66,15 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 				// Prior to shutting down though, we need to reset the IO limits to ensure we don't have
 				// processes stuck in the uninterruptable "D" (disk sleep) state. This would prevent the
 				// workspace pod from shutting down.
-				c.WriteBytesPerSecond = 0
-				c.ReadBytesPerSecond = 0
-				c.WriteIOPs = 0
-				c.ReadIOPs = 0
 
-				err := c.writeIOMax(ioMaxFile)
+				err := c.writeIOMax(ioMaxFile, clearLimits)
 				if err != nil {
 					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
 				}
 				log.WithField("cgroupPath", cgroupPath).Debug("stopping io limiting")
 				return
 			case <-ticker.C:
-				err := c.writeIOMax(ioMaxFile)
+				err := c.writeIOMax(ioMaxFile, c.limits)
 				if err != nil {
 					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
 				}
@@ -64,7 +84,7 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 	return nil
 }
 
-func (c *IOLimiterV2) writeIOMax(cgroupPath string) error {
+func (c *IOLimiterV2) writeIOMax(cgroupPath string, options ioLimitOptions) error {
 	iostat, err := os.ReadFile(filepath.Join(string(cgroupPath), "io.stat"))
 	if os.IsNotExist(err) {
 		// cgroup gone is ok due to the dispatch/container race
@@ -80,7 +100,6 @@ func (c *IOLimiterV2) writeIOMax(cgroupPath string) error {
 	// 9 block	Metadisk (RAID) devices
 	// source https://www.kernel.org/doc/Documentation/admin-guide/devices.txt
 	var classesToLimit = []string{"8", "9"}
-
 	var devs []string
 	for _, line := range strings.Split(string(iostat), "\n") {
 		fields := strings.Fields(line)
@@ -100,10 +119,10 @@ func (c *IOLimiterV2) writeIOMax(cgroupPath string) error {
 		limit := fmt.Sprintf(
 			"%s wbps=%s rbps=%s wiops=%s riops=%s",
 			dev,
-			getLimit(c.WriteBytesPerSecond),
-			getLimit(c.ReadBytesPerSecond),
-			getLimit(c.WriteIOPs),
-			getLimit(c.ReadIOPs),
+			getLimit(options.WriteBytesPerSecond),
+			getLimit(options.ReadBytesPerSecond),
+			getLimit(options.WriteIOPs),
+			getLimit(options.ReadIOPs),
 		)
 
 		log.WithField("limit", limit).WithField("ioMaxPath", ioMaxPath).Debug("creating io.max limit")
