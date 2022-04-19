@@ -37,7 +37,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 					InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx)},
 					Containers: []corev1.Container{{
 						Name:            Component,
-						Image:           common.ImageName(ctx.Config.Repository, "db-migrations", ctx.VersionManifest.Components.DBMigrations.Version),
+						Image:           ctx.ImageName(ctx.Config.Repository, "db-migrations", ctx.VersionManifest.Components.DBMigrations.Version),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Env: common.MergeEnv(
 							common.DatabaseEnv(&ctx.Config),

@@ -48,7 +48,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						Containers: []corev1.Container{{
 							Name:            Component,
-							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Dashboard.Version),
+							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Dashboard.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{

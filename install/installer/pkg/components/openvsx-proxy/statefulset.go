@@ -68,7 +68,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}},
 					Containers: []v1.Container{{
 						Name:  Component,
-						Image: common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.OpenVSXProxy.Version),
+						Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.OpenVSXProxy.Version),
 						Args:  []string{"/config/config.json"},
 						ReadinessProbe: &v1.Probe{
 							ProbeHandler: v1.ProbeHandler{
@@ -101,7 +101,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						),
 					}, {
 						Name:  "redis",
-						Image: common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/redis", "6.2"),
+						Image: ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/redis", "6.2"),
 						Command: []string{
 							"redis-server",
 							"/config/redis.conf",

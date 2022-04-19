@@ -35,7 +35,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Port:    ContainerPort,
 			Timeout: util.Duration(time.Second * 5),
 			Repos: map[string]blobserve.Repo{
-				common.RepoName(ctx.Config.Repository, ide.CodeIDEImage): {
+				ctx.RepoName(ctx.Config.Repository, ide.CodeIDEImage): {
 					PrePull: []string{},
 					Workdir: "/ide",
 					Replacements: []blobserve.StringReplacement{{
@@ -88,7 +88,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Replacement: "${supervisor}",
 					}},
 				},
-				common.RepoName(ctx.Config.Repository, workspace.SupervisorImage): {
+				ctx.RepoName(ctx.Config.Repository, workspace.SupervisorImage): {
 					PrePull: []string{},
 					Workdir: "/.supervisor/frontend",
 				},

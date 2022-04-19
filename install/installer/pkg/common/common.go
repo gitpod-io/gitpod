@@ -16,7 +16,6 @@ import (
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
-	"github.com/docker/distribution/reference"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -248,7 +247,7 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "database-waiter",
-		Image: ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
+		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
 		Args: []string{
 			"-v",
 			"database",
@@ -266,7 +265,7 @@ func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "msgbus-waiter",
-		Image: ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
+		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
 		Args: []string{
 			"-v",
 			"messagebus",
@@ -284,7 +283,7 @@ func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 func KubeRBACProxyContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "kube-rbac-proxy",
-		Image: ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
+		Image: ctx.ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 		Args: []string{
 			"--v=5",
 			"--logtostderr",
@@ -337,33 +336,6 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 			},
 		},
 	}
-}
-
-func RepoName(repo, name string) string {
-	var ref string
-	if repo == "" {
-		ref = name
-	} else {
-		ref = fmt.Sprintf("%s/%s", strings.TrimSuffix(repo, "/"), name)
-	}
-	pref, err := reference.ParseNormalizedNamed(ref)
-	if err != nil {
-		panic(fmt.Sprintf("cannot parse image repo %s: %v", ref, err))
-	}
-	return pref.String()
-}
-
-func ImageName(repo, name, tag string) string {
-	ref := fmt.Sprintf("%s:%s", RepoName(repo, name), tag)
-	pref, err := reference.ParseNamed(ref)
-	if err != nil {
-		panic(fmt.Sprintf("cannot parse image ref %s: %v", ref, err))
-	}
-	if _, ok := pref.(reference.Tagged); !ok {
-		panic(fmt.Sprintf("image ref %s has no tag: %v", ref, err))
-	}
-
-	return ref
 }
 
 // ObjectHash marshals the objects to YAML and produces a sha256 hash of the output.
