@@ -19,7 +19,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/cgroups"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sys/unix"
 	"golang.org/x/time/rate"
@@ -28,6 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
@@ -287,7 +287,12 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
 	}
 
-	if cgroups.Mode() == cgroups.Unified {
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
+	}
+
+	if unified {
 		cgroupBase, err := rt.ContainerCGroupPath(ctx, wscontainerID)
 		if err != nil {
 			log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot find workspace container CGroup path")
@@ -889,7 +894,11 @@ func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *ap
 // └── workspace       drwxr-xr-x 5 gitpodUid gitpodGid
 //     └── user        drwxr-xr-x 5 gitpodUid gitpodGid
 func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *api.EvacuateCGroupRequest) (*api.EvacuateCGroupResponse, error) {
-	if cgroups.Mode() != cgroups.Unified {
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
+	}
+	if unified {
 		return &api.EvacuateCGroupResponse{}, nil
 	}
 
