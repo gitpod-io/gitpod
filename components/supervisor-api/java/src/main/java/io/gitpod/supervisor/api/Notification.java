@@ -3922,6 +3922,4995 @@ public final class Notification {
 
   }
 
+  public interface NotifyActiveRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.NotifyActiveRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+     * @return Whether the open field is set.
+     */
+    boolean hasOpen();
+    /**
+     * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+     * @return The open.
+     */
+    io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData getOpen();
+    /**
+     * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+     */
+    io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenDataOrBuilder getOpenOrBuilder();
+
+    /**
+     * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+     * @return Whether the preview field is set.
+     */
+    boolean hasPreview();
+    /**
+     * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+     * @return The preview.
+     */
+    io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData getPreview();
+    /**
+     * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+     */
+    io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewDataOrBuilder getPreviewOrBuilder();
+
+    public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.ActionDataCase getActionDataCase();
+  }
+  /**
+   * Protobuf type {@code supervisor.NotifyActiveRequest}
+   */
+  public static final class NotifyActiveRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.NotifyActiveRequest)
+      NotifyActiveRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use NotifyActiveRequest.newBuilder() to construct.
+    private NotifyActiveRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private NotifyActiveRequest() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new NotifyActiveRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private NotifyActiveRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.Builder subBuilder = null;
+              if (actionDataCase_ == 1) {
+                subBuilder = ((io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) actionData_).toBuilder();
+              }
+              actionData_ =
+                  input.readMessage(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom((io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) actionData_);
+                actionData_ = subBuilder.buildPartial();
+              }
+              actionDataCase_ = 1;
+              break;
+            }
+            case 18: {
+              io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.Builder subBuilder = null;
+              if (actionDataCase_ == 2) {
+                subBuilder = ((io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) actionData_).toBuilder();
+              }
+              actionData_ =
+                  input.readMessage(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom((io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) actionData_);
+                actionData_ = subBuilder.buildPartial();
+              }
+              actionDataCase_ = 2;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.Notification.NotifyActiveRequest.class, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.Builder.class);
+    }
+
+    public interface OpenDataOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:supervisor.NotifyActiveRequest.OpenData)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <code>repeated string urls = 1;</code>
+       * @return A list containing the urls.
+       */
+      java.util.List<java.lang.String>
+          getUrlsList();
+      /**
+       * <code>repeated string urls = 1;</code>
+       * @return The count of urls.
+       */
+      int getUrlsCount();
+      /**
+       * <code>repeated string urls = 1;</code>
+       * @param index The index of the element to return.
+       * @return The urls at the given index.
+       */
+      java.lang.String getUrls(int index);
+      /**
+       * <code>repeated string urls = 1;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the urls at the given index.
+       */
+      com.google.protobuf.ByteString
+          getUrlsBytes(int index);
+
+      /**
+       * <pre>
+       * wait until all opened files are closed
+       * </pre>
+       *
+       * <code>bool await = 2;</code>
+       * @return The await.
+       */
+      boolean getAwait();
+    }
+    /**
+     * <pre>
+     * open a file in editor
+     * </pre>
+     *
+     * Protobuf type {@code supervisor.NotifyActiveRequest.OpenData}
+     */
+    public static final class OpenData extends
+        com.google.protobuf.GeneratedMessageV3 implements
+        // @@protoc_insertion_point(message_implements:supervisor.NotifyActiveRequest.OpenData)
+        OpenDataOrBuilder {
+    private static final long serialVersionUID = 0L;
+      // Use OpenData.newBuilder() to construct.
+      private OpenData(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+        super(builder);
+      }
+      private OpenData() {
+        urls_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      }
+
+      @java.lang.Override
+      @SuppressWarnings({"unused"})
+      protected java.lang.Object newInstance(
+          UnusedPrivateParameter unused) {
+        return new OpenData();
+      }
+
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+        return this.unknownFields;
+      }
+      private OpenData(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        this();
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        int mutable_bitField0_ = 0;
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+            com.google.protobuf.UnknownFieldSet.newBuilder();
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                java.lang.String s = input.readStringRequireUtf8();
+                if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+                  urls_ = new com.google.protobuf.LazyStringArrayList();
+                  mutable_bitField0_ |= 0x00000001;
+                }
+                urls_.add(s);
+                break;
+              }
+              case 16: {
+
+                await_ = input.readBool();
+                break;
+              }
+              default: {
+                if (!parseUnknownField(
+                    input, unknownFields, extensionRegistry, tag)) {
+                  done = true;
+                }
+                break;
+              }
+            }
+          }
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(this);
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(
+              e).setUnfinishedMessage(this);
+        } finally {
+          if (((mutable_bitField0_ & 0x00000001) != 0)) {
+            urls_ = urls_.getUnmodifiableView();
+          }
+          this.unknownFields = unknownFields.build();
+          makeExtensionsImmutable();
+        }
+      }
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_OpenData_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_OpenData_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.class, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.Builder.class);
+      }
+
+      public static final int URLS_FIELD_NUMBER = 1;
+      private com.google.protobuf.LazyStringList urls_;
+      /**
+       * <code>repeated string urls = 1;</code>
+       * @return A list containing the urls.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getUrlsList() {
+        return urls_;
+      }
+      /**
+       * <code>repeated string urls = 1;</code>
+       * @return The count of urls.
+       */
+      public int getUrlsCount() {
+        return urls_.size();
+      }
+      /**
+       * <code>repeated string urls = 1;</code>
+       * @param index The index of the element to return.
+       * @return The urls at the given index.
+       */
+      public java.lang.String getUrls(int index) {
+        return urls_.get(index);
+      }
+      /**
+       * <code>repeated string urls = 1;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the urls at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getUrlsBytes(int index) {
+        return urls_.getByteString(index);
+      }
+
+      public static final int AWAIT_FIELD_NUMBER = 2;
+      private boolean await_;
+      /**
+       * <pre>
+       * wait until all opened files are closed
+       * </pre>
+       *
+       * <code>bool await = 2;</code>
+       * @return The await.
+       */
+      @java.lang.Override
+      public boolean getAwait() {
+        return await_;
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        for (int i = 0; i < urls_.size(); i++) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 1, urls_.getRaw(i));
+        }
+        if (await_ != false) {
+          output.writeBool(2, await_);
+        }
+        unknownFields.writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        {
+          int dataSize = 0;
+          for (int i = 0; i < urls_.size(); i++) {
+            dataSize += computeStringSizeNoTag(urls_.getRaw(i));
+          }
+          size += dataSize;
+          size += 1 * getUrlsList().size();
+        }
+        if (await_ != false) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeBoolSize(2, await_);
+        }
+        size += unknownFields.getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData)) {
+          return super.equals(obj);
+        }
+        io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData other = (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) obj;
+
+        if (!getUrlsList()
+            .equals(other.getUrlsList())) return false;
+        if (getAwait()
+            != other.getAwait()) return false;
+        if (!unknownFields.equals(other.unknownFields)) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        if (getUrlsCount() > 0) {
+          hash = (37 * hash) + URLS_FIELD_NUMBER;
+          hash = (53 * hash) + getUrlsList().hashCode();
+        }
+        hash = (37 * hash) + AWAIT_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getAwait());
+        hash = (29 * hash) + unknownFields.hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * <pre>
+       * open a file in editor
+       * </pre>
+       *
+       * Protobuf type {@code supervisor.NotifyActiveRequest.OpenData}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:supervisor.NotifyActiveRequest.OpenData)
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenDataOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_OpenData_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_OpenData_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.class, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.Builder.class);
+        }
+
+        // Construct using io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+          super(parent);
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessageV3
+                  .alwaysUseFieldBuilders) {
+          }
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          urls_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          bitField0_ = (bitField0_ & ~0x00000001);
+          await_ = false;
+
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_OpenData_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData getDefaultInstanceForType() {
+          return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData build() {
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData buildPartial() {
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData result = new io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData(this);
+          int from_bitField0_ = bitField0_;
+          if (((bitField0_ & 0x00000001) != 0)) {
+            urls_ = urls_.getUnmodifiableView();
+            bitField0_ = (bitField0_ & ~0x00000001);
+          }
+          result.urls_ = urls_;
+          result.await_ = await_;
+          onBuilt();
+          return result;
+        }
+
+        @java.lang.Override
+        public Builder clone() {
+          return super.clone();
+        }
+        @java.lang.Override
+        public Builder setField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            java.lang.Object value) {
+          return super.setField(field, value);
+        }
+        @java.lang.Override
+        public Builder clearField(
+            com.google.protobuf.Descriptors.FieldDescriptor field) {
+          return super.clearField(field);
+        }
+        @java.lang.Override
+        public Builder clearOneof(
+            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+          return super.clearOneof(oneof);
+        }
+        @java.lang.Override
+        public Builder setRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            int index, java.lang.Object value) {
+          return super.setRepeatedField(field, index, value);
+        }
+        @java.lang.Override
+        public Builder addRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            java.lang.Object value) {
+          return super.addRepeatedField(field, value);
+        }
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) {
+            return mergeFrom((io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData other) {
+          if (other == io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.getDefaultInstance()) return this;
+          if (!other.urls_.isEmpty()) {
+            if (urls_.isEmpty()) {
+              urls_ = other.urls_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+            } else {
+              ensureUrlsIsMutable();
+              urls_.addAll(other.urls_);
+            }
+            onChanged();
+          }
+          if (other.getAwait() != false) {
+            setAwait(other.getAwait());
+          }
+          this.mergeUnknownFields(other.unknownFields);
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData parsedMessage = null;
+          try {
+            parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            parsedMessage = (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) e.getUnfinishedMessage();
+            throw e.unwrapIOException();
+          } finally {
+            if (parsedMessage != null) {
+              mergeFrom(parsedMessage);
+            }
+          }
+          return this;
+        }
+        private int bitField0_;
+
+        private com.google.protobuf.LazyStringList urls_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        private void ensureUrlsIsMutable() {
+          if (!((bitField0_ & 0x00000001) != 0)) {
+            urls_ = new com.google.protobuf.LazyStringArrayList(urls_);
+            bitField0_ |= 0x00000001;
+           }
+        }
+        /**
+         * <code>repeated string urls = 1;</code>
+         * @return A list containing the urls.
+         */
+        public com.google.protobuf.ProtocolStringList
+            getUrlsList() {
+          return urls_.getUnmodifiableView();
+        }
+        /**
+         * <code>repeated string urls = 1;</code>
+         * @return The count of urls.
+         */
+        public int getUrlsCount() {
+          return urls_.size();
+        }
+        /**
+         * <code>repeated string urls = 1;</code>
+         * @param index The index of the element to return.
+         * @return The urls at the given index.
+         */
+        public java.lang.String getUrls(int index) {
+          return urls_.get(index);
+        }
+        /**
+         * <code>repeated string urls = 1;</code>
+         * @param index The index of the value to return.
+         * @return The bytes of the urls at the given index.
+         */
+        public com.google.protobuf.ByteString
+            getUrlsBytes(int index) {
+          return urls_.getByteString(index);
+        }
+        /**
+         * <code>repeated string urls = 1;</code>
+         * @param index The index to set the value at.
+         * @param value The urls to set.
+         * @return This builder for chaining.
+         */
+        public Builder setUrls(
+            int index, java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureUrlsIsMutable();
+          urls_.set(index, value);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string urls = 1;</code>
+         * @param value The urls to add.
+         * @return This builder for chaining.
+         */
+        public Builder addUrls(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureUrlsIsMutable();
+          urls_.add(value);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string urls = 1;</code>
+         * @param values The urls to add.
+         * @return This builder for chaining.
+         */
+        public Builder addAllUrls(
+            java.lang.Iterable<java.lang.String> values) {
+          ensureUrlsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, urls_);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string urls = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearUrls() {
+          urls_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string urls = 1;</code>
+         * @param value The bytes of the urls to add.
+         * @return This builder for chaining.
+         */
+        public Builder addUrlsBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+          ensureUrlsIsMutable();
+          urls_.add(value);
+          onChanged();
+          return this;
+        }
+
+        private boolean await_ ;
+        /**
+         * <pre>
+         * wait until all opened files are closed
+         * </pre>
+         *
+         * <code>bool await = 2;</code>
+         * @return The await.
+         */
+        @java.lang.Override
+        public boolean getAwait() {
+          return await_;
+        }
+        /**
+         * <pre>
+         * wait until all opened files are closed
+         * </pre>
+         *
+         * <code>bool await = 2;</code>
+         * @param value The await to set.
+         * @return This builder for chaining.
+         */
+        public Builder setAwait(boolean value) {
+          
+          await_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * wait until all opened files are closed
+         * </pre>
+         *
+         * <code>bool await = 2;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearAwait() {
+          
+          await_ = false;
+          onChanged();
+          return this;
+        }
+        @java.lang.Override
+        public final Builder setUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return super.setUnknownFields(unknownFields);
+        }
+
+        @java.lang.Override
+        public final Builder mergeUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return super.mergeUnknownFields(unknownFields);
+        }
+
+
+        // @@protoc_insertion_point(builder_scope:supervisor.NotifyActiveRequest.OpenData)
+      }
+
+      // @@protoc_insertion_point(class_scope:supervisor.NotifyActiveRequest.OpenData)
+      private static final io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData();
+      }
+
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<OpenData>
+          PARSER = new com.google.protobuf.AbstractParser<OpenData>() {
+        @java.lang.Override
+        public OpenData parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return new OpenData(input, extensionRegistry);
+        }
+      };
+
+      public static com.google.protobuf.Parser<OpenData> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<OpenData> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
+    public interface PreviewDataOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:supervisor.NotifyActiveRequest.PreviewData)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <code>string url = 1;</code>
+       * @return The url.
+       */
+      java.lang.String getUrl();
+      /**
+       * <code>string url = 1;</code>
+       * @return The bytes for url.
+       */
+      com.google.protobuf.ByteString
+          getUrlBytes();
+
+      /**
+       * <pre>
+       * open the URL in a new browser tab
+       * </pre>
+       *
+       * <code>bool external = 2;</code>
+       * @return The external.
+       */
+      boolean getExternal();
+    }
+    /**
+     * <pre>
+     * ask editor to open a URL in its preview
+     * </pre>
+     *
+     * Protobuf type {@code supervisor.NotifyActiveRequest.PreviewData}
+     */
+    public static final class PreviewData extends
+        com.google.protobuf.GeneratedMessageV3 implements
+        // @@protoc_insertion_point(message_implements:supervisor.NotifyActiveRequest.PreviewData)
+        PreviewDataOrBuilder {
+    private static final long serialVersionUID = 0L;
+      // Use PreviewData.newBuilder() to construct.
+      private PreviewData(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+        super(builder);
+      }
+      private PreviewData() {
+        url_ = "";
+      }
+
+      @java.lang.Override
+      @SuppressWarnings({"unused"})
+      protected java.lang.Object newInstance(
+          UnusedPrivateParameter unused) {
+        return new PreviewData();
+      }
+
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+        return this.unknownFields;
+      }
+      private PreviewData(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        this();
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+            com.google.protobuf.UnknownFieldSet.newBuilder();
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                java.lang.String s = input.readStringRequireUtf8();
+
+                url_ = s;
+                break;
+              }
+              case 16: {
+
+                external_ = input.readBool();
+                break;
+              }
+              default: {
+                if (!parseUnknownField(
+                    input, unknownFields, extensionRegistry, tag)) {
+                  done = true;
+                }
+                break;
+              }
+            }
+          }
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(this);
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(
+              e).setUnfinishedMessage(this);
+        } finally {
+          this.unknownFields = unknownFields.build();
+          makeExtensionsImmutable();
+        }
+      }
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_PreviewData_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_PreviewData_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.class, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.Builder.class);
+      }
+
+      public static final int URL_FIELD_NUMBER = 1;
+      private volatile java.lang.Object url_;
+      /**
+       * <code>string url = 1;</code>
+       * @return The url.
+       */
+      @java.lang.Override
+      public java.lang.String getUrl() {
+        java.lang.Object ref = url_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs = 
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          url_ = s;
+          return s;
+        }
+      }
+      /**
+       * <code>string url = 1;</code>
+       * @return The bytes for url.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getUrlBytes() {
+        java.lang.Object ref = url_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          url_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int EXTERNAL_FIELD_NUMBER = 2;
+      private boolean external_;
+      /**
+       * <pre>
+       * open the URL in a new browser tab
+       * </pre>
+       *
+       * <code>bool external = 2;</code>
+       * @return The external.
+       */
+      @java.lang.Override
+      public boolean getExternal() {
+        return external_;
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(url_)) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 1, url_);
+        }
+        if (external_ != false) {
+          output.writeBool(2, external_);
+        }
+        unknownFields.writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(url_)) {
+          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, url_);
+        }
+        if (external_ != false) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeBoolSize(2, external_);
+        }
+        size += unknownFields.getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData)) {
+          return super.equals(obj);
+        }
+        io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData other = (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) obj;
+
+        if (!getUrl()
+            .equals(other.getUrl())) return false;
+        if (getExternal()
+            != other.getExternal()) return false;
+        if (!unknownFields.equals(other.unknownFields)) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        hash = (37 * hash) + URL_FIELD_NUMBER;
+        hash = (53 * hash) + getUrl().hashCode();
+        hash = (37 * hash) + EXTERNAL_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getExternal());
+        hash = (29 * hash) + unknownFields.hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * <pre>
+       * ask editor to open a URL in its preview
+       * </pre>
+       *
+       * Protobuf type {@code supervisor.NotifyActiveRequest.PreviewData}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:supervisor.NotifyActiveRequest.PreviewData)
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewDataOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_PreviewData_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_PreviewData_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.class, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.Builder.class);
+        }
+
+        // Construct using io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+          super(parent);
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessageV3
+                  .alwaysUseFieldBuilders) {
+          }
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          url_ = "";
+
+          external_ = false;
+
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_PreviewData_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData getDefaultInstanceForType() {
+          return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData build() {
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData buildPartial() {
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData result = new io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData(this);
+          result.url_ = url_;
+          result.external_ = external_;
+          onBuilt();
+          return result;
+        }
+
+        @java.lang.Override
+        public Builder clone() {
+          return super.clone();
+        }
+        @java.lang.Override
+        public Builder setField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            java.lang.Object value) {
+          return super.setField(field, value);
+        }
+        @java.lang.Override
+        public Builder clearField(
+            com.google.protobuf.Descriptors.FieldDescriptor field) {
+          return super.clearField(field);
+        }
+        @java.lang.Override
+        public Builder clearOneof(
+            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+          return super.clearOneof(oneof);
+        }
+        @java.lang.Override
+        public Builder setRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            int index, java.lang.Object value) {
+          return super.setRepeatedField(field, index, value);
+        }
+        @java.lang.Override
+        public Builder addRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            java.lang.Object value) {
+          return super.addRepeatedField(field, value);
+        }
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) {
+            return mergeFrom((io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData other) {
+          if (other == io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.getDefaultInstance()) return this;
+          if (!other.getUrl().isEmpty()) {
+            url_ = other.url_;
+            onChanged();
+          }
+          if (other.getExternal() != false) {
+            setExternal(other.getExternal());
+          }
+          this.mergeUnknownFields(other.unknownFields);
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData parsedMessage = null;
+          try {
+            parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            parsedMessage = (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) e.getUnfinishedMessage();
+            throw e.unwrapIOException();
+          } finally {
+            if (parsedMessage != null) {
+              mergeFrom(parsedMessage);
+            }
+          }
+          return this;
+        }
+
+        private java.lang.Object url_ = "";
+        /**
+         * <code>string url = 1;</code>
+         * @return The url.
+         */
+        public java.lang.String getUrl() {
+          java.lang.Object ref = url_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            url_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <code>string url = 1;</code>
+         * @return The bytes for url.
+         */
+        public com.google.protobuf.ByteString
+            getUrlBytes() {
+          java.lang.Object ref = url_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            url_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <code>string url = 1;</code>
+         * @param value The url to set.
+         * @return This builder for chaining.
+         */
+        public Builder setUrl(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  
+          url_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string url = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearUrl() {
+          
+          url_ = getDefaultInstance().getUrl();
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string url = 1;</code>
+         * @param value The bytes for url to set.
+         * @return This builder for chaining.
+         */
+        public Builder setUrlBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+          
+          url_ = value;
+          onChanged();
+          return this;
+        }
+
+        private boolean external_ ;
+        /**
+         * <pre>
+         * open the URL in a new browser tab
+         * </pre>
+         *
+         * <code>bool external = 2;</code>
+         * @return The external.
+         */
+        @java.lang.Override
+        public boolean getExternal() {
+          return external_;
+        }
+        /**
+         * <pre>
+         * open the URL in a new browser tab
+         * </pre>
+         *
+         * <code>bool external = 2;</code>
+         * @param value The external to set.
+         * @return This builder for chaining.
+         */
+        public Builder setExternal(boolean value) {
+          
+          external_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * open the URL in a new browser tab
+         * </pre>
+         *
+         * <code>bool external = 2;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearExternal() {
+          
+          external_ = false;
+          onChanged();
+          return this;
+        }
+        @java.lang.Override
+        public final Builder setUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return super.setUnknownFields(unknownFields);
+        }
+
+        @java.lang.Override
+        public final Builder mergeUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return super.mergeUnknownFields(unknownFields);
+        }
+
+
+        // @@protoc_insertion_point(builder_scope:supervisor.NotifyActiveRequest.PreviewData)
+      }
+
+      // @@protoc_insertion_point(class_scope:supervisor.NotifyActiveRequest.PreviewData)
+      private static final io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData();
+      }
+
+      public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<PreviewData>
+          PARSER = new com.google.protobuf.AbstractParser<PreviewData>() {
+        @java.lang.Override
+        public PreviewData parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return new PreviewData(input, extensionRegistry);
+        }
+      };
+
+      public static com.google.protobuf.Parser<PreviewData> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<PreviewData> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
+    private int actionDataCase_ = 0;
+    private java.lang.Object actionData_;
+    public enum ActionDataCase
+        implements com.google.protobuf.Internal.EnumLite,
+            com.google.protobuf.AbstractMessage.InternalOneOfEnum {
+      OPEN(1),
+      PREVIEW(2),
+      ACTIONDATA_NOT_SET(0);
+      private final int value;
+      private ActionDataCase(int value) {
+        this.value = value;
+      }
+      /**
+       * @param value The number of the enum to look for.
+       * @return The enum associated with the given number.
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static ActionDataCase valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static ActionDataCase forNumber(int value) {
+        switch (value) {
+          case 1: return OPEN;
+          case 2: return PREVIEW;
+          case 0: return ACTIONDATA_NOT_SET;
+          default: return null;
+        }
+      }
+      public int getNumber() {
+        return this.value;
+      }
+    };
+
+    public ActionDataCase
+    getActionDataCase() {
+      return ActionDataCase.forNumber(
+          actionDataCase_);
+    }
+
+    public static final int OPEN_FIELD_NUMBER = 1;
+    /**
+     * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+     * @return Whether the open field is set.
+     */
+    @java.lang.Override
+    public boolean hasOpen() {
+      return actionDataCase_ == 1;
+    }
+    /**
+     * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+     * @return The open.
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData getOpen() {
+      if (actionDataCase_ == 1) {
+         return (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) actionData_;
+      }
+      return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.getDefaultInstance();
+    }
+    /**
+     * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenDataOrBuilder getOpenOrBuilder() {
+      if (actionDataCase_ == 1) {
+         return (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) actionData_;
+      }
+      return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.getDefaultInstance();
+    }
+
+    public static final int PREVIEW_FIELD_NUMBER = 2;
+    /**
+     * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+     * @return Whether the preview field is set.
+     */
+    @java.lang.Override
+    public boolean hasPreview() {
+      return actionDataCase_ == 2;
+    }
+    /**
+     * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+     * @return The preview.
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData getPreview() {
+      if (actionDataCase_ == 2) {
+         return (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) actionData_;
+      }
+      return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.getDefaultInstance();
+    }
+    /**
+     * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewDataOrBuilder getPreviewOrBuilder() {
+      if (actionDataCase_ == 2) {
+         return (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) actionData_;
+      }
+      return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.getDefaultInstance();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (actionDataCase_ == 1) {
+        output.writeMessage(1, (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) actionData_);
+      }
+      if (actionDataCase_ == 2) {
+        output.writeMessage(2, (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) actionData_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (actionDataCase_ == 1) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) actionData_);
+      }
+      if (actionDataCase_ == 2) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) actionData_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.Notification.NotifyActiveRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.Notification.NotifyActiveRequest other = (io.gitpod.supervisor.api.Notification.NotifyActiveRequest) obj;
+
+      if (!getActionDataCase().equals(other.getActionDataCase())) return false;
+      switch (actionDataCase_) {
+        case 1:
+          if (!getOpen()
+              .equals(other.getOpen())) return false;
+          break;
+        case 2:
+          if (!getPreview()
+              .equals(other.getPreview())) return false;
+          break;
+        case 0:
+        default:
+      }
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      switch (actionDataCase_) {
+        case 1:
+          hash = (37 * hash) + OPEN_FIELD_NUMBER;
+          hash = (53 * hash) + getOpen().hashCode();
+          break;
+        case 2:
+          hash = (37 * hash) + PREVIEW_FIELD_NUMBER;
+          hash = (53 * hash) + getPreview().hashCode();
+          break;
+        case 0:
+        default:
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.Notification.NotifyActiveRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.NotifyActiveRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.NotifyActiveRequest)
+        io.gitpod.supervisor.api.Notification.NotifyActiveRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Notification.NotifyActiveRequest.class, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.Notification.NotifyActiveRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        actionDataCase_ = 0;
+        actionData_ = null;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest build() {
+        io.gitpod.supervisor.api.Notification.NotifyActiveRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest buildPartial() {
+        io.gitpod.supervisor.api.Notification.NotifyActiveRequest result = new io.gitpod.supervisor.api.Notification.NotifyActiveRequest(this);
+        if (actionDataCase_ == 1) {
+          if (openBuilder_ == null) {
+            result.actionData_ = actionData_;
+          } else {
+            result.actionData_ = openBuilder_.build();
+          }
+        }
+        if (actionDataCase_ == 2) {
+          if (previewBuilder_ == null) {
+            result.actionData_ = actionData_;
+          } else {
+            result.actionData_ = previewBuilder_.build();
+          }
+        }
+        result.actionDataCase_ = actionDataCase_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.Notification.NotifyActiveRequest) {
+          return mergeFrom((io.gitpod.supervisor.api.Notification.NotifyActiveRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.Notification.NotifyActiveRequest other) {
+        if (other == io.gitpod.supervisor.api.Notification.NotifyActiveRequest.getDefaultInstance()) return this;
+        switch (other.getActionDataCase()) {
+          case OPEN: {
+            mergeOpen(other.getOpen());
+            break;
+          }
+          case PREVIEW: {
+            mergePreview(other.getPreview());
+            break;
+          }
+          case ACTIONDATA_NOT_SET: {
+            break;
+          }
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.Notification.NotifyActiveRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.Notification.NotifyActiveRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int actionDataCase_ = 0;
+      private java.lang.Object actionData_;
+      public ActionDataCase
+          getActionDataCase() {
+        return ActionDataCase.forNumber(
+            actionDataCase_);
+      }
+
+      public Builder clearActionData() {
+        actionDataCase_ = 0;
+        actionData_ = null;
+        onChanged();
+        return this;
+      }
+
+
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenDataOrBuilder> openBuilder_;
+      /**
+       * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+       * @return Whether the open field is set.
+       */
+      @java.lang.Override
+      public boolean hasOpen() {
+        return actionDataCase_ == 1;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+       * @return The open.
+       */
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData getOpen() {
+        if (openBuilder_ == null) {
+          if (actionDataCase_ == 1) {
+            return (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) actionData_;
+          }
+          return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.getDefaultInstance();
+        } else {
+          if (actionDataCase_ == 1) {
+            return openBuilder_.getMessage();
+          }
+          return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+       */
+      public Builder setOpen(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData value) {
+        if (openBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          actionData_ = value;
+          onChanged();
+        } else {
+          openBuilder_.setMessage(value);
+        }
+        actionDataCase_ = 1;
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+       */
+      public Builder setOpen(
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.Builder builderForValue) {
+        if (openBuilder_ == null) {
+          actionData_ = builderForValue.build();
+          onChanged();
+        } else {
+          openBuilder_.setMessage(builderForValue.build());
+        }
+        actionDataCase_ = 1;
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+       */
+      public Builder mergeOpen(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData value) {
+        if (openBuilder_ == null) {
+          if (actionDataCase_ == 1 &&
+              actionData_ != io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.getDefaultInstance()) {
+            actionData_ = io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.newBuilder((io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) actionData_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            actionData_ = value;
+          }
+          onChanged();
+        } else {
+          if (actionDataCase_ == 1) {
+            openBuilder_.mergeFrom(value);
+          }
+          openBuilder_.setMessage(value);
+        }
+        actionDataCase_ = 1;
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+       */
+      public Builder clearOpen() {
+        if (openBuilder_ == null) {
+          if (actionDataCase_ == 1) {
+            actionDataCase_ = 0;
+            actionData_ = null;
+            onChanged();
+          }
+        } else {
+          if (actionDataCase_ == 1) {
+            actionDataCase_ = 0;
+            actionData_ = null;
+          }
+          openBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+       */
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.Builder getOpenBuilder() {
+        return getOpenFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+       */
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenDataOrBuilder getOpenOrBuilder() {
+        if ((actionDataCase_ == 1) && (openBuilder_ != null)) {
+          return openBuilder_.getMessageOrBuilder();
+        } else {
+          if (actionDataCase_ == 1) {
+            return (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) actionData_;
+          }
+          return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.OpenData open = 1;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenDataOrBuilder> 
+          getOpenFieldBuilder() {
+        if (openBuilder_ == null) {
+          if (!(actionDataCase_ == 1)) {
+            actionData_ = io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.getDefaultInstance();
+          }
+          openBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenDataOrBuilder>(
+                  (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.OpenData) actionData_,
+                  getParentForChildren(),
+                  isClean());
+          actionData_ = null;
+        }
+        actionDataCase_ = 1;
+        onChanged();;
+        return openBuilder_;
+      }
+
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewDataOrBuilder> previewBuilder_;
+      /**
+       * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+       * @return Whether the preview field is set.
+       */
+      @java.lang.Override
+      public boolean hasPreview() {
+        return actionDataCase_ == 2;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+       * @return The preview.
+       */
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData getPreview() {
+        if (previewBuilder_ == null) {
+          if (actionDataCase_ == 2) {
+            return (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) actionData_;
+          }
+          return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.getDefaultInstance();
+        } else {
+          if (actionDataCase_ == 2) {
+            return previewBuilder_.getMessage();
+          }
+          return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+       */
+      public Builder setPreview(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData value) {
+        if (previewBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          actionData_ = value;
+          onChanged();
+        } else {
+          previewBuilder_.setMessage(value);
+        }
+        actionDataCase_ = 2;
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+       */
+      public Builder setPreview(
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.Builder builderForValue) {
+        if (previewBuilder_ == null) {
+          actionData_ = builderForValue.build();
+          onChanged();
+        } else {
+          previewBuilder_.setMessage(builderForValue.build());
+        }
+        actionDataCase_ = 2;
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+       */
+      public Builder mergePreview(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData value) {
+        if (previewBuilder_ == null) {
+          if (actionDataCase_ == 2 &&
+              actionData_ != io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.getDefaultInstance()) {
+            actionData_ = io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.newBuilder((io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) actionData_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            actionData_ = value;
+          }
+          onChanged();
+        } else {
+          if (actionDataCase_ == 2) {
+            previewBuilder_.mergeFrom(value);
+          }
+          previewBuilder_.setMessage(value);
+        }
+        actionDataCase_ = 2;
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+       */
+      public Builder clearPreview() {
+        if (previewBuilder_ == null) {
+          if (actionDataCase_ == 2) {
+            actionDataCase_ = 0;
+            actionData_ = null;
+            onChanged();
+          }
+        } else {
+          if (actionDataCase_ == 2) {
+            actionDataCase_ = 0;
+            actionData_ = null;
+          }
+          previewBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.Builder getPreviewBuilder() {
+        return getPreviewFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+       */
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewDataOrBuilder getPreviewOrBuilder() {
+        if ((actionDataCase_ == 2) && (previewBuilder_ != null)) {
+          return previewBuilder_.getMessageOrBuilder();
+        } else {
+          if (actionDataCase_ == 2) {
+            return (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) actionData_;
+          }
+          return io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest.PreviewData preview = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewDataOrBuilder> 
+          getPreviewFieldBuilder() {
+        if (previewBuilder_ == null) {
+          if (!(actionDataCase_ == 2)) {
+            actionData_ = io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.getDefaultInstance();
+          }
+          previewBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewDataOrBuilder>(
+                  (io.gitpod.supervisor.api.Notification.NotifyActiveRequest.PreviewData) actionData_,
+                  getParentForChildren(),
+                  isClean());
+          actionData_ = null;
+        }
+        actionDataCase_ = 2;
+        onChanged();;
+        return previewBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.NotifyActiveRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.NotifyActiveRequest)
+    private static final io.gitpod.supervisor.api.Notification.NotifyActiveRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Notification.NotifyActiveRequest();
+    }
+
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<NotifyActiveRequest>
+        PARSER = new com.google.protobuf.AbstractParser<NotifyActiveRequest>() {
+      @java.lang.Override
+      public NotifyActiveRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new NotifyActiveRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<NotifyActiveRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<NotifyActiveRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface NotifyActiveResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.NotifyActiveResponse)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code supervisor.NotifyActiveResponse}
+   */
+  public static final class NotifyActiveResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.NotifyActiveResponse)
+      NotifyActiveResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use NotifyActiveResponse.newBuilder() to construct.
+    private NotifyActiveResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private NotifyActiveResponse() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new NotifyActiveResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private NotifyActiveResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.Notification.NotifyActiveResponse.class, io.gitpod.supervisor.api.Notification.NotifyActiveResponse.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.Notification.NotifyActiveResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.Notification.NotifyActiveResponse other = (io.gitpod.supervisor.api.Notification.NotifyActiveResponse) obj;
+
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.Notification.NotifyActiveResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.NotifyActiveResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.NotifyActiveResponse)
+        io.gitpod.supervisor.api.Notification.NotifyActiveResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Notification.NotifyActiveResponse.class, io.gitpod.supervisor.api.Notification.NotifyActiveResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.Notification.NotifyActiveResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveResponse getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Notification.NotifyActiveResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveResponse build() {
+        io.gitpod.supervisor.api.Notification.NotifyActiveResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveResponse buildPartial() {
+        io.gitpod.supervisor.api.Notification.NotifyActiveResponse result = new io.gitpod.supervisor.api.Notification.NotifyActiveResponse(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.Notification.NotifyActiveResponse) {
+          return mergeFrom((io.gitpod.supervisor.api.Notification.NotifyActiveResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.Notification.NotifyActiveResponse other) {
+        if (other == io.gitpod.supervisor.api.Notification.NotifyActiveResponse.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.Notification.NotifyActiveResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.Notification.NotifyActiveResponse) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.NotifyActiveResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.NotifyActiveResponse)
+    private static final io.gitpod.supervisor.api.Notification.NotifyActiveResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Notification.NotifyActiveResponse();
+    }
+
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<NotifyActiveResponse>
+        PARSER = new com.google.protobuf.AbstractParser<NotifyActiveResponse>() {
+      @java.lang.Override
+      public NotifyActiveResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new NotifyActiveResponse(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<NotifyActiveResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<NotifyActiveResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SubscribeActiveRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.SubscribeActiveRequest)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code supervisor.SubscribeActiveRequest}
+   */
+  public static final class SubscribeActiveRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.SubscribeActiveRequest)
+      SubscribeActiveRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SubscribeActiveRequest.newBuilder() to construct.
+    private SubscribeActiveRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SubscribeActiveRequest() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SubscribeActiveRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private SubscribeActiveRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_SubscribeActiveRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_SubscribeActiveRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.Notification.SubscribeActiveRequest.class, io.gitpod.supervisor.api.Notification.SubscribeActiveRequest.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.Notification.SubscribeActiveRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.Notification.SubscribeActiveRequest other = (io.gitpod.supervisor.api.Notification.SubscribeActiveRequest) obj;
+
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.Notification.SubscribeActiveRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.SubscribeActiveRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.SubscribeActiveRequest)
+        io.gitpod.supervisor.api.Notification.SubscribeActiveRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_SubscribeActiveRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_SubscribeActiveRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Notification.SubscribeActiveRequest.class, io.gitpod.supervisor.api.Notification.SubscribeActiveRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.Notification.SubscribeActiveRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_SubscribeActiveRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.SubscribeActiveRequest getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Notification.SubscribeActiveRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.SubscribeActiveRequest build() {
+        io.gitpod.supervisor.api.Notification.SubscribeActiveRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.SubscribeActiveRequest buildPartial() {
+        io.gitpod.supervisor.api.Notification.SubscribeActiveRequest result = new io.gitpod.supervisor.api.Notification.SubscribeActiveRequest(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.Notification.SubscribeActiveRequest) {
+          return mergeFrom((io.gitpod.supervisor.api.Notification.SubscribeActiveRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.Notification.SubscribeActiveRequest other) {
+        if (other == io.gitpod.supervisor.api.Notification.SubscribeActiveRequest.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.Notification.SubscribeActiveRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.Notification.SubscribeActiveRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.SubscribeActiveRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.SubscribeActiveRequest)
+    private static final io.gitpod.supervisor.api.Notification.SubscribeActiveRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Notification.SubscribeActiveRequest();
+    }
+
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SubscribeActiveRequest>
+        PARSER = new com.google.protobuf.AbstractParser<SubscribeActiveRequest>() {
+      @java.lang.Override
+      public SubscribeActiveRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new SubscribeActiveRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<SubscribeActiveRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SubscribeActiveRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.SubscribeActiveRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SubscribeActiveResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.SubscribeActiveResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>uint64 requestId = 1;</code>
+     * @return The requestId.
+     */
+    long getRequestId();
+
+    /**
+     * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+     * @return Whether the request field is set.
+     */
+    boolean hasRequest();
+    /**
+     * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+     * @return The request.
+     */
+    io.gitpod.supervisor.api.Notification.NotifyActiveRequest getRequest();
+    /**
+     * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+     */
+    io.gitpod.supervisor.api.Notification.NotifyActiveRequestOrBuilder getRequestOrBuilder();
+  }
+  /**
+   * Protobuf type {@code supervisor.SubscribeActiveResponse}
+   */
+  public static final class SubscribeActiveResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.SubscribeActiveResponse)
+      SubscribeActiveResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SubscribeActiveResponse.newBuilder() to construct.
+    private SubscribeActiveResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SubscribeActiveResponse() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SubscribeActiveResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private SubscribeActiveResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              requestId_ = input.readUInt64();
+              break;
+            }
+            case 18: {
+              io.gitpod.supervisor.api.Notification.NotifyActiveRequest.Builder subBuilder = null;
+              if (request_ != null) {
+                subBuilder = request_.toBuilder();
+              }
+              request_ = input.readMessage(io.gitpod.supervisor.api.Notification.NotifyActiveRequest.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(request_);
+                request_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_SubscribeActiveResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_SubscribeActiveResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.Notification.SubscribeActiveResponse.class, io.gitpod.supervisor.api.Notification.SubscribeActiveResponse.Builder.class);
+    }
+
+    public static final int REQUESTID_FIELD_NUMBER = 1;
+    private long requestId_;
+    /**
+     * <code>uint64 requestId = 1;</code>
+     * @return The requestId.
+     */
+    @java.lang.Override
+    public long getRequestId() {
+      return requestId_;
+    }
+
+    public static final int REQUEST_FIELD_NUMBER = 2;
+    private io.gitpod.supervisor.api.Notification.NotifyActiveRequest request_;
+    /**
+     * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+     * @return Whether the request field is set.
+     */
+    @java.lang.Override
+    public boolean hasRequest() {
+      return request_ != null;
+    }
+    /**
+     * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+     * @return The request.
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveRequest getRequest() {
+      return request_ == null ? io.gitpod.supervisor.api.Notification.NotifyActiveRequest.getDefaultInstance() : request_;
+    }
+    /**
+     * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveRequestOrBuilder getRequestOrBuilder() {
+      return getRequest();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (requestId_ != 0L) {
+        output.writeUInt64(1, requestId_);
+      }
+      if (request_ != null) {
+        output.writeMessage(2, getRequest());
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (requestId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(1, requestId_);
+      }
+      if (request_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getRequest());
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.Notification.SubscribeActiveResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.Notification.SubscribeActiveResponse other = (io.gitpod.supervisor.api.Notification.SubscribeActiveResponse) obj;
+
+      if (getRequestId()
+          != other.getRequestId()) return false;
+      if (hasRequest() != other.hasRequest()) return false;
+      if (hasRequest()) {
+        if (!getRequest()
+            .equals(other.getRequest())) return false;
+      }
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + REQUESTID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getRequestId());
+      if (hasRequest()) {
+        hash = (37 * hash) + REQUEST_FIELD_NUMBER;
+        hash = (53 * hash) + getRequest().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.Notification.SubscribeActiveResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.SubscribeActiveResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.SubscribeActiveResponse)
+        io.gitpod.supervisor.api.Notification.SubscribeActiveResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_SubscribeActiveResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_SubscribeActiveResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Notification.SubscribeActiveResponse.class, io.gitpod.supervisor.api.Notification.SubscribeActiveResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.Notification.SubscribeActiveResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        requestId_ = 0L;
+
+        if (requestBuilder_ == null) {
+          request_ = null;
+        } else {
+          request_ = null;
+          requestBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_SubscribeActiveResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.SubscribeActiveResponse getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Notification.SubscribeActiveResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.SubscribeActiveResponse build() {
+        io.gitpod.supervisor.api.Notification.SubscribeActiveResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.SubscribeActiveResponse buildPartial() {
+        io.gitpod.supervisor.api.Notification.SubscribeActiveResponse result = new io.gitpod.supervisor.api.Notification.SubscribeActiveResponse(this);
+        result.requestId_ = requestId_;
+        if (requestBuilder_ == null) {
+          result.request_ = request_;
+        } else {
+          result.request_ = requestBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.Notification.SubscribeActiveResponse) {
+          return mergeFrom((io.gitpod.supervisor.api.Notification.SubscribeActiveResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.Notification.SubscribeActiveResponse other) {
+        if (other == io.gitpod.supervisor.api.Notification.SubscribeActiveResponse.getDefaultInstance()) return this;
+        if (other.getRequestId() != 0L) {
+          setRequestId(other.getRequestId());
+        }
+        if (other.hasRequest()) {
+          mergeRequest(other.getRequest());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.Notification.SubscribeActiveResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.Notification.SubscribeActiveResponse) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private long requestId_ ;
+      /**
+       * <code>uint64 requestId = 1;</code>
+       * @return The requestId.
+       */
+      @java.lang.Override
+      public long getRequestId() {
+        return requestId_;
+      }
+      /**
+       * <code>uint64 requestId = 1;</code>
+       * @param value The requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestId(long value) {
+        
+        requestId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 requestId = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRequestId() {
+        
+        requestId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private io.gitpod.supervisor.api.Notification.NotifyActiveRequest request_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveRequestOrBuilder> requestBuilder_;
+      /**
+       * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+       * @return Whether the request field is set.
+       */
+      public boolean hasRequest() {
+        return requestBuilder_ != null || request_ != null;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+       * @return The request.
+       */
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest getRequest() {
+        if (requestBuilder_ == null) {
+          return request_ == null ? io.gitpod.supervisor.api.Notification.NotifyActiveRequest.getDefaultInstance() : request_;
+        } else {
+          return requestBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+       */
+      public Builder setRequest(io.gitpod.supervisor.api.Notification.NotifyActiveRequest value) {
+        if (requestBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          request_ = value;
+          onChanged();
+        } else {
+          requestBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+       */
+      public Builder setRequest(
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest.Builder builderForValue) {
+        if (requestBuilder_ == null) {
+          request_ = builderForValue.build();
+          onChanged();
+        } else {
+          requestBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+       */
+      public Builder mergeRequest(io.gitpod.supervisor.api.Notification.NotifyActiveRequest value) {
+        if (requestBuilder_ == null) {
+          if (request_ != null) {
+            request_ =
+              io.gitpod.supervisor.api.Notification.NotifyActiveRequest.newBuilder(request_).mergeFrom(value).buildPartial();
+          } else {
+            request_ = value;
+          }
+          onChanged();
+        } else {
+          requestBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+       */
+      public Builder clearRequest() {
+        if (requestBuilder_ == null) {
+          request_ = null;
+          onChanged();
+        } else {
+          request_ = null;
+          requestBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequest.Builder getRequestBuilder() {
+        
+        onChanged();
+        return getRequestFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRequestOrBuilder getRequestOrBuilder() {
+        if (requestBuilder_ != null) {
+          return requestBuilder_.getMessageOrBuilder();
+        } else {
+          return request_ == null ?
+              io.gitpod.supervisor.api.Notification.NotifyActiveRequest.getDefaultInstance() : request_;
+        }
+      }
+      /**
+       * <code>.supervisor.NotifyActiveRequest request = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Notification.NotifyActiveRequest, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveRequestOrBuilder> 
+          getRequestFieldBuilder() {
+        if (requestBuilder_ == null) {
+          requestBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.gitpod.supervisor.api.Notification.NotifyActiveRequest, io.gitpod.supervisor.api.Notification.NotifyActiveRequest.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveRequestOrBuilder>(
+                  getRequest(),
+                  getParentForChildren(),
+                  isClean());
+          request_ = null;
+        }
+        return requestBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.SubscribeActiveResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.SubscribeActiveResponse)
+    private static final io.gitpod.supervisor.api.Notification.SubscribeActiveResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Notification.SubscribeActiveResponse();
+    }
+
+    public static io.gitpod.supervisor.api.Notification.SubscribeActiveResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SubscribeActiveResponse>
+        PARSER = new com.google.protobuf.AbstractParser<SubscribeActiveResponse>() {
+      @java.lang.Override
+      public SubscribeActiveResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new SubscribeActiveResponse(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<SubscribeActiveResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SubscribeActiveResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.SubscribeActiveResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface NotifyActiveRespondRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.NotifyActiveRespondRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>uint64 requestId = 1;</code>
+     * @return The requestId.
+     */
+    long getRequestId();
+
+    /**
+     * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+     * @return Whether the response field is set.
+     */
+    boolean hasResponse();
+    /**
+     * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+     * @return The response.
+     */
+    io.gitpod.supervisor.api.Notification.NotifyActiveResponse getResponse();
+    /**
+     * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+     */
+    io.gitpod.supervisor.api.Notification.NotifyActiveResponseOrBuilder getResponseOrBuilder();
+  }
+  /**
+   * Protobuf type {@code supervisor.NotifyActiveRespondRequest}
+   */
+  public static final class NotifyActiveRespondRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.NotifyActiveRespondRequest)
+      NotifyActiveRespondRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use NotifyActiveRespondRequest.newBuilder() to construct.
+    private NotifyActiveRespondRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private NotifyActiveRespondRequest() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new NotifyActiveRespondRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private NotifyActiveRespondRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              requestId_ = input.readUInt64();
+              break;
+            }
+            case 18: {
+              io.gitpod.supervisor.api.Notification.NotifyActiveResponse.Builder subBuilder = null;
+              if (response_ != null) {
+                subBuilder = response_.toBuilder();
+              }
+              response_ = input.readMessage(io.gitpod.supervisor.api.Notification.NotifyActiveResponse.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(response_);
+                response_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRespondRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRespondRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest.class, io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest.Builder.class);
+    }
+
+    public static final int REQUESTID_FIELD_NUMBER = 1;
+    private long requestId_;
+    /**
+     * <code>uint64 requestId = 1;</code>
+     * @return The requestId.
+     */
+    @java.lang.Override
+    public long getRequestId() {
+      return requestId_;
+    }
+
+    public static final int RESPONSE_FIELD_NUMBER = 2;
+    private io.gitpod.supervisor.api.Notification.NotifyActiveResponse response_;
+    /**
+     * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+     * @return Whether the response field is set.
+     */
+    @java.lang.Override
+    public boolean hasResponse() {
+      return response_ != null;
+    }
+    /**
+     * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+     * @return The response.
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveResponse getResponse() {
+      return response_ == null ? io.gitpod.supervisor.api.Notification.NotifyActiveResponse.getDefaultInstance() : response_;
+    }
+    /**
+     * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveResponseOrBuilder getResponseOrBuilder() {
+      return getResponse();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (requestId_ != 0L) {
+        output.writeUInt64(1, requestId_);
+      }
+      if (response_ != null) {
+        output.writeMessage(2, getResponse());
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (requestId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(1, requestId_);
+      }
+      if (response_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getResponse());
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest other = (io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest) obj;
+
+      if (getRequestId()
+          != other.getRequestId()) return false;
+      if (hasResponse() != other.hasResponse()) return false;
+      if (hasResponse()) {
+        if (!getResponse()
+            .equals(other.getResponse())) return false;
+      }
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + REQUESTID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getRequestId());
+      if (hasResponse()) {
+        hash = (37 * hash) + RESPONSE_FIELD_NUMBER;
+        hash = (53 * hash) + getResponse().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.NotifyActiveRespondRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.NotifyActiveRespondRequest)
+        io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRespondRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRespondRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest.class, io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        requestId_ = 0L;
+
+        if (responseBuilder_ == null) {
+          response_ = null;
+        } else {
+          response_ = null;
+          responseBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRespondRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest build() {
+        io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest buildPartial() {
+        io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest result = new io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest(this);
+        result.requestId_ = requestId_;
+        if (responseBuilder_ == null) {
+          result.response_ = response_;
+        } else {
+          result.response_ = responseBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest) {
+          return mergeFrom((io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest other) {
+        if (other == io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest.getDefaultInstance()) return this;
+        if (other.getRequestId() != 0L) {
+          setRequestId(other.getRequestId());
+        }
+        if (other.hasResponse()) {
+          mergeResponse(other.getResponse());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private long requestId_ ;
+      /**
+       * <code>uint64 requestId = 1;</code>
+       * @return The requestId.
+       */
+      @java.lang.Override
+      public long getRequestId() {
+        return requestId_;
+      }
+      /**
+       * <code>uint64 requestId = 1;</code>
+       * @param value The requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestId(long value) {
+        
+        requestId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 requestId = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRequestId() {
+        
+        requestId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private io.gitpod.supervisor.api.Notification.NotifyActiveResponse response_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Notification.NotifyActiveResponse, io.gitpod.supervisor.api.Notification.NotifyActiveResponse.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveResponseOrBuilder> responseBuilder_;
+      /**
+       * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+       * @return Whether the response field is set.
+       */
+      public boolean hasResponse() {
+        return responseBuilder_ != null || response_ != null;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+       * @return The response.
+       */
+      public io.gitpod.supervisor.api.Notification.NotifyActiveResponse getResponse() {
+        if (responseBuilder_ == null) {
+          return response_ == null ? io.gitpod.supervisor.api.Notification.NotifyActiveResponse.getDefaultInstance() : response_;
+        } else {
+          return responseBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+       */
+      public Builder setResponse(io.gitpod.supervisor.api.Notification.NotifyActiveResponse value) {
+        if (responseBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          response_ = value;
+          onChanged();
+        } else {
+          responseBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+       */
+      public Builder setResponse(
+          io.gitpod.supervisor.api.Notification.NotifyActiveResponse.Builder builderForValue) {
+        if (responseBuilder_ == null) {
+          response_ = builderForValue.build();
+          onChanged();
+        } else {
+          responseBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+       */
+      public Builder mergeResponse(io.gitpod.supervisor.api.Notification.NotifyActiveResponse value) {
+        if (responseBuilder_ == null) {
+          if (response_ != null) {
+            response_ =
+              io.gitpod.supervisor.api.Notification.NotifyActiveResponse.newBuilder(response_).mergeFrom(value).buildPartial();
+          } else {
+            response_ = value;
+          }
+          onChanged();
+        } else {
+          responseBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+       */
+      public Builder clearResponse() {
+        if (responseBuilder_ == null) {
+          response_ = null;
+          onChanged();
+        } else {
+          response_ = null;
+          responseBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Notification.NotifyActiveResponse.Builder getResponseBuilder() {
+        
+        onChanged();
+        return getResponseFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Notification.NotifyActiveResponseOrBuilder getResponseOrBuilder() {
+        if (responseBuilder_ != null) {
+          return responseBuilder_.getMessageOrBuilder();
+        } else {
+          return response_ == null ?
+              io.gitpod.supervisor.api.Notification.NotifyActiveResponse.getDefaultInstance() : response_;
+        }
+      }
+      /**
+       * <code>.supervisor.NotifyActiveResponse response = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Notification.NotifyActiveResponse, io.gitpod.supervisor.api.Notification.NotifyActiveResponse.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveResponseOrBuilder> 
+          getResponseFieldBuilder() {
+        if (responseBuilder_ == null) {
+          responseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.gitpod.supervisor.api.Notification.NotifyActiveResponse, io.gitpod.supervisor.api.Notification.NotifyActiveResponse.Builder, io.gitpod.supervisor.api.Notification.NotifyActiveResponseOrBuilder>(
+                  getResponse(),
+                  getParentForChildren(),
+                  isClean());
+          response_ = null;
+        }
+        return responseBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.NotifyActiveRespondRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.NotifyActiveRespondRequest)
+    private static final io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest();
+    }
+
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<NotifyActiveRespondRequest>
+        PARSER = new com.google.protobuf.AbstractParser<NotifyActiveRespondRequest>() {
+      @java.lang.Override
+      public NotifyActiveRespondRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new NotifyActiveRespondRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<NotifyActiveRespondRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<NotifyActiveRespondRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveRespondRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface NotifyActiveRespondResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.NotifyActiveRespondResponse)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code supervisor.NotifyActiveRespondResponse}
+   */
+  public static final class NotifyActiveRespondResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.NotifyActiveRespondResponse)
+      NotifyActiveRespondResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use NotifyActiveRespondResponse.newBuilder() to construct.
+    private NotifyActiveRespondResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private NotifyActiveRespondResponse() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new NotifyActiveRespondResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private NotifyActiveRespondResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRespondResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRespondResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse.class, io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse other = (io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse) obj;
+
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.NotifyActiveRespondResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.NotifyActiveRespondResponse)
+        io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRespondResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRespondResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse.class, io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.Notification.internal_static_supervisor_NotifyActiveRespondResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse build() {
+        io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse buildPartial() {
+        io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse result = new io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse) {
+          return mergeFrom((io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse other) {
+        if (other == io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.NotifyActiveRespondResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.NotifyActiveRespondResponse)
+    private static final io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse();
+    }
+
+    public static io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<NotifyActiveRespondResponse>
+        PARSER = new com.google.protobuf.AbstractParser<NotifyActiveRespondResponse>() {
+      @java.lang.Override
+      public NotifyActiveRespondResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new NotifyActiveRespondResponse(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<NotifyActiveRespondResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<NotifyActiveRespondResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Notification.NotifyActiveRespondResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_NotifyRequest_descriptor;
   private static final 
@@ -3952,6 +8941,46 @@ public final class Notification {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_RespondResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_NotifyActiveRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_NotifyActiveRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_NotifyActiveRequest_OpenData_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_NotifyActiveRequest_OpenData_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_NotifyActiveRequest_PreviewData_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_NotifyActiveRequest_PreviewData_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_NotifyActiveResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_NotifyActiveResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_SubscribeActiveRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_SubscribeActiveRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_SubscribeActiveResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_SubscribeActiveResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_NotifyActiveRespondRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_NotifyActiveRespondRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_NotifyActiveRespondResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_NotifyActiveRespondResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -3972,17 +9001,41 @@ public final class Notification {
       "upervisor.NotifyRequest\"Q\n\016RespondReques" +
       "t\022\021\n\trequestId\030\001 \001(\004\022,\n\010response\030\002 \001(\0132\032" +
       ".supervisor.NotifyResponse\"\021\n\017RespondRes" +
-      "ponse2\315\002\n\023NotificationService\022`\n\006Notify\022" +
-      "\031.supervisor.NotifyRequest\032\032.supervisor." +
-      "NotifyResponse\"\037\202\323\344\223\002\031\"\027/v1/notification" +
-      "/notify\022n\n\tSubscribe\022\034.supervisor.Subscr" +
-      "ibeRequest\032\035.supervisor.SubscribeRespons" +
-      "e\"\"\202\323\344\223\002\034\022\032/v1/notification/subscribe0\001\022" +
-      "d\n\007Respond\022\032.supervisor.RespondRequest\032\033" +
-      ".supervisor.RespondResponse\" \202\323\344\223\002\032\"\030/v1" +
-      "/notification/respondBF\n\030io.gitpod.super" +
-      "visor.apiZ*github.com/gitpod-io/gitpod/s" +
-      "upervisor/apib\006proto3"
+      "ponse\"\365\001\n\023NotifyActiveRequest\0228\n\004open\030\001 " +
+      "\001(\0132(.supervisor.NotifyActiveRequest.Ope" +
+      "nDataH\000\022>\n\007preview\030\002 \001(\0132+.supervisor.No" +
+      "tifyActiveRequest.PreviewDataH\000\032\'\n\010OpenD" +
+      "ata\022\014\n\004urls\030\001 \003(\t\022\r\n\005await\030\002 \001(\010\032,\n\013Prev" +
+      "iewData\022\013\n\003url\030\001 \001(\t\022\020\n\010external\030\002 \001(\010B\r" +
+      "\n\013action_data\"\026\n\024NotifyActiveResponse\"\030\n" +
+      "\026SubscribeActiveRequest\"^\n\027SubscribeActi" +
+      "veResponse\022\021\n\trequestId\030\001 \001(\004\0220\n\007request" +
+      "\030\002 \001(\0132\037.supervisor.NotifyActiveRequest\"" +
+      "c\n\032NotifyActiveRespondRequest\022\021\n\trequest" +
+      "Id\030\001 \001(\004\0222\n\010response\030\002 \001(\0132 .supervisor." +
+      "NotifyActiveResponse\"\035\n\033NotifyActiveResp" +
+      "ondResponse2\353\005\n\023NotificationService\022`\n\006N" +
+      "otify\022\031.supervisor.NotifyRequest\032\032.super" +
+      "visor.NotifyResponse\"\037\202\323\344\223\002\031\"\027/v1/notifi" +
+      "cation/notify\022n\n\tSubscribe\022\034.supervisor." +
+      "SubscribeRequest\032\035.supervisor.SubscribeR" +
+      "esponse\"\"\202\323\344\223\002\034\022\032/v1/notification/subscr" +
+      "ibe0\001\022d\n\007Respond\022\032.supervisor.RespondReq" +
+      "uest\032\033.supervisor.RespondResponse\" \202\323\344\223\002" +
+      "\032\"\030/v1/notification/respond\022\207\001\n\017Subscrib" +
+      "eActive\022\".supervisor.SubscribeActiveRequ" +
+      "est\032#.supervisor.SubscribeActiveResponse" +
+      "\")\202\323\344\223\002#\"!/v1/notification/subscribe-act" +
+      "ive0\001\022y\n\014NotifyActive\022\037.supervisor.Notif" +
+      "yActiveRequest\032 .supervisor.NotifyActive" +
+      "Response\"&\202\323\344\223\002 \"\036/v1/notification/notif" +
+      "y-action\022\226\001\n\023NotifyActiveRespond\022&.super" +
+      "visor.NotifyActiveRespondRequest\032\'.super" +
+      "visor.NotifyActiveRespondResponse\".\202\323\344\223\002" +
+      "(\"&/v1/notification/notify-action-respon" +
+      "dBF\n\030io.gitpod.supervisor.apiZ*github.co" +
+      "m/gitpod-io/gitpod/supervisor/apib\006proto" +
+      "3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -4024,6 +9077,54 @@ public final class Notification {
     internal_static_supervisor_RespondResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_RespondResponse_descriptor,
+        new java.lang.String[] { });
+    internal_static_supervisor_NotifyActiveRequest_descriptor =
+      getDescriptor().getMessageTypes().get(6);
+    internal_static_supervisor_NotifyActiveRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_NotifyActiveRequest_descriptor,
+        new java.lang.String[] { "Open", "Preview", "ActionData", });
+    internal_static_supervisor_NotifyActiveRequest_OpenData_descriptor =
+      internal_static_supervisor_NotifyActiveRequest_descriptor.getNestedTypes().get(0);
+    internal_static_supervisor_NotifyActiveRequest_OpenData_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_NotifyActiveRequest_OpenData_descriptor,
+        new java.lang.String[] { "Urls", "Await", });
+    internal_static_supervisor_NotifyActiveRequest_PreviewData_descriptor =
+      internal_static_supervisor_NotifyActiveRequest_descriptor.getNestedTypes().get(1);
+    internal_static_supervisor_NotifyActiveRequest_PreviewData_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_NotifyActiveRequest_PreviewData_descriptor,
+        new java.lang.String[] { "Url", "External", });
+    internal_static_supervisor_NotifyActiveResponse_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_supervisor_NotifyActiveResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_NotifyActiveResponse_descriptor,
+        new java.lang.String[] { });
+    internal_static_supervisor_SubscribeActiveRequest_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_supervisor_SubscribeActiveRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_SubscribeActiveRequest_descriptor,
+        new java.lang.String[] { });
+    internal_static_supervisor_SubscribeActiveResponse_descriptor =
+      getDescriptor().getMessageTypes().get(9);
+    internal_static_supervisor_SubscribeActiveResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_SubscribeActiveResponse_descriptor,
+        new java.lang.String[] { "RequestId", "Request", });
+    internal_static_supervisor_NotifyActiveRespondRequest_descriptor =
+      getDescriptor().getMessageTypes().get(10);
+    internal_static_supervisor_NotifyActiveRespondRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_NotifyActiveRespondRequest_descriptor,
+        new java.lang.String[] { "RequestId", "Response", });
+    internal_static_supervisor_NotifyActiveRespondResponse_descriptor =
+      getDescriptor().getMessageTypes().get(11);
+    internal_static_supervisor_NotifyActiveRespondResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_NotifyActiveRespondResponse_descriptor,
         new java.lang.String[] { });
     com.google.protobuf.ExtensionRegistry registry =
         com.google.protobuf.ExtensionRegistry.newInstance();
