@@ -34,6 +34,7 @@ export async function trackSignup(user: User, request: Request, analytics: IAnal
         properties: {
             auth_provider: user.identities[0].authProviderId,
             qualified: !!request.cookies["gitpod-marketing-website-visited"],
+            blocked: user.blocked,
         },
     });
 }

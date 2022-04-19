@@ -583,7 +583,9 @@ export class UserController {
             await this.userService.updateUserIdentity(user, additionalIdentity, additionalToken);
         }
 
-        // const { isBlocked } = tosFlowInfo; // todo@alex: this setting is in conflict with the env var
+        if (user.blocked) {
+            log.warn({ user: user.id }, "user blocked on signup");
+        }
 
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
@@ -600,6 +602,7 @@ export class UserController {
         newUser.name = authUser.authName;
         newUser.fullName = authUser.name || undefined;
         newUser.avatarUrl = authUser.avatarUrl;
+        newUser.blocked = tosFlowInfo.isBlocked;
     }
 
     protected getSorryUrl(message: string) {
