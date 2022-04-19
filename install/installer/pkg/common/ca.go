@@ -14,23 +14,6 @@ const (
 	caVolumeName = "gitpod-ca-certificate"
 )
 
-func InternalCAVolumeMount() *corev1.VolumeMount {
-	return &corev1.VolumeMount{
-		Name:      cacerts,
-		ReadOnly:  true,
-		MountPath: etcSSLCerts,
-	}
-}
-
-func InternalCAVolume() *corev1.Volume {
-	return &corev1.Volume{
-		Name: caVolumeName,
-		VolumeSource: corev1.VolumeSource{
-			EmptyDir: &corev1.EmptyDirVolumeSource{},
-		},
-	}
-}
-
 // InternalCAContainer returns a container that updates the CA certificates
 // adding the internal Gitpod self-generated CA.
 // This is required for components that communicate with registry-facade
