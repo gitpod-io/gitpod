@@ -140,12 +140,20 @@ export class UserController {
                 res.sendStatus(401);
                 return;
             }
+            if (req.user.blocked) {
+                res.sendStatus(403);
+                return;
+            }
             this.ensureSafeReturnToParam(req);
             this.authenticator.authorize(req, res, next).catch((err) => log.error("authenticator.authorize", err));
         });
         router.get("/deauthorize", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!User.is(req.user)) {
                 res.sendStatus(401);
+                return;
+            }
+            if (req.user.blocked) {
+                res.sendStatus(403);
                 return;
             }
             this.ensureSafeReturnToParam(req);
