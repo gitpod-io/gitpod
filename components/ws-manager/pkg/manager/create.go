@@ -314,7 +314,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		// prevent cluster-autoscaler from removing a node
 		// https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-types-of-pods-can-prevent-ca-from-removing-a-node
 		"cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
-		"blockio.resources.beta.kubernetes.io/pod":       "ThrottledIO",
 	}
 	if req.Spec.Timeout != "" {
 		_, err := time.ParseDuration(req.Spec.Timeout)
