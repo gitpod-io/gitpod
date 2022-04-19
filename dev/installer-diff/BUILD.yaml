@@ -8,5 +8,7 @@ packages:
     env:
       - CGO_ENABLED=0
       - GOOS=linux
+    deps:
+      - components/common-go:lib
     config:
       packaging: app
