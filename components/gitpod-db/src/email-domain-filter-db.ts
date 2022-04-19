@@ -12,7 +12,7 @@ export interface EmailDomainFilterDB {
 
     /**
      * @param emailDomain
-     * @returns false iff this emailDomain is meant to be blocked, aka "filtered out from the list"
+     * @returns true iff this emailDomain is meant to be blocked
      */
-    filter(emailDomain: string): Promise<boolean>;
+    isBlocked(emailDomain: string): Promise<boolean>;
 }

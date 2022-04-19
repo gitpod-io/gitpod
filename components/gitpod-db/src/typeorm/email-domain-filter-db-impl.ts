@@ -29,13 +29,13 @@ export class EmailDomainFilterDBImpl implements EmailDomainFilterDB {
         await repo.save(entry);
     }
 
-    async filter(domain: string): Promise<boolean> {
+    async isBlocked(domain: string): Promise<boolean> {
         const repo = await this.getRepo();
         const result = await repo
             .createQueryBuilder("entry")
             .where(`entry.domain = :domain`, { domain: domain })
             .andWhere(`entry.negative = '1'`)
             .getOne();
-        return !result;
+        return !!result;
     }
 }
