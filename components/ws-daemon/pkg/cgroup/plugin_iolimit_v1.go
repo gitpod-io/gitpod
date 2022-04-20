@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/xerrors"
@@ -17,6 +18,8 @@ import (
 
 type IOLimiterV1 struct {
 	limits limits
+
+	cond *sync.Cond
 }
 
 type limits struct {
@@ -34,6 +37,7 @@ func NewIOLimiterV1(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs
 			WriteIOPS:           writeIOPs,
 			ReadIOPS:            readIOPs,
 		},
+		cond: sync.NewCond(&sync.Mutex{}),
 	}
 }
 
@@ -49,6 +53,19 @@ const (
 
 // TODO: enable custom configuration
 var blockDevices = []string{"sd*", "md*", "nvme0n*"}
+
+func (c *IOLimiterV1) Update(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) {
+	c.cond.L.Lock()
+	defer c.cond.L.Unlock()
+
+	c.limits = limits{
+		WriteBytesPerSecond: writeBytesPerSecond,
+		ReadBytesPerSecond:  readBytesPerSecond,
+		WriteIOPS:           writeIOPs,
+		ReadIOPS:            readIOPs,
+	}
+	c.cond.Broadcast()
+}
 
 func (c *IOLimiterV1) Apply(ctx context.Context, basePath, cgroupPath string) error {
 	var devices []string
@@ -112,6 +129,21 @@ func (c *IOLimiterV1) Apply(ctx context.Context, basePath, cgroupPath string) er
 		return nil
 	}
 
+	update := make(chan struct{}, 1)
+	go func() {
+		// TODO(cw): this Go-routine will leak per workspace, until we update config or restart ws-daemon
+		defer close(update)
+		for {
+			c.cond.L.Lock()
+			c.cond.Wait()
+			c.cond.L.Unlock()
+
+			if ctx.Err() != nil {
+				return
+			}
+			update <- struct{}{}
+		}
+	}()
 	go func() {
 		log.WithField("cgroupPath", cgroupPath).Debug("starting IO limiting")
 		err := writeLimits(c.limits)
@@ -119,15 +151,26 @@ func (c *IOLimiterV1) Apply(ctx context.Context, basePath, cgroupPath string) er
 			log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
 		}
 
-		<-ctx.Done()
-		// Prior to shutting down though, we need to reset the IO limits to ensure we don't have
-		// processes stuck in the uninterruptable "D" (disk sleep) state. This would prevent the
-		// workspace pod from shutting down.
-		err = writeLimits(limits{})
-		if err != nil {
-			log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot reset IO limits")
+		for {
+			select {
+			case <-update:
+				log.WithField("cgroupPath", cgroupPath).WithField("l", c.limits).Debug("writing new IO limiting")
+				err := writeLimits(c.limits)
+				if err != nil {
+					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
+				}
+			case <-ctx.Done():
+				// Prior to shutting down though, we need to reset the IO limits to ensure we don't have
+				// processes stuck in the uninterruptable "D" (disk sleep) state. This would prevent the
+				// workspace pod from shutting down.
+				err = writeLimits(limits{})
+				if err != nil {
+					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot reset IO limits")
+				}
+				log.WithField("cgroupPath", cgroupPath).Debug("stopping IO limiting")
+			}
 		}
-		log.WithField("cgroupPath", cgroupPath).Debug("stopping IO limiting")
+
 	}()
 
 	return nil
