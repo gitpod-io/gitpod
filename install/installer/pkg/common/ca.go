@@ -9,8 +9,7 @@ import (
 )
 
 const (
-	cacerts      = "cacerts"
-	caVolumeName = "gitpod-ca-certificate"
+	cacerts = "cacerts"
 )
 
 // InternalCAContainer returns a container that updates the CA certificates
@@ -31,11 +30,6 @@ func InternalCAContainer(ctx *RenderContext, mod ...func(*corev1.Container)) *co
 			{
 				Name:      cacerts,
 				MountPath: "/ssl-certs",
-			},
-			{
-				Name:      caVolumeName,
-				SubPath:   "ca.crt",
-				MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
 			},
 		},
 	}
