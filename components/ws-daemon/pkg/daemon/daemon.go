@@ -57,6 +57,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		&cgroup.CacheReclaim{},
 		&cgroup.FuseDeviceEnablerV1{},
 		&cgroup.FuseDeviceEnablerV2{},
+		cgroup.NewIOLimiterV1(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS),
 		cgroup.NewIOLimiterV2(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS),
 	)
 	if err != nil {
