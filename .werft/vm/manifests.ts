@@ -156,11 +156,11 @@ spec:
     - name: ssh-gateway
       protocol: TCP
       port: 22
-      targetPort: 22
+      targetPort: 2200
     - name: https
       protocol: TCP
       port: 443
-      targetPort: 443
+      targetPort: 4430
   selector:
     gitpod.io/lbName: ${name}
   type: LoadBalancer
@@ -169,10 +169,9 @@ spec:
 
 type LBDeployManifestOptions = {
   name: string
-  destIP: string
 }
 
-export function LBDeployManifest({ name, destIP }: LBDeployManifestOptions) {
+export function LBDeployManifest({ name }: LBDeployManifestOptions) {
   return `
 apiVersion: apps/v1
 kind: Deployment
@@ -192,45 +191,29 @@ spec:
       labels:
         gitpod.io/lbName: ${name}
     spec:
+      volumes:
+        - name: kubeconfig
+          secret:
+            secretName: harvester-kubeconfig
       containers:
-        - name: lb-port-22
-          image: rancher/klipper-lb:v0.3.4
-          ports:
-            - name: lb-port-22
-              containerPort: 22
-              protocol: TCP
-          env:
-            - name: SRC_PORT
-              value: '22'
-            - name: DEST_PROTO
-              value: TCP
-            - name: DEST_PORT
-              value: '22'
-            - name: DEST_IPS
-              value: ${destIP}
-          securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
-        - name: lb-port-443
-          image: rancher/klipper-lb:v0.3.4
-          ports:
-            - name: lb-port-443
-              containerPort: 443
-              protocol: TCP
-          env:
-            - name: SRC_PORT
-              value: '443'
-            - name: DEST_PROTO
-              value: TCP
-            - name: DEST_PORT
-              value: '443'
-            - name: DEST_IPS
-              value: ${destIP}
-          securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
+        - name: kubectl
+          image: bitnami/kubectl:1.23.5
+          args:
+            - port-forward
+            - '--kubeconfig'
+            - /mnt/kubeconfig/harvester-kubeconfig.yml
+            - '-n'
+            - preview-${name}
+            - --address=0.0.0.0
+            - --pod-running-timeout=2m
+            - svc/proxy
+            - '4430:443'
+            - '2200:22'
+          resources: {}
+          volumeMounts:
+            - name: kubeconfig
+              readOnly: true
+              mountPath: /mnt/kubeconfig/
       serviceAccount: proxy
       enableServiceLinks: false
 `
