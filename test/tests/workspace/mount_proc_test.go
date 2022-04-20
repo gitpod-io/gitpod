@@ -70,7 +70,7 @@ func TestMountProc(t *testing.T) {
 
 			var wg sync.WaitGroup
 			wg.Add(parallel)
-			for i := 0; i < 5; i++ {
+			for i := 0; i < parallel; i++ {
 				go func() {
 					defer wg.Done()
 					loadMountProc(t, rsa)
