@@ -186,7 +186,6 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 	}
 
 	sresp, err := wsm.StartWorkspace(sctx, req)
-	scancel()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot start workspace: %q", err)
 	}
