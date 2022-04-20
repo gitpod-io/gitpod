@@ -1,6 +1,6 @@
 # Integration Tests
 
-This directory containts Gitpod's integration tests, including the framework that makes them possible.
+This directory contains Gitpod's integration tests, including the framework that makes them possible.
 
 Integration tests work by instrumenting Gitpod's components to modify and verify its state.
 Such tests are for example:
@@ -61,13 +61,13 @@ There are 4 different types of tests:
 To run the tests:
 1. Clone this repo (`git clone git@github.com:gitpod-io/gitpod.git`), and `cd` to `./gitpod/test`
 2. Run the tests like so
-  ```console
-  go test -v ./... \
-  -kubeconfig=<path_to_kube_config_file> \
-  -namespace=<namespace_where_gitpod_is_installed> \
-  -username=<gitpod_user_with_oauth_setup> \
-  -enterprise=<true|false> \
-  -gitlab=<true|false>
-  ```
+   ```console
+   go test -v ./... \
+     -kubeconfig=<path_to_kube_config_file> \
+     -namespace=<namespace_where_gitpod_is_installed> \
+     -username=<gitpod_user_with_oauth_setup> \
+     -enterprise=<true|false> \
+     -gitlab=<true|false>
+   ```
 3. Tests `TestUploadDownloadBlob` and `TestUploadDownloadBlobViaServer` will fail when testing locally, as they are trying to connect to cluster local resources directly. To test them use docker image instead that runs within the cluster.
 4. If you want to run specific test, add `-run <test>` before `-kubeconfig` parameter.
