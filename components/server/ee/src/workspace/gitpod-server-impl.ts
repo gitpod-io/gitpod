@@ -312,11 +312,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             (i) => i.workspaceId !== workspaceId && i.status.timeout !== defaultTimeout && i.status.phase === "running",
         );
         await Promise.all(
-            instancesWithReset.map((i) => {
+            instancesWithReset.map(async (i) => {
                 const req = new SetTimeoutRequest();
                 req.setId(i.id);
                 req.setDuration(this.userService.workspaceTimeoutToDuration(defaultTimeout));
 
+                const client = await this.workspaceManagerClientProvider.get(i.region);
                 return client.setTimeout(ctx, req);
             }),
         );
