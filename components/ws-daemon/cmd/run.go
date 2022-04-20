@@ -16,7 +16,6 @@ import (
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/heptiolabs/healthcheck"
-	"github.com/intel/goresctrl/pkg/cgroups"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -125,8 +124,6 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("cannot start daemon")
 		}
-
-		cgroups.SetMountDir(cfg.Daemon.CPULimit.CGroupBasePath)
 
 		// run until we're told to stop
 		sigChan := make(chan os.Signal, 1)
