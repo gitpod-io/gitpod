@@ -1,6 +1,21 @@
 # Change Log
 
 ## April 2022
+- Update GoLand IDE image to version 221.5080.224. ([#9348](https://github.com/gitpod-io/gitpod/pull/9348)) - [@roboquat](https://github.com/roboquat)
+- Update PyCharm IDE image to version 221.5080.212. ([#9322](https://github.com/gitpod-io/gitpod/pull/9322)) - [@roboquat](https://github.com/roboquat)
+- Update PhpStorm IDE image to version 221.5080.224. ([#9349](https://github.com/gitpod-io/gitpod/pull/9349)) - [@roboquat](https://github.com/roboquat)
+- ws-daemon: align to decide if cgroup v2 to fix cgroup v2 with fuse ([#9390](https://github.com/gitpod-io/gitpod/pull/9390)) - [@Furisto](https://github.com/Furisto), [@utam0k](https://github.com/utam0k)
+- Make image-builder available through ws-manager ([#9335](https://github.com/gitpod-io/gitpod/pull/9335)) - [@csweichel](https://github.com/csweichel)
+- re-enables blocklisting of email domains ([#9385](https://github.com/gitpod-io/gitpod/pull/9385)) - [@geropl](https://github.com/geropl)
+- Fixed a bug where IO limits were not applied to the workspace ([#9404](https://github.com/gitpod-io/gitpod/pull/9404)) - [@Furisto](https://github.com/Furisto)
+- [ws-daemon] Only limit storage device classes ([#9309](https://github.com/gitpod-io/gitpod/pull/9309)) - [@aledbf](https://github.com/aledbf)
+- [docker-up] Set the MTU using ceth0 value ([#9356](https://github.com/gitpod-io/gitpod/pull/9356)) - [@aledbf](https://github.com/aledbf)
+- [ws-proxy] Do not allow ACME challenge to be processed by workspaces to ensure no one can register TLS for gitpod.io through letsencrypt ([#9358](https://github.com/gitpod-io/gitpod/pull/9358)) - [@sagor999](https://github.com/sagor999)
+- [ws-manager] add metrics to track initialize and finalize of workspaces ([#9355](https://github.com/gitpod-io/gitpod/pull/9355)) - [@sagor999](https://github.com/sagor999)
+- Revert "[ws-daemon] Fix CPU limit annotation" ([#9382](https://github.com/gitpod-io/gitpod/pull/9382)) - [@aledbf](https://github.com/aledbf)
+- Update code to 1.66.2 ([#9381](https://github.com/gitpod-io/gitpod/pull/9381)) - [@jeanp413](https://github.com/jeanp413)
+- Automatically block users that are running blacklisted workloads ([#9366](https://github.com/gitpod-io/gitpod/pull/9366)) - [@Furisto](https://github.com/Furisto)
+- Update OpenSSH to v9.0 ([#9367](https://github.com/gitpod-io/gitpod/pull/9367)) - [@aledbf](https://github.com/aledbf)
 - [docker-up] Add docker-compose binary ([#9360](https://github.com/gitpod-io/gitpod/pull/9360)) - [@aledbf](https://github.com/aledbf)
 - [registry-facade] Do not log warning from local store already exist error ([#9338](https://github.com/gitpod-io/gitpod/pull/9338)) - [@aledbf](https://github.com/aledbf)
 - [ws-daemon] Remove warning when cpu.stat does not exist ([#9328](https://github.com/gitpod-io/gitpod/pull/9328)) - [@aledbf](https://github.com/aledbf)
