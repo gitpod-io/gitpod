@@ -530,13 +530,14 @@ const hasWindow = typeof window !== "undefined";
 const phasesOrder: Record<WorkspaceInstancePhase, number> = {
     unknown: 0,
     preparing: 1,
-    pending: 2,
-    creating: 3,
-    initializing: 4,
-    running: 5,
-    interrupted: 6,
-    stopping: 7,
-    stopped: 8,
+    building: 2,
+    pending: 3,
+    creating: 4,
+    initializing: 5,
+    running: 6,
+    interrupted: 7,
+    stopping: 8,
+    stopped: 9,
 };
 export class WorkspaceInstanceUpdateListener {
     private readonly onDidChangeEmitter = new Emitter<void>();

@@ -106,7 +106,7 @@ export class WorkspaceManagerBridge implements Disposable {
             // Still, listen to all updates, generate/derive new state and distribute it locally!
             startStatusUpdateHandler(false);
 
-            // emulate WorkspaceInstance updates for all Workspaces in the "preparing" phase in this cluster
+            // emulate WorkspaceInstance updates for all Workspaces in the  "preparing" or "building" phase in this cluster
             const updateEmulator = this.preparingUpdateEmulatorFactory() as PreparingUpdateEmulator;
             this.disposables.push(updateEmulator);
             updateEmulator.start(cluster.name);
