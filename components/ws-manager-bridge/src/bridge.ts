@@ -36,6 +36,7 @@ import { Configuration } from "./config";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./preparing-update-emulator";
+import { performance } from "perf_hooks";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -166,10 +167,55 @@ export class WorkspaceManagerBridge implements Disposable {
     }
 
     protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus, writeToDB: boolean) {
+        const start = performance.now();
         const status = rawStatus.toObject();
         log.info("Handling WorkspaceStatus update", status);
+
         if (!status.spec || !status.metadata || !status.conditions) {
             log.warn("Received invalid status update", status);
+            return;
+        }
+
+        const logCtx = {
+            instanceId: status.id!,
+            workspaceId: status.metadata!.metaId!,
+            userId: status.metadata!.owner!,
+        };
+
+        try {
+            this.prometheusExporter.reportWorkspaceInstanceUpdateStarted(
+                writeToDB,
+                this.cluster.name,
+                status.spec.type,
+            );
+            await this.statusUpdate(ctx, rawStatus, writeToDB);
+        } catch (e) {
+            const durationMs = performance.now() - start;
+            this.prometheusExporter.reportWorkspaceInstanceUpdateCompleted(
+                durationMs / 1000,
+                writeToDB,
+                this.cluster.name,
+                status.spec.type,
+                e,
+            );
+            log.error(logCtx, "Failed to complete WorkspaceInstance status update", e);
+            throw e;
+        } finally {
+            const durationMs = performance.now() - start;
+            this.prometheusExporter.reportWorkspaceInstanceUpdateCompleted(
+                durationMs / 1000,
+                writeToDB,
+                this.cluster.name,
+                status.spec.type,
+            );
+            log.info(logCtx, "Successfully completed WorkspaceInstance status update");
+        }
+    }
+
+    private async statusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus, writeToDB: boolean) {
+        const status = rawStatus.toObject();
+
+        if (!status.spec || !status.metadata || !status.conditions) {
             return;
         }
 
@@ -183,7 +229,6 @@ export class WorkspaceManagerBridge implements Disposable {
             const instanceId = status.id!;
             const workspaceId = status.metadata!.metaId!;
             const userId = status.metadata!.owner!;
-            const logCtx = { instanceId, workspaceId, userId };
 
             const instance = await this.workspaceDB.trace({ span }).findInstanceById(instanceId);
             if (instance) {
@@ -194,7 +239,6 @@ export class WorkspaceManagerBridge implements Disposable {
                 // We ignore this update because we do not have anything to reconcile this update against, but also because we assume it is handled
                 // by another instance of ws-manager-bridge that is in the region where the WorkspaceInstance record was created.
                 this.prometheusExporter.statusUpdateReceived(this.cluster.name, false);
-                log.warn(logCtx, "Received a status update for an unknown instance", { status });
                 return;
             }
 
