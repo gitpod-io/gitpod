@@ -326,6 +326,13 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 		}
 	}
 
+	// if ws-manager is still attempting to create workspace pod, keep status in pending
+	// pod might get deleted several times if we cannot schedule it on the node
+	if _, atc := pod.Annotations[attemptingToCreatePodAnnotation]; atc {
+		result.Phase = api.WorkspacePhase_PENDING
+		return nil
+	}
+
 	if isPodBeingDeleted(pod) {
 		result.Phase = api.WorkspacePhase_STOPPING
 
