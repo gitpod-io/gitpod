@@ -290,6 +290,13 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 
+	// remove annotation to signal that workspace pod was indeed created and scheduled on the node
+	err = m.markWorkspace(ctx, req.Id, deleteMark(attemptingToCreatePodAnnotation))
+	if err != nil {
+		clog.WithError(err).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("failed to remove annotation after creating workspace pod. this will break things")
+		return nil, xerrors.Errorf("couldn't remove annotation after creating workspace pod: %w", err)
+	}
+
 	span.LogKV("event", "pod started successfully")
 
 	// all workspaces get a service now

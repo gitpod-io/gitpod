@@ -306,6 +306,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		kubernetes.WorkspaceImageSpecAnnotation: imageSpec,
 		kubernetes.OwnerTokenAnnotation:         startContext.OwnerToken,
 		wsk8s.TraceIDAnnotation:                 startContext.TraceID,
+		attemptingToCreatePodAnnotation:         "true",
 		// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 		"container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
 		// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
