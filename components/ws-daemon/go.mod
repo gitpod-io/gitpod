@@ -36,6 +36,7 @@ require (
 
 require (
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
+	github.com/intel/goresctrl v0.2.0
 	github.com/opencontainers/runc v1.1.0
 )
 
@@ -71,6 +72,8 @@ require (
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
