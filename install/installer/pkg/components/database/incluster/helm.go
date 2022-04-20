@@ -10,6 +10,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"sigs.k8s.io/yaml"
 )
 
 var Helm = common.CompositeHelmFunc(
@@ -20,6 +21,20 @@ var Helm = common.CompositeHelmFunc(
 		}
 
 		primaryAffinityTemplate, err := helm.KeyFileValue("mysql.primary.affinity", affinity)
+		if err != nil {
+			return nil, err
+		}
+
+		backupCmd, err := yaml.Marshal([]string{
+			"/bin/bash",
+			"-c",
+			"mysqldump -d \"${MYSQL_DATABASE}\" -u \"${MYSQL_USER}\" -p\"${MYSQL_PASSWORD}\" -h 127.0.0.1 > /scratch/backup.sql",
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		backupCmdTemplate, err := helm.KeyFileValue("mysql.primary.podAnnotations.pre\\.hook\\.backup\\.velero\\.io/command", backupCmd)
 		if err != nil {
 			return nil, err
 		}
@@ -44,10 +59,18 @@ var Helm = common.CompositeHelmFunc(
 					// improve start time
 					helm.KeyValue("mysql.primary.startupProbe.enabled", "false"),
 					helm.KeyValue("mysql.primary.livenessProbe.initialDelaySeconds", "30"),
+
+					// Configure KOTS backup
+					helm.KeyValue("mysql.primary.podAnnotations.backup\\.velero\\.io/backup-volumes", "backup"),
+					helm.KeyValue("mysql.primary.podAnnotations.pre\\.hook\\.backup\\.velero\\.io/timeout", "5m"),
+					helm.KeyValue("mysql.primary.extraVolumes[0].name", "backup"),
+					helm.KeyValue("mysql.primary.extraVolumeMounts[0].name", "backup"),
+					helm.KeyValue("mysql.primary.extraVolumeMounts[0].mountPath", "/scratch"),
 				},
 				// This is too complex to be sent as a string
 				FileValues: []string{
 					primaryAffinityTemplate,
+					backupCmdTemplate,
 				},
 			},
 		}, nil
