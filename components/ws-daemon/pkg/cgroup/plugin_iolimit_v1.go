@@ -7,77 +7,128 @@ package cgroup
 import (
 	"context"
 	"fmt"
-	"time"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/intel/goresctrl/pkg/blockio"
+	"golang.org/x/xerrors"
 )
 
 type IOLimiterV1 struct {
+	limits limits
+}
+
+type limits struct {
+	WriteBytesPerSecond int64
+	ReadBytesPerSecond  int64
+	WriteIOPS           int64
+	ReadIOPS            int64
 }
 
 func NewIOLimiterV1(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) *IOLimiterV1 {
-	err := blockio.SetConfig(&blockio.Config{
-		Classes: map[string][]blockio.DevicesParameters{
-			"default": {
-				{
-					Devices:           []string{"/dev/sd[a-z]", "/dev/md[0-99]"},
-					ThrottleReadBps:   fmt.Sprintf("%v", readBytesPerSecond),
-					ThrottleWriteBps:  fmt.Sprintf("%v", writeBytesPerSecond),
-					ThrottleReadIOPS:  fmt.Sprintf("%v", readIOPs),
-					ThrottleWriteIOPS: fmt.Sprintf("%v", writeIOPs),
-				},
-			},
-			"reset": {
-				{
-					Devices:           []string{"/dev/sd[a-z]", "/dev/md[0-99]"},
-					ThrottleReadBps:   fmt.Sprintf("%v", 0),
-					ThrottleWriteBps:  fmt.Sprintf("%v", 0),
-					ThrottleReadIOPS:  fmt.Sprintf("%v", 0),
-					ThrottleWriteIOPS: fmt.Sprintf("%v", 0),
-				},
-			},
+	return &IOLimiterV1{
+		limits: limits{
+			WriteBytesPerSecond: writeBytesPerSecond,
+			ReadBytesPerSecond:  readBytesPerSecond,
+			WriteIOPS:           writeIOPs,
+			ReadIOPS:            readIOPs,
 		},
-	}, true)
-	if err != nil {
-		log.WithError(err).Fatal("cannot start daemon")
 	}
-
-	return &IOLimiterV1{}
 }
 
 func (c *IOLimiterV1) Name() string  { return "iolimiter-v1" }
 func (c *IOLimiterV1) Type() Version { return Version1 }
 
+const (
+	fnBlkioThrottleWriteBps  = "blkio.throttle.write_bps_device"
+	fnBlkioThrottleReadBps   = "blkio.throttle.read_bps_device"
+	fnBlkioThrottleWriteIOPS = "blkio.throttle.write_iops_device"
+	fnBlkioThrottleReadIOPS  = "blkio.throttle.read_iops_device"
+)
+
+// TODO: enable custom configuration
+var blockDevices = []string{"sd*", "md*", "nvme0n*"}
+
 func (c *IOLimiterV1) Apply(ctx context.Context, basePath, cgroupPath string) error {
-	go func() {
-		log.WithField("cgroupPath", cgroupPath).Debug("starting io limiting")
-		// We are racing workspacekit and the interaction with disks.
-		// If we did this just once there's a chance we haven't interacted with all
-		// devices yet, and hence would not impose IO limits on them.
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
+	var devices []string
+	for _, wc := range blockDevices {
+		matches, err := filepath.Glob(filepath.Join("/sys/block", wc, "dev"))
+		if err != nil {
+			log.WithField("cgroupPath", cgroupPath).WithField("wc", wc).Warn("cannot glob devices")
+			continue
+		}
 
-		for {
-			select {
-			case <-ctx.Done():
-				// Prior to shutting down though, we need to reset the IO limits to ensure we don't have
-				// processes stuck in the uninterruptable "D" (disk sleep) state. This would prevent the
-				// workspace pod from shutting down.
+		for _, dev := range matches {
+			fc, err := os.ReadFile(dev)
+			if err != nil {
+				log.WithField("dev", dev).WithError(err).Error("cannot read device file")
+			}
+			devices = append(devices, strings.TrimSpace(string(fc)))
+		}
+	}
+	log.WithField("devices", devices).Debug("found devices")
 
-				err := blockio.SetCgroupClass(cgroupPath, "reset")
-				if err != nil {
-					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
-				}
-				log.WithField("cgroupPath", cgroupPath).Debug("stopping io limiting")
-				return
-			case <-ticker.C:
-				err := blockio.SetCgroupClass(cgroupPath, "default")
-				if err != nil {
-					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
-				}
+	produceLimits := func(value int64) []string {
+		lines := make([]string, 0, len(devices))
+		for _, dev := range devices {
+			lines = append(lines, fmt.Sprintf("%s %d", dev, value))
+		}
+		return lines
+	}
+
+	writeLimit := func(fn string, content []string) error {
+		for _, l := range content {
+			err := os.WriteFile(fn, []byte(l), 0644)
+			if err != nil {
+				log.WithError(err).WithField("fn", fn).WithField("line", l).Warn("cannot write limit")
+				continue
 			}
 		}
+		return nil
+	}
+
+	writeLimits := func(l limits) error {
+		base := filepath.Join(basePath, "blkio", cgroupPath)
+
+		var err error
+		err = writeLimit(filepath.Join(base, fnBlkioThrottleWriteBps), produceLimits(l.WriteBytesPerSecond))
+		if err != nil {
+			return xerrors.Errorf("cannot write %s: %w", fnBlkioThrottleWriteBps, err)
+		}
+		err = writeLimit(filepath.Join(base, fnBlkioThrottleReadBps), produceLimits(l.ReadBytesPerSecond))
+		if err != nil {
+			return xerrors.Errorf("cannot write %s: %w", fnBlkioThrottleReadBps, err)
+		}
+		err = writeLimit(filepath.Join(base, fnBlkioThrottleWriteIOPS), produceLimits(l.WriteIOPS))
+		if err != nil {
+			return xerrors.Errorf("cannot write %s: %w", fnBlkioThrottleWriteIOPS, err)
+		}
+		err = writeLimit(filepath.Join(base, fnBlkioThrottleReadIOPS), produceLimits(l.ReadIOPS))
+		if err != nil {
+			return xerrors.Errorf("cannot write %s: %w", fnBlkioThrottleReadIOPS, err)
+		}
+
+		return nil
+	}
+
+	go func() {
+		log.WithField("cgroupPath", cgroupPath).Debug("starting IO limiting")
+		err := writeLimits(c.limits)
+		if err != nil {
+			log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
+		}
+
+		<-ctx.Done()
+		// Prior to shutting down though, we need to reset the IO limits to ensure we don't have
+		// processes stuck in the uninterruptable "D" (disk sleep) state. This would prevent the
+		// workspace pod from shutting down.
+		err = writeLimits(limits{})
+		if err != nil {
+			log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot reset IO limits")
+		}
+		log.WithField("cgroupPath", cgroupPath).Debug("stopping IO limiting")
 	}()
+
 	return nil
 }
