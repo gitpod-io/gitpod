@@ -85,9 +85,11 @@ function issueCertificate(werft: Werft, config: JobConfig) {
 function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
     if (shouldCreateVM(config)) {
         createVM(werft, config)
-        applyLoadBalancer({ name: config.previewEnvironment.destname })
     } else {
         werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", false)
+    }
+    if (config.withVM) {
+        applyLoadBalancer({ name: config.previewEnvironment.destname })
     }
     werft.done(prepareSlices.BOOT_VM)
 }
@@ -121,20 +123,6 @@ ${manifest}
 EOF
         `);
     }
-    function getVMServiceIP() {
-        let ip = exec(
-            `kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} -n ${namespace} get service proxy -o=jsonpath='{.spec.clusterIP}'`,
-            { silent: true },
-        );
-        if (ip.length > 4) {
-            return ip;
-        }
-        return null;
-    }
-    let forwardIP = getVMServiceIP();
-    if (forwardIP == null) {
-        throw new Error("Failed to get VM IP");
-    }
-    kubectlApplyManifest(Manifests.LBDeployManifest({ name: option.name, destIP: forwardIP }));
+    kubectlApplyManifest(Manifests.LBDeployManifest({ name: option.name }));
     kubectlApplyManifest(Manifests.LBServiceManifest({ name: option.name }));
 }
