@@ -5,7 +5,17 @@
  */
 
 import { injectable, inject } from "inversify";
-import { User, Identity, WorkspaceTimeoutDuration, UserEnvVarValue, Token, WORKSPACE_TIMEOUT_DEFAULT_SHORT, WORKSPACE_TIMEOUT_DEFAULT_LONG, WORKSPACE_TIMEOUT_EXTENDED, WORKSPACE_TIMEOUT_EXTENDED_ALT } from "@gitpod/gitpod-protocol";
+import {
+    User,
+    Identity,
+    WorkspaceTimeoutDuration,
+    UserEnvVarValue,
+    Token,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_TIMEOUT_EXTENDED,
+    WORKSPACE_TIMEOUT_EXTENDED_ALT,
+} from "@gitpod/gitpod-protocol";
 import { TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -142,7 +152,8 @@ export class UserService {
                 this.config.blockNewUsers.passlist.some((e) => mail.endsWith(`@${e}`));
             const canPass = newUser.identities.some((i) => !!i.primaryEmail && emailDomainInPasslist(i.primaryEmail));
 
-            newUser.blocked = !canPass;
+            // blocked = if user already blocked OR is not allowed to pass
+            newUser.blocked = newUser.blocked || !canPass;
         }
         if (!newUser.blocked && (isFirstUser || this.config.makeNewUsersAdmin)) {
             newUser.rolesOrPermissions = ["admin"];

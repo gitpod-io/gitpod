@@ -42,7 +42,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      common.Affinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
+					Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					HostPID:                       true,
 					EnableServiceLinks:            pointer.Bool(false),

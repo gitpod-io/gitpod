@@ -140,6 +140,85 @@ spec:
 `
 }
 
+type LBServiceManifestOptions = {
+  name: string
+}
+
+export function LBServiceManifest({ name }: LBServiceManifestOptions) {
+    return `
+apiVersion: v1
+kind: Service
+metadata:
+  name: lb-${name}
+  namespace: loadbalancers
+spec:
+  ports:
+    - name: ssh-gateway
+      protocol: TCP
+      port: 22
+      targetPort: 2200
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 4430
+  selector:
+    gitpod.io/lbName: ${name}
+  type: LoadBalancer
+  `
+}
+
+type LBDeployManifestOptions = {
+  name: string
+}
+
+export function LBDeployManifest({ name }: LBDeployManifestOptions) {
+  return `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lb-${name}
+  namespace: loadbalancers
+  labels:
+    gitpod.io/lbName: ${name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      gitpod.io/lbName: ${name}
+  template:
+    metadata:
+      name: lb
+      labels:
+        gitpod.io/lbName: ${name}
+    spec:
+      volumes:
+        - name: kubeconfig
+          secret:
+            secretName: harvester-kubeconfig
+      containers:
+        - name: kubectl
+          image: bitnami/kubectl:1.23.5
+          args:
+            - port-forward
+            - '--kubeconfig'
+            - /mnt/kubeconfig/harvester-kubeconfig.yml
+            - '-n'
+            - preview-${name}
+            - --address=0.0.0.0
+            - --pod-running-timeout=2m
+            - svc/proxy
+            - '4430:443'
+            - '2200:22'
+          resources: {}
+          volumeMounts:
+            - name: kubeconfig
+              readOnly: true
+              mountPath: /mnt/kubeconfig/
+      serviceAccount: proxy
+      enableServiceLinks: false
+`
+}
+
 type UserDataSecretManifestOptions = {
   vmName: string
   namespace: string,

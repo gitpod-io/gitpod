@@ -10,6 +10,7 @@ metadata:
   name: server-config
   labels:
     app: {{ template "gitpod.fullname" . }}
+    component: server
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
@@ -19,7 +20,6 @@ data:
         "version": "{{ .Values.version }}",
         "hostUrl": "https://{{ .Values.hostname }}",
         "installationShortname": "{{ template "gitpod.installation.shortname" $this }}",
-        "stage": "{{ .Values.installation.stage }}",
 {{- if .Values.devBranch }}
         "devBranch": "{{ .Values.devBranch }}",
 {{- end }}
@@ -45,9 +45,6 @@ data:
         "incrementalPrebuilds": {{ $comp.incrementalPrebuilds | toJson }},
         "blockNewUsers": {{ $comp.blockNewUsers | toJson }},
         "makeNewUsersAdmin": {{ $comp.makeNewUsersAdmin }},
-{{- if $comp.theiaPluginsBucketNameOverride }}
-        "theiaPluginsBucketNameOverride": "{{ $comp.theiaPluginsBucketNameOverride }}",
-{{- end }}
         "defaultBaseImageRegistryWhitelist": {{ $comp.defaultBaseImageRegistryWhitelist | toJson }},
         "runDbDeleter": {{ $comp.runDbDeleter }},
         "oauthServer": {

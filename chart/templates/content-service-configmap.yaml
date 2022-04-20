@@ -23,6 +23,7 @@ metadata:
   name: content-service-config
   labels:
     app: {{ template "gitpod.fullname" . }}
+    component: content-service
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"

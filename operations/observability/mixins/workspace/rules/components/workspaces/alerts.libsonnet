@@ -44,6 +44,20 @@
             |||,
           },
           {
+            alert: 'GitpodWorkspaceHighFailureRate',
+            labels: {
+              severity: 'critical',
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceHighFailureRate.md',
+              summary: 'Workspaces are failing',
+              description: 'Multiple workspaces are failing for the last 5 minutes',
+            },
+            expr: |||
+                rate(gitpod_ws_manager_workspace_stops_total{reason="failed", type="REGULAR"}[5m]) >= 1
+            |||,
+          },
+          {
             alert: 'GitpodWorkspaceStatusUpdatesCeased',
             labels: {
               severity: 'warning',

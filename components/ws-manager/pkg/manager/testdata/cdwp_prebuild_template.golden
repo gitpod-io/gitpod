@@ -76,6 +76,10 @@
                             "value": "Ab=5=rRA*9:C'T{;RRB\u003e]vK2p6`fFfrS"
                         },
                         {
+                            "name": "GITPOD_OWNER_ID",
+                            "value": "tester"
+                        },
+                        {
                             "name": "GITPOD_WORKSPACE_ID",
                             "value": "foobar"
                         },

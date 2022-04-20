@@ -306,7 +306,6 @@ components:
     maxEnvvarPerUserCount: 4048
     maxConcurrentPrebuildsPerRef: 10
     makeNewUsersAdmin: false
-    theiaPluginsBucketNameOverride: null
     oauthServer:
       enabled: false
     rateLimiter:
@@ -358,7 +357,7 @@ components:
       version: "latest"
     codeImage:
       imageName: "ide/code"
-      stableVersion: "commit-54b4098031a1a3a600c1fd73d070c4aab27e1cd8"
+      stableVersion: "commit-c89358b24c9577d1fd986d57387f3847f7dfb06f"
       insidersVersion: "nightly"
     desktopIdeImages:
       codeDesktop:

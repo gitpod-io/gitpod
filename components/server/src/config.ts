@@ -15,11 +15,10 @@ import { ChargebeeProviderOptions, readOptionsFromFile } from "@gitpod/gitpod-pa
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { filePathTelepresenceAware, KubeStage, translateLegacyStagename } from "@gitpod/gitpod-protocol/lib/env";
+import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 
 export const Config = Symbol("Config");
 export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOptionsFile"> & {
-    stage: KubeStage;
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
@@ -50,7 +49,6 @@ export interface ConfigSerialized {
     version: string;
     hostUrl: string;
     installationShortname: string;
-    stage: string;
     devBranch?: string;
     insecureNoDomain: boolean;
     logLevel: LogrusLogLevel;
@@ -112,9 +110,6 @@ export interface ConfigSerialized {
     };
 
     makeNewUsersAdmin: boolean;
-
-    /** this value - if present - overrides the default naming scheme for the GCloud bucket that Theia Plugins are stored in */
-    theiaPluginsBucketNameOverride?: string;
 
     /** defaultBaseImageRegistryWhitelist is the list of registryies users get acces to by default */
     defaultBaseImageRegistryWhitelist: string[];
@@ -209,7 +204,6 @@ export namespace ConfigFile {
         }
         return {
             ...config,
-            stage: translateLegacyStagename(config.stage),
             hostUrl,
             authProviderConfigs,
             builtinAuthProvidersConfigured,

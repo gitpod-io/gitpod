@@ -130,6 +130,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			RateLimits: map[string]grpc.RateLimit{}, // todo(sje) add values
 		},
+		ImageBuilderProxy: struct {
+			TargetAddr string "json:\"targetAddr\""
+		}{
+			TargetAddr: fmt.Sprintf("%s.%s.svc.cluster.local:%d", common.ImageBuilderComponent, ctx.Namespace, common.ImageBuilderRPCPort),
+		},
 		PProf: struct {
 			Addr string `json:"addr"`
 		}{Addr: "localhost:6060"},

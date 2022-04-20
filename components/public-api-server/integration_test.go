@@ -1,0 +1,75 @@
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+package main
+
+import (
+	"context"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	v1 "github.com/gitpod-io/gitpod/public-api/v1"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
+	"testing"
+	"time"
+)
+
+func TestPublicAPIServer(t *testing.T) {
+	ctx := context.Background()
+	srv := baseserver.NewForTests(t)
+	require.NoError(t, register(srv))
+
+	go func() {
+		require.NoError(t, srv.ListenAndServe())
+	}()
+
+	baseserver.WaitForServerToBeReachable(t, srv, 1*time.Second)
+
+	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+
+	workspaceClient := v1.NewWorkspacesServiceClient(conn)
+
+	_, err = workspaceClient.GetWorkspace(ctx, &v1.GetWorkspaceRequest{})
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	_, err = workspaceClient.ListWorkspaces(ctx, &v1.ListWorkspacesRequest{})
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	_, err = workspaceClient.CreateAndStartWorkspace(ctx, &v1.CreateAndStartWorkspaceRequest{})
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	_, err = workspaceClient.StartWorkspace(ctx, &v1.StartWorkspaceRequest{})
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	_, err = workspaceClient.GetActiveWorkspaceInstance(ctx, &v1.GetActiveWorkspaceInstanceRequest{})
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	_, err = workspaceClient.GetWorkspaceInstanceOwnerToken(ctx, &v1.GetWorkspaceInstanceOwnerTokenRequest{})
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	stopWorkspaceStream, err := workspaceClient.StopWorkspace(ctx, &v1.StopWorkspaceRequest{})
+	require.NoError(t, err)
+	_, err = stopWorkspaceStream.Recv()
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	listenWorkspaceStream, err := workspaceClient.ListenToWorkspaceInstance(ctx, &v1.ListenToWorkspaceInstanceRequest{})
+	require.NoError(t, err)
+	_, err = listenWorkspaceStream.Recv()
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+
+	listenImageBuildStream, err := workspaceClient.ListenToImageBuildLogs(ctx, &v1.ListenToImageBuildLogsRequest{})
+	require.NoError(t, err)
+	_, err = listenImageBuildStream.Recv()
+	requireErrorStatusCode(t, codes.Unimplemented, err)
+}
+
+func requireErrorStatusCode(t *testing.T, expected codes.Code, err error) {
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equalf(t, expected, st.Code(), "expected: %s but got: %s", expected.String(), st.String())
+}

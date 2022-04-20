@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { exec, ExecOptions } from '../../util/shell';
@@ -208,7 +208,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
 
     if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta) || (isNaN(nodeExporterPort) && !withVM && withObservability)) {
         werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
-        [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
+        [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = await findFreeHostPorts([
             { start: 10000, end: 11000 },
             { start: 30000, end: 31000 },
             { start: 31001, end: 32000 },
@@ -280,6 +280,8 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         }
     }
 
+    const [token, tokenHash] = generateToken()
+
     const installer = new Installer({
         werft: werft,
         installerConfigPath: "config.yaml",
@@ -294,7 +296,8 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         withEELicense: deploymentConfig.installEELicense,
         withVM: withVM,
         workspaceFeatureFlags: workspaceFeatureFlags,
-        gitpodDaemonsetPorts: { registryFacade: registryNodePortMeta, wsDaemon: wsdaemonPortMeta }
+        gitpodDaemonsetPorts: { registryFacade: registryNodePortMeta, wsDaemon: wsdaemonPortMeta },
+        smithToken: token,
     })
     try {
         installer.init(installerSlices.INSTALLER_INIT)
@@ -314,7 +317,12 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     await waitUntilAllPodsAreReady(deploymentConfig.namespace, installer.options.kubeconfigPath, { slice: installerSlices.DEPLOYMENT_WAITING })
     werft.done(installerSlices.DEPLOYMENT_WAITING);
 
-    await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, !withVM, installer.options.kubeconfigPath)
+    if (!withVM) {
+        await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, !withVM, installer.options.kubeconfigPath)
+    } else {
+        await addVMDNSRecord(werft, destname, domain)
+    }
+    addAgentSmithToken(werft, deploymentConfig.namespace, installer.options.kubeconfigPath, tokenHash)
 
     // TODO: Fix sweeper, it does not appear to be doing clean-up
     werft.log('sweeper', 'installing Sweeper');
@@ -366,7 +374,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     const { version, destname, namespace, domain, monitoringDomain, url } = deploymentConfig;
     // find free ports
     werft.log("find free ports", "Check for some free ports.");
-    const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
+    const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = await findFreeHostPorts([
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
         { start: 31001, end: 32000 },
@@ -665,9 +673,74 @@ async function addDNSRecord(werft: Werft, namespace: string, domain: string, isL
     }
 
     await Promise.all([
-        createDNSRecord(domain, 'gitpod-dev-com', coreDevIngressIP, installerSlices.DNS_ADD_RECORD),
-        createDNSRecord(`*.${domain}`, 'gitpod-dev-com', coreDevIngressIP, installerSlices.DNS_ADD_RECORD),
-        createDNSRecord(`*.ws-dev.${domain}`, 'gitpod-dev-com', wsProxyLBIP, installerSlices.DNS_ADD_RECORD),
+        createDNSRecord({
+            domain,
+            projectId: "gitpod-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: coreDevIngressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `*.${domain}`,
+            projectId: "gitpod-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: coreDevIngressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `*.ws-dev.${domain}`,
+            projectId: "gitpod-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: wsProxyLBIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+    ])
+    werft.done(installerSlices.DNS_ADD_RECORD);
+}
+
+async function addVMDNSRecord(werft: Werft, name: string, domain: string) {
+    const ingressIP = getHarvesterIngressIP()
+    let proxyLBIP = null
+    werft.log(installerSlices.DNS_ADD_RECORD, "Getting loadbalancer IP");
+    for (let i = 0; i < 60; i++) {
+        try {
+            let lb = exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n loadbalancers get service lb-${name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'`, { silent: true })
+            if (lb.length > 4) {
+                proxyLBIP = lb.toString()
+                break
+            }
+            await sleep(1000)
+        } catch (err) {
+            await sleep(1000)
+        }
+    }
+    if (proxyLBIP == null) {
+        werft.fail(installerSlices.DNS_ADD_RECORD, new Error("Can't get loadbalancer IP"));
+    }
+    werft.log(installerSlices.DNS_ADD_RECORD, "Get loadbalancer IP: " + proxyLBIP);
+
+    await Promise.all([
+        createDNSRecord({
+            domain: domain,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'preview-gitpod-dev-com',
+            IP: ingressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `*.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'preview-gitpod-dev-com',
+            IP: ingressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `*.ws.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'preview-gitpod-dev-com',
+            IP: proxyLBIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
     ])
     werft.done(installerSlices.DNS_ADD_RECORD);
 }
@@ -716,6 +789,27 @@ function getCoreDevIngressIP(): string {
     return "104.199.27.246";
 }
 
+// returns the static IP address
+function getHarvesterIngressIP(): string {
+    return "159.69.172.117";
+}
+
 function metaEnv(_parent?: ExecOptions): ExecOptions {
     return env("", _parent);
+}
+
+function addAgentSmithToken(werft: Werft, namespace: string, kubeconfigPath: string, token: string) {
+    process.env.KUBECONFIG = kubeconfigPath
+    process.env.TOKEN = token
+    setKubectlContextNamespace(namespace, {})
+    exec("leeway run components:add-smith-token")
+    delete process.env.KUBECONFIG
+    delete process.env.TOKEN
+}
+
+function generateToken(): [string, string] {
+    const token = randomBytes(30).toString('hex')
+    const tokenHash = createHash('sha256').update(token, "utf-8").digest("hex")
+
+    return [token, tokenHash]
 }

@@ -81,7 +81,7 @@ func (host *PluginHost) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspa
 
 	cgroupPath, err := disp.Runtime.ContainerCGroupPath(context.Background(), ws.ContainerID)
 	if err != nil {
-		return xerrors.Errorf("cannot start governer: %w", err)
+		return xerrors.Errorf("cannot get cgroup path for container %s: %w", ws.ContainerID, err)
 	}
 
 	for _, plg := range host.Plugins {

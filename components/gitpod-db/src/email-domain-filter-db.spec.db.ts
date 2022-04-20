@@ -1,0 +1,88 @@
+/**
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the Gitpod Enterprise Source Code License,
+ * See License.enterprise.txt in the project root folder.
+ */
+
+import * as chai from "chai";
+import { suite, test, timeout } from "mocha-typescript";
+import { testContainer } from "./test-container";
+import { TypeORM } from "./typeorm/typeorm";
+import { EmailDomainFilterDB } from "./email-domain-filter-db";
+import { DBEmailDomainFilterEntry } from "./typeorm/entity/db-email-domain-filter-entry";
+const expect = chai.expect;
+
+@suite
+@timeout(5000)
+export class EmailDomainFilterDBSpec {
+    typeORM = testContainer.get<TypeORM>(TypeORM);
+    db = testContainer.get<EmailDomainFilterDB>(EmailDomainFilterDB);
+
+    async before() {
+        await this.clear();
+    }
+
+    async after() {
+        await this.clear();
+    }
+
+    protected async clear() {
+        const connection = await this.typeORM.getConnection();
+        const manager = connection.manager;
+        await manager.clear(DBEmailDomainFilterEntry);
+    }
+
+    @test public async filterSimple() {
+        await this.db.storeFilterEntry({
+            domain: "gitpod.io",
+            negative: true,
+        });
+
+        const actual = await this.db.isBlocked("gitpod.io");
+        expect(actual, "isBlocked").to.equal(true);
+    }
+
+    @test public async filterSimple_negative() {
+        await this.db.storeFilterEntry({
+            domain: "gitpod.io",
+            negative: true,
+        });
+
+        const actual = await this.db.isBlocked("example.org");
+        expect(actual, "isBlocked").to.equal(false);
+
+        const actual2 = await this.db.isBlocked("sub.gitpod.io");
+        expect(actual2, "isBlocked").to.equal(false);
+    }
+
+    @test public async filterSuffixMatch() {
+        await this.db.storeFilterEntry({
+            domain: "%.gitpod.io",
+            negative: true,
+        });
+
+        const actual = await this.db.isBlocked("gitpod.io");
+        expect(actual, "isBlocked").to.equal(false);
+
+        const actual2 = await this.db.isBlocked("sub.gitpod.io");
+        expect(actual2, "isBlocked").to.equal(true);
+
+        const actual3 = await this.db.isBlocked("sub.gitpod.io.xyz");
+        expect(actual3, "isBlocked").to.equal(false);
+    }
+
+    @test public async filterSimple_guard_against_blocking_everyone() {
+        await this.db.storeFilterEntry({
+            domain: "%",
+            negative: true,
+        });
+
+        const actual = await this.db.isBlocked("example.org");
+        expect(actual, "isBlocked").to.equal(false);
+
+        const actual2 = await this.db.isBlocked("sub.gitpod.io");
+        expect(actual2, "isBlocked").to.equal(false);
+    }
+}
+
+module.exports = EmailDomainFilterDBSpec;

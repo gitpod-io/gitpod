@@ -11,6 +11,7 @@ metadata:
   name: ws-proxy-config
   labels:
     app: {{ template "gitpod.fullname" . }}
+    component: ws-proxy-config
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"

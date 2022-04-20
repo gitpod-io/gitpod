@@ -143,6 +143,8 @@ export type PartialUserUpdate = Partial<Omit<User, "identities">> & Pick<User, "
 
 export const BUILTIN_WORKSPACE_PROBE_USER_ID = "builtin-user-workspace-probe-0000000";
 
+export const BUILTIN_WORKSPACE_USER_AGENT_SMITH = "builtin-user-agent-smith-0000000";
+
 export interface OwnerAndRepo {
     owner: string;
     repo: string;

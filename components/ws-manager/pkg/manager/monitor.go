@@ -734,7 +734,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		// we are already initialising
 		return nil
 	}
-
+	t := time.Now()
 	err = retryIfUnavailable(ctx, func(ctx context.Context) error {
 		_, err = snc.InitWorkspace(ctx, &wsdaemon.InitWorkspaceRequest{
 			Id: workspaceID,
@@ -755,6 +755,12 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	} else {
 		err = handleGRPCError(ctx, err)
 	}
+	wsType := pod.Labels[wsk8s.TypeLabel]
+	hist, errHist := m.manager.metrics.initializeTimeHistVec.GetMetricWithLabelValues(wsType)
+	if errHist != nil {
+		log.WithError(errHist).WithField("type", wsType).Warn("cannot get initialize time histogram metric")
+	}
+	hist.Observe(time.Since(t).Seconds())
 	if err != nil {
 		return xerrors.Errorf("cannot initialize workspace: %w", err)
 	}
@@ -916,6 +922,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		backupError error
 		gitStatus   *csapi.GitStatus
 	)
+	t := time.Now()
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		span.LogKV("attempt", i)
 		didSometing, gs, err := doFinalize()
@@ -959,6 +966,12 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 		break
 	}
+	wsType := api.WorkspaceType_name[int32(tpe)]
+	hist, err := m.manager.metrics.finalizeTimeHistVec.GetMetricWithLabelValues(wsType)
+	if err != nil {
+		log.WithError(err).WithField("type", wsType).Warn("cannot get finalize time histogram metric")
+	}
+	hist.Observe(time.Since(t).Seconds())
 
 	disposalStatus = &workspaceDisposalStatus{
 		BackupComplete: true,

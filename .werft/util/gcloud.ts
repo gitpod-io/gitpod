@@ -36,16 +36,19 @@ function getExternalIp(name: string, region = "europe-west1") {
     return exec(`gcloud compute addresses describe ${name} --region ${region}| grep 'address:' | cut -c 10-`, { silent: true }).trim();
 }
 
-export async function createDNSRecord(domain: string, dnsZone: string, IP: string, slice: string): Promise<void> {
+export async function createDNSRecord(options: {domain: string, projectId: string, dnsZone: string, IP: string, slice: string}): Promise<void> {
     const werft = getGlobalWerftInstance()
 
-    const dnsClient = new DNS({ projectId: 'gitpod-dev', keyFilename: GCLOUD_SERVICE_ACCOUNT_PATH })
-    const zone = dnsClient.zone(dnsZone)
+    const dnsClient = new DNS({
+        projectId: options.projectId,
+        keyFilename: GCLOUD_SERVICE_ACCOUNT_PATH,
+    });
+    const zone = dnsClient.zone(options.dnsZone)
 
-    if (!(await matchesExistingRecord(zone, domain, IP))) {
-        await createOrReplaceRecord(zone, domain, IP, slice)
+    if (!(await matchesExistingRecord(zone, options.domain, options.IP))) {
+        await createOrReplaceRecord(zone, options.domain, options.IP, options.slice)
     } else {
-        werft.log(slice, `DNS Record already exists for domain ${domain}`)
+        werft.log(options.slice, `DNS Record already exists for domain ${options.domain}`)
     }
 }
 

@@ -16,7 +16,6 @@ type ConfigSerialized struct {
 	Version                           string   `json:"version"`
 	HostURL                           string   `json:"hostUrl"`
 	InstallationShortname             string   `json:"installationShortname"`
-	Stage                             string   `json:"stage"`
 	DevBranch                         string   `json:"devBranch"`
 	InsecureNoDomain                  bool     `json:"insecureNoDomain"`
 	License                           string   `json:"license"`
@@ -28,7 +27,6 @@ type ConfigSerialized struct {
 	MaxEnvvarPerUserCount             int32    `json:"maxEnvvarPerUserCount"`
 	MaxConcurrentPrebuildsPerRef      int32    `json:"maxConcurrentPrebuildsPerRef"`
 	MakeNewUsersAdmin                 bool     `json:"makeNewUsersAdmin"`
-	TheiaPluginsBucketNameOverride    string   `json:"theiaPluginsBucketNameOverride"`
 	DefaultBaseImageRegistryWhitelist []string `json:"defaultBaseImageRegistryWhitelist"`
 	RunDbDeleter                      bool     `json:"runDbDeleter"`
 	ContentServiceAddr                string   `json:"contentServiceAddr"`

@@ -4,10 +4,8 @@
 package public_api_server
 
 import (
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -18,21 +16,6 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	var experimentalCfg *experimental.Config
-
-	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		experimentalCfg = ucfg
-		return nil
-	})
-
-	if experimentalCfg == nil || experimentalCfg.WebApp == nil || experimentalCfg.WebApp.PublicAPI == nil {
-		// We don't want to render anything for this deployment
-		return nil, nil
-	}
-
-	publicAPIConfig := experimentalCfg.WebApp.PublicAPI
-	log.Debug("Detected experimental.WebApp.PublicApi configuration", publicAPIConfig)
-
 	labels := common.DefaultLabels(Component)
 	return []runtime.Object{
 		&appsv1.Deployment{
@@ -53,7 +36,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Labels:    labels,
 					},
 					Spec: corev1.PodSpec{
-						Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
+						Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),
 						DNSPolicy:                     "ClusterFirst",
@@ -69,10 +52,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									"memory": resource.MustParse("32Mi"),
 								},
 							},
-							Ports: []corev1.ContainerPort{{
-								ContainerPort: ContainerPort,
-								Name:          PortName,
-							}},
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: HTTPContainerPort,
+									Name:          HTTPPortName,
+								},
+								{
+									ContainerPort: GRPCContainerPort,
+									Name:          GRPCPortName,
+								},
+							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),
 							},
@@ -83,7 +72,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path:   "/",
-										Port:   intstr.IntOrString{IntVal: ContainerPort},
+										Port:   intstr.IntOrString{IntVal: HTTPContainerPort},
 										Scheme: corev1.URISchemeHTTP,
 									},
 								},

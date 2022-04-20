@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cgroup"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
@@ -51,16 +52,12 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, err
 	}
 
+	log.Warn("Creating plugin host")
 	cgroupPlugins, err := cgroup.NewPluginHost(config.CPULimit.CGroupBasePath,
 		&cgroup.CacheReclaim{},
 		&cgroup.FuseDeviceEnablerV1{},
 		&cgroup.FuseDeviceEnablerV2{},
-		&cgroup.IOLimiterV2{
-			WriteBytesPerSecond: config.IOLimit.WriteBWPerSecond.Value(),
-			ReadBytesPerSecond:  config.IOLimit.ReadBWPerSecond.Value(),
-			WriteIOPs:           config.IOLimit.WriteIOPS,
-			ReadIOPs:            config.IOLimit.ReadIOPS,
-		},
+		cgroup.NewIOLimiterV2(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS),
 	)
 	if err != nil {
 		return nil, err
@@ -70,6 +67,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("cannot register cgroup plugin metrics: %w", err)
 	}
 
+	log.Warn("Adding cgroup plugins")
 	listener := []dispatch.Listener{
 		cpulimit.NewDispatchListener(&config.CPULimit, reg),
 		markUnmountFallback,

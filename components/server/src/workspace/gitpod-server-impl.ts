@@ -525,7 +525,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async deleteAccount(ctx: TraceContext): Promise<void> {
-        const user = this.checkUser("deleteAccount");
+        const user = this.checkAndBlockUser("deleteAccount");
         await this.guardAccess({ kind: "user", subject: user! }, "delete");
 
         await this.userDeletionService.deleteUser(user.id);
@@ -574,7 +574,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { workspaceId });
         traceWI(ctx, { workspaceId });
 
-        this.checkUser("getOwnerToken");
+        this.checkAndBlockUser("getOwnerToken");
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (!workspace) {
@@ -905,7 +905,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { workspaceId });
         traceWI(ctx, { workspaceId });
 
-        this.checkUser("getWorkspaceUsers", undefined, { workspaceId });
+        this.checkAndBlockUser("getWorkspaceUsers", undefined, { workspaceId });
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
@@ -1220,7 +1220,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<void> {}
 
     public async getFeaturedRepositories(ctx: TraceContext): Promise<WhitelistedRepository[]> {
-        const user = this.checkUser("getFeaturedRepositories");
+        const user = this.checkAndBlockUser("getFeaturedRepositories");
         const repositories = await this.workspaceDb.trace(ctx).getFeaturedRepositories();
         if (repositories.length === 0) return [];
 
@@ -1255,8 +1255,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async getSuggestedContextURLs(ctx: TraceContext): Promise<string[]> {
-        const user = this.checkUser("getSuggestedContextURLs");
-        const suggestions: Array<{ url: string; lastUse?: string }> = [];
+        const user = this.checkAndBlockUser("getSuggestedContextURLs");
+        const suggestions: Array<{ url: string; lastUse?: string; priority: number }> = [];
         const logCtx: LogContext = { userId: user.id };
 
         // Fetch all data sources in parallel for maximum speed (don't await in this scope before `Promise.allSettled(promises)` below!)
@@ -1266,7 +1266,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         promises.push(
             this.getFeaturedRepositories(ctx)
                 .then((exampleRepos) => {
-                    exampleRepos.forEach((r) => suggestions.push({ url: r.url }));
+                    exampleRepos.forEach((r) => suggestions.push({ url: r.url, priority: 0 }));
                 })
                 .catch((error) => {
                     log.error(logCtx, "Could not get example repositories", error);
@@ -1281,7 +1281,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         authProviders.map(async (p) => {
                             try {
                                 const userRepos = await this.getProviderRepositoriesForUser(ctx, { provider: p.host });
-                                userRepos.forEach((r) => suggestions.push({ url: r.cloneUrl.replace(/\.git$/, "") }));
+                                userRepos.forEach((r) =>
+                                    suggestions.push({ url: r.cloneUrl.replace(/\.git$/, ""), priority: 5 }),
+                                );
                             } catch (error) {
                                 log.debug(logCtx, "Could not get user repositories from App for " + p.host, error);
                             }
@@ -1307,7 +1309,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                                     return;
                                 }
                                 const userRepos = await services.repositoryProvider.getUserRepos(user);
-                                userRepos.forEach((r) => suggestions.push({ url: r.replace(/\.git$/, "") }));
+                                userRepos.forEach((r) =>
+                                    suggestions.push({ url: r.replace(/\.git$/, ""), priority: 5 }),
+                                );
                             } catch (error) {
                                 log.debug(logCtx, "Could not get user repositories from host " + p.host, error);
                             }
@@ -1329,7 +1333,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         const repoUrl = Workspace.getFullRepositoryUrl(ws.workspace);
                         if (repoUrl) {
                             const lastUse = WorkspaceInfo.lastActiveISODate(ws);
-                            suggestions.push({ url: repoUrl, lastUse });
+                            suggestions.push({ url: repoUrl, lastUse, priority: 10 });
                         }
                     });
                 })
@@ -1343,7 +1347,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const uniqueURLs = new Set();
         return suggestions
             .sort((a, b) => {
-                // Most recently used first
+                // priority first
+                if (a.priority !== b.priority) {
+                    return a.priority < b.priority ? 1 : -1;
+                }
+                // Most recently used second
                 if (b.lastUse || a.lastUse) {
                     const la = a.lastUse || "";
                     const lb = b.lastUse || "";
@@ -1386,7 +1394,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { workspaceId });
         traceWI(ctx, { workspaceId });
 
-        this.checkUser("getOpenPorts");
+        this.checkAndBlockUser("getOpenPorts");
 
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
