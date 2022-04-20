@@ -212,7 +212,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 			d.mu.Lock()
 			s := d.ctxs[workspaceInstanceID]
 			if s == nil {
-				log.WithFields(owi).Error("pod disappaered from dispatch state before container was ready")
+				log.WithFields(owi).Error("pod disappeared from dispatch state before container was ready")
 				d.mu.Unlock()
 				return
 			}

@@ -17,7 +17,7 @@ import (
 
 // ForwardPort establishes a TCP port forwarding to a Kubernetes pod
 // Uses kubectl instead of Go to use a local process that can reproduce the same behavior outside the tests
-// Since we are using kubectl directly we need to pass kubeconfig explicetly
+// Since we are using kubectl directly we need to pass kubeconfig explicitly
 func ForwardPort(ctx context.Context, kubeconfig string, namespace, pod, port string) (readychan chan struct{}, errchan chan error) {
 	errchan = make(chan error, 1)
 	readychan = make(chan struct{}, 1)
