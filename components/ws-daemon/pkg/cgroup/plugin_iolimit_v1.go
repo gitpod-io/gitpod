@@ -21,7 +21,7 @@ func NewIOLimiterV1(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs
 		Classes: map[string][]blockio.DevicesParameters{
 			"default": {
 				{
-					Devices:           []string{"/dev/sd[a-z]"},
+					Devices:           []string{"/dev/sd[a-z]", "/dev/md[0-99]"},
 					ThrottleReadBps:   fmt.Sprintf("%v", readBytesPerSecond),
 					ThrottleWriteBps:  fmt.Sprintf("%v", writeBytesPerSecond),
 					ThrottleReadIOPS:  fmt.Sprintf("%v", readIOPs),
@@ -30,7 +30,7 @@ func NewIOLimiterV1(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs
 			},
 			"reset": {
 				{
-					Devices:           []string{"/dev/sd[a-z]"},
+					Devices:           []string{"/dev/sd[a-z]", "/dev/md[0-99]"},
 					ThrottleReadBps:   fmt.Sprintf("%v", 0),
 					ThrottleWriteBps:  fmt.Sprintf("%v", 0),
 					ThrottleReadIOPS:  fmt.Sprintf("%v", 0),
