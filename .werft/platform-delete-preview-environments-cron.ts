@@ -4,7 +4,7 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import { wipePreviewEnvironmentAndNamespace, helmInstallName, listAllPreviewNamespaces } from './util/kubectl';
 import { exec } from './util/shell';
 import { previewNameFromBranchName } from './util/preview';
-import { CORE_DEV_KUBECONFIG_PATH } from './jobs/build/const';
+import { CORE_DEV_KUBECONFIG_PATH, HARVESTER_KUBECONFIG_PATH } from './jobs/build/const';
 
 // Will be set once tracing has been initialized
 let werft: Werft
@@ -14,6 +14,7 @@ Tracing.initialize()
         werft = new Werft("delete-preview-environment-cron")
     })
     .then(() => deletePreviewEnvironments())
+    .then(() => cleanLoadbalancer())
     .catch((err) => {
         werft.rootSpan.setStatus({
             code: SpanStatusCode.ERROR,
@@ -65,6 +66,47 @@ async function deletePreviewEnvironments() {
         werft.fail("deleting previews", err)
     }
     werft.done("deleting previews")
+}
+
+async function cleanLoadbalancer() {
+    const prepPhase = "prep clean loadbalancers"
+    const fetchPhase = "fetching unuse loadbalancer"
+    const deletionPhase = "deleting unused load balancers"
+
+    werft.phase(prepPhase);
+    try {
+        exec(`cp /mnt/secrets/harvester-kubeconfig/harvester-kubeconfig.yml ${HARVESTER_KUBECONFIG_PATH}`)
+    } catch (err) {
+        werft.fail(prepPhase, err)
+    }
+    werft.done(prepPhase)
+
+
+    werft.phase(fetchPhase);
+    let lbsToDelete: string[]
+    try {
+        // get all loadbalancer
+        let lbs: string[] = exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get deployment -n loadbalancers -o=jsonpath="{.items[*].metadata.labels['gitpod\\.io\\/lbName']}"`, { silent: true }).stdout.trim().split(' ');
+        let previews = exec(`kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} get namespaces -o go-template --template '{{range .items}}{{.metadata.name}}{{"\\n"}}{{end}}' | awk '/(preview-.*)/ { print $1 }'`, { silent: true }).stdout.trim().split('\n')
+        let previewSet = new Set(previews)
+        lbsToDelete = lbs.filter(lb => !previewSet.has('preview-' + lb))
+        lbsToDelete.forEach(lb => werft.log(fetchPhase, "will delete " + lb))
+    } catch (err) {
+        werft.fail(fetchPhase, err);
+    }
+
+
+    werft.phase(deletionPhase);
+    try {
+        lbsToDelete.forEach(lb => {
+            werft.log(deletionPhase, "deleteing " + lb);
+            exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n loadbalancers delete deployment lb-${lb}`)
+            exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n loadbalancers delete service lb-${lb}`)
+        });
+    } catch (err) {
+        werft.fail(deletionPhase, err)
+    }
+    werft.done(deletionPhase)
 }
 
 function getAllBranches(): string[] {
