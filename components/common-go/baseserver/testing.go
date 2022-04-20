@@ -34,7 +34,20 @@ func NewForTests(t *testing.T, opts ...Option) *Server {
 	return srv
 }
 
-func WaitForServerToBeReachable(t *testing.T, srv *Server, timeout time.Duration) {
+// StartServerForTests starts the server for test purposes.
+// This is a helper which also ensures the server is reachable before returning.
+func StartServerForTests(t *testing.T, srv *Server) {
+	t.Helper()
+
+	go func() {
+		err := srv.ListenAndServe()
+		require.NoError(t, err)
+	}()
+
+	waitForServerToBeReachable(t, srv, 3*time.Second)
+}
+
+func waitForServerToBeReachable(t *testing.T, srv *Server, timeout time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

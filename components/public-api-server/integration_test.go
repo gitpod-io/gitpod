@@ -14,19 +14,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"testing"
-	"time"
 )
 
 func TestPublicAPIServer(t *testing.T) {
 	ctx := context.Background()
 	srv := baseserver.NewForTests(t)
+
 	require.NoError(t, register(srv))
-
-	go func() {
-		require.NoError(t, srv.ListenAndServe())
-	}()
-
-	baseserver.WaitForServerToBeReachable(t, srv, 1*time.Second)
+	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
