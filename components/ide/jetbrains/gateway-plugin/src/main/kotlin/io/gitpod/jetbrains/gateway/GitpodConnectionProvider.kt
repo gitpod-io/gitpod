@@ -164,6 +164,10 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         when (update.status.phase) {
                             "preparing" -> {
                                 phaseMessage.text = "Preparing"
+                                statusMessage.text = "Preparing workspace..."
+                            }
+                            "building" -> {
+                                phaseMessage.text = "Building"
                                 statusMessage.text = "Building workspace image..."
                             }
                             "pending" -> {

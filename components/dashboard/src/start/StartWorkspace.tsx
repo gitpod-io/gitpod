@@ -340,7 +340,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             return;
         }
 
-        if (workspaceInstance.status.phase === "preparing") {
+        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase == "preparing") {
             this.setState({ hasImageBuildLogs: true });
         }
 
@@ -402,10 +402,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // a workspace. This phase is usually accompanied by an error.
             case "unknown":
                 break;
-
             // Preparing means that we haven't actually started the workspace instance just yet, but rather
-            // are still preparing for launch. This means we're building the Docker image for the workspace.
+            // are still preparing for launch.
             case "preparing":
+            // Building means we're building the Docker image for the workspace.
+            case "building":
                 return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
 
             // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
