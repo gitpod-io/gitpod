@@ -81,10 +81,10 @@ async function createOrReplaceRecord(zone: Zone, domain: string, IP: string, sli
     })
 
     const [records] = await zone.getRecords({ name: `${domain}.` })
-    records.forEach(async (record) => {
+    await Promise.all(records.map(record => {
         werft.log(slice, `Deleting old record for ${record.metadata.name} due to IP mismatch.`)
-        await record.delete()
-    })
+        return record.delete()
+    }))
 
     werft.log(slice, `Creating DNS record: ${JSON.stringify(record)}`) // delete before submiting PR
     await zone.addRecords(record)
