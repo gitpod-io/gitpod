@@ -16,7 +16,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cgroup"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
@@ -52,12 +51,12 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, err
 	}
 
-	log.Warn("Creating plugin host")
+	cgroupV1IOLimiter := cgroup.NewIOLimiterV1(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
 	cgroupPlugins, err := cgroup.NewPluginHost(config.CPULimit.CGroupBasePath,
 		&cgroup.CacheReclaim{},
 		&cgroup.FuseDeviceEnablerV1{},
 		&cgroup.FuseDeviceEnablerV2{},
-		cgroup.NewIOLimiterV1(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS),
+		cgroupV1IOLimiter,
 		cgroup.NewIOLimiterV2(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS),
 	)
 	if err != nil {
@@ -68,7 +67,12 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("cannot register cgroup plugin metrics: %w", err)
 	}
 
-	log.Warn("Adding cgroup plugins")
+	var configReloader CompositeConfigReloader
+	configReloader = append(configReloader, ConfigReloaderFunc(func(ctx context.Context, config *Config) error {
+		cgroupV1IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
+		return nil
+	}))
+
 	listener := []dispatch.Listener{
 		cpulimit.NewDispatchListener(&config.CPULimit, reg),
 		markUnmountFallback,
@@ -104,10 +108,11 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	return &Daemon{
 		Config: config,
 
-		dispatch:   dsptch,
-		content:    contentService,
-		diskGuards: dsk,
-		hosts:      hsts,
+		dispatch:       dsptch,
+		content:        contentService,
+		diskGuards:     dsk,
+		hosts:          hsts,
+		configReloader: configReloader,
 	}, nil
 }
 
@@ -137,10 +142,15 @@ func newClientSet(kubeconfig string) (res *kubernetes.Clientset, err error) {
 type Daemon struct {
 	Config Config
 
-	dispatch   *dispatch.Dispatch
-	content    *content.WorkspaceService
-	diskGuards []*diskguard.Guard
-	hosts      hosts.Controller
+	dispatch       *dispatch.Dispatch
+	content        *content.WorkspaceService
+	diskGuards     []*diskguard.Guard
+	hosts          hosts.Controller
+	configReloader ConfigReloader
+}
+
+func (d *Daemon) ReloadConfig(ctx context.Context, cfg *Config) error {
+	return d.configReloader.ReloadConfig(ctx, cfg)
 }
 
 // Start runs all parts of the daemon until stop is called

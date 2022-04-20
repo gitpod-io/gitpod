@@ -39,7 +39,10 @@ var runCmd = &cobra.Command{
 	Short: "Connects to the messagebus and starts the workspace monitor",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg := getConfig()
+		cfg, err := config.Read(configFile)
+		if err != nil {
+			log.WithError(err).Fatal("cannot read configuration. Maybe missing --config?")
+		}
 		reg := prometheus.NewRegistry()
 		dmn, err := daemon.NewDaemon(cfg.Daemon, prometheus.WrapRegistererWithPrefix("gitpod_ws_daemon_", reg))
 		if err != nil {
@@ -124,6 +127,8 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("cannot start daemon")
 		}
+
+		go config.Watch(configFile, dmn.ReloadConfig)
 
 		// run until we're told to stop
 		sigChan := make(chan os.Signal, 1)
