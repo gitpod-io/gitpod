@@ -11,19 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
-	"time"
 )
 
 func TestServer_StartStop(t *testing.T) {
 	// We don't use the helper NewForTests, because we want to control stopping ourselves.
 	srv, err := baseserver.New("server_test", baseserver.WithHTTPPort(8765), baseserver.WithGRPCPort(8766))
 	require.NoError(t, err)
+	baseserver.StartServerForTests(t, srv)
 
-	go func() {
-		require.NoError(t, srv.ListenAndServe())
-	}()
-
-	baseserver.WaitForServerToBeReachable(t, srv, 3*time.Second)
 	require.Equal(t, "http://localhost:8765", srv.HTTPAddress())
 	require.Equal(t, "localhost:8766", srv.GRPCAddress())
 	require.NoError(t, srv.Close())
@@ -31,12 +26,7 @@ func TestServer_StartStop(t *testing.T) {
 
 func TestServer_ServesReady(t *testing.T) {
 	srv := baseserver.NewForTests(t)
-
-	go func(t *testing.T) {
-		require.NoError(t, srv.ListenAndServe())
-	}(t)
-
-	baseserver.WaitForServerToBeReachable(t, srv, 3*time.Second)
+	baseserver.StartServerForTests(t, srv)
 
 	readyURL := fmt.Sprintf("%s/ready", srv.HTTPAddress())
 	resp, err := http.Get(readyURL)
@@ -47,11 +37,7 @@ func TestServer_ServesReady(t *testing.T) {
 func TestServer_ServesMetricsEndpointWithDefaultConfig(t *testing.T) {
 	srv := baseserver.NewForTests(t)
 
-	go func(t *testing.T) {
-		require.NoError(t, srv.ListenAndServe())
-	}(t)
-
-	baseserver.WaitForServerToBeReachable(t, srv, 3*time.Second)
+	baseserver.StartServerForTests(t, srv)
 
 	readyUR := fmt.Sprintf("%s/metrics", srv.HTTPAddress())
 	resp, err := http.Get(readyUR)
@@ -65,11 +51,7 @@ func TestServer_ServesMetricsEndpointWithCustomMetricsConfig(t *testing.T) {
 		baseserver.WithMetricsRegistry(registry),
 	)
 
-	go func(t *testing.T) {
-		require.NoError(t, srv.ListenAndServe())
-	}(t)
-
-	baseserver.WaitForServerToBeReachable(t, srv, 3*time.Second)
+	baseserver.StartServerForTests(t, srv)
 
 	readyUR := fmt.Sprintf("%s/metrics", srv.HTTPAddress())
 	resp, err := http.Get(readyUR)
