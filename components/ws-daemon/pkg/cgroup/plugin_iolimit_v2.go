@@ -58,7 +58,7 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 
-		ioMaxFile := filepath.Join(basePath, cgroupPath)
+		ioMaxFile := filepath.Join(basePath, cgroupPath, "workspace", "user")
 
 		for {
 			select {
