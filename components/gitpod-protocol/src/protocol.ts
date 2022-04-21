@@ -545,6 +545,19 @@ export interface VSCodeConfig {
     extensions?: string[];
 }
 
+export interface JetBrainsConfig {
+    intellij?: JetBrainsProductConfig;
+    goland?: JetBrainsProductConfig;
+    pycharm?: JetBrainsProductConfig;
+    phpstorm?: JetBrainsProductConfig;
+}
+export interface JetBrainsProductConfig {
+    prebuilds?: JetBrainsPrebuilds;
+}
+export interface JetBrainsPrebuilds {
+    version?: "stable" | "latest" | "both";
+}
+
 export interface RepositoryCloneInformation {
     url: string;
     checkoutLocation?: string;
@@ -561,6 +574,7 @@ export interface WorkspaceConfig {
     gitConfig?: { [config: string]: string };
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;
+    jetbrains?: JetBrainsConfig;
 
     /** deprecated. Enabled by default **/
     experimentalNetwork?: boolean;
