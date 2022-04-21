@@ -13,7 +13,7 @@
 import * as jspb from "google-protobuf";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
 
-export class InitWorkspaceRequest extends jspb.Message {
+export class InitWorkspaceRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): InitWorkspaceRequest;
 
@@ -56,7 +56,7 @@ export namespace InitWorkspaceRequest {
     }
 }
 
-export class WorkspaceMetadata extends jspb.Message {
+export class WorkspaceMetadata extends jspb.Message { 
     getOwner(): string;
     setOwner(value: string): WorkspaceMetadata;
     getMetaId(): string;
@@ -79,7 +79,7 @@ export namespace WorkspaceMetadata {
     }
 }
 
-export class InitWorkspaceResponse extends jspb.Message {
+export class InitWorkspaceResponse extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): InitWorkspaceResponse.AsObject;
@@ -96,7 +96,7 @@ export namespace InitWorkspaceResponse {
     }
 }
 
-export class WaitForInitRequest extends jspb.Message {
+export class WaitForInitRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): WaitForInitRequest;
 
@@ -116,7 +116,7 @@ export namespace WaitForInitRequest {
     }
 }
 
-export class WaitForInitResponse extends jspb.Message {
+export class WaitForInitResponse extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WaitForInitResponse.AsObject;
@@ -133,7 +133,7 @@ export namespace WaitForInitResponse {
     }
 }
 
-export class TakeSnapshotRequest extends jspb.Message {
+export class TakeSnapshotRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): TakeSnapshotRequest;
     getReturnImmediately(): boolean;
@@ -156,7 +156,7 @@ export namespace TakeSnapshotRequest {
     }
 }
 
-export class TakeSnapshotResponse extends jspb.Message {
+export class TakeSnapshotResponse extends jspb.Message { 
     getUrl(): string;
     setUrl(value: string): TakeSnapshotResponse;
 
@@ -176,7 +176,7 @@ export namespace TakeSnapshotResponse {
     }
 }
 
-export class DisposeWorkspaceRequest extends jspb.Message {
+export class DisposeWorkspaceRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): DisposeWorkspaceRequest;
     getBackup(): boolean;
@@ -202,7 +202,7 @@ export namespace DisposeWorkspaceRequest {
     }
 }
 
-export class DisposeWorkspaceResponse extends jspb.Message {
+export class DisposeWorkspaceResponse extends jspb.Message { 
 
     hasGitStatus(): boolean;
     clearGitStatus(): void;
@@ -225,7 +225,7 @@ export namespace DisposeWorkspaceResponse {
     }
 }
 
-export class BackupWorkspaceRequest extends jspb.Message {
+export class BackupWorkspaceRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): BackupWorkspaceRequest;
 
@@ -245,7 +245,7 @@ export namespace BackupWorkspaceRequest {
     }
 }
 
-export class BackupWorkspaceResponse extends jspb.Message {
+export class BackupWorkspaceResponse extends jspb.Message { 
     getUrl(): string;
     setUrl(value: string): BackupWorkspaceResponse;
 
