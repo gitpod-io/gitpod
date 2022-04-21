@@ -5,7 +5,6 @@
  */
 
 import { AdminGetListResult, User } from "@gitpod/gitpod-protocol";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
@@ -113,12 +112,7 @@ function UserEntry(p: { user: User }) {
     if (!p) {
         return <></>;
     }
-    let email = "---";
-    try {
-        email = User.getPrimaryEmail(p.user);
-    } catch (e) {
-        log.error(e);
-    }
+    const email = User.getPrimaryEmail(p.user) || "---";
     return (
         <Link key={p.user.id} to={"/admin/users/" + p.user.id} data-analytics='{"button_type":"sidebar_menu"}'>
             <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">

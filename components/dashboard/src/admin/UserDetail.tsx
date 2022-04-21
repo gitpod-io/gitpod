@@ -50,7 +50,7 @@ export default function UserDetail(p: { user: User }) {
     }, [p.user]);
 
     const email = User.getPrimaryEmail(p.user);
-    const emailDomain = email.split("@")[email.split("@").length - 1];
+    const emailDomain = email ? email.split("@")[email.split("@").length - 1] : undefined;
 
     const updateUser: UpdateUserFunction = async (fun) => {
         setActivity(true);
@@ -62,6 +62,11 @@ export default function UserDetail(p: { user: User }) {
     };
 
     const addStudentDomain = async () => {
+        if (!emailDomain) {
+            console.log("cannot add student's email domain because there is none!");
+            return;
+        }
+
         await updateUser(async (u) => {
             await getGitpodService().server.adminAddStudentEmailDomain(u.id, emailDomain);
             await getGitpodService()
@@ -221,7 +226,9 @@ export default function UserDetail(p: { user: User }) {
                             <Property
                                 name="Student"
                                 actions={
-                                    !isStudent && !["gmail.com", "yahoo.com", "hotmail.com"].includes(emailDomain)
+                                    !isStudent &&
+                                    emailDomain &&
+                                    !["gmail.com", "yahoo.com", "hotmail.com"].includes(emailDomain)
                                         ? [
                                               {
                                                   label: `Make '${emailDomain}' a student domain`,

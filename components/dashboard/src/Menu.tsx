@@ -379,7 +379,7 @@ export default function Menu() {
                             <ContextMenu
                                 menuEntries={[
                                     {
-                                        title: (user && User.getPrimaryEmail(user)) || "",
+                                        title: (user && (User.getPrimaryEmail(user) || user?.name)) || "User",
                                         customFontStyle: "text-gray-400",
                                         separator: true,
                                     },
