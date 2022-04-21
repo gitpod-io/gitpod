@@ -67,11 +67,7 @@ func TestPublicAPIServer_v1_PrebuildService(t *testing.T) {
 	srv := baseserver.NewForTests(t)
 	require.NoError(t, register(srv))
 
-	go func() {
-		require.NoError(t, srv.ListenAndServe())
-	}()
-
-	baseserver.WaitForServerToBeReachable(t, srv, 1*time.Second)
+	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
