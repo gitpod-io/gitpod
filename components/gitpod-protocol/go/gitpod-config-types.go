@@ -150,6 +150,25 @@ type JetBrains struct {
 
 	// List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.
 	Plugins []string `yaml:"plugins,omitempty"`
+
+	// Configure IntelliJ integration
+	IntelliJ *JetBrainsProduct `yaml:"intellij,omitempty"`
+
+	// Configure GoLand integration
+	GoLand *JetBrainsProduct `yaml:"goland,omitempty"`
+
+	// Configure PyCharm integration
+	PyCharm *JetBrainsProduct `yaml:"pycharm,omitempty"`
+
+	// Configure PhpStorm integration
+	PhpStorm *JetBrainsProduct `yaml:"phpstorm,omitempty"`
+}
+
+// Configure JetBrains product
+type JetBrainsProduct struct {
+
+	// List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.
+	Plugins []string `yaml:"plugins,omitempty"`
 }
 
 func (strct *Github) MarshalJSON() ([]byte, error) {
