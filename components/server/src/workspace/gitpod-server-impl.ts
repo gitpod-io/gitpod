@@ -1840,6 +1840,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = this.checkAndBlockUser("setEnvVar");
         const userId = user.id;
 
+        // validate input
+        const validationError = UserEnvVar.validate(variable);
+        if (validationError) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, validationError);
+        }
+
         variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
         const existingVars = (await this.userDB.getEnvVars(user.id)).filter((v) => !v.deleted);
 
