@@ -19,6 +19,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/imdario/mergo v0.3.12
+	github.com/mwitkow/grpc-proxy v0.0.0-20220126150247-db34e7bfee32
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/sirupsen/logrus v1.8.1
@@ -44,7 +45,6 @@ require (
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Microsoft/hcsshim v0.8.17 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -82,7 +82,6 @@ require (
 	github.com/moby/sys/mountinfo v0.4.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/mwitkow/grpc-proxy v0.0.0-20220126150247-db34e7bfee32 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -113,7 +112,6 @@ require (
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	honnef.co/go/tools v0.1.3 // indirect
 	k8s.io/apiextensions-apiserver v0.23.4 // indirect
 	k8s.io/component-base v0.23.4 // indirect
 	k8s.io/klog/v2 v2.30.0 // indirect
