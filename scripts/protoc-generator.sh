@@ -5,19 +5,19 @@
 
 
 install_dependencies() {
-    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.0
 
-    go get google.golang.org/protobuf/runtime/protoimpl@v1.27.1
-    go get google.golang.org/protobuf/reflect/protoreflect@v1.27.1
-	go get google.golang.org/protobuf/types/known/timestamppb@v1.27.1
+    go get google.golang.org/protobuf/runtime/protoimpl@v1.28.0
+    go get google.golang.org/protobuf/reflect/protoreflect@v1.28.0
+	go get google.golang.org/protobuf/types/known/timestamppb@v1.28.0
 
-    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2.0
 
     go install github.com/golang/mock/mockgen@v1.6.0
 
-    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.6.0
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.10.0
 
-    curl -sSo /tmp/protoc-gen-grpc-java https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.41.0/protoc-gen-grpc-java-1.41.0-linux-x86_64.exe
+    curl -sSo /tmp/protoc-gen-grpc-java https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.45.0/protoc-gen-grpc-java-1.45.0-linux-x86_64.exe
     chmod +x /tmp/protoc-gen-grpc-java
 }
 
