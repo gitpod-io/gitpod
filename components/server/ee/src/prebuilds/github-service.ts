@@ -27,22 +27,25 @@ export class GitHubService extends RepositoryService {
 
     async getRepositoriesForAutomatedPrebuilds(user: User): Promise<ProviderRepository[]> {
         const octokit = await this.githubApi.create(user);
-        const adminRepositories = await octokit.paginate(
+        const repositories = await octokit.paginate(
             octokit.repos.listForAuthenticatedUser,
             { per_page: 100 },
-            (response) => response.data.filter((r) => !!r.permissions?.admin),
+            (response) =>
+                response.data
+                    .filter((r) => !!r.permissions?.admin)
+                    .map((r) => {
+                        return <ProviderRepository>{
+                            name: r.name,
+                            cloneUrl: r.clone_url,
+                            account: r.owner.login,
+                            accountAvatarUrl: r.owner.gravatar_id
+                                ? `https://www.gravatar.com/avatar/${r.owner.gravatar_id}?size=128`
+                                : r.owner.avatar_url,
+                            updatedAt: r.updated_at,
+                        };
+                    }),
         );
-        return adminRepositories.map((r) => {
-            return <ProviderRepository>{
-                name: r.name,
-                cloneUrl: r.clone_url,
-                account: r.owner.login,
-                accountAvatarUrl: r.owner.gravatar_id
-                    ? `https://www.gravatar.com/avatar/${r.owner.gravatar_id}?size=128`
-                    : r.owner.avatar_url,
-                updatedAt: r.updated_at,
-            };
-        });
+        return repositories;
     }
 
     async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
