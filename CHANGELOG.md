@@ -1,6 +1,11 @@
 # Change Log
 
 ## April 2022
+- [ws-daemon] Refactor configuration of I/O limits ([#9437](https://github.com/gitpod-io/gitpod/pull/9437)) - [@aledbf](https://github.com/aledbf)
+- Add I/O limit plugin for cgroup v1 ([#9428](https://github.com/gitpod-io/gitpod/pull/9428)) - [@aledbf](https://github.com/aledbf), [@csweichel](https://github.com/csweichel)
+- Allow workspace timeouts to be extended when a user has workspaces in different regions. ([#9427](https://github.com/gitpod-io/gitpod/pull/9427)) - [@andrew-farries](https://github.com/andrew-farries)
+- [werft] Improve findFreeHostPorts speed ([#9361](https://github.com/gitpod-io/gitpod/pull/9361)) - [@aledbf](https://github.com/aledbf)
+- block abusers based on email domain suffixes ([#9409](https://github.com/gitpod-io/gitpod/pull/9409)) - [@geropl](https://github.com/geropl)
 - Update GoLand IDE image to version 221.5080.224. ([#9348](https://github.com/gitpod-io/gitpod/pull/9348)) - [@roboquat](https://github.com/roboquat)
 - Update PyCharm IDE image to version 221.5080.212. ([#9322](https://github.com/gitpod-io/gitpod/pull/9322)) - [@roboquat](https://github.com/roboquat)
 - Update PhpStorm IDE image to version 221.5080.224. ([#9349](https://github.com/gitpod-io/gitpod/pull/9349)) - [@roboquat](https://github.com/roboquat)
