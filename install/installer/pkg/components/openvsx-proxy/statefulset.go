@@ -82,7 +82,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Resources: v1.ResourceRequirements{
 							Requests: v1.ResourceList{
 								"cpu":    resource.MustParse("1m"),
-								"memory": resource.MustParse("2.25Gi"),
+								"memory": resource.MustParse("150Mi"),
 							},
 						},
 						Ports: []v1.ContainerPort{{
@@ -117,7 +117,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Resources: v1.ResourceRequirements{
 							Requests: v1.ResourceList{
 								"cpu":    resource.MustParse("1m"),
-								"memory": resource.MustParse("512Mi"),
+								"memory": resource.MustParse("150Mi"),
 							},
 						},
 						VolumeMounts: []v1.VolumeMount{{
