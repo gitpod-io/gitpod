@@ -17,7 +17,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-version"
@@ -51,7 +53,7 @@ func main() {
 		log.Fatalf("Usage: %s <port> <kind> [<link label>]\n", os.Args[0])
 	}
 	port := os.Args[1]
-	kind := os.Args[2]
+	alias := os.Args[2]
 	label := "Open JetBrains IDE"
 	if len(os.Args) > 3 {
 		label = os.Args[3]
@@ -73,7 +75,7 @@ func main() {
 
 	version_2022_1, _ := version.NewVersion("2022.1")
 	if version_2022_1.LessThanOrEqual(backendVersion) {
-		err = installPlugins(wsInfo)
+		err = installPlugins(wsInfo, alias)
 		installPluginsCost := time.Now().Local().Sub(startTime).Milliseconds()
 		if err != nil {
 			log.WithError(err).WithField("cost", installPluginsCost).Error("installing repo plugins: done")
@@ -125,7 +127,7 @@ func main() {
 		response["link"] = gatewayLink
 		response["label"] = label
 		response["clientID"] = "jetbrains-gateway"
-		response["kind"] = kind
+		response["kind"] = alias
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(response)
 	})
@@ -294,8 +296,8 @@ func resolveBackendVersion() (*version.Version, error) {
 	return version.NewVersion(info.Version)
 }
 
-func installPlugins(wsInfo *supervisor.WorkspaceInfoResponse) error {
-	plugins, err := getPlugins(wsInfo.GetCheckoutLocation())
+func installPlugins(wsInfo *supervisor.WorkspaceInfoResponse, alias string) error {
+	plugins, err := getPlugins(wsInfo.GetCheckoutLocation(), alias)
 	if err != nil {
 		return err
 	}
@@ -342,29 +344,49 @@ func installPlugins(wsInfo *supervisor.WorkspaceInfoResponse) error {
 	return nil
 }
 
-func getPlugins(repoRoot string) (plugins []string, err error) {
+func getPlugins(repoRoot string, alias string) ([]string, error) {
 	if repoRoot == "" {
-		err = errors.New("repoRoot is empty")
-		return
+		return nil, errors.New("repoRoot is empty")
 	}
 	data, err := os.ReadFile(filepath.Join(repoRoot, ".gitpod.yml"))
 	if err != nil {
 		// .gitpod.yml not exist is ok
 		if errors.Is(err, os.ErrNotExist) {
-			err = nil
-			return
+			return nil, nil
 		}
-		err = errors.New("read .gitpod.yml file failed: " + err.Error())
-		return
+		return nil, errors.New("read .gitpod.yml file failed: " + err.Error())
 	}
 	var config *gitpod.GitpodConfig
 	if err = yaml.Unmarshal(data, &config); err != nil {
-		err = errors.New("unmarshal .gitpod.yml file failed" + err.Error())
-		return
+		return nil, errors.New("unmarshal .gitpod.yml file failed" + err.Error())
 	}
+
 	if config == nil || config.JetBrains == nil {
-		err = errors.New("config.vscode field not exists")
-		return
+		return nil, nil
 	}
-	return config.JetBrains.Plugins, nil
+	var plugins []string
+	if config.JetBrains.Plugins != nil {
+		plugins = append(plugins, config.JetBrains.Plugins...)
+	}
+	productConfig := getProductConfig(config, alias)
+	if productConfig != nil && productConfig.Plugins != nil {
+		plugins = append(plugins, productConfig.Plugins...)
+	}
+	return plugins, nil
+}
+
+func getProductConfig(config *gitpod.GitpodConfig, alias string) *gitpod.JetBrainsProduct {
+	defer func() {
+		if err := recover(); err != nil {
+			log.WithField("error", err).WithField("alias", alias).Error("failed to extract JB product config")
+		}
+	}()
+	v := reflect.ValueOf(*config.JetBrains).FieldByNameFunc(func(s string) bool {
+		return strings.ToLower(s) == alias
+	}).Interface()
+	productConfig, ok := v.(*gitpod.JetBrainsProduct)
+	if !ok {
+		return nil
+	}
+	return productConfig
 }

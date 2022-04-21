@@ -2,7 +2,10 @@ module github.com/gitpod-io/gitpod/jetbrains/status
 
 go 1.17
 
-require github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
+require (
+	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
+	github.com/google/go-cmp v0.5.6
+)
 
 require (
 	github.com/golang/mock v1.6.0 // indirect
