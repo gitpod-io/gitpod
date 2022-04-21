@@ -16,7 +16,7 @@ export async function trackLogin(
     subscriptionService: SubscriptionService,
 ) {
     // make new complete identify call for each login
-    fullIdentify(user, request, analytics, subscriptionService);
+    await fullIdentify(user, request, analytics, subscriptionService);
 
     // track the login
     analytics.track({
@@ -31,7 +31,7 @@ export async function trackLogin(
 
 export async function trackSignup(user: User, request: Request, analytics: IAnalyticsWriter) {
     // make new complete identify call for each signup
-    fullIdentify(user, request, analytics);
+    await fullIdentify(user, request, analytics);
 
     // track the signup
     analytics.track({
