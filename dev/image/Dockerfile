@@ -45,6 +45,8 @@ RUN curl -fsSL https://github.com/kubernetes-sigs/kubebuilder/releases/download/
     && sudo mv /tmp/kubebuilder_2.3.2_linux_amd64/* /usr/local/kubebuilder \
     && rm -rf /tmp/*
 
+RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | sudo apt-key add -
+
 ### MySQL client ###
 RUN install-packages mysql-client
 
