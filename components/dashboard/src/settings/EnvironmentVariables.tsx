@@ -198,8 +198,8 @@ export default function EnvVars() {
         if (name.trim() === "") {
             return "Name must not be empty.";
         }
-        if (!/^[a-zA-Z0-9_]*$/.test(name)) {
-            return "Name must match /[a-zA-Z_]+[a-zA-Z0-9_]*/.";
+        if (!/^[a-zA-Z_]+[a-zA-Z0-9_]*$/.test(name)) {
+            return "Name must match /^[a-zA-Z_]+[a-zA-Z0-9_]*$/.";
         }
         if (variable.value.trim() === "") {
             return "Value must not be empty.";
