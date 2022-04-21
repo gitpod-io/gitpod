@@ -59,7 +59,7 @@ function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter)
         },
         traits: {
             ...resolveIdentities(user),
-            email: User.getPrimaryEmail(user),
+            email: User.getPrimaryEmail(user) || "",
             full_name: user.fullName,
             created_at: user.creationDate,
             unsubscribed_onboarding: user.additionalData?.emailNotificationSettings?.allowsOnboardingMail === false,

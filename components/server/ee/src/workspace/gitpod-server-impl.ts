@@ -1120,6 +1120,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         try {
             const email = User.getPrimaryEmail(user);
+            if (!email) {
+                throw new Error("No identity with primary email for user");
+            }
 
             return new Promise((resolve, reject) => {
                 this.chargebeeProvider.hosted_page

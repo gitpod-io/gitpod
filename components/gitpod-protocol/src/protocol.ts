@@ -68,13 +68,19 @@ export namespace User {
         });
         return res;
     }
-    export function getPrimaryEmail(user: User): string {
+
+    /**
+     * Tries to return the primaryEmail of the first identity this user signed up with.
+     * @param user
+     * @returns A primaryEmail, or undefined if there is none.
+     */
+    export function getPrimaryEmail(user: User): string | undefined {
         const identities = user.identities.filter((i) => !!i.primaryEmail);
         if (identities.length <= 0) {
-            throw new Error(`No identity with primary email for user: ${user.id}!`);
+            return undefined;
         }
 
-        return identities[0].primaryEmail!;
+        return identities[0].primaryEmail || undefined;
     }
     export function getName(user: User): string | undefined {
         const name = user.fullName || user.name;

@@ -21,7 +21,7 @@ export default function Account() {
     const [modal, setModal] = useState(false);
     const [typedEmail, setTypedEmail] = useState("");
 
-    const primaryEmail = User.getPrimaryEmail(user!);
+    const primaryEmail = User.getPrimaryEmail(user!) || "---";
 
     const deleteAccount = async () => {
         await getGitpodService().server.deleteAccount();
@@ -75,7 +75,7 @@ export default function Account() {
                         </div>
                         <div className="mt-4">
                             <h4>Email</h4>
-                            <input type="text" disabled={true} value={User.getPrimaryEmail(user!)} />
+                            <input type="text" disabled={true} value={primaryEmail} />
                         </div>
                     </div>
                     <div className="lg:pl-14">
