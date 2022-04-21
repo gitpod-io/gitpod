@@ -225,12 +225,13 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.NotificationService/Notify", runtime.WithHTTPPathPattern("/v1/notification/notify"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.NotificationService/Notify", runtime.WithHTTPPathPattern("/v1/notification/notify"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_Notify_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_NotificationService_Notify_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -255,12 +256,13 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.NotificationService/Respond", runtime.WithHTTPPathPattern("/v1/notification/respond"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.NotificationService/Respond", runtime.WithHTTPPathPattern("/v1/notification/respond"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_Respond_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_NotificationService_Respond_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -285,12 +287,13 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.NotificationService/NotifyActive", runtime.WithHTTPPathPattern("/v1/notification/notify-action"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.NotificationService/NotifyActive", runtime.WithHTTPPathPattern("/v1/notification/notify-action"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_NotifyActive_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_NotificationService_NotifyActive_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -308,12 +311,13 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.NotificationService/NotifyActiveRespond", runtime.WithHTTPPathPattern("/v1/notification/notify-action-respond"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.NotificationService/NotifyActiveRespond", runtime.WithHTTPPathPattern("/v1/notification/notify-action-respond"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_NotificationService_NotifyActiveRespond_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_NotificationService_NotifyActiveRespond_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -370,12 +374,13 @@ func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/Notify", runtime.WithHTTPPathPattern("/v1/notification/notify"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/Notify", runtime.WithHTTPPathPattern("/v1/notification/notify"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_Notify_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_NotificationService_Notify_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -390,12 +395,13 @@ func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/Subscribe", runtime.WithHTTPPathPattern("/v1/notification/subscribe"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/Subscribe", runtime.WithHTTPPathPattern("/v1/notification/subscribe"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_Subscribe_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_NotificationService_Subscribe_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -410,12 +416,13 @@ func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/Respond", runtime.WithHTTPPathPattern("/v1/notification/respond"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/Respond", runtime.WithHTTPPathPattern("/v1/notification/respond"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_Respond_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_NotificationService_Respond_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -430,12 +437,13 @@ func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/SubscribeActive", runtime.WithHTTPPathPattern("/v1/notification/subscribe-active"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/SubscribeActive", runtime.WithHTTPPathPattern("/v1/notification/subscribe-active"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_SubscribeActive_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_NotificationService_SubscribeActive_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -450,12 +458,13 @@ func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/NotifyActive", runtime.WithHTTPPathPattern("/v1/notification/notify-action"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/NotifyActive", runtime.WithHTTPPathPattern("/v1/notification/notify-action"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_NotifyActive_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_NotificationService_NotifyActive_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -470,12 +479,13 @@ func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/NotifyActiveRespond", runtime.WithHTTPPathPattern("/v1/notification/notify-action-respond"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.NotificationService/NotifyActiveRespond", runtime.WithHTTPPathPattern("/v1/notification/notify-action-respond"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_NotificationService_NotifyActiveRespond_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_NotificationService_NotifyActiveRespond_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)

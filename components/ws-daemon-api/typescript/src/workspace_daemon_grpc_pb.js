@@ -279,7 +279,7 @@ teardown: {
     responseSerialize: serialize_iws_TeardownResponse,
     responseDeserialize: deserialize_iws_TeardownResponse,
   },
-  // Set up a pair of veths that interconnect the specified PID and the workspace container's network namename.
+  // Set up a pair of veths that interconnect the specified PID and the workspace container's network namespace.
 setupPairVeths: {
     path: '/iws.InWorkspaceService/SetupPairVeths',
     requestStream: false,

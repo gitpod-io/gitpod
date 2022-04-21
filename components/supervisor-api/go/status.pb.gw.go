@@ -383,12 +383,13 @@ func RegisterStatusServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/SupervisorStatus", runtime.WithHTTPPathPattern("/v1/status/supervisor"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/SupervisorStatus", runtime.WithHTTPPathPattern("/v1/status/supervisor"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_StatusService_SupervisorStatus_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_StatusService_SupervisorStatus_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -406,12 +407,13 @@ func RegisterStatusServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/IDEStatus", runtime.WithHTTPPathPattern("/v1/status/ide"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/IDEStatus", runtime.WithHTTPPathPattern("/v1/status/ide"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_StatusService_IDEStatus_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_StatusService_IDEStatus_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -429,12 +431,13 @@ func RegisterStatusServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/IDEStatus", runtime.WithHTTPPathPattern("/v1/status/ide/wait/{wait=true}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/IDEStatus", runtime.WithHTTPPathPattern("/v1/status/ide/wait/{wait=true}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_StatusService_IDEStatus_1(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_StatusService_IDEStatus_1(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -452,12 +455,13 @@ func RegisterStatusServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/ContentStatus", runtime.WithHTTPPathPattern("/v1/status/content"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/ContentStatus", runtime.WithHTTPPathPattern("/v1/status/content"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_StatusService_ContentStatus_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_StatusService_ContentStatus_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -475,12 +479,13 @@ func RegisterStatusServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/ContentStatus", runtime.WithHTTPPathPattern("/v1/status/content/wait/{wait=true}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/ContentStatus", runtime.WithHTTPPathPattern("/v1/status/content/wait/{wait=true}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_StatusService_ContentStatus_1(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_StatusService_ContentStatus_1(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -498,12 +503,13 @@ func RegisterStatusServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/BackupStatus", runtime.WithHTTPPathPattern("/v1/status/backup"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.StatusService/BackupStatus", runtime.WithHTTPPathPattern("/v1/status/backup"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_StatusService_BackupStatus_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_StatusService_BackupStatus_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -588,12 +594,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/SupervisorStatus", runtime.WithHTTPPathPattern("/v1/status/supervisor"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/SupervisorStatus", runtime.WithHTTPPathPattern("/v1/status/supervisor"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_SupervisorStatus_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_SupervisorStatus_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -608,12 +615,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/IDEStatus", runtime.WithHTTPPathPattern("/v1/status/ide"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/IDEStatus", runtime.WithHTTPPathPattern("/v1/status/ide"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_IDEStatus_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_IDEStatus_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -628,12 +636,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/IDEStatus", runtime.WithHTTPPathPattern("/v1/status/ide/wait/{wait=true}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/IDEStatus", runtime.WithHTTPPathPattern("/v1/status/ide/wait/{wait=true}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_IDEStatus_1(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_IDEStatus_1(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -648,12 +657,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/ContentStatus", runtime.WithHTTPPathPattern("/v1/status/content"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/ContentStatus", runtime.WithHTTPPathPattern("/v1/status/content"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_ContentStatus_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_ContentStatus_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -668,12 +678,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/ContentStatus", runtime.WithHTTPPathPattern("/v1/status/content/wait/{wait=true}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/ContentStatus", runtime.WithHTTPPathPattern("/v1/status/content/wait/{wait=true}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_ContentStatus_1(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_ContentStatus_1(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -688,12 +699,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/BackupStatus", runtime.WithHTTPPathPattern("/v1/status/backup"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/BackupStatus", runtime.WithHTTPPathPattern("/v1/status/backup"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_BackupStatus_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_BackupStatus_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -708,12 +720,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/PortsStatus", runtime.WithHTTPPathPattern("/v1/status/ports"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/PortsStatus", runtime.WithHTTPPathPattern("/v1/status/ports"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_PortsStatus_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_PortsStatus_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -728,12 +741,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/PortsStatus", runtime.WithHTTPPathPattern("/v1/status/ports/observe/{observe=true}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/PortsStatus", runtime.WithHTTPPathPattern("/v1/status/ports/observe/{observe=true}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_PortsStatus_1(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_PortsStatus_1(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -748,12 +762,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/TasksStatus", runtime.WithHTTPPathPattern("/v1/status/tasks"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/TasksStatus", runtime.WithHTTPPathPattern("/v1/status/tasks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_TasksStatus_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_TasksStatus_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -768,12 +783,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/TasksStatus", runtime.WithHTTPPathPattern("/v1/status/tasks/observe/{observe=true}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.StatusService/TasksStatus", runtime.WithHTTPPathPattern("/v1/status/tasks/observe/{observe=true}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_TasksStatus_1(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_TasksStatus_1(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
