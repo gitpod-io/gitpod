@@ -96,6 +96,7 @@ import { DebugApp } from "./debug-app";
 import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messaging/local-message-broker";
 import { contentServiceBinder } from "@gitpod/content-service/lib/sugar";
 import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser";
+import { EditorPrefixParser } from "./workspace/editor-prefix-context-parser";
 import { InstallationAdminTelemetryDataProvider } from "./installation-admin/telemetry-data-provider";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -169,6 +170,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(SnapshotContextParser).toSelf().inSingletonScope();
     bind(IContextParser).to(SnapshotContextParser).inSingletonScope();
     bind(IPrefixContextParser).to(ReferrerPrefixParser).inSingletonScope();
+    bind(IPrefixContextParser).to(EditorPrefixParser).inSingletonScope();
     bind(IPrefixContextParser).to(EnvvarPrefixParser).inSingletonScope();
     bind(IPrefixContextParser).to(ImageBuildPrefixContextParser).inSingletonScope();
     bind(IPrefixContextParser).to(AdditionalContentPrefixContextParser).inSingletonScope();

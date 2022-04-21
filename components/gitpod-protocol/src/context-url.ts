@@ -20,6 +20,7 @@ export namespace ContextURL {
     export const IMAGEBUILD_PREFIX = "imagebuild";
     export const SNAPSHOT_PREFIX = "snapshot";
     export const REFERRER_PREFIX = "referrer:";
+    export const EDITOR_PREFIX = "editor:";
 
     /**
      * This function will (try to) return the HTTP(S) URL of the context the user originally created this workspace on.
@@ -94,7 +95,8 @@ export namespace ContextURL {
             firstSegment === INCREMENTAL_PREBUILD_PREFIX ||
             firstSegment === IMAGEBUILD_PREFIX ||
             firstSegment === SNAPSHOT_PREFIX ||
-            firstSegment.startsWith(REFERRER_PREFIX)
+            firstSegment.startsWith(REFERRER_PREFIX) ||
+            firstSegment.startsWith(EDITOR_PREFIX)
         ) {
             return segmentsToURL(1);
         }
