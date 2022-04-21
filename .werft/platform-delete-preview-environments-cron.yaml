@@ -21,7 +21,7 @@ pod:
       secretName: harvester-kubeconfig
   containers:
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-werft.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go.4
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
