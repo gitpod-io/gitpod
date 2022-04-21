@@ -89,6 +89,10 @@ export interface WorkspaceInstanceStatus {
 
     // ownerToken is the token one needs to access the workspace. Its presence is checked by ws-proxy.
     ownerToken?: string;
+
+    // statusVersion defines the last observed stateVersion from a WorkspaceStatus. See ws-manager-api/core.proto.
+    // statusVersion must only be set by a controller/observer.
+    statusVersion: number;
 }
 
 // WorkspaceInstancePhase describes a high-level state of a workspace instance
