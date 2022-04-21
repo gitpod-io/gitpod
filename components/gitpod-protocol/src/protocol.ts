@@ -191,6 +191,39 @@ export interface UserEnvVar extends UserEnvVarValue {
 }
 
 export namespace UserEnvVar {
+    /**
+     * @param variable
+     * @returns Either a string containing an error message or undefined.
+     */
+    export function validate(variable: UserEnvVarValue): string | undefined {
+        const name = variable.name;
+        const pattern = variable.repositoryPattern;
+        if (name.trim() === "") {
+            return "Name must not be empty.";
+        }
+        if (!/^[a-zA-Z_]+[a-zA-Z0-9_]*$/.test(name)) {
+            return "Name must match /^[a-zA-Z_]+[a-zA-Z0-9_]*$/.";
+        }
+        if (variable.value.trim() === "") {
+            return "Value must not be empty.";
+        }
+        if (pattern.trim() === "") {
+            return "Scope must not be empty.";
+        }
+        const split = pattern.split("/");
+        if (split.length < 2) {
+            return "A scope must use the form 'organization/repo'.";
+        }
+        for (const name of split) {
+            if (name !== "*") {
+                if (!/^[a-zA-Z0-9_\-.\*]+$/.test(name)) {
+                    return "Invalid scope segment. Only ASCII characters, numbers, -, _, . or * are allowed.";
+                }
+            }
+        }
+        return undefined;
+    }
+
     // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function normalizeRepoPattern(pattern: string) {
         return pattern.toLocaleLowerCase();
