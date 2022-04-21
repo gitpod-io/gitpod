@@ -147,7 +147,7 @@ export class EligibilityService {
 
         const hasHitParallelWorkspaceLimit = async (): Promise<HitParallelWorkspaceLimit | undefined> => {
             const max = await this.getMaxParallelWorkspaces(user);
-            const instances = (await runningInstances).filter((i) => i.status.phase !== "unknown");
+            const instances = (await runningInstances).filter((i) => i.status.phase !== "preparing");
             const current = instances.length; // >= parallelWorkspaceAllowance;
             if (current >= max) {
                 return {
