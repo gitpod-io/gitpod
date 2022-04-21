@@ -169,6 +169,16 @@ type JetBrainsProduct struct {
 
 	// List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.
 	Plugins []string `yaml:"plugins,omitempty"`
+
+	// Enable warming up of JetBrains product in prebuilds
+	Prebuilds *JetBrainsPrebuilds `yaml:"prebuilds,omitempty"`
+}
+
+// Enable warming up of JetBrains product in prebuilds
+type JetBrainsPrebuilds struct {
+
+	// Whether only stable, latest or both versions should be warmed up.
+	Version string `yaml:"version,omitempty"`
 }
 
 func (strct *Github) MarshalJSON() ([]byte, error) {

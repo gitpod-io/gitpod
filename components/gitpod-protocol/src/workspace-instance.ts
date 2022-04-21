@@ -207,6 +207,7 @@ export interface WorkspaceInstanceRepoStatus {
 // ConfigurationIdeConfig ide config of WorkspaceInstanceConfiguration
 export interface ConfigurationIdeConfig {
     useLatest?: boolean;
+    desktopIdeAlias?: string;
 }
 
 // WorkspaceInstanceConfiguration contains all per-instance configuration

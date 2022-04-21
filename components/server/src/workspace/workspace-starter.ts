@@ -109,6 +109,7 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
+import { IDEService } from "../ide-service";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -119,6 +120,7 @@ export interface StartWorkspaceOptions {
 const MAX_INSTANCE_START_RETRIES = 2;
 const INSTANCE_START_RETRY_INTERVAL_SECONDS = 2;
 
+// TODO(ak) move to IDE service
 export const migrationIDESettings = (user: User) => {
     if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.0") {
         return;
@@ -145,6 +147,7 @@ export const migrationIDESettings = (user: User) => {
     return newIDESettings;
 };
 
+// TODO(ak) move to IDE service
 export const chooseIDE = (
     ideChoice: string,
     ideOptions: IDEOptions,
@@ -181,6 +184,7 @@ export class WorkspaceStarter {
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
     @inject(Config) protected readonly config: Config;
     @inject(IDEConfigService) private readonly ideConfigService: IDEConfigService;
+    @inject(IDEService) private readonly ideService: IDEService;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(TracedUserDB) protected readonly userDB: DBWithTracing<UserDB>;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
@@ -598,6 +602,7 @@ export class WorkspaceStarter {
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
     ): Promise<WorkspaceInstance> {
+        //#endregion IDE resolution TODO(ak) move to IDE service
         // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
         delete ideConfig.ideOptions.options["code-latest"];
         delete ideConfig.ideOptions.options["code-desktop-insiders"];
@@ -654,6 +659,7 @@ export class WorkspaceStarter {
                     });
             }
         }
+        //#endregion
 
         let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
         featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
@@ -706,6 +712,7 @@ export class WorkspaceStarter {
         return instance;
     }
 
+    // TODO(ak) move to IDE service
     protected resolveReferrerIDE(
         workspace: Workspace,
         user: User,
@@ -1134,12 +1141,13 @@ export class WorkspaceStarter {
         envvars.push(contextEnv);
 
         log.debug("Workspace config", workspace.config);
-        if (!!workspace.config.tasks) {
-            // The task config is interpreted by Theia only, there's little point in transforming it into something
+        const tasks = this.ideService.resolveGitpodTasks(workspace);
+        if (tasks.length) {
+            // The task config is interpreted by supervisor only, there's little point in transforming it into something
             // wsman understands and back into the very same structure.
             const ev = new EnvironmentVariable();
             ev.setName("GITPOD_TASKS");
-            ev.setValue(JSON.stringify(workspace.config.tasks));
+            ev.setValue(JSON.stringify(tasks));
             envvars.push(ev);
         }
 
