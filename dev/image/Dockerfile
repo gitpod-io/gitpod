@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full-vnc:latest
 
-ENV TRIGGER_REBUILD 16
+ENV TRIGGER_REBUILD 17
 
 USER root
 
@@ -23,7 +23,7 @@ RUN mkdir -p /tmp/helm/ \
 
 ### kubernetes ###
 RUN mkdir -p /usr/local/kubernetes/ && \
-    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.22.4/kubernetes.tar.gz \
+    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.23.6/kubernetes.tar.gz \
     | tar -xzvC /usr/local/kubernetes/ --strip-components=1 \
     && KUBERNETES_SKIP_CONFIRM=true /usr/local/kubernetes/cluster/get-kube-binaries.sh \
     && chown gitpod:gitpod -R /usr/local/kubernetes
@@ -34,7 +34,7 @@ ENV PATH=$PATH:/usr/local/kubernetes/cluster/:/usr/local/kubernetes/client/bin/
 RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
     # really 'xenial'
     && add-apt-repository -yu "deb https://apt.kubernetes.io/ kubernetes-xenial main" \
-    && install-packages kubectl=1.22.4-00 \
+    && install-packages kubectl=1.23.5-00 \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl
 
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
@@ -56,7 +56,7 @@ ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
 RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.17/leeway_0.2.17_Linux_x86_64.tar.gz | tar xz
 
 # dazzle
-RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/download/v0.1.7/dazzle_0.1.7_Darwin_x86_64.tar.gz| tar xz
+RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/download/v0.1.11/dazzle_0.1.11_Linux_x86_64.tar.gz| tar xz
 
 # werft CLI
 ENV WERFT_K8S_NAMESPACE=werft
@@ -75,7 +75,7 @@ RUN cd /usr/bin && curl -fsSL https://github.com/c4milo/github-release/releases/
 ### Protobuf
 RUN set -ex \
     && tmpdir=$(mktemp -d) \
-    && curl -fsSL -o $tmpdir/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v3.19.4/protoc-3.19.4-linux-x86_64.zip \
+    && curl -fsSL -o $tmpdir/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-linux-x86_64.zip \
     && mkdir -p /usr/lib/protoc && cd /usr/lib/protoc && unzip $tmpdir/protoc.zip \
     && chmod -R o+r+x /usr/lib/protoc/include \
     && chmod -R +x /usr/lib/protoc/bin \
