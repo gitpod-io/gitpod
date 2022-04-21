@@ -111,6 +111,7 @@ function publishKots(werft: Werft, jobConfig: JobConfig) {
 
     // Set the tag to the current version
     exec(`yq w -i ${REPLICATED_YAML_DIR}/gitpod-installer-job.yaml ${INSTALLER_JOB_IMAGE} ${image}:${jobConfig.version}`, { slice: phases.PUBLISH_KOTS });
+    exec(`yq w -i ${REPLICATED_YAML_DIR}/gitpod-installation-status.yaml ${INSTALLER_JOB_IMAGE} ${image}:${jobConfig.version}`, { slice: phases.PUBLISH_KOTS });
 
     // Generate the logo
     exec(`make logo -C ${REPLICATED_DIR}`, { slice: phases.PUBLISH_KOTS });
