@@ -93,7 +93,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 
 				b, err := yaml.Marshal(f.ctnt)
 				if err != nil {
-					t.Errorf("cannot re-marshal %s template: %w", f.tplfn, err)
+					t.Errorf("cannot re-marshal %s template: %v", f.tplfn, err)
 					return nil
 				}
 
