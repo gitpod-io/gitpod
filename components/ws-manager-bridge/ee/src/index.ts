@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-require('reflect-metadata');
+require("reflect-metadata");
 
 import { Container } from "inversify";
 import { containerModuleEE } from "./container-module";

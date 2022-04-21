@@ -4,10 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as prom from 'prom-client';
+import * as prom from "prom-client";
 import { injectable } from "inversify";
-import { WorkspaceInstance } from '@gitpod/gitpod-protocol';
-import { WorkspaceClusterWoTLS } from '@gitpod/gitpod-protocol/src/workspace-cluster';
+import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/src/workspace-cluster";
 
 @injectable()
 export class PrometheusMetricsExporter {
@@ -22,44 +22,48 @@ export class PrometheusMetricsExporter {
 
     constructor() {
         this.workspaceStartupTimeHistogram = new prom.Histogram({
-            name: 'workspace_startup_time',
-            help: 'The time until a workspace instance is marked running',
-            labelNames: ['neededImageBuild', 'region'],
+            name: "workspace_startup_time",
+            help: "The time until a workspace instance is marked running",
+            labelNames: ["neededImageBuild", "region"],
             buckets: prom.exponentialBuckets(2, 2, 10),
         });
         this.timeToFirstUserActivityHistogram = new prom.Histogram({
-            name: 'first_user_activity_time',
-            help: 'The time between a workspace is running and first user activity',
-            labelNames: ['region'],
+            name: "first_user_activity_time",
+            help: "The time between a workspace is running and first user activity",
+            labelNames: ["region"],
             buckets: prom.exponentialBuckets(2, 2, 10),
         });
         this.clusterScore = new prom.Gauge({
-            name: 'gitpod_ws_manager_bridge_cluster_score',
-            help: 'Score of the individual registered workspace cluster',
-            labelNames: ["workspace_cluster"]
+            name: "gitpod_ws_manager_bridge_cluster_score",
+            help: "Score of the individual registered workspace cluster",
+            labelNames: ["workspace_cluster"],
         });
         this.clusterCordoned = new prom.Gauge({
-            name: 'gitpod_ws_manager_bridge_cluster_cordoned',
-            help: 'Cordoned status of the individual registered workspace cluster',
-            labelNames: ["workspace_cluster"]
+            name: "gitpod_ws_manager_bridge_cluster_cordoned",
+            help: "Cordoned status of the individual registered workspace cluster",
+            labelNames: ["workspace_cluster"],
         });
         this.statusUpdatesTotal = new prom.Counter({
-            name: 'gitpod_ws_manager_bridge_status_updates_total',
-            help: 'Total workspace status updates received',
-            labelNames: ["workspace_cluster", "known_instance"]
+            name: "gitpod_ws_manager_bridge_status_updates_total",
+            help: "Total workspace status updates received",
+            labelNames: ["workspace_cluster", "known_instance"],
         });
         this.stalePrebuildEventsTotal = new prom.Counter({
             name: "gitpod_ws_manager_bridge_stale_prebuild_events_total",
-            help: "Total count of stale prebuild events received by workspace manager bridge"
-        })
+            help: "Total count of stale prebuild events received by workspace manager bridge",
+        });
     }
 
     observeWorkspaceStartupTime(instance: WorkspaceInstance): void {
-        const timeToRunningSecs = (new Date(instance.startedTime!).getTime() - new Date(instance.creationTime).getTime()) / 1000;
-        this.workspaceStartupTimeHistogram.observe({
-            neededImageBuild: JSON.stringify(instance.status.conditions.neededImageBuild),
-            region: instance.region,
-        }, timeToRunningSecs);
+        const timeToRunningSecs =
+            (new Date(instance.startedTime!).getTime() - new Date(instance.creationTime).getTime()) / 1000;
+        this.workspaceStartupTimeHistogram.observe(
+            {
+                neededImageBuild: JSON.stringify(instance.status.conditions.neededImageBuild),
+                region: instance.region,
+            },
+            timeToRunningSecs,
+        );
     }
 
     observeFirstUserActivity(instance: WorkspaceInstance, firstUserActivity: string): void {
@@ -67,22 +71,26 @@ export class PrometheusMetricsExporter {
             return;
         }
 
-        const timeToFirstUserActivity = (new Date(firstUserActivity).getTime() - new Date(instance.startedTime!).getTime()) / 1000;
-        this.timeToFirstUserActivityHistogram.observe({
-            region: instance.region,
-        }, timeToFirstUserActivity);
+        const timeToFirstUserActivity =
+            (new Date(firstUserActivity).getTime() - new Date(instance.startedTime!).getTime()) / 1000;
+        this.timeToFirstUserActivityHistogram.observe(
+            {
+                region: instance.region,
+            },
+            timeToFirstUserActivity,
+        );
     }
 
     updateClusterMetrics(clusters: WorkspaceClusterWoTLS[]): void {
         let newActiveClusterNames = new Set<string>();
-        clusters.forEach(cluster => {
-            this.clusterCordoned.labels(cluster.name).set(cluster.state === 'cordoned' ? 1 : 0);
+        clusters.forEach((cluster) => {
+            this.clusterCordoned.labels(cluster.name).set(cluster.state === "cordoned" ? 1 : 0);
             this.clusterScore.labels(cluster.name).set(cluster.score);
             newActiveClusterNames.add(cluster.name);
         });
 
-        const noLongerActiveCluster = Array.from(this.activeClusterNames).filter(c => !newActiveClusterNames.has(c));
-        noLongerActiveCluster.forEach(clusterName => {
+        const noLongerActiveCluster = Array.from(this.activeClusterNames).filter((c) => !newActiveClusterNames.has(c));
+        noLongerActiveCluster.forEach((clusterName) => {
             this.clusterCordoned.remove(clusterName);
             this.clusterScore.remove(clusterName);
         });
@@ -97,4 +105,3 @@ export class PrometheusMetricsExporter {
         this.stalePrebuildEventsTotal.inc();
     }
 }
-

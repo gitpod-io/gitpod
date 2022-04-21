@@ -4,10 +4,15 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from 'inversify';
+import { injectable, inject } from "inversify";
 import { MessageBusHelper, AbstractMessageBusIntegration, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
-import { HeadlessWorkspaceEventType, WorkspaceInstance, HeadlessWorkspaceEvent, PrebuildWithStatus } from '@gitpod/gitpod-protocol';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
+import {
+    HeadlessWorkspaceEventType,
+    WorkspaceInstance,
+    HeadlessWorkspaceEvent,
+    PrebuildWithStatus,
+} from "@gitpod/gitpod-protocol";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 
 @injectable()
 export class MessageBusIntegration extends AbstractMessageBusIntegration {
@@ -20,7 +25,11 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         const topic = `prebuild.update.project-${prebuildInfo.info.projectId}`;
         await this.messageBusHelper.assertWorkspaceExchange(this.channel);
 
-        await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, Buffer.from(JSON.stringify(prebuildInfo)));
+        await super.publish(
+            MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL,
+            topic,
+            Buffer.from(JSON.stringify(prebuildInfo)),
+        );
     }
 
     async notifyOnInstanceUpdate(ctx: TraceContext, userId: string, instance: WorkspaceInstance) {
@@ -30,13 +39,18 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
                 throw new Error("Not connected to message bus");
             }
 
-            const topic = this.messageBusHelper.getWsTopicForPublishing(userId, instance.workspaceId, 'updates');
+            const topic = this.messageBusHelper.getWsTopicForPublishing(userId, instance.workspaceId, "updates");
             await this.messageBusHelper.assertWorkspaceExchange(this.channel);
-            await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, new Buffer(JSON.stringify(instance)), {
-                trace: { span },
-            });
+            await super.publish(
+                MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL,
+                topic,
+                new Buffer(JSON.stringify(instance)),
+                {
+                    trace: { span },
+                },
+            );
         } catch (err) {
-            TraceContext.setError({span}, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();
@@ -48,7 +62,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
             throw new Error("Not connected to message bus");
         }
 
-        const topic = this.messageBusHelper.getWsTopicForPublishing(userId, workspaceId, 'headless-log');
+        const topic = this.messageBusHelper.getWsTopicForPublishing(userId, workspaceId, "headless-log");
         const msg = new Buffer(JSON.stringify(evt));
         await this.messageBusHelper.assertWorkspaceExchange(this.channel);
         await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, msg, {
@@ -71,5 +85,4 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
             this.channel.close();
         }
     }
-
 }
