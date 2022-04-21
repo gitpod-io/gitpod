@@ -718,7 +718,7 @@ export class WorkspaceStarter {
             workspaceImage: "", // Initially empty, filled during starting process
             status: {
                 conditions: {},
-                phase: "unknown",
+                phase: "preparing",
             },
             configuration,
         };
