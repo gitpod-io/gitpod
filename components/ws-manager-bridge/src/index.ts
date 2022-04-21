@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-require('reflect-metadata');
+require("reflect-metadata");
 
 import { Container } from "inversify";
 import { containerModule } from "./container-module";
