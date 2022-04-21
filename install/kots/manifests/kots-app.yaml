@@ -17,6 +17,7 @@ spec:
     - deployment/dashboard
     - deployment/ide-proxy
     - deployment/image-builder-mk3
+    - deployment/installation-status
     - deployment/proxy
     - deployment/server
     - deployment/ws-manager
