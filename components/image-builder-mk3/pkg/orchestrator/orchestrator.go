@@ -42,8 +42,8 @@ import (
 )
 
 const (
-	// buildWorkspaceOwnerID is the owner ID we pass to ws-manager
-	buildWorkspaceOwnerID = "image-builder"
+	// buildWorkspaceManagerID identifies the manager for the workspace
+	buildWorkspaceManagerID = "image-builder"
 
 	// maxBuildRuntime is the maximum time a build is allowed to take
 	maxBuildRuntime = 60 * time.Minute
@@ -345,12 +345,11 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 			Metadata: &wsmanapi.WorkspaceMetadata{
 				MetaId: buildID,
 				Annotations: map[string]string{
-					annotationRef:     wsrefstr,
-					annotationBaseRef: baseref,
+					annotationRef:       wsrefstr,
+					annotationBaseRef:   baseref,
+					annotationManagedBy: buildWorkspaceManagerID,
 				},
-				// TODO(cw): use the actual image build owner here and move to annotation based filter
-				//           when retrieving running image builds.
-				Owner: buildWorkspaceOwnerID,
+				Owner: req.GetTriggeredBy(),
 			},
 			Spec: &wsmanapi.StartWorkspaceSpec{
 				Initializer:        initializer,

@@ -217,6 +217,8 @@ export class BuildRequest extends jspb.Message {
     setAuth(value?: BuildRegistryAuth): BuildRequest;
     getForceRebuild(): boolean;
     setForceRebuild(value: boolean): BuildRequest;
+    getTriggeredBy(): string;
+    setTriggeredBy(value: string): BuildRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): BuildRequest.AsObject;
@@ -233,6 +235,7 @@ export namespace BuildRequest {
         source?: BuildSource.AsObject,
         auth?: BuildRegistryAuth.AsObject,
         forceRebuild: boolean,
+        triggeredBy: string,
     }
 }
 
