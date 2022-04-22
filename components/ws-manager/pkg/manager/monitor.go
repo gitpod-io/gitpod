@@ -870,7 +870,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			return false, nil, nil
 		}
 
-		// todo: once we add snapshot objects, this will be moved to a better place
+		// todo(pavel): once we add snapshot objects, this will be moved to a better place
 		if wso.Pod != nil {
 			_, pvcFeatureEnabled := wso.Pod.Labels[pvcWorkspaceFeatureAnnotation]
 			if pvcFeatureEnabled {

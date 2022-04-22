@@ -261,11 +261,11 @@ var validWorkspaceURLTemplate = validation.By(func(o interface{}) error {
 
 // PVCConfiguration configures properties of persistent volume claim to use for workspace containers
 type PVCConfiguration struct {
-	Size         string `json:"size"`
-	StorageClass string `json:"storage-class"`
+	Size         resource.Quantity `json:"size"`
+	StorageClass string            `json:"storage-class"`
 }
 
-// Validate validates a container configuration
+// Validate validates a PVC configuration
 func (c *PVCConfiguration) Validate() error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.Size, validation.Required),

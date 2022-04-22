@@ -21,7 +21,6 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -231,7 +230,7 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 	default:
 		prefix = "ws"
 	}
-	storageClassName := m.Config.Container.PVC.StorageClass
+	storageClassName := m.Config.PVC.StorageClass
 	return &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
@@ -242,8 +241,7 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 			StorageClassName: &storageClassName,
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					// todo: fix pvc size, should come from ws manager config now
-					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(m.Config.Container.PVC.Size),
+					corev1.ResourceName(corev1.ResourceStorage): m.Config.PVC.Size,
 				},
 			},
 		},
@@ -540,7 +538,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			// not needed, since it is using dedicated disk
 			pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
 
-			// pavel: magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
+			// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
+			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
 			gitpodGUID := int64(133332)
 			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
 
@@ -635,20 +634,6 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 
 	image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
 
-	volMounts := []corev1.VolumeMount{
-		{
-			Name:             workspaceVolumeName,
-			MountPath:        workspaceDir,
-			ReadOnly:         false,
-			MountPropagation: &mountPropagation,
-		},
-		{
-			MountPath:        "/.workspace",
-			Name:             "daemon-mount",
-			MountPropagation: &mountPropagation,
-		},
-	}
-
 	return &corev1.Container{
 		Name:            "workspace",
 		Image:           image,
@@ -661,7 +646,19 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			Limits:   limits,
 			Requests: requests,
 		},
-		VolumeMounts:             volMounts,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:             workspaceVolumeName,
+				MountPath:        workspaceDir,
+				ReadOnly:         false,
+				MountPropagation: &mountPropagation,
+			},
+			{
+				MountPath:        "/.workspace",
+				Name:             "daemon-mount",
+				MountPropagation: &mountPropagation,
+			},
+		},
 		ReadinessProbe:           readinessProbe,
 		Env:                      env,
 		Command:                  command,

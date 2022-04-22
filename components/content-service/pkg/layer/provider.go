@@ -245,19 +245,8 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 	// check if workspace has an FWB
 	var (
 		bucket = s.Storage.Bucket(owner)
-		mfobj  = fmt.Sprintf(fmtWorkspaceManifest, workspaceID)
 	)
-	span.LogKV("bucket", bucket, "mfobj", mfobj)
-	manifest, _, err = s.downloadContentManifest(ctx, bucket, mfobj)
-	if err != nil && err != storage.ErrNotFound {
-		return nil, nil, err
-	}
-	if manifest != nil {
-		span.LogKV("backup found", "full workspace backup")
-
-		l, err = s.layerFromContentManifestPVC(ctx, manifest, csapi.WorkspaceInitFromBackup, true)
-		return l, manifest, err
-	}
+	span.LogKV("bucket", bucket)
 
 	// check if legacy workspace backup is present
 	var layer *Layer
@@ -470,36 +459,6 @@ func (s *Provider) layerFromContentManifest(ctx context.Context, mf *csapi.Works
 	return l, nil
 }
 
-func (s *Provider) layerFromContentManifestPVC(ctx context.Context, mf *csapi.WorkspaceContentManifest, initsrc csapi.WorkspaceInitSource, ready bool) (l []Layer, err error) {
-	// we have a valid full workspace backup
-	l = make([]Layer, len(mf.Layers))
-	for i, mfl := range mf.Layers {
-		info, err := s.Storage.SignDownload(ctx, mfl.Bucket, mfl.Object, &storage.SignedURLOptions{})
-		if err != nil {
-			return nil, err
-		}
-		if info.Meta.Digest != mfl.Digest.String() {
-			return nil, xerrors.Errorf("digest mismatch for %s/%s: expected %s, got %s", mfl.Bucket, mfl.Object, mfl.Digest, info.Meta.Digest)
-		}
-		l[i] = Layer{
-			DiffID:    mfl.DiffID.String(),
-			Digest:    mfl.Digest.String(),
-			MediaType: mfl.MediaType,
-			URL:       info.URL,
-			Size:      mfl.Size,
-		}
-	}
-
-	if ready {
-		rl, err := workspaceReadyLayerPVC(initsrc)
-		if err != nil {
-			return nil, err
-		}
-		l = append(l, *rl)
-	}
-	return l, nil
-}
-
 func contentDescriptorToLayer(cdesc []byte) (*Layer, error) {
 	return layerFromContent(
 		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
@@ -532,22 +491,6 @@ func workspaceReadyLayer(src csapi.WorkspaceInitSource) (*Layer, error) {
 		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
 		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
 		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace/.gitpod/ready", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(ctnt))}, []byte(ctnt)},
-	)
-}
-
-func workspaceReadyLayerPVC(src csapi.WorkspaceInitSource) (*Layer, error) {
-	msg := csapi.WorkspaceReadyMessage{
-		Source: src,
-	}
-	ctnt, err := json.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return layerFromContent(
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/.workspace/.gitpod/ready", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(ctnt))}, []byte(ctnt)},
 	)
 }
 
