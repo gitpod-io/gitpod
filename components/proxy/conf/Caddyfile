@@ -270,7 +270,7 @@ https://api.{$GITPOD_DOMAIN} {
         transport http {
             versions h2c 2
         }
-    }g
+    }
 }
 
 # workspaces
