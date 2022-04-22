@@ -350,6 +350,11 @@ export class GithubApp {
         try {
             const installationId = ctx.payload.installation?.id;
             const cloneURL = ctx.payload.repository.clone_url;
+            // we are only interested in PRs that want to contribute to our repo
+            if (ctx.payload.pull_request?.base?.repo?.clone_url !== cloneURL) {
+                log.info("Ignoring inverse PR", ctx.payload.pull_request);
+                return;
+            }
             const pr = ctx.payload.pull_request;
             const contextURL = pr.html_url;
             let { user, project } = await this.findOwnerAndProject(installationId, cloneURL);
