@@ -337,6 +337,20 @@ func NodeAffinity(orLabels ...string) *corev1.Affinity {
 	}
 }
 
+func Replicas(ctx *RenderContext, component string) *int32 {
+	replicas := int32(1)
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Common != nil && cfg.Common.PodConfig[component] != nil {
+			if cfg.Common.PodConfig[component].Replicas != nil {
+				replicas = *cfg.Common.PodConfig[component].Replicas
+			}
+		}
+		return nil
+	})
+	return &replicas
+}
+
 // ObjectHash marshals the objects to YAML and produces a sha256 hash of the output.
 // This function is useful for restarting pods when the config changes.
 // Takes an error as argument to make calling it more conventient. If that error is not nil,
