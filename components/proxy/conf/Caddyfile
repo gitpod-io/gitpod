@@ -136,6 +136,18 @@
 	}
 }
 
+# public-api
+api.{$GITPOD_DOMAIN} {
+    # 9001 serves gRPC traffic
+    reverse_proxy {
+        to h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
+        transport http {
+            versions h2c 2
+        }
+    }
+}
+
+
 # always redirect to HTTPS
 http:// {
 	redir https://{host}{uri} permanent
@@ -260,17 +272,6 @@ https://{$GITPOD_DOMAIN} {
 	handle_errors {
 		redir https://{$GITPOD_DOMAIN}/sorry/#Error%20{http.reverse_proxy.status_text} 302
 	}
-}
-
-# public-api
-https://api.{$GITPOD_DOMAIN} {
-    # 9001 serves gRPC traffic
-    reverse_proxy {
-        to h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
-        transport http {
-            versions h2c 2
-        }
-    }
 }
 
 # workspaces
