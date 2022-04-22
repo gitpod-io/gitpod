@@ -154,9 +154,6 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		wsloc string
 	)
 	if req.FullWorkspaceBackup || req.PersistentVolumeClaim {
-		if s.runtime == nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "full workspace backup is not available - not connected to container runtime")
-		}
 		var mf csapi.WorkspaceContentManifest
 		if len(req.ContentManifest) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument, "content manifest is required")
@@ -166,7 +163,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			return nil, status.Errorf(codes.InvalidArgument, "invalid content manifest: %s", err.Error())
 		}
 		if req.PersistentVolumeClaim {
-			// pavel: setting wsloc as otherwise mkdir fails later on.
+			// todo(pavel): setting wsloc as otherwise mkdir fails later on.
 			wsloc = filepath.Join(s.store.Location, req.Id)
 		}
 	} else {
@@ -395,8 +392,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 
 	if sess.PersistentVolumeClaim {
 		// currently not supported (will be done differently via snapshots)
-		log.Error("uploadWorkspaceContent not supported yet when PVC feature is enabled")
-		return nil
+		return status.Error(codes.FailedPrecondition, "uploadWorkspaceContent not supported yet when PVC feature is enabled")
 	}
 
 	if sess.FullWorkspaceBackup {

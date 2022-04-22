@@ -64,7 +64,7 @@ const (
 	fullWorkspaceBackupAnnotation = "gitpod/fullWorkspaceBackup"
 
 	// pvcWorkspaceFeatureAnnotation is set on workspaces which are using persistent_volume_claim feature
-	pvcWorkspaceFeatureAnnotation = "gitpod/pvcFeature"
+	pvcWorkspaceFeatureAnnotation = "gitpod.io/pvcFeature"
 
 	// gitpodFinalizerName is the name of the Gitpod finalizer we use to clean up a workspace
 	gitpodFinalizerName = "gitpod.io/finalizer"

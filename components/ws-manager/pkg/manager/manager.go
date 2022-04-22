@@ -211,23 +211,22 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	span.LogKV("event", "pod description created")
 
+	var createPVC bool
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
-		created := false
-		switch feature {
-		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
-			clog.Info("PVC feature detected, creating PVC object")
-			pvc, err := m.createPVCForWorkspacePod(startContext)
-			if err != nil {
-				return nil, xerrors.Errorf("cannot create pvc for workspace pod: %w", err)
-			}
-			err = m.Clientset.Create(ctx, pvc)
-			if err != nil {
-				return nil, xerrors.Errorf("cannot create pvc object for workspace pod: %w", err)
-			}
-			created = true
-		}
-		if created {
+		if feature == api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM {
+			createPVC = true
 			break
+		}
+	}
+	if createPVC {
+		clog.Info("PVC feature detected, creating PVC object")
+		pvc, err := m.createPVCForWorkspacePod(startContext)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create pvc for workspace pod: %w", err)
+		}
+		err = m.Clientset.Create(ctx, pvc)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create pvc object for workspace pod: %w", err)
 		}
 	}
 
