@@ -156,7 +156,7 @@ export const chooseIDE = (
     const data: { desktopIdeImage?: string; ideImage: string } = {
         ideImage: defaultIdeImage,
     };
-    const chooseOption = ideOptions.options[ideChoice];
+    const chooseOption = ideOptions.options[ideChoice] ?? defaultIDEOption;
     const isDesktopIde = chooseOption.type === "desktop";
     if (isDesktopIde) {
         data.desktopIdeImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
