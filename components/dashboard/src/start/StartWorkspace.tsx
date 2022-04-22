@@ -199,8 +199,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 throw new Error("No result!");
             }
             console.log("/start: started workspace instance: " + result.instanceID);
+
             // redirect to workspaceURL if we are not yet running in an iframe
             if (!this.props.runsInIFrame && result.workspaceURL) {
+                // before redirect, make sure we actually have the auth cookie set!
+                await this.ensureWorkspaceAuth(result.instanceID);
                 this.redirectTo(result.workspaceURL);
                 return;
             }
