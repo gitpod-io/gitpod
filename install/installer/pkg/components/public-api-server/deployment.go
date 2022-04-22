@@ -68,10 +68,22 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
 							),
+							LivenessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path:   "/live",
+										Port:   intstr.IntOrString{IntVal: HTTPContainerPort},
+										Scheme: corev1.URISchemeHTTP,
+									},
+								},
+								FailureThreshold: 3,
+								SuccessThreshold: 1,
+								TimeoutSeconds:   1,
+							},
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
-										Path:   "/",
+										Path:   "/ready",
 										Port:   intstr.IntOrString{IntVal: HTTPContainerPort},
 										Scheme: corev1.URISchemeHTTP,
 									},
