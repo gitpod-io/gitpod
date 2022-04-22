@@ -64,6 +64,7 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
             },
         },
         kubescape: {},
+        pyrra: {},
     }" \
     monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
     find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
