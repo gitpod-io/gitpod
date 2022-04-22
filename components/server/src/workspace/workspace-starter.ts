@@ -938,6 +938,7 @@ export class WorkspaceStarter {
             req.setSource(src);
             req.setAuth(auth);
             req.setForceRebuild(forceRebuild);
+            req.setTriggeredBy(user.id);
 
             // Make sure we persist logInfo as soon as we retrieve it
             const imageBuildLogInfo = new Deferred<ImageBuildLogInfo>();

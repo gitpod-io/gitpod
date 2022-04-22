@@ -26,8 +26,9 @@ import (
 )
 
 const (
-	annotationRef     = "ref"
-	annotationBaseRef = "baseref"
+	annotationRef       = "ref"
+	annotationBaseRef   = "baseref"
+	annotationManagedBy = "managed-by"
 )
 
 type orchestrator interface {
@@ -70,7 +71,9 @@ func (m *buildMonitor) Run() {
 	for {
 		wss, err := m.wsman.GetWorkspaces(ctx, &wsmanapi.GetWorkspacesRequest{
 			MustMatch: &wsmanapi.MetadataFilter{
-				Owner: buildWorkspaceOwnerID,
+				Annotations: map[string]string{
+					annotationManagedBy: buildWorkspaceManagerID,
+				},
 			},
 		})
 		if err != nil {
@@ -78,6 +81,7 @@ func (m *buildMonitor) Run() {
 			time.Sleep(5 * time.Second)
 			continue
 		}
+
 		m.runningBuildsMu.Lock()
 		m.runningBuilds = make(map[string]*runningBuild, len(wss.Status))
 		m.runningBuildsMu.Unlock()
@@ -87,7 +91,9 @@ func (m *buildMonitor) Run() {
 
 		sub, err := m.wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{
 			MustMatch: &wsmanapi.MetadataFilter{
-				Owner: buildWorkspaceOwnerID,
+				Annotations: map[string]string{
+					annotationManagedBy: buildWorkspaceManagerID,
+				},
 			},
 		})
 		if err != nil {
