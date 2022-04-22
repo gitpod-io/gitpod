@@ -280,6 +280,12 @@ function App() {
         return <div></div>;
     }
 
+    // redirect for Anton
+    if (isGitpodIo() && window.location.pathname === "/akosyakov") {
+        window.location.host = "github.com";
+        return <div></div>;
+    }
+
     if (isGitpodIo() && window.location.pathname === "/" && window.location.hash === "" && !loading && !user) {
         if (!GitpodCookie.isPresent(document.cookie)) {
             window.location.href = `https://www.gitpod.io`;
