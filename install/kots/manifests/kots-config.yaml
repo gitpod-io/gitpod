@@ -16,6 +16,10 @@ spec:
           help_text: This will be the URL that you use to access your Gitpod instance. This should be in the format "gitpod.domain.com".
           type: text
           required: true
+        - name: openVsxUrl
+          title: What is your Open VSX Registry URL?
+          help_text: This will be the URL that you use to access [Open VSX](https://open-vsx.org). This should be a fully qualified domain name, including `https://`. Will default to `https://open-vsx.org` if not set.
+          type: text
 
     - name: container_registry
       title: Container registry

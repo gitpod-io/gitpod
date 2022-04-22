@@ -71,6 +71,12 @@ spec:
               yq e -i '.license.kind = "secret"' "${CONFIG_FILE}"
               yq e -i '.license.name = "gitpod-license"' "${CONFIG_FILE}"
 
+              if [ '{{repl ConfigOptionNotEquals "openVsxUrl" "" }}' = "true" ];
+              then
+                echo "Gitpod: Setting Open VSX Registry URL"
+                yq e -i ".openVSX.url = \"{{repl ConfigOption "openVsxUrl" }}\"" "${CONFIG_FILE}"
+              fi
+
               if [ '{{repl and (ConfigOptionEquals "db_incluster" "0") (ConfigOptionEquals "db_cloudsql_enabled" "1") }}' = "true" ];
               then
                 echo "Gitpod: configuring CloudSQLProxy"
