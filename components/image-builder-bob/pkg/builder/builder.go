@@ -138,7 +138,7 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 		// "--debug",
 		"build",
 		"--progress=plain",
-		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true,compression=estargz,force-compression=true",
+		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true",
 		//"--export-cache=type=inline",
 		"--local=context=" + contextdir,
 		//"--export-cache=type=registry,ref=" + target + "-cache",
@@ -209,7 +209,7 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 	cmd := exec.Command("buildkitd",
 		"--debug",
 		"--addr="+socketPath,
-		"--oci-worker-net=host", "--oci-worker-snapshotter=stargz",
+		"--oci-worker-net=host",
 		"--root=/workspace/buildkit",
 	)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: 0, Gid: 0}}
