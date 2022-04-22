@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/content-service-api/util
 
-go 1.17
+go 1.18
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../../go
 
@@ -18,6 +18,6 @@ require (
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154 // indirect
-	google.golang.org/grpc v1.39.1 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	google.golang.org/grpc v1.45.0 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 )

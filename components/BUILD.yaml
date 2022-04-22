@@ -172,14 +172,14 @@ scripts:
       - test/**/*
       - dev/**/*
     script: |
-      leeway exec --filter-type go -v -- go mod tidy -compat=1.17
+      leeway exec --filter-type go -v -- go mod tidy -compat=1.18
 
       # not all the code is present in leeway.
       # ensure we update everything containing a go.mod file
       for COMPONENT in $(find . -name go.mod); do
         DIRECTORY=$(dirname $COMPONENT)
         pushd $DIRECTORY > /dev/null
-        go mod tidy -compat=1.17
+        go mod tidy -compat=1.18
         popd > /dev/null
       done
 

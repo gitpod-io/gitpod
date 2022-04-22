@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel
 
-go 1.17
+go 1.18
 
 require (
 	github.com/caddyserver/caddy/v2 v2.4.5
@@ -91,7 +91,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20210604141403-392c879c8b08 // indirect
 	google.golang.org/grpc v1.38.0 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect

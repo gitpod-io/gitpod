@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/sweeper
 
-go 1.17
+go 1.18
 
 require (
 	github.com/go-sql-driver/mysql v1.5.0
