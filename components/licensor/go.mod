@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/licensor
 
-go 1.17
+go 1.18
 
 require (
 	github.com/32leaves/bel v1.0.1

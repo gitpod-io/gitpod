@@ -1,11 +1,11 @@
 module github.com/gitpod-io/gitpod/local-app/api
 
-go 1.17
+go 1.18
 
 require (
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
-	google.golang.org/grpc v1.39.1
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/grpc v1.45.0
+	google.golang.org/protobuf v1.28.0
 )
 
 require (
