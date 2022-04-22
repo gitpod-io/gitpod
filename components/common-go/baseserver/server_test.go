@@ -7,6 +7,7 @@ package baseserver_test
 import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -66,4 +67,13 @@ func TestServer_ServesMetricsEndpointWithCustomMetricsConfig(t *testing.T) {
 	resp, err := http.Get(readyUR)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestServer_ServesPprof(t *testing.T) {
+	srv := baseserver.NewForTests(t)
+	baseserver.StartServerForTests(t, srv)
+
+	resp, err := http.Get(srv.HTTPAddress() + pprof.Path)
+	require.NoError(t, err)
+	require.Equalf(t, http.StatusOK, resp.StatusCode, "must serve pprof on %s", pprof.Path)
 }
