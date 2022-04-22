@@ -22,6 +22,14 @@ func TestObjects_NotRenderedDefault(t *testing.T) {
 }
 
 func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
+	ctx := renderContextWithPublicAPIEnabled(t)
+
+	objects, err := Objects(ctx)
+	require.NoError(t, err)
+	require.NotEmpty(t, objects, "must render objects because experimental config is specified")
+}
+
+func renderContextWithPublicAPIEnabled(t *testing.T) *common.RenderContext {
 	ctx, err := common.NewRenderContext(config.Config{
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
@@ -37,7 +45,5 @@ func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
 	}, "test-namespace")
 	require.NoError(t, err)
 
-	objects, err := Objects(ctx)
-	require.NoError(t, err)
-	require.NotEmpty(t, objects, "must render objects because experimental config is specified")
+	return ctx
 }

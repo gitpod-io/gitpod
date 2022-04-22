@@ -280,17 +280,21 @@ func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 }
 
 func KubeRBACProxyContainer(ctx *RenderContext) *corev1.Container {
+	return KubeRBACProxyContainerWithConfig(ctx, 9500, "http://127.0.0.1:9500/")
+}
+
+func KubeRBACProxyContainerWithConfig(ctx *RenderContext, listenPort int32, upstream string) *corev1.Container {
 	return &corev1.Container{
 		Name:  "kube-rbac-proxy",
 		Image: ctx.ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 		Args: []string{
 			"--v=5",
 			"--logtostderr",
-			"--insecure-listen-address=[$(IP)]:9500",
-			"--upstream=http://127.0.0.1:9500/",
+			fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", listenPort),
+			fmt.Sprintf("--upstream=%s", upstream),
 		},
 		Ports: []corev1.ContainerPort{
-			{Name: "metrics", ContainerPort: 9500},
+			{Name: "metrics", ContainerPort: listenPort},
 		},
 		Env: []corev1.EnvVar{
 			{
