@@ -221,6 +221,9 @@ func (d *DispatchListener) WorkspaceUpdated(ctx context.Context, ws *dispatch.Wo
 		}
 		wsinfo.BaseLimit = BandwidthFromQuantity(limit)
 		wsinfo.BurstLimit = BandwidthFromQuantity(limit)
+	} else {
+		wsinfo.BaseLimit = Bandwidth(0)
+		wsinfo.BurstLimit = Bandwidth(0)
 	}
 
 	return nil
