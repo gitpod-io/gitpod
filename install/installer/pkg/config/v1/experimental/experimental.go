@@ -17,6 +17,15 @@ type Config struct {
 	Workspace *WorkspaceConfig `json:"workspace,omitempty"`
 	WebApp    *WebAppConfig    `json:"webapp,omitempty"`
 	IDE       *IDEConfig       `json:"ide,omitempty"`
+	Common    *CommonConfig    `json:"common,omitempty"`
+}
+
+type CommonConfig struct {
+	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
+}
+
+type PodConfig struct {
+	Replicas *int32 `json:"replicas,omitempty"`
 }
 
 type WorkspaceConfig struct {
