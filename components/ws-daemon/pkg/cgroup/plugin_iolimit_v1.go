@@ -6,6 +6,7 @@ package cgroup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -94,11 +95,17 @@ func (c *IOLimiterV1) Apply(ctx context.Context, basePath, cgroupPath string) er
 		return lines
 	}
 
-	writeLimit := func(fn string, content []string) error {
+	writeLimit := func(limitPath string, content []string) error {
 		for _, l := range content {
-			err := os.WriteFile(fn, []byte(l), 0644)
+			_, err := os.Stat(limitPath)
+			if errors.Is(err, os.ErrNotExist) {
+				log.WithError(err).WithField("limitPath", limitPath).Debug("blkio file does not exist")
+				continue
+			}
+
+			err = os.WriteFile(limitPath, []byte(l), 0644)
 			if err != nil {
-				log.WithError(err).WithField("fn", fn).WithField("line", l).Warn("cannot write limit")
+				log.WithError(err).WithField("limitPath", limitPath).WithField("line", l).Warn("cannot write limit")
 				continue
 			}
 		}
