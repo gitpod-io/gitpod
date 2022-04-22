@@ -7,6 +7,7 @@ package baseserver
 import (
 	"context"
 	"fmt"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -213,7 +214,10 @@ func (s *Server) initializeHTTP() error {
 func (s *Server) newHTTPMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ready", s.cfg.healthHandler.ReadyEndpoint)
+	s.Logger().WithField("protocol", "http").Debug("Serving readiness handler on /ready")
+
 	mux.HandleFunc("/live", s.cfg.healthHandler.LiveEndpoint)
+	s.Logger().WithField("protocol", "http").Debug("Serving liveliness handler on /live")
 
 	// Metrics endpoint
 	metricsHandler := promhttp.Handler()
@@ -223,6 +227,10 @@ func (s *Server) newHTTPMux() *http.ServeMux {
 		)
 	}
 	mux.Handle("/metrics", metricsHandler)
+	s.Logger().WithField("protocol", "http").Debug("Serving metrics on /metrics")
+
+	mux.Handle(pprof.Path, pprof.Handler())
+	s.Logger().WithField("protocol", "http").Debug("Serving profiler on /debug/pprof")
 
 	return mux
 }
