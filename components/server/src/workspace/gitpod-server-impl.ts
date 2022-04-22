@@ -1547,7 +1547,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
             const wsi = await this.workspaceDb.trace(ctx).findInstanceById(instance.id);
-            if (!wsi || (wsi.status.phase !== "preparing" && wsi.status.phase !== "building")) {
+            if (!wsi || wsi.status.phase !== "building") {
                 log.debug(logCtx, `imagebuild logs: instance is not/no longer in 'building' state`, {
                     phase: wsi?.status.phase,
                 });
