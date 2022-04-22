@@ -946,7 +946,12 @@ export class WorkspaceStarter {
                         .updateInstancePartial(instance.id, { imageBuildInfo })
                         .catch((err) => log.error("error writing image build log info to the DB", err));
                 })
-                .catch((err) => log.warn("image build: never received log info"));
+                .catch((err) =>
+                    log.warn("image build: never received log info", err, {
+                        instanceId: instance.id,
+                        workspaceId: instance.workspaceId,
+                    }),
+                );
 
             const result = await client.build({ span }, req, imageBuildLogInfo);
 
