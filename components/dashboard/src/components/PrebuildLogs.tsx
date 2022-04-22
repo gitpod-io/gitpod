@@ -82,9 +82,6 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
 
     useEffect(() => {
         switch (workspaceInstance?.status.phase) {
-            // Preparing means that we haven't actually started the workspace instance just yet, but rather
-            // are still preparing for launch.
-            case "preparing":
             // Building means we're building the Docker image for the workspace so the workspace hasn't started yet.
             case "building":
             case "stopped":
