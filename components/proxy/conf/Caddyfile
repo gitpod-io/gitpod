@@ -264,7 +264,8 @@ https://{$GITPOD_DOMAIN} {
 
 # public-api
 https://api.{$GITPOD_DOMAIN} {
-    reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9000
+    # 9001 serves gRPC traffic
+    reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
 }
 
 # workspaces
