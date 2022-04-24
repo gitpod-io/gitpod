@@ -1,0 +1,6 @@
+apiVersion: workspace.gitpod.io/v1
+kind: Workspace
+metadata:
+  name: workspace-sample
+spec:
+  # TODO(user): Add fields here
