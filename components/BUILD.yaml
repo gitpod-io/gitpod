@@ -78,6 +78,7 @@ packages:
       - components/ws-daemon/shiftfs-module-loader:docker
       - components/ws-manager-bridge:docker
       - components/ws-manager:docker
+      - components/ws-manager-mk2:docker
       - components/ws-proxy:docker
       - components/ide-proxy:docker
       - components/ide-metrics:docker

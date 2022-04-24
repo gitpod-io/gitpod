@@ -1,3 +1,7 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
 # the following config is for teaching kustomize where to look at when substituting vars.
 # It requires kustomize v2.1.0 or newer to work properly.
 nameReference:

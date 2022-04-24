@@ -27,7 +27,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 )
 
@@ -39,6 +38,9 @@ const (
 
 	// headlessLabel marks a workspace as headless
 	headlessLabel = "gitpod.io/headless"
+
+	// gitpodPodFinalizerName is the name of the finalizer we use on pods
+	gitpodPodFinalizerName = "gitpod.io/finalizer"
 )
 
 type startWorkspaceContext struct {
@@ -307,6 +309,19 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			},
 		},
 	}
+	if sctx.Workspace.Spec.Type == workspacev1.WorkspaceTypeImageBuild {
+		volumes = append(volumes, corev1.Volume{
+			Name: "gitpod-ca-certificate",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "builtin-registry-facade-cert",
+					Items: []corev1.KeyToPath{
+						{Key: "ca.crt", Path: "ca.crt"},
+					},
+				},
+			},
+		})
+	}
 
 	// This is how we support custom CA certs in Gitpod workspaces.
 	// Keep workspace templates clean.
@@ -376,7 +391,7 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			Namespace:   sctx.Config.Namespace,
 			Labels:      labels,
 			Annotations: annotations,
-			Finalizers:  []string{"gitpod.io/finalizer"},
+			Finalizers:  []string{gitpodPodFinalizerName},
 		},
 		Spec: corev1.PodSpec{
 			Hostname:                     sctx.Workspace.Spec.Ownership.WorkspaceID,
@@ -414,28 +429,6 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 	}
 
 	return &pod, nil
-}
-
-func removeVolume(pod *corev1.Pod, name string) {
-	var vols []corev1.Volume
-	for _, v := range pod.Spec.Volumes {
-		if v.Name == name {
-			continue
-		}
-		vols = append(vols, v)
-	}
-	pod.Spec.Volumes = vols
-
-	for i, c := range pod.Spec.Containers {
-		var mounts []corev1.VolumeMount
-		for _, v := range c.VolumeMounts {
-			if v.Name == name {
-				continue
-			}
-			mounts = append(mounts, v)
-		}
-		pod.Spec.Containers[i].VolumeMounts = mounts
-	}
 }
 
 func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, error) {
@@ -647,7 +640,7 @@ func createDefaultSecurityContext() (*corev1.SecurityContext, error) {
 
 func newStartWorkspaceContext(ctx context.Context, cfg *config.Configuration, ws *workspacev1.Workspace) (res *startWorkspaceContext, err error) {
 	// we deliberately do not shadow ctx here as we need the original context later to extract the TraceID
-	span, ctx := tracing.FromContext(ctx, "newStartWorkspaceContext")
+	span, _ := tracing.FromContext(ctx, "newStartWorkspaceContext")
 	defer tracing.FinishSpan(span, &err)
 
 	if ws.Spec.Type != workspacev1.WorkspaceTypeRegular {
@@ -683,14 +676,6 @@ func newStartWorkspaceContext(ctx context.Context, cfg *config.Configuration, ws
 		SupervisorPort: 22999,
 		Headless:       ws.Status.Headless,
 	}, nil
-}
-
-func getServicePrefix(req *api.StartWorkspaceRequest) string {
-	if req.ServicePrefix != "" {
-		return req.ServicePrefix
-	}
-
-	return req.Id
 }
 
 // validCookieChars contains all characters which may occur in an HTTP Cookie value (unicode \u0021 through \u007E),

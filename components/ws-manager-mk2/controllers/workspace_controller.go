@@ -23,7 +23,8 @@ type WorkspaceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 
-	Config config.Configuration
+	Config      config.Configuration
+	OnReconcile func(ctx context.Context, ws *workspacev1.Workspace)
 }
 
 type WorkspacePodCreator func(ctx context.Context, ws *workspacev1.Workspace) (*corev1.Pod, error)
@@ -71,7 +72,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// if there isn't a workspace pod and we're not currently deleting this workspace,
 	// create one.
-	if len(workspacePods.Items) == 0 {
+	if len(workspacePods.Items) == 0 && workspace.Status.PodStarts == 0 {
 		sctx, err := newStartWorkspaceContext(ctx, &r.Config, &workspace)
 		if err != nil {
 			log.Error(err, "unable to create startWorkspace context")
@@ -89,6 +90,10 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			log.Error(err, "unable to create Pod for Workspace", "pod", pod)
 			return ctrl.Result{Requeue: true}, err
 		}
+
+		// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
+		//			 need to be deleted and re-created
+		workspace.Status.PodStarts++
 	}
 
 	err = r.Status().Update(ctx, &workspace)
@@ -97,25 +102,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	return ctrl.Result{}, nil
-}
-
-func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList) error {
-	switch len(pods.Items) {
-	case 0:
-		workspace.Status.Available = false
-		return nil
-	case 1:
-		// continue below
-	default:
-		// This is exceptional - not sure what to do here. Probably fail the pod
-		workspace.Status.Conditions.Failed = "multiple pods exists - this should never happen"
-		return nil
+	if r.OnReconcile != nil {
+		r.OnReconcile(ctx, &workspace)
 	}
 
-	workspace.Status.Conditions.Deployed = true
-
-	return nil
+	return ctrl.Result{}, nil
 }
 
 var (
