@@ -5,6 +5,7 @@ packages:
         - go.mod
         - go.sum
         - "**/*.go"
+        - "config/**/*"
       env:
         - CGO_ENABLED=0
       deps:
@@ -15,3 +16,19 @@ packages:
         - components/ws-manager-api/go:lib
       config:
         packaging: app
+        dontTest: true
+        buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/ws-manager-mk2/cmd.Version=commit-${__git_commit}'"]
+    - name: docker
+      type: docker
+      deps:
+        - :app
+      argdeps:
+        - imageRepoBase
+      config:
+        buildArgs:
+          VERSION: ${version}
+        dockerfile: leeway.Dockerfile
+        metadata:
+          helm-component: wsManagerMk2
+        image:
+          - ${imageRepoBase}/ws-manager-mk2:commit-${__git_commit}

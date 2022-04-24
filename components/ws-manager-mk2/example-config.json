@@ -79,11 +79,6 @@
   },
   "rpcServer": {
     "addr": ":8080",
-    "tls": {
-      "ca": "/certs/ca.crt",
-      "crt": "/certs/tls.crt",
-      "key": "/certs/tls.key"
-    },
     "ratelimits": {}
   },
   "imageBuilderProxy": {
