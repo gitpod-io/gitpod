@@ -212,7 +212,6 @@ spec:
                 type: string
             required:
             - admission
-            - git
             - image
             - initializer
             - ownership
@@ -227,6 +226,11 @@ spec:
                 type: boolean
               conditions:
                 properties:
+                  deployed:
+                    description: Deployed indicates if a workspace pod is currently
+                      deployed. If this condition is false, there is no means for
+                      the user to alter the workspace content.
+                    type: boolean
                   failed:
                     description: Failed contains the reason the workspace failed to
                       operate. If this field is empty, the workspace has not failed.
@@ -251,6 +255,8 @@ spec:
                 type: object
               headless:
                 type: boolean
+              ownerToken:
+                type: string
               phase:
                 type: string
               results:
@@ -269,10 +275,7 @@ spec:
                 type: string
             required:
             - available
-            - conditions
             - headless
-            - phase
-            - url
             type: object
         type: object
     served: true

@@ -11,6 +11,7 @@ package v1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -79,7 +80,7 @@ func (in *TimeoutSpec) DeepCopyInto(out *TimeoutSpec) {
 	*out = *in
 	if in.Time != nil {
 		in, out := &in.Time, &out.Time
-		*out = new(string)
+		*out = new(metav1.Duration)
 		**out = **in
 	}
 }
@@ -246,7 +247,11 @@ func (in *WorkspaceSpec) DeepCopyInto(out *WorkspaceSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	out.Git = in.Git
+	if in.Git != nil {
+		in, out := &in.Git, &out.Git
+		*out = new(GitSpec)
+		**out = **in
+	}
 	in.Timeout.DeepCopyInto(&out.Timeout)
 	out.Admission = in.Admission
 }
