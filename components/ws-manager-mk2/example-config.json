@@ -1,0 +1,98 @@
+{
+  "manager": {
+    "namespace": "staging-cw-io-limit-hack",
+    "schedulerName": "",
+    "seccompProfile": "localhost/workspace_default_cw-ws-manager-mk2.1.json",
+    "container": {
+      "workspace": {
+        "image": "OVERWRITTEN-IN-REQUEST",
+        "requests": {
+          "cpu": "1",
+          "memory": "2Gi",
+          "ephemeral-storage": ""
+        },
+        "limits": {
+          "cpu": "",
+          "memory": "",
+          "ephemeral-storage": ""
+        }
+      }
+    },
+    "timeouts": {
+      "startup": "1h0m0s",
+      "initialization": "30m0s",
+      "regularWorkspace": "30m0s",
+      "maxLifetime": "36h0m0s",
+      "headlessWorkspace": "1h0m0s",
+      "afterClose": "2m0s",
+      "contentFinalization": "1h0m0s",
+      "stopping": "1h0m0s",
+      "interrupted": "5m0s"
+    },
+    "initProbe": {
+      "timeout": "1s"
+    },
+    "podTemplate": {},
+    "urlTemplate": "https://{{ .Prefix }}.ws.foo.com",
+    "portUrlTemplate": "https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.foo.com",
+    "workspaceHostPath": "/var/gitpod/workspaces",
+    "heartbeatInterval": "30s",
+    "hostURL": "https://foo.com",
+    "reconnectionInterval": "30s",
+    "wsdaemon": {
+      "port": 8080,
+      "tls": {
+        "ca": "/ws-daemon-tls-certs/ca.crt",
+        "crt": "/ws-daemon-tls-certs/tls.crt",
+        "key": "/ws-daemon-tls-certs/tls.key"
+      }
+    },
+    "registryFacadeHost": "reg.foo.com:20000",
+    "workspaceClusterHost": "ws.foo.com"
+  },
+  "content": {
+    "storage": {
+      "stage": "",
+      "kind": "minio",
+      "gcloud": {
+        "credentialsFile": "",
+        "region": "",
+        "projectId": "",
+        "parallelUpload": 0,
+        "maximumBackupCount": 0
+      },
+      "minio": {
+        "endpoint": "minio.default.svc.cluster.local:9000",
+        "accessKey": "6BYlUKCJraAbBy5U35A4",
+        "accessKeyFile": "",
+        "secretKey": "ClclNAidlUwP2ESwEsXt",
+        "secretKeyFile": "",
+        "region": "local",
+        "parallelUpload": 6
+      },
+      "backupTrail": {
+        "enabled": true,
+        "maxLength": 3
+      },
+      "blobQuota": 5368709120
+    }
+  },
+  "rpcServer": {
+    "addr": ":8080",
+    "tls": {
+      "ca": "/certs/ca.crt",
+      "crt": "/certs/tls.crt",
+      "key": "/certs/tls.key"
+    },
+    "ratelimits": {}
+  },
+  "imageBuilderProxy": {
+    "targetAddr": "image-builder-mk3.default.svc.cluster.local:8080"
+  },
+  "pprof": {
+    "addr": "localhost:6060"
+  },
+  "prometheus": {
+    "addr": "127.0.0.1:9500"
+  }
+}

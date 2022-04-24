@@ -15,13 +15,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 )
 
 // WorkspaceReconciler reconciles a Workspace object
 type WorkspaceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
+	Config config.Configuration
 }
+
+type WorkspacePodCreator func(ctx context.Context, ws *workspacev1.Workspace) (*corev1.Pod, error)
 
 //+kubebuilder:rbac:groups=workspace.gitpod.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=workspace.gitpod.io,resources=workspaces/status,verbs=get;update;patch
@@ -51,6 +56,8 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	log.Info("reconciling workspace", "ws", req.NamespacedName)
+
 	var workspacePods corev1.PodList
 	if err := r.List(ctx, &workspacePods, client.InNamespace(req.Namespace), client.MatchingFields{wsOwnerKey: req.Name}); err != nil {
 		log.Error(err, "unable to list child Jobs")
@@ -65,10 +72,16 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// if there isn't a workspace pod and we're not currently deleting this workspace,
 	// create one.
 	if len(workspacePods.Items) == 0 {
-		pod, err := createPodForWorkspace(ctx, &workspace)
+		sctx, err := newStartWorkspaceContext(ctx, &r.Config, &workspace)
 		if err != nil {
-			log.Error(err, "unable to construct workspace pod")
+			log.Error(err, "unable to create startWorkspace context")
 			return ctrl.Result{Requeue: true}, err
+		}
+
+		pod, err := r.createWorkspacePod(sctx)
+		if err != nil {
+			log.Error(err, "unable to produce workspace pod")
+			return ctrl.Result{}, err
 		}
 
 		err = r.Create(ctx, pod)
@@ -76,19 +89,32 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			log.Error(err, "unable to create Pod for Workspace", "pod", pod)
 			return ctrl.Result{Requeue: true}, err
 		}
+	}
 
-		// we've just created a new pod and will want to update the status, hence the requeue
-		return ctrl.Result{Requeue: true}, nil
+	err = r.Status().Update(ctx, &workspace)
+	if err != nil {
+		log.Error(err, "unable to update workspace status")
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func createPodForWorkspace(ctx context.Context, workspace *workspacev1.Workspace) (*corev1.Pod, error) {
-	return &corev1.Pod{}, nil
-}
-
 func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList) error {
+	switch len(pods.Items) {
+	case 0:
+		workspace.Status.Available = false
+		return nil
+	case 1:
+		// continue below
+	default:
+		// This is exceptional - not sure what to do here. Probably fail the pod
+		workspace.Status.Conditions.Failed = "multiple pods exists - this should never happen"
+		return nil
+	}
+
+	workspace.Status.Conditions.Deployed = true
+
 	return nil
 }
 
