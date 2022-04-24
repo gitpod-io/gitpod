@@ -9,5 +9,9 @@ packages:
         - CGO_ENABLED=0
       deps:
         - components/common-go:lib
+        - components/content-service-api/go:lib
+        - components/content-service:lib
+        - components/registry-facade-api/go:lib
+        - components/ws-manager-api/go:lib
       config:
         packaging: app
