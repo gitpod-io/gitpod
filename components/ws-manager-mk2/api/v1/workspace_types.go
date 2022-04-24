@@ -36,6 +36,8 @@ type WorkspaceSpec struct {
 	Timeout TimeoutSpec `json:"timeout"`
 
 	Admission AdmissionSpec `json:"admission"`
+
+	Ports []PortSpec `json:"ports,omitempty"`
 }
 
 type Ownership struct {
@@ -90,11 +92,20 @@ const (
 	AdmissionLevelEveryone AdmissionLevel = "everyone"
 )
 
+type PortSpec struct {
+	// +kubebuilder:validation:Required
+	Port uint32 `json:"port"`
+
+	// +kubebuilder:validation:Required
+	Visibility AdmissionLevel `json:"visibility"`
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	PodStarts  int    `json:"podStarts"`
 	Available  bool   `json:"available"`
 	Headless   bool   `json:"headless"`
 	URL        string `json:"url,omitempty"`
@@ -105,11 +116,14 @@ type WorkspaceStatus struct {
 	// +kubebuilder:validation:Optional
 	Conditions WorkspaceConditions `json:"conditions,omitempty"`
 	Results    *WorkspaceResults   `json:"results,omitempty"`
+
+	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 }
 
 type WorkspacePhase string
 
 const (
+	WorkspacePhaseUnknown      WorkspacePhase = "unknown"
 	WorkspacePhasePending      WorkspacePhase = "pending"
 	WorkspacePhaseImageBuild   WorkspacePhase = "imagebuild"
 	WorkspacePhaseCreating     WorkspacePhase = "creating"
@@ -138,6 +152,9 @@ type WorkspaceConditions struct {
 
 	// StoppedByRequest is true if the workspace was stopped using a StopWorkspace call
 	StoppedByRequest *bool `json:"stoppedByRequest,omitempty"`
+
+	// EverReady becomes true if the workspace was ever ready to be used
+	EverReady bool `json:"everReady,omitempty"`
 }
 
 type WorkspaceResults struct {
@@ -146,6 +163,12 @@ type WorkspaceResults struct {
 
 	// HeadlessTaskFailed indicates that a headless workspace task failed
 	HeadlessTaskFailed string `json:"headlessTaskFailed,omitempty"`
+}
+
+type WorkspaceRuntimeStatus struct {
+	NodeName string `json:"nodeName,omitempty"`
+	PodName  string `json:"podName,omitempty"`
+	HostIP   string `json:"hostIP,omitempty"`
 }
 
 //+kubebuilder:object:root=true
