@@ -1,6 +1,19 @@
 # Change Log
 
 ## April 2022
+- [ws-daemon] Check blkio throttle exists ([#9493](https://github.com/gitpod-io/gitpod/pull/9493)) - [@aledbf](https://github.com/aledbf)
+- fix a dashboard bug where you might end up on a workspace without having access to it ([#9488](https://github.com/gitpod-io/gitpod/pull/9488)) - [@geropl](https://github.com/geropl)
+- fix and improve validation of user environment variables ([#9460](https://github.com/gitpod-io/gitpod/pull/9460)) - [@geropl](https://github.com/geropl)
+- [kots]: add an installation status pod ([#9455](https://github.com/gitpod-io/gitpod/pull/9455)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [ws-manager] fix a bug when opening workspace you would be signed out from git and not able to do git commands ([#9438](https://github.com/gitpod-io/gitpod/pull/9438)) - [@sagor999](https://github.com/sagor999)
+- [server] Optimization: Map GitHub API repositories during pagination, not after ([#9462](https://github.com/gitpod-io/gitpod/pull/9462)) - [@jankeromnes](https://github.com/jankeromnes)
+- [server] fix "floating promises" error ([#9463](https://github.com/gitpod-io/gitpod/pull/9463)) - [@svenefftinge](https://github.com/svenefftinge)
+- [kots]: move dropImageRepo config to when using local registry ([#9458](https://github.com/gitpod-io/gitpod/pull/9458)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Allow integrating with 'github.com' without a GitHub App ([#9231](https://github.com/gitpod-io/gitpod/pull/9231)) - [@jankeromnes](https://github.com/jankeromnes)
+- Allow to configure JB plugins on repo level per a product, i.e. specific for IntelliJ or GoLand. ([#9445](https://github.com/gitpod-io/gitpod/pull/9445)) - [@akosyakov](https://github.com/akosyakov)
+- [kots]: enable use of a local registry ([#9155](https://github.com/gitpod-io/gitpod/pull/9155)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- fixed a bug around email address rendering ([#9446](https://github.com/gitpod-io/gitpod/pull/9446)) - [@geropl](https://github.com/geropl)
+- JetBrains IDEs now start with a terminal opened, displaying an introductory message about Gitpod CLI. ([#9443](https://github.com/gitpod-io/gitpod/pull/9443)) - [@felladrin](https://github.com/felladrin)
 - [ws-daemon] Refactor configuration of I/O limits ([#9437](https://github.com/gitpod-io/gitpod/pull/9437)) - [@aledbf](https://github.com/aledbf)
 - Add I/O limit plugin for cgroup v1 ([#9428](https://github.com/gitpod-io/gitpod/pull/9428)) - [@aledbf](https://github.com/aledbf), [@csweichel](https://github.com/csweichel)
 - Allow workspace timeouts to be extended when a user has workspaces in different regions. ([#9427](https://github.com/gitpod-io/gitpod/pull/9427)) - [@andrew-farries](https://github.com/andrew-farries)
