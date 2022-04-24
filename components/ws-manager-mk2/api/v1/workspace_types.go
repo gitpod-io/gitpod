@@ -21,15 +21,17 @@ type WorkspaceSpec struct {
 	// +kubebuilder:validation:Enum:=Regular;Prebuild;ImageBuild
 	Type WorkspaceType `json:"type"`
 
+	// +kubebuilder:validation:Required
 	Image WorkspaceImages `json:"image"`
 
 	Initializer []byte `json:"initializer"`
 
 	Envvars []corev1.EnvVar `json:"envvars,omitempty"`
 
+	// +kubebuilder:validation:Required
 	WorkspaceLocation string `json:"workspaceLocation"`
 
-	Git GitSpec `json:"git"`
+	Git *GitSpec `json:"git,omitempty"`
 
 	Timeout TimeoutSpec `json:"timeout"`
 
@@ -74,7 +76,7 @@ type GitSpec struct {
 }
 
 type TimeoutSpec struct {
-	Time *string `json:"time,omitempty"`
+	Time *metav1.Duration `json:"time,omitempty"`
 }
 
 type AdmissionSpec struct {
@@ -93,11 +95,15 @@ type WorkspaceStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Available  bool                `json:"available"`
-	Headless   bool                `json:"headless"`
-	URL        string              `json:"url"`
-	Phase      WorkspacePhase      `json:"phase"`
-	Conditions WorkspaceConditions `json:"conditions"`
+	Available  bool   `json:"available"`
+	Headless   bool   `json:"headless"`
+	URL        string `json:"url,omitempty"`
+	OwnerToken string `json:"ownerToken,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	Phase WorkspacePhase `json:"phase,omitempty"`
+	// +kubebuilder:validation:Optional
+	Conditions WorkspaceConditions `json:"conditions,omitempty"`
 	Results    *WorkspaceResults   `json:"results,omitempty"`
 }
 
@@ -114,6 +120,10 @@ const (
 )
 
 type WorkspaceConditions struct {
+	// Deployed indicates if a workspace pod is currently deployed.
+	// If this condition is false, there is no means for the user to alter the workspace content.
+	Deployed bool `json:"deployed,omitempty"`
+
 	// Failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
 	Failed string `json:"failed,omitempty"`
 
