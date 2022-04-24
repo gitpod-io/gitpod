@@ -14,6 +14,7 @@ import (
 
 // WorkspaceSpec defines the desired state of Workspace
 type WorkspaceSpec struct {
+	// +kubebuilder:validation:Required
 	Ownership Ownership `json:"ownership"`
 
 	// +kubebuilder:validation:Required
@@ -36,7 +37,9 @@ type WorkspaceSpec struct {
 }
 
 type Ownership struct {
-	Owner       string `json:"owner"`
+	// +kubebuilder:validation:Required
+	Owner string `json:"owner"`
+	// +kubebuilder:validation:Required
 	WorkspaceID string `json:"workspaceID"`
 	Team        string `json:"team,omitempty"`
 	Tenant      string `json:"tenant,omitempty"`
