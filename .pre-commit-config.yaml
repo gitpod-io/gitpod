@@ -6,8 +6,6 @@ repos:
       #  args: [--allow-multiple-documents]
       # - id: end-of-file-fixer
       - id: trailing-whitespace
-        exclude: .*/src/main/java/io/gitpod/supervisor/api/.*
-
       - id: check-symlinks
       - id: mixed-line-ending
       - id: check-case-conflict
