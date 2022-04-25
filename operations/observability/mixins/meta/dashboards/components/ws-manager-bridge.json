@@ -110,7 +110,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "rate(gitpod_ws_manager_bridge_status_updates_total{cluster=\"$cluster\"}[1m]) * 60",
+          "expr": "rate(gitpod_ws_manager_bridge_status_updates_total{cluster=~\"$cluster\"}[1m]) * 60",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
