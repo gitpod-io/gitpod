@@ -143,13 +143,13 @@
 }
 
 # public-api
-grpc://api.{$GITPOD_DOMAIN} {
+api.{$GITPOD_DOMAIN} {
     log {
-        level INFO
+        level DEBUG
     }
 
     # 9001 serves gRPC traffic
-    reverse_proxy h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
+    reverse_proxy grpc://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
 }
 
 
