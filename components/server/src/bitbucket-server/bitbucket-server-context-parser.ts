@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { NavigatorContext, Repository, User, WorkspaceContext } from "@gitpod/gitpod-protocol";
+import { NavigatorContext, PullRequestContext, Repository, User, WorkspaceContext } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
@@ -26,7 +26,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
 
         try {
             const more: Partial<NavigatorContext> = {};
-            const { repoKind, host, owner, repoName, /*moreSegments*/ searchParams } = await this.parseURL(
+            const { repoKind, host, owner, repoName, moreSegments, searchParams } = await this.parseURL(
                 user,
                 contextUrl,
             );
@@ -34,6 +34,18 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             if (searchParams.has("at")) {
                 more.ref = decodeURIComponent(searchParams.get("at")!);
                 more.refType = "branch";
+            }
+
+            if (moreSegments[0] === "pull-requests" && !!moreSegments[1]) {
+                const more = { nr: parseInt(moreSegments[1]) };
+                return await this.handlePullRequestContext(ctx, user, repoKind, host, owner, repoName, more);
+            }
+
+            if (moreSegments[0] === "commits" && !!moreSegments[1]) {
+                more.ref = "";
+                more.revision = moreSegments[1];
+                more.refType = "revision";
+                return await this.handleNavigatorContext(ctx, user, repoKind, host, owner, repoName, more);
             }
 
             return await this.handleNavigatorContext(ctx, user, repoKind, host, owner, repoName, more);
@@ -202,5 +214,47 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
         };
 
         return result;
+    }
+
+    protected async handlePullRequestContext(
+        ctx: TraceContext,
+        user: User,
+        repoKind: "projects" | "users",
+        host: string,
+        owner: string,
+        repoName: string,
+        more: Partial<PullRequestContext> & { nr: number },
+    ): Promise<PullRequestContext> {
+        const pr = await this.api.getPullRequest(user, {
+            repoKind,
+            repositorySlug: repoName,
+            owner,
+            nr: more.nr,
+        });
+
+        const getRepository = async (ref: BitbucketServer.Ref) => {
+            const repoKindFromRef = ref.repository.project.type === "PERSONAL" ? "users" : "projects";
+            const defaultBranchFromRef = await this.api.getDefaultBranch(user, {
+                repoKind: repoKindFromRef,
+                owner: ref.repository.project.owner ? ref.repository.project.owner.slug : ref.repository.project.key,
+                repositorySlug: ref.repository.slug,
+            });
+            return this.toRepository(host, ref.repository, repoKindFromRef, defaultBranchFromRef);
+        };
+
+        return <PullRequestContext>{
+            repository: await getRepository(pr.fromRef),
+            title: pr.title,
+            ref: pr.fromRef.displayId,
+            refType: "branch",
+            revision: pr.fromRef.latestCommit,
+            base: {
+                repository: await getRepository(pr.toRef),
+                ref: pr.toRef.displayId,
+                refType: "branch",
+            },
+            ...more,
+            owner,
+        };
     }
 }
