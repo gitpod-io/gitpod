@@ -95,6 +95,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	const kubeRbacProxyContainerName = "kube-rbac-proxy"
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -142,7 +143,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 						}},
 						Containers: []corev1.Container{{
-							Name:            "kube-rbac-proxy",
+							Name:            kubeRbacProxyContainerName,
 							Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Args: []string{
@@ -165,12 +166,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:          MetricsContainerName,
 								Protocol:      *common.TCPProtocol,
 							}},
-							Resources: corev1.ResourceRequirements{
+							Resources: common.ResourceRequirements(ctx, Component, kubeRbacProxyContainerName, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("1m"),
 									"memory": resource.MustParse("30Mi"),
 								},
-							},
+							}),
 							SecurityContext: &corev1.SecurityContext{
 								RunAsGroup:   pointer.Int64(65532),
 								RunAsNonRoot: pointer.Bool(true),
@@ -180,12 +181,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:            Component,
 							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Proxy.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Resources: corev1.ResourceRequirements{
+							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("100m"),
 									"memory": resource.MustParse("200Mi"),
 								},
-							},
+							}),
 							Ports: []corev1.ContainerPort{{
 								ContainerPort: ContainerHTTPPort,
 								Name:          "http",

@@ -153,12 +153,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							common.DefaultEnv(&ctx.Config),
 							common.TracingEnv(ctx),
 						),
-						Resources: corev1.ResourceRequirements{
+						Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								"cpu":    resource.MustParse("100m"),
 								"memory": resource.MustParse("200Mi"),
 							},
-						},
+						}),
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: RPCPort,
 							Name:          RPCPortName,

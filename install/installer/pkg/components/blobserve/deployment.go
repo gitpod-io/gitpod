@@ -100,12 +100,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:          ServicePortName,
 								ContainerPort: ContainerPort,
 							}},
-							Resources: corev1.ResourceRequirements{
+							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("100m"),
 									"memory": resource.MustParse("32Mi"),
 								},
-							},
+							}),
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),
 								RunAsUser:  pointer.Int64(1000),
