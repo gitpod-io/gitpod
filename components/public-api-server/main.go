@@ -17,6 +17,7 @@ func main() {
 		baseserver.WithLogger(logger),
 		baseserver.WithHTTPPort(9000),
 		baseserver.WithGRPCPort(9001),
+		baseserver.WithTLS("/etc/caddy/certificates/tls.crt", "/etc/caddy/certificates/tls.key"),
 	)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to initialize public api server.")

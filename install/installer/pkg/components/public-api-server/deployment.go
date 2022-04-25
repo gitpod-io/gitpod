@@ -17,6 +17,23 @@ import (
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
+
+	volumes := []corev1.Volume{
+		{
+			Name: "config-certificates",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.Certificate.Name,
+				},
+			},
+		},
+	}
+
+	volumeMounts := []corev1.VolumeMount{{
+		Name:      "config-certificates",
+		MountPath: "/etc/caddy/certificates",
+	}}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -42,6 +59,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						DNSPolicy:                     "ClusterFirst",
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
+						Volumes:                       volumes,
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.PublicAPIServer.Version),
@@ -52,6 +70,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									"memory": resource.MustParse("32Mi"),
 								},
 							},
+							VolumeMounts: volumeMounts,
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: HTTPContainerPort,
