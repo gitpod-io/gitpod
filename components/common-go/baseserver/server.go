@@ -6,11 +6,13 @@ package baseserver
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"net"
 	"net/http"
 	"os"
@@ -236,7 +238,21 @@ func (s *Server) newHTTPMux() *http.ServeMux {
 }
 
 func (s *Server) initializeGRPC() error {
-	s.grpc = grpc.NewServer()
+	var opts []grpc.ServerOption
+	if s.cfg.tls != nil {
+		// Load server's certificate and private key
+		serverCert, err := tls.LoadX509KeyPair(s.cfg.tls.certFilePath, s.cfg.tls.keyFilePath)
+		if err != nil {
+			return fmt.Errorf("failed to initialize server certificate: %w", err)
+		}
+
+		opts = append(opts, grpc.Creds(credentials.NewTLS(&tls.Config{
+			Certificates: []tls.Certificate{serverCert},
+			ClientAuth:   tls.NoClientCert,
+		})))
+	}
+
+	s.grpc = grpc.NewServer(opts...)
 
 	return nil
 }

@@ -5,11 +5,13 @@
 package baseserver
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
+	"os"
 	"time"
 )
 
@@ -23,6 +25,8 @@ type config struct {
 	// httpPort is the port we listen on for HTTP traffic
 	httpPort int
 
+	tls *tlsConfig
+
 	// closeTimeout is the amount we allow for the server to shut down cleanly
 	closeTimeout time.Duration
 
@@ -30,6 +34,13 @@ type config struct {
 	metricsRegistry *prometheus.Registry
 
 	healthHandler healthcheck.Handler
+}
+
+type tlsConfig struct {
+	// file path to CA Certificate
+	certFilePath string
+	// File Path to Certificate Key
+	keyFilePath string
 }
 
 func defaultConfig() *config {
@@ -110,6 +121,25 @@ func WithHealthHandler(handler healthcheck.Handler) Option {
 		}
 
 		cfg.healthHandler = handler
+		return nil
+	}
+}
+
+func WithTLS(certPath, keyPath string) Option {
+	return func(cfg *config) error {
+		if _, err := os.Stat(certPath); errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("certificate file %s does not exist: %w", certPath, err)
+		}
+
+		if _, err := os.Stat(keyPath); errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("key file %s does not exist: %w", certPath, err)
+		}
+
+		cfg.tls = &tlsConfig{
+			certFilePath: certPath,
+			keyFilePath:  keyPath,
+		}
+
 		return nil
 	}
 }
