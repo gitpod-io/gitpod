@@ -9,6 +9,7 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"os"
 	"testing"
 	"time"
 )
@@ -72,4 +73,22 @@ func TestWithGRPCPort(t *testing.T) {
 func TestLogger_ErrorsWithNilLogger(t *testing.T) {
 	_, err := evaluateOptions(defaultConfig(), WithLogger(nil))
 	require.Error(t, err)
+}
+
+func TestWithTLS(t *testing.T) {
+
+	t.Run("with valid file paths", func(t *testing.T) {
+		cert, err := os.CreateTemp("", "test_cert")
+		require.NoError(t, err)
+		key, err := os.CreateTemp("", "test_key")
+		require.NoError(t, err)
+
+		cfg, err := evaluateOptions(defaultConfig(), WithTLS(cert.Name(), key.Name()))
+		require.NoError(t, err)
+		require.Equal(t, &tlsConfig{
+			certFilePath: cert.Name(),
+			keyFilePath:  key.Name(),
+		}, cfg.tls)
+	})
+
 }
