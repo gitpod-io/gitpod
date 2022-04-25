@@ -16,6 +16,12 @@
 	order gitpod.workspace_download     before redir
 	order gitpod.headless_log_download	before rewrite
 	order gitpod.sec_websocket_key      before header
+
+	servers {
+        protocol {
+            allow_h2c
+        }
+    }
 }
 
 (compression) {
@@ -135,6 +141,17 @@
 		disable_openmetrics
 	}
 }
+
+# public-api
+api.{$GITPOD_DOMAIN} {
+    log {
+        level DEBUG
+        output stdout
+    }
+
+    reverse_proxy h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
+}
+
 
 # always redirect to HTTPS
 http:// {
@@ -260,11 +277,6 @@ https://{$GITPOD_DOMAIN} {
 	handle_errors {
 		redir https://{$GITPOD_DOMAIN}/sorry/#Error%20{http.reverse_proxy.status_text} 302
 	}
-}
-
-# public-api
-https://api.{$GITPOD_DOMAIN} {
-    reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9000
 }
 
 # workspaces
