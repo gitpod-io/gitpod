@@ -117,12 +117,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Args:            []string{"run", "/config/config.json"},
 							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSProxy.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Resources: corev1.ResourceRequirements{
+							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("100m"),
 									"memory": resource.MustParse("32Mi"),
 								},
-							},
+							}),
 							Ports: []corev1.ContainerPort{{
 								Name:          HTTPProxyPortName,
 								ContainerPort: HTTPProxyPort,

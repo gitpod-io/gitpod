@@ -213,10 +213,10 @@ fi
 						},
 					}},
 				),
-				Resources: corev1.ResourceRequirements{Requests: corev1.ResourceList{
+				Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{Requests: corev1.ResourceList{
 					"cpu":    resource.MustParse("1m"),
 					"memory": resource.MustParse("1Mi"),
-				}},
+				}}),
 				VolumeMounts: []corev1.VolumeMount{
 					{
 						Name:             "working-area",

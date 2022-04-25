@@ -207,12 +207,12 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Args:            []string{"run", "/mnt/config/config.json"},
-						Resources: corev1.ResourceRequirements{
+						Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								"cpu":    resource.MustParse("100m"),
 								"memory": resource.MustParse("32Mi"),
 							},
-						},
+						}),
 						Ports: []corev1.ContainerPort{{
 							Name:          ContainerPortName,
 							ContainerPort: ContainerPort,

@@ -46,12 +46,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:            Component,
 							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.PublicAPIServer.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Resources: corev1.ResourceRequirements{
+							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("100m"),
 									"memory": resource.MustParse("32Mi"),
 								},
-							},
+							}),
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: HTTPContainerPort,

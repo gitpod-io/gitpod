@@ -48,12 +48,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				"--config",
 				"/config/config.json",
 			},
-			Resources: corev1.ResourceRequirements{
+			Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					"cpu":    resource.MustParse("100m"),
 					"memory": resource.MustParse("32Mi"),
 				},
-			},
+			}),
 			Ports: []corev1.ContainerPort{{
 				Name:          RPCServiceName,
 				ContainerPort: RPCPort,

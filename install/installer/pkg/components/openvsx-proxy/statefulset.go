@@ -28,6 +28,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	const redisContainerName = "redis"
 	return []runtime.Object{&appsv1.StatefulSet{
 		TypeMeta: common.TypeMetaStatefulSet,
 		ObjectMeta: metav1.ObjectMeta{
@@ -79,12 +80,12 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 						},
 						ImagePullPolicy: v1.PullIfNotPresent,
-						Resources: v1.ResourceRequirements{
+						Resources: common.ResourceRequirements(ctx, Component, Component, v1.ResourceRequirements{
 							Requests: v1.ResourceList{
 								"cpu":    resource.MustParse("1m"),
 								"memory": resource.MustParse("150Mi"),
 							},
-						},
+						}),
 						Ports: []v1.ContainerPort{{
 							Name:          PortName,
 							ContainerPort: ContainerPort,
@@ -100,7 +101,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							common.DefaultEnv(&ctx.Config),
 						),
 					}, {
-						Name:  "redis",
+						Name:  redisContainerName,
 						Image: ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/redis", "6.2"),
 						Command: []string{
 							"redis-server",
@@ -114,12 +115,12 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Ports: []v1.ContainerPort{{
 							ContainerPort: 6379,
 						}},
-						Resources: v1.ResourceRequirements{
+						Resources: common.ResourceRequirements(ctx, Component, redisContainerName, v1.ResourceRequirements{
 							Requests: v1.ResourceList{
 								"cpu":    resource.MustParse("1m"),
 								"memory": resource.MustParse("150Mi"),
 							},
-						},
+						}),
 						VolumeMounts: []v1.VolumeMount{{
 							Name:      "config",
 							MountPath: "/config",
