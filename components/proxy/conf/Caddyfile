@@ -144,7 +144,7 @@ api.{$GITPOD_DOMAIN} {
     }
 
     reverse_proxy {
-        to h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9000
+        to h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
         transport http {
             versions h2c 2
         }
