@@ -36,18 +36,22 @@ func TestCompositeRenderFunc_NilObjectsNilError(t *testing.T) {
 func TestReplicas(t *testing.T) {
 	testCases := []struct {
 		Component        string
+		Name             string
 		ExpectedReplicas int32
 	}{
 		{
 			Component:        server.Component,
+			Name:             "server takes replica count from common config",
 			ExpectedReplicas: 123,
 		},
 		{
 			Component:        dashboard.Component,
+			Name:             "dashboard takes replica count from common config",
 			ExpectedReplicas: 456,
 		},
 		{
 			Component:        content_service.Component,
+			Name:             "content_service takes default replica count",
 			ExpectedReplicas: 1,
 		},
 	}
@@ -64,12 +68,14 @@ func TestReplicas(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, testCase := range testCases {
-		actualReplicas := common.Replicas(ctx, testCase.Component)
+		t.Run(testCase.Name, func(t *testing.T) {
+			actualReplicas := common.Replicas(ctx, testCase.Component)
 
-		if *actualReplicas != testCase.ExpectedReplicas {
-			t.Errorf("expected %d replicas for %q component, but got %d",
-				testCase.ExpectedReplicas, testCase.Component, *actualReplicas)
-		}
+			if *actualReplicas != testCase.ExpectedReplicas {
+				t.Errorf("expected %d replicas for %q component, but got %d",
+					testCase.ExpectedReplicas, testCase.Component, *actualReplicas)
+			}
+		})
 	}
 }
 
