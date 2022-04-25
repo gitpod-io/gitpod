@@ -35,6 +35,7 @@ require (
 )
 
 require (
+	github.com/hashicorp/golang-lru v0.5.1
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/opencontainers/runc v1.1.0
 )
