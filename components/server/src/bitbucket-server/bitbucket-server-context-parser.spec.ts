@@ -88,7 +88,7 @@ class TestBitbucketServerContextParser {
         expect(result).to.deep.include({
             ref: "master",
             refType: "branch",
-            revision: "535924584468074ec5dcbe935f4e68fbc3f0cb2d",
+            revision: "9eea1cca9bb98f0caf7ae77c740d5d24548ff33c",
             path: "",
             isFile: false,
             repository: {
@@ -115,7 +115,7 @@ class TestBitbucketServerContextParser {
         expect(result).to.deep.include({
             ref: "master",
             refType: "branch",
-            revision: "535924584468074ec5dcbe935f4e68fbc3f0cb2d",
+            revision: "9eea1cca9bb98f0caf7ae77c740d5d24548ff33c",
             path: "",
             isFile: false,
             repository: {
@@ -142,7 +142,7 @@ class TestBitbucketServerContextParser {
         expect(result).to.deep.include({
             ref: "main",
             refType: "branch",
-            revision: "a15d7d15adee54d0afdbe88148c8e587e8fb609d",
+            revision: "d4bdb1459f9fc90756154bdda5eb23c39457a89c",
             path: "",
             isFile: false,
             repository: {
@@ -156,6 +156,152 @@ class TestBitbucketServerContextParser {
                 repoKind: "users",
             },
             title: "alextugarev/tada - main",
+        });
+    }
+
+    @test async test_commit_context_01() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://bitbucket.gitpod-self-hosted.com/users/jan/repos/yolo/commits/ec15264e536e9684034ea8e08f3afc3fd485b613",
+        );
+
+        expect(result).to.deep.include({
+            refType: "revision",
+            revision: "ec15264e536e9684034ea8e08f3afc3fd485b613",
+            path: "",
+            isFile: false,
+            repository: {
+                cloneUrl: "https://bitbucket.gitpod-self-hosted.com/scm/~jan/yolo.git",
+                defaultBranch: "master",
+                host: "bitbucket.gitpod-self-hosted.com",
+                name: "YOLO",
+                owner: "jan",
+                private: true,
+                repoKind: "users",
+                webUrl: "https://bitbucket.gitpod-self-hosted.com/users/jan/repos/yolo",
+            },
+            title: "jan/yolo - ec15264e536e9684034ea8e08f3afc3fd485b613",
+        });
+    }
+
+    @test async test_PR_context_01() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123/pull-requests/1/commits",
+        );
+
+        expect(result).to.deep.include({
+            title: "Let's do it",
+            nr: 1,
+            ref: "foo",
+            refType: "branch",
+            revision: "1384b6842d73b8705feaf45f3e8aa41f00529042",
+            repository: {
+                host: "bitbucket.gitpod-self-hosted.com",
+                owner: "FOO",
+                name: "repo123",
+                cloneUrl: "https://bitbucket.gitpod-self-hosted.com/scm/foo/repo123.git",
+                webUrl: "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123",
+                defaultBranch: "master",
+                private: true,
+                repoKind: "projects",
+            },
+            base: {
+                ref: "master",
+                refType: "branch",
+                repository: {
+                    host: "bitbucket.gitpod-self-hosted.com",
+                    owner: "FOO",
+                    name: "repo123",
+                    cloneUrl: "https://bitbucket.gitpod-self-hosted.com/scm/foo/repo123.git",
+                    webUrl: "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123",
+                    defaultBranch: "master",
+                    private: true,
+                    repoKind: "projects",
+                },
+            },
+        });
+    }
+
+    @test async test_PR_context_02() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123/pull-requests/2/overview",
+        );
+
+        expect(result).to.deep.include({
+            title: "Let's do it again",
+            nr: 2,
+            ref: "foo",
+            refType: "branch",
+            revision: "1384b6842d73b8705feaf45f3e8aa41f00529042",
+            repository: {
+                host: "bitbucket.gitpod-self-hosted.com",
+                owner: "LAL",
+                name: "repo123",
+                cloneUrl: "https://bitbucket.gitpod-self-hosted.com/scm/lal/repo123.git",
+                webUrl: "https://bitbucket.gitpod-self-hosted.com/projects/LAL/repos/repo123",
+                defaultBranch: "master",
+                private: true,
+                repoKind: "projects",
+            },
+            base: {
+                ref: "master",
+                refType: "branch",
+                repository: {
+                    host: "bitbucket.gitpod-self-hosted.com",
+                    owner: "FOO",
+                    name: "repo123",
+                    cloneUrl: "https://bitbucket.gitpod-self-hosted.com/scm/foo/repo123.git",
+                    webUrl: "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123",
+                    defaultBranch: "master",
+                    private: true,
+                    repoKind: "projects",
+                },
+            },
+        });
+    }
+
+    @test async test_PR_context_03() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://bitbucket.gitpod-self-hosted.com/projects/LAL/repos/repo123/pull-requests/1/overview",
+        );
+
+        expect(result).to.deep.include({
+            title: "U turn",
+            nr: 1,
+            ref: "foo",
+            refType: "branch",
+            revision: "1384b6842d73b8705feaf45f3e8aa41f00529042",
+            repository: {
+                host: "bitbucket.gitpod-self-hosted.com",
+                owner: "FOO",
+                name: "repo123",
+                cloneUrl: "https://bitbucket.gitpod-self-hosted.com/scm/foo/repo123.git",
+                webUrl: "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123",
+                defaultBranch: "master",
+                private: true,
+                repoKind: "projects",
+            },
+            base: {
+                ref: "master",
+                refType: "branch",
+                repository: {
+                    host: "bitbucket.gitpod-self-hosted.com",
+                    owner: "LAL",
+                    name: "repo123",
+                    cloneUrl: "https://bitbucket.gitpod-self-hosted.com/scm/lal/repo123.git",
+                    webUrl: "https://bitbucket.gitpod-self-hosted.com/projects/LAL/repos/repo123",
+                    defaultBranch: "master",
+                    private: true,
+                    repoKind: "projects",
+                },
+            },
         });
     }
 }

@@ -265,7 +265,7 @@ export class BitbucketServerApi {
         );
     }
 
-    setWebhook(
+    async setWebhook(
         user: User,
         params: { repoKind: "projects" | "users"; owner: string; repositorySlug: string },
         webhook: BitbucketServer.WebhookParams,
@@ -301,6 +301,17 @@ export class BitbucketServerApi {
         }
         return this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(user, `/repos${q}`);
     }
+
+    async getPullRequest(
+        user: User,
+        params: { repoKind: "projects" | "users"; owner: string; repositorySlug: string; nr: number },
+    ): Promise<BitbucketServer.PullRequest> {
+        const result = await this.runQuery<BitbucketServer.PullRequest>(
+            user,
+            `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/pull-requests/${params.nr}`,
+        );
+        return result;
+    }
 }
 
 export namespace BitbucketServer {
@@ -329,6 +340,7 @@ export namespace BitbucketServer {
         id: number;
         name: string;
         public: boolean;
+        type: "PERSONAL" | "NORMAL";
     }
 
     export interface Branch {
@@ -373,6 +385,45 @@ export namespace BitbucketServer {
         commiter: BitbucketServer.User;
         committerTimestamp: number;
         message: string;
+    }
+
+    export interface PullRequest {
+        id: number;
+        version: number;
+        title: string;
+        description: string;
+        state: "OPEN" | string;
+        open: boolean;
+        closed: boolean;
+        createdDate: number;
+        updatedDate: number;
+        fromRef: Ref;
+        toRef: Ref;
+        locked: boolean;
+        author: {
+            user: User;
+            role: "AUTHOR" | string;
+            approved: boolean;
+            status: "UNAPPROVED" | string;
+        };
+        // reviewers: [];
+        // participants: [];
+        links: {
+            self: [
+                {
+                    //"https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123/pull-requests/1"
+                    href: string;
+                },
+            ];
+        };
+    }
+
+    export interface Ref {
+        id: string; // "refs/heads/foo"
+        displayId: string; //"foo"
+        latestCommit: string;
+        type: "BRANCH" | string;
+        repository: Repository;
     }
 
     export interface Paginated<T> {
