@@ -8,7 +8,7 @@
 	# set default SNI for old clients
 	default_sni {$GITPOD_DOMAIN}
 
-	# debug
+	gstdebug
 
 	# configure plugin order
 	# https://caddyserver.com/docs/caddyfile/directives#directive-order
