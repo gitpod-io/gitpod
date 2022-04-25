@@ -315,6 +315,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		// prevent cluster-autoscaler from removing a node
 		// https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-types-of-pods-can-prevent-ca-from-removing-a-node
 		"cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
+		// TODO(aledbf): use workspace classes to allow custom values
+		"kubernetes.io/ingress-bandwidth": "200M",
+		"kubernetes.io/egress-bandwidth":  "200M",
 	}
 	if req.Spec.Timeout != "" {
 		_, err := time.ParseDuration(req.Spec.Timeout)
