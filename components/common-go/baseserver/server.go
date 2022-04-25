@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 )
 
@@ -80,13 +81,14 @@ func (s *Server) ListenAndServe() error {
 		s.Logger().
 			WithField("protocol", "grpc").
 			Infof("Serving gRPC on %s", s.grpcListener.Addr().String())
-		if serveErr := s.grpc.Serve(s.grpcListener); serveErr != nil {
-			if s.isClosing() {
-				return
-			}
 
-			errors <- serveErr
-		}
+		//if serveErr := s.grpc.Serve(s.grpcListener); serveErr != nil {
+		//	if s.isClosing() {
+		//		return
+		//	}
+		//
+		//	errors <- serveErr
+		//}
 	}()
 
 	go func() {
@@ -206,8 +208,15 @@ func (s *Server) isClosing() bool {
 func (s *Server) initializeHTTP() error {
 	s.httpMux = s.newHTTPMux()
 	s.http = &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.cfg.httpPort),
-		Handler: s.httpMux,
+		Addr: fmt.Sprintf(":%d", s.cfg.httpPort),
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			s.Logger().WithField("protocol", "http").WithField("request", r).Info("Got request")
+			if r.ProtoMajor == 2 && strings.HasPrefix(r.Header.Get("content-type"), "application/grpc") {
+				s.grpc.ServeHTTP(w, r)
+				return
+			}
+			s.httpMux.ServeHTTP(w, r)
+		}),
 	}
 
 	return nil
