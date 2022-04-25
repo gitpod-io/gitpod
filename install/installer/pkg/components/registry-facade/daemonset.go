@@ -37,47 +37,47 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		volumeMounts []corev1.VolumeMount
 	)
 
-	name := "config-certificates"
-	volumes = append(volumes, corev1.Volume{
-		Name: name,
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: common.RegistryFacadeTLSCertSecret,
-			},
-		},
-	})
-
-	volumeMounts = append(volumeMounts, corev1.VolumeMount{
-		Name:      name,
-		MountPath: "/mnt/certificates",
-	})
-
-	// Attach the proxy CA certificate as registry-facade seems to talk to
-	// the registry through the `proxy`
 	if ctx.Config.Certificate.Name != "" {
-		volumeName := "proxy-ca-cert"
+		name := "config-certificates"
 		volumes = append(volumes, corev1.Volume{
-			Name: volumeName,
+			Name: name,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: ctx.Config.Certificate.Name,
-					Items: []corev1.KeyToPath{
-						{
-							Key:  "tls.crt",
-							Path: "ca.crt",
-						},
-					},
 				},
 			},
 		})
 
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			ReadOnly:  true,
-			MountPath: "/etc/ssl/certs/proxy-ca.crt",
-			SubPath:   "ca.crt",
-			Name:      volumeName,
+			Name:      name,
+			MountPath: "/mnt/certificates",
 		})
 	}
+
+	// Attach the custom CA certificate as registry-facade seems to talk to
+	// the registry through the `proxy`
+	volumeName := "custom-ca-cert"
+	volumes = append(volumes, corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: ctx.Config.Certificate.Name,
+				Items: []corev1.KeyToPath{
+					{
+						Key:  "ca.crt",
+						Path: "ca.crt",
+					},
+				},
+			},
+		},
+	})
+
+	volumeMounts = append(volumeMounts, corev1.VolumeMount{
+		ReadOnly:  true,
+		MountPath: "/etc/ssl/certs/proxy-ca.crt",
+		SubPath:   "ca.crt",
+		Name:      volumeName,
+	})
 
 	if objs, err := common.DockerRegistryHash(ctx); err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	name = "pull-secret"
+	name := "pull-secret"
 	var secretName string
 	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
 		secretName = dockerregistry.BuiltInRegistryAuth
@@ -145,6 +145,44 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	initContainers := []corev1.Container{
+		*common.InternalCAContainer(ctx),
+	}
+	// Load `customCACert` into Kubelet's only if its self-signed
+	if ctx.Config.CustomCACert != nil && ctx.Config.CustomCACert.Name != "" {
+		initContainers = append(initContainers,
+			*common.InternalCAContainer(ctx, func(c *corev1.Container) {
+				c.Name = "update-containerd-certificates"
+				c.Env = append(c.Env,
+					corev1.EnvVar{
+						Name: "GITPOD_CA_CERT",
+						ValueFrom: &corev1.EnvVarSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								Key: "ca.crt",
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: ctx.Config.CustomCACert.Name,
+								},
+							},
+						},
+					},
+					corev1.EnvVar{
+						// Install gitpod ca.crt in containerd to allow pulls from the host
+						// https://github.com/containerd/containerd/blob/main/docs/hosts.md
+						Name:  "SETUP_SCRIPT",
+						Value: fmt.Sprintf(`TARGETS="docker containerd";for TARGET in $TARGETS;do mkdir -p /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v && echo "$GITPOD_CA_CERT" > /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v/ca.crt && echo "OK";done`, ctx.Config.Domain, ServicePort, ctx.Config.Domain, ServicePort),
+					},
+				)
+				c.VolumeMounts = append(c.VolumeMounts,
+					corev1.VolumeMount{
+						Name:      "hostfs",
+						MountPath: "/mnt/dst",
+					},
+				)
+				c.Command = []string{"sh", "-c", "$(SETUP_SCRIPT)"}
+			}),
+		)
+	}
+
 	return []runtime.Object{&appsv1.DaemonSet{
 		TypeMeta: common.TypeMetaDaemonset,
 		ObjectMeta: metav1.ObjectMeta{
@@ -170,38 +208,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					DNSPolicy:                     "ClusterFirst",
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
-					InitContainers: []corev1.Container{
-						*common.InternalCAContainer(ctx),
-						*common.InternalCAContainer(ctx, func(c *corev1.Container) {
-							c.Name = "update-containerd-certificates"
-							c.Env = append(c.Env,
-								corev1.EnvVar{
-									Name: "GITPOD_CA_CERT",
-									ValueFrom: &corev1.EnvVarSource{
-										SecretKeyRef: &corev1.SecretKeySelector{
-											Key: "ca.crt",
-											LocalObjectReference: corev1.LocalObjectReference{
-												Name: common.RegistryFacadeTLSCertSecret,
-											},
-										},
-									},
-								},
-								corev1.EnvVar{
-									// Install gitpod ca.crt in containerd to allow pulls from the host
-									// https://github.com/containerd/containerd/blob/main/docs/hosts.md
-									Name:  "SETUP_SCRIPT",
-									Value: fmt.Sprintf(`TARGETS="docker containerd";for TARGET in $TARGETS;do mkdir -p /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v && echo "$GITPOD_CA_CERT" > /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v/ca.crt && echo "OK";done`, ctx.Config.Domain, ServicePort, ctx.Config.Domain, ServicePort),
-								},
-							)
-							c.VolumeMounts = append(c.VolumeMounts,
-								corev1.VolumeMount{
-									Name:      "hostfs",
-									MountPath: "/mnt/dst",
-								},
-							)
-							c.Command = []string{"sh", "-c", "$(SETUP_SCRIPT)"}
-						}),
-					},
+					InitContainers:                initContainers,
 					Containers: []corev1.Container{{
 						Name:            Component,
 						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
