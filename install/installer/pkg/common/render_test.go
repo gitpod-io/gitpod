@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,46 @@ func TestCompositeRenderFunc_NilObjectsNilError(t *testing.T) {
 	objects, err := f(ctx)
 	require.NoError(t, err)
 	require.Len(t, objects, 0)
+}
+
+func TestReplicas(t *testing.T) {
+	testCases := []struct {
+		Component        string
+		ExpectedReplicas int32
+	}{
+		{
+			Component:        "server",
+			ExpectedReplicas: 123,
+		},
+		{
+			Component:        "dashboard",
+			ExpectedReplicas: 456,
+		},
+		{
+			Component:        "content-service",
+			ExpectedReplicas: 1,
+		},
+	}
+	ctx, err := NewRenderContext(config.Config{
+		Experimental: &experimental.Config{
+			Common: &experimental.CommonConfig{
+				PodConfig: map[string]*experimental.PodConfig{
+					"server":    {Replicas: pointer.Int32(123)},
+					"dashboard": {Replicas: pointer.Int32(456)},
+				},
+			},
+		},
+	}, versions.Manifest{}, "test_namespace")
+	require.NoError(t, err)
+
+	for _, testCase := range testCases {
+		actualReplicas := Replicas(ctx, testCase.Component)
+
+		if *actualReplicas != testCase.ExpectedReplicas {
+			t.Errorf("expected %d replicas for %q component, but got %d",
+				testCase.ExpectedReplicas, testCase.Component, *actualReplicas)
+		}
+	}
 }
 
 func TestRepoName(t *testing.T) {
