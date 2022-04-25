@@ -6,6 +6,9 @@ package common
 import (
 	"testing"
 
+	"github.com/gitpod-io/gitpod/installer/pkg/components/content_service"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
@@ -35,15 +38,15 @@ func TestReplicas(t *testing.T) {
 		ExpectedReplicas int32
 	}{
 		{
-			Component:        "server",
+			Component:        server.Component,
 			ExpectedReplicas: 123,
 		},
 		{
-			Component:        "dashboard",
+			Component:        dashboard.Component,
 			ExpectedReplicas: 456,
 		},
 		{
-			Component:        "content-service",
+			Component:        content_service.Component,
 			ExpectedReplicas: 1,
 		},
 	}
