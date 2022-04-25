@@ -140,6 +140,7 @@
 api.{$GITPOD_DOMAIN} {
     log {
         level DEBUG
+        output stdout
     }
 
     reverse_proxy {
