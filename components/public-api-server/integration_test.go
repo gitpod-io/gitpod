@@ -16,49 +16,20 @@ import (
 	"testing"
 )
 
-func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
+func TestPublicAPIServer_v1(t *testing.T) {
 	ctx := context.Background()
 	srv := baseserver.NewForTests(t)
 
 	require.NoError(t, register(srv))
 	baseserver.StartServerForTests(t, srv)
 
-	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	addr := "api.mp-papi-caddy-grpc.staging.gitpod-dev.com:443"
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 
 	workspaceClient := v1.NewWorkspacesServiceClient(conn)
 
 	_, err = workspaceClient.GetWorkspace(ctx, &v1.GetWorkspaceRequest{})
-	requireErrorStatusCode(t, codes.Unimplemented, err)
-
-	_, err = workspaceClient.ListWorkspaces(ctx, &v1.ListWorkspacesRequest{})
-	requireErrorStatusCode(t, codes.Unimplemented, err)
-
-	_, err = workspaceClient.CreateAndStartWorkspace(ctx, &v1.CreateAndStartWorkspaceRequest{})
-	requireErrorStatusCode(t, codes.Unimplemented, err)
-
-	_, err = workspaceClient.StartWorkspace(ctx, &v1.StartWorkspaceRequest{})
-	requireErrorStatusCode(t, codes.Unimplemented, err)
-
-	_, err = workspaceClient.GetActiveWorkspaceInstance(ctx, &v1.GetActiveWorkspaceInstanceRequest{})
-	requireErrorStatusCode(t, codes.Unimplemented, err)
-
-	_, err = workspaceClient.GetWorkspaceInstanceOwnerToken(ctx, &v1.GetWorkspaceInstanceOwnerTokenRequest{})
-	requireErrorStatusCode(t, codes.Unimplemented, err)
-
-	stopWorkspaceStream, err := workspaceClient.StopWorkspace(ctx, &v1.StopWorkspaceRequest{})
-	require.NoError(t, err)
-	_, err = stopWorkspaceStream.Recv()
-	requireErrorStatusCode(t, codes.Unimplemented, err)
-
-	listenWorkspaceStream, err := workspaceClient.ListenToWorkspaceInstance(ctx, &v1.ListenToWorkspaceInstanceRequest{})
-	require.NoError(t, err)
-	_, err = listenWorkspaceStream.Recv()
-	requireErrorStatusCode(t, codes.Unimplemented, err)
-
-	listenImageBuildStream, err := workspaceClient.ListenToImageBuildLogs(ctx, &v1.ListenToImageBuildLogsRequest{})
-	require.NoError(t, err)
-	_, err = listenImageBuildStream.Recv()
 	requireErrorStatusCode(t, codes.Unimplemented, err)
 }
 
