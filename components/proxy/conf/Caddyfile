@@ -137,7 +137,7 @@
 }
 
 # public-api
-https://api.{$GITPOD_DOMAIN} {
+https://api.{$GITPOD_DOMAIN}:9001 {
     log {
         level DEBUG
     }
