@@ -351,6 +351,21 @@ func Replicas(ctx *RenderContext, component string) *int32 {
 	return &replicas
 }
 
+func ResourceRequirements(ctx *RenderContext, component, containerName string, defaults corev1.ResourceRequirements) corev1.ResourceRequirements {
+	resources := defaults
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Common != nil && cfg.Common.PodConfig[component] != nil {
+			if cfg.Common.PodConfig[component].Resources[containerName] != nil {
+				resources = *cfg.Common.PodConfig[component].Resources[containerName]
+			}
+		}
+		return nil
+	})
+
+	return resources
+}
+
 // ObjectHash marshals the objects to YAML and produces a sha256 hash of the output.
 // This function is useful for restarting pods when the config changes.
 // Takes an error as argument to make calling it more conventient. If that error is not nil,
