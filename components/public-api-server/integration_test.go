@@ -35,7 +35,6 @@ func TestPublicAPIServer_v1(t *testing.T) {
 }
 
 func TestPublicAPIServer_v1_PrebuildService(t *testing.T) {
-	t.SkipNow()
 	ctx := context.Background()
 	srv := baseserver.NewForTests(t)
 	require.NoError(t, register(srv))
