@@ -1,12 +1,13 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-package common
+package common_test
 
 import (
 	"testing"
 
-	"github.com/gitpod-io/gitpod/installer/pkg/components/content_service"
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	content_service "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
@@ -19,12 +20,12 @@ import (
 )
 
 func TestCompositeRenderFunc_NilObjectsNilError(t *testing.T) {
-	f := CompositeRenderFunc(
-		func(cfg *RenderContext) ([]runtime.Object, error) {
+	f := common.CompositeRenderFunc(
+		func(cfg *common.RenderContext) ([]runtime.Object, error) {
 			return nil, nil
 		})
 
-	ctx, err := NewRenderContext(config.Config{}, versions.Manifest{}, "test_namespace")
+	ctx, err := common.NewRenderContext(config.Config{}, versions.Manifest{}, "test_namespace")
 	require.NoError(t, err)
 
 	objects, err := f(ctx)
@@ -50,7 +51,7 @@ func TestReplicas(t *testing.T) {
 			ExpectedReplicas: 1,
 		},
 	}
-	ctx, err := NewRenderContext(config.Config{
+	ctx, err := common.NewRenderContext(config.Config{
 		Experimental: &experimental.Config{
 			Common: &experimental.CommonConfig{
 				PodConfig: map[string]*experimental.PodConfig{
@@ -63,7 +64,7 @@ func TestReplicas(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, testCase := range testCases {
-		actualReplicas := Replicas(ctx, testCase.Component)
+		actualReplicas := common.Replicas(ctx, testCase.Component)
 
 		if *actualReplicas != testCase.ExpectedReplicas {
 			t.Errorf("expected %d replicas for %q component, but got %d",
@@ -170,7 +171,7 @@ func TestRepoName(t *testing.T) {
 					}
 				}()
 
-				ctx, err := NewRenderContext(config.Config{
+				ctx, err := common.NewRenderContext(config.Config{
 					DropImageRepo: test.DropImageRepo,
 					Repository:    test.CfgRepo,
 				}, versions.Manifest{}, "test_namespace")
