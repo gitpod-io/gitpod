@@ -69,8 +69,8 @@ typescript_protoc() {
         -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
         "../$PROTO_DIR"/*.proto
 
-    # shellcheck disable=SC2011
-    # ls -1 "$MODULE_DIR"/typescript/src/*_pb.d.ts | xargs sed -i -e "s/[[:space:]]*$//" || exit
+    # remove trailing spaces
+    find "$MODULE_DIR"/typescript/src -maxdepth 1 -name "*_pb.d.ts" -exec sed -i -e "s/[[:space:]]*$//" {} \;
 
     popd > /dev/null || exit
 }
