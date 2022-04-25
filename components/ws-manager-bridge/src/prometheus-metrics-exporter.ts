@@ -127,7 +127,7 @@ export class PrometheusMetricsExporter {
     }
 
     reportWorkspaceInstanceUpdateStarted(dbWrite: boolean, workspaceCluster: string, type: WorkspaceType): void {
-        this.workspaceInstanceUpdateStartedTotal.labels(String(dbWrite), workspaceCluster, WorkspaceType[type]);
+        this.workspaceInstanceUpdateStartedTotal.labels(String(dbWrite), workspaceCluster, WorkspaceType[type]).inc();
     }
 
     reportWorkspaceInstanceUpdateCompleted(
