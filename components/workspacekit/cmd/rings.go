@@ -68,7 +68,7 @@ var ring0Cmd = &cobra.Command{
 
 		defer log.Info("done")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 		defer cancel()
 
 		client, err := connectToInWorkspaceDaemonService(ctx)
