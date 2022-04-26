@@ -1401,7 +1401,7 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 			cancel()
 			return err
 		})
-		if err != nil && !errors.Is(err, context.Canceled) {
+		if err != nil && !errors.Is(err, context.Canceled) && err.Error() != "signal: killed" {
 			log.WithError(err).Error("cannot provide Docker activation socket")
 		}
 	}
