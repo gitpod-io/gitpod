@@ -64,7 +64,7 @@ func TestPublicAPIServer_v1(t *testing.T) {
 	var opts []grpc.DialOption
 
 	//opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	opts = append(opts, grpc.WithTransportCredentials(tlsCredentials))
+	//opts = append(opts, grpc.WithTransportCredentials(tlsCredentials))
 
 	conn, err := grpc.Dial(addr, opts...)
 	require.NoError(t, err)
