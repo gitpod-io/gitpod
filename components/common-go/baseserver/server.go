@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	grpc2 "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -265,6 +266,8 @@ func (s *Server) initializeGRPC() error {
 	}
 
 	s.grpc = grpc.NewServer(opts...)
+
+	grpc2.SetupLogging()
 
 	return nil
 }

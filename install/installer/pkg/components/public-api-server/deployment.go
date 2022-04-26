@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+	"strings"
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -86,6 +87,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
+								[]corev1.EnvVar{
+									{Name: "LOG_LEVEL", Value: strings.ToLower("trace")},
+								},
 							),
 							LivenessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{

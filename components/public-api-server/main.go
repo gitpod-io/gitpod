@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	log.Init("public-api-server", "yolo", true, true)
 	logger := log.New()
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
