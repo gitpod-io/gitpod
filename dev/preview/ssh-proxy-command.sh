@@ -29,5 +29,15 @@ while true; do
     fi
 done
 
+# There seems to be a race condition somewhere. If we don't sleep a bit here
+# we're seeing sporadic SSH connection failure with the following messages
+#
+#    kex_exchange_identification: Connection closed by remote host
+#
+# We have created an issue to debug further and remove this fixed sleep
+#
+#    https://github.com/gitpod-io/ops/issues/1984
+sleep 10s
+
 # Use netcat as SSH expects ProxyCommand to read and write using stdin/stdout
 netcat -X connect localhost "${PORT}"
