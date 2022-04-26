@@ -346,7 +346,12 @@ func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id strin
 			return err
 		}
 
-		return mod(&ws)
+		err = mod(&ws)
+		if err != nil {
+			return err
+		}
+
+		return wsm.Client.Update(ctx, &ws)
 	})
 	if errors.IsNotFound(err) {
 		return status.Errorf(codes.NotFound, "workspace %s not found", id)
