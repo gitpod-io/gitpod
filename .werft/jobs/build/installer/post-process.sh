@@ -49,6 +49,8 @@ while [ "$documentIndex" -le "$DOCS" ]; do
    if [[ "$SIZE" -ne "0" ]] && [[ "$NAME" == "registry-facade" ]] && [[ "$KIND" == "DaemonSet" ]] ; then
       echo "setting $NAME to $REG_DAEMON_PORT"
       yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].ports.[0].hostPort "$REG_DAEMON_PORT"
+      echo "setting $NAME's update-containerd-certificates env port to $REG_DAEMON_PORT"
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.initContainers.[1].env.[1].value "$REG_DAEMON_PORT"
    fi
    if [[ "$SIZE" -ne "0" ]] && [[ "$NAME" == "ws-daemon" ]] && [[ "$KIND" == "DaemonSet" ]] ; then
       echo "setting $NAME to $WS_DAEMON_PORT"

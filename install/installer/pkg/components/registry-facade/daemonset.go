@@ -187,10 +187,14 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									},
 								},
 								corev1.EnvVar{
+									Name:  "REGISTRY_FACADE_PORT",
+									Value: fmt.Sprintf("%v", ServicePort),
+								},
+								corev1.EnvVar{
 									// Install gitpod ca.crt in containerd to allow pulls from the host
 									// https://github.com/containerd/containerd/blob/main/docs/hosts.md
 									Name:  "SETUP_SCRIPT",
-									Value: fmt.Sprintf(`TARGETS="docker containerd";for TARGET in $TARGETS;do mkdir -p /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v && echo "$GITPOD_CA_CERT" > /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v/ca.crt && echo "OK";done`, ctx.Config.Domain, ServicePort, ctx.Config.Domain, ServicePort),
+									Value: fmt.Sprintf(`TARGETS="docker containerd";for TARGET in $TARGETS;do mkdir -p /mnt/dst/etc/$TARGET/certs.d/reg.%s:$REGISTRY_FACADE_PORT && echo "$GITPOD_CA_CERT" > /mnt/dst/etc/$TARGET/certs.d/reg.%s:$REGISTRY_FACADE_PORT/ca.crt && echo "OK";done`, ctx.Config.Domain, ctx.Config.Domain),
 								},
 							)
 							c.VolumeMounts = append(c.VolumeMounts,
