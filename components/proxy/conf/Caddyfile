@@ -144,6 +144,8 @@
 
 # public-api
 api.{$GITPOD_DOMAIN} {
+    import ssl_configuration
+
     log {
         level DEBUG
         output stdout
