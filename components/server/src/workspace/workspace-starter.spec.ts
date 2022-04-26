@@ -249,5 +249,19 @@ describe("workspace-starter", function () {
             const result = chooseIDE("unknown-custom", customOptions, useLatest, hasPerm);
             expect(result.ideImage).to.equal(ideOptions.options["code"].latestImage);
         });
+
+        it("not exists ide with custom permission", function () {
+            const useLatest = true;
+            const hasPerm = true;
+            const result = chooseIDE("not-exists", ideOptions, useLatest, hasPerm);
+            expect(result.ideImage).to.equal(ideOptions.options["code"].latestImage);
+        });
+
+        it("not exists ide with custom permission", function () {
+            const useLatest = true;
+            const hasPerm = false;
+            const result = chooseIDE("not-exists", ideOptions, useLatest, hasPerm);
+            expect(result.ideImage).to.equal(ideOptions.options["code"].latestImage);
+        });
     });
 });
