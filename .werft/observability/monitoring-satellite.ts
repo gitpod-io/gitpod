@@ -94,7 +94,7 @@ export class MonitoringSatelliteInstaller {
         this.ensureCorrectInstallationOrder();
     }
 
-    private async ensureCorrectInstallationOrder() {
+    private ensureCorrectInstallationOrder() {
         const { werft, kubeconfigPath } = this.options;
 
         werft.log(sliceName, "installing monitoring-satellite");
@@ -104,26 +104,25 @@ export class MonitoringSatelliteInstaller {
         this.checkReadiness();
     }
 
-    private async checkReadiness() {
+    private checkReadiness() {
         const { kubeconfigPath, satelliteNamespace } = this.options;
 
         // For some reason prometheus' statefulset always take quite some time to get created
         // Therefore we wait a couple of seconds
         exec(
             `sleep 30 && kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} statefulset prometheus-k8s`,
-            { slice: sliceName, async: true },
+            { slice: sliceName },
         );
         exec(`kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment grafana`, {
             slice: sliceName,
-            async: true,
         });
         exec(
             `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment kube-state-metrics`,
-            { slice: sliceName, async: true },
+            { slice: sliceName },
         );
         exec(
             `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment otel-collector`,
-            { slice: sliceName, async: true },
+            { slice: sliceName },
         );
 
         // core-dev is just too unstable for node-exporter
@@ -131,12 +130,12 @@ export class MonitoringSatelliteInstaller {
         if (this.options.withVM) {
             exec(
                 `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} daemonset node-exporter`,
-                { slice: sliceName, async: true },
+                { slice: sliceName },
             );
         }
     }
 
-    private async deployGitpodServiceMonitors() {
+    private deployGitpodServiceMonitors() {
         const { werft, kubeconfigPath } = this.options;
 
         werft.log(sliceName, "installing gitpod ServiceMonitor resources");
