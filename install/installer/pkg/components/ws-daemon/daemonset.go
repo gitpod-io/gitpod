@@ -287,7 +287,7 @@ fi
 					PeriodSeconds:       10,
 					TimeoutSeconds:      1,
 					SuccessThreshold:    1,
-					FailureThreshold:    3,
+					FailureThreshold:    5,
 				},
 				Lifecycle: &corev1.Lifecycle{
 					PostStart: &corev1.LifecycleHandler{
