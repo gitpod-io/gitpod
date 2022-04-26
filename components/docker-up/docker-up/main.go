@@ -130,6 +130,8 @@ func runWithinNetns() (err error) {
 	}
 
 	args = append(args, fmt.Sprintf("--mtu=%v", netIface.Attrs().MTU))
+	// configure docker0 MTU (used as control plane, not related to containers)
+	args = append(args, fmt.Sprintf("--network-control-plane-mtu=%v", netIface.Attrs().MTU))
 
 	if listenFDs > 0 {
 		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
