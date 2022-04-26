@@ -95,6 +95,12 @@ export namespace User {
         }
         return undefined;
     }
+    export function hasPerferredIde(user: User) {
+        return !!user?.additionalData?.ideSettings?.defaultIde;
+    }
+    export function isOnboardingUser(user: User) {
+        return !hasPerferredIde(user);
+    }
 }
 
 export interface AdditionalUserData {

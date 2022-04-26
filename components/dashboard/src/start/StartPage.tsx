@@ -10,6 +10,7 @@ import gitpodIconUA from "../icons/gitpod-ua.svg";
 import { gitpodHostUrl } from "../service/service";
 
 export enum StartPhase {
+    Onboarding = -1,
     Checking = 0,
     Preparing = 1,
     Creating = 2,
@@ -41,6 +42,8 @@ function getPhaseTitle(phase?: StartPhase, error?: StartWorkspaceError) {
             return "Stopping";
         case StartPhase.Stopped:
             return "Stopped";
+        case StartPhase.Onboarding:
+            return "Onboarding";
         default:
             return "";
     }
@@ -92,8 +95,8 @@ export function StartPage(props: StartPageProps) {
         document.title = "Starting — Gitpod";
     }, []);
     return (
-        <div className="w-screen h-screen align-middle">
-            <div className="flex flex-col mx-auto items-center text-center h-screen">
+        <div className="w-full h-full align-middle">
+            <div className="flex flex-col mx-auto items-center text-center h-full">
                 <div className="h-1/3"></div>
                 <img
                     src={gitpodIconUA}

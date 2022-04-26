@@ -44,6 +44,7 @@ import {
 import { refreshSearchData } from "./components/RepositoryFinder";
 import { StartWorkspaceModal } from "./workspaces/StartWorkspaceModal";
 import { parseProps } from "./start/StartWorkspace";
+import WorkspaceOnboarding from "./start/WorkspaceOnboarding";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -493,8 +494,14 @@ function App() {
     if (isWhatsNewShown) {
         toRender = <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     } else if (isCreation) {
+        if (User.isOnboardingUser(user)) {
+            redirect2Onboarding(window.location.toString());
+        }
         toRender = <CreateWorkspace contextUrl={hash} />;
     } else if (isWsStart) {
+        if (User.isOnboardingUser(user)) {
+            redirect2Onboarding(window.location.toString());
+        }
         toRender = <StartWorkspace {...parseProps(hash, window.location.search)} />;
     } else if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {
         let url = new URL(window.location.href);
@@ -502,9 +509,17 @@ function App() {
         url.pathname = "/";
         window.location.replace(url);
         return <div></div>;
+    } else if (/^\/onboarding\//.test(window.location.pathname)) {
+        toRender = <WorkspaceOnboarding />;
     }
-
     return <Suspense fallback={<Loading />}>{toRender}</Suspense>;
+}
+
+function redirect2Onboarding(originalUrl: string) {
+    const url = new URL(originalUrl);
+    url.pathname = "/onboarding/";
+    url.searchParams.append("redirectTo", originalUrl);
+    window.location.replace(url);
 }
 
 export default App;

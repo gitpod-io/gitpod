@@ -12,15 +12,51 @@ import Tooltip from "../components/Tooltip";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
+import { IDESettings, User } from "@gitpod/gitpod-protocol";
+
+export enum DisplayMode {
+    List = 1,
+    Cell,
+}
 
 export interface SelectIDEProps {
     showLatest?: boolean;
+    onChange?: (ide: string, useLatest: boolean) => void;
+    displayMode?: DisplayMode;
 }
 
 export default function SelectIDE(props: SelectIDEProps) {
-    const { showLatest = true } = props;
+    const { showLatest = true, displayMode = DisplayMode.Cell } = props;
 
-    const { user, setUser } = useContext(UserContext);
+    const { user: originUser, setUser } = useContext(UserContext);
+    const user: User = JSON.parse(JSON.stringify(originUser));
+
+    const migrationIDESettings = () => {
+        if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.0") {
+            return;
+        }
+        const newIDESettings: IDESettings = {
+            settingVersion: "2.0",
+        };
+        const ideSettings = user.additionalData.ideSettings;
+        if (ideSettings.useDesktopIde) {
+            if (ideSettings.defaultDesktopIde === "code-desktop") {
+                newIDESettings.defaultIde = "code-desktop";
+            } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
+                newIDESettings.defaultIde = "code-desktop";
+                newIDESettings.useLatestVersion = true;
+            } else {
+                newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
+                newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
+            }
+        } else {
+            const useLatest = ideSettings.defaultIde === "code-latest";
+            newIDESettings.defaultIde = "code";
+            newIDESettings.useLatestVersion = useLatest;
+        }
+        user.additionalData.ideSettings = newIDESettings;
+    };
+    migrationIDESettings();
 
     const updateUserIDEInfo = async (selectedIde: string, useLatestVersion: boolean) => {
         const additionalData = user?.additionalData ?? {};
@@ -36,13 +72,15 @@ export default function SelectIDE(props: SelectIDEProps) {
             })
             .then()
             .catch(console.error);
-        await getGitpodService().server.updateLoggedInUser({ additionalData });
+        props.onChange && props.onChange(selectedIde, useLatestVersion);
+        const newUser = await getGitpodService().server.updateLoggedInUser({ additionalData });
+        setUser({ ...newUser });
     };
 
     const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || "");
     const actuallySetDefaultIde = async (value: string) => {
         // force context to refresh
-        setUser({ ...user! });
+        // setUser({ ...user! });
         await updateUserIDEInfo(value, useLatestVersion);
         setDefaultIde(value);
     };
@@ -68,6 +106,7 @@ export default function SelectIDE(props: SelectIDEProps) {
     }, []);
 
     const allIdeOptions = ideOptions && orderedIdeOptions(ideOptions);
+    const displayList = displayMode === DisplayMode.List;
 
     return (
         <>
@@ -75,12 +114,12 @@ export default function SelectIDE(props: SelectIDEProps) {
                 <>
                     {allIdeOptions && (
                         <>
-                            <div className="my-4 gap-4 flex flex-wrap max-w-2xl">
+                            <div className={`my-4  flex flex-wrap max-w-2xl ${displayList ? "gap-2" : "gap-4"}`}>
                                 {allIdeOptions.map(([id, option]) => {
                                     const selected = defaultIde === id;
                                     console.log(id, defaultIde, selected);
                                     const onSelect = () => actuallySetDefaultIde(id);
-                                    return renderIdeOption(option, selected, onSelect);
+                                    return renderIdeOption(option, selected, onSelect, displayMode);
                                 })}
                             </div>
                             {ideOptions.options[defaultIde]?.notes && (
@@ -98,9 +137,9 @@ export default function SelectIDE(props: SelectIDEProps) {
                                     href="https://github.com/gitpod-io/gitpod/issues/6576"
                                     target="gitpod-feedback-issue"
                                     rel="noopener"
-                                    className="gp-link"
+                                    className="gp-link whitespace-nowrap"
                                 >
-                                    Send feedback
+                                    Send Feedback
                                 </a>{" "}
                                 ·{" "}
                                 <a
@@ -159,18 +198,41 @@ function orderedIdeOptions(ideOptions: IDEOptions) {
         });
 }
 
-function renderIdeOption(option: IDEOption, selected: boolean, onSelect: () => void): JSX.Element {
+function renderIdeOption(
+    option: IDEOption,
+    selected: boolean,
+    onSelect: () => void,
+    displayMode: DisplayMode,
+): JSX.Element {
     const label = option.type === "desktop" ? "" : option.type;
+    const displayList = displayMode === DisplayMode.List;
     const card = (
-        <SelectableCardSolid className="w-36 h-40" title={option.title} selected={selected} onClick={onSelect}>
-            <div className="flex justify-center mt-3">
-                <img className="w-16 filter-grayscale self-center" src={option.logo} alt="logo" />
+        <SelectableCardSolid
+            className={`${displayList ? "h-12 w-full flex flex-row flex-nowrap" : "w-36 h-40 flex flex-col"}`}
+            title={option.title}
+            selected={selected}
+            onClick={onSelect}
+        >
+            <div
+                className={`w-full text-base font-semibold truncate ${displayList ? "order-2" : ""} ${
+                    selected ? "text-gray-100 dark:text-gray-600" : "text-gray-600 dark:text-gray-500"
+                }`}
+                title={option.title}
+            >
+                {option.title}
+            </div>
+            <div className={`justify-center ${displayList ? "inline-flex order-1 mx-2 flex-none" : "flex mt-3"}`}>
+                <img
+                    className={`filter-grayscale self-center ${displayList ? "w-5" : "w-16"}`}
+                    src={option.logo}
+                    alt="logo"
+                />
             </div>
             {label ? (
                 <div
-                    className={`font-semibold text-sm ${
-                        selected ? "text-gray-100 dark:text-gray-600" : "text-gray-600 dark:text-gray-500"
-                    } uppercase mt-2 px-3 py-1 self-center`}
+                    className={`font-semibold text-sm uppercase px-3 py-1 self-center ${
+                        displayList ? "order-3" : "mt-2"
+                    } ${selected ? "text-gray-100 dark:text-gray-600" : "text-gray-600 dark:text-gray-500"}`}
                 >
                     {label}
                 </div>

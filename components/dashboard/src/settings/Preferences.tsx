@@ -14,7 +14,6 @@ import { UserContext } from "../user-context";
 import getSettingsMenu from "./settings-menu";
 import { trackEvent } from "../Analytics";
 import { PaymentContext } from "../payment-context";
-import { IDESettings } from "@gitpod/gitpod-protocol";
 import SelectIDE from "./SelectIDE";
 
 type Theme = "light" | "dark" | "system";
@@ -23,33 +22,6 @@ export default function Preferences() {
     const { user } = useContext(UserContext);
     const { showPaymentUI } = useContext(PaymentContext);
     const { setIsDark } = useContext(ThemeContext);
-
-    const migrationIDESettings = () => {
-        if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.0") {
-            return;
-        }
-        const newIDESettings: IDESettings = {
-            settingVersion: "2.0",
-        };
-        const ideSettings = user.additionalData.ideSettings;
-        if (ideSettings.useDesktopIde) {
-            if (ideSettings.defaultDesktopIde === "code-desktop") {
-                newIDESettings.defaultIde = "code-desktop";
-            } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
-                newIDESettings.defaultIde = "code-desktop";
-                newIDESettings.useLatestVersion = true;
-            } else {
-                newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
-                newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
-            }
-        } else {
-            const useLatest = ideSettings.defaultIde === "code-latest";
-            newIDESettings.defaultIde = "code";
-            newIDESettings.useLatestVersion = useLatest;
-        }
-        user.additionalData.ideSettings = newIDESettings;
-    };
-    migrationIDESettings();
 
     const [theme, setTheme] = useState<Theme>(localStorage.theme || "system");
     const actuallySetTheme = (theme: Theme) => {
