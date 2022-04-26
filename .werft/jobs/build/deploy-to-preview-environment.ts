@@ -206,7 +206,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     let registryNodePortMeta = findLastHostPort(namespace, 'registry-facade', deploymentKubeconfig, metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
     let nodeExporterPort = findLastHostPort(namespace, 'node-exporter', deploymentKubeconfig, metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
 
-    if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta) || (isNaN(nodeExporterPort) && !withVM && withObservability)) {
+    if (isNaN(wsdaemonPortMeta) || isNaN(registryNodePortMeta) || (isNaN(nodeExporterPort) && !withVM && withObservability)) {
         werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
         [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = await findFreeHostPorts([
             { start: 10000, end: 11000 },
