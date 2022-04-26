@@ -52,6 +52,19 @@ export async function createDNSRecord(options: {domain: string, projectId: strin
     }
 }
 
+export async function deleteDNSRecord(recordType: string, domain: string, projectId: string, dnsZone: string): Promise<void> {
+    const dnsClient = new DNS({
+        projectId: projectId,
+        keyFilename: GCLOUD_SERVICE_ACCOUNT_PATH,
+    })
+    const zone = dnsClient.zone(dnsZone)
+    const [records] = await zone.getRecords({ name: `${domain}.`, type: recordType })
+
+    await Promise.all(records.map(record => {
+        return record.delete()
+    }))
+}
+
 // matchesExistingRecord will return true only if the existing record matches the same name and IP.
 // If IP doesn't match, then the record needs to be replaced in a following step.
 async function matchesExistingRecord(zone: Zone, domain: string, IP: string): Promise<boolean> {

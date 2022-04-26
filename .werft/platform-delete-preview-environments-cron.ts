@@ -5,6 +5,7 @@ import { wipePreviewEnvironmentAndNamespace, helmInstallName, listAllPreviewName
 import { exec } from './util/shell';
 import { previewNameFromBranchName } from './util/preview';
 import { CORE_DEV_KUBECONFIG_PATH, HARVESTER_KUBECONFIG_PATH } from './jobs/build/const';
+import {deleteDNSRecord} from "./util/gcloud";
 
 // for testing purposes
 // if set to 'true' it shows only previews that would be deleted
@@ -81,7 +82,10 @@ async function deletePreviewEnvironments() {
             const promises: Promise<any>[] = [];
             previewsToDelete.forEach(preview => {
                 werft.log("deleting preview", preview)
-                promises.push(wipePreviewEnvironmentAndNamespace(helmInstallName, preview, CORE_DEV_KUBECONFIG_PATH, { slice: `Deleting preview ${preview}` }))
+                promises.push(
+                    removeCertificate(preview, CORE_DEV_KUBECONFIG_PATH),
+                    removeStagingDNSRecord(preview),
+                    wipePreviewEnvironmentAndNamespace(helmInstallName, preview, CORE_DEV_KUBECONFIG_PATH, { slice: `Deleting preview ${preview}` }))
             })
             await Promise.all(promises)
         }
@@ -134,6 +138,39 @@ function isInactive(previewNS: string): boolean {
         }
     }
 
+}
+
+async function removeCertificate(preview: string, kubectlConfig: string) {
+    exec(`kubectl --kubeconfig ${kubectlConfig} -n certs delete cert ${preview}`)
+    return
+}
+
+// remove DNS records on the old generation of preview environments
+async function removeStagingDNSRecord(preview: string) {
+    return Promise.all([
+        deleteDNSRecord('A', `*.ws-dev.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
+        deleteDNSRecord('A', `*.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
+        deleteDNSRecord('A', `${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
+        deleteDNSRecord('A', `prometheus-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
+        deleteDNSRecord('TXT', `prometheus-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
+        deleteDNSRecord('A', `grafana-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
+        deleteDNSRecord('TXT', `grafana-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
+        deleteDNSRecord('TXT', `_acme-challenge.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
+        deleteDNSRecord('TXT', `_acme-challenge.ws-dev.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com')
+    ])
+}
+
+// remove DNS records on the new (Harvester based) generation of preview environments
+async function removePreviewDNSRecord(preview: string) {
+    return Promise.all([
+        deleteDNSRecord('A', `*.ws-dev.${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
+        deleteDNSRecord('A', `*.${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
+        deleteDNSRecord('A', `${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
+        deleteDNSRecord('A', `prometheus-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
+        deleteDNSRecord('TXT', `prometheus-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
+        deleteDNSRecord('A', `grafana-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
+        deleteDNSRecord('TXT', `grafana-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com')
+    ])
 }
 
 async function cleanLoadbalancer() {
