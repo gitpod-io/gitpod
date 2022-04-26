@@ -16,10 +16,8 @@
 	order gitpod.workspace_download     before redir
 	order gitpod.headless_log_download	before rewrite
 	order gitpod.sec_websocket_key      before header
-}
 
-{
-    servers {
+	servers {
         protocol {
             allow_h2c
         }
@@ -152,7 +150,6 @@ api.{$GITPOD_DOMAIN} {
     }
 
     reverse_proxy h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
-
 }
 
 
