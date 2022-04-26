@@ -26,12 +26,20 @@ export function exec(cmd: string, options?: ExecOptions): ChildProcess | shell.S
     }
 
     const handleResult = (result, options) => {
-        if (options && options.slice) {
-            werft.logOutput(options.slice, result.stderr || result.stdout);
+        let output = [];
+        if(result.stdout) {
+            output.push("STDOUT: " + result.stdout);
         }
-
+        if(result.stderr) {
+            output.push("STDERR: " + result.stderr);
+        }
+        if (options && options.slice) {
+            werft.logOutput(options.slice, output.join("\n"));
+            output = []; // don't show the same output as part of the exception again.
+        }
         if ((!options || !options.dontCheckRc) && result.code !== 0) {
-            throw new Error(`${cmd} exit with non-zero status code`);
+            output.unshift(`${cmd} exit with non-zero status code.`)
+            throw new Error(output.join("\n"));
         }
     };
 
