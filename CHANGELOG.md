@@ -1,6 +1,14 @@
 # Change Log
 
 ## April 2022
+- [bitbucket-server] handle pull-request context url ([#9524](https://github.com/gitpod-io/gitpod/pull/9524)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [ws-daemon] Fix check logic for I/O limits ([#9527](https://github.com/gitpod-io/gitpod/pull/9527)) - [@aledbf](https://github.com/aledbf)
+- [kots]: allow deployment whilst installer job running ([#9471](https://github.com/gitpod-io/gitpod/pull/9471)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [kots]: allow configuration of Open VSX URL ([#9485](https://github.com/gitpod-io/gitpod/pull/9485)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Fix multiple issues with `self-signed` certs ([#9518](https://github.com/gitpod-io/gitpod/pull/9518)) - [@Pothulapati](https://github.com/Pothulapati)
+- Update dev image, switch to go 1.18.1 and update dependencies ([#9465](https://github.com/gitpod-io/gitpod/pull/9465)) - [@aledbf](https://github.com/aledbf)
+- mess with tracing ([#9281](https://github.com/gitpod-io/gitpod/pull/9281)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Added experimental support of warming up JetBrains's products in prebuilds via .gitpod.yml. ([#9450](https://github.com/gitpod-io/gitpod/pull/9450)) - [@akosyakov](https://github.com/akosyakov)
 - [ws-daemon] Check blkio throttle exists ([#9493](https://github.com/gitpod-io/gitpod/pull/9493)) - [@aledbf](https://github.com/aledbf)
 - fix a dashboard bug where you might end up on a workspace without having access to it ([#9488](https://github.com/gitpod-io/gitpod/pull/9488)) - [@geropl](https://github.com/geropl)
 - fix and improve validation of user environment variables ([#9460](https://github.com/gitpod-io/gitpod/pull/9460)) - [@geropl](https://github.com/geropl)
