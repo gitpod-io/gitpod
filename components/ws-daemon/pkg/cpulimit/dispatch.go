@@ -6,6 +6,8 @@ package cpulimit
 
 import (
 	"context"
+	"errors"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -114,9 +116,13 @@ func (d *DispatchListener) source(context.Context) ([]Workspace, error) {
 	for id, w := range d.workspaces {
 		usage, err := w.CFS.Usage()
 		if err != nil {
-			log.WithFields(w.OWI).WithError(err).Warn("cannot read CPU usage")
+			if !errors.Is(err, os.ErrNotExist) {
+				log.WithFields(w.OWI).WithError(err).Warn("cannot read CPU usage")
+			}
+
 			continue
 		}
+
 		throttled, err := w.CFS.NrThrottled()
 		if err != nil {
 			log.WithFields(w.OWI).WithError(err).Warn("cannot read times cgroup was throttled")
