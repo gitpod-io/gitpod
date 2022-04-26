@@ -15,6 +15,8 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
 )
@@ -74,6 +76,108 @@ func TestReplicas(t *testing.T) {
 			if *actualReplicas != testCase.ExpectedReplicas {
 				t.Errorf("expected %d replicas for %q component, but got %d",
 					testCase.ExpectedReplicas, testCase.Component, *actualReplicas)
+			}
+		})
+	}
+}
+
+func TestResourceRequirements(t *testing.T) {
+	defaultResources := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			"cpu":    resource.MustParse("200m"),
+			"memory": resource.MustParse("200Mi"),
+		},
+		Limits: corev1.ResourceList{
+			"cpu":    resource.MustParse("200m"),
+			"memory": resource.MustParse("200Mi"),
+		},
+	}
+
+	serverResources := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			"cpu":    resource.MustParse("50m"),
+			"memory": resource.MustParse("100Mi"),
+		},
+		Limits: corev1.ResourceList{
+			"cpu":    resource.MustParse("500m"),
+			"memory": resource.MustParse("800Mi"),
+		},
+	}
+
+	dashboardResources := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			"cpu":    resource.MustParse("60m"),
+			"memory": resource.MustParse("100Mi"),
+		},
+		Limits: corev1.ResourceList{
+			"cpu":    resource.MustParse("100m"),
+			"memory": resource.MustParse("500Mi"),
+		},
+	}
+
+	testCases := []struct {
+		Component         string
+		ContainerName     string
+		Name              string
+		ExpectedResources corev1.ResourceRequirements
+	}{
+		{
+			Component:         server.Component,
+			ContainerName:     server.Component,
+			Name:              "server takes resource requirements from config",
+			ExpectedResources: serverResources,
+		},
+		{
+			Component:         dashboard.Component,
+			ContainerName:     dashboard.Component,
+			Name:              "dashboard takes resource requirements from config",
+			ExpectedResources: dashboardResources,
+		},
+		{
+			Component:         content_service.Component,
+			Name:              "content_service takes default resource requirements",
+			ExpectedResources: defaultResources,
+		},
+	}
+	ctx, err := common.NewRenderContext(config.Config{
+		Experimental: &experimental.Config{
+			Common: &experimental.CommonConfig{
+				PodConfig: map[string]*experimental.PodConfig{
+					server.Component: {
+						Resources: map[string]*corev1.ResourceRequirements{
+							server.Component: &serverResources,
+						},
+					},
+					dashboard.Component: {
+						Resources: map[string]*corev1.ResourceRequirements{
+							dashboard.Component: &dashboardResources,
+						},
+					},
+				},
+			},
+		},
+	}, versions.Manifest{}, "test_namespace")
+	require.NoError(t, err)
+
+	for _, testCase := range testCases {
+		t.Run(testCase.Name, func(t *testing.T) {
+			actualResources := common.ResourceRequirements(ctx, testCase.Component, testCase.ContainerName, defaultResources)
+
+			if actualResources.Limits["cpu"] != testCase.ExpectedResources.Limits["cpu"] {
+				t.Errorf("expected cpu limits for container %q in component %q to be %+v, but got %+v",
+					testCase.Component, testCase.ContainerName, testCase.ExpectedResources.Limits["cpu"], actualResources.Limits["cpu"])
+			}
+			if actualResources.Limits["memory"] != testCase.ExpectedResources.Limits["memory"] {
+				t.Errorf("expected memory limits for container %q in component %q to be %+v, but got %+v",
+					testCase.Component, testCase.ContainerName, testCase.ExpectedResources.Limits["memory"], actualResources.Limits["memory"])
+			}
+			if actualResources.Requests["cpu"] != testCase.ExpectedResources.Requests["cpu"] {
+				t.Errorf("expected cpu requests for container %q in component %q to be %+v, but got %+v",
+					testCase.Component, testCase.ContainerName, testCase.ExpectedResources.Requests["cpu"], actualResources.Requests["cpu"])
+			}
+			if actualResources.Requests["memory"] != testCase.ExpectedResources.Requests["memory"] {
+				t.Errorf("expected memory requests for container %q in component %q to be %+v, but got %+v",
+					testCase.Component, testCase.ContainerName, testCase.ExpectedResources.Requests["memory"], actualResources.Requests["memory"])
 			}
 		})
 	}
