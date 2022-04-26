@@ -103,12 +103,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.WorkspaceReconciler{
-		Client:      mgr.GetClient(),
-		Scheme:      mgr.GetScheme(),
-		Config:      cfg.Manager,
-		OnReconcile: wsmanService.OnWorkspaceReconcile,
-	}).SetupWithManager(mgr); err != nil {
+	reconciler, err := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), cfg.Manager)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
+		os.Exit(1)
+	}
+	reconciler.OnReconcile = wsmanService.OnWorkspaceReconcile
+	if err = reconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 		os.Exit(1)
 	}

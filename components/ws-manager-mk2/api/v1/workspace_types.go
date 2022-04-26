@@ -114,8 +114,9 @@ type WorkspaceStatus struct {
 	// +kubebuilder:validation:Optional
 	Phase WorkspacePhase `json:"phase,omitempty"`
 	// +kubebuilder:validation:Optional
-	Conditions WorkspaceConditions `json:"conditions,omitempty"`
-	Results    *WorkspaceResults   `json:"results,omitempty"`
+	Conditions WorkspaceConditions      `json:"conditions,omitempty"`
+	Results    *WorkspaceResults        `json:"results,omitempty"`
+	Disposal   *WorkspaceDisposalStatus `json:"disposal,omitempty"`
 
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 }
@@ -163,6 +164,32 @@ type WorkspaceResults struct {
 
 	// HeadlessTaskFailed indicates that a headless workspace task failed
 	HeadlessTaskFailed string `json:"headlessTaskFailed,omitempty"`
+}
+
+// workspaceDisposalStatus indicates the status of the workspace diposal
+type WorkspaceDisposalStatus struct {
+	BackupComplete bool       `json:"backupComplete,omitempty"`
+	BackupFailure  string     `json:"backupFailure,omitempty"`
+	GitStatus      *GitStatus `json:"git,omitempty"`
+}
+
+type GitStatus struct {
+	// branch is branch we're currently on
+	Branch string `json:"branch,omitempty"`
+	// latest_commit is the most recent commit on the current branch
+	LatestCommit string `json:"latest_commit,omitempty"`
+	// uncommited_files is the number of uncommitted files, possibly truncated
+	UncommitedFiles []string `json:"uncommited_files,omitempty"`
+	// the total number of uncommited files
+	TotalUncommitedFiles int64 `json:"total_uncommited_files,omitempty"`
+	// untracked_files is the number of untracked files in the workspace, possibly truncated
+	UntrackedFiles []string `json:"untracked_files,omitempty"`
+	// the total number of untracked files
+	TotalUntrackedFiles int64 `json:"total_untracked_files,omitempty"`
+	// unpushed_commits is the number of unpushed changes in the workspace, possibly truncated
+	UnpushedCommits []string `json:"unpushed_commits,omitempty"`
+	// the total number of unpushed changes
+	TotalUnpushedCommits int64 `json:"total_unpushed_commits,omitempty"`
 }
 
 type WorkspaceRuntimeStatus struct {
