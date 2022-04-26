@@ -241,7 +241,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (!result.enoughCredits) {
             throw new ResponseError(
                 ErrorCodes.NOT_ENOUGH_CREDIT,
-                `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`,
+                `You ran out of hours for this month, please check ${this.config.hostUrl.asUpgradeSubscription}`,
             );
         }
         if (!!result.hitParallelWorkspaceLimit) {
@@ -2101,8 +2101,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             log.debug({ userId: user.id }, "Cannot find branch details.", { project, branchName });
             throw new ResponseError(
                 ErrorCodes.NOT_FOUND,
-                `Could not find ${!branchName ? "a default branch" : `branch '${branchName}'`} in repository ${
-                    project.cloneUrl
+                `Could not find ${!branchName ? "a default branch" : `branch '${branchName}'`} in repository ${project.cloneUrl
                 }`,
             );
         }
