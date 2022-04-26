@@ -42,7 +42,7 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 }
 
 func TestPublicAPIServer_v1(t *testing.T) {
-	//t.SkipNow()
+	t.SkipNow()
 	ctx := context.Background()
 	srv := baseserver.NewForTests(t)
 
