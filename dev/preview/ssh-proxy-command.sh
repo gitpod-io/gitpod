@@ -24,7 +24,7 @@ kubectl \
 # Wait for the port to be read
 while true; do
     sleep 1
-    if [[ "$(netcat -z localhost 8022)" -eq 0 ]]; then
+    if [[ "$(netcat -z localhost "${PORT}")" -eq 0 ]]; then
         break
     fi
 done
