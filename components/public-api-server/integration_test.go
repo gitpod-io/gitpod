@@ -6,26 +6,54 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	"io/ioutil"
 	"testing"
 )
 
+func loadTLSCredentials() (credentials.TransportCredentials, error) {
+	// Load certificate of the CA who signed server's certificate
+	pemServerCA, err := ioutil.ReadFile("/workspace/gitpod/yolo/cert")
+	if err != nil {
+		return nil, err
+	}
+
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(pemServerCA) {
+		return nil, fmt.Errorf("failed to add server CA's certificate")
+	}
+
+	// Create the credentials and return it
+	config := &tls.Config{
+		RootCAs: certPool,
+	}
+
+	return credentials.NewTLS(config), nil
+}
+
 func TestPublicAPIServer_v1(t *testing.T) {
-	t.SkipNow()
+	//t.SkipNow()
 	ctx := context.Background()
 	srv := baseserver.NewForTests(t)
 
 	require.NoError(t, register(srv))
 	baseserver.StartServerForTests(t, srv)
 
+	tlsCredentials, err := loadTLSCredentials()
+	require.NoError(t, err)
+
 	addr := "api.mp-papi-caddy-grpc.staging.gitpod-dev.com:443"
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(tlsCredentials))
 	require.NoError(t, err)
 
 	workspaceClient := v1.NewWorkspacesServiceClient(conn)
