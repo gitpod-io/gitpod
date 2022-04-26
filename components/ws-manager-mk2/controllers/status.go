@@ -32,6 +32,9 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 	switch len(pods.Items) {
 	case 0:
 		workspace.Status.Available = false
+		if workspace.Status.Phase != workspacev1.WorkspacePhasePending {
+			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
+		}
 		return nil
 	case 1:
 		// continue below
@@ -67,7 +70,8 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		workspace.Status.Conditions.Failed = failure
 	}
 
-	if isPodBeingDeleted(pod) {
+	switch {
+	case isPodBeingDeleted(pod):
 		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 
 		var hasFinalizer bool
@@ -83,9 +87,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 			// a disposal status, hence would never stop the workspace.
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
-	}
 
-	switch {
 	case pod.Status.Phase == corev1.PodPending:
 		var creating bool
 		// check if any container is still pulling images
