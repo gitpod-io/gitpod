@@ -3,5 +3,6 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
+
 set -Eeuo pipefail
-source /workspace/gitpod/scripts/ws-deploy.sh deployment image-builder-mk3
+source /workspace/gitpod/scripts/ws-deploy.sh deployment content-service
