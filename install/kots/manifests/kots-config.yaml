@@ -258,7 +258,14 @@ spec:
           title: Use a self-signed TLS certificate
           type: bool
           default: "0"
-          help_text: A self-signed certficate should only be used if applying TLS termination to your load balancer or other proxy.
+          help_text: |
+            A self-signed certficate should only be used if applying TLS termination to your load balancer or other proxy.
+
+            If you are terminating your TLS connection with this certificate, you will need to download the [CA](https://en.wikipedia.org/wiki/Certificate_authority)
+            certificate and install it to your browser.
+
+            To download the certificate, run
+            `kubectl get secrets -n {{repl Namespace }}  ca-issuer-ca -o jsonpath='{.data.ca\.crt}' | base64 -d > ~/ca.crt`
 
         - name: cert_manager_enabled
           title: Use cert-manager
@@ -301,6 +308,12 @@ spec:
           required: true
           when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") }}'
           help_text: A file containing the TLS private key.
+
+        - name: tls_ca_crt
+          title: CA certificate
+          type: file
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") }}'
+          help_text: A file containing the Certificate Authority certificate. To be used if your certificate is signed by a non-public CA.
 
     - name: features
       title: Additional features

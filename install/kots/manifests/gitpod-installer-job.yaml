@@ -194,6 +194,18 @@ spec:
                 yq e -i '.sshGatewayHostKey.name = "ssh-gateway-host-key"' "${CONFIG_FILE}"
               fi
 
+              if [ '{{repl ConfigOptionEquals "tls_self_signed_enabled" "1" }}' = "true" ];
+              then
+                echo "Gitpod: Generating a self-signed certificate with the internal CA"
+                yq e -i '.customCACert.kind = "secret"' "${CONFIG_FILE}"
+                yq e -i '.customCACert.name = "ca-issuer-ca"' "${CONFIG_FILE}"
+              elif [ '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") (ConfigOptionNotEquals "tls_ca_crt" "") }}' = "true" ];
+              then
+                echo "Gitpod: Setting CA to be used for certificate"
+                yq e -i '.customCACert.kind = "secret"' "${CONFIG_FILE}"
+                yq e -i '.customCACert.name = "ca-certificate"' "${CONFIG_FILE}"
+              fi
+
               echo "Gitpod: Patch Gitpod config"
               base64 -d "${CONFIG_PATCH_FILE}" > /tmp/patch.yaml
               config_patch=$(cat /tmp/patch.yaml)
