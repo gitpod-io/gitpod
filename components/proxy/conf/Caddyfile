@@ -18,6 +18,14 @@
 	order gitpod.sec_websocket_key      before header
 }
 
+{
+    servers {
+        protocol {
+            allow_h2c
+        }
+    }
+}
+
 (compression) {
 	encode zstd gzip
 }
@@ -143,9 +151,7 @@ api.{$GITPOD_DOMAIN} {
         output stdout
     }
 
-    reverse_proxy {
-        to public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
-    }
+    reverse_proxy h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
 
 }
 
