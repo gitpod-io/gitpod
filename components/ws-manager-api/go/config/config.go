@@ -259,6 +259,9 @@ type ContainerConfiguration struct {
 	Image    string                `json:"image"`
 	Requests ResourceConfiguration `json:"requests"`
 	Limits   ResourceConfiguration `json:"limits"`
+
+	JetBrainsImagePrefix string                `json:"jetbrainsImagePrefix"`
+	JetBrainsRequests    ResourceConfiguration `json:"jetbrainsRequests"`
 }
 
 // Validate validates a container configuration

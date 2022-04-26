@@ -31,6 +31,8 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 		RegularTemplate    *corev1.Pod                   `json:"regularTemplate,omitempty"`
 		ResourceRequests   *config.ResourceConfiguration `json:"resourceRequests,omitempty"`
 		ResourceLimits     *config.ResourceConfiguration `json:"resourceLimits,omitempty"`
+		JBPrefix           string                        `json:"jbPrefix,omitempty"`
+		JBRequest          *config.ResourceConfiguration `json:"jbRequests,omitempty"`
 		CACertSecret       string                        `json:"caCertSecret,omitempty"`
 
 		EnforceAffinity bool `json:"enforceAffinity,omitempty"`
@@ -64,6 +66,17 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 					ws   = cont.Workspace
 				)
 				ws.Limits = *fixture.ResourceLimits
+				cont.Workspace = ws
+				mgmtCfg.Container = cont
+			}
+
+			if fixture.JBPrefix != "" {
+				var (
+					cont = mgmtCfg.Container
+					ws   = cont.Workspace
+				)
+				ws.JetBrainsRequests = *fixture.JBRequest
+				ws.JetBrainsImagePrefix = fixture.JBPrefix
 				cont.Workspace = ws
 				mgmtCfg.Container = cont
 			}

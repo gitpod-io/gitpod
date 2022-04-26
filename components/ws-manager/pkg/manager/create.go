@@ -533,10 +533,15 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	if err != nil {
 		return nil, xerrors.Errorf("cannot parse workspace container limits: %w", err)
 	}
+
 	requests, err := m.Config.Container.Workspace.Requests.ResourceList()
+	if pfx := m.Config.Container.Workspace.JetBrainsImagePrefix; pfx != "" && strings.HasPrefix(startContext.Request.Spec.IdeImage.DesktopRef, pfx) {
+		requests, err = m.Config.Container.Workspace.JetBrainsRequests.ResourceList()
+	}
 	if err != nil {
 		return nil, xerrors.Errorf("cannot parse workspace container requests: %w", err)
 	}
+
 	env, err := m.createWorkspaceEnvironment(startContext)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace env: %w", err)
