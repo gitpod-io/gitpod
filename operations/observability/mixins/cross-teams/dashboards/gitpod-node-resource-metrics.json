@@ -445,10 +445,7 @@
       ],
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "node_uname_info{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"} - 0",
           "format": "table",
@@ -458,10 +455,7 @@
           "refId": "A"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "sum(time() - node_boot_time_seconds{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"})by(instance)",
           "format": "table",
@@ -472,10 +466,7 @@
           "refId": "D"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "node_memory_MemTotal_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"} - 0",
           "format": "table",
@@ -486,10 +477,7 @@
           "refId": "B"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "count(node_cpu_seconds_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",mode='system',cluster=~\"$cluster\"}) by (instance)",
           "format": "table",
@@ -500,10 +488,7 @@
           "refId": "C"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "node_load5{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"}",
           "format": "table",
@@ -513,10 +498,7 @@
           "refId": "L"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "(1 - avg(rate(node_cpu_seconds_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",mode=\"idle\",cluster=~\"$cluster\"}[$interval])) by (instance)) * 100",
           "format": "table",
@@ -527,10 +509,7 @@
           "refId": "F"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "(1 - (node_memory_MemAvailable_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"} / (node_memory_MemTotal_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"})))* 100",
           "format": "table",
@@ -541,10 +520,7 @@
           "refId": "G"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "max((node_filesystem_size_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"}-node_filesystem_free_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"}) *100/(node_filesystem_avail_bytes {origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"}+(node_filesystem_size_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"}-node_filesystem_free_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"})))by(instance)",
           "format": "table",
@@ -555,10 +531,7 @@
           "refId": "E"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "max(rate(node_disk_read_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"}[$interval])) by (instance)",
           "format": "table",
@@ -569,10 +542,7 @@
           "refId": "H"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "max(rate(node_disk_written_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"}[$interval])) by (instance)",
           "format": "table",
@@ -583,10 +553,7 @@
           "refId": "I"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "node_netstat_Tcp_CurrEstab{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"} - 0",
           "format": "table",
@@ -597,10 +564,7 @@
           "refId": "M"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "node_sockstat_TCP_tw{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"} - 0",
           "format": "table",
@@ -611,10 +575,7 @@
           "refId": "N"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "max(rate(node_network_receive_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"}[$interval])*8) by (instance)",
           "format": "table",
@@ -625,10 +586,7 @@
           "refId": "J"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": false,
           "expr": "max(rate(node_network_transmit_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"}[$interval])*8) by (instance)",
           "format": "table",
@@ -1615,10 +1573,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": true,
           "expr": "increase(node_network_receive_bytes_total{instance=~\"$node\",device=~\"$device\"}[60m])",
           "interval": "60m",
@@ -1630,10 +1585,7 @@
           "target": ""
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_VICTORIAMETRICS}"
-          },
+          "datasource": "$datasource",
           "exemplar": true,
           "expr": "increase(node_network_transmit_bytes_total{cluster=~\"$cluster\",instance=~\"$node\",device=~\"$device\"}[60m])",
           "hide": false,
