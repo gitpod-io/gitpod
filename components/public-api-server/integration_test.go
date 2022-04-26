@@ -54,7 +54,7 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 }
 
 func TestPublicAPIServer_v1(t *testing.T) {
-	t.SkipNow()
+	//t.SkipNow()
 	ctx := context.Background()
 	srv := baseserver.NewForTests(t)
 
@@ -64,7 +64,7 @@ func TestPublicAPIServer_v1(t *testing.T) {
 	tlsCredentials, err := loadTLSCredentials()
 	require.NoError(t, err)
 
-	addr := "api.mp-papi-caddy-grpc.preview.gitpod-dev.com:9001"
+	addr := "api.mp-papi-caddy-grpc.preview.gitpod-dev.com:443"
 	//addr := "localhost:9001"
 	var opts []grpc.DialOption
 
