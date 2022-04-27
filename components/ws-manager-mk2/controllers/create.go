@@ -26,8 +26,8 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 const (
