@@ -7,8 +7,8 @@ import * as VM from './vm/vm'
 import { buildAndPublish } from './jobs/build/build-and-publish';
 import { validateChanges } from './jobs/build/validate-changes';
 import { prepare } from './jobs/build/prepare';
-import { deployToPreviewEnvironment } from './jobs/build/deploy-to-preview-environment';
-import { triggerIntegrationTests } from './jobs/build/trigger-integration-tests';
+// import { deployToPreviewEnvironment } from './jobs/build/deploy-to-preview-environment';
+// import { triggerIntegrationTests } from './jobs/build/trigger-integration-tests';
 import { jobConfig } from './jobs/build/job-config';
 import { runNightlyTests } from './jobs/build/nightly-tests';
 import { typecheckWerftJobs } from './jobs/build/typecheck-werft-jobs';
