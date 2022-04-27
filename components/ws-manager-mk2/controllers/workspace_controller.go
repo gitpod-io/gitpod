@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -198,7 +199,15 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	switch {
 	// if there is a pod, and it's failed, delete it
 	case workspace.Status.Conditions.Failed != "" && !isPodBeingDeleted(pod):
+		err := r.Client.Delete(ctx, pod)
+		if errors.IsNotFound(err) {
+			// pod is gone - nothing to do here
+		} else {
+			return ctrl.Result{Requeue: true}, err
+		}
 
+	// if the pod was stopped by request, delete it
+	case pointer.BoolDeref(workspace.Status.Conditions.StoppedByRequest, false) && !isPodBeingDeleted(pod):
 		err := r.Client.Delete(ctx, pod)
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
@@ -260,11 +269,14 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 	// we've disposed already - try to remove the finalizer and call it a day
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
+		var foundFinalizer bool
 		n := 0
 		for _, x := range pod.Finalizers {
 			if x != gitpodPodFinalizerName {
 				pod.Finalizers[n] = x
 				n++
+			} else {
+				foundFinalizer = true
 			}
 		}
 		pod.Finalizers = pod.Finalizers[:n]
@@ -273,6 +285,15 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			return ctrl.Result{Requeue: true}, err
 		}
 
+		if foundFinalizer {
+			// reque to remove workspace
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		} else {
+			err = r.Client.Delete(ctx, workspace)
+			if err != nil {
+				return ctrl.Result{Requeue: true}, err
+			}
+		}
 	}
 
 	return ctrl.Result{}, nil
@@ -357,12 +378,13 @@ func (r *WorkspaceReconciler) finalizeWorkspaceContent(ctx context.Context, work
 			}
 
 			if res != nil {
-				r.modifyWorkspace(ctx, workspace.Name, func(ws *workspacev1.Workspace) error {
-					results := ws.Status.Results
+				r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
+					results := status.Results
 					if res == nil {
 						results = &workspacev1.WorkspaceResults{}
 					}
 					results.Snapshot = res.Url
+					status.Results = results
 					return nil
 				})
 				if err != nil {
@@ -446,6 +468,14 @@ func (r *WorkspaceReconciler) finalizeWorkspaceContent(ctx context.Context, work
 			log.Error(backupError, "internal error while disposing workspace content")
 		}
 	}
+	err := r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
+		status.Disposal = disposalStatus
+		log.V(1).Info("setting disposal status", "instanceID", workspace.Name, "status", *disposalStatus)
+		return nil
+	})
+	if err != nil {
+		log.Error(err, "cannot update workspace disposal status")
+	}
 }
 
 func gitStatusfromContentServiceAPI(s *csapi.GitStatus) *workspacev1.GitStatus {
@@ -508,9 +538,9 @@ func (r *WorkspaceReconciler) connectToWorkspaceDaemon(ctx context.Context, work
 	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
 }
 
-// modifyWorkspace modifies a workspace object using the mod function. If the mod function returns a gRPC status error, that error
+// modifyWorkspaceStatus modifies a workspace object using the mod function. If the mod function returns a gRPC status error, that error
 // is returned directly. If mod returns a non-gRPC error it is turned into one.
-func (r *WorkspaceReconciler) modifyWorkspace(ctx context.Context, id string, mod func(ws *workspacev1.Workspace) error) error {
+func (r *WorkspaceReconciler) modifyWorkspaceStatus(ctx context.Context, id string, mod func(ws *workspacev1.WorkspaceStatus) error) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		var ws workspacev1.Workspace
 		err := r.Client.Get(ctx, types.NamespacedName{Namespace: r.Config.Namespace, Name: id}, &ws)
@@ -518,12 +548,12 @@ func (r *WorkspaceReconciler) modifyWorkspace(ctx context.Context, id string, mo
 			return err
 		}
 
-		err = mod(&ws)
+		err = mod(&ws.Status)
 		if err != nil {
 			return err
 		}
 
-		return r.Client.Update(ctx, &ws)
+		return r.Client.Status().Update(ctx, &ws)
 	})
 }
 
