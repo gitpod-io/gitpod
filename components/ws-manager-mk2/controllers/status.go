@@ -84,7 +84,11 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 				break
 			}
 		}
-		if !hasFinalizer {
+		if hasFinalizer {
+			if workspace.Status.Disposal != nil && workspace.Status.Disposal.BackupComplete {
+				workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
+			}
+		} else {
 			// We do this independently of the dispostal status because pods only get their finalizer
 			// once they're running. If they fail before they reach the running phase we'll never see
 			// a disposal status, hence would never stop the workspace.
