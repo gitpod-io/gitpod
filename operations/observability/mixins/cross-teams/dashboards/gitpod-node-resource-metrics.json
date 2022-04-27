@@ -11,7 +11,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.4.5"
+      "version": "8.5.0"
     },
     {
       "type": "panel",
@@ -64,7 +64,7 @@
   "gnetId": 11074,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1650611369878,
+  "iteration": 1651051124466,
   "links": [
     {
       "$$hashKey": "object:2300",
@@ -164,7 +164,7 @@
           "link": true,
           "linkTargetBlank": false,
           "linkTooltip": "Browse host details",
-          "linkUrl": "d/xfpJB9FGz/node-exporter?orgId=1&var-job=${job}&var-hostname=All&var-node=${__cell}&var-device=All&var-origin_prometheus=$origin_prometheus",
+          "linkUrl": "d/xfpJB9FGz2/node-exporter?orgId=1&var-job=${job}&var-cluster=${cluster}&var-nodepool=All&var-hostname=All&var-node=${__cell}&var-device=All&var-origin_prometheus=$origin_prometheus",
           "mappingType": 1,
           "pattern": "instance",
           "thresholds": [],
@@ -447,8 +447,9 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "node_uname_info{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"} - 0",
+          "expr": "node_uname_info{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",nodename=~\"$hostname\"} - 0",
           "format": "table",
+          "hide": false,
           "instant": true,
           "interval": "",
           "legendFormat": "CPU name",
@@ -457,7 +458,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "sum(time() - node_boot_time_seconds{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"})by(instance)",
+          "expr": "sum(time() - node_boot_time_seconds{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"})by(instance)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -468,7 +469,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "node_memory_MemTotal_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"} - 0",
+          "expr": "node_memory_MemTotal_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"} - 0",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -479,7 +480,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "count(node_cpu_seconds_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",mode='system',cluster=~\"$cluster\"}) by (instance)",
+          "expr": "count(node_cpu_seconds_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",mode='system',cluster=~\"$cluster\", node=~\"$hostname\"}) by (instance)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -490,8 +491,9 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "node_load5{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"}",
+          "expr": "node_load5{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"}",
           "format": "table",
+          "hide": false,
           "instant": true,
           "interval": "",
           "legendFormat": "5minute load",
@@ -500,7 +502,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "(1 - avg(rate(node_cpu_seconds_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",mode=\"idle\",cluster=~\"$cluster\"}[$interval])) by (instance)) * 100",
+          "expr": "(1 - avg(rate(node_cpu_seconds_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",mode=\"idle\",cluster=~\"$cluster\",node=~\"$hostname\"}[$interval])) by (instance)) * 100",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -511,7 +513,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "(1 - (node_memory_MemAvailable_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"} / (node_memory_MemTotal_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"})))* 100",
+          "expr": "(1 - (node_memory_MemAvailable_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"} / (node_memory_MemTotal_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"})))* 100",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -522,7 +524,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "max((node_filesystem_size_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"}-node_filesystem_free_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"}) *100/(node_filesystem_avail_bytes {origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"}+(node_filesystem_size_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"}-node_filesystem_free_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"})))by(instance)",
+          "expr": "max((node_filesystem_size_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\",node=~\"$hostname\"}-node_filesystem_free_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\",node=~\"$hostname\"}) *100/(node_filesystem_avail_bytes {origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\",node=~\"$hostname\"}+(node_filesystem_size_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\",node=~\"$hostname\"}-node_filesystem_free_bytes{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\",node=~\"$hostname\"})))by(instance)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -533,7 +535,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "max(rate(node_disk_read_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"}[$interval])) by (instance)",
+          "expr": "max(rate(node_disk_read_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"}[$interval])) by (instance)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -544,7 +546,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "max(rate(node_disk_written_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"}[$interval])) by (instance)",
+          "expr": "max(rate(node_disk_written_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"}[$interval])) by (instance)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -555,7 +557,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "node_netstat_Tcp_CurrEstab{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"} - 0",
+          "expr": "node_netstat_Tcp_CurrEstab{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"} - 0",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -566,7 +568,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "node_sockstat_TCP_tw{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"} - 0",
+          "expr": "node_sockstat_TCP_tw{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"} - 0",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -577,7 +579,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "max(rate(node_network_receive_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"}[$interval])*8) by (instance)",
+          "expr": "max(rate(node_network_receive_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"}[$interval])*8) by (instance)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -588,7 +590,7 @@
         {
           "datasource": "$datasource",
           "exemplar": false,
-          "expr": "max(rate(node_network_transmit_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\"}[$interval])*8) by (instance)",
+          "expr": "max(rate(node_network_transmit_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",cluster=~\"$cluster\",node=~\"$hostname\"}[$interval])*8) by (instance)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -604,6 +606,7 @@
     {
       "aliasColors": {
         "192.168.200.241:9100_Total": "dark-red",
+        "Disk costs inI/OOperation ratio": "#ba43a9",
         "Idle - Waiting for something to happen": "#052B51",
         "guest": "#9AC48A",
         "idle": "#052B51",
@@ -614,8 +617,7 @@
         "softirq": "#E24D42",
         "steal": "#FCE2DE",
         "system": "#508642",
-        "user": "#5195CE",
-        "Disk costs inI/OOperation ratio": "#ba43a9"
+        "user": "#5195CE"
       },
       "bars": false,
       "dashLength": 10,
@@ -662,7 +664,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -806,7 +808,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -943,7 +945,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1106,7 +1108,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "targets": [
         {
           "expr": "avg(time() - node_boot_time_seconds{instance=~\"$node\",cluster=~\"$cluster\"})",
@@ -1173,6 +1175,8 @@
       "id": 177,
       "options": {
         "displayMode": "lcd",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
@@ -1183,7 +1187,7 @@
         },
         "showUnfilled": true
       },
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "targets": [
         {
           "expr": "100 - (avg(rate(node_cpu_seconds_total{instance=~\"$node\",mode=\"idle\",cluster=~\"$cluster\"}[$interval])) * 100)",
@@ -1486,7 +1490,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "targets": [
         {
           "expr": "avg(rate(node_cpu_seconds_total{instance=~\"$node\",mode=\"iowait\",cluster=~\"$cluster\"}[$interval])) * 100",
@@ -1557,7 +1561,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 1,
       "points": false,
       "renderer": "flot",
@@ -1650,8 +1654,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "rgba(245, 54, 54, 0.9)",
-                "value": null
+                "color": "rgba(245, 54, 54, 0.9)"
               },
               {
                 "color": "rgba(237, 129, 40, 0.89)",
@@ -1690,7 +1693,7 @@
         },
         "textMode": "value"
       },
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "targets": [
         {
           "expr": "count(node_cpu_seconds_total{instance=~\"$node\", mode='system',cluster=~\"$cluster\"})",
@@ -1726,8 +1729,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "rgba(245, 54, 54, 0.9)",
-                "value": null
+                "color": "rgba(245, 54, 54, 0.9)"
               },
               {
                 "color": "rgba(237, 129, 40, 0.89)",
@@ -1766,7 +1768,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "targets": [
         {
           "expr": "avg(node_filesystem_files_free{instance=~\"$node\",mountpoint=\"$maxmount\",fstype=~\"ext.?|xfs\",cluster=~\"$cluster\"})",
@@ -1803,8 +1805,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "rgba(245, 54, 54, 0.9)",
-                "value": null
+                "color": "rgba(245, 54, 54, 0.9)"
               },
               {
                 "color": "rgba(237, 129, 40, 0.89)",
@@ -1843,7 +1844,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "targets": [
         {
           "expr": "sum(node_memory_MemTotal_bytes{instance=~\"$node\",cluster=~\"$cluster\"})",
@@ -1879,8 +1880,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "rgba(245, 54, 54, 0.9)",
-                "value": null
+                "color": "rgba(245, 54, 54, 0.9)"
               },
               {
                 "color": "rgba(237, 129, 40, 0.89)",
@@ -1919,7 +1919,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "targets": [
         {
           "expr": "avg(node_filefd_maximum{instance=~\"$node\",cluster=~\"$cluster\"})",
@@ -1937,6 +1937,7 @@
     {
       "aliasColors": {
         "192.168.200.241:9100_Total": "dark-red",
+        "Disk costs inI/OOperation ratio": "#ba43a9",
         "Idle - Waiting for something to happen": "#052B51",
         "guest": "#9AC48A",
         "idle": "#052B51",
@@ -1947,8 +1948,7 @@
         "softirq": "#E24D42",
         "steal": "#FCE2DE",
         "system": "#508642",
-        "user": "#5195CE",
-        "Disk costs inI/OOperation ratio": "#ba43a9"
+        "user": "#5195CE"
       },
       "bars": false,
       "dashLength": 10,
@@ -1996,7 +1996,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -2092,14 +2092,14 @@
     {
       "aliasColors": {
         "192.168.200.241:9100_totalRAM": "dark-red",
-        "usage": "yellow",
         "RAM_Avaliable": "#6ED0E0",
         "RAM_Cached": "#EF843C",
         "RAM_Free": "#629E51",
         "RAM_Total": "#6d1f62",
         "RAM_Used": "#eab839",
         "available": "#9ac48a",
-        "totalRAM": "#bf1b00"
+        "totalRAM": "#bf1b00",
+        "usage": "yellow"
       },
       "bars": false,
       "dashLength": 10,
@@ -2146,7 +2146,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -2333,7 +2333,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -2455,7 +2455,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -2595,7 +2595,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -2710,7 +2710,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -2828,7 +2828,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -2908,6 +2908,7 @@
     },
     {
       "aliasColors": {
+        "Disk costs inI/OOperation ratio": "#ba43a9",
         "Idle - Waiting for something to happen": "#052B51",
         "guest": "#9AC48A",
         "idle": "#052B51",
@@ -2918,8 +2919,7 @@
         "softirq": "#E24D42",
         "steal": "#FCE2DE",
         "system": "#508642",
-        "user": "#5195CE",
-        "Disk costs inI/OOperation ratio": "#ba43a9"
+        "user": "#5195CE"
       },
       "bars": false,
       "dashLength": 10,
@@ -2964,7 +2964,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -3064,7 +3064,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -3205,7 +3205,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -3340,11 +3340,11 @@
     },
     {
       "aliasColors": {
-        "filefd_192.168.200.241:9100": "super-light-green",
-        "switches_192.168.200.241:9100": "semi-dark-red",
-        "file descriptor used_10.118.72.128:9100": "red",
         "context switches per second_10.118.71.245:9100": "yellow",
-        "context switches per second_10.118.72.128:9100": "yellow"
+        "context switches per second_10.118.72.128:9100": "yellow",
+        "file descriptor used_10.118.72.128:9100": "red",
+        "filefd_192.168.200.241:9100": "super-light-green",
+        "switches_192.168.200.241:9100": "semi-dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -3387,7 +3387,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.5",
+      "pluginVersion": "8.5.0",
       "pointradius": 1,
       "points": false,
       "renderer": "flot",
@@ -3474,7 +3474,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 35,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [
     "Prometheus",
@@ -3484,7 +3484,7 @@
     "list": [
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "VictoriaMetrics",
           "value": "VictoriaMetrics"
         },
@@ -3567,8 +3567,8 @@
         "useTags": false
       },
       {
-        "current": {},
         "allFormat": "glob",
+        "current": {},
         "datasource": "$datasource",
         "definition": "label_values(kube_node_labels{cluster=~\"$cluster\"}, nodepool)",
         "hide": 0,
@@ -3619,7 +3619,7 @@
         "datasource": "$datasource",
         "definition": "label_values(node_uname_info{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",nodename=~\"$hostname\",cluster=~\"$cluster\"},instance)",
         "hide": 0,
-        "includeAll": true,
+        "includeAll": false,
         "label": "Instance",
         "multi": true,
         "multiFormat": "regex values",
@@ -3746,9 +3746,9 @@
         "datasource": "$datasource",
         "definition": "label_values(node_uname_info{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",instance=~\"$node\",cluster=~\"$cluster\"}, nodename)",
         "hide": 2,
-        "includeAll": true,
+        "includeAll": false,
         "label": "show_hostname",
-        "multi": true,
+        "multi": false,
         "name": "show_hostname",
         "options": [],
         "query": {
@@ -3819,6 +3819,6 @@
   "timezone": "browser",
   "title": "Node Resource Usage Metrics",
   "uid": "xfpJB9FGz2",
-  "version": 6,
+  "version": 10,
   "weekStart": ""
 }
