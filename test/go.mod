@@ -139,8 +139,6 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.11.0
-
 replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.11.2
 
 replace github.com/gitpod-io/gitpod/common-go => ../components/common-go // leeway
