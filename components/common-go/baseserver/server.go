@@ -7,7 +7,9 @@ package baseserver
 import (
 	"context"
 	"fmt"
+	gitpod_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -236,7 +238,20 @@ func (s *Server) newHTTPMux() *http.ServeMux {
 }
 
 func (s *Server) initializeGRPC() error {
-	s.grpc = grpc.NewServer()
+	var opts []grpc.ServerOption
+
+	gitpod_grpc.SetupLogging()
+
+	unary := grpc.ChainUnaryInterceptor(
+		grpc_logrus.UnaryServerInterceptor(s.Logger()),
+	)
+	stream := grpc.ChainStreamInterceptor(
+		grpc_logrus.StreamServerInterceptor(s.Logger()),
+	)
+
+	opts = append(opts, unary, stream)
+
+	s.grpc = grpc.NewServer(opts...)
 
 	return nil
 }
