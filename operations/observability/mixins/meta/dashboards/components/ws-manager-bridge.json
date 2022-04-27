@@ -26,27 +26,29 @@
   "panels": [
     {
       "collapsed": false,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 46,
+      "id": 56,
       "panels": [],
-      "title": "ws-manager bridge metrics",
+      "title": "Health Metrics",
       "type": "row"
     },
     {
-      "datasource": "$datasource",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "P4169E866C3094E38"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "",
+            "axisLabel": "# of events",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -96,7 +98,7 @@
         "x": 0,
         "y": 1
       },
-      "id": 48,
+      "id": 50,
       "options": {
         "legend": {
           "calcs": [],
@@ -104,19 +106,342 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "rate(gitpod_ws_manager_bridge_status_updates_total{cluster=~\"$cluster\"}[1m]) * 60",
-          "interval": "",
-          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P4169E866C3094E38"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_started_total{cluster=~\"$cluster\", pod=~\"$pod\"}[1m]))",
+          "legendFormat": "Events received",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P4169E866C3094E38"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"}[1m]))",
+          "hide": false,
+          "legendFormat": "Events completed",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Workspace Instance events received (by both read/write replicas) [1m]",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "# of events",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 58,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P4169E866C3094E38"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_started_total{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[10m])) - sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[10m]))",
+          "legendFormat": "# of events received - # of events completed",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "workspace status update rate (per minute)",
+      "title": "Event processing lag by write replicas (started - completed events) [10m]",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "# of events",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 52,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P4169E866C3094E38"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{outcome=\"success\", db_write=\"true\"}[1m])) OR 0",
+          "interval": "",
+          "legendFormat": "success",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{outcome=\"error\", db_write=\"true\"}[1m])) OR 0",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "error",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Workspace instance updates completed by write replicas [1m]",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "seconds",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 54,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P4169E866C3094E38"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.5, sum(rate(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_bucket{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (le))",
+          "legendFormat": "50th",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum(rate(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_bucket{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "90th",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum(rate(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_bucket{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "99th",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Processing latency by write replicas [1m] (bucketed)",
       "type": "timeseries"
     },
     {
