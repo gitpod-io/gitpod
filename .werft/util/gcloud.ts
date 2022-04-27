@@ -52,7 +52,9 @@ export async function createDNSRecord(options: {domain: string, projectId: strin
     }
 }
 
-export async function deleteDNSRecord(recordType: string, domain: string, projectId: string, dnsZone: string): Promise<void> {
+export async function deleteDNSRecord(recordType: string, domain: string, projectId: string, dnsZone: string, slicdeID: string): Promise<void> {
+    const werft = getGlobalWerftInstance()
+
     const dnsClient = new DNS({
         projectId: projectId,
         keyFilename: GCLOUD_SERVICE_ACCOUNT_PATH,
@@ -60,7 +62,10 @@ export async function deleteDNSRecord(recordType: string, domain: string, projec
     const zone = dnsClient.zone(dnsZone)
     const [records] = await zone.getRecords({ name: `${domain}.`, type: recordType })
 
+    werft.log(slicdeID, `Found ${records.length} for ${domain}`)
+
     await Promise.all(records.map(record => {
+        werft.log(slicdeID, `Deleting ${record.metadata.name}`)
         return record.delete()
     }))
 }
