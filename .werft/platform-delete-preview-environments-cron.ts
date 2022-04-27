@@ -127,6 +127,8 @@ async function removePreviewEnvironment(previewNamespace: string) {
     werft.log(sliceID, `Starting deletion of all resources related to ${previewNamespace}`)
     try {
         const previewDNSName = previewNamespace.replace('staging-', '')
+
+        // We're running these promises sequentially to make it easier to read the log output.
         await removeCertificate(previewNamespace, CORE_DEV_KUBECONFIG_PATH, sliceID)
         await removeStagingDNSRecord(previewDNSName, sliceID)
         await removePreviewDNSRecord(previewDNSName, sliceID)
