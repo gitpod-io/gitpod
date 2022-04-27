@@ -17,7 +17,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	//+kubebuilder:scaffold:imports
 )
 

@@ -8,7 +8,7 @@ import (
 	"context"
 
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"

@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )

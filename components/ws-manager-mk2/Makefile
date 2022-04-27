@@ -41,12 +41,18 @@ help: ## Display this help.
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+	mkdir -p api/v1
+	cp -rf ../ws-manager-api/go/crd/v1/*.go api/v1
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	rm -rf api/v1
 	leeway run components:update-license-header
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+	mkdir -p api/v1
+	cp -rf ../ws-manager-api/go/crd/v1/*.go api/v1
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	rm -rf api/v1
 	leeway run components:update-license-header
 
 .PHONY: fmt
