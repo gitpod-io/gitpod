@@ -648,6 +648,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports: []corev1.ContainerPort{
 			{ContainerPort: startContext.IDEPort},
+			{ContainerPort: startContext.SupervisorPort, Name: "supervisor"},
 		},
 		Resources: corev1.ResourceRequirements{
 			Limits:   limits,
