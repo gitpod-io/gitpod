@@ -67,7 +67,7 @@ func (s *Server) ListenAndServe() error {
 
 	s.httpListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.httpPort))
 	if err != nil {
-		return fmt.Errorf("failed to acquire port %d", s.cfg.grpcPort)
+		return fmt.Errorf("failed to acquire port %d", s.cfg.httpPort)
 	}
 
 	errors := make(chan error)
