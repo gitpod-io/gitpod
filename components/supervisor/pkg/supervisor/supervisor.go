@@ -33,6 +33,7 @@ import (
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"github.com/prometheus/common/route"
 	"github.com/prometheus/procfs"
 	"github.com/soheilhy/cmux"
 	"golang.org/x/crypto/ssh"
@@ -55,6 +56,14 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
+
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	dto "github.com/prometheus/client_model/go"
+	"github.com/prometheus/pushgateway/handler"
+	"github.com/prometheus/pushgateway/storage"
 )
 
 const (
@@ -1037,6 +1046,13 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		)
 	}
 
+	grpcMetrics := grpc_prometheus.NewServerMetrics()
+	grpcMetrics.EnableHandlingTimeHistogram()
+	opts = append(opts,
+		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
+		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor()),
+	)
+
 	m := cmux.New(l)
 	restMux := grpcruntime.NewServeMux()
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
@@ -1060,6 +1076,31 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	grpcWebServer := grpcweb.WrapServer(grpcServer, grpcweb.WithWebsockets(true), grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
 		return true
 	}))
+
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(grpcMetrics)
+
+	reg.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+	)
+	ms := storage.NewDiskMetricStore("", time.Minute*5, prometheus.DefaultGatherer, nil)
+
+	g := prometheus.Gatherers{
+		reg,
+		prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) { return ms.GetMetricFamilies(), nil }),
+	}
+	r := route.New()
+
+	r.Get("/metrics", promhttp.HandlerFor(g, promhttp.HandlerOpts{}).ServeHTTP)
+	r.Put("/metrics/job/:job/*labels", handler.Push(ms, true, true, false, nil))
+	r.Post("/metrics/job/:job/*labels", handler.Push(ms, false, true, false, nil))
+	r.Del("/metrics/job/:job/*labels", handler.Delete(ms, false, nil))
+	r.Put("/metrics/job/:job", handler.Push(ms, true, true, false, nil))
+	r.Post("/metrics/job/:job", handler.Push(ms, false, true, false, nil))
+
+	routes.Handle("/", r)
+
 	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") ||
 			websocket.IsWebSocketUpgrade(r) {

@@ -65,6 +65,10 @@
                     "ports": [
                         {
                             "containerPort": 23000
+                        },
+                        {
+                            "name": "supervisor",
+                            "containerPort": 22999
                         }
                     ],
                     "env": [
