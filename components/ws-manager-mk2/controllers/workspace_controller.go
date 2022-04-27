@@ -32,9 +32,9 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/grpcpool"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 const (

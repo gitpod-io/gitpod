@@ -38,11 +38,11 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/service"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	//+kubebuilder:scaffold:imports
 )
 
