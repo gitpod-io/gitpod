@@ -188,6 +188,7 @@ function isInactive(previewNS: string): boolean {
         return isInactive
     } catch (err) {
         werft.log(sliceID, "Is inactive: false - Unable to check DB activity")
+        werft.done(sliceID)
         return false
     }
 }
