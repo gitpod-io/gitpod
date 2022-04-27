@@ -1,0 +1,10 @@
+project_id         = "nvn-self-hosted-playground"
+region             = "us-central1"
+zones              = ["us-central1-a", "us-central1-b", "us-central1-c"]
+name               = "gitpod"
+machine_type       = "n2-standard-4"
+min_count          = 1
+max_count          = 1
+disk_size_gb       = 100
+service_account    = "gitpod-k3s@nvn-self-hosted-playground.iam.gserviceaccount.com"
+initial_node_count = 3
