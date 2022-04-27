@@ -47,7 +47,7 @@ set-up-ssh
     > "${K3S_KUBECONFIG_PATH}"
 
 log "Merging kubeconfig files ${KUBECONFIG_PATH} ${K3S_KUBECONFIG_PATH} into ${MERGED_KUBECONFIG_PATH}"
-KUBECONFIG="${KUBECONFIG_PATH}:${K3S_KUBECONFIG_PATH}" \
+KUBECONFIG="${K3S_KUBECONFIG_PATH}:${KUBECONFIG_PATH}" \
     kubectl config view --flatten --merge > "${MERGED_KUBECONFIG_PATH}"
 
 log "Overwriting ${KUBECONFIG_PATH}"
