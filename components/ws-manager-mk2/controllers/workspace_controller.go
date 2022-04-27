@@ -157,20 +157,20 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods corev1.PodList) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	// if there isn't a workspace pod and we're not currently deleting this workspace,
 	// create one.
 	if len(workspacePods.Items) == 0 && workspace.Status.PodStarts == 0 {
 		sctx, err := newStartWorkspaceContext(ctx, &r.Config, workspace)
 		if err != nil {
-			log.Error(err, "unable to create startWorkspace context")
+			logger.Error(err, "unable to create startWorkspace context")
 			return ctrl.Result{Requeue: true}, err
 		}
 
 		pod, err := r.createWorkspacePod(sctx)
 		if err != nil {
-			log.Error(err, "unable to produce workspace pod")
+			logger.Error(err, "unable to produce workspace pod")
 			return ctrl.Result{}, err
 		}
 
@@ -178,7 +178,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		if errors.IsAlreadyExists(err) {
 			// pod exists, we're good
 		} else if err != nil {
-			log.Error(err, "unable to create Pod for Workspace", "pod", pod)
+			logger.Error(err, "unable to create Pod for Workspace", "pod", pod)
 			return ctrl.Result{Requeue: true}, err
 		} else {
 			// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
@@ -211,15 +211,21 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing):
 
 		go func() {
-			err := r.actingManager.initializeWorkspaceContent(ctx, workspace)
+			initCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			initCtx = log.IntoContext(initCtx, logger)
+			defer cancel()
+
+			err := r.actingManager.initializeWorkspaceContent(initCtx, workspace)
 			if err == nil {
 				return
 			}
 
 			// workspace initialization failed, which means the workspace as a whole failed
 			msg := err.Error()
-			log.Error(err, "unable to initialize workspace")
+			logger.Error(err, "unable to initialize workspace")
 			err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+				ctx := context.Background()
+
 				var ws workspacev1.Workspace
 				err := r.Client.Get(ctx, types.NamespacedName{Namespace: r.Config.Namespace, Name: workspace.Name}, &ws)
 				if err != nil {
@@ -231,7 +237,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				return r.Update(ctx, &ws)
 			})
 			if err != nil {
-				log.Error(err, "was unable to mark workspace as failed")
+				logger.Error(err, "was unable to mark workspace as failed")
 			}
 		}()
 
@@ -457,6 +463,8 @@ func gitStatusfromContentServiceAPI(s *csapi.GitStatus) *workspacev1.GitStatus {
 
 // connectToWorkspaceDaemon establishes a connection to the ws-daemon daemon running on the node of the pod/workspace.
 func (r *WorkspaceReconciler) connectToWorkspaceDaemon(ctx context.Context, workspace *workspacev1.Workspace) (wcsClient wsdaemon.WorkspaceContentServiceClient, err error) {
+	log := log.FromContext(ctx)
+
 	var nodeName string
 	if workspace.Status.Runtime != nil {
 		nodeName = workspace.Status.Runtime.NodeName
@@ -496,6 +504,7 @@ func (r *WorkspaceReconciler) connectToWorkspaceDaemon(ctx context.Context, work
 		return nil, err
 	}
 
+	log.V(1).Info("connecting to ws-daemon", "workspace", workspace.Name, "hostName", nodeName, "wsDaemonHostIP", hostIP)
 	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
 }
 
@@ -569,6 +578,7 @@ func (r *WorkspaceReconciler) initializeWorkspaceContent(ctx context.Context, ws
 		// we are already initialising
 		return nil
 	}
+	log.FromContext(ctx).Info("initialising workspace", "workspace", ws.Name)
 	_, err = snc.InitWorkspace(ctx, &wsdaemon.InitWorkspaceRequest{
 		Id: ws.Name,
 		Metadata: &wsdaemon.WorkspaceMetadata{

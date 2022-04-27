@@ -114,16 +114,18 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 
 	case pod.Status.Phase == corev1.PodRunning:
 		// TODO(cw): port interrupted handling - after making sure this is even still relevant
-
-		if workspace.Status.Headless && workspace.Spec.Type != workspacev1.WorkspaceTypePrebuild {
-			// headless workspaces (except prebuilds) don't expose a public service and thus cannot be asked about their status.
-			// once kubernetes reports the workspace running, so do we.
-			workspace.Status.Phase = workspacev1.WorkspacePhaseRunning
-		} else if workspace.Status.Conditions.EverReady {
-			// workspcae has been marked ready by a workspace-ready probe of the monitor
+		var ready bool
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.Ready {
+				ready = true
+				break
+			}
+		}
+		if ready {
+			// workspace is ready - hence content init is done
 			workspace.Status.Phase = workspacev1.WorkspacePhaseRunning
 		} else {
-			// workspace has not yet been marked ready by one of monitor's probes. It must be initializing then.
+			// workspace has not become ready yet - it must be initializing then.
 			workspace.Status.Phase = workspacev1.WorkspacePhaseInitializing
 		}
 
