@@ -11,7 +11,7 @@ resources:
   domain: gitpod.io
   group: workspace
   kind: Workspace
-  path: github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1
+  path: github.com/gitpod-io/gitpod/ws-manager/api/crd/v1
   version: v1
   webhooks:
     defaulting: true

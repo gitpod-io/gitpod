@@ -14,6 +14,9 @@ testbin/*
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# API lives outside of this package
+api/
+
 # Kubernetes Generated files - skip generated files, except for vendored files
 
 !vendor/**/zz_generated.*

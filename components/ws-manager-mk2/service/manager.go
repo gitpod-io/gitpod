@@ -23,10 +23,10 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
