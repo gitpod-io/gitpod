@@ -274,6 +274,55 @@ spec:
                       out. If this field is empty, the workspace has not timed out.
                     type: string
                 type: object
+              disposal:
+                description: workspaceDisposalStatus indicates the status of the workspace
+                  diposal
+                properties:
+                  backupComplete:
+                    type: boolean
+                  backupFailure:
+                    type: string
+                  git:
+                    properties:
+                      branch:
+                        description: branch is branch we're currently on
+                        type: string
+                      latest_commit:
+                        description: latest_commit is the most recent commit on the
+                          current branch
+                        type: string
+                      total_uncommited_files:
+                        description: the total number of uncommited files
+                        format: int64
+                        type: integer
+                      total_unpushed_commits:
+                        description: the total number of unpushed changes
+                        format: int64
+                        type: integer
+                      total_untracked_files:
+                        description: the total number of untracked files
+                        format: int64
+                        type: integer
+                      uncommited_files:
+                        description: uncommited_files is the number of uncommitted
+                          files, possibly truncated
+                        items:
+                          type: string
+                        type: array
+                      unpushed_commits:
+                        description: unpushed_commits is the number of unpushed changes
+                          in the workspace, possibly truncated
+                        items:
+                          type: string
+                        type: array
+                      untracked_files:
+                        description: untracked_files is the number of untracked files
+                          in the workspace, possibly truncated
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
               headless:
                 type: boolean
               ownerToken:
@@ -299,6 +348,8 @@ spec:
                   hostIP:
                     type: string
                   nodeName:
+                    type: string
+                  podIP:
                     type: string
                   podName:
                     type: string
