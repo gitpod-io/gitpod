@@ -206,6 +206,19 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	}, nil
 }
 
+func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsmanapi.StopWorkspaceRequest) (*wsmanapi.StopWorkspaceResponse, error) {
+	err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+		// TODO(cw): stopping the workspace by modifying the status is nasty.
+		// 			 instead we should modify the spec or delete the workspace object.
+		ws.Status.Conditions.StoppedByRequest = pointer.Bool(true)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &wsmanapi.StopWorkspaceResponse{}, nil
+}
+
 func (wsm *WorkspaceManagerServer) GetWorkspaces(ctx context.Context, req *wsmanapi.GetWorkspacesRequest) (*wsmanapi.GetWorkspacesResponse, error) {
 	labelSelector, err := metadataFilterToLabelSelector(req.MustMatch)
 	if err != nil {
@@ -268,7 +281,7 @@ func (wsm *WorkspaceManagerServer) SetTimeout(ctx context.Context, req *wsmanapi
 		return nil, status.Errorf(codes.InvalidArgument, "invalid duration: %v", err)
 	}
 
-	err = wsm.modifyWorkspace(ctx, req.Id, func(ws *workspacev1.Workspace) error {
+	err = wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
 		ws.Spec.Timeout.Time = &metav1.Duration{Duration: duration}
 		return nil
 	})
@@ -285,7 +298,7 @@ func (wsm *WorkspaceManagerServer) ControlPort(ctx context.Context, req *wsmanap
 	}
 
 	port := req.Spec.Port
-	err := wsm.modifyWorkspace(ctx, req.Id, func(ws *workspacev1.Workspace) error {
+	err := wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
 		n := 0
 		for _, x := range ws.Spec.Ports {
 			if x.Port != port {
@@ -319,7 +332,7 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 }
 
 func (wsm *WorkspaceManagerServer) ControlAdmission(ctx context.Context, req *wsmanapi.ControlAdmissionRequest) (*wsmanapi.ControlAdmissionResponse, error) {
-	err := wsm.modifyWorkspace(ctx, req.Id, func(ws *workspacev1.Workspace) error {
+	err := wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
 		switch req.Level {
 		case wsmanapi.AdmissionLevel_ADMIT_EVERYONE:
 			ws.Spec.Admission.Level = workspacev1.AdmissionLevelEveryone
@@ -338,7 +351,7 @@ func (wsm *WorkspaceManagerServer) ControlAdmission(ctx context.Context, req *ws
 
 // modifyWorkspace modifies a workspace object using the mod function. If the mod function returns a gRPC status error, that error
 // is returned directly. If mod returns a non-gRPC error it is turned into one.
-func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id string, mod func(ws *workspacev1.Workspace) error) error {
+func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id string, updateStatus bool, mod func(ws *workspacev1.Workspace) error) error {
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		var ws workspacev1.Workspace
 		err := wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: id}, &ws)
@@ -351,7 +364,13 @@ func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id strin
 			return err
 		}
 
-		return wsm.Client.Update(ctx, &ws)
+		if updateStatus {
+			err = wsm.Client.Status().Update(ctx, &ws)
+		} else {
+			err = wsm.Client.Update(ctx, &ws)
+
+		}
+		return err
 	})
 	if errors.IsNotFound(err) {
 		return status.Errorf(codes.NotFound, "workspace %s not found", id)

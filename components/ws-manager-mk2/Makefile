@@ -130,9 +130,11 @@ define go-get-tool
 set -e ;\
 TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
-go mod init tmp ;\
-echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+go install golang.org/dl/go1.17@latest ;\
+go1.17 download ;\
+go1.17 mod init tmp ;\
+echo "Downloading $(2) to $(PROJECT_DIR)/bin" ;\
+GOBIN=$(PROJECT_DIR)/bin go1.17 get $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
