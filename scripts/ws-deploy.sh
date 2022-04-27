@@ -11,12 +11,14 @@ resource_type=$1
 resource_name=$2
 enable_debug=${3:-true}
 version="dev-$(date +%F_T"%H-%M-%S")"
-dev_image=eu.gcr.io/gitpod-core-dev/dev/$resource_name:"$version"
+bldfn="/tmp/build-$version.tar.gz"
 
 docker ps &> /dev/null || (echo "You need a working Docker daemon. Maybe set DOCKER_HOST?"; exit 1)
-leeway build .:docker -Dversion="$version" -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev
+leeway build .:docker -Dversion="$version" -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev --save "$bldfn"
+dev_image="$(tar xfO "$bldfn" ./imgnames.txt | head -n1)"
 
 kubectl set image "$resource_type" "$resource_name" "$resource_name"="$dev_image"
+kubectl patch "$resource_type" "$resource_name" -p '{"spec":{"containers":{"name":"'"$resource_name"'", "imagePullPolicy": "Always"}}}' --type=merge
 kubectl rollout restart "$resource_type" "$resource_name"
 kubectl annotate "$resource_type" "$resource_name" kubernetes.io/change-cause="$version"
 kubectl rollout status -w "$resource_type" "$resource_name"
