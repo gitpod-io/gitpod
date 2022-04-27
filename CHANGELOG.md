@@ -1,6 +1,15 @@
 # Change Log
 
 ## April 2022
+- [kots]: add configuration for using a custom CA certificate ([#9566](https://github.com/gitpod-io/gitpod/pull/9566)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [docker-up] Configure docker0 MTU ([#9549](https://github.com/gitpod-io/gitpod/pull/9549)) - [@aledbf](https://github.com/aledbf)
+- [installer] Increase ws-daemon FailureThreshold ([#9554](https://github.com/gitpod-io/gitpod/pull/9554)) - [@aledbf](https://github.com/aledbf)
+- No ([#9555](https://github.com/gitpod-io/gitpod/pull/9555)) - [@jenting](https://github.com/jenting)
+- [workspacekit] Increase rin0 ws-daemon socket timeout ([#9551](https://github.com/gitpod-io/gitpod/pull/9551)) - [@aledbf](https://github.com/aledbf)
+- [ws-daemon] Remove missing cpuacct.usage file log ([#9548](https://github.com/gitpod-io/gitpod/pull/9548)) - [@aledbf](https://github.com/aledbf)
+- Update Caddy to v2.5.0 ([#9537](https://github.com/gitpod-io/gitpod/pull/9537)) - [@aledbf](https://github.com/aledbf)
+- Allow replica counts for each component to be configurable through the installer ([#9495](https://github.com/gitpod-io/gitpod/pull/9495)) - [@andrew-farries](https://github.com/andrew-farries)
+- JetBrains IDEs won't show an exit dialog anymore, as the text on it was not necessary when running on Gitpod. ([#9528](https://github.com/gitpod-io/gitpod/pull/9528)) - [@felladrin](https://github.com/felladrin)
 - [bitbucket-server] handle pull-request context url ([#9524](https://github.com/gitpod-io/gitpod/pull/9524)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [ws-daemon] Fix check logic for I/O limits ([#9527](https://github.com/gitpod-io/gitpod/pull/9527)) - [@aledbf](https://github.com/aledbf)
 - [kots]: allow deployment whilst installer job running ([#9471](https://github.com/gitpod-io/gitpod/pull/9471)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
