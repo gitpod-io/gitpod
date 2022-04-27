@@ -80,7 +80,8 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 	integration.SkipWithoutUserToken(t, userToken)
 
 	f := features.New("Start a workspace and let JetBrains Gateway connect").
-		WithLabel("component", "IDE").
+		WithLabel("team", "IDE").
+		WithLabel("component", "jetbrains").
 		Assess("it can start a workspace and let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()

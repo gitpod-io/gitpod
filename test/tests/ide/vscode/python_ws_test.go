@@ -46,7 +46,8 @@ func TestPythonExtWorkspace(t *testing.T) {
 	integration.SkipWithoutUserToken(t, userToken)
 
 	f := features.New("PythonExtensionWorkspace").
-		WithLabel("component", "server").
+		WithLabel("team", "IDE").
+		WithLabel("component", "vscode").
 		Assess("it can run python extension in a workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
