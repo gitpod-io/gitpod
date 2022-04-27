@@ -10,7 +10,7 @@ import (
 	"log"
 	"time"
 
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/yaml"
