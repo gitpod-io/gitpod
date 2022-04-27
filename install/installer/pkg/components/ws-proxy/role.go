@@ -30,6 +30,15 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 					"watch",
 				},
 			},
+			{
+				APIGroups: []string{"workspace.gitpod.io"},
+				Resources: []string{"workspaces"},
+				Verbs: []string{
+					"get",
+					"list",
+					"watch",
+				},
+			},
 		},
 	}}, nil
 }
