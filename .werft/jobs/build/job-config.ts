@@ -26,6 +26,7 @@ export interface JobConfig {
     withObservability: boolean
     withPayment: boolean
     withVM: boolean
+    withNightlyTests: boolean
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig,
     repository: Repository
@@ -100,6 +101,8 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     }
     const withVM = ("with-vm" in buildConfig || repository.branch.includes("with-vm")) && !mainBuild;
 
+    const withNightlyTests = ("with-nightly-tests" in buildConfig)
+
     const previewName = previewNameFromBranchName(repository.branch)
     const previewEnvironmentNamespace = withVM ? `default` : `staging-${previewName}`;
     const previewEnvironment = {
@@ -138,6 +141,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withObservability,
         withPayment,
         withVM,
+        withNightlyTests,
         workspaceFeatureFlags,
     }
 

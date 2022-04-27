@@ -5,7 +5,7 @@ terraform {
 # Remote state
 terraform {
   backend "gcs" {
-    bucket      = "gitpod-gke-tf"
+    bucket      = "gitpod-tf"
     prefix      = "terraform/state"
   }
 }

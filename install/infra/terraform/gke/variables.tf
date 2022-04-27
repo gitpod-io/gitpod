@@ -11,6 +11,7 @@ variable "region" {
 variable "zones" {
   type        = list(string)
   description = "The zones to create the cluster."
+  default     = []
 }
 
 variable "kubernetes_version" {

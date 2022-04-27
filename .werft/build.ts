@@ -10,6 +10,7 @@ import { prepare } from './jobs/build/prepare';
 import { deployToPreviewEnvironment } from './jobs/build/deploy-to-preview-environment';
 import { triggerIntegrationTests } from './jobs/build/trigger-integration-tests';
 import { jobConfig } from './jobs/build/job-config';
+import { runNightlyTests } from './jobs/build/nightly-tests';
 import { typecheckWerftJobs } from './jobs/build/typecheck-werft-jobs';
 
 // Will be set once tracing has been initialized
@@ -60,6 +61,13 @@ async function run(context: any) {
         return
     }
 
-    await deployToPreviewEnvironment(werft, config)
-    await triggerIntegrationTests(werft, config, context.Owner)
+    // if (config.withNightlyTests) {
+        werft.phase("nightly-tests", "starting nightly tests on self-hosted");
+        await runNightlyTests(werft, config)
+        console.log("Skipping preview for the nightly tests");
+        return
+    // }
+
+    // await deployToPreviewEnvironment(werft, config)
+    // await triggerIntegrationTests(werft, config, context.Owner)
 }
