@@ -198,12 +198,25 @@ func (s *Containerd) handleNewContainer(c containers.Container) {
 			return
 		}
 
-		info := &containerInfo{
-			InstanceID:  c.Labels[wsk8s.WorkspaceIDLabel],
-			OwnerID:     c.Labels[wsk8s.OwnerLabel],
-			WorkspaceID: c.Labels[wsk8s.MetaIDLabel],
-			PodName:     podName,
+		var info *containerInfo
+		if _, ok := c.Labels["gpwsman"]; ok {
+			// this is a ws-manager-mk1 workspace
+			info = &containerInfo{
+				InstanceID:  c.Labels[wsk8s.WorkspaceIDLabel],
+				OwnerID:     c.Labels[wsk8s.OwnerLabel],
+				WorkspaceID: c.Labels[wsk8s.MetaIDLabel],
+				PodName:     podName,
+			}
+		} else {
+			// this is a ws-manager-mk2 workspace
+			info = &containerInfo{
+				InstanceID:  c.Labels["gitpod.io/instanceID"],
+				OwnerID:     c.Labels[wsk8s.OwnerLabel],
+				WorkspaceID: c.Labels[wsk8s.WorkspaceIDLabel],
+				PodName:     podName,
+			}
 		}
+
 		if info.Snapshotter == "" {
 			// c.Snapshotter is optional
 			info.Snapshotter = "overlayfs"
