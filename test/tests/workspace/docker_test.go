@@ -18,7 +18,8 @@ import (
 
 func TestRunDocker(t *testing.T) {
 	f := features.New("docker").
-		WithLabel("component", "workspace").
+		WithLabel("team", "workspace").
+		WithLabel("component", "runtime").
 		Assess("it should start a container", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()

@@ -23,6 +23,7 @@ import (
 
 func TestBaseImageBuild(t *testing.T) {
 	f := features.New("database").
+		WithLabel("team", "workspace").
 		WithLabel("component", "image-builder").
 		Assess("it should build a base image", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -99,6 +100,7 @@ func TestBaseImageBuild(t *testing.T) {
 
 func TestParallelBaseImageBuild(t *testing.T) {
 	f := features.New("image-builder").
+		WithLabel("team", "workspace").
 		WithLabel("component", "image-builder").
 		Assess("it should allow parallel build of images", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)

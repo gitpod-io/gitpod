@@ -19,7 +19,7 @@ import (
 func TestWorkspaceInstrumentation(t *testing.T) {
 	integration.SkipWithoutUsername(t, username)
 	f := features.New("instrumentation").
-		WithLabel("component", "server").
+		WithLabel("team", "workspace").
 		Assess("it can instrument a workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
@@ -62,7 +62,7 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 
 func TestLaunchWorkspaceDirectly(t *testing.T) {
 	f := features.New("workspace").
-		WithLabel("component", "server").
+		WithLabel("team", "workspace").
 		Assess("it can run workspace tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()

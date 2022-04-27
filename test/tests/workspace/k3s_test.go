@@ -19,7 +19,8 @@ import (
 
 func TestK3s(t *testing.T) {
 	f := features.New("k3s").
-		WithLabel("component", "workspace").
+		WithLabel("team", "workspace").
+		WithLabel("component", "k3s").
 		Assess("it should start a k3s when cgroup v2 enable", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()

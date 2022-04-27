@@ -18,6 +18,7 @@ import (
 
 func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 	f := features.New("prebuild").
+		WithLabel("team", "workspace").
 		WithLabel("component", "ws-manager").
 		Assess("it should create a prebuild and succeed the defined tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -55,7 +56,8 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 	t.Skip("status never returns HeadlessTaskFailed (exit 1)")
 
 	f := features.New("prebuild").
-		WithLabel("component", "server").
+		WithLabel("team", "workspace").
+		WithLabel("component", "ws-manager").
 		Assess("it should create a prebuild and fail after running the defined tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()

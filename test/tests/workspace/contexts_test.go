@@ -96,7 +96,7 @@ func TestGitLabContexts(t *testing.T) {
 func runContextTests(t *testing.T, tests []ContextTest) {
 	integration.SkipWithoutUsername(t, username)
 	f := features.New("context").
-		WithLabel("component", "server").
+		WithLabel("team", "workspace").
 		Assess("should run context tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			for _, test := range tests {
 				t.Run(test.ContextURL, func(t *testing.T) {

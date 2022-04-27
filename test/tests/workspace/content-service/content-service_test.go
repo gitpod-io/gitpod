@@ -63,6 +63,7 @@ func TestUploadUrl(t *testing.T) {
 	}
 
 	f := features.New("UploadUrlRequest").
+		WithLabel("team", "workspace").
 		WithLabel("component", "content-service").
 		Assess("it should run content-service tests", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -123,7 +124,8 @@ func TestDownloadUrl(t *testing.T) {
 	}
 
 	f := features.New("DownloadUrl").
-		WithLabel("component", "server").
+		WithLabel("team", "workspace").
+		WithLabel("component", "content-service").
 		Assess("it should pass download URL tests", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
@@ -169,7 +171,8 @@ func TestDownloadUrl(t *testing.T) {
 
 func TestUploadDownloadBlob(t *testing.T) {
 	f := features.New("UploadDownloadBlob").
-		WithLabel("component", "server").
+		WithLabel("team", "workspace").
+		WithLabel("component", "content-service").
 		Assess("it should upload and download blob", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
@@ -218,7 +221,8 @@ func TestUploadDownloadBlob(t *testing.T) {
 func TestUploadDownloadBlobViaServer(t *testing.T) {
 	integration.SkipWithoutUsername(t, username)
 	f := features.New("UploadDownloadBlobViaServer").
-		WithLabel("component", "content-server").
+		WithLabel("team", "workspace").
+		WithLabel("component", "content-service").
 		Assess("it should uploads a blob via server → content-server and downloads it afterwards", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
