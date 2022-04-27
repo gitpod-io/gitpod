@@ -29,7 +29,7 @@ func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
 	workspaceClient := v1.NewWorkspacesServiceClient(conn)
 
 	_, err = workspaceClient.GetWorkspace(ctx, &v1.GetWorkspaceRequest{})
-	requireErrorStatusCode(t, codes.Unimplemented, err)
+	require.NoError(t, err)
 
 	_, err = workspaceClient.ListWorkspaces(ctx, &v1.ListWorkspacesRequest{})
 	requireErrorStatusCode(t, codes.Unimplemented, err)

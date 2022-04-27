@@ -7,6 +7,7 @@ package main
 import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"net/http"
 )
@@ -36,7 +37,7 @@ func register(srv *baseserver.Server) error {
 		_, _ = w.Write([]byte(`hello world`))
 	})
 
-	v1.RegisterWorkspacesServiceServer(srv.GRPC(), v1.UnimplementedWorkspacesServiceServer{})
+	v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService())
 	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
 
 	return nil
