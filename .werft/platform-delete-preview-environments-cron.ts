@@ -73,9 +73,9 @@ async function deletePreviewEnvironments() {
 
     werft.phase("Determining which preview environments are stale");
 
-    const previewEnvironmentsBasedOnBranches = new Set(branches.map(branch => expectedNamespaceFromBranch(branch)));
+    const previewNamespaceBasedOnBranches = new Set(branches.map(branch => expectedNamespaceFromBranch(branch)));
 
-    const previewEnvironmentsBasedOnStaleBranches = new Set(branches
+    const previewNamespaceBasedOnStaleBranches = new Set(branches
         .filter(branch => {
             const sliceID = SLICES.CHECKING_STALE_BRANCH(branch)
             const lastCommit = exec(`git log origin/${branch} --since=$(date +%Y-%m-%d -d "5 days ago")`, { slice: sliceID })
@@ -86,8 +86,8 @@ async function deletePreviewEnvironments() {
         })
         .map(branch => expectedNamespaceFromBranch(branch)))
 
-    const deleteDueToMissingBranch     = previews.filter(ns => !previewEnvironmentsBasedOnBranches.has(ns))
-    const deleteDueToNoCommitActivity  = previews.filter(ns => previewEnvironmentsBasedOnStaleBranches.has(ns))
+    const deleteDueToMissingBranch     = previews.filter(ns => !previewNamespaceBasedOnBranches.has(ns))
+    const deleteDueToNoCommitActivity  = previews.filter(ns => previewNamespaceBasedOnStaleBranches.has(ns))
     const deleteDueToNoDBActivity      = previews.filter(ns => isInactive(ns))
     const previewsToDelete             = new Set([...deleteDueToMissingBranch, ...deleteDueToNoCommitActivity, ...deleteDueToNoDBActivity])
 
@@ -126,9 +126,10 @@ async function removePreviewEnvironment(previewNamespace: string) {
     const sliceID = `Deleting preview ${previewNamespace}`
     werft.log(sliceID, `Starting deletion of all resources related to ${previewNamespace}`)
     try {
+        const previewDNSName = previewNamespace.replace('staging-', '')
         await removeCertificate(previewNamespace, CORE_DEV_KUBECONFIG_PATH, sliceID)
-        await removeStagingDNSRecord(previewNamespace, sliceID)
-        await removePreviewDNSRecord(previewNamespace, sliceID)
+        await removeStagingDNSRecord(previewDNSName, sliceID)
+        await removePreviewDNSRecord(previewDNSName, sliceID)
         await wipePreviewEnvironmentAndNamespace(helmInstallName, previewNamespace, CORE_DEV_KUBECONFIG_PATH, { slice: sliceID })
         werft.done(sliceID)
     } catch (e) {
