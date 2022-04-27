@@ -195,6 +195,7 @@ type GitStatus struct {
 type WorkspaceRuntimeStatus struct {
 	NodeName string `json:"nodeName,omitempty"`
 	PodName  string `json:"podName,omitempty"`
+	PodIP    string `json:"podIP,omitempty"`
 	HostIP   string `json:"hostIP,omitempty"`
 }
 
