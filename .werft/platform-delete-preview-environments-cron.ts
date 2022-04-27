@@ -126,12 +126,10 @@ async function removePreviewEnvironment(previewNamespace: string) {
     const sliceID = `Deleting preview ${previewNamespace}`
     werft.log(sliceID, `Starting deletion of all resources related to ${previewNamespace}`)
     try {
-        await Promise.all([
-            removeCertificate(previewNamespace, CORE_DEV_KUBECONFIG_PATH),
-            removeStagingDNSRecord(previewNamespace),
-            removePreviewDNSRecord(previewNamespace),
-            wipePreviewEnvironmentAndNamespace(helmInstallName, previewNamespace, CORE_DEV_KUBECONFIG_PATH, { slice: sliceID })
-        ])
+        await removeCertificate(previewNamespace, CORE_DEV_KUBECONFIG_PATH, sliceID)
+        await removeStagingDNSRecord(previewNamespace, sliceID)
+        await removePreviewDNSRecord(previewNamespace, sliceID)
+        await wipePreviewEnvironmentAndNamespace(helmInstallName, previewNamespace, CORE_DEV_KUBECONFIG_PATH, { slice: sliceID })
         werft.done(sliceID)
     } catch (e) {
         werft.fail(sliceID, e)
@@ -191,35 +189,37 @@ function isInactive(previewNS: string): boolean {
     }
 }
 
-async function removeCertificate(preview: string, kubectlConfig: string) {
-    exec(`kubectl --kubeconfig ${kubectlConfig} -n certs delete cert ${preview}`)
+async function removeCertificate(preview: string, kubectlConfig: string, slice: string) {
+    exec(`kubectl --kubeconfig ${kubectlConfig} -n certs delete cert ${preview}`, {slice: slice})
 }
 
 // remove DNS records for core-dev-based preview environments
-async function removeStagingDNSRecord(preview: string) {
+async function removeStagingDNSRecord(preview: string, sliceID: string) {
+    werft.log(sliceID, "Deleting core-dev related DNS records for the preview environment")
     await Promise.all([
-        deleteDNSRecord('A', `*.ws-dev.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
-        deleteDNSRecord('A', `*.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
-        deleteDNSRecord('A', `${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
-        deleteDNSRecord('A', `prometheus-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
-        deleteDNSRecord('TXT', `prometheus-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
-        deleteDNSRecord('A', `grafana-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
-        deleteDNSRecord('TXT', `grafana-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
-        deleteDNSRecord('TXT', `_acme-challenge.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
-        deleteDNSRecord('TXT', `_acme-challenge.ws-dev.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com')
+        deleteDNSRecord('A', `*.ws-dev.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
+        deleteDNSRecord('A', `*.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
+        deleteDNSRecord('A', `${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
+        deleteDNSRecord('A', `prometheus-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
+        deleteDNSRecord('TXT', `prometheus-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
+        deleteDNSRecord('A', `grafana-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
+        deleteDNSRecord('TXT', `grafana-${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
+        deleteDNSRecord('TXT', `_acme-challenge.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
+        deleteDNSRecord('TXT', `_acme-challenge.ws-dev.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID)
     ])
 }
 
 // remove DNS records for harvester-based preview environments
-async function removePreviewDNSRecord(preview: string) {
+async function removePreviewDNSRecord(preview: string, sliceID: string) {
+    werft.log(sliceID, "Deleting harvester related DNS records for the preview environment")
     await Promise.all([
-        deleteDNSRecord('A', `*.ws-dev.${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
-        deleteDNSRecord('A', `*.${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
-        deleteDNSRecord('A', `${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
-        deleteDNSRecord('A', `prometheus-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
-        deleteDNSRecord('TXT', `prometheus-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
-        deleteDNSRecord('A', `grafana-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
-        deleteDNSRecord('TXT', `grafana-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com')
+        deleteDNSRecord('A', `*.ws-dev.${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
+        deleteDNSRecord('A', `*.${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
+        deleteDNSRecord('A', `${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
+        deleteDNSRecord('A', `prometheus-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
+        deleteDNSRecord('TXT', `prometheus-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
+        deleteDNSRecord('A', `grafana-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
+        deleteDNSRecord('TXT', `grafana-${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID)
     ])
 }
 
