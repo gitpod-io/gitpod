@@ -39,6 +39,10 @@ const (
 	// headlessLabel marks a workspace as headless
 	headlessLabel = "gitpod.io/headless"
 
+	// instanceIDLabel is added for the container dispatch mechanism in ws-daemon to work
+	// TODO(cw): remove this label once we have moved ws-daemon to a controller setup
+	instanceIDLabel = "gitpod.io/instanceID"
+
 	// gitpodPodFinalizerName is the name of the finalizer we use on pods
 	gitpodPodFinalizerName = "gitpod.io/finalizer"
 )
@@ -668,6 +672,7 @@ func newStartWorkspaceContext(ctx context.Context, cfg *config.Configuration, ws
 			wsk8s.WorkspaceIDLabel: ws.Spec.Ownership.WorkspaceID,
 			wsk8s.OwnerLabel:       ws.Spec.Ownership.Owner,
 			wsk8s.TypeLabel:        string(ws.Spec.Type),
+			instanceIDLabel:        ws.Name,
 			headlessLabel:          strconv.FormatBool(ws.Status.Headless),
 		},
 		Config:         cfg,
