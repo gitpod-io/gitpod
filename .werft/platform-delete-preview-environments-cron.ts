@@ -85,7 +85,9 @@ async function deletePreviewEnvironments() {
                 promises.push(
                     removeCertificate(preview, CORE_DEV_KUBECONFIG_PATH),
                     removeStagingDNSRecord(preview),
-                    wipePreviewEnvironmentAndNamespace(helmInstallName, preview, CORE_DEV_KUBECONFIG_PATH, { slice: `Deleting preview ${preview}` }))
+                    removePreviewDNSRecord(preview),
+                    wipePreviewEnvironmentAndNamespace(helmInstallName, preview, CORE_DEV_KUBECONFIG_PATH, { slice: `Deleting preview ${preview}` })
+                )
             })
             await Promise.all(promises)
         }
@@ -145,7 +147,7 @@ async function removeCertificate(preview: string, kubectlConfig: string) {
     return
 }
 
-// remove DNS records on the old generation of preview environments
+// remove DNS records for core-dev-based preview environments
 async function removeStagingDNSRecord(preview: string) {
     return Promise.all([
         deleteDNSRecord('A', `*.ws-dev.${preview}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com'),
@@ -160,7 +162,7 @@ async function removeStagingDNSRecord(preview: string) {
     ])
 }
 
-// remove DNS records on the new (Harvester based) generation of preview environments
+// remove DNS records for harvester-based preview environments
 async function removePreviewDNSRecord(preview: string) {
     return Promise.all([
         deleteDNSRecord('A', `*.ws-dev.${preview}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com'),
