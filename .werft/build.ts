@@ -62,10 +62,7 @@ async function run(context: any) {
     }
 
     if (config.withNightlyTests) {
-        werft.phase("nightly-tests", "starting nightly tests on self-hosted");
-        console.log("no-preview is needed");
-        return
-
+        await runNightlyTests(werft, config)
     }
 
     await deployToPreviewEnvironment(werft, config)
