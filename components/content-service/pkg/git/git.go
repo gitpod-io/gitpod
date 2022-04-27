@@ -167,6 +167,7 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 		}
 		env = append(env, fmt.Sprintf("GIT_AUTH_USER=%s", user))
 		env = append(env, fmt.Sprintf("GIT_AUTH_PASSWORD=%s", pwd))
+		env = append(env, fmt.Sprintf("http.sslCAInfo=%s", "/etc/ssl/certs/custom-ca.crt"))
 	}
 
 	env = append(env, "HOME=/home/gitpod")
