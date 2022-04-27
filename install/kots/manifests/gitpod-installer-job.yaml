@@ -239,6 +239,9 @@ spec:
               echo "Gitpod: Escape any Golang template values"
               sed -i -r 's/(.*\{\{.*)/{{`\1`}}/' "${GITPOD_OBJECTS}/templates/gitpod.yaml"
 
+              echo "Gitpod: Delete existing Open VSX proxy stateful set"
+              kubectl delete statefulsets.apps -n {{repl Namespace }} openvsx-proxy || true
+
               # The long timeout is to ensure the TLS cert is created (if required)
               echo "Gitpod: Apply the Kubernetes objects"
               helm upgrade \
