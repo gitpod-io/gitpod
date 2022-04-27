@@ -55,7 +55,10 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		workspace.Status.Runtime.NodeName = pod.Spec.NodeName
 	}
 	if workspace.Status.Runtime.HostIP == "" && pod.Status.HostIP != "" {
-		workspace.Status.Runtime.HostIP = pod.Spec.NodeName
+		workspace.Status.Runtime.HostIP = pod.Status.HostIP
+	}
+	if workspace.Status.Runtime.PodIP == "" && pod.Status.PodIP != "" {
+		workspace.Status.Runtime.PodIP = pod.Status.PodIP
 	}
 	if workspace.Status.Runtime.PodName == "" && pod.Name != "" {
 		workspace.Status.Runtime.PodName = pod.Name
