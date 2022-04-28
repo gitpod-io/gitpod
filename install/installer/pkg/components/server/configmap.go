@@ -64,6 +64,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	defaultBaseImageRegistryWhitelist := []string{}
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
+			if cfg.WebApp.Server.DefaultBaseImageRegistryWhiteList != nil {
+				defaultBaseImageRegistryWhitelist = cfg.WebApp.Server.DefaultBaseImageRegistryWhiteList
+			}
+		}
+		return nil
+	})
+
 	githubApp := GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
@@ -128,7 +138,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		IncrementalPrebuilds:              IncrementalPrebuilds{CommitHistory: 100, RepositoryPasslist: []string{}},
 		BlockNewUsers:                     ctx.Config.BlockNewUsers,
 		MakeNewUsersAdmin:                 false,
-		DefaultBaseImageRegistryWhitelist: []string{},
+		DefaultBaseImageRegistryWhitelist: defaultBaseImageRegistryWhitelist,
 		RunDbDeleter:                      true,
 		OAuthServer: OAuthServer{
 			Enabled:   true,
