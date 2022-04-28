@@ -261,6 +261,7 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.Worksp
 			FullWorkspaceBackup:   req.FullWorkspaceBackup,
 			ContentManifest:       req.ContentManifest,
 			RemoteStorageDisabled: req.RemoteStorageDisabled,
+			StorageQuota:          int(req.StorageQuotaBytes),
 
 			ServiceLocDaemon: filepath.Join(s.config.WorkingArea, ServiceDirName(req.Id)),
 			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, ServiceDirName(req.Id)),

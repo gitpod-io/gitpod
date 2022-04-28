@@ -295,8 +295,22 @@ var validResourceConfig = validation.By(func(o interface{}) error {
 			return xerrors.Errorf("cannot parse EphemeralStorage quantity: %w", err)
 		}
 	}
+	if rc.Storage != "" {
+		_, err := resource.ParseQuantity(rc.Storage)
+		if err != nil {
+			return xerrors.Errorf("cannot parse Storage quantity: %w", err)
+		}
+	}
 	return nil
 })
+
+func (r *ResourceConfiguration) StorageQuantity() (resource.Quantity, error) {
+	if r.Storage == "" {
+		res := resource.NewQuantity(0, resource.BinarySI)
+		return *res, nil
+	}
+	return resource.ParseQuantity(r.Storage)
+}
 
 // ResourceList parses the quantities in the resource config
 func (r *ResourceConfiguration) ResourceList() (corev1.ResourceList, error) {
@@ -411,4 +425,5 @@ type ResourceConfiguration struct {
 	CPU              string `json:"cpu"`
 	Memory           string `json:"memory"`
 	EphemeralStorage string `json:"ephemeral-storage"`
+	Storage          string `json:"storage,omitempty"`
 }

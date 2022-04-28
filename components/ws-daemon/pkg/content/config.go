@@ -11,7 +11,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	cntntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 	"golang.org/x/xerrors"
 )
 
@@ -28,9 +27,6 @@ type Config struct {
 
 	// TmpDir is the temp working diretory for creating tar files during upload
 	TmpDir string `json:"tempDir"`
-
-	// Limit limits the size of a sandbox
-	WorkspaceSizeLimit quota.Size `json:"workspaceSizeLimit"`
 
 	// Storage is some form of permanent file store to which we back up workspaces
 	Storage cntntcfg.StorageConfig `json:"storage"`
