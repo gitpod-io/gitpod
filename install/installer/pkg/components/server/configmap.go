@@ -106,7 +106,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 			return providers
 		}(),
-		BuiltinAuthProvidersConfigured:    len(ctx.Config.AuthProviders) > 0,
 		DisableDynamicAuthProviderLogin:   false,
 		MaxEnvvarPerUserCount:             4048,
 		MaxConcurrentPrebuildsPerRef:      10,

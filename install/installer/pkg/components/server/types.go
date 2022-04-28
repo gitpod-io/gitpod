@@ -22,7 +22,6 @@ type ConfigSerialized struct {
 	LicenseFile                       string   `json:"licenseFile"`
 	DefinitelyGpDisabled              bool     `json:"definitelyGpDisabled"`
 	EnableLocalApp                    bool     `json:"enableLocalApp"`
-	BuiltinAuthProvidersConfigured    bool     `json:"builtinAuthProvidersConfigured"`
 	DisableDynamicAuthProviderLogin   bool     `json:"disableDynamicAuthProviderLogin"`
 	MaxEnvvarPerUserCount             int32    `json:"maxEnvvarPerUserCount"`
 	MaxConcurrentPrebuildsPerRef      int32    `json:"maxConcurrentPrebuildsPerRef"`

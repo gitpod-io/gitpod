@@ -18,10 +18,11 @@ import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 
 export const Config = Symbol("Config");
-export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOptionsFile"> & {
+export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOptionsFile" | "licenseFile"> & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
+    builtinAuthProvidersConfigured: boolean;
 };
 
 export interface WorkspaceDefaults {
@@ -87,7 +88,6 @@ export interface ConfigSerialized {
 
     authProviderConfigs: AuthProviderParams[];
     authProviderConfigFiles: string[];
-    builtinAuthProvidersConfigured: boolean;
     disableDynamicAuthProviderLogin: boolean;
 
     /**
