@@ -1,4 +1,4 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
 
-Disallow: /from-referrer/
+Disallow: /
