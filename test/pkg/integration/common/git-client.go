@@ -59,6 +59,40 @@ func (g GitClient) Add(dir string, files ...string) error {
 	return nil
 }
 
+func (g GitClient) ConfigUserName(dir string) error {
+	args := []string{"config", "--local", "user.name", "integration-test"}
+	var resp agent.ExecResponse
+	err := g.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+		Dir:     dir,
+		Command: "git",
+		Args:    args,
+	}, &resp)
+	if err != nil {
+		return err
+	}
+	if resp.ExitCode != 0 {
+		return xerrors.Errorf("config user name returned rc: %d", resp.ExitCode)
+	}
+	return nil
+}
+
+func (g GitClient) ConfigUserEmail(dir string, files ...string) error {
+	args := []string{"config", "--local", "user.email", "integration-test@gitpod.io"}
+	var resp agent.ExecResponse
+	err := g.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+		Dir:     dir,
+		Command: "git",
+		Args:    args,
+	}, &resp)
+	if err != nil {
+		return err
+	}
+	if resp.ExitCode != 0 {
+		return xerrors.Errorf("config user email returned rc: %d", resp.ExitCode)
+	}
+	return nil
+}
+
 func (g GitClient) Commit(dir string, message string, all bool) error {
 	args := []string{"commit", "-m", message}
 	if all {
