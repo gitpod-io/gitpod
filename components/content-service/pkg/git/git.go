@@ -187,6 +187,11 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 	cmd1.Env = env
 	res1, err := cmd1.CombinedOutput()
 	log.Infof("ls -lrtha ./* before git command %v: %s", fullArgs, res1)
+	cmd3 := exec.Command("ls", "-lrtha")
+	cmd3.Dir = c.Location
+	cmd3.Env = env
+	res3, err := cmd3.CombinedOutput()
+	log.Infof("ls -lrtha * before git command %v: %s", fullArgs, res3)
 	cmd2 := exec.Command("id")
 	cmd2.Dir = c.Location
 	cmd2.Env = env
