@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = (function() {
-  if (this) { return this; }
-  if (typeof window !== 'undefined') { return window; }
-  if (typeof global !== 'undefined') { return global; }
-  if (typeof self !== 'undefined') { return self; }
-  return Function('return this')();
-}.call(null));
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 var gitpod_v1_workspaces_pb = require('../../gitpod/v1/workspaces_pb.js');
 goog.object.extend(proto, gitpod_v1_workspaces_pb);
