@@ -48,6 +48,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	disableDynamicAuthProviderLogin := false
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
+			disableDynamicAuthProviderLogin = cfg.WebApp.Server.DisableDynamicAuthProviderLogin
+		}
+		return nil
+	})
+
 	githubApp := GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
@@ -106,7 +114,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 			return providers
 		}(),
-		DisableDynamicAuthProviderLogin:   false,
+		DisableDynamicAuthProviderLogin:   disableDynamicAuthProviderLogin,
 		MaxEnvvarPerUserCount:             4048,
 		MaxConcurrentPrebuildsPerRef:      10,
 		IncrementalPrebuilds:              IncrementalPrebuilds{CommitHistory: 100, RepositoryPasslist: []string{}},
