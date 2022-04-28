@@ -74,7 +74,8 @@ func logLevelFromEnv() {
 // Init initializes/configures the application-wide logger
 func Init(service, version string, json, verbose bool) {
 	Log = log.WithFields(log.Fields{
-		"serviceContext": ServiceContext{service, version},
+		"service": service,
+		"version": version,
 	})
 
 	if json {
