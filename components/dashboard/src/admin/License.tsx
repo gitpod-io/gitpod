@@ -79,7 +79,7 @@ export default function License() {
                             href="https://www.gitpod.io/self-hosted"
                             target="_blank"
                         >
-                            <span>Compare Plans</span>
+                            <span className="text-sm">Compare Plans</span>
                             <div className="self-end">
                                 <LinkSvg />
                             </div>
