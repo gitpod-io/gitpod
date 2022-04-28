@@ -47,7 +47,7 @@ func NewRatelimitingInterceptor(f map[string]RateLimit) RatelimitingInterceptor 
 	cacheHitCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grpc",
 		Subsystem: "server",
-		Name:      "rate_limiter_calls_total",
+		Name:      "rate_limiter_cache_hit_total",
 	}, []string{"grpc_method"})
 
 	funcs := make(map[string]*ratelimitedFunction, len(f))
