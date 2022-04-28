@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "crypto";
 import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { exec, ExecOptions } from '../../util/shell';
-import { InstallMonitoringSatelliteParams, installMonitoringSatellite } from '../../observability/monitoring-satellite';
+import { MonitoringSatelliteInstaller } from '../../observability/monitoring-satellite';
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName, findLastHostPort, waitUntilAllPodsAreReady, waitForApiserver } from '../../util/kubectl';
 import { issueCertificate, installCertificate, IssueCertificateParams, InstallCertificateParams } from '../../util/certs';
 import { sleep, env } from '../../util/util';
@@ -150,7 +150,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             exec('exit 0')
         }
 
-        installMonitoring(PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
+        installMonitoring(werft, PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
         werft.done('observability')
     }
 
@@ -462,7 +462,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         try {
-            await installMonitoring(CORE_DEV_KUBECONFIG_PATH, namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
+            await installMonitoring(werft, CORE_DEV_KUBECONFIG_PATH, namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
         } catch (err) {
             if (!jobConfig.mainBuild) {
                 werft.fail('observability', err);
@@ -771,17 +771,19 @@ async function installMetaCertificates(werft: Werft, branch: string, withVM: boo
     await installCertificate(werft, metaInstallCertParams, { ...metaEnv(), slice: slice });
 }
 
-async function installMonitoring(kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
-    const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
-    installMonitoringSatelliteParams.kubeconfigPath = kubeconfig
-    installMonitoringSatelliteParams.branch = observabilityBranch;
-    installMonitoringSatelliteParams.satelliteNamespace = namespace
-    installMonitoringSatelliteParams.clusterName = namespace
-    installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
-    installMonitoringSatelliteParams.previewDomain = domain
-    installMonitoringSatelliteParams.stackdriverServiceAccount = stackdriverServiceAccount
-    installMonitoringSatelliteParams.withVM = withVM
-    installMonitoringSatellite(installMonitoringSatelliteParams);
+async function installMonitoring(werft: Werft, kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
+    const installMonitoringSatellite = new MonitoringSatelliteInstaller({
+        kubeconfigPath: kubeconfig,
+        branch: observabilityBranch,
+        satelliteNamespace: namespace,
+        clusterName: namespace,
+        nodeExporterPort: nodeExporterPort,
+        previewDomain: domain,
+        stackdriverServiceAccount: stackdriverServiceAccount,
+        withVM: withVM,
+        werft: werft
+    });
+    installMonitoringSatellite.install()
 }
 
 // returns the static IP address
