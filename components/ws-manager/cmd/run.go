@@ -119,6 +119,7 @@ var runCmd = &cobra.Command{
 			log.WithField("ratelimits", cfg.RPCServer.RateLimits).Info("imposing rate limits on the gRPC interface")
 		}
 		ratelimits := common_grpc.NewRatelimitingInterceptor(cfg.RPCServer.RateLimits)
+		metrics.Registry.MustRegister(ratelimits)
 
 		grpcMetrics := grpc_prometheus.NewServerMetrics()
 		grpcMetrics.EnableHandlingTimeHistogram()
