@@ -108,6 +108,7 @@ type ServerConfig struct {
 		CertSecretName  string `json:"certSecretName"`
 	} `json:"githubApp"`
 	DisableDynamicAuthProviderLogin bool `json:"disableDynamicAuthProviderLogin"`
+	EnableLocalApp                  bool `json:"enableLocalApp"`
 }
 
 type PublicAPIConfig struct {
