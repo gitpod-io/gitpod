@@ -56,6 +56,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	enableLocalApp := true
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
+			enableLocalApp = cfg.WebApp.Server.EnableLocalApp
+		}
+		return nil
+	})
+
 	githubApp := GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
@@ -103,7 +111,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MinAgeDays:                 14,
 			MinAgePrebuildDays:         7,
 		},
-		EnableLocalApp: true,
+		EnableLocalApp: enableLocalApp,
 		AuthProviderConfigFiles: func() []string {
 			providers := make([]string, 0)
 
