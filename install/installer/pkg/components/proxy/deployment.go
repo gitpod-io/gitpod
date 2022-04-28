@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
@@ -95,6 +96,28 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	var podAntiAffinity *corev1.PodAntiAffinity
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.UsePodAffinity {
+			podAntiAffinity = &corev1.PodAntiAffinity{
+				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{{
+					Weight: 100,
+					PodAffinityTerm: corev1.PodAffinityTerm{
+						LabelSelector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{{
+								Key:      "component",
+								Operator: "In",
+								Values:   []string{Component},
+							}},
+						},
+						TopologyKey: cluster.AffinityLabelMeta,
+					},
+				}},
+			}
+		}
+		return nil
+	})
+
 	const kubeRbacProxyContainerName = "kube-rbac-proxy"
 	return []runtime.Object{
 		&appsv1.Deployment{
@@ -118,7 +141,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 					Spec: corev1.PodSpec{
-						Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
+						Affinity: &corev1.Affinity{
+							NodeAffinity:    common.NodeAffinity(cluster.AffinityLabelMeta).NodeAffinity,
+							PodAntiAffinity: podAntiAffinity,
+						},
 						PriorityClassName:             common.SystemNodeCritical,
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),
