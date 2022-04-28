@@ -20,7 +20,6 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, &v1.GetWorkspaceResponse{
-		ResponseStatus: nil,
 		Result: &v1.Workspace{
 			WorkspaceId: workspaceID,
 			OwnerId:     "mock_owner",

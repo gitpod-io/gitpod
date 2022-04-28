@@ -4,7 +4,6 @@
 var grpc = require('@grpc/grpc-js');
 var gitpod_v1_prebuilds_pb = require('../../gitpod/v1/prebuilds_pb.js');
 var gitpod_v1_workspaces_pb = require('../../gitpod/v1/workspaces_pb.js');
-var google_rpc_status_pb = require('../../google/rpc/status_pb.js');
 
 function serialize_gitpod_v1_GetPrebuildRequest(arg) {
   if (!(arg instanceof gitpod_v1_prebuilds_pb.GetPrebuildRequest)) {

@@ -7,7 +7,6 @@
 import * as jspb from "google-protobuf";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 import * as google_protobuf_field_mask_pb from "google-protobuf/google/protobuf/field_mask_pb";
-import * as google_rpc_status_pb from "../../google/rpc/status_pb";
 import * as gitpod_v1_pagination_pb from "../../gitpod/v1/pagination_pb";
 
 export class ListWorkspacesRequest extends jspb.Message {
@@ -40,11 +39,6 @@ export namespace ListWorkspacesRequest {
 }
 
 export class ListWorkspacesResponse extends jspb.Message {
-
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): ListWorkspacesResponse;
     getNextPageToken(): string;
     setNextPageToken(value: string): ListWorkspacesResponse;
     clearResultList(): void;
@@ -64,7 +58,6 @@ export class ListWorkspacesResponse extends jspb.Message {
 
 export namespace ListWorkspacesResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         nextPageToken: string,
         resultList: Array<ListWorkspacesResponse.WorkspaceAndInstance.AsObject>,
     }
@@ -123,11 +116,6 @@ export namespace GetWorkspaceRequest {
 
 export class GetWorkspaceResponse extends jspb.Message {
 
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): GetWorkspaceResponse;
-
     hasResult(): boolean;
     clearResult(): void;
     getResult(): Workspace | undefined;
@@ -145,7 +133,6 @@ export class GetWorkspaceResponse extends jspb.Message {
 
 export namespace GetWorkspaceResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         result?: Workspace.AsObject,
     }
 }
@@ -198,11 +185,6 @@ export namespace CreateAndStartWorkspaceRequest {
 }
 
 export class CreateAndStartWorkspaceResponse extends jspb.Message {
-
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): CreateAndStartWorkspaceResponse;
     getWorkspaceId(): string;
     setWorkspaceId(value: string): CreateAndStartWorkspaceResponse;
 
@@ -218,7 +200,6 @@ export class CreateAndStartWorkspaceResponse extends jspb.Message {
 
 export namespace CreateAndStartWorkspaceResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         workspaceId: string,
     }
 }
@@ -253,11 +234,6 @@ export namespace StartWorkspaceRequest {
 }
 
 export class StartWorkspaceResponse extends jspb.Message {
-
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): StartWorkspaceResponse;
     getInstanceId(): string;
     setInstanceId(value: string): StartWorkspaceResponse;
     getWorkspaceUrl(): string;
@@ -275,7 +251,6 @@ export class StartWorkspaceResponse extends jspb.Message {
 
 export namespace StartWorkspaceResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         instanceId: string,
         workspaceUrl: string,
     }
@@ -303,11 +278,6 @@ export namespace GetActiveWorkspaceInstanceRequest {
 
 export class GetActiveWorkspaceInstanceResponse extends jspb.Message {
 
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): GetActiveWorkspaceInstanceResponse;
-
     hasInstance(): boolean;
     clearInstance(): void;
     getInstance(): WorkspaceInstance | undefined;
@@ -325,7 +295,6 @@ export class GetActiveWorkspaceInstanceResponse extends jspb.Message {
 
 export namespace GetActiveWorkspaceInstanceResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         instance?: WorkspaceInstance.AsObject,
     }
 }
@@ -351,11 +320,6 @@ export namespace GetWorkspaceInstanceOwnerTokenRequest {
 }
 
 export class GetWorkspaceInstanceOwnerTokenResponse extends jspb.Message {
-
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): GetWorkspaceInstanceOwnerTokenResponse;
     getOwnerToken(): string;
     setOwnerToken(value: string): GetWorkspaceInstanceOwnerTokenResponse;
 
@@ -371,7 +335,6 @@ export class GetWorkspaceInstanceOwnerTokenResponse extends jspb.Message {
 
 export namespace GetWorkspaceInstanceOwnerTokenResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         ownerToken: string,
     }
 }
@@ -398,11 +361,6 @@ export namespace ListenToWorkspaceInstanceRequest {
 
 export class ListenToWorkspaceInstanceResponse extends jspb.Message {
 
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): ListenToWorkspaceInstanceResponse;
-
     hasInstanceStatus(): boolean;
     clearInstanceStatus(): void;
     getInstanceStatus(): WorkspaceInstanceStatus | undefined;
@@ -420,7 +378,6 @@ export class ListenToWorkspaceInstanceResponse extends jspb.Message {
 
 export namespace ListenToWorkspaceInstanceResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         instanceStatus?: WorkspaceInstanceStatus.AsObject,
     }
 }
@@ -446,11 +403,6 @@ export namespace ListenToImageBuildLogsRequest {
 }
 
 export class ListenToImageBuildLogsResponse extends jspb.Message {
-
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): ListenToImageBuildLogsResponse;
     getLine(): string;
     setLine(value: string): ListenToImageBuildLogsResponse;
 
@@ -466,7 +418,6 @@ export class ListenToImageBuildLogsResponse extends jspb.Message {
 
 export namespace ListenToImageBuildLogsResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         line: string,
     }
 }
@@ -496,11 +447,6 @@ export namespace StopWorkspaceRequest {
 
 export class StopWorkspaceResponse extends jspb.Message {
 
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): StopWorkspaceResponse;
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StopWorkspaceResponse.AsObject;
     static toObject(includeInstance: boolean, msg: StopWorkspaceResponse): StopWorkspaceResponse.AsObject;
@@ -513,7 +459,6 @@ export class StopWorkspaceResponse extends jspb.Message {
 
 export namespace StopWorkspaceResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
     }
 }
 
