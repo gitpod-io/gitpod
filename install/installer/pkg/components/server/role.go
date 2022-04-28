@@ -31,8 +31,6 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 					"update",
 					"patch",
 					"watch",
-					"delete",
-					"deletecollection",
 				},
 			},
 			{
@@ -45,8 +43,6 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 					"update",
 					"patch",
 					"watch",
-					"delete",
-					"deletecollection",
 				},
 			},
 		},
