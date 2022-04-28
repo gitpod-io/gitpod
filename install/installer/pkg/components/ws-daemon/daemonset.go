@@ -340,10 +340,11 @@ fi
 		return nil, err
 	}
 
-	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
+	if vol, mnt, env, ok := common.CustomCACertVolume(ctx); ok {
 		podSpec.Volumes = append(podSpec.Volumes, *vol)
 		pod := podSpec.Containers[0]
 		pod.VolumeMounts = append(pod.VolumeMounts, *mnt)
+		pod.Env = append(pod.Env, env...)
 		podSpec.Containers[0] = pod
 	}
 

@@ -57,7 +57,7 @@ func InternalCAContainer(ctx *RenderContext, mod ...func(*corev1.Container)) *co
 }
 
 // CustomCACertVolume produces the objects required to mount custom CA certificates
-func CustomCACertVolume(ctx *RenderContext) (vol *corev1.Volume, mnt *corev1.VolumeMount, env *corev1.EnvVar, ok bool) {
+func CustomCACertVolume(ctx *RenderContext) (vol *corev1.Volume, mnt *corev1.VolumeMount, env []corev1.EnvVar, ok bool) {
 	if ctx.Config.CustomCACert == nil {
 		return nil, nil, nil, false
 	}
@@ -86,9 +86,9 @@ func CustomCACertVolume(ctx *RenderContext) (vol *corev1.Volume, mnt *corev1.Vol
 		MountPath: mountPath,
 		SubPath:   "ca.crt",
 	}
-	env = &corev1.EnvVar{
-		Name:  "NODE_EXTRA_CA_CERTS",
-		Value: mountPath,
+	env = []corev1.EnvVar{
+		{Name: "NODE_EXTRA_CA_CERTS", Value: mountPath},
+		{Name: "GIT_SSL_CAINFO", Value: mountPath},
 	}
 	ok = true
 	return
