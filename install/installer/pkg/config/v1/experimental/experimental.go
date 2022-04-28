@@ -107,6 +107,7 @@ type ServerConfig struct {
 		WebhookSecret   string `json:"webhookSecret"`
 		CertSecretName  string `json:"certSecretName"`
 	} `json:"githubApp"`
+	DisableDynamicAuthProviderLogin bool `json:"disableDynamicAuthProviderLogin"`
 }
 
 type PublicAPIConfig struct {
