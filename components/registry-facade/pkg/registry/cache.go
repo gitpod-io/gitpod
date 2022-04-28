@@ -256,10 +256,20 @@ func (w *redisBlobWriter) Commit(ctx context.Context, size int64, expected diges
 		return nil
 	}
 
-	trans := w.client.TxPipeline()
-	trans.SetEX(ctx, kContent, w.buf.String(), ttl)
-	trans.SetEX(ctx, kInfo, string(rnfo), ttl)
-	_, err = trans.Exec(ctx)
+	pipe := w.client.TxPipeline()
+	defer pipe.Close()
+
+	err = pipe.SetEX(ctx, kContent, w.buf.String(), ttl).Err()
+	if err != nil {
+		return err
+	}
+
+	err = pipe.SetEX(ctx, kInfo, string(rnfo), ttl).Err()
+	if err != nil {
+		return err
+	}
+
+	_, err = pipe.Exec(ctx)
 	return err
 }
 
