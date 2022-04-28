@@ -195,12 +195,10 @@ func (tm *tasksManager) init(ctx context.Context) {
 	for i, config := range *tasks {
 		id := strconv.Itoa(i)
 		presentation := &api.TaskPresentation{}
-		title := ""
 		if config.Name != nil {
 			presentation.Name = *config.Name
-			title = *config.Name
 		} else {
-			presentation.Name = tm.terminalService.DefaultWorkdir
+			presentation.Name = "Gitpod Task " + strconv.Itoa(i+1)
 		}
 		if config.OpenIn != nil {
 			presentation.OpenIn = *config.OpenIn
@@ -216,7 +214,7 @@ func (tm *tasksManager) init(ctx context.Context) {
 			},
 			config:      config,
 			successChan: make(chan taskSuccess, 1),
-			title:       title,
+			title:       presentation.Name,
 		}
 		task.command = getCommand(task, tm.config.isHeadless(), tm.contentSource, tm.storeLocation)
 		if tm.config.isHeadless() && task.command == "exit" {
