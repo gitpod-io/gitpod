@@ -161,8 +161,19 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         // success rate or installing monitoring satellite, but we can at least count and debug errors.
         // In the future we can consider not closing spans when closing phases, or restructuring our phases
         // based on parallelism boundaries
+        const monitoringSatelliteInstaller = new MonitoringSatelliteInstaller({
+            kubeconfigPath: PREVIEW_K3S_KUBECONFIG_PATH,
+            branch: jobConfig.observability.branch,
+            satelliteNamespace: deploymentConfig.namespace,
+            clusterName: deploymentConfig.namespace,
+            nodeExporterPort: 9100,
+            previewDomain: deploymentConfig.domain,
+            stackdriverServiceAccount: STACKDRIVER_SERVICEACCOUNT,
+            withVM: withVM,
+            werft: werft
+        });
         const sliceID = "observability"
-        installMonitoring(werft, PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch)
+        monitoringSatelliteInstaller.install()
             .then(() => {
                 werft.log(sliceID, "Succeeded installing monitoring satellite")
             })
@@ -485,7 +496,18 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         try {
-            await installMonitoring(werft, CORE_DEV_KUBECONFIG_PATH, namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
+            const installMonitoringSatellite = new MonitoringSatelliteInstaller({
+                kubeconfigPath: CORE_DEV_KUBECONFIG_PATH,
+                branch: jobConfig.observability.branch,
+                satelliteNamespace: namespace,
+                clusterName: namespace,
+                nodeExporterPort: nodeExporterPort,
+                previewDomain: domain,
+                stackdriverServiceAccount: STACKDRIVER_SERVICEACCOUNT,
+                withVM: false,
+                werft: werft
+            });
+            await installMonitoringSatellite.install()
         } catch (err) {
             if (!jobConfig.mainBuild) {
                 werft.fail('observability', err);
@@ -792,21 +814,6 @@ async function installMetaCertificates(werft: Werft, branch: string, withVM: boo
     metaInstallCertParams.destinationNamespace = destNamespace
     metaInstallCertParams.destinationKubeconfig = destinationKubeconfig
     await installCertificate(werft, metaInstallCertParams, { ...metaEnv(), slice: slice });
-}
-
-async function installMonitoring(werft: Werft, kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
-    const installMonitoringSatellite = new MonitoringSatelliteInstaller({
-        kubeconfigPath: kubeconfig,
-        branch: observabilityBranch,
-        satelliteNamespace: namespace,
-        clusterName: namespace,
-        nodeExporterPort: nodeExporterPort,
-        previewDomain: domain,
-        stackdriverServiceAccount: stackdriverServiceAccount,
-        withVM: withVM,
-        werft: werft
-    });
-    installMonitoringSatellite.install()
 }
 
 // returns the static IP address
