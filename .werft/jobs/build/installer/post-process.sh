@@ -183,8 +183,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       | jq --arg REGISTRY_FACADE_HOST "$REGISTRY_FACADE_HOST" '.manager.registryFacadeHost = $REGISTRY_FACADE_HOST' \
       | jq ".manager.wsdaemon.port = $WS_DAEMON_PORT" > /tmp/"$NAME"-cm-overrides.json
 
-      yq w -i -j /tmp/"$NAME"-cm-overrides.json manager.podTemplate.defaultPath /workspace-templates/default.yaml
-
       touch /tmp/"$NAME"-cm-overrides.yaml
       # write a yaml file with the json as a multiline string
       yq w -i /tmp/"$NAME"-cm-overrides.yaml "data.[config.json]" -- "$(< /tmp/"$NAME"-cm-overrides.json)"

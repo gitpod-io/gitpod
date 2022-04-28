@@ -68,6 +68,7 @@ type Workspace struct {
 	ServiceLocDaemon string `json:"serviceLocDaemon"`
 
 	RemoteStorageDisabled bool `json:"remoteStorageDisabled,omitempty"`
+	StorageQuota          int  `json:"storageQuota,omitempty"`
 
 	XFSProjectID int `json:"xfsProjectID"`
 

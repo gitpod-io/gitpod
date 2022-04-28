@@ -670,6 +670,15 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		return xerrors.Errorf("pod %s has no owner", pod.Name)
 	}
 
+	class, ok := m.manager.Config.WorkspaceClasses[pod.Labels[workspaceClassLabel]]
+	if !ok {
+		return xerrors.Errorf("pod %s has unknown workspace class", pod.Name, pod.Labels[workspaceClassLabel])
+	}
+	storage, err := class.Container.Limits.StorageQuantity()
+	if !ok {
+		return xerrors.Errorf("workspace class %s has invalid storage quantity: %w", pod.Labels[workspaceClassLabel], err)
+	}
+
 	var (
 		initializer     csapi.WorkspaceInitializer
 		snc             wsdaemon.WorkspaceContentServiceClient
@@ -747,6 +756,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			FullWorkspaceBackup:   fullWorkspaceBackup,
 			ContentManifest:       contentManifest,
 			RemoteStorageDisabled: shouldDisableRemoteStorage(pod),
+			StorageQuotaBytes:     storage.Value(),
 		})
 		return err
 	})
