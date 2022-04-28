@@ -14,6 +14,7 @@ import (
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	wsmanagerbridge "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-bridge"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -163,6 +164,28 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		env = append(env, envv...)
 	}
 
+	var podAntiAffinity *corev1.PodAntiAffinity
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.UsePodAffinity {
+			podAntiAffinity = &corev1.PodAntiAffinity{
+				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{{
+					Weight: 100,
+					PodAffinityTerm: corev1.PodAffinityTerm{
+						LabelSelector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{{
+								Key:      "component",
+								Operator: "In",
+								Values:   []string{Component},
+							}},
+						},
+						TopologyKey: cluster.AffinityLabelMeta,
+					},
+				}},
+			}
+		}
+		return nil
+	})
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -185,7 +208,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 					Spec: corev1.PodSpec{
-						Affinity:           common.NodeAffinity(cluster.AffinityLabelMeta),
+						Affinity: &corev1.Affinity{
+							NodeAffinity:    common.NodeAffinity(cluster.AffinityLabelMeta).NodeAffinity,
+							PodAntiAffinity: podAntiAffinity,
+						},
 						PriorityClassName:  common.SystemNodeCritical,
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
