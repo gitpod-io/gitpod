@@ -353,7 +353,7 @@ export class PrebuildManager {
         }
         const now = Date.now();
         const lastUse = new Date(usage.lastWorkspaceStart).getTime();
-        const inactiveProjectTime = 1000 * 60 * 60 * 24 * 7 * 10; // 10 weeks
+        const inactiveProjectTime = 1000 * 60 * 60 * 24 * 7 * 1; // 1 week
         return now - lastUse > inactiveProjectTime;
     }
 }
