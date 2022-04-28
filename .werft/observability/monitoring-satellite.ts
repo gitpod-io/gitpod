@@ -22,7 +22,7 @@ const sliceName = "observability";
 export class MonitoringSatelliteInstaller {
     constructor(private readonly options: MonitoringSatelliteInstallerOptions) {}
 
-    public install() {
+    public async install() {
         const {
             werft,
             branch,
@@ -89,9 +89,9 @@ export class MonitoringSatelliteInstaller {
             this.postProcessManifests();
         }
 
-        // The correct kubectl context should already be configured prior to this step
-        // Only checks node-exporter readiness for harvester
-        this.ensureCorrectInstallationOrder();
+        this.ensureCorrectInstallationOrder()
+        this.deployGitpodServiceMonitors();
+        await this.waitForReadiness()
     }
 
     private ensureCorrectInstallationOrder() {
@@ -99,40 +99,51 @@ export class MonitoringSatelliteInstaller {
 
         werft.log(sliceName, "installing monitoring-satellite");
         exec(`cd observability && hack/deploy-satellite.sh --kubeconfig ${kubeconfigPath}`, { slice: sliceName });
-
-        this.deployGitpodServiceMonitors();
-        this.checkReadiness();
     }
 
-    private checkReadiness() {
+    private async waitForReadiness() {
         const { kubeconfigPath, satelliteNamespace } = this.options;
 
+        const checks: Promise<any>[] = [];
         // For some reason prometheus' statefulset always take quite some time to get created
         // Therefore we wait a couple of seconds
-        exec(
-            `sleep 30 && kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} statefulset prometheus-k8s`,
-            { slice: sliceName },
+        checks.push(
+            exec(
+                `sleep 30 && kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} statefulset prometheus-k8s`,
+                { slice: sliceName, async: true },
+            ),
         );
-        exec(`kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment grafana`, {
-            slice: sliceName,
-        });
-        exec(
-            `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment kube-state-metrics`,
-            { slice: sliceName },
+        checks.push(
+            exec(`kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment grafana`, {
+                slice: sliceName,
+                async: true,
+            }),
         );
-        exec(
-            `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment otel-collector`,
-            { slice: sliceName },
+        checks.push(
+            exec(
+                `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment kube-state-metrics`,
+                { slice: sliceName, async: true },
+            ),
+        );
+        checks.push(
+            exec(
+                `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment otel-collector`,
+                { slice: sliceName, async: true },
+            ),
         );
 
         // core-dev is just too unstable for node-exporter
         // we don't guarantee that it will run at all
         if (this.options.withVM) {
-            exec(
-                `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} daemonset node-exporter`,
-                { slice: sliceName },
+            checks.push(
+                exec(
+                    `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} daemonset node-exporter`,
+                    { slice: sliceName, async: true },
+                ),
             );
         }
+
+        await Promise.all(checks);
     }
 
     private deployGitpodServiceMonitors() {
