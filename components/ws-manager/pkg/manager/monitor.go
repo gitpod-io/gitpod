@@ -376,8 +376,9 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		}
 
 		_, gone := wso.Pod.Annotations[wsk8s.ContainerIsGoneAnnotation]
+		_, alreadyFinalized := wso.Pod.Annotations[disposalStatusAnnotation]
 
-		if terminated || gone {
+		if (terminated || gone) && !alreadyFinalized {
 			// We start finalizing the workspace content only after the container is gone. This way we ensure there's
 			// no process modifying the workspace content as we create the backup.
 			go m.finalizeWorkspaceContent(ctx, wso)
