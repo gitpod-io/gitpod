@@ -78,6 +78,8 @@ type NewFromRequestOpts struct {
 	// Git content is forced to the Gitpod user. All other content (backup, prebuild, snapshot) will already
 	// have the correct user.
 	ForceGitpodUserForGit bool
+
+	CustomCACertPath string
 }
 
 // NewFromRequest picks the initializer from the request but does not execute it.
@@ -106,7 +108,7 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 			return nil, status.Error(codes.InvalidArgument, "missing Git initializer spec")
 		}
 
-		initializer, err = newGitInitializer(ctx, loc, ir.Git, opts.ForceGitpodUserForGit)
+		initializer, err = newGitInitializer(ctx, loc, ir.Git, opts.ForceGitpodUserForGit, opts.CustomCACertPath)
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Prebuild); ok {
 		if ir.Prebuild == nil {
 			return nil, status.Error(codes.InvalidArgument, "missing prebuild initializer spec")
@@ -120,7 +122,7 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		}
 		var gits []*GitInitializer
 		for _, gi := range ir.Prebuild.Git {
-			gitinit, err := newGitInitializer(ctx, loc, gi, opts.ForceGitpodUserForGit)
+			gitinit, err := newGitInitializer(ctx, loc, gi, opts.ForceGitpodUserForGit, opts.CustomCACertPath)
 			if err != nil {
 				return nil, err
 			}
@@ -195,7 +197,7 @@ func (bi *fromBackupInitializer) Run(ctx context.Context, mappings []archive.IDM
 
 // newGitInitializer creates a Git initializer based on the request.
 // Returns gRPC errors.
-func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitializer, forceGitpodUser bool) (*GitInitializer, error) {
+func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitializer, forceGitpodUser bool, customCACertPath string) (*GitInitializer, error) {
 	if req.Config == nil {
 		return nil, status.Error(codes.InvalidArgument, "Git initializer misses config")
 	}
@@ -240,13 +242,21 @@ func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitialize
 		return
 	})
 
+	cfg := make(map[string]string, len(req.Config.CustomConfig))
+	for k, v := range req.Config.CustomConfig {
+		cfg[k] = v
+	}
+	if customCACertPath != "" {
+		cfg["http.sslCAInfo"] = customCACertPath
+	}
+
 	log.WithField("location", loc).Debug("using Git initializer")
 	return &GitInitializer{
 		Client: git.Client{
 			Location:          filepath.Join(loc, req.CheckoutLocation),
 			RemoteURI:         req.RemoteUri,
 			UpstreamRemoteURI: req.Upstream_RemoteUri,
-			Config:            req.Config.CustomConfig,
+			Config:            cfg,
 			AuthMethod:        authMethod,
 			AuthProvider:      authProvider,
 		},

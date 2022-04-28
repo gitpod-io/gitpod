@@ -43,6 +43,8 @@ type RunInitializerOpts struct {
 	// Options to use on untar
 	IdMappings []archive.IDMapping
 
+	CustomCACertPath string
+
 	UID uint32
 	GID uint32
 
@@ -147,14 +149,15 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	}
 
 	msg := msgInitContent{
-		Destination:   "/dst",
-		Initializer:   init,
-		RemoteContent: remoteContent,
-		TraceInfo:     tracing.GetTraceID(span),
-		IDMappings:    opts.IdMappings,
-		GID:           int(opts.GID),
-		UID:           int(opts.UID),
-		OWI:           opts.OWI.Fields(),
+		Destination:      "/dst",
+		Initializer:      init,
+		RemoteContent:    remoteContent,
+		TraceInfo:        tracing.GetTraceID(span),
+		IDMappings:       opts.IdMappings,
+		GID:              int(opts.GID),
+		UID:              int(opts.UID),
+		OWI:              opts.OWI.Fields(),
+		CustomCACertPath: opts.CustomCACertPath,
 	}
 	fc, err := json.MarshalIndent(msg, "", "  ")
 	if err != nil {
@@ -188,7 +191,8 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	spec.Process.NoNewPrivileges = true
 	spec.Process.User.UID = opts.UID
 	spec.Process.User.GID = opts.GID
-	spec.Process.Args = []string{"/app/content-initializer"}
+	spec.Process.Args = []string{opts.Command}
+	spec.Process.Args = append(spec.Process.Args, opts.Args...)
 	for _, e := range os.Environ() {
 		if strings.HasPrefix(e, "JAEGER_") {
 			spec.Process.Env = append(spec.Process.Env, e)
@@ -317,7 +321,10 @@ func RunInitializerChild() (err error) {
 
 	rs := &remoteContentStorage{RemoteContent: initmsg.RemoteContent}
 
-	initializer, err := wsinit.NewFromRequest(ctx, "/dst", rs, &req, wsinit.NewFromRequestOpts{ForceGitpodUserForGit: false})
+	initializer, err := wsinit.NewFromRequest(ctx, "/dst", rs, &req, wsinit.NewFromRequestOpts{
+		ForceGitpodUserForGit: false,
+		CustomCACertPath:      initmsg.CustomCACertPath,
+	})
 	if err != nil {
 		return err
 	}
@@ -431,11 +438,12 @@ func (rs *remoteContentStorage) SnapshotObject(name string) string {
 }
 
 type msgInitContent struct {
-	Destination   string
-	RemoteContent map[string]storage.DownloadInfo
-	Initializer   []byte
-	UID, GID      int
-	IDMappings    []archive.IDMapping
+	Destination      string
+	RemoteContent    map[string]storage.DownloadInfo
+	Initializer      []byte
+	UID, GID         int
+	IDMappings       []archive.IDMapping
+	CustomCACertPath string
 
 	TraceInfo string
 	OWI       map[string]interface{}

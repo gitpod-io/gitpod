@@ -230,6 +230,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 				WorkspaceID: req.Metadata.MetaId,
 				InstanceID:  req.Id,
 			},
+			CustomCACertPath: s.config.Initializer.CustomCACertPath,
 		}
 
 		err = RunInitializer(ctx, workspace.Location, req.Initializer, remoteContent, opts)

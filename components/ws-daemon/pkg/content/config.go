@@ -92,4 +92,7 @@ type InitializerConfig struct {
 
 	// Args are additional arguments to pass to the CI runtime
 	Args []string `json:"args"`
+
+	// CustomCACertPath points to a custom cert which Git needs to use for its operations
+	CustomCACertPath string `json:"customCACertPath,omitempty"`
 }

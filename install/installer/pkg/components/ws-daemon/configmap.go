@@ -62,6 +62,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	var customCACertPath string
+	if _, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
+		customCACertPath = mnt.MountPath
+	}
+
 	wsdcfg := wsdconfig.Config{
 		Daemon: daemon.Config{
 			Runtime: daemon.RuntimeConfig{
@@ -92,7 +97,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Attempts: 3,
 				},
 				Initializer: content.InitializerConfig{
-					Command: "/app/content-initializer",
+					Command:          "/app/content-initializer",
+					CustomCACertPath: customCACertPath,
 				},
 			},
 			Uidmapper: iws.UidmapperConfig{
