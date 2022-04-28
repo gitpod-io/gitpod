@@ -106,7 +106,6 @@ type WorkspaceStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	PodStarts  int    `json:"podStarts"`
-	Available  bool   `json:"available"`
 	Headless   bool   `json:"headless"`
 	URL        string `json:"url,omitempty"`
 	OwnerToken string `json:"ownerToken,omitempty"`
