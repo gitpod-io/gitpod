@@ -160,7 +160,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if vol, mnt, envv, ok := common.CustomCACertVolume(ctx); ok {
 		volumes = append(volumes, *vol)
 		volumeMounts = append(volumeMounts, *mnt)
-		env = append(env, *envv)
+		env = append(env, envv...)
 	}
 
 	return []runtime.Object{

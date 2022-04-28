@@ -190,7 +190,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	spec.Process.User.GID = opts.GID
 	spec.Process.Args = []string{"/app/content-initializer"}
 	for _, e := range os.Environ() {
-		if strings.HasPrefix(e, "JAEGER_") {
+		if strings.HasPrefix(e, "JAEGER_") || strings.HasPrefix(e, "GIT_SSL_CAINFO=") {
 			spec.Process.Env = append(spec.Process.Env, e)
 		}
 	}
