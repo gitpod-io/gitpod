@@ -28,7 +28,8 @@ export namespace TraceContext {
         if (!!parentCtx?.span) {
             const ctx = parentCtx?.span?.context();
             if (ctx && !!ctx.toTraceId() && !!ctx.toSpanId()) {
-                options.references = [opentracing.followsFrom(ctx)];
+                // options.references = [opentracing.followsFrom(ctx)];
+                options.childOf = ctx;
             }
         }
 
