@@ -13,6 +13,7 @@ import * as VM from '../../vm/vm'
 import { Analytics, Installer } from "./installer/installer";
 import { previewNameFromBranchName } from "../../util/preview";
 import { createDNSRecord } from "../../util/gcloud";
+import { SpanStatusCode } from '@opentelemetry/api';
 
 // used by both deploys (helm and Installer)
 const PROXY_SECRET_NAME = "proxy-config-certificates";
@@ -150,8 +151,30 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             exec('exit 0')
         }
 
-        installMonitoring(werft, PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
-        werft.done('observability')
+        // Deploying monitoring satellite to VM-based preview environments is currently best-effort.
+        // That means we currently don't wait for the promise here, and should the installation fail
+        // we'll simply log an error rather than failing the build.
+        //
+        // Note: Werft currently doesn't support slices spanning across multiple phases so running this
+        // can result in many 'observability' slices. Currently we close all the spans in a phase
+        // when we complete a phase. This means we can't currently measure the full duration or the
+        // success rate or installing monitoring satellite, but we can at least count and debug errors.
+        // In the future we can consider not closing spans when closing phases, or restructuring our phases
+        // based on parallelism boundaries
+        const sliceID = "observability"
+        installMonitoring(werft, PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch)
+            .then(() => {
+                werft.log(sliceID, "Succeeded installing monitoring satellite")
+            })
+            .catch((err) => {
+                werft.log(sliceID, `Failed to install monitoring: ${err}`)
+                const span = werft.getSpanForSlice(sliceID)
+                span.setStatus({
+                    code: SpanStatusCode.ERROR,
+                    message: err
+                })
+            })
+            .finally(() => werft.done(sliceID));
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
@@ -462,7 +485,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         try {
-            installMonitoring(werft, CORE_DEV_KUBECONFIG_PATH, namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
+            await installMonitoring(werft, CORE_DEV_KUBECONFIG_PATH, namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false, jobConfig.observability.branch);
         } catch (err) {
             if (!jobConfig.mainBuild) {
                 werft.fail('observability', err);
@@ -771,7 +794,7 @@ async function installMetaCertificates(werft: Werft, branch: string, withVM: boo
     await installCertificate(werft, metaInstallCertParams, { ...metaEnv(), slice: slice });
 }
 
-function installMonitoring(werft: Werft, kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
+async function installMonitoring(werft: Werft, kubeconfig: string, namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean, observabilityBranch: string) {
     const installMonitoringSatellite = new MonitoringSatelliteInstaller({
         kubeconfigPath: kubeconfig,
         branch: observabilityBranch,

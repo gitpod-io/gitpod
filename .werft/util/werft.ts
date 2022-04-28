@@ -137,4 +137,13 @@ export class Werft {
 
         this.globalSpanAttributes = {...this.globalSpanAttributes, ...attributes}
     }
+
+    public getSpanForSlice(slice: string): Span {
+        const span = this.sliceSpans[slice]
+        if (!span) {
+            throw new Error(`No open span for ${slice}`)
+        }
+        return span
+
+    }
 }
