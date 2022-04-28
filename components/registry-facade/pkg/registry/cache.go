@@ -79,7 +79,15 @@ func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, conte
 		return nil
 	}
 
-	p, err := store.IPFS.Unixfs().Add(ctx, files.NewReaderFile(content), options.Unixfs.Pin(true), options.Unixfs.CidVersion(1))
+	opts := []options.UnixfsAddOption{
+		options.Unixfs.Pin(true),
+		options.Unixfs.CidVersion(1),
+		options.Unixfs.RawLeaves(true),
+		options.Unixfs.FsCache(true),
+		options.Unixfs.Nocopy(true), //add the file using filestore
+	}
+
+	p, err := store.IPFS.Unixfs().Add(ctx, files.NewReaderFile(content), opts...)
 	if err != nil {
 		return err
 	}
