@@ -31,7 +31,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 
 	switch len(pods.Items) {
 	case 0:
-		workspace.Status.Available = false
+		workspace.Status.Conditions.Deployed = false
 		if workspace.Status.Phase != workspacev1.WorkspacePhasePending {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
@@ -202,9 +202,9 @@ func extractFailure(ws *workspacev1.Workspace, pod *corev1.Pod) (string, *worksp
 					phase := workspacev1.WorkspacePhaseRunning
 					return fmt.Sprintf("container %s ran with an error: exit code %d", cs.Name, terminationState.ExitCode), &phase
 				}
-			} else if terminationState.Reason == "Completed" {
+			} else if terminationState.Reason == "Completed" && !isPodBeingDeleted(pod) {
 				if ws.Status.Headless {
-					// default way for headless workspaces to be done
+					// headless workspaces are expected to finish
 					return "", nil
 				}
 				return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that", cs.Name), nil
