@@ -18,6 +18,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/util"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type keyFunc func(req interface{}) (string, error)
@@ -38,6 +39,17 @@ func (r RateLimit) Limiter() *rate.Limiter {
 
 // NewRatelimitingInterceptor creates a new rate limiting interceptor
 func NewRatelimitingInterceptor(f map[string]RateLimit) RatelimitingInterceptor {
+	callCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grpc",
+		Subsystem: "server",
+		Name:      "rate_limiter_calls_total",
+	}, []string{"grpc_method", "rate_limited"})
+	cacheHitCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grpc",
+		Subsystem: "server",
+		Name:      "rate_limiter_calls_total",
+	}, []string{"grpc_method"})
+
 	funcs := make(map[string]*ratelimitedFunction, len(f))
 	for name, fnc := range f {
 		var (
@@ -50,13 +62,19 @@ func NewRatelimitingInterceptor(f map[string]RateLimit) RatelimitingInterceptor 
 		}
 
 		funcs[name] = &ratelimitedFunction{
-			RateLimit:   fnc,
-			GlobalLimit: fnc.Limiter(),
-			Key:         key,
-			KeyedLimit:  keyedLimit,
+			RateLimit:           fnc,
+			GlobalLimit:         fnc.Limiter(),
+			Key:                 key,
+			KeyedLimit:          keyedLimit,
+			RateLimitedTotal:    callCounter.WithLabelValues(name, "true"),
+			NotRateLimitedTotal: callCounter.WithLabelValues(name, "false"),
+			CacheMissTotal:      cacheHitCounter.WithLabelValues(name),
 		}
 	}
-	return funcs
+	return RatelimitingInterceptor{
+		functions:  funcs,
+		collectors: []prometheus.Collector{callCounter, cacheHitCounter},
+	}
 }
 
 func fieldAccessKey(key string) keyFunc {
@@ -102,7 +120,28 @@ func getFieldValue(msg protoreflect.Message, path []string) (val string, ok bool
 
 // RatelimitingInterceptor limits how often a gRPC function may be called. If the limit has been
 // exceeded, we'll return resource exhausted.
-type RatelimitingInterceptor map[string]*ratelimitedFunction
+type RatelimitingInterceptor struct {
+	functions  map[string]*ratelimitedFunction
+	collectors []prometheus.Collector
+}
+
+var _ prometheus.Collector = RatelimitingInterceptor{}
+
+func (r RatelimitingInterceptor) Describe(d chan<- *prometheus.Desc) {
+	for _, c := range r.collectors {
+		c.Describe(d)
+	}
+}
+
+func (r RatelimitingInterceptor) Collect(m chan<- prometheus.Metric) {
+	for _, c := range r.collectors {
+		c.Collect(m)
+	}
+}
+
+type counter interface {
+	Inc()
+}
 
 type ratelimitedFunction struct {
 	RateLimit RateLimit
@@ -110,12 +149,16 @@ type ratelimitedFunction struct {
 	GlobalLimit *rate.Limiter
 	Key         keyFunc
 	KeyedLimit  *lru.Cache
+
+	RateLimitedTotal    counter
+	NotRateLimitedTotal counter
+	CacheMissTotal      counter
 }
 
 // UnaryInterceptor creates a unary interceptor that implements the rate limiting
 func (r RatelimitingInterceptor) UnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		f, ok := r[info.FullMethod]
+		f, ok := r.functions[info.FullMethod]
 		if !ok {
 			return handler(ctx, req)
 		}
@@ -129,19 +172,34 @@ func (r RatelimitingInterceptor) UnaryInterceptor() grpc.UnaryServerInterceptor 
 				return nil, err
 			}
 
-			f.KeyedLimit.ContainsOrAdd(key, f.RateLimit.Limiter())
+			found, _ := f.KeyedLimit.ContainsOrAdd(key, f.RateLimit.Limiter())
+			if !found && f.CacheMissTotal != nil {
+				f.CacheMissTotal.Inc()
+			}
 			v, _ := f.KeyedLimit.Get(key)
 			limit = v.(*rate.Limiter)
 		}
+
+		var blocked bool
+		defer func() {
+			if blocked && f.RateLimitedTotal != nil {
+				f.RateLimitedTotal.Inc()
+			} else if !blocked && f.NotRateLimitedTotal != nil {
+				f.NotRateLimitedTotal.Inc()
+			}
+		}()
 		if f.RateLimit.Block {
 			err := limit.Wait(ctx)
 			if err == context.Canceled {
+				blocked = true
 				return nil, err
 			}
 			if err != nil {
+				blocked = true
 				return nil, status.Error(codes.ResourceExhausted, err.Error())
 			}
 		} else if !limit.Allow() {
+			blocked = true
 			return nil, status.Error(codes.ResourceExhausted, "too many requests")
 		}
 
