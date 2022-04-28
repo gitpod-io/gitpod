@@ -7,7 +7,6 @@
 import * as grpc from "@grpc/grpc-js";
 import * as gitpod_v1_prebuilds_pb from "../../gitpod/v1/prebuilds_pb";
 import * as gitpod_v1_workspaces_pb from "../../gitpod/v1/workspaces_pb";
-import * as google_rpc_status_pb from "../../google/rpc/status_pb";
 
 interface IPrebuildsServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     getPrebuild: IPrebuildsServiceService_IGetPrebuild;

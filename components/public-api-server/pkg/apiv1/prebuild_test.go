@@ -20,7 +20,6 @@ func TestPrebuildService_GetPrebuild(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, &v1.GetPrebuildResponse{
-		ResponseStatus: nil,
 		Prebuild: &v1.Prebuild{
 			PrebuildId: prebuildID,
 			Spec: &v1.PrebuildSpec{

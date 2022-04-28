@@ -21,7 +21,6 @@ type WorkspaceService struct {
 
 func (w *WorkspaceService) GetWorkspace(ctx context.Context, r *v1.GetWorkspaceRequest) (*v1.GetWorkspaceResponse, error) {
 	return &v1.GetWorkspaceResponse{
-		ResponseStatus: nil,
 		Result: &v1.Workspace{
 			WorkspaceId: r.GetWorkspaceId(),
 			OwnerId:     "mock_owner",

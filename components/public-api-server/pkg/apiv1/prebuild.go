@@ -21,7 +21,6 @@ type PrebuildService struct {
 
 func (p *PrebuildService) GetPrebuild(ctx context.Context, req *v1.GetPrebuildRequest) (*v1.GetPrebuildResponse, error) {
 	return &v1.GetPrebuildResponse{
-		ResponseStatus: nil,
 		Prebuild: &v1.Prebuild{
 			PrebuildId: req.GetPrebuildId(),
 			Spec: &v1.PrebuildSpec{
