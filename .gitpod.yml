@@ -35,11 +35,11 @@ tasks:
     command: |
       ./dev/preview/download-and-merge-harvester-kubeconfig.sh
       exit 0
-  - name: Java
-    init: |
-      leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
-      leeway exec --package components/ide/jetbrains/backend-plugin:plugin -- ./gradlew buildPlugin
-      leeway exec --package components/ide/jetbrains/gateway-plugin:publish -- ./gradlew buildPlugin
+  #- name: Java
+  #  init: |
+  #    leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
+  #    leeway exec --package components/ide/jetbrains/backend-plugin:plugin -- ./gradlew buildPlugin
+  #    leeway exec --package components/ide/jetbrains/gateway-plugin:publish -- ./gradlew buildPlugin
   - name: TypeScript
     before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
