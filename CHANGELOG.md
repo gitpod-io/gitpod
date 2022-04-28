@@ -1,6 +1,9 @@
 # Change Log
 
 ## April 2022
+- [kots]: fix typo in CA cert extract command ([#9580](https://github.com/gitpod-io/gitpod/pull/9580)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Update the error message when you run out of workspace credits. ([#9370](https://github.com/gitpod-io/gitpod/pull/9370)) - [@Harry-Hopkinson](https://github.com/Harry-Hopkinson)
+- [supervisor] Do not report error when the process is terminated ([#9572](https://github.com/gitpod-io/gitpod/pull/9572)) - [@aledbf](https://github.com/aledbf)
 - [kots]: add configuration for using a custom CA certificate ([#9566](https://github.com/gitpod-io/gitpod/pull/9566)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [docker-up] Configure docker0 MTU ([#9549](https://github.com/gitpod-io/gitpod/pull/9549)) - [@aledbf](https://github.com/aledbf)
 - [installer] Increase ws-daemon FailureThreshold ([#9554](https://github.com/gitpod-io/gitpod/pull/9554)) - [@aledbf](https://github.com/aledbf)
