@@ -7,6 +7,7 @@ package grpc
 import (
 	"crypto/tls"
 	"crypto/x509"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"os"
 	"path/filepath"
 	"time"
@@ -84,8 +85,14 @@ func DefaultServerOptions() []grpc.ServerOption {
 // ServerOptionsWithInterceptors returns the default ServerOption sets options for internal components with additional interceptors.
 // By default, Interceptors for OpenTracing (grpc_opentracing) are added as the last one.
 func ServerOptionsWithInterceptors(stream []grpc.StreamServerInterceptor, unary []grpc.UnaryServerInterceptor) []grpc.ServerOption {
-	stream = append(stream, grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())))
-	unary = append(unary, grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())))
+	stream = append(stream,
+		grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
+		grpc_recovery.StreamServerInterceptor(), // must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with
+	)
+	unary = append(unary,
+		grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
+		grpc_recovery.UnaryServerInterceptor(), // must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with
+	)
 
 	return []grpc.ServerOption{
 		// terminate the connection if the client pings more than once every 2 seconds
