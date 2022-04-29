@@ -26,7 +26,6 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 ![browser-vscode](https://user-images.githubusercontent.com/22498066/135150975-23bba3a6-f099-48c5-83ed-a1a6627ff0e9.png)
 
-
 ## Features
 
 🏗 [Dev environments as code](https://www.gitpod.io/docs/#-dev-environments-as-code) - Gitpod applies lessons learned from infrastructure-as-code. Spinning up dev environments is easily repeatable and reproducible empowering you to automate, version-control and share dev environments across your team.
@@ -50,12 +49,12 @@ Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free su
 ## Getting Started
 
 You can start using Gitpod in one or more of the following ways:
+
 1. Quickstart using an [Example Project](https://www.gitpod.io/docs/quickstart) or [OSS Project](https://contribute.dev/)
 1. Getting started with [one of your existing projects](https://www.gitpod.io/docs/getting-started)
 1. [Use a Prefixed URL](https://www.gitpod.io/docs/getting-started/#prefixed-url)
 1. [Install Browser Extension](https://www.gitpod.io/docs/getting-started#browser-extension)
 1. [Enable GitLab Integration](https://www.gitpod.io/docs/gitlab-integration#gitlab-integration)
-
 
 ## Documentation
 
@@ -79,8 +78,8 @@ You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/is
 
 We work with quarterly roadmaps in autonomous product teams.
 
- - [Gitpod Architecture](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74)
- - [Product Roadmap](https://github.com/orgs/gitpod-io/projects/27)
+-   [Gitpod Architecture](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74)
+-   [Product Roadmap](https://github.com/orgs/gitpod-io/projects/27)
 
 ### How do GitHub Issues get prioritised?
 
