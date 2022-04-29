@@ -6,14 +6,13 @@ package cmd
 
 import (
 	"context"
-	"net"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"strings"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"github.com/bombsimon/logrusr/v2"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/mwitkow/grpc-proxy/proxy"
 	"github.com/spf13/cobra"
@@ -44,12 +43,15 @@ var runCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
-
 		err := cfg.Manager.Validate()
 		if err != nil {
 			log.WithError(err).Fatal("invalid configuration")
 		}
 		log.Info("wsman configuration is valid")
+
+		srv, err := baseserver.New("ws-manager",
+			baseserver.WithLogger(log.Log),
+		)
 
 		common_grpc.SetupLogging()
 
@@ -146,18 +148,22 @@ var runCmd = &cobra.Command{
 
 		grpcOpts = append(grpcOpts, grpc.UnknownServiceHandler(proxy.TransparentHandler(imagebuilderDirector(cfg.ImageBuilderProxy.TargetAddr))))
 
-		grpcServer := grpc.NewServer(grpcOpts...)
-		defer grpcServer.Stop()
-		grpc_prometheus.Register(grpcServer)
+		//grpcServer := grpc.NewServer(grpcOpts...)
+		//defer grpcServer.Stop()
+		//grpc_prometheus.Register(grpcServer)
 
-		manager.Register(grpcServer, mgmt)
-		lis, err := net.Listen("tcp", cfg.RPCServer.Addr)
-		if err != nil {
-			log.WithError(err).WithField("addr", cfg.RPCServer.Addr).Fatal("cannot start RPC server")
-		}
+		manager.Register(srv.GRPC(), mgmt)
+		//lis, err := net.Listen("tcp", cfg.RPCServer.Addr)
+		//if err != nil {
+		//	log.WithError(err).WithField("addr", cfg.RPCServer.Addr).Fatal("cannot start RPC server")
+		//}
+
+		go func() {
+			if err := srv.ListenAndServe(); err != nil {
+				log.Log.WithError(err).Fatal("Failed to start server.")
+			}
+		}()
 		//nolint:errcheck
-		go grpcServer.Serve(lis)
-		log.WithField("addr", cfg.RPCServer.Addr).Info("started gRPC server")
 
 		monitor, err := mgmt.CreateMonitor()
 		if err != nil {
