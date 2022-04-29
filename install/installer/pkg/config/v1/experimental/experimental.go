@@ -86,30 +86,38 @@ type WebAppConfig struct {
 	UsePodAntiAffinity bool             `json:"usePodAntiAffinity"`
 }
 
+type WorkspaceDefaults struct {
+	WorkspaceImage string `json:"workspaceImage"`
+}
+
+type OAuthServer struct {
+	JWTSecret string `json:"jwtSecret"`
+}
+
+type Session struct {
+	Secret string `json:"secret"`
+}
+
+type GithubApp struct {
+	AppId           int32  `json:"appId"`
+	AuthProviderId  string `json:"authProviderId"`
+	BaseUrl         string `json:"baseUrl"`
+	CertPath        string `json:"certPath"`
+	Enabled         bool   `json:"enabled"`
+	LogLevel        string `json:"logLevel"`
+	MarketplaceName string `json:"marketplaceName"`
+	WebhookSecret   string `json:"webhookSecret"`
+	CertSecretName  string `json:"certSecretName"`
+}
+
 type ServerConfig struct {
-	WorkspaceDefaults struct {
-		WorkspaceImage string `json:"workspaceImage"`
-	} `json:"workspaceDefaults"`
-	OAuthServer struct {
-		JWTSecret string `json:"jwtSecret"`
-	} `json:"oauthServer"`
-	Session struct {
-		Secret string `json:"secret"`
-	} `json:"session"`
-	GithubApp *struct {
-		AppId           int32  `json:"appId"`
-		AuthProviderId  string `json:"authProviderId"`
-		BaseUrl         string `json:"baseUrl"`
-		CertPath        string `json:"certPath"`
-		Enabled         bool   `json:"enabled"`
-		LogLevel        string `json:"logLevel"`
-		MarketplaceName string `json:"marketplaceName"`
-		WebhookSecret   string `json:"webhookSecret"`
-		CertSecretName  string `json:"certSecretName"`
-	} `json:"githubApp"`
-	DisableDynamicAuthProviderLogin   bool     `json:"disableDynamicAuthProviderLogin"`
-	EnableLocalApp                    bool     `json:"enableLocalApp"`
-	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`
+	WorkspaceDefaults                 WorkspaceDefaults `json:"workspaceDefaults"`
+	OAuthServer                       OAuthServer       `json:"oauthServer"`
+	Session                           Session           `json:"session"`
+	GithubApp                         *GithubApp        `json:"githubApp"`
+	DisableDynamicAuthProviderLogin   bool              `json:"disableDynamicAuthProviderLogin"`
+	EnableLocalApp                    bool              `json:"enableLocalApp"`
+	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`
 }
 
 type PublicAPIConfig struct {
