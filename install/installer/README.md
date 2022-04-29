@@ -8,7 +8,7 @@
 
 # Installer
 
-The best way to get started with Gitpod
+The best way to get started with Gitpod is by using our recommended & default installation method [described in our documentation](https://www.gitpod.io/docs/self-hosted/latest/getting-started). In fact, our default installation method actually wraps this installer into a UI that helps you manage, update and configure Gitpod in a streamlined way. This document describes how to use the installer directly.
 
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/from-referrer/)
 
@@ -17,7 +17,7 @@ The best way to get started with Gitpod
 - A machine running Linux
     - MacOS and Windows are not currently supported, but may be in future
 - [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) installed
-- A [Kubernetes cluster configured](https://www.gitpod.io/docs/self-hosted/latest/installation)
+- A [Kubernetes cluster configured](https://www.gitpod.io/docs/self-hosted/latest)
 - A [TLS certificate](#tls-certificates)
 
 Or, [open a Gitpod workspace](https://gitpod.io/from-referrer/)
