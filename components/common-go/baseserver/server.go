@@ -238,20 +238,16 @@ func (s *Server) newHTTPMux() *http.ServeMux {
 }
 
 func (s *Server) initializeGRPC() error {
-	var opts []grpc.ServerOption
-
 	gitpod_grpc.SetupLogging()
 
-	unary := grpc.ChainUnaryInterceptor(
+	unary := []grpc.UnaryServerInterceptor{
 		grpc_logrus.UnaryServerInterceptor(s.Logger()),
-	)
-	stream := grpc.ChainStreamInterceptor(
+	}
+	stream := []grpc.StreamServerInterceptor{
 		grpc_logrus.StreamServerInterceptor(s.Logger()),
-	)
+	}
 
-	opts = append(opts, unary, stream)
-
-	s.grpc = grpc.NewServer(opts...)
+	s.grpc = grpc.NewServer(gitpod_grpc.ServerOptionsWithInterceptors(stream, unary)...)
 
 	return nil
 }
