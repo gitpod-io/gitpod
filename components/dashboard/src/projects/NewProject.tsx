@@ -368,9 +368,9 @@ export default function NewProject() {
                 <p className="text-gray-500 text-center text-base mt-12">
                     {loaded && noReposAvailable ? "Select account on " : "Select a Git repository on "}
                     <b>{selectedProviderHost}</b> (
-                    <a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>
+                    <button className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>
                         change
-                    </a>
+                    </button>
                     )
                 </p>
                 <div className={`mt-2 flex-col ${noReposAvailable && isGitHub() ? "w-96" : ""}`}>
@@ -493,13 +493,12 @@ export default function NewProject() {
                     <div>
                         <div className="text-gray-500 text-center w-96 mx-8">
                             Repository not found?{" "}
-                            <a
-                                href="javascript:void(0)"
+                            <button
                                 onClick={(e) => reconfigure()}
-                                className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600"
+                                className="gp-link text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600"
                             >
                                 Reconfigure
-                            </a>
+                            </button>
                         </div>
                     </div>
                 )}
