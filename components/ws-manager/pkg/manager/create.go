@@ -230,7 +230,12 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 	default:
 		prefix = "ws"
 	}
-	storageClassName := m.Config.PVC.StorageClass
+
+	PVCConfig := m.Config.WorkspaceClasses[""].PVC
+	if startContext.Class != nil {
+		PVCConfig = startContext.Class.PVC
+	}
+	storageClassName := PVCConfig.StorageClass
 	return &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
@@ -241,7 +246,7 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 			StorageClassName: &storageClassName,
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceName(corev1.ResourceStorage): m.Config.PVC.Size,
+					corev1.ResourceName(corev1.ResourceStorage): PVCConfig.Size,
 				},
 			},
 		},

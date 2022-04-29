@@ -66,13 +66,23 @@ type WorkspaceConfig struct {
 	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
 }
 
+type PersistentVolumeClaim struct {
+	// Size is a size of persistent volume claim to use
+	Size resource.Quantity `json:"size" validate:"required"`
+
+	// StorageClass is a storage class of persistent volume claim to use
+	StorageClass string `json:"storageClass"`
+}
+
 type WorkspaceClass struct {
 	Resources struct {
 		Requests corev1.ResourceList `json:"requests" validate:"required"`
 		Limits   corev1.ResourceList `json:"limits,omitempty"`
 	} `json:"resources" validate:"required"`
-	Templates WorkspaceTemplates `json:"templates,omitempty"`
+	Templates WorkspaceTemplates    `json:"templates,omitempty"`
+	PVC       PersistentVolumeClaim `json:"pvc" validate:"required"`
 }
+
 type WorkspaceTemplates struct {
 	Default    *corev1.Pod `json:"default"`
 	Prebuild   *corev1.Pod `json:"prebuild"`

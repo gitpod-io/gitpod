@@ -102,6 +102,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				Templates: tplsCfg,
+				PVC:       config.PVCConfiguration(c.PVC),
 			}
 			tpls = append(tpls, ctpls...)
 		}
