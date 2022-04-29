@@ -81,9 +81,9 @@ type WorkspaceTemplates struct {
 }
 
 type WebAppConfig struct {
-	PublicAPI      *PublicAPIConfig `json:"publicApi,omitempty"`
-	Server         *ServerConfig    `json:"server,omitempty"`
-	UsePodAffinity bool             `json:"usePodAffinity"`
+	PublicAPI          *PublicAPIConfig `json:"publicApi,omitempty"`
+	Server             *ServerConfig    `json:"server,omitempty"`
+	UsePodAntiAffinity bool             `json:"usePodAntiAffinity"`
 }
 
 type ServerConfig struct {
