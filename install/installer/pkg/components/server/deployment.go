@@ -166,7 +166,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	var podAntiAffinity *corev1.PodAntiAffinity
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.UsePodAffinity {
+		if cfg.WebApp != nil && cfg.WebApp.UsePodAntiAffinity {
 			podAntiAffinity = &corev1.PodAntiAffinity{
 				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{{
 					Weight: 100,
