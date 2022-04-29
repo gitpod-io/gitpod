@@ -104,7 +104,7 @@ pod:
       [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
       echo "[prep|DONE]"
 
-      /entrypoint.sh "${args[@]}" 2>&1 | ts "[int-tests] "
+      /entrypoint.sh "${args[@]}" 2>&1 | tee entrypoint.sh.log | ts "[int-tests] "
 
       RC=${PIPESTATUS[0]}
       context_name={{ .Name }}
@@ -112,17 +112,24 @@ pod:
       werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
 
       if [ $RC -eq 1 ]; then
-        title=":X: *Workspace integration test failure*"
-        body="Some Workspace integration test failed, please check the werf job logs and fix them"
+        title=":x: *Workspace integration test fail*"
+
+        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}\n_TestPattern_: {{ .Annotations.testPattern }}"
+        errors=$(grep "\-\-\- FAIL: " entrypoint.sh.log)
+        BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errors}\\n\`\`\`\"}}]}"
+
         echo "[int-tests|FAIL]"
       else
-        title=":white_check_mark: *Workspace integration test success*";
-        body="test success"
+        title=":white_check_mark: *Workspace integration test pass*"
+
+        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}\n_TestPattern_: {{ .Annotations.testPattern }}"
+        BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}}]}"
+
         echo "[int-tests|DONE]"
       fi
-      title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}\n_TestPattern_: {{ .Annotations.testPattern }}";
+
       curl -X POST \
           -H 'Content-type: application/json' \
-          -d "{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${body}\\n\`\`\`\"}}]}" \
+          -d "${BODY}" \
           "https://hooks.slack.com/${SLACK_NOTIFICATION_PATH}"
       exit $RC
