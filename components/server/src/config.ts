@@ -14,7 +14,7 @@ import { CodeSyncConfig } from "./code-sync/code-sync-service";
 import { ChargebeeProviderOptions, readOptionsFromFile } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 
 export const Config = Symbol("Config");
@@ -52,7 +52,6 @@ export interface ConfigSerialized {
     installationShortname: string;
     devBranch?: string;
     insecureNoDomain: boolean;
-    logLevel: LogrusLogLevel;
 
     // Use one or other - licenseFile reads from a file and populates license
     license?: string;
