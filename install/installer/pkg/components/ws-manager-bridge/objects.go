@@ -9,6 +9,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 )
 
 var Objects = common.CompositeRenderFunc(
@@ -19,6 +20,12 @@ var Objects = common.CompositeRenderFunc(
 )
 
 func WSManagerList(ctx *common.RenderContext) []WorkspaceCluster {
+	// Registering a local cluster ws-manager only makes sense when we actually deploy one,
+	// (ie when we are doing a full self hosted installation rather than a SaaS install to gitpod.io).
+	if ctx.Config.Kind != config.InstallationFull {
+		return []WorkspaceCluster{}
+	}
+
 	return []WorkspaceCluster{{
 		Name: ctx.Config.Metadata.InstallationShortname,
 		URL:  fmt.Sprintf("dns:///%s:%d", wsmanager.Component, wsmanager.RPCPort),
