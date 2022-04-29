@@ -154,7 +154,7 @@ export class UserDeletionService {
         const workspaces = await this.workspaceDb.findWorkspacesByUser(userId);
 
         await Promise.all(
-            workspaces.map((ws) => async () => {
+            workspaces.map(async (ws) => {
                 this.anonymizeWorkspace(ws);
                 await this.workspaceDb.store(ws);
             }),
