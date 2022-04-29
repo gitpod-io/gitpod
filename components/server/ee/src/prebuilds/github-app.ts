@@ -67,12 +67,14 @@ export class GithubApp {
         @inject(PrebuildStatusMaintainer) protected readonly statusMaintainer: PrebuildStatusMaintainer,
     ) {
         if (config.githubApp?.enabled) {
+            const logLevel = LogrusLogLevel.getFromEnv() ?? "info";
+
             this.server = new Server({
                 Probot: Probot.defaults({
                     appId: config.githubApp.appId,
                     privateKey: GithubApp.loadPrivateKey(config.githubApp.certPath),
                     secret: config.githubApp.webhookSecret,
-                    logLevel: GithubApp.mapToGitHubLogLevel(config.logLevel),
+                    logLevel: GithubApp.mapToGitHubLogLevel(logLevel),
                     baseUrl: config.githubApp.baseUrl,
                 }),
             });
