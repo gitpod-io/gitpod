@@ -10,6 +10,7 @@ import {
     Subscription,
     UserPaidSubscription,
     AssignedTeamSubscription,
+    AssignedTeamSubscription2,
     CreditDescription,
 } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { PlanCoupon, GithubUpgradeURL } from "@gitpod/gitpod-protocol/lib/payment-protocol";
@@ -80,16 +81,18 @@ export default function () {
     const paidSubscription = activeSubscriptions.find((s) => UserPaidSubscription.is(s));
     const paidPlan = paidSubscription && Plans.getById(paidSubscription.planId);
 
-    const assignedTeamSubscriptions = activeSubscriptions.filter((s) => AssignedTeamSubscription.is(s));
+    const assignedTeamSubscriptions = activeSubscriptions.filter(
+        (s) => AssignedTeamSubscription.is(s) || AssignedTeamSubscription2.is(s),
+    );
     const getAssignedTs = (type: PlanType) =>
         assignedTeamSubscriptions.find((s) => {
             const p = Plans.getById(s.planId);
             return !!p && p.type === type;
         });
-    const assignedProfessionalTs = getAssignedTs("professional-new");
     const assignedUnleashedTs = getAssignedTs("professional");
     const assignedStudentUnleashedTs = getAssignedTs("student");
-    const assignedTs = assignedProfessionalTs || assignedUnleashedTs || assignedStudentUnleashedTs;
+    const assignedProfessionalTs = getAssignedTs("professional-new");
+    const assignedTs = assignedUnleashedTs || assignedStudentUnleashedTs || assignedProfessionalTs;
 
     const claimedTeamSubscriptionId = new URL(window.location.href).searchParams.get("teamid");
     if (
@@ -674,7 +677,7 @@ export default function () {
                         )}
                         <p className="text-sm">
                             <a
-                                className={`text-blue-light hover:underline" ${isChargebeeCustomer ? "" : "invisible"}`}
+                                className={`gp-link ${isChargebeeCustomer ? "" : "invisible"}`}
                                 href="javascript:void(0)"
                                 onClick={() => {
                                     ChargebeeClient.getOrCreate().then((chargebeeClient) =>

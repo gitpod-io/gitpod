@@ -33,6 +33,29 @@ export namespace TeamSubscription {
     };
 }
 
+export interface TeamSubscription2 {
+    id: string;
+    teamId: string;
+    planId: string;
+    startDate: string;
+    endDate?: string;
+    quantity: number;
+    /** The Chargebee subscription id */
+    paymentReference: string;
+    cancellationDate?: string;
+}
+
+export namespace TeamSubscription2 {
+    export const create = (ts2: Omit<TeamSubscription2, "id">): TeamSubscription2 => {
+        const withId = ts2 as TeamSubscription2;
+        withId.id = uuidv4();
+        return withId;
+    };
+    export const isActive = (ts2: TeamSubscription2, date: string): boolean => {
+        return ts2.startDate <= date && (ts2.endDate === undefined || date < ts2.endDate);
+    };
+}
+
 /**
  * A slot represents one unit of a TeamSubscription that gets assigned to one user at a time
  */

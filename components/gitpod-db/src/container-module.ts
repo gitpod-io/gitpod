@@ -62,6 +62,8 @@ import { OssAllowListDB } from "./oss-allowlist-db";
 import { OssAllowListDBImpl } from "./typeorm/oss-allowlist-db-impl";
 import { TypeORMInstallationAdminImpl } from "./typeorm/installation-admin-db-impl";
 import { InstallationAdminDB } from "./installation-admin-db";
+import { TeamSubscription2DB } from "./team-subscription-2-db";
+import { TeamSubscription2DBImpl } from "./typeorm/team-subscription-2-db-impl";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -143,6 +145,7 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
         };
     });
     bind(TeamSubscriptionDB).to(TeamSubscriptionDBImpl).inSingletonScope();
+    bind(TeamSubscription2DB).to(TeamSubscription2DBImpl).inSingletonScope();
     bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
     bind(EduEmailDomainDB).to(EduEmailDomainDBImpl).inSingletonScope();
     bind(EMailDB).to(TypeORMEMailDBImpl).inSingletonScope();
