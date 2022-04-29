@@ -1,6 +1,18 @@
 # Change Log
 
 ## April 2022
+- - [devx]: Added ESLint and Prettier to the auto-installed VSCode extensions ([#9269](https://github.com/gitpod-io/gitpod/pull/9269)) - [@trumbitta](https://github.com/trumbitta)
+- - [devx]: Activated "format on save" for TypeScript and JavaScript ([#9269](https://github.com/gitpod-io/gitpod/pull/9269)) - [@trumbitta](https://github.com/trumbitta)
+- The `gp tasks attach` command now shows the Gitpod Task ID instead of the working directory of the task, to avoid duplicated items in the list of running tasks, as most of the tasks runs in the root directory of the project. ([#9620](https://github.com/gitpod-io/gitpod/pull/9620)) - [@felladrin](https://github.com/felladrin)
+- Allow resource requests and limits for each component to be configurable through the installer ([#9545](https://github.com/gitpod-io/gitpod/pull/9545)) - [@andrew-farries](https://github.com/andrew-farries)
+- [dashboard] Disable search indexing of all web app pages ([#9622](https://github.com/gitpod-io/gitpod/pull/9622)) - [@jankeromnes](https://github.com/jankeromnes)
+- Support custom CA certs for SCM systems ([#9613](https://github.com/gitpod-io/gitpod/pull/9613)) - [@csweichel](https://github.com/csweichel)
+- [registry-facade] Improve redis error messages ([#9616](https://github.com/gitpod-io/gitpod/pull/9616)) - [@aledbf](https://github.com/aledbf)
+- Fix public-api codegeneration. ([#9605](https://github.com/gitpod-io/gitpod/pull/9605)) - [@easyCZ](https://github.com/easyCZ)
+- Improved security by removing unneeded privileges from the server component. ([#9614](https://github.com/gitpod-io/gitpod/pull/9614)) - [@meysholdt](https://github.com/meysholdt)
+- [server] reduce project inactivity time to 1 week (was 10) ([#9608](https://github.com/gitpod-io/gitpod/pull/9608)) - [@svenefftinge](https://github.com/svenefftinge)
+- Prompt first-time users to choose their default IDE ([#9432](https://github.com/gitpod-io/gitpod/pull/9432)) - [@mustard-mh](https://github.com/mustard-mh)
+- Fix 'last backup failed: workspace does not exist.' error when shutting down workspace ([#9600](https://github.com/gitpod-io/gitpod/pull/9600)) - [@sagor999](https://github.com/sagor999)
 - [kots]: fix typo in CA cert extract command ([#9580](https://github.com/gitpod-io/gitpod/pull/9580)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Update the error message when you run out of workspace credits. ([#9370](https://github.com/gitpod-io/gitpod/pull/9370)) - [@Harry-Hopkinson](https://github.com/Harry-Hopkinson)
 - [supervisor] Do not report error when the process is terminated ([#9572](https://github.com/gitpod-io/gitpod/pull/9572)) - [@aledbf](https://github.com/aledbf)
