@@ -41,7 +41,7 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 👯‍♀️ [Collaboration](https://www.gitpod.io/docs/sharing-and-collaboration/) - invite team members to your dev environment or snapshot any state of your dev environment to share it with your team asynchronously.
 
-🛠 Professional & customizable developer experience - a Gitpod workspace gives you the same capabilities (yes, even [root & docker](https://www.gitpod.io/docs/feature-preview/#root-access)) as your Linux machine - pre-configured and optimized for your individual development workflow. Install any [VS Code extension](https://www.gitpod.io/docs/vscode-extensions/) with one click on a user and/or team level.
+🛠 Professional & customizable developer experience - a Gitpod workspace gives you the same capabilities (yes, even [root & docker](https://www.gitpod.io/docs/config-docker#configure-a-custom-dockerfile)) as your Linux machine - pre-configured and optimized for your individual development workflow. Install any [VS Code extension](https://www.gitpod.io/docs/vscode-extensions/) with one click on a user and/or team level.
 
 [Learn more 👉](https://www.gitpod.io/)
 
