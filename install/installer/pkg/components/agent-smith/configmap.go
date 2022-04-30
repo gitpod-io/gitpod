@@ -7,15 +7,12 @@ package agentsmith
 import (
 	"encoding/base64"
 	"fmt"
-	"time"
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
-	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -34,17 +31,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Pattern: []byte(base64.StdEncoding.EncodeToString([]byte("agentSmithTestTarget"))),
 						Regexp:  false,
 					}},
-				},
-			},
-			EgressTraffic: &config.EgressTraffic{
-				WindowDuration: util.Duration(time.Minute * 2),
-				ExcessiveLevel: &config.PerLevelEgressTraffic{
-					BaseBudget: resource.MustParse("300Mi"),
-					Threshold:  resource.MustParse("100Mi"),
-				},
-				VeryExcessiveLevel: &config.PerLevelEgressTraffic{
-					BaseBudget: resource.MustParse("2Gi"),
-					Threshold:  resource.MustParse("250Mi"),
 				},
 			},
 			Kubernetes: config.Kubernetes{Enabled: true},

@@ -8,11 +8,17 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/xerrors"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/utils/lru"
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
@@ -20,13 +26,6 @@ import (
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/detector"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/xerrors"
-
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/utils/lru"
 )
 
 const (
@@ -42,9 +41,8 @@ type Smith struct {
 	Kubernetes       kubernetes.Interface
 	metrics          *metrics
 
-	egressTrafficCheckHandler func(pid int) (int64, error)
-	timeElapsedHandler        func(t time.Time) time.Duration
-	notifiedInfringements     *lru.Cache
+	timeElapsedHandler    func(t time.Time) time.Duration
+	notifiedInfringements *lru.Cache
 
 	detector   detector.ProcessDetector
 	classifier classifier.ProcessClassifier
@@ -112,10 +110,9 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 	res := &Smith{
 		EnforcementRules: map[string]config.EnforcementRules{
 			defaultRuleset: {
-				config.GradeKind(config.InfringementExec, common.SeverityBarely):          config.PenaltyLimitCPU,
-				config.GradeKind(config.InfringementExec, common.SeverityAudit):           config.PenaltyStopWorkspace,
-				config.GradeKind(config.InfringementExec, common.SeverityVery):            config.PenaltyStopWorkspaceAndBlockUser,
-				config.GradeKind(config.InfringementExcessiveEgress, common.SeverityVery): config.PenaltyStopWorkspace,
+				config.GradeKind(config.InfringementExec, common.SeverityBarely): config.PenaltyLimitCPU,
+				config.GradeKind(config.InfringementExec, common.SeverityAudit):  config.PenaltyStopWorkspace,
+				config.GradeKind(config.InfringementExec, common.SeverityVery):   config.PenaltyStopWorkspaceAndBlockUser,
 			},
 		},
 		Config:     cfg,
@@ -125,10 +122,9 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 		detector:   detec,
 		classifier: class,
 
-		notifiedInfringements:     lru.New(notificationCacheSize),
-		metrics:                   m,
-		egressTrafficCheckHandler: getEgressTraffic,
-		timeElapsedHandler:        time.Since,
+		notifiedInfringements: lru.New(notificationCacheSize),
+		metrics:               m,
+		timeElapsedHandler:    time.Since,
 	}
 	if cfg.Enforcement.Default != nil {
 		if err := cfg.Enforcement.Default.Validate(); err != nil {
@@ -239,40 +235,6 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 			}
 		}()
 	}
-
-	egressTicker := time.NewTicker(2 * time.Minute)
-
-	go func() {
-		for {
-			<-egressTicker.C
-			wsMutex.Lock()
-			for pid, ws := range workspaces {
-				// check if the workspace is already stopped
-				fi, err := os.Stat(fmt.Sprintf("/proc/%d", pid))
-				if err != nil {
-					if os.IsNotExist(err) {
-						log.Debugf("deleting workspace with pid %d and workspaceId %s from workspaces", pid, ws.WorkspaceID)
-						delete(workspaces, pid)
-					} else {
-						log.WithError(err).WithFields(log.OWI(ws.OwnerID, ws.WorkspaceID, ws.InstanceID)).Error("could not stat workspace, stale entries will continue to exist in workspaces state")
-					}
-					continue
-				}
-				infringement, err := agent.checkEgressTrafficCallback(pid, fi.ModTime())
-				if err != nil {
-					log.WithError(err).WithFields(log.OWI(ws.OwnerID, ws.WorkspaceID, ws.InstanceID)).Error("error calling checkEgressTrafficCallback")
-					continue
-				}
-				if infringement != nil {
-					log.WithFields(log.OWI(ws.OwnerID, ws.WorkspaceID, ws.InstanceID)).Info("found egress infringing workspace")
-					// monitor metric here, as we are not penalizing workspaces yet
-					agent.metrics.egressViolations.WithLabelValues(string(infringement.Kind)).Inc()
-				}
-
-			}
-			wsMutex.Unlock()
-		}
-	}()
 
 	defer log.Info("agent smith main loop ended")
 
@@ -428,46 +390,4 @@ func (agent *Smith) Collect(m chan<- prometheus.Metric) {
 	agent.metrics.Collect(m)
 	agent.classifier.Collect(m)
 	agent.detector.Collect(m)
-}
-
-func (agent *Smith) checkEgressTrafficCallback(pid int, pidCreationTime time.Time) (*Infringement, error) {
-	if agent.Config.EgressTraffic == nil {
-		return nil, nil
-	}
-
-	podLifetime := agent.timeElapsedHandler(pidCreationTime)
-	resp, err := agent.egressTrafficCheckHandler(pid)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debugf("total egress bytes %d", resp)
-	if resp <= 0 {
-		log.WithField("total egress bytes", resp).Warn("GetEgressTraffic returned <= 0 value")
-		return nil, nil
-	}
-
-	type level struct {
-		V config.GradedInfringementKind
-		T *config.PerLevelEgressTraffic
-	}
-	levels := make([]level, 0, 2)
-	if agent.Config.EgressTraffic.VeryExcessiveLevel != nil {
-		levels = append(levels, level{V: config.GradeKind(config.InfringementExcessiveEgress, common.SeverityVery), T: agent.Config.EgressTraffic.VeryExcessiveLevel})
-	}
-	if agent.Config.EgressTraffic.ExcessiveLevel != nil {
-		levels = append(levels, level{V: config.GradeKind(config.InfringementExcessiveEgress, common.SeverityAudit), T: agent.Config.EgressTraffic.ExcessiveLevel})
-	}
-
-	dt := int64(podLifetime / time.Duration(agent.Config.EgressTraffic.WindowDuration))
-	for _, lvl := range levels {
-		allowance := dt*lvl.T.Threshold.Value() + lvl.T.BaseBudget.Value()
-		excess := resp - allowance
-
-		if excess > 0 {
-			return &Infringement{Description: fmt.Sprintf("egress traffic is %.3f megabytes over limit", float64(excess)/(1024.0*1024.0)), Kind: lvl.V}, nil
-		}
-	}
-
-	return nil, nil
 }
