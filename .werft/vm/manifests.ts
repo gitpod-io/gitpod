@@ -1,25 +1,32 @@
+import * as fs from "fs";
+
 type NamespaceManifestOptions = {
-  namespace: string
-}
+    namespace: string;
+};
 
 export function NamespaceManifest({ namespace }: NamespaceManifestOptions) {
-  return `
+    return `
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ${namespace}
-`
+`;
 }
 
 type VirtualMachineManifestArguments = {
-  vmName: string
-  namespace: string
-  claimName: string
-  userDataSecretName: string
-}
+    vmName: string;
+    namespace: string;
+    claimName: string;
+    userDataSecretName: string;
+};
 
-export function VirtualMachineManifest({ vmName, namespace, claimName, userDataSecretName }: VirtualMachineManifestArguments) {
-  return `
+export function VirtualMachineManifest({
+    vmName,
+    namespace,
+    claimName,
+    userDataSecretName,
+}: VirtualMachineManifestArguments) {
+    return `
 apiVersion: kubevirt.io/v1
 type: kubevirt.io.virtualmachine
 kind: VirtualMachine
@@ -89,16 +96,16 @@ spec:
             secretRef:
               name: ${userDataSecretName}
 
-`
+`;
 }
 
 type ServiceManifestOptions = {
-  vmName: string
-  namespace: string
-}
+    vmName: string;
+    namespace: string;
+};
 
 export function ServiceManifest({ vmName, namespace }: ServiceManifestOptions) {
-  return `
+    return `
 apiVersion: v1
 kind: Service
 metadata:
@@ -137,12 +144,12 @@ spec:
   selector:
     harvesterhci.io/vmName: ${vmName}
   type: ClusterIP
-`
+`;
 }
 
 type LBServiceManifestOptions = {
-  name: string
-}
+    name: string;
+};
 
 export function LBServiceManifest({ name }: LBServiceManifestOptions) {
     return `
@@ -164,15 +171,15 @@ spec:
   selector:
     gitpod.io/lbName: ${name}
   type: LoadBalancer
-  `
+  `;
 }
 
 type LBDeployManifestOptions = {
-  name: string
-}
+    name: string;
+};
 
 export function LBDeployManifest({ name }: LBDeployManifestOptions) {
-  return `
+    return `
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -216,17 +223,20 @@ spec:
               mountPath: /mnt/kubeconfig/
       serviceAccount: proxy
       enableServiceLinks: false
-`
+`;
 }
 
 type UserDataSecretManifestOptions = {
-  vmName: string
-  namespace: string,
-  secretName: string
-}
+    vmName: string;
+    namespace: string;
+    secretName: string;
+};
 
 export function UserDataSecretManifest({ vmName, namespace, secretName }: UserDataSecretManifestOptions) {
-  const userdata = Buffer.from(`#cloud-config
+    const dockerhubUser = fs.readFileSync("/mnt/secrets/harvester-k3s-dockerhub-pull-account/username").toString();
+    const dockerhubPasswd = fs.readFileSync("/mnt/secrets/harvester-k3s-dockerhub-pull-account/password").toString();
+    const userdata = Buffer.from(
+        `#cloud-config
 users:
 - name: ubuntu
   sudo: "ALL=(ALL) NOPASSWD: ALL"
@@ -255,6 +265,7 @@ write_files:
     permission: 0644
     owner: root
     content: 'Port 2200'
+
   - path: /usr/local/bin/bootstrap-k3s.sh
     permissions: 0744
     owner: root
@@ -262,6 +273,13 @@ write_files:
       #!/bin/bash
 
       set -eo pipefail
+
+      cat <<EOF >> /etc/containerd/config.toml
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-1.docker.io".auth]
+        username = "${dockerhubUser}"
+        password = "${dockerhubPasswd}"
+      EOF
+      sudo systemctl restart containerd.service
 
       # inspired by https://github.com/gitpod-io/ops/blob/main/deploy/workspace/templates/bootstrap.sh
 
@@ -312,8 +330,9 @@ write_files:
       EOF
 runcmd:
  - bash /etc/disable-services.sh
- - bash /usr/local/bin/bootstrap-k3s.sh`).toString("base64")
-  return `
+ - bash /usr/local/bin/bootstrap-k3s.sh`,
+    ).toString("base64");
+    return `
 apiVersion: v1
 type: secret
 kind: Secret
@@ -323,5 +342,5 @@ data:
 metadata:
   name: ${secretName}
   namespace: ${namespace}
-`
+`;
 }
