@@ -7,6 +7,7 @@ package workspace
 import (
 	"context"
 	"net/rpc"
+	"os"
 	"testing"
 	"time"
 
@@ -30,7 +31,10 @@ type GitTest struct {
 type GitFunc func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) error
 
 func TestGitActions(t *testing.T) {
+	userToken, _ := os.LookupEnv("USER_TOKEN")
 	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+
 	tests := []GitTest{
 		{
 			Name:          "create, add and commit",
@@ -107,6 +111,11 @@ func TestGitActions(t *testing.T) {
 			t.Cleanup(func() {
 				api.Done(t)
 			})
+
+			_, err := api.CreateUser(username, userToken)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			for _, test := range tests {
 				t.Run(test.ContextURL, func(t *testing.T) {
