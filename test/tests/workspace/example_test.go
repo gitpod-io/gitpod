@@ -6,6 +6,7 @@ package workspace
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -17,7 +18,10 @@ import (
 )
 
 func TestWorkspaceInstrumentation(t *testing.T) {
+	userToken, _ := os.LookupEnv("USER_TOKEN")
 	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+
 	f := features.New("instrumentation").
 		WithLabel("component", "server").
 		Assess("it can instrument a workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -28,6 +32,11 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 			t.Cleanup(func() {
 				api.Done(t)
 			})
+
+			_, err := api.CreateUser(username, userToken)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/gitpod-io/gitpod", username, api)
 			if err != nil {

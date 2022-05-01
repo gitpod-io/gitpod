@@ -7,6 +7,7 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -94,7 +95,10 @@ func TestGitLabContexts(t *testing.T) {
 }
 
 func runContextTests(t *testing.T, tests []ContextTest) {
+	userToken, _ := os.LookupEnv("USER_TOKEN")
 	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+
 	f := features.New("context").
 		WithLabel("component", "server").
 		Assess("should run context tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -113,6 +117,11 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 					t.Cleanup(func() {
 						api.Done(t)
 					})
+
+					_, err := api.CreateUser(username, userToken)
+					if err != nil {
+						t.Fatal(err)
+					}
 
 					nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
 					if err != nil {
