@@ -98,7 +98,8 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     if (repository.branch.startsWith(refsPrefix)) {
         repository.branch = repository.branch.substring(refsPrefix.length);
     }
-    const withVM = ("with-vm" in buildConfig || repository.branch.includes("with-vm")) && !mainBuild;
+    const withoutVM = "without-vm" in buildConfig;
+    const withVM = !withoutVM || mainBuild;
 
     const previewName = previewNameFromBranchName(repository.branch)
     const previewEnvironmentNamespace = withVM ? `default` : `staging-${previewName}`;
