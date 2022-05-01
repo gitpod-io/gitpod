@@ -1,6 +1,12 @@
 # Change Log
 
 ## April 2022
+- supervisor: Remove slirp4netns ([#9213](https://github.com/gitpod-io/gitpod/pull/9213)) - [@utam0k](https://github.com/utam0k)
+- Refactor backups ([#9589](https://github.com/gitpod-io/gitpod/pull/9589)) - [@aledbf](https://github.com/aledbf)
+- Allow `disableDynamicAuthProviderLogin`, `enableLocalApp` and `defaultBaseImageRegistryWhitelist` server config to be configurable via the installer ([#9630](https://github.com/gitpod-io/gitpod/pull/9630)) - [@andrew-farries](https://github.com/andrew-farries)
+- [ws-manager-bridge] Add health metrics to grafana dashboard ([#9584](https://github.com/gitpod-io/gitpod/pull/9584)) - [@easyCZ](https://github.com/easyCZ)
+- [ws-manager] Support more fine-grained rate limits ([#9547](https://github.com/gitpod-io/gitpod/pull/9547)) - [@csweichel](https://github.com/csweichel)
+- [ws-manager] Add support for workspace classes ([#9238](https://github.com/gitpod-io/gitpod/pull/9238)) - [@csweichel](https://github.com/csweichel)
 - - [devx]: Added ESLint and Prettier to the auto-installed VSCode extensions ([#9269](https://github.com/gitpod-io/gitpod/pull/9269)) - [@trumbitta](https://github.com/trumbitta)
 - - [devx]: Activated "format on save" for TypeScript and JavaScript ([#9269](https://github.com/gitpod-io/gitpod/pull/9269)) - [@trumbitta](https://github.com/trumbitta)
 - The `gp tasks attach` command now shows the Gitpod Task ID instead of the working directory of the task, to avoid duplicated items in the list of running tasks, as most of the tasks runs in the root directory of the project. ([#9620](https://github.com/gitpod-io/gitpod/pull/9620)) - [@felladrin](https://github.com/felladrin)
