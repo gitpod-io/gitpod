@@ -35,7 +35,7 @@ func Read(fn string) (*Config, error) {
 	dec.DisallowUnknownFields()
 	err = dec.Decode(&cfg)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot parse config file: %w")
+		return nil, xerrors.Errorf("cannot parse config file: %w", err)
 	}
 
 	return &cfg, nil
