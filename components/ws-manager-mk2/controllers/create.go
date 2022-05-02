@@ -59,18 +59,23 @@ type startWorkspaceContext struct {
 // createWorkspacePod creates the actual workspace pod based on the definite workspace pod and appropriate
 // templates. The result of this function is not expected to be modified prior to being passed to Kubernetes.
 func (r *WorkspaceReconciler) createWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error) {
-	podTemplate, err := config.GetWorkspacePodTemplate(sctx.Config.WorkspacePodTemplate.DefaultPath)
+	class, ok := sctx.Config.WorkspaceClasses[sctx.Workspace.Spec.Class]
+	if !ok {
+		return nil, xerrors.Errorf("unknown workspace class: %s", sctx.Workspace.Spec.Class)
+	}
+
+	podTemplate, err := config.GetWorkspacePodTemplate(class.Templates.DefaultPath)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read pod template - this is a configuration problem: %w", err)
 	}
 	var typeSpecificTpl *corev1.Pod
 	switch sctx.Workspace.Spec.Type {
 	case workspacev1.WorkspaceTypeRegular:
-		typeSpecificTpl, err = config.GetWorkspacePodTemplate(sctx.Config.WorkspacePodTemplate.RegularPath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(class.Templates.RegularPath)
 	case workspacev1.WorkspaceTypePrebuild:
-		typeSpecificTpl, err = config.GetWorkspacePodTemplate(sctx.Config.WorkspacePodTemplate.PrebuildPath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(class.Templates.PrebuildPath)
 	case workspacev1.WorkspaceTypeImageBuild:
-		typeSpecificTpl, err = config.GetWorkspacePodTemplate(sctx.Config.WorkspacePodTemplate.ImagebuildPath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(class.Templates.ImagebuildPath)
 	}
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read type-specific pod template - this is a configuration problem: %w", err)
@@ -436,11 +441,16 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 }
 
 func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, error) {
-	limits, err := sctx.Config.Container.Workspace.Limits.ResourceList()
+	class, ok := sctx.Config.WorkspaceClasses[sctx.Workspace.Spec.Class]
+	if !ok {
+		return nil, xerrors.Errorf("unknown workspace class: %s", sctx.Workspace.Spec.Class)
+	}
+
+	limits, err := class.Container.Limits.ResourceList()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot parse workspace container limits: %w", err)
 	}
-	requests, err := sctx.Config.Container.Workspace.Requests.ResourceList()
+	requests, err := class.Container.Requests.ResourceList()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot parse workspace container requests: %w", err)
 	}
@@ -510,6 +520,11 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 }
 
 func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, error) {
+	class, ok := sctx.Config.WorkspaceClasses[sctx.Workspace.Spec.Class]
+	if !ok {
+		return nil, xerrors.Errorf("unknown workspace class: %s", sctx.Workspace.Spec.Class)
+	}
+
 	getWorkspaceRelativePath := func(segment string) string {
 		// ensure we do not produce nested paths for the default workspace location
 		return filepath.Join("/workspace", strings.TrimPrefix(segment, "/workspace"))
@@ -564,7 +579,7 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	heartbeatInterval := time.Duration(sctx.Config.HeartbeatInterval)
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INTERVAL", Value: fmt.Sprintf("%d", int64(heartbeatInterval/time.Millisecond))})
 
-	res, err := sctx.Config.Container.Workspace.Requests.ResourceList()
+	res, err := class.Container.Requests.ResourceList()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create environment: %w", err)
 	}

@@ -46,6 +46,8 @@ spec:
                 required:
                 - level
                 type: object
+              class:
+                type: string
               envvars:
                 items:
                   description: EnvVar represents an environment variable present in
@@ -229,6 +231,7 @@ spec:
                 type: string
             required:
             - admission
+            - class
             - image
             - initializer
             - ownership
@@ -239,8 +242,6 @@ spec:
           status:
             description: WorkspaceStatus defines the observed state of Workspace
             properties:
-              available:
-                type: boolean
               conditions:
                 properties:
                   deployed:
@@ -357,7 +358,6 @@ spec:
               url:
                 type: string
             required:
-            - available
             - headless
             - podStarts
             type: object
