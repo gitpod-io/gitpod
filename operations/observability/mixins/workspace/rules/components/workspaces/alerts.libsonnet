@@ -104,6 +104,36 @@
               rate(gitpod_ws_manager_workspace_startup_seconds_sum{type="REGULAR"}[1m]) == 0
             |||,
           },
+          {
+            alert: 'GitpodTooManyWorkspacesInPending',
+            labels: {
+              severity: 'critical',
+            },
+            'for': '15m',
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodTooManyWorkspacesInPending.md',
+              summary: 'workspaces are in pending phase',
+              description: 'regular workspaces are stuck in pending phase',
+            },
+            expr: |||
+              gitpod_ws_manager_workspace_phase_total{phase="PENDING", type="REGULAR"} > 20
+            |||,
+          },
+          {
+            alert: 'GitpodTooManyPrebuildsInPending',
+            labels: {
+              severity: 'critical',
+            },
+            'for': '15m',
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodTooManyPrebuildsInPending.md',
+              summary: 'workspaces are in pending phase',
+              description: 'prebuilds are stuck in pending phase',
+            },
+            expr: |||
+              gitpod_ws_manager_workspace_phase_total{phase="PENDING", type="PREBUILD"} > 20
+            |||,
+          },
         ],
       },
     ],
