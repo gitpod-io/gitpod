@@ -24,6 +24,8 @@ COPY --from=dl /dl/runc.amd64 /usr/bin/runc
 RUN addgroup -g 33333 gitpod \
     && adduser -D -h /home/gitpod -s /bin/sh -u 33333 -G gitpod gitpod \
     && echo "gitpod:gitpod" | chpasswd
+# Add gitpodmp user for operations in the mapped UID/GID space
+RUN echo "gitpodmp:x:133332:133332::/home/gitpod:/bin/bash" >> /etc/passwd
 
 COPY components-ws-daemon--app/ws-daemon /app/ws-daemond
 COPY components-ws-daemon--content-initializer/ws-daemon /app/content-initializer
