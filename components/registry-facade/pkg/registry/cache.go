@@ -84,7 +84,6 @@ func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, conte
 		options.Unixfs.CidVersion(1),
 		options.Unixfs.RawLeaves(true),
 		options.Unixfs.FsCache(true),
-		options.Unixfs.Nocopy(true), //add the file using filestore
 	}
 
 	p, err := store.IPFS.Unixfs().Add(ctx, files.NewReaderFile(content), opts...)
