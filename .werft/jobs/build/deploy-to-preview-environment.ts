@@ -142,7 +142,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
 
         try {
             werft.log(vmSlices.COPY_CERT_MANAGER_RESOURCES, 'Copy over CertManager resources from core-dev')
-            installMetaCertificates(werft, jobConfig.repository.branch, withVM, 'default', PREVIEW_K3S_KUBECONFIG_PATH, vmSlices.COPY_CERT_MANAGER_RESOURCES)
+            await installMetaCertificates(werft, jobConfig.repository.branch, withVM, 'default', PREVIEW_K3S_KUBECONFIG_PATH, vmSlices.COPY_CERT_MANAGER_RESOURCES)
             werft.done(vmSlices.COPY_CERT_MANAGER_RESOURCES)
         } catch (err) {
             if (!jobConfig.mainBuild) {

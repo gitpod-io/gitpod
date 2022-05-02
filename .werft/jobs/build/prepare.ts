@@ -6,7 +6,6 @@ import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECO
 import { issueMetaCerts } from './deploy-to-preview-environment';
 import { JobConfig } from './job-config';
 import * as Manifests from '../../vm/manifests';
-import { sleep } from '../../util/util';
 
 const phaseName = "prepare";
 const prepareSlices = {
@@ -24,7 +23,7 @@ export async function prepare(werft: Werft, config: JobConfig) {
         configureStaticClustersAccess()
         werft.done(prepareSlices.CONFIGURE_CORE_DEV)
 
-        issueCertificate(werft, config)
+        await issueCertificate(werft, config)
         decideHarvesterVMCreation(werft, config)
     } catch (err) {
         werft.fail(phaseName, err);
@@ -62,12 +61,12 @@ function configureStaticClustersAccess() {
     }
 }
 
-function issueCertificate(werft: Werft, config: JobConfig) {
+async function issueCertificate(werft: Werft, config: JobConfig) {
     const certName = config.withVM ? `harvester-${previewNameFromBranchName(config.repository.branch)}` : `staging-${previewNameFromBranchName(config.repository.branch)}`
     const domain = config.withVM ? `${config.previewEnvironment.destname}.preview.gitpod-dev.com` : `${config.previewEnvironment.destname}.staging.gitpod-dev.com`;
 
     werft.log(prepareSlices.ISSUE_CERTIFICATES, prepareSlices.ISSUE_CERTIFICATES)
-    issueMetaCerts(werft, certName, "certs", domain, config.withVM, prepareSlices.ISSUE_CERTIFICATES)
+    await issueMetaCerts(werft, certName, "certs", domain, config.withVM, prepareSlices.ISSUE_CERTIFICATES)
     werft.done(prepareSlices.ISSUE_CERTIFICATES)
 }
 
