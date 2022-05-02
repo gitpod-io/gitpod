@@ -98,9 +98,6 @@ flags:
   dev-poolkeeper-app:
     paths:
       - dev/poolkeeper/
-  dev-sweeper-app:
-    paths:
-      - dev/sweeper/
   dev-version-manifest-app:
     paths:
       - dev/version-manifest/

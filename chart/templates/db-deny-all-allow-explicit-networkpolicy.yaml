@@ -52,9 +52,4 @@ spec:
         matchLabels:
           app: {{ template "gitpod.fullname" . }}
           component: postman
-    {{ if eq .Values.installation.stage "devstaging" -}}
-    - podSelector:
-        matchLabels:
-          app: sweeper
-    {{- end -}}
 {{- end -}}
