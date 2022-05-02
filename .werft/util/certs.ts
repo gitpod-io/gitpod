@@ -1,5 +1,4 @@
 import { exec, ExecOptions } from './shell';
-import { sleep } from './util';
 import * as path from 'path';
 import { CORE_DEV_KUBECONFIG_PATH } from '../jobs/build/const';
 import { Werft } from './werft';
@@ -33,13 +32,9 @@ export async function issueCertificate(werft, params: IssueCertificateParams, sh
         subdomains.push(sd);
     }
 
-    try {
-        exec(`echo "Domain: ${params.domain}, Subdomains: ${subdomains}"`, {slice: shellOpts.slice})
-        validateSubdomains(params.domain, subdomains)
-        createCertificateResource(werft, shellOpts, params, subdomains)
-    } catch (err) {
-        throw new Error(err)
-    }
+    exec(`echo "Domain: ${params.domain}, Subdomains: ${subdomains}"`, {slice: shellOpts.slice})
+    validateSubdomains(params.domain, subdomains)
+    createCertificateResource(werft, shellOpts, params, subdomains)
 }
 
 function validateSubdomains(domain: string, subdomains: string[]): void {
@@ -70,17 +65,13 @@ function createCertificateResource(werft: Werft, shellOpts: ExecOptions, params:
     const rc = exec(cmd, { slice: shellOpts.slice }).code
 
     if (rc != 0) {
-        throw new Error("Failed to create the certificate Custom Resource")
+        werft.fail(shellOpts.slice, "Failed to create the certificate Custom Resource")
     }
 }
 
 export async function installCertificate(werft, params: InstallCertificateParams, shellOpts: ExecOptions) {
-    try {
-        waitForCertificateReadiness(werft, params.certName, shellOpts.slice)
-        copyCachedSecret(werft, params, shellOpts.slice)
-    } catch (err) {
-        throw err
-    }
+    waitForCertificateReadiness(werft, params.certName, shellOpts.slice)
+    copyCachedSecret(werft, params, shellOpts.slice)
 }
 
 function waitForCertificateReadiness(werft: Werft, certName: string, slice: string) {
@@ -89,7 +80,7 @@ function waitForCertificateReadiness(werft: Werft, certName: string, slice: stri
     const rc = exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`).code
 
     if (rc != 0) {
-        throw new Error(`Timeout while waiting for certificate readiness after ${timeout}`)
+        werft.fail(slice, `Timeout while waiting for certificate readiness after ${timeout}`)
     }
 }
 
@@ -106,6 +97,6 @@ function copyCachedSecret(werft: Werft, params: InstallCertificateParams, slice:
     const rc = exec(cmd, { slice: slice }).code;
 
     if (rc != 0) {
-        throw new Error(`Failed to copy certificate. Destination namespace: ${params.destinationNamespace}. Destination Kubeconfig: ${params.destinationKubeconfig}`)
+        werft.fail(slice, `Failed to copy certificate. Destination namespace: ${params.destinationNamespace}. Destination Kubeconfig: ${params.destinationKubeconfig}`)
     }
 }
