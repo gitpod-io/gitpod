@@ -47,3 +47,32 @@ export function reportBuildFailureInSlack(context, err: Error): Promise<void> {
         req.end();
     })
 }
+
+export function reportCertificateError(options: { certificateName: string }): Promise<void> {
+    const data = JSON.stringify({
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": `A build failed because the certificate ${options.certificateName} never reached the Ready state. @team-platform please investigate :hug:`
+                },
+            },
+        ]
+    });
+    return new Promise((resolve, reject) => {
+        const req = https.request({
+            hostname: "hooks.slack.com",
+            port: 443,
+            path: process.env.SLACK_NOTIFICATION_PATH.trim(),
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': data.length,
+            }
+        }, () => resolve());
+        req.on('error', (error: Error) => reject(error))
+        req.write(data);
+        req.end();
+    })
+}
