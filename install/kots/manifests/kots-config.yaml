@@ -33,6 +33,39 @@ spec:
           help_text: You may either use an in-cluster container registry or configure your own external container registry for better performance. This container registry must be accessible from your Kubernetes cluster.
           recommended: false
 
+        - name: reg_incluster_storage
+          title: In-cluster Storage provider
+          type: select_one
+          when: '{{repl (ConfigOptionEquals "reg_incluster" "1") }}'
+          default: none
+          help_text: You may configure your Docker registry to use an external storage backend. This setting is recommended for AWS users instead of using Elastic Container Registry.
+          items:
+            - name: none
+              title: None
+            - name: s3
+              title: S3
+
+        - name: reg_incluster_storage_s3_bucketname
+          title: S3 bucket name
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          help_text: The name of the bucket to act as your S3 storage backend.
+
+        - name: reg_incluster_storage_s3_accesskey
+          title: S3 access key
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          help_text: The access key to use for authentication of your S3 storage backend.
+
+        - name: reg_incluster_storage_s3_secretkey
+          title: S3 secret key
+          type: password
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          required: true
+          help_text: The secret key to use for authentication of your S3 storage backend.
+
         - name: reg_url
           title: Container registry URL
           type: text
@@ -59,34 +92,6 @@ spec:
           when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") }}'
           required: true
           help_text: The password for your container registry.
-
-        - name: reg_s3storage
-          title: Use S3 storage for your container registry
-          type: bool
-          default: "0"
-          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") }}'
-          help_text: If using AWS as your container registry, you must configure an S3 storage backend.
-
-        - name: reg_bucketname
-          title: S3 bucket name
-          type: text
-          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
-          required: true
-          help_text: The name of the bucket to act as your S3 storage backend.
-
-        - name: reg_accesskey
-          title: S3 access key
-          type: text
-          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
-          required: true
-          help_text: The access key to use for authentication of your S3 storage backend.
-
-        - name: reg_secretkey
-          title: S3 secret key
-          type: password
-          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
-          required: true
-          help_text: The secret key to use for authentication of your S3 storage backend.
 
     - name: database
       title: Database
