@@ -934,6 +934,7 @@ func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (deskt
 	if ide == DesktopIDE {
 		defaultProbePort = desktopIDEPort
 	}
+
 	switch ideConfig.ReadinessProbe.Type {
 	case ReadinessProcessProbe:
 		return
@@ -944,46 +945,60 @@ func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (deskt
 			host   = defaultIfEmpty(ideConfig.ReadinessProbe.HTTPProbe.Host, "localhost")
 			port   = defaultIfZero(ideConfig.ReadinessProbe.HTTPProbe.Port, defaultProbePort)
 			url    = fmt.Sprintf("%s://%s:%d/%s", schema, host, port, strings.TrimPrefix(ideConfig.ReadinessProbe.HTTPProbe.Path, "/"))
-			client = http.Client{Timeout: 1 * time.Second}
-			tick   = time.NewTicker(500 * time.Millisecond)
 		)
-		defer tick.Stop()
 
 		t0 := time.Now()
 
-		for {
-			<-tick.C
-
-			resp, err := client.Get(url)
+		var body []byte
+		for range time.Tick(250 * time.Millisecond) {
+			var err error
+			body, err = ideStatusRequest(url)
 			if err != nil {
+				log.WithField("ide", ide.String()).WithError(err).Debug("Error running IDE readiness probe")
 				continue
 			}
-			defer resp.Body.Close()
 
-			if resp.StatusCode == http.StatusOK {
-				log.WithField("ide", ide.String()).WithField("status", resp.StatusCode).Infof("IDE readiness took %.3f seconds", time.Since(t0).Seconds())
-
-				if ide == DesktopIDE {
-					bodyBytes, err := ioutil.ReadAll(resp.Body)
-					log.WithField("ide", ide.String()).Infof("IDE status probe body: %s", string(bodyBytes))
-					if err != nil {
-						log.WithField("ide", ide.String()).WithError(err).Infof("Error reading response body from IDE status probe.")
-						break
-					}
-					err = json.Unmarshal(bodyBytes, &desktopIDEStatus)
-					if err != nil {
-						log.WithField("ide", ide.String()).WithError(err).WithField("body", bodyBytes).Debugf("Error parsing JSON body from IDE status probe.")
-						break
-					}
-					log.WithField("ide", ide.String()).Infof("Desktop IDE status: %s", desktopIDEStatus)
-				}
-				break
-			}
-
-			log.WithField("ide", ide.String()).WithField("status", resp.StatusCode).Info("IDE readiness probe came back with non-200 status code")
+			break
 		}
+
+		log.WithField("ide", ide.String()).Infof("IDE readiness took %.3f seconds", time.Since(t0).Seconds())
+
+		if ide != DesktopIDE {
+			return
+		}
+
+		err := json.Unmarshal(body, &desktopIDEStatus)
+		if err != nil {
+			log.WithField("ide", ide.String()).WithError(err).WithField("body", body).Debugf("Error parsing JSON body from IDE status probe.")
+			return
+		}
+
+		log.WithField("ide", ide.String()).Infof("Desktop IDE status: %s", desktopIDEStatus)
+		return
 	}
+
 	return
+}
+
+func ideStatusRequest(url string) ([]byte, error) {
+	client := http.Client{Timeout: 1 * time.Second}
+
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, xerrors.Errorf("IDE readiness probe came back with non-200 status code (%v)", resp.StatusCode)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
 
 func isBlacklistedEnvvar(name string) bool {
