@@ -83,8 +83,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         | yq r - data['.dockerconfigjson'] \
         | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
 
-    const sweeperImage = exec(`tar xfO /tmp/dev.tar.gz ./sweeper.txt`).stdout.trim();
-
     const deploymentConfig: DeploymentConfig = {
         version,
         destname,
@@ -94,7 +92,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         url,
         analytics,
         cleanSlateDeployment,
-        sweeperImage,
         installEELicense,
         imagePullAuth,
         withPayment,
@@ -358,34 +355,6 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     }
     addAgentSmithToken(werft, deploymentConfig.namespace, installer.options.kubeconfigPath, tokenHash)
 
-    // TODO: Fix sweeper, it does not appear to be doing clean-up
-    werft.log('sweeper', 'installing Sweeper');
-    const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
-    werft.log('sweeper', `Sweeper version: ${sweeperVersion}`);
-
-    // prepare args
-    const args = {
-        "period": "10m",
-        "timeout": "48h",                     // period of inactivity that triggers a removal
-        branch: jobConfig.repository.branch,  // the branch to check for deletion
-        owner: jobConfig.repository.owner,
-        repo: jobConfig.repository.repo,
-    };
-    const argsStr = Object.entries(args).map(([k, v]) => `\"--${k}\", \"${v}\"`).join(", ");
-    const allArgsStr = `--set args="{${argsStr}}" --set githubToken.secret=github-sweeper-read-branches --set githubToken.key=token`;
-
-    // TODO: Implement sweeper logic for VMs in Harvester
-    if (!withVM) {
-        // copy GH token into namespace
-        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} --namespace werft get secret github-sweeper-read-branches -o yaml \
-            | yq w - metadata.namespace ${namespace} \
-            | yq d - metadata.uid \
-            | yq d - metadata.resourceVersion \
-            | yq d - metadata.creationTimestamp \
-            | kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f -`);
-        exec(`/usr/local/bin/helm3 --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
-    }
-
     werft.done(phases.DEPLOY);
 
     async function cleanStateEnv(kubeconfig: string, shellOpts: ExecOptions) {
@@ -561,30 +530,6 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
 
         exec(`helm dependencies up`);
         exec(`/usr/local/bin/helm3 --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} upgrade --install --timeout 10m -f ../.werft/jobs/build/helm/${nodeAffinityValues[nodepoolIndex]} -f ../.werft/jobs/build/helm/values.dev.yaml ${flags} ${helmInstallName} .`);
-
-        werft.log('helm', 'installing Sweeper');
-        const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
-        werft.log('helm', `Sweeper version: ${sweeperVersion}`);
-
-        // prepare args
-        const args = {
-            "period": "10m",
-            "timeout": "48h",                    // period of inactivity that triggers a removal
-            branch: jobConfig.repository.branch, // the branch to check for deletion
-            owner: jobConfig.repository.owner,
-            repo: jobConfig.repository.repo,
-        };
-        const argsStr = Object.entries(args).map(([k, v]) => `\"--${k}\", \"${v}\"`).join(", ");
-        const allArgsStr = `--set args="{${argsStr}}" --set githubToken.secret=github-sweeper-read-branches --set githubToken.key=token`;
-
-        // copy GH token into namespace
-        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} --namespace werft get secret github-sweeper-read-branches -o yaml \
-            | yq w - metadata.namespace ${namespace} \
-            | yq d - metadata.uid \
-            | yq d - metadata.resourceVersion \
-            | yq d - metadata.creationTimestamp \
-            | kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f -`);
-        exec(`/usr/local/bin/helm3 --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ../dev/charts/sweeper`);
     }
 
     function addDeploymentFlags() {
@@ -684,7 +629,6 @@ interface DeploymentConfig {
     url: string;
     analytics?: string;
     cleanSlateDeployment: boolean;
-    sweeperImage: string;
     installEELicense: boolean;
     imagePullAuth: string;
     withPayment: boolean;

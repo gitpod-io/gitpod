@@ -31,8 +31,6 @@ async function devCleanup() {
     await wipePreviewCluster(env(""))
 }
 
-// sweeper runs in the dev cluster so we need to delete the k3s cluster first and then delete self contained namespace
-
 Tracing.initialize()
     .then(() => {
         werft = new Werft("wipe-devstaging")
