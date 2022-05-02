@@ -26,7 +26,7 @@ export class InstallCertificateParams {
     destinationKubeconfig: string
 }
 
-export async function issueCertificate(werft, params: IssueCertificateParams, shellOpts: ExecOptions) {
+export async function issueCertificate(werft: Werft, params: IssueCertificateParams, shellOpts: ExecOptions) {
     var subdomains = [];
     werft.log(shellOpts.slice, `Subdomains: ${params.additionalSubdomains}`)
     for (const sd of params.additionalSubdomains) {
@@ -34,18 +34,18 @@ export async function issueCertificate(werft, params: IssueCertificateParams, sh
     }
 
     exec(`echo "Domain: ${params.domain}, Subdomains: ${subdomains}"`, {slice: shellOpts.slice})
-    validateSubdomains(params.domain, subdomains)
+    validateSubdomains(werft, shellOpts.slice, params.domain, subdomains)
     createCertificateResource(werft, shellOpts, params, subdomains)
 }
 
-function validateSubdomains(domain: string, subdomains: string[]): void {
+function validateSubdomains(werft: Werft, slice: string, domain: string, subdomains: string[]): void {
     // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"
     // source: https://community.letsencrypt.org/t/certbot-errors-with-obtaining-a-new-certificate-an-unexpected-error-occurred-the-csr-is-unacceptable-e-g-due-to-a-short-key-error-finalizing-order-issuing-precertificate-csr-doesnt-contain-a-san-short-enough-to-fit-in-cn/105513/2
     if (!subdomains.some(sd => {
         const san = sd + domain;
         return san.length <= 63;
     })) {
-        throw new Error(`there is no subdomain + '${domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`);
+        werft.fail(slice, `there is no subdomain + '${domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`)
     }
 }
 
