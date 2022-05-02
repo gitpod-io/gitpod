@@ -229,7 +229,7 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 
 // GetContentLayerPVC provides the content layer for a workspace that uses PVC feature
 func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID string, initializer *csapi.WorkspaceInitializer) (l []Layer, manifest *csapi.WorkspaceContentManifest, err error) {
-	span, ctx := tracing.FromContext(ctx, "GetContentLayer")
+	span, ctx := tracing.FromContext(ctx, "GetContentLayerPVC")
 	defer tracing.FinishSpan(span, &err)
 	tracing.ApplyOWI(span, log.OWI(owner, workspaceID, ""))
 
@@ -243,9 +243,7 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 	}()
 
 	// check if workspace has an FWB
-	var (
-		bucket = s.Storage.Bucket(owner)
-	)
+	bucket := s.Storage.Bucket(owner)
 	span.LogKV("bucket", bucket)
 
 	// check if legacy workspace backup is present
