@@ -74,6 +74,13 @@ pod:
     image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go.4
     workingDir: /workspace
     imagePullPolicy: Always
+    resources:
+      requests:
+        memory: "10Gi"
+        cpu: "3500m"
+      limits:
+        memory: "20Gi"
+        cpu: "10000m"
     volumeMounts:
     - name: monitoring-satellite-stackdriver-credentials
       mountPath: /mnt/secrets/monitoring-satellite-stackdriver-credentials
