@@ -135,6 +135,18 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		return nil, status.Errorf(codes.InvalidArgument, "unsupported admission level: %v", req.Spec.Admission)
 	}
 
+	ports := make([]workspacev1.PortSpec, 0, len(req.Spec.Ports))
+	for _, p := range req.Spec.Ports {
+		v := workspacev1.AdmissionLevelOwner
+		if p.Visibility == api.PortVisibility_PORT_VISIBILITY_PUBLIC {
+			v = workspacev1.AdmissionLevelEveryone
+		}
+		ports = append(ports, workspacev1.PortSpec{
+			Port:       p.Port,
+			Visibility: v,
+		})
+	}
+
 	ws := workspacev1.Workspace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: workspacev1.GroupVersion.String(),
@@ -154,7 +166,8 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 				Owner:       req.Metadata.Owner,
 				WorkspaceID: req.Metadata.MetaId,
 			},
-			Type: workspaceType,
+			Type:  workspaceType,
+			Class: req.Spec.Class,
 			Image: workspacev1.WorkspaceImages{
 				Workspace: workspacev1.WorkspaceImage{
 					Ref: pointer.String(req.Spec.WorkspaceImage),
@@ -175,6 +188,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			Admission: workspacev1.AdmissionSpec{
 				Level: admissionLevel,
 			},
+			Ports: ports,
 		},
 	}
 	err = wsm.Client.Create(ctx, &ws)
