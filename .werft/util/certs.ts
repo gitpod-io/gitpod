@@ -82,8 +82,9 @@ function waitForCertificateReadiness(werft: Werft, certName: string, slice: stri
 
     if (rc != 0) {
         werft.log(slice, "The certificate never became Ready. We are deleting the certificate so that the next job can create a new one")
+        const certificateYAML = exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs get certificate ${certName} -o yaml`, { silent: true }).stdout.trim()
         exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs delete certificate ${certName}`, {slice: slice})
-        reportCertificateError({certificateName: certName}).catch((error: Error) => console.error("Failed to send message to Slack", error));
+        reportCertificateError({certificateName: certName, certifiateYAML: certificateYAML}).catch((error: Error) => console.error("Failed to send message to Slack", error));
         werft.fail(slice, `Timeout while waiting for certificate readiness after ${timeout}. We have deleted the certificate. Please retry your Werft job. The issue has been reported to the Platform team so they can investigate. Sorry for the inconveneince.`)
     }
 }
