@@ -19,9 +19,9 @@ EOF
 /**
  * Convenience function to kubectl delete a manifest from stdin.
  */
-function kubectlDeleteManifest(manifest: string, options?: { validate?: boolean }) {
+function kubectlDeleteManifest(manifest: string) {
     exec(`
-        cat <<EOF | kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} delete -f -
+        cat <<EOF | kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} delete --ignore-not-found=true -f -
 ${manifest}
 EOF
     `)
@@ -96,8 +96,7 @@ export function deleteVM(options: { name: string }) {
             vmName: options.name,
             claimName: `${options.name}-${Date.now()}`,
             userDataSecretName
-        }),
-        { validate: false }
+        })
     )
 
     kubectlDeleteManifest(
