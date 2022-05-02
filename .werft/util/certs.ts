@@ -2,6 +2,7 @@ import { exec, ExecOptions } from './shell';
 import * as path from 'path';
 import { CORE_DEV_KUBECONFIG_PATH } from '../jobs/build/const';
 import { Werft } from './werft';
+import { reportCertificateError } from '../util/slack';
 
 
 export class IssueCertificateParams {
@@ -80,7 +81,10 @@ function waitForCertificateReadiness(werft: Werft, certName: string, slice: stri
     const rc = exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`).code
 
     if (rc != 0) {
-        werft.fail(slice, `Timeout while waiting for certificate readiness after ${timeout}`)
+        werft.log(slice, "The certificate never became Ready. We are deleting the certificate so that the next job can create a new one")
+        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs delete certificate ${certName}`, {slice: slice})
+        reportCertificateError({certificateName: certName}).catch((error: Error) => console.error("Failed to send message to Slack", error));
+        werft.fail(slice, `Timeout while waiting for certificate readiness after ${timeout}. We have deleted the certificate. Please retry your Werft job. The issue has been reported to the Platform team so they can investigate. Sorry for the inconveneince.`)
     }
 }
 
