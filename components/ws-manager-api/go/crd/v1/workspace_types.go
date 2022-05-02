@@ -21,6 +21,8 @@ type WorkspaceSpec struct {
 	// +kubebuilder:validation:Enum:=Regular;Prebuild;ImageBuild
 	Type WorkspaceType `json:"type"`
 
+	Class string `json:"class"`
+
 	// +kubebuilder:validation:Required
 	Image WorkspaceImages `json:"image"`
 
