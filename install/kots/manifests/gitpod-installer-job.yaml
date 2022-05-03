@@ -14,6 +14,7 @@ metadata:
     component: gitpod-installer
     cursor: "{{repl Cursor }}"
 spec:
+  backoffLimit: 1
   ttlSecondsAfterFinished: 0
   template:
     metadata:
