@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 	wsproxy "github.com/gitpod-io/gitpod/installer/pkg/components/ws-proxy"
 )
 
@@ -25,6 +26,7 @@ var Objects = common.CompositeRenderFunc(
 	wsproxy.Objects,
 	imagebuildermk3.Objects,
 	refreshcredential.Objects,
+	wsmanagermk2.Objects,
 )
 
 var Helm = common.CompositeHelmFunc()

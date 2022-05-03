@@ -11,6 +11,7 @@ export type InstallerOptions = {
     withEELicense: boolean;
     workspaceFeatureFlags: string[];
     withSlowDatabase: boolean;
+    useWsManagerMk2: boolean;
 };
 
 export class Installer {
