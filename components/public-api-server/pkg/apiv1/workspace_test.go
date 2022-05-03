@@ -6,20 +6,34 @@ package apiv1
 
 import (
 	"context"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/proto"
 	"testing"
 )
 
 func TestWorkspaceService_GetWorkspace(t *testing.T) {
-	svc := NewWorkspaceService()
+	srv := baseserver.NewForTests(t)
+	v1.RegisterWorkspacesServiceServer(srv.GRPC(), NewWorkspaceService())
+	baseserver.StartServerForTests(t, srv)
+
+	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+
+	client := v1.NewWorkspacesServiceClient(conn)
+
+	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", "some-token")
 
 	workspaceID := "some-workspace-id"
-	resp, err := svc.GetWorkspace(context.Background(), &v1.GetWorkspaceRequest{
+	resp, err := client.GetWorkspace(ctx, &v1.GetWorkspaceRequest{
 		WorkspaceId: workspaceID,
 	})
 	require.NoError(t, err)
-	require.Equal(t, &v1.GetWorkspaceResponse{
+	require.True(t, proto.Equal(&v1.GetWorkspaceResponse{
 		Result: &v1.Workspace{
 			WorkspaceId: workspaceID,
 			OwnerId:     "mock_owner",
@@ -30,5 +44,5 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 			},
 			Description: "This is a mock response",
 		},
-	}, resp)
+	}, resp))
 }
