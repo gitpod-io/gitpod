@@ -21,16 +21,72 @@ import (
 
 func TestServer_StartStop(t *testing.T) {
 	// We don't use the helper NewForTests, because we want to control stopping ourselves.
-	srv, err := baseserver.New("server_test", baseserver.WithHTTPPort(8765), baseserver.WithGRPCPort(8766))
+	srv, err := baseserver.New("server_test", baseserver.WithHTTPPort(8765), baseserver.WithGRPCPort(8766), baseserver.WithDebugPort(8767))
 	require.NoError(t, err)
 	baseserver.StartServerForTests(t, srv)
 
 	require.Equal(t, "http://localhost:8765", srv.HTTPAddress())
 	require.Equal(t, "localhost:8766", srv.GRPCAddress())
+	require.Equal(t, "http://localhost:8767", srv.DebugAddress())
 	require.NoError(t, srv.Close())
 }
 
-func TestServer_ServesHealthEndpoints(t *testing.T) {
+func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
+	scenarios := []struct {
+		startHTTP bool
+		startGRPC bool
+	}{
+		{startHTTP: false, startGRPC: false},
+		{startHTTP: true, startGRPC: false},
+		{startHTTP: true, startGRPC: true},
+		{startHTTP: false, startGRPC: true},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(fmt.Sprintf("with grpc: %v, http: %v", scenario.startGRPC, scenario.startHTTP), func(t *testing.T) {
+			opts := []baseserver.Option{baseserver.WithDebugPort(9000)}
+
+			if scenario.startHTTP {
+				opts = append(opts, baseserver.WithHTTPPort(7000))
+			} else {
+				opts = append(opts, baseserver.WithHTTPPort(-1))
+			}
+
+			if scenario.startGRPC {
+				opts = append(opts, baseserver.WithGRPCPort(8000))
+			} else {
+				opts = append(opts, baseserver.WithGRPCPort(-1))
+			}
+
+			srv := baseserver.NewForTests(t, opts...)
+			baseserver.StartServerForTests(t, srv)
+
+			require.Equal(t, "http://localhost:9000", srv.DebugAddress())
+			if scenario.startHTTP {
+				require.Equal(t, "http://localhost:7000", srv.HTTPAddress(), "must serve http on port 7000 because startHTTP was set")
+			} else {
+				require.Empty(t, srv.HTTPAddress(), "must not serve http")
+			}
+
+			if scenario.startGRPC {
+				require.Equal(t, "localhost:8000", srv.GRPCAddress(), "must serve grpc on port 8000 because startGRPC was set")
+			} else {
+				require.Empty(t, srv.GRPCAddress(), "must not serve grpc")
+			}
+		})
+	}
+}
+
+func TestServer_OnlyDebug(t *testing.T) {
+	srv := baseserver.NewForTests(t, baseserver.WithGRPCPort(-1), baseserver.WithHTTPPort(-1), baseserver.WithDebugPort(7777))
+	baseserver.StartServerForTests(t, srv)
+
+	require.Empty(t, srv.HTTPAddress(), "server not started, address must be empty")
+	require.Empty(t, srv.GRPCAddress(), "server not started, address must be empty")
+	require.Equal(t, "http://localhost:7777", srv.DebugAddress())
+}
+
+func TestServer_Debug_HealthEndpoints(t *testing.T) {
 	for _, scenario := range []struct {
 		name     string
 		endpoint string
@@ -42,19 +98,19 @@ func TestServer_ServesHealthEndpoints(t *testing.T) {
 			srv := baseserver.NewForTests(t)
 			baseserver.StartServerForTests(t, srv)
 
-			resp, err := http.Get(srv.HTTPAddress() + scenario.endpoint)
+			resp, err := http.Get(srv.DebugAddress() + scenario.endpoint)
 			require.NoError(t, err)
 			require.Equal(t, http.StatusOK, resp.StatusCode)
 		})
 	}
 }
 
-func TestServer_ServesMetricsEndpointWithDefaultConfig(t *testing.T) {
+func TestServer_Debug_MetricsEndpointWithDefaultConfig(t *testing.T) {
 	srv := baseserver.NewForTests(t)
 
 	baseserver.StartServerForTests(t, srv)
 
-	readyUR := fmt.Sprintf("%s/metrics", srv.HTTPAddress())
+	readyUR := fmt.Sprintf("%s/metrics", srv.DebugAddress())
 	resp, err := http.Get(readyUR)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -68,7 +124,7 @@ func TestServer_ServesMetricsEndpointWithCustomMetricsConfig(t *testing.T) {
 
 	baseserver.StartServerForTests(t, srv)
 
-	readyUR := fmt.Sprintf("%s/metrics", srv.HTTPAddress())
+	readyUR := fmt.Sprintf("%s/metrics", srv.DebugAddress())
 	resp, err := http.Get(readyUR)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -78,7 +134,7 @@ func TestServer_ServesPprof(t *testing.T) {
 	srv := baseserver.NewForTests(t)
 	baseserver.StartServerForTests(t, srv)
 
-	resp, err := http.Get(srv.HTTPAddress() + pprof.Path)
+	resp, err := http.Get(srv.DebugAddress() + pprof.Path)
 	require.NoError(t, err)
 	require.Equalf(t, http.StatusOK, resp.StatusCode, "must serve pprof on %s", pprof.Path)
 }

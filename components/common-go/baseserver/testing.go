@@ -20,6 +20,7 @@ func NewForTests(t *testing.T, opts ...Option) *Server {
 	defaultTestOpts := []Option{
 		WithGRPCPort(0),
 		WithHTTPPort(0),
+		WithDebugPort(0),
 		WithCloseTimeout(1 * time.Second),
 	}
 
@@ -65,7 +66,7 @@ func waitForServerToBeReachable(t *testing.T, srv *Server, timeout time.Duration
 			require.Failf(t, "server did not become reachable in %s", timeout.String())
 		case <-ticker.C:
 			// We retrieve the URL on each tick, because the HTTPAddress is only available once the server is listening.
-			healthURL := fmt.Sprintf("%s/ready", srv.HTTPAddress())
+			healthURL := fmt.Sprintf("%s/ready", srv.DebugAddress())
 			_, err := client.Get(healthURL)
 			if err != nil {
 				continue
