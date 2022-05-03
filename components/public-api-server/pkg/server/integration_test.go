@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"net/url"
 	"testing"
 )
 
@@ -21,16 +22,16 @@ func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
 	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", "some-token")
 	srv := baseserver.NewForTests(t)
 
-	require.NoError(t, register(srv))
+	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
+	require.NoError(t, err)
+
+	require.NoError(t, register(srv, Config{GitpodAPI: gitpodAPI}))
 	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 
 	workspaceClient := v1.NewWorkspacesServiceClient(conn)
-
-	_, err = workspaceClient.GetWorkspace(ctx, &v1.GetWorkspaceRequest{})
-	require.NoError(t, err)
 
 	_, err = workspaceClient.ListWorkspaces(ctx, &v1.ListWorkspacesRequest{})
 	requireErrorStatusCode(t, codes.Unimplemented, err)
@@ -66,7 +67,11 @@ func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
 func TestPublicAPIServer_v1_PrebuildService(t *testing.T) {
 	ctx := context.Background()
 	srv := baseserver.NewForTests(t)
-	require.NoError(t, register(srv))
+
+	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
+	require.NoError(t, err)
+
+	require.NoError(t, register(srv, Config{GitpodAPI: gitpodAPI}))
 
 	baseserver.StartServerForTests(t, srv)
 
