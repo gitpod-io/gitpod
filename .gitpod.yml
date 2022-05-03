@@ -71,4 +71,3 @@ jetbrains:
   intellij:
     prebuilds:
       version: stable
-
