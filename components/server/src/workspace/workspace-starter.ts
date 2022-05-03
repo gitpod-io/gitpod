@@ -226,6 +226,7 @@ export class WorkspaceStarter {
             // At this point any workspace that has no imageSource should have a commit context (we don't have any other contexts which don't resolve
             // to a commit context prior to being started, or which don't get an imageSource).
             if (!workspace.imageSource) {
+                log.info("HELLO no imageSource, getting one");
                 const imageSource = await this.imageSourceProvider.getImageSource(
                     ctx,
                     user,
@@ -281,9 +282,11 @@ export class WorkspaceStarter {
 
             let needsImageBuild: boolean;
             try {
+                log.info("HELLO getting additional image auth");
                 // if we need to build the workspace image we musn't wait for actuallyStartWorkspace to return as that would block the
                 // frontend until the image is built.
                 const additionalAuth = await this.getAdditionalImageAuth(projectEnvVars);
+                log.info("HELLO checking needs image build");
                 needsImageBuild =
                     forceRebuild || (await this.needsImageBuild({ span }, user, workspace, instance, additionalAuth));
                 if (needsImageBuild) {
@@ -319,6 +322,7 @@ export class WorkspaceStarter {
                 return { instanceID: instance.id };
             }
 
+            log.info("HELLO actually starting workspace");
             return await this.actuallyStartWorkspace(
                 { span },
                 instance,
