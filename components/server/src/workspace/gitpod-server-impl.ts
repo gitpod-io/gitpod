@@ -1109,7 +1109,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 context = prebuiltWorkspace;
             }
 
+            log.info("HELLO creating for context");
             const workspace = await this.workspaceFactory.createForContext(ctx, user, context, normalizedContextUrl);
+            log.info("HELLO created for context", workspace);
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
             } catch (err) {
@@ -1121,6 +1123,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
             logContext.workspaceId = workspace.id;
             traceWI(ctx, { workspaceId: workspace.id });
+            log.info("HELLO starting workspace", workspace);
             const startWorkspaceResult = await this.workspaceStarter.startWorkspace(
                 ctx,
                 workspace,
@@ -1128,6 +1131,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 await envVars,
                 await projectEnvVarsPromise,
             );
+            log.info("HELLO started workspace");
             ctx.span?.log({ event: "startWorkspaceComplete", ...startWorkspaceResult });
 
             return {

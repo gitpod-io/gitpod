@@ -232,7 +232,7 @@ export class WorkspaceStarter {
                     workspace.context as CommitContext,
                     workspace.config,
                 );
-                log.debug("Found workspace without imageSource, generated one", { imageSource });
+                log.info("HELLO Found workspace without imageSource, generated one", { imageSource });
 
                 workspace.imageSource = imageSource;
                 await this.workspaceDb.trace({ span }).store(workspace);
@@ -247,12 +247,15 @@ export class WorkspaceStarter {
                 auth.setTotal(allowAll);
                 req.setAuth(auth);
 
+                log.info("HELLO getting client");
                 const client = await this.imagebuilderClientProvider.getDefault(
                     user,
                     workspace,
                     {} as WorkspaceInstance,
                 );
+                log.info("HELLO got client, getting base image");
                 const res = await client.resolveBaseImage({ span }, req);
+                log.info("HELLO got base image");
                 workspace.imageSource = <WorkspaceImageSourceReference>{
                     baseImageResolved: res.getRef(),
                 };
