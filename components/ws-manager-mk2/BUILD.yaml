@@ -33,3 +33,11 @@ packages:
           helm-component: wsManagerMk2
         image:
           - ${imageRepoBase}/ws-manager-mk2:commit-${__git_commit}
+    - name: crd
+      type: generic
+      srcs:
+        - config/crd/bases/*.yaml
+      config:
+        commands:
+          - ["find", ".", "-name", "*.yaml", "-exec", "mv", "{}", ".", ";"]
+          - ["rm", "-r", "config"]

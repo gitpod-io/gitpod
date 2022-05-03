@@ -80,6 +80,7 @@ type Components struct {
 		} `json:"userNamespaces"`
 	} `json:"wsDaemon"`
 	WSManager       Versioned `json:"wsManager"`
+	WSManagerMk2    Versioned `json:"wsManagerMk2"`
 	WSManagerBridge Versioned `json:"wsManagerBridge"`
 	WSProxy         Versioned `json:"wsProxy"`
 }
