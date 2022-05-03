@@ -49,7 +49,7 @@ func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 
 	return []corev1.EnvVar{
 		{Name: "GITPOD_DOMAIN", Value: cfg.Domain},
-		{Name: "GITPOD_INSTALLATION_SHORTNAME", Value: cfg.Domain}, // todo(sje): figure out these values
+		{Name: "GITPOD_INSTALLATION_SHORTNAME", Value: cfg.Metadata.InstallationShortname},
 		{Name: "GITPOD_REGION", Value: cfg.Metadata.Region},
 		{Name: "HOST_URL", Value: "https://" + cfg.Domain},
 		{Name: "KUBE_NAMESPACE", ValueFrom: &corev1.EnvVarSource{
