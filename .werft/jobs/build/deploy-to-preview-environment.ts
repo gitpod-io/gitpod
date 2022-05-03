@@ -41,7 +41,7 @@ interface DeploymentConfig {
 }
 
 export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobConfig) {
-    const { version, cleanSlateDeployment, withObservability, installEELicense, workspaceFeatureFlags } = jobConfig;
+    const { version, cleanSlateDeployment, withObservability, installEELicense, workspaceFeatureFlags, useWsManagerMk2 } = jobConfig;
 
     const { destname, namespace } = jobConfig.previewEnvironment;
 
@@ -106,6 +106,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             workspaceFeatureFlags: workspaceFeatureFlags,
             withSlowDatabase: jobConfig.withSlowDatabase,
             withDedicatedEmulation: jobConfig.withDedicatedEmulation,
+            useWsManagerMk2: useWsManagerMk2,
         });
         try {
             werft.log(installerSlices.INSTALL, "deploying using installer");

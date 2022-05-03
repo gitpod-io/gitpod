@@ -45,6 +45,7 @@ export interface JobConfig {
     recreatePreview: boolean;
     recreateVm: boolean;
     withGitHubActions: boolean;
+    useWsManagerMk2: boolean;
 }
 
 export interface PreviewEnvironmentConfig {
@@ -126,6 +127,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     }
     const certIssuer = buildConfig["cert-issuer"];
 
+    const useWsManagerMk2 = "with-wsman-mk2" in buildConfig;
     const repository: Repository = {
         owner: context.Repository.owner,
         repo: context.Repository.repo,
@@ -186,6 +188,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withSlowDatabase,
         withGitHubActions,
         withDedicatedEmulation,
+        useWsManagerMk2,
     };
 
     werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));

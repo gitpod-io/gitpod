@@ -30,6 +30,8 @@ GITPOD_WITH_EE_LICENSE="${GITPOD_WITH_EE_LICENSE:-true}"
 GITPOD_WORKSPACE_FEATURE_FLAGS="${GITPOD_WORKSPACE_FEATURE_FLAGS:-}"
 GITPOD_WITH_SLOW_DATABASE="${GITPOD_WITH_SLOW_DATABASE:-false}"
 GITPOD_WITH_DEDICATED_EMU="${GITPOD_WITH_DEDICATED_EMU:-false}"
+GITPOD_WSMANAGER_MK2="${GITPOD_WSMANAGER_MK2:-false}"
+
 
 if [[ "${VERSION:-}" == "" ]]; then
   if [[ ! -f  /tmp/local-dev-version ]]; then
@@ -468,6 +470,13 @@ if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
   yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_KEY).value' "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
 else
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer ""
+fi
+
+#
+# wsManagerMk2
+#
+if [[ "${GITPOD_WSMANAGER_MK2}" == "true" ]]; then
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.workspace.useWsmanagerMk2" "true"
 fi
 
 #
