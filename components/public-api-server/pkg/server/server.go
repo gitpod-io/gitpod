@@ -15,11 +15,11 @@ import (
 	"net/http"
 )
 
-func Start(logger *logrus.Entry) error {
+func Start(logger *logrus.Entry, cfg Config) error {
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
-		baseserver.WithHTTPPort(9000),
-		baseserver.WithGRPCPort(9001),
+		baseserver.WithHTTPPort(cfg.HTTPPort),
+		baseserver.WithGRPCPort(cfg.GRPCPort),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to initialize public api server: %w", err)
