@@ -41,7 +41,7 @@ interface DeploymentConfig {
 }
 
 export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobConfig) {
-    const { version, cleanSlateDeployment, withObservability, installEELicense, workspaceFeatureFlags } = jobConfig;
+    const { version, cleanSlateDeployment, withObservability, installEELicense, workspaceFeatureFlags, useWsManagerMk2 } = jobConfig;
 
     const { destname, namespace } = jobConfig.previewEnvironment;
 
@@ -60,6 +60,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         installEELicense,
         withObservability,
         analytics: jobConfig.analytics,
+        useWsManagerMk2,
     };
 
     // We set all attributes to false as default and only set it to true once the each process is complete.
@@ -105,6 +106,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             withEELicense: deploymentConfig.installEELicense,
             workspaceFeatureFlags: workspaceFeatureFlags,
             withSlowDatabase: jobConfig.withSlowDatabase,
+            useWsManagerMk2: useWsManagerMk2,
         });
         try {
             werft.log(installerSlices.INSTALL, "deploying using installer");
