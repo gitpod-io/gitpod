@@ -118,9 +118,6 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 	if err != nil {
 		return xerrors.Errorf("tar %s: %s", dst, err.Error()+";"+string(msg))
 	}
-
-	log.WithField("log", string(msg)).Debug("decompressing tar stream log")
-
 	<-finished
 
 	// lets create a sorted list of pathes and chown depth first.
