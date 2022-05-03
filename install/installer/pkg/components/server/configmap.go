@@ -74,6 +74,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	chargebeeSecret := ""
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
+			chargebeeSecret = cfg.WebApp.Server.ChargebeeSecret
+		}
+		return nil
+	})
+
 	githubApp := GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
@@ -162,9 +170,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ImageBuilderAddr:             "image-builder-mk3:8080",
 		CodeSync:                     CodeSync{},
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
-		EnablePayment:                false,
+		EnablePayment:                chargebeeSecret != "",
+		ChargebeeProviderOptionsFile: fmt.Sprintf("%s/providerOptions", chargebeeMountPath),
 		InsecureNoDomain:             false,
-		ChargebeeProviderOptionsFile: "/chargebee/providerOptions",
 		PrebuildLimiter: map[string]int{
 			// default limit for all cloneURLs
 			"*": 50,

@@ -125,6 +125,7 @@ type ServerConfig struct {
 	OAuthServer                       OAuthServer       `json:"oauthServer"`
 	Session                           Session           `json:"session"`
 	GithubApp                         *GithubApp        `json:"githubApp"`
+	ChargebeeSecret                   string            `json:"chargebeeSecret"`
 	DisableDynamicAuthProviderLogin   bool              `json:"disableDynamicAuthProviderLogin"`
 	EnableLocalApp                    bool              `json:"enableLocalApp"`
 	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`

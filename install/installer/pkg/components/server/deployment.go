@@ -164,6 +164,30 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		env = append(env, envv...)
 	}
 
+	chargebeeSecret := ""
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.ChargebeeSecret != "" {
+			chargebeeSecret = cfg.WebApp.Server.ChargebeeSecret
+
+			volumes = append(volumes,
+				corev1.Volume{
+					Name: "chargebee-config",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: chargebeeSecret,
+						},
+					},
+				})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      "chargebee-config",
+				MountPath: chargebeeMountPath,
+				ReadOnly:  true,
+			})
+		}
+		return nil
+	})
+
 	var podAntiAffinity *corev1.PodAntiAffinity
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.UsePodAntiAffinity {
