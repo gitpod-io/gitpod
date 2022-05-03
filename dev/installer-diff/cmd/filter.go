@@ -182,7 +182,7 @@ func sortContainersAndEnvVars(containers []corev1.Container) {
 func filterSpecificObjects(obj *unstructured.Unstructured) (filter bool, err error) {
 	// TODO(gpl) revise later: generic
 	switch obj.GetKind() {
-	case "Certificate", "ClusterRole", "ClusterRoleBinding", "RoleBinding", "Role":
+	case "Certificate", "ClusterRole", "ClusterRoleBinding", "RoleBinding", "Role", "NetworkPolicy":
 		return false, nil
 	}
 
@@ -192,21 +192,16 @@ func filterSpecificObjects(obj *unstructured.Unstructured) (filter bool, err err
 		return false, nil
 	}
 
-	// TODO(gpl) revise later: workspace stack
+	// TODO(gpl) we filter out workspace stack to look at it separately
 	switch obj.GetLabels()["component"] {
 	case "agent-smith", "ws-daemon", "registry-facade", "ws-manager", "blobserve", "image-builder-mk3", "ws-proxy", "workspace":
 		return false, nil
 	}
 	switch obj.GetName() {
-	case "blobserve-config", "image-builder-mk3-config", "default-ns-registry-facade":
+	case "blobserve-config", "image-builder-mk3-config", "default-ns-registry-facade", "ws-daemon-config", "ws-proxy-config":
 		return false, nil
 	}
 
-	// TODO(gpl) revise later: messagebus, db-sync, payment-endpoint, dbinit, migrations
-	switch obj.GetLabels()["component"] {
-	case "messagebus", "db-sync", "payment-endpoint", "dbinit", "migrations":
-		return false, nil
-	}
 
 	// filter/format individual fields
 	id := fmt.Sprintf("%s:%s", obj.GetKind(), obj.GetName())
