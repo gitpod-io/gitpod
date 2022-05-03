@@ -10,6 +10,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	regfac "github.com/gitpod-io/gitpod/registry-facade/api/config"
 
@@ -27,8 +28,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 	}
 
-	var ipfsCache *regfac.IPFSCacheConfig
-	var redisCache *regfac.RedisCacheConfig
+	var (
+		ipfsCache     *regfac.IPFSCacheConfig
+		redisCache    *regfac.RedisCacheConfig
+		wsManagerAddr = fmt.Sprintf("dns:///ws-manager:%d", wsmanager.RPCPort)
+	)
 
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
@@ -54,6 +58,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}
 		}
 
+		if ucfg.Workspace.UseWsmanagerMk2 {
+			wsManagerAddr = fmt.Sprintf("dns:///ws-manager-mk2:%d", wsmanagermk2.RPCPort)
+		}
+
 		return nil
 	})
 
@@ -61,7 +69,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Registry: regfac.Config{
 			Port: ContainerPort,
 			RemoteSpecProvider: &regfac.RSProvider{
-				Addr: fmt.Sprintf("dns:///ws-manager:%d", wsmanager.RPCPort),
+				Addr: wsManagerAddr,
 				TLS: &regfac.TLS{
 					Authority:   "/ws-manager-client-tls-certs/ca.crt",
 					Certificate: "/ws-manager-client-tls-certs/tls.crt",

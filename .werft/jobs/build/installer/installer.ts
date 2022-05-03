@@ -12,6 +12,7 @@ export type InstallerOptions = {
     workspaceFeatureFlags: string[];
     withSlowDatabase: boolean;
     withDedicatedEmulation: boolean;
+    useWsManagerMk2: boolean;
 };
 
 export class Installer {
