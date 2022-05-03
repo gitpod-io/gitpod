@@ -665,10 +665,7 @@ export default function () {
                         </Tooltip>
                         {typeof accountStatement?.remainingHours === "number" &&
                         typeof currentPlan.hoursPerMonth === "number" ? (
-                            <progress
-                                value={currentPlan.hoursPerMonth - accountStatement.remainingHours}
-                                max={currentPlan.hoursPerMonth}
-                            />
+                            <progress value={accountStatement.remainingHours} max={currentPlan.hoursPerMonth} />
                         ) : (
                             <progress value="0" max="100" />
                         )}
