@@ -21,9 +21,6 @@ daemon:
   content:
     workingArea: "/mnt/workingarea"
     workingAreaNode: {{ $comp.hostWorkspaceArea | quote }}
-    {{- if (and $comp.workspaceSizeLimit (not (eq $comp.workspaceSizeLimit ""))) }}
-    workspaceSizeLimit: {{ ($comp.workspaceSizeLimit | default "0g") | quote }}
-    {{- end }}
     tempDir: {{ $comp.backupTempDir | default "/tmp" }}
 {{ include "gitpod.remoteStorage.config" (dict "root" . "remoteStorage" .Values.components.contentService.remoteStorage) | indent 4 }}
     backup:
