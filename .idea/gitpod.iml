@@ -15,7 +15,7 @@
       <excludeFolder url="file://$MODULE_DIR$/components/supervisor-api/typescript-rest/lib" />
       <excludeFolder url="file://$MODULE_DIR$/components/content-service-api/typescript/lib" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="11" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
