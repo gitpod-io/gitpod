@@ -26,6 +26,8 @@ RUN addgroup -g 33333 gitpod \
     && echo "gitpod:gitpod" | chpasswd
 # Add gitpodmp user for operations in the mapped UID/GID space
 RUN echo "gitpodmp:x:133332:133332::/home/gitpod:/bin/bash" >> /etc/passwd
+# Add missing known_hosts entry
+RUN mkdir /home/gitpod/.ssh && echo $(ssh-keyscan -t rsa github.com) > /home/gitpod/.ssh/known_hosts
 
 COPY components-ws-daemon--app/ws-daemon /app/ws-daemond
 COPY components-ws-daemon--content-initializer/ws-daemon /app/content-initializer
