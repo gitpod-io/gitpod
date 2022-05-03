@@ -239,8 +239,15 @@ spec:
               echo "Gitpod: Escape any Golang template values"
               sed -i -r 's/(.*\{\{.*)/{{`\1`}}/' "${GITPOD_OBJECTS}/templates/gitpod.yaml"
 
+              # If certificate secret already exists, set the timeout to 5m
+              CERT_SECRET=$(kubectl get secrets -n {{repl Namespace }} https-certificates -o jsonpath='{.metadata.name}' || echo '')
+              HELM_TIMEOUT="5m"
+              if [ "${CERT_SECRET}" = "" ]; then
+                HELM_TIMEOUT="1h"
+              fi
+
               # The long timeout is to ensure the TLS cert is created (if required)
-              echo "Gitpod: Apply the Kubernetes objects"
+              echo "Gitpod: Apply the Kubernetes objects with timeout of ${HELM_TIMEOUT}"
               helm upgrade \
                 --atomic \
                 --cleanup-on-fail \
@@ -248,7 +255,7 @@ spec:
                 --install \
                 --namespace="{{repl Namespace }}" \
                 --reset-values \
-                --timeout 1h \
+                --timeout "${HELM_TIMEOUT}" \
                 --wait \
                 gitpod \
                 "${GITPOD_OBJECTS}"
