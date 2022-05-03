@@ -127,7 +127,7 @@ var runCmd = &cobra.Command{
 			// Ensure we can resolve DNS queries, and can access the registry host
 			health := healthcheck.NewHandler()
 			health.AddReadinessCheck("dns", kubernetes.DNSCanResolveProbe(staticLayerHost, 1*time.Second))
-			health.AddReadinessCheck("registry", kubernetes.NetworkIsReachableProbe(fmt.Sprintf("http://%v", repository)))
+			health.AddReadinessCheck("registry", kubernetes.NetworkIsReachableProbe(fmt.Sprintf("https://%v", repository)))
 
 			go func() {
 				if err := http.ListenAndServe(cfg.ReadinessProbeAddr, health); err != nil && err != http.ErrServerClosed {
