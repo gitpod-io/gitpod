@@ -10,6 +10,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/public-api-server/middleware"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -25,7 +26,7 @@ func Start(logger *logrus.Entry, cfg Config) error {
 		return fmt.Errorf("failed to initialize public api server: %w", err)
 	}
 
-	if registerErr := register(srv); registerErr != nil {
+	if registerErr := register(srv, cfg); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -36,12 +37,14 @@ func Start(logger *logrus.Entry, cfg Config) error {
 	return nil
 }
 
-func register(srv *baseserver.Server) error {
+func register(srv *baseserver.Server, cfg Config) error {
 	logger := log.New()
 	m := middleware.NewLoggingMiddleware(logger)
 	srv.HTTPMux().Handle("/", m(http.HandlerFunc(HelloWorldHandler)))
 
-	v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService())
+	connPool := &proxy.NoConnectionPool{ServerAPI: cfg.GitpodAPI}
+
+	v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
 	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
 
 	return nil
