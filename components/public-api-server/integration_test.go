@@ -12,12 +12,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"testing"
 )
 
 func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
-	ctx := context.Background()
+	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", "some-token")
 	srv := baseserver.NewForTests(t)
 
 	require.NoError(t, register(srv))
