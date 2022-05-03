@@ -36,10 +36,7 @@ export default function () {
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
                 <p className="text-gray-500 text-base pb-3">
                     Choose the editor for opening workspaces. You can always change later the editor in{" "}
-                    <Link
-                        to={"/preferences"}
-                        className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400 truncate"
-                    >
+                    <Link to={"/preferences"} className="gp-link">
                         user preferences
                     </Link>
                     .
