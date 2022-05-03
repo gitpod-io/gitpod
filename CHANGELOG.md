@@ -1,6 +1,10 @@
 # Change Log
 
-## April 2022
+## May 2022
+- [docker-up] Update docker compose to 2.5.0 ([#9699](https://github.com/gitpod-io/gitpod/pull/9699)) - [@aledbf](https://github.com/aledbf)
+- [dashboard] add license tab to the admin dashboard ([#9343](https://github.com/gitpod-io/gitpod/pull/9343)) - [@nandajavarma](https://github.com/nandajavarma)
+
+##  April 2022
 - supervisor: Remove slirp4netns ([#9213](https://github.com/gitpod-io/gitpod/pull/9213)) - [@utam0k](https://github.com/utam0k)
 - Refactor backups ([#9589](https://github.com/gitpod-io/gitpod/pull/9589)) - [@aledbf](https://github.com/aledbf)
 - Allow `disableDynamicAuthProviderLogin`, `enableLocalApp` and `defaultBaseImageRegistryWhitelist` server config to be configurable via the installer ([#9630](https://github.com/gitpod-io/gitpod/pull/9630)) - [@andrew-farries](https://github.com/andrew-farries)
