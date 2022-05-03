@@ -324,6 +324,24 @@ spec:
           default: "0"
           help_text: 'Enabling the SSH gateway allows use of additional desktop IDEs. IMPORTANT: This uses port 22 on your Kubernetes nodes. When enabled, this will prevent login to the cluster via SSH. If you wish to maintain SSH access to your cluster, please configure another SSH port on your nodes.'
 
+    - name: user_management
+      title: User management
+      items:
+        - name: user_management_block_enabled
+          title: Limit user registration
+          type: bool
+          default: "0"
+          help_text: New registrations can be limited to users in specific domains.
+
+        - name: user_management_block_passlist
+          title: Allow registration for domain(s)
+          type: text
+          when: '{{repl (ConfigOptionEquals "user_management_block_enabled" "1") }}'
+          help_text: |
+            Enable users with email addresses in these domains to register for this service. This must be the primary email address set for the provider.
+
+            Add the domain only (eg, `gitpod.io`). Separate multiple domains with spaces.
+
     - name: advanced
       title: Advanced customizations (Expert Mode)
       description: Use with care! Enable only when you know what you are doing!
