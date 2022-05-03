@@ -20,3 +20,23 @@ func TestDeployment(t *testing.T) {
 	dpl := objects[0].(*appsv1.Deployment)
 	require.Len(t, dpl.Spec.Template.Spec.Containers, 2, "must render 2 containers")
 }
+
+func TestDeployment_ServerArguments(t *testing.T) {
+	ctx := renderContextWithPublicAPIEnabled(t)
+
+	objects, err := deployment(ctx)
+	require.NoError(t, err)
+
+	require.Len(t, objects, 1, "must render only one object")
+
+	dpl := objects[0].(*appsv1.Deployment)
+	containers := dpl.Spec.Template.Spec.Containers
+	require.Equal(t, Component, containers[0].Name)
+
+	apiContainer := containers[0]
+	require.EqualValues(t, []string{
+		"--http-port=9000",
+		"--grpc-port=9001",
+		`--gitpod-api-url=wss://test.domain.everything.awesome.is/api/v1`,
+	}, apiContainer.Args)
+}

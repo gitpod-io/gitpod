@@ -44,8 +44,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						Containers: []corev1.Container{{
-							Name:            Component,
-							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.PublicAPIServer.Version),
+							Name:  Component,
+							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.PublicAPIServer.Version),
+							Args: []string{
+								fmt.Sprintf("--http-port=%d", HTTPContainerPort),
+								fmt.Sprintf("--grpc-port=%d", GRPCContainerPort),
+								fmt.Sprintf("--gitpod-api-url=wss://%s/api/v1", ctx.Config.Domain),
+							},
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
