@@ -10,6 +10,7 @@ import (
 	gitpod_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -223,6 +224,7 @@ func (s *Server) newHTTPMux() *http.ServeMux {
 
 	// Metrics endpoint
 	metricsHandler := promhttp.Handler()
+	fmt.Println("checking ", s.cfg.metricsRegistry)
 	if s.cfg.metricsRegistry != nil {
 		metricsHandler = promhttp.InstrumentMetricHandler(
 			s.cfg.metricsRegistry, promhttp.HandlerFor(s.cfg.metricsRegistry, promhttp.HandlerOpts{}),
@@ -241,13 +243,16 @@ func (s *Server) initializeGRPC() error {
 	gitpod_grpc.SetupLogging()
 
 	unary := []grpc.UnaryServerInterceptor{
+		grpc_prometheus.UnaryServerInterceptor,
 		grpc_logrus.UnaryServerInterceptor(s.Logger()),
 	}
 	stream := []grpc.StreamServerInterceptor{
+		grpc_prometheus.StreamServerInterceptor,
 		grpc_logrus.StreamServerInterceptor(s.Logger()),
 	}
 
 	s.grpc = grpc.NewServer(gitpod_grpc.ServerOptionsWithInterceptors(stream, unary)...)
+	grpc_prometheus.Register(s.grpc)
 
 	return nil
 }
