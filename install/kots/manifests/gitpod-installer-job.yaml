@@ -76,6 +76,16 @@ spec:
               echo "Gitpod: Generate the base Installer config"
               /app/installer init > "${CONFIG_FILE}"
 
+              echo "Gitpod: auto-detecting ShiftFS support on host machine"
+              kubectl wait job -n {{repl Namespace }} --for=condition=complete -l component=shiftfs-module-loader --timeout=30s || true
+              ENABLE_SHIFTFS=$(kubectl get jobs.batch -n {{repl Namespace }} -l component=shiftfs-module-loader -o jsonpath='{.items[0].status.succeeded}')
+
+              if [ "${ENABLE_SHIFTFS}" = "1" ]; then
+                echo "Gitpod: enabling ShiftFS support"
+
+                yq e -i '.workspace.runtime.fsShiftMethod = "shiftfs"' "${CONFIG_FILE}"
+              fi
+
               echo "Gitpod: auto-detecting containerd location on host machine"
               if [ -d "/mnt/node0${CONTAINERD_DIR_K3S}" ]; then
                 echo "Gitpod: containerd dir detected as k3s"
