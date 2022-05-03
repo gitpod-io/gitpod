@@ -360,6 +360,7 @@ export class WorkspaceStarter {
 
         try {
             // build workspace image
+            log.info("HELLO getting additional image auth again");
             const additionalAuth = await this.getAdditionalImageAuth(projectEnvVars);
             instance = await this.buildWorkspaceImage(
                 { span },
@@ -379,6 +380,7 @@ export class WorkspaceStarter {
             }
 
             // create spec
+            log.info("HELLO creating spec");
             const spec = await this.createSpec(
                 { span },
                 user,
@@ -412,6 +414,7 @@ export class WorkspaceStarter {
             let retries = 0;
             try {
                 for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
+                    log.info("HELLO trying start on cluster " + retries);
                     resp = await this.tryStartOnCluster({ span }, startRequest, euser, workspace, instance);
                     if (resp) {
                         break;
@@ -895,7 +898,9 @@ export class WorkspaceStarter {
     ): Promise<boolean> {
         const span = TraceContext.startSpan("needsImageBuild", ctx);
         try {
+            log.info("HELLO from needsImageBuild");
             const client = await this.imagebuilderClientProvider.getDefault(user, workspace, instance);
+            log.info("HELLO got client");
             const { src, auth, disposable } = await this.prepareBuildRequest(
                 { span },
                 workspace,
@@ -907,7 +912,9 @@ export class WorkspaceStarter {
             const req = new ResolveWorkspaceImageRequest();
             req.setSource(src);
             req.setAuth(auth);
+            log.info("HELLO resolving workspace image");
             const result = await client.resolveWorkspaceImage({ span }, req);
+            log.info("HELLO resolved workspace image");
 
             if (!!disposable) {
                 disposable.dispose();
