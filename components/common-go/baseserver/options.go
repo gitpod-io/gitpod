@@ -20,6 +20,8 @@ type config struct {
 
 	// hostname is the hostname on which our servers will listen.
 	hostname string
+	// debugPort is the port we listen on for metrics, pprof, readiness and livenss checks
+	debugPort int
 	// grpcPort is the port we listen on for gRPC traffic
 	grpcPort int
 	// httpPort is the port we listen on for HTTP traffic
@@ -40,8 +42,9 @@ func defaultConfig() *config {
 	return &config{
 		logger:          log.New(),
 		hostname:        "localhost",
-		httpPort:        9000,
-		grpcPort:        9001,
+		httpPort:        -1, // disabled by default
+		grpcPort:        -1, // disabled by default
+		debugPort:       9500,
 		closeTimeout:    5 * time.Second,
 		healthHandler:   healthcheck.NewHandler(),
 		metricsRegistry: prometheus.NewRegistry(),
@@ -58,24 +61,29 @@ func WithHostname(hostname string) Option {
 	}
 }
 
+// WithHTTPPort sets the port to use for an HTTP server. Setting WithHTTPPort also enables an HTTP server on the baseserver.
 func WithHTTPPort(port int) Option {
 	return func(cfg *config) error {
-		if port < 0 {
-			return fmt.Errorf("http must not be negative, got: %d", port)
-		}
-
 		cfg.httpPort = port
 		return nil
 	}
 }
 
+// WithGRPCPort sets the port to use for an HTTP server. Setting WithGRPCPort also enables a gRPC server on the baseserver.
 func WithGRPCPort(port int) Option {
+	return func(cfg *config) error {
+		cfg.grpcPort = port
+		return nil
+	}
+}
+
+func WithDebugPort(port int) Option {
 	return func(cfg *config) error {
 		if port < 0 {
 			return fmt.Errorf("grpc port must not be negative, got: %d", port)
 		}
 
-		cfg.grpcPort = port
+		cfg.debugPort = port
 		return nil
 	}
 }
