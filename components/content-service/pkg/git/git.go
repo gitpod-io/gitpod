@@ -182,6 +182,11 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 		env = append(env, fmt.Sprintf("https_proxy=%s", os.Getenv("https_proxy")))
 	}
 
+	cmd0 := exec.Command("git", "version")
+	cmd0.Dir = c.Location
+	cmd0.Env = env
+	res0, err := cmd0.CombinedOutput()
+	log.Infof("git version %v: %s", fullArgs, res0)
 	cmd1 := exec.Command("ls", "-lrtha", "./*")
 	cmd1.Dir = c.Location
 	cmd1.Env = env
