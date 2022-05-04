@@ -16,7 +16,7 @@ import (
 
 func TestServiceLoadBalancerIP(t *testing.T) {
 	const loadBalancerIP = "123.456.789.0"
-	ctx := renderContextWithLoadBalancerIP(t, loadBalancerIP)
+	ctx := renderContextWithProxyConfig(t, &experimental.ProxyConfig{StaticIP: loadBalancerIP})
 
 	objects, err := service(ctx)
 	require.NoError(t, err)
@@ -27,13 +27,28 @@ func TestServiceLoadBalancerIP(t *testing.T) {
 	require.Equal(t, loadBalancerIP, svc.Spec.LoadBalancerIP)
 }
 
-func renderContextWithLoadBalancerIP(t *testing.T, loadBalancerIp string) *common.RenderContext {
+func TestServiceAnnotations(t *testing.T) {
+	annotations := map[string]string{"hello": "world"}
+
+	ctx := renderContextWithProxyConfig(t, &experimental.ProxyConfig{ServiceAnnotations: annotations})
+
+	objects, err := service(ctx)
+	require.NoError(t, err)
+
+	require.Len(t, objects, 1, "must render only one object")
+
+	svc := objects[0].(*corev1.Service)
+	for k, v := range annotations {
+		require.Equalf(t, annotations[k], svc.Annotations[k],
+			"expected to find annotation %q:%q on proxy service, but found %q:%q", k, v, k, svc.Annotations[k])
+	}
+}
+
+func renderContextWithProxyConfig(t *testing.T, proxyConfig *experimental.ProxyConfig) *common.RenderContext {
 	ctx, err := common.NewRenderContext(config.Config{
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
-				ProxyConfig: &experimental.ProxyConfig{
-					StaticIP: loadBalancerIp,
-				},
+				ProxyConfig: proxyConfig,
 			},
 		},
 	}, versions.Manifest{
