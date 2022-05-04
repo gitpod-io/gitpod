@@ -3,7 +3,9 @@
 # Exposes Prometheus and Grafana's UI
 #
 
-source ./preview-name-from-branch.sh
+THIS_DIR="$(dirname "$0")"
+
+source "$THIS_DIR/preview-name-from-branch.sh"
 
 if [[ -z "${VM_NAME:-}" ]]; then
     VM_NAME="$(preview-name-from-branch)"
