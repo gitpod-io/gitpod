@@ -91,10 +91,11 @@ type WorkspaceTemplates struct {
 }
 
 type WebAppConfig struct {
-	PublicAPI          *PublicAPIConfig `json:"publicApi,omitempty"`
-	Server             *ServerConfig    `json:"server,omitempty"`
-	ProxyConfig        *ProxyConfig     `json:"proxy,omitempty"`
-	UsePodAntiAffinity bool             `json:"usePodAntiAffinity"`
+	PublicAPI              *PublicAPIConfig       `json:"publicApi,omitempty"`
+	Server                 *ServerConfig          `json:"server,omitempty"`
+	ProxyConfig            *ProxyConfig           `json:"proxy,omitempty"`
+	WorkspaceManagerBridge *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`
+	UsePodAntiAffinity     bool                   `json:"usePodAntiAffinity"`
 }
 
 type WorkspaceDefaults struct {
@@ -119,6 +120,10 @@ type GithubApp struct {
 	MarketplaceName string `json:"marketplaceName"`
 	WebhookSecret   string `json:"webhookSecret"`
 	CertSecretName  string `json:"certSecretName"`
+}
+
+type WsManagerBridgeConfig struct {
+	SkipSelf bool `json:"skipSelf"`
 }
 
 type ServerConfig struct {
