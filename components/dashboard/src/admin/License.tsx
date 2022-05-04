@@ -37,7 +37,7 @@ export default function License() {
     const features = license?.features;
 
     // if user seats is 0, it means that there is no user limit in the license
-    const userLimit = license?.seats == 0 ? "Unlimited" : license?.seats;
+    const userLimit = license?.seats === 0 ? "Unlimited" : license?.seats;
 
     const [licenseLevel, paid, statusMessage] = license ? getSubscriptionLevel(license) : defaultMessage();
 
@@ -155,7 +155,8 @@ function professionalPlan(userCount: number, seats: number, trial: boolean, vali
         );
     };
 
-    const aboveLimit: boolean = userCount > seats;
+    // seats === 0 means unlimited number of users
+    const aboveLimit: boolean = seats === 0 ? false : userCount > seats;
 
     const licenseTitle = () => {
         const expDate = new Date(validUntil);
@@ -202,7 +203,8 @@ function communityPlan(userCount: number, seats: number, fallbackAllowed: boolea
         }
     };
 
-    const aboveLimit: boolean = userCount > seats;
+    // seats === 0 means unlimited number of users
+    const aboveLimit: boolean = seats === 0 ? false : userCount > seats;
 
     return [licenseLevel("Community"), additionalLicenseInfo("Free"), alertMessage(aboveLimit)];
 }
