@@ -14,11 +14,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/pointer"
 )
 
 func TestConfigMap(t *testing.T) {
 	type Expectation struct {
 		EnableLocalApp                    bool
+		RunDbDeleter                      bool
 		DisableDynamicAuthProviderLogin   bool
 		DefaultBaseImageRegistryWhiteList []string
 		WorkspaceImage                    string
@@ -30,6 +32,7 @@ func TestConfigMap(t *testing.T) {
 	expectation := Expectation{
 		EnableLocalApp:                    true,
 		DisableDynamicAuthProviderLogin:   true,
+		RunDbDeleter:                      false,
 		DefaultBaseImageRegistryWhiteList: []string{"some-registry"},
 		WorkspaceImage:                    "some-workspace-image",
 		JWTSecret:                         "some-jwt-secret",
@@ -53,6 +56,7 @@ func TestConfigMap(t *testing.T) {
 				Server: &experimental.ServerConfig{
 					DisableDynamicAuthProviderLogin:   expectation.DisableDynamicAuthProviderLogin,
 					EnableLocalApp:                    expectation.EnableLocalApp,
+					RunDbDeleter:                      pointer.Bool(expectation.RunDbDeleter),
 					DefaultBaseImageRegistryWhiteList: expectation.DefaultBaseImageRegistryWhiteList,
 					WorkspaceDefaults: experimental.WorkspaceDefaults{
 						WorkspaceImage: expectation.WorkspaceImage,
@@ -94,6 +98,7 @@ func TestConfigMap(t *testing.T) {
 	actual := Expectation{
 		DisableDynamicAuthProviderLogin:   config.DisableDynamicAuthProviderLogin,
 		EnableLocalApp:                    config.EnableLocalApp,
+		RunDbDeleter:                      config.RunDbDeleter,
 		DefaultBaseImageRegistryWhiteList: config.DefaultBaseImageRegistryWhitelist,
 		WorkspaceImage:                    config.WorkspaceDefaults.WorkspaceImage,
 		JWTSecret:                         config.OAuthServer.JWTSecret,
