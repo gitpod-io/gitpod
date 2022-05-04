@@ -26,8 +26,13 @@ import (
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-// ErrNotFound is returned when the reference was not found
-var ErrNotFound = xerrors.Errorf("not found")
+var (
+	// ErrNotFound is returned when the reference was not found
+	ErrNotFound = xerrors.Errorf("not found")
+
+	// ErrNotFound is returned when we're not authorized to return the reference
+	ErrUnauthorized = xerrors.Errorf("not authorized")
+)
 
 // StandaloneRefResolver can resolve image references without a Docker daemon
 type StandaloneRefResolver struct {
@@ -96,8 +101,12 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 	span.LogKV("normalized-ref", nref)
 
 	res, desc, err := r.Resolve(ctx, nref)
-	if err != nil && strings.Contains(err.Error(), "not found") {
-		err = ErrNotFound
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			err = ErrNotFound
+		} else if strings.Contains(err.Error(), "Unauthorized") {
+			err = ErrUnauthorized
+		}
 		return
 	}
 	fetcher, err := r.Fetcher(ctx, res)
@@ -137,6 +146,9 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 
 	var dgst digest.Digest
 	for _, mf := range mfl.Manifests {
+		if mf.Platform == nil {
+			continue
+		}
 		if fmt.Sprintf("%s-%s", mf.Platform.OS, mf.Platform.Architecture) == "linux-amd64" {
 			dgst = mf.Digest
 			break
