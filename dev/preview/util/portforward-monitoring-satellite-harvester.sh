@@ -13,17 +13,26 @@ fi
 
 NAMESPACE="preview-${VM_NAME}"
 
-function log {
-    echo "[$(date)] $*"
-}
+echo "
+Starting port-forwarding:
 
+Prometheus:
+$(gp url 9090)
+
+Grafana:
+$(gp url 3000)
+
+"
+
+# This is just a bit of extra safety to ensure that no other port-forwards are running
+# e.g. maybe you forgot you had it running in another terminal etc.
 pkill -f "kubectl port-forward (.*)3000:3000"
-kubectl port-forward --context=harvester -n "${NAMESPACE}" svc/proxy "3000:3000" > /dev/null 2>&1 &
-
 pkill -f "kubectl port-forward (.*)9090:9090"
-kubectl port-forward --context=harvester -n "${NAMESPACE}" svc/proxy "9090:9090" > /dev/null 2>&1 &
 
-log "Please follow the link to access Prometheus' UI: $(gp url 9090)"
-log "Please follow the link to access Grafanas' UI: $(gp url 3000)"
-echo ""
-log "If they are not accessible, make sure to re-run the Werft job with the following annotation: 'with-vm=true'"
+# We're using xargs here to run the commands in parallel. This has two benefits as xargs
+#
+#   1. Will show the stdout/stderr of both processes, making it easier to diagnose issues
+#   2. Deals with process termination. If you ^C this script xargs will kill the underlying
+#.     processes.
+#
+echo "3000:3000 9090:9090" | xargs  -n 1 -P 2 kubectl port-forward --context=harvester -n "${NAMESPACE}" svc/proxy
