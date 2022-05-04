@@ -292,11 +292,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:          PrometheusPortName,
 								ContainerPort: PrometheusPort,
 							}, {
-								Name:          "debug",
-								ContainerPort: 6060,
+								Name:          InstallationAdminName,
+								ContainerPort: InstallationAdminPort,
 							}, {
-								Name:          "debugnode",
-								ContainerPort: 9229,
+								Name:          DebugPortName,
+								ContainerPort: common.DebugPort,
+							}, {
+								Name:          DebugNodePortName,
+								ContainerPort: common.DebugNodePort,
 							},
 							},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?

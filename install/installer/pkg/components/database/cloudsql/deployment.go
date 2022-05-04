@@ -6,6 +6,7 @@ package cloudsql
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -43,7 +44,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Labels:    labels,
 					},
 					Spec: corev1.PodSpec{
-						Affinity:                      &corev1.Affinity{},
+						Affinity: &corev1.Affinity{
+							NodeAffinity: common.NodeAffinity(cluster.AffinityLabelMeta).NodeAffinity,
+						},
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),
 						DNSPolicy:                     "ClusterFirst",
