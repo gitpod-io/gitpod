@@ -1,7 +1,7 @@
 ## start with
 ##    loadgen benchmark prod-benchmark.yaml
 
-workspaces: 500
+workspaces: 60
 ideImage: eu.gcr.io/gitpod-core-dev/build/ide/code:commit-ff263e14024f00d0ed78386b4417dfa6bcd4ae2f
 repos:
   - cloneURL: https://github.com/gitpod-io/template-typescript-node
