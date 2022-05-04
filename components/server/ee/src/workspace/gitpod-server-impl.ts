@@ -232,7 +232,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const result = await this.eligibilityService.mayStartWorkspace(user, new Date(), runningInstances);
         if (!result.enoughCredits) {
-            throw new ResponseError(ErrorCodes.NOT_ENOUGH_CREDIT, `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`);
+            throw new ResponseError(
+                ErrorCodes.NOT_ENOUGH_CREDIT,
+                `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`,
+            );
         }
         if (!!result.hitParallelWorkspaceLimit) {
             throw new ResponseError(
@@ -565,13 +568,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
 
-        const target = await this.userDB.findUserById(req.id);
-        if (!target) {
+        let targetUser;
+        try {
+            targetUser = await this.userService.blockUser(req.id, req.blocked);
+        } catch (error) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
         }
-
-        target.blocked = !!req.blocked;
-        await this.userDB.storeUser(target);
 
         const workspaceDb = this.workspaceDb.trace(ctx);
         const workspaces = await workspaceDb.findWorkspacesByUser(req.id);
@@ -584,7 +586,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
         // Returning `target` instead (which should be equivalent).
-        return this.censorUser(target);
+        return this.censorUser(targetUser);
     }
 
     async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
