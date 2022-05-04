@@ -55,7 +55,7 @@ func TestConfigMap(t *testing.T) {
 			WebApp: &experimental.WebAppConfig{
 				Server: &experimental.ServerConfig{
 					DisableDynamicAuthProviderLogin:   expectation.DisableDynamicAuthProviderLogin,
-					EnableLocalApp:                    expectation.EnableLocalApp,
+					EnableLocalApp:                    pointer.Bool(expectation.EnableLocalApp),
 					RunDbDeleter:                      pointer.Bool(expectation.RunDbDeleter),
 					DefaultBaseImageRegistryWhiteList: expectation.DefaultBaseImageRegistryWhiteList,
 					WorkspaceDefaults: experimental.WorkspaceDefaults{
