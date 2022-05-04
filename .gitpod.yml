@@ -33,7 +33,7 @@ ports:
 tasks:
   - name: Add Harvester kubeconfig
     command: |
-      ./dev/preview/download-and-merge-harvester-kubeconfig.sh
+      ./dev/preview/util/download-and-merge-harvester-kubeconfig.sh
       exit 0
   - name: Java
     init: |
