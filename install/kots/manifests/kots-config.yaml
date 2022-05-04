@@ -343,18 +343,18 @@ spec:
             Add the domain only (eg, `gitpod.io`). Separate multiple domains with spaces.
 
     - name: advanced
-      title: Advanced customizations (Expert Mode)
-      description: Use with care! Enable only when you know what you are doing!
+      title: Additional Options
+      description: Here are additional options that you should only make use of in coordination with us or when you know what you are doing.
       items:
         - name: advanced_mode_enabled
-          title: Enable advanced mode
+          title: Enable additional options
           type: bool
           default: "0"
-          help_text: Enables advanced customization options. Enable only when you know what you are doing!
+          help_text: Enables additional customization options. Enable only when you know what you are doing!
 
         - name: config_patch
           title: Gitpod config patch (YAML file)
           type: file
           required: false
           when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
-          help_text: A file with Gitpod config that will be used to patch the generated Gitpod config.
+          help_text: A file with Gitpod config that will be used to patch the generated Gitpod config. Usually provided by Gitpod as a way to tailor your installation.
