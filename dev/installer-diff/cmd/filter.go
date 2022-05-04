@@ -34,20 +34,29 @@ var filterCmd = &cobra.Command{
 			log.Panic(err)
 		}
 
-		// sort by .kind and .metadata.name
-		sort.SliceStable(objs, func(i, j int) bool {
-			id := func(i int) string {
-				return fmt.Sprintf("%s:%s", objs[i].GetKind(), objs[i].GetName())
-			}
-			return id(i) < id(j)
-		})
-
 		var outObjs []unstructured.Unstructured
 		for _, obj := range objs {
 			// filter out generic stuff: .status, .metadata.annotations, etc.
 			err = filterGenericStuff(&obj)
 			if err != nil {
 				log.Panic(err)
+			}
+
+			// rename objects and components (to allow to compare re-named objects)
+			nameMappings := map[string]string{
+				"db": "cloudsqlproxy-cloud-sql-proxy",
+			}
+			if newName, hasEntry := nameMappings[obj.GetName()]; hasEntry {
+				obj.SetName(newName)
+			}
+
+			componentMapping := map[string]string{
+				"db": "cloudsqlproxy",
+			}
+			lbls := obj.GetLabels()
+			if newComponent, hasEntry := componentMapping[lbls["component"]]; hasEntry {
+				lbls["component"] = newComponent
+				obj.SetLabels(lbls)
 			}
 
 			// handle specific objects
@@ -59,6 +68,14 @@ var filterCmd = &cobra.Command{
 				outObjs = append(outObjs, obj)
 			}
 		}
+
+		// sort by .kind and .metadata.name
+		sort.SliceStable(outObjs, func(i, j int) bool {
+			id := func(i int) string {
+				return fmt.Sprintf("%s:%s", outObjs[i].GetKind(), outObjs[i].GetName())
+			}
+			return id(i) < id(j)
+		})
 
 		// pretty print to stdout
 		bytes, err := json.MarshalIndent(outObjs, "", "  ")
@@ -93,6 +110,9 @@ func filterGenericStuff(obj *unstructured.Unstructured) (err error) {
 		svc := asService(obj)
 		svc.Spec.Selector = filterLabels(svc.Spec.Selector)
 		svc.Spec.SessionAffinity = "" // gpl: new relies on k8s default ("None"), old always sets "None" everywhere
+		sort.SliceStable(svc.Spec.Ports, func(i, j int) bool {
+			return svc.Spec.Ports[i].Name < svc.Spec.Ports[j].Name
+		})
 		obj.Object, err = runtime.DefaultUnstructuredConverter.ToUnstructured(svc)
 	case "Deployment":
 		dep := asDeployment(obj)
@@ -133,7 +153,7 @@ func filterGenericStuff(obj *unstructured.Unstructured) (err error) {
 	// (needs to be below the kind-specific stuff to override converter artifacts!)
 	obj.SetAnnotations(emptyMap)
 	obj.SetNamespace("")
-	obj.SetCreationTimestamp(v1.Time{})	// results in "null". How to set to "nil" w/o writing by hand?
+	obj.SetCreationTimestamp(v1.Time{}) // results in "null". How to set to "nil" w/o writing by hand?
 
 	delete(obj.Object, "status")
 	delete(obj.Object, "automountServiceAccountToken")
@@ -180,15 +200,25 @@ func sortContainersAndEnvVars(containers []corev1.Container) {
 }
 
 func filterSpecificObjects(obj *unstructured.Unstructured) (filter bool, err error) {
+	id := fmt.Sprintf("%s:%s", obj.GetKind(), obj.GetName())
+
 	// TODO(gpl) revise later: generic
 	switch obj.GetKind() {
-	case "Certificate", "ClusterRole", "ClusterRoleBinding", "RoleBinding", "Role", "NetworkPolicy":
+	case "Certificate", "ClusterRole", "ClusterRoleBinding", "RoleBinding", "Role", "NetworkPolicy", "PodSecurityPolicy", "PodDisruptionBudget", "ServiceAccount":
 		return false, nil
 	}
 
-	// TODO(gpl) revise later: NetworkPolicy
-	switch obj.GetKind() {
-	case "NetworkPolicy":
+	// filter out: messagebus
+	switch obj.GetLabels()["component"] {
+	case "messagebus", "rabbitmq":
+		return false, nil
+	}
+	switch obj.GetName() {
+	case "messagebus-config":
+		return false, nil
+	}
+	switch id {
+	case "Service:messagebus", "Service:messagebus-headless", "StatefulSet:messagebus":
 		return false, nil
 	}
 
@@ -202,9 +232,7 @@ func filterSpecificObjects(obj *unstructured.Unstructured) (filter bool, err err
 		return false, nil
 	}
 
-
 	// filter/format individual fields
-	id := fmt.Sprintf("%s:%s", obj.GetKind(), obj.GetName())
 	switch id {
 	case "ConfigMap:content-service-config", "ConfigMap:content-service", "ConfigMap:server-config":
 		cm := asConfigMap(obj)
