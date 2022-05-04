@@ -128,6 +128,7 @@ type ServerConfig struct {
 	ChargebeeSecret                   string            `json:"chargebeeSecret"`
 	DisableDynamicAuthProviderLogin   bool              `json:"disableDynamicAuthProviderLogin"`
 	EnableLocalApp                    bool              `json:"enableLocalApp"`
+	RunDbDeleter                      *bool             `json:"runDbDeleter"`
 	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`
 }
 
