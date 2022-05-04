@@ -3,7 +3,7 @@
 # Exposes Prometheus and Grafana's UI
 #
 
-source ./dev/preview/util/preview-name-from-branch.sh
+source ./preview-name-from-branch.sh
 
 PREVIEW_NAME="$(preview-name-from-branch)"
 NAMESPACE="staging-${PREVIEW_NAME}"

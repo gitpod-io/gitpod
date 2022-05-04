@@ -3,9 +3,12 @@
 # Exposes Prometheus and Grafana's UI
 #
 
-source ./dev/preview/util/preview-name-from-branch.sh
+source ./preview-name-from-branch.sh
 
-VM_NAME="$(preview-name-from-branch)"
+if [[ -z "${VM_NAME:-}" ]]; then
+    VM_NAME="$(preview-name-from-branch)"
+fi
+
 NAMESPACE="preview-${VM_NAME}"
 
 function log {
