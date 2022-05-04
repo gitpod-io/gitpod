@@ -71,7 +71,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go.4
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
     workingDir: /workspace
     imagePullPolicy: Always
     resources:
