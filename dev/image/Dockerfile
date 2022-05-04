@@ -233,6 +233,8 @@ RUN curl -LO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJSONT
 RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/v0.38.0/install.sh | sudo bash && \
     curl https://kots.io/install/1.65.0 | bash
 
+ENV WERFT_CREDENTIAL_HELPER=/workspace/gitpod/dev/preview/werft-credential-helper.sh
+
 # Copy our own tools
 ENV NEW_KUBECDL=1
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
