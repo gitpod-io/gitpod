@@ -574,7 +574,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			PeriodSeconds:       1,
 			SuccessThreshold:    1,
 			TimeoutSeconds:      1,
-			InitialDelaySeconds: 3,
+			InitialDelaySeconds: 2,
 		}
 	)
 
