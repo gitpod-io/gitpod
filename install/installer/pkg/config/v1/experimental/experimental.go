@@ -93,6 +93,7 @@ type WorkspaceTemplates struct {
 type WebAppConfig struct {
 	PublicAPI          *PublicAPIConfig `json:"publicApi,omitempty"`
 	Server             *ServerConfig    `json:"server,omitempty"`
+	ProxyConfig        *ProxyConfig     `json:"proxy,omitempty"`
 	UsePodAntiAffinity bool             `json:"usePodAntiAffinity"`
 }
 
@@ -130,6 +131,10 @@ type ServerConfig struct {
 	EnableLocalApp                    *bool             `json:"enableLocalApp"`
 	RunDbDeleter                      *bool             `json:"runDbDeleter"`
 	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`
+}
+
+type ProxyConfig struct {
+	StaticIP string `json:"staticIP"`
 }
 
 type PublicAPIConfig struct {
