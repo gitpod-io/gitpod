@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-source ./dev/preview/util/preview-name-from-branch.sh
-
-VM_NAME="$(preview-name-from-branch)"
-NAMESPACE="preview-${VM_NAME}"
-
 while getopts n:p:v: flag
 do
     case "${flag}" in
@@ -14,6 +9,13 @@ do
         *) ;;
     esac
 done
+
+if [[ -z "${VM_NAME:-}" ]]; then
+    echo "VM_NAME not specified"
+    exit 1
+fi
+
+NAMESPACE="preview-${VM_NAME}"
 
 pkill -f "kubectl --context=harvester (.*)${PORT}:2200"
 kubectl \
