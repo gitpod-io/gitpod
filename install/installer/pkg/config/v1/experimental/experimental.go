@@ -127,7 +127,7 @@ type ServerConfig struct {
 	GithubApp                         *GithubApp        `json:"githubApp"`
 	ChargebeeSecret                   string            `json:"chargebeeSecret"`
 	DisableDynamicAuthProviderLogin   bool              `json:"disableDynamicAuthProviderLogin"`
-	EnableLocalApp                    bool              `json:"enableLocalApp"`
+	EnableLocalApp                    *bool             `json:"enableLocalApp"`
 	RunDbDeleter                      *bool             `json:"runDbDeleter"`
 	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`
 }

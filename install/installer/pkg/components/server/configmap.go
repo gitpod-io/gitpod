@@ -58,8 +58,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	enableLocalApp := true
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
-			enableLocalApp = cfg.WebApp.Server.EnableLocalApp
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.EnableLocalApp != nil {
+			enableLocalApp = *cfg.WebApp.Server.EnableLocalApp
 		}
 		return nil
 	})
