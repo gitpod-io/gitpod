@@ -198,6 +198,7 @@ type DockerRefResolver interface {
 type PrecachingRefResolver struct {
 	Resolver   DockerRefResolver
 	Candidates []string
+	Auth       auth.RegistryAuthenticator
 
 	mu    sync.RWMutex
 	cache map[string]string
@@ -218,7 +219,24 @@ func (pr *PrecachingRefResolver) StartCaching(ctx context.Context, interval time
 	pr.cache = make(map[string]string)
 	for {
 		for _, c := range pr.Candidates {
-			res, err := pr.Resolver.Resolve(ctx, c)
+			var opts []DockerRefResolverOption
+			if pr.Auth != nil {
+				ref, err := reference.ParseNormalizedNamed(c)
+				if err != nil {
+					log.WithError(err).WithField("ref", c).Warn("unable to precache reference: cannot parse")
+					continue
+				}
+
+				auth, err := pr.Auth.Authenticate(reference.Domain(ref))
+				if err != nil {
+					log.WithError(err).WithField("ref", c).Warn("unable to precache reference: cannot authenticate")
+					continue
+				}
+
+				opts = append(opts, WithAuthentication(auth))
+			}
+
+			res, err := pr.Resolver.Resolve(ctx, c, opts...)
 			if err != nil {
 				log.WithError(err).WithField("ref", c).Warn("unable to precache reference")
 				continue
