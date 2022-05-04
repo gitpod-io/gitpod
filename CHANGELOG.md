@@ -1,6 +1,10 @@
 # Change Log
 
 ## May 2022
+- [experimental] Add persistent volume support for workspaces ([#9242](https://github.com/gitpod-io/gitpod/pull/9242)) - [@sagor999](https://github.com/sagor999)
+- [supervisor] Improve IDE readiness probe ([#9706](https://github.com/gitpod-io/gitpod/pull/9706)) - [@aledbf](https://github.com/aledbf)
+- [registry-facade] Adjust IPFS client Add options ([#9635](https://github.com/gitpod-io/gitpod/pull/9635)) - [@aledbf](https://github.com/aledbf)
+- [image-builder-bob] Update buildkit to v0.10.2 ([#9708](https://github.com/gitpod-io/gitpod/pull/9708)) - [@aledbf](https://github.com/aledbf)
 - [docker-up] Update docker compose to 2.5.0 ([#9699](https://github.com/gitpod-io/gitpod/pull/9699)) - [@aledbf](https://github.com/aledbf)
 - [dashboard] add license tab to the admin dashboard ([#9343](https://github.com/gitpod-io/gitpod/pull/9343)) - [@nandajavarma](https://github.com/nandajavarma)
 
