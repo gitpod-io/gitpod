@@ -172,3 +172,37 @@ func TestGitActions(t *testing.T) {
 
 	testEnv.Test(t, f)
 }
+
+func TestGitLFSSupport(t *testing.T) {
+	userToken, _ := os.LookupEnv("USER_TOKEN")
+	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+
+	f := features.New("GitLFSSupport").
+		WithLabel("component", "server").
+		Assess("it can open a repo with Git LFS support", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
+
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			t.Cleanup(func() {
+				api.Done(t)
+			})
+
+			_, err := api.CreateUser(username, userToken)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/atduarte/lfs-test", username, api)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stopWs(true)
+
+			return ctx
+		}).
+		Feature()
+
+	testEnv.Test(t, f)
+}
