@@ -37,7 +37,7 @@ function log {
 function set-up-ssh {
     if [[ (! -f $PRIVATE_KEY) || (! -f $PUBLIC_KEY) ]]; then
         log Setting up ssh-keys
-        "$THIS_DIR"/install-vm-ssh-keys.sh
+        "$THIS_DIR"/util/install-vm-ssh-keys.sh
     fi
 }
 

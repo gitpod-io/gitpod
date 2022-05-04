@@ -16,7 +16,7 @@ function has-dev-access {
 
 if ! has-dev-access; then
     log "Setting up kubeconfig"
-    "$THIS_DIR"/util/download-and-merge-harvester-kubeconfig.sh
+    "$THIS_DIR"/download-and-merge-harvester-kubeconfig.sh
 fi
 
 log "Downloading private key to ${PRIVATE_KEY_PATH}"
