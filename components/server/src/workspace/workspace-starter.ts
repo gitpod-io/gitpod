@@ -219,6 +219,8 @@ export class WorkspaceStarter {
 
         options = options || {};
         try {
+            await this.checkBlockedRepository(user, workspace.contextURL);
+
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
             // Whenever a such a workspace is re-started we'll give it an image source now. This is in line with how this thing used to work.
@@ -330,6 +332,22 @@ export class WorkspaceStarter {
         } finally {
             span.finish();
         }
+    }
+
+    protected async checkBlockedRepository(user: User, contextURL: string) {
+        const hit = this.config.blockedRepositories.find((r) => !!contextURL && r.urlRegExp.test(contextURL));
+        if (!hit) {
+            return;
+        }
+        if (hit.blockUser) {
+            try {
+                await this.userService.blockUser(user.id, true);
+                log.info({ userId: user.id }, "Blocked user.", { contextURL });
+            } catch (error) {
+                log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });
+            }
+        }
+        throw new Error(`${contextURL} is blocklisted on Gitpod.`);
     }
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself.

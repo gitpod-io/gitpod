@@ -18,11 +18,15 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 
 export const Config = Symbol("Config");
-export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOptionsFile" | "licenseFile"> & {
+export type Config = Omit<
+    ConfigSerialized,
+    "blockedRepositories" | "hostUrl" | "chargebeeProviderOptionsFile" | "licenseFile"
+> & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
     builtinAuthProvidersConfigured: boolean;
+    blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[];
 };
 
 export interface WorkspaceDefaults {
@@ -152,6 +156,12 @@ export interface ConfigSerialized {
      * Key '*' specifies the default rate limit for a cloneURL, unless overriden by a specific cloneURL.
      */
     prebuildLimiter: { [cloneURL: string]: number } & { "*": number };
+
+    /**
+     * List of repositories not allowed to be used for workspace starts.
+     * `blockUser` attribute to control handling of the user's account.
+     */
+    blockedRepositories?: { urlRegExp: string; blockUser: boolean }[];
 }
 
 export namespace ConfigFile {
@@ -201,6 +211,15 @@ export namespace ConfigFile {
         if (licenseFile) {
             license = fs.readFileSync(filePathTelepresenceAware(licenseFile), "utf-8");
         }
+        const blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[] = [];
+        if (config.blockedRepositories) {
+            for (const { blockUser, urlRegExp } of config.blockedRepositories) {
+                blockedRepositories.push({
+                    blockUser,
+                    urlRegExp: new RegExp(urlRegExp),
+                });
+            }
+        }
         return {
             ...config,
             hostUrl,
@@ -214,6 +233,7 @@ export namespace ConfigFile {
                     ? new Date(config.workspaceGarbageCollection.startDate).getTime()
                     : Date.now(),
             },
+            blockedRepositories,
         };
     }
 }
