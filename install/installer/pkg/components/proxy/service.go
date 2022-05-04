@@ -23,6 +23,14 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	var annotations map[string]string
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil {
+			annotations = cfg.WebApp.ProxyConfig.ServiceAnnotations
+		}
+		return nil
+	})
+
 	ports := map[string]common.ServicePort{
 		ContainerHTTPName: {
 			ContainerPort: ContainerHTTPPort,
@@ -47,7 +55,12 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return common.GenerateService(Component, ports, func(service *corev1.Service) {
 		service.Spec.Type = corev1.ServiceTypeLoadBalancer
 		service.Spec.LoadBalancerIP = loadBalancerIP
+
 		service.Annotations["external-dns.alpha.kubernetes.io/hostname"] = fmt.Sprintf("%s,*.%s,*.ws.%s", ctx.Config.Domain, ctx.Config.Domain, ctx.Config.Domain)
 		service.Annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {}}}`
+
+		for k, v := range annotations {
+			service.Annotations[k] = v
+		}
 	})(ctx)
 }

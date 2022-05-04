@@ -134,7 +134,8 @@ type ServerConfig struct {
 }
 
 type ProxyConfig struct {
-	StaticIP string `json:"staticIP"`
+	StaticIP           string            `json:"staticIP"`
+	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
 }
 
 type PublicAPIConfig struct {
