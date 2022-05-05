@@ -1,13 +1,3 @@
-args:
-- name: version
-  desc: "The version of the integration tests to use"
-  required: true
-- name: namespace
-  desc: "The namespace to run the integration test against"
-  required: true
-- name: testPattern
-  desc: "The test file pattern to filter the tests to run"
-  required: false
 pod:
   serviceAccount: werft
   nodeSelector:
@@ -18,16 +8,38 @@ pod:
   - name: gcp-sa
     secret:
       secretName: gcp-sa-gitpod-dev-deployer
-  - name: integration-test-user
-    secret:
-      secretName: integration-test-user
   - name: config
     emptyDir: {}
-  initContainers:
+  containers:
   - name: gcloud
     image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
+    env:
+    - name: NODENAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    - name: ROBOQUAT_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-roboquat-automatic-changelog
+          key: token
+    - name: SLACK_NOTIFICATION_PATH
+      valueFrom:
+        secretKeyRef:
+          name: slack-webhook-urls
+          key: workspace_jobs
+    - name: USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: integration-test-user
+          key: username
+    - name: USER_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: integration-test-user
+          key: token
     volumeMounts:
     - name: gcp-sa
       mountPath: /mnt/secrets/gcp-sa
@@ -39,97 +51,119 @@ pod:
     - bash
     - -c
     - |
-
-      echo "[prep] preparing config."
-
-      gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
-      cp -R /home/gitpod/.config/gcloud /config/gcloud
-      cp /home/gitpod/.kube/config /config/kubeconfig
-
-      echo "[prep] copied config..."
-  containers:
-  - name: tests
-    image: eu.gcr.io/gitpod-core-dev/build/integration-tests:{{ .Annotations.version }}
-    workingDir: /workspace
-    imagePullPolicy: IfNotPresent
-    volumeMounts:
-    - name: config
-      mountPath: /config
-      readOnly: true
-    env:
-    - name: USERNAME
-      valueFrom:
-        secretKeyRef:
-          name: integration-test-user
-          key: username
-    - name: USER_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: integration-test-user
-          key: token
-    - name: ROBOQUAT_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: github-roboquat-automatic-changelog
-          key: token
-    - name: SLACK_NOTIFICATION_PATH
-      valueFrom:
-        secretKeyRef:
-          name: slack-webhook-urls
-          key: workspace_jobs
-    command:
-    - /bin/bash
-    - -c
-    - |
       set -euo
 
-      printf '{{ toJson .Annotations }}' > context.json
+      BRANCH="inte-test/"$(date +%Y%m%d%H%M%S)
+      export WERFT_CREDENTIAL_HELPER=/workspace/dev/preview/werft-credential-helper.sh
 
-      echo "[prep] receiving config..."
-      export GOOGLE_APPLICATION_CREDENTIALS="/config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json"
-      echo "[prep] received config."
+      function cleanup ()
+      {
+        werft log phase "clean up" "clean up"
+        git push origin :$BRANCH | werft log slice "clean up"
+        werft log slice "clean up" --done
+      }
 
-      echo "[prep] using username: $USERNAME"
+      echo "preparing config." | werft log slice prepare
+      sudo chown -R gitpod:gitpod /workspace
+      gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
+      export GOOGLE_APPLICATION_CREDENTIALS="/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json"
 
-      TEST_PATTERN="{{ .Annotations.testPattern }}"
-      if [[ "$TEST_PATTERN" == "<no value>" ]]; then
-        TEST_PATTERN=""
+      git config --global user.name roboquat
+      git config --global user.email roboquat@gitpod.io
+      git remote set-url origin https://oauth2:$ROBOQUAT_TOKEN@github.com/gitpod-io/gitpod.git
+
+      echo "copied config..." | werft log slice prepare
+      go install github.com/csweichel/oci-tool@latest 2>&1 | werft log slice prepare
+      werft log slice prepare --done
+
+      werft log phase "build preview environment" "build preview environment"
+      echo integration test >> README.md
+      git checkout -B $BRANCH
+      git add README.md
+      git commit -m "integration test"
+      git push --set-upstream origin $BRANCH
+      trap cleanup SIGINT SIGTERM EXIT
+
+      BUILD_ID=$(werft job list repo.ref==refs/heads/${BRANCH} -o yaml | yq r - "result[0].name")
+      until [ "$BUILD_ID" != "" ]
+      do
+          sleep 1
+          BUILD_ID=$(werft job list repo.ref==refs/heads/${BRANCH} -o yaml | yq r - "result[0].name")
+      done
+      echo "start build preview environment, job name: ${BUILD_ID}, this will take long time" | werft log slice "build preview environment"
+      werft log result -d "build job" url "https://werft.gitpod-dev.com/job/${BUILD_ID}"
+
+      if ! werft job logs ${BUILD_ID} | werft log slice "build preview environment";
+      then
+          echo "build failed" | werft log slice "build preview environment"
+          exit 1
       fi
-      echo "[prep] using testPattern: $TEST_PATTERN"
+      echo "build success" | werft log slice "build preview environment"
+      werft log slice "build preview environment" --done
 
+      werft log phase "kubectx" "kubectx"
+      mkdir -p /home/gitpod/.ssh
+      /workspace/dev/preview/util/download-and-merge-harvester-kubeconfig.sh | werft log slice "kubectx"
+      /workspace/dev/preview/install-k3s-kubeconfig.sh | werft log slice "kubectx"
+      werft log slice "kubectx" --done
+
+      werft log phase "integration test" "integration test"
       args=()
-      [[ "$TEST_PATTERN" != "" ]] && args+=( "-testPattern=$TEST_PATTERN" )
-      args+=( '-kubeconfig=/config/kubeconfig' )
-      args+=( "-namespace={{ .Annotations.namespace }}" )
+      args+=( "-kubeconfig=/home/gitpod/.kube/config" )
+      args+=( "-namespace=default" )
       [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
-      echo "[prep|DONE]"
 
-      /entrypoint.sh "${args[@]}" 2>&1 | tee entrypoint.sh.log | ts "[int-tests] "
+      WK_TEST_LIST=(/workspace/test/tests/components/content-service /workspace/test/tests/components/image-builder /workspace/test/tests/components/ws-daemon /workspace/test/tests/components/ws-manager /workspace/test/tests/workspace)
 
-      RC=${PIPESTATUS[0]}
+      FAILURE_COUNT=0
+      declare -A FAILURE_TESTS
+      for TEST_PATH in "${WK_TEST_LIST[@]}"
+      do
+          TEST_NAME=$(basename "${TEST_PATH}")
+          echo "running integration for ${TEST_NAME}" | werft log slice "test-${TEST_NAME}"
+
+          cd "${TEST_PATH}"
+          go test -v ./... "${args[@]}" 2>&1 | tee "${TEST_NAME}".log | werft log slice "test-${TEST_NAME}"
+
+
+          if [ "${PIPESTATUS[0]}" -ne "0" ]; then
+            FAILURE_COUNT=$((FAILURE_COUNT+1))
+            FAILURE_TESTS["${TEST_NAME}"]=$(grep "\-\-\- FAIL: " "${TEST_PATH}"/"${TEST_NAME}".log)
+            werft log slice "test-${TEST_NAME}" --fail "${PIPESTATUS[0]}"
+          else
+            werft log slice "test-${TEST_NAME}" --done
+          fi
+      done
+
+      werft log phase "slack notification" "slack notification"
       context_name={{ .Name }}
       context_repo={{ .Repository.Repo }}
       werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
 
-      if [ $RC -eq 1 ]; then
+      if [ "${FAILURE_COUNT}" -ne "0" ]; then
         title=":x: *Workspace integration test fail*"
+        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
 
-        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}\n_TestPattern_: {{ .Annotations.testPattern }}"
-        errors=$(grep "\-\-\- FAIL: " entrypoint.sh.log)
-        BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errors}\\n\`\`\`\"}}]}"
-
-        echo "[int-tests|FAIL]"
+        errs=""
+        for TEST_NAME in ${!FAILURE_TESTS[*]}; do
+          title=$title"\n_Tests_: ${TEST_NAME}"
+          errs+="${FAILURE_TESTS["${TEST_NAME}"]}"
+        done
+        errs=$(echo "${errs}" | head)
+        BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errs}\\n\`\`\`\"}}]}"
       else
         title=":white_check_mark: *Workspace integration test pass*"
 
-        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}\n_TestPattern_: {{ .Annotations.testPattern }}"
+        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
         BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}}]}"
-
-        echo "[int-tests|DONE]"
       fi
 
       curl -X POST \
           -H 'Content-type: application/json' \
           -d "${BODY}" \
           "https://hooks.slack.com/${SLACK_NOTIFICATION_PATH}"
-      exit $RC
+      werft log result "slack notification" "${PIPESTATUS[0]}"
+
+      exit $FAILURE_COUNT
+plugins:
+  cron: "@midnight"
