@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -225,11 +226,12 @@ func (s *Server) newHTTPMux() *http.ServeMux {
 	// Metrics endpoint
 	metricsHandler := promhttp.Handler()
 	fmt.Println("checking ", s.cfg.metricsRegistry)
-	if s.cfg.metricsRegistry != nil {
-		metricsHandler = promhttp.InstrumentMetricHandler(
-			s.cfg.metricsRegistry, promhttp.HandlerFor(s.cfg.metricsRegistry, promhttp.HandlerOpts{}),
-		)
+	if s.cfg.metricsRegistry == nil {
+		s.cfg.metricsRegistry = prometheus.NewRegistry()
 	}
+	metricsHandler = promhttp.InstrumentMetricHandler(
+		s.cfg.metricsRegistry, promhttp.HandlerFor(s.cfg.metricsRegistry, promhttp.HandlerOpts{}),
+	)
 	mux.Handle("/metrics", metricsHandler)
 	s.Logger().WithField("protocol", "http").Debug("Serving metrics on /metrics")
 
