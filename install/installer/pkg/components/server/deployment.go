@@ -187,6 +187,27 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
+			volumes = append(volumes,
+				corev1.Volume{
+					Name: githubAppCertSecret,
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: cfg.WebApp.Server.GithubApp.CertSecretName,
+						},
+					},
+				})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      githubAppCertSecret,
+				MountPath: cfg.WebApp.Server.GithubApp.CertPath,
+				ReadOnly:  true,
+			})
+		}
+		return nil
+	})
+
 	var podAntiAffinity *corev1.PodAntiAffinity
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.UsePodAntiAffinity {
@@ -238,7 +259,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						PriorityClassName:  common.SystemNodeCritical,
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
-						// todo(sje): conditionally add github-app-cert-secret in
 						// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
 						Volumes: append(
 							[]corev1.Volume{
@@ -303,7 +323,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
 							Env: env,
-							// todo(sje): conditionally add github-app-cert-secret in
 							// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
 							VolumeMounts: append(
 								[]corev1.VolumeMount{
