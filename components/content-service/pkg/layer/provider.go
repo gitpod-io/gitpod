@@ -465,15 +465,27 @@ func contentDescriptorToLayer(cdesc []byte) (*Layer, error) {
 	)
 }
 
+var prestophookScript = `#!/bin/bash
+cd ${GITPOD_REPO_ROOT}
+git config --global --add safe.directory ${GITPOD_REPO_ROOT}
+git status --porcelain=v2 --branch -uall > /.workspace/prestophookdata/git_status.txt
+git log --pretty='%h: %s' --branches --not --remotes > /.workspace/prestophookdata/git_log_1.txt
+git log --pretty=%H -n 1 > /.workspace/prestophookdata/git_log_2.txt
+`
+
 // version of this function for persistent volume claim feature
 // we cannot use /workspace folder as when mounting /workspace folder through PVC
 // it will mask anything that was in container layer, hence we are using /.workspace instead here
 func contentDescriptorToLayerPVC(cdesc []byte) (*Layer, error) {
-	return layerFromContent(
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/.workspace/.gitpod/content.json", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(cdesc))}, cdesc},
-	)
+	layers := []fileInLayer{
+		{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		{&tar.Header{Typeflag: tar.TypeReg, Name: "/.supervisor/prestophook.sh", Uid: 0, Gid: 0, Mode: 0775, Size: int64(len(prestophookScript))}, []byte(prestophookScript)},
+	}
+	if len(cdesc) > 0 {
+		layers = append(layers, fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/.workspace/.gitpod/content.json", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(cdesc))}, cdesc})
+	}
+	return layerFromContent(layers...)
 }
 
 func workspaceReadyLayer(src csapi.WorkspaceInitSource) (*Layer, error) {
