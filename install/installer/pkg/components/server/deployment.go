@@ -7,6 +7,7 @@ package server
 import (
 	"encoding/base64"
 	"fmt"
+	"path"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
@@ -201,7 +202,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 			volumeMounts = append(volumeMounts, corev1.VolumeMount{
 				Name:      githubAppCertSecret,
-				MountPath: cfg.WebApp.Server.GithubApp.CertPath,
+				MountPath: path.Dir(cfg.WebApp.Server.GithubApp.CertPath),
 				ReadOnly:  true,
 			})
 		}
