@@ -1,6 +1,20 @@
 # Change Log
 
 ## May 2022
+- [image-builder] Improve error handling (no more "hostname required") ([#9778](https://github.com/gitpod-io/gitpod/pull/9778)) - [@csweichel](https://github.com/csweichel)
+- [server] blocklist repositories ([#9762](https://github.com/gitpod-io/gitpod/pull/9762)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [ws-manager] Reduce readiness probe initialDelaySeconds ([#9768](https://github.com/gitpod-io/gitpod/pull/9768)) - [@aledbf](https://github.com/aledbf)
+- [loadgen] Adjust workspace count in the default load test ([#9774](https://github.com/gitpod-io/gitpod/pull/9774)) - [@aledbf](https://github.com/aledbf)
+- Fix readiness probe issue in registry-facace when configured registry address contains a port ([#9727](https://github.com/gitpod-io/gitpod/pull/9727)) - [@csweichel](https://github.com/csweichel)
+- Allow `proxy` service to configure a static IP via the installer ([#9764](https://github.com/gitpod-io/gitpod/pull/9764)) - [@andrew-farries](https://github.com/andrew-farries)
+- [kots]: automatically enable shiftfs support if cluster supports it ([#9731](https://github.com/gitpod-io/gitpod/pull/9731)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Make `runDbDeleter` for the server configurable via the installer ([#9756](https://github.com/gitpod-io/gitpod/pull/9756)) - [@andrew-farries](https://github.com/andrew-farries)
+- [kots]: improve installer job failure recovery ([#9741](https://github.com/gitpod-io/gitpod/pull/9741)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [agent-smith] Remove egress check feature ([#9689](https://github.com/gitpod-io/gitpod/pull/9689)) - [@aledbf](https://github.com/aledbf)
+- [kots] support s3 backend in incluster registry ([#9701](https://github.com/gitpod-io/gitpod/pull/9701)) - [@Pothulapati](https://github.com/Pothulapati)
+- Allow chargebee payment config to be specified via the installer for SaaS installations. ([#9717](https://github.com/gitpod-io/gitpod/pull/9717)) - [@andrew-farries](https://github.com/andrew-farries)
+- [KOTS]: configure blockNewUsers ([#9718](https://github.com/gitpod-io/gitpod/pull/9718)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [content-service] Fix backup restoration ([#9732](https://github.com/gitpod-io/gitpod/pull/9732)) - [@aledbf](https://github.com/aledbf)
 - [experimental] Add persistent volume support for workspaces ([#9242](https://github.com/gitpod-io/gitpod/pull/9242)) - [@sagor999](https://github.com/sagor999)
 - [supervisor] Improve IDE readiness probe ([#9706](https://github.com/gitpod-io/gitpod/pull/9706)) - [@aledbf](https://github.com/aledbf)
 - [registry-facade] Adjust IPFS client Add options ([#9635](https://github.com/gitpod-io/gitpod/pull/9635)) - [@aledbf](https://github.com/aledbf)
