@@ -377,7 +377,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		}
 
 		_, gone := wso.Pod.Annotations[wsk8s.ContainerIsGoneAnnotation]
-		_, alreadyFinalized := wso.Pod.Annotations[disposalStatusAnnotation]
+		_, alreadyFinalized := wso.Pod.Annotations[startedDisposalAnnotation]
 
 		if (terminated || gone) && !alreadyFinalized {
 			// We start finalizing the workspace content only after the container is gone. This way we ensure there's
@@ -921,6 +921,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			delete(m.finalizerMap, workspaceID)
 			m.finalizerMapLock.Unlock()
 		}()
+
+		err = m.manager.markWorkspace(ctx, workspaceID, addMark(startedDisposalAnnotation, "true"))
+		if err != nil {
+			log.WithError(err).Error("was unable to update pod's start disposal state - this might cause an incorrect disposal state")
+		}
 
 		if doSnapshot {
 			// if this is a prebuild take a snapshot and mark the workspace
