@@ -14,6 +14,7 @@ message WorkspaceInitializer {
         CompositeInitializer composite = 5;
         FileDownloadInitializer download = 6;
         FromBackupInitializer backup = 7;
+        FromVolumeSnapshotInitializer volume_snapshot = 8;
     }
 }
 
@@ -123,6 +124,11 @@ message PrebuildInitializer {
 
 // FromBackupInitializer initializes content from a previously made backup
 message FromBackupInitializer {
+    string checkout_location = 1;
+}
+
+// FromVolumeSnapshotInitializer initializes content when workspace is created from volume snapshot
+message FromVolumeSnapshotInitializer {
     string checkout_location = 1;
 }
 
