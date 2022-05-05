@@ -132,8 +132,8 @@ message PortsStatusResponse {
 }
 
 enum PortVisibility {
-    private = 0;
-    public = 1;
+    private_visibility = 0;
+    public_visibility = 1;
 }
 enum OnPortExposedAction {
     ignore = 0;
