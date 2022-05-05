@@ -276,8 +276,18 @@ func (w *redisBlobWriter) Commit(ctx context.Context, size int64, expected diges
 		return err
 	}
 
-	_, err = pipe.Exec(ctx)
-	return err
+	errs, err := pipe.Exec(ctx)
+	if err != nil {
+		// in case of errors, there is no details besides the abort of the transaction:
+		// EXECABORT Transaction discarded because of previous errors.
+		if len(errs) > 0 {
+			log.WithField("errors", errs).WithField("kContent", kContent).WithField("kInfo", kInfo).Error("unexpected error during redis commit")
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 // Status returns the current state of write
