@@ -96,6 +96,7 @@ type WebAppConfig struct {
 	ProxyConfig            *ProxyConfig           `json:"proxy,omitempty"`
 	WorkspaceManagerBridge *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`
 	UsePodAntiAffinity     bool                   `json:"usePodAntiAffinity"`
+	DisableMigration       bool                   `json:"disableMigration"`
 }
 
 type WorkspaceDefaults struct {
