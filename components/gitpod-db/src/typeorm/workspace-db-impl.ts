@@ -25,6 +25,7 @@ import {
     WorkspaceInstanceUser,
     WhitelistedRepository,
     Snapshot,
+    VolumeSnapshot,
     LayoutData,
     PrebuiltWorkspace,
     RunningWorkspaceInfo,
@@ -41,6 +42,7 @@ import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
 import { DBLayoutData } from "./entity/db-layout-data";
 import { DBSnapshot } from "./entity/db-snapshot";
+import { DBVolumeSnapshot } from "./entity/db-volume-snapshot";
 import { DBWorkspaceInstanceUser } from "./entity/db-workspace-instance-user";
 import { DBRepositoryWhiteList } from "./entity/db-repository-whitelist";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -77,6 +79,10 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     protected async getSnapshotRepo(): Promise<Repository<DBSnapshot>> {
         return await (await this.getManager()).getRepository<DBSnapshot>(DBSnapshot);
+    }
+
+    protected async getVolumeSnapshotRepo(): Promise<Repository<DBVolumeSnapshot>> {
+        return await (await this.getManager()).getRepository<DBVolumeSnapshot>(DBVolumeSnapshot);
     }
 
     protected async getPrebuiltWorkspaceRepo(): Promise<Repository<DBPrebuiltWorkspace>> {
@@ -698,6 +704,34 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     public async findSnapshotsByWorkspaceId(workspaceId: string): Promise<Snapshot[]> {
         const snapshots = await this.getSnapshotRepo();
         return snapshots.find({ where: { originalWorkspaceId: workspaceId } });
+    }
+
+    public async findVolumeSnapshotById(volumeSnapshotId: string): Promise<VolumeSnapshot | undefined> {
+        const volumeSnapshots = await this.getVolumeSnapshotRepo();
+        return volumeSnapshots.findOne(volumeSnapshotId);
+    }
+
+    public async storeVolumeSnapshot(volumeSnapshot: VolumeSnapshot): Promise<VolumeSnapshot> {
+        const volumeSnapshots = await this.getVolumeSnapshotRepo();
+        const dbVolumeSnapshot = volumeSnapshot as DBVolumeSnapshot;
+        return await volumeSnapshots.save(dbVolumeSnapshot);
+    }
+
+    public async deleteVolumeSnapshot(volumeSnapshotId: string): Promise<void> {
+        const volumeSnapshots = await this.getVolumeSnapshotRepo();
+        await volumeSnapshots.delete(volumeSnapshotId);
+    }
+
+    public async updateVolumeSnapshot(
+        volumeSnapshot: DeepPartial<VolumeSnapshot> & Pick<VolumeSnapshot, "id">,
+    ): Promise<void> {
+        const volumeSnapshots = await this.getVolumeSnapshotRepo();
+        await volumeSnapshots.update(volumeSnapshot.id, volumeSnapshot);
+    }
+
+    public async findVolumeSnapshotsByWorkspaceId(workspaceId: string): Promise<VolumeSnapshot[]> {
+        const volumeSnapshots = await this.getVolumeSnapshotRepo();
+        return volumeSnapshots.find({ where: { originalWorkspaceId: workspaceId } });
     }
 
     public async storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace> {
