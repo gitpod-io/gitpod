@@ -55,7 +55,10 @@ interface SSHProps {
 }
 
 function SSHView(props: SSHProps) {
-    const sshCommand = `ssh ${props.workspaceId}#${props.ownerToken}@${props.ideUrl}`;
+    const sshCommand = `ssh ${props.workspaceId}#${props.ownerToken}@${props.ideUrl.replace(
+        props.workspaceId,
+        props.workspaceId + ".ssh",
+    )}`;
     return (
         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-6">
             <div className="mt-1 mb-4">
