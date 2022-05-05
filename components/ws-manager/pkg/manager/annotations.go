@@ -66,6 +66,10 @@ const (
 	// pvcWorkspaceFeatureAnnotation is set on workspaces which are using persistent_volume_claim feature
 	pvcWorkspaceFeatureAnnotation = "gitpod.io/pvcFeature"
 
+	// startedDisposalAnnotation sets to true when finalizeWorkspaceContent is called to prevent finalize from
+	// being called more then once, which can happen due to race between disposalStatusAnnotation update and actOnPodEvent
+	startedDisposalAnnotation = "gitpod.io/startedDisposal"
+
 	// gitpodFinalizerName is the name of the Gitpod finalizer we use to clean up a workspace
 	gitpodFinalizerName = "gitpod.io/finalizer"
 
