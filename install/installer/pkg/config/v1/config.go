@@ -60,6 +60,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.MaxLifetime = util.Duration(36 * time.Hour)
 	cfg.Workspace.PVC.Size = resource.MustParse("30Gi")
 	cfg.Workspace.PVC.StorageClass = ""
+	cfg.Workspace.PVC.SnapshotClass = ""
 	cfg.OpenVSX.URL = "https://open-vsx.org"
 	cfg.DisableDefinitelyGP = true
 
@@ -246,6 +247,9 @@ type PersistentVolumeClaim struct {
 
 	// StorageClass is a storage class of persistent volume claim to use
 	StorageClass string `json:"storageClass"`
+
+	// SnapshotClass is a snapshot class name that is used to create snapshot volume
+	SnapshotClass string `json:"snapshotClass"`
 }
 
 type Workspace struct {
