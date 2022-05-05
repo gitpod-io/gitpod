@@ -431,8 +431,8 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 				mp = &managedPort{}
 				state[port] = mp
 			}
-			mp.Name = config.Name
-			mp.Description = config.Description
+			mp.Name = "Lorem Ipsum"
+			mp.Description = "Dolor Asmet"
 		})
 	}
 
