@@ -15,6 +15,10 @@ import (
 )
 
 func job(ctx *common.RenderContext) ([]runtime.Object, error) {
+	if disableMigration := common.IsDatabaseMigrationDisabled(ctx); disableMigration {
+		return nil, nil
+	}
+
 	objectMeta := metav1.ObjectMeta{
 		Name:      Component,
 		Namespace: ctx.Namespace,

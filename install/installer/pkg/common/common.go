@@ -341,6 +341,17 @@ func NodeAffinity(orLabels ...string) *corev1.Affinity {
 	}
 }
 
+func IsDatabaseMigrationDisabled(ctx *RenderContext) bool {
+	disableMigration := false
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil {
+			disableMigration = cfg.WebApp.DisableMigration
+		}
+		return nil
+	})
+	return disableMigration
+}
+
 func Replicas(ctx *RenderContext, component string) *int32 {
 	replicas := int32(1)
 

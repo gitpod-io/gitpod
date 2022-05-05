@@ -8,6 +8,7 @@ package init
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -19,6 +20,10 @@ import (
 )
 
 func job(ctx *common.RenderContext) ([]runtime.Object, error) {
+	if disableMigration := common.IsDatabaseMigrationDisabled(ctx); disableMigration {
+		return nil, nil
+	}
+
 	objectMeta := metav1.ObjectMeta{
 		Name:      fmt.Sprintf("%s-session", Component),
 		Namespace: ctx.Namespace,
