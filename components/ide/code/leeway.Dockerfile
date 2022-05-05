@@ -19,6 +19,7 @@ RUN yarn --cwd remote --frozen-lockfile --network-timeout 180000
 FROM gitpod/openvscode-server-linux-build-agent:bionic-x64 as code_builder
 
 ARG CODE_COMMIT
+ARG CODE_QUALITY
 
 ARG NODE_VERSION=16.15.0
 ARG NVM_DIR="/root/.nvm"
@@ -44,6 +45,25 @@ RUN yarn --frozen-lockfile --network-timeout 180000
 # copy remote dependencies build in dependencies_builder image
 RUN rm -rf remote/node_modules/
 COPY --from=dependencies_builder /gp-code/remote/node_modules/ /gp-code/remote/node_modules/
+
+RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
+    nameLong=$(jq --raw-output '.nameLong' product.json) && \
+    echo $CODE_QUALITY && \
+    if [ "$CODE_QUALITY" = "insider" ]; then \
+        nameShort="$nameShort - Insiders" \
+        nameLong="$nameLong - Insiders" \
+    ; fi  && \
+    setQuality='setpath(["quality"]; $codeQuality)' && \
+    setNameShort='setpath(["nameShort"]; $nameShort)' && \
+    setNameLong='setpath(["nameLong"]; $nameLong)' && \
+    jqCommands="${setQuality} | ${setNameShort} | ${setNameLong}" && \
+    cat product.json | jq \
+        --arg codeQuality "$CODE_QUALITY" \
+        --arg nameShort "$nameShort" \
+        --arg nameLong "$nameLong" \
+         "${jqCommands}" > product.json.tmp && \
+    mv product.json.tmp product.json && \
+    cat product.json
 
 RUN yarn --cwd extensions compile \
     && yarn gulp vscode-web-min \
