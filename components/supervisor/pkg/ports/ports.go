@@ -360,8 +360,6 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 				state[port] = mp
 			}
 			mp.LocalhostPort = port
-			mp.Description = config.Description
-			mp.Name = config.Name
 
 			autoExpose, autoExposed := pm.autoExposed[port]
 			if autoExposed {
@@ -423,6 +421,19 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		}
 
 		mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, public).state
+	}
+
+	// Set name and description for each port state.
+	if pm.configs != nil {
+		pm.configs.ForEach(func(port uint32, config *gitpod.PortConfig) {
+			mp, exists := state[port]
+			if !exists {
+				mp = &managedPort{}
+				state[port] = mp
+			}
+			mp.Name = config.Name
+			mp.Description = config.Description
+		})
 	}
 
 	var ports []uint32
