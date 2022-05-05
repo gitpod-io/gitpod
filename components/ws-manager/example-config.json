@@ -17,7 +17,7 @@
       },
       "pvc": {
         "size": "30Gi",
-        "storage-class": ""
+        "storageClass": ""
       },
       "sync": {
         "image": "eu.gcr.io/gitpod-dev/gitpod-ws-daemon:cw-ws-manager.24",

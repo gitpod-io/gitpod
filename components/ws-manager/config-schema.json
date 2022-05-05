@@ -134,13 +134,13 @@
     "PVCConfiguration": {
       "required": [
         "size",
-        "storage-class"
+        "storageClass"
       ],
       "properties": {
         "size": {
           "type": "string"
         },
-        "storage-class": {
+        "storageClass": {
           "type": "string"
         }
       },

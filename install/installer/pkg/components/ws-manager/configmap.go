@@ -69,8 +69,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Templates: templatesCfg,
 			PVC: config.PVCConfiguration{
-				Size:         ctx.Config.Workspace.PVC.Size,
-				StorageClass: ctx.Config.Workspace.PVC.StorageClass,
+				Size:          ctx.Config.Workspace.PVC.Size,
+				StorageClass:  ctx.Config.Workspace.PVC.StorageClass,
+				SnapshotClass: ctx.Config.Workspace.PVC.SnapshotClass,
 			},
 		},
 	}
