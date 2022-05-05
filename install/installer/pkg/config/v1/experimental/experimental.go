@@ -149,7 +149,17 @@ type PublicAPIConfig struct {
 
 type IDEConfig struct {
 	// Disable resolution of latest images and use bundled latest versions instead
-	ResolveLatest *bool `json:"resolveLatest,omitempty"`
+	ResolveLatest  *bool           `json:"resolveLatest,omitempty"`
+	IDEProxyConfig *IDEProxyConfig `json:"ideProxy,omitempty"`
+	VSXProxyConfig *VSXProxyConfig `json:"openvsxProxy,omitempty"`
+}
+
+type IDEProxyConfig struct {
+	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
+}
+
+type VSXProxyConfig struct {
+	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
 }
 
 type TracingSampleType string

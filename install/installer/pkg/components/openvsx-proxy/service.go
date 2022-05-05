@@ -6,12 +6,22 @@ package openvsx_proxy
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
-	return common.GenerateService(Component, map[string]common.ServicePort{
+	var annotations map[string]string
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.IDE != nil && cfg.IDE.VSXProxyConfig != nil {
+			annotations = cfg.IDE.VSXProxyConfig.ServiceAnnotations
+		}
+		return nil
+	})
+
+	ports := map[string]common.ServicePort{
 		PortName: {
 			ContainerPort: ContainerPort,
 			ServicePort:   ServicePort,
@@ -20,5 +30,11 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},
+	}
+
+	return common.GenerateService(Component, ports, func(service *corev1.Service) {
+		for k, v := range annotations {
+			service.Annotations[k] = v
+		}
 	})(ctx)
 }
