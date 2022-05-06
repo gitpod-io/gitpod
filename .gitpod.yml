@@ -68,7 +68,3 @@ jetbrains:
   goland:
     prebuilds:
       version: stable
-  intellij:
-    prebuilds:
-      version: stable
-
