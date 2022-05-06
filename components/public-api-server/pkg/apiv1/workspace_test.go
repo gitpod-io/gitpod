@@ -6,7 +6,7 @@ package apiv1
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
@@ -37,24 +37,10 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 			foundWorkspaceID: {
 				LatestInstance: &gitpod.WorkspaceInstance{},
 				Workspace: &gitpod.Workspace{
-					BaseImageNameResolved: "",
-					BasedOnPrebuildID:     "",
-					BasedOnSnapshotID:     "",
-					Config:                nil,
-					ContentDeletedTime:    "",
-					Context:               nil,
-					ContextURL:            contextURL,
-					CreationTime:          "",
-					Deleted:               false,
-					Description:           description,
-					ID:                    foundWorkspaceID,
-					ImageNameResolved:     "",
-					ImageSource:           nil,
-					OwnerID:               ownerID,
-					Pinned:                false,
-					Shareable:             false,
-					SoftDeleted:           "",
-					Type:                  "",
+					ContextURL:  contextURL,
+					Description: description,
+					ID:          foundWorkspaceID,
+					OwnerID:     ownerID,
 				},
 			},
 		}},
@@ -68,39 +54,44 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 	client := v1.NewWorkspacesServiceClient(conn)
 	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", bearerToken)
 
+	type Expectation struct {
+		Code     codes.Code
+		Response *v1.GetWorkspaceResponse
+	}
+
 	scenarios := []struct {
-		name string
-
+		name        string
 		WorkspaceID string
-
-		ErrorCode codes.Code
-		Response  *v1.GetWorkspaceResponse
+		Expect      Expectation
 	}{
 		{
 			name:        "returns a workspace when workspace is found by ID",
 			WorkspaceID: foundWorkspaceID,
-			ErrorCode:   codes.OK,
-			Response: &v1.GetWorkspaceResponse{
-				Result: &v1.Workspace{
-					WorkspaceId: foundWorkspaceID,
-					OwnerId:     ownerID,
-					ProjectId:   "",
-					Context: &v1.WorkspaceContext{
-						ContextUrl: contextURL,
-						Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
-							NormalizedContextUrl: contextURL,
-							Commit:               "",
-						}},
+			Expect: Expectation{
+				Code: codes.OK,
+				Response: &v1.GetWorkspaceResponse{
+					Result: &v1.Workspace{
+						WorkspaceId: foundWorkspaceID,
+						OwnerId:     ownerID,
+						ProjectId:   "",
+						Context: &v1.WorkspaceContext{
+							ContextUrl: contextURL,
+							Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
+								NormalizedContextUrl: contextURL,
+								Commit:               "",
+							}},
+						},
+						Description: description,
 					},
-					Description: description,
 				},
 			},
 		},
 		{
 			name:        "not found when workspace is not found by ID",
 			WorkspaceID: "some-not-found-workspace-id",
-			ErrorCode:   codes.NotFound,
-			Response:    nil,
+			Expect: Expectation{
+				Code: codes.NotFound,
+			},
 		},
 	}
 
@@ -109,8 +100,10 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 			resp, err := client.GetWorkspace(ctx, &v1.GetWorkspaceRequest{
 				WorkspaceId: scenario.WorkspaceID,
 			})
-			require.Equal(t, scenario.ErrorCode, status.Code(err), "status code must match")
-			if diff := cmp.Diff(scenario.Response, resp, protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(scenario.Expect, Expectation{
+				Code:     status.Code(err),
+				Response: resp,
+			}, protocmp.Transform()); diff != "" {
 				t.Errorf("unexpected difference:\n%v", diff)
 			}
 		})
@@ -134,7 +127,7 @@ type FakeGitpodAPI struct {
 func (f *FakeGitpodAPI) GetWorkspace(ctx context.Context, id string) (res *gitpod.WorkspaceInfo, err error) {
 	w, ok := f.workspaces[id]
 	if !ok {
-		return nil, fmt.Errorf("workspace not found")
+		return nil, errors.New("code 404")
 	}
 
 	return w, nil
