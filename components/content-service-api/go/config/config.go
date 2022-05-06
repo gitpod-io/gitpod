@@ -96,7 +96,6 @@ type GCPConfig struct {
 	CredentialsFile string `json:"credentialsFile"`
 	Region          string `json:"region"`
 	Project         string `json:"projectId"`
-	ParallelUpload  int    `json:"parallelUpload"`
 
 	MaximumBackupCount int `json:"maximumBackupCount"`
 }

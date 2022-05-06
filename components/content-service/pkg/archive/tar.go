@@ -134,16 +134,17 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 	// We need to remap the UID and GID between the host and the container to avoid permission issues.
 	for _, p := range paths {
 		v := m[p]
-		uid := toHostID(v.UID, cfg.UIDMaps)
-		gid := toHostID(v.GID, cfg.GIDMaps)
 
 		if v.IsSymlink {
 			continue
 		}
 
+		uid := toHostID(v.UID, cfg.UIDMaps)
+		gid := toHostID(v.GID, cfg.GIDMaps)
+
 		err = remapFile(path.Join(dst, p), uid, gid, v.Xattrs)
 		if err != nil {
-			log.WithError(err).WithField("uid", uid).WithField("gid", gid).WithField("path", p).Warn("cannot chown")
+			log.WithError(err).WithField("uid", uid).WithField("gid", gid).WithField("path", p).Debug("cannot chown")
 		}
 	}
 
