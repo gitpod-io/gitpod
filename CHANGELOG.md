@@ -1,6 +1,14 @@
 # Change Log
 
 ## May 2022
+- [content-service] Add logs for Redis pipeline errors ([#9809](https://github.com/gitpod-io/gitpod/pull/9809)) - [@aledbf](https://github.com/aledbf)
+- Make sure the server mounts the github app secret when an app is specified in the installer ([#9795](https://github.com/gitpod-io/gitpod/pull/9795)) - [@andrew-farries](https://github.com/andrew-farries)
+- Add `disableDbMigration` config flag to the installer to disable db migrations ([#9793](https://github.com/gitpod-io/gitpod/pull/9793)) - [@andrew-farries](https://github.com/andrew-farries)
+- Allow setting `ide-proxy` and `openvsx-proxy` service annotations via the installer. ([#9788](https://github.com/gitpod-io/gitpod/pull/9788)) - [@andrew-farries](https://github.com/andrew-farries)
+- Use a special domain name for SSH Gateway ([#9786](https://github.com/gitpod-io/gitpod/pull/9786)) - [@iQQBot](https://github.com/iQQBot)
+- Allow `ws-manager-bridge` service to skip registering itself as a workspace, via the installer. ([#9760](https://github.com/gitpod-io/gitpod/pull/9760)) - [@andrew-farries](https://github.com/andrew-farries)
+- Allow setting `proxy` service annotations via the installer. ([#9773](https://github.com/gitpod-io/gitpod/pull/9773)) - [@andrew-farries](https://github.com/andrew-farries)
+- Use link component class for the editor selection modal ([#9738](https://github.com/gitpod-io/gitpod/pull/9738)) - [@gtsiolis](https://github.com/gtsiolis)
 - [image-builder] Improve error handling (no more "hostname required") ([#9778](https://github.com/gitpod-io/gitpod/pull/9778)) - [@csweichel](https://github.com/csweichel)
 - [server] blocklist repositories ([#9762](https://github.com/gitpod-io/gitpod/pull/9762)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [ws-manager] Reduce readiness probe initialDelaySeconds ([#9768](https://github.com/gitpod-io/gitpod/pull/9768)) - [@aledbf](https://github.com/aledbf)
