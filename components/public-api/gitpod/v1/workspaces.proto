@@ -151,6 +151,12 @@ message Workspace {
     string description = 5;
 }
 
+// WorkspaceStatus represents the currently observed status of a Workspace, including data about child resources that belong to this Workspace.
+message WorkspaceStatus {
+    // instance is the currently assigned WorkspaceInstance to this workspace. Empty when there is no WorkspaceInstance assigned.
+    WorkspaceInstance instance = 1;
+}
+
 // WorkspaceContext describes the context a workspace was created from
 message WorkspaceContext {
     // Explicit Git context

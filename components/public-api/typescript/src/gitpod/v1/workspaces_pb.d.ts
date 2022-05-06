@@ -497,6 +497,29 @@ export namespace Workspace {
     }
 }
 
+export class WorkspaceStatus extends jspb.Message {
+
+    hasInstance(): boolean;
+    clearInstance(): void;
+    getInstance(): WorkspaceInstance | undefined;
+    setInstance(value?: WorkspaceInstance): WorkspaceStatus;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WorkspaceStatus.AsObject;
+    static toObject(includeInstance: boolean, msg: WorkspaceStatus): WorkspaceStatus.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WorkspaceStatus, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WorkspaceStatus;
+    static deserializeBinaryFromReader(message: WorkspaceStatus, reader: jspb.BinaryReader): WorkspaceStatus;
+}
+
+export namespace WorkspaceStatus {
+    export type AsObject = {
+        instance?: WorkspaceInstance.AsObject,
+    }
+}
+
 export class WorkspaceContext extends jspb.Message {
     getContextUrl(): string;
     setContextUrl(value: string): WorkspaceContext;
