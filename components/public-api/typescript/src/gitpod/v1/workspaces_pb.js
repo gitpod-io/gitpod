@@ -3721,7 +3721,8 @@ proto.gitpod.v1.Workspace.toObject = function(includeInstance, msg) {
     ownerId: jspb.Message.getFieldWithDefault(msg, 2, ""),
     projectId: jspb.Message.getFieldWithDefault(msg, 3, ""),
     context: (f = msg.getContext()) && proto.gitpod.v1.WorkspaceContext.toObject(includeInstance, f),
-    description: jspb.Message.getFieldWithDefault(msg, 5, "")
+    description: jspb.Message.getFieldWithDefault(msg, 5, ""),
+    status: (f = msg.getStatus()) && proto.gitpod.v1.WorkspaceStatus.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -3778,6 +3779,11 @@ proto.gitpod.v1.Workspace.deserializeBinaryFromReader = function(msg, reader) {
     case 5:
       var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
+      break;
+    case 6:
+      var value = new proto.gitpod.v1.WorkspaceStatus;
+      reader.readMessage(value,proto.gitpod.v1.WorkspaceStatus.deserializeBinaryFromReader);
+      msg.setStatus(value);
       break;
     default:
       reader.skipField();
@@ -3842,6 +3848,14 @@ proto.gitpod.v1.Workspace.serializeBinaryToWriter = function(message, writer) {
     writer.writeString(
       5,
       f
+    );
+  }
+  f = message.getStatus();
+  if (f != null) {
+    writer.writeMessage(
+      6,
+      f,
+      proto.gitpod.v1.WorkspaceStatus.serializeBinaryToWriter
     );
   }
 };
@@ -3953,6 +3967,43 @@ proto.gitpod.v1.Workspace.prototype.getDescription = function() {
  */
 proto.gitpod.v1.Workspace.prototype.setDescription = function(value) {
   return jspb.Message.setProto3StringField(this, 5, value);
+};
+
+
+/**
+ * optional WorkspaceStatus status = 6;
+ * @return {?proto.gitpod.v1.WorkspaceStatus}
+ */
+proto.gitpod.v1.Workspace.prototype.getStatus = function() {
+  return /** @type{?proto.gitpod.v1.WorkspaceStatus} */ (
+    jspb.Message.getWrapperField(this, proto.gitpod.v1.WorkspaceStatus, 6));
+};
+
+
+/**
+ * @param {?proto.gitpod.v1.WorkspaceStatus|undefined} value
+ * @return {!proto.gitpod.v1.Workspace} returns this
+*/
+proto.gitpod.v1.Workspace.prototype.setStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 6, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.Workspace} returns this
+ */
+proto.gitpod.v1.Workspace.prototype.clearStatus = function() {
+  return this.setStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.Workspace.prototype.hasStatus = function() {
+  return jspb.Message.getField(this, 6) != null;
 };
 
 

@@ -149,6 +149,9 @@ message Workspace {
 
     // description is a human readable description of the workspace
     string description = 5;
+
+    // status is the current status of this Workspace.
+    WorkspaceStatus status = 6;
 }
 
 // WorkspaceStatus represents the currently observed status of a Workspace, including data about child resources that belong to this Workspace.

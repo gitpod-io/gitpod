@@ -477,6 +477,11 @@ export class Workspace extends jspb.Message {
     getDescription(): string;
     setDescription(value: string): Workspace;
 
+    hasStatus(): boolean;
+    clearStatus(): void;
+    getStatus(): WorkspaceStatus | undefined;
+    setStatus(value?: WorkspaceStatus): Workspace;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Workspace.AsObject;
     static toObject(includeInstance: boolean, msg: Workspace): Workspace.AsObject;
@@ -494,6 +499,7 @@ export namespace Workspace {
         projectId: string,
         context?: WorkspaceContext.AsObject,
         description: string,
+        status?: WorkspaceStatus.AsObject,
     }
 }
 
