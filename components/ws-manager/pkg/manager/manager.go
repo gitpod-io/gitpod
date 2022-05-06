@@ -270,8 +270,10 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			// We do below in loop as sometimes the pod might be already deleted or modified when we attempt to remove the finalizer
 			// so we first get the pod and then attempt to remove the finalizer
 			// in case the pod is not found in the first place, we return success
+			rmCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
 			for i := 0; i < 3 && !finalizerRemoved; i++ {
-				getErr := m.Clientset.Get(ctx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
+				getErr := m.Clientset.Get(rmCtx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
 				if getErr != nil {
 					if k8serr.IsNotFound(getErr) {
 						// pod doesn't exist, so we are safe to proceed with retry
@@ -283,7 +285,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				}
 				// we successfully got the pod, now we attempt to remove finalizer
 				tempPod.Finalizers = []string{}
-				updateErr := m.Clientset.Update(ctx, &tempPod)
+				updateErr := m.Clientset.Update(rmCtx, &tempPod)
 				if updateErr != nil {
 					if k8serr.IsNotFound(updateErr) {
 						// pod doesn't exist, so we are safe to proceed with retry
@@ -299,7 +301,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				return false, retryErr
 			}
 
-			deleteErr := m.Clientset.Delete(ctx, &tempPod)
+			deleteErr := m.Clientset.Delete(rmCtx, &tempPod)
 			if deleteErr != nil && !k8serr.IsNotFound(deleteErr) {
 				clog.WithError(deleteErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to delete pod")
 				// failed to delete pod, so not going to be able to create a new pod, so bail out
