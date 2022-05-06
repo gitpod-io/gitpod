@@ -10,13 +10,14 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/testing/protocmp"
 	"testing"
 )
 
@@ -24,6 +25,9 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 	const (
 		bearerToken      = "bearer-token-for-tests"
 		foundWorkspaceID = "easycz-seer-xl8o1zacpyw"
+		contextURL       = "https://github.com/gitpod/pull/1111"
+		ownerID          = "c6zz4631-3bbc-4hj4-be80-3dd05c66ee4e"
+		description      = "This is the description"
 	)
 
 	srv := baseserver.NewForTests(t)
@@ -32,7 +36,26 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 		api: &FakeGitpodAPI{workspaces: map[string]*gitpod.WorkspaceInfo{
 			foundWorkspaceID: {
 				LatestInstance: &gitpod.WorkspaceInstance{},
-				Workspace:      &gitpod.Workspace{},
+				Workspace: &gitpod.Workspace{
+					BaseImageNameResolved: "",
+					BasedOnPrebuildID:     "",
+					BasedOnSnapshotID:     "",
+					Config:                nil,
+					ContentDeletedTime:    "",
+					Context:               nil,
+					ContextURL:            contextURL,
+					CreationTime:          "",
+					Deleted:               false,
+					Description:           description,
+					ID:                    foundWorkspaceID,
+					ImageNameResolved:     "",
+					ImageSource:           nil,
+					OwnerID:               ownerID,
+					Pinned:                false,
+					Shareable:             false,
+					SoftDeleted:           "",
+					Type:                  "",
+				},
 			},
 		}},
 	}
@@ -60,13 +83,16 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 			Response: &v1.GetWorkspaceResponse{
 				Result: &v1.Workspace{
 					WorkspaceId: foundWorkspaceID,
-					OwnerId:     "mock_owner",
-					ProjectId:   "mock_project_id",
+					OwnerId:     ownerID,
+					ProjectId:   "",
 					Context: &v1.WorkspaceContext{
-						ContextUrl: "https://github.com/gitpod-io/gitpod",
-						Details:    nil,
+						ContextUrl: contextURL,
+						Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
+							NormalizedContextUrl: contextURL,
+							Commit:               "",
+						}},
 					},
-					Description: "This is a mock response",
+					Description: description,
 				},
 			},
 		},
@@ -84,7 +110,9 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 				WorkspaceId: scenario.WorkspaceID,
 			})
 			require.Equal(t, scenario.ErrorCode, status.Code(err), "status code must match")
-			require.True(t, proto.Equal(scenario.Response, resp))
+			if diff := cmp.Diff(scenario.Response, resp, protocmp.Transform()); diff != "" {
+				t.Errorf("unexpected difference:\n%v", diff)
+			}
 		})
 
 	}

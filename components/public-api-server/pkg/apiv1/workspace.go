@@ -37,22 +37,24 @@ func (w *WorkspaceService) GetWorkspace(ctx context.Context, r *v1.GetWorkspaceR
 		return nil, status.Error(codes.Internal, "failed to establish connection to downstream services")
 	}
 
-	// TODO(milan): Use resulting workspace and transform it to public API response
-	_, err = server.GetWorkspace(ctx, r.GetWorkspaceId())
+	workspace, err := server.GetWorkspace(ctx, r.GetWorkspaceId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "failed to get workspace")
 	}
 
 	return &v1.GetWorkspaceResponse{
 		Result: &v1.Workspace{
-			WorkspaceId: r.GetWorkspaceId(),
-			OwnerId:     "mock_owner",
-			ProjectId:   "mock_project_id",
+			WorkspaceId: workspace.Workspace.ID,
+			OwnerId:     workspace.Workspace.OwnerID,
+			ProjectId:   "",
 			Context: &v1.WorkspaceContext{
-				ContextUrl: "https://github.com/gitpod-io/gitpod",
-				Details:    nil,
+				ContextUrl: workspace.Workspace.ContextURL,
+				Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
+					NormalizedContextUrl: workspace.Workspace.ContextURL,
+					Commit:               "",
+				}},
 			},
-			Description: "This is a mock response",
+			Description: workspace.Workspace.Description,
 		},
 	}, nil
 }
