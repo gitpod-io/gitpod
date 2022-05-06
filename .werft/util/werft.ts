@@ -70,9 +70,10 @@ export class Werft {
      * Use this when you intend to fail the werft job
      */
     public fail(slice, err) {
+        const span = this.sliceSpans[slice];
         // Set the status on the span for the slice and also propagate the status to the phase and root span
         // as well so we can query on all phases that had an error regardless of which slice produced the error.
-        [this.sliceSpans[slice], this.rootSpan, this.currentPhaseSpan].forEach((span: Span) => {
+        [span, this.rootSpan, this.currentPhaseSpan].forEach((span: Span) => {
             if (!span) {
                 return
             }
@@ -82,7 +83,7 @@ export class Werft {
             })
         })
 
-        this.endAllSpans()
+        span.end()
 
         console.log(`[${slice}|FAIL] ${err}`);
         throw err;
