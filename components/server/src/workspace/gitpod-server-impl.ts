@@ -924,7 +924,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async internalGetWorkspace(id: string, db: WorkspaceDB): Promise<Workspace> {
         const ws = await db.findById(id);
         if (!ws) {
-            throw new Error(`No workspace with id '${id}' found.`);
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Workspace not found.");
         }
         return ws;
     }
