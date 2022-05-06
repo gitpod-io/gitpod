@@ -34,7 +34,7 @@ func newWorkspacesGetCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "get",
 		Short:   "Retrieve details about a workspace by ID",
-		Example: "  get --workspace-id 1234",
+		Example: "  get --id 1234",
 		Run: func(cmd *cobra.Command, args []string) {
 			if workspaceID == "" {
 				log.Log.Fatal("no workspace id specified, use --id to set it")
