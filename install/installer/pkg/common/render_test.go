@@ -183,6 +183,32 @@ func TestResourceRequirements(t *testing.T) {
 	}
 }
 
+func TestStaticMessagebusPassword(t *testing.T) {
+	const expectedPassword = "some-password"
+
+	ctx, err := common.NewRenderContext(config.Config{
+		Experimental: &experimental.Config{
+			Common: &experimental.CommonConfig{
+				StaticMessagebusPassword: expectedPassword,
+			},
+		},
+	}, versions.Manifest{}, "test_namespace")
+	require.NoError(t, err)
+
+	actualPassword := ctx.Values.MessageBusPassword
+
+	require.Equal(t, expectedPassword, actualPassword)
+}
+
+func TestDynamicMessagebusPassword(t *testing.T) {
+	ctx, err := common.NewRenderContext(config.Config{}, versions.Manifest{}, "test_namespace")
+	require.NoError(t, err)
+
+	actualPassword := ctx.Values.MessageBusPassword
+
+	require.NotEmpty(t, actualPassword)
+}
+
 func TestRepoName(t *testing.T) {
 	type Expectation struct {
 		Result string
