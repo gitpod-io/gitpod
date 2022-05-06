@@ -27,12 +27,12 @@ Tracing.initialize()
             message: err
         })
 
+        console.log('Error', err)
+
         if (context.Repository.ref === "refs/heads/main") {
             reportBuildFailureInSlack(context, err).catch((error: Error) => {
                 console.error("Failed to send message to Slack", error)
             });
-        } else {
-            console.log('Error', err)
         }
 
         // Explicitly not using process.exit as we need to flush tracing, see tracing.js
