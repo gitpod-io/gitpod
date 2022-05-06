@@ -8,6 +8,7 @@ import (
 	"context"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -27,6 +28,7 @@ type WorkspaceService struct {
 }
 
 func (w *WorkspaceService) GetWorkspace(ctx context.Context, r *v1.GetWorkspaceRequest) (*v1.GetWorkspaceResponse, error) {
+	logger := ctxlogrus.Extract(ctx)
 	token, err := bearerTokenFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -34,12 +36,22 @@ func (w *WorkspaceService) GetWorkspace(ctx context.Context, r *v1.GetWorkspaceR
 
 	server, err := w.connectionPool.Get(ctx, token)
 	if err != nil {
+		logger.WithError(err).Error("Failed to get connection to server.")
 		return nil, status.Error(codes.Internal, "failed to establish connection to downstream services")
 	}
 
 	workspace, err := server.GetWorkspace(ctx, r.GetWorkspaceId())
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "failed to get workspace")
+		logger.WithError(err).Error("Failed to get workspace.")
+		converted := proxy.ConvertError(err)
+		switch status.Code(converted) {
+		case codes.PermissionDenied:
+			return nil, status.Error(codes.PermissionDenied, "insufficient permission to access workspace")
+		case codes.NotFound:
+			return nil, status.Error(codes.NotFound, "workspace does not exist")
+		default:
+			return nil, status.Error(codes.Internal, "unable to retrieve workspace")
+		}
 	}
 
 	return &v1.GetWorkspaceResponse{
