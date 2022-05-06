@@ -150,9 +150,18 @@ func (r *RenderContext) generateValues() error {
 	}
 	r.Values.InternalRegistryPassword = internalRegistryPassword
 
-	messageBusPassword, err := RandomString(20)
-	if err != nil {
-		return err
+	messageBusPassword := ""
+	_ = r.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Common != nil {
+			messageBusPassword = cfg.Common.StaticMessagebusPassword
+		}
+		return nil
+	})
+	if messageBusPassword == "" {
+		messageBusPassword, err = RandomString(20)
+		if err != nil {
+			return err
+		}
 	}
 	r.Values.MessageBusPassword = messageBusPassword
 

@@ -24,7 +24,8 @@ type Config struct {
 }
 
 type CommonConfig struct {
-	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
+	PodConfig                map[string]*PodConfig `json:"podConfig,omitempty"`
+	StaticMessagebusPassword string                `json:"staticMessagebusPassword"`
 }
 
 type PodConfig struct {
