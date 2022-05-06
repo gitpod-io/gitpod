@@ -130,7 +130,7 @@ function defaultMessage(): ReactElement[] {
         return (
             <span className="text-gray-600 dark:text-gray-50 flex font-semibold items-center">
                 <div>Inactive or unknown license</div>
-                <div className="flex justify-right my-4 mx-1">
+                <div className="flex justify-right my-4 mr-2 ml-4">
                     <Alert fill="grey" className="h-8 w-8" />
                 </div>
             </span>
@@ -145,14 +145,14 @@ function professionalPlan(userCount: number, seats: number, trial: boolean, vali
         return aboveLimit ? (
             <span className="text-red-700 dark:text-red-400 flex font-semibold items-center">
                 <div>You have exceeded the usage limit.</div>
-                <div className="flex justify-right my-4 mx-1">
+                <div className="flex justify-right my-4 mr-2 ml-4">
                     <Alert className="h-6 w-6" />
                 </div>
             </span>
         ) : (
             <span className="text-green-600 dark:text-green-400 flex font-semibold items-center">
                 <div>You have an active professional license.</div>
-                <div className="flex justify-right my-4 mx-1">
+                <div className="flex justify-right my-4 mr-2 ml-4">
                     <Success className="h-8 w-8" />
                 </div>
             </span>
@@ -183,14 +183,14 @@ function communityPlan(userCount: number, seats: number, fallbackAllowed: boolea
             return fallbackAllowed ? (
                 <div className="text-gray-600 dark:text-gray-50 flex font-semibold items-center">
                     <div>No active license. You are using community edition.</div>
-                    <div className="my-4 mx-1 ">
+                    <div className="my-4 mr-2 ml-4">
                         <Success className="h-8 w-8" />
                     </div>
                 </div>
             ) : (
                 <span className="text-red-700 dark:text-red-400 flex font-semibold items-center">
                     <div>No active license. You have exceeded the usage limit.</div>
-                    <div className="flex justify-right my-4 mx-1">
+                    <div className="flex justify-right my-4 mr-2 ml-4">
                         <Alert className="h-8 w-8" />
                     </div>
                 </span>
@@ -199,7 +199,7 @@ function communityPlan(userCount: number, seats: number, fallbackAllowed: boolea
             return (
                 <span className="text-green-600 dark:text-green-400 flex font-semibold items-center">
                     <div>You are using the free community edition.</div>
-                    <div className="flex justify-right my-4 mx-1">
+                    <div className="flex justify-right my-4 mr-2 ml-4">
                         <Success fill="green" className="h-8 w-8" />
                     </div>
                 </span>
