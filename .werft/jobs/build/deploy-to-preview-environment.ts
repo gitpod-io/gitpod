@@ -142,10 +142,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             await installMetaCertificates(werft, jobConfig.repository.branch, withVM, 'default', PREVIEW_K3S_KUBECONFIG_PATH, vmSlices.COPY_CERT_MANAGER_RESOURCES)
             werft.done(vmSlices.COPY_CERT_MANAGER_RESOURCES)
         } catch (err) {
-            if (!jobConfig.mainBuild) {
-                werft.fail(vmSlices.COPY_CERT_MANAGER_RESOURCES, err);
-            }
-            exec('exit 0')
+            werft.fail(vmSlices.COPY_CERT_MANAGER_RESOURCES, err);
         }
 
         // Deploying monitoring satellite to VM-based preview environments is currently best-effort.
@@ -262,10 +259,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         }
         werft.done(installerSlices.CLEAN_ENV_STATE);
     } catch (err) {
-        if (!jobConfig.mainBuild) {
-            werft.fail(installerSlices.CLEAN_ENV_STATE, err);
-        }
-        exec('exit 0')
+        werft.fail(installerSlices.CLEAN_ENV_STATE, err);
     }
 
     if (!withVM) {
@@ -278,10 +272,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
             await installMetaCertificates(werft, jobConfig.repository.branch, jobConfig.withVM, namespace, CORE_DEV_KUBECONFIG_PATH, installerSlices.COPY_CERTIFICATES);
             werft.done(installerSlices.COPY_CERTIFICATES);
         } catch (err) {
-            if (!jobConfig.mainBuild) {
-                werft.fail(installerSlices.COPY_CERTIFICATES, err);
-            }
-            exec('exit 0')
+            werft.fail(installerSlices.COPY_CERTIFICATES, err);
         }
     }
 
@@ -295,10 +286,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
             exec(`kubectl --kubeconfig ${deploymentKubeconfig} create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`, { slice: installerSlices.IMAGE_PULL_SECRET });
         }
         catch (err) {
-            if (!jobConfig.mainBuild) {
-                werft.fail(installerSlices.IMAGE_PULL_SECRET, err);
-            }
-            exec('exit 0')
+            werft.fail(installerSlices.IMAGE_PULL_SECRET, err);
         }
     }
     werft.done(installerSlices.IMAGE_PULL_SECRET);
@@ -338,10 +326,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         installer.postProcessing(installerSlices.INSTALLER_POST_PROCESSING)
         installer.install(installerSlices.APPLY_INSTALL_MANIFESTS)
     } catch (err) {
-        if (!jobConfig.mainBuild) {
-            werft.fail(phases.DEPLOY, err)
-        }
-        exec('exit 0')
+        werft.fail(phases.DEPLOY, err)
     }
 
     werft.log(installerSlices.DEPLOYMENT_WAITING, "Waiting until all pods are ready.");
@@ -410,10 +395,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, false, CORE_DEV_KUBECONFIG_PATH)
         werft.done('prep');
     } catch (err) {
-        if (!jobConfig.mainBuild) {
-            werft.fail('prep', err);
-        }
-        exec('exit 0')
+        werft.fail('prep', err);
     }
 
     // core-dev specific section start
@@ -435,10 +417,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
 }`      );
         werft.done('secret');
     } catch (err) {
-        if (!jobConfig.mainBuild) {
-            werft.fail('secret', err);
-        }
-        exec('exit 0')
+        werft.fail('secret', err);
     }
 
     werft.log("authProviders", "copy authProviders")
@@ -450,10 +429,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         exec(`yq merge --inplace .werft/jobs/build/helm/values.dev.yaml ./authProviders`, { slice: "authProviders" })
         werft.done('authProviders');
     } catch (err) {
-        if (!jobConfig.mainBuild) {
-            werft.fail('authProviders', err);
-        }
-        exec('exit 0')
+        werft.fail('authProviders', err);
     }
     // core-dev specific section end
 
@@ -478,10 +454,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
             });
             await installMonitoringSatellite.install()
         } catch (err) {
-            if (!jobConfig.mainBuild) {
-                werft.fail('observability', err);
-            }
-            exec('exit 0')
+            werft.fail('observability', err);
         }
     } else {
         exec(`echo '"with-observability" annotation not set, skipping...'`, { slice: `observability` })
@@ -500,10 +473,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         werft.log('helm', 'done');
         werft.done('helm');
     } catch (err) {
-        if (!jobConfig.mainBuild) {
-            werft.fail('deploy', err);
-        }
-        exec('exit 0')
+        werft.fail('deploy', err);
     } finally {
         // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces`);
@@ -559,10 +529,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         try {
             exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | tee versions.yaml`);
         } catch (err) {
-            if (!jobConfig.mainBuild) {
-                werft.fail('helm', err);
-            }
-            exec('exit 0')
+            werft.fail('helm', err);
         }
         const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
         flags += ` -f ${pathToVersions}`;
@@ -590,10 +557,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
             await deleteNonNamespaceObjects(namespace, destname, CORE_DEV_KUBECONFIG_PATH, { ...shellOpts, slice: 'predeploy cleanup' });
             werft.done('predeploy cleanup');
         } catch (err) {
-            if (!jobConfig.mainBuild) {
-                werft.fail('predeploy cleanup', err);
-            }
-            exec('exit 0')
+            werft.fail('predeploy cleanup', err);
         }
     }
 }
