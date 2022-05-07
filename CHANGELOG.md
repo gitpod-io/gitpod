@@ -1,6 +1,11 @@
 # Change Log
 
 ## May 2022
+- Add user environment variable name length and value length validation in settings UI modal. ([#8248](https://github.com/gitpod-io/gitpod/pull/8248)) - [@randomir](https://github.com/randomir)
+- Add `staticMessagebusPassword` config flag to use a fixed message bus password in the installer ([#9831](https://github.com/gitpod-io/gitpod/pull/9831)) - [@andrew-farries](https://github.com/andrew-farries)
+- Change icon spacing in license page ([#9823](https://github.com/gitpod-io/gitpod/pull/9823)) - [@gtsiolis](https://github.com/gtsiolis)
+- [ws-manager] fix sometimes workspaces fail with backup not found error ([#9803](https://github.com/gitpod-io/gitpod/pull/9803)) - [@sagor999](https://github.com/sagor999)
+- fix account deletion failing on bad DB state ([#9654](https://github.com/gitpod-io/gitpod/pull/9654)) - [@geropl](https://github.com/geropl)
 - [content-service] Add logs for Redis pipeline errors ([#9809](https://github.com/gitpod-io/gitpod/pull/9809)) - [@aledbf](https://github.com/aledbf)
 - Make sure the server mounts the github app secret when an app is specified in the installer ([#9795](https://github.com/gitpod-io/gitpod/pull/9795)) - [@andrew-farries](https://github.com/andrew-farries)
 - Add `disableDbMigration` config flag to the installer to disable db migrations ([#9793](https://github.com/gitpod-io/gitpod/pull/9793)) - [@andrew-farries](https://github.com/andrew-farries)
