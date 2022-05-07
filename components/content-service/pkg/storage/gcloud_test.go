@@ -8,14 +8,20 @@ import (
 	"archive/tar"
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	gcp_storage "cloud.google.com/go/storage"
 	"github.com/fsouza/fake-gcs-server/fakestorage"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"google.golang.org/api/option"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/api/config"
@@ -69,13 +75,36 @@ func TestObjectUpload(t *testing.T) {
 		InstanceID  string
 		Payload     func() (string, error)
 	}{
-		{"valid 1M backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload(1)},
-		{"valid 100M backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload(100)},
-		{"valid 1GB backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload(1024)},
+		{"valid 1M backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload("1Mi")},
+		{"valid 100M backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload("100Mi")},
+		{"valid 1GB backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload("1Gi")},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			fakeGCSContainer, err := setupFakeStorage(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			defer fakeGCSContainer.Terminate(ctx)
+
+			client, err := gcp_storage.NewClient(ctx,
+				option.WithEndpoint(fakeGCSContainer.URI),
+				option.WithoutAuthentication(),
+				option.WithHTTPClient(&http.Client{
+					Transport: &http.Transport{
+						TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+					},
+				}),
+			)
+			if err != nil {
+				t.Fatalf("failed to create client: %v", err)
+			}
+
 			storage := DirectGCPStorage{
 				Stage:         test.Stage,
 				Username:      test.Owner,
@@ -85,25 +114,11 @@ func TestObjectUpload(t *testing.T) {
 					Region:  "fake-region",
 					Project: "fake-project",
 				},
+				// replace internal (valid) client with fake one
+				client: client,
 			}
 
 			storage.ObjectAccess = storage.defaultObjectAccess
-
-			server, err := fakestorage.NewServerWithOptions(fakestorage.Options{
-				Writer: os.Stdout,
-			})
-			if err != nil {
-				t.Fatalf("error creating fake GCS server: %v", err)
-			}
-
-			defer server.Stop()
-
-			server.CreateBucketWithOpts(fakestorage.CreateBucketOpts{
-				Name: gcpBucketName(test.Stage, test.Owner),
-			})
-
-			// replace internal (valid) client with fake one
-			storage.client = server.Client()
 
 			bucket := storage.client.Bucket(gcpBucketName(test.Stage, test.Owner))
 			err = bucket.Create(context.Background(), "fake-project", nil)
@@ -117,17 +132,9 @@ func TestObjectUpload(t *testing.T) {
 			}
 			defer os.Remove(payloadPath)
 
-			ctx, cancelFunc := context.WithCancel(context.Background())
-			defer cancelFunc()
-
 			_, _, err = storage.Upload(ctx, payloadPath, test.Name, WithContentType(csapi.ContentTypeManifest))
 			if err != nil {
 				t.Fatalf("error uploading file: %v", err)
-			}
-
-			_, err = server.GetObject(storage.bucketName(), storage.objectName(test.Name))
-			if err != nil {
-				t.Fatal(err)
 			}
 
 			dst, err := ioutil.TempDir("", "gcs-download")
@@ -157,7 +164,7 @@ func TestObjectUpload(t *testing.T) {
 	}
 }
 
-func fakeTarPayload(mb int) func() (string, error) {
+func fakeTarPayload(size string) func() (string, error) {
 	return func() (string, error) {
 		payload, err := ioutil.TempFile("", "test-payload-")
 		if err != nil {
@@ -166,7 +173,12 @@ func fakeTarPayload(mb int) func() (string, error) {
 
 		defer os.Remove(payload.Name())
 
-		_, err = io.CopyN(payload, rand.Reader, int64(mb*1024*1024))
+		q, err := resource.ParseQuantity(size)
+		if err != nil {
+			return "", err
+		}
+
+		_, err = io.CopyN(payload, rand.Reader, q.Value())
 		if err != nil {
 			return "", err
 		}
@@ -218,4 +230,33 @@ func addFileToTar(filePath string, tarWriter *tar.Writer) error {
 	}
 
 	return nil
+}
+
+type fakeGCSContainer struct {
+	testcontainers.Container
+
+	URI string
+}
+
+func setupFakeStorage(ctx context.Context) (*fakeGCSContainer, error) {
+	req := testcontainers.ContainerRequest{
+		Image:        "fsouza/fake-gcs-server",
+		ExposedPorts: []string{"4443/tcp"},
+		NetworkMode:  "host",
+		Entrypoint:   []string{"/bin/fake-gcs-server", "-data=/data", "-backend=filesystem", "-public-host=localhost:4443"},
+		WaitingFor:   wait.ForLog("server started at").WithPollInterval(1 * time.Second),
+	}
+
+	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &fakeGCSContainer{
+		Container: container,
+		URI:       "https://localhost:4443/storage/v1/",
+	}, nil
 }
