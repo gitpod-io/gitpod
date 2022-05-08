@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/tls"
+	"flag"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -65,6 +66,8 @@ func TestObjectAccessToNonExistentObj(t *testing.T) {
 	}
 }
 
+var runWithDocker = flag.Bool("with-docker", false, "run fake-gcs-server in docker")
+
 func TestObjectUpload(t *testing.T) {
 	tests := []struct {
 		Desc        string
@@ -90,7 +93,7 @@ func TestObjectUpload(t *testing.T) {
 
 			// use docker to run the fake GCS server
 			// or start an embed server otherwise
-			switch isDockerRunning() {
+			switch *runWithDocker {
 			case true:
 				var gcsContainer *fakeGCSContainer
 				gcsContainer, err = setupFakeStorage(ctx)
@@ -288,13 +291,4 @@ func setupFakeStorage(ctx context.Context) (*fakeGCSContainer, error) {
 		Container: container,
 		URI:       "https://localhost:4443/storage/v1/",
 	}, nil
-}
-
-func isDockerRunning() bool {
-	p, err := testcontainers.NewDockerProvider()
-	if err != nil {
-		return false
-	}
-
-	return p.Health(context.Background()) == nil
 }
