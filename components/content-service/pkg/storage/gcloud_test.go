@@ -85,24 +85,52 @@ func TestObjectUpload(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			fakeGCSContainer, err := setupFakeStorage(ctx)
-			if err != nil {
-				t.Fatal(err)
+			var err error
+			var client *gcp_storage.Client
+
+			// use docker to run the fake GCS server
+			// or start an embed server otherwise
+			switch isDockerRunning() {
+			case true:
+				var gcsContainer *fakeGCSContainer
+				gcsContainer, err = setupFakeStorage(ctx)
+				if err != nil {
+					break
+				}
+
+				defer gcsContainer.Terminate(ctx)
+
+				client, err = gcp_storage.NewClient(ctx,
+					option.WithEndpoint(gcsContainer.URI),
+					option.WithoutAuthentication(),
+					option.WithHTTPClient(&http.Client{
+						Transport: &http.Transport{
+							TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+						},
+					}),
+				)
+			case false:
+				// the downside of using the fake server as library is the amount or
+				// memory used by the test binary (this makes too hard the use of pprof)
+				var server *fakestorage.Server
+				server, err = fakestorage.NewServerWithOptions(fakestorage.Options{
+					Writer: os.Stdout,
+				})
+				if err != nil {
+					break
+				}
+
+				defer server.Stop()
+
+				server.CreateBucketWithOpts(fakestorage.CreateBucketOpts{
+					Name: gcpBucketName(test.Stage, test.Owner),
+				})
+
+				client = server.Client()
 			}
 
-			defer fakeGCSContainer.Terminate(ctx)
-
-			client, err := gcp_storage.NewClient(ctx,
-				option.WithEndpoint(fakeGCSContainer.URI),
-				option.WithoutAuthentication(),
-				option.WithHTTPClient(&http.Client{
-					Transport: &http.Transport{
-						TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-					},
-				}),
-			)
 			if err != nil {
-				t.Fatalf("failed to create client: %v", err)
+				t.Fatalf("failed to create GCS client: %v", err)
 			}
 
 			storage := DirectGCPStorage{
@@ -126,6 +154,7 @@ func TestObjectUpload(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			t.Log("creating fake tar file...")
 			payloadPath, err := test.Payload()
 			if err != nil {
 				t.Fatalf("error creating test file: %v", err)
@@ -259,4 +288,13 @@ func setupFakeStorage(ctx context.Context) (*fakeGCSContainer, error) {
 		Container: container,
 		URI:       "https://localhost:4443/storage/v1/",
 	}, nil
+}
+
+func isDockerRunning() bool {
+	p, err := testcontainers.NewDockerProvider()
+	if err != nil {
+		return false
+	}
+
+	return p.Health(context.Background()) == nil
 }
