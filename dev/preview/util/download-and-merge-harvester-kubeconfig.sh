@@ -36,7 +36,7 @@ KUBECONFIG="${KUBECONFIG_PATH}:${HARVESTER_KUBECONFIG_PATH}" \
 log "Overwriting ${KUBECONFIG_PATH}"
 mv "${MERGED_KUBECONFIG_PATH}" "${KUBECONFIG_PATH}"
 
-log "Cleaning up temporay Harveter kubeconfig"
+log "Cleaning up temporary Harvester kubeconfig"
 rm "${HARVESTER_KUBECONFIG_PATH}"
 
 log "Done"
