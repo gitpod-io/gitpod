@@ -121,9 +121,6 @@ message DisposeWorkspaceRequest {
 
     // backup_logs triggers the upload of terminal logs
     bool backup_logs = 3;
-
-    // persistent_volume_claim is enabled if workspace is using PVC
-    bool persistent_volume_claim = 4;
 }
 
 message DisposeWorkspaceResponse {

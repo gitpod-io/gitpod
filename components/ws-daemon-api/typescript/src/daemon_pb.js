@@ -19,13 +19,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = (function() {
-  if (this) { return this; }
-  if (typeof window !== 'undefined') { return window; }
-  if (typeof global !== 'undefined') { return global; }
-  if (typeof self !== 'undefined') { return self; }
-  return Function('return this')();
-}.call(null));
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
 goog.object.extend(proto, content$service$api_initializer_pb);
@@ -1494,8 +1488,7 @@ proto.wsdaemon.DisposeWorkspaceRequest.toObject = function(includeInstance, msg)
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
     backup: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
-    backupLogs: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
-    persistentVolumeClaim: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
+    backupLogs: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
   };
 
   if (includeInstance) {
@@ -1544,10 +1537,6 @@ proto.wsdaemon.DisposeWorkspaceRequest.deserializeBinaryFromReader = function(ms
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setBackupLogs(value);
       break;
-    case 4:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setPersistentVolumeClaim(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -1595,13 +1584,6 @@ proto.wsdaemon.DisposeWorkspaceRequest.serializeBinaryToWriter = function(messag
   if (f) {
     writer.writeBool(
       3,
-      f
-    );
-  }
-  f = message.getPersistentVolumeClaim();
-  if (f) {
-    writer.writeBool(
-      4,
       f
     );
   }
@@ -1659,24 +1641,6 @@ proto.wsdaemon.DisposeWorkspaceRequest.prototype.getBackupLogs = function() {
  */
 proto.wsdaemon.DisposeWorkspaceRequest.prototype.setBackupLogs = function(value) {
   return jspb.Message.setProto3BooleanField(this, 3, value);
-};
-
-
-/**
- * optional bool persistent_volume_claim = 4;
- * @return {boolean}
- */
-proto.wsdaemon.DisposeWorkspaceRequest.prototype.getPersistentVolumeClaim = function() {
-  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 4, false));
-};
-
-
-/**
- * @param {boolean} value
- * @return {!proto.wsdaemon.DisposeWorkspaceRequest} returns this
- */
-proto.wsdaemon.DisposeWorkspaceRequest.prototype.setPersistentVolumeClaim = function(value) {
-  return jspb.Message.setProto3BooleanField(this, 4, value);
 };
 
 
