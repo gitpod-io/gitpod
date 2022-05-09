@@ -20,7 +20,7 @@ import gitpodIcon from "./icons/gitpod.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useHistory } from "react-router-dom";
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from "./Analytics";
-import { LicenseInfo, User } from "@gitpod/gitpod-protocol";
+import { ContextURL, LicenseInfo, User } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Experiment } from "./experiments";
 import { workspacesPathMain } from "./workspaces/workspaces.routes";
@@ -45,6 +45,8 @@ import {
 import { refreshSearchData } from "./components/RepositoryFinder";
 import { StartWorkspaceModal } from "./workspaces/StartWorkspaceModal";
 import { parseProps } from "./start/StartWorkspace";
+import SelectIDEModal from "./settings/SelectIDEModal";
+import { StartPage, StartPhase } from "./start/StartPage";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -495,12 +497,24 @@ function App() {
         );
         return <div></div>;
     }
+    // Prefix with `/#referrer` will specify an IDE for workspace
+    // We don't need to show IDE preference in this case
+    const shouldUserIdePreferenceShown = User.isOnboardingUser(user) && !hash.startsWith(ContextURL.REFERRER_PREFIX);
+
     const isCreation = window.location.pathname === "/" && hash !== "";
     const isWsStart = /\/start\/?/.test(window.location.pathname) && hash !== "";
     if (isWhatsNewShown) {
         toRender = <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     } else if (isCreation) {
-        toRender = <CreateWorkspace contextUrl={hash} />;
+        if (shouldUserIdePreferenceShown) {
+            toRender = (
+                <StartPage phase={StartPhase.Checking}>
+                    <SelectIDEModal />
+                </StartPage>
+            );
+        } else {
+            toRender = <CreateWorkspace contextUrl={hash} />;
+        }
     } else if (isWsStart) {
         toRender = <StartWorkspace {...parseProps(hash, window.location.search)} />;
     } else if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {
