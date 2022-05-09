@@ -52,20 +52,3 @@ packages:
     config:
       commands:
         - ["mv", "pkg/manager/testdata/cdwp_userns.golden", "pod.json"]
-  - name: integration-test
-    type: generic
-    deps:
-      - :app
-      - chart:helm
-    config:
-      commands:
-        - ["echo", "skip tests"]
-        # - ["pwd"]
-        # - ["kubectl", "create", "namespace", "wsman-integration-${__pkg_version}"]
-        # - ["sh", "-c", "cp $HOME/.kube/config kubeconfig"]
-        # - ["sh", "-c", 'kubectl get node -l gitpod.io/workload_workspace_regular --no-headers -o custom-columns=":metadata.name" | xargs kubectl patch node --patch ''{"metadata":{"labels":{"gitpod.io/theia.wsman-test": "available"}}}''']
-        # - ["kubectl", "--kubeconfig", "kubeconfig", "config", "set-context", "--current", "--namespace", "wsman-integration-${__pkg_version}"]
-        # - ["components-ws-manager--app/ws-manager", "--kubeconfig", "kubeconfig", "integration-test", "patch-nodes", "-l", "gitpod.io/jenkins_agent"]
-        # - ["sh", "-c", "./components-ws-manager--app/ws-manager --kubeconfig kubeconfig integration-test objs chart--helm/gitpod | kubectl --kubeconfig kubeconfig apply -f -"]
-        # - ["components-ws-manager--app/_tests/manager.test", "-integration-test", "kubeconfig", "-test.run", "TestIntegration", "-test.v"]
-        # - ["kubectl", "--kubeconfig", "kubeconfig", "delete", "namespace", "wsman-integration-${__pkg_version}"]
