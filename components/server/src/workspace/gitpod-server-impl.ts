@@ -2028,6 +2028,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             event: "team_joined",
             properties: {
                 team_id: invite.teamId,
+                team_name: team?.name,
+                team_slug: team?.slug,
                 invite_id: inviteId,
             },
         });
