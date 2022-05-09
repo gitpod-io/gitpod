@@ -317,8 +317,10 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         workspaceFeatureFlags: workspaceFeatureFlags,
         gitpodDaemonsetPorts: { registryFacade: registryNodePortMeta, wsDaemon: wsdaemonPortMeta },
         smithToken: token,
+        withPayment: deploymentConfig.withPayment,
     })
     try {
+        werft.log(phases.DEPLOY, "deploying using installer")
         installer.init(installerSlices.INSTALLER_INIT)
         installer.addPreviewConfiguration(installerSlices.PREVIEW_CONFIG)
         installer.validateConfiguration(installerSlices.VALIDATE_CONFIG)
