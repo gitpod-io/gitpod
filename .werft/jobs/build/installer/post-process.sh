@@ -28,8 +28,13 @@ echo "Use node pool index $NODE_POOL_INDEX"
 LICENSE=$(cat /tmp/license)
 # default, no, we do not add feature flags, file is empty
 DEFAULT_FEATURE_FLAGS=$(cat /tmp/defaultFeatureFlags)
-
-
+# if payment is configured: Append the YAML objects
+if [[ -f "/tmp/payment" ]] ; then
+   echo "found /tmp/payment, appending to k8s.yaml now"
+   # do not make any assumptions about new lines
+   printf \\n'---'\\n >> k8s.yaml
+   cat "/tmp/payment" >> k8s.yaml
+fi
 
 # count YAML like lines in the k8s manifest file
 MATCHES="$(grep -c -- --- k8s.yaml)"
@@ -379,9 +384,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
    #    # merge base into k8s.yaml
    #    yq m -x -i -d "$documentIndex" k8s.yaml /tmp/"$NAME"-"$KIND".yaml
    # fi
-
-   # TODO: integrate with chargebees
-   # won't fix now, use Helm
 
    documentIndex=$((documentIndex + 1))
 done
