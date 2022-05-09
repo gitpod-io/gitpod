@@ -45,9 +45,10 @@ packages:
     type: generic
     srcs:
       - package.json
+      - hack/*.sql
     deps:
       - :migrations
-      - chart/config/db/init:init-scripts
+      - install/installer/pkg/components/database/incluster/init:init-scripts
     env:
       - DB_HOST=127.0.0.1
       - DB_PORT=23306
@@ -62,7 +63,9 @@ packages:
         #       Re-use of the instance because of the init scripts (cmp. next step).
         - ["sh", "-c", "mysqladmin ping -h \"$DB_HOST\" \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER --silent || (docker run -d -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD -e MYSQL_TCP_PORT=$DB_PORT -p $DB_PORT:$DB_PORT mysql:5.7; while ! mysqladmin ping -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER --silent; do echo \"waiting for DB...\"; sleep 2; done)"]
         # Apply the DB initialization scripts (re-creates the "gitpod" DB if already there)
-        - ["sh", "-c", "find chart-config-db-init--init-scripts -name \"*.sql\" | sort | xargs cat | mysql -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER"]
+        - ["mkdir", "-p", "init-scripts"]
+        - ["sh", "-c", "find . -name \"*.sql\" | sort | xargs -I file cp file init-scripts"]
+        - ["sh", "-c", "ls init-scripts | sort | xargs -I file cat init-scripts/file | sed -e 's/__GITPOD_USERNAME__/gitpod/g' | sed -e 's/__GITPOD_USERNAME__/gitpod/g' | sed -e 's/__GITPOD_DB_NAME__/gitpod/g' | tee debug.txt | mysql -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER"]
         # Run DB migrations
         - ["sh", "-c", "mkdir -p mig; cd mig; ../components-gitpod-db--migrations/install.sh"]
         # migrate 'migrations'
