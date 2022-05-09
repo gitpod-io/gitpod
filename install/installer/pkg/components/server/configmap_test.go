@@ -138,3 +138,25 @@ func TestConfigMap(t *testing.T) {
 
 	assert.Equal(t, expectation, actual)
 }
+
+func TestInvalidBlockedRepositoryRegularExpressions(t *testing.T) {
+	const invalidRegexp = "["
+
+	ctx, err := common.NewRenderContext(config.Config{
+		Experimental: &experimental.Config{
+			WebApp: &experimental.WebAppConfig{
+				Server: &experimental.ServerConfig{
+					BlockedRepositories: []experimental.BlockedRepository{{
+						UrlRegExp: invalidRegexp,
+						BlockUser: false,
+					}},
+				},
+			},
+		},
+	}, versions.Manifest{}, "test_namespace")
+	require.NoError(t, err)
+
+	_, err = configmap(ctx)
+
+	require.Error(t, err, "expected to fail when rendering configmap with invalid blocked repo regexp %q", invalidRegexp)
+}
