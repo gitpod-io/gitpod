@@ -22,6 +22,7 @@ func TestConfigMap(t *testing.T) {
 		EnableLocalApp                    bool
 		RunDbDeleter                      bool
 		DisableDynamicAuthProviderLogin   bool
+		DisableWorkspaceGarbageCollection bool
 		DefaultBaseImageRegistryWhiteList []string
 		WorkspaceImage                    string
 		JWTSecret                         string
@@ -33,6 +34,7 @@ func TestConfigMap(t *testing.T) {
 		EnableLocalApp:                    true,
 		DisableDynamicAuthProviderLogin:   true,
 		RunDbDeleter:                      false,
+		DisableWorkspaceGarbageCollection: true,
 		DefaultBaseImageRegistryWhiteList: []string{"some-registry"},
 		WorkspaceImage:                    "some-workspace-image",
 		JWTSecret:                         "some-jwt-secret",
@@ -57,6 +59,7 @@ func TestConfigMap(t *testing.T) {
 					DisableDynamicAuthProviderLogin:   expectation.DisableDynamicAuthProviderLogin,
 					EnableLocalApp:                    pointer.Bool(expectation.EnableLocalApp),
 					RunDbDeleter:                      pointer.Bool(expectation.RunDbDeleter),
+					DisableWorkspaceGarbageCollection: expectation.DisableWorkspaceGarbageCollection,
 					DefaultBaseImageRegistryWhiteList: expectation.DefaultBaseImageRegistryWhiteList,
 					WorkspaceDefaults: experimental.WorkspaceDefaults{
 						WorkspaceImage: expectation.WorkspaceImage,
@@ -99,6 +102,7 @@ func TestConfigMap(t *testing.T) {
 		DisableDynamicAuthProviderLogin:   config.DisableDynamicAuthProviderLogin,
 		EnableLocalApp:                    config.EnableLocalApp,
 		RunDbDeleter:                      config.RunDbDeleter,
+		DisableWorkspaceGarbageCollection: config.WorkspaceGarbageCollection.Disabled,
 		DefaultBaseImageRegistryWhiteList: config.DefaultBaseImageRegistryWhitelist,
 		WorkspaceImage:                    config.WorkspaceDefaults.WorkspaceImage,
 		JWTSecret:                         config.OAuthServer.JWTSecret,
