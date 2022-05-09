@@ -4,7 +4,7 @@ repos:
     hooks:
       #- id: check-yaml
       #  args: [--allow-multiple-documents]
-      # - id: end-of-file-fixer
+      - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-symlinks
       - id: mixed-line-ending
