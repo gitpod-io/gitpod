@@ -132,16 +132,22 @@ type WsManagerBridgeConfig struct {
 }
 
 type ServerConfig struct {
-	WorkspaceDefaults                 WorkspaceDefaults `json:"workspaceDefaults"`
-	OAuthServer                       OAuthServer       `json:"oauthServer"`
-	Session                           Session           `json:"session"`
-	GithubApp                         *GithubApp        `json:"githubApp"`
-	ChargebeeSecret                   string            `json:"chargebeeSecret"`
-	DisableDynamicAuthProviderLogin   bool              `json:"disableDynamicAuthProviderLogin"`
-	EnableLocalApp                    *bool             `json:"enableLocalApp"`
-	RunDbDeleter                      *bool             `json:"runDbDeleter"`
-	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`
-	DisableWorkspaceGarbageCollection bool              `json:"disableWorkspaceGarbageCollection"`
+	WorkspaceDefaults                 WorkspaceDefaults   `json:"workspaceDefaults"`
+	OAuthServer                       OAuthServer         `json:"oauthServer"`
+	Session                           Session             `json:"session"`
+	GithubApp                         *GithubApp          `json:"githubApp"`
+	ChargebeeSecret                   string              `json:"chargebeeSecret"`
+	DisableDynamicAuthProviderLogin   bool                `json:"disableDynamicAuthProviderLogin"`
+	EnableLocalApp                    *bool               `json:"enableLocalApp"`
+	RunDbDeleter                      *bool               `json:"runDbDeleter"`
+	DefaultBaseImageRegistryWhiteList []string            `json:"defaultBaseImageRegistryWhitelist"`
+	DisableWorkspaceGarbageCollection bool                `json:"disableWorkspaceGarbageCollection"`
+	BlockedRepositories               []BlockedRepository `json:"blockedRepositories,omitempty"`
+}
+
+type BlockedRepository struct {
+	UrlRegExp string `json:"urlRegExp"`
+	BlockUser bool   `json:"blockUser"`
 }
 
 type ProxyConfig struct {
