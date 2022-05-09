@@ -11,7 +11,7 @@ import SelectIDE, { updateUserIDEInfo } from "./SelectIDE";
 import Modal from "../components/Modal";
 import { UserContext } from "../user-context";
 
-export default function () {
+export default function (props: { onClose?: () => void }) {
     const { user, setUser } = useContext(UserContext);
     const [visible, setVisible] = useState(true);
 
@@ -23,11 +23,13 @@ export default function () {
     const handleContinue = async () => {
         setVisible(false);
         if (!user || User.hasPreferredIde(user)) {
+            props.onClose && props.onClose();
             return;
         }
         // TODO: We need to get defaultIde in ideOptions..
         const defaultIde = "code";
         await actualUpdateUserIDEInfo(user, defaultIde, false);
+        props.onClose && props.onClose();
     };
 
     return (
