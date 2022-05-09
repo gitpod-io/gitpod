@@ -29,8 +29,10 @@ const (
 type LicenseSubscriptionLevel string
 
 const (
-	CommunityLicense    LicenseSubscriptionLevel = "community"
-	ProfessionalLicense LicenseSubscriptionLevel = "prod"
+	LicenseTypeCommunity   LicenseSubscriptionLevel = "community"
+	LicenseTypePaid        LicenseSubscriptionLevel = "prod"
+	LicenseTypeTrial       LicenseSubscriptionLevel = "trial"
+	LicenseTypeDevelopment LicenseSubscriptionLevel = "dev"
 )
 
 // LicenseData has type specific info about the license

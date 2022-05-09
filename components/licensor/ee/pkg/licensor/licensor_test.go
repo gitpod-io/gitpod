@@ -79,7 +79,7 @@ func (test *licenseTest) Run(t *testing.T) {
 				payload, err := json.Marshal(replicatedLicensePayload{
 					LicenseType: func() LicenseSubscriptionLevel {
 						if test.ReplicatedLicenseType == nil {
-							return ReplicatedLicenseTypePaid
+							return LicenseTypePaid
 						}
 						return *test.ReplicatedLicenseType
 					}(),
@@ -210,8 +210,8 @@ func TestSeats(t *testing.T) {
 }
 
 func TestFeatures(t *testing.T) {
-	replicatedCommunity := ReplicatedLicenseTypeCommunity
-	replicatedPaid := ReplicatedLicenseTypePaid
+	replicatedCommunity := LicenseTypeCommunity
+	replicatedPaid := LicenseTypePaid
 
 	tests := []struct {
 		Name                  string

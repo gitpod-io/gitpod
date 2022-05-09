@@ -32,12 +32,10 @@ export interface LicensePayload {
 }
 
 export enum LicenseSubscriptionLevel {
-    ReplicatedLicenseTypeCommunity = "community",
-    ReplicatedLicenseTypeDevelopment = "dev",
-    ReplicatedLicenseTypePaid = "prod",
-    ReplicatedLicenseTypeTrial = "trial",
-    CommunityLicense = "community",
-    ProfessionalLicense = "prod",
+    LicenseTypeCommunity = "community",
+    LicenseTypePaid = "prod",
+    LicenseTypeTrial = "trial",
+    LicenseTypeDevelopment = "dev",
 }
 export enum LicenseType {
     LicenseTypeGitpod = "gitpod",
