@@ -1,8 +1,0 @@
-packages:
-  - name: all
-    type: generic
-    argdeps:
-      - version
-    deps:
-      - contrib/docker/examples/gitpod-gitlab/gitlab:docker
-      - contrib/docker/gitpod-image:docker
