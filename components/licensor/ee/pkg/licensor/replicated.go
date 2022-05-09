@@ -23,14 +23,6 @@ type replicatedFields struct {
 	Value interface{} `json:"value"` // This is of type "fieldType"
 }
 
-// variable names are what Replicated calls them in the vendor portal
-const (
-	ReplicatedLicenseTypeCommunity   LicenseSubscriptionLevel = "community"
-	ReplicatedLicenseTypeDevelopment LicenseSubscriptionLevel = "dev"
-	ReplicatedLicenseTypePaid        LicenseSubscriptionLevel = "prod"
-	ReplicatedLicenseTypeTrial       LicenseSubscriptionLevel = "trial"
-)
-
 // replicatedLicensePayload exists to convert the JSON structure to a LicensePayload
 type replicatedLicensePayload struct {
 	LicenseID      string                   `json:"license_id"`
@@ -95,7 +87,7 @@ func defaultReplicatedLicense() *Evaluator {
 	return &Evaluator{
 		lic:           defaultLicense,
 		allowFallback: true,
-		plan:          ReplicatedLicenseTypeCommunity,
+		plan:          LicenseTypeCommunity,
 	}
 }
 
@@ -143,7 +135,7 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator)
 
 	return &Evaluator{
 		lic:           lic,
-		allowFallback: replicatedPayload.LicenseType == ReplicatedLicenseTypeCommunity, // Only community licenses are allowed to fallback
+		allowFallback: replicatedPayload.LicenseType == LicenseTypeCommunity, // Only community licenses are allowed to fallback
 		plan:          replicatedPayload.LicenseType,
 	}
 }

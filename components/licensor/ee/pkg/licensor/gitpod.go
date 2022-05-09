@@ -21,7 +21,7 @@ func NewGitpodEvaluator(key []byte, domain string) (res *Evaluator) {
 		return &Evaluator{
 			lic:           defaultLicense,
 			allowFallback: true,
-			plan:          CommunityLicense,
+			plan:          LicenseTypeCommunity,
 		}
 	}
 
@@ -64,7 +64,7 @@ func NewGitpodEvaluator(key []byte, domain string) (res *Evaluator) {
 
 	return &Evaluator{
 		lic:           lic.LicensePayload,
-		allowFallback: false,               // Gitpod licenses cannot fallback - assume these are always paid-for
-		plan:          ProfessionalLicense, //  This essentially means "paid" license
+		allowFallback: false,           // Gitpod licenses cannot fallback - assume these are always paid-for
+		plan:          LicenseTypePaid, //  This essentially means "paid" license
 	}
 }
