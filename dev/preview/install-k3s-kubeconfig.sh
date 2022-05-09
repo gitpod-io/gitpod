@@ -56,7 +56,7 @@ KUBECONFIG="${K3S_KUBECONFIG_PATH}:${KUBECONFIG_PATH}" \
 log "Overwriting ${KUBECONFIG_PATH}"
 mv "${MERGED_KUBECONFIG_PATH}" "${KUBECONFIG_PATH}"
 
-log "Cleaning up temporay K3S kubeconfig"
+log "Cleaning up temporary K3S kubeconfig"
 rm "${K3S_KUBECONFIG_PATH}"
 
 log "Done"
