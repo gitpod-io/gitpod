@@ -1455,7 +1455,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setOk(boolean value) {
-        
+
         ok_ = value;
         onChanged();
         return this;
@@ -1465,7 +1465,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearOk() {
-        
+
         ok_ = false;
         onChanged();
         return this;
@@ -1966,7 +1966,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setWait(boolean value) {
-        
+
         wait_ = value;
         onChanged();
         return this;
@@ -1981,7 +1981,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearWait() {
-        
+
         wait_ = false;
         onChanged();
         return this;
@@ -2332,7 +2332,7 @@ public final class Status {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           link_ = s;
@@ -2348,7 +2348,7 @@ public final class Status {
           getLinkBytes() {
         java.lang.Object ref = link_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           link_ = b;
@@ -2370,7 +2370,7 @@ public final class Status {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           label_ = s;
@@ -2386,7 +2386,7 @@ public final class Status {
           getLabelBytes() {
         java.lang.Object ref = label_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           label_ = b;
@@ -2408,7 +2408,7 @@ public final class Status {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           clientID_ = s;
@@ -2424,7 +2424,7 @@ public final class Status {
           getClientIDBytes() {
         java.lang.Object ref = clientID_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           clientID_ = b;
@@ -2446,7 +2446,7 @@ public final class Status {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           kind_ = s;
@@ -2462,7 +2462,7 @@ public final class Status {
           getKindBytes() {
         java.lang.Object ref = kind_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           kind_ = b;
@@ -2850,7 +2850,7 @@ public final class Status {
             getLinkBytes() {
           java.lang.Object ref = link_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             link_ = b;
@@ -2869,7 +2869,7 @@ public final class Status {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           link_ = value;
           onChanged();
           return this;
@@ -2879,7 +2879,7 @@ public final class Status {
          * @return This builder for chaining.
          */
         public Builder clearLink() {
-          
+
           link_ = getDefaultInstance().getLink();
           onChanged();
           return this;
@@ -2895,7 +2895,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           link_ = value;
           onChanged();
           return this;
@@ -2926,7 +2926,7 @@ public final class Status {
             getLabelBytes() {
           java.lang.Object ref = label_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             label_ = b;
@@ -2945,7 +2945,7 @@ public final class Status {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           label_ = value;
           onChanged();
           return this;
@@ -2955,7 +2955,7 @@ public final class Status {
          * @return This builder for chaining.
          */
         public Builder clearLabel() {
-          
+
           label_ = getDefaultInstance().getLabel();
           onChanged();
           return this;
@@ -2971,7 +2971,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           label_ = value;
           onChanged();
           return this;
@@ -3002,7 +3002,7 @@ public final class Status {
             getClientIDBytes() {
           java.lang.Object ref = clientID_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             clientID_ = b;
@@ -3021,7 +3021,7 @@ public final class Status {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           clientID_ = value;
           onChanged();
           return this;
@@ -3031,7 +3031,7 @@ public final class Status {
          * @return This builder for chaining.
          */
         public Builder clearClientID() {
-          
+
           clientID_ = getDefaultInstance().getClientID();
           onChanged();
           return this;
@@ -3047,7 +3047,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           clientID_ = value;
           onChanged();
           return this;
@@ -3078,7 +3078,7 @@ public final class Status {
             getKindBytes() {
           java.lang.Object ref = kind_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             kind_ = b;
@@ -3097,7 +3097,7 @@ public final class Status {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           kind_ = value;
           onChanged();
           return this;
@@ -3107,7 +3107,7 @@ public final class Status {
          * @return This builder for chaining.
          */
         public Builder clearKind() {
-          
+
           kind_ = getDefaultInstance().getKind();
           onChanged();
           return this;
@@ -3123,7 +3123,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           kind_ = value;
           onChanged();
           return this;
@@ -3566,7 +3566,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setOk(boolean value) {
-        
+
         ok_ = value;
         onChanged();
         return this;
@@ -3576,7 +3576,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearOk() {
-        
+
         ok_ = false;
         onChanged();
         return this;
@@ -3669,7 +3669,7 @@ public final class Status {
        * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
        */
       public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder getDesktopBuilder() {
-        
+
         onChanged();
         return getDesktopFieldBuilder().getBuilder();
       }
@@ -3688,7 +3688,7 @@ public final class Status {
        * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder> 
+          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder>
           getDesktopFieldBuilder() {
         if (desktopBuilder_ == null) {
           desktopBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -4196,7 +4196,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setWait(boolean value) {
-        
+
         wait_ = value;
         onChanged();
         return this;
@@ -4211,7 +4211,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearWait() {
-        
+
         wait_ = false;
         onChanged();
         return this;
@@ -4777,7 +4777,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setAvailable(boolean value) {
-        
+
         available_ = value;
         onChanged();
         return this;
@@ -4791,7 +4791,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearAvailable() {
-        
+
         available_ = false;
         onChanged();
         return this;
@@ -4819,7 +4819,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setSourceValue(int value) {
-        
+
         source_ = value;
         onChanged();
         return this;
@@ -4851,7 +4851,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         source_ = value.getNumber();
         onChanged();
         return this;
@@ -4865,7 +4865,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearSource() {
-        
+
         source_ = 0;
         onChanged();
         return this;
@@ -5766,7 +5766,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setCanaryAvailable(boolean value) {
-        
+
         canaryAvailable_ = value;
         onChanged();
         return this;
@@ -5776,7 +5776,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearCanaryAvailable() {
-        
+
         canaryAvailable_ = false;
         onChanged();
         return this;
@@ -6277,7 +6277,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setObserve(boolean value) {
-        
+
         observe_ = value;
         onChanged();
         return this;
@@ -6292,7 +6292,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearObserve() {
-        
+
         observe_ = false;
         onChanged();
         return this;
@@ -6357,7 +6357,7 @@ public final class Status {
     /**
      * <code>repeated .supervisor.PortsStatus ports = 1;</code>
      */
-    java.util.List<io.gitpod.supervisor.api.Status.PortsStatus> 
+    java.util.List<io.gitpod.supervisor.api.Status.PortsStatus>
         getPortsList();
     /**
      * <code>repeated .supervisor.PortsStatus ports = 1;</code>
@@ -6370,7 +6370,7 @@ public final class Status {
     /**
      * <code>repeated .supervisor.PortsStatus ports = 1;</code>
      */
-    java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder> 
+    java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder>
         getPortsOrBuilderList();
     /**
      * <code>repeated .supervisor.PortsStatus ports = 1;</code>
@@ -6484,7 +6484,7 @@ public final class Status {
      * <code>repeated .supervisor.PortsStatus ports = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder> 
+    public java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder>
         getPortsOrBuilderList() {
       return ports_;
     }
@@ -6815,7 +6815,7 @@ public final class Status {
               portsBuilder_ = null;
               ports_ = other.ports_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              portsBuilder_ = 
+              portsBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getPortsFieldBuilder() : null;
             } else {
@@ -7048,7 +7048,7 @@ public final class Status {
       /**
        * <code>repeated .supervisor.PortsStatus ports = 1;</code>
        */
-      public java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder> 
+      public java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder>
            getPortsOrBuilderList() {
         if (portsBuilder_ != null) {
           return portsBuilder_.getMessageOrBuilderList();
@@ -7074,12 +7074,12 @@ public final class Status {
       /**
        * <code>repeated .supervisor.PortsStatus ports = 1;</code>
        */
-      public java.util.List<io.gitpod.supervisor.api.Status.PortsStatus.Builder> 
+      public java.util.List<io.gitpod.supervisor.api.Status.PortsStatus.Builder>
            getPortsBuilderList() {
         return getPortsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.PortsStatus, io.gitpod.supervisor.api.Status.PortsStatus.Builder, io.gitpod.supervisor.api.Status.PortsStatusOrBuilder> 
+          io.gitpod.supervisor.api.Status.PortsStatus, io.gitpod.supervisor.api.Status.PortsStatus.Builder, io.gitpod.supervisor.api.Status.PortsStatusOrBuilder>
           getPortsFieldBuilder() {
         if (portsBuilder_ == null) {
           portsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -7350,7 +7350,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         url_ = s;
@@ -7370,7 +7370,7 @@ public final class Status {
         getUrlBytes() {
       java.lang.Object ref = url_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         url_ = b;
@@ -7763,7 +7763,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setVisibilityValue(int value) {
-        
+
         visibility_ = value;
         onChanged();
         return this;
@@ -7795,7 +7795,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         visibility_ = value.getNumber();
         onChanged();
         return this;
@@ -7809,7 +7809,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearVisibility() {
-        
+
         visibility_ = 0;
         onChanged();
         return this;
@@ -7848,7 +7848,7 @@ public final class Status {
           getUrlBytes() {
         java.lang.Object ref = url_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           url_ = b;
@@ -7871,7 +7871,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         url_ = value;
         onChanged();
         return this;
@@ -7885,7 +7885,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearUrl() {
-        
+
         url_ = getDefaultInstance().getUrl();
         onChanged();
         return this;
@@ -7905,7 +7905,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         url_ = value;
         onChanged();
         return this;
@@ -7933,7 +7933,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setOnExposedValue(int value) {
-        
+
         onExposed_ = value;
         onChanged();
         return this;
@@ -7965,7 +7965,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         onExposed_ = value.getNumber();
         onChanged();
         return this;
@@ -7979,7 +7979,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearOnExposed() {
-        
+
         onExposed_ = 0;
         onChanged();
         return this;
@@ -8293,7 +8293,7 @@ public final class Status {
           java.lang.String, java.lang.Integer> defaultEntry =
               com.google.protobuf.MapEntry
               .<java.lang.String, java.lang.Integer>newDefaultInstance(
-                  io.gitpod.supervisor.api.Status.internal_static_supervisor_TunneledPortInfo_ClientsEntry_descriptor, 
+                  io.gitpod.supervisor.api.Status.internal_static_supervisor_TunneledPortInfo_ClientsEntry_descriptor,
                   com.google.protobuf.WireFormat.FieldType.STRING,
                   "",
                   com.google.protobuf.WireFormat.FieldType.UINT32,
@@ -8776,7 +8776,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setTargetPort(int value) {
-        
+
         targetPort_ = value;
         onChanged();
         return this;
@@ -8790,7 +8790,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearTargetPort() {
-        
+
         targetPort_ = 0;
         onChanged();
         return this;
@@ -8820,7 +8820,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setVisibilityValue(int value) {
-        
+
         visibility_ = value;
         onChanged();
         return this;
@@ -8854,7 +8854,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         visibility_ = value.getNumber();
         onChanged();
         return this;
@@ -8869,7 +8869,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearVisibility() {
-        
+
         visibility_ = 0;
         onChanged();
         return this;
@@ -9011,7 +9011,7 @@ public final class Status {
           java.lang.String key,
           int value) {
         if (key == null) { throw new NullPointerException("map key"); }
-        
+
         internalGetMutableClients().getMutableMap()
             .put(key, value);
         return this;
@@ -9525,7 +9525,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         description_ = s;
@@ -9545,7 +9545,7 @@ public final class Status {
         getDescriptionBytes() {
       java.lang.Object ref = description_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         description_ = b;
@@ -9571,7 +9571,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         name_ = s;
@@ -9591,7 +9591,7 @@ public final class Status {
         getNameBytes() {
       java.lang.Object ref = name_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         name_ = b;
@@ -10062,7 +10062,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setLocalPort(int value) {
-        
+
         localPort_ = value;
         onChanged();
         return this;
@@ -10080,7 +10080,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearLocalPort() {
-        
+
         localPort_ = 0;
         onChanged();
         return this;
@@ -10109,7 +10109,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setServed(boolean value) {
-        
+
         served_ = value;
         onChanged();
         return this;
@@ -10123,7 +10123,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearServed() {
-        
+
         served_ = false;
         onChanged();
         return this;
@@ -10251,7 +10251,7 @@ public final class Status {
        * <code>.supervisor.ExposedPortInfo exposed = 5;</code>
        */
       public io.gitpod.supervisor.api.Status.ExposedPortInfo.Builder getExposedBuilder() {
-        
+
         onChanged();
         return getExposedFieldBuilder().getBuilder();
       }
@@ -10280,7 +10280,7 @@ public final class Status {
        * <code>.supervisor.ExposedPortInfo exposed = 5;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.ExposedPortInfo, io.gitpod.supervisor.api.Status.ExposedPortInfo.Builder, io.gitpod.supervisor.api.Status.ExposedPortInfoOrBuilder> 
+          io.gitpod.supervisor.api.Status.ExposedPortInfo, io.gitpod.supervisor.api.Status.ExposedPortInfo.Builder, io.gitpod.supervisor.api.Status.ExposedPortInfoOrBuilder>
           getExposedFieldBuilder() {
         if (exposedBuilder_ == null) {
           exposedBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -10315,7 +10315,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setAutoExposureValue(int value) {
-        
+
         autoExposure_ = value;
         onChanged();
         return this;
@@ -10347,7 +10347,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         autoExposure_ = value.getNumber();
         onChanged();
         return this;
@@ -10361,7 +10361,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearAutoExposure() {
-        
+
         autoExposure_ = 0;
         onChanged();
         return this;
@@ -10489,7 +10489,7 @@ public final class Status {
        * <code>.supervisor.TunneledPortInfo tunneled = 6;</code>
        */
       public io.gitpod.supervisor.api.Status.TunneledPortInfo.Builder getTunneledBuilder() {
-        
+
         onChanged();
         return getTunneledFieldBuilder().getBuilder();
       }
@@ -10518,7 +10518,7 @@ public final class Status {
        * <code>.supervisor.TunneledPortInfo tunneled = 6;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.TunneledPortInfo, io.gitpod.supervisor.api.Status.TunneledPortInfo.Builder, io.gitpod.supervisor.api.Status.TunneledPortInfoOrBuilder> 
+          io.gitpod.supervisor.api.Status.TunneledPortInfo, io.gitpod.supervisor.api.Status.TunneledPortInfo.Builder, io.gitpod.supervisor.api.Status.TunneledPortInfoOrBuilder>
           getTunneledFieldBuilder() {
         if (tunneledBuilder_ == null) {
           tunneledBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -10564,7 +10564,7 @@ public final class Status {
           getDescriptionBytes() {
         java.lang.Object ref = description_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           description_ = b;
@@ -10587,7 +10587,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         description_ = value;
         onChanged();
         return this;
@@ -10601,7 +10601,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearDescription() {
-        
+
         description_ = getDefaultInstance().getDescription();
         onChanged();
         return this;
@@ -10621,7 +10621,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         description_ = value;
         onChanged();
         return this;
@@ -10660,7 +10660,7 @@ public final class Status {
           getNameBytes() {
         java.lang.Object ref = name_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           name_ = b;
@@ -10683,7 +10683,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         name_ = value;
         onChanged();
         return this;
@@ -10697,7 +10697,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearName() {
-        
+
         name_ = getDefaultInstance().getName();
         onChanged();
         return this;
@@ -10717,7 +10717,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         name_ = value;
         onChanged();
         return this;
@@ -11218,7 +11218,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setObserve(boolean value) {
-        
+
         observe_ = value;
         onChanged();
         return this;
@@ -11233,7 +11233,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearObserve() {
-        
+
         observe_ = false;
         onChanged();
         return this;
@@ -11298,7 +11298,7 @@ public final class Status {
     /**
      * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
      */
-    java.util.List<io.gitpod.supervisor.api.Status.TaskStatus> 
+    java.util.List<io.gitpod.supervisor.api.Status.TaskStatus>
         getTasksList();
     /**
      * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
@@ -11311,7 +11311,7 @@ public final class Status {
     /**
      * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
      */
-    java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder> 
+    java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder>
         getTasksOrBuilderList();
     /**
      * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
@@ -11425,7 +11425,7 @@ public final class Status {
      * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder> 
+    public java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder>
         getTasksOrBuilderList() {
       return tasks_;
     }
@@ -11756,7 +11756,7 @@ public final class Status {
               tasksBuilder_ = null;
               tasks_ = other.tasks_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              tasksBuilder_ = 
+              tasksBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getTasksFieldBuilder() : null;
             } else {
@@ -11989,7 +11989,7 @@ public final class Status {
       /**
        * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
        */
-      public java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder> 
+      public java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder>
            getTasksOrBuilderList() {
         if (tasksBuilder_ != null) {
           return tasksBuilder_.getMessageOrBuilderList();
@@ -12015,12 +12015,12 @@ public final class Status {
       /**
        * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
        */
-      public java.util.List<io.gitpod.supervisor.api.Status.TaskStatus.Builder> 
+      public java.util.List<io.gitpod.supervisor.api.Status.TaskStatus.Builder>
            getTasksBuilderList() {
         return getTasksFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.TaskStatus, io.gitpod.supervisor.api.Status.TaskStatus.Builder, io.gitpod.supervisor.api.Status.TaskStatusOrBuilder> 
+          io.gitpod.supervisor.api.Status.TaskStatus, io.gitpod.supervisor.api.Status.TaskStatus.Builder, io.gitpod.supervisor.api.Status.TaskStatusOrBuilder>
           getTasksFieldBuilder() {
         if (tasksBuilder_ == null) {
           tasksBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -12265,7 +12265,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         id_ = s;
@@ -12281,7 +12281,7 @@ public final class Status {
         getIdBytes() {
       java.lang.Object ref = id_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         id_ = b;
@@ -12322,7 +12322,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         terminal_ = s;
@@ -12338,7 +12338,7 @@ public final class Status {
         getTerminalBytes() {
       java.lang.Object ref = terminal_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         terminal_ = b;
@@ -12764,7 +12764,7 @@ public final class Status {
           getIdBytes() {
         java.lang.Object ref = id_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           id_ = b;
@@ -12783,7 +12783,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         id_ = value;
         onChanged();
         return this;
@@ -12793,7 +12793,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearId() {
-        
+
         id_ = getDefaultInstance().getId();
         onChanged();
         return this;
@@ -12809,7 +12809,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         id_ = value;
         onChanged();
         return this;
@@ -12829,7 +12829,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setStateValue(int value) {
-        
+
         state_ = value;
         onChanged();
         return this;
@@ -12853,7 +12853,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         state_ = value.getNumber();
         onChanged();
         return this;
@@ -12863,7 +12863,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearState() {
-        
+
         state_ = 0;
         onChanged();
         return this;
@@ -12894,7 +12894,7 @@ public final class Status {
           getTerminalBytes() {
         java.lang.Object ref = terminal_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           terminal_ = b;
@@ -12913,7 +12913,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         terminal_ = value;
         onChanged();
         return this;
@@ -12923,7 +12923,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearTerminal() {
-        
+
         terminal_ = getDefaultInstance().getTerminal();
         onChanged();
         return this;
@@ -12939,7 +12939,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         terminal_ = value;
         onChanged();
         return this;
@@ -13032,7 +13032,7 @@ public final class Status {
        * <code>.supervisor.TaskPresentation presentation = 4;</code>
        */
       public io.gitpod.supervisor.api.Status.TaskPresentation.Builder getPresentationBuilder() {
-        
+
         onChanged();
         return getPresentationFieldBuilder().getBuilder();
       }
@@ -13051,7 +13051,7 @@ public final class Status {
        * <code>.supervisor.TaskPresentation presentation = 4;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.TaskPresentation, io.gitpod.supervisor.api.Status.TaskPresentation.Builder, io.gitpod.supervisor.api.Status.TaskPresentationOrBuilder> 
+          io.gitpod.supervisor.api.Status.TaskPresentation, io.gitpod.supervisor.api.Status.TaskPresentation.Builder, io.gitpod.supervisor.api.Status.TaskPresentationOrBuilder>
           getPresentationFieldBuilder() {
         if (presentationBuilder_ == null) {
           presentationBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -13268,7 +13268,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         name_ = s;
@@ -13284,7 +13284,7 @@ public final class Status {
         getNameBytes() {
       java.lang.Object ref = name_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         name_ = b;
@@ -13306,7 +13306,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         openIn_ = s;
@@ -13322,7 +13322,7 @@ public final class Status {
         getOpenInBytes() {
       java.lang.Object ref = openIn_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         openIn_ = b;
@@ -13344,7 +13344,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         openMode_ = s;
@@ -13360,7 +13360,7 @@ public final class Status {
         getOpenModeBytes() {
       java.lang.Object ref = openMode_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         openMode_ = b;
@@ -13731,7 +13731,7 @@ public final class Status {
           getNameBytes() {
         java.lang.Object ref = name_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           name_ = b;
@@ -13750,7 +13750,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         name_ = value;
         onChanged();
         return this;
@@ -13760,7 +13760,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearName() {
-        
+
         name_ = getDefaultInstance().getName();
         onChanged();
         return this;
@@ -13776,7 +13776,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         name_ = value;
         onChanged();
         return this;
@@ -13807,7 +13807,7 @@ public final class Status {
           getOpenInBytes() {
         java.lang.Object ref = openIn_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           openIn_ = b;
@@ -13826,7 +13826,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         openIn_ = value;
         onChanged();
         return this;
@@ -13836,7 +13836,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearOpenIn() {
-        
+
         openIn_ = getDefaultInstance().getOpenIn();
         onChanged();
         return this;
@@ -13852,7 +13852,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         openIn_ = value;
         onChanged();
         return this;
@@ -13883,7 +13883,7 @@ public final class Status {
           getOpenModeBytes() {
         java.lang.Object ref = openMode_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           openMode_ = b;
@@ -13902,7 +13902,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         openMode_ = value;
         onChanged();
         return this;
@@ -13912,7 +13912,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearOpenMode() {
-        
+
         openMode_ = getDefaultInstance().getOpenMode();
         onChanged();
         return this;
@@ -13928,7 +13928,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         openMode_ = value;
         onChanged();
         return this;
@@ -13988,97 +13988,97 @@ public final class Status {
 
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SupervisorStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SupervisorStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SupervisorStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SupervisorStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_IDEStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_IDEStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_IDEStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_IDEStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_IDEStatusResponse_DesktopStatus_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_IDEStatusResponse_DesktopStatus_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ContentStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ContentStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ContentStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ContentStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_BackupStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_BackupStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_BackupStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_BackupStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_PortsStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_PortsStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_PortsStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_PortsStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ExposedPortInfo_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ExposedPortInfo_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TunneledPortInfo_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TunneledPortInfo_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TunneledPortInfo_ClientsEntry_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TunneledPortInfo_ClientsEntry_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_PortsStatus_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_PortsStatus_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TasksStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TasksStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TasksStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TasksStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TaskStatus_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TaskStatus_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TaskPresentation_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TaskPresentation_fieldAccessorTable;
 
