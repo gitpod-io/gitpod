@@ -141,6 +141,7 @@ type ServerConfig struct {
 	EnableLocalApp                    *bool             `json:"enableLocalApp"`
 	RunDbDeleter                      *bool             `json:"runDbDeleter"`
 	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`
+	DisableWorkspaceGarbageCollection bool              `json:"disableWorkspaceGarbageCollection"`
 }
 
 type ProxyConfig struct {

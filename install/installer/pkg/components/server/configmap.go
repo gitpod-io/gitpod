@@ -90,6 +90,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	disableWsGarbageCollection := false
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
+			disableWsGarbageCollection = cfg.WebApp.Server.DisableWorkspaceGarbageCollection
+		}
+		return nil
+	})
+
 	githubApp := GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
@@ -133,7 +141,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ChunkLimit:                 1000,
 			ContentChunkLimit:          1000,
 			ContentRetentionPeriodDays: 21,
-			Disabled:                   false,
+			Disabled:                   disableWsGarbageCollection,
 			MinAgeDays:                 14,
 			MinAgePrebuildDays:         7,
 		},
