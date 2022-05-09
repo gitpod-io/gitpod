@@ -7,6 +7,7 @@ package wsmanager
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
@@ -89,6 +90,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			if err != nil {
 				return err
 			}
+
 			classes[k] = &config.WorkspaceClass{
 				Container: config.ContainerConfiguration{
 					Requests: &config.ResourceConfiguration{
@@ -105,7 +107,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Templates: tplsCfg,
 				PVC:       config.PVCConfiguration(c.PVC),
 			}
-			tpls = append(tpls, ctpls...)
+
+			for k, v := range ctpls {
+				tpls[fixTemplateClass(k)] = v
+			}
 		}
 		return nil
 	})
@@ -210,12 +215,21 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				"config.json": string(fc),
 			},
 		},
+		&corev1.ConfigMap{
+			TypeMeta: common.TypeMetaConfigmap,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      WorkspaceTemplateConfigMap,
+				Namespace: ctx.Namespace,
+				Labels:    common.DefaultLabels(Component),
+			},
+			Data: tpls,
+		},
 	}
-	res = append(res, tpls...)
+
 	return res, nil
 }
 
-func buildWorkspaceTemplates(ctx *common.RenderContext, cfgTpls *configv1.WorkspaceTemplates, className string) (config.WorkspacePodTemplateConfiguration, []runtime.Object, error) {
+func buildWorkspaceTemplates(ctx *common.RenderContext, cfgTpls *configv1.WorkspaceTemplates, className string) (config.WorkspacePodTemplateConfiguration, map[string]string, error) {
 	var (
 		cfg  config.WorkspacePodTemplateConfiguration
 		tpls = make(map[string]string)
@@ -243,19 +257,13 @@ func buildWorkspaceTemplates(ctx *common.RenderContext, cfgTpls *configv1.Worksp
 			return cfg, nil, fmt.Errorf("unable to marshal %s workspace template: %w", op.Name, err)
 		}
 		fn := filepath.Join(className, op.Name+".yaml")
-		*op.Path = filepath.Join(WorkspaceTemplatePath, fn)
+		*op.Path = filepath.Join(WorkspaceTemplatePath, fixTemplateClass(fn))
 		tpls[fn] = string(fc)
 	}
 
-	return cfg, []runtime.Object{
-		&corev1.ConfigMap{
-			TypeMeta: common.TypeMetaConfigmap,
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      WorkspaceTemplateConfigMap,
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
-			},
-			Data: tpls,
-		},
-	}, nil
+	return cfg, tpls, nil
+}
+
+func fixTemplateClass(input string) string {
+	return strings.ReplaceAll(input, "/", "-")
 }

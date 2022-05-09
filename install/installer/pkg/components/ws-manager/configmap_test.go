@@ -13,7 +13,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
 )
 
@@ -29,13 +28,17 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 		Expectation       Expectation
 	}{
 		{
-			Name:        "no templates",
-			Expectation: Expectation{},
+			Name: "no templates",
+			Expectation: Expectation{
+				Data: map[string]bool{},
+			},
 		},
 		{
-			Name:        "empty templates",
-			Config:      &configv1.WorkspaceTemplates{},
-			Expectation: Expectation{},
+			Name:   "empty templates",
+			Config: &configv1.WorkspaceTemplates{},
+			Expectation: Expectation{
+				Data: map[string]bool{},
+			},
 		},
 		{
 			Name: "default tpl",
@@ -95,7 +98,7 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			var (
 				act  Expectation
-				objs []runtime.Object
+				data map[string]string
 				err  error
 			)
 
@@ -103,29 +106,18 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 				test.ContainerRegistry = &configv1.ContainerRegistry{InCluster: pointer.Bool(true)}
 			}
 
-			act.TplConfig, objs, err = buildWorkspaceTemplates(&common.RenderContext{Config: configv1.Config{
+			act.TplConfig, data, err = buildWorkspaceTemplates(&common.RenderContext{Config: configv1.Config{
 				ContainerRegistry: *test.ContainerRegistry,
 			}}, test.Config, "")
 			if err != nil {
 				t.Error(err)
 			}
-			if len(objs) < 1 {
-				t.Fatalf("received zero runtime objects")
-				return
-			}
 
-			cfgmap, ok := objs[0].(*corev1.ConfigMap)
-			if !ok {
-				t.Fatalf("buildWorkspaceTemplates did not return a configMap")
-				return
+			dt := make(map[string]bool)
+			for k := range data {
+				dt[k] = true
 			}
-			if len(cfgmap.Data) > 0 {
-				dt := make(map[string]bool)
-				for k := range cfgmap.Data {
-					dt[k] = true
-				}
-				act.Data = dt
-			}
+			act.Data = dt
 
 			if diff := cmp.Diff(test.Expectation, act); diff != "" {
 				t.Errorf("Expectation mismatch (-want +got):\n%s", diff)
