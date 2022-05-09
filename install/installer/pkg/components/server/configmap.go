@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
@@ -99,9 +100,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	})
 
 	var blockedRepositories []BlockedRepository
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+	err = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && len(cfg.WebApp.Server.BlockedRepositories) > 0 {
 			for _, repo := range cfg.WebApp.Server.BlockedRepositories {
+				_, err := regexp.Compile(repo.UrlRegExp)
+				if err != nil {
+					return fmt.Errorf("invalid regexp %q for blocked user URL: %w", repo.UrlRegExp, err)
+				}
 				blockedRepositories = append(blockedRepositories, BlockedRepository{
 					UrlRegExp: repo.UrlRegExp,
 					BlockUser: repo.BlockUser,
@@ -110,6 +115,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	githubApp := GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
