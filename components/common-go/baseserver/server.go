@@ -10,6 +10,8 @@ import (
 	gitpod_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -165,6 +167,10 @@ func (s *Server) GRPC() *grpc.Server {
 	return s.grpc
 }
 
+func (s *Server) MetricsRegistry() *prometheus.Registry {
+	return s.cfg.metricsRegistry
+}
+
 func (s *Server) close(ctx context.Context) error {
 	if s.listening == nil {
 		return fmt.Errorf("server is not running, invalid close operation")
@@ -221,14 +227,9 @@ func (s *Server) newHTTPMux() *http.ServeMux {
 	mux.HandleFunc("/live", s.cfg.healthHandler.LiveEndpoint)
 	s.Logger().WithField("protocol", "http").Debug("Serving liveliness handler on /live")
 
-	// Metrics endpoint
-	metricsHandler := promhttp.Handler()
-	if s.cfg.metricsRegistry != nil {
-		metricsHandler = promhttp.InstrumentMetricHandler(
-			s.cfg.metricsRegistry, promhttp.HandlerFor(s.cfg.metricsRegistry, promhttp.HandlerOpts{}),
-		)
-	}
-	mux.Handle("/metrics", metricsHandler)
+	mux.Handle("/metrics", promhttp.InstrumentMetricHandler(
+		s.cfg.metricsRegistry, promhttp.HandlerFor(s.cfg.metricsRegistry, promhttp.HandlerOpts{}),
+	))
 	s.Logger().WithField("protocol", "http").Debug("Serving metrics on /metrics")
 
 	mux.Handle(pprof.Path, pprof.Handler())
@@ -240,11 +241,19 @@ func (s *Server) newHTTPMux() *http.ServeMux {
 func (s *Server) initializeGRPC() error {
 	gitpod_grpc.SetupLogging()
 
+	grpcMetrics := grpc_prometheus.NewServerMetrics()
+	grpcMetrics.EnableHandlingTimeHistogram()
+	if err := s.MetricsRegistry().Register(grpcMetrics); err != nil {
+		return fmt.Errorf("failed to register grpc metrics: %w", err)
+	}
+
 	unary := []grpc.UnaryServerInterceptor{
 		grpc_logrus.UnaryServerInterceptor(s.Logger()),
+		grpcMetrics.UnaryServerInterceptor(),
 	}
 	stream := []grpc.StreamServerInterceptor{
 		grpc_logrus.StreamServerInterceptor(s.Logger()),
+		grpcMetrics.StreamServerInterceptor(),
 	}
 
 	s.grpc = grpc.NewServer(gitpod_grpc.ServerOptionsWithInterceptors(stream, unary)...)

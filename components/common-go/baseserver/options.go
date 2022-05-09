@@ -34,12 +34,13 @@ type config struct {
 
 func defaultConfig() *config {
 	return &config{
-		logger:        log.New(),
-		hostname:      "localhost",
-		httpPort:      9000,
-		grpcPort:      9001,
-		closeTimeout:  5 * time.Second,
-		healthHandler: healthcheck.NewHandler(),
+		logger:          log.New(),
+		hostname:        "localhost",
+		httpPort:        9000,
+		grpcPort:        9001,
+		closeTimeout:    5 * time.Second,
+		healthHandler:   healthcheck.NewHandler(),
+		metricsRegistry: prometheus.NewRegistry(),
 	}
 }
 
