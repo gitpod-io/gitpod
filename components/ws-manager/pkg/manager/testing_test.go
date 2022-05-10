@@ -41,7 +41,7 @@ func forTestingOnlyManagerConfig() config.Configuration {
 		WorkspacePortURLTemplate: "{{ .WorkspacePort }}-{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		RegistryFacadeHost:       "registry-facade:8080",
 		WorkspaceClasses: map[string]*config.WorkspaceClass{
-			"": {
+			config.DefaultWorkspaceClass: {
 				Container: config.ContainerConfiguration{
 					Limits: &config.ResourceConfiguration{
 						CPU:    "900m",

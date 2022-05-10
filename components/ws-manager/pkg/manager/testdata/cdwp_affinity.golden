@@ -8,6 +8,7 @@
                 "app": "gitpod",
                 "component": "workspace",
                 "gitpod.io/networkpolicy": "default",
+                "gitpod.io/workspaceClass": "default",
                 "gpwsman": "true",
                 "headless": "false",
                 "metaID": "foobar",
@@ -221,10 +222,6 @@
                                     },
                                     {
                                         "key": "gitpod.io/registry-facade_ready_ns_default",
-                                        "operator": "Exists"
-                                    },
-                                    {
-                                        "key": "foobar",
                                         "operator": "Exists"
                                     }
                                 ]

@@ -24,6 +24,9 @@ import (
 	cntntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 )
 
+// DefaultWorkspaceClass is the name of the default workspace class
+const DefaultWorkspaceClass = "default"
+
 type osFS struct{}
 
 func (*osFS) Open(name string) (iofs.File, error) {
@@ -212,6 +215,9 @@ func (c *Configuration) Validate() error {
 		return err
 	}
 
+	if _, ok := c.WorkspaceClasses[DefaultWorkspaceClass]; !ok {
+		return xerrors.Errorf("missing \"%s\" workspace class", DefaultWorkspaceClass)
+	}
 	for name, class := range c.WorkspaceClasses {
 		if err := class.Container.Validate(); err != nil {
 			return xerrors.Errorf("workspace class %s: %w", name, err)

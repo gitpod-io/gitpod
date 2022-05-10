@@ -19,6 +19,8 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -846,6 +848,20 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 	workspaceSpan := opentracing.StartSpan("workspace", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))
 	traceID := tracing.GetTraceID(workspaceSpan)
 
+	clsName := req.Spec.Class
+	if _, ok := m.Config.WorkspaceClasses[req.Spec.Class]; clsName == "" || !ok {
+		// For the time being, if the requested workspace class is unknown, or if
+		// no class is specified, we'll fall back to the default class.
+		clsName = config.DefaultWorkspaceClass
+	}
+
+	var class *config.WorkspaceClass
+	if cls, ok := m.Config.WorkspaceClasses[clsName]; ok {
+		class = cls
+	} else {
+		return nil, status.Errorf(codes.InvalidArgument, "workspace class \"%s\" is unknown", clsName)
+	}
+
 	labels := map[string]string{
 		"app":                  "gitpod",
 		"component":            "workspace",
@@ -855,17 +871,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		wsk8s.TypeLabel:        workspaceType,
 		headlessLabel:          fmt.Sprintf("%v", headless),
 		markerLabel:            "true",
-	}
-
-	var class *config.WorkspaceClass
-	if cls, ok := m.Config.WorkspaceClasses[req.Spec.Class]; ok {
-		class = cls
-		if req.Spec.Class != "" {
-			labels[workspaceClassLabel] = req.Spec.Class
-		}
-	} else {
-		// TODO(cw): in the future we should fail the request here. Until we've migrated server, let's not be that strict
-		// return nil, status.Errorf(codes.InvalidArgument, "workspace class \"%s\" is unknown", req.Spec.Class)
+		workspaceClassLabel:    clsName,
 	}
 
 	return &startWorkspaceContext{

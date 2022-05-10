@@ -8,6 +8,7 @@
                 "app": "gitpod",
                 "component": "workspace",
                 "gitpod.io/networkpolicy": "default",
+                "gitpod.io/workspaceClass": "default",
                 "gpwsman": "true",
                 "headless": "false",
                 "metaID": "foobar",
@@ -138,10 +139,6 @@
                         }
                     ],
                     "resources": {
-                        "limits": {
-                            "cpu": "900m",
-                            "memory": "1G"
-                        },
                         "requests": {
                             "cpu": "5m"
                         }

@@ -54,7 +54,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	classes := map[string]*config.WorkspaceClass{
-		"": {
+		config.DefaultWorkspaceClass: {
 			Container: config.ContainerConfiguration{
 				Requests: &config.ResourceConfiguration{
 					CPU:              quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceCPU),
