@@ -113,6 +113,7 @@ func (ft *FixtureTest) Run() {
 				t.Errorf("cannot read golden file %s: %v", goldenFilePath, err)
 				return
 			}
+			expected = bytes.TrimSpace(expected)
 
 			if !bytes.Equal(actual, expected) {
 				expectedResult := ft.Gold()
@@ -128,8 +129,10 @@ func (ft *FixtureTest) Run() {
 				}
 
 				diff := deep.Equal(expectedResult, result)
+				if len(diff) > 0 {
+					t.Errorf("fixture %s: %v", fn, diff)
+				}
 
-				t.Errorf("fixture %s: %v", fn, diff)
 				return
 			}
 		})
