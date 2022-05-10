@@ -10,6 +10,7 @@ import (
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"net/url"
+	"time"
 )
 
 type ServerConnectionPool interface {
@@ -26,6 +27,10 @@ type NoConnectionPool struct {
 func (p *NoConnectionPool) Get(ctx context.Context, token string) (gitpod.APIInterface, error) {
 	logger := ctxlogrus.Extract(ctx)
 
+	start := time.Now()
+	defer func() {
+		reportConnectionDuration(time.Since(start))
+	}()
 	server, err := gitpod.ConnectToServer(p.ServerAPI.String(), gitpod.ConnectToServerOpts{
 		Context: ctx,
 		Token:   token,
