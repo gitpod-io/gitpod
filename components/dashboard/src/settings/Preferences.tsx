@@ -40,13 +40,15 @@ export default function Preferences() {
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
     const actuallySetDotfileRepo = async (value: string) => {
         const additionalData = user?.additionalData || {};
-        const prevDotfileRepo = additionalData.dotfileRepo;
+        const prevDotfileRepo = additionalData.dotfileRepo || "";
         additionalData.dotfileRepo = value;
         await getGitpodService().server.updateLoggedInUser({ additionalData });
-        trackEvent("dotfile_repo_changed", {
-            previous: prevDotfileRepo,
-            current: value,
-        });
+        if (value !== prevDotfileRepo) {
+            trackEvent("dotfile_repo_changed", {
+                previous: prevDotfileRepo,
+                current: value,
+            });
+        }
     };
 
     return (
