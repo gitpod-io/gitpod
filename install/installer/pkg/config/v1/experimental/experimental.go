@@ -99,6 +99,7 @@ type WebAppConfig struct {
 	Server                 *ServerConfig          `json:"server,omitempty"`
 	ProxyConfig            *ProxyConfig           `json:"proxy,omitempty"`
 	WorkspaceManagerBridge *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`
+	Tracing                *Tracing               `json:"tracing,omitempty"`
 	UsePodAntiAffinity     bool                   `json:"usePodAntiAffinity"`
 	DisableMigration       bool                   `json:"disableMigration"`
 }
