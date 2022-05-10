@@ -12,25 +12,21 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
 func Start(logger *logrus.Entry, cfg Config) error {
-	registry := prometheus.NewRegistry()
-
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
 		baseserver.WithHTTPPort(cfg.HTTPPort),
 		baseserver.WithGRPCPort(cfg.GRPCPort),
-		baseserver.WithMetricsRegistry(registry),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to initialize public api server: %w", err)
 	}
 
-	if registerErr := register(srv, cfg, registry); registerErr != nil {
+	if registerErr := register(srv, cfg); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -41,14 +37,17 @@ func Start(logger *logrus.Entry, cfg Config) error {
 	return nil
 }
 
-func register(srv *baseserver.Server, cfg Config, registry *prometheus.Registry) error {
-	proxy.RegisterMetrics(registry)
+func register(srv *baseserver.Server, cfg Config) error {
+	proxy.RegisterMetrics(srv.MetricsRegistry())
 
 	logger := log.New()
 	m := middleware.NewLoggingMiddleware(logger)
 	srv.HTTPMux().Handle("/", m(http.HandlerFunc(HelloWorldHandler)))
 
-	connPool := &proxy.NoConnectionPool{ServerAPI: cfg.GitpodAPI}
+	connPool, err := proxy.NewAlwaysNewConnectionPool(cfg.GitpodAPI)
+	if err != nil {
+		return fmt.Errorf("failed to create connection pool: %w", err)
+	}
 
 	v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
 	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})

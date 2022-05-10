@@ -19,19 +19,32 @@ type ServerConnectionPool interface {
 	Get(ctx context.Context, token string) (gitpod.APIInterface, error)
 }
 
-// NoConnectionPool is a simple version of the ServerConnectionPool which always creates a new connection.
-type NoConnectionPool struct {
-	ServerAPI *url.URL
+type connectionConstructor func(endpoint string, opts gitpod.ConnectToServerOpts) (gitpod.APIInterface, error)
+
+func NewAlwaysNewConnectionPool(address *url.URL) (*AlwaysNewConnectionPool, error) {
+	return &AlwaysNewConnectionPool{
+		ServerAPI: address,
+		constructor: func(endpoint string, opts gitpod.ConnectToServerOpts) (gitpod.APIInterface, error) {
+			return gitpod.ConnectToServer(endpoint, opts)
+		},
+	}, nil
 }
 
-func (p *NoConnectionPool) Get(ctx context.Context, token string) (gitpod.APIInterface, error) {
+// AlwaysNewConnectionPool is a simple version of the ServerConnectionPool which always creates a new connection.
+type AlwaysNewConnectionPool struct {
+	ServerAPI *url.URL
+
+	constructor connectionConstructor
+}
+
+func (p *AlwaysNewConnectionPool) Get(ctx context.Context, token string) (gitpod.APIInterface, error) {
 	logger := ctxlogrus.Extract(ctx)
 
 	start := time.Now()
 	defer func() {
 		reportConnectionDuration(time.Since(start))
 	}()
-	server, err := gitpod.ConnectToServer(p.ServerAPI.String(), gitpod.ConnectToServerOpts{
+	server, err := p.constructor(p.ServerAPI.String(), gitpod.ConnectToServerOpts{
 		Context: ctx,
 		Token:   token,
 		Log:     logger,
@@ -41,4 +54,21 @@ func (p *NoConnectionPool) Get(ctx context.Context, token string) (gitpod.APIInt
 	}
 
 	return server, nil
+}
+
+func WrapConnectionPoolWithMetrics(pool ServerConnectionPool) ServerConnectionPool {
+	return &connectionPoolWithMetrics{pool: pool}
+}
+
+type connectionPoolWithMetrics struct {
+	pool ServerConnectionPool
+}
+
+func (c *connectionPoolWithMetrics) Get(ctx context.Context, token string) (gitpod.APIInterface, error) {
+	start := time.Now()
+	defer func() {
+		reportConnectionDuration(time.Since(start))
+	}()
+
+	return c.pool.Get(ctx, token)
 }
