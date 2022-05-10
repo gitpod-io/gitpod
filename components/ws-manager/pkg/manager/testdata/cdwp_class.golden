@@ -8,7 +8,7 @@
                 "app": "gitpod",
                 "component": "workspace",
                 "gitpod.io/networkpolicy": "default",
-                "gitpod.io/workspaceClass": "gitpod.io/internal/foobar",
+                "gitpod.io/workspaceClass": "gitpodio-internal-foobar",
                 "gpwsman": "true",
                 "headless": "false",
                 "metaID": "foobar",
@@ -142,7 +142,14 @@
                             "value": "foofoo"
                         }
                     ],
-                    "resources": {},
+                    "resources": {
+                        "limits": {
+                            "cpu": "900m"
+                        },
+                        "requests": {
+                            "cpu": "900m"
+                        }
+                    },
                     "volumeMounts": [
                         {
                             "name": "vol-this-workspace",
@@ -232,7 +239,7 @@
                                         "key": "gitpod.io/workspaceClass",
                                         "operator": "In",
                                         "values": [
-                                            "gitpod.io/internal/foobar"
+                                            "gitpodio-internal-foobar"
                                         ]
                                     }
                                 ]

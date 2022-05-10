@@ -12,11 +12,12 @@ import (
 	"os"
 	"path/filepath"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	ozzo "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/gitpod-io/gitpod/common-go/grpc"
@@ -187,15 +188,15 @@ type WorkspaceDaemonConfiguration struct {
 
 // Validate validates the configuration to catch issues during startup and not at runtime
 func (c *Configuration) Validate() error {
-	err := validation.ValidateStruct(&c.Timeouts,
-		validation.Field(&c.Timeouts.AfterClose, validation.Required),
-		validation.Field(&c.Timeouts.HeadlessWorkspace, validation.Required),
-		validation.Field(&c.Timeouts.Initialization, validation.Required),
-		validation.Field(&c.Timeouts.RegularWorkspace, validation.Required),
-		validation.Field(&c.Timeouts.MaxLifetime, validation.Required),
-		validation.Field(&c.Timeouts.TotalStartup, validation.Required),
-		validation.Field(&c.Timeouts.ContentFinalization, validation.Required),
-		validation.Field(&c.Timeouts.Stopping, validation.Required),
+	err := ozzo.ValidateStruct(&c.Timeouts,
+		ozzo.Field(&c.Timeouts.AfterClose, ozzo.Required),
+		ozzo.Field(&c.Timeouts.HeadlessWorkspace, ozzo.Required),
+		ozzo.Field(&c.Timeouts.Initialization, ozzo.Required),
+		ozzo.Field(&c.Timeouts.RegularWorkspace, ozzo.Required),
+		ozzo.Field(&c.Timeouts.MaxLifetime, ozzo.Required),
+		ozzo.Field(&c.Timeouts.TotalStartup, ozzo.Required),
+		ozzo.Field(&c.Timeouts.ContentFinalization, ozzo.Required),
+		ozzo.Field(&c.Timeouts.Stopping, ozzo.Required),
 	)
 	if err != nil {
 		return xerrors.Errorf("timeouts: %w", err)
@@ -204,12 +205,12 @@ func (c *Configuration) Validate() error {
 		return xerrors.Errorf("stopping timeout must be greater than content finalization timeout")
 	}
 
-	err = validation.ValidateStruct(c,
-		validation.Field(&c.WorkspaceURLTemplate, validation.Required, validWorkspaceURLTemplate),
-		validation.Field(&c.WorkspaceHostPath, validation.Required),
-		validation.Field(&c.HeartbeatInterval, validation.Required),
-		validation.Field(&c.GitpodHostURL, validation.Required, is.URL),
-		validation.Field(&c.ReconnectionInterval, validation.Required),
+	err = ozzo.ValidateStruct(c,
+		ozzo.Field(&c.WorkspaceURLTemplate, ozzo.Required, validWorkspaceURLTemplate),
+		ozzo.Field(&c.WorkspaceHostPath, ozzo.Required),
+		ozzo.Field(&c.HeartbeatInterval, ozzo.Required),
+		ozzo.Field(&c.GitpodHostURL, ozzo.Required, is.URL),
+		ozzo.Field(&c.ReconnectionInterval, ozzo.Required),
 	)
 	if err != nil {
 		return err
@@ -219,15 +220,18 @@ func (c *Configuration) Validate() error {
 		return xerrors.Errorf("missing \"%s\" workspace class", DefaultWorkspaceClass)
 	}
 	for name, class := range c.WorkspaceClasses {
+		if errs := validation.IsValidLabelValue(name); len(errs) > 0 {
+			return xerrors.Errorf("workspace class name \"%s\" is invalid: %v", name, errs)
+		}
 		if err := class.Container.Validate(); err != nil {
 			return xerrors.Errorf("workspace class %s: %w", name, err)
 		}
 
-		err = validation.ValidateStruct(&class.Templates,
-			validation.Field(&class.Templates.DefaultPath, validPodTemplate),
-			validation.Field(&class.Templates.PrebuildPath, validPodTemplate),
-			validation.Field(&class.Templates.ProbePath, validPodTemplate),
-			validation.Field(&class.Templates.RegularPath, validPodTemplate),
+		err = ozzo.ValidateStruct(&class.Templates,
+			ozzo.Field(&class.Templates.DefaultPath, validPodTemplate),
+			ozzo.Field(&class.Templates.PrebuildPath, validPodTemplate),
+			ozzo.Field(&class.Templates.ProbePath, validPodTemplate),
+			ozzo.Field(&class.Templates.RegularPath, validPodTemplate),
 		)
 		if err != nil {
 			return xerrors.Errorf("workspace class %s: %w", name, err)
@@ -237,7 +241,7 @@ func (c *Configuration) Validate() error {
 	return err
 }
 
-var validPodTemplate = validation.By(func(o interface{}) error {
+var validPodTemplate = ozzo.By(func(o interface{}) error {
 	s, ok := o.(string)
 	if !ok {
 		return xerrors.Errorf("field should be string")
@@ -247,7 +251,7 @@ var validPodTemplate = validation.By(func(o interface{}) error {
 	return err
 })
 
-var validWorkspaceURLTemplate = validation.By(func(o interface{}) error {
+var validWorkspaceURLTemplate = ozzo.By(func(o interface{}) error {
 	s, ok := o.(string)
 	if !ok {
 		return xerrors.Errorf("field should be string")
@@ -274,10 +278,10 @@ type PVCConfiguration struct {
 
 // Validate validates a PVC configuration
 func (c *PVCConfiguration) Validate() error {
-	return validation.ValidateStruct(c,
-		validation.Field(&c.Size, validation.Required),
-		validation.Field(&c.StorageClass, validation.Required),
-		validation.Field(&c.SnapshotClass, validation.Required),
+	return ozzo.ValidateStruct(c,
+		ozzo.Field(&c.Size, ozzo.Required),
+		ozzo.Field(&c.StorageClass, ozzo.Required),
+		ozzo.Field(&c.SnapshotClass, ozzo.Required),
 	)
 }
 
@@ -289,16 +293,19 @@ type ContainerConfiguration struct {
 
 // Validate validates a container configuration
 func (c *ContainerConfiguration) Validate() error {
-	return validation.ValidateStruct(c,
-		validation.Field(&c.Requests, validResourceConfig),
-		validation.Field(&c.Limits, validResourceConfig),
+	return ozzo.ValidateStruct(c,
+		ozzo.Field(&c.Requests, validResourceConfig),
+		ozzo.Field(&c.Limits, validResourceConfig),
 	)
 }
 
-var validResourceConfig = validation.By(func(o interface{}) error {
+var validResourceConfig = ozzo.By(func(o interface{}) error {
 	rc, ok := o.(*ResourceConfiguration)
 	if !ok {
 		return xerrors.Errorf("can only validate ResourceConfiguration")
+	}
+	if rc == nil {
+		return nil
 	}
 	if rc.CPU != "" {
 		_, err := resource.ParseQuantity(rc.CPU)
