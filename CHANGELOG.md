@@ -1,6 +1,9 @@
 # Change Log
 
 ## May 2022
+- workspacekit: Remove slirp4netns codes where it affects the supervisor. ([#9214](https://github.com/gitpod-io/gitpod/pull/9214)) - [@utam0k](https://github.com/utam0k)
+- Prompt onboarding users to choose default IDE during workspace starting ([#9663](https://github.com/gitpod-io/gitpod/pull/9663)) - [@mustard-mh](https://github.com/mustard-mh)
+- Update GitLab logo ([#9859](https://github.com/gitpod-io/gitpod/pull/9859)) - [@gtsiolis](https://github.com/gtsiolis)
 - Add user environment variable name length and value length validation in settings UI modal. ([#8248](https://github.com/gitpod-io/gitpod/pull/8248)) - [@randomir](https://github.com/randomir)
 - Add `staticMessagebusPassword` config flag to use a fixed message bus password in the installer ([#9831](https://github.com/gitpod-io/gitpod/pull/9831)) - [@andrew-farries](https://github.com/andrew-farries)
 - Change icon spacing in license page ([#9823](https://github.com/gitpod-io/gitpod/pull/9823)) - [@gtsiolis](https://github.com/gtsiolis)
