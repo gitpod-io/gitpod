@@ -251,7 +251,6 @@ func (w *redisBlobWriter) Commit(ctx context.Context, size int64, expected diges
 	var (
 		kContent = fmt.Sprintf("cnt.%s", w.digest)
 		kInfo    = fmt.Sprintf("nfo.%s", w.digest)
-		ttl      = 48 * time.Hour
 	)
 
 	existingKeys, err := w.client.Exists(ctx, kContent, kInfo).Result()
@@ -263,27 +262,11 @@ func (w *redisBlobWriter) Commit(ctx context.Context, size int64, expected diges
 		return nil
 	}
 
-	pipe := w.client.TxPipeline()
-	defer pipe.Close()
-
-	err = pipe.SetEX(ctx, kContent, w.buf.String(), ttl).Err()
+	err = w.client.MSet(ctx, map[string]interface{}{
+		kContent: w.buf.String(),
+		kInfo:    string(rnfo),
+	}).Err()
 	if err != nil {
-		return err
-	}
-
-	err = pipe.SetEX(ctx, kInfo, string(rnfo), ttl).Err()
-	if err != nil {
-		return err
-	}
-
-	errs, err := pipe.Exec(ctx)
-	if err != nil {
-		// in case of errors, there is no details besides the abort of the transaction:
-		// EXECABORT Transaction discarded because of previous errors.
-		if len(errs) > 0 {
-			log.WithField("errors", errs).WithField("kContent", kContent).WithField("kInfo", kInfo).Error("unexpected error during redis commit")
-		}
-
 		return err
 	}
 
