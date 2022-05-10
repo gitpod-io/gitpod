@@ -10,7 +10,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -218,11 +217,8 @@ const (
 
 type Resources struct {
 	// todo(sje): add custom validation to corev1.ResourceList
-	Requests      corev1.ResourceList `json:"requests" validate:"required"`
-	Limits        corev1.ResourceList `json:"limits,omitempty"`
-	DynamicLimits *struct {
-		CPU []cpulimit.Bucket // todo(sje): add custom validation
-	} `json:"dynamicLimits,omitempty"`
+	Requests corev1.ResourceList `json:"requests" validate:"required"`
+	Limits   corev1.ResourceList `json:"limits,omitempty"`
 }
 
 type WorkspaceRuntime struct {

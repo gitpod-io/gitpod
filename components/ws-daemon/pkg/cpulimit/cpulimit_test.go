@@ -242,7 +242,7 @@ func (n *Node) Dump(out io.Writer, t time.Duration, dbg cpulimit.DistributorDebu
 	}
 }
 
-func TestBucketLimitsEatAll(t *testing.T) {
+func TestFixedLimitsEatAll(t *testing.T) {
 	node := NewNode(
 		SteadyConsumer{id: "q1", rate: 6000, qos: -1},
 		SteadyConsumer{id: "q2", rate: 4000, qos: -1},
@@ -255,7 +255,7 @@ func TestBucketLimitsEatAll(t *testing.T) {
 	runSimulation(t, node, dist)
 }
 
-func TestBucketLimitsSine(t *testing.T) {
+func TestFixedLimitsSine(t *testing.T) {
 	node := NewNode(
 		SteadyConsumer{id: "q1", rate: 5000, qos: -1},
 		SteadyConsumer{id: "a2", rate: 3000},
@@ -272,7 +272,7 @@ func TestBucketLimitsSine(t *testing.T) {
 	runSimulation(t, node, dist)
 }
 
-func TestBucketLimitsMiner(t *testing.T) {
+func TestFixedLimitsMiner(t *testing.T) {
 	cs := defaultConsumerSet(t)
 	cs = append(cs, SteadyConsumer{id: "miner01", rate: 10000})
 	node := NewNode(cs...)
@@ -282,7 +282,7 @@ func TestBucketLimitsMiner(t *testing.T) {
 	runSimulation(t, node, dist)
 }
 
-func TestBucketLimitsMixedQoS(t *testing.T) {
+func TestFixedLimitsMixedQoS(t *testing.T) {
 	cs := defaultConsumerSet(t)
 	cs = cs[5:]
 	cs = append(cs, defaultQoSConsumerSet(t)...)
@@ -293,7 +293,7 @@ func TestBucketLimitsMixedQoS(t *testing.T) {
 	runSimulation(t, node, dist)
 }
 
-func TestBucketLimitsMaxConsumer(t *testing.T) {
+func TestFixedLimitsMaxConsumer(t *testing.T) {
 	var cs []Consumer
 	for i := 0; i < 20; i++ {
 		cs = append(cs,
@@ -306,24 +306,11 @@ func TestBucketLimitsMaxConsumer(t *testing.T) {
 	runSimulation(t, node, dist)
 }
 
-func TestBucketLimitsNewProdBehaviour(t *testing.T) {
+func TestFixedLimitsNewProdBehaviour(t *testing.T) {
 	cs := defaultConsumerSet(t)
 	node := NewNode(cs...)
 
 	dist := cpulimit.NewDistributor(node.Source, node.Sink, defaultLimit, defaultBreakoutLimit, totalCapacity)
-
-	runSimulation(t, node, dist)
-}
-
-func TestProdBehaviour(t *testing.T) {
-	node := NewNode(defaultConsumerSet(t)...)
-	limiter := cpulimit.BucketLimiter{
-		cpulimit.Bucket{Budget: 5 * 60 * 6000, Limit: 6000},
-		cpulimit.Bucket{Budget: 5 * 60 * 4000, Limit: 4000},
-		cpulimit.Bucket{Budget: 5 * 60 * 2000, Limit: 2000},
-	}
-	breakoutLimiter := limiter
-	dist := cpulimit.NewDistributor(node.Source, node.Sink, limiter, breakoutLimiter, totalCapacity)
 
 	runSimulation(t, node, dist)
 }
