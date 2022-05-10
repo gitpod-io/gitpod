@@ -1,6 +1,8 @@
 {
     "classes": {
-        "gitpod.io/internal/foobar": {
+        "gitpodio-internal-foobar": {
+            "resourceRequests": {"cpu": "900m"},
+            "resourceLimits": {"cpu": "900m"},
             "defaultTemplate": {
                 "spec": {
                     "dnsConfig": {
@@ -25,7 +27,7 @@
                                                 "key": "gitpod.io/workspaceClass",
                                                 "operator": "In",
                                                 "values": [
-                                                    "gitpod.io/internal/foobar"
+                                                    "gitpodio-internal-foobar"
                                                 ]
                                             }
                                         ]
@@ -71,6 +73,6 @@
             "username": "usernameGoesHere",
             "email": "some@user.com"
         },
-        "class": "gitpod.io/internal/foobar"
+        "class": "gitpodio-internal-foobar"
     }
 }

@@ -13,6 +13,6 @@
             "username": "usernameGoesHere",
             "email": "some@user.com"
         },
-        "class": "gitpod.io/internal/not-found"
+        "class": "gitpodio-internal-not-found"
     }
 }
