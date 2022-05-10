@@ -311,7 +311,7 @@ async function determineStalePreviewEnvironments(options: {previews: PreviewEnvi
     werft.log(SLICES.CHECKING_FOR_STALE_BRANCHES, `Checking commit activity on ${branches.length} branches`)
     const previewNamespaceBasedOnStaleBranches = new Set(branches
         .filter(branch => {
-            const lastCommit = exec(`git log origin/${branch} --since=$(date +%Y-%m-%d -d "5 days ago")`, { silent: true })
+            const lastCommit = exec(`git log origin/${branch} --since=$(date +%Y-%m-%d -d "2 days ago")`, { silent: true })
             const hasRecentCommits = lastCommit.length > 1
             werft.log(SLICES.CHECKING_FOR_STALE_BRANCHES, `${branch} has-recent-commits=${hasRecentCommits}`)
             return !hasRecentCommits
