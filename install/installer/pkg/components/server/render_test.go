@@ -45,13 +45,50 @@ func TestServerDeployment_MountsGithubAppSecret(t *testing.T) {
 	require.Truef(t, foundMount, "failed to find expected volume mount %q on server container", githubAppCertSecret)
 }
 
+func TestServerDeployment_UsesTracingConfig(t *testing.T) {
+	ctx := renderContext(t)
+
+	objects, err := deployment(ctx)
+	require.NoError(t, err)
+
+	require.Len(t, objects, 1, "must render only one object")
+
+	deployment := objects[0].(*appsv1.Deployment)
+
+	serverContainer := deployment.Spec.Template.Spec.Containers[0]
+
+	var envVars = make(map[string]string, len(serverContainer.Env))
+	for _, envVar := range serverContainer.Env {
+		envVars[envVar.Name] = envVar.Value
+	}
+
+	actualSamplerType := envVars["JAEGER_SAMPLER_TYPE"]
+	actualSamplerParam := envVars["JAEGER_SAMPLER_PARAM"]
+
+	require.Equal(t, "probabilistic", actualSamplerType)
+	require.Equal(t, "12.5", actualSamplerParam)
+}
+
 func renderContext(t *testing.T) *common.RenderContext {
+	var samplerType experimental.TracingSampleType = "probabilistic"
+
 	ctx, err := common.NewRenderContext(config.Config{
 		Database: config.Database{
 			InCluster: pointer.Bool(true),
 		},
+		Observability: config.Observability{
+			LogLevel: config.LogLevelInfo,
+			Tracing: &config.Tracing{
+				Endpoint:  pointer.String("some-endpoint"),
+				AgentHost: pointer.String("some-agent-host"),
+			},
+		},
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
+				Tracing: &experimental.Tracing{
+					SamplerType:  &samplerType,
+					SamplerParam: pointer.Float64(12.5),
+				},
 				Server: &experimental.ServerConfig{
 					GithubApp: &experimental.GithubApp{
 						AppId:           0,
