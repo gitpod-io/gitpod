@@ -47,6 +47,7 @@ import { StartWorkspaceModal } from "./workspaces/StartWorkspaceModal";
 import { parseProps } from "./start/StartWorkspace";
 import SelectIDEModal from "./settings/SelectIDEModal";
 import { StartPage, StartPhase } from "./start/StartPage";
+import { isGitpodIo } from "./utils";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -84,15 +85,6 @@ const License = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/Lic
 
 function Loading() {
     return <></>;
-}
-
-function isGitpodIo() {
-    return (
-        window.location.hostname === "gitpod.io" ||
-        window.location.hostname === "gitpod-staging.com" ||
-        window.location.hostname.endsWith("gitpod-dev.com") ||
-        window.location.hostname.endsWith("gitpod-io-dev.com")
-    );
 }
 
 function isWebsiteSlug(pathName: string) {
