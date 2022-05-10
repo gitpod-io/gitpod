@@ -1,3 +1,14 @@
+#
+# This job is responsible for cleaning up a single Werft build node.
+#
+# The nodeAffinity ensures this is executed on a specific node and we rely on
+# volume mounts for getting access to the disk
+#
+# This job is being triggered for each build node periodically by .werft/platform-trigger-werft-cleanup.yaml
+# but you can also run it manually for a specific node like so:
+#
+# werft job run github -j .werft/platform-clean-up-werft-build-node.yaml -a node=gke-core-dev-builds-0-294352e4-mxkv
+#
 pod:
   serviceAccount: werft
   affinity:
@@ -5,10 +16,10 @@ pod:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:
-              - key: dev/workload
+              - key: "kubernetes.io/hostname"
                 operator: In
                 values:
-                  - "builds"
+                  - "{{ .Annotations.node }}"
   volumes:
     - name: werft-build-caches
       hostPath:
@@ -43,5 +54,3 @@ pod:
 
           werft log phase werft-build-cache-prune "Cleaning up Werft build caches older than 12 hours"
           find /werft-build-caches/* -maxdepth 0 -mmin +720 -print -exec sudo rm -rf "{}" \; | werft log slice werft-build-cache-prune
-plugins:
-  cron: "@midnight"
