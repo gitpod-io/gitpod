@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from "uuid";
 import { oauthUrls as githubUrls } from "../github/github-urls";
 import { oauthUrls as gitlabUrls } from "../gitlab/gitlab-urls";
 import { oauthUrls as bbsUrls } from "../bitbucket-server/bitbucket-server-urls";
+import { oauthUrls as bbUrls } from "../bitbucket/bitbucket-urls";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
@@ -122,6 +123,9 @@ export class AuthProviderService {
                 break;
             case "BitbucketServer":
                 urls = bbsUrls(host);
+                break;
+            case "Bitbucket":
+                urls = bbUrls(host);
                 break;
         }
         if (!urls) {

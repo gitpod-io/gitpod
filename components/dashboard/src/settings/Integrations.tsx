@@ -696,11 +696,11 @@ export function GitIntegrationModal(
         return (
             <span>
                 Use this redirect URL to update the OAuth application. Go to{" "}
-                <a href={`https://${settingsUrl}`} target="_blank" rel="noopener" className="gp-link">
+                <a href={`https://${settingsUrl}`} target="_blank" rel="noreferrer noopener" className="gp-link">
                     developer settings
                 </a>{" "}
                 and setup the OAuth application.&nbsp;
-                <a href={docsUrl} target="_blank" rel="noopener" className="gp-link">
+                <a href={docsUrl} target="_blank" rel="noreferrer noopener" className="gp-link">
                     Learn more
                 </a>
                 .
@@ -716,6 +716,8 @@ export function GitIntegrationModal(
                 return "gitlab.example.com";
             case "BitbucketServer":
                 return "bitbucket.example.com";
+            case "Bitbucket":
+                return "bitbucket.org";
             default:
                 return "";
         }
@@ -762,6 +764,7 @@ export function GitIntegrationModal(
                             >
                                 <option value="GitHub">GitHub</option>
                                 <option value="GitLab">GitLab</option>
+                                <option value="Bitbucket">Bitbucket</option>
                                 <option value="BitbucketServer">Bitbucket Server</option>
                             </select>
                         </div>
@@ -785,7 +788,7 @@ export function GitIntegrationModal(
                         </label>
                         <input
                             name="hostName"
-                            disabled={mode === "edit"}
+                            disabled={mode === "edit" || type === "Bitbucket"}
                             type="text"
                             placeholder={getPlaceholderForIntegrationType(type)}
                             value={host}
