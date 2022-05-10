@@ -1,6 +1,6 @@
 {
     "classes": {
-        "foobar": {
+        "gitpod.io/internal/foobar": {
             "defaultTemplate": {
                 "spec": {
                     "dnsConfig": {
@@ -12,9 +12,6 @@
                     "dnsPolicy": "None",
                     "imagePullSecrets": [
                         {
-                            "name": "dockerhub-typefox"
-                        },
-                        {
                             "name": "eu.gcr.io-gitpod"
                         }
                     ],
@@ -25,10 +22,10 @@
                                     {
                                         "matchExpressions": [
                                             {
-                                                "key": "gitpod.io/workload_workspace_regular",
+                                                "key": "gitpod.io/workspaceClass",
                                                 "operator": "In",
                                                 "values": [
-                                                    "true"
+                                                    "gitpod.io/internal/foobar"
                                                 ]
                                             }
                                         ]
@@ -74,6 +71,6 @@
             "username": "usernameGoesHere",
             "email": "some@user.com"
         },
-        "class": "foobar"
+        "class": "gitpod.io/internal/foobar"
     }
 }

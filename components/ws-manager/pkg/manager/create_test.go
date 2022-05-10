@@ -74,31 +74,22 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 				fixture.Classes = make(map[string]WorkspaceClass)
 			}
 
-			var (
-				files   []tpl
-				classes = make(map[string]*config.WorkspaceClass)
-			)
-			classes[""] = mgmtCfg.WorkspaceClasses[""]
-			fixture.Classes[""] = fixture.WorkspaceClass
-			if fixture.Classes[""].ResourceLimits == nil {
-				v := fixture.Classes[""]
-				v.ResourceLimits = mgmtCfg.WorkspaceClasses[""].Container.Limits
-				fixture.Classes[""] = v
+			var files []tpl
+			if _, exists := fixture.Classes[config.DefaultWorkspaceClass]; !exists {
+				if fixture.WorkspaceClass.ResourceLimits != nil || fixture.WorkspaceClass.ResourceRequests != nil {
+					// there's no default class in the fixture. If there are limits configured, use those
+					fixture.Classes[config.DefaultWorkspaceClass] = fixture.WorkspaceClass
+				}
 			}
-			if fixture.Classes[""].ResourceRequests == nil {
-				v := fixture.Classes[""]
-				v.ResourceRequests = mgmtCfg.WorkspaceClasses[""].Container.Requests
-				fixture.Classes[""] = v
-			}
+
 			for n, cls := range fixture.Classes {
 				var cfgCls config.WorkspaceClass
 				cfgCls.Container.Requests = cls.ResourceRequests
 				cfgCls.Container.Limits = cls.ResourceLimits
 
 				files = append(files, toTpl(n, cls, &cfgCls.Templates)...)
-				classes[n] = &cfgCls
+				mgmtCfg.WorkspaceClasses[n] = &cfgCls
 			}
-			mgmtCfg.WorkspaceClasses = classes
 
 			manager := &Manager{Config: mgmtCfg}
 

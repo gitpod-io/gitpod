@@ -8,6 +8,7 @@
                 "app": "gitpod",
                 "component": "workspace",
                 "gitpod.io/networkpolicy": "default",
+                "gitpod.io/workspaceClass": "default",
                 "gitpod/fullWorkspaceBackup": "true",
                 "gpwsman": "true",
                 "headless": "false",

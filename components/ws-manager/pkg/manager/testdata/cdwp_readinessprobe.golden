@@ -8,6 +8,7 @@
                 "app": "gitpod",
                 "component": "workspace",
                 "gitpod.io/networkpolicy": "default",
+                "gitpod.io/workspaceClass": "default",
                 "gpwsman": "true",
                 "headless": "false",
                 "metaID": "foobar",
@@ -161,10 +162,10 @@
                         }
                     ],
                     "readinessProbe": {
-                        "exec": {
-                            "command": [
-                                "echo"
-                            ]
+                        "httpGet": {
+                            "path": "/_supervisor/v1/status/content/wait/true",
+                            "port": 22999,
+                            "scheme": "HTTP"
                         },
                         "initialDelaySeconds": 2,
                         "timeoutSeconds": 1,
