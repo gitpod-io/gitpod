@@ -138,7 +138,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
-								common.TracingEnv(ctx),
+								common.WorkspaceTracingEnv(ctx),
 							),
 							ReadinessProbe: &corev1.Probe{
 								InitialDelaySeconds: int32(2),
