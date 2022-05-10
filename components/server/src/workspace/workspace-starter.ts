@@ -14,11 +14,7 @@ import {
     SnapshotInitializer,
     WorkspaceInitializer,
 } from "@gitpod/content-service/lib";
-import {
-    CompositeInitializer,
-    FromBackupInitializer,
-    FromSnapshotVolumeInitializer,
-} from "@gitpod/content-service/lib/initializer_pb";
+import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
 import {
     DBUser,
     DBWithTracing,
@@ -1436,17 +1432,12 @@ export class WorkspaceStarter {
         let result = new WorkspaceInitializer();
         const disp = new DisposableCollection();
 
-        if (hasVolumeSnapshot) {
-            const snapshotVolume = new FromSnapshotVolumeInitializer();
-            if (CommitContext.is(context)) {
-                snapshotVolume.setCheckoutLocation(context.checkoutLocation || "");
-            }
-            result.setSnapshotVolume(snapshotVolume);
-        } else if (mustHaveBackup) {
+        if (mustHaveBackup) {
             const backup = new FromBackupInitializer();
             if (CommitContext.is(context)) {
                 backup.setCheckoutLocation(context.checkoutLocation || "");
             }
+            backup.setFromSnapshotVolume(hasVolumeSnapshot);
             result.setBackup(backup);
         } else if (SnapshotContext.is(context)) {
             const snapshot = new SnapshotInitializer();
