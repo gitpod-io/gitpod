@@ -26,7 +26,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -877,7 +876,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	)
 	if wso.Pod != nil {
 		_, pvcFeatureEnabled = wso.Pod.Labels[pvcWorkspaceFeatureAnnotation]
-		pvcSnapshotVolumeName = string(uuid.NewUUID())
+		pvcSnapshotVolumeName = workspaceID
 		wsClassName := ""
 		if _, ok := wso.Pod.Labels[workspaceClassLabel]; ok {
 			wsClassName = wso.Pod.Labels[workspaceClassLabel]
@@ -998,7 +997,6 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 
 				snapshotHandle := *volumeSnapshotContent.Status.SnapshotHandle
 
-				log.Infof("snapshot name: %s, handle: %s", pvcSnapshotVolumeName, snapshotHandle)
 				b, err := json.Marshal(workspaceSnapshotVolumeStatus{PvcSnapshotVolumeName: pvcSnapshotVolumeName, PvcSnapshotVolumeHandle: snapshotHandle})
 				if err != nil {
 					return true, nil, err

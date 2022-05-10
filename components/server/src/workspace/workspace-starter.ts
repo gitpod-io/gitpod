@@ -259,9 +259,15 @@ export class WorkspaceStarter {
 
             // check if there has been an instance before, i.e. if this is a restart
             const pastInstances = await this.workspaceDb.trace({ span }).findInstances(workspace.id);
-            const mustHaveBackup = pastInstances.some(
+            const hasValidBackup = pastInstances.some(
                 (i) => !!i.status && !!i.status.conditions && !i.status.conditions.failed,
             );
+            let lastValidWorkspaceInstanceId = "";
+            if (hasValidBackup) {
+                lastValidWorkspaceInstanceId = pastInstances.reduce((previousValue, currentValue) =>
+                    currentValue.creationTime > previousValue.creationTime ? currentValue : previousValue,
+                ).id;
+            }
 
             const ideConfig = await this.ideConfigService.config;
 
@@ -305,7 +311,7 @@ export class WorkspaceStarter {
                     instance,
                     workspace,
                     user,
-                    mustHaveBackup,
+                    lastValidWorkspaceInstanceId,
                     ideConfig,
                     userEnvVars,
                     projectEnvVars,
@@ -320,7 +326,7 @@ export class WorkspaceStarter {
                 instance,
                 workspace,
                 user,
-                mustHaveBackup,
+                lastValidWorkspaceInstanceId,
                 ideConfig,
                 userEnvVars,
                 projectEnvVars,
@@ -357,7 +363,7 @@ export class WorkspaceStarter {
         instance: WorkspaceInstance,
         workspace: Workspace,
         user: User,
-        mustHaveBackup: boolean,
+        lastValidWorkspaceInstanceId: string,
         ideConfig: IDEConfig,
         userEnvVars: UserEnvVar[],
         projectEnvVars: ProjectEnvVar[],
@@ -392,7 +398,7 @@ export class WorkspaceStarter {
                 user,
                 workspace,
                 instance,
-                mustHaveBackup,
+                lastValidWorkspaceInstanceId,
                 ideConfig,
                 userEnvVars,
                 projectEnvVars,
@@ -856,7 +862,7 @@ export class WorkspaceStarter {
                         workspace,
                         workspace.context,
                         user,
-                        false,
+                        "",
                         false,
                     );
                     source = initializer;
@@ -1080,7 +1086,7 @@ export class WorkspaceStarter {
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
-        mustHaveBackup: boolean,
+        lastValidWorkspaceInstanceId: string,
         ideConfig: IDEConfig,
         userEnvVars: UserEnvVarValue[],
         projectEnvVars: ProjectEnvVar[],
@@ -1261,13 +1267,12 @@ export class WorkspaceStarter {
         }
 
         let volumeSnapshotInfo = new PvcSnapshotVolumeInfo();
-        const volumeSnapshots = await this.workspaceDb.trace(traceCtx).findVolumeSnapshotsByWorkspaceId(workspace.id);
-        if (volumeSnapshots.length > 0) {
-            const latestVolumeSnapshot = volumeSnapshots.reduce((previousValue, currentValue) =>
-                currentValue.creationTime > previousValue.creationTime ? currentValue : previousValue,
-            );
-            volumeSnapshotInfo.setSnapshotVolumeName(latestVolumeSnapshot.id);
-            volumeSnapshotInfo.setSnapshotVolumeHandle(latestVolumeSnapshot.volumeHandle);
+        const volumeSnapshots = await this.workspaceDb
+            .trace(traceCtx)
+            .findVolumeSnapshotById(lastValidWorkspaceInstanceId);
+        if (volumeSnapshots !== undefined) {
+            volumeSnapshotInfo.setSnapshotVolumeName(volumeSnapshots.id);
+            volumeSnapshotInfo.setSnapshotVolumeHandle(volumeSnapshots.volumeHandle);
         }
 
         const initializerPromise = this.createInitializer(
@@ -1275,8 +1280,8 @@ export class WorkspaceStarter {
             workspace,
             workspace.context,
             user,
-            mustHaveBackup,
-            volumeSnapshotInfo.getSnapshotVolumeName() != "",
+            lastValidWorkspaceInstanceId,
+            volumeSnapshots !== undefined,
         );
         const userTimeoutPromise = this.userService.getDefaultWorkspaceTimeout(user);
 
@@ -1426,13 +1431,13 @@ export class WorkspaceStarter {
         workspace: Workspace,
         context: WorkspaceContext,
         user: User,
-        mustHaveBackup: boolean,
+        lastValidWorkspaceInstanceId: string,
         hasVolumeSnapshot: boolean,
     ): Promise<{ initializer: WorkspaceInitializer; disposable: Disposable }> {
         let result = new WorkspaceInitializer();
         const disp = new DisposableCollection();
 
-        if (mustHaveBackup) {
+        if (lastValidWorkspaceInstanceId != "") {
             const backup = new FromBackupInitializer();
             if (CommitContext.is(context)) {
                 backup.setCheckoutLocation(context.checkoutLocation || "");

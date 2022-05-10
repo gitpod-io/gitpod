@@ -760,11 +760,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         await volumeSnapshots.update(volumeSnapshot.id, volumeSnapshot);
     }
 
-    public async findVolumeSnapshotsByWorkspaceId(workspaceId: string): Promise<VolumeSnapshot[]> {
-        const volumeSnapshots = await this.getVolumeSnapshotRepo();
-        return volumeSnapshots.find({ where: { originalWorkspaceId: workspaceId } });
-    }
-
     public async storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace> {
         const repo = await this.getPrebuiltWorkspaceRepo();
         if (pws.error && pws.error.length > 255) {

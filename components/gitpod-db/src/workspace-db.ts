@@ -162,7 +162,6 @@ export interface WorkspaceDB {
     updateSnapshot(snapshot: DeepPartial<Snapshot> & Pick<Snapshot, "id">): Promise<void>;
 
     findVolumeSnapshotById(volumeSnapshotId: string): Promise<VolumeSnapshot | undefined>;
-    findVolumeSnapshotsByWorkspaceId(workspaceId: string): Promise<VolumeSnapshot[]>;
     storeVolumeSnapshot(snapshot: VolumeSnapshot): Promise<VolumeSnapshot>;
     deleteVolumeSnapshot(volumeSnapshotId: string): Promise<void>;
     updateVolumeSnapshot(snapshot: DeepPartial<VolumeSnapshot> & Pick<VolumeSnapshot, "id">): Promise<void>;
