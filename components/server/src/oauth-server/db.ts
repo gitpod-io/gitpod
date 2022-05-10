@@ -67,6 +67,9 @@ function createVSCodeClient(protocol: "vscode" | "vscode-insiders"): OAuthClient
             { name: "function:getGitpodTokenScopes" },
             { name: "function:getLoggedInUser" },
             { name: "function:accessCodeSyncStorage" },
+            { name: "function:getOwnerToken" },
+            { name: "function:getWorkspace" },
+            { name: "function:getWorkspaces" },
             { name: "resource:default" },
         ],
     };
