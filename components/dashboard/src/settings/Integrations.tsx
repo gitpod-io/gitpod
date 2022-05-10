@@ -21,6 +21,7 @@ import { PaymentContext } from "../payment-context";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
+import { isGitpodIo } from "../utils";
 import { SelectAccountModal } from "./SelectAccountModal";
 import getSettingsMenu from "./settings-menu";
 
@@ -553,6 +554,13 @@ export function GitIntegrationModal(
         validate();
     }, [clientId, clientSecret, type]);
 
+    // "bitbucket.org" is set as host value whenever "Bitbucket" is selected
+    useEffect(() => {
+        if (props.mode === "new") {
+            updateHostValue(type === "Bitbucket" ? "bitbucket.org" : "");
+        }
+    }, [type]);
+
     const onClose = () => props.onClose && props.onClose();
     const onUpdate = () => props.onUpdate && props.onUpdate();
 
@@ -764,7 +772,7 @@ export function GitIntegrationModal(
                             >
                                 <option value="GitHub">GitHub</option>
                                 <option value="GitLab">GitLab</option>
-                                <option value="Bitbucket">Bitbucket</option>
+                                {!isGitpodIo() && <option value="Bitbucket">Bitbucket</option>}
                                 <option value="BitbucketServer">Bitbucket Server</option>
                             </select>
                         </div>

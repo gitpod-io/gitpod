@@ -19,6 +19,7 @@ import { ReactComponent as CheckSvg } from "../images/check.svg";
 import { ReactComponent as LinkSvg } from "../images/external-link.svg";
 import SolidCard from "../components/SolidCard";
 import Card from "../components/Card";
+import { isGitpodIo } from "../utils";
 
 export default function License() {
     const { license, setLicense } = useContext(LicenseContext);
@@ -211,8 +212,4 @@ function communityPlan(userCount: number, seats: number, fallbackAllowed: boolea
     const aboveLimit: boolean = seats === 0 ? false : userCount > seats;
 
     return [licenseLevel("Community"), additionalLicenseInfo("Free"), alertMessage(aboveLimit)];
-}
-
-function isGitpodIo() {
-    return window.location.hostname === "gitpod.io" || window.location.hostname === "gitpod-staging.com";
 }
