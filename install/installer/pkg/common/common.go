@@ -63,6 +63,32 @@ func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 }
 
 func WorkspaceTracingEnv(context *RenderContext) (res []corev1.EnvVar) {
+	var tracing *experimental.Tracing
+
+	_ = context.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Workspace != nil {
+			tracing = cfg.Workspace.Tracing
+		}
+		return nil
+	})
+
+	return tracingEnv(context, tracing)
+}
+
+func WebappTracingEnv(context *RenderContext) (res []corev1.EnvVar) {
+	var tracing *experimental.Tracing
+
+	_ = context.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil {
+			tracing = cfg.WebApp.Tracing
+		}
+		return nil
+	})
+
+	return tracingEnv(context, tracing)
+}
+
+func tracingEnv(context *RenderContext, tracing *experimental.Tracing) (res []corev1.EnvVar) {
 	if context.Config.Observability.Tracing == nil {
 		res = append(res, corev1.EnvVar{Name: "JAEGER_DISABLED", Value: "true"})
 		return
@@ -81,17 +107,14 @@ func WorkspaceTracingEnv(context *RenderContext) (res []corev1.EnvVar) {
 	samplerType := experimental.TracingSampleTypeConst
 	samplerParam := "1"
 
-	_ = context.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg.Workspace != nil && ucfg.Workspace.Tracing != nil {
-			if ucfg.Workspace.Tracing.SamplerType != nil {
-				samplerType = *ucfg.Workspace.Tracing.SamplerType
-			}
-			if ucfg.Workspace.Tracing.SamplerParam != nil {
-				samplerParam = strconv.FormatFloat(*ucfg.Workspace.Tracing.SamplerParam, 'f', -1, 64)
-			}
+	if tracing != nil {
+		if tracing.SamplerType != nil {
+			samplerType = *tracing.SamplerType
 		}
-		return nil
-	})
+		if tracing.SamplerParam != nil {
+			samplerParam = strconv.FormatFloat(*tracing.SamplerParam, 'f', -1, 64)
+		}
+	}
 
 	res = append(res,
 		corev1.EnvVar{Name: "JAEGER_SAMPLER_TYPE", Value: string(samplerType)},
