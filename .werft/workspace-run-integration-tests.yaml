@@ -51,7 +51,7 @@ pod:
   - name: tests
     image: eu.gcr.io/gitpod-core-dev/build/integration-tests:{{ .Annotations.version }}
     workingDir: /workspace
-    imagePullPolicy: Always
+    imagePullPolicy: IfNotPresent
     volumeMounts:
     - name: config
       mountPath: /config

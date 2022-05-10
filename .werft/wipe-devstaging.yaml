@@ -16,7 +16,7 @@ pod:
   - name: wipe-devstaging
     image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
     workingDir: /workspace
-    imagePullPolicy: Always
+    imagePullPolicy: IfNotPresent
     volumeMounts:
     - name: gcp-sa
       mountPath: /mnt/secrets/gcp-sa
