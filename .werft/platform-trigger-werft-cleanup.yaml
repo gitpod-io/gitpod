@@ -1,0 +1,68 @@
+#
+# This job is responsible for triggering the .werft/platform-clean-up-werft-build-node.yaml job
+# for each node that has the dev/workload label set to "builds"
+#
+# It is a Werft cron job that runs periodically but you can always manually trigger it using
+#
+# werft job run github -j .werft/platform-trigger-werft-cleanup.yaml
+#
+pod:
+  serviceAccount: werft
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: dev/workload
+                operator: In
+                values:
+                  - "builds"
+  volumes:
+    # Needed to install the core-dev kubectl context to talk to Werft
+    - name: gcp-sa
+      secret:
+        secretName: gcp-sa-gitpod-dev-deployer
+  containers:
+    - name: build
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
+      workingDir: /workspace
+      imagePullPolicy: IfNotPresent
+      env:
+        - name: WERFT_K8S_NAMESPACE
+          value: werft
+        - name: WERFT_DIAL_MODE
+          value: kubernetes
+        - name: WERFT_CREDENTIAL_HELPER
+          value: ""
+      volumeMounts:
+        - name: gcp-sa
+          mountPath: /mnt/secrets/gcp-sa
+          readOnly: true
+      command:
+        - bash
+        - -c
+        - |
+          sleep 1
+          set -Eeuo pipefail
+
+          # This is needed to run Werft jobs from Github
+          sudo chown -R gitpod:gitpod /workspace
+          git config --global user.name roboquat
+          git config --global user.email roboquat@gitpod.io
+
+          # Install core-dev context
+          gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa/service-account.json"
+          gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev
+
+          echo "[Triggering clean up jobs|PHASE] Triggering the cleanup job for each node"
+
+          nodes=$(kubectl get nodes -l dev/workload=builds --no-headers -o custom-columns=":metadata.name")
+
+          for node in $nodes ; do
+            echo "[Cleanup up node $node] Triggering the cleanup job for $node"
+            werft job run github -j .werft/platform-clean-up-werft-build-node.yaml -a node="$node" \
+            | werft log slice "Cleanup up node $node"
+            echo "[Cleanup up node $node|DONE]"
+          done
+plugins:
+  cron: "@midnight"
