@@ -243,7 +243,7 @@ export namespace UserEnvVar {
             return "Name must not be empty.";
         }
         if (name.length > 255) {
-            return 'Name too long. Maximum name length is 255 characters.';
+            return "Name too long. Maximum name length is 255 characters.";
         }
         if (!/^[a-zA-Z_]+[a-zA-Z0-9_]*$/.test(name)) {
             return "Name must match /^[a-zA-Z_]+[a-zA-Z0-9_]*$/.";
@@ -252,7 +252,7 @@ export namespace UserEnvVar {
             return "Value must not be empty.";
         }
         if (variable.value.length > 32767) {
-            return 'Value too long. Maximum value length is 32767 characters.';
+            return "Value too long. Maximum value length is 32767 characters.";
         }
         if (pattern.trim() === "") {
             return "Scope must not be empty.";
@@ -491,7 +491,6 @@ export interface Snapshot {
 export interface VolumeSnapshot {
     id: string;
     creationTime: string;
-    originalWorkspaceId: string;
     volumeHandle: string;
 }
 

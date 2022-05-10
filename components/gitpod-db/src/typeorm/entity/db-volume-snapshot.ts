@@ -13,7 +13,7 @@ import { Transformer } from "../transformer";
 @Entity()
 @Index("ind_dbsync", ["creationTime"]) // DBSync
 export class DBVolumeSnapshot implements VolumeSnapshot {
-    @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
+    @PrimaryColumn(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
     id: string;
 
     @Column({
@@ -23,10 +23,6 @@ export class DBVolumeSnapshot implements VolumeSnapshot {
         transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
     creationTime: string;
-
-    @Column(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
-    @Index("ind_originalWorkspaceId")
-    originalWorkspaceId: string;
 
     @Column("varchar")
     volumeHandle: string;
