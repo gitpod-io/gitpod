@@ -340,7 +340,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             return;
         }
 
-        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase == "preparing") {
+        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase === "preparing") {
             this.setState({ hasImageBuildLogs: true });
         }
 
@@ -567,7 +567,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
             case "stopping":
                 if (isHeadless) {
-                    return <HeadlessWorkspaceView instanceId={this.state.workspaceInstance.id} />;
+                    return (
+                        <HeadlessWorkspaceView
+                            instanceId={this.state.workspaceInstance.id}
+                            title="Uploading the prebuild ..."
+                        />
+                    );
                 }
                 phase = StartPhase.Stopping;
                 statusMessage = (
@@ -717,7 +722,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
     );
 }
 
-function HeadlessWorkspaceView(props: { instanceId: string }) {
+function HeadlessWorkspaceView(props: { instanceId: string; title?: string }) {
     const logsEmitter = new EventEmitter();
 
     useEffect(() => {
@@ -734,7 +739,7 @@ function HeadlessWorkspaceView(props: { instanceId: string }) {
     }, []);
 
     return (
-        <StartPage title="Prebuild in Progress">
+        <StartPage title={props.title || "Prebuild in Progress"}>
             <Suspense fallback={<div />}>
                 <WorkspaceLogs logsEmitter={logsEmitter} />
             </Suspense>
