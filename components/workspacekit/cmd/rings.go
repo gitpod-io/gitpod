@@ -73,7 +73,7 @@ var ring0Cmd = &cobra.Command{
 
 		client, err := connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon")
+			log.WithError(err).Error("cannot connect to daemon from ring0")
 			return
 		}
 
@@ -90,7 +90,7 @@ var ring0Cmd = &cobra.Command{
 
 			client, err := connectToInWorkspaceDaemonService(ctx)
 			if err != nil {
-				log.WithError(err).Error("cannot connect to daemon")
+				log.WithError(err).Error("cannot connect to daemon from ring0 in defer")
 				return
 			}
 			defer client.Close()
@@ -204,7 +204,7 @@ var ring1Cmd = &cobra.Command{
 		if !ring1Opts.MappingEstablished {
 			client, err := connectToInWorkspaceDaemonService(ctx)
 			if err != nil {
-				log.WithError(err).Error("cannot connect to daemon")
+				log.WithError(err).Error("cannot connect to daemon from ring1 when mappings not established")
 				return
 			}
 			defer client.Close()
@@ -397,7 +397,7 @@ var ring1Cmd = &cobra.Command{
 
 		client, err := connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon")
+			log.WithError(err).Error("cannot connect to daemon from ring1")
 			return
 		}
 		_, err = client.MountProc(ctx, &daemonapi.MountProcRequest{
@@ -466,7 +466,7 @@ var ring1Cmd = &cobra.Command{
 
 		client, err = connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon")
+			log.WithError(err).Error("cannot connect to daemon from ring1 after ring2")
 			return
 		}
 		_, err = client.SetupPairVeths(ctx, &daemonapi.SetupPairVethsRequest{Pid: int64(cmd.Process.Pid)})
