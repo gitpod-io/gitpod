@@ -1,6 +1,12 @@
 # Change Log
 
 ## May 2022
+- [registry-facade] Remove TTL from Redis keys ([#9906](https://github.com/gitpod-io/gitpod/pull/9906)) - [@aledbf](https://github.com/aledbf)
+- [server] getWorkspace() returns NOT_FOUND when workspace cannot be fetched from db ([#9828](https://github.com/gitpod-io/gitpod/pull/9828)) - [@easyCZ](https://github.com/easyCZ)
+- Adding metrics reporting to the IDE ([#9815](https://github.com/gitpod-io/gitpod/pull/9815)) - [@iQQBot](https://github.com/iQQBot)
+- Add `disableWorkspaceGarbageCollection` experimental installer config flag ([#9867](https://github.com/gitpod-io/gitpod/pull/9867)) - [@andrew-farries](https://github.com/andrew-farries)
+- Update buildkit to v0.10.3 ([#9881](https://github.com/gitpod-io/gitpod/pull/9881)) - [@aledbf](https://github.com/aledbf)
+- Add `disableWorkspaceGarbageCollection` experimental installer config flag ([#9862](https://github.com/gitpod-io/gitpod/pull/9862)) - [@andrew-farries](https://github.com/andrew-farries)
 - workspacekit: Remove slirp4netns codes where it affects the supervisor. ([#9214](https://github.com/gitpod-io/gitpod/pull/9214)) - [@utam0k](https://github.com/utam0k)
 - Prompt onboarding users to choose default IDE during workspace starting ([#9663](https://github.com/gitpod-io/gitpod/pull/9663)) - [@mustard-mh](https://github.com/mustard-mh)
 - Update GitLab logo ([#9859](https://github.com/gitpod-io/gitpod/pull/9859)) - [@gtsiolis](https://github.com/gtsiolis)
