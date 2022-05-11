@@ -11,12 +11,23 @@ import meh from "../images/feedback/meh-emoji.svg";
 import crying from "../images/feedback/crying-emoji.svg";
 import { trackEvent } from "../Analytics";
 
-function FeedbackComponent(props: { onClose: () => void; onSubmit: () => void; isModal: boolean }) {
+function FeedbackComponent(props: {
+    onClose?: () => void;
+    isModal: boolean;
+    isError: boolean;
+    message?: string;
+    initialSize?: number;
+}) {
     const [text, setText] = useState<string>("");
     const [selectedEmoji, setSelectedEmoji] = useState<number | undefined>();
+    const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState<boolean>(false);
 
-    const height = props.isModal ? "300px" : "";
-
+    const onClose = () => {
+        if (props.onClose) {
+            props.onClose();
+        }
+        setSelectedEmoji(undefined);
+    };
     const onSubmit = () => {
         if (selectedEmoji) {
             const feedbackObj = {
@@ -28,7 +39,7 @@ function FeedbackComponent(props: { onClose: () => void; onSubmit: () => void; i
             trackEvent("feedback_submitted", feedbackObj);
         }
 
-        props.onSubmit();
+        setIsFeedbackSubmitted(true);
     };
 
     const handleClick = (emojiScore: number) => {
@@ -54,12 +65,42 @@ function FeedbackComponent(props: { onClose: () => void; onSubmit: () => void; i
             </button>
         ));
     };
+
+    const minimisedFirstView = !selectedEmoji && !isFeedbackSubmitted;
+    const expandedWithTextView = selectedEmoji && !isFeedbackSubmitted;
+
     return (
         <>
-            <h3 className="mb-4">Send Feedback</h3>
-            {selectedEmoji ? (
+            {props.isModal && !isFeedbackSubmitted && <h3 className="mb-4">Send Feedback</h3>}
+            {minimisedFirstView && (
+                <div
+                    className={
+                        "flex flex-col justify-center px-6 py-4 border-gray-200 dark:border-gray-800 " +
+                        (props.isError ? "mt-20 bg-gray-100 dark:bg-gray-800 rounded-xl" : "border-t")
+                    }
+                >
+                    <p
+                        className={
+                            "text-center text-base mb-3 dark:text-gray-400 " +
+                            (props.isError ? "text-gray-400" : "text-gray-500")
+                        }
+                    >
+                        {props.message}
+                    </p>
+
+                    <div className="flex items-center justify-center w-full">{emojiGroup(props.initialSize || 50)}</div>
+                </div>
+            )}
+            {expandedWithTextView && (
                 <>
-                    <div className="flex flex-col -mx-6 px-6 py-4 border-t border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <div
+                        className={
+                            "flex flex-col px-6 py-4 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 " +
+                            (props.isError
+                                ? "w-96 mt-6 bg-gray-100 dark:bg-gray-800 rounded-xl"
+                                : "-mx-6 border-t border-b")
+                        }
+                    >
                         <div className="relative">
                             <div className="absolute flex bottom-5 right-5 -space-x-3">{emojiGroup(24)}</div>
                             <textarea
@@ -82,26 +123,27 @@ function FeedbackComponent(props: { onClose: () => void; onSubmit: () => void; i
                                 .
                             </p>
                         </div>
-                    </div>
-                    <div className="flex justify-end mt-6">
-                        <button className="secondary" onClick={props.onClose}>
-                            Cancel
-                        </button>
-                        <button className="ml-2" onClick={onSubmit}>
-                            Send Feedback
-                        </button>
+                        <div className="flex justify-end mt-6">
+                            <button className="secondary" onClick={onClose}>
+                                Cancel
+                            </button>
+                            <button className="ml-2" onClick={onSubmit}>
+                                Send Feedback
+                            </button>
+                        </div>
                     </div>
                 </>
-            ) : (
+            )}
+            {isFeedbackSubmitted && (
                 <div
-                    className="flex flex-col justify-center -mx-6 px-6 py-4 border-t border-gray-200 dark:border-gray-800"
-                    style={{ height: height }}
+                    className={
+                        "flex flex-col px-6 py-4 border-gray-200 dark:border-gray-800 " +
+                        (props.isError ? "mt-20 bg-gray-100 dark:bg-gray-800 rounded-xl" : "")
+                    }
                 >
-                    <p className="text-center text-lg mb-8 text-gray-500 dark:text-gray-400">
-                        We'd love to know what you think!
+                    <p className={"text-center text-base " + (props.isError ? "text-gray-400" : "text-gray-500")}>
+                        Thanks for your feedback, we appreciate it.
                     </p>
-
-                    <div className="flex items-center justify-center w-full space-x-3">{emojiGroup(50)}</div>
                 </div>
             )}
         </>

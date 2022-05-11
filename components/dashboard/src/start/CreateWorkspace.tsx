@@ -23,6 +23,7 @@ import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
 import { watchHeadlessLogs } from "../components/PrebuildLogs";
 import CodeText from "../components/CodeText";
+import FeedbackComponent from "../feedback-form/FeedbackComponent";
 
 const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
 
@@ -432,6 +433,14 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
                 <CodeText>{repoFullName}</CodeText>
             </p>
             {statusMessage}
+            {p.error && (
+                <FeedbackComponent
+                    isModal={false}
+                    message={"Was this error message helpful?"}
+                    isError={true}
+                    initialSize={24}
+                />
+            )}
         </StartPage>
     );
 }
