@@ -5,15 +5,19 @@
  */
 
 import { WorkspaceManagerBridge } from "../../src/bridge";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceStatus, WorkspaceType, WorkspacePhase } from "@gitpod/ws-manager/lib";
-import { HeadlessWorkspaceEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
+import { HeadlessWorkspaceEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { PrebuildStateMapper } from "../../src/prebuild-state-mapper";
 
 @injectable()
 export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
+    @inject(PrebuildStateMapper)
+    protected readonly prebuildStateMapper: PrebuildStateMapper;
+
     protected async cleanupProbeWorkspace(ctx: TraceContext, status: WorkspaceStatus.AsObject | undefined) {
         if (!status) {
             return;
@@ -75,65 +79,31 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
             }
             prebuild.statusVersion = status.statusVersion;
 
-            if (prebuild.state === "queued") {
-                // We've received an update from ws-man for this workspace, hence it must be running.
-                prebuild.state = "building";
+            const update = this.prebuildStateMapper.mapWorkspaceStatusToPrebuild(status);
+            if (update) {
+                const updatedPrebuild = {
+                    ...prebuild,
+                    ...update,
+                };
+
+                span.setTag("updatePrebuildWorkspace.prebuild.state", updatedPrebuild.state);
+                span.setTag("updatePrebuildWorkspace.prebuild.error", updatedPrebuild.error);
 
                 if (writeToDB) {
-                    await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
-                }
-                await this.messagebus.notifyHeadlessUpdate({ span }, userId, workspaceId, <HeadlessWorkspaceEvent>{
-                    type: HeadlessWorkspaceEventType.Started,
-                    workspaceID: workspaceId,
-                });
-            }
-
-            if (status.phase === WorkspacePhase.STOPPING) {
-                let headlessUpdateType: HeadlessWorkspaceEventType = HeadlessWorkspaceEventType.Aborted;
-                if (!!status.conditions!.timeout) {
-                    prebuild.state = "timeout";
-                    prebuild.error = status.conditions!.timeout;
-                    headlessUpdateType = HeadlessWorkspaceEventType.AbortedTimedOut;
-                } else if (!!status.conditions!.failed) {
-                    prebuild.state = "failed";
-                    prebuild.error = status.conditions!.failed;
-                    headlessUpdateType = HeadlessWorkspaceEventType.Failed;
-                } else if (!!status.conditions!.stoppedByRequest) {
-                    prebuild.state = "aborted";
-                    prebuild.error = "Cancelled";
-                    headlessUpdateType = HeadlessWorkspaceEventType.Aborted;
-                } else if (!!status.conditions!.headlessTaskFailed) {
-                    prebuild.state = "available";
-                    if (status.conditions!.headlessTaskFailed) prebuild.error = status.conditions!.headlessTaskFailed;
-                    prebuild.snapshot = status.conditions!.snapshot;
-                    headlessUpdateType = HeadlessWorkspaceEventType.FinishedButFailed;
-                } else if (!!status.conditions!.snapshot) {
-                    prebuild.state = "available";
-                    prebuild.snapshot = status.conditions!.snapshot;
-                    headlessUpdateType = HeadlessWorkspaceEventType.FinishedSuccessfully;
-                } else {
-                    // stopping event with no clear outcome (i.e. no snapshot yet)
-                    return;
-                }
-
-                span.setTag("updatePrebuildWorkspace.prebuild.state", prebuild.state);
-                span.setTag("updatePrebuildWorkspace.prebuild.error", prebuild.error);
-
-                if (writeToDB) {
-                    await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
+                    await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(updatedPrebuild);
                 }
 
                 // notify updates
                 // headless update
                 await this.messagebus.notifyHeadlessUpdate({ span }, userId, workspaceId, <HeadlessWorkspaceEvent>{
-                    type: headlessUpdateType,
+                    type: update.type,
                     workspaceID: workspaceId,
                 });
 
                 // prebuild info
-                const info = (await this.workspaceDB.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
+                const info = (await this.workspaceDB.trace({ span }).findPrebuildInfos([updatedPrebuild.id]))[0];
                 if (info) {
-                    this.messagebus.notifyOnPrebuildUpdate({ info, status: prebuild.state });
+                    this.messagebus.notifyOnPrebuildUpdate({ info, status: updatedPrebuild.state });
                 }
             }
         } catch (e) {
