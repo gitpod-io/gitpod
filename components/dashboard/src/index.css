@@ -43,6 +43,12 @@
     .dark .dark\:filter-invert {
         @apply filter-invert;
     }
+    .grayed {
+        filter: grayscale(100%);
+    }
+    .grayed:hover {
+        filter: none;
+    }
 }
 
 @layer components {
