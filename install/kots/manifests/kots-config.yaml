@@ -242,18 +242,18 @@ spec:
           help_text: The endpoint used to connect to the S3 storage.
 
         - name: store_s3_access_key_id
-          title: Username
+          title: Access Key
           type: text
           required: true
           when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
-          help_text: The username that has access to the S3 account. In AWS, this is an IAM user's credentials with `AmazonS3FullAccess` policy.
+          help_text: Access key of IAM user's credentials with `AmazonS3FullAccess` policy.
 
         - name: store_s3_secret_access_key
-          title: Password
+          title: Secret Key
           type: password
           required: true
           when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
-          help_text: The password that has access to the S3 account. In AWS, this is an IAM user's credentials with `AmazonS3FullAccess` policy.
+          help_text: Secret key of IAM user's credentials with `AmazonS3FullAccess` policy.
 
     - name: certs
       title: TLS certificates
