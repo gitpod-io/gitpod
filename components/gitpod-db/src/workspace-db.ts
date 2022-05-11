@@ -125,6 +125,7 @@ export interface WorkspaceDB {
     findInstancesByPhaseAndRegion(phase: string, region: string): Promise<WorkspaceInstance[]>;
 
     getWorkspaceCount(type?: String): Promise<Number>;
+    getWorkspaceCountByCloneURL(cloneURL: string, sinceLastDays?: number, type?: string): Promise<number>;
     getInstanceCount(type?: string): Promise<number>;
 
     findAllWorkspaceInstances(
