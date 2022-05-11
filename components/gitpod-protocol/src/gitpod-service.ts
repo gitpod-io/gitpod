@@ -47,6 +47,7 @@ import { LicenseService } from "./license-protocol";
 import { Emitter } from "./util/event";
 import { AccountStatement, CreditAlert } from "./accounting-protocol";
 import { GithubUpgradeURL, PlanCoupon } from "./payment-protocol";
+
 import {
     TeamSubscription,
     TeamSubscription2,
@@ -269,6 +270,10 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
 
     getGithubUpgradeUrls(): Promise<GithubUpgradeURL[]>;
+
+    getStripeClientSecret(): Promise<string | undefined>;
+    getStripeCustomerIdOfUser(): Promise<string | undefined>;
+    subscribeUserToStripe(setupIntentId: string): Promise<void>;
 
     /**
      * Analytics
