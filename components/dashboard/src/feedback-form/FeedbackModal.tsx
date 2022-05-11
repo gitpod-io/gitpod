@@ -12,13 +12,14 @@ function FeedbackFormModal(props: { onClose: () => void }) {
         props.onClose();
     };
 
-    const onSubmit = () => {
-        props.onClose();
-    };
-
     return (
         <Modal visible={true} onClose={onClose}>
-            <FeedbackComponent onClose={onClose} onSubmit={onSubmit} isModal={true} />
+            <FeedbackComponent
+                onClose={onClose}
+                isModal={true}
+                isError={false}
+                message="We'd love to know what you think!"
+            />
         </Modal>
     );
 }
