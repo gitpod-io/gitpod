@@ -303,6 +303,12 @@ func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
 
 		SentinelUsername: cfg.Username,
 		SentinelPassword: cfg.Password,
+
+		MaxRetries:      9,
+		MinRetryBackoff: time.Millisecond * 100,
+		MaxRetryBackoff: time.Minute * 1,
+		ReadTimeout:     time.Second * 30,
+		WriteTimeout:    time.Second * 5,
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
