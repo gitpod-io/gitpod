@@ -16,8 +16,9 @@ import (
 )
 
 type SuccessObserver struct {
-	workspaces map[string]*workspaceSuccess
-	m          sync.Mutex
+	workspaces  map[string]*workspaceSuccess
+	m           sync.Mutex
+	successRate float32
 }
 
 type workspaceSuccess struct {
@@ -25,9 +26,10 @@ type workspaceSuccess struct {
 	Failed bool
 }
 
-func NewSuccessObserver() *SuccessObserver {
+func NewSuccessObserver(successRate float32) *SuccessObserver {
 	return &SuccessObserver{
-		workspaces: make(map[string]*workspaceSuccess),
+		workspaces:  make(map[string]*workspaceSuccess),
+		successRate: successRate,
 	}
 }
 
@@ -70,27 +72,28 @@ func (o *SuccessObserver) Wait(ctx context.Context, expected int) error {
 		select {
 		case <-ticker.C:
 			o.m.Lock()
-			if len(o.workspaces) == expected {
-				running := true
-				for _, ws := range o.workspaces {
-					if ws.Phase != api.WorkspacePhase_RUNNING {
-						running = false
-					}
-				}
-			
-				if running {
-					return nil
+			running := 0
+			for _, ws := range o.workspaces {
+				if ws.Phase == api.WorkspacePhase_RUNNING {
+					running += 1
 				}
 			}
+
+			if float32(running) >= float32(len(o.workspaces))*o.successRate {
+				return nil
+			}
+
 			o.m.Unlock()
 		case <-ctx.Done():
-			log.Warn("workspaces did not get ready in time")
 			o.m.Lock()
+			log.Warnf("workspaces did not get ready in time. Expected %v workspaces, did see %v", expected, len(o.workspaces))
 			for id, ws := range o.workspaces {
-				log.Warnf("workspace %s is in phase %v", id, ws.Phase)
+				if ws.Phase != api.WorkspacePhase_RUNNING {
+					log.Warnf("workspace %s is in phase %v", id, ws.Phase)
+				}
 			}
 			o.m.Unlock()
-			return fmt.Errorf("timeout out waiting for workspace to get ready")
+			return fmt.Errorf("timeout waiting for workspace to get ready")
 		}
 	}
 }
