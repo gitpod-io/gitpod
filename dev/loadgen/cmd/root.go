@@ -25,3 +25,7 @@ func Execute() {
 		os.Exit(1)
 	}
 }
+
+func init() {
+	rootCmd.PersistentFlags().BoolVar(&runOpts.Interactive, "interactive", false, "loadgen will prompt before destructive actions")
+}

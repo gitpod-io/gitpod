@@ -156,35 +156,31 @@ var benchmarkCommand = &cobra.Command{
 				}
 			},
 			Termination: func(executor loadgen.Executor) error {
-				if confirmWorkspaceDeletion() {
-					stopping, err := time.ParseDuration(scenario.StoppingTimeout)
-					if err != nil {
-						return fmt.Errorf("invalid timeout")
-					}
-					ctx, cancel := context.WithTimeout(context.Background(), stopping)
-					defer cancel()
-					err = executor.StopAll(ctx)
-
-					if err != nil {
-						return err
-					}
-				}
-				return nil
+				return handleWorkspaceDeletion(scenario.StoppingTimeout, executor)
 			},
 		}
+
+		sctx, scancel := context.WithCancel(context.Background())
 
 		go func() {
 			sigc := make(chan os.Signal, 1)
 			signal.Notify(sigc, syscall.SIGINT)
 			<-sigc
+			// cancel workspace creation so that no new workspaces are created while we are deleting them
+			scancel()
+
+			if err := handleWorkspaceDeletion(scenario.StoppingTimeout, session.Executor); err != nil {
+				log.Warnf("could not delete workspaces: %v", err)
+				os.Exit(1)
+			}
+
 			os.Exit(0)
 		}()
 
-		err = session.Run()
+		err = session.Run(sctx)
 		if err != nil {
 			log.WithError(err).Fatal()
 		}
-
 	},
 }
 
@@ -204,8 +200,25 @@ type BenchmarkScenario struct {
 	StoppingTimeout string                     `json:"waitForStopping"`
 }
 
-func confirmWorkspaceDeletion() bool {
-	fmt.Println("Do you want to delete the workspaces? y/n")
+func handleWorkspaceDeletion(timeout string, executor loadgen.Executor) error {
+	if runOpts.Interactive {
+		if !confirmDeletion() {
+			return nil
+		}
+
+		if err := stopWorkspaces(timeout, executor); err != nil {
+			return err
+		}
+	} else {
+		if err := stopWorkspaces(timeout, executor); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func confirmDeletion() bool {
+	fmt.Println("Do you want to delete the created workspaces? y/n")
 	var response string
 	_, err := fmt.Scanln(&response)
 	if err != nil {
@@ -213,8 +226,18 @@ func confirmWorkspaceDeletion() bool {
 	}
 
 	if response != "y" && response != "n" {
-		return confirmWorkspaceDeletion()
+		return confirmDeletion()
 	}
 
 	return response == "y"
+}
+
+func stopWorkspaces(timeout string, executor loadgen.Executor) error {
+	stopping, err := time.ParseDuration(timeout)
+	if err != nil {
+		return fmt.Errorf("invalid timeout")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), stopping)
+	defer cancel()
+	return executor.StopAll(ctx)
 }

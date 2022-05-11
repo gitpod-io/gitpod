@@ -5,6 +5,8 @@
 package loadgen
 
 import (
+	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -62,14 +64,13 @@ type SessionEventWorkspaceUpdate struct {
 }
 
 // Run starts the load testing
-func (s *Session) Run() error {
+func (s *Session) Run(ctx context.Context) error {
 	load := s.Load.Generate()
 
 	var infraWG sync.WaitGroup
 	infraWG.Add(1)
 	updates := make(chan *SessionEvent)
 	go s.distributeUpdates(&infraWG, updates)
-
 	start := make(chan struct{})
 
 	obs, err := s.Executor.Observe()
@@ -78,7 +79,6 @@ func (s *Session) Run() error {
 	}
 	infraWG.Add(1)
 	go func() {
-		defer close(updates)
 		defer infraWG.Done()
 
 		<-start
@@ -108,6 +108,10 @@ func (s *Session) Run() error {
 					continue
 				}
 
+				if errors.Is(ctx.Err(), context.Canceled) {
+					break
+				}
+
 				dur, err := s.Executor.StartWorkspace(spec)
 				if err != nil {
 					updates <- &SessionEvent{Kind: SessionError, Error: err}
@@ -130,16 +134,17 @@ func (s *Session) Run() error {
 	close(start)
 
 	loadWG.Wait()
-	if s.PostLoadWait != nil {
+	if s.PostLoadWait != nil && ctx.Err() == nil {
 		s.PostLoadWait()
 	}
 
 	updates <- &SessionEvent{Kind: SessionDone}
-	if s.Termination != nil {
+	if s.Termination != nil && ctx.Err() == nil {
 		if err := s.Termination(s.Executor); err != nil {
 			return err
 		}
 	}
+	close(updates)
 
 	infraWG.Wait()
 	return nil
