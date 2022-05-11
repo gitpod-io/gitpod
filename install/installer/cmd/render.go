@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -95,7 +96,16 @@ func saveYamlToFiles(dir string, yaml []string) error {
 func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *configv1.Config, err error) {
 	var overrideConfig string
 	// Update overrideConfig if cfgFN is not empty
-	if cfgFN != "" {
+	switch cfgFN {
+	case "-":
+		b, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return nil, "", nil, err
+		}
+		overrideConfig = string(b)
+	case "":
+		return nil, "", nil, fmt.Errorf("missing config file")
+	default:
 		cfgBytes, err := ioutil.ReadFile(cfgFN)
 		if err != nil {
 			panic(fmt.Sprintf("couldn't read file %s, %s", cfgFN, err))
@@ -213,7 +223,7 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 func init() {
 	rootCmd.AddCommand(renderCmd)
 
-	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
+	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file, use - for stdin")
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
 	renderCmd.Flags().BoolVar(&renderOpts.ValidateConfigDisabled, "no-validation", false, "if set, the config will not be validated before running")
 	renderCmd.Flags().BoolVar(&renderOpts.UseExperimentalConfig, "use-experimental-config", false, "enable the use of experimental config that is prone to be changed")
