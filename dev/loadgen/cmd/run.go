@@ -134,9 +134,8 @@ var runCmd = &cobra.Command{
 				}),
 			},
 			PostLoadWait: func() {
-				<-make(chan struct{})
 				log.Info("load generation complete - press Ctrl+C to finish of")
-
+				<-make(chan struct{})
 			},
 		}
 

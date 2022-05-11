@@ -132,8 +132,10 @@ func (s *Session) Run() error {
 	if s.PostLoadWait != nil {
 		s.PostLoadWait()
 	}
+
 	updates <- &SessionEvent{Kind: SessionDone}
 	err = s.Executor.StopAll()
+
 	if err != nil {
 		return err
 	}

@@ -17,6 +17,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -57,7 +58,7 @@ var benchmarkCommand = &cobra.Command{
 			Id: "will-be-overriden",
 			Metadata: &api.WorkspaceMetadata{
 				MetaId:    "will-be-overriden",
-				Owner:     "00000000-0000-0000-0000-000000000000",
+				Owner:     "c0f5dbf1-8d50-4d2a-8cd9-fe563fa53c71",
 				StartedAt: timestamppb.Now(),
 			},
 			ServicePrefix: "will-be-overriden",
@@ -74,13 +75,8 @@ var benchmarkCommand = &cobra.Command{
 				FeatureFlags:      []api.WorkspaceFeatureFlag{},
 				Timeout:           "5m",
 				WorkspaceImage:    "will-be-overriden",
-				WorkspaceLocation: "gitpod",
-				Envvars: []*api.EnvironmentVariable{
-					{
-						Name:  "THEIA_SUPERVISOR_TOKENS",
-						Value: `[{"token":"foobar","host":"gitpod-staging.com","scope":["function:getWorkspace","function:getLoggedInUser","function:getPortAuthenticationToken","function:getWorkspaceOwner","function:getWorkspaceUsers","function:isWorkspaceOwner","function:controlAdmission","function:setWorkspaceTimeout","function:getWorkspaceTimeout","function:sendHeartBeat","function:getOpenPorts","function:openPort","function:closePort","function:getLayout","function:generateNewGitpodToken","function:takeSnapshot","function:storeLayout","function:stopWorkspace","resource:workspace::fa498dcc-0a84-448f-9666-79f297ad821a::get/update","resource:workspaceInstance::e0a17083-6a78-441a-9b97-ef90d6aff463::get/update/delete","resource:snapshot::*::create/get","resource:gitpodToken::*::create","resource:userStorage::*::create/get/update"],"expiryDate":"2020-12-01T07:55:12.501Z","reuse":2}]`,
-					},
-				},
+				WorkspaceLocation: "workspace-stress",
+				Envvars:           scenario.Environment,
 			},
 			Type: api.WorkspaceType_REGULAR,
 		}
@@ -113,6 +109,13 @@ var benchmarkCommand = &cobra.Command{
 		}
 		defer conn.Close()
 
+		d, err := time.ParseDuration(scenario.RunningTimeout)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		success := observer.NewSuccessObserver()
+
 		session := &loadgen.Session{
 			Executor: &loadgen.WsmanExecutor{C: api.NewWorkspaceManagerClient(conn)},
 			// Executor: loadgen.NewFakeExecutor(),
@@ -132,11 +135,20 @@ var benchmarkCommand = &cobra.Command{
 					}
 					os.WriteFile("stats.json", fc, 0644)
 				}),
+				success.Observe(),
 			},
 			PostLoadWait: func() {
-				<-make(chan struct{})
-				log.Info("load generation complete - press Ctrl+C to finish of")
+				ctx, cancel := context.WithTimeout(context.Background(), d)
+				defer cancel()
 
+				log.Info("Waiting for workspaces to enter running phase")
+				if err := success.Wait(ctx, scenario.Workspaces); err != nil {
+					log.Errorf("%v", err)
+					log.Info("load generation did not complete successfully - press Ctrl+C to finish of")
+				} else {
+					log.Info("load generation completed successfully - press Ctrl+C to finish of")
+				}
+				<-make(chan struct{})
 			},
 		}
 
@@ -163,7 +175,9 @@ func init() {
 }
 
 type BenchmarkScenario struct {
-	Workspaces int                    `json:"workspaces"`
-	IDEImage   string                 `json:"ideImage"`
-	Repos      []loadgen.WorkspaceCfg `json:"repos"`
+	Workspaces     int                        `json:"workspaces"`
+	IDEImage       string                     `json:"ideImage"`
+	Repos          []loadgen.WorkspaceCfg     `json:"repos"`
+	Environment    []*api.EnvironmentVariable `json:"environment"`
+	RunningTimeout string                        `json:"waitForRunning"`
 }

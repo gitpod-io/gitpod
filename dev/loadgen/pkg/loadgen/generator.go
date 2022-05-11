@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
@@ -154,9 +155,11 @@ func (f *FixedLoadGenerator) Close() error {
 }
 
 type WorkspaceCfg struct {
-	CloneURL       string `json:"cloneURL"`
-	WorkspaceImage string `json:"workspaceImage"`
-	CloneTarget    string `json:"cloneTarget"`
+	CloneURL       string                     `json:"cloneURL"`
+	WorkspaceImage string                     `json:"workspaceImage"`
+	CloneTarget    string                     `json:"cloneTarget"`
+	Score          int                        `json:"score`
+	Environment    []*api.EnvironmentVariable `json:"environment`
 }
 
 type MultiWorkspaceGenerator struct {
@@ -174,7 +177,8 @@ func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 		return nil, err
 	}
 
-	repo := f.Repos[rand.Intn(len(f.Repos))]
+	repo := selectRepo(f.Repos)
+	log.Infof("selecting repo %s", repo.CloneURL)
 
 	out := proto.Clone(f.Template).(*api.StartWorkspaceRequest)
 	out.Id = instanceID.String()
@@ -194,6 +198,26 @@ func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 		},
 	}
 	out.Spec.WorkspaceImage = repo.WorkspaceImage
+	out.Spec.Envvars = append(out.Spec.Envvars, repo.Environment...)
 	r := StartWorkspaceSpec(*out)
 	return &r, nil
+}
+
+func selectRepo(repos []WorkspaceCfg) WorkspaceCfg {
+	var scoreSum int
+	for _, repo := range repos {
+		scoreSum += repo.Score
+	}
+
+	r := rand.Float32()
+	var normalizedSum float32
+	for _, repo := range repos {
+		normalized := float32(repo.Score) / float32(scoreSum)
+		normalizedSum += normalized
+		if r < normalizedSum {
+			return repo
+		}
+	}
+
+	return repos[len(repos)-1]
 }
