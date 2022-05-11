@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	_ "embed"
 
@@ -24,6 +25,7 @@ var renderOpts struct {
 	Namespace              string
 	ValidateConfigDisabled bool
 	UseExperimentalConfig  bool
+	FilesDir               string
 }
 
 // renderCmd represents the render command
@@ -58,12 +60,36 @@ A config file is required which can be generated with the init command.`,
 			return err
 		}
 
+		if renderOpts.FilesDir != "" {
+			err := saveYamlToFiles(renderOpts.FilesDir, yaml)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+
 		for _, item := range yaml {
 			fmt.Println(item)
 		}
 
 		return nil
 	},
+}
+
+func saveYamlToFiles(dir string, yaml []string) error {
+	for i, mf := range yaml {
+		objs, err := common.YamlToRuntimeObject([]string{mf})
+		if err != nil {
+			return err
+		}
+		obj := objs[0]
+		fn := filepath.Join(dir, fmt.Sprintf("%03d_%s_%s.yaml", i, obj.Kind, obj.Metadata.Name))
+		err = ioutil.WriteFile(fn, []byte(mf), 0644)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *configv1.Config, err error) {
@@ -191,4 +217,5 @@ func init() {
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
 	renderCmd.Flags().BoolVar(&renderOpts.ValidateConfigDisabled, "no-validation", false, "if set, the config will not be validated before running")
 	renderCmd.Flags().BoolVar(&renderOpts.UseExperimentalConfig, "use-experimental-config", false, "enable the use of experimental config that is prone to be changed")
+	renderCmd.Flags().StringVar(&renderOpts.FilesDir, "output-split-files", "", "path to output individual Kubernetes manifests to")
 }
