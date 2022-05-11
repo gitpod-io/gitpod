@@ -120,7 +120,7 @@ var benchmarkCommand = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		success := observer.NewSuccessObserver()
+		success := observer.NewSuccessObserver(scenario.SuccessRate)
 
 		session := &loadgen.Session{
 			Executor: &loadgen.WsmanExecutor{C: api.NewWorkspaceManagerClient(conn)},
@@ -198,6 +198,7 @@ type BenchmarkScenario struct {
 	Environment     []*api.EnvironmentVariable `json:"environment"`
 	RunningTimeout  string                     `json:"waitForRunning"`
 	StoppingTimeout string                     `json:"waitForStopping"`
+	SuccessRate     float32                    `json:"successRate"`
 }
 
 func handleWorkspaceDeletion(timeout string, executor loadgen.Executor) error {
