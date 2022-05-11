@@ -10,10 +10,10 @@ import Cookies from "js-cookie";
 import { v4 } from "uuid";
 import { Experiment } from "./experiments";
 
-export type Event = "invite_url_requested" | "organisation_authorised" | "dotfile_repo_changed";
+export type Event = "invite_url_requested" | "organisation_authorised" | "dotfile_repo_changed" | "feedback_submitted";
 type InternalEvent = Event | "path_changed" | "dashboard_clicked";
 
-export type EventProperties = TrackOrgAuthorised | TrackInviteUrlRequested | TrackDotfileRepo;
+export type EventProperties = TrackOrgAuthorised | TrackInviteUrlRequested | TrackDotfileRepo | TrackFeedback;
 type InternalEventProperties = TrackUIExperiments & (EventProperties | TrackDashboardClick | TrackPathChanged);
 
 export interface TrackOrgAuthorised {
@@ -30,6 +30,12 @@ export interface TrackDotfileRepo {
     current: string;
 }
 
+export interface TrackFeedback {
+    score: number;
+    feedback: string;
+    href: string;
+    path: string;
+}
 interface TrackDashboardClick {
     dnt?: boolean;
     path: string;

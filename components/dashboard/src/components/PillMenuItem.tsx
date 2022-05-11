@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 
 export default function PillMenuItem(p: {
     name: string;
-    selected: boolean;
+    selected?: boolean;
     link?: string;
     onClick?: (event: React.MouseEvent) => void;
 }) {
