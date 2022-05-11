@@ -71,6 +71,7 @@ packages:
       - components/ws-proxy:docker
       - components/ide-proxy:docker
       - components/kots-config-check/database:docker
+      - components/kots-config-check/storage:docker
       - test:docker
       - dev/version-manifest:app
     config:

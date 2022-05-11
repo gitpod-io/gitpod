@@ -29,6 +29,21 @@ spec:
           - -c
         args:
           - semver --coerce --range '>=5.4.0' $(uname -r) || echo invalid
+    - run:
+        collectorName: storage
+        image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/storage:sje-kots-storage-check.9
+        name: storage
+        args:
+          - '{{repl ConfigOption "store_provider" }}' # STORE_PROVIDER
+          - '{{repl ConfigOption "store_region" }}' # STORE_LOCATION
+          - '{{repl ConfigOption "store_azure_account_name" }}' # AZURE_ACCOUNT_NAME
+          - '{{repl ConfigOption "store_azure_access_key" }}' # AZURE_ACCESS_KEY
+          - '{{repl ConfigOption "store_gcp_project" }}' # GCP_PROJECT_ID
+          - '{{repl ConfigOption "store_gcp_credentials" }}' # GCP_SERVICE_ACCOUNT_KEY
+          - '{{repl ConfigOption "store_s3_endpoint" }}' # S3_ENDPOINT
+          - '{{repl ConfigOption "store_s3_access_key_id" }}' # S3_ACCESS_KEY_ID
+          - '{{repl ConfigOption "store_s3_secret_access_key" }}' # S3_SECRET_ACCESS_KEY
+          - '{{repl ConfigOption "store_s3_bucket" }}' # S3_BUCKET_NAME
   analyzers:
     - clusterVersion:
         outcomes:
@@ -184,3 +199,13 @@ spec:
               message: Database version is valid
           - warn:
               message: Database version could not be verified. This should be MySQL 5.7
+    - textAnalyze:
+        checkName: Object storage connection is valid
+        fileName: storage/storage.log
+        regexGroups: 'connection: (?P<Connection>\w+)'
+        outcomes:
+          - pass:
+              when: "Connection == ok"
+              message: Object storage connection is valid
+          - fail:
+              message: Object storage connection is invalid. Please check your settings and that the resource is accessible from your cluster
