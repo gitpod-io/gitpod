@@ -134,13 +134,13 @@ var runCmd = &cobra.Command{
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		log.Info("🧫 ws-daemon is up and running. Stop with SIGINT or CTRL+C")
-		<-sigChan
+		receiveSig := <-sigChan
 		server.Stop()
 		err = dmn.Stop()
 		if err != nil {
 			log.WithError(err).Error("cannot shut down gracefully")
 		}
-		log.Info("Received SIGINT - shutting down")
+		log.Infof("Received %s - shutting down", receiveSig.String())
 	},
 }
 
