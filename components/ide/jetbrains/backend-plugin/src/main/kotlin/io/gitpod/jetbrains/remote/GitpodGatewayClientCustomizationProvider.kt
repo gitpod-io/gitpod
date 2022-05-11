@@ -13,7 +13,7 @@ import javax.swing.Icon
 
 class GitpodGatewayClientCustomizationProvider : GatewayClientCustomizationProvider {
     override val icon: Icon = GitpodIcons.Logo
-    override val title: String = DefaultGatewayControlCenterProvider().getHostnameShort()
+    override val title: String = System.getenv("JETBRAINS_GITPOD_WORKSPACE_HOST") ?: DefaultGatewayControlCenterProvider().getHostnameShort()
 
     override val controlCenter: GatewayControlCenterProvider = object : GatewayControlCenterProvider {
         override fun getHostnameDisplayKind() = GatewayHostnameDisplayKind.ShowHostnameOnNavbar
@@ -21,4 +21,3 @@ class GitpodGatewayClientCustomizationProvider : GatewayClientCustomizationProvi
         override fun getHostnameLong() = title
     }
 }
-
