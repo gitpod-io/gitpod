@@ -110,7 +110,7 @@ type WsmanExecutor struct {
 
 // StartWorkspace starts a new workspace
 func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration time.Duration, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
 	s := *spec
@@ -182,6 +182,8 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 			log.Warnf("failed to stop %s", id)
 		}
 	}
+
+	w.workspaces = make([]string, 0)
 
 	listReq := api.GetWorkspacesRequest{
 		MustMatch: &api.MetadataFilter{
