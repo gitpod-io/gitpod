@@ -18,6 +18,7 @@ type Session struct {
 	Specs        WorkspaceGenerator
 	Observer     []chan<- *SessionEvent
 	PostLoadWait func()
+	Termination  func(executor Executor) error
 
 	Worker int
 }
@@ -134,10 +135,10 @@ func (s *Session) Run() error {
 	}
 
 	updates <- &SessionEvent{Kind: SessionDone}
-	err = s.Executor.StopAll()
-
-	if err != nil {
-		return err
+	if s.Termination != nil {
+		if err := s.Termination(s.Executor); err != nil {
+			return err
+		}
 	}
 
 	infraWG.Wait()

@@ -12,6 +12,8 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
@@ -25,7 +27,7 @@ type Executor interface {
 	Observe() (<-chan WorkspaceUpdate, error)
 
 	// StopAll stops all workspaces started by the executor
-	StopAll() error
+	StopAll(ctx context.Context) error
 }
 
 // StartWorkspaceSpec specifies a workspace
@@ -101,8 +103,9 @@ func (fe *FakeExecutor) StopAll() error {
 
 // WsmanExecutor talks to a ws manager
 type WsmanExecutor struct {
-	C   api.WorkspaceManagerClient
-	Sub []context.CancelFunc
+	C          api.WorkspaceManagerClient
+	Sub        []context.CancelFunc
+	workspaces []string
 }
 
 // StartWorkspace starts a new workspace
@@ -118,6 +121,8 @@ func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration t
 	if err != nil {
 		return 0, err
 	}
+
+	w.workspaces = append(w.workspaces, ss.Id)
 	return time.Since(t0), nil
 }
 
@@ -137,10 +142,9 @@ func (w *WsmanExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 		for {
 			resp, err := sub.Recv()
 			if err != nil {
-				if err != io.EOF {
+				if err != io.EOF && status.Code(err) != codes.Canceled {
 					log.WithError(err).Warn("subscription failure")
 				}
-				close(res)
 				return
 			}
 			status := resp.GetStatus()
@@ -161,10 +165,49 @@ func (w *WsmanExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 }
 
 // StopAll stops all workspaces started by the executor
-func (w *WsmanExecutor) StopAll() error {
+func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 	for _, s := range w.Sub {
 		s()
 	}
-	fmt.Println("kubectl delete pod -l component=workspace")
+
+	log.Info("stopping workspaces")
+	for _, id := range w.workspaces {
+		stopReq := api.StopWorkspaceRequest{
+			Id:     id,
+			Policy: api.StopWorkspacePolicy_NORMALLY,
+		}
+
+		_, err := w.C.StopWorkspace(ctx, &stopReq)
+		if err != nil {
+			log.Warnf("failed to stop %s", id)
+		}
+	}
+
+	listReq := api.GetWorkspacesRequest{
+		MustMatch: &api.MetadataFilter{
+			Annotations: map[string]string{
+				"benchmark": "true",
+			},
+		},
+	}
+
+	for {
+		resp, err := w.C.GetWorkspaces(ctx, &listReq)
+		if len(resp.Status) == 0 {
+			break
+		}
+
+		if err != nil {
+			log.Warnf("could not get workspaces: %v", err)
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("not all workspaces could be stopped")
+		default:
+			time.Sleep(5 * time.Second)
+		}
+	}
+
 	return nil
 }
