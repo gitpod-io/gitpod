@@ -26,6 +26,7 @@ import { Experiment } from "./experiments";
 import { workspacesPathMain } from "./workspaces/workspaces.routes";
 import {
     settingsPathAccount,
+    settingsPathBilling,
     settingsPathIntegrations,
     settingsPathMain,
     settingsPathNotifications,
@@ -53,6 +54,7 @@ const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Account"));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Notifications"));
+const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Billing"));
 const Plans = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Plans"));
 const Teams = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Teams"));
 const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/EnvironmentVariables"));
@@ -359,6 +361,7 @@ function App() {
                     <Route path={settingsPathAccount} exact component={Account} />
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
                     <Route path={settingsPathNotifications} exact component={Notifications} />
+                    <Route path={settingsPathBilling} exact component={Billing} />
                     <Route path={settingsPathPlans} exact component={Plans} />
                     <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
                     <Route path={settingsPathPreferences} exact component={Preferences} />

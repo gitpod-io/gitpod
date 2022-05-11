@@ -14,6 +14,10 @@ export default function getSettingsMenu(params: { showPaymentUI?: boolean }) {
             title: "Notifications",
             link: ["/notifications"],
         },
+        {
+            title: "Billing",
+            link: ["/billing"],
+        },
         ...(params.showPaymentUI
             ? [
                   {
