@@ -225,6 +225,10 @@ func run(wsInfo *supervisor.WorkspaceInfoResponse) {
 	args = append(args, "run")
 	args = append(args, wsInfo.GetCheckoutLocation())
 	cmd := remoteDevServerCmd(args)
+	workspaceUrl, err := url.Parse(wsInfo.WorkspaceUrl)
+	if err == nil {
+		cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_WORKSPACE_HOST="+workspaceUrl.Hostname())
+	}
 	// Enable host status endpoint
 	cmd.Env = append(cmd.Env, "CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod")
 	if err := cmd.Run(); err != nil {
