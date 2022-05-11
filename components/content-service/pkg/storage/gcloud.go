@@ -192,7 +192,7 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 
 	rc, _, err := rs.ObjectAccess(ctx, bkt, obj)
 	if rc == nil {
-		return false, nil
+		return false, err
 	}
 	defer rc.Close()
 
