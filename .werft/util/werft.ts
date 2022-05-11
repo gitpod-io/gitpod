@@ -71,6 +71,13 @@ export class Werft {
      */
     public fail(slice, err) {
         const span = this.sliceSpans[slice];
+
+        if (span) {
+            span.end()
+        } else {
+            console.log(`[${slice}] tracing warning: No slice span by name ${slice}`)
+        }
+
         // Set the status on the span for the slice and also propagate the status to the phase and root span
         // as well so we can query on all phases that had an error regardless of which slice produced the error.
         [span, this.rootSpan, this.currentPhaseSpan].forEach((span: Span) => {
@@ -82,8 +89,6 @@ export class Werft {
                 message: err
             })
         })
-
-        span.end()
 
         console.log(`[${slice}|FAIL] ${err}`);
         throw err;
