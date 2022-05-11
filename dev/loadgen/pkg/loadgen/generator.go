@@ -183,6 +183,7 @@ func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 	out := proto.Clone(f.Template).(*api.StartWorkspaceRequest)
 	out.Id = instanceID.String()
 	out.Metadata.MetaId = workspaceID
+	out.Metadata.Annotations["context-url"] = repo.CloneURL
 	out.ServicePrefix = workspaceID
 	out.Spec.Initializer = &csapi.WorkspaceInitializer{
 		Spec: &csapi.WorkspaceInitializer_Git{

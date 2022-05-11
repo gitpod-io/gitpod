@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -27,6 +28,8 @@ import (
 	"github.com/gitpod-io/gitpod/loadgen/pkg/observer"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
+
+const benchmarkAnnotation = "benchmark"
 
 var benchmarkOpts struct {
 	TLSPath string
@@ -60,6 +63,9 @@ var benchmarkCommand = &cobra.Command{
 				MetaId:    "will-be-overriden",
 				Owner:     "c0f5dbf1-8d50-4d2a-8cd9-fe563fa53c71",
 				StartedAt: timestamppb.Now(),
+				Annotations: map[string]string{
+					benchmarkAnnotation: "true",
+				},
 			},
 			ServicePrefix: "will-be-overriden",
 			Spec: &api.StartWorkspaceSpec{
@@ -144,11 +150,26 @@ var benchmarkCommand = &cobra.Command{
 				log.Info("Waiting for workspaces to enter running phase")
 				if err := success.Wait(ctx, scenario.Workspaces); err != nil {
 					log.Errorf("%v", err)
-					log.Info("load generation did not complete successfully - press Ctrl+C to finish of")
+					log.Info("load generation did not complete successfully")
 				} else {
-					log.Info("load generation completed successfully - press Ctrl+C to finish of")
+					log.Info("load generation completed successfully")
 				}
-				<-make(chan struct{})
+			},
+			Termination: func(executor loadgen.Executor) error {
+				if confirmWorkspaceDeletion() {
+					stopping, err := time.ParseDuration(scenario.StoppingTimeout)
+					if err != nil {
+						return fmt.Errorf("invalid timeout")
+					}
+					ctx, cancel := context.WithTimeout(context.Background(), stopping)
+					defer cancel()
+					err = executor.StopAll(ctx)
+
+					if err != nil {
+						return err
+					}
+				}
+				return nil
 			},
 		}
 
@@ -175,9 +196,25 @@ func init() {
 }
 
 type BenchmarkScenario struct {
-	Workspaces     int                        `json:"workspaces"`
-	IDEImage       string                     `json:"ideImage"`
-	Repos          []loadgen.WorkspaceCfg     `json:"repos"`
-	Environment    []*api.EnvironmentVariable `json:"environment"`
-	RunningTimeout string                        `json:"waitForRunning"`
+	Workspaces      int                        `json:"workspaces"`
+	IDEImage        string                     `json:"ideImage"`
+	Repos           []loadgen.WorkspaceCfg     `json:"repos"`
+	Environment     []*api.EnvironmentVariable `json:"environment"`
+	RunningTimeout  string                     `json:"waitForRunning"`
+	StoppingTimeout string                     `json:"waitForStopping"`
+}
+
+func confirmWorkspaceDeletion() bool {
+	fmt.Println("Do you want to delete the workspaces? y/n")
+	var response string
+	_, err := fmt.Scanln(&response)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if response != "y" && response != "n" {
+		return confirmWorkspaceDeletion()
+	}
+
+	return response == "y"
 }
