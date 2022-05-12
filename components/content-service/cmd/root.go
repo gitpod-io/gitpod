@@ -9,12 +9,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
-
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/api/config"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -52,7 +50,7 @@ func Execute() {
 func getConfig() *config.ServiceConfig {
 	ctnt, err := os.ReadFile(configFile)
 	if err != nil {
-		log.WithError(xerrors.Errorf("cannot read config: %w", err)).Error("cannot read configuration. Maybe missing --config?")
+		log.WithError(fmt.Errorf("cannot read config: %w", err)).Error("cannot read configuration. Maybe missing --config?")
 		os.Exit(1)
 	}
 
