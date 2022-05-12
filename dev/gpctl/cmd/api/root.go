@@ -37,7 +37,7 @@ func NewCommand() *cobra.Command {
 }
 
 func newConn(connOpts *connectionOptions) (*grpc.ClientConn, error) {
-	log.Log.Infof("Estabilishing gRPC connection against %s", connOpts.address)
+	log.Log.Infof("Establishing gRPC connection against %s", connOpts.address)
 
 	opts := []grpc.DialOption{
 		// attach token to requests to auth
@@ -61,13 +61,26 @@ func newConn(connOpts *connectionOptions) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
+func validateAndConnect(connOpts *connectionOptions) (*grpc.ClientConn, error) {
+	if err := connOpts.validate(); err != nil {
+		return nil, fmt.Errorf("invalid connection options: %w", err)
+	}
+
+	conn, err := newConn(connOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to establish gRPC connection: %w", err)
+	}
+
+	return conn, nil
+}
+
 type connectionOptions struct {
 	address  string
 	insecure bool
 	token    string
 }
 
-func (o *connectionOptions) Validate() error {
+func (o *connectionOptions) validate() error {
 	if o.address == "" {
 		return fmt.Errorf("empty connection address")
 	}
