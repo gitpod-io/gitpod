@@ -20,7 +20,7 @@ install_dependencies() {
 lint() {
     local PROTO_DIR=${1:-.}
 
-    docker run --volume "$PWD/$PROTO_DIR:/workspace" --workdir /workspace bufbuild/buf lint || exit 1
+    docker run --rm --volume "$PWD/$PROTO_DIR:/workspace" --workdir /workspace bufbuild/buf lint || exit 1
 }
 
 go_protoc() {
