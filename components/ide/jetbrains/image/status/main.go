@@ -84,6 +84,10 @@ func main() {
 		}
 	}
 
+	err = configureXmx(alias)
+	if err != nil {
+		log.WithError(err).Error("failed to configure backend Xmx")
+	}
 	go run(wsInfo)
 
 	http.HandleFunc("/joinLink", func(w http.ResponseWriter, r *http.Request) {
@@ -256,6 +260,21 @@ func remoteDevServerCmd(args []string) *exec.Cmd {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd
+}
+
+func configureXmx(alias string) error {
+	xmx := os.Getenv(strings.ToUpper(alias) + "_XMX")
+	if xmx == "" {
+		return nil
+	}
+	launcherPath := "/ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh"
+	content, err := ioutil.ReadFile(launcherPath)
+	if err != nil {
+		return err
+	}
+	// by default remote dev already set -Xmx2048m, see /ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh
+	newContent := strings.Replace(string(content), "-Xmx2048m", "-Xmx"+xmx, 1)
+	return ioutil.WriteFile(launcherPath, []byte(newContent), 0)
 }
 
 /**
