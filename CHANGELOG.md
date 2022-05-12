@@ -1,6 +1,13 @@
 # Change Log
 
 ## May 2022
+- fix prebuild state mapping bug in face of missing snapshot (& add tests for it) ([#9924](https://github.com/gitpod-io/gitpod/pull/9924)) - [@geropl](https://github.com/geropl)
+- [dashboard] fixing backoff for getHeadlessLog calls ([#9941](https://github.com/gitpod-io/gitpod/pull/9941)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Fully removed the deprecated helm charts. ([#9858](https://github.com/gitpod-io/gitpod/pull/9858)) - [@csweichel](https://github.com/csweichel)
+- - [dashboard]: Added a `.gp-link` Tailwind class to make buttons mimic anchor tags ([#9641](https://github.com/gitpod-io/gitpod/pull/9641)) - [@trumbitta](https://github.com/trumbitta)
+- Enable git integrations of Bitbucket for self-hosted Gitpod ([#9894](https://github.com/gitpod-io/gitpod/pull/9894)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Ensure workspace can be deleted even if start workspace timeout has been exceeded ([#9825](https://github.com/gitpod-io/gitpod/pull/9825)) - [@Furisto](https://github.com/Furisto)
+- Separate tracing installer config for the server and workspace components ([#9900](https://github.com/gitpod-io/gitpod/pull/9900)) - [@andrew-farries](https://github.com/andrew-farries)
 - [registry-facade] Remove TTL from Redis keys ([#9906](https://github.com/gitpod-io/gitpod/pull/9906)) - [@aledbf](https://github.com/aledbf)
 - [server] getWorkspace() returns NOT_FOUND when workspace cannot be fetched from db ([#9828](https://github.com/gitpod-io/gitpod/pull/9828)) - [@easyCZ](https://github.com/easyCZ)
 - Adding metrics reporting to the IDE ([#9815](https://github.com/gitpod-io/gitpod/pull/9815)) - [@iQQBot](https://github.com/iQQBot)
