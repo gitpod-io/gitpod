@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"net"
 	"net/http"
 	"os"
@@ -257,6 +258,9 @@ func (s *Server) initializeGRPC() error {
 	}
 
 	s.grpc = grpc.NewServer(gitpod_grpc.ServerOptionsWithInterceptors(stream, unary)...)
+
+	// Register health service by default
+	grpc_health_v1.RegisterHealthServer(s.grpc, s.cfg.grpcHealthCheck)
 
 	return nil
 }

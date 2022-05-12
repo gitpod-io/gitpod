@@ -5,11 +5,13 @@
 package baseserver
 
 import (
+	"context"
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"time"
 )
 
@@ -30,6 +32,8 @@ type config struct {
 	metricsRegistry *prometheus.Registry
 
 	healthHandler healthcheck.Handler
+
+	grpcHealthCheck grpc_health_v1.HealthServer
 }
 
 func defaultConfig() *config {
@@ -41,6 +45,7 @@ func defaultConfig() *config {
 		closeTimeout:    5 * time.Second,
 		healthHandler:   healthcheck.NewHandler(),
 		metricsRegistry: prometheus.NewRegistry(),
+		grpcHealthCheck: &GrpcHealthService{},
 	}
 }
 
@@ -115,6 +120,17 @@ func WithHealthHandler(handler healthcheck.Handler) Option {
 	}
 }
 
+func WithGRPCHealthService(svc grpc_health_v1.HealthServer) Option {
+	return func(cfg *config) error {
+		if svc == nil {
+			return fmt.Errorf("nil healthcheck handler provided")
+		}
+
+		cfg.grpcHealthCheck = svc
+		return nil
+	}
+}
+
 func evaluateOptions(cfg *config, opts ...Option) (*config, error) {
 	for _, opt := range opts {
 		if err := opt(cfg); err != nil {
@@ -123,4 +139,12 @@ func evaluateOptions(cfg *config, opts ...Option) (*config, error) {
 	}
 
 	return cfg, nil
+}
+
+type GrpcHealthService struct {
+	grpc_health_v1.UnimplementedHealthServer
+}
+
+func (g *GrpcHealthService) Check(ctx context.Context, request *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
+	return &grpc_health_v1.HealthCheckResponse{Status: grpc_health_v1.HealthCheckResponse_SERVING}, nil
 }

@@ -89,10 +89,6 @@ func TestServer_Metrics_gRPC(t *testing.T) {
 
 	// At this point, there must be metrics registry available for use
 	require.NotNil(t, srv.MetricsRegistry())
-
-	// To actually get gRPC metrics, we need to invoke an RPC, let's use a built-in health service as a mock
-	grpc_health_v1.RegisterHealthServer(srv.GRPC(), &HealthService{})
-
 	// Let's start our server up
 	baseserver.StartServerForTests(t, srv)
 
@@ -101,7 +97,7 @@ func TestServer_Metrics_gRPC(t *testing.T) {
 	require.NoError(t, err)
 	client := grpc_health_v1.NewHealthClient(conn)
 
-	// Invoke the RPC
+	// By default the server runs a Health service, we can use it for our purposes
 	_, err = client.Check(ctx, &grpc_health_v1.HealthCheckRequest{})
 	require.NoError(t, err)
 
@@ -113,12 +109,4 @@ func TestServer_Metrics_gRPC(t *testing.T) {
 	count, err := testutil.GatherAndCount(registry, expected...)
 	require.NoError(t, err)
 	require.Equal(t, len(expected)*1, count, "expected 1 count for each metric")
-}
-
-type HealthService struct {
-	grpc_health_v1.UnimplementedHealthServer
-}
-
-func (h *HealthService) Check(_ context.Context, _ *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
-	return &grpc_health_v1.HealthCheckResponse{Status: grpc_health_v1.HealthCheckResponse_SERVING}, nil
 }
