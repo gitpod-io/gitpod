@@ -9,6 +9,7 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"testing"
 	"time"
 )
@@ -21,6 +22,7 @@ func TestOptions(t *testing.T) {
 	hostname := "another_hostname"
 	registry := prometheus.NewRegistry()
 	health := healthcheck.NewHandler()
+	grpcHealthService := &grpc_health_v1.UnimplementedHealthServer{}
 
 	var opts = []Option{
 		WithHostname(hostname),
@@ -30,6 +32,7 @@ func TestOptions(t *testing.T) {
 		WithCloseTimeout(timeout),
 		WithMetricsRegistry(registry),
 		WithHealthHandler(health),
+		WithGRPCHealthService(grpcHealthService),
 	}
 	cfg, err := evaluateOptions(defaultConfig(), opts...)
 	require.NoError(t, err)
@@ -42,6 +45,7 @@ func TestOptions(t *testing.T) {
 		closeTimeout:    timeout,
 		metricsRegistry: registry,
 		healthHandler:   health,
+		grpcHealthCheck: grpcHealthService,
 	}, cfg)
 }
 
