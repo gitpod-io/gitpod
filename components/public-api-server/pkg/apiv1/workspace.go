@@ -59,6 +59,10 @@ func (w *WorkspaceService) GetWorkspace(ctx context.Context, r *v1.GetWorkspaceR
 	}, nil
 }
 
+func (w *WorkspaceService) GetOwnerToken(ctx context.Context, r *v1.GetOwnerTokenRequest) (*v1.GetOwnerTokenResponse, error) {
+	return &v1.GetOwnerTokenResponse{Token: "some-owner-token"}, nil
+}
+
 func bearerTokenFromContext(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
