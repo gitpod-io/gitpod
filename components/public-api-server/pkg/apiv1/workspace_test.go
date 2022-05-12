@@ -119,6 +119,25 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 
 }
 
+func TestWorkspaceService_GetOwnerToken(t *testing.T) {
+	srv := baseserver.NewForTests(t)
+	var connPool *FakeServerConnPool
+
+	v1.RegisterWorkspacesServiceServer(srv.GRPC(), NewWorkspaceService(connPool))
+	baseserver.StartServerForTests(t, srv)
+
+	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+
+	client := v1.NewWorkspacesServiceClient(conn)
+	ctx := context.Background()
+
+	actualOwnerId, err := client.GetOwnerToken(ctx, &v1.GetOwnerTokenRequest{WorkspaceId: "some-workspace-id"})
+	require.NoError(t, err)
+
+	require.Equal(t, "some-owner-token", actualOwnerId.Token)
+}
+
 type FakeServerConnPool struct {
 	api gitpod.APIInterface
 }
