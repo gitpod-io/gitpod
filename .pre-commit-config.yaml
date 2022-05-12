@@ -42,3 +42,11 @@ repos:
     hooks:
       - id: go-fmt
       - id: go-mod-tidy
+
+  - repo: local
+    hooks:
+      - id: license-header
+        name: license-header
+        entry: leeway run components:update-license-header
+        language: system
+        pass_filenames: false
