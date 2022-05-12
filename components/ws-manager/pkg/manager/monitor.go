@@ -974,18 +974,28 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 						log.WithError(err).WithField("VolumeSnapshot.Name", pvcSnapshotVolumeName).Error("was unable to get volume snapshot")
 						return false, err
 					}
-					if volumeSnapshot.Status != nil && volumeSnapshot.Status.ReadyToUse != nil && *(volumeSnapshot.Status.ReadyToUse) {
-						pvcSnapshotContentName = *volumeSnapshot.Status.BoundVolumeSnapshotContentName
-						return true, nil
+					if volumeSnapshot.Status != nil {
+						if volumeSnapshot.Status.ReadyToUse != nil && *(volumeSnapshot.Status.ReadyToUse) {
+							pvcSnapshotContentName = *volumeSnapshot.Status.BoundVolumeSnapshotContentName
+							return true, nil
+						}
+						if volumeSnapshot.Status.Error != nil {
+							if volumeSnapshot.Status.Error.Message != nil {
+								err = xerrors.Errorf("error during volume snapshot creation: %s", *volumeSnapshot.Status.Error.Message)
+								log.WithError(err).WithField("VolumeSnapshot.Name", pvcSnapshotVolumeName).Error("unable to create volume snapshot")
+								return false, err
+							}
+							log.WithField("VolumeSnapshot.Name", pvcSnapshotVolumeName).Error("unknown error during volume snapshot creation")
+							return false, xerrors.Errorf("unknown error during volume snapshot creation")
+						}
 					}
 					return false, nil
 				})
 				if err != nil {
-					log.WithError(err).Errorf("failed to get volume snapshot `%s`", pvcSnapshotVolumeName)
+					log.WithError(err).WithField("VolumeSnapshot.Name", pvcSnapshotVolumeName).Errorf("failed while waiting for volume snapshot to get ready")
 					return true, nil, err
 				}
 				readySnapshotVolume = true
-
 			}
 			if readySnapshotVolume && !markSnapshotVolumeAnnotation {
 				var volumeSnapshotContent volumesnapshotv1.VolumeSnapshotContent
@@ -995,6 +1005,12 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					return true, nil, err
 				}
 
+				if volumeSnapshotContent.Status == nil {
+					return true, nil, xerrors.Errorf("volume snapshot content status is nil")
+				}
+				if volumeSnapshotContent.Status.SnapshotHandle == nil {
+					return true, nil, xerrors.Errorf("volume snapshot content's snapshot handle is nil")
+				}
 				snapshotHandle := *volumeSnapshotContent.Status.SnapshotHandle
 
 				b, err := json.Marshal(workspaceSnapshotVolumeStatus{PvcSnapshotVolumeName: pvcSnapshotVolumeName, PvcSnapshotVolumeHandle: snapshotHandle})
