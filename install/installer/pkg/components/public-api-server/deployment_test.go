@@ -35,7 +35,7 @@ func TestDeployment_ServerArguments(t *testing.T) {
 
 	apiContainer := containers[0]
 	require.EqualValues(t, []string{
-		"--http-port=9000",
+		"--debug-port=9000",
 		"--grpc-port=9001",
 		`--gitpod-api-url=wss://test.domain.everything.awesome.is/api/v1`,
 	}, apiContainer.Args)

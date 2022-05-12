@@ -10,9 +10,9 @@ import (
 
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return common.GenerateService(Component, map[string]common.ServicePort{
-		HTTPPortName: {
-			ContainerPort: HTTPContainerPort,
-			ServicePort:   HTTPServicePort,
+		DebugPortName: {
+			ContainerPort: DebugContainerPort,
+			ServicePort:   DebugServicePort,
 		},
 		GRPCPortName: {
 			ContainerPort: GRPCContainerPort,

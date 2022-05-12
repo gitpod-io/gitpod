@@ -47,7 +47,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:  Component,
 							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.PublicAPIServer.Version),
 							Args: []string{
-								fmt.Sprintf("--http-port=%d", HTTPContainerPort),
+								fmt.Sprintf("--debug-port=%d", DebugContainerPort),
 								fmt.Sprintf("--grpc-port=%d", GRPCContainerPort),
 								fmt.Sprintf("--gitpod-api-url=wss://%s/api/v1", ctx.Config.Domain),
 							},
@@ -60,8 +60,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							}),
 							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort: HTTPContainerPort,
-									Name:          HTTPPortName,
+									ContainerPort: DebugContainerPort,
+									Name:          DebugPortName,
 								},
 								{
 									ContainerPort: GRPCContainerPort,
@@ -78,7 +78,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path:   "/live",
-										Port:   intstr.IntOrString{IntVal: HTTPContainerPort},
+										Port:   intstr.IntOrString{IntVal: DebugContainerPort},
 										Scheme: corev1.URISchemeHTTP,
 									},
 								},
@@ -90,7 +90,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path:   "/ready",
-										Port:   intstr.IntOrString{IntVal: HTTPContainerPort},
+										Port:   intstr.IntOrString{IntVal: DebugContainerPort},
 										Scheme: corev1.URISchemeHTTP,
 									},
 								},
@@ -99,7 +99,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								TimeoutSeconds:   1,
 							},
 						},
-							*common.KubeRBACProxyContainerWithConfig(ctx, 9500, fmt.Sprintf("http://127.0.0.1:%d/", HTTPContainerPort)),
+							*common.KubeRBACProxyContainerWithConfig(ctx, 9500, fmt.Sprintf("http://127.0.0.1:%d/", DebugContainerPort)),
 						},
 					},
 				},
