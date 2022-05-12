@@ -137,6 +137,46 @@ export namespace GetWorkspaceResponse {
     }
 }
 
+export class GetOwnerTokenRequest extends jspb.Message {
+    getWorkspaceId(): string;
+    setWorkspaceId(value: string): GetOwnerTokenRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetOwnerTokenRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: GetOwnerTokenRequest): GetOwnerTokenRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetOwnerTokenRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetOwnerTokenRequest;
+    static deserializeBinaryFromReader(message: GetOwnerTokenRequest, reader: jspb.BinaryReader): GetOwnerTokenRequest;
+}
+
+export namespace GetOwnerTokenRequest {
+    export type AsObject = {
+        workspaceId: string,
+    }
+}
+
+export class GetOwnerTokenResponse extends jspb.Message {
+    getResult(): string;
+    setResult(value: string): GetOwnerTokenResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetOwnerTokenResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: GetOwnerTokenResponse): GetOwnerTokenResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetOwnerTokenResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetOwnerTokenResponse;
+    static deserializeBinaryFromReader(message: GetOwnerTokenResponse, reader: jspb.BinaryReader): GetOwnerTokenResponse;
+}
+
+export namespace GetOwnerTokenResponse {
+    export type AsObject = {
+        result: string,
+    }
+}
+
 export class CreateAndStartWorkspaceRequest extends jspb.Message {
     getIdempotencyToken(): string;
     setIdempotencyToken(value: string): CreateAndStartWorkspaceRequest;
