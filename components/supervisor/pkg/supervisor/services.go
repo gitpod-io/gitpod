@@ -929,3 +929,8 @@ func (s *portService) RetryAutoExpose(ctx context.Context, req *api.RetryAutoExp
 	s.portsManager.RetryAutoExpose(ctx, req.Port)
 	return &api.RetryAutoExposeResponse{}, nil
 }
+
+// ResourcesStatus provides workspace resources status information.
+func (s *statusService) ResourcesStatus(ctx context.Context, in *api.ResourcesStatuRequest) (*api.ResourcesStatusResponse, error) {
+	return Top(ctx)
+}
