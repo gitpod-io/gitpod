@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -58,7 +59,7 @@ func TestObjectAccessToNonExistentObj(t *testing.T) {
 
 	var mappings []archive.IDMapping
 	found, err := storage.Download(context.Background(), "/tmp", "foo", mappings)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "object doesn't exist") {
 		t.Errorf("%+v", err)
 	}
 	if found {
