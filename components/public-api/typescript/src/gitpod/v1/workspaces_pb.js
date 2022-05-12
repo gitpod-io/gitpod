@@ -1722,7 +1722,7 @@ proto.gitpod.v1.GetOwnerTokenResponse.prototype.toObject = function(opt_includeI
  */
 proto.gitpod.v1.GetOwnerTokenResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    result: jspb.Message.getFieldWithDefault(msg, 1, "")
+    token: jspb.Message.getFieldWithDefault(msg, 1, "")
   };
 
   if (includeInstance) {
@@ -1761,7 +1761,7 @@ proto.gitpod.v1.GetOwnerTokenResponse.deserializeBinaryFromReader = function(msg
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setResult(value);
+      msg.setToken(value);
       break;
     default:
       reader.skipField();
@@ -1792,7 +1792,7 @@ proto.gitpod.v1.GetOwnerTokenResponse.prototype.serializeBinary = function() {
  */
 proto.gitpod.v1.GetOwnerTokenResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getResult();
+  f = message.getToken();
   if (f.length > 0) {
     writer.writeString(
       1,
@@ -1803,10 +1803,10 @@ proto.gitpod.v1.GetOwnerTokenResponse.serializeBinaryToWriter = function(message
 
 
 /**
- * optional string result = 1;
+ * optional string token = 1;
  * @return {string}
  */
-proto.gitpod.v1.GetOwnerTokenResponse.prototype.getResult = function() {
+proto.gitpod.v1.GetOwnerTokenResponse.prototype.getToken = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
@@ -1815,7 +1815,7 @@ proto.gitpod.v1.GetOwnerTokenResponse.prototype.getResult = function() {
  * @param {string} value
  * @return {!proto.gitpod.v1.GetOwnerTokenResponse} returns this
  */
-proto.gitpod.v1.GetOwnerTokenResponse.prototype.setResult = function(value) {
+proto.gitpod.v1.GetOwnerTokenResponse.prototype.setToken = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
