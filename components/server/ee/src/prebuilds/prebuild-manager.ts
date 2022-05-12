@@ -195,11 +195,6 @@ export class PrebuildManager {
                 prebuild.error =
                     "Project is inactive. Please start a new workspace for this project to re-enable prebuilds.";
                 await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
-            } else if (!project && (await this.shouldSkipInactiveRepository({ span }, cloneURL))) {
-                prebuild.state = "aborted";
-                prebuild.error =
-                    "Repository is inactive. Please create a project for this repository to re-enable prebuilds.";
-                await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
             } else {
                 span.setTag("starting", true);
                 const projectEnvVars = await projectEnvVarsPromise;
@@ -360,19 +355,5 @@ export class PrebuildManager {
         const lastUse = new Date(usage.lastWorkspaceStart).getTime();
         const inactiveProjectTime = 1000 * 60 * 60 * 24 * 7 * 1; // 1 week
         return now - lastUse > inactiveProjectTime;
-    }
-
-    private async shouldSkipInactiveRepository(ctx: TraceContext, cloneURL: string): Promise<boolean> {
-        const span = TraceContext.startSpan("shouldSkipInactiveRepository", ctx);
-        try {
-            return (
-                (await this.workspaceDB
-                    .trace({ span })
-                    .getWorkspaceCountByCloneURL(cloneURL, 7 /* last week */, "regular")) === 0
-            );
-        } catch (error) {
-            log.error("cannot compute activity for repository", { cloneURL }, error);
-            return false;
-        }
     }
 }
