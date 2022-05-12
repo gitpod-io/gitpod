@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"sigs.k8s.io/e2e-framework/pkg/features"
-
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	supervisorapi "github.com/gitpod-io/gitpod/supervisor/api"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
+	"sigs.k8s.io/e2e-framework/pkg/envconf"
+	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
 func TestRegularWorkspaceTasks(t *testing.T) {
@@ -85,6 +85,44 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 					}
 					defer rsa.Close()
 					integration.DeferCloser(t, closer)
+
+					var parsedResp struct {
+						Result struct {
+							Tasks []*struct {
+								State string `json:"state,omitempty"`
+							} `json:"tasks,omitempty"`
+						} `json:"result"`
+					}
+					supervisorTaskStatusCompleted := false
+					for i := 1; i < 10; i++ {
+						var res agent.ExecResponse
+						err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+							Dir:     "/workspace",
+							Command: "curl",
+							// nftable rule only forwards to this ip address
+							Args: []string{"10.0.5.2:22999/_supervisor/v1/status/tasks"},
+						}, &res)
+						if err != nil {
+							t.Fatal(err)
+						}
+						err = json.Unmarshal([]byte(res.Stdout), &parsedResp)
+						if err != nil {
+							t.Fatalf("cannot decode supervisor status response: %s", err)
+						}
+
+						if len(parsedResp.Result.Tasks) != 1 {
+							t.Fatalf("expected one task to run, but got %d", len(parsedResp.Result.Tasks))
+						}
+						if parsedResp.Result.Tasks[0].State == supervisorapi.TaskState_name[int32(supervisorapi.TaskState_closed)] {
+							supervisorTaskStatusCompleted = true
+							break
+						}
+						// sleep before next attempt hoping that the task completed meanwhile
+						time.Sleep(6 * time.Second)
+					}
+					if !supervisorTaskStatusCompleted {
+						t.Fatal("tasks did not complete in time")
+					}
 
 					var ls agent.ListDirResponse
 					err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
