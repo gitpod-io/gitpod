@@ -29,6 +29,7 @@ import (
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/common-go/watch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
 )
@@ -128,7 +129,27 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot start daemon")
 		}
 
-		go config.Watch(configFile, dmn.ReloadConfig)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err = watch.File(ctx, configFile, func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			defer cancel()
+
+			cfg, err := config.Read(configFile)
+			if err != nil {
+				log.WithError(err).Warn("cannot reload configuration")
+				return
+			}
+
+			err = dmn.ReloadConfig(ctx, &cfg.Daemon)
+			if err != nil {
+				log.WithError(err).Warn("cannot reload configuration")
+			}
+		})
+		if err != nil {
+			log.WithError(err).Fatal("cannot start watch of configuration file")
+		}
 
 		// run until we're told to stop
 		sigChan := make(chan os.Signal, 1)
