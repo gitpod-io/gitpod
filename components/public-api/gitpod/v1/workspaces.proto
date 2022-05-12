@@ -76,7 +76,7 @@ message GetOwnerTokenRequest {
     string workspace_id = 1;
 }
 message GetOwnerTokenResponse {
-    string result = 1;
+    string token = 1;
 }
 
 message CreateAndStartWorkspaceRequest {
