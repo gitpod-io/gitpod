@@ -158,8 +158,8 @@ export namespace GetOwnerTokenRequest {
 }
 
 export class GetOwnerTokenResponse extends jspb.Message {
-    getResult(): string;
-    setResult(value: string): GetOwnerTokenResponse;
+    getToken(): string;
+    setToken(value: string): GetOwnerTokenResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): GetOwnerTokenResponse.AsObject;
@@ -173,7 +173,7 @@ export class GetOwnerTokenResponse extends jspb.Message {
 
 export namespace GetOwnerTokenResponse {
     export type AsObject = {
-        result: string,
+        token: string,
     }
 }
 
