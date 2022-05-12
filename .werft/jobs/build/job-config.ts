@@ -21,7 +21,6 @@ export interface JobConfig {
     storage: string;
     version: string;
     withContrib: boolean
-    withHelm: boolean
     withIntegrationTests: boolean;
     withObservability: boolean
     withPayment: boolean
@@ -87,7 +86,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const installEELicense = !("without-ee-license" in buildConfig) || mainBuild;
     const withPayment = "with-payment" in buildConfig && !mainBuild;
     const withObservability = "with-observability" in buildConfig && !mainBuild;
-    const withHelm = "with-helm" in buildConfig && !mainBuild;
     const repository: Repository = {
         owner: context.Repository.owner,
         repo: context.Repository.repo,
@@ -134,7 +132,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         storage,
         version,
         withContrib,
-        withHelm,
         withIntegrationTests,
         withObservability,
         withPayment,
