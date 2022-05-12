@@ -249,6 +249,7 @@ func (s *Server) initializeGRPC() error {
 	}
 
 	unary := []grpc.UnaryServerInterceptor{
+		gitpod_grpc.NewRatelimitingInterceptor(s.cfg.rateLimits).UnaryInterceptor(),
 		grpc_logrus.UnaryServerInterceptor(s.Logger()),
 		grpcMetrics.UnaryServerInterceptor(),
 	}

@@ -7,6 +7,7 @@ package baseserver
 import (
 	"context"
 	"fmt"
+	gitpod_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
@@ -34,6 +35,8 @@ type config struct {
 	healthHandler healthcheck.Handler
 
 	grpcHealthCheck grpc_health_v1.HealthServer
+
+	rateLimits map[string]gitpod_grpc.RateLimit
 }
 
 func defaultConfig() *config {
@@ -46,6 +49,7 @@ func defaultConfig() *config {
 		healthHandler:   healthcheck.NewHandler(),
 		metricsRegistry: prometheus.NewRegistry(),
 		grpcHealthCheck: &GrpcHealthService{},
+		rateLimits:      map[string]gitpod_grpc.RateLimit{},
 	}
 }
 
@@ -127,6 +131,17 @@ func WithGRPCHealthService(svc grpc_health_v1.HealthServer) Option {
 		}
 
 		cfg.grpcHealthCheck = svc
+		return nil
+	}
+}
+
+func WithRateLimits(limits map[string]gitpod_grpc.RateLimit) Option {
+	return func(cfg *config) error {
+		if limits == nil {
+			return fmt.Errorf("nil rate limits provided")
+		}
+
+		cfg.rateLimits = limits
 		return nil
 	}
 }

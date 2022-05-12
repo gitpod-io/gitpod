@@ -5,6 +5,7 @@
 package baseserver
 
 import (
+	gitpod_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,6 +24,9 @@ func TestOptions(t *testing.T) {
 	registry := prometheus.NewRegistry()
 	health := healthcheck.NewHandler()
 	grpcHealthService := &grpc_health_v1.UnimplementedHealthServer{}
+	rateLimits := map[string]gitpod_grpc.RateLimit{
+		"/grpc.health.v1.Health/Check": {},
+	}
 
 	var opts = []Option{
 		WithHostname(hostname),
@@ -33,6 +37,7 @@ func TestOptions(t *testing.T) {
 		WithMetricsRegistry(registry),
 		WithHealthHandler(health),
 		WithGRPCHealthService(grpcHealthService),
+		WithRateLimits(rateLimits),
 	}
 	cfg, err := evaluateOptions(defaultConfig(), opts...)
 	require.NoError(t, err)
@@ -46,6 +51,7 @@ func TestOptions(t *testing.T) {
 		metricsRegistry: registry,
 		healthHandler:   health,
 		grpcHealthCheck: grpcHealthService,
+		rateLimits:      rateLimits,
 	}, cfg)
 }
 
