@@ -20,6 +20,7 @@ import (
 	"github.com/gitpod-io/gitpod/image-builder/pkg/orchestrator"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -99,7 +100,10 @@ var runCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		grpcOpts := common_grpc.DefaultServerOptions()
+		grpcOpts := common_grpc.ServerOptionsWithInterceptors(
+			[]grpc.StreamServerInterceptor{otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer())},
+			[]grpc.UnaryServerInterceptor{otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer())},
+		)
 		tlsOpt, err := cfg.Service.TLS.ServerOption()
 		if err != nil {
 			log.WithError(err).Fatal("cannot use TLS config")

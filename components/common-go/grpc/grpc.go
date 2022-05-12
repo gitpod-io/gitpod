@@ -7,15 +7,17 @@ package grpc
 import (
 	"crypto/tls"
 	"crypto/x509"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"os"
 	"path/filepath"
 	"time"
+
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -48,10 +50,10 @@ func DefaultClientOptions() []grpc.DialOption {
 
 	var (
 		unaryInterceptor = []grpc.UnaryClientInterceptor{
-			grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
+			grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()), otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer())),
 		}
 		streamInterceptor = []grpc.StreamClientInterceptor{
-			grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
+			grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()), otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer())),
 		}
 	)
 	if defaultClientOptionsConfig.Metrics != nil {

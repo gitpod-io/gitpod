@@ -14,6 +14,8 @@ import (
 
 	"github.com/bombsimon/logrusr/v2"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
+	"github.com/opentracing/opentracing-go"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -123,8 +125,8 @@ var runCmd = &cobra.Command{
 		metrics.Registry.MustRegister(grpcMetrics)
 
 		grpcOpts := common_grpc.ServerOptionsWithInterceptors(
-			[]grpc.StreamServerInterceptor{grpcMetrics.StreamServerInterceptor()},
-			[]grpc.UnaryServerInterceptor{grpcMetrics.UnaryServerInterceptor(), ratelimits.UnaryInterceptor()},
+			[]grpc.StreamServerInterceptor{grpcMetrics.StreamServerInterceptor(), otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer())},
+			[]grpc.UnaryServerInterceptor{grpcMetrics.UnaryServerInterceptor(), ratelimits.UnaryInterceptor(), otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer())},
 		)
 		if cfg.RPCServer.TLS.CA != "" && cfg.RPCServer.TLS.Certificate != "" && cfg.RPCServer.TLS.PrivateKey != "" {
 			tlsConfig, err := common_grpc.ClientAuthTLSConfig(

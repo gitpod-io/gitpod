@@ -32,7 +32,9 @@ import (
 	"github.com/gorilla/websocket"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/common/route"
 	"github.com/prometheus/procfs"
 	"github.com/soheilhy/cmux"
@@ -1049,8 +1051,8 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	grpcMetrics := grpc_prometheus.NewServerMetrics()
 	grpcMetrics.EnableHandlingTimeHistogram()
 	opts = append(opts,
-		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
-		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor()),
+		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor(), otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer())),
+		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor(), otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer())),
 	)
 
 	m := cmux.New(l)

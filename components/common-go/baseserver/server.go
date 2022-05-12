@@ -7,20 +7,23 @@ package baseserver
 import (
 	"context"
 	"fmt"
-	gitpod_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
-	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health/grpc_health_v1"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	gitpod_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
+	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func New(name string, opts ...Option) (*Server, error) {
@@ -251,10 +254,12 @@ func (s *Server) initializeGRPC() error {
 	unary := []grpc.UnaryServerInterceptor{
 		grpc_logrus.UnaryServerInterceptor(s.Logger()),
 		grpcMetrics.UnaryServerInterceptor(),
+		otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
 	}
 	stream := []grpc.StreamServerInterceptor{
 		grpc_logrus.StreamServerInterceptor(s.Logger()),
 		grpcMetrics.StreamServerInterceptor(),
+		otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer()),
 	}
 
 	s.grpc = grpc.NewServer(gitpod_grpc.ServerOptionsWithInterceptors(stream, unary)...)

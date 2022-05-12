@@ -15,7 +15,9 @@ import (
 	"time"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/heptiolabs/healthcheck"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -56,8 +58,8 @@ var runCmd = &cobra.Command{
 		reg.MustRegister(grpcMetrics)
 
 		grpcOpts := common_grpc.ServerOptionsWithInterceptors(
-			[]grpc.StreamServerInterceptor{grpcMetrics.StreamServerInterceptor()},
-			[]grpc.UnaryServerInterceptor{grpcMetrics.UnaryServerInterceptor()},
+			[]grpc.StreamServerInterceptor{grpcMetrics.StreamServerInterceptor(), otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer())},
+			[]grpc.UnaryServerInterceptor{grpcMetrics.UnaryServerInterceptor(), otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer())},
 		)
 		tlsOpt, err := cfg.Service.TLS.ServerOption()
 		if err != nil {

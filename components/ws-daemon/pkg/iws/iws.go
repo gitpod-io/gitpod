@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sys/unix"
 	"golang.org/x/time/rate"
@@ -182,7 +183,11 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 		},
 	}
 
-	wbs.srv = grpc.NewServer(grpc.ChainUnaryInterceptor(limits.UnaryInterceptor()))
+	grpcOpts := common_grpc.ServerOptionsWithInterceptors(
+		[]grpc.StreamServerInterceptor{otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer())},
+		[]grpc.UnaryServerInterceptor{limits.UnaryInterceptor(), otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer())},
+	)
+	wbs.srv = grpc.NewServer(grpcOpts...)
 	api.RegisterInWorkspaceServiceServer(wbs.srv, wbs)
 	go func() {
 		err := wbs.srv.Serve(sckt)
