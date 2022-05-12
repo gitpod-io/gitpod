@@ -27,7 +27,7 @@ func TestNetworkPolicy(t *testing.T) {
 		Ports: []networkingv1.NetworkPolicyPort{
 			{
 				Protocol: common.TCPProtocol,
-				Port:     &intstr.IntOrString{IntVal: HTTPContainerPort},
+				Port:     &intstr.IntOrString{IntVal: DebugContainerPort},
 			},
 			{
 				Protocol: common.TCPProtocol,
