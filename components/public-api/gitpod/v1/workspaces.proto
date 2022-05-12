@@ -16,6 +16,9 @@ service WorkspacesService {
     // GetWorkspace returns a single workspace.
     rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {}
 
+    // GetOwnerToken returns an owner token.
+    rpc GetOwnerToken(GetOwnerTokenRequest) returns (GetOwnerTokenResponse) {}
+
     // CreateAndStartWorkspace creates a new workspace and starts it.
     rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest) returns (CreateAndStartWorkspaceResponse) {}
 
@@ -67,6 +70,13 @@ message GetWorkspaceRequest {
 }
 message GetWorkspaceResponse {
     Workspace result = 1;
+}
+
+message GetOwnerTokenRequest {
+    string workspace_id = 1;
+}
+message GetOwnerTokenResponse {
+    string result = 1;
 }
 
 message CreateAndStartWorkspaceRequest {
