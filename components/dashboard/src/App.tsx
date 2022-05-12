@@ -150,6 +150,7 @@ function App() {
 
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
+    const [showUserIdePreference, setShowUserIdePreference] = useState(false);
     const [isSetupRequired, setSetupRequired] = useState(false);
     const history = useHistory();
 
@@ -492,16 +493,23 @@ function App() {
     // Prefix with `/#referrer` will specify an IDE for workspace
     // We don't need to show IDE preference in this case
     const shouldUserIdePreferenceShown = User.isOnboardingUser(user) && !hash.startsWith(ContextURL.REFERRER_PREFIX);
+    if (shouldUserIdePreferenceShown !== showUserIdePreference) {
+        setShowUserIdePreference(shouldUserIdePreferenceShown);
+    }
 
     const isCreation = window.location.pathname === "/" && hash !== "";
     const isWsStart = /\/start\/?/.test(window.location.pathname) && hash !== "";
     if (isWhatsNewShown) {
         toRender = <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     } else if (isCreation) {
-        if (shouldUserIdePreferenceShown) {
+        if (showUserIdePreference) {
             toRender = (
                 <StartPage phase={StartPhase.Checking}>
-                    <SelectIDEModal />
+                    <SelectIDEModal
+                        onClose={() => {
+                            setShowUserIdePreference(false);
+                        }}
+                    />
                 </StartPage>
             );
         } else {
