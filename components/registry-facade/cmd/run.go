@@ -132,7 +132,7 @@ var runCmd = &cobra.Command{
 			health := healthcheck.NewHandler()
 			health.AddReadinessCheck("dns", kubernetes.DNSCanResolveProbe(staticLayerHost, 1*time.Second))
 			health.AddReadinessCheck("registry", kubernetes.NetworkIsReachableProbe(fmt.Sprintf("https://%v", staticLayerRef)))
-			health.AddReadinessCheck("registry-facade", kubernetes.NetworkIsReachableProbe(fmt.Sprintf("https://127.0.0.1:%v/%v/base/", cfg.Registry.Port, cfg.Registry.Prefix)))
+			//health.AddReadinessCheck("registry-facade", kubernetes.NetworkIsReachableProbe(fmt.Sprintf("https://127.0.0.1:%v/%v/base/", cfg.Registry.Port, cfg.Registry.Prefix)))
 
 			health.AddLivenessCheck("dns", kubernetes.DNSCanResolveProbe(staticLayerHost, 1*time.Second))
 			health.AddLivenessCheck("registry", kubernetes.NetworkIsReachableProbe(fmt.Sprintf("https://%v", staticLayerRef)))
