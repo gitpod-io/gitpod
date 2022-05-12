@@ -6,6 +6,7 @@ package content_service
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 
 	"github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -17,14 +18,8 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cscfg := config.ServiceConfig{
-		Service: config.Service{
-			Addr: fmt.Sprintf(":%d", RPCPort),
-		},
-		Prometheus: config.Prometheus{
-			Addr: fmt.Sprintf(":%d", PrometheusPort),
-		},
-		PProf: config.PProf{
-			Addr: fmt.Sprintf(":%d", PProfPort),
+		Service: baseserver.ServerConfiguration{
+			Address: fmt.Sprintf(":%d", RPCPort),
 		},
 		Storage: common.StorageConfig(ctx),
 	}
