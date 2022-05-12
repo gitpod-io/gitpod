@@ -7,8 +7,6 @@ package wsmanager
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"io"
 	"testing"
 	"time"
 
@@ -16,7 +14,6 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
@@ -81,37 +78,6 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 					t.Cleanup(func() {
 						_ = integration.DeleteWorkspace(ctx, api, nfo.Req.Id)
 					})
-
-					conn, err := api.Supervisor(nfo.Req.Id)
-					if err != nil {
-						t.Fatal(err)
-					}
-
-					tsctx, tscancel := context.WithTimeout(ctx, 60*time.Second)
-					defer tscancel()
-
-					statusService := supervisor.NewStatusServiceClient(conn)
-					resp, err := statusService.TasksStatus(tsctx, &supervisor.TasksStatusRequest{Observe: false})
-					if err != nil {
-						t.Fatal(err)
-					}
-
-					for {
-						status, err := resp.Recv()
-						if errors.Is(err, io.EOF) {
-							break
-						}
-
-						if err != nil {
-							t.Fatal(err)
-						}
-						if len(status.Tasks) != 1 {
-							t.Fatalf("expected one task to run, but got %d", len(status.Tasks))
-						}
-						if status.Tasks[0].State == supervisor.TaskState_closed {
-							break
-						}
-					}
 
 					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.Req.Id))
 					if err != nil {
