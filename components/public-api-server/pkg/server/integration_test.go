@@ -30,7 +30,7 @@ func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
 	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
 	require.NoError(t, err)
 
-	require.NoError(t, register(srv, Config{GitpodAPI: gitpodAPI}, registry))
+	require.NoError(t, register(srv, gitpodAPI, registry))
 	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -77,7 +77,7 @@ func TestPublicAPIServer_v1_PrebuildService(t *testing.T) {
 	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
 	require.NoError(t, err)
 
-	require.NoError(t, register(srv, Config{GitpodAPI: gitpodAPI}, registry))
+	require.NoError(t, register(srv, gitpodAPI, registry))
 
 	baseserver.StartServerForTests(t, srv)
 

@@ -4,6 +4,7 @@
 package public_api_server
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,18 @@ func TestDeployment_ServerArguments(t *testing.T) {
 	apiContainer := containers[0]
 	require.EqualValues(t, []string{
 		"run",
-		"--grpc-port=9001",
-		`--gitpod-api-url=wss://test.domain.everything.awesome.is/api/v1`,
+		"--config=/config.json",
+		`--json-log=true`,
 	}, apiContainer.Args)
+
+	require.Equal(t, []corev1.Volume{{
+		Name: configmapVolume,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: Component,
+				},
+			},
+		},
+	}}, dpl.Spec.Template.Spec.Volumes, "must bind config as a volume")
 }
