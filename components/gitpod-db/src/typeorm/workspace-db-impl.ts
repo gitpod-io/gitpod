@@ -356,6 +356,22 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return workspaceRepo.find({ ownerId: userId });
     }
 
+    public async getWorkspaceCountByCloneURL(
+        cloneURL: string,
+        sinceLastDays: number = 7,
+        type: string = "regular",
+    ): Promise<number> {
+        const workspaceRepo = await this.getWorkspaceRepo();
+        const since = new Date();
+        since.setDate(since.getDate() - sinceLastDays);
+        return workspaceRepo
+            .createQueryBuilder("ws")
+            .where("cloneURL = :cloneURL", { cloneURL })
+            .andWhere("creationTime > :since", { since: since.toISOString() })
+            .andWhere("type = :type", { type })
+            .getCount();
+    }
+
     public async findCurrentInstance(workspaceId: string): Promise<MaybeWorkspaceInstance> {
         const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
         const qb = workspaceInstanceRepo
