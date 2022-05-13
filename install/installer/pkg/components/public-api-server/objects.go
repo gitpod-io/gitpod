@@ -18,6 +18,7 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	log.Debug("Detected experimental.WebApp.PublicApi configuration", cfg)
 	return common.CompositeRenderFunc(
+		configmap,
 		deployment,
 		rolebinding,
 		common.DefaultServiceAccount(Component),

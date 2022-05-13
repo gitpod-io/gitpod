@@ -5,8 +5,8 @@ package public_api_server
 
 import (
 	"fmt"
-
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	appsv1 "k8s.io/api/apps/v1"
@@ -18,7 +18,18 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+const (
+	configmapVolume = "config"
+	configMountPath = "/config.json"
+)
+
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
+
+	configHash, err := common.ObjectHash(configmap(ctx))
+	if err != nil {
+		return nil, err
+	}
+
 	labels := common.DefaultLabels(Component)
 	return []runtime.Object{
 		&appsv1.Deployment{
@@ -27,6 +38,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:      Component,
 				Namespace: ctx.Namespace,
 				Labels:    labels,
+				Annotations: map[string]string{
+					common.AnnotationConfigChecksum: configHash,
+				},
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
@@ -45,59 +59,80 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						DNSPolicy:                     "ClusterFirst",
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
-						Containers: []corev1.Container{{
-							Name:  Component,
-							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.PublicAPIServer.Version),
-							Args: []string{
-								"run",
-								fmt.Sprintf("--grpc-port=%d", GRPCContainerPort),
-								fmt.Sprintf("--gitpod-api-url=wss://%s/api/v1", ctx.Config.Domain),
-							},
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									"cpu":    resource.MustParse("100m"),
-									"memory": resource.MustParse("32Mi"),
+						Containers: []corev1.Container{
+							{
+								Name:  Component,
+								Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.PublicAPIServer.Version),
+								Args: []string{
+									"run",
+									fmt.Sprintf("--config=%s", configMountPath),
+									"--json-log=true",
 								},
-							}),
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: GRPCContainerPort,
-									Name:          GRPCPortName,
-								},
-							},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: pointer.Bool(false),
-							},
-							Env: common.MergeEnv(
-								common.DefaultEnv(&ctx.Config),
-							),
-							LivenessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path:   "/live",
-										Port:   intstr.IntOrString{IntVal: baseserver.BuiltinHealthPort},
-										Scheme: corev1.URISchemeHTTP,
+								ImagePullPolicy: corev1.PullIfNotPresent,
+								Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
+									Requests: corev1.ResourceList{
+										"cpu":    resource.MustParse("100m"),
+										"memory": resource.MustParse("32Mi"),
+									},
+								}),
+								Ports: []corev1.ContainerPort{
+									{
+										ContainerPort: GRPCContainerPort,
+										Name:          GRPCPortName,
 									},
 								},
-								FailureThreshold: 3,
-								SuccessThreshold: 1,
-								TimeoutSeconds:   1,
-							},
-							ReadinessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path:   "/ready",
-										Port:   intstr.IntOrString{IntVal: baseserver.BuiltinHealthPort},
-										Scheme: corev1.URISchemeHTTP,
+								SecurityContext: &corev1.SecurityContext{
+									Privileged: pointer.Bool(false),
+								},
+								Env: common.MergeEnv(
+									common.DefaultEnv(&ctx.Config),
+								),
+								LivenessProbe: &corev1.Probe{
+									ProbeHandler: corev1.ProbeHandler{
+										HTTPGet: &corev1.HTTPGetAction{
+											Path:   "/live",
+											Port:   intstr.IntOrString{IntVal: baseserver.BuiltinHealthPort},
+											Scheme: corev1.URISchemeHTTP,
+										},
+									},
+									FailureThreshold: 3,
+									SuccessThreshold: 1,
+									TimeoutSeconds:   1,
+								},
+								ReadinessProbe: &corev1.Probe{
+									ProbeHandler: corev1.ProbeHandler{
+										HTTPGet: &corev1.HTTPGetAction{
+											Path:   "/ready",
+											Port:   intstr.IntOrString{IntVal: baseserver.BuiltinHealthPort},
+											Scheme: corev1.URISchemeHTTP,
+										},
+									},
+									FailureThreshold: 3,
+									SuccessThreshold: 1,
+									TimeoutSeconds:   1,
+								},
+								VolumeMounts: []corev1.VolumeMount{
+									{
+										Name:      configmapVolume,
+										ReadOnly:  true,
+										MountPath: configMountPath,
+										SubPath:   configJSONFilename,
 									},
 								},
-								FailureThreshold: 3,
-								SuccessThreshold: 1,
-								TimeoutSeconds:   1,
 							},
-						},
 							*common.KubeRBACProxyContainerWithConfig(ctx, 9500, fmt.Sprintf("http://127.0.0.1:%d/", baseserver.BuiltinMetricsPort)),
+						},
+						Volumes: []corev1.Volume{
+							{
+								Name: configmapVolume,
+								VolumeSource: corev1.VolumeSource{
+									ConfigMap: &corev1.ConfigMapVolumeSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: Component,
+										},
+									},
+								},
+							},
 						},
 					},
 				},

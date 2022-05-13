@@ -6,6 +6,8 @@ package server
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/public-api/config"
+	"net/url"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
@@ -15,19 +17,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Start(logger *logrus.Entry, cfg Config) error {
+func Start(logger *logrus.Entry, cfg *config.Configuration) error {
+	logger.WithField("config", cfg).Info("Starting public-api.")
+
+	gitpodAPI, err := url.Parse(cfg.GitpodServiceURL)
+	if err != nil {
+		return fmt.Errorf("failed to parse Gitpod API U: %w", err)
+	}
+
 	registry := prometheus.NewRegistry()
 
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
-		baseserver.WithGRPC(&baseserver.ServerConfiguration{Address: fmt.Sprintf(":%d", cfg.GRPCPort)}),
+		baseserver.WithConfig(cfg.Server),
 		baseserver.WithMetricsRegistry(registry),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to initialize public api server: %w", err)
 	}
 
-	if registerErr := register(srv, cfg, registry); registerErr != nil {
+	if registerErr := register(srv, gitpodAPI, registry); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -38,10 +47,10 @@ func Start(logger *logrus.Entry, cfg Config) error {
 	return nil
 }
 
-func register(srv *baseserver.Server, cfg Config, registry *prometheus.Registry) error {
+func register(srv *baseserver.Server, serverAPIURL *url.URL, registry *prometheus.Registry) error {
 	proxy.RegisterMetrics(registry)
 
-	connPool := &proxy.NoConnectionPool{ServerAPI: cfg.GitpodAPI}
+	connPool := &proxy.NoConnectionPool{ServerAPI: serverAPIURL}
 
 	v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
 	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
