@@ -6,6 +6,7 @@
 
 const { execSync } = require("child_process");
 const { promises } = require("fs");
+const fetch = require("node-fetch");
 const path = require("path");
 
 /**
@@ -26,13 +27,41 @@ const q90 = (arr) => {
 
 (async () => {
     let wsPodName;
+    let creationTimestamp;
     while (!wsPodName) {
-        wsPodName = execSync("kubectl get pod -l component=workspace -o=custom-columns=:metadata.name", {
-            encoding: "utf8",
-        }).trim();
+        const segments = execSync(
+            "kubectl get pod -l component=workspace -o=custom-columns=:metadata.name,:metadata.creationTimestamp",
+            {
+                encoding: "utf8",
+            },
+        )
+            .trim()
+            .split(/\s+/);
+        wsPodName = segments[0];
+        creationTimestamp = new Date(segments[1]);
         await new Promise((r) => setTimeout(r, 1000));
     }
     console.log(wsPodName);
+    console.log(creationTimestamp);
+
+    const query = async (prefix) => {
+        const age = ((new Date().getTime() - creationTimestamp.getTime()) / 1000).toFixed(0);
+        const response = await fetch.default(
+            encodeURI(`http://localhost:9090/api/v1/query?query=${prefix}{pod="${wsPodName}"}[${age}s])/(1024*1024)`),
+            {
+                method: "GET",
+            },
+        );
+        if (!response.ok) {
+            console.error(`${prefix}: ${response.statusText} (${response.status})`);
+            return "N/A";
+        }
+        /**
+         * @type {{data: {result: { value: [number, string] }[]}}}
+         */
+        const body = await response.json();
+        return Number(body.data.result[0].value[1]).toFixed(2);
+    };
 
     const perfLogPath = path.resolve(__dirname, "perf.log");
     console.log(perfLogPath);
@@ -65,6 +94,7 @@ const q90 = (arr) => {
         } catch (e) {
             console.error(e);
         }
+
         if (top) {
             cores.push(top.cpu.used);
             sumCores += top.cpu.used;
@@ -77,13 +107,32 @@ const q90 = (arr) => {
             avgMemory = sumMemory / measurements;
             maxMemory = Math.max(maxMemory, mem);
 
+            const [avgMax, maxMax, q90Max, avgUsed, maxUsed, q90user] = (
+                await Promise.allSettled([
+                    query("avg_over_time(gitpod_jb_backend_memory_max_bytes"),
+                    query("max_over_time(gitpod_jb_backend_memory_max_bytes"),
+                    query("quantile_over_time(0.9, gitpod_jb_backend_memory_max_bytes"),
+                    query("avg_over_time(gitpod_jb_backend_memory_used_bytes"),
+                    query("max_over_time(gitpod_jb_backend_memory_used_bytes"),
+                    query("quantile_over_time(0.9, gitpod_jb_backend_memory_used_bytes"),
+                ])
+            ).map((v) => {
+                if (v.status === "fulfilled") {
+                    return v.value;
+                }
+                console.error(v.reason);
+                return "N/A";
+            });
+
             await promises.appendFile(
                 perfLogPath,
                 `${((new Date().getTime() - start) / 1000).toFixed(2)}s, cpu(m) ${top.cpu.used.toFixed(
                     2,
                 )}/${avgCores.toFixed(2)}/${maxCores.toFixed(2)}/${q90(cores).toFixed(2)}, memory(Mi) ${mem.toFixed(
                     2,
-                )}/${avgMemory.toFixed(2)}/${maxMemory.toFixed(2)}/${q90(mems).toFixed(2)}\n`,
+                )}/${avgMemory.toFixed(2)}/${maxMemory.toFixed(2)}/${q90(mems).toFixed(
+                    2,
+                )}, allocated(M) ${avgMax}/${maxMax}/${q90Max}, used(M) ${avgUsed}/${maxUsed}/${q90user}\n`,
             );
         }
         await new Promise((r) => setTimeout(r, 1000));

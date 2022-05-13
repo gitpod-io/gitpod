@@ -88,7 +88,7 @@ func main() {
 	if err != nil {
 		log.WithError(err).Error("failed to configure backend Xmx")
 	}
-	go run(wsInfo)
+	go run(wsInfo, alias)
 
 	http.HandleFunc("/joinLink", func(w http.ResponseWriter, r *http.Request) {
 		backendPort := r.URL.Query().Get("backendPort")
@@ -224,11 +224,12 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.ContentStatusRespons
 	return nil, nil, errors.New("failed with attempt 10 times")
 }
 
-func run(wsInfo *supervisor.WorkspaceInfoResponse) {
+func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string) {
 	var args []string
 	args = append(args, "run")
 	args = append(args, wsInfo.GetCheckoutLocation())
 	cmd := remoteDevServerCmd(args)
+	cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_BACKEND_KIND="+alias)
 	workspaceUrl, err := url.Parse(wsInfo.WorkspaceUrl)
 	if err == nil {
 		cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_WORKSPACE_HOST="+workspaceUrl.Hostname())
