@@ -50,10 +50,10 @@ func DefaultClientOptions() []grpc.DialOption {
 
 	var (
 		unaryInterceptor = []grpc.UnaryClientInterceptor{
-			grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()), otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer())),
+			grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())), otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
 		}
 		streamInterceptor = []grpc.StreamClientInterceptor{
-			grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()), otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer())),
+			grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())), otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer()),
 		}
 	)
 	if defaultClientOptionsConfig.Metrics != nil {
