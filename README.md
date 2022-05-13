@@ -9,7 +9,7 @@
 </p>
 <p align="center">
   <a href="https://gitpod.io/from-referrer/">
-    <img src="https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod" alt="Gitpod ready-to-code" />
+    <img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod" />
   </a>
   <a href="https://werft.gitpod-dev.com/">
     <img src="https://img.shields.io/badge/Werft.dev-CI--builds-green" alt="Werft.dev - Gitpod CI" />
