@@ -6,6 +6,8 @@ package proxy
 
 import (
 	"context"
+	"testing"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,12 +16,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"testing"
 )
 
 func TestConnectionCreationWasTracked(t *testing.T) {
 	// Set up server
-	srv := baseserver.NewForTests(t)
+	srv := baseserver.NewForTests(t,
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
 	baseserver.StartServerForTests(t, srv)
 
 	// Set up Prometheus registry

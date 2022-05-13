@@ -7,6 +7,8 @@ package apiv1
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
@@ -18,7 +20,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
-	"testing"
 )
 
 func TestWorkspaceService_GetWorkspace(t *testing.T) {
@@ -30,7 +31,9 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 		description      = "This is the description"
 	)
 
-	srv := baseserver.NewForTests(t)
+	srv := baseserver.NewForTests(t,
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
 
 	connPool := &FakeServerConnPool{
 		api: &FakeGitpodAPI{workspaces: map[string]*gitpod.WorkspaceInfo{
@@ -113,7 +116,9 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 }
 
 func TestWorkspaceService_GetOwnerToken(t *testing.T) {
-	srv := baseserver.NewForTests(t)
+	srv := baseserver.NewForTests(t,
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
 	var connPool *FakeServerConnPool
 
 	v1.RegisterWorkspacesServiceServer(srv.GRPC(), NewWorkspaceService(connPool))

@@ -4,12 +4,13 @@
 package public_api_server
 
 import (
+	"testing"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/stretchr/testify/require"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"testing"
 )
 
 func TestNetworkPolicy(t *testing.T) {
@@ -25,10 +26,6 @@ func TestNetworkPolicy(t *testing.T) {
 
 	require.Equal(t, networkingv1.NetworkPolicyIngressRule{
 		Ports: []networkingv1.NetworkPolicyPort{
-			{
-				Protocol: common.TCPProtocol,
-				Port:     &intstr.IntOrString{IntVal: DebugContainerPort},
-			},
 			{
 				Protocol: common.TCPProtocol,
 				Port:     &intstr.IntOrString{IntVal: GRPCContainerPort},
