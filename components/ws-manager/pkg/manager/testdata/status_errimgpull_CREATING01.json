@@ -65,6 +65,10 @@
               "value": "/workspace/django-locallibrary-tutorial"
             },
             {
+              "name": "GITPOD_REPO_ROOTS",
+              "value": "/workspace/django-locallibrary-tutorial"
+            },
+            {
               "name": "GITPOD_CLI_APITOKEN",
               "value": "70ef5e25-3873-4fa4-a3c3-44444e7de21c"
             },

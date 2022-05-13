@@ -57,6 +57,10 @@
               "value": "/workspace/bel"
             },
             {
+              "name": "GITPOD_REPO_ROOTS",
+              "value": "/workspace/bel"
+            },
+            {
               "name": "GITPOD_CLI_APITOKEN",
               "value": "6bbf5c36-9c48-4a8a-a777-d4e85d65621d"
             },

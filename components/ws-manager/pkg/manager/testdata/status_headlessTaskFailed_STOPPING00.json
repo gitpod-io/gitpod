@@ -442,6 +442,10 @@
               "value": "/workspace/test-repo"
             },
             {
+              "name": "GITPOD_REPO_ROOT",
+              "value": "/workspace/test-repo"
+            },
+            {
               "name": "GITPOD_CLI_APITOKEN",
               "value": "CjO1N2aw3AkGV4fWDFJRc4R56vPd7dNw"
             },

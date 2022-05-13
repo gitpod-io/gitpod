@@ -469,6 +469,10 @@
               "value": "/workspace/"
             },
             {
+              "name": "GITPOD_REPO_ROOTS",
+              "value": "/workspace/"
+            },
+            {
               "value": "q5wspmwV6hlbdmBJg7viT4lWhVZ9CQVF",
               "name": "GITPOD_CLI_APITOKEN"
             },

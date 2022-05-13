@@ -517,21 +517,24 @@ func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.W
 	return nil
 }
 
-func GetCheckoutLocationFromInitializer(init *csapi.WorkspaceInitializer) string {
+func GetCheckoutLocationsFromInitializer(init *csapi.WorkspaceInitializer) []string {
 	switch {
 	case init.GetGit() != nil:
-		return init.GetGit().CheckoutLocation
+		return []string{init.GetGit().CheckoutLocation}
 	case init.GetPrebuild() != nil && len(init.GetPrebuild().Git) > 0:
-		return init.GetPrebuild().Git[0].CheckoutLocation
-	case init.GetBackup() != nil:
-		return init.GetBackup().CheckoutLocation
-	case init.GetComposite() != nil:
-		for _, c := range init.GetComposite().Initializer {
-			loc := GetCheckoutLocationFromInitializer(c)
-			if loc != "" {
-				return loc
-			}
+		var result = make([]string, len(init.GetPrebuild().Git))
+		for i, c := range init.GetPrebuild().Git {
+			result[i] = c.CheckoutLocation
 		}
+		return result
+	case init.GetBackup() != nil:
+		return []string{init.GetBackup().CheckoutLocation}
+	case init.GetComposite() != nil:
+		var result []string
+		for _, c := range init.GetComposite().Initializer {
+			result = append(result, GetCheckoutLocationsFromInitializer(c)...)
+		}
+		return result
 	}
-	return ""
+	return nil
 }

@@ -268,10 +268,15 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 }
 
 func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.WorkspaceFactory {
+	var checkoutLocation string
+	allLocations := wsinit.GetCheckoutLocationsFromInitializer(req.Initializer)
+	if len(allLocations) > 0 {
+		checkoutLocation = allLocations[0]
+	}
 	return func(ctx context.Context, location string) (res *session.Workspace, err error) {
 		return &session.Workspace{
 			Location:              location,
-			CheckoutLocation:      wsinit.GetCheckoutLocationFromInitializer(req.Initializer),
+			CheckoutLocation:      checkoutLocation,
 			CreatedAt:             time.Now(),
 			Owner:                 req.Metadata.Owner,
 			WorkspaceID:           req.Metadata.MetaId,
