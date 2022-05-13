@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -917,17 +918,20 @@ func connectToInWorkspaceDaemonService(ctx context.Context) (*inWorkspaceService
 	const socketFN = "/.workspace/daemon.sock"
 
 	t := time.NewTicker(500 * time.Millisecond)
+	errs := errors.New("errors of connect to ws-daemon")
 	defer t.Stop()
 	for {
 		if _, err := os.Stat(socketFN); err == nil {
 			break
+		} else if !os.IsNotExist(err) {
+			errs = fmt.Errorf("%v: %w", errs, err)
 		}
 
 		select {
 		case <-t.C:
 			continue
 		case <-ctx.Done():
-			return nil, xerrors.Errorf("socket did not appear before context was canceled")
+			return nil, fmt.Errorf("socket did not appear before context was canceled: %v", errs)
 		}
 	}
 
