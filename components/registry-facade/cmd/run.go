@@ -5,10 +5,7 @@
 package cmd
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -32,6 +29,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/common-go/watch"
 	"github.com/gitpod-io/gitpod/registry-facade/api/config"
 	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 )
@@ -150,7 +148,28 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot create registry")
 		}
 
-		go watchConfig(configPath, reg)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err = watch.File(ctx, configPath, func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			defer cancel()
+
+			cfg, err := config.GetConfig(configPath)
+			if err != nil {
+				log.WithError(err).Warn("cannot reload configuration")
+				return
+			}
+
+			err = reg.UpdateStaticLayer(ctx, cfg.Registry.StaticLayer)
+			if err != nil {
+				log.WithError(err).Warn("cannot reload configuration")
+			}
+		})
+		if err != nil {
+			log.WithError(err).Fatal("cannot start watch of configuration file")
+		}
+
 		go func() {
 			defer close(registryDoneChan)
 			reg.MustServe()
@@ -198,61 +217,4 @@ func authorizerFromDockerConfig(cfg *configfile.ConfigFile) docker.Authorizer {
 		pass = auth.Password
 		return
 	}))
-}
-
-// watchConfig watches the configuration file and if changed reloads the static layer
-func watchConfig(fn string, reg *registry.Registry) {
-	hashConfig := func() (hash string, err error) {
-		f, err := os.Open(fn)
-		if err != nil {
-			return "", err
-		}
-		defer f.Close()
-
-		h := sha256.New()
-		_, err = io.Copy(h, f)
-		if err != nil {
-			return "", err
-		}
-
-		return hex.EncodeToString(h.Sum(nil)), nil
-	}
-	reloadConfig := func() error {
-		cfg, err := config.GetConfig(fn)
-		if err != nil {
-			return err
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-		defer cancel()
-
-		return reg.UpdateStaticLayer(ctx, cfg.Registry.StaticLayer)
-	}
-
-	var (
-		tick    = time.NewTicker(30 * time.Second)
-		oldHash string
-	)
-	defer tick.Stop()
-	for range tick.C {
-		currentHash, err := hashConfig()
-		if err != nil {
-			log.WithError(err).Warn("cannot check if config has changed")
-		}
-
-		if oldHash == "" {
-			oldHash = currentHash
-		}
-		if currentHash == oldHash {
-			continue
-		}
-		oldHash = currentHash
-
-		err = reloadConfig()
-		if err == nil {
-			log.Info("configuration was updated - reloaded static layer config")
-		} else {
-			log.WithError(err).Error("cannot reload config - config hot reloading did not work")
-		}
-	}
 }
