@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 )
 
@@ -24,11 +25,9 @@ type Service struct {
 }
 
 type ServiceConfig struct {
-	Orchestrator Configuration  `json:"orchestrator"`
-	RefCache     RefCacheConfig `json:"refCache,omitempty"`
-	Service      Service        `json:"service"`
-	Prometheus   Service        `json:"prometheus"`
-	PProf        PProf          `json:"pprof"`
+	Orchestrator Configuration                  `json:"orchestrator"`
+	RefCache     RefCacheConfig                 `json:"refCache,omitempty"`
+	Service      baseserver.ServerConfiguration `json:"service"`
 }
 
 type RefCacheConfig struct {

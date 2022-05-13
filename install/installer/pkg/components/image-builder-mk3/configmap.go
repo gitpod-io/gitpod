@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -61,14 +62,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
 			},
 		},
-		Service: config.Service{
-			Addr: fmt.Sprintf(":%d", RPCPort),
-		},
-		Prometheus: config.Service{
-			Addr: fmt.Sprintf("127.0.0.1:%d", PrometheusPort),
-		},
-		PProf: config.PProf{
-			Addr: fmt.Sprintf(":%d", PProfPort),
+		Service: baseserver.ServerConfiguration{
+			Address: fmt.Sprintf(":%d", RPCPort),
 		},
 	}
 

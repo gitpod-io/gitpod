@@ -109,70 +109,71 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		volumeMounts = append(volumeMounts, *mnt)
 	}
 
-	return []runtime.Object{&appsv1.Deployment{
-		TypeMeta: common.TypeMetaDeployment,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    labels,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Selector: &metav1.LabelSelector{MatchLabels: labels},
-			Replicas: common.Replicas(ctx, Component),
-			Strategy: common.DeploymentStrategy,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      Component,
-					Namespace: ctx.Namespace,
-					Labels:    labels,
-					Annotations: map[string]string{
-						common.AnnotationConfigChecksum: configHash,
-					},
-				},
-				Spec: corev1.PodSpec{
-					Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
-					ServiceAccountName:            Component,
-					EnableServiceLinks:            pointer.Bool(false),
-					DNSPolicy:                     "ClusterFirst",
-					RestartPolicy:                 "Always",
-					TerminationGracePeriodSeconds: pointer.Int64(30),
-					Volumes:                       volumes,
-					InitContainers: []corev1.Container{
-						*common.InternalCAContainer(ctx),
-					},
-					Containers: []corev1.Container{{
-						Name:            Component,
-						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
-						ImagePullPolicy: corev1.PullIfNotPresent,
-						Args: []string{
-							"run",
-							"--config",
-							"/config/image-builder.json",
+	return []runtime.Object{
+		&appsv1.Deployment{
+			TypeMeta: common.TypeMetaDeployment,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      Component,
+				Namespace: ctx.Namespace,
+				Labels:    labels,
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{MatchLabels: labels},
+				Replicas: common.Replicas(ctx, Component),
+				Strategy: common.DeploymentStrategy,
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      Component,
+						Namespace: ctx.Namespace,
+						Labels:    labels,
+						Annotations: map[string]string{
+							common.AnnotationConfigChecksum: configHash,
 						},
-						Env: common.MergeEnv(
-							common.DefaultEnv(&ctx.Config),
-							common.WorkspaceTracingEnv(ctx),
-						),
-						Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								"cpu":    resource.MustParse("100m"),
-								"memory": resource.MustParse("200Mi"),
+					},
+					Spec: corev1.PodSpec{
+						Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
+						ServiceAccountName:            Component,
+						EnableServiceLinks:            pointer.Bool(false),
+						DNSPolicy:                     "ClusterFirst",
+						RestartPolicy:                 "Always",
+						TerminationGracePeriodSeconds: pointer.Int64(30),
+						Volumes:                       volumes,
+						InitContainers: []corev1.Container{
+							*common.InternalCAContainer(ctx),
+						},
+						Containers: []corev1.Container{{
+							Name:            Component,
+							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Args: []string{
+								"run",
+								"--config",
+								"/config/image-builder.json",
 							},
-						}),
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: RPCPort,
-							Name:          RPCPortName,
-						}},
-						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.Bool(false),
-							RunAsUser:  pointer.Int64(33333),
+							Env: common.MergeEnv(
+								common.DefaultEnv(&ctx.Config),
+								common.WorkspaceTracingEnv(ctx),
+							),
+							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    resource.MustParse("100m"),
+									"memory": resource.MustParse("200Mi"),
+								},
+							}),
+							Ports: []corev1.ContainerPort{{
+								ContainerPort: RPCPort,
+								Name:          RPCPortName,
+							}},
+							SecurityContext: &corev1.SecurityContext{
+								Privileged: pointer.Bool(false),
+								RunAsUser:  pointer.Int64(33333),
+							},
+							VolumeMounts: volumeMounts,
 						},
-						VolumeMounts: volumeMounts,
-					},
-						*common.KubeRBACProxyContainer(ctx),
+							*common.KubeRBACProxyContainer(ctx),
+						},
 					},
 				},
 			},
-		},
-	}}, nil
+		}}, nil
 }
