@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
@@ -19,8 +20,8 @@ func Start(logger *logrus.Entry, cfg Config) error {
 
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
-		baseserver.WithDebugPort(cfg.DebugPort),
-		baseserver.WithGRPCPort(cfg.GRPCPort),
+		baseserver.WithDebug(fmt.Sprintf("localhost:%d", cfg.DebugPort), nil),
+		baseserver.WithGRPC(fmt.Sprintf("localhost:%d", cfg.GRPCPort), nil),
 		baseserver.WithMetricsRegistry(registry),
 	)
 	if err != nil {

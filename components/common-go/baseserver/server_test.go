@@ -7,6 +7,9 @@ package baseserver_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/prometheus/client_golang/prometheus"
@@ -15,75 +18,67 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"net/http"
-	"testing"
 )
 
 func TestServer_StartStop(t *testing.T) {
 	// We don't use the helper NewForTests, because we want to control stopping ourselves.
-	srv, err := baseserver.New("server_test", baseserver.WithHTTPPort(8765), baseserver.WithGRPCPort(8766), baseserver.WithDebugPort(8767))
+	srv, err := baseserver.New("server_test",
+		baseserver.WithHTTP("localhost:8765", nil),
+		baseserver.WithGRPC("localhost:8766", nil),
+		baseserver.WithDebug("localhost:8767", nil),
+	)
 	require.NoError(t, err)
 	baseserver.StartServerForTests(t, srv)
 
-	require.Equal(t, "http://localhost:8765", srv.HTTPAddress())
+	require.Equal(t, "http://127.0.0.1:8765", srv.HTTPAddress())
 	require.Equal(t, "localhost:8766", srv.GRPCAddress())
-	require.Equal(t, "http://localhost:8767", srv.DebugAddress())
+	require.Equal(t, "http://127.0.0.1:8767", srv.DebugAddress())
 	require.NoError(t, srv.Close())
 }
 
 func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
-	scenarios := []struct {
-		startHTTP bool
-		startGRPC bool
+	tests := []struct {
+		StartHTTP bool
+		StartGRPC bool
 	}{
-		{startHTTP: false, startGRPC: false},
-		{startHTTP: true, startGRPC: false},
-		{startHTTP: true, startGRPC: true},
-		{startHTTP: false, startGRPC: true},
+		{StartHTTP: false, StartGRPC: false},
+		{StartHTTP: true, StartGRPC: false},
+		{StartHTTP: true, StartGRPC: true},
+		{StartHTTP: false, StartGRPC: true},
 	}
 
-	for _, scenario := range scenarios {
-		t.Run(fmt.Sprintf("with grpc: %v, http: %v", scenario.startGRPC, scenario.startHTTP), func(t *testing.T) {
-			opts := []baseserver.Option{baseserver.WithDebugPort(9000)}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("with http: %v, grpc: %v", test.StartGRPC, test.StartHTTP), func(t *testing.T) {
+			opts := []baseserver.Option{baseserver.WithDebug(fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)), nil)}
 
-			if scenario.startHTTP {
-				opts = append(opts, baseserver.WithHTTPPort(7000))
-			} else {
-				opts = append(opts, baseserver.WithHTTPPort(-1))
+			if test.StartHTTP {
+				opts = append(opts, baseserver.WithHTTP(fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)), nil))
 			}
 
-			if scenario.startGRPC {
-				opts = append(opts, baseserver.WithGRPCPort(8000))
-			} else {
-				opts = append(opts, baseserver.WithGRPCPort(-1))
+			if test.StartGRPC {
+				opts = append(opts, baseserver.WithGRPC(fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)), nil))
 			}
 
-			srv := baseserver.NewForTests(t, opts...)
+			srv, err := baseserver.New("test_server", opts...)
+			if err != nil {
+				t.Fatal(err)
+			}
 			baseserver.StartServerForTests(t, srv)
 
-			require.Equal(t, "http://localhost:9000", srv.DebugAddress())
-			if scenario.startHTTP {
-				require.Equal(t, "http://localhost:7000", srv.HTTPAddress(), "must serve http on port 7000 because startHTTP was set")
+			require.NotEmpty(t, srv.DebugAddress(), "must serve debug endpoint")
+			if test.StartHTTP {
+				require.NotEmpty(t, srv.HTTPAddress(), "must serve http because startHTTP was set")
 			} else {
 				require.Empty(t, srv.HTTPAddress(), "must not serve http")
 			}
 
-			if scenario.startGRPC {
-				require.Equal(t, "localhost:8000", srv.GRPCAddress(), "must serve grpc on port 8000 because startGRPC was set")
+			if test.StartGRPC {
+				require.NotEmpty(t, srv.GRPCAddress(), "must serve grpc because startGRPC was set")
 			} else {
 				require.Empty(t, srv.GRPCAddress(), "must not serve grpc")
 			}
 		})
 	}
-}
-
-func TestServer_OnlyDebug(t *testing.T) {
-	srv := baseserver.NewForTests(t, baseserver.WithGRPCPort(-1), baseserver.WithHTTPPort(-1), baseserver.WithDebugPort(7777))
-	baseserver.StartServerForTests(t, srv)
-
-	require.Empty(t, srv.HTTPAddress(), "server not started, address must be empty")
-	require.Empty(t, srv.GRPCAddress(), "server not started, address must be empty")
-	require.Equal(t, "http://localhost:7777", srv.DebugAddress())
 }
 
 func TestServer_Debug_HealthEndpoints(t *testing.T) {
