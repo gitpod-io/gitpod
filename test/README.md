@@ -69,5 +69,4 @@ To run the tests:
      -enterprise=<true|false> \
      -gitlab=<true|false>
    ```
-3. Tests `TestUploadDownloadBlob` and `TestUploadDownloadBlobViaServer` will fail when testing locally, as they are trying to connect to cluster local resources directly. To test them use docker image instead that runs within the cluster.
-4. If you want to run specific test, add `-run <test>` before `-kubeconfig` parameter.
+3. If you want to run specific test, add `-run <test>` before `-kubeconfig` parameter.

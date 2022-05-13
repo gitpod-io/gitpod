@@ -215,7 +215,7 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		}
 	}()
 
-	fwdReady, fwdErr := common.ForwardPort(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
+	fwdReady, fwdErr := common.ForwardPortOfPod(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
 	select {
 	case <-fwdReady:
 	case err := <-execErrs:
