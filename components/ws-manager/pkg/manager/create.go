@@ -691,11 +691,18 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 		return filepath.Join("/workspace", strings.TrimPrefix(segment, "/workspace"))
 	}
 
-	repoRoot := content.GetCheckoutLocationFromInitializer(spec.Initializer)
+	allRepoRoots := content.GetCheckoutLocationsFromInitializer(spec.Initializer)
+	if len(allRepoRoots) == 0 {
+		allRepoRoots = []string{""} // for backward compatibility, we are adding a single empty location (translates to /workspace/)
+	}
+	for i, root := range allRepoRoots {
+		allRepoRoots[i] = getWorkspaceRelativePath(root)
+	}
 
 	// Envs that start with GITPOD_ are appended to the Terminal environments
 	result := []corev1.EnvVar{}
-	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOT", Value: getWorkspaceRelativePath(repoRoot)})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOT", Value: allRepoRoots[0]})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOTS", Value: strings.Join(allRepoRoots, ",")})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_CLI_APITOKEN", Value: startContext.CLIAPIKey})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_OWNER_ID", Value: startContext.Request.Metadata.Owner})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_ID", Value: startContext.Request.Metadata.MetaId})

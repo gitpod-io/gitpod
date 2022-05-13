@@ -76,6 +76,10 @@
               "value": "/workspace/sveltejs-template"
             },
             {
+              "name": "GITPOD_REPO_ROOTS",
+              "value": "/workspace/sveltejs-template"
+            },
+            {
               "name": "GITPOD_CLI_APITOKEN",
               "value": "^?:k5kMe^DmJyy72m*KTRi@SX0T$TNa!"
             },

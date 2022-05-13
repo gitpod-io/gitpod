@@ -27,7 +27,8 @@ Use the `-H` flag to connect to either the HTTP RPC interace (`http://localhost:
 
 ### Running tests
 We use the standard Go `testing` package to run tests. To execute all `ws-manager` tests run `go test -v ./...`.
-Some of our test-cases use _golden_ files. If you want to update one, delete that particular file and execute the tests with `-update`.
+Some of our test-cases use _golden_ files. If you want to update one, delete that particular file and execute the tests with `-update` (i.e. `cd components/ws-manager/pkg/manager
+go test -v -update -force .`).
 
 Go has a load of handy flags for its testing abilities. For example the built-in race detector using `go test -race -v ./...`.
 

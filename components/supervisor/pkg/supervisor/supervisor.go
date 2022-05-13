@@ -328,21 +328,23 @@ func Run(options ...RunOption) {
 
 	if !cfg.isHeadless() {
 		go func() {
-			<-cstate.ContentReady()
+			for _, repoRoot := range strings.Split(cfg.RepoRoots, ",") {
+				<-cstate.ContentReady()
 
-			start := time.Now()
-			defer func() {
-				log.Debugf("unshallow of local repository took %v", time.Since(start))
-			}()
+				start := time.Now()
+				defer func() {
+					log.Debugf("unshallow of local repository took %v", time.Since(start))
+				}()
 
-			cmd := runAsGitpodUser(exec.Command("git", "fetch", "--unshallow", "--tags"))
-			cmd.Env = childProcEnvvars
-			cmd.Dir = cfg.RepoRoot
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			err := cmd.Run()
-			if err != nil {
-				log.WithError(err).Error("git fetch error")
+				cmd := runAsGitpodUser(exec.Command("git", "fetch", "--unshallow", "--tags"))
+				cmd.Env = childProcEnvvars
+				cmd.Dir = repoRoot
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				err := cmd.Run()
+				if err != nil {
+					log.WithError(err).Error("git fetch error")
+				}
 			}
 		}()
 	}
