@@ -7,7 +7,15 @@ package baseserver
 import (
 	"context"
 	"fmt"
-	gitpod_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -15,41 +23,32 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func New(name string, opts ...Option) (*Server, error) {
-	cfg, err := evaluateOptions(defaultConfig(), opts...)
+	options, err := evaluateOptions(defaultOptions(), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
 	server := &Server{
-		Name: name,
-		cfg:  cfg,
+		Name:    name,
+		options: options,
 	}
 
-	if initErr := server.initializeDebug(); initErr != nil {
-		return nil, fmt.Errorf("failed to initialize debug server: %w", initErr)
+	err = server.initializeDebug()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize debug server: %w", err)
 	}
 
-	if server.isHTTPEnabled() {
-		httpErr := server.initializeHTTP()
-		if httpErr != nil {
-			return nil, fmt.Errorf("failed to initialize http server: %w", httpErr)
-		}
-	}
+	server.httpMux = http.NewServeMux()
+	server.http = &http.Server{Handler: server.httpMux}
 
-	if server.isGRPCEnabled() {
-		grpcErr := server.initializeGRPC()
-		if grpcErr != nil {
-			return nil, fmt.Errorf("failed to initialize grpc server: %w", grpcErr)
-		}
+	err = server.initializeGRPC()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize gRPC server: %w", err)
 	}
 
 	return server, nil
@@ -75,7 +74,7 @@ type Server struct {
 	// Name is the name of this server, used for logging context
 	Name string
 
-	cfg *config
+	options *options
 
 	// debug is an HTTP server for debug endpoints - metrics, pprof, readiness & liveness.
 	debug         *http.Server
@@ -92,69 +91,72 @@ type Server struct {
 
 	// listening indicates the server is serving. When closed, the server is in the process of graceful termination.
 	listening chan struct{}
+	closeOnce sync.Once
+}
+
+func serveHTTP(cfg *ServerConfiguration, srv *http.Server, l net.Listener) (err error) {
+	if cfg.TLS == nil {
+		err = srv.Serve(l)
+	} else {
+		err = srv.ServeTLS(l, cfg.TLS.Cert, cfg.TLS.Key)
+	}
+	return
 }
 
 func (s *Server) ListenAndServe() error {
 	var err error
 
-	s.debugListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.debugPort))
-	if err != nil {
-		return fmt.Errorf("failed to acquire port %d", s.cfg.debugPort)
-	}
-
-	if s.isGRPCEnabled() {
-		s.grpcListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.grpcPort))
-		if err != nil {
-			return fmt.Errorf("failed to acquire port %d", s.cfg.grpcPort)
-		}
-	}
-
-	if s.isHTTPEnabled() {
-		s.httpListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.httpPort))
-		if err != nil {
-			return fmt.Errorf("failed to acquire port %d", s.cfg.httpPort)
-		}
-	}
-
-	errors := make(chan error)
-	defer close(errors)
 	s.listening = make(chan struct{})
-
-	// Always start the debug server, we should always have metrics and other debug information.
-	go func() {
-		s.Logger().WithField("protocol", "http").Infof("Serving debug server on %s", s.debugListener.Addr().String())
-		serveErr := s.debug.Serve(s.debugListener)
-		if serveErr != nil {
-			if s.isClosing() {
-				return
-			}
-
-			errors <- serveErr
+	defer func() {
+		err := s.Close()
+		if err != nil {
+			s.Logger().WithError(err).Errorf("cannot close gracefully")
 		}
 	}()
 
-	if s.isGRPCEnabled() {
-		go func() {
-			s.Logger().WithField("protocol", "grpc").Infof("Serving gRPC on %s", s.grpcListener.Addr().String())
-			if serveErr := s.grpc.Serve(s.grpcListener); serveErr != nil {
-				if s.isClosing() {
-					return
-				}
+	if srv := s.options.config.Services.Debug; srv != nil {
+		s.debugListener, err = net.Listen("tcp", srv.Address)
+		if err != nil {
+			return fmt.Errorf("failed to start debug server: %w", err)
+		}
+		s.debug.Addr = srv.Address
 
-				errors <- serveErr
+		go func() {
+			err := serveHTTP(srv, s.debug, s.debugListener)
+			if err != nil {
+				s.Logger().WithError(err).Errorf("debug server encountered an error - closing remaining servers.")
+				s.Close()
 			}
 		}()
 	}
 
-	if s.isHTTPEnabled() {
-		go func() {
-			s.Logger().WithField("protocol", "http").Infof("Serving http on %s", s.httpListener.Addr().String())
-			if serveErr := s.http.Serve(s.httpListener); serveErr != nil {
-				if s.isClosing() {
-					return
-				}
+	if srv := s.options.config.Services.HTTP; srv != nil {
+		s.httpListener, err = net.Listen("tcp", srv.Address)
+		if err != nil {
+			return fmt.Errorf("failed to start HTTP server: %w", err)
+		}
+		s.http.Addr = srv.Address
 
-				errors <- serveErr
+		go func() {
+			err := serveHTTP(srv, s.http, s.httpListener)
+			if err != nil {
+				s.Logger().WithError(err).Errorf("HTTP server encountered an error - closing remaining servers.")
+				s.Close()
+			}
+		}()
+	}
+
+	if srv := s.options.config.Services.GRPC; srv != nil {
+		s.grpcListener, err = net.Listen("tcp", srv.Address)
+		if err != nil {
+			return fmt.Errorf("failed to start gRPC server: %w", err)
+		}
+
+		go func() {
+			err := s.grpc.Serve(s.grpcListener)
+			if err != nil {
+				s.Logger().WithError(err).Errorf("gRPC server encountered an error - closing remaining servers.")
+				s.Close()
 			}
 		}()
 	}
@@ -166,61 +168,23 @@ func (s *Server) ListenAndServe() error {
 	select {
 	case sig := <-signals:
 		s.Logger().Infof("Received system signal %s, closing server.", sig.String())
-		if closeErr := s.Close(); closeErr != nil {
-			s.Logger().WithError(closeErr).Error("Failed to close server.")
-			return closeErr
-		}
-
 		return nil
-	case serverErr := <-errors:
-		s.Logger().WithError(serverErr).Errorf("Server encountered an error. Closing remaining servers.")
-		if closeErr := s.Close(); closeErr != nil {
-			return fmt.Errorf("failed to close server after one of the servers errored: %w", closeErr)
-		}
-
-		return serverErr
 	}
 }
 
 func (s *Server) Close() error {
-	ctx, cancel := context.WithTimeout(context.Background(), s.cfg.closeTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), s.options.closeTimeout)
 	defer cancel()
 
-	return s.close(ctx)
+	var err error
+	s.closeOnce.Do(func() {
+		err = s.close(ctx)
+	})
+	return err
 }
 
 func (s *Server) Logger() *logrus.Entry {
-	return s.cfg.logger
-}
-
-// HTTPAddress returns address of the HTTP Server
-// HTTPAddress() is only available once the server has been started.
-func (s *Server) HTTPAddress() string {
-	if s.httpListener == nil {
-		return ""
-	}
-	protocol := "http"
-	addr := s.httpListener.Addr().(*net.TCPAddr)
-	return fmt.Sprintf("%s://%s:%d", protocol, s.cfg.hostname, addr.Port)
-}
-
-// GRPCAddress returns address of the gRPC Server
-// GRPCAddress() is only available once the server has been started.
-func (s *Server) GRPCAddress() string {
-	if s.grpcListener == nil {
-		return ""
-	}
-	addr := s.grpcListener.Addr().(*net.TCPAddr)
-	return fmt.Sprintf("%s:%d", s.cfg.hostname, addr.Port)
-}
-
-func (s *Server) DebugAddress() string {
-	if s.debugListener == nil {
-		return ""
-	}
-	protocol := "http"
-	addr := s.debugListener.Addr().(*net.TCPAddr)
-	return fmt.Sprintf("%s://%s:%d", protocol, s.cfg.hostname, addr.Port)
+	return s.options.logger
 }
 
 func (s *Server) HTTPMux() *http.ServeMux {
@@ -232,7 +196,7 @@ func (s *Server) GRPC() *grpc.Server {
 }
 
 func (s *Server) MetricsRegistry() *prometheus.Registry {
-	return s.cfg.metricsRegistry
+	return s.options.metricsRegistry
 }
 
 func (s *Server) close(ctx context.Context) error {
@@ -241,22 +205,23 @@ func (s *Server) close(ctx context.Context) error {
 	}
 
 	if s.isClosing() {
-		s.Logger().Info("Server is already closing.")
+		s.Logger().Debug("Server is already closing.")
 		return nil
 	}
 
 	s.Logger().Info("Received graceful shutdown request.")
 	close(s.listening)
 
-	if s.isGRPCEnabled() {
+	if s.grpc != nil {
 		s.grpc.GracefulStop()
 		// s.grpc.GracefulStop() also closes the underlying net.Listener, we just release the reference.
 		s.grpcListener = nil
 		s.Logger().Info("GRPC server terminated.")
 	}
 
-	if s.isHTTPEnabled() {
-		if err := s.http.Shutdown(ctx); err != nil {
+	if s.http != nil {
+		err := s.http.Shutdown(ctx)
+		if err != nil {
 			return fmt.Errorf("failed to close http server: %w", err)
 		}
 		// s.http.Shutdown() also closes the underlying net.Listener, we just release the reference.
@@ -265,12 +230,15 @@ func (s *Server) close(ctx context.Context) error {
 	}
 
 	// Always terminate debug server last, we want to keep it running for as long as possible
-	if err := s.debug.Shutdown(ctx); err != nil {
-		return fmt.Errorf("failed to close debug server: %w", err)
+	if s.debug != nil {
+		err := s.debug.Shutdown(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to close debug server: %w", err)
+		}
+		// s.http.Shutdown() also closes the underlying net.Listener, we just release the reference.
+		s.debugListener = nil
+		s.Logger().Info("Debug server terminated.")
 	}
-	// s.http.Shutdown() also closes the underlying net.Listener, we just release the reference.
-	s.debugListener = nil
-	s.Logger().Info("Debug server terminated.")
 
 	return nil
 }
@@ -285,29 +253,19 @@ func (s *Server) isClosing() bool {
 	}
 }
 
-func (s *Server) initializeHTTP() error {
-	s.httpMux = http.NewServeMux()
-	s.http = &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.cfg.httpPort),
-		Handler: s.httpMux,
-	}
-
-	return nil
-}
-
 func (s *Server) initializeDebug() error {
 	logger := s.Logger().WithField("protocol", "debug")
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/ready", s.cfg.healthHandler.ReadyEndpoint)
+	mux.HandleFunc("/ready", s.options.healthHandler.ReadyEndpoint)
 	logger.Debug("Serving readiness handler on /ready")
 
-	mux.HandleFunc("/live", s.cfg.healthHandler.LiveEndpoint)
+	mux.HandleFunc("/live", s.options.healthHandler.LiveEndpoint)
 	logger.Debug("Serving liveliness handler on /live")
 
 	mux.Handle("/metrics", promhttp.InstrumentMetricHandler(
-		s.cfg.metricsRegistry, promhttp.HandlerFor(s.cfg.metricsRegistry, promhttp.HandlerOpts{}),
+		s.options.metricsRegistry, promhttp.HandlerFor(s.options.metricsRegistry, promhttp.HandlerOpts{}),
 	))
 	s.Logger().WithField("protocol", "http").Debug("Serving metrics on /metrics")
 
@@ -315,7 +273,6 @@ func (s *Server) initializeDebug() error {
 	logger.Debug("Serving profiler on /debug/pprof")
 
 	s.debug = &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.cfg.debugPort),
 		Handler: mux,
 	}
 
@@ -323,7 +280,7 @@ func (s *Server) initializeDebug() error {
 }
 
 func (s *Server) initializeGRPC() error {
-	gitpod_grpc.SetupLogging()
+	common_grpc.SetupLogging()
 
 	grpcMetrics := grpc_prometheus.NewServerMetrics()
 	grpcMetrics.EnableHandlingTimeHistogram()
@@ -340,18 +297,46 @@ func (s *Server) initializeGRPC() error {
 		grpcMetrics.StreamServerInterceptor(),
 	}
 
-	s.grpc = grpc.NewServer(gitpod_grpc.ServerOptionsWithInterceptors(stream, unary)...)
+	opts := common_grpc.ServerOptionsWithInterceptors(stream, unary)
+	if cfg := s.options.config.Services.GRPC; cfg != nil && cfg.TLS != nil {
+		tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+			cfg.TLS.CA, cfg.TLS.Cert, cfg.TLS.Key,
+			common_grpc.WithSetClientCAs(true),
+			common_grpc.WithServerName(s.Name),
+		)
+		if err != nil {
+			log.WithError(err).Fatal("cannot load ws-manager certs")
+		}
+
+		opts = append(opts, grpc.Creds(credentials.NewTLS(tlsConfig)))
+	}
+
+	s.grpc = grpc.NewServer(opts...)
 
 	// Register health service by default
-	grpc_health_v1.RegisterHealthServer(s.grpc, s.cfg.grpcHealthCheck)
+	grpc_health_v1.RegisterHealthServer(s.grpc, s.options.grpcHealthCheck)
 
 	return nil
 }
 
-func (s *Server) isGRPCEnabled() bool {
-	return s.cfg.grpcPort >= 0
+func httpAddress(cfg *ServerConfiguration, l net.Listener) string {
+	if l == nil {
+		return ""
+	}
+	protocol := "http"
+	if cfg != nil && cfg.TLS != nil {
+		protocol = "https"
+	}
+	return fmt.Sprintf("%s://%s", protocol, l.Addr().String())
 }
 
-func (s *Server) isHTTPEnabled() bool {
-	return s.cfg.httpPort >= 0
+func (s *Server) DebugAddress() string {
+	return httpAddress(s.options.config.Services.Debug, s.debugListener)
 }
+func (s *Server) HTTPAddress() string {
+	return httpAddress(s.options.config.Services.HTTP, s.httpListener)
+}
+func (s *Server) ReadinessAddress() string {
+	return s.DebugAddress()
+}
+func (s *Server) GRPCAddress() string { return s.options.config.Services.GRPC.GetAddress() }
