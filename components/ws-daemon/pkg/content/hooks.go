@@ -26,15 +26,15 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 
 	return map[session.WorkspaceState][]session.WorkspaceLivecycleHook{
 		session.WorkspaceInitializing: {
-			hookSetupRemoteStorage(cfg),
 			hookSetupWorkspaceLocation,
+			startIWS, // workspacekit is waiting for starting IWS, so it needs to start as soon as possible.
+			hookSetupRemoteStorage(cfg),
 			hookInstallQuota(xfs),
-			startIWS,
 		},
 		session.WorkspaceReady: {
+			startIWS,
 			hookSetupRemoteStorage(cfg),
 			hookInstallQuota(xfs),
-			startIWS,
 		},
 		session.WorkspaceDisposed: {
 			iws.StopServingWorkspace,
