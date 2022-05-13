@@ -37,6 +37,14 @@ func NewForTests(t *testing.T, opts ...Option) *Server {
 	return srv
 }
 
+func MustUseRandomLocalAddress(t *testing.T) *ServerConfiguration {
+	t.Helper()
+
+	return &ServerConfiguration{
+		Address: fmt.Sprintf("localhost:%d", MustFindFreePort(t)),
+	}
+}
+
 func MustFindFreePort(t *testing.T) int {
 	t.Helper()
 

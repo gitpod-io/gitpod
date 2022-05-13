@@ -5,6 +5,8 @@ package public_api_server
 
 import (
 	"fmt"
+
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	appsv1 "k8s.io/api/apps/v1"
@@ -47,7 +49,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:  Component,
 							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.PublicAPIServer.Version),
 							Args: []string{
-								fmt.Sprintf("--debug-port=%d", DebugContainerPort),
 								fmt.Sprintf("--grpc-port=%d", GRPCContainerPort),
 								fmt.Sprintf("--gitpod-api-url=wss://%s/api/v1", ctx.Config.Domain),
 							},
@@ -59,10 +60,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							}),
 							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: DebugContainerPort,
-									Name:          DebugPortName,
-								},
 								{
 									ContainerPort: GRPCContainerPort,
 									Name:          GRPCPortName,
@@ -78,7 +75,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path:   "/live",
-										Port:   intstr.IntOrString{IntVal: DebugContainerPort},
+										Port:   intstr.IntOrString{IntVal: baseserver.BuiltinHealthPort},
 										Scheme: corev1.URISchemeHTTP,
 									},
 								},
@@ -90,7 +87,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path:   "/ready",
-										Port:   intstr.IntOrString{IntVal: DebugContainerPort},
+										Port:   intstr.IntOrString{IntVal: baseserver.BuiltinHealthPort},
 										Scheme: corev1.URISchemeHTTP,
 									},
 								},
@@ -99,7 +96,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								TimeoutSeconds:   1,
 							},
 						},
-							*common.KubeRBACProxyContainerWithConfig(ctx, 9500, fmt.Sprintf("http://127.0.0.1:%d/", DebugContainerPort)),
+							*common.KubeRBACProxyContainerWithConfig(ctx, 9500, fmt.Sprintf("http://127.0.0.1:%d/", baseserver.BuiltinDebugPort)),
 						},
 					},
 				},

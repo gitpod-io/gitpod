@@ -31,10 +31,6 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
 								Protocol: common.TCPProtocol,
-								Port:     &intstr.IntOrString{IntVal: DebugContainerPort},
-							},
-							{
-								Protocol: common.TCPProtocol,
 								Port:     &intstr.IntOrString{IntVal: GRPCContainerPort},
 							},
 						},

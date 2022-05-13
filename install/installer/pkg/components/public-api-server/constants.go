@@ -7,10 +7,6 @@ package public_api_server
 const (
 	Component = "public-api-server"
 
-	DebugPortName      = "debug"
-	DebugContainerPort = 9000
-	DebugServicePort   = 9000
-
 	GRPCPortName      = "grpc"
 	GRPCContainerPort = 9001
 	GRPCServicePort   = 9001
