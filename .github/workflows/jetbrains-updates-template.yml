@@ -13,6 +13,9 @@ on:
       productType:
         type: string
         required: true
+      exampleRepo:
+        type: string
+        required: true
     secrets:
       slackWebhook:
         required: true
@@ -59,12 +62,24 @@ jobs:
             This PR updates the ${{ inputs.productName }} IDE image to the latest release version.
 
             ## How to test
-            Go to the preferences and select ${{ inputs.productName }} as desktop IDE. Start a workspace and verify that the new IDE version works.
+            1. Open the preview environment generated for this branch
+            2. Choose the stable version of ${{ inputs.productName }} as your preferred editor
+            3. Start a workspace using this repository: `${{ inputs.exampleRepo }}`
+            4. Verify that the workspace starts successfully
+            5. Verify that the IDE opens successfully
+            6. Verify that the version of the IDE corresponds to the one being updated in this PR
+
+            The following resources should help, in case something goes wrong (e.g. workspaces don't start):
+
+            - https://www.gitpod.io/docs/troubleshooting#gitpod-logs-in-jetbrains-gateway
+            - https://docs.google.com/document/d/1K9PSB0G6NwX2Ns_SX_HEgMYTKYsgMJMY2wbh0p6t3lQ
 
             ## Release Notes
             ```release-note
             Update ${{ inputs.productName }} IDE image to version ${{ steps.latest-release.outputs.version }}.
             ```
+
+            _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-updates-template.yml) template_
           commit-message: "[${{ inputs.productId }}] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
           branch: "jetbrains/${{ inputs.productId }}-${{ steps.latest-release.outputs.version2 }}"
           labels: "team: IDE"
