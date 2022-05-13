@@ -21,12 +21,10 @@ func TestOptions(t *testing.T) {
 	registry := prometheus.NewRegistry()
 	health := healthcheck.NewHandler()
 	grpcHealthService := &grpc_health_v1.UnimplementedHealthServer{}
-	debugCfg := ServerConfiguration{Address: "localhost:9500"}
 	httpCfg := ServerConfiguration{Address: "localhost:8080"}
 	grpcCfg := ServerConfiguration{Address: "localhost:8081"}
 
 	var opts = []Option{
-		WithDebug(debugCfg.Address, debugCfg.TLS),
 		WithHTTP(httpCfg.Address, httpCfg.TLS),
 		WithGRPC(grpcCfg.Address, grpcCfg.TLS),
 		WithLogger(logger),
@@ -42,9 +40,8 @@ func TestOptions(t *testing.T) {
 		logger: logger,
 		config: &Configuration{
 			Services: ServicesConfiguration{
-				Debug: &debugCfg,
-				GRPC:  &grpcCfg,
-				HTTP:  &httpCfg,
+				GRPC: &grpcCfg,
+				HTTP: &httpCfg,
 			},
 		},
 		closeTimeout:    timeout,

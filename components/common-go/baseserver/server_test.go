@@ -7,12 +7,9 @@ package baseserver_test
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -23,16 +20,15 @@ import (
 func TestServer_StartStop(t *testing.T) {
 	// We don't use the helper NewForTests, because we want to control stopping ourselves.
 	srv, err := baseserver.New("server_test",
+		baseserver.WithUnderTest(),
 		baseserver.WithHTTP("localhost:8765", nil),
 		baseserver.WithGRPC("localhost:8766", nil),
-		baseserver.WithDebug("localhost:8767", nil),
 	)
 	require.NoError(t, err)
 	baseserver.StartServerForTests(t, srv)
 
 	require.Equal(t, "http://127.0.0.1:8765", srv.HTTPAddress())
 	require.Equal(t, "localhost:8766", srv.GRPCAddress())
-	require.Equal(t, "http://127.0.0.1:8767", srv.DebugAddress())
 	require.NoError(t, srv.Close())
 }
 
@@ -49,8 +45,8 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("with http: %v, grpc: %v", test.StartGRPC, test.StartHTTP), func(t *testing.T) {
-			opts := []baseserver.Option{baseserver.WithDebug(fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)), nil)}
-
+			var opts []baseserver.Option
+			opts = append(opts, baseserver.WithUnderTest())
 			if test.StartHTTP {
 				opts = append(opts, baseserver.WithHTTP(fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)), nil))
 			}
@@ -79,59 +75,6 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestServer_Debug_HealthEndpoints(t *testing.T) {
-	for _, scenario := range []struct {
-		name     string
-		endpoint string
-	}{
-		{name: "ready endpoint", endpoint: "/ready"},
-		{name: "live endpoint", endpoint: "/live"},
-	} {
-		t.Run(scenario.name, func(t *testing.T) {
-			srv := baseserver.NewForTests(t)
-			baseserver.StartServerForTests(t, srv)
-
-			resp, err := http.Get(srv.DebugAddress() + scenario.endpoint)
-			require.NoError(t, err)
-			require.Equal(t, http.StatusOK, resp.StatusCode)
-		})
-	}
-}
-
-func TestServer_Debug_MetricsEndpointWithDefaultConfig(t *testing.T) {
-	srv := baseserver.NewForTests(t)
-
-	baseserver.StartServerForTests(t, srv)
-
-	readyUR := fmt.Sprintf("%s/metrics", srv.DebugAddress())
-	resp, err := http.Get(readyUR)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-}
-
-func TestServer_ServesMetricsEndpointWithCustomMetricsConfig(t *testing.T) {
-	registry := prometheus.NewRegistry()
-	srv := baseserver.NewForTests(t,
-		baseserver.WithMetricsRegistry(registry),
-	)
-
-	baseserver.StartServerForTests(t, srv)
-
-	readyUR := fmt.Sprintf("%s/metrics", srv.DebugAddress())
-	resp, err := http.Get(readyUR)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-}
-
-func TestServer_ServesPprof(t *testing.T) {
-	srv := baseserver.NewForTests(t)
-	baseserver.StartServerForTests(t, srv)
-
-	resp, err := http.Get(srv.DebugAddress() + pprof.Path)
-	require.NoError(t, err)
-	require.Equalf(t, http.StatusOK, resp.StatusCode, "must serve pprof on %s", pprof.Path)
 }
 
 func TestServer_Metrics_gRPC(t *testing.T) {

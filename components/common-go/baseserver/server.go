@@ -22,6 +22,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -37,11 +38,7 @@ func New(name string, opts ...Option) (*Server, error) {
 		Name:    name,
 		options: options,
 	}
-
-	err = server.initializeDebug()
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize debug server: %w", err)
-	}
+	server.builtinServices = newBuiltinServices(server)
 
 	server.httpMux = http.NewServeMux()
 	server.http = &http.Server{Handler: server.httpMux}
@@ -76,9 +73,7 @@ type Server struct {
 
 	options *options
 
-	// debug is an HTTP server for debug endpoints - metrics, pprof, readiness & liveness.
-	debug         *http.Server
-	debugListener net.Listener
+	builtinServices *builtinServices
 
 	// http is an http Server, only used when port is specified in cfg
 	http         *http.Server
@@ -114,21 +109,13 @@ func (s *Server) ListenAndServe() error {
 		}
 	}()
 
-	if srv := s.options.config.Services.Debug; srv != nil {
-		s.debugListener, err = net.Listen("tcp", srv.Address)
+	go func() {
+		err := s.builtinServices.ListenAndServe()
 		if err != nil {
-			return fmt.Errorf("failed to start debug server: %w", err)
+			s.Logger().WithError(err).Errorf("builtin services encountered an error - closing remaining servers.")
+			s.Close()
 		}
-		s.debug.Addr = srv.Address
-
-		go func() {
-			err := serveHTTP(srv, s.debug, s.debugListener)
-			if err != nil {
-				s.Logger().WithError(err).Errorf("debug server encountered an error - closing remaining servers.")
-				s.Close()
-			}
-		}()
-	}
+	}()
 
 	if srv := s.options.config.Services.HTTP; srv != nil {
 		s.httpListener, err = net.Listen("tcp", srv.Address)
@@ -229,16 +216,12 @@ func (s *Server) close(ctx context.Context) error {
 		s.Logger().Info("HTTP server terminated.")
 	}
 
-	// Always terminate debug server last, we want to keep it running for as long as possible
-	if s.debug != nil {
-		err := s.debug.Shutdown(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to close debug server: %w", err)
-		}
-		// s.http.Shutdown() also closes the underlying net.Listener, we just release the reference.
-		s.debugListener = nil
-		s.Logger().Info("Debug server terminated.")
+	// Always terminate builtin server last, we want to keep it running for as long as possible
+	err := s.builtinServices.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close debug server: %w", err)
 	}
+	s.Logger().Info("Debug server terminated.")
 
 	return nil
 }
@@ -253,30 +236,19 @@ func (s *Server) isClosing() bool {
 	}
 }
 
-func (s *Server) initializeDebug() error {
-	logger := s.Logger().WithField("protocol", "debug")
-
+func (s *Server) healthEndpoint() http.Handler {
 	mux := http.NewServeMux()
-
 	mux.HandleFunc("/ready", s.options.healthHandler.ReadyEndpoint)
-	logger.Debug("Serving readiness handler on /ready")
-
 	mux.HandleFunc("/live", s.options.healthHandler.LiveEndpoint)
-	logger.Debug("Serving liveliness handler on /live")
+	return mux
+}
 
+func (s *Server) metricsEndpoint() http.Handler {
+	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.InstrumentMetricHandler(
 		s.options.metricsRegistry, promhttp.HandlerFor(s.options.metricsRegistry, promhttp.HandlerOpts{}),
 	))
-	s.Logger().WithField("protocol", "http").Debug("Serving metrics on /metrics")
-
-	mux.Handle(pprof.Path, pprof.Handler())
-	logger.Debug("Serving profiler on /debug/pprof")
-
-	s.debug = &http.Server{
-		Handler: mux,
-	}
-
-	return nil
+	return mux
 }
 
 func (s *Server) initializeGRPC() error {
@@ -331,12 +303,87 @@ func httpAddress(cfg *ServerConfiguration, l net.Listener) string {
 }
 
 func (s *Server) DebugAddress() string {
-	return httpAddress(s.options.config.Services.Debug, s.debugListener)
+	if s.builtinServices == nil {
+		return ""
+	}
+	return "http://" + s.builtinServices.Debug.Addr
+}
+func (s *Server) HealthAddr() string {
+	if s.builtinServices == nil {
+		return ""
+	}
+	return "http://" + s.builtinServices.Health.Addr
 }
 func (s *Server) HTTPAddress() string {
 	return httpAddress(s.options.config.Services.HTTP, s.httpListener)
 }
-func (s *Server) ReadinessAddress() string {
-	return s.DebugAddress()
-}
 func (s *Server) GRPCAddress() string { return s.options.config.Services.GRPC.GetAddress() }
+
+const (
+	BuiltinDebugPort   = 6060
+	BuiltinMetricsPort = 9500
+	BuiltinHealthPort  = 9501
+)
+
+type builtinServices struct {
+	underTest bool
+
+	Debug   *http.Server
+	Health  *http.Server
+	Metrics *http.Server
+}
+
+func newBuiltinServices(server *Server) *builtinServices {
+	healthAddr := fmt.Sprintf(":%d", BuiltinHealthPort)
+	if server.options.underTest {
+		healthAddr = "localhost:0"
+	}
+
+	return &builtinServices{
+		underTest: server.options.underTest,
+		Debug: &http.Server{
+			Addr:    fmt.Sprintf("localhost:%d", BuiltinDebugPort),
+			Handler: pprof.Handler(),
+		},
+		Health: &http.Server{
+			Addr:    healthAddr,
+			Handler: server.healthEndpoint(),
+		},
+		Metrics: &http.Server{
+			Addr:    fmt.Sprintf("localhost:%d", BuiltinMetricsPort),
+			Handler: server.metricsEndpoint(),
+		},
+	}
+}
+
+func (s *builtinServices) ListenAndServe() error {
+	if s == nil {
+		return nil
+	}
+
+	var eg errgroup.Group
+	if !s.underTest {
+		eg.Go(func() error { return s.Debug.ListenAndServe() })
+		eg.Go(func() error { return s.Metrics.ListenAndServe() })
+	}
+	eg.Go(func() error {
+		// health is the only service which has a variable address,
+		// because we need the health service to figure out if the
+		// server started at all
+		l, err := net.Listen("tcp", s.Health.Addr)
+		if err != nil {
+			return err
+		}
+		s.Health.Addr = l.Addr().String()
+		return s.Health.Serve(l)
+	})
+	return eg.Wait()
+}
+
+func (s *builtinServices) Close() error {
+	var eg errgroup.Group
+	eg.Go(func() error { return s.Debug.Close() })
+	eg.Go(func() error { return s.Metrics.Close() })
+	eg.Go(func() error { return s.Health.Close() })
+	return eg.Wait()
+}

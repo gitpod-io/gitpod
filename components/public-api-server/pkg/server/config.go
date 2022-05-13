@@ -9,6 +9,5 @@ import "net/url"
 type Config struct {
 	GitpodAPI *url.URL
 
-	GRPCPort  int
-	DebugPort int
+	GRPCPort int
 }
