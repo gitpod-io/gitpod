@@ -21,8 +21,8 @@ func TestServer_StartStop(t *testing.T) {
 	// We don't use the helper NewForTests, because we want to control stopping ourselves.
 	srv, err := baseserver.New("server_test",
 		baseserver.WithUnderTest(),
-		baseserver.WithHTTP("localhost:8765", nil),
-		baseserver.WithGRPC("localhost:8766", nil),
+		baseserver.WithHTTP(&baseserver.ServerConfiguration{Address: "localhost:8765"}),
+		baseserver.WithGRPC(&baseserver.ServerConfiguration{Address: "localhost:8766"}),
 	)
 	require.NoError(t, err)
 	baseserver.StartServerForTests(t, srv)
@@ -48,11 +48,15 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 			var opts []baseserver.Option
 			opts = append(opts, baseserver.WithUnderTest())
 			if test.StartHTTP {
-				opts = append(opts, baseserver.WithHTTP(fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)), nil))
+				opts = append(opts, baseserver.WithHTTP(&baseserver.ServerConfiguration{
+					Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
+				}))
 			}
 
 			if test.StartGRPC {
-				opts = append(opts, baseserver.WithGRPC(fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)), nil))
+				opts = append(opts, baseserver.WithGRPC(&baseserver.ServerConfiguration{
+					Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
+				}))
 			}
 
 			srv, err := baseserver.New("test_server", opts...)
@@ -79,7 +83,9 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 
 func TestServer_Metrics_gRPC(t *testing.T) {
 	ctx := context.Background()
-	srv := baseserver.NewForTests(t)
+	srv := baseserver.NewForTests(t, baseserver.WithGRPC(&baseserver.ServerConfiguration{
+		Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
+	}))
 
 	// At this point, there must be metrics registry available for use
 	require.NotNil(t, srv.MetricsRegistry())

@@ -21,8 +21,6 @@ func NewForTests(t *testing.T, opts ...Option) *Server {
 
 	defaultTestOpts := []Option{
 		WithUnderTest(),
-		WithGRPC(fmt.Sprintf("localhost:%d", MustFindFreePort(t)), nil),
-		WithHTTP(fmt.Sprintf("localhost:%d", MustFindFreePort(t)), nil),
 		WithCloseTimeout(1 * time.Second),
 	}
 

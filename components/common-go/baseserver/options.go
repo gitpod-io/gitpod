@@ -77,23 +77,17 @@ func WithUnderTest() Option {
 }
 
 // WithHTTP configures and enables the HTTP server.
-func WithHTTP(addr string, tls *TLSConfiguration) Option {
+func WithHTTP(cfg *ServerConfiguration) Option {
 	return func(opts *options) error {
-		opts.config.Services.HTTP = &ServerConfiguration{
-			Address: addr,
-			TLS:     tls,
-		}
+		opts.config.Services.HTTP = cfg
 		return nil
 	}
 }
 
 // WithGRPC configures and enables the GRPC server.
-func WithGRPC(addr string, tls *TLSConfiguration) Option {
+func WithGRPC(cfg *ServerConfiguration) Option {
 	return func(opts *options) error {
-		opts.config.Services.GRPC = &ServerConfiguration{
-			Address: addr,
-			TLS:     tls,
-		}
+		opts.config.Services.GRPC = cfg
 		return nil
 	}
 }

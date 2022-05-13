@@ -25,8 +25,8 @@ func TestOptions(t *testing.T) {
 	grpcCfg := ServerConfiguration{Address: "localhost:8081"}
 
 	var opts = []Option{
-		WithHTTP(httpCfg.Address, httpCfg.TLS),
-		WithGRPC(grpcCfg.Address, grpcCfg.TLS),
+		WithHTTP(&httpCfg),
+		WithGRPC(&grpcCfg),
 		WithLogger(logger),
 		WithCloseTimeout(timeout),
 		WithMetricsRegistry(registry),
