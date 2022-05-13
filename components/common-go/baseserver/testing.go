@@ -20,7 +20,7 @@ func NewForTests(t *testing.T, opts ...Option) *Server {
 	t.Helper()
 
 	defaultTestOpts := []Option{
-		WithDebug(fmt.Sprintf("localhost:%d", MustFindFreePort(t)), nil),
+		WithUnderTest(),
 		WithGRPC(fmt.Sprintf("localhost:%d", MustFindFreePort(t)), nil),
 		WithHTTP(fmt.Sprintf("localhost:%d", MustFindFreePort(t)), nil),
 		WithCloseTimeout(1 * time.Second),
@@ -82,7 +82,7 @@ func waitForServerToBeReachable(t *testing.T, srv *Server, timeout time.Duration
 	}
 
 	for {
-		healthURL := fmt.Sprintf("%s/ready", srv.DebugAddress())
+		healthURL := fmt.Sprintf("%s/ready", srv.HealthAddr())
 
 		select {
 		case <-ctx.Done():

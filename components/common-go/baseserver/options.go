@@ -24,6 +24,9 @@ type options struct {
 	// closeTimeout is the amount we allow for the server to shut down cleanly
 	closeTimeout time.Duration
 
+	noBuiltinServices bool
+	underTest         bool
+
 	// metricsRegistry configures the metrics registry to use for exporting metrics. When not set, the default prometheus registry is used.
 	metricsRegistry *prometheus.Registry
 
@@ -39,9 +42,6 @@ func defaultOptions() *options {
 			Services: ServicesConfiguration{
 				GRPC: nil, // disabled by default
 				HTTP: nil, // disabled by default
-				Debug: &ServerConfiguration{
-					Address: "localhost:9500",
-				},
 			},
 		},
 
@@ -62,6 +62,20 @@ func WithConfig(config *Configuration) Option {
 	}
 }
 
+func WithoutBuiltinServices() Option {
+	return func(opts *options) error {
+		opts.noBuiltinServices = true
+		return nil
+	}
+}
+
+func WithUnderTest() Option {
+	return func(opts *options) error {
+		opts.underTest = true
+		return nil
+	}
+}
+
 // WithHTTP configures and enables the HTTP server.
 func WithHTTP(addr string, tls *TLSConfiguration) Option {
 	return func(opts *options) error {
@@ -77,17 +91,6 @@ func WithHTTP(addr string, tls *TLSConfiguration) Option {
 func WithGRPC(addr string, tls *TLSConfiguration) Option {
 	return func(opts *options) error {
 		opts.config.Services.GRPC = &ServerConfiguration{
-			Address: addr,
-			TLS:     tls,
-		}
-		return nil
-	}
-}
-
-// WithDebug configures and enables the debug server.
-func WithDebug(addr string, tls *TLSConfiguration) Option {
-	return func(opts *options) error {
-		opts.config.Services.Debug = &ServerConfiguration{
 			Address: addr,
 			TLS:     tls,
 		}

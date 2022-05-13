@@ -9,9 +9,8 @@ type Configuration struct {
 }
 
 type ServicesConfiguration struct {
-	Debug *ServerConfiguration `json:"debug,omitempty" yaml:"debug,omitempty"`
-	GRPC  *ServerConfiguration `json:"grpc,omitempty" yaml:"grpc,omitempty"`
-	HTTP  *ServerConfiguration `json:"http,omitempty" yaml:"http,omitempty"`
+	GRPC *ServerConfiguration `json:"grpc,omitempty" yaml:"grpc,omitempty"`
+	HTTP *ServerConfiguration `json:"http,omitempty" yaml:"http,omitempty"`
 }
 
 type ServerConfiguration struct {

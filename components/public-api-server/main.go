@@ -6,12 +6,13 @@ package main
 
 import (
 	"context"
+	"net/url"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/server"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"net/url"
 )
 
 const (
@@ -31,9 +32,9 @@ func main() {
 
 func command() *cobra.Command {
 	var (
-		gitpodAPIURL        string
-		debugPort, grpcPort int
-		verbose             bool
+		gitpodAPIURL string
+		grpcPort     int
+		verbose      bool
 	)
 
 	cmd := &cobra.Command{
@@ -53,7 +54,6 @@ func command() *cobra.Command {
 
 			if err := server.Start(logger, server.Config{
 				GitpodAPI: gitpodAPI,
-				DebugPort: debugPort,
 				GRPCPort:  grpcPort,
 			}); err != nil {
 				logger.WithError(err).Fatal("Server errored.")
@@ -62,7 +62,6 @@ func command() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&gitpodAPIURL, "gitpod-api-url", "wss://main.preview.gitpod-dev.com/api/v1", "URL for existing Gitpod Websocket API")
-	cmd.Flags().IntVar(&debugPort, "debug-port", 9500, "Port for serving debug endpoints")
 	cmd.Flags().IntVar(&grpcPort, "grpc-port", 9501, "Port for serving gRPC traffic")
 	cmd.Flags().BoolVar(&verbose, "verbose", false, "Toggle verbose logging (debug level)")
 
