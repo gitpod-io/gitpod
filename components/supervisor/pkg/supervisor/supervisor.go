@@ -1051,8 +1051,13 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	grpcMetrics := grpc_prometheus.NewServerMetrics()
 	grpcMetrics.EnableHandlingTimeHistogram()
 	opts = append(opts,
-		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor(), otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer())),
-		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor(), otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer())),
+		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
+		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor()),
+	)
+
+	opts = append(opts,
+		grpc.StreamInterceptor(otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer())),
+		grpc.UnaryInterceptor(otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer())),
 	)
 
 	m := cmux.New(l)
