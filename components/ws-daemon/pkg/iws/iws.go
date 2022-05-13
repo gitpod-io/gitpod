@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sys/unix"
