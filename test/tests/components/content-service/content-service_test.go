@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -190,19 +191,27 @@ func TestUploadDownloadBlob(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			url := resp.Url
-			t.Logf("upload URL: %s", url)
+			originalUrl := resp.Url
+			updatedUrl, err := api.Storage(originalUrl)
+			if err != nil {
+				t.Fatalf("error resolving blob upload target url")
+			}
+			t.Logf("upload URL: %s", updatedUrl)
 
-			uploadBlob(t, url, blobContent)
+			uploadBlob(t, originalUrl, updatedUrl, blobContent)
 
 			resp2, err := bs.DownloadUrl(ctx, &content_service_api.DownloadUrlRequest{OwnerId: gitpodBuiltinUserID, Name: "test-blob"})
 			if err != nil {
 				t.Fatal(err)
 			}
-			url = resp2.Url
-			t.Logf("download URL: %s", url)
+			originalUrl = resp2.Url
+			updatedUrl, err = api.Storage(originalUrl)
+			if err != nil {
+				t.Fatalf("error resolving blob download target url")
+			}
+			t.Logf("download URL: %s", updatedUrl)
 
-			body := downloadBlob(t, url)
+			body := downloadBlob(t, originalUrl, updatedUrl)
 			if string(body) != blobContent {
 				t.Fatalf("blob content mismatch: should '%s' but is '%s'", blobContent, body)
 			}
@@ -235,21 +244,30 @@ func TestUploadDownloadBlobViaServer(t *testing.T) {
 				t.Fatalf("cannot get content blob upload URL: %q", err)
 			}
 
-			url, err := server.GetContentBlobUploadURL(ctx, "test-blob")
+			originalUrl, err := server.GetContentBlobUploadURL(ctx, "test-blob")
 			if err != nil {
 				t.Fatalf("cannot get content blob upload URL: %q", err)
 			}
-			t.Logf("upload URL: %s", url)
+			updatedUrl, err := api.Storage(originalUrl)
+			if err != nil {
+				t.Fatalf("error resolving blob upload target url")
+			}
+			t.Logf("upload URL: %s", updatedUrl)
 
-			uploadBlob(t, url, blobContent)
+			uploadBlob(t, originalUrl, updatedUrl, blobContent)
 
-			url, err = server.GetContentBlobDownloadURL(ctx, "test-blob")
+			originalUrl, err = server.GetContentBlobDownloadURL(ctx, "test-blob")
 			if err != nil {
 				t.Fatalf("cannot get content blob download URL: %q", err)
 			}
-			t.Logf("download URL: %s", url)
 
-			body := downloadBlob(t, url)
+			updatedUrl, err = api.Storage(originalUrl)
+			if err != nil {
+				t.Fatalf("error resolving blob download target url")
+			}
+			t.Logf("download URL: %s", updatedUrl)
+
+			body := downloadBlob(t, originalUrl, updatedUrl)
 			if string(body) != blobContent {
 				t.Fatalf("blob content mismatch: should '%s' but is '%s'", blobContent, body)
 			}
@@ -263,12 +281,20 @@ func TestUploadDownloadBlobViaServer(t *testing.T) {
 	testEnv.Test(t, f)
 }
 
-func uploadBlob(t *testing.T, url string, content string) {
+func uploadBlob(t *testing.T, originalUrl, updatedUrl, content string) {
+	// Always use original URL to extract the host information.
+	// This will avoid any Signature mismatch errors
+	u, err := url.Parse(originalUrl)
+	if err != nil {
+		t.Fatal(err)
+	}
 	var client = &http.Client{Timeout: time.Second * 10}
-	httpreq, err := http.NewRequest(http.MethodPut, url, strings.NewReader(content))
+	httpreq, err := http.NewRequest(http.MethodPut, updatedUrl, strings.NewReader(content))
 	if err != nil {
 		t.Fatalf("cannot create HTTP PUT request: %q", err)
 	}
+	// Add Host header
+	httpreq.Host = u.Host
 	httpresp, err := client.Do(httpreq)
 	if err != nil {
 		t.Fatalf("HTTP PUT request failed: %q", err)
@@ -282,14 +308,27 @@ func uploadBlob(t *testing.T, url string, content string) {
 	}
 }
 
-func downloadBlob(t *testing.T, url string) string {
-	httpresp, err := http.Get(url)
+func downloadBlob(t *testing.T, originalUrl, updatedUrl string) string {
+	// Always use original URL to extract the host information.
+	// This will avoid any Signature mismatch errors
+	u, err := url.Parse(originalUrl)
 	if err != nil {
-		t.Fatalf("HTTP GET requst failed: %q", err)
+		t.Fatal(err)
+	}
+	var client = &http.Client{Timeout: time.Second * 10}
+	httpreq, err := http.NewRequest(http.MethodGet, updatedUrl, nil)
+	if err != nil {
+		t.Fatalf("cannot create HTTP GET request: %q", err)
+	}
+	// Add Host header
+	httpreq.Host = u.Host
+	httpresp, err := client.Do(httpreq)
+	if err != nil {
+		t.Fatalf("HTTP GET request failed: %q", err)
 	}
 	body, err := io.ReadAll(httpresp.Body)
 	if err != nil {
-		t.Fatalf("cannot read response body of HTTP PUT: %q", err)
+		t.Fatalf("cannot read response body of HTTP GET: %q", err)
 	}
 	return string(body)
 }

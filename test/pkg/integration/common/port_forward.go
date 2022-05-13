@@ -15,10 +15,20 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// ForwardPort establishes a TCP port forwarding to a Kubernetes pod
+// ForwardPortOfPod establishes a TCP port forwarding to a Kubernetes pod
+func ForwardPortOfPod(ctx context.Context, kubeconfig string, namespace, name, port string) (readychan chan struct{}, errchan chan error) {
+	return forwardPort(ctx, kubeconfig, namespace, "pod", name, port)
+}
+
+// ForwardPortOfSvc establishes a TCP port forwarding to a Kubernetes service
+func ForwardPortOfSvc(ctx context.Context, kubeconfig string, namespace, name, port string) (readychan chan struct{}, errchan chan error) {
+	return forwardPort(ctx, kubeconfig, namespace, "service", name, port)
+}
+
+// forwardPort establishes a TCP port forwarding to a Kubernetes resource - pod or service
 // Uses kubectl instead of Go to use a local process that can reproduce the same behavior outside the tests
 // Since we are using kubectl directly we need to pass kubeconfig explicitly
-func ForwardPort(ctx context.Context, kubeconfig string, namespace, pod, port string) (readychan chan struct{}, errchan chan error) {
+func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType, name, port string) (readychan chan struct{}, errchan chan error) {
 	errchan = make(chan error, 1)
 	readychan = make(chan struct{}, 1)
 
@@ -26,7 +36,7 @@ func ForwardPort(ctx context.Context, kubeconfig string, namespace, pod, port st
 		args := []string{
 			"port-forward",
 			"--address=0.0.0.0",
-			fmt.Sprintf("pod/%v", pod),
+			fmt.Sprintf("%s/%v", resourceType, name),
 			fmt.Sprintf("--namespace=%v", namespace),
 			fmt.Sprintf("--kubeconfig=%v", kubeconfig),
 			port,
