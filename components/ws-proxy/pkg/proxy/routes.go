@@ -94,15 +94,6 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 	})
 	routes.HandleSupervisorFrontendRoute(faviconRouter.NewRoute())
 
-	// Theia has a bunch of special routes it probably requires.
-	// TODO(cw): figure out if these routes are still required, and how we deal with specialties of other IDEs.
-	for _, pp := range []string{"/services", "/file-upload"} {
-		routes.HandleDirectIDERoute(r.Path(pp))
-	}
-	for _, pp := range []string{"/mini-browser", "/file", "/files", "/hostedPlugin", "/webview"} {
-		routes.HandleDirectIDERoute(r.PathPrefix(pp))
-	}
-
 	routes.HandleSupervisorFrontendRoute(enableCompression(r).PathPrefix("/_supervisor/frontend"))
 
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/supervisor"), false)
