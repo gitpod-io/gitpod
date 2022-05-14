@@ -326,19 +326,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 		}
 	}
 
-	# REMOVE this once all workspaces have updated to new vscode version
-	# old foreign content route used by vscode to serve webview and webworker resources
-	# origin should be decoupled from the workspace (port) origin but the workspace (port) prefix should be the path root for routing
-	@foreign_content header_regexp host Host ^.+-foreign.ws(-[a-z0-9]+)?.{$GITPOD_DOMAIN}
-	handle @foreign_content {
-		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
-			import workspace_transport
-			import upstream_headers
-
-			header_up X-WSProxy-Host       {http.request.host}
-		}
-	}
-
 	# foreign content route used by vscode to serve webview and webworker resources of the form
 	# https://{{hash_base_32}}.<cluster>.<gitpod_domain> or https://v--{{hash_base_32}}.<cluster>.<gitpod_domain>
 	# e.g:
