@@ -935,6 +935,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				tracing.LogError(span, err)
 				log.WithError(err).Warn("cannot take snapshot")
 				err = xerrors.Errorf("cannot take snapshot: %v", err)
+				err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+				if err != nil {
+					log.WithError(err).Warn("was unable to mark workspace as failed")
+				}
 			}
 
 			if res != nil {
@@ -943,6 +947,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					tracing.LogError(span, err)
 					log.WithError(err).Warn("cannot mark headless workspace with snapshot - that's one prebuild lost")
 					err = xerrors.Errorf("cannot remember snapshot: %v", err)
+					err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+					if err != nil {
+						log.WithError(err).Warn("was unable to mark workspace as failed")
+					}
 				}
 			}
 		}
