@@ -46,24 +46,20 @@ RUN yarn --frozen-lockfile --network-timeout 180000
 RUN rm -rf remote/node_modules/
 COPY --from=dependencies_builder /gp-code/remote/node_modules/ /gp-code/remote/node_modules/
 
+# update product.json
 RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
     nameLong=$(jq --raw-output '.nameLong' product.json) && \
-    echo $CODE_QUALITY && \
     if [ "$CODE_QUALITY" = "insider" ]; then \
         nameShort="$nameShort - Insiders" \
         nameLong="$nameLong - Insiders" \
     ; fi  && \
-    setQuality='setpath(["quality"]; $codeQuality)' && \
-    setNameShort='setpath(["nameShort"]; $nameShort)' && \
-    setNameLong='setpath(["nameLong"]; $nameLong)' && \
+    setQuality="setpath([\"quality\"]; \"$CODE_QUALITY\")" && \
+    setNameShort="setpath([\"nameShort\"]; \"$nameShort\")" && \
+    setNameLong="setpath([\"nameLong\"]; \"$nameLong\")" && \
     jqCommands="${setQuality} | ${setNameShort} | ${setNameLong}" && \
-    cat product.json | jq \
-        --arg codeQuality "$CODE_QUALITY" \
-        --arg nameShort "$nameShort" \
-        --arg nameLong "$nameLong" \
-         "${jqCommands}" > product.json.tmp && \
+    cat product.json | jq "${jqCommands}" > product.json.tmp && \
     mv product.json.tmp product.json && \
-    cat product.json
+    jq '{quality,nameLong,nameShort}' product.json
 
 RUN yarn --cwd extensions compile \
     && yarn gulp vscode-web-min \
