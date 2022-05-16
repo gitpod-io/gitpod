@@ -166,6 +166,8 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	case api.WorkspaceType_IMAGEBUILD:
 		wss, err := m.GetWorkspaces(ctx, &api.GetWorkspacesRequest{
 			MustMatch: &api.MetadataFilter{
+				Owner:       req.Metadata.Owner,
+				MetaId:      req.Metadata.MetaId,
 				Annotations: req.Metadata.Annotations,
 			},
 		})
