@@ -27,7 +27,7 @@ func (s *ServerConfiguration) GetAddress() string {
 }
 
 type TLSConfiguration struct {
-	CA   string `json:"ca" yaml:"ca"`
-	Cert string `json:"cert" yaml:"cert"`
-	Key  string `json:"key" yaml:"key"`
+	CAPath   string `json:"caPath" yaml:"caPath"`
+	CertPath string `json:"certPath" yaml:"certPath"`
+	KeyPath  string `json:"keyPath" yaml:"keyPath"`
 }

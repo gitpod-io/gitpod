@@ -24,8 +24,7 @@ type options struct {
 	// closeTimeout is the amount we allow for the server to shut down cleanly
 	closeTimeout time.Duration
 
-	noBuiltinServices bool
-	underTest         bool
+	underTest bool
 
 	// metricsRegistry configures the metrics registry to use for exporting metrics. When not set, the default prometheus registry is used.
 	metricsRegistry *prometheus.Registry
@@ -58,13 +57,6 @@ type Option func(opts *options) error
 func WithConfig(config *Configuration) Option {
 	return func(opts *options) error {
 		opts.config = config
-		return nil
-	}
-}
-
-func WithoutBuiltinServices() Option {
-	return func(opts *options) error {
-		opts.noBuiltinServices = true
 		return nil
 	}
 }
