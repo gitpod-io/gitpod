@@ -93,7 +93,7 @@ func serveHTTP(cfg *ServerConfiguration, srv *http.Server, l net.Listener) (err 
 	if cfg.TLS == nil {
 		err = srv.Serve(l)
 	} else {
-		err = srv.ServeTLS(l, cfg.TLS.Cert, cfg.TLS.Key)
+		err = srv.ServeTLS(l, cfg.TLS.CertPath, cfg.TLS.KeyPath)
 	}
 	return
 }
@@ -272,7 +272,7 @@ func (s *Server) initializeGRPC() error {
 	opts := common_grpc.ServerOptionsWithInterceptors(stream, unary)
 	if cfg := s.options.config.Services.GRPC; cfg != nil && cfg.TLS != nil {
 		tlsConfig, err := common_grpc.ClientAuthTLSConfig(
-			cfg.TLS.CA, cfg.TLS.Cert, cfg.TLS.Key,
+			cfg.TLS.CAPath, cfg.TLS.CertPath, cfg.TLS.KeyPath,
 			common_grpc.WithSetClientCAs(true),
 			common_grpc.WithServerName(s.Name),
 		)
