@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/distribution/reference"
@@ -28,6 +29,7 @@ var proxyCmd = &cobra.Command{
 	Use:   "proxy",
 	Short: "Runs an authenticating proxy",
 	Run: func(cmd *cobra.Command, args []string) {
+		time.Sleep(10 * time.Second)
 		log.Init("bob", "", true, os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true")
 		log := log.WithField("command", "proxy")
 

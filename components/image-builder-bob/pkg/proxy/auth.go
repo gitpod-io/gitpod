@@ -27,6 +27,7 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 		log.WithFields(logrus.Fields{
 			"host": host,
 			"user": user,
+			"pass": pass,
 		}).Info("authorizing registry access")
 	}()
 
@@ -35,6 +36,7 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 		return
 	}
 
+	log.Infof("res before: %+v", res)
 	user, pass = res.Username, res.Password
 	if res.Auth != "" {
 		var auth []byte
@@ -43,12 +45,15 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 			return
 		}
 		segs := strings.SplitN(string(auth), ":", 2)
+		log.Infof("segs: %+v", segs)
 		if len(segs) < 2 {
 			return
 		}
 
 		user = segs[0]
 		pass = strings.Join(segs[1:], ":")
+		log.Infof("res after user: %s, pass: %s", user, pass)
+
 	}
 
 	return
