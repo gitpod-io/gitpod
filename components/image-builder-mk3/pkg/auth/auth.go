@@ -207,7 +207,7 @@ func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
 	}
 	dec, err := base64.StdEncoding.DecodeString(ath)
 	if err == nil {
-		segs := strings.Split(string(dec), ":")
+		segs := strings.SplitN(string(dec), ":", 1)
 		if len(segs) == 2 {
 			res.Username = segs[0]
 			res.Password = segs[1]
