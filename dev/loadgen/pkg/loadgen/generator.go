@@ -158,8 +158,8 @@ type WorkspaceCfg struct {
 	CloneURL       string                     `json:"cloneURL"`
 	WorkspaceImage string                     `json:"workspaceImage"`
 	CloneTarget    string                     `json:"cloneTarget"`
-	Score          int                        `json:"score`
-	Environment    []*api.EnvironmentVariable `json:"environment`
+	Score          int                        `json:"score"`
+	Environment    []*api.EnvironmentVariable `json:"environment"`
 }
 
 type MultiWorkspaceGenerator struct {
@@ -183,6 +183,9 @@ func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 	out := proto.Clone(f.Template).(*api.StartWorkspaceRequest)
 	out.Id = instanceID.String()
 	out.Metadata.MetaId = workspaceID
+	if out.Metadata.Annotations == nil {
+		out.Metadata.Annotations = make(map[string]string)
+	}
 	out.Metadata.Annotations["context-url"] = repo.CloneURL
 	out.ServicePrefix = workspaceID
 	out.Spec.Initializer = &csapi.WorkspaceInitializer{
