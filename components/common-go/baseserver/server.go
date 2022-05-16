@@ -20,6 +20,7 @@ import (
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -42,6 +43,11 @@ func New(name string, opts ...Option) (*Server, error) {
 
 	server.httpMux = http.NewServeMux()
 	server.http = &http.Server{Handler: server.httpMux}
+
+	err = server.initializeMetrics()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize metrics: %w", err)
+	}
 
 	err = server.initializeGRPC()
 	if err != nil {
@@ -291,15 +297,18 @@ func (s *Server) initializeGRPC() error {
 	return nil
 }
 
-func httpAddress(cfg *ServerConfiguration, l net.Listener) string {
-	if l == nil {
-		return ""
+func (s *Server) initializeMetrics() error {
+	err := s.MetricsRegistry().Register(collectors.NewGoCollector())
+	if err != nil {
+		return fmt.Errorf("faile to register go collectors: %w", err)
 	}
-	protocol := "http"
-	if cfg != nil && cfg.TLS != nil {
-		protocol = "https"
+
+	err = s.MetricsRegistry().Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+	if err != nil {
+		return fmt.Errorf("failed to register process collectors: %w", err)
 	}
-	return fmt.Sprintf("%s://%s", protocol, l.Addr().String())
+
+	return nil
 }
 
 func (s *Server) DebugAddress() string {
@@ -386,4 +395,15 @@ func (s *builtinServices) Close() error {
 	eg.Go(func() error { return s.Metrics.Close() })
 	eg.Go(func() error { return s.Health.Close() })
 	return eg.Wait()
+}
+
+func httpAddress(cfg *ServerConfiguration, l net.Listener) string {
+	if l == nil {
+		return ""
+	}
+	protocol := "http"
+	if cfg != nil && cfg.TLS != nil {
+		protocol = "https"
+	}
+	return fmt.Sprintf("%s://%s", protocol, l.Addr().String())
 }
