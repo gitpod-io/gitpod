@@ -1,6 +1,16 @@
 # Change Log
 
 ## May 2022
+- [ws-daemon] fix some workspaces fail to shutdown correctly if git operation was interrupted due to workspace termination ([#10012](https://github.com/gitpod-io/gitpod/pull/10012)) - [@sagor999](https://github.com/sagor999)
+- [ws-daemon] Remove stray IO limiter warnings ([#9995](https://github.com/gitpod-io/gitpod/pull/9995)) - [@csweichel](https://github.com/csweichel)
+- Update IntelliJ IDEA IDE image to version 221.5591.52. ([#9969](https://github.com/gitpod-io/gitpod/pull/9969)) - [@roboquat](https://github.com/roboquat)
+- [supervisor] inflate all git repos ([#9961](https://github.com/gitpod-io/gitpod/pull/9961)) - [@svenefftinge](https://github.com/svenefftinge)
+- remove with-helm and associated functions ([#9964](https://github.com/gitpod-io/gitpod/pull/9964)) - [@liam-j-bennett](https://github.com/liam-j-bennett)
+- [content-service] Refactor upload to GCS ([#9836](https://github.com/gitpod-io/gitpod/pull/9836)) - [@aledbf](https://github.com/aledbf)
+- Revert "[prebuilds] no prebuilds for inactive repos" ([#9959](https://github.com/gitpod-io/gitpod/pull/9959)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [gitpod-db] fix tables.ts ([#9957](https://github.com/gitpod-io/gitpod/pull/9957)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [installer] Miscellaneous `render` improvements ([#9947](https://github.com/gitpod-io/gitpod/pull/9947)) - [@csweichel](https://github.com/csweichel)
+- [ws-daemon] fix restore from snapshot not working ([#9943](https://github.com/gitpod-io/gitpod/pull/9943)) - [@sagor999](https://github.com/sagor999)
 - fix prebuild state mapping bug in face of missing snapshot (& add tests for it) ([#9924](https://github.com/gitpod-io/gitpod/pull/9924)) - [@geropl](https://github.com/geropl)
 - [dashboard] fixing backoff for getHeadlessLog calls ([#9941](https://github.com/gitpod-io/gitpod/pull/9941)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Fully removed the deprecated helm charts. ([#9858](https://github.com/gitpod-io/gitpod/pull/9858)) - [@csweichel](https://github.com/csweichel)
