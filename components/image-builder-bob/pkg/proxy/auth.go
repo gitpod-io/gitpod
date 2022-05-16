@@ -42,7 +42,7 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 		if err != nil {
 			return
 		}
-		segs := strings.SplitN(string(auth), ":", 1)
+		segs := strings.SplitN(string(auth), ":", 2)
 		if len(segs) < 2 {
 			return
 		}

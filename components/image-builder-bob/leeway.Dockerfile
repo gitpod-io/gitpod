@@ -29,5 +29,4 @@ ARG VERSION
 ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
 ENV GITPOD_BUILD_VERSION=${VERSION}
 # sudo buildctl-daemonless.sh
-ENTRYPOINT [ "/app/bob" ]
-CMD [ "build" ]
+ENTRYPOINT [ "/bin/sh", "-c", "sleep 10s && /app/bob build || sleep 10s" ]
