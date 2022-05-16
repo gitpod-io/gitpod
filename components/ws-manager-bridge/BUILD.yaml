@@ -4,6 +4,7 @@ packages:
     srcs:
       - "**/*.ts"
       - package.json
+      - mocha.opts
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
@@ -16,7 +17,8 @@ packages:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
-      dontTest: true
+      commands:
+        test: ["yarn", "test"]
   - name: docker
     type: docker
     deps:
