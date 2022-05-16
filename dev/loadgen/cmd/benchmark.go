@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -18,7 +19,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -28,8 +28,6 @@ import (
 	"github.com/gitpod-io/gitpod/loadgen/pkg/observer"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
-
-const benchmarkAnnotation = "benchmark"
 
 var benchmarkOpts struct {
 	TLSPath string
@@ -63,9 +61,6 @@ var benchmarkCommand = &cobra.Command{
 				MetaId:    "will-be-overriden",
 				Owner:     "c0f5dbf1-8d50-4d2a-8cd9-fe563fa53c71",
 				StartedAt: timestamppb.Now(),
-				Annotations: map[string]string{
-					benchmarkAnnotation: "true",
-				},
 			},
 			ServicePrefix: "will-be-overriden",
 			Spec: &api.StartWorkspaceSpec{

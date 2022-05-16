@@ -101,6 +101,8 @@ func (fe *FakeExecutor) StopAll() error {
 	return nil
 }
 
+const loadgenAnnotation = "loadgen"
+
 // WsmanExecutor talks to a ws manager
 type WsmanExecutor struct {
 	C          api.WorkspaceManagerClient
@@ -114,6 +116,7 @@ func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration t
 	defer cancel()
 
 	s := *spec
+	s.Metadata.Annotations[loadgenAnnotation] = "true"
 	ss := api.StartWorkspaceRequest(s)
 
 	t0 := time.Now()
@@ -188,7 +191,7 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 	listReq := api.GetWorkspacesRequest{
 		MustMatch: &api.MetadataFilter{
 			Annotations: map[string]string{
-				"benchmark": "true",
+				loadgenAnnotation: "true",
 			},
 		},
 	}
