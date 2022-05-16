@@ -86,6 +86,7 @@ packages:
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor-api/typescript-grpcweb:publish
       - components/ide/jetbrains/gateway-plugin:publish
+      - components/public-api/typescript:publish
   - name: all-apps
     type: generic
     deps:
