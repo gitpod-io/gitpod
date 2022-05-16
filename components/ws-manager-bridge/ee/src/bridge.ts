@@ -83,7 +83,7 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
             if (update) {
                 const updatedPrebuild = {
                     ...prebuild,
-                    ...update,
+                    ...update.update,
                 };
 
                 span.setTag("updatePrebuildWorkspace.prebuild.state", updatedPrebuild.state);
