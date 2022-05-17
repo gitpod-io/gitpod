@@ -27,15 +27,26 @@ docker build -t localhost:5000/source:latest .
 docker push localhost:5000/source:latest
 ```
 
-Build and run
+Build and Debug Locally
+
 ```
-# build and install bob (do this after every change)
-cd /workspace/gitpod/components/image-builder-bob
-go install
+# create a file using the contents of Google artifact registry https://www.notion.so/gitpod/Bob-proxy-env-vars-a8c3feb32092410296b7e913746fed45
 
-# run bob
-BOB_BASE_REF=localhost:5000/source:latest BOB_TARGET_REF=localhost:5000/target:83 sudo -E $(which bob) build
+touch /workspace/gitpod/components/image-builder-bob/bob.env
 
-# debug using delve
-BOB_BASE_REF=localhost:5000/source:latest BOB_TARGET_REF=localhost:5000/target:83 sudo -E $(which dlv) --listen=:2345 --headless=true --api-version=2 exec $(which bob) build
+# Start bob proxy in debug mode using vs code `bob proxy`
+# Use CMD+SHIFT+D to open menu and then select bob proxy and then run
+
+# Add break points as per your needs
+
+# export bob.env variables so that bob build uses correct values while trying to build an image
+
+set -a
+source <(cat bob.env | \
+    sed -e '/^#/d;/^\s*$/d' -e "s/'/'\\\''/g" -e "s/=\(.*\)/='\1'/g")
+set +a
+
+
+# Run bob build. This will trigger several calls to the container registry
+sudo -E $(which bob) build
 ```
