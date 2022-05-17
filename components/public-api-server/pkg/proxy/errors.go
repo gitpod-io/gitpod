@@ -22,6 +22,11 @@ func ConvertError(err error) error {
 	}
 
 	// components/gitpod-protocol/src/messaging/error.ts
+	if strings.Contains(s, "code 403") {
+		return status.Error(codes.PermissionDenied, s)
+	}
+
+	// components/gitpod-protocol/src/messaging/error.ts
 	if strings.Contains(s, "code 404") {
 		return status.Error(codes.NotFound, s)
 	}
