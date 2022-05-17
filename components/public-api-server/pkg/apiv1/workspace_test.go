@@ -116,11 +116,21 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 }
 
 func TestWorkspaceService_GetOwnerToken(t *testing.T) {
+	const (
+		bearerToken      = "bearer-token-for-tests"
+		foundWorkspaceID = "easycz-seer-xl8o1zacpyw"
+		ownerToken       = "some-owner-token"
+	)
+
 	srv := baseserver.NewForTests(t,
 		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
 	)
-	var connPool *FakeServerConnPool
 
+	connPool := &FakeServerConnPool{
+		api: &FakeGitpodAPI{
+			ownertokens: map[string]string{foundWorkspaceID: ownerToken},
+		},
+	}
 	v1.RegisterWorkspacesServiceServer(srv.GRPC(), NewWorkspaceService(connPool))
 	baseserver.StartServerForTests(t, srv)
 
@@ -128,12 +138,50 @@ func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 	require.NoError(t, err)
 
 	client := v1.NewWorkspacesServiceClient(conn)
-	ctx := context.Background()
+	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", bearerToken)
 
-	actualOwnerId, err := client.GetOwnerToken(ctx, &v1.GetOwnerTokenRequest{WorkspaceId: "some-workspace-id"})
-	require.NoError(t, err)
+	type Expectation struct {
+		Code     codes.Code
+		Response *v1.GetOwnerTokenResponse
+	}
 
-	require.Equal(t, "some-owner-token", actualOwnerId.Token)
+	scenarios := []struct {
+		name        string
+		WorkspaceID string
+		Expect      Expectation
+	}{
+		{
+			name:        "returns an owner token when workspace is found by ID",
+			WorkspaceID: foundWorkspaceID,
+			Expect: Expectation{
+				Code: codes.OK,
+				Response: &v1.GetOwnerTokenResponse{
+					Token: ownerToken,
+				},
+			},
+		},
+		{
+			name:        "not found when workspace is not found by ID",
+			WorkspaceID: "some-not-found-workspace-id",
+			Expect: Expectation{
+				Code: codes.NotFound,
+			},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			resp, err := client.GetOwnerToken(ctx, &v1.GetOwnerTokenRequest{
+				WorkspaceId: scenario.WorkspaceID,
+			})
+			if diff := cmp.Diff(scenario.Expect, Expectation{
+				Code:     status.Code(err),
+				Response: resp,
+			}, protocmp.Transform()); diff != "" {
+				t.Errorf("unexpected difference:\n%v", diff)
+			}
+		})
+	}
 }
 
 type FakeServerConnPool struct {
@@ -145,7 +193,8 @@ func (f *FakeServerConnPool) Get(ctx context.Context, token string) (gitpod.APII
 }
 
 type FakeGitpodAPI struct {
-	workspaces map[string]*gitpod.WorkspaceInfo
+	workspaces  map[string]*gitpod.WorkspaceInfo
+	ownertokens map[string]string
 }
 
 func (f *FakeGitpodAPI) GetWorkspace(ctx context.Context, id string) (res *gitpod.WorkspaceInfo, err error) {
@@ -158,7 +207,11 @@ func (f *FakeGitpodAPI) GetWorkspace(ctx context.Context, id string) (res *gitpo
 }
 
 func (f *FakeGitpodAPI) GetOwnerToken(ctx context.Context, workspaceID string) (res string, err error) {
-	panic("implement me")
+	w, ok := f.ownertokens[workspaceID]
+	if !ok {
+		return "", errors.New("code 404")
+	}
+	return w, nil
 }
 
 func (f *FakeGitpodAPI) AdminBlockUser(ctx context.Context, req *gitpod.AdminBlockUserRequest) (err error) {
