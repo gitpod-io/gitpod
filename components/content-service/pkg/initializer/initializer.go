@@ -527,8 +527,6 @@ func GetCheckoutLocationsFromInitializer(init *csapi.WorkspaceInitializer) []str
 	switch {
 	case init.GetGit() != nil:
 		return []string{init.GetGit().CheckoutLocation}
-	case init.GetSnapshotVolume() != nil:
-		return []string{init.GetSnapshotVolume().CheckoutLocation}
 	case init.GetPrebuild() != nil && len(init.GetPrebuild().Git) > 0:
 		var result = make([]string, len(init.GetPrebuild().Git))
 		for i, c := range init.GetPrebuild().Git {
