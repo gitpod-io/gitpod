@@ -37,7 +37,6 @@ require (
 )
 
 require (
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.32.1
@@ -64,6 +63,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.3.0 // indirect
 	github.com/googleapis/go-type-adapters v1.0.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
@@ -75,7 +75,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/minio/md5-simd v1.1.0 // indirect
-	github.com/minio/minio-go/v7 v7.0.11 // indirect
+	github.com/minio/minio-go/v7 v7.0.26 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
