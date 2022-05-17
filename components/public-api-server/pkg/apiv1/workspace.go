@@ -72,7 +72,34 @@ func (w *WorkspaceService) GetWorkspace(ctx context.Context, r *v1.GetWorkspaceR
 }
 
 func (w *WorkspaceService) GetOwnerToken(ctx context.Context, r *v1.GetOwnerTokenRequest) (*v1.GetOwnerTokenResponse, error) {
-	return &v1.GetOwnerTokenResponse{Token: "some-owner-token"}, nil
+	logger := ctxlogrus.Extract(ctx)
+	token, err := bearerTokenFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	server, err := w.connectionPool.Get(ctx, token)
+	if err != nil {
+		logger.WithError(err).Error("Failed to get connection to server.")
+		return nil, status.Error(codes.Internal, "failed to establish connection to downstream services")
+	}
+
+	ownerToken, err := server.GetOwnerToken(ctx, r.GetWorkspaceId())
+
+	if err != nil {
+		logger.WithError(err).Error("Failed to get owner token.")
+		converted := proxy.ConvertError(err)
+		switch status.Code(converted) {
+		case codes.PermissionDenied:
+			return nil, status.Error(codes.PermissionDenied, "insufficient permission to retrieve ownertoken")
+		case codes.NotFound:
+			return nil, status.Error(codes.NotFound, "workspace does not exist")
+		default:
+			return nil, status.Error(codes.Internal, "unable to retrieve owner token")
+		}
+	}
+
+	return &v1.GetOwnerTokenResponse{Token: ownerToken}, nil
 }
 
 func bearerTokenFromContext(ctx context.Context) (string, error) {
