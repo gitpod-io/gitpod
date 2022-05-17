@@ -157,6 +157,10 @@ func (f *FakeGitpodAPI) GetWorkspace(ctx context.Context, id string) (res *gitpo
 	return w, nil
 }
 
+func (f *FakeGitpodAPI) GetOwnerToken(ctx context.Context, workspaceID string) (res string, err error) {
+	panic("implement me")
+}
+
 func (f *FakeGitpodAPI) AdminBlockUser(ctx context.Context, req *gitpod.AdminBlockUserRequest) (err error) {
 	panic("implement me")
 }
