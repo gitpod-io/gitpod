@@ -110,10 +110,10 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 				if len(matches) < 4 {
 					return false
 				}
-				// https://{{uuid}}.ws-eu10.gitpod.io/3000-coral-dragon-ilr0r6eq/index.html
+				// https://0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk.ws-eu10.gitpod.io/3000-coral-dragon-ilr0r6eq/index.html
 				// workspaceID: coral-dragon-ilr0r6eq
 				// workspacePort: 3000
-				// foreignOrigin: extensions-
+				// foreignOrigin: 0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk
 				// foreignPath: /index.html
 				workspaceID = matches[2]
 				workspacePort = matches[1]
@@ -122,10 +122,10 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 				if len(matches) < 3 {
 					return false
 				}
-				// https://{{uuid}}.ws-eu10.gitpod.io/coral-dragon-ilr0r6eq/index.html
+				// https://0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk.ws-eu10.gitpod.io/coral-dragon-ilr0r6eq/index.html
 				// workspaceID: coral-dragon-ilr0r6eq
 				// workspacePort:
-				// foreignOrigin: extensions-
+				// foreignOrigin: 0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk
 				// foreignPath: /index.html
 				workspaceID = matches[1]
 				foreignPath = matches[2]
