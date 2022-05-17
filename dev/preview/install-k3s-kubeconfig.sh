@@ -6,29 +6,34 @@ THIS_DIR="$(dirname "$0")"
 
 source "$THIS_DIR/util/preview-name-from-branch.sh"
 
-if [[ -z "${VM_NAME:-}" ]]; then
-    VM_NAME="$(preview-name-from-branch)"
-fi
-
 PRIVATE_KEY=$HOME/.ssh/vm_id_rsa
 PUBLIC_KEY=$HOME/.ssh/vm_id_rsa.pub
 USER="ubuntu"
+BRANCH=""
 
 KUBECONFIG_PATH="/home/gitpod/.kube/config"
 K3S_KUBECONFIG_PATH="$(mktemp)"
 MERGED_KUBECONFIG_PATH="$(mktemp)"
 
-K3S_CONTEXT="${VM_NAME}"
-K3S_ENDPOINT="${VM_NAME}.kube.gitpod-dev.com"
-
-while getopts n:p:u: flag
+while getopts n:p:u:b: flag
 do
     case "${flag}" in
         u) USER="${OPTARG}";;
+        b) BRANCH="${2}";;
         *) ;;
     esac
 done
 
+if [[ "${BRANCH}" == "" ]]; then
+    VM_NAME="$(preview-name-from-branch)"
+else
+    VM_NAME="$(preview-name-from-branch "$BRANCH")"
+fi
+
+echo "Installing context from VM: $VM_NAME"
+
+K3S_CONTEXT="${VM_NAME}"
+K3S_ENDPOINT="${VM_NAME}.kube.gitpod-dev.com"
 
 function log {
     echo "[$(date)] $*"
