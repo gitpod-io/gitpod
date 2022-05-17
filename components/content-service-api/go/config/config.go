@@ -105,6 +105,8 @@ type MinIOConfig struct {
 
 	Region         string `json:"region"`
 	ParallelUpload uint   `json:"parallelUpload,omitempty"`
+
+	BucketName string `json:"bucket"`
 }
 
 type PProf struct {
