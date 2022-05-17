@@ -8,12 +8,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
-	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
@@ -29,7 +29,7 @@ type fileWatcher struct {
 func File(ctx context.Context, path string, onChange func()) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return xerrors.Errorf("unexpected error creating file watcher: %w", err)
+		return fmt.Errorf("unexpected error creating file watcher: %w", err)
 	}
 
 	fw := &fileWatcher{
@@ -40,7 +40,7 @@ func File(ctx context.Context, path string, onChange func()) error {
 	// initial hash of the file
 	hash, err := hashConfig(path)
 	if err != nil {
-		return xerrors.Errorf("cannot get hash of file %v: %w", path, err)
+		return fmt.Errorf("cannot get hash of file %v: %w", path, err)
 	}
 
 	// visible files in a volume are symlinks to files in the writer's data directory.
@@ -51,7 +51,7 @@ func File(ctx context.Context, path string, onChange func()) error {
 	err = watcher.Add(watchDir)
 	if err != nil {
 		watcher.Close()
-		return xerrors.Errorf("unexpected error watching file %v: %w", path, err)
+		return fmt.Errorf("unexpected error watching file %v: %w", path, err)
 	}
 
 	log.Infof("starting watch of file %v", path)
@@ -60,11 +60,11 @@ func File(ctx context.Context, path string, onChange func()) error {
 
 	go func() {
 		defer func() {
-			log.WithError(err).Error("stopping file watch")
+			log.WithError(err).Error("Stopping file watch")
 
 			err = watcher.Close()
 			if err != nil {
-				log.WithError(err).Error("unexpected error closing file watcher")
+				log.WithError(err).Error("Unexpected error closing file watcher")
 			}
 		}()
 
@@ -81,7 +81,7 @@ func File(ctx context.Context, path string, onChange func()) error {
 
 				currentHash, err := hashConfig(path)
 				if err != nil {
-					log.WithError(err).Warn("cannot check if config has changed")
+					log.WithError(err).Warn("Cannot check if config has changed")
 					return
 				}
 
@@ -95,7 +95,7 @@ func File(ctx context.Context, path string, onChange func()) error {
 				fw.hash = currentHash
 				fw.onChange()
 			case err := <-watcher.Errors:
-				log.WithError(err).Error("unexpected error watching event")
+				log.WithError(err).Error("Unexpected error watching event")
 			case <-ctx.Done():
 				return
 			}
