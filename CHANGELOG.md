@@ -1,6 +1,10 @@
 # Change Log
 
 ## May 2022
+- Fix prebuild updates ([#10042](https://github.com/gitpod-io/gitpod/pull/10042)) - [@andrew-farries](https://github.com/andrew-farries)
+- [ws-manager-bridge] Fix cluster role binding to scrape metrics ([#10034](https://github.com/gitpod-io/gitpod/pull/10034)) - [@easyCZ](https://github.com/easyCZ)
+- Implement a new Team Billing where Team Owners can conveniently manage a paid plan for their Team ([#8041](https://github.com/gitpod-io/gitpod/pull/8041)) - [@jankeromnes](https://github.com/jankeromnes)
+- Revert "[bridge] Fix wrong mapping of WorkspaceStatus to prebuild when "snapshot" is missing" ([#10006](https://github.com/gitpod-io/gitpod/pull/10006)) - [@geropl](https://github.com/geropl)
 - [ws-daemon] fix some workspaces fail to shutdown correctly if git operation was interrupted due to workspace termination ([#10012](https://github.com/gitpod-io/gitpod/pull/10012)) - [@sagor999](https://github.com/sagor999)
 - [ws-daemon] Remove stray IO limiter warnings ([#9995](https://github.com/gitpod-io/gitpod/pull/9995)) - [@csweichel](https://github.com/csweichel)
 - Update IntelliJ IDEA IDE image to version 221.5591.52. ([#9969](https://github.com/gitpod-io/gitpod/pull/9969)) - [@roboquat](https://github.com/roboquat)
