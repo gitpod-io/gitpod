@@ -126,9 +126,9 @@ func (test *licenseTest) Run(t *testing.T) {
 			})
 
 			if test.License == nil {
-				eval = newReplicatedEvaluator(client, domain)
+				eval = newReplicatedEvaluator(client)
 			} else {
-				eval = newReplicatedEvaluator(client, test.License.Domain)
+				eval = newReplicatedEvaluator(client)
 			}
 		} else {
 			t.Fatalf("unknown license type: '%s'", test.Type)

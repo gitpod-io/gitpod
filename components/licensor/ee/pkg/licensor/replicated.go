@@ -92,7 +92,7 @@ func defaultReplicatedLicense() *Evaluator {
 }
 
 // newReplicatedEvaluator exists to allow mocking of client
-func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator) {
+func newReplicatedEvaluator(client *http.Client) (res *Evaluator) {
 	resp, err := client.Get(replicatedLicenseApiEndpoint)
 	if err != nil {
 		return &Evaluator{invalid: fmt.Sprintf("cannot query kots admin, %q", err)}
@@ -121,10 +121,6 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator)
 		}
 	}
 
-	if !matchesDomain(lic.Domain, domain) {
-		return defaultReplicatedLicense()
-	}
-
 	if replicatedPayload.ExpirationTime != nil {
 		lic.ValidUntil = *replicatedPayload.ExpirationTime
 
@@ -141,6 +137,6 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator)
 }
 
 // NewReplicatedEvaluator gets the license data from the kots admin panel
-func NewReplicatedEvaluator(domain string) (res *Evaluator) {
-	return newReplicatedEvaluator(&http.Client{Timeout: replicatedLicenseApiTimeout}, domain)
+func NewReplicatedEvaluator() (res *Evaluator) {
+	return newReplicatedEvaluator(&http.Client{Timeout: replicatedLicenseApiTimeout})
 }
