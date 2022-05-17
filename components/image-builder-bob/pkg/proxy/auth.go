@@ -50,8 +50,8 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 			return
 		}
 
-		user = segs[0]
-		pass = strings.Join(segs[1:], ":")
+		// user = segs[0]
+		// pass = segs[1]
 		log.Infof("res after user: %s, pass: %s", user, pass)
 
 	}
@@ -66,6 +66,7 @@ func (a MapAuthorizer) AddIfNotExists(other MapAuthorizer) MapAuthorizer {
 	}
 	for k, v := range other {
 		if _, ok := a[k]; ok {
+			log.Infof("skipping key: %s from addition to auth. override value was: \n %+v, actual value is: %+v", k, v, res[k])
 			continue
 		}
 		res[k] = v

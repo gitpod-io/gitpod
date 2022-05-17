@@ -60,6 +60,7 @@ var proxyCmd = &cobra.Command{
 			targettag = r.Tag()
 		}
 
+		log.Infof("Map Authorizer value: %+v", authP)
 		auth := func() docker.Authorizer { return docker.NewDockerAuthorizer(docker.WithAuthCreds(authP.Authorize)) }
 		prx, err := proxy.NewProxy(&url.URL{Host: "localhost:8080", Scheme: "http"}, map[string]proxy.Repo{
 			"base": {
