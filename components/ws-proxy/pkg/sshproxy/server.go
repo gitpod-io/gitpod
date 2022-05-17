@@ -6,13 +6,16 @@ package sshproxy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	tracker "github.com/gitpod-io/gitpod/ws-proxy/pkg/analytics"
 	p "github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
@@ -20,6 +23,10 @@ import (
 )
 
 const GitpodUsername = "gitpod"
+
+var ErrWorkspaceNotFound = errors.New("not found workspace")
+var ErrAuthFailed = errors.New("auth failed")
+var ErrUsernameFormat = errors.New("username format is not correct")
 
 type Session struct {
 	Conn *ssh.ServerConn
@@ -51,11 +58,26 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 
 	server.sshConfig = &ssh.ServerConfig{
 		ServerVersion: "SSH-2.0-GITPOD-GATEWAY",
-		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, error) {
+		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (perm *ssh.Permissions, err error) {
 			workspaceId, ownerToken := conn.User(), string(password)
-			err := server.Authenticator(workspaceId, ownerToken)
+			wsInfo, err := server.Authenticator(workspaceId, ownerToken)
+			defer func() {
+				server.TrackSSHConnection(wsInfo, "auth", err)
+			}()
 			if err != nil {
-				return nil, err
+				if err == ErrAuthFailed {
+					return
+				}
+				args := strings.Split(conn.User(), "#")
+				if len(args) != 2 {
+					return
+				}
+				workspaceId, ownerToken = args[0], args[1]
+				wsInfo, err = server.Authenticator(workspaceId, ownerToken)
+				if err == nil {
+					err = errors.New("miss private key")
+				}
+				return
 			}
 			return &ssh.Permissions{
 				Extensions: map[string]string{
@@ -67,10 +89,13 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 			args := strings.Split(conn.User(), "#")
 			// workspaceId#ownerToken
 			if len(args) != 2 {
-				return nil, fmt.Errorf("username error")
+				return nil, ErrUsernameFormat
 			}
 			workspaceId, ownerToken := args[0], args[1]
-			err := server.Authenticator(workspaceId, ownerToken)
+			wsInfo, err := server.Authenticator(workspaceId, ownerToken)
+			defer func() {
+				server.TrackSSHConnection(wsInfo, "auth", err)
+			}()
 			if err != nil {
 				return nil, err
 			}
@@ -108,6 +133,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	key, err := s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress)
 	if err != nil {
 		cancel()
+		s.TrackSSHConnection(wsInfo, "connect", err)
 		return
 	}
 	cancel()
@@ -121,6 +147,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	remoteAddr := wsInfo.IPAddress + ":23001"
 	conn, err := net.Dial("tcp", remoteAddr)
 	if err != nil {
+		s.TrackSSHConnection(wsInfo, "connect", err)
 		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("dail failed")
 		return
 	}
@@ -137,12 +164,15 @@ func (s *Server) HandleConn(c net.Conn) {
 		Timeout: 10 * time.Second,
 	})
 	if err != nil {
+		s.TrackSSHConnection(wsInfo, "connect", err)
 		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("connect failed")
 		return
 	}
 	s.Heartbeater.SendHeartbeat(wsInfo.InstanceID, false)
 	client := ssh.NewClient(clientConn, clientChans, clientReqs)
 	ctx, cancel = context.WithCancel(context.Background())
+
+	s.TrackSSHConnection(wsInfo, "connect", nil)
 
 	go func() {
 		client.Wait()
@@ -161,15 +191,38 @@ func (s *Server) HandleConn(c net.Conn) {
 	}
 }
 
-func (s *Server) Authenticator(workspaceId, ownerToken string) (err error) {
+func (s *Server) Authenticator(workspaceId, ownerToken string) (*p.WorkspaceInfo, error) {
 	wsInfo := s.workspaceInfoProvider.WorkspaceInfo(workspaceId)
 	if wsInfo == nil {
-		return fmt.Errorf("not found workspace")
+		return nil, ErrWorkspaceNotFound
 	}
 	if wsInfo.Auth.OwnerToken != ownerToken {
-		return fmt.Errorf("auth failed")
+		return wsInfo, ErrAuthFailed
 	}
-	return nil
+	return wsInfo, nil
+}
+
+func (s *Server) TrackSSHConnection(wsInfo *p.WorkspaceInfo, phase string, err error) {
+	// if we didn't find an associated user, we don't want to track
+	if wsInfo == nil {
+		return
+	}
+	propertics := make(map[string]interface{})
+	propertics["workspaceId"] = wsInfo.WorkspaceID
+	propertics["instanceId"] = wsInfo.InstanceID
+	propertics["state"] = "success"
+	propertics["phase"] = phase
+
+	if err != nil {
+		propertics["state"] = "failed"
+		propertics["cause"] = err.Error()
+	}
+
+	tracker.Track(analytics.TrackMessage{
+		Identity:   analytics.Identity{UserID: wsInfo.OwnerUserId},
+		Event:      "ssh_connection",
+		Properties: propertics,
+	})
 }
 
 func (s *Server) GetWorkspaceSSHKey(ctx context.Context, workspaceIP string) (ssh.Signer, error) {
