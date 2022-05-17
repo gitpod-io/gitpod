@@ -57,9 +57,7 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/pushgateway/handler"
@@ -1048,13 +1046,6 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		)
 	}
 
-	grpcMetrics := grpc_prometheus.NewServerMetrics()
-	grpcMetrics.EnableHandlingTimeHistogram()
-	opts = append(opts,
-		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
-		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor()),
-	)
-
 	m := cmux.New(l)
 	restMux := grpcruntime.NewServeMux()
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
@@ -1079,17 +1070,8 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		return true
 	}))
 
-	reg := prometheus.NewRegistry()
-	reg.MustRegister(grpcMetrics)
-
-	reg.MustRegister(
-		collectors.NewGoCollector(),
-		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-	)
 	ms := storage.NewDiskMetricStore("", time.Minute*5, prometheus.DefaultGatherer, nil)
-
 	g := prometheus.Gatherers{
-		reg,
 		prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) { return ms.GetMetricFamilies(), nil }),
 	}
 	r := route.New()
