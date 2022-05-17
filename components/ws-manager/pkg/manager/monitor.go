@@ -828,6 +828,8 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	defer tracing.FinishSpan(span, nil)
 	log := log.WithFields(wso.GetOWI())
 
+	log.Infof("blabla")
+
 	workspaceID, ok := wso.WorkspaceID()
 	if !ok {
 		tracing.LogError(span, xerrors.Errorf("cannot find %s annotation", workspaceIDAnnotation))
