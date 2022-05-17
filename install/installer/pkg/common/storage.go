@@ -60,6 +60,8 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 				Secure:              true,
 				Region:              context.Config.Metadata.Region,
 				ParallelUpload:      100,
+
+				BucketName: context.Config.ObjectStorage.S3.BucketName,
 			},
 		}
 	}
