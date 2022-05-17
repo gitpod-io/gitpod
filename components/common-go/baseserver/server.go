@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 func New(name string, opts ...Option) (*Server, error) {
@@ -290,6 +291,8 @@ func (s *Server) initializeGRPC() error {
 	}
 
 	s.grpc = grpc.NewServer(opts...)
+
+	reflection.Register(s.grpc)
 
 	// Register health service by default
 	grpc_health_v1.RegisterHealthServer(s.grpc, s.options.grpcHealthCheck)
