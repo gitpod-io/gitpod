@@ -102,6 +102,7 @@ type WebAppConfig struct {
 	Tracing                *Tracing               `json:"tracing,omitempty"`
 	UsePodAntiAffinity     bool                   `json:"usePodAntiAffinity"`
 	DisableMigration       bool                   `json:"disableMigration"`
+	XLTeams                []string               `json:"xlTeams,omitempty"`
 }
 
 type WorkspaceDefaults struct {

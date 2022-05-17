@@ -162,6 +162,13 @@ export interface ConfigSerialized {
      * `blockUser` attribute to control handling of the user's account.
      */
     blockedRepositories?: { urlRegExp: string; blockUser: boolean }[];
+
+    /**
+     * XL Teams lists all teams (by uuid) for which we have XL clusters/workspace classes enabled.
+     *
+     * This is a stop gap measure until we have usage-based pricing.
+     */
+    xlTeams: string[];
 }
 
 export namespace ConfigFile {

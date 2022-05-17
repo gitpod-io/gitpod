@@ -5,7 +5,14 @@
  */
 
 import { UserService, CheckSignUpParams, CheckTermsParams } from "../../../src/user/user-service";
-import { User, WorkspaceTimeoutDuration, WORKSPACE_TIMEOUT_EXTENDED, WORKSPACE_TIMEOUT_EXTENDED_ALT, WORKSPACE_TIMEOUT_DEFAULT_LONG, WORKSPACE_TIMEOUT_DEFAULT_SHORT } from "@gitpod/gitpod-protocol";
+import {
+    User,
+    WorkspaceTimeoutDuration,
+    WORKSPACE_TIMEOUT_EXTENDED,
+    WORKSPACE_TIMEOUT_EXTENDED_ALT,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+} from "@gitpod/gitpod-protocol";
 import { inject } from "inversify";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
@@ -15,6 +22,7 @@ import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/account
 import { OssAllowListDB } from "@gitpod/gitpod-db/lib/oss-allowlist-db";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { Config } from "../../../src/config";
+import { TeamDB } from "@gitpod/gitpod-db/lib";
 
 export class UserServiceEE extends UserService {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
@@ -23,6 +31,7 @@ export class UserServiceEE extends UserService {
     @inject(OssAllowListDB) protected readonly OssAllowListDb: OssAllowListDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
         if (this.config.enablePayment) {
@@ -66,11 +75,8 @@ export class UserServiceEE extends UserService {
     }
 
     async userGetsMoreResources(user: User): Promise<boolean> {
-        if (this.config.enablePayment) {
-            return this.eligibilityService.userGetsMoreResources(user);
-        }
-
-        return false;
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        return teams.some((t) => (this.config.xlTeams || []).includes(t.id));
     }
 
     async checkSignUp(params: CheckSignUpParams) {

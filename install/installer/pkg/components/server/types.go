@@ -49,6 +49,9 @@ type ConfigSerialized struct {
 	// PrebuildLimiter defines the number of prebuilds allowed for each cloneURL in a given 1 minute interval
 	// Key of "*" defines the default limit, unless there exists a cloneURL in the map which overrides it.
 	PrebuildLimiter map[string]int `json:"prebuildLimiter"`
+
+	// XL Teams lists all teams (by uuid) for which we have XL clusters/workspace classes enabled.
+	XLTeams []string `json:"xlTeams"`
 }
 
 type BlockedRepository struct {
