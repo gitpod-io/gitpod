@@ -50,8 +50,8 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 			return
 		}
 
-		// user = segs[0]
-		// pass = segs[1]
+		user = segs[0]
+		pass = segs[1]
 		log.Infof("res after user: %s, pass: %s", user, pass)
 
 	}

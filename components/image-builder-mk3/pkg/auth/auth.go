@@ -211,6 +211,7 @@ func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
 		if len(segs) == 2 {
 			res.Username = segs[0]
 			res.Password = segs[1]
+			log.Infof("res from auth value: %+v", res)
 		}
 	}
 	return res
