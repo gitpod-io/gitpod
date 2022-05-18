@@ -27,6 +27,7 @@ export type Config = Omit<
     chargebeeProviderOptions?: ChargebeeProviderOptions;
     builtinAuthProvidersConfigured: boolean;
     blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[];
+    inactivityPeriodForRepos?: number;
 };
 
 export interface WorkspaceDefaults {
@@ -162,6 +163,12 @@ export interface ConfigSerialized {
      * `blockUser` attribute to control handling of the user's account.
      */
     blockedRepositories?: { urlRegExp: string; blockUser: boolean }[];
+
+    /**
+     * If a numeric value interpreted as days is set, repositories not beeing opened with Gitpod are
+     * considered inactive.
+     */
+    inactivityPeriodForRepos?: number;
 }
 
 export namespace ConfigFile {
@@ -220,6 +227,12 @@ export namespace ConfigFile {
                 });
             }
         }
+        let inactivityPeriodForRepos: number | undefined;
+        if (typeof config.inactivityPeriodForRepos === "number") {
+            if (config.inactivityPeriodForRepos >= 1) {
+                inactivityPeriodForRepos = config.inactivityPeriodForRepos;
+            }
+        }
         return {
             ...config,
             hostUrl,
@@ -234,6 +247,7 @@ export namespace ConfigFile {
                     : Date.now(),
             },
             blockedRepositories,
+            inactivityPeriodForRepos,
         };
     }
 }
