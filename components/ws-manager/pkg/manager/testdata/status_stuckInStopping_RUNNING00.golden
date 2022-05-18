@@ -31,7 +31,7 @@
         "phase": 4,
         "conditions": {
             "failed": "container workspace ran with an error: exit code 1",
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "runtime": {
             "node_name": "gke-gp-prod-ws-us14-us-workspace-pool-67d93ed3-l67s",

@@ -68,7 +68,7 @@
                 "seconds": 1582886676,
                 "nanos": 995133911
             },
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "runtime": {
             "node_name": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq",

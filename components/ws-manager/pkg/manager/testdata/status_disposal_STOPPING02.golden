@@ -21,7 +21,7 @@
         "phase": 6,
         "conditions": {
             "final_backup_complete": 1,
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "repo": {
             "branch": "master",

@@ -24,7 +24,7 @@
         },
         "phase": 4,
         "conditions": {
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "runtime": {
             "node_name": "minikube",

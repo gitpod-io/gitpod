@@ -16,7 +16,7 @@
         },
         "phase": 3,
         "conditions": {
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "message": "workspace initializer is running",
         "runtime": {

@@ -26,7 +26,7 @@
         },
         "phase": 5,
         "conditions": {
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "message": "headless workspace is stopping",
         "runtime": {

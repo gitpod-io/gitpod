@@ -16,7 +16,7 @@
         },
         "phase": 7,
         "conditions": {
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "message": "container workspace was terminated unexpectedly - workspace is recovering",
         "runtime": {

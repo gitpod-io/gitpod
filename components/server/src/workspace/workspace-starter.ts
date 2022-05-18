@@ -86,7 +86,7 @@ import {
     StartWorkspaceRequest,
     WorkspaceMetadata,
     WorkspaceType,
-    PvcSnapshotVolumeInfo,
+    VolumeSnapshotInfo,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
@@ -1266,13 +1266,13 @@ export class WorkspaceStarter {
             }
         }
 
-        let volumeSnapshotInfo = new PvcSnapshotVolumeInfo();
+        let volumeSnapshotInfo = new VolumeSnapshotInfo();
         const volumeSnapshots = await this.workspaceDb
             .trace(traceCtx)
             .findVolumeSnapshotById(lastValidWorkspaceInstanceId);
         if (volumeSnapshots !== undefined) {
-            volumeSnapshotInfo.setSnapshotVolumeName(volumeSnapshots.id);
-            volumeSnapshotInfo.setSnapshotVolumeHandle(volumeSnapshots.volumeHandle);
+            volumeSnapshotInfo.setVolumeSnapshotName(volumeSnapshots.id);
+            volumeSnapshotInfo.setVolumeSnapshotHandle(volumeSnapshots.volumeHandle);
         }
 
         const initializerPromise = this.createInitializer(
@@ -1442,7 +1442,7 @@ export class WorkspaceStarter {
             if (CommitContext.is(context)) {
                 backup.setCheckoutLocation(context.checkoutLocation || "");
             }
-            backup.setFromSnapshotVolume(hasVolumeSnapshot);
+            backup.setFromVolumeSnapshot(hasVolumeSnapshot);
             result.setBackup(backup);
         } else if (SnapshotContext.is(context)) {
             const snapshot = new SnapshotInitializer();

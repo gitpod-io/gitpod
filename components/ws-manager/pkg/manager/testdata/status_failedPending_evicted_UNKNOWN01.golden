@@ -17,7 +17,7 @@
         },
         "conditions": {
             "failed": "Evicted: Pod The node was low on resource: [DiskPressure]. ",
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "runtime": {
             "node_name": "gke-production--gitp-workspace-pool-2-a3afc0b4-nmbw",

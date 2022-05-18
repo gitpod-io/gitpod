@@ -124,7 +124,7 @@ message PrebuildInitializer {
 // FromBackupInitializer initializes content from a previously made backup
 message FromBackupInitializer {
     string checkout_location = 1;
-    bool from_snapshot_volume = 2;
+    bool from_volume_snapshot = 2;
 }
 
 // GitStatus describes the current Git working copy status, akin to a combination of "git status" and "git branch"

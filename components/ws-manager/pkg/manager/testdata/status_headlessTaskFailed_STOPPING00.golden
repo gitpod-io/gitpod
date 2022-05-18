@@ -22,7 +22,7 @@
         "phase": 5,
         "conditions": {
             "headless_task_failed": "headless task failed",
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "message": "headless workspace is stopping",
         "runtime": {

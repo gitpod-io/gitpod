@@ -300,8 +300,8 @@ export namespace PrebuildInitializer {
 export class FromBackupInitializer extends jspb.Message {
     getCheckoutLocation(): string;
     setCheckoutLocation(value: string): FromBackupInitializer;
-    getFromSnapshotVolume(): boolean;
-    setFromSnapshotVolume(value: boolean): FromBackupInitializer;
+    getFromVolumeSnapshot(): boolean;
+    setFromVolumeSnapshot(value: boolean): FromBackupInitializer;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): FromBackupInitializer.AsObject;
@@ -316,7 +316,7 @@ export class FromBackupInitializer extends jspb.Message {
 export namespace FromBackupInitializer {
     export type AsObject = {
         checkoutLocation: string,
-        fromSnapshotVolume: boolean,
+        fromVolumeSnapshot: boolean,
     }
 }
 

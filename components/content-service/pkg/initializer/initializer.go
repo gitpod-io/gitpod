@@ -173,18 +173,18 @@ func newFromBackupInitializer(loc string, rs storage.DirectDownloader, req *csap
 	return &fromBackupInitializer{
 		Location:           loc,
 		RemoteStorage:      rs,
-		FromSnapshotVolume: req.FromSnapshotVolume,
+		FromVolumeSnapshot: req.FromVolumeSnapshot,
 	}, nil
 }
 
 type fromBackupInitializer struct {
 	Location           string
 	RemoteStorage      storage.DirectDownloader
-	FromSnapshotVolume bool
+	FromVolumeSnapshot bool
 }
 
 func (bi *fromBackupInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
-	if bi.FromSnapshotVolume {
+	if bi.FromVolumeSnapshot {
 		return csapi.WorkspaceInitFromBackup, nil
 	}
 

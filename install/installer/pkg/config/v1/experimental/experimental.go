@@ -74,7 +74,7 @@ type PersistentVolumeClaim struct {
 	// StorageClass is a storage class of persistent volume claim to use
 	StorageClass string `json:"storageClass"`
 
-	// SnapshotClass is a snapshot class name that is used to create snapshot volume
+	// SnapshotClass is a snapshot class name that is used to create volume snapshot
 	SnapshotClass string `json:"snapshotClass"`
 }
 

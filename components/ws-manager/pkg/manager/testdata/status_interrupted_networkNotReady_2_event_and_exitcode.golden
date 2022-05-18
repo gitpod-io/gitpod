@@ -24,7 +24,7 @@
         "phase": 7,
         "conditions": {
             "network_not_ready": 1,
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "message": "container network not ready - workspace should recover shortly",
         "runtime": {
