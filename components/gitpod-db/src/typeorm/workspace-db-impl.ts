@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import * as crypto from "crypto";
 import { injectable, inject } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder, Brackets } from "typeorm";
 import {
@@ -138,8 +139,22 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     public async store(workspace: Workspace) {
         const workspaceRepo = await this.getWorkspaceRepo();
         const dbWorkspace = workspace as DBWorkspace;
+
+        // `cloneUrl` is stored redundandly to optimize for `getWorkspaceCountByCloneURL`.
+        // As clone URLs are lesser constrained we want to shorten the value to work well with the indexed column.
+        let cloneUrl: string = this.toCloneUrl255((workspace as any).context?.repository?.cloneUrl || "");
+
+        dbWorkspace.cloneUrl = cloneUrl;
         return await workspaceRepo.save(dbWorkspace);
     }
+
+    protected toCloneUrl255(cloneUrl: string) {
+        if (cloneUrl.length > 255) {
+            return `cloneUrl-sha:${crypto.createHash("sha256").update(cloneUrl, "utf8").digest("hex")}`;
+        }
+        return cloneUrl;
+    }
+
     public async updatePartial(workspaceId: string, partial: DeepPartial<Workspace>) {
         const workspaceRepo = await this.getWorkspaceRepo();
         await workspaceRepo.update(workspaceId, partial);
@@ -366,7 +381,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         since.setDate(since.getDate() - sinceLastDays);
         return workspaceRepo
             .createQueryBuilder("ws")
-            .where("cloneURL = :cloneURL", { cloneURL })
+            .where("cloneURL = :cloneURL", { cloneURL: this.toCloneUrl255(cloneURL) })
             .andWhere("creationTime > :since", { since: since.toISOString() })
             .andWhere("type = :type", { type })
             .getCount();

@@ -50,6 +50,12 @@ export class DBWorkspace implements Workspace {
     @Column("simple-json")
     context: WorkspaceContext;
 
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    cloneUrl?: string;
+
     @Column("simple-json")
     config: WorkspaceConfig;
 
