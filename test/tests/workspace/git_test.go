@@ -41,7 +41,6 @@ func TestGitActions(t *testing.T) {
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
 			Action: func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) (err error) {
-
 				var resp agent.ExecResponse
 				err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 					Dir:     workspaceRoot,
@@ -51,6 +50,10 @@ func TestGitActions(t *testing.T) {
 						"echo \"another test run...\" >> file_to_commit.txt",
 					},
 				}, &resp)
+				if err != nil {
+					return err
+				}
+				err = git.ConfigSafeDirectory(workspaceRoot)
 				if err != nil {
 					return err
 				}
@@ -79,7 +82,6 @@ func TestGitActions(t *testing.T) {
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
 			Action: func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) (err error) {
-
 				var resp agent.ExecResponse
 				err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 					Dir:     workspaceRoot,
@@ -89,6 +91,10 @@ func TestGitActions(t *testing.T) {
 						"echo \"another test run...\" >> file_to_commit.txt",
 					},
 				}, &resp)
+				if err != nil {
+					return err
+				}
+				err = git.ConfigSafeDirectory(workspaceRoot)
 				if err != nil {
 					return err
 				}
