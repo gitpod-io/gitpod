@@ -339,8 +339,15 @@ export class TypeORMUserDBImpl implements UserDB {
         if (tokenEntries.length === 0) {
             return undefined;
         }
-        return tokenEntries.sort((a, b) => `${a.token.updateDate}`.localeCompare(`${b.token.updateDate}`)).reverse()[0]
-            ?.token;
+        const latestTokenEntry = tokenEntries
+            .sort((a, b) => `${a.token.updateDate}`.localeCompare(`${b.token.updateDate}`))
+            .reverse()[0];
+        if (latestTokenEntry) {
+            if (latestTokenEntry.expiryDate !== latestTokenEntry.token.expiryDate) {
+                log.info(`Overriding 'expiryDate' of token to get refreshed on demand.`, { identity });
+            }
+            return { ...latestTokenEntry.token, expiryDate: latestTokenEntry.expiryDate };
+        }
     }
 
     public async findTokensForIdentity(identity: Identity, includeDeleted?: boolean): Promise<TokenEntry[]> {
