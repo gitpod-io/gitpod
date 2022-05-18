@@ -7,7 +7,7 @@
 import { useContext, useState } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
-import SelectableCard from "../components/SelectableCard";
+import SelectableCardSolid from "../components/SelectableCardSolid";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
 import { UserContext } from "../user-context";
@@ -64,7 +64,7 @@ export default function Preferences() {
                 <h3 className="mt-12">Theme</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>
                 <div className="mt-4 space-x-4 flex">
-                    <SelectableCard
+                    <SelectableCardSolid
                         className="w-36 h-32"
                         title="Light"
                         selected={theme === "light"}
@@ -78,8 +78,8 @@ export default function Preferences() {
                                 <rect width="32" height="16" y="48" fill="#C4C4C4" rx="8" />
                             </svg>
                         </div>
-                    </SelectableCard>
-                    <SelectableCard
+                    </SelectableCardSolid>
+                    <SelectableCardSolid
                         className="w-36 h-32"
                         title="Dark"
                         selected={theme === "dark"}
@@ -93,8 +93,8 @@ export default function Preferences() {
                                 <rect width="32" height="16" y="48" fill="#737373" rx="8" />
                             </svg>
                         </div>
-                    </SelectableCard>
-                    <SelectableCard
+                    </SelectableCardSolid>
+                    <SelectableCardSolid
                         className="w-36 h-32"
                         title="System"
                         selected={theme === "system"}
@@ -112,7 +112,7 @@ export default function Preferences() {
                                 <rect width="32" height="16" y="48" fill="#C4C4C4" rx="8" />
                             </svg>
                         </div>
-                    </SelectableCard>
+                    </SelectableCardSolid>
                 </div>
 
                 <h3 className="mt-12">
