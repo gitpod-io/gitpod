@@ -380,9 +380,27 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		_, alreadyFinalized := wso.Pod.Annotations[startedDisposalAnnotation]
 
 		if (terminated || gone) && !alreadyFinalized {
-			// We start finalizing the workspace content only after the container is gone. This way we ensure there's
-			// no process modifying the workspace content as we create the backup.
-			go m.finalizeWorkspaceContent(ctx, wso)
+			if isFailed, ok := wso.Pod.Annotations[workspaceFailedBeforeStoppingAnnotation]; ok && isFailed == "true" {
+				if neverReady, ok := wso.Pod.Annotations[workspaceNeverReadyAnnotation]; ok && neverReady == "true" {
+					// The workspace is never ready, so there is no need for a finalizer.
+					if _, ok := pod.Annotations[workspaceExplicitFailAnnotation]; !ok {
+						failMessage := status.Conditions.Failed
+						if failMessage == "" {
+							failMessage = "workspace failed to start."
+						}
+						err := m.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, failMessage))
+						if err != nil {
+							log.WithError(err).Error("was unable to mark workspace as failed")
+						}
+					}
+
+					return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
+				}
+			} else {
+				// We start finalizing the workspace content only after the container is gone. This way we ensure there's
+				// no process modifying the workspace content as we create the backup.
+				go m.finalizeWorkspaceContent(ctx, wso)
+			}
 		}
 	}
 
