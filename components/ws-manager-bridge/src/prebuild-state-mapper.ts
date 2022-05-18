@@ -64,17 +64,12 @@ export class PrebuildStateMapper {
                     update: {
                         state: "available",
                         snapshot: status.conditions!.snapshot,
+                        error: "",
                     },
                 };
             } else if (!status.conditions!.snapshot) {
-                // STOPPING && no snapshot? Definitely an error case
-                return {
-                    type: HeadlessWorkspaceEventType.Failed,
-                    update: {
-                        state: "failed",
-                        error: "error while taking snapshot",
-                    },
-                };
+                // STOPPING && no snapshot is an intermediate state that we are choosing to ignore.
+                return undefined;
             } else {
                 log.error({ instanceId: status.id }, "unhandled prebuild status update", {
                     phase: status.phase,

@@ -53,11 +53,8 @@ class TestPrebuildStateMapper {
                 },
             },
             {
-                name: "failed - no snapshot",
-                expected: {
-                    state: "failed",
-                    hasError: true,
-                },
+                name: "Stopping and no snapshot yet",
+                expected: undefined,
                 status: {
                     id,
                     phase: WorkspacePhase.STOPPING,
