@@ -62,7 +62,7 @@ func command() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&gitpodAPIURL, "gitpod-api-url", "wss://main.preview.gitpod-dev.com/api/v1", "URL for existing Gitpod Websocket API")
-	cmd.Flags().IntVar(&grpcPort, "grpc-port", 9501, "Port for serving gRPC traffic")
+	cmd.Flags().IntVar(&grpcPort, "grpc-port", 9001, "Port for serving gRPC traffic")
 	cmd.Flags().BoolVar(&verbose, "verbose", false, "Toggle verbose logging (debug level)")
 
 	return cmd
