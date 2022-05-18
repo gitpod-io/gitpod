@@ -33,6 +33,7 @@ import (
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 )
 
 // Protobuf structures often require pointer to boolean values (as that's Go's best means of expression optionallity).
@@ -259,8 +260,8 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 		PVC.Spec.StorageClassName = &PVCConfig.StorageClass
 	}
 
-	if startContext.VolumeSnapshot.VolumeSnapshotName != "" {
-		snapshotApiGroup := "snapshot.storage.k8s.io"
+	if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
+		snapshotApiGroup := volumesnapshotv1.GroupName
 		PVC.Spec.DataSource = &corev1.TypedLocalObjectReference{
 			APIGroup: &snapshotApiGroup,
 			Kind:     "VolumeSnapshot",
@@ -907,10 +908,12 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		workspaceClassLabel:    clsName,
 	}
 
-	var volumeSnapshot workspaceVolumeSnapshotStatus
+	var volumeSnapshot *workspaceVolumeSnapshotStatus
 	if req.Spec.VolumeSnapshot != nil {
-		volumeSnapshot.VolumeSnapshotName = req.Spec.VolumeSnapshot.VolumeSnapshotName
-		volumeSnapshot.VolumeSnapshotHandle = req.Spec.VolumeSnapshot.VolumeSnapshotHandle
+		volumeSnapshot = &workspaceVolumeSnapshotStatus{
+			VolumeSnapshotName:   req.Spec.VolumeSnapshot.VolumeSnapshotName,
+			VolumeSnapshotHandle: req.Spec.VolumeSnapshot.VolumeSnapshotHandle,
+		}
 	}
 
 	return &startWorkspaceContext{
