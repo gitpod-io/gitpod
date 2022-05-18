@@ -34,4 +34,7 @@ public interface GitpodServer {
 
     @JsonRequest
     CompletableFuture<IDEOptions> getIDEOptions();
+
+    @JsonRequest
+    CompletableFuture<WorkspaceInstancePort> openPort(String workspaceId, WorkspaceInstancePort port);
 }
