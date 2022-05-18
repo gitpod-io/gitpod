@@ -39,7 +39,7 @@
                 "nanos": 983492544
             },
             "stopped_by_request": 1,
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "runtime": {
             "node_name": "gke-core-dev-workspace-3-a69c4dd8-jqzs",

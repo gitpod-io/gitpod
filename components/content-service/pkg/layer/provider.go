@@ -269,7 +269,7 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 		return l, manifest, nil
 	}
 
-	if initializer.GetBackup() != nil && initializer.GetBackup().FromSnapshotVolume {
+	if initializer.GetBackup() != nil && initializer.GetBackup().FromVolumeSnapshot {
 		layer, err = contentDescriptorToLayerPVC([]byte{})
 		if err != nil {
 			return nil, nil, err

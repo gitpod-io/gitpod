@@ -865,23 +865,23 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 
 	var (
-		createdSnapshotVolume        bool
-		readySnapshotVolume          bool
+		createdVolumeSnapshot        bool
+		readyVolumeSnapshot          bool
 		deletedPVC                   bool
 		pvcFeatureEnabled            bool
-		markSnapshotVolumeAnnotation bool
-		pvcSnapshotVolumeName        string
-		pvcSnapshotContentName       string
-		pvcSnapshotClassName         string
+		markVolumeSnapshotAnnotation bool
+		pvcVolumeSnapshotName        string
+		pvcVolumeSnapshotContentName string
+		pvcVolumeSnapshotClassName   string
 	)
 	if wso.Pod != nil {
 		_, pvcFeatureEnabled = wso.Pod.Labels[pvcWorkspaceFeatureAnnotation]
-		pvcSnapshotVolumeName = workspaceID
+		pvcVolumeSnapshotName = workspaceID
 		wsClassName := ""
 		if _, ok := wso.Pod.Labels[workspaceClassLabel]; ok {
 			wsClassName = wso.Pod.Labels[workspaceClassLabel]
 		}
-		pvcSnapshotClassName = m.manager.Config.WorkspaceClasses[wsClassName].PVC.SnapshotClass
+		pvcVolumeSnapshotClassName = m.manager.Config.WorkspaceClasses[wsClassName].PVC.SnapshotClass
 	}
 
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
@@ -930,11 +930,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 
 		if pvcFeatureEnabled {
 			pvcName := wso.Pod.Name
-			if !createdSnapshotVolume {
+			if !createdVolumeSnapshot {
 				// create snapshot object out of PVC
 				volumeSnapshot := &volumesnapshotv1.VolumeSnapshot{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      pvcSnapshotVolumeName,
+						Name:      pvcVolumeSnapshotName,
 						Namespace: m.manager.Config.Namespace,
 						Labels: map[string]string{
 							"workspaceID": workspaceID,
@@ -944,7 +944,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 						Source: volumesnapshotv1.VolumeSnapshotSource{
 							PersistentVolumeClaimName: &pvcName,
 						},
-						VolumeSnapshotClassName: &pvcSnapshotClassName,
+						VolumeSnapshotClassName: &pvcVolumeSnapshotClassName,
 					},
 				}
 
@@ -953,9 +953,9 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					err = xerrors.Errorf("cannot create volumesnapshot: %v", err)
 					return true, nil, err
 				}
-				createdSnapshotVolume = true
+				createdVolumeSnapshot = true
 			}
-			if createdSnapshotVolume {
+			if createdVolumeSnapshot {
 				backoff := wait.Backoff{
 					Steps:    30,
 					Duration: 100 * time.Millisecond,
@@ -965,43 +965,43 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				}
 				err = wait.ExponentialBackoff(backoff, func() (bool, error) {
 					var volumeSnapshot volumesnapshotv1.VolumeSnapshot
-					err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: m.manager.Config.Namespace, Name: pvcSnapshotVolumeName}, &volumeSnapshot)
+					err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: m.manager.Config.Namespace, Name: pvcVolumeSnapshotName}, &volumeSnapshot)
 					if err != nil {
 						if k8serr.IsNotFound(err) {
 							// volumesnapshot doesn't exist yet, retry again
 							return false, nil
 						}
-						log.WithError(err).WithField("VolumeSnapshot.Name", pvcSnapshotVolumeName).Error("was unable to get volume snapshot")
+						log.WithError(err).WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName).Error("was unable to get volume snapshot")
 						return false, err
 					}
 					if volumeSnapshot.Status != nil {
 						if volumeSnapshot.Status.ReadyToUse != nil && *(volumeSnapshot.Status.ReadyToUse) {
-							pvcSnapshotContentName = *volumeSnapshot.Status.BoundVolumeSnapshotContentName
+							pvcVolumeSnapshotContentName = *volumeSnapshot.Status.BoundVolumeSnapshotContentName
 							return true, nil
 						}
 						if volumeSnapshot.Status.Error != nil {
 							if volumeSnapshot.Status.Error.Message != nil {
 								err = xerrors.Errorf("error during volume snapshot creation: %s", *volumeSnapshot.Status.Error.Message)
-								log.WithError(err).WithField("VolumeSnapshot.Name", pvcSnapshotVolumeName).Error("unable to create volume snapshot")
+								log.WithError(err).WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName).Error("unable to create volume snapshot")
 								return false, err
 							}
-							log.WithField("VolumeSnapshot.Name", pvcSnapshotVolumeName).Error("unknown error during volume snapshot creation")
+							log.WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName).Error("unknown error during volume snapshot creation")
 							return false, xerrors.Errorf("unknown error during volume snapshot creation")
 						}
 					}
 					return false, nil
 				})
 				if err != nil {
-					log.WithError(err).WithField("VolumeSnapshot.Name", pvcSnapshotVolumeName).Errorf("failed while waiting for volume snapshot to get ready")
+					log.WithError(err).WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName).Errorf("failed while waiting for volume snapshot to get ready")
 					return true, nil, err
 				}
-				readySnapshotVolume = true
+				readyVolumeSnapshot = true
 			}
-			if readySnapshotVolume && !markSnapshotVolumeAnnotation {
+			if readyVolumeSnapshot && !markVolumeSnapshotAnnotation {
 				var volumeSnapshotContent volumesnapshotv1.VolumeSnapshotContent
-				err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: "", Name: pvcSnapshotContentName}, &volumeSnapshotContent)
+				err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: "", Name: pvcVolumeSnapshotContentName}, &volumeSnapshotContent)
 				if err != nil {
-					log.WithError(err).WithField("VolumeSnapshotContent.Name", pvcSnapshotContentName).Error("was unable to get volume snapshot content")
+					log.WithError(err).WithField("VolumeSnapshotContent.Name", pvcVolumeSnapshotContentName).Error("was unable to get volume snapshot content")
 					return true, nil, err
 				}
 
@@ -1013,22 +1013,22 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				}
 				snapshotHandle := *volumeSnapshotContent.Status.SnapshotHandle
 
-				b, err := json.Marshal(workspaceSnapshotVolumeStatus{PvcSnapshotVolumeName: pvcSnapshotVolumeName, PvcSnapshotVolumeHandle: snapshotHandle})
+				b, err := json.Marshal(workspaceVolumeSnapshotStatus{VolumeSnapshotName: pvcVolumeSnapshotName, VolumeSnapshotHandle: snapshotHandle})
 				if err != nil {
 					return true, nil, err
 				}
 
-				err = m.manager.markWorkspace(context.Background(), workspaceID, addMark(pvcWorkspaceSnapshotVolumeAnnotation, string(b)))
+				err = m.manager.markWorkspace(context.Background(), workspaceID, addMark(pvcWorkspaceVolumeSnapshotAnnotation, string(b)))
 				if err != nil {
-					log.WithError(err).Error("cannot mark workspace with snapshot volume name - snapshot will be orphaned and backup lost")
+					log.WithError(err).Error("cannot mark workspace with volume snapshot name - snapshot will be orphaned and backup lost")
 					return true, nil, err
 				}
 
-				markSnapshotVolumeAnnotation = true
+				markVolumeSnapshotAnnotation = true
 			}
 
 			// backup is done and we are ready to kill the pod, mark PVC for deletion
-			if readySnapshotVolume && !deletedPVC {
+			if readyVolumeSnapshot && !deletedPVC {
 				// todo: once we add snapshot objects, this will be changed to create snapshot object first
 				pvcErr := m.manager.Clientset.Delete(ctx,
 					&corev1.PersistentVolumeClaim{

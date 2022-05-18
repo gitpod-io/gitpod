@@ -78,7 +78,7 @@ type startWorkspaceContext struct {
 	TraceID        string                        `json:"traceID"`
 	Headless       bool                          `json:"headless"`
 	Class          *config.WorkspaceClass        `json:"class"`
-	VolumeSnapshot workspaceSnapshotVolumeStatus `json:"volumeSnapshot"`
+	VolumeSnapshot workspaceVolumeSnapshotStatus `json:"volumeSnapshot"`
 }
 
 func (swctx *startWorkspaceContext) ContainerConfiguration() config.ContainerConfiguration {

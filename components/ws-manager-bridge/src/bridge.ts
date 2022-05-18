@@ -356,25 +356,25 @@ export class WorkspaceManagerBridge implements Disposable {
 
             // update volume snapshot information
             if (
-                status.conditions.pvcSnapshotVolume &&
-                status.conditions.pvcSnapshotVolume.snapshotVolumeName != "" &&
+                status.conditions.volumeSnapshot &&
+                status.conditions.volumeSnapshot.volumeSnapshotName != "" &&
                 writeToDB
             ) {
-                if (status.conditions.pvcSnapshotVolume.snapshotVolumeName != instance.id) {
+                if (status.conditions.volumeSnapshot.volumeSnapshotName != instance.id) {
                     log.error(
-                        "snapshot volume name doesn't match workspace instance id",
-                        status.conditions.pvcSnapshotVolume.snapshotVolumeName,
+                        "volume snapshot name doesn't match workspace instance id",
+                        status.conditions.volumeSnapshot.volumeSnapshotName,
                         instance.id,
                     );
                 }
                 let existingSnapshot = await this.workspaceDB
                     .trace(ctx)
-                    .findVolumeSnapshotById(status.conditions.pvcSnapshotVolume.snapshotVolumeName);
+                    .findVolumeSnapshotById(status.conditions.volumeSnapshot.volumeSnapshotName);
                 if (existingSnapshot === undefined) {
                     await this.workspaceDB.trace(ctx).storeVolumeSnapshot({
-                        id: status.conditions.pvcSnapshotVolume.snapshotVolumeName,
+                        id: status.conditions.volumeSnapshot.volumeSnapshotName,
                         creationTime: new Date().toISOString(),
-                        volumeHandle: status.conditions.pvcSnapshotVolume.snapshotVolumeHandle,
+                        volumeHandle: status.conditions.volumeSnapshot.volumeSnapshotHandle,
                     });
                 }
             }

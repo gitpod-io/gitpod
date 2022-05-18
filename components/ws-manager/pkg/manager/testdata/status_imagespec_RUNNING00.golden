@@ -30,7 +30,7 @@
                 "seconds": 1583767886,
                 "nanos": 855961185
             },
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "runtime": {
             "node_name": "gke-gitpod-dev-worker-pool-1-3df476cf-qxwr",

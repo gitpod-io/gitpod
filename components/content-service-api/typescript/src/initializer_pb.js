@@ -2323,7 +2323,7 @@ proto.contentservice.FromBackupInitializer.prototype.toObject = function(opt_inc
 proto.contentservice.FromBackupInitializer.toObject = function(includeInstance, msg) {
   var f, obj = {
     checkoutLocation: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    fromSnapshotVolume: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
+    fromVolumeSnapshot: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -2366,7 +2366,7 @@ proto.contentservice.FromBackupInitializer.deserializeBinaryFromReader = functio
       break;
     case 2:
       var value = /** @type {boolean} */ (reader.readBool());
-      msg.setFromSnapshotVolume(value);
+      msg.setFromVolumeSnapshot(value);
       break;
     default:
       reader.skipField();
@@ -2404,7 +2404,7 @@ proto.contentservice.FromBackupInitializer.serializeBinaryToWriter = function(me
       f
     );
   }
-  f = message.getFromSnapshotVolume();
+  f = message.getFromVolumeSnapshot();
   if (f) {
     writer.writeBool(
       2,
@@ -2433,10 +2433,10 @@ proto.contentservice.FromBackupInitializer.prototype.setCheckoutLocation = funct
 
 
 /**
- * optional bool from_snapshot_volume = 2;
+ * optional bool from_volume_snapshot = 2;
  * @return {boolean}
  */
-proto.contentservice.FromBackupInitializer.prototype.getFromSnapshotVolume = function() {
+proto.contentservice.FromBackupInitializer.prototype.getFromVolumeSnapshot = function() {
   return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
 };
 
@@ -2445,7 +2445,7 @@ proto.contentservice.FromBackupInitializer.prototype.getFromSnapshotVolume = fun
  * @param {boolean} value
  * @return {!proto.contentservice.FromBackupInitializer} returns this
  */
-proto.contentservice.FromBackupInitializer.prototype.setFromSnapshotVolume = function(value) {
+proto.contentservice.FromBackupInitializer.prototype.setFromVolumeSnapshot = function(value) {
   return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 

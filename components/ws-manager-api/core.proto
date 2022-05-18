@@ -337,13 +337,13 @@ enum PortVisibility {
     PORT_VISIBILITY_PUBLIC = 1;
 }
 
-// PvcSnapshotVolumeInfo defines snapshot volume information
-message PvcSnapshotVolumeInfo {
-    // snapshot_volume_name is the name of snapshot volume
-    string snapshot_volume_name = 1;
+// VolumeSnapshotInfo defines volume snapshot information
+message VolumeSnapshotInfo {
+    // volume_snapshot_name is the name of volume snapshot
+    string volume_snapshot_name = 1;
 
-    // snapshot_volume_handle is a handle that is used to restore snapshot volume
-    string snapshot_volume_handle = 2;
+    // volume_snapshot_handle is a handle that is used to restore volume snapshot
+    string volume_snapshot_handle = 2;
 }
 
 // WorkspaceCondition gives more detailed information as to the state of the workspace. Which condition actually
@@ -383,8 +383,8 @@ message WorkspaceConditions {
     // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
     WorkspaceConditionBool stopped_by_request = 11;
 
-    // pvc_snapshot_volume contains info about snapshot volume that was used to save persistent volume
-    PvcSnapshotVolumeInfo pvc_snapshot_volume = 12;
+    // volume_snapshot contains info about volume snapshot that was used to save persistent volume
+    VolumeSnapshotInfo volume_snapshot = 12;
 }
 
 // WorkspaceConditionBool is a trinary bool: true/false/empty
@@ -512,8 +512,8 @@ message StartWorkspaceSpec {
     // Class denotes the class of the workspace we ought to start
     string class = 13;
 
-    // volume_snapshot_id to use to restore PVC from, if set
-    PvcSnapshotVolumeInfo volume_snapshot = 14;
+    // volume_snapshot to use to restore PVC from, if set
+    VolumeSnapshotInfo volume_snapshot = 14;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces

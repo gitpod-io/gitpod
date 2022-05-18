@@ -700,26 +700,26 @@ export namespace PortSpec {
     }
 }
 
-export class PvcSnapshotVolumeInfo extends jspb.Message {
-    getSnapshotVolumeName(): string;
-    setSnapshotVolumeName(value: string): PvcSnapshotVolumeInfo;
-    getSnapshotVolumeHandle(): string;
-    setSnapshotVolumeHandle(value: string): PvcSnapshotVolumeInfo;
+export class VolumeSnapshotInfo extends jspb.Message {
+    getVolumeSnapshotName(): string;
+    setVolumeSnapshotName(value: string): VolumeSnapshotInfo;
+    getVolumeSnapshotHandle(): string;
+    setVolumeSnapshotHandle(value: string): VolumeSnapshotInfo;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): PvcSnapshotVolumeInfo.AsObject;
-    static toObject(includeInstance: boolean, msg: PvcSnapshotVolumeInfo): PvcSnapshotVolumeInfo.AsObject;
+    toObject(includeInstance?: boolean): VolumeSnapshotInfo.AsObject;
+    static toObject(includeInstance: boolean, msg: VolumeSnapshotInfo): VolumeSnapshotInfo.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: PvcSnapshotVolumeInfo, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): PvcSnapshotVolumeInfo;
-    static deserializeBinaryFromReader(message: PvcSnapshotVolumeInfo, reader: jspb.BinaryReader): PvcSnapshotVolumeInfo;
+    static serializeBinaryToWriter(message: VolumeSnapshotInfo, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): VolumeSnapshotInfo;
+    static deserializeBinaryFromReader(message: VolumeSnapshotInfo, reader: jspb.BinaryReader): VolumeSnapshotInfo;
 }
 
-export namespace PvcSnapshotVolumeInfo {
+export namespace VolumeSnapshotInfo {
     export type AsObject = {
-        snapshotVolumeName: string,
-        snapshotVolumeHandle: string,
+        volumeSnapshotName: string,
+        volumeSnapshotHandle: string,
     }
 }
 
@@ -748,10 +748,10 @@ export class WorkspaceConditions extends jspb.Message {
     getStoppedByRequest(): WorkspaceConditionBool;
     setStoppedByRequest(value: WorkspaceConditionBool): WorkspaceConditions;
 
-    hasPvcSnapshotVolume(): boolean;
-    clearPvcSnapshotVolume(): void;
-    getPvcSnapshotVolume(): PvcSnapshotVolumeInfo | undefined;
-    setPvcSnapshotVolume(value?: PvcSnapshotVolumeInfo): WorkspaceConditions;
+    hasVolumeSnapshot(): boolean;
+    clearVolumeSnapshot(): void;
+    getVolumeSnapshot(): VolumeSnapshotInfo | undefined;
+    setVolumeSnapshot(value?: VolumeSnapshotInfo): WorkspaceConditions;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceConditions.AsObject;
@@ -775,7 +775,7 @@ export namespace WorkspaceConditions {
         firstUserActivity?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         headlessTaskFailed: string,
         stoppedByRequest: WorkspaceConditionBool,
-        pvcSnapshotVolume?: PvcSnapshotVolumeInfo.AsObject,
+        volumeSnapshot?: VolumeSnapshotInfo.AsObject,
     }
 }
 
@@ -905,8 +905,8 @@ export class StartWorkspaceSpec extends jspb.Message {
 
     hasVolumeSnapshot(): boolean;
     clearVolumeSnapshot(): void;
-    getVolumeSnapshot(): PvcSnapshotVolumeInfo | undefined;
-    setVolumeSnapshot(value?: PvcSnapshotVolumeInfo): StartWorkspaceSpec;
+    getVolumeSnapshot(): VolumeSnapshotInfo | undefined;
+    setVolumeSnapshot(value?: VolumeSnapshotInfo): StartWorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -932,7 +932,7 @@ export namespace StartWorkspaceSpec {
         admission: AdmissionLevel,
         ideImage?: IDEImage.AsObject,
         pb_class: string,
-        volumeSnapshot?: PvcSnapshotVolumeInfo.AsObject,
+        volumeSnapshot?: VolumeSnapshotInfo.AsObject,
     }
 }
 

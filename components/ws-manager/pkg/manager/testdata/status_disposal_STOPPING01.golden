@@ -32,7 +32,7 @@
         },
         "phase": 5,
         "conditions": {
-            "pvc_snapshot_volume": {}
+            "volume_snapshot": {}
         },
         "runtime": {
             "node_name": "gke-dev-workload-1-49d27f81-n6zr",
