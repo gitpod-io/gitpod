@@ -347,13 +347,13 @@ type builtinServices struct {
 func newBuiltinServices(server *Server) *builtinServices {
 	healthAddr := fmt.Sprintf(":%d", BuiltinHealthPort)
 	if server.options.underTest {
-		healthAddr = "localhost:0"
+		healthAddr = ":0"
 	}
 
 	return &builtinServices{
 		underTest: server.options.underTest,
 		Debug: &http.Server{
-			Addr:    fmt.Sprintf("localhost:%d", BuiltinDebugPort),
+			Addr:    fmt.Sprintf(":%d", BuiltinDebugPort),
 			Handler: pprof.Handler(),
 		},
 		Health: &http.Server{
@@ -361,7 +361,7 @@ func newBuiltinServices(server *Server) *builtinServices {
 			Handler: server.healthEndpoint(),
 		},
 		Metrics: &http.Server{
-			Addr:    fmt.Sprintf("localhost:%d", BuiltinMetricsPort),
+			Addr:    fmt.Sprintf(":%d", BuiltinMetricsPort),
 			Handler: server.metricsEndpoint(),
 		},
 	}
