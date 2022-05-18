@@ -20,7 +20,7 @@ func Start(logger *logrus.Entry, cfg Config) error {
 
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
-		baseserver.WithGRPC(&baseserver.ServerConfiguration{Address: fmt.Sprintf("localhost:%d", cfg.GRPCPort)}),
+		baseserver.WithGRPC(&baseserver.ServerConfiguration{Address: fmt.Sprintf(":%d", cfg.GRPCPort)}),
 		baseserver.WithMetricsRegistry(registry),
 	)
 	if err != nil {
