@@ -70,12 +70,12 @@ export default function Preferences() {
                         selected={theme === "light"}
                         onClick={() => actuallySetTheme("light")}
                     >
-                        <div className="flex-grow flex justify-center items-end">
-                            <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
-                                <rect width="68" height="40" x="40" fill="#C4C4C4" rx="8" />
-                                <rect width="32" height="16" fill="#C4C4C4" rx="8" />
-                                <rect width="32" height="16" y="24" fill="#C4C4C4" rx="8" />
-                                <rect width="32" height="16" y="48" fill="#C4C4C4" rx="8" />
+                        <div className="flex-grow flex items-end p-1">
+                            <svg width="112" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M0 8a8 8 0 0 1 8-8h16a8 8 0 1 1 0 16H8a8 8 0 0 1-8-8ZM0 32a8 8 0 0 1 8-8h16a8 8 0 1 1 0 16H8a8 8 0 0 1-8-8ZM0 56a8 8 0 0 1 8-8h16a8 8 0 1 1 0 16H8a8 8 0 0 1-8-8ZM40 6a6 6 0 0 1 6-6h60a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H46a6 6 0 0 1-6-6V6Z"
+                                    fill="#D6D3D1"
+                                />
                             </svg>
                         </div>
                     </SelectableCardSolid>
@@ -85,12 +85,12 @@ export default function Preferences() {
                         selected={theme === "dark"}
                         onClick={() => actuallySetTheme("dark")}
                     >
-                        <div className="flex-grow flex justify-center items-end">
-                            <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
-                                <rect width="68" height="40" x="40" fill="#737373" rx="8" />
-                                <rect width="32" height="16" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="24" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="48" fill="#737373" rx="8" />
+                        <div className="flex-grow flex items-end p-1">
+                            <svg width="112" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M0 8a8 8 0 0 1 8-8h16a8 8 0 1 1 0 16H8a8 8 0 0 1-8-8ZM0 32a8 8 0 0 1 8-8h16a8 8 0 1 1 0 16H8a8 8 0 0 1-8-8ZM0 56a8 8 0 0 1 8-8h16a8 8 0 1 1 0 16H8a8 8 0 0 1-8-8ZM40 6a6 6 0 0 1 6-6h60a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H46a6 6 0 0 1-6-6V6Z"
+                                    fill="#78716C"
+                                />
                             </svg>
                         </div>
                     </SelectableCardSolid>
@@ -100,16 +100,17 @@ export default function Preferences() {
                         selected={theme === "system"}
                         onClick={() => actuallySetTheme("system")}
                     >
-                        <div className="flex-grow flex justify-center items-end">
-                            <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64">
-                                <rect width="68" height="40" x="40" fill="#C4C4C4" rx="8" />
+                        <div className="flex-grow flex items-end p-1">
+                            <svg width="112" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
-                                    fill="#737373"
-                                    d="M74.111 3.412A8 8 0 0180.665 0H100a8 8 0 018 8v24a8 8 0 01-8 8H48.5L74.111 3.412z"
+                                    d="M0 8a8 8 0 0 1 8-8h16a8 8 0 1 1 0 16H8a8 8 0 0 1-8-8ZM40 6a6 6 0 0 1 6-6h60a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H46a6 6 0 0 1-6-6V6Z"
+                                    fill="#D9D9D9"
                                 />
-                                <rect width="32" height="16" fill="#C4C4C4" rx="8" />
-                                <rect width="32" height="16" y="24" fill="#737373" rx="8" />
-                                <rect width="32" height="16" y="48" fill="#C4C4C4" rx="8" />
+                                <path
+                                    d="M84 0h22a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H68L84 0ZM0 32a8 8 0 0 1 8-8h16a8 8 0 1 1 0 16H8a8 8 0 0 1-8-8Z"
+                                    fill="#78716C"
+                                />
+                                <path d="M0 56a8 8 0 0 1 8-8h16a8 8 0 1 1 0 16H8a8 8 0 0 1-8-8Z" fill="#D9D9D9" />
                             </svg>
                         </div>
                     </SelectableCardSolid>
