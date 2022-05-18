@@ -32,7 +32,7 @@ import (
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/proxy"
-	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v6/apis/volumesnapshot/v1"
+	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 )
 
 // serveCmd represents the serve command

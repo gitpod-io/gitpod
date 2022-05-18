@@ -280,9 +280,9 @@ func (s *Workspace) UpdateGitSafeDirectory(ctx context.Context) (err error) {
 }
 
 // UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
-func (s *Workspace) UpdateGitStatus(ctx context.Context, persistent_volume_claim bool) (res *csapi.GitStatus, err error) {
+func (s *Workspace) UpdateGitStatus(ctx context.Context, persistentVolumeClaim bool) (res *csapi.GitStatus, err error) {
 	var loc string
-	if persistent_volume_claim {
+	if persistentVolumeClaim {
 		loc = filepath.Join(s.ServiceLocDaemon, "prestophookdata")
 		stat, err := git.GitStatusFromFiles(ctx, loc)
 		if err != nil {
