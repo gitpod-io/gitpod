@@ -364,11 +364,16 @@ export class PrebuildManager {
 
     private async shouldSkipInactiveRepository(ctx: TraceContext, cloneURL: string): Promise<boolean> {
         const span = TraceContext.startSpan("shouldSkipInactiveRepository", ctx);
+        const { inactivityPeriodForRepos } = this.config;
+        if (!inactivityPeriodForRepos) {
+            // skipping is disabled if `inactivityPeriodForRepos` is not set
+            return false;
+        }
         try {
             return (
                 (await this.workspaceDB
                     .trace({ span })
-                    .getWorkspaceCountByCloneURL(cloneURL, 7 /* last week */, "regular")) === 0
+                    .getWorkspaceCountByCloneURL(cloneURL, inactivityPeriodForRepos /* in days */, "regular")) === 0
             );
         } catch (error) {
             log.error("cannot compute activity for repository", { cloneURL }, error);
