@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
@@ -208,7 +209,10 @@ func (d *Daemon) ReadinessProbe() func() error {
 			return err
 		}
 
-		isContainerdReady, err := d.dispatch.Runtime.IsContainerdReady(context.Background())
+		// use 2 second timeout to ensure that IsContainerdReady() will not block indefinetely
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(2*time.Second))
+		defer cancel()
+		isContainerdReady, err := d.dispatch.Runtime.IsContainerdReady(ctx)
 		if err != nil {
 			log.WithError(err).Errorf("readiness probe failure: containerd error")
 			return fmt.Errorf("containerd error: %v", err)
