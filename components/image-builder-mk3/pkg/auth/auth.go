@@ -208,9 +208,9 @@ func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
 	dec, err := base64.StdEncoding.DecodeString(ath)
 	if err == nil {
 		segs := strings.Split(string(dec), ":")
-		if len(segs) == 2 {
+		if len(segs) > 1 {
 			res.Username = segs[0]
-			res.Password = segs[1]
+			res.Password = strings.Join(segs[1:], ":")
 		}
 	}
 	return res

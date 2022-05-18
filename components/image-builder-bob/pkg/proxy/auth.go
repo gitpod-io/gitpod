@@ -61,6 +61,7 @@ func (a MapAuthorizer) AddIfNotExists(other MapAuthorizer) MapAuthorizer {
 	}
 	for k, v := range other {
 		if _, ok := a[k]; ok {
+			log.Infof("Skip adding key: %s to MapAuthorizer as it already exists", k)
 			continue
 		}
 		res[k] = v
