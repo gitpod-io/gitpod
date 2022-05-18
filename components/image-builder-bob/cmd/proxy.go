@@ -19,8 +19,8 @@ import (
 
 var proxyOpts struct {
 	BaseRef, TargetRef string
-	Auth               string
-	AdditionalAuth     string
+	BaseAuth           string
+	TargetAuth         string
 }
 
 // proxyCmd represents the build command
@@ -31,15 +31,28 @@ var proxyCmd = &cobra.Command{
 		log.Init("bob", "", true, os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true")
 		log := log.WithField("command", "proxy")
 
-		authP, err := proxy.NewAuthorizerFromDockerEnvVar(proxyOpts.Auth)
+		// Base refers to the user's base image. We prefer user given auth
+		// for base ref
+		authBase, err := proxy.NewAuthorizerFromEnvVar(proxyOpts.BaseAuth)
 		if err != nil {
-			log.WithError(err).WithField("auth", proxyOpts.Auth).Fatal("cannot unmarshal auth")
+			log.WithError(err).WithField("auth", proxyOpts.BaseAuth).Fatal("cannot unmarshal authBase")
 		}
-		authA, err := proxy.NewAuthorizerFromEnvVar(proxyOpts.AdditionalAuth)
+		// Target refers to the target registry where we want to upload the built image.
+		// We prefer existing configuration for target auth
+		authTarget, err := proxy.NewAuthorizerFromDockerEnvVar(proxyOpts.TargetAuth)
 		if err != nil {
-			log.WithError(err).WithField("auth", proxyOpts.Auth).Fatal("cannot unmarshal auth")
+			log.WithError(err).WithField("auth", proxyOpts.TargetAuth).Fatal("cannot unmarshal authTarget")
 		}
-		authP = authP.AddIfNotExists(authA)
+		// fallback: Add missing auth to authTarget from authBase
+		authTarget = authTarget.AddIfNotExists(authBase)
+
+		// Just reuse authBase as authTarget if authTarget has not been supplied
+		if authBase == nil {
+			authBase = authTarget
+		} else {
+			// fallback: Add missing auth to authBase from authTarget
+			authBase = authBase.AddIfNotExists(authTarget)
+		}
 
 		baseref, err := reference.ParseNormalizedNamed(proxyOpts.BaseRef)
 		if err != nil {
@@ -58,19 +71,22 @@ var proxyCmd = &cobra.Command{
 			targettag = r.Tag()
 		}
 
-		auth := func() docker.Authorizer { return docker.NewDockerAuthorizer(docker.WithAuthCreds(authP.Authorize)) }
+		authB := func() docker.Authorizer { return docker.NewDockerAuthorizer(docker.WithAuthCreds(authBase.Authorize)) }
+		authT := func() docker.Authorizer {
+			return docker.NewDockerAuthorizer(docker.WithAuthCreds(authTarget.Authorize))
+		}
 		prx, err := proxy.NewProxy(&url.URL{Host: "localhost:8080", Scheme: "http"}, map[string]proxy.Repo{
 			"base": {
 				Host: reference.Domain(baseref),
 				Repo: reference.Path(baseref),
 				Tag:  basetag,
-				Auth: auth,
+				Auth: authB,
 			},
 			"target": {
 				Host: reference.Domain(targetref),
 				Repo: reference.Path(targetref),
 				Tag:  targettag,
-				Auth: auth,
+				Auth: authT,
 			},
 		})
 		if err != nil {
@@ -92,6 +108,6 @@ func init() {
 	// These env vars start with `WORKSPACEKIT_` so that they aren't passed on to ring2
 	proxyCmd.Flags().StringVar(&proxyOpts.BaseRef, "base-ref", os.Getenv("WORKSPACEKIT_BOBPROXY_BASEREF"), "ref of the base image")
 	proxyCmd.Flags().StringVar(&proxyOpts.TargetRef, "target-ref", os.Getenv("WORKSPACEKIT_BOBPROXY_TARGETREF"), "ref of the target image")
-	proxyCmd.Flags().StringVar(&proxyOpts.Auth, "auth", os.Getenv("WORKSPACEKIT_BOBPROXY_AUTH"), "authentication to use")
-	proxyCmd.Flags().StringVar(&proxyOpts.AdditionalAuth, "additional-auth", os.Getenv("WORKSPACEKIT_BOBPROXY_ADDITIONALAUTH"), "additional authentication to use")
+	proxyCmd.Flags().StringVar(&proxyOpts.BaseAuth, "base-auth", os.Getenv("WORKSPACEKIT_BOBPROXY_AUTH"), "authentication to use for base ref")
+	proxyCmd.Flags().StringVar(&proxyOpts.TargetAuth, "target-auth", os.Getenv("WORKSPACEKIT_BOBPROXY_TARGETAUTH"), "authentication to use for target ref")
 }

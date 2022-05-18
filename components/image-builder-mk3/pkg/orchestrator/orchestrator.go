@@ -330,9 +330,9 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		bobBaseref += ":latest"
 	}
 	wsref, err := reference.ParseNamed(wsrefstr)
-	var additionalAuth []byte
+	var baseRefAuth []byte
 	if err == nil {
-		additionalAuth, err = json.Marshal(reqauth.GetImageBuildAuthFor([]string{
+		baseRefAuth, err = json.Marshal(reqauth.GetImageBuildAuthFor([]string{
 			reference.Domain(wsref),
 		}))
 		if err != nil {
@@ -374,15 +374,15 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					{Name: "WORKSPACEKIT_BOBPROXY_BASEREF", Value: baseref},
 					{Name: "WORKSPACEKIT_BOBPROXY_TARGETREF", Value: wsrefstr},
 					{
-						Name: "WORKSPACEKIT_BOBPROXY_AUTH",
+						Name: "WORKSPACEKIT_BOBPROXY_TARGETAUTH",
 						Secret: &wsmanapi.EnvironmentVariable_SecretKeyRef{
 							SecretName: o.Config.PullSecret,
 							Key:        ".dockerconfigjson",
 						},
 					},
 					{
-						Name:  "WORKSPACEKIT_BOBPROXY_ADDITIONALAUTH",
-						Value: string(additionalAuth),
+						Name:  "WORKSPACEKIT_BOBPROXY_AUTH",
+						Value: string(baseRefAuth),
 					},
 					{Name: "SUPERVISOR_DEBUG_ENABLE", Value: fmt.Sprintf("%v", log.Log.Logger.IsLevelEnabled(logrus.DebugLevel))},
 				},
