@@ -133,7 +133,7 @@ class GitpodManager : Disposable {
         GitVcsApplicationSettings.getInstance().isUseCredentialHelper = true
     }
 
-    private val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
+    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
     private val notificationsJob = GlobalScope.launch {
         if (application.isHeadlessEnvironment) {
             return@launch
@@ -234,6 +234,7 @@ class GitpodManager : Disposable {
                     .setHost(info.gitpodApi.host)
                     .addScope("function:sendHeartBeat")
                     .addScope("function:trackEvent")
+                    .addScope("function:openPort")
                     .setKind("gitpod")
                     .build()
 
