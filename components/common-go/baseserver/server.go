@@ -332,7 +332,7 @@ func (s *Server) GRPCAddress() string { return s.options.config.Services.GRPC.Ge
 
 const (
 	BuiltinDebugPort   = 6060
-	BuiltinMetricsPort = 9500
+	BuiltinMetricsPort = 9502
 	BuiltinHealthPort  = 9501
 )
 
