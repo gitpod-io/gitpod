@@ -98,7 +98,6 @@ data "local_file" "kubeconfig" {
 resource "google_compute_firewall" "k3s-firewall" {
   name    = "k3s-firewall"
   network = "default"
-  project      = "nvn-self-hosted-playground"
 
   allow {
     protocol = "tcp"
