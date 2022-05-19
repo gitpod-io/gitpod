@@ -105,7 +105,7 @@ func WithArgs(args []string) RunOption {
 
 // The sum of those timeBudget* times has to fit within the terminationGracePeriod of the workspace pod.
 const (
-	timeBudgetIDEShutdown = 5 * time.Second
+	timeBudgetIDEShutdown = 15 * time.Second
 )
 
 const (
@@ -713,9 +713,9 @@ supervisorLoop:
 			// we've been asked to shut down
 			ideStatus = statusShouldShutdown
 			if cmd == nil || cmd.Process == nil {
-				log.WithField("ide", ide.String()).Error("cmd or cmd.Process is nil, cannot send Interrupt signal")
+				log.WithField("ide", ide.String()).Error("cmd or cmd.Process is nil, cannot send SIGTERM signal")
 			} else {
-				_ = cmd.Process.Signal(os.Interrupt)
+				_ = cmd.Process.Signal(syscall.SIGTERM)
 			}
 			break supervisorLoop
 		}

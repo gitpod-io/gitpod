@@ -16,15 +16,18 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/hashicorp/go-version"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -190,13 +193,33 @@ func resolveJsonLink(backendPort string) (string, error) {
 	return jsonResp.Projects[0].JoinLink, nil
 }
 
+func terminateIDE(backendPort string) error {
+	var (
+		hostStatusUrl = "http://localhost:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod&exit=true"
+		client        = http.Client{Timeout: 10 * time.Second}
+	)
+	resp, err := client.Get(hostStatusUrl)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return xerrors.Errorf("failed to resolve terminate IDE: %s (%d)", bodyBytes, resp.StatusCode)
+	}
+	return nil
+}
+
 func resolveWorkspaceInfo(ctx context.Context) (*supervisor.ContentStatusResponse, *supervisor.WorkspaceInfoResponse, error) {
 	resolve := func(ctx context.Context) (contentStatus *supervisor.ContentStatusResponse, wsInfo *supervisor.WorkspaceInfoResponse, err error) {
 		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
 		if supervisorAddr == "" {
 			supervisorAddr = "localhost:22999"
 		}
-		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			err = errors.New("dial supervisor failed: " + err.Error())
 			return
@@ -236,9 +259,18 @@ func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string) {
 	}
 	// Enable host status endpoint
 	cmd.Env = append(cmd.Env, "CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod")
-	if err := cmd.Run(); err != nil {
-		log.WithError(err).Error("failed to run")
+
+	if err := cmd.Start(); err != nil {
+		log.WithError(err).Error("failed to start")
 	}
+
+	// Nicely handle SIGTERM sinal
+	go handleSignal(wsInfo.GetCheckoutLocation())
+
+	if err := cmd.Wait(); err != nil {
+		log.WithError(err).Error("failed to wait")
+	}
+	log.Info("IDE stopped, exiting")
 	os.Exit(cmd.ProcessState.ExitCode())
 }
 
@@ -261,6 +293,18 @@ func remoteDevServerCmd(args []string) *exec.Cmd {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd
+}
+
+func handleSignal(projectPath string) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	<-sigChan
+	log.WithField("port", defaultBackendPort).Info("receive SIGTERM signal, terminating IDE")
+	if err := terminateIDE(defaultBackendPort); err != nil {
+		log.WithError(err).Error("failed to terminate IDE")
+	}
+	log.Info("asked IDE to terminate")
 }
 
 func configureXmx(alias string) error {
