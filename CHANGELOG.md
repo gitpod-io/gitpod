@@ -1,6 +1,19 @@
 # Change Log
 
 ## May 2022
+- [db] enable overriding of expiryDate on tokens ([#10102](https://github.com/gitpod-io/gitpod/pull/10102)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Fix credential errors when json key is used as secret in image-builder-mk3 ([#10031](https://github.com/gitpod-io/gitpod/pull/10031)) - [@princerachit](https://github.com/princerachit)
+- [common-go] Add file watcher ([#10020](https://github.com/gitpod-io/gitpod/pull/10020)) - [@aledbf](https://github.com/aledbf)
+- [registry-facade] Refactor watch of configuration file ([#10020](https://github.com/gitpod-io/gitpod/pull/10020)) - [@aledbf](https://github.com/aledbf)
+- [ws-daemon] Refactor watch of configuration file ([#10020](https://github.com/gitpod-io/gitpod/pull/10020)) - [@aledbf](https://github.com/aledbf)
+- [ws-daemon] add log entry when ready probe fails ([#10082](https://github.com/gitpod-io/gitpod/pull/10082)) - [@sagor999](https://github.com/sagor999)
+- Implement `GetOwnerToken` rpc on the public api ([#10068](https://github.com/gitpod-io/gitpod/pull/10068)) - [@andrew-farries](https://github.com/andrew-farries)
+- Update PhpStorm IDE image to version 221.5591.58. ([#10039](https://github.com/gitpod-io/gitpod/pull/10039)) - [@roboquat](https://github.com/roboquat)
+- Update PyCharm IDE image to version 221.5591.52. ([#9997](https://github.com/gitpod-io/gitpod/pull/9997)) - [@roboquat](https://github.com/roboquat)
+- Enable gRPC reflection for the public API ([#10060](https://github.com/gitpod-io/gitpod/pull/10060)) - [@andrew-farries](https://github.com/andrew-farries)
+- [public-api] Publish typescript definitions to NPM ([#10052](https://github.com/gitpod-io/gitpod/pull/10052)) - [@easyCZ](https://github.com/easyCZ)
+- [code] fix code insiders about dialog don't show `insiders` label ([#10058](https://github.com/gitpod-io/gitpod/pull/10058)) - [@mustard-mh](https://github.com/mustard-mh)
+- [prebuild] fix incorrect handling of failed prebuilds ([#10053](https://github.com/gitpod-io/gitpod/pull/10053)) - [@sagor999](https://github.com/sagor999)
 - Fix prebuild updates ([#10042](https://github.com/gitpod-io/gitpod/pull/10042)) - [@andrew-farries](https://github.com/andrew-farries)
 - [ws-manager-bridge] Fix cluster role binding to scrape metrics ([#10034](https://github.com/gitpod-io/gitpod/pull/10034)) - [@easyCZ](https://github.com/easyCZ)
 - Implement a new Team Billing where Team Owners can conveniently manage a paid plan for their Team ([#8041](https://github.com/gitpod-io/gitpod/pull/8041)) - [@jankeromnes](https://github.com/jankeromnes)
