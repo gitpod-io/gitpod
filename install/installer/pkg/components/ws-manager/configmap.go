@@ -113,6 +113,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	installationShortNameSuffix := ""
+	if ctx.Config.Metadata.InstallationShortname != "" {
+		installationShortNameSuffix = "-" + ctx.Config.Metadata.InstallationShortname
+	}
+
 	wsmcfg := config.ServiceConfiguration{
 		Manager: config.Configuration{
 			Namespace:      ctx.Namespace,
@@ -137,8 +142,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			InitProbe: config.InitProbeConfiguration{
 				Timeout: (1 * time.Second).String(),
 			},
-			WorkspaceURLTemplate:     fmt.Sprintf("https://{{ .Prefix }}.ws.%s", ctx.Config.Domain),
-			WorkspacePortURLTemplate: fmt.Sprintf("https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.%s", ctx.Config.Domain),
+			WorkspaceURLTemplate:     fmt.Sprintf("https://{{ .Prefix }}.ws%s.%s", installationShortNameSuffix, ctx.Config.Domain),
+			WorkspacePortURLTemplate: fmt.Sprintf("https://{{ .WorkspacePort }}-{{ .Prefix }}.ws%s.%s", installationShortNameSuffix, ctx.Config.Domain),
 			WorkspaceHostPath:        wsdaemon.HostWorkingArea,
 			Timeouts: config.WorkspaceTimeoutConfiguration{
 				AfterClose:          timeoutAfterClose,
