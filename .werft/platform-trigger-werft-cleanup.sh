@@ -35,7 +35,7 @@ function cordon-node-if-almost-full {
         | tail -n1 \
         | tr -d '[:space:]'
     )
-    echo "The disk is %${disk_used_pct} full" | werft log slice "$slice_id"
+    echo "The disk is ${disk_used_pct}% full" | werft log slice "$slice_id"
 
     if [ "$disk_used_pct" -gt "$DISK_USED_THRESHOLD" ]; then
         echo "${disk_used_pct} is greater than ${DISK_USED_THRESHOLD}. Cordining node" | werft log slice "$slice_id"
