@@ -63,7 +63,7 @@ export default function Preferences() {
                 <SelectIDE />
                 <h3 className="mt-12">Theme</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>
-                <div className="mt-4 space-x-4 flex">
+                <div className="mt-4 space-x-3 flex">
                     <SelectableCardSolid
                         className="w-36 h-32"
                         title="Light"
