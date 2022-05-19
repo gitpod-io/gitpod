@@ -260,7 +260,7 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 			return nil, nil, err
 		}
 
-		layer, err = contentDescriptorToLayerPVC(cdesc)
+		layer, err = contentDescriptorToLayer(cdesc)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -309,7 +309,7 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 			return nil, nil, err
 		}
 
-		layer, err = contentDescriptorToLayerPVC(cdesc)
+		layer, err = contentDescriptorToLayer(cdesc)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -457,14 +457,6 @@ func (s *Provider) layerFromContentManifest(ctx context.Context, mf *csapi.Works
 	return l, nil
 }
 
-func contentDescriptorToLayer(cdesc []byte) (*Layer, error) {
-	return layerFromContent(
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace/.gitpod/content.json", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(cdesc))}, cdesc},
-	)
-}
-
 var prestophookScript = `#!/bin/bash
 cd ${GITPOD_REPO_ROOT}
 git config --global --add safe.directory ${GITPOD_REPO_ROOT}
@@ -476,7 +468,7 @@ git log --pretty=%H -n 1 > /.workspace/prestophookdata/git_log_2.txt
 // version of this function for persistent volume claim feature
 // we cannot use /workspace folder as when mounting /workspace folder through PVC
 // it will mask anything that was in container layer, hence we are using /.workspace instead here
-func contentDescriptorToLayerPVC(cdesc []byte) (*Layer, error) {
+func contentDescriptorToLayer(cdesc []byte) (*Layer, error) {
 	layers := []fileInLayer{
 		{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
 		{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
@@ -498,9 +490,9 @@ func workspaceReadyLayer(src csapi.WorkspaceInitSource) (*Layer, error) {
 	}
 
 	return layerFromContent(
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace/.gitpod/ready", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(ctnt))}, []byte(ctnt)},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/.workspace/.gitpod/ready", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(ctnt))}, []byte(ctnt)},
 	)
 }
 

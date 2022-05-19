@@ -178,7 +178,7 @@ func waitForBuildContext(ctx context.Context) error {
 				return
 			}
 
-			if _, err := os.Stat("/workspace/.gitpod/ready"); err != nil {
+			if _, err := os.Stat("/.workspace/.gitpod/ready"); err != nil {
 				continue
 			}
 

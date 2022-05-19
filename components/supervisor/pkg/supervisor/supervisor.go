@@ -1260,13 +1260,8 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		log.WithError(err).Fatal("content initialization failed")
 	}()
 
-	fn := "/workspace/.gitpod/content.json"
-	fnReady := "/workspace/.gitpod/ready"
-	if _, err := os.Stat("/.workspace/.gitpod/content.json"); !os.IsNotExist(err) {
-		fn = "/.workspace/.gitpod/content.json"
-		fnReady = "/.workspace/.gitpod/ready"
-		log.Info("Detected content.json in /.workspace folder, assuming PVC feature enabled")
-	}
+	fn := "/.workspace/.gitpod/content.json"
+	fnReady := "/.workspace/.gitpod/ready"
 	f, err := os.Open(fn)
 	if os.IsNotExist(err) {
 		log.WithError(err).Info("no content init descriptor found - not trying to run it")
