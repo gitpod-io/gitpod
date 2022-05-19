@@ -425,7 +425,7 @@ func (h *InWorkspaceHandler) Bind(req *libseccomp.ScmpNotifReq) (val uint64, err
 
 func (h *InWorkspaceHandler) Chown(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	log := log.WithFields(map[string]interface{}{
-		"syscall": "bind",
+		"syscall": "chown",
 		"pid":     req.Pid,
 		"id":      req.ID,
 	})
