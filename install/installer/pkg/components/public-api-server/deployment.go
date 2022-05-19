@@ -49,6 +49,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:  Component,
 							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.PublicAPIServer.Version),
 							Args: []string{
+								"run",
 								fmt.Sprintf("--grpc-port=%d", GRPCContainerPort),
 								fmt.Sprintf("--gitpod-api-url=wss://%s/api/v1", ctx.Config.Domain),
 							},
