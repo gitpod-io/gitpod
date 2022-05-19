@@ -18,4 +18,4 @@ if [ "${SUPERVISOR_DEBUG_ENABLE+}" = "true" ]; then
   export JAVA_TOOL_OPTIONS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:0"
 fi
 
-/ide-desktop/status "$@"
+exec /ide-desktop/status "$@"
