@@ -29,17 +29,17 @@ gke-standard-cluster:
 .PHONY:
 ## k3s-standard-cluster: Creates a K3S cluster on GCP with one master and 1 worker node
 k3s-standard-cluster:
-	terraform init -upgrade && \
+	terraform init --upgrade && \
+	terraform workspace new $(TF_VAR_sub_domain) && \
 	terraform apply -target=module.k3s \
 	-var kubeconfig=${KUBECONFIG} --auto-approve
 
 
-CLUSTER_ISSUER_CLOUD_DNS := "./manifests/gcp_issuer.yaml"
+CLUSTER_ISSUER_CLOUD_DNS := "./manifests/gcp-issuer.yaml"
 
 .PHONY:
 ## managed-dns-with-cert-manager: Installs cert-manager, external-dns, and setup up CloudDNS
 managed-dns-with-cert-manager: check-env-sub-domain
-	terraform init -upgrade && \
 	terraform apply -target=module.tools -var kubeconfig=${KUBECONFIG} --auto-approve && \
 	kubectl --kubeconfig=${KUBECONFIG} apply -f ${CLUSTER_ISSUER_CLOUD_DNS}
 
@@ -50,7 +50,7 @@ get-kubeconfig:
 
 KOTS_KONFIG := "./manifests/kots-config.yaml"
 CHANNEL = "gitpod/unstable"
-COMMUNITY_LICENSE := "../licenses/Community\ \(Beta\).yaml"
+COMMUNITY_LICENSE := "../licenses/Community.yaml"
 
 install-kots-cli:
 	curl https://kots.io/install | bash
@@ -74,9 +74,9 @@ kots-install-with-community-license: install-kots-cli
 
 check-gitpod-installation:
 	sleep 120
-	kubectl --kubeconfig=${KUBECONFIF} delete pods --all -n cert-manager
+	kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager
 	sleep 300
-	kubectl --kubeconfig=${KUBECONFIF} kots get app gitpod -n gitpod | grep gitpod  | awk '{print $2}'
+	kubectl --kubeconfig=${KUBECONFIG} kots get app gitpod -n gitpod | grep gitpod  | awk '{print $2}'
 
 cleanup:
 	terraform destroy -var kubeconfig=${KUBECONFIG} --auto-approve
