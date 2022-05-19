@@ -123,23 +123,26 @@ export default function Preferences() {
                     </PillLabel>
                 </h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Customize workspaces using dotfiles.</p>
-                <div className="mt-4 max-w-md">
+                <div className="mt-4 max-w-xl">
                     <h4>Repository URL</h4>
-                    <input
-                        type="text"
-                        value={dotfileRepo}
-                        className="w-full"
-                        placeholder="e.g. https://github.com/username/dotfiles"
-                        onChange={(e) => setDotfileRepo(e.target.value)}
-                    />
+                    <span className="flex">
+                        <input
+                            type="text"
+                            value={dotfileRepo}
+                            className="w-96 h-9"
+                            placeholder="e.g. https://github.com/username/dotfiles"
+                            onChange={(e) => setDotfileRepo(e.target.value)}
+                        />
+                        <button className="secondary ml-2" onClick={() => actuallySetDotfileRepo(dotfileRepo)}>
+                            Save Changes
+                        </button>
+                    </span>
                     <div className="mt-1">
                         <p className="text-gray-500 dark:text-gray-400">
-                            Add a repository URL that includes dotfiles. Gitpod will clone and install your dotfiles for
-                            every new workspace.
+                            Add a repository URL that includes dotfiles. Gitpod will
+                            <br />
+                            clone and install your dotfiles for every new workspace.
                         </p>
-                    </div>
-                    <div className="mt-4 max-w-md">
-                        <button onClick={() => actuallySetDotfileRepo(dotfileRepo)}>Save Changes</button>
                     </div>
                 </div>
             </PageWithSubMenu>
