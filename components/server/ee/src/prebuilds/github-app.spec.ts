@@ -26,17 +26,6 @@ describe("GitHub app", () => {
         chai.assert.isFalse(rules.shouldRunPrebuild(undefined, false, true, true));
     });
 
-    it("should not run prebuilds without tasks to execute", async () => {
-        const noTaskConfig: WorkspaceConfig = {
-            tasks: [],
-        };
-        const rules = container.get(GithubAppRules) as GithubAppRules;
-        chai.assert.isFalse(rules.shouldRunPrebuild(noTaskConfig, true, false, false));
-        chai.assert.isFalse(rules.shouldRunPrebuild(noTaskConfig, false, true, false));
-        chai.assert.isFalse(rules.shouldRunPrebuild(noTaskConfig, false, false, false));
-        chai.assert.isFalse(rules.shouldRunPrebuild(noTaskConfig, false, true, true));
-    });
-
     it("should behave well with individual configuration", async () => {
         const rules = container.get(GithubAppRules) as GithubAppRules;
 
