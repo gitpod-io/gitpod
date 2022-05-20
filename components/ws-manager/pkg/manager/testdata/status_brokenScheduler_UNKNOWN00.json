@@ -23,10 +23,7 @@
                 "gitpod/servicePrefix": "a9949b21-d6d8-443a-85f5-44f5ac3065c0",
                 "gitpod/traceid": "AAAAAAAAAAC0nYySXpfHcnzoa970pCkZBtBSaqGr/6oBAAAAAA==",
                 "gitpod/url": "http://a9949b21-d6d8-443a-85f5-44f5ac3065c0.ws-eu.cw-scheduler.staging.gitpod.io",
-                "gitpod/never-ready": "true",
-                "prometheus.io/path": "/metrics",
-                "prometheus.io/port": "23000",
-                "prometheus.io/scrape": "true"
+                "gitpod/never-ready": "true"
             }
         },
         "spec": {

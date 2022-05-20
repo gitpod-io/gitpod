@@ -337,9 +337,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	annotations := map[string]string{
-		"prometheus.io/scrape":                  "true",
-		"prometheus.io/path":                    "/metrics",
-		"prometheus.io/port":                    strconv.Itoa(int(startContext.IDEPort)),
 		workspaceIDAnnotation:                   req.Id,
 		servicePrefixAnnotation:                 getServicePrefix(req),
 		kubernetes.WorkspaceURLAnnotation:       startContext.WorkspaceURL,

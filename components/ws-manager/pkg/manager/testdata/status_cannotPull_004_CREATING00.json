@@ -175,14 +175,12 @@
       "name": "ws-5031df46-db5e-43ae-91bd-1448305c001d",
       "namespace": "default",
       "annotations": {
-        "prometheus.io/scrape": "true",
         "gitpod/admission": "admit_owner_only",
         "gitpod/ownerToken": "4BYvs6dfa-yXpTWZEPzeNsS2Ge.0QMdE",
         "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
         "gitpod/never-ready": "true",
         "gitpod/imageSpec": "CmZldS5nY3IuaW8vZ2l0cG9kLWRldi93b3Jrc3BhY2UtaW1hZ2VzOjAxYWJiMzFkZDc2YTFlMjg4NWVhMWQ1YzNiMDZhNGVhZDEwYWUzNjJlZTIxMzQ4NDI4ODM1ZDBjOGIyODZlM2ESWGV1Lmdjci5pby9naXRwb2QtY29yZS1kZXYvYnVpbGQvaWRlL2NvZGU6Y29tbWl0LTA5NDFhMDgwNWRjM2M3MzQ1YzQ1YmQ5MjYzMTdlYWYwNDVkNGI3ZmI=",
         "gitpod/exposedPorts": "CjwIuBciN2h0dHBzOi8vMzAwMC1zaWx2ZXItZG9ybW91c2UtaXM3MzNwcmcud3MtdXMxNC5naXRwb2QuaW8=",
-        "prometheus.io/path": "/metrics",
         "cni.projectcalico.org/podIPs": "10.4.35.173/32",
         "gitpod/contentInitializer": "[redacted]",
         "gitpod/servicePrefix": "silver-dormouse-is733prg",
@@ -193,7 +191,6 @@
         "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_main.1254.json",
         "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
         "kubernetes.io/psp": "default-ns-workspace",
-        "prometheus.io/port": "23000",
         "cni.projectcalico.org/podIP": "10.4.35.173/32",
         "gitpod/url": "https://silver-dormouse-is733prg.ws-us14.gitpod.io"
       },
@@ -488,7 +485,6 @@
                 "f:gitpod.io/requiredNodeServices": {},
                 "f:seccomp.security.alpha.kubernetes.io/pod": {},
                 ".": {},
-                "f:prometheus.io/scrape": {},
                 "f:gitpod/contentInitializer": {},
                 "f:gitpod/customTimeout": {},
                 "f:gitpod/never-ready": {},
@@ -496,9 +492,7 @@
                 "f:container.apparmor.security.beta.kubernetes.io/workspace": {},
                 "f:gitpod/imageSpec": {},
                 "f:gitpod/id": {},
-                "f:prometheus.io/port": {},
                 "f:gitpod/ownerToken": {},
-                "f:prometheus.io/path": {},
                 "f:cluster-autoscaler.kubernetes.io/safe-to-evict": {}
               }
             }

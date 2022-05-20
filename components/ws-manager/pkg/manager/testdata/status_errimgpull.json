@@ -25,10 +25,7 @@
         "gitpod/servicePrefix": "ba66e4d4-3eae-4c9c-83da-75b6dbc2f592",
         "gitpod/traceid": "AAAAAAAAAADhGTsriIyxPTTDrd1As99VVqvzdzhPjzsBAAAAAA==",
         "gitpod/url": "http://ba66e4d4-3eae-4c9c-83da-75b6dbc2f592.cw-minio-core.staging.gitpod.io",
-        "gitpod/never-ready": "true",
-        "prometheus.io/path": "/metrics",
-        "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true"
+        "gitpod/never-ready": "true"
       }
     },
     "spec": {
