@@ -75,7 +75,7 @@ export class GitLabApi {
             log.error(`GitLab request error`, error);
             throw error;
         } finally {
-            log.info(`GitLab request took ${new Date().getTime() - before} ms`);
+            log.debug(`GitLab request took ${new Date().getTime() - before} ms`);
         }
     }
 

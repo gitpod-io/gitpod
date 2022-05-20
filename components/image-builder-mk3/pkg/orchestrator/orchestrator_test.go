@@ -18,6 +18,9 @@ import (
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	wsmock "github.com/gitpod-io/gitpod/ws-manager/api/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/google/go-cmp/cmp"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestBuild(t *testing.T) {
@@ -143,4 +146,62 @@ func TestBuild(t *testing.T) {
 			test.Test(t, ctrl, wsman, o)
 		})
 	}
+}
+
+type unauthenticatedResolver struct{}
+
+func (unauthenticatedResolver) Resolve(ctx context.Context, ref string, opts ...resolve.DockerRefResolverOption) (res string, err error) {
+	return "", resolve.ErrUnauthorized
+}
+
+func TestResolveBaseImage(t *testing.T) {
+	type Expectation struct {
+		Code codes.Code
+	}
+	ref := "some-image:latest"
+	tests := []struct {
+		Name        string
+		Resolver    resolve.DockerRefResolver
+		Expectation Expectation
+	}{
+		{
+			Name:     "not found",
+			Resolver: resolve.MockRefResolver{},
+			Expectation: Expectation{
+				Code: codes.NotFound,
+			},
+		},
+		{
+			Name:     "not authenticated",
+			Resolver: unauthenticatedResolver{},
+			Expectation: Expectation{
+				Code: codes.Unauthenticated,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			o, err := NewOrchestratingBuilder(config.Configuration{
+				WorkspaceManager: config.WorkspaceManagerConfig{
+					Client: wsmock.NewMockWorkspaceManagerClient(ctrl),
+				},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			o.RefResolver = test.Resolver
+
+			_, err = o.ResolveBaseImage(context.Background(), &api.ResolveBaseImageRequest{
+				Ref: ref,
+			})
+			act := Expectation{Code: status.Code(err)}
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("ResolveBaseImage() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+
 }

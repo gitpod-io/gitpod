@@ -13,13 +13,11 @@ import { getGitpodService } from "../service/service";
 import { adminMenu } from "./admin-menu";
 import { useEffect, useState } from "react";
 import InfoBox from "../components/InfoBox";
-import { Redirect } from "react-router-dom";
-import { UserContext } from "../user-context";
+import { isGitpodIo } from "../utils";
 
 export default function Settings() {
     const { adminSettings, setAdminSettings } = useContext(AdminContext);
     const [telemetryData, setTelemetryData] = useState<TelemetryData>();
-    const { user } = useContext(UserContext);
 
     useEffect(() => {
         if (isGitpodIo()) {
@@ -33,10 +31,6 @@ export default function Settings() {
             setAdminSettings(setting);
         })();
     }, []);
-
-    if (!user || !user?.rolesOrPermissions?.includes("admin")) {
-        return <Redirect to="/" />;
-    }
 
     const actuallySetTelemetryPrefs = async (value: InstallationAdminSettings) => {
         await getGitpodService().server.adminUpdateSettings(value);
@@ -75,8 +69,4 @@ export default function Settings() {
             </PageWithSubMenu>
         </div>
     );
-}
-
-function isGitpodIo() {
-    return window.location.hostname === "gitpod.io" || window.location.hostname === "gitpod-staging.com";
 }

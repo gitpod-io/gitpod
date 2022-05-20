@@ -210,5 +210,12 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 			return errors, nil
 		})))
 	}
+
+	if cfg.CustomCACert != nil {
+		res = append(res, cluster.CheckSecret(cfg.CustomCACert.Name, cluster.CheckSecretRequiredData("ca.crt")))
+	}
+
+	res = append(res, experimental.ClusterValidation(cfg.Experimental)...)
+
 	return res
 }

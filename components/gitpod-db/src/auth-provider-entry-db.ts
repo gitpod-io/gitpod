@@ -15,6 +15,9 @@ export interface AuthProviderEntryDB {
     delete(ap: AuthProviderEntry): Promise<void>;
 
     findAll(exceptOAuthRevisions?: string[]): Promise<AuthProviderEntry[]>;
+    /**
+     * `host`s contained in the result array are expected to be lower case.
+     */
     findAllHosts(): Promise<string[]>;
     findByHost(host: string): Promise<AuthProviderEntry | undefined>;
     findByUserId(userId: string): Promise<AuthProviderEntry[]>;

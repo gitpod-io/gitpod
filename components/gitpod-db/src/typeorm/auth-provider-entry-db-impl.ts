@@ -31,7 +31,7 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
     async storeAuthProvider(ap: AuthProviderEntry, updateOAuthRevision: boolean): Promise<AuthProviderEntry> {
         const repo = await this.getAuthProviderRepo();
         if (updateOAuthRevision) {
-            (ap.oauthRevision as any) = this.oauthContentHash(ap.oauth);
+            (ap.oauthRevision as any) = this.oauthContentHash(ap);
         }
         return repo.save(ap);
     }
@@ -70,7 +70,8 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         const repo = await this.getAuthProviderRepo();
         const query = repo.createQueryBuilder("auth_provider").select(hostField).where("auth_provider.deleted != true");
         const result = (await query.execute()) as Pick<DBAuthProviderEntry, "host">[];
-        return result.map((r) => r.host);
+        // HINT: host is expected to be lower case
+        return result.map((r) => r.host?.toLowerCase()).filter((h) => !!h);
     }
 
     async findByHost(host: string): Promise<AuthProviderEntry | undefined> {
@@ -91,8 +92,10 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         return query.getMany();
     }
 
-    protected oauthContentHash(oauth: AuthProviderEntry["oauth"]): string {
-        const result = createHash("sha256").update(JSON.stringify(oauth)).digest("hex");
+    protected oauthContentHash(entry: AuthProviderEntry): string {
+        const result = createHash("sha256")
+            .update(JSON.stringify({ oauth: entry.oauth, ownerId: entry.ownerId, status: entry.status }))
+            .digest("hex");
         return result;
     }
 }

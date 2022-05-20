@@ -12,6 +12,7 @@ import {
     DisposableCollection,
     WorkspaceImageBuild,
     HEADLESS_LOG_STREAM_STATUS_CODE_REGEX,
+    Disposable,
 } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
 
@@ -19,7 +20,6 @@ const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 
 export interface PrebuildLogsProps {
     workspaceId?: string;
-    onInstanceUpdate?: (instance: WorkspaceInstance) => void;
 }
 
 export default function PrebuildLogs(props: PrebuildLogsProps) {
@@ -81,62 +81,15 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
     }, [props.workspaceId]);
 
     useEffect(() => {
-        if (props.onInstanceUpdate && workspaceInstance) {
-            props.onInstanceUpdate(workspaceInstance);
-        }
         switch (workspaceInstance?.status.phase) {
-            // unknown indicates an issue within the system in that it cannot determine the actual phase of
-            // a workspace. This phase is usually accompanied by an error.
-            case "unknown":
-                break;
-
             // Preparing means that we haven't actually started the workspace instance just yet, but rather
-            // are still preparing for launch. This means we're building the Docker image for the workspace.
+            // are still preparing for launch.
             case "preparing":
-                getGitpodService().server.watchWorkspaceImageBuildLogs(workspace!.id);
-                break;
-
-            // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
-            // some space within the cluster. If for example the cluster needs to scale up to accomodate the
-            // workspace, the workspace will be in Pending state until that happened.
-            case "pending":
-                break;
-
-            // Creating means the workspace is currently being created. That includes downloading the images required
-            // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
-            // network speed, image size and cache states.
-            case "creating":
-                break;
-
-            // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
-            // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
-            case "initializing":
-                break;
-
-            // Running means the workspace is able to actively perform work, either by serving a user through Theia,
-            // or as a headless workspace.
-            case "running":
-                break;
-
-            // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
-            // When in this state, we expect it to become running or stopping anytime soon.
-            case "interrupted":
-                break;
-
-            // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
-            case "stopping":
-                break;
-
-            // Stopped means the workspace ended regularly because it was shut down.
+            // Building means we're building the Docker image for the workspace so the workspace hasn't started yet.
+            case "building":
             case "stopped":
                 getGitpodService().server.watchWorkspaceImageBuildLogs(workspace!.id);
                 break;
-        }
-        if (workspaceInstance?.status.conditions.headlessTaskFailed) {
-            setError(new Error(workspaceInstance.status.conditions.headlessTaskFailed));
-        }
-        if (workspaceInstance?.status.conditions.failed) {
-            setError(new Error(workspaceInstance.status.conditions.failed));
         }
     }, [props.workspaceId, workspaceInstance?.status.phase]);
 
@@ -154,22 +107,30 @@ export function watchHeadlessLogs(
 ): DisposableCollection {
     const disposables = new DisposableCollection();
 
+    // initializing non-empty here to use this as a stopping signal for the retries down below
+    disposables.push(Disposable.NULL);
+
+    // retry configuration goes here
+    const initialDelaySeconds = 1;
+    const backoffFactor = 1.2;
+    const maxBackoffSeconds = 5;
+    let delayInSeconds = initialDelaySeconds;
+
     const startWatchingLogs = async () => {
         if (await checkIsDone()) {
             return;
         }
 
-        const initialDelaySeconds = 1;
-        let delayInSeconds = initialDelaySeconds;
         const retryBackoff = async (reason: string, err?: Error) => {
-            const backoffFactor = 1.2;
-            const maxBackoffSeconds = 5;
             delayInSeconds = Math.min(delayInSeconds * backoffFactor, maxBackoffSeconds);
 
             console.debug("re-trying headless-logs because: " + reason, err);
             await new Promise((resolve) => {
                 setTimeout(resolve, delayInSeconds * 1000);
             });
+            if (disposables.disposed) {
+                return; // and stop retrying
+            }
             startWatchingLogs().catch(console.error);
         };
 

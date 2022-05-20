@@ -45,7 +45,7 @@ export class GitHubEnterpriseApp {
                 try {
                     user = await this.findUser({ span }, payload, req);
                 } catch (error) {
-                    log.error("Cannot find user.", error, { req });
+                    log.error("Cannot find user.", error, {});
                 }
                 if (!user) {
                     res.statusCode = 401;
@@ -116,6 +116,15 @@ export class GitHubEnterpriseApp {
     ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("GitHubEnterpriseApp.handlePushHook", ctx);
         try {
+            const cloneURL = payload.repository.clone_url;
+            const projectAndOwner = await this.findProjectAndOwner(cloneURL, user);
+            if (projectAndOwner.project) {
+                /* tslint:disable-next-line */
+                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
+                    lastWebhookReceived: new Date().toISOString(),
+                });
+            }
+
             const contextURL = this.createContextUrl(payload);
             span.setTag("contextURL", contextURL);
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
@@ -127,15 +136,13 @@ export class GitHubEnterpriseApp {
 
             log.debug("GitHub Enterprise push event: Starting prebuild.", { contextURL });
 
-            const cloneURL = payload.repository.clone_url;
-            const projectAndOwner = await this.findProjectAndOwner(cloneURL, user);
             const commitInfo = await this.getCommitInfo(user, payload.repository.url, payload.after);
             const ws = await this.prebuildManager.startPrebuild(
                 { span },
                 {
                     context,
                     user: projectAndOwner.user,
-                    project: projectAndOwner?.project,
+                    project: projectAndOwner.project,
                     commitInfo,
                 },
             );

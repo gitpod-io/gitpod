@@ -28,7 +28,13 @@ import {
 import { inject, injectable, postConstruct } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
-import { BUILTIN_WORKSPACE_PROBE_USER_ID, MaybeUser, PartialUserUpdate, UserDB } from "../user-db";
+import {
+    BUILTIN_WORKSPACE_PROBE_USER_ID,
+    BUILTIN_WORKSPACE_USER_AGENT_SMITH,
+    MaybeUser,
+    PartialUserUpdate,
+    UserDB,
+} from "../user-db";
 import { DBGitpodToken } from "./entity/db-gitpod-token";
 import { DBIdentity } from "./entity/db-identity";
 import { DBTokenEntry } from "./entity/db-token-entry";
@@ -95,7 +101,9 @@ export class TypeORMUserDBImpl implements UserDB {
             creationDate: new Date().toISOString(),
             identities: [],
             additionalData: {
-                ideSettings: { defaultIde: "code" },
+                // Please DO NOT add ideSettings prop, it'll broke onboarding of JetBrains Gateway
+                // If you want to do it, ping IDE team
+                // ideSettings: {},
                 emailNotificationSettings: {
                     allowsChangelogMail: true,
                     allowsDevXMail: true,
@@ -331,8 +339,15 @@ export class TypeORMUserDBImpl implements UserDB {
         if (tokenEntries.length === 0) {
             return undefined;
         }
-        return tokenEntries.sort((a, b) => `${a.token.updateDate}`.localeCompare(`${b.token.updateDate}`)).reverse()[0]
-            ?.token;
+        const latestTokenEntry = tokenEntries
+            .sort((a, b) => `${a.token.updateDate}`.localeCompare(`${b.token.updateDate}`))
+            .reverse()[0];
+        if (latestTokenEntry) {
+            if (latestTokenEntry.expiryDate !== latestTokenEntry.token.expiryDate) {
+                log.info(`Overriding 'expiryDate' of token to get refreshed on demand.`, { identity });
+            }
+            return { ...latestTokenEntry.token, expiryDate: latestTokenEntry.expiryDate };
+        }
     }
 
     public async findTokensForIdentity(identity: Identity, includeDeleted?: boolean): Promise<TokenEntry[]> {
@@ -356,7 +371,7 @@ export class TypeORMUserDBImpl implements UserDB {
             WHERE markedDeleted != true`;
         if (excludeBuiltinUsers) {
             query = `${query}
-                AND id <> '${BUILTIN_WORKSPACE_PROBE_USER_ID}'`;
+                AND id NOT IN ('${BUILTIN_WORKSPACE_PROBE_USER_ID}', '${BUILTIN_WORKSPACE_USER_AGENT_SMITH}')`;
         }
         const res = await userRepo.query(query);
         const count = res[0].cnt;
@@ -486,7 +501,7 @@ export class TypeORMUserDBImpl implements UserDB {
         } else {
             var user: MaybeUser;
             if (accessToken.user) {
-                user = await this.findUserById(accessToken.user.id);
+                user = await this.findUserById(accessToken.user.id.toString());
             }
             dbToken = {
                 tokenHash,

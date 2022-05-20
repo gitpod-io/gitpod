@@ -8,6 +8,7 @@ public class WorkspaceInstanceStatus {
     private String phase;
     private String ownerToken;
     private WorkspaceInstanceConditions conditions;
+    private Repository repo;
 
     public String getPhase() {
         return phase;
@@ -31,5 +32,13 @@ public class WorkspaceInstanceStatus {
 
     public void setConditions(WorkspaceInstanceConditions conditions) {
         this.conditions = conditions;
+    }
+
+    public Repository getRepo() {
+        return repo;
+    }
+
+    public void setRepo(Repository repo) {
+        this.repo = repo;
     }
 }

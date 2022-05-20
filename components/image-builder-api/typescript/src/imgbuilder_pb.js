@@ -19,13 +19,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = (function() {
-  if (this) { return this; }
-  if (typeof window !== 'undefined') { return window; }
-  if (typeof global !== 'undefined') { return global; }
-  if (typeof self !== 'undefined') { return self; }
-  return Function('return this')();
-}.call(null));
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
 goog.object.extend(proto, content$service$api_initializer_pb);
@@ -1764,7 +1758,8 @@ proto.builder.BuildRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     source: (f = msg.getSource()) && proto.builder.BuildSource.toObject(includeInstance, f),
     auth: (f = msg.getAuth()) && proto.builder.BuildRegistryAuth.toObject(includeInstance, f),
-    forceRebuild: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
+    forceRebuild: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
+    triggeredBy: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -1815,6 +1810,10 @@ proto.builder.BuildRequest.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setForceRebuild(value);
       break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setTriggeredBy(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1864,6 +1863,13 @@ proto.builder.BuildRequest.serializeBinaryToWriter = function(message, writer) {
   if (f) {
     writer.writeBool(
       3,
+      f
+    );
+  }
+  f = message.getTriggeredBy();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
       f
     );
   }
@@ -1959,6 +1965,24 @@ proto.builder.BuildRequest.prototype.getForceRebuild = function() {
  */
 proto.builder.BuildRequest.prototype.setForceRebuild = function(value) {
   return jspb.Message.setProto3BooleanField(this, 3, value);
+};
+
+
+/**
+ * optional string triggered_by = 4;
+ * @return {string}
+ */
+proto.builder.BuildRequest.prototype.getTriggeredBy = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.builder.BuildRequest} returns this
+ */
+proto.builder.BuildRequest.prototype.setTriggeredBy = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 

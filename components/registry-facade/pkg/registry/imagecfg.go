@@ -8,6 +8,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/containerd/containerd/errdefs"
 	lru "github.com/hashicorp/golang-lru"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/xerrors"
@@ -25,6 +26,17 @@ var ErrRefInvalid = xerrors.Errorf("invalid ref")
 type ImageSpecProvider interface {
 	// GetSpec returns the spec for the image or a wrapped ErrRefInvalid
 	GetSpec(ctx context.Context, ref string) (*api.ImageSpec, error)
+}
+
+// FixedImageSpecProvider provides a single spec
+type FixedImageSpecProvider map[string]*api.ImageSpec
+
+func (p FixedImageSpecProvider) GetSpec(ctx context.Context, ref string) (*api.ImageSpec, error) {
+	res, ok := p[ref]
+	if !ok {
+		return nil, xerrors.Errorf("%w: %s", ErrRefInvalid, errdefs.ErrNotFound)
+	}
+	return res, nil
 }
 
 // RemoteSpecProvider queries a remote spec provider using gRPC

@@ -5,7 +5,9 @@
  */
 
 import { useEffect } from "react";
-import gitpodIconUA from "../icons/gitpod-ua.svg";
+import Alert from "../components/Alert";
+import gitpodIconUA from "../icons/gitpod.svg";
+import { gitpodHostUrl } from "../service/service";
 
 export enum StartPhase {
     Checking = 0,
@@ -74,6 +76,7 @@ export interface StartPageProps {
     error?: StartWorkspaceError;
     title?: string;
     children?: React.ReactNode;
+    showLatestIdeWarning?: boolean;
 }
 
 export interface StartWorkspaceError {
@@ -105,6 +108,21 @@ export function StartPage(props: StartPageProps) {
                 )}
                 {error && <StartError error={error} />}
                 {props.children}
+                {props.showLatestIdeWarning && (
+                    <Alert type="warning" className="mt-4 w-96">
+                        This workspace is configured with the latest release (unstable) for the editor.{" "}
+                        <a className="gp-link" target="_blank" href={gitpodHostUrl.asPreferences().toString()}>
+                            Change Preferences
+                        </a>
+                    </Alert>
+                )}
+                <div className="absolute bottom-4 right-4 text-gray-400 dark:text-gray-500 text-xs font-medium tracking-wide">
+                    <span className="mr-1 align-middle">Stand with Ukraine</span>{" "}
+                    <svg width="14" height="14" className="inline-block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 7A7 7 0 1 0 0 7h14Z" fill="#015BBB" />
+                        <path d="M0 7a7 7 0 1 0 14 0H0Z" fill="#FC0" />
+                    </svg>
+                </div>
             </div>
         </div>
     );

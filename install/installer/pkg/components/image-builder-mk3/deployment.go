@@ -6,6 +6,7 @@ package image_builder_mk3
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -58,6 +59,56 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	volumes := []corev1.Volume{
+		{
+			Name: "configuration",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+				},
+			},
+		},
+		{
+			Name: "wsman-tls-certs",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: wsmanager.TLSSecretNameClient,
+				},
+			},
+		},
+		{
+			Name: "pull-secret",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secretName,
+				},
+			},
+		},
+		*common.InternalCAVolume(),
+		*common.NewEmptyDirVolume("cacerts"),
+	}
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "configuration",
+			MountPath: "/config/image-builder.json",
+			SubPath:   "image-builder.json",
+		},
+		{
+			Name:      "wsman-tls-certs",
+			MountPath: "/wsman-certs",
+			ReadOnly:  true,
+		},
+		{
+			Name:      "pull-secret",
+			MountPath: PullSecretFile,
+			SubPath:   ".dockerconfigjson",
+		},
+	}
+	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
+		volumes = append(volumes, *vol)
+		volumeMounts = append(volumeMounts, *mnt)
+	}
+
 	return []runtime.Object{&appsv1.Deployment{
 		TypeMeta: common.TypeMetaDeployment,
 		ObjectMeta: metav1.ObjectMeta{
@@ -67,7 +118,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{MatchLabels: labels},
-			Replicas: pointer.Int32(1),
+			Replicas: common.Replicas(ctx, Component),
 			Strategy: common.DeploymentStrategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
@@ -79,46 +130,19 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
+					Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
-					Volumes: append([]corev1.Volume{
-						{
-							Name: "configuration",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
-								},
-							},
-						},
-						{
-							Name: "wsman-tls-certs",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: wsmanager.TLSSecretNameClient,
-								},
-							},
-						},
-						{
-							Name: "pull-secret",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: secretName,
-								},
-							},
-						},
-						*common.InternalCAVolume(),
-						*common.NewEmptyDirVolume("cacerts"),
-					}),
+					Volumes:                       volumes,
 					InitContainers: []corev1.Container{
 						*common.InternalCAContainer(ctx),
 					},
 					Containers: []corev1.Container{{
 						Name:            Component,
-						Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
+						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Args: []string{
 							"run",
@@ -127,14 +151,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 						Env: common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
-							common.TracingEnv(ctx),
+							common.WorkspaceTracingEnv(ctx),
 						),
-						Resources: corev1.ResourceRequirements{
+						Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								"cpu":    resource.MustParse("100m"),
 								"memory": resource.MustParse("200Mi"),
 							},
-						},
+						}),
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: RPCPort,
 							Name:          RPCPortName,
@@ -143,24 +167,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Privileged: pointer.Bool(false),
 							RunAsUser:  pointer.Int64(33333),
 						},
-						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "configuration",
-								MountPath: "/config/image-builder.json",
-								SubPath:   "image-builder.json",
-							},
-							{
-								Name:      "wsman-tls-certs",
-								MountPath: "/wsman-certs",
-								ReadOnly:  true,
-							},
-							{
-								Name:      "pull-secret",
-								MountPath: PullSecretFile,
-								SubPath:   ".dockerconfigjson",
-							},
-							*common.InternalCAVolumeMount(),
-						},
+						VolumeMounts: volumeMounts,
 					},
 						*common.KubeRBACProxyContainer(ctx),
 					},

@@ -424,6 +424,10 @@
               "name": "GITPOD_REPO_ROOT"
             },
             {
+              "value": "/workspace/gitlab",
+              "name": "GITPOD_REPO_ROOTS"
+            },
+            {
               "value": "9hXMzvpCgZYB1Eq7cEpswb9Tx2NzYeIG",
               "name": "GITPOD_CLI_APITOKEN"
             },

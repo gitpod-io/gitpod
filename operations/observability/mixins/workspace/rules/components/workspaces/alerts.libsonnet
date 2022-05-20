@@ -44,6 +44,20 @@
             |||,
           },
           {
+            alert: 'GitpodWorkspaceHighFailureRate',
+            labels: {
+              severity: 'critical',
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceHighFailureRate.md',
+              summary: 'Workspaces are failing',
+              description: 'Multiple workspaces are failing for the last 5 minutes',
+            },
+            expr: |||
+                rate(gitpod_ws_manager_workspace_stops_total{reason="failed", type="REGULAR"}[5m]) >= 1
+            |||,
+          },
+          {
             alert: 'GitpodWorkspaceStatusUpdatesCeased',
             labels: {
               severity: 'warning',
@@ -71,6 +85,53 @@
             },
             expr: |||
               gitpod_workspace_regular_not_active_percentage > 0.15 AND sum(gitpod_ws_manager_workspace_activity_total) > 100
+            |||,
+          },
+          {
+            alert: 'GitpodWorkspacesNotStarting',
+            labels: {
+              severity: 'critical',
+            },
+            'for': '10m',
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceNotStarting.md',
+              summary: 'workspaces are not starting',
+              description: 'inactive regular workspaces exists but workspaces are not being started',
+            },
+            expr: |||
+              avg_over_time(gitpod_workspace_regular_not_active_percentage[1m]) > 0
+              AND
+              rate(gitpod_ws_manager_workspace_startup_seconds_sum{type="REGULAR"}[1m]) == 0
+            |||,
+          },
+          {
+            alert: 'GitpodTooManyWorkspacesInPending',
+            labels: {
+              severity: 'critical',
+            },
+            'for': '15m',
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodTooManyWorkspacesInPending.md',
+              summary: 'workspaces are in pending phase',
+              description: 'regular workspaces are stuck in pending phase',
+            },
+            expr: |||
+              gitpod_ws_manager_workspace_phase_total{phase="PENDING", type="REGULAR"} > 20
+            |||,
+          },
+          {
+            alert: 'GitpodTooManyPrebuildsInPending',
+            labels: {
+              severity: 'critical',
+            },
+            'for': '15m',
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodTooManyPrebuildsInPending.md',
+              summary: 'workspaces are in pending phase',
+              description: 'prebuilds are stuck in pending phase',
+            },
+            expr: |||
+              gitpod_ws_manager_workspace_phase_total{phase="PENDING", type="PREBUILD"} > 20
             |||,
           },
         ],

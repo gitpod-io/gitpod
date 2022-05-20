@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -68,12 +69,12 @@ var ring0Cmd = &cobra.Command{
 
 		defer log.Info("done")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 		defer cancel()
 
 		client, err := connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon")
+			log.WithError(err).Error("cannot connect to daemon from ring0")
 			return
 		}
 
@@ -90,7 +91,7 @@ var ring0Cmd = &cobra.Command{
 
 			client, err := connectToInWorkspaceDaemonService(ctx)
 			if err != nil {
-				log.WithError(err).Error("cannot connect to daemon")
+				log.WithError(err).Error("cannot connect to daemon from ring0 in defer")
 				return
 			}
 			defer client.Close()
@@ -111,7 +112,7 @@ var ring0Cmd = &cobra.Command{
 		cmd.Stderr = os.Stderr
 		cmd.Env = append(os.Environ(),
 			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
-			fmt.Sprintf("WORKSPACEKIT_FULL_WORKSPACE_BACKUP=%v", prep.FullWorkspaceBackup),
+			fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
 		)
 
 		if err := cmd.Start(); err != nil {
@@ -204,7 +205,7 @@ var ring1Cmd = &cobra.Command{
 		if !ring1Opts.MappingEstablished {
 			client, err := connectToInWorkspaceDaemonService(ctx)
 			if err != nil {
-				log.WithError(err).Error("cannot connect to daemon")
+				log.WithError(err).Error("cannot connect to daemon from ring1 when mappings not established")
 				return
 			}
 			defer client.Close()
@@ -248,10 +249,6 @@ var ring1Cmd = &cobra.Command{
 		} else {
 			fsshift = api.FSShiftMethod(v)
 		}
-
-		var (
-			slirp4netnsSocket string
-		)
 
 		type mnte struct {
 			Target string
@@ -307,20 +304,12 @@ var ring1Cmd = &cobra.Command{
 
 		// FWB workspaces do not require mounting /workspace
 		// if that is done, the backup will not contain any change in the directory
-		if os.Getenv("WORKSPACEKIT_FULL_WORKSPACE_BACKUP") != "true" {
+		// same applies to persistent volume claims, we cannot mount /workspace folder when PVC is used
+		if os.Getenv("WORKSPACEKIT_NO_WORKSPACE_MOUNT") != "true" {
 			mnts = append(mnts,
 				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
 			)
 		}
-
-		f, err := ioutil.TempDir("", "wskit-slirp4netns")
-		if err != nil {
-			log.WithError(err).Error("cannot create slirp4netns socket tempdir")
-			return
-		}
-
-		slirp4netnsSocket = filepath.Join(f, "slirp4netns.sock")
-		mnts = append(mnts, mnte{Target: "/.supervisor/slirp4netns.sock", Source: f, Flags: unix.MS_BIND | unix.MS_REC})
 
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)
@@ -409,7 +398,7 @@ var ring1Cmd = &cobra.Command{
 
 		client, err := connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon")
+			log.WithError(err).Error("cannot connect to daemon from ring1")
 			return
 		}
 		_, err = client.MountProc(ctx, &daemonapi.MountProcRequest{
@@ -421,6 +410,7 @@ var ring1Cmd = &cobra.Command{
 			log.WithError(err).Error("cannot mount proc")
 			return
 		}
+
 		_, err = client.EvacuateCGroup(ctx, &daemonapi.EvacuateCGroupRequest{})
 		if err != nil {
 			client.Close()
@@ -475,25 +465,17 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 
-		slirpCmd := exec.Command(filepath.Join(filepath.Dir(ring2Opts.SupervisorPath), "slirp4netns"),
-			"--configure",
-			"--mtu=65520",
-			"--disable-host-loopback",
-			"--api-socket", slirp4netnsSocket,
-			strconv.Itoa(cmd.Process.Pid),
-			"tap0",
-		)
-		slirpCmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig: syscall.SIGKILL,
-		}
-
-		err = slirpCmd.Start()
+		client, err = connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
-			log.WithError(err).Error("cannot start slirp4netns")
+			log.WithError(err).Error("cannot connect to daemon from ring1 after ring2")
 			return
 		}
-		//nolint:errcheck
-		defer slirpCmd.Process.Kill()
+		_, err = client.SetupPairVeths(ctx, &daemonapi.SetupPairVethsRequest{Pid: int64(cmd.Process.Pid)})
+		if err != nil {
+			log.WithError(err).Error("cannot setup pair of veths")
+			return
+		}
+		client.Close()
 
 		log.Info("signaling to child process")
 		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{
@@ -582,6 +564,7 @@ var (
 		"/sys",
 		"/dev",
 		"/etc/hostname",
+		"/etc/ssl/certs/gitpod-ca.crt",
 	}
 	rejectMountPaths = map[string]struct{}{
 		"/etc/resolv.conf": {},
@@ -935,17 +918,20 @@ func connectToInWorkspaceDaemonService(ctx context.Context) (*inWorkspaceService
 	const socketFN = "/.workspace/daemon.sock"
 
 	t := time.NewTicker(500 * time.Millisecond)
+	errs := errors.New("errors of connect to ws-daemon")
 	defer t.Stop()
 	for {
 		if _, err := os.Stat(socketFN); err == nil {
 			break
+		} else if !os.IsNotExist(err) {
+			errs = fmt.Errorf("%v: %w", errs, err)
 		}
 
 		select {
 		case <-t.C:
 			continue
 		case <-ctx.Done():
-			return nil, xerrors.Errorf("socket did not appear before context was canceled")
+			return nil, fmt.Errorf("socket did not appear before context was canceled: %v", errs)
 		}
 	}
 

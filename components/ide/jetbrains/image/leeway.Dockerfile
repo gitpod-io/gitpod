@@ -9,6 +9,7 @@ RUN apk add --no-cache --upgrade curl gzip tar unzip
 RUN curl -sSLo backend.tar.gz "$JETBRAINS_BACKEND_URL" && tar -xf backend.tar.gz --strip-components=1 && rm backend.tar.gz
 COPY --chown=33333:33333 components-ide-jetbrains-backend-plugin--plugin/build/distributions/gitpod-remote-0.0.1.zip /workdir
 RUN unzip gitpod-remote-0.0.1.zip -d plugins/ && rm gitpod-remote-0.0.1.zip
+RUN printf '\n-Dgtw.disable.exit.dialog=true\n' >> $(find /workdir/bin/ -name "*64.vmoptions")
 # enable shared indexes by default
 RUN printf '\nshared.indexes.download.auto.consent=true' >> "/workdir/bin/idea.properties"
 
@@ -18,6 +19,9 @@ COPY --chown=33333:33333 ${SUPERVISOR_IDE_CONFIG} /ide-desktop/supervisor-ide-co
 COPY --chown=33333:33333 startup.sh /ide-desktop/
 COPY --chown=33333:33333 --from=download /workdir/ /ide-desktop/backend/
 COPY --chown=33333:33333 components-ide-jetbrains-image-status--app/status /ide-desktop
+
+ARG JETBRAINS_BACKEND_QUALIFIER
+ENV GITPOD_ENV_SET_JETBRAINS_BACKEND_QUALIFIER ${JETBRAINS_BACKEND_QUALIFIER}
 
 COPY --chown=33333:33333 components-ide-jetbrains-cli--app/cli /ide-desktop/bin/idea-cli
 ENV GITPOD_ENV_APPEND_PATH /ide-desktop/bin:

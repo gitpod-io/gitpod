@@ -28,7 +28,7 @@ type licenseTest struct {
 	Validate              func(t *testing.T, eval *Evaluator)
 	Type                  LicenseType
 	NeverExpires          bool
-	ReplicatedLicenseType *ReplicatedLicenseType
+	ReplicatedLicenseType *LicenseSubscriptionLevel
 }
 
 // roundTripFunc .
@@ -77,9 +77,9 @@ func (test *licenseTest) Run(t *testing.T) {
 				}
 
 				payload, err := json.Marshal(replicatedLicensePayload{
-					LicenseType: func() ReplicatedLicenseType {
+					LicenseType: func() LicenseSubscriptionLevel {
 						if test.ReplicatedLicenseType == nil {
-							return ReplicatedLicenseTypePaid
+							return LicenseTypePaid
 						}
 						return *test.ReplicatedLicenseType
 					}(),
@@ -126,9 +126,9 @@ func (test *licenseTest) Run(t *testing.T) {
 			})
 
 			if test.License == nil {
-				eval = newReplicatedEvaluator(client, domain)
+				eval = newReplicatedEvaluator(client)
 			} else {
-				eval = newReplicatedEvaluator(client, test.License.Domain)
+				eval = newReplicatedEvaluator(client)
 			}
 		} else {
 			t.Fatalf("unknown license type: '%s'", test.Type)
@@ -210,8 +210,8 @@ func TestSeats(t *testing.T) {
 }
 
 func TestFeatures(t *testing.T) {
-	replicatedCommunity := ReplicatedLicenseTypeCommunity
-	replicatedPaid := ReplicatedLicenseTypePaid
+	replicatedCommunity := LicenseTypeCommunity
+	replicatedPaid := LicenseTypePaid
 
 	tests := []struct {
 		Name                  string
@@ -220,7 +220,7 @@ func TestFeatures(t *testing.T) {
 		Features              []Feature
 		LicenseType           LicenseType
 		UserCount             int
-		ReplicatedLicenseType *ReplicatedLicenseType
+		ReplicatedLicenseType *LicenseSubscriptionLevel
 	}{
 		{"Gitpod (in seats): no license", true, LicenseLevel(0), []Feature{
 			FeatureAdminDashboard,
@@ -238,7 +238,7 @@ func TestFeatures(t *testing.T) {
 			FeaturePrebuild,
 		}, LicenseTypeGitpod, seats, nil},
 
-		{"Gitpod (over seats): no license", true, LicenseLevel(0), []Feature{}, LicenseTypeGitpod, 11, nil},
+		{"Gitpod (over seats): no license", true, LicenseLevel(0), []Feature{FeatureAdminDashboard}, LicenseTypeGitpod, 11, nil},
 		{"Gitpod (over seats): invalid license level", false, LicenseLevel(666), []Feature{}, LicenseTypeGitpod, seats + 1, nil},
 		{"Gitpod (over seats): enterprise license", false, LevelEnterprise, []Feature{}, LicenseTypeGitpod, seats + 1, nil},
 

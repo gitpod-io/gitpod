@@ -70,8 +70,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
-				// todo(sje): receive config value
-				Replicas: pointer.Int32(1),
+				Replicas: common.Replicas(ctx, Component),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
@@ -84,7 +83,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 					Spec: corev1.PodSpec{
 						PriorityClassName: common.SystemNodeCritical,
-						Affinity:          common.Affinity(cluster.AffinityLabelWorkspaceServices),
+						Affinity:          common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
 						TopologySpreadConstraints: []corev1.TopologySpreadConstraint{
 							corev1.TopologySpreadConstraint{
 								LabelSelector:     &metav1.LabelSelector{MatchLabels: labels},
@@ -116,14 +115,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Args:            []string{"run", "/config/config.json"},
-							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSProxy.Version),
+							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSProxy.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Resources: corev1.ResourceRequirements{
+							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("100m"),
 									"memory": resource.MustParse("32Mi"),
 								},
-							},
+							}),
 							Ports: []corev1.ContainerPort{{
 								Name:          HTTPProxyPortName,
 								ContainerPort: HTTPProxyPort,
@@ -139,7 +138,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
-								common.TracingEnv(ctx),
+								common.WorkspaceTracingEnv(ctx),
+								common.AnalyticsEnv(&ctx.Config),
 							),
 							ReadinessProbe: &corev1.Probe{
 								InitialDelaySeconds: int32(2),
@@ -148,7 +148,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/readyz",
-										Port: intstr.IntOrString{IntVal: ProbePort},
+										Port: intstr.IntOrString{IntVal: ReadinessPort},
 									},
 								},
 							},
@@ -161,7 +161,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/healthz",
-										Port: intstr.IntOrString{IntVal: ProbePort},
+										Port: intstr.IntOrString{IntVal: ReadinessPort},
 									},
 								},
 							},

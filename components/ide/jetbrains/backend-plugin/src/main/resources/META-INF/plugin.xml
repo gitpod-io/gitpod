@@ -8,12 +8,16 @@
     <id>io.gitpod.jetbrains.remote</id>
     <name>Gitpod Remote</name>
     <vendor>Gitpod</vendor>
+    <description>Provides integrations within a Gitpod workspace.</description>
+
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
     <dependencies>
-        <plugin id="com.intellij.modules.platform"/>
         <plugin id="Git4Idea"/>
+        <plugin id="org.jetbrains.plugins.terminal"/>
+        <plugin id="com.jetbrains.codeWithMe"/>
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -22,10 +26,9 @@
         <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false" />
         <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodClientProjectSessionTracker" client="guest" preload="true"/>
-        <!-- <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodBranding"
-                            serviceInterface="com.intellij.remoteDev.customization.GatewayBranding"
-                            overrides="true" /> -->
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodTerminalService" preload="true"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodProjectManager" preload="true"/>
+        <gateway.customization.name implementation="io.gitpod.jetbrains.remote.GitpodGatewayClientCustomizationProvider"/>
     </extensions>
 
 </idea-plugin>

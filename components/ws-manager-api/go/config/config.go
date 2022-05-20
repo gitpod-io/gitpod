@@ -12,17 +12,21 @@ import (
 	"os"
 	"path/filepath"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	ozzo "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	cntntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 )
+
+// DefaultWorkspaceClass is the name of the default workspace class
+const DefaultWorkspaceClass = "default"
 
 type osFS struct{}
 
@@ -49,6 +53,9 @@ type ServiceConfiguration struct {
 		} `json:"tls"`
 		RateLimits map[string]grpc.RateLimit `json:"ratelimits"`
 	} `json:"rpcServer"`
+	ImageBuilderProxy struct {
+		TargetAddr string `json:"targetAddr"`
+	} `json:"imageBuilderProxy"`
 
 	PProf struct {
 		Addr string `json:"addr"`
@@ -66,15 +73,14 @@ type Configuration struct {
 	SchedulerName string `json:"schedulerName"`
 	// SeccompProfile names the seccomp profile workspaces will use
 	SeccompProfile string `json:"seccompProfile"`
-	// Container configures all three workspace containers
-	Container AllContainerConfiguration `json:"container"`
 	// Timeouts configures how long workspaces can be without activity before they're shut down.
 	// All values in here must be valid time.Duration
 	Timeouts WorkspaceTimeoutConfiguration `json:"timeouts"`
 	// InitProbe configures the ready-probe of workspaces which signal when the initialization is finished
 	InitProbe InitProbeConfiguration `json:"initProbe"`
-	// WorkspacePodTemplate is a path to a workspace pod template YAML file
-	WorkspacePodTemplate WorkspacePodTemplateConfiguration `json:"podTemplate,omitempty"`
+	// WorkspaceCACertSecret optionally names a secret which is mounted in `/etc/ssl/certs/gp-custom.crt`
+	// in all workspace pods.
+	WorkspaceCACertSecret string `json:"caCertSecret,omitempty"`
 	// WorkspaceURLTemplate is a Go template which resolves to the external URL of the
 	// workspace. Available fields are:
 	// - `ID` which is the workspace ID,
@@ -107,11 +113,14 @@ type Configuration struct {
 	RegistryFacadeHost string `json:"registryFacadeHost"`
 	// Cluster host under which workspaces are served, e.g. ws-eu11.gitpod.io
 	WorkspaceClusterHost string `json:"workspaceClusterHost"`
+	// WorkspaceClasses provide different resource classes for workspaces
+	WorkspaceClasses map[string]*WorkspaceClass `json:"workspaceClass"`
 }
 
-// AllContainerConfiguration contains the configuration for all container in a workspace pod
-type AllContainerConfiguration struct {
-	Workspace ContainerConfiguration `json:"workspace"`
+type WorkspaceClass struct {
+	Container ContainerConfiguration            `json:"container"`
+	Templates WorkspacePodTemplateConfiguration `json:"templates"`
+	PVC       PVCConfiguration                  `json:"pvc"`
 }
 
 // WorkspaceTimeoutConfiguration configures the timeout behaviour of workspaces
@@ -179,19 +188,15 @@ type WorkspaceDaemonConfiguration struct {
 
 // Validate validates the configuration to catch issues during startup and not at runtime
 func (c *Configuration) Validate() error {
-	if err := c.Container.Workspace.Validate(); err != nil {
-		return xerrors.Errorf("container.workspace: %w", err)
-	}
-
-	err := validation.ValidateStruct(&c.Timeouts,
-		validation.Field(&c.Timeouts.AfterClose, validation.Required),
-		validation.Field(&c.Timeouts.HeadlessWorkspace, validation.Required),
-		validation.Field(&c.Timeouts.Initialization, validation.Required),
-		validation.Field(&c.Timeouts.RegularWorkspace, validation.Required),
-		validation.Field(&c.Timeouts.MaxLifetime, validation.Required),
-		validation.Field(&c.Timeouts.TotalStartup, validation.Required),
-		validation.Field(&c.Timeouts.ContentFinalization, validation.Required),
-		validation.Field(&c.Timeouts.Stopping, validation.Required),
+	err := ozzo.ValidateStruct(&c.Timeouts,
+		ozzo.Field(&c.Timeouts.AfterClose, ozzo.Required),
+		ozzo.Field(&c.Timeouts.HeadlessWorkspace, ozzo.Required),
+		ozzo.Field(&c.Timeouts.Initialization, ozzo.Required),
+		ozzo.Field(&c.Timeouts.RegularWorkspace, ozzo.Required),
+		ozzo.Field(&c.Timeouts.MaxLifetime, ozzo.Required),
+		ozzo.Field(&c.Timeouts.TotalStartup, ozzo.Required),
+		ozzo.Field(&c.Timeouts.ContentFinalization, ozzo.Required),
+		ozzo.Field(&c.Timeouts.Stopping, ozzo.Required),
 	)
 	if err != nil {
 		return xerrors.Errorf("timeouts: %w", err)
@@ -200,27 +205,43 @@ func (c *Configuration) Validate() error {
 		return xerrors.Errorf("stopping timeout must be greater than content finalization timeout")
 	}
 
-	err = validation.ValidateStruct(&c.WorkspacePodTemplate,
-		validation.Field(&c.WorkspacePodTemplate.DefaultPath, validPodTemplate),
-		validation.Field(&c.WorkspacePodTemplate.PrebuildPath, validPodTemplate),
-		validation.Field(&c.WorkspacePodTemplate.ProbePath, validPodTemplate),
-		validation.Field(&c.WorkspacePodTemplate.RegularPath, validPodTemplate),
+	err = ozzo.ValidateStruct(c,
+		ozzo.Field(&c.WorkspaceURLTemplate, ozzo.Required, validWorkspaceURLTemplate),
+		ozzo.Field(&c.WorkspaceHostPath, ozzo.Required),
+		ozzo.Field(&c.HeartbeatInterval, ozzo.Required),
+		ozzo.Field(&c.GitpodHostURL, ozzo.Required, is.URL),
+		ozzo.Field(&c.ReconnectionInterval, ozzo.Required),
 	)
 	if err != nil {
-		return xerrors.Errorf("workspacePodTemplate: %w", err)
+		return err
 	}
 
-	err = validation.ValidateStruct(c,
-		validation.Field(&c.WorkspaceURLTemplate, validation.Required, validWorkspaceURLTemplate),
-		validation.Field(&c.WorkspaceHostPath, validation.Required),
-		validation.Field(&c.HeartbeatInterval, validation.Required),
-		validation.Field(&c.GitpodHostURL, validation.Required, is.URL),
-		validation.Field(&c.ReconnectionInterval, validation.Required),
-	)
+	if _, ok := c.WorkspaceClasses[DefaultWorkspaceClass]; !ok {
+		return xerrors.Errorf("missing \"%s\" workspace class", DefaultWorkspaceClass)
+	}
+	for name, class := range c.WorkspaceClasses {
+		if errs := validation.IsValidLabelValue(name); len(errs) > 0 {
+			return xerrors.Errorf("workspace class name \"%s\" is invalid: %v", name, errs)
+		}
+		if err := class.Container.Validate(); err != nil {
+			return xerrors.Errorf("workspace class %s: %w", name, err)
+		}
+
+		err = ozzo.ValidateStruct(&class.Templates,
+			ozzo.Field(&class.Templates.DefaultPath, validPodTemplate),
+			ozzo.Field(&class.Templates.PrebuildPath, validPodTemplate),
+			ozzo.Field(&class.Templates.ProbePath, validPodTemplate),
+			ozzo.Field(&class.Templates.RegularPath, validPodTemplate),
+		)
+		if err != nil {
+			return xerrors.Errorf("workspace class %s: %w", name, err)
+		}
+	}
+
 	return err
 }
 
-var validPodTemplate = validation.By(func(o interface{}) error {
+var validPodTemplate = ozzo.By(func(o interface{}) error {
 	s, ok := o.(string)
 	if !ok {
 		return xerrors.Errorf("field should be string")
@@ -230,7 +251,7 @@ var validPodTemplate = validation.By(func(o interface{}) error {
 	return err
 })
 
-var validWorkspaceURLTemplate = validation.By(func(o interface{}) error {
+var validWorkspaceURLTemplate = ozzo.By(func(o interface{}) error {
 	s, ok := o.(string)
 	if !ok {
 		return xerrors.Errorf("field should be string")
@@ -248,26 +269,43 @@ var validWorkspaceURLTemplate = validation.By(func(o interface{}) error {
 	return err
 })
 
+// PVCConfiguration configures properties of persistent volume claim to use for workspace containers
+type PVCConfiguration struct {
+	Size          resource.Quantity `json:"size"`
+	StorageClass  string            `json:"storageClass"`
+	SnapshotClass string            `json:"snapshotClass"`
+}
+
+// Validate validates a PVC configuration
+func (c *PVCConfiguration) Validate() error {
+	return ozzo.ValidateStruct(c,
+		ozzo.Field(&c.Size, ozzo.Required),
+		ozzo.Field(&c.StorageClass, ozzo.Required),
+		ozzo.Field(&c.SnapshotClass, ozzo.Required),
+	)
+}
+
 // ContainerConfiguration configures properties of workspace pod container
 type ContainerConfiguration struct {
-	Image    string                `json:"image"`
-	Requests ResourceConfiguration `json:"requests"`
-	Limits   ResourceConfiguration `json:"limits"`
+	Requests *ResourceConfiguration `json:"requests,omitempty"`
+	Limits   *ResourceConfiguration `json:"limits,omitempty"`
 }
 
 // Validate validates a container configuration
 func (c *ContainerConfiguration) Validate() error {
-	return validation.ValidateStruct(c,
-		validation.Field(&c.Image, validation.Required),
-		validation.Field(&c.Requests, validResourceConfig),
-		validation.Field(&c.Limits, validResourceConfig),
+	return ozzo.ValidateStruct(c,
+		ozzo.Field(&c.Requests, validResourceConfig),
+		ozzo.Field(&c.Limits, validResourceConfig),
 	)
 }
 
-var validResourceConfig = validation.By(func(o interface{}) error {
-	rc, ok := o.(ResourceConfiguration)
+var validResourceConfig = ozzo.By(func(o interface{}) error {
+	rc, ok := o.(*ResourceConfiguration)
 	if !ok {
 		return xerrors.Errorf("can only validate ResourceConfiguration")
+	}
+	if rc == nil {
+		return nil
 	}
 	if rc.CPU != "" {
 		_, err := resource.ParseQuantity(rc.CPU)
@@ -287,11 +325,28 @@ var validResourceConfig = validation.By(func(o interface{}) error {
 			return xerrors.Errorf("cannot parse EphemeralStorage quantity: %w", err)
 		}
 	}
+	if rc.Storage != "" {
+		_, err := resource.ParseQuantity(rc.Storage)
+		if err != nil {
+			return xerrors.Errorf("cannot parse Storage quantity: %w", err)
+		}
+	}
 	return nil
 })
 
+func (r *ResourceConfiguration) StorageQuantity() (resource.Quantity, error) {
+	if r.Storage == "" {
+		res := resource.NewQuantity(0, resource.BinarySI)
+		return *res, nil
+	}
+	return resource.ParseQuantity(r.Storage)
+}
+
 // ResourceList parses the quantities in the resource config
 func (r *ResourceConfiguration) ResourceList() (corev1.ResourceList, error) {
+	if r == nil {
+		return corev1.ResourceList{}, nil
+	}
 	res := map[corev1.ResourceName]string{
 		corev1.ResourceCPU:              r.CPU,
 		corev1.ResourceMemory:           r.Memory,
@@ -400,4 +455,5 @@ type ResourceConfiguration struct {
 	CPU              string `json:"cpu"`
 	Memory           string `json:"memory"`
 	EphemeralStorage string `json:"ephemeral-storage"`
+	Storage          string `json:"storage,omitempty"`
 }

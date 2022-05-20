@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -157,6 +158,39 @@ func EncryptValue(value []byte, key []byte) (data string, iv string) {
 	return
 }
 
+// Storage provides a url of the storage provider
+// it takes a url as input and creates a port forward if required
+// e.g. when minio running in gitpod cluster
+// and modifies the url to refer to the localhost instead of dns name
+func (c *ComponentAPI) Storage(connUrl string) (string, error) {
+	u, err := url.Parse(connUrl)
+	if err != nil {
+		return "", err
+	}
+	host, port, _ := net.SplitHostPort(u.Host)
+	if !strings.HasSuffix(host, ".svc.cluster.local") {
+		return connUrl, nil
+	}
+	serviceName := strings.Split(host, ".")[0]
+
+	localPort, err := getFreePort()
+	if err != nil {
+		return "", err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	ready, errc := common.ForwardPortOfSvc(ctx, c.kubeconfig, c.namespace, serviceName, fmt.Sprintf("%d:%s", localPort, port))
+	select {
+	case err = <-errc:
+		cancel()
+		return "", err
+	case <-ready:
+	}
+	c.appendCloser(func() error { cancel(); return nil })
+
+	return strings.Replace(connUrl, u.Host, fmt.Sprintf("localhost:%d", localPort), 1), nil
+}
+
 // Supervisor provides a gRPC connection to a workspace's supervisor
 func (c *ComponentAPI) Supervisor(instanceID string) (grpc.ClientConnInterface, error) {
 	pod, _, err := selectPod(ComponentWorkspace, selectPodOptions{
@@ -172,7 +206,7 @@ func (c *ComponentAPI) Supervisor(instanceID string) (grpc.ClientConnInterface, 
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:22999", localPort))
+	ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:22999", localPort))
 	select {
 	case err = <-errc:
 		cancel()
@@ -594,7 +628,7 @@ func (c *ComponentAPI) WorkspaceManager() (wsmanapi.WorkspaceManagerClient, erro
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+		ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
 		select {
 		case err := <-errc:
 			cancel()
@@ -667,7 +701,7 @@ func (c *ComponentAPI) BlobService() (csapi.BlobServiceClient, error) {
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+		ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
 		select {
 		case err := <-errc:
 			cancel()
@@ -720,7 +754,7 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 	// if configured: setup local port-forward to DB pod
 	if config.ForwardPort != nil {
 		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, config.ForwardPort.PodName, fmt.Sprintf("%d:%d", config.Port, config.ForwardPort.RemotePort))
+		ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, config.ForwardPort.PodName, fmt.Sprintf("%d:%d", config.Port, config.ForwardPort.RemotePort))
 		select {
 		case err := <-errc:
 			cancel()
@@ -966,7 +1000,7 @@ func (c *ComponentAPI) ImageBuilder(opts ...APIImageBuilderOpt) (imgbldr.ImageBu
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
-			ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+			ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
 			select {
 			case err = <-errc:
 				cancel()
@@ -1015,7 +1049,7 @@ func (c *ComponentAPI) ContentService() (ContentService, error) {
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+		ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
 		select {
 		case err := <-errc:
 			cancel()

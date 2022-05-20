@@ -42,7 +42,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      common.Affinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
+					Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					HostPID:                       true,
 					EnableServiceLinks:            pointer.Bool(false),
@@ -51,22 +51,22 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					Containers: []corev1.Container{{
 						Name:            Component,
-						Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.AgentSmith.Version),
+						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.AgentSmith.Version),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Args:            []string{"run", "--config", "/config/config.json"},
-						Resources: corev1.ResourceRequirements{
+						Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								"cpu":    resource.MustParse("100m"),
 								"memory": resource.MustParse("32Mi"),
 							},
-						},
+						}),
 						VolumeMounts: []corev1.VolumeMount{{
 							Name:      "config",
 							MountPath: "/config",
 						}},
 						Env: common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
-							common.TracingEnv(ctx),
+							common.WorkspaceTracingEnv(ctx),
 							[]corev1.EnvVar{{
 								Name: "NODENAME",
 								ValueFrom: &corev1.EnvVarSource{

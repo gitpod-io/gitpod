@@ -140,12 +140,20 @@ export class UserController {
                 res.sendStatus(401);
                 return;
             }
+            if (req.user.blocked) {
+                res.sendStatus(403);
+                return;
+            }
             this.ensureSafeReturnToParam(req);
             this.authenticator.authorize(req, res, next).catch((err) => log.error("authenticator.authorize", err));
         });
         router.get("/deauthorize", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!User.is(req.user)) {
                 res.sendStatus(401);
+                return;
+            }
+            if (req.user.blocked) {
+                res.sendStatus(403);
                 return;
             }
             this.ensureSafeReturnToParam(req);
@@ -575,12 +583,14 @@ export class UserController {
             await this.userService.updateUserIdentity(user, additionalIdentity, additionalToken);
         }
 
-        // const { isBlocked } = tosFlowInfo; // todo@alex: this setting is in conflict with the env var
+        if (user.blocked) {
+            log.warn({ user: user.id }, "user blocked on signup");
+        }
 
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
 
-        /* no await */ trackSignup(user, req, this.analytics).catch((err) =>
+        /** no await */ trackSignup(user, req, this.analytics).catch((err) =>
             log.warn({ userId: user.id }, "trackSignup", err),
         );
 
@@ -592,6 +602,7 @@ export class UserController {
         newUser.name = authUser.authName;
         newUser.fullName = authUser.name || undefined;
         newUser.avatarUrl = authUser.avatarUrl;
+        newUser.blocked = newUser.blocked || tosFlowInfo.isBlocked;
     }
 
     protected getSorryUrl(message: string) {

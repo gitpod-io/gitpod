@@ -11,7 +11,6 @@ import { deployToPreviewEnvironment } from './jobs/build/deploy-to-preview-envir
 import { triggerIntegrationTests } from './jobs/build/trigger-integration-tests';
 import { jobConfig } from './jobs/build/job-config';
 import { typecheckWerftJobs } from './jobs/build/typecheck-werft-jobs';
-import { publishKotsUnstable } from './jobs/build/publish-kots-unstable'
 
 // Will be set once tracing has been initialized
 let werft: Werft
@@ -28,12 +27,12 @@ Tracing.initialize()
             message: err
         })
 
+        console.log('Error', err)
+
         if (context.Repository.ref === "refs/heads/main") {
             reportBuildFailureInSlack(context, err).catch((error: Error) => {
                 console.error("Failed to send message to Slack", error)
             });
-        } else {
-            console.log('Error', err)
         }
 
         // Explicitly not using process.exit as we need to flush tracing, see tracing.js
@@ -61,7 +60,16 @@ async function run(context: any) {
         return
     }
 
-    await deployToPreviewEnvironment(werft, config)
+    try {
+        await deployToPreviewEnvironment(werft, config)
+    } catch (e) {
+        // We currently don't support concurrent deployments to the same preview environment.
+        // Until we do we don't want errors to mark the main build as failed.
+        if (config.mainBuild) {
+            return
+        }
+        throw e
+    }
+
     await triggerIntegrationTests(werft, config, context.Owner)
-    await publishKotsUnstable(werft, config)
 }

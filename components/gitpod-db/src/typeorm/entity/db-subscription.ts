@@ -61,6 +61,12 @@ export class DBSubscription implements Subscription {
     teamSubscriptionSlotId?: string;
 
     @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    teamMembershipId?: string;
+
+    @Column({
         default: false,
     })
     deleted?: boolean;

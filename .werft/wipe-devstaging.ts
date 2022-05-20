@@ -1,11 +1,10 @@
 import { Werft } from './util/werft'
 import { wipePreviewEnvironmentAndNamespace, listAllPreviewNamespaces, helmInstallName } from './util/kubectl';
-import * as fs from 'fs';
-import { deleteExternalIp } from './util/gcloud';
 import * as Tracing from './observability/tracing'
 import { SpanStatusCode } from '@opentelemetry/api';
 import { ExecOptions } from './util/shell';
 import { env } from './util/util';
+import { CORE_DEV_KUBECONFIG_PATH } from './jobs/build/const';
 
 // Will be set once tracing has been initialized
 let werft: Werft
@@ -15,7 +14,7 @@ async function wipePreviewCluster(shellOpts: ExecOptions) {
     const namespaces: string[] = [];
     if (namespace_raw === "<no value>" || !namespace_raw) {
         werft.log('wipe', "Going to wipe all namespaces");
-        listAllPreviewNamespaces(shellOpts)
+        listAllPreviewNamespaces(CORE_DEV_KUBECONFIG_PATH, shellOpts)
             .map(ns => namespaces.push(ns));
     } else {
         werft.log('wipe', `Going to wipe namespace ${namespace_raw}`);
@@ -23,7 +22,7 @@ async function wipePreviewCluster(shellOpts: ExecOptions) {
     }
 
     for (const namespace of namespaces) {
-        await wipePreviewEnvironmentAndNamespace(helmInstallName, namespace, { ...shellOpts, slice: 'wipe' });
+        await wipePreviewEnvironmentAndNamespace(helmInstallName, namespace, CORE_DEV_KUBECONFIG_PATH, { ...shellOpts, slice: 'wipe' });
     }
 }
 
@@ -31,8 +30,6 @@ async function wipePreviewCluster(shellOpts: ExecOptions) {
 async function devCleanup() {
     await wipePreviewCluster(env(""))
 }
-
-// sweeper runs in the dev cluster so we need to delete the k3s cluster first and then delete self contained namespace
 
 Tracing.initialize()
     .then(() => {

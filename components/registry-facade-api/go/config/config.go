@@ -7,14 +7,17 @@ package config
 import (
 	"encoding/json"
 	"os"
+
+	"golang.org/x/xerrors"
 )
 
 // ServiceConfig configures this service
 type ServiceConfig struct {
-	Registry       Config `json:"registry"`
-	AuthCfg        string `json:"dockerAuth"`
-	PProfAddr      string `json:"pprofAddr"`
-	PrometheusAddr string `json:"prometheusAddr"`
+	Registry           Config `json:"registry"`
+	AuthCfg            string `json:"dockerAuth"`
+	PProfAddr          string `json:"pprofAddr"`
+	PrometheusAddr     string `json:"prometheusAddr"`
+	ReadinessProbeAddr string `json:"readinessProbeAddr"`
 }
 
 // GetConfig loads and validates the configuration
@@ -28,6 +31,18 @@ func GetConfig(fn string) (*ServiceConfig, error) {
 	err = json.Unmarshal(fc, &cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if cfg.Registry.IPFSCache != nil && cfg.Registry.IPFSCache.Enabled {
+		if cfg.Registry.RedisCache == nil || !cfg.Registry.RedisCache.Enabled {
+			return nil, xerrors.Errorf("IPFS cache requires Redis")
+		}
+	}
+
+	if cfg.Registry.RedisCache != nil {
+		rd := cfg.Registry.RedisCache
+		rd.Password = os.Getenv("REDIS_PASSWORD")
+		cfg.Registry.RedisCache = rd
 	}
 
 	return &cfg, nil
@@ -50,9 +65,30 @@ type Config struct {
 	Prefix             string           `json:"prefix"`
 	StaticLayer        []StaticLayerCfg `json:"staticLayer"`
 	RemoteSpecProvider *RSProvider      `json:"remoteSpecProvider,omitempty"`
+	FixedSpecProvider  string           `json:"fixedSpecFN,omitempty"`
 	Store              string           `json:"store"`
 	RequireAuth        bool             `json:"requireAuth"`
 	TLS                *TLS             `json:"tls"`
+
+	IPFSCache *IPFSCacheConfig `json:"ipfs,omitempty"`
+
+	RedisCache *RedisCacheConfig `json:"redis,omitempty"`
+}
+
+type RedisCacheConfig struct {
+	Enabled bool `json:"enabled"`
+
+	SingleHostAddress string `json:"singleHostAddr,omitempty"`
+
+	MasterName    string   `json:"masterName,omitempty"`
+	SentinelAddrs []string `json:"sentinelAddrs,omitempty"`
+	Username      string   `json:"username,omitempty"`
+	Password      string   `json:"-" env:"REDIS_PASSWORD"`
+}
+
+type IPFSCacheConfig struct {
+	Enabled  bool   `json:"enabled"`
+	IPFSAddr string `json:"ipfsAddr"`
 }
 
 // StaticLayerCfg configure statically added layer

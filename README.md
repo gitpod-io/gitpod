@@ -1,14 +1,23 @@
 <p align="center">
   <a href="https://www.gitpod.io">
-    <img src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/src/icons/gitpod.svg" height="60">
-    <h3 align="center">Gitpod</h3>
+    <img src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/src/icons/gitpod.svg" alt="Gitpod Logo" height="60" />
+    <br />
+    <strong>Gitpod</strong>
   </a>
-  <p align="center">Always ready-to-code.</p>
+  <br />
+  <span>Always ready-to-code.</span>
 </p>
-
-[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/from-referrer/)
-[![Werft.dev - Gitpod CI](https://img.shields.io/badge/Werft.dev-CI--builds-green)](https://werft.gitpod-dev.com/)
-[![Discord](https://img.shields.io/discord/816244985187008514)](https://www.gitpod.io/chat)
+<p align="center">
+  <a href="https://gitpod.io/from-referrer/">
+    <img src="https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod" alt="Gitpod ready-to-code" />
+  </a>
+  <a href="https://werft.gitpod-dev.com/">
+    <img src="https://img.shields.io/badge/Werft.dev-CI--builds-green" alt="Werft.dev - Gitpod CI" />
+  </a>
+  <a href="https://www.gitpod.io/chat">
+    <img src="https://img.shields.io/discord/816244985187008514" alt="Discord" />
+  </a>
+</p>
 
 Gitpod is an open-source Kubernetes application for ready-to-code developer environments that spins up fresh, automated dev environments
 for each task, in the cloud, in seconds. It enables you to describe your dev environment as code and start instant, remote and cloud-based developer environments directly from your browser or your Desktop IDE.
@@ -16,7 +25,6 @@ for each task, in the cloud, in seconds. It enables you to describe your dev env
 Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and continuously prebuilds dev environments for all your branches. As a result, team members can instantly start coding with fresh, ephemeral and fully-compiled dev environments - no matter if you are building a new feature, want to fix a bug or do a code review.
 
 ![browser-vscode](https://user-images.githubusercontent.com/22498066/135150975-23bba3a6-f099-48c5-83ed-a1a6627ff0e9.png)
-
 
 ## Features
 
@@ -32,7 +40,7 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 👯‍♀️ [Collaboration](https://www.gitpod.io/docs/sharing-and-collaboration/) - invite team members to your dev environment or snapshot any state of your dev environment to share it with your team asynchronously.
 
-🛠 Professional & customizable developer experience - a Gitpod workspace gives you the same capabilities (yes, even [root & docker](https://www.gitpod.io/docs/feature-preview/#root-access)) as your Linux machine - pre-configured and optimized for your individual development workflow. Install any [VS Code extension](https://www.gitpod.io/docs/vscode-extensions/) with one click on a user and/or team level.
+🛠 Professional & customizable developer experience - a Gitpod workspace gives you the same capabilities (yes, even [root & docker](https://www.gitpod.io/docs/config-docker#configure-a-custom-dockerfile)) as your Linux machine - pre-configured and optimized for your individual development workflow. Install any [VS Code extension](https://www.gitpod.io/docs/vscode-extensions/) with one click on a user and/or team level.
 
 [Learn more 👉](https://www.gitpod.io/)
 
@@ -41,12 +49,12 @@ Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free su
 ## Getting Started
 
 You can start using Gitpod in one or more of the following ways:
+
 1. Quickstart using an [Example Project](https://www.gitpod.io/docs/quickstart) or [OSS Project](https://contribute.dev/)
 1. Getting started with [one of your existing projects](https://www.gitpod.io/docs/getting-started)
 1. [Use a Prefixed URL](https://www.gitpod.io/docs/getting-started/#prefixed-url)
 1. [Install Browser Extension](https://www.gitpod.io/docs/getting-started#browser-extension)
 1. [Enable GitLab Integration](https://www.gitpod.io/docs/gitlab-integration#gitlab-integration)
-
 
 ## Documentation
 
@@ -70,8 +78,8 @@ You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/is
 
 We work with quarterly roadmaps in autonomous product teams.
 
- - [Gitpod Architecture](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74)
- - [Product Roadmap](https://github.com/orgs/gitpod-io/projects/27)
+-   [Gitpod Architecture](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74)
+-   [Product Roadmap](https://github.com/orgs/gitpod-io/projects/27)
 
 ### How do GitHub Issues get prioritised?
 

@@ -5,22 +5,25 @@
 package daemon
 
 import (
+	"context"
+
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // Config configures the workspace node daemon
 type Config struct {
-	Runtime         RuntimeConfig         `json:"runtime"`
-	ReadinessSignal ReadinessSignalConfig `json:"readiness"`
+	Runtime RuntimeConfig `json:"runtime"`
 
 	Content        content.Config      `json:"content"`
 	Uidmapper      iws.UidmapperConfig `json:"uidmapper"`
-	Resources      cpulimit.Config     `json:"cpulimit"`
+	CPULimit       cpulimit.Config     `json:"cpulimit"`
+	IOLimit        IOLimitConfig       `json:"ioLimit"`
 	Hosts          hosts.Config        `json:"hosts"`
 	DiskSpaceGuard diskguard.Config    `json:"disk"`
 }
@@ -31,8 +34,34 @@ type RuntimeConfig struct {
 	KubernetesNamespace string            `json:"namespace"`
 }
 
-type ReadinessSignalConfig struct {
-	Enabled bool   `json:"enabled"`
-	Addr    string `json:"addr"`
-	Path    string `json:"path"`
+type IOLimitConfig struct {
+	WriteBWPerSecond resource.Quantity `json:"writeBandwidthPerSecond"`
+	ReadBWPerSecond  resource.Quantity `json:"readBandwidthPerSecond"`
+	WriteIOPS        int64             `json:"writeIOPS"`
+	ReadIOPS         int64             `json:"readIOPS"`
+}
+
+type ConfigReloader interface {
+	ReloadConfig(context.Context, *Config) error
+}
+
+type ConfigReloaderFunc func(context.Context, *Config) error
+
+func (f ConfigReloaderFunc) ReloadConfig(ctx context.Context, cfg *Config) error {
+	return f(ctx, cfg)
+}
+
+type CompositeConfigReloader []ConfigReloader
+
+func (cs CompositeConfigReloader) ReloadConfig(ctx context.Context, cfg *Config) error {
+	for _, c := range cs {
+		err := c.ReloadConfig(ctx, cfg)
+		if err != nil {
+			return err
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+	}
+	return nil
 }

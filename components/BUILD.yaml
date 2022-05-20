@@ -43,12 +43,17 @@ packages:
       - components/ide/code-desktop:docker-insiders
       - components/ide/code:docker
       - components/ide/jetbrains/image:goland
+      - components/ide/jetbrains/image:goland-latest
       - components/ide/jetbrains/image:intellij
+      - components/ide/jetbrains/image:intellij-latest
       - components/ide/jetbrains/image:phpstorm
+      - components/ide/jetbrains/image:phpstorm-latest
       - components/ide/jetbrains/image:pycharm
+      - components/ide/jetbrains/image:pycharm-latest
       - components/image-builder-bob:docker
       - components/image-builder-mk3:docker
       - components/local-app:docker
+      - components/public-api-server:docker
       - components/openvsx-proxy:docker
       - components/proxy:docker
       - components/registry-facade:docker
@@ -81,6 +86,7 @@ packages:
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor-api/typescript-grpcweb:publish
       - components/ide/jetbrains/gateway-plugin:publish
+      - components/public-api/typescript:publish
   - name: all-apps
     type: generic
     deps:
@@ -94,6 +100,7 @@ packages:
       - components/ee/payment-endpoint:app
       - components/image-builder-mk3:app
       - components/openvsx-proxy:app
+      - components/public-api-server:app
       - components/registry-facade:app
       - components/server:app
       - components/service-waiter:app
@@ -166,14 +173,14 @@ scripts:
       - test/**/*
       - dev/**/*
     script: |
-      leeway exec --filter-type go -v -- go mod tidy -compat=1.17
+      leeway exec --filter-type go -v -- go mod tidy -compat=1.18
 
       # not all the code is present in leeway.
       # ensure we update everything containing a go.mod file
       for COMPONENT in $(find . -name go.mod); do
         DIRECTORY=$(dirname $COMPONENT)
         pushd $DIRECTORY > /dev/null
-        go mod tidy -compat=1.17
+        go mod tidy -compat=1.18
         popd > /dev/null
       done
 
@@ -239,4 +246,28 @@ scripts:
         query="update d_b_user set rolesOrPermissions = '[\"admin\"]' where name=\"$user\";"
         mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
       fi
+      kill $PID || true
+
+  - name: add-smith-token
+    deps:
+      - components/service-waiter:app
+    script: |
+      echo "$"
+      export DB_USERNAME=$(kubectl get secrets mysql -o jsonpath="{.data.username}" | base64 -d)
+      export DB_PASSWORD=$(kubectl get secrets mysql -o jsonpath="{.data.password}" | base64 -d)
+      kubectl port-forward statefulset/mysql 3306 &
+      PID=$!
+      service-waiter database -t 20s
+      if [ $? -ne 0 ]; then
+        echo "could not connect to DB"
+        kill $PID || true
+        exit 1
+      fi
+
+      query="insert into d_b_user(id,name,creationDate,rolesOrPermissions,additionalData) values('builtin-user-agent-smith-0000000', 'agent-smith', DATE_FORMAT(NOW(3), '%Y-%m-%dT%T.%fZ'),'[\"admin\"]','{\"emailNotificationSettings\": {\"allowsChangelogMail\": false, \"allowsOnboardingMail\": true}}') on duplicate key update id=id;"
+      mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
+
+      query="insert into d_b_gitpod_token(tokenHash,name,type,userId,scopes,created,deleted) VALUES('$TOKEN','agent-smith',0,'builtin-user-agent-smith-0000000','function:adminBlockUser', '2021-03-16T10:28:57.608Z', false) on duplicate key update tokenHash=tokenHash;"
+      mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
+
       kill $PID || true

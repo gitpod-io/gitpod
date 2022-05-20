@@ -5,15 +5,18 @@
 
 set -euo pipefail
 
-source ./dev/preview/util/preview-name-from-branch.sh
+THIS_DIR="$(dirname "$0")"
 
-VM_NAME="$(preview-name-from-branch)"
+source "$THIS_DIR/util/preview-name-from-branch.sh"
+
+if [[ -z "${VM_NAME:-}" ]]; then
+    VM_NAME="$(preview-name-from-branch)"
+fi
+
 NAMESPACE="preview-${VM_NAME}"
-
 PRIVATE_KEY=$HOME/.ssh/vm_id_rsa
 PUBLIC_KEY=$HOME/.ssh/vm_id_rsa.pub
 PORT=8022
-THIS_DIR="$(dirname "$0")"
 USER="ubuntu"
 COMMAND=""
 
@@ -41,13 +44,13 @@ function has-harvester-access {
 function set-up-ssh {
     if [[ (! -f $PRIVATE_KEY) || (! -f $PUBLIC_KEY) ]]; then
         echo Setting up ssh-keys
-        "$THIS_DIR"/install-vm-ssh-keys.sh
+        "$THIS_DIR"/util/install-vm-ssh-keys.sh
     fi
 }
 
 if ! has-harvester-access; then
     echo Setting up kubeconfig
-    "$THIS_DIR"/download-and-merge-harvester-kubeconfig.sh
+    "$THIS_DIR"/util/download-and-merge-harvester-kubeconfig.sh
 fi
 
 set-up-ssh
@@ -56,7 +59,7 @@ ssh "$USER"@127.0.0.1 \
     -o UserKnownHostsFile=/dev/null \
     -o StrictHostKeyChecking=no \
     -o LogLevel=ERROR \
-    -o "ProxyCommand=$THIS_DIR/ssh-proxy-command.sh -p $PORT -n $NAMESPACE -v $VM_NAME" \
+    -o "ProxyCommand=$THIS_DIR/util/ssh-proxy-command.sh -p $PORT -n $NAMESPACE -v $VM_NAME" \
     -i "$HOME/.ssh/vm_id_rsa" \
     -p "$PORT" \
     "$COMMAND"

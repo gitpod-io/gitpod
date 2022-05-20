@@ -4,10 +4,12 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as url from "url";
+import { URL } from "url";
 export namespace RepoURL {
-    export function parseRepoUrl(repoUrl: string): { host: string; owner: string; repo: string } | undefined {
-        const u = url.parse(repoUrl);
+    export function parseRepoUrl(
+        repoUrl: string,
+    ): { host: string; owner: string; repo: string; repoKind?: string } | undefined {
+        const u = new URL(repoUrl);
         const host = u.hostname || "";
         const path = u.pathname || "";
         const segments = path.split("/").filter((s) => !!s); // e.g. [ 'gitpod-io', 'gitpod.git' ]
@@ -18,10 +20,20 @@ export namespace RepoURL {
         }
         if (segments.length > 2) {
             const endSegment = segments[segments.length - 1];
-            const ownerSegments = segments.slice(0, segments.length - 1);
-            const owner = ownerSegments.join("/");
+            let ownerSegments = segments.slice(0, segments.length - 1);
+            let repoKind: string | undefined;
+            if (ownerSegments[0] === "scm") {
+                ownerSegments = ownerSegments.slice(1);
+                repoKind = "projects";
+            }
+
+            let owner = ownerSegments.join("/");
+            if (owner.startsWith("~")) {
+                repoKind = "users";
+                owner = owner.substring(1);
+            }
             const repo = endSegment.endsWith(".git") ? endSegment.slice(0, -4) : endSegment;
-            return { host, owner, repo };
+            return { host, owner, repo, repoKind };
         }
         return undefined;
     }

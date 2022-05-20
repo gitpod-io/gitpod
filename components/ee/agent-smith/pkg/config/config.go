@@ -12,9 +12,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
-	"github.com/gitpod-io/gitpod/common-go/util"
 	"golang.org/x/xerrors"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func GetConfig(cfgFile string) (*ServiceConfig, error) {
@@ -56,9 +54,6 @@ type ServiceConfig struct {
 	// We have had memory leak issues with agent smith in the past due to experimental gRPC use.
 	// This upper limit causes agent smith to stop itself should it go above this limit.
 	MaxSysMemMib uint64 `json:"systemMemoryLimitMib,omitempty"`
-
-	HostURL        string `json:"hostURL,omitempty"`
-	GitpodAPIToken string `json:"gitpodAPIToken,omitempty"`
 }
 
 type Enforcement struct {
@@ -99,8 +94,6 @@ type InfringementKind string
 const (
 	// InfringementExec means a user executed a blocklisted executable
 	InfringementExec InfringementKind = "blocklisted executable"
-	// InfringementExcessiveEgress means a user produced too much egress traffic
-	InfringementExcessiveEgress InfringementKind = "excessive egress"
 )
 
 // PenaltyKind describes a kind of penalty for a violating workspace
@@ -144,7 +137,6 @@ func (g GradedInfringementKind) Kind() (InfringementKind, error) {
 	wopfx := strings.TrimSpace(strings.TrimPrefix(string(g), string(g.Severity())))
 
 	validKinds := []InfringementKind{
-		InfringementExcessiveEgress,
 		InfringementExec,
 	}
 	for _, k := range validKinds {
@@ -178,7 +170,6 @@ type Config struct {
 
 	Blocklists *Blocklists `json:"blocklists,omitempty"`
 
-	EgressTraffic     *EgressTraffic     `json:"egressTraffic,omitempty"`
 	Enforcement       Enforcement        `json:"enforcement,omitempty"`
 	ExcessiveCPUCheck *ExcessiveCPUCheck `json:"excessiveCPUCheck,omitempty"`
 	SlackWebhooks     *SlackWebhooks     `json:"slackWebhooks,omitempty"`
@@ -191,20 +182,6 @@ type Config struct {
 type SlackWebhooks struct {
 	Audit   string `json:"audit,omitempty"`
 	Warning string `json:"warning,omitempty"`
-}
-
-// EgressTraffic configures an upper limit of allowed egress traffic over time
-type EgressTraffic struct {
-	WindowDuration util.Duration `json:"dt"`
-
-	ExcessiveLevel     *PerLevelEgressTraffic `json:"excessive"`
-	VeryExcessiveLevel *PerLevelEgressTraffic `json:"veryExcessive"`
-}
-
-// PerLevelEgressTraffic configures the egress traffic threshold per level
-type PerLevelEgressTraffic struct {
-	BaseBudget resource.Quantity `json:"baseBudget"`
-	Threshold  resource.Quantity `json:"perDtThreshold"`
 }
 
 // Blocklists list s/signature blocklists for various levels of infringement

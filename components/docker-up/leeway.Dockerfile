@@ -4,7 +4,12 @@
 
 FROM scratch
 
-LABEL skip-n.registry-facade.gitpod.io="1"
+LABEL skip-n.registry-facade.gitpod.io="2"
+# the next two layers (WORKDIR) will be removed by registry-facade
+# this avoids the replacement of the content of the existing directories
+WORKDIR /usr/local/bin
 WORKDIR /usr/bin
 
 COPY components-docker-up--app/* ./
+
+COPY components-docker-up--app/docker-compose /usr/local/bin/docker-compose

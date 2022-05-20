@@ -29,6 +29,7 @@ import (
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 )
@@ -68,7 +69,7 @@ func main() {
 	pflag.BoolVarP(&opts.Verbose, "verbose", "v", false, "enables verbose logging")
 	pflag.BoolVar(&opts.RuncFacade, "runc-facade", true, "enables the runc-facade to handle rootless idiosyncrasies")
 	pflag.StringVar(&opts.BinDir, "bin-dir", filepath.Dir(self), "directory where runc-facade is found")
-	pflag.BoolVar(&opts.AutoInstall, "auto-install", true, "auto-install prerequisites (docker, slirp4netns)")
+	pflag.BoolVar(&opts.AutoInstall, "auto-install", true, "auto-install prerequisites (docker)")
 	pflag.BoolVar(&opts.UserAccessibleSocket, "user-accessible-socket", true, "chmod the Docker socket to make it user accessible")
 	pflag.BoolVar(&opts.DontWrapNetNS, "dont-wrap-netns", os.Getenv("WORKSPACEKIT_WRAP_NETNS") == "true", "wrap the Docker daemon in a network namespace")
 	pflag.Parse()
@@ -121,6 +122,16 @@ func runWithinNetns() (err error) {
 		return xerrors.Errorf("cannot add user supplied docker args: %w", err)
 	}
 	args = append(args, userArgs...)
+
+	containerIf := "ceth0"
+	netIface, err := netlink.LinkByName(containerIf)
+	if err != nil {
+		return xerrors.Errorf("cannot get container network device %s: %w", containerIf, err)
+	}
+
+	args = append(args, fmt.Sprintf("--mtu=%v", netIface.Attrs().MTU))
+	// configure docker0 MTU (used as control plane, not related to containers)
+	args = append(args, fmt.Sprintf("--network-control-plane-mtu=%v", netIface.Attrs().MTU))
 
 	if listenFDs > 0 {
 		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))

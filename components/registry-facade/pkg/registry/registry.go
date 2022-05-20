@@ -6,27 +6,32 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/gitpod-io/gitpod/registry-facade/api/config"
+	"time"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/registry-facade/api"
+	"github.com/gitpod-io/gitpod/registry-facade/api/config"
 
-	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/content/local"
 	"github.com/containerd/containerd/remotes"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/errcode"
 	distv2 "github.com/docker/distribution/registry/api/v2"
+	"github.com/go-redis/redis/v8"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/gorilla/mux"
+	httpapi "github.com/ipfs/go-ipfs-http-client"
+	ma "github.com/multiformats/go-multiaddr"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -64,7 +69,8 @@ type ResolverProvider func() remotes.Resolver
 type Registry struct {
 	Config         config.Config
 	Resolver       ResolverProvider
-	Store          content.Store
+	Store          BlobStore
+	IPFS           *IPFSBlobCache
 	LayerSource    LayerSource
 	ConfigModifier ConfigModifier
 	SpecProvider   map[string]ImageSpecProvider
@@ -76,15 +82,42 @@ type Registry struct {
 
 // NewRegistry creates a new registry
 func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus.Registerer) (*Registry, error) {
-	storePath := cfg.Store
-	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
-		storePath = filepath.Join(tproot, storePath)
+	var mfStore BlobStore
+
+	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
+		if cfg.RedisCache == nil || !cfg.RedisCache.Enabled {
+			return nil, xerrors.Errorf("IPFS cache requires Redis")
+		}
 	}
-	store, err := local.NewStore(storePath)
-	if err != nil {
-		return nil, err
+
+	if cfg.RedisCache != nil && cfg.RedisCache.Enabled {
+		rdc, err := getRedisClient(cfg.RedisCache)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot connect to Redis: %w", err)
+		}
+
+		mfStore = &RedisBlobStore{Client: rdc}
+		log.Info("using redis to cache manifests and config")
+
+		resolverFactory := &RedisCachedResolver{
+			Client:   rdc,
+			Provider: newResolver,
+		}
+		newResolver = resolverFactory.Factory
+		log.Info("using redis to cache references")
+	} else {
+		storePath := cfg.Store
+		if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
+			storePath = filepath.Join(tproot, storePath)
+		}
+		var err error
+		mfStore, err = local.NewStore(storePath)
+		if err != nil {
+			return nil, err
+		}
+		log.WithField("storePath", storePath).Info("using local filesystem to cache manifests and config")
+		// TODO(cw): GC the store
 	}
-	// TODO: GC the store
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -170,18 +203,117 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 		}
 		specProvider[api.ProviderPrefixRemote] = specprov
 	}
+	if cfg.FixedSpecProvider != "" {
+		fc, err := ioutil.ReadFile(cfg.FixedSpecProvider)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot read fixed spec: %w", err)
+		}
+
+		f := make(map[string]json.RawMessage)
+		err = json.Unmarshal(fc, &f)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot unmarshal fixed spec: %w", err)
+		}
+
+		prov := make(FixedImageSpecProvider)
+		for k, v := range f {
+			var spec api.ImageSpec
+			err = jsonpb.UnmarshalString(string(v), &spec)
+			if err != nil {
+				return nil, xerrors.Errorf("cannot unmarshal fixed spec: %w", err)
+			}
+			prov[k] = &spec
+		}
+		specProvider[api.ProviderPrefixFixed] = prov
+	}
+
+	var ipfs *IPFSBlobCache
+	if cfg.IPFSCache != nil && cfg.IPFSCache.Enabled {
+		addr := cfg.IPFSCache.IPFSAddr
+		if ipfsHost := os.Getenv("IPFS_HOST"); ipfsHost != "" {
+			addr = strings.ReplaceAll(addr, "$IPFS_HOST", ipfsHost)
+		}
+
+		maddr, err := ma.NewMultiaddr(strings.TrimSpace(addr))
+		if err != nil {
+			return nil, xerrors.Errorf("cannot connect to IPFS: %w", err)
+		}
+		core, err := httpapi.NewApi(maddr)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot connect to IPFS: %w", err)
+		}
+		rdc, err := getRedisClient(cfg.RedisCache)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot connect to Redis: %w", err)
+		}
+
+		ipfs = &IPFSBlobCache{
+			Redis: rdc,
+			IPFS:  core,
+		}
+		log.WithField("config", cfg.IPFSCache).Info("enabling IPFS caching")
+	}
 
 	layerSource := CompositeLayerSource(layerSources)
 	return &Registry{
 		Config:            cfg,
 		Resolver:          newResolver,
-		Store:             store,
+		Store:             mfStore,
+		IPFS:              ipfs,
 		SpecProvider:      specProvider,
 		LayerSource:       layerSource,
 		staticLayerSource: staticLayer,
 		ConfigModifier:    NewConfigModifierFromLayerSource(layerSource),
 		metrics:           metrics,
 	}, nil
+}
+
+func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
+	if cfg.SingleHostAddress != "" {
+		log.WithField("addr", cfg.SingleHostAddress).WithField("username", cfg.Username).Info("connecting to single Redis host")
+		rdc := redis.NewClient(&redis.Options{
+			Addr:     cfg.SingleHostAddress,
+			Username: cfg.Username,
+			Password: cfg.Password,
+		})
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
+		_, err := rdc.Ping(ctx).Result()
+		if err != nil {
+			return nil, xerrors.Errorf("cannot check Redis connection: %w", err)
+		}
+
+		return rdc, nil
+	}
+
+	if cfg.MasterName == "" {
+		return nil, fmt.Errorf("redis masterName must not be empty")
+	}
+	if len(cfg.SentinelAddrs) == 0 {
+		return nil, fmt.Errorf("redis sentinelAddrs must not be empty")
+	}
+
+	rdc := redis.NewFailoverClient(&redis.FailoverOptions{
+		MasterName:    cfg.MasterName,
+		SentinelAddrs: cfg.SentinelAddrs,
+		Username:      cfg.Username,
+		Password:      cfg.Password,
+
+		SentinelUsername: cfg.Username,
+		SentinelPassword: cfg.Password,
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	_, err := rdc.Ping(ctx).Result()
+	if err != nil {
+		return nil, xerrors.Errorf("cannot check Redis connection: %w", err)
+	}
+
+	return rdc, nil
 }
 
 // UpdateStaticLayer updates the static layer a registry-facade adds

@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
 // package: gitpod.v1
 // file: gitpod/v1/prebuilds.proto
 
@@ -6,7 +12,6 @@
 
 import * as jspb from "google-protobuf";
 import * as gitpod_v1_workspaces_pb from "../../gitpod/v1/workspaces_pb";
-import * as google_rpc_status_pb from "../../google/rpc/status_pb";
 
 export class GetPrebuildRequest extends jspb.Message {
     getPrebuildId(): string;
@@ -30,11 +35,6 @@ export namespace GetPrebuildRequest {
 
 export class GetPrebuildResponse extends jspb.Message {
 
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): GetPrebuildResponse;
-
     hasPrebuild(): boolean;
     clearPrebuild(): void;
     getPrebuild(): Prebuild | undefined;
@@ -52,7 +52,6 @@ export class GetPrebuildResponse extends jspb.Message {
 
 export namespace GetPrebuildResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         prebuild?: Prebuild.AsObject,
     }
 }
@@ -79,11 +78,6 @@ export namespace GetRunningPrebuildRequest {
 
 export class GetRunningPrebuildResponse extends jspb.Message {
 
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): GetRunningPrebuildResponse;
-
     hasPrebuild(): boolean;
     clearPrebuild(): void;
     getPrebuild(): Prebuild | undefined;
@@ -101,7 +95,6 @@ export class GetRunningPrebuildResponse extends jspb.Message {
 
 export namespace GetRunningPrebuildResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         prebuild?: Prebuild.AsObject,
     }
 }
@@ -128,11 +121,6 @@ export namespace ListenToPrebuildStatusRequest {
 
 export class ListenToPrebuildStatusResponse extends jspb.Message {
 
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): ListenToPrebuildStatusResponse;
-
     hasStatus(): boolean;
     clearStatus(): void;
     getStatus(): PrebuildStatus | undefined;
@@ -150,7 +138,6 @@ export class ListenToPrebuildStatusResponse extends jspb.Message {
 
 export namespace ListenToPrebuildStatusResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         status?: PrebuildStatus.AsObject,
     }
 }
@@ -176,11 +163,6 @@ export namespace ListenToPrebuildLogsRequest {
 }
 
 export class ListenToPrebuildLogsResponse extends jspb.Message {
-
-    hasResponseStatus(): boolean;
-    clearResponseStatus(): void;
-    getResponseStatus(): google_rpc_status_pb.Status | undefined;
-    setResponseStatus(value?: google_rpc_status_pb.Status): ListenToPrebuildLogsResponse;
     getLine(): string;
     setLine(value: string): ListenToPrebuildLogsResponse;
 
@@ -196,7 +178,6 @@ export class ListenToPrebuildLogsResponse extends jspb.Message {
 
 export namespace ListenToPrebuildLogsResponse {
     export type AsObject = {
-        responseStatus?: google_rpc_status_pb.Status.AsObject,
         line: string,
     }
 }

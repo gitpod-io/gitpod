@@ -97,10 +97,13 @@ import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messagin
 import { contentServiceBinder } from "@gitpod/content-service/lib/sugar";
 import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser";
 import { InstallationAdminTelemetryDataProvider } from "./installation-admin/telemetry-data-provider";
+import { IDEService } from "./ide-service";
+import { LicenseEvaluator } from "@gitpod/licensor/lib";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
     bind(IDEConfigService).toSelf().inSingletonScope();
+    bind(IDEService).toSelf().inSingletonScope();
 
     bind(UserService).toSelf().inSingletonScope();
     bind(UserDeletionService).toSelf().inSingletonScope();
@@ -212,6 +215,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(TermsProvider).toSelf().inSingletonScope();
 
     bind(InstallationAdminTelemetryDataProvider).toSelf().inSingletonScope();
+
+    bind(LicenseEvaluator).toSelf().inSingletonScope();
 
     // binds all content services
     contentServiceBinder((ctx) => {

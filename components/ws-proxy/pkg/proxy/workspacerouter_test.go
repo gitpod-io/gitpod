@@ -157,39 +157,17 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			HostHeader: "",
 		},
 		{
+			Name:       "no match 2",
+			HostHeader: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
+			Path:       "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly@sha256:41aeea688aa0943bd746cb70c4ed378910f7c7ecf56f5f53ccb2b76c6b68e1a7/__files__/index.html",
+		},
+		{
 			Name:       "workspace match",
 			HostHeader: "amaranth-smelt-9ba20cc1" + wsHostSuffix,
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
 					workspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
-				},
-			},
-		},
-		{
-			Name:       "unique webview workspace match",
-			HostHeader: "ad859a83-b5a8-43ef-8e82-cfbf36cafacb-webview-foreign" + wsHostSuffix,
-			Path:       "/amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesWorkspace: true,
-				WorkspaceVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					foreignOriginIdentifier: "ad859a83-b5a8-43ef-8e82-cfbf36cafacb-webview-",
-					foreignPathIdentifier:   "/index.html",
-				},
-			},
-		},
-		{
-			Name:       "unique webview port match",
-			HostHeader: "ad859a83-b5a8-43ef-8e82-cfbf36cafacb-webview-foreign" + wsHostSuffix,
-			Path:       "/8080-amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesPort: true,
-				PortVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					workspacePortIdentifier: "8080",
-					foreignOriginIdentifier: "ad859a83-b5a8-43ef-8e82-cfbf36cafacb-webview-",
-					foreignPathIdentifier:   "/index.html",
 				},
 			},
 		},
@@ -293,6 +271,73 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 
 			if diff := cmp.Diff(test.Expected, res); diff != "" {
 				t.Errorf("unexpected response (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestAcmeHandler(t *testing.T) {
+	type Expectation struct {
+		ContentType string
+		Code        int
+	}
+	tests := []struct {
+		Name        string
+		Method      string
+		URL         string
+		Body        []byte
+		Expectation Expectation
+	}{
+		{
+			Name:   "Valid acme request",
+			Method: http.MethodGet,
+			URL:    "http://domain.example.com/.well-known/acme-challenge/token1",
+			Expectation: Expectation{
+				Code:        403,
+				ContentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			Name:   "Not an acme request",
+			Method: http.MethodGet,
+			URL:    "http://domain.example.com/",
+			Expectation: Expectation{
+				Code:        404,
+				ContentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			Name:   "Valid acme request",
+			Method: http.MethodGet,
+			URL:    "http://1.1.1.1/.well-known/acme-challenge/token1",
+			Expectation: Expectation{
+				Code:        403,
+				ContentType: "text/plain; charset=utf-8",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			req, err := http.NewRequest(test.Method, test.URL, nil)
+			if err != nil {
+				t.Errorf("unexpected error:%v", err)
+			}
+
+			w := httptest.NewRecorder()
+
+			r := mux.NewRouter()
+			setupAcmeRouter(r)
+
+			r.ServeHTTP(w, req)
+
+			act := Expectation{
+				ContentType: w.Header().Get("Content-Type"),
+				Code:        w.Code,
+			}
+
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("unexpected result (-want +got):\n%s", diff)
 			}
 		})
 	}

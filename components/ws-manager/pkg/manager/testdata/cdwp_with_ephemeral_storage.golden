@@ -8,6 +8,7 @@
                 "app": "gitpod",
                 "component": "workspace",
                 "gitpod.io/networkpolicy": "default",
+                "gitpod.io/workspaceClass": "default",
                 "gpwsman": "true",
                 "headless": "true",
                 "metaID": "foobar",
@@ -18,6 +19,7 @@
             "annotations": {
                 "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
                 "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
+                "gitpod.io/attemptingToCreate": "true",
                 "gitpod/admission": "admit_owner_only",
                 "gitpod/contentInitializer": "GmcKZXdvcmtzcGFjZXMvY3J5cHRpYy1pZC1nb2VzLWhlcmcvZmQ2MjgwNGItNGNhYi0xMWU5LTg0M2EtNGU2NDUzNzMwNDhlLnRhckBnaXRwb2QtZGV2LXVzZXItY2hyaXN0ZXN0aW5n",
                 "gitpod/id": "foobar",
@@ -76,6 +78,10 @@
                     "ports": [
                         {
                             "containerPort": 23000
+                        },
+                        {
+                            "name": "supervisor",
+                            "containerPort": 22999
                         }
                     ],
                     "env": [
@@ -84,8 +90,16 @@
                             "value": "/workspace"
                         },
                         {
+                            "name": "GITPOD_REPO_ROOTS",
+                            "value": "/workspace"
+                        },
+                        {
                             "name": "GITPOD_CLI_APITOKEN",
                             "value": "Ab=5=rRA*9:C'T{;RRB\u003e]vK2p6`fFfrS"
+                        },
+                        {
+                            "name": "GITPOD_OWNER_ID",
+                            "value": "tester"
                         },
                         {
                             "name": "GITPOD_WORKSPACE_ID",
@@ -180,7 +194,7 @@
                             "port": 22999,
                             "scheme": "HTTP"
                         },
-                        "initialDelaySeconds": 3,
+                        "initialDelaySeconds": 2,
                         "timeoutSeconds": 1,
                         "periodSeconds": 1,
                         "successThreshold": 1,
@@ -221,6 +235,7 @@
             "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
+            "securityContext": {},
             "hostname": "foobar",
             "affinity": {
                 "nodeAffinity": {

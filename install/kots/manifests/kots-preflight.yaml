@@ -6,6 +6,16 @@ kind: Preflight
 metadata:
   name: gitpod
 spec:
+  collectors:
+    - run:
+        collectorName: "kernel"
+        image: alpine/semver
+        name: kernel
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - semver --coerce --range '>=5.4.0' $(uname -r) || echo invalid
   analyzers:
     - clusterVersion:
         outcomes:
@@ -19,7 +29,17 @@ spec:
               uri: https://kubernetes.io
           - pass:
               message: Your cluster meets the recommended and required versions of Kubernetes.
-    # @todo(sje): figure out a way of checking the Kernel version is >= 5.4.0-0
+    - textAnalyze:
+        checkName: Kernel version is 5.4.0 or above
+        fileName: kernel/kernel.log
+        regex: invalid
+        outcomes:
+          - pass:
+              when: "false"
+              message: Kernel version valid
+          - fail:
+              when: "true"
+              message: Kernel must be 5.4.0 or above
     - containerRuntime:
         outcomes:
           - pass:
@@ -27,6 +47,13 @@ spec:
               message: containerd runtime was found.
           - fail:
               message: Did not find containerd runtime.
+    - distribution:
+        outcomes:
+          - fail:
+              when: == openshift
+              message: OpenShift is not supported
+          - pass:
+              message: The cluster is using a support distribution
     - nodeResources:
         checkName: At least one node must "gitpod.io/workload_meta" label
         filters:
@@ -96,24 +123,24 @@ spec:
           - pass:
               message: Cert-manager is installed and available.
     - nodeResources:
-        checkName: Total CPU Cores in the cluster
+        checkName: CPU Cores per node
         outcomes:
           - fail:
-              when: "sum(cpuCapacity) < 2"
+              when: "min(cpuCapacity) < 2"
               message: The cluster must contain at least 2 cores
           - warn:
-              when: "sum(cpuCapacity) < 4"
+              when: "min(cpuCapacity) < 4"
               message: The cluster must contain at least 4 cores
           - pass:
               message: There are at least 4 cores in the cluster
     - nodeResources:
-        checkName: Total memory in the cluster
+        checkName: Memory per node
         outcomes:
           - fail:
-              when: "sum(memoryCapacity) < 8G"
+              when: "min(memoryCapacity) < 8G"
               message: The cluster must have least 8GB of memory
           - warn:
-              when: "sum(memoryCapacity) < 16G"
+              when: "min(memoryCapacity) < 16G"
               message: The cluster must have least 16GB of memory
           - pass:
               message: There is at least 16GB of memory in the cluster

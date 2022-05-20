@@ -19,7 +19,9 @@ export interface CheckWriteAccessResult {
 export interface IGitTokenValidatorParams {
     token: string;
     host: string;
-    repoFullName: string;
+    owner: string;
+    repo: string;
+    repoKind?: string;
 }
 
 export interface IGitTokenValidator {

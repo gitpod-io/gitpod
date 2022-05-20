@@ -11,12 +11,14 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
@@ -30,8 +32,10 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		hashObj = append(hashObj, objs...)
 	}
 
-	var volumes []corev1.Volume
-	var volumeMounts []corev1.VolumeMount
+	var (
+		volumes      []corev1.Volume
+		volumeMounts []corev1.VolumeMount
+	)
 
 	if ctx.Config.Certificate.Name != "" {
 		name := "config-certificates"
@@ -47,6 +51,32 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      name,
 			MountPath: "/mnt/certificates",
+		})
+	}
+	if ctx.Config.CustomCACert != nil && ctx.Config.CustomCACert.Name != "" {
+		// Attach the custom CA certificate as registry-facade seems to talk to
+		// the registry through the `proxy`
+		volumeName := "custom-ca-cert"
+		volumes = append(volumes, corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.CustomCACert.Name,
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "ca.crt",
+							Path: "ca.crt",
+						},
+					},
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			ReadOnly:  true,
+			MountPath: "/etc/ssl/certs/proxy-ca.crt",
+			SubPath:   "ca.crt",
+			Name:      volumeName,
 		})
 	}
 
@@ -71,6 +101,89 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, fmt.Errorf("%s: invalid container registry config", Component)
 	}
 
+	var envvars []corev1.EnvVar
+	err = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace == nil {
+			return nil
+		}
+
+		if ucfg.Workspace.RegistryFacade.IPFSCache.Enabled && !ucfg.Workspace.RegistryFacade.RedisCache.Enabled {
+			return fmt.Errorf("IPFS cache requires Redis")
+		}
+
+		if ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+			envvars = []corev1.EnvVar{
+				{
+					Name: "IPFS_HOST",
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							FieldPath: "status.hostIP",
+						},
+					},
+				},
+			}
+		}
+
+		if ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+			if scr := ucfg.Workspace.RegistryFacade.RedisCache.PasswordSecret; scr != "" {
+				envvars = append(envvars, corev1.EnvVar{
+					Name: "REDIS_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: scr,
+							},
+							Key: "password",
+						},
+					},
+				})
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	initContainers := []corev1.Container{
+		*common.InternalCAContainer(ctx),
+	}
+	// Load `customCACert` into Kubelet's only if its self-signed
+	if ctx.Config.CustomCACert != nil && ctx.Config.CustomCACert.Name != "" {
+		initContainers = append(initContainers,
+			*common.InternalCAContainer(ctx, func(c *corev1.Container) {
+				c.Name = "update-containerd-certificates"
+				c.Env = append(c.Env,
+					corev1.EnvVar{
+						Name: "GITPOD_CA_CERT",
+						ValueFrom: &corev1.EnvVarSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								Key: "ca.crt",
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: ctx.Config.CustomCACert.Name,
+								},
+							},
+						},
+					},
+					corev1.EnvVar{
+						// Install gitpod ca.crt in containerd to allow pulls from the host
+						// https://github.com/containerd/containerd/blob/main/docs/hosts.md
+						Name:  "SETUP_SCRIPT",
+						Value: fmt.Sprintf(`TARGETS="docker containerd";for TARGET in $TARGETS;do mkdir -p /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v && echo "$GITPOD_CA_CERT" > /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v/ca.crt && echo "OK";done`, ctx.Config.Domain, ServicePort, ctx.Config.Domain, ServicePort),
+					},
+				)
+				c.VolumeMounts = append(c.VolumeMounts,
+					corev1.VolumeMount{
+						Name:      "hostfs",
+						MountPath: "/mnt/dst",
+					},
+				)
+				c.Command = []string{"sh", "-c", "$(SETUP_SCRIPT)"}
+			}),
+		)
+	}
+
 	return []runtime.Object{&appsv1.DaemonSet{
 		TypeMeta: common.TypeMetaDaemonset,
 		ObjectMeta: metav1.ObjectMeta{
@@ -90,55 +203,24 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				Spec: corev1.PodSpec{
 					PriorityClassName:             common.SystemNodeCritical,
-					Affinity:                      common.Affinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
+					Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
-					InitContainers: []corev1.Container{
-						*common.InternalCAContainer(ctx),
-						*common.InternalCAContainer(ctx, func(c *corev1.Container) {
-							c.Name = "update-containerd-certificates"
-							c.Env = append(c.Env,
-								corev1.EnvVar{
-									Name: "GITPOD_CA_CERT",
-									ValueFrom: &corev1.EnvVarSource{
-										SecretKeyRef: &corev1.SecretKeySelector{
-											Key: "ca.crt",
-											LocalObjectReference: corev1.LocalObjectReference{
-												Name: common.RegistryFacadeTLSCertSecret,
-											},
-										},
-									},
-								},
-								corev1.EnvVar{
-									// Install gitpod ca.crt in containerd to allow pulls from the host
-									// https://github.com/containerd/containerd/blob/main/docs/hosts.md
-									Name:  "SETUP_SCRIPT",
-									Value: fmt.Sprintf(`TARGETS="docker containerd";for TARGET in $TARGETS;do mkdir -p /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v && echo "$GITPOD_CA_CERT" > /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v/ca.crt && echo "OK";done`, ctx.Config.Domain, ServicePort, ctx.Config.Domain, ServicePort),
-								},
-							)
-							c.VolumeMounts = append(c.VolumeMounts,
-								corev1.VolumeMount{
-									Name:      "hostfs",
-									MountPath: "/mnt/dst",
-								},
-							)
-							c.Command = []string{"sh", "-c", "$(SETUP_SCRIPT)"}
-						}),
-					},
+					InitContainers:                initContainers,
 					Containers: []corev1.Container{{
 						Name:            Component,
-						Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
+						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Args:            []string{"run", "/mnt/config/config.json"},
-						Resources: corev1.ResourceRequirements{
+						Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								"cpu":    resource.MustParse("100m"),
 								"memory": resource.MustParse("32Mi"),
 							},
-						},
+						}),
 						Ports: []corev1.ContainerPort{{
 							Name:          ContainerPortName,
 							ContainerPort: ContainerPort,
@@ -150,42 +232,78 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 						Env: common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
-							common.TracingEnv(ctx),
-							[]corev1.EnvVar{{
-								Name:  "GRPC_GO_RETRY",
-								Value: "on",
-							}, {
-								Name: "NODENAME",
-								ValueFrom: &corev1.EnvVarSource{
-									FieldRef: &corev1.ObjectFieldSelector{
-										FieldPath: "spec.nodeName",
+							common.WorkspaceTracingEnv(ctx),
+							[]corev1.EnvVar{
+								{
+									Name:  "GRPC_GO_RETRY",
+									Value: "on",
+								},
+								{
+									Name: "NODENAME",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "spec.nodeName",
+										},
 									},
 								},
-							}},
+							},
+							envvars,
 						),
-						VolumeMounts: append([]corev1.VolumeMount{{
-							Name:      "cache",
-							MountPath: "/mnt/cache",
-						}, {
-							Name:      "config",
-							MountPath: "/mnt/config",
-							ReadOnly:  true,
-						}, {
-							Name:      "ws-manager-client-tls-certs",
-							MountPath: "/ws-manager-client-tls-certs",
-							ReadOnly:  true,
-						}, {
-							Name:      name,
-							MountPath: "/mnt/pull-secret.json",
-							SubPath:   ".dockerconfigjson",
+						VolumeMounts: append(
+							[]corev1.VolumeMount{
+								{
+									Name:      "cache",
+									MountPath: "/mnt/cache",
+								},
+								{
+									Name:      "config",
+									MountPath: "/mnt/config",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "ws-manager-client-tls-certs",
+									MountPath: "/ws-manager-client-tls-certs",
+									ReadOnly:  true,
+								},
+								{
+									Name:      name,
+									MountPath: "/mnt/pull-secret.json",
+									SubPath:   ".dockerconfigjson",
+								},
+							},
+							volumeMounts...,
+						),
+						ReadinessProbe: &corev1.Probe{
+							ProbeHandler: corev1.ProbeHandler{
+								HTTPGet: &corev1.HTTPGetAction{
+									Path: "/ready",
+									Port: intstr.IntOrString{IntVal: ReadinessPort},
+								},
+							},
+							InitialDelaySeconds: 5,
+							PeriodSeconds:       5,
+							TimeoutSeconds:      1,
+							SuccessThreshold:    2,
+							FailureThreshold:    5,
 						},
-							*common.InternalCAVolumeMount(),
-						}, volumeMounts...),
+						LivenessProbe: &corev1.Probe{
+							ProbeHandler: corev1.ProbeHandler{
+								HTTPGet: &corev1.HTTPGetAction{
+									Path: "/live",
+									Port: intstr.IntOrString{IntVal: ReadinessPort},
+								},
+							},
+							InitialDelaySeconds: 5,
+							PeriodSeconds:       10,
+							TimeoutSeconds:      1,
+							SuccessThreshold:    1,
+							FailureThreshold:    3,
+						},
 						Lifecycle: &corev1.Lifecycle{
 							PostStart: &corev1.LifecycleHandler{
 								Exec: &corev1.ExecAction{
 									Command: []string{
-										"/bin/bash", "-c", `kubectl label --overwrite nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}=true`,
+										"/bin/bash", "-c", fmt.Sprintf(`wait4x http http://localhost:%v/ready -t30s --expect-status-code 200 && kubectl label --overwrite nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}=true`, ReadinessPort),
 									},
 								},
 							},

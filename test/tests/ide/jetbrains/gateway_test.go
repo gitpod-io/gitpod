@@ -24,6 +24,8 @@ import (
 	"github.com/google/go-github/v42/github"
 )
 
+var ideProjectMap map[string]string
+
 type GatewayHostStatus struct {
 	AppPid     int64  `json:"appPid"`
 	AppVersion string `json:"appVersion"`
@@ -43,6 +45,14 @@ type GatewayHostStatus struct {
 	UnattendedMode bool   `json:"unattendedMode"`
 }
 
+func init() {
+	ideProjectMap = make(map[string]string)
+	ideProjectMap["goland"] = "https://github.com/gitpod-io/template-golang-cli"
+	ideProjectMap["intellij"] = "https://github.com/gitpod-io/spring-petclinic"
+	ideProjectMap["phpstorm"] = "https://github.com/gitpod-io/template-php-laravel-mysql"
+	ideProjectMap["pycharm"] = "https://github.com/gitpod-io/template-python-django"
+}
+
 func GetHttpContent(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -57,7 +67,10 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 	userToken, _ := os.LookupEnv("USER_TOKEN")
 	ideName, ok := annotations["jetbrains-ide"]
 	if !ok {
-		t.Skip("not provide a special IDE")
+		t.Skip("not provide a special IDE name")
+	}
+	if _, ok = ideProjectMap[ideName]; !ok {
+		t.Skip("not support " + ideName + " now")
 	}
 	roboquatToken, ok := os.LookupEnv("ROBOQUAT_TOKEN")
 	if !ok {
@@ -96,7 +109,7 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 			t.Logf("connected to server")
 
 			t.Logf("starting workspace")
-			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "referrer:jetbrains-gateway:"+ideName+"/https://github.com/gitpod-io/spring-petclinic", username, api)
+			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "referrer:jetbrains-gateway:"+ideName+"/"+ideProjectMap[ideName], username, api)
 			if err != nil {
 				t.Fatal(err)
 			}

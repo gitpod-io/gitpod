@@ -22,6 +22,18 @@
             },
             expr: 'nodepool:node_load1:normalized{nodepool=~".*workspace.*"} > 3',
           },
+          {
+            alert: 'AutoscalerAddsNodesTooFast',
+            labels: {
+              severity: 'critical',
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/AutoscalerAddsNodesTooFast.md',
+              summary: "Autoscaler is adding new nodes rapidly",
+              description: 'Autoscaler in cluster {{ $labels.cluster }} is rapidly adding new nodes.',
+            },
+            expr: '((sum(cluster_autoscaler_nodes_count) by (cluster)) - (sum(cluster_autoscaler_nodes_count offset 10m) by (cluster))) > 15',
+          },
         ],
       },
     ],

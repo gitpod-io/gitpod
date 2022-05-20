@@ -1,16 +1,15 @@
+import { HARVESTER_KUBECONFIG_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from '../jobs/build/const';
 import { exec } from '../util/shell';
 import { getGlobalWerftInstance } from '../util/werft';
 
 import * as Manifests from './manifests'
-
-const KUBECONFIG_PATH = '/mnt/secrets/harvester-kubeconfig/harvester-kubeconfig.yml'
 
 /**
  * Convenience function to kubectl apply a manifest from stdin.
  */
 function kubectlApplyManifest(manifest: string, options?: { validate?: boolean }) {
     exec(`
-        cat <<EOF | kubectl --kubeconfig ${KUBECONFIG_PATH} apply --validate=${!!options?.validate} -f -
+        cat <<EOF | kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} apply --validate=${!!options?.validate} -f -
 ${manifest}
 EOF
     `)
@@ -20,9 +19,9 @@ EOF
 /**
  * Convenience function to kubectl delete a manifest from stdin.
  */
- function kubectlDeleteManifest(manifest: string, options?: { validate?: boolean }) {
+function kubectlDeleteManifest(manifest: string) {
     exec(`
-        cat <<EOF | kubectl --kubeconfig ${KUBECONFIG_PATH} delete -f -
+        cat <<EOF | kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} delete --ignore-not-found=true -f -
 ${manifest}
 EOF
     `)
@@ -72,7 +71,7 @@ export function startVM(options: { name: string }) {
 /**
  * Remove a VM with its Namespace
  */
- export function deleteVM(options: { name: string }) {
+export function deleteVM(options: { name: string }) {
     const namespace = `preview-${options.name}`
     const userDataSecretName = `userdata-${options.name}`
 
@@ -97,8 +96,7 @@ export function startVM(options: { name: string }) {
             vmName: options.name,
             claimName: `${options.name}-${Date.now()}`,
             userDataSecretName
-        }),
-        { validate: false }
+        })
     )
 
     kubectlDeleteManifest(
@@ -115,7 +113,7 @@ export function startVM(options: { name: string }) {
  */
 export function vmExists(options: { name: string }) {
     const namespace = `preview-${options.name}`
-    const status = exec(`kubectl --kubeconfig ${KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name}`, { dontCheckRc: true, silent: true })
+    const status = exec(`kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name}`, { dontCheckRc: true, silent: true })
     return status.code == 0
 }
 
@@ -128,7 +126,7 @@ export function waitForVMReadiness(options: { name: string, timeoutSeconds: numb
     const namespace = `preview-${options.name}`
 
     const startTime = Date.now()
-    const ready = exec(`kubectl --kubeconfig ${KUBECONFIG_PATH} -n ${namespace} wait --for=condition=ready --timeout=${options.timeoutSeconds}s pod -l kubevirt.io=virt-launcher -l harvesterhci.io/vmName=${options.name}`, { dontCheckRc: true, silent: true })
+    const ready = exec(`kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} -n ${namespace} wait --for=condition=ready --timeout=${options.timeoutSeconds}s pod -l kubevirt.io=virt-launcher -l harvesterhci.io/vmName=${options.name}`, { dontCheckRc: true, silent: true })
 
     if (ready.code == 0) {
         werft.log(options.slice, `VM is ready after ${(Date.now() - startTime) / 1000} seconds`)
@@ -143,15 +141,15 @@ export function waitForVMReadiness(options: { name: string, timeoutSeconds: numb
  * Copies the k3s kubeconfig out of the VM and places it at `path`
  * If it doesn't manage to do so before the timeout it will throw an Error
  */
-export function copyk3sKubeconfig(options: { name: string, path: string, timeoutMS: number, slice: string }) {
+export function copyk3sKubeconfig(options: { name: string, timeoutMS: number, slice: string }) {
     const werft = getGlobalWerftInstance()
     const startTime = Date.now()
     while (true) {
 
-        const status = exec(`ssh -i /workspace/.ssh/id_rsa_harvester_vm ubuntu@127.0.0.1 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no 'sudo cat /etc/rancher/k3s/k3s.yaml' > ${options.path}`, { silent: true, dontCheckRc: true, slice: options.slice })
+        const status = exec(`ssh -i /workspace/.ssh/id_rsa_harvester_vm ubuntu@127.0.0.1 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no 'sudo cat /etc/rancher/k3s/k3s.yaml' > ${PREVIEW_K3S_KUBECONFIG_PATH}`, { silent: true, dontCheckRc: true, slice: options.slice })
 
         if (status.code == 0) {
-            exec(`kubectl --kubeconfig ${options.path} config set clusters.default.server https://${options.name}.kube.gitpod-dev.com:6443`, { silent: true, slice: options.slice });
+            exec(`kubectl --kubeconfig ${PREVIEW_K3S_KUBECONFIG_PATH} config set clusters.default.server https://${options.name}.kube.gitpod-dev.com:6443`, { silent: true, slice: options.slice });
             return
         }
 
@@ -170,7 +168,7 @@ export function copyk3sKubeconfig(options: { name: string, path: string, timeout
  */
 export function startSSHProxy(options: { name: string, slice: string }) {
     const namespace = `preview-${options.name}`
-    exec(`sudo kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:2200`, { async: true, silent: true, slice: options.slice, dontCheckRc: true })
+    exec(`sudo kubectl --kubeconfig=${HARVESTER_KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:2200`, { async: true, silent: true, slice: options.slice, dontCheckRc: true })
 }
 
 /**
@@ -183,9 +181,9 @@ export function stopKubectlPortForwards() {
 /**
  * Install Fluent-Bit sending logs to GCP
  */
-export function installFluentBit(options: {namespace: string, slice: string}) {
-    exec(`kubectl create secret generic fluent-bit-external --save-config --dry-run=client --from-file=credentials.json=/mnt/fluent-bit-external/credentials.json -o yaml | kubectl apply -n ${options.namespace} -f -`, { slice: options.slice, dontCheckRc: true})
-    exec(`helm3 repo add fluent https://fluent.github.io/helm-charts`, { slice: options.slice, dontCheckRc: true})
-    exec(`helm3 repo update`, { slice: options.slice, dontCheckRc: true})
-    exec(`helm3 upgrade --install fluent-bit fluent/fluent-bit -n ${options.namespace} -f .werft/vm/charts/fluentbit/values.yaml`, { slice: options.slice, dontCheckRc: true})
+export function installFluentBit(options: { namespace: string, kubeconfig: string, slice: string }) {
+    exec(`kubectl --kubeconfig ${options.kubeconfig} create secret generic fluent-bit-external --save-config --dry-run=client --from-file=credentials.json=/mnt/fluent-bit-external/credentials.json -o yaml | kubectl --kubeconfig ${options.kubeconfig} apply -n ${options.namespace} -f -`, { slice: options.slice, dontCheckRc: true })
+    exec(`helm3 --kubeconfig ${options.kubeconfig} repo add fluent https://fluent.github.io/helm-charts`, { slice: options.slice, dontCheckRc: true })
+    exec(`helm3 --kubeconfig ${options.kubeconfig} repo update`, { slice: options.slice, dontCheckRc: true })
+    exec(`helm3 --kubeconfig ${options.kubeconfig} upgrade --install fluent-bit fluent/fluent-bit -n ${options.namespace} -f .werft/vm/charts/fluentbit/values.yaml`, { slice: options.slice, dontCheckRc: true })
 }

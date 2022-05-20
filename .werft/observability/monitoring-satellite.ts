@@ -1,125 +1,172 @@
-import { exec } from '../util/shell';
-import { getGlobalWerftInstance } from '../util/werft';
-import * as shell from 'shelljs';
-import * as fs from 'fs';
+import { exec } from "../util/shell";
+import { getGlobalWerftInstance, Werft } from "../util/werft";
+import * as fs from "fs";
+
+type MonitoringSatelliteInstallerOptions = {
+    werft: Werft;
+    kubeconfigPath: string;
+    satelliteNamespace: string;
+    clusterName: string;
+    nodeExporterPort: number;
+    branch: string;
+    previewDomain: string;
+    stackdriverServiceAccount: any;
+    withVM: boolean;
+};
+
+const sliceName = "observability";
 
 /**
- * Monitoring satellite deployment bits
+ * Installs monitoring-satellite, while updating its dependencies to the latest commit in the branch it is running.
  */
- export class InstallMonitoringSatelliteParams {
-    pathToKubeConfig: string
-    satelliteNamespace: string
-    clusterName: string
-    nodeExporterPort: number
-    branch: string
-    previewDomain: string
-    stackdriverServiceAccount: any
-    withVM: boolean
-}
+export class MonitoringSatelliteInstaller {
+    constructor(private readonly options: MonitoringSatelliteInstallerOptions) {}
 
-const sliceName = 'observability';
+    public async install() {
+        const {
+            werft,
+            branch,
+            satelliteNamespace,
+            stackdriverServiceAccount,
+            withVM,
+            previewDomain,
+            nodeExporterPort,
+        } = this.options;
 
-/**
- * installMonitoringSatellite installs monitoring-satellite, while updating its dependencies to the latest commit in the branch it is running.
- */
-export async function installMonitoringSatellite(params: InstallMonitoringSatelliteParams) {
-    const werft = getGlobalWerftInstance()
+        werft.log(sliceName, `Cloning observability repository - Branch: ${branch}`);
+        exec(
+            `git clone --branch ${branch} https://roboquat:$(cat /mnt/secrets/monitoring-satellite-preview-token/token)@github.com/gitpod-io/observability.git`,
+            { silent: true },
+        );
+        let currentCommit = exec(`git rev-parse HEAD`, { silent: true }).stdout.trim();
+        let pwd = exec(`pwd`, { silent: true }).stdout.trim();
+        werft.log(
+            sliceName,
+            `Updating Gitpod's mixin in monitoring-satellite's jsonnetfile.json to latest commit SHA: ${currentCommit}`,
+        );
 
-    werft.log(sliceName, `Cloning observability repository - Branch: ${params.branch}`)
-    exec(`git clone --branch ${params.branch} https://roboquat:$(cat /mnt/secrets/monitoring-satellite-preview-token/token)@github.com/gitpod-io/observability.git`, {silent: true})
-    let currentCommit = exec(`git rev-parse HEAD`, {silent: true}).stdout.trim()
-    let pwd = exec(`pwd`, {silent: true}).stdout.trim()
-    werft.log(sliceName, `Updating Gitpod's mixin in monitoring-satellite's jsonnetfile.json to latest commit SHA: ${currentCommit}`);
+        let jsonnetFile = JSON.parse(fs.readFileSync(`${pwd}/observability/jsonnetfile.json`, "utf8"));
+        jsonnetFile.dependencies.forEach((dep) => {
+            if (dep.name == "gitpod") {
+                dep.version = currentCommit;
+            }
+        });
+        fs.writeFileSync(`${pwd}/observability/jsonnetfile.json`, JSON.stringify(jsonnetFile));
+        exec(`cd observability && jb update`, { slice: sliceName });
 
-    let jsonnetFile = JSON.parse(fs.readFileSync(`${pwd}/observability/jsonnetfile.json`, 'utf8'));
-    jsonnetFile.dependencies.forEach(dep => {
-        if(dep.name == 'gitpod') {
-            dep.version = currentCommit
-        }
-    });
-    fs.writeFileSync(`${pwd}/observability/jsonnetfile.json`, JSON.stringify(jsonnetFile));
-    exec(`cd observability && jb update`, {slice: sliceName})
-
-    let jsonnetRenderCmd = `cd observability && jsonnet -c -J vendor -m monitoring-satellite/manifests \
-    --ext-code config="{
-        namespace: '${params.satelliteNamespace}',
-        clusterName: '${params.satelliteNamespace}',
-        tracing: {
-            honeycombAPIKey: '${process.env.HONEYCOMB_API_KEY}',
-            honeycombDataset: 'preview-environments',
-        },
-        previewEnvironment: {
-            domain: '${params.previewDomain}',
-            nodeExporterPort: ${params.nodeExporterPort},
-        },
-        ${params.withVM ? '' : "nodeAffinity: { nodeSelector: { 'gitpod.io/workload_services': 'true' }, },"  }
-        stackdriver: {
-            defaultProject: '${params.stackdriverServiceAccount.project_id}',
-            clientEmail: '${params.stackdriverServiceAccount.client_email}',
-            privateKey: '${params.stackdriverServiceAccount.private_key}',
-        },
-        prometheus: {
-            resources: {
-                requests: { memory: '200Mi', cpu: '50m' },
+        let jsonnetRenderCmd = `cd observability && jsonnet -c -J vendor -m monitoring-satellite/manifests \
+        --ext-code config="{
+            namespace: '${satelliteNamespace}',
+            clusterName: '${satelliteNamespace}',
+            tracing: {
+                honeycombAPIKey: '${process.env.HONEYCOMB_API_KEY}',
+                honeycombDataset: 'preview-environments',
             },
-        },
-        kubescape: {},
-    }" \
-    monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
-    find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
+            previewEnvironment: {
+                domain: '${previewDomain}',
+                nodeExporterPort: ${nodeExporterPort},
+            },
+            ${withVM ? "" : "nodeAffinity: { nodeSelector: { 'gitpod.io/workload_services': 'true' }, },"}
+            stackdriver: {
+                defaultProject: '${stackdriverServiceAccount.project_id}',
+                clientEmail: '${stackdriverServiceAccount.client_email}',
+                privateKey: '${stackdriverServiceAccount.private_key}',
+            },
+            prometheus: {
+                resources: {
+                    requests: { memory: '200Mi', cpu: '50m' },
+                },
+            },
+            kubescape: {},
+            pyrra: {},
+        }" \
+        monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
+        find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
 
-    werft.log(sliceName, 'rendering YAML files')
-    exec(jsonnetRenderCmd, {silent: true})
-    if(params.withVM) {
-        postProcessManifests()
+        werft.log(sliceName, "rendering YAML files");
+        exec(jsonnetRenderCmd, { silent: true });
+        if (withVM) {
+            this.postProcessManifests();
+        }
+
+        this.ensureCorrectInstallationOrder()
+        this.deployGitpodServiceMonitors();
+        await this.waitForReadiness()
     }
 
-    // The correct kubectl context should already be configured prior to this step
-    // Only checks node-exporter readiness for harvester
-    ensureCorrectInstallationOrder(params.satelliteNamespace, params.withVM)
-}
+    private ensureCorrectInstallationOrder() {
+        const { werft, kubeconfigPath } = this.options;
 
-async function ensureCorrectInstallationOrder(namespace: string, checkNodeExporterStatus: boolean){
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, 'installing monitoring-satellite')
-    exec('cd observability && hack/deploy-satellite.sh', {slice: sliceName})
-
-    deployGitpodServiceMonitors()
-    checkReadiness(namespace, checkNodeExporterStatus)
-}
-
-async function checkReadiness(namespace: string, checkNodeExporterStatus: boolean) {
-    // For some reason prometheus' statefulset always take quite some time to get created
-    // Therefore we wait a couple of seconds
-    exec(`sleep 30 && kubectl rollout status -n ${namespace} statefulset prometheus-k8s`, {slice: sliceName, async: true})
-    exec(`kubectl rollout status -n ${namespace} deployment grafana`, {slice: sliceName, async: true})
-    exec(`kubectl rollout status -n ${namespace} deployment kube-state-metrics`, {slice: sliceName, async: true})
-    exec(`kubectl rollout status -n ${namespace} deployment otel-collector`, {slice: sliceName, async: true})
-
-    // core-dev is just too unstable for node-exporter
-    // we don't guarantee that it will run at all
-    if(checkNodeExporterStatus) {
-        exec(`kubectl rollout status -n ${namespace} daemonset node-exporter`, {slice: sliceName, async: true})
+        werft.log(sliceName, "installing monitoring-satellite");
+        exec(`cd observability && hack/deploy-satellite.sh --kubeconfig ${kubeconfigPath}`, { slice: sliceName });
     }
-}
 
-async function deployGitpodServiceMonitors() {
-    const werft = getGlobalWerftInstance()
+    private async waitForReadiness() {
+        const { kubeconfigPath, satelliteNamespace } = this.options;
 
-    werft.log(sliceName, 'installing gitpod ServiceMonitor resources')
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/gitpod/', {silent: true})
-}
+        const checks: Promise<any>[] = [];
+        // For some reason prometheus' statefulset always take quite some time to get created
+        // Therefore we wait a couple of seconds
+        checks.push(
+            exec(
+                `sleep 30 && kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} statefulset prometheus-k8s`,
+                { slice: sliceName, async: true },
+            ),
+        );
+        checks.push(
+            exec(`kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment grafana`, {
+                slice: sliceName,
+                async: true,
+            }),
+        );
+        checks.push(
+            exec(
+                `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment kube-state-metrics`,
+                { slice: sliceName, async: true },
+            ),
+        );
+        checks.push(
+            exec(
+                `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment otel-collector`,
+                { slice: sliceName, async: true },
+            ),
+        );
 
-function postProcessManifests() {
-    const werft = getGlobalWerftInstance()
+        // core-dev is just too unstable for node-exporter
+        // we don't guarantee that it will run at all
+        if (this.options.withVM) {
+            checks.push(
+                exec(
+                    `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} daemonset node-exporter`,
+                    { slice: sliceName, async: true },
+                ),
+            );
+        }
 
-    // We're hardcoding nodeports, so we can use them in .werft/vm/manifests.ts
-    // We'll be able to access Prometheus and Grafana's UI by port-forwarding the harvester proxy into the nodePort
-    werft.log(sliceName, 'Post-processing manifests so it works on Harvester')
-    exec(`yq w -i observability/monitoring-satellite/manifests/grafana/service.yaml spec.type 'NodePort'`)
-    exec(`yq w -i observability/monitoring-satellite/manifests/prometheus/service.yaml spec.type 'NodePort'`)
+        await Promise.all(checks);
+    }
 
-    exec(`yq w -i observability/monitoring-satellite/manifests/prometheus/service.yaml spec.ports[0].nodePort 32001`)
-    exec(`yq w -i observability/monitoring-satellite/manifests/grafana/service.yaml spec.ports[0].nodePort 32000`)
+    private deployGitpodServiceMonitors() {
+        const { werft, kubeconfigPath } = this.options;
+
+        werft.log(sliceName, "installing gitpod ServiceMonitor resources");
+        exec(`kubectl --kubeconfig ${kubeconfigPath} apply -f observability/monitoring-satellite/manifests/gitpod/`, {
+            silent: true,
+        });
+    }
+
+    private postProcessManifests() {
+        const werft = getGlobalWerftInstance();
+
+        // We're hardcoding nodeports, so we can use them in .werft/vm/manifests.ts
+        // We'll be able to access Prometheus and Grafana's UI by port-forwarding the harvester proxy into the nodePort
+        werft.log(sliceName, "Post-processing manifests so it works on Harvester");
+        exec(`yq w -i observability/monitoring-satellite/manifests/grafana/service.yaml spec.type 'NodePort'`);
+        exec(`yq w -i observability/monitoring-satellite/manifests/prometheus/service.yaml spec.type 'NodePort'`);
+
+        exec(
+            `yq w -i observability/monitoring-satellite/manifests/prometheus/service.yaml spec.ports[0].nodePort 32001`,
+        );
+        exec(`yq w -i observability/monitoring-satellite/manifests/grafana/service.yaml spec.ports[0].nodePort 32000`);
+    }
 }

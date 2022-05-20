@@ -23,6 +23,7 @@ import (
 
 // APIInterface wraps the
 type APIInterface interface {
+	GetOwnerToken(ctx context.Context, workspaceID string) (res string, err error)
 	AdminBlockUser(ctx context.Context, req *AdminBlockUserRequest) (err error)
 	GetLoggedInUser(ctx context.Context) (res *User, err error)
 	UpdateLoggedInUser(ctx context.Context, user *User) (res *User, err error)
@@ -85,6 +86,8 @@ type APIInterface interface {
 type FunctionName string
 
 const (
+	// FunctionGetOwnerToken is the name of the getOwnerToken function
+	FunctionGetOwnerToken FunctionName = "getOwnerToken"
 	// FunctionAdminBlockUser is the name of the adminBlockUser function
 	FunctionAdminBlockUser FunctionName = "adminBlockUser"
 	// FunctionGetLoggedInUser is the name of the getLoggedInUser function
@@ -334,6 +337,23 @@ func (gp *APIoverJSONRPC) handler(ctx context.Context, conn *jsonrpc2.Conn, req 
 		}
 	}
 
+	return
+}
+
+func (gp *APIoverJSONRPC) GetOwnerToken(ctx context.Context, workspaceID string) (res string, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+	_params = append(_params, workspaceID)
+
+	var _result string
+	err = gp.C.Call(ctx, "getOwnerToken", _params, &_result)
+	if err != nil {
+		return "", err
+	}
+	res = _result
 	return
 }
 

@@ -35,7 +35,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Port:    ContainerPort,
 			Timeout: util.Duration(time.Second * 5),
 			Repos: map[string]blobserve.Repo{
-				common.RepoName(ctx.Config.Repository, ide.CodeIDEImage): {
+				ctx.RepoName(ctx.Config.Repository, ide.CodeIDEImage): {
 					PrePull: []string{},
 					Workdir: "/ide",
 					Replacements: []blobserve.StringReplacement{{
@@ -48,6 +48,18 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
 					}, {
 						Search:      "vscode-webview.net",
+						Replacement: ctx.Config.Domain,
+						Path:        "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
+					}, {
+						Search:      "vscode-cdn.net",
+						Replacement: ctx.Config.Domain,
+						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
+					}, {
+						Search:      "vscode-cdn.net",
+						Replacement: ctx.Config.Domain,
+						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
+					}, {
+						Search:      "vscode-cdn.net",
 						Replacement: ctx.Config.Domain,
 						Path:        "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
 					}, {
@@ -76,7 +88,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Replacement: "${supervisor}",
 					}},
 				},
-				common.RepoName(ctx.Config.Repository, workspace.SupervisorImage): {
+				ctx.RepoName(ctx.Config.Repository, workspace.SupervisorImage): {
 					PrePull: []string{},
 					Workdir: "/.supervisor/frontend",
 				},
@@ -86,9 +98,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				MaxSize:  MaxSizeBytes,
 			},
 		},
-		AuthCfg:        "/mnt/pull-secret.json",
-		PProfAddr:      ":6060",
-		PrometheusAddr: "127.0.0.1:9500",
+		AuthCfg:            "/mnt/pull-secret.json",
+		PProfAddr:          ":6060",
+		PrometheusAddr:     "127.0.0.1:9500",
+		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 	}
 
 	fc, err := common.ToJSONString(bscfg)

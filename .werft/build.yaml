@@ -45,6 +45,9 @@ pod:
   - name: harvester-vm-ssh-keys
     secret:
       secretName: harvester-vm-ssh-keys
+  - name: harvester-k3s-dockerhub-pull-account
+    secret:
+      secretName: harvester-k3s-dockerhub-pull-account
   - name: fluent-bit-external
     secret:
       secretName: fluent-bit-external
@@ -68,9 +71,16 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kyleb-kubecdl-qol.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
     workingDir: /workspace
-    imagePullPolicy: Always
+    imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        memory: "10Gi"
+        cpu: "3500m"
+      limits:
+        memory: "20Gi"
+        cpu: "10000m"
     volumeMounts:
     - name: monitoring-satellite-stackdriver-credentials
       mountPath: /mnt/secrets/monitoring-satellite-stackdriver-credentials
@@ -101,6 +111,8 @@ pod:
       mountPath: /mnt/secrets/harvester-kubeconfig
     - name: harvester-vm-ssh-keys
       mountPath: /mnt/secrets/harvester-vm-ssh-keys
+    - name: harvester-k3s-dockerhub-pull-account
+      mountPath: /mnt/secrets/harvester-k3s-dockerhub-pull-account
     - name: fluent-bit-external
       mountPath: /mnt/fluent-bit-external
     # - name: deploy-key

@@ -25,7 +25,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	podSpec := corev1.PodSpec{
-		Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
+		Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
 		ServiceAccountName:            Component,
 		EnableServiceLinks:            pointer.Bool(false),
 		DNSPolicy:                     "ClusterFirst",
@@ -41,19 +41,19 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}},
 		Containers: []corev1.Container{{
 			Name:            Component,
-			Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ContentService.Version),
+			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ContentService.Version),
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			Args: []string{
 				"run",
 				"--config",
 				"/config/config.json",
 			},
-			Resources: corev1.ResourceRequirements{
+			Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					"cpu":    resource.MustParse("100m"),
 					"memory": resource.MustParse("32Mi"),
 				},
-			},
+			}),
 			Ports: []corev1.ContainerPort{{
 				Name:          RPCServiceName,
 				ContainerPort: RPCPort,
@@ -67,7 +67,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Env: common.MergeEnv(
 				common.DefaultEnv(&ctx.Config),
-				common.TracingEnv(ctx),
+				common.WorkspaceTracingEnv(ctx),
 				[]corev1.EnvVar{{
 					Name:  "GRPC_GO_RETRY",
 					Value: "on",
@@ -96,7 +96,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: v1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
-				Replicas: pointer.Int32(1),
+				Replicas: common.Replicas(ctx, Component),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{

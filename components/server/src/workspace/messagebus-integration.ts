@@ -98,11 +98,14 @@ export class PrebuildUpdatableQueueListener implements MessagebusListener {
         }
 
         const spanCtx = opentracing.globalTracer().extract(opentracing.FORMAT_HTTP_HEADERS, message.properties.headers);
-        const span = !!spanCtx
-            ? opentracing.globalTracer().startSpan(`/messagebus/${MessageBusHelperImpl.PREBUILD_UPDATABLE_QUEUE}`, {
-                  references: [opentracing.childOf(spanCtx!)],
-              })
-            : undefined;
+        let span;
+        if (!!spanCtx && !!spanCtx.toTraceId()) {
+            span = opentracing
+                .globalTracer()
+                .startSpan(`/messagebus/${MessageBusHelperImpl.PREBUILD_UPDATABLE_QUEUE}`, {
+                    references: [opentracing.childOf(spanCtx!)],
+                });
+        }
 
         let msg: any | undefined;
         try {

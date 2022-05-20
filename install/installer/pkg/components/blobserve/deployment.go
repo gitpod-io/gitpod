@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
@@ -59,7 +60,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
-				Replicas: pointer.Int32(1),
+				Replicas: common.Replicas(ctx, Component),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
@@ -71,7 +72,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 					Spec: corev1.PodSpec{
-						Affinity:           common.Affinity(cluster.AffinityLabelWorkspaceServices),
+						Affinity:           common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
 						Volumes: []corev1.Volume{{
@@ -93,25 +94,25 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Args:            []string{"run", "/mnt/config/config.json"},
-							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Blobserve.Version),
+							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Blobserve.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Ports: []corev1.ContainerPort{{
 								Name:          ServicePortName,
 								ContainerPort: ContainerPort,
 							}},
-							Resources: corev1.ResourceRequirements{
+							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("100m"),
 									"memory": resource.MustParse("32Mi"),
 								},
-							},
+							}),
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),
 								RunAsUser:  pointer.Int64(1000),
 							},
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
-								common.TracingEnv(ctx),
+								common.WorkspaceTracingEnv(ctx),
 							),
 							VolumeMounts: []corev1.VolumeMount{{
 								Name:      "config",
@@ -125,6 +126,33 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								MountPath: "/mnt/pull-secret.json",
 								SubPath:   ".dockerconfigjson",
 							}},
+
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/ready",
+										Port: intstr.IntOrString{IntVal: ReadinessPort},
+									},
+								},
+								InitialDelaySeconds: 5,
+								PeriodSeconds:       5,
+								TimeoutSeconds:      1,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							LivenessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/live",
+										Port: intstr.IntOrString{IntVal: ReadinessPort},
+									},
+								},
+								InitialDelaySeconds: 5,
+								PeriodSeconds:       10,
+								TimeoutSeconds:      1,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
 						}, *common.KubeRBACProxyContainer(ctx)},
 					},
 				},

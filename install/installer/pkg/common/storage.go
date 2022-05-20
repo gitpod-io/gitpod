@@ -34,14 +34,18 @@ func useMinio(context *RenderContext) bool {
 func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 	var res *storageconfig.StorageConfig
 	if context.Config.ObjectStorage.CloudStorage != nil {
+		maximumBackupCount := 3
+		if context.Config.ObjectStorage.MaximumBackupCount != nil {
+			maximumBackupCount = *context.Config.ObjectStorage.MaximumBackupCount
+		}
+
 		res = &storageconfig.StorageConfig{
 			Kind: storageconfig.GCloudStorage,
 			GCloudConfig: storageconfig.GCPConfig{
 				Region:             context.Config.Metadata.Region,
 				Project:            context.Config.ObjectStorage.CloudStorage.Project,
 				CredentialsFile:    filepath.Join(storageMount, "service-account.json"),
-				ParallelUpload:     6,
-				MaximumBackupCount: 3,
+				MaximumBackupCount: maximumBackupCount,
 			},
 		}
 	}
@@ -88,6 +92,9 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 	}
 	// 5 GiB
 	res.BlobQuota = 5 * 1024 * 1024 * 1024
+	if context.Config.ObjectStorage.BlobQuota != nil {
+		res.BlobQuota = *context.Config.ObjectStorage.BlobQuota
+	}
 
 	_ = context.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace != nil {

@@ -13,11 +13,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.remoteDev.util.onTerminationOrNow
+import com.intellij.util.application
 import com.jetbrains.rd.util.lifetime.Lifetime
 import git4idea.config.GitVcsApplicationSettings
 import io.gitpod.gitpodprotocol.api.GitpodClient
 import io.gitpod.gitpodprotocol.api.GitpodServerLauncher
 import io.gitpod.jetbrains.remote.services.HeartbeatService
+import io.gitpod.jetbrains.remote.utils.Retrier.retry
 import io.gitpod.supervisor.api.*
 import io.gitpod.supervisor.api.Info.WorkspaceInfoResponse
 import io.gitpod.supervisor.api.Notification.*
@@ -25,6 +27,9 @@ import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
+import io.prometheus.client.CollectorRegistry
+import io.prometheus.client.Gauge
+import io.prometheus.client.exporter.PushGateway
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
@@ -40,7 +45,6 @@ import java.time.Duration
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import javax.websocket.DeploymentException
-import io.gitpod.jetbrains.remote.utils.Retrier.retry
 
 @Service
 class GitpodManager : Disposable {
@@ -51,6 +55,8 @@ class GitpodManager : Disposable {
     }
 
     val devMode = System.getenv("JB_DEV").toBoolean()
+    private val backendKind = System.getenv("JETBRAINS_GITPOD_BACKEND_KIND") ?: "unknown"
+    private val backendQualifier = System.getenv("JETBRAINS_BACKEND_QUALIFIER") ?: "unknown"
 
     private val lifetime = Lifetime.Eternal.createNested()
 
@@ -59,7 +65,43 @@ class GitpodManager : Disposable {
     }
 
     init {
+        val monitoringJob =  GlobalScope.launch {
+            if (application.isHeadlessEnvironment) {
+                return@launch
+            }
+            val pg = PushGateway("localhost:22999")
+            val registry = CollectorRegistry()
+            val allocatedGauge = Gauge.build()
+                    .name("gitpod_jb_backend_memory_max_bytes")
+                    .help("Total allocated memory of JB backend in bytes.")
+                    .labelNames("product", "qualifier")
+                    .register(registry)
+            val usedGauge = Gauge.build()
+                    .name("gitpod_jb_backend_memory_used_bytes")
+                    .help("Used memory of JB backend in bytes.")
+                    .labelNames("product", "qualifier")
+                    .register(registry)
+            while(isActive) {
+                val totalMemory = Runtime.getRuntime().totalMemory()
+                allocatedGauge.labels(backendKind, backendQualifier).set(totalMemory.toDouble())
+                val usedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())
+                usedGauge.labels(backendKind, backendQualifier).set(usedMemory.toDouble())
+                try {
+                    pg.push(registry, "jb_backend")
+                } catch (t: Throwable) {
+                    thisLogger().error("gitpod: failed to push monitoring metrics:", t)
+                }
+                delay(5000)
+            }
+        }
+        lifetime.onTerminationOrNow { monitoringJob.cancel() }
+    }
+
+    init {
         GlobalScope.launch {
+            if (application.isHeadlessEnvironment) {
+                return@launch
+            }
             try {
                 val backendPort = BuiltInServerManager.getInstance().waitForStart().port
                 val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS)
@@ -93,6 +135,9 @@ class GitpodManager : Disposable {
 
     private val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
     private val notificationsJob = GlobalScope.launch {
+        if (application.isHeadlessEnvironment) {
+            return@launch
+        }
         val notifications = NotificationServiceGrpc.newStub(supervisorChannel)
         val futureNotifications = NotificationServiceGrpc.newFutureStub(supervisorChannel)
         while (isActive) {
@@ -156,6 +201,9 @@ class GitpodManager : Disposable {
 
     val pendingInfo = CompletableFuture<WorkspaceInfoResponse>()
     private val infoJob = GlobalScope.launch {
+        if (application.isHeadlessEnvironment) {
+            return@launch
+        }
         try {
             // TODO(ak) replace retry with proper handling of grpc errors
             val infoResponse = retry(3) {

@@ -54,7 +54,7 @@ export class BitbucketApp {
                     console.warn(`Ignoring unsupported bitbucket event: ${req.header("X-Event-Key")}`);
                 }
             } catch (err) {
-                console.error(`Couldn't handle request.`, err, { headers: req.headers, reqBody: req.body });
+                console.error(`Couldn't handle request.`, err, { headers: req.headers });
             } finally {
                 // we always respond with OK, when we received a valid event.
                 res.sendStatus(200);
@@ -95,6 +95,14 @@ export class BitbucketApp {
     ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
+            const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
+            if (projectAndOwner.project) {
+                /* tslint:disable-next-line */
+                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
+                    lastWebhookReceived: new Date().toISOString(),
+                });
+            }
+
             const contextURL = this.createContextUrl(data);
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
             span.setTag("contextURL", contextURL);
@@ -116,11 +124,10 @@ export class BitbucketApp {
                     data.commitHash,
                 );
             }
-            const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
             // todo@alex: add branch and project args
             const ws = await this.prebuildManager.startPrebuild(
                 { span },
-                { user, project: projectAndOwner?.project, context, commitInfo },
+                { user, project: projectAndOwner.project, context, commitInfo },
             );
             return ws;
         } finally {
@@ -189,7 +196,7 @@ function toData(body: BitbucketPushHook): ParsedRequestData | undefined {
         gitCloneUrl: body.repository.links.html.href + ".git",
     };
     if (!result.commitHash || !result.repoUrl) {
-        console.error("Bitbucket push event: unexpected request body.", body);
+        console.error("Bitbucket push event: unexpected request body.");
         throw new Error("Unexpected request body.");
     }
     return result;

@@ -6,8 +6,10 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	_ "embed"
 
@@ -24,6 +26,7 @@ var renderOpts struct {
 	Namespace              string
 	ValidateConfigDisabled bool
 	UseExperimentalConfig  bool
+	FilesDir               string
 }
 
 // renderCmd represents the render command
@@ -58,6 +61,14 @@ A config file is required which can be generated with the init command.`,
 			return err
 		}
 
+		if renderOpts.FilesDir != "" {
+			err := saveYamlToFiles(renderOpts.FilesDir, yaml)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+
 		for _, item := range yaml {
 			fmt.Println(item)
 		}
@@ -66,10 +77,35 @@ A config file is required which can be generated with the init command.`,
 	},
 }
 
+func saveYamlToFiles(dir string, yaml []string) error {
+	for i, mf := range yaml {
+		objs, err := common.YamlToRuntimeObject([]string{mf})
+		if err != nil {
+			return err
+		}
+		obj := objs[0]
+		fn := filepath.Join(dir, fmt.Sprintf("%03d_%s_%s.yaml", i, obj.Kind, obj.Metadata.Name))
+		err = ioutil.WriteFile(fn, []byte(mf), 0644)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *configv1.Config, err error) {
 	var overrideConfig string
 	// Update overrideConfig if cfgFN is not empty
-	if cfgFN != "" {
+	switch cfgFN {
+	case "-":
+		b, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return nil, "", nil, err
+		}
+		overrideConfig = string(b)
+	case "":
+		return nil, "", nil, fmt.Errorf("missing config file")
+	default:
 		cfgBytes, err := ioutil.ReadFile(cfgFN)
 		if err != nil {
 			panic(fmt.Sprintf("couldn't read file %s, %s", cfgFN, err))
@@ -187,8 +223,9 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 func init() {
 	rootCmd.AddCommand(renderCmd)
 
-	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
+	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file, use - for stdin")
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
 	renderCmd.Flags().BoolVar(&renderOpts.ValidateConfigDisabled, "no-validation", false, "if set, the config will not be validated before running")
 	renderCmd.Flags().BoolVar(&renderOpts.UseExperimentalConfig, "use-experimental-config", false, "enable the use of experimental config that is prone to be changed")
+	renderCmd.Flags().StringVar(&renderOpts.FilesDir, "output-split-files", "", "path to output individual Kubernetes manifests to")
 }

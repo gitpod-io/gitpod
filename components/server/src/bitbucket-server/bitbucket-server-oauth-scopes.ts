@@ -10,11 +10,14 @@ export namespace BitbucketServerOAuthScopes {
     /** View projects and repositories that are publicly accessible, including pulling code and cloning repositories. */
     export const PUBLIC_REPOS = "PUBLIC_REPOS";
     /** View projects and repositories the user account can view, including pulling code, cloning, and forking repositories. Create and comment on pull requests. */
-    export const REPOSITORY_READ = "REPO_READ";
+    export const REPO_READ = "REPO_READ";
     /** Push over https, fork repo */
-    export const REPOSITORY_WRITE = "REPO_WRITE";
+    export const REPO_WRITE = "REPO_WRITE";
 
-    export const ALL = [PUBLIC_REPOS, REPOSITORY_READ, REPOSITORY_WRITE];
+    export const REPO_ADMIN = "REPO_ADMIN";
+    export const PROJECT_ADMIN = "PROJECT_ADMIN";
+
+    export const ALL = [PUBLIC_REPOS, REPO_READ, REPO_WRITE, REPO_ADMIN, PROJECT_ADMIN];
 
     export const Requirements = {
         /**

@@ -16,12 +16,11 @@ import {
     matchesNewWorkspaceIdExactly,
 } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import moment from "moment";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
-import { Link, Redirect } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
-import { UserContext } from "../user-context";
 import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEntry";
 import { adminMenu } from "./admin-menu";
 import WorkspaceDetail from "./WorkspaceDetail";
@@ -41,7 +40,6 @@ export default function WorkspaceSearchPage() {
 
 export function WorkspaceSearch(props: Props) {
     const location = useLocation();
-    const { user } = useContext(UserContext);
     const [searchResult, setSearchResult] = useState<AdminGetListResult<WorkspaceAndInstance>>({ rows: [], total: 0 });
     const [queryTerm, setQueryTerm] = useState("");
     const [searching, setSearching] = useState(false);
@@ -69,10 +67,6 @@ export function WorkspaceSearch(props: Props) {
             search();
         }
     }, [props.user]);
-
-    if (!user || !user?.rolesOrPermissions?.includes("admin")) {
-        return <Redirect to="/" />;
-    }
 
     if (currentWorkspace) {
         return <WorkspaceDetail workspace={currentWorkspace} />;

@@ -42,8 +42,8 @@ import (
 )
 
 const (
-	// buildWorkspaceOwnerID is the owner ID we pass to ws-manager
-	buildWorkspaceOwnerID = "image-builder"
+	// buildWorkspaceManagerID identifies the manager for the workspace
+	buildWorkspaceManagerID = "image-builder"
 
 	// maxBuildRuntime is the maximum time a build is allowed to take
 	maxBuildRuntime = 60 * time.Minute
@@ -156,7 +156,7 @@ func (o *Orchestrator) ResolveBaseImage(ctx context.Context, req *protocol.Resol
 
 	refstr, err := o.getAbsoluteImageRef(ctx, req.Ref, reqauth)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot resolve base image ref: %v", err)
+		return nil, err
 	}
 
 	return &protocol.ResolveBaseImageResponse{
@@ -176,6 +176,9 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
+	if _, ok := status.FromError(err); err != nil && ok {
+		return nil, err
+	}
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot resolve base image: %s", err.Error())
 	}
@@ -224,11 +227,11 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
 
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
-	if xerrors.Is(err, resolve.ErrNotFound) {
-		return status.Error(codes.NotFound, "cannot resolve base image")
+	if _, ok := status.FromError(err); err != nil && ok {
+		return err
 	}
 	if err != nil {
-		return status.Errorf(codes.Internal, "cannot resolve base image: %q", err)
+		return status.Errorf(codes.Internal, "cannot resolve base image: %s", err.Error())
 	}
 	wsrefstr, err := o.getWorkspaceImageRef(ctx, baseref)
 	if err != nil {
@@ -249,7 +252,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		// If we didn't build it and the base image doesn't exist anymore, getWorkspaceImageRef will have failed to resolve the baseref.
 		baserefAbsolute, err := o.getAbsoluteImageRef(ctx, baseref, auth.AllowedAuthForAll())
 		if err != nil {
-			return status.Errorf(codes.Internal, "cannot resolve base image ref: %q", err)
+			return err
 		}
 
 		// image has already been built - no need for us to start building
@@ -327,9 +330,9 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		bobBaseref += ":latest"
 	}
 	wsref, err := reference.ParseNamed(wsrefstr)
-	var additionalAuth []byte
+	var baseRefAuth []byte
 	if err == nil {
-		additionalAuth, err = json.Marshal(reqauth.GetImageBuildAuthFor([]string{
+		baseRefAuth, err = json.Marshal(reqauth.GetImageBuildAuthFor([]string{
 			reference.Domain(wsref),
 		}))
 		if err != nil {
@@ -345,15 +348,13 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 			Metadata: &wsmanapi.WorkspaceMetadata{
 				MetaId: buildID,
 				Annotations: map[string]string{
-					annotationRef:     wsrefstr,
-					annotationBaseRef: baseref,
+					annotationRef:       wsrefstr,
+					annotationBaseRef:   baseref,
+					annotationManagedBy: buildWorkspaceManagerID,
 				},
-				// TODO(cw): use the actual image build owner here and move to annotation based filter
-				//           when retrieving running image builds.
-				Owner: buildWorkspaceOwnerID,
+				Owner: req.GetTriggeredBy(),
 			},
 			Spec: &wsmanapi.StartWorkspaceSpec{
-				CheckoutLocation:   ".",
 				Initializer:        initializer,
 				Timeout:            maxBuildRuntime.String(),
 				WorkspaceImage:     o.Config.BuilderImage,
@@ -373,15 +374,15 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					{Name: "WORKSPACEKIT_BOBPROXY_BASEREF", Value: baseref},
 					{Name: "WORKSPACEKIT_BOBPROXY_TARGETREF", Value: wsrefstr},
 					{
-						Name: "WORKSPACEKIT_BOBPROXY_AUTH",
+						Name: "WORKSPACEKIT_BOBPROXY_TARGETAUTH",
 						Secret: &wsmanapi.EnvironmentVariable_SecretKeyRef{
 							SecretName: o.Config.PullSecret,
 							Key:        ".dockerconfigjson",
 						},
 					},
 					{
-						Name:  "WORKSPACEKIT_BOBPROXY_ADDITIONALAUTH",
-						Value: string(additionalAuth),
+						Name:  "WORKSPACEKIT_BOBPROXY_AUTH",
+						Value: string(baseRefAuth),
 					},
 					{Name: "SUPERVISOR_DEBUG_ENABLE", Value: fmt.Sprintf("%v", log.Log.Logger.IsLevelEnabled(logrus.DebugLevel))},
 				},
@@ -534,8 +535,11 @@ func (o *Orchestrator) checkImageExists(ctx context.Context, ref string, authent
 	span.SetTag("ref", ref)
 
 	_, err = o.RefResolver.Resolve(ctx, ref, resolve.WithAuthentication(authentication))
-	if err == resolve.ErrNotFound {
+	if errors.Is(err, resolve.ErrNotFound) {
 		return false, nil
+	}
+	if errors.Is(err, resolve.ErrUnauthorized) {
+		return false, status.Errorf(codes.Unauthenticated, "cannot check if image exists: %q", err)
 	}
 	if err != nil {
 		return false, err
@@ -548,10 +552,20 @@ func (o *Orchestrator) checkImageExists(ctx context.Context, ref string, authent
 func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allowedAuth auth.AllowedAuthFor) (res string, err error) {
 	auth, err := allowedAuth.GetAuthFor(o.Auth, ref)
 	if err != nil {
-		return "", xerrors.Errorf("cannt resolve base image ref: %w", err)
+		return "", status.Errorf(codes.InvalidArgument, "cannt resolve base image ref: %v", err)
 	}
 
-	return o.RefResolver.Resolve(ctx, ref, resolve.WithAuthentication(auth))
+	ref, err = o.RefResolver.Resolve(ctx, ref, resolve.WithAuthentication(auth))
+	if xerrors.Is(err, resolve.ErrNotFound) {
+		return "", status.Error(codes.NotFound, "cannot resolve image")
+	}
+	if xerrors.Is(err, resolve.ErrUnauthorized) {
+		return "", status.Error(codes.Unauthenticated, "cannot resolve image")
+	}
+	if err != nil {
+		return "", status.Errorf(codes.Internal, "cannot resolve image: %v", err)
+	}
+	return ref, nil
 }
 
 func (o *Orchestrator) getBaseImageRef(ctx context.Context, bs *protocol.BuildSource, allowedAuth auth.AllowedAuthFor) (res string, err error) {

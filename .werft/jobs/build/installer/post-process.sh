@@ -13,8 +13,9 @@ REG_DAEMON_PORT=$1
 WS_DAEMON_PORT=$2
 NODE_POOL_INDEX=$3
 DEV_BRANCH=$4
-if [[ -z ${REG_DAEMON_PORT} ]] || [[ -z ${WS_DAEMON_PORT} ]] || [[ -z ${NODE_POOL_INDEX} ]] || [[ -z ${DEV_BRANCH} ]]; then
-   echo "One or more input params were invalid: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${NODE_POOL_INDEX} ${DEV_BRANCH}"
+SMITH_TOKEN=$5
+if [[ -z ${REG_DAEMON_PORT} ]] || [[ -z ${WS_DAEMON_PORT} ]] || [[ -z ${NODE_POOL_INDEX} ]] || [[ -z ${DEV_BRANCH} ]] || [[ -z ${SMITH_TOKEN} ]]; then
+   echo "One or more input params were invalid: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${NODE_POOL_INDEX} ${DEV_BRANCH} ${SMITH_TOKEN}"
    exit 1
 else
    echo "Running with the following params: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${NODE_POOL_INDEX} ${DEV_BRANCH}"
@@ -27,8 +28,13 @@ echo "Use node pool index $NODE_POOL_INDEX"
 LICENSE=$(cat /tmp/license)
 # default, no, we do not add feature flags, file is empty
 DEFAULT_FEATURE_FLAGS=$(cat /tmp/defaultFeatureFlags)
-
-
+# if payment is configured: Append the YAML objects
+if [[ -f "/tmp/payment" ]] ; then
+   echo "found /tmp/payment, appending to k8s.yaml now"
+   # do not make any assumptions about new lines
+   printf \\n'---'\\n >> k8s.yaml
+   cat "/tmp/payment" >> k8s.yaml
+fi
 
 # count YAML like lines in the k8s manifest file
 MATCHES="$(grep -c -- --- k8s.yaml)"
@@ -91,10 +97,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       echo "$WORK"
       touch /tmp/"$NAME"overrides.yaml
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
-
-      THEIA_BUCKET_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.theiaPluginsBucketNameOverride)
-      THEIA_BUCKET_NAME_EXPR="s/\"theiaPluginsBucketNameOverride\": \"\"/\"theiaPluginsBucketNameOverride\": \"$THEIA_BUCKET_NAME\"/"
-      sed -i "$THEIA_BUCKET_NAME_EXPR" /tmp/"$NAME"overrides.yaml
 
       DEV_BRANCH_EXPR="s/\"devBranch\": \"\"/\"devBranch\": \"$DEV_BRANCH\"/"
       sed -i "$DEV_BRANCH_EXPR" /tmp/"$NAME"overrides.yaml
@@ -185,8 +187,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq r /tmp/"$NAME"overrides.yaml 'data.[config.json]' \
       | jq --arg REGISTRY_FACADE_HOST "$REGISTRY_FACADE_HOST" '.manager.registryFacadeHost = $REGISTRY_FACADE_HOST' \
       | jq ".manager.wsdaemon.port = $WS_DAEMON_PORT" > /tmp/"$NAME"-cm-overrides.json
-
-      yq w -i -j /tmp/"$NAME"-cm-overrides.json manager.podTemplate.defaultPath /workspace-templates/default.yaml
 
       touch /tmp/"$NAME"-cm-overrides.yaml
       # write a yaml file with the json as a multiline string
@@ -301,6 +301,25 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-"$KIND"-overrides.yaml
    fi
 
+   if [[ "agent-smith" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+
+      # get a copy of the config we're working with
+      yq r k8s.yaml -d "$documentIndex" > /tmp/"$NAME"-"$KIND"-overrides.yaml
+
+      # replace gitpod token
+      yq r /tmp/"$NAME"-"$KIND"-overrides.yaml 'data.[config.json]' \
+      | jq ".gitpodAPI.apiToken = \"$SMITH_TOKEN\"" > /tmp/"$NAME"-"$KIND"-overrides.json
+
+      # create override file
+      touch /tmp/"$NAME"-"$KIND"-data-overrides.yaml
+      yq w -i /tmp/"$NAME"-"$KIND"-data-overrides.yaml "data.[config.json]" -- "$(< /tmp/"$NAME"-"$KIND"-overrides.json)"
+
+      # merge the updated config map with k8s.yaml
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-"$KIND"-data-overrides.yaml
+   fi
+
    # suspend telemetry cron job
    if [[ "gitpod-telemetry" == "$NAME" ]] && [[ "$KIND" == "CronJob" ]]; then
       WORK="suspend $NAME $KIND"
@@ -365,9 +384,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
    #    # merge base into k8s.yaml
    #    yq m -x -i -d "$documentIndex" k8s.yaml /tmp/"$NAME"-"$KIND".yaml
    # fi
-
-   # TODO: integrate with chargebees
-   # won't fix now, use Helm
 
    documentIndex=$((documentIndex + 1))
 done

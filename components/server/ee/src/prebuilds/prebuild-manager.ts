@@ -159,31 +159,9 @@ export class PrebuildManager {
                 prebuildContext,
                 context.normalizedContextURL!,
             );
-            const prebuildPromise = this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(workspace.id)!;
-
-            span.setTag("starting", true);
-            const projectEnvVars = await projectEnvVarsPromise;
-            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {
-                excludeFeatureFlags: ["full_workspace_backup"],
-            });
-            const prebuild = await prebuildPromise;
+            const prebuild = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(workspace.id)!;
             if (!prebuild) {
                 throw new Error(`Failed to create a prebuild for: ${context.normalizedContextURL}`);
-            }
-
-            if (await this.shouldRateLimitPrebuild(span, cloneURL)) {
-                prebuild.state = "aborted";
-                prebuild.error =
-                    "Prebuild is rate limited. Please contact Gitpod if you believe this happened in error.";
-
-                await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
-                span.setTag("starting", false);
-                span.setTag("ratelimited", true);
-                return {
-                    wsid: workspace.id,
-                    prebuildId: prebuild.id,
-                    done: false,
-                };
             }
 
             if (project) {
@@ -205,6 +183,31 @@ export class PrebuildManager {
                 }
                 await this.storePrebuildInfo({ span }, project, prebuild, workspace, user, aCommitInfo);
             }
+
+            if (await this.shouldRateLimitPrebuild(span, cloneURL)) {
+                prebuild.state = "aborted";
+                prebuild.error =
+                    "Prebuild is rate limited. Please contact Gitpod if you believe this happened in error.";
+                await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
+                span.setTag("ratelimited", true);
+            } else if (project && (await this.shouldSkipInactiveProject(project))) {
+                prebuild.state = "aborted";
+                prebuild.error =
+                    "Project is inactive. Please start a new workspace for this project to re-enable prebuilds.";
+                await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
+            } else if (!project && (await this.shouldSkipInactiveRepository({ span }, cloneURL))) {
+                prebuild.state = "aborted";
+                prebuild.error =
+                    "Repository is inactive. Please create a project for this repository to re-enable prebuilds.";
+                await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
+            } else {
+                span.setTag("starting", true);
+                const projectEnvVars = await projectEnvVarsPromise;
+                await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {
+                    excludeFeatureFlags: ["full_workspace_backup"],
+                });
+            }
+
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {
             TraceContext.setError({ span }, err);
@@ -346,5 +349,35 @@ export class PrebuildManager {
 
         // Last resort default
         return PREBUILD_LIMITER_DEFAULT_LIMIT;
+    }
+
+    private async shouldSkipInactiveProject(project: Project): Promise<boolean> {
+        const usage = await this.projectService.getProjectUsage(project.id);
+        if (!usage?.lastWorkspaceStart) {
+            return false;
+        }
+        const now = Date.now();
+        const lastUse = new Date(usage.lastWorkspaceStart).getTime();
+        const inactiveProjectTime = 1000 * 60 * 60 * 24 * 7 * 1; // 1 week
+        return now - lastUse > inactiveProjectTime;
+    }
+
+    private async shouldSkipInactiveRepository(ctx: TraceContext, cloneURL: string): Promise<boolean> {
+        const span = TraceContext.startSpan("shouldSkipInactiveRepository", ctx);
+        const { inactivityPeriodForRepos } = this.config;
+        if (!inactivityPeriodForRepos) {
+            // skipping is disabled if `inactivityPeriodForRepos` is not set
+            return false;
+        }
+        try {
+            return (
+                (await this.workspaceDB
+                    .trace({ span })
+                    .getWorkspaceCountByCloneURL(cloneURL, inactivityPeriodForRepos /* in days */, "regular")) === 0
+            );
+        } catch (error) {
+            log.error("cannot compute activity for repository", { cloneURL }, error);
+            return false;
+        }
     }
 }

@@ -215,7 +215,7 @@ func TestWaitOrMarkForDisposalRace(t *testing.T) {
 
 			done, _, err := ws.WaitOrMarkForDisposal(ctx)
 			if err != nil {
-				t.Errorf("WaitOrMarkForDisposal failed: %w", err)
+				t.Errorf("WaitOrMarkForDisposal failed: %v", err)
 			}
 			if !done {
 				atomic.AddInt32(&c, 1)

@@ -307,6 +307,9 @@ message WorkspaceSpec {
 
     // ide_image is the name of the Docker image used as IDE
     IDEImage ide_image = 8;
+
+    // class names the class of this workspace
+    string class = 9;
 }
 
 // PortSpec describes a networking port exposed on a workspace
@@ -477,7 +480,7 @@ message StartWorkspaceSpec {
     repeated EnvironmentVariable envvars = 6;
 
     // checkout_location describes where the code has been checked out to
-    string checkout_location = 7;
+    reserved 7;
 
     // workspace_location describes where the workspace root of Theia will be
     string workspace_location = 8;
@@ -493,6 +496,9 @@ message StartWorkspaceSpec {
 
     // ide_image is the Docker image name of the IDE image
     IDEImage ide_image = 12;
+
+    // Class denotes the class of the workspace we ought to start
+    string class = 13;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces
@@ -523,6 +529,9 @@ enum WorkspaceFeatureFlag {
 
     // Was used for UserNamespace
     reserved 6;
+
+    // PERSISTENT_VOLUME_CLAIM feature flag for enabling PVC\Snapshot feature support
+    PERSISTENT_VOLUME_CLAIM = 7;
 }
 
 // GitSpec configures the Git available within the workspace

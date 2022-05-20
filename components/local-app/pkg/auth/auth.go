@@ -120,25 +120,24 @@ const html = `
 </html>`
 
 // NOTE: the port ranges all need to be valid redirect URI's in the backend
-const STARTING_PORT_NUM = 63110
-const ENDING_PORT_NUM = 63120
+const (
+	StartingPortNum = 63110
+	EndingPortNum   = 63120
+)
 
 // Login walks through the login flow for obtaining a Gitpod token
 func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	// Try a range of ports for local redirect server
-	var rl net.Listener
-	var port int
-	for port = STARTING_PORT_NUM; port < ENDING_PORT_NUM || rl == nil; port++ {
-		rl, err = net.Listen("tcp4", fmt.Sprintf("127.0.0.1:%d", port))
-		if err != nil {
-			logrus.Infof("Could not open port:%d got error:%s\nTrying next port\n", port, err)
-			continue
+	rl, port, err := findOpenPortInRange(StartingPortNum, EndingPortNum)
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if closeErr := rl.Close(); closeErr != nil {
+			logrus.WithField("port", port).WithError(closeErr).Warn("Failed to to close listener")
 		}
-		defer rl.Close()
-	}
-	if rl == nil {
-		return "", xerrors.Errorf("could not open any valid port in range %d - %d", STARTING_PORT_NUM, ENDING_PORT_NUM)
-	}
+	}()
 
 	var (
 		errChan   = make(chan error, 1)
@@ -243,4 +242,17 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 
 	gitpodToken := claims["jti"].(string)
 	return gitpodToken, nil
+}
+
+func findOpenPortInRange(start, end int) (net.Listener, int, error) {
+	for port := start; port < end; port++ {
+		rl, err := net.Listen("tcp4", fmt.Sprintf("127.0.0.1:%d", port))
+		if err != nil {
+			logrus.WithField("port", port).WithError(err).Info("Could not open port, trying next port")
+			continue
+		}
+
+		return rl, port, nil
+	}
+	return nil, 0, xerrors.Errorf("could not open any valid port in range %d - %d", start, end)
 }

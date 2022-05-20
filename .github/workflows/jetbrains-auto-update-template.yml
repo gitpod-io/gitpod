@@ -20,12 +20,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.18.1'
       - name: Download leeway
-        run: cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.16/leeway_0.2.16_Linux_x86_64.tar.gz | tar xz
+        run: cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.17/leeway_0.2.17_Linux_x86_64.tar.gz | tar xz
       - name: Download golangci-lint
-        run: cd /usr/local && curl -fsSL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.42.0
+        run: cd /usr/local && curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.45.2
       - name: Download GoKart
-        run: cd /usr/local/bin && curl -L https://github.com/praetorian-inc/gokart/releases/download/v0.3.0/gokart_0.3.0_linux_x86_64.tar.gz | tar xzv gokart
+        run: cd /usr/local/bin && curl -L https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv gokart
       - name: Auth Google Cloud SDK
         uses: google-github-actions/auth@v0
         with:
@@ -46,7 +49,7 @@ jobs:
           data=$(curl -sSL "https://data.services.jetbrains.com/products?code=${{ inputs.productCode }}&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000")
           link=$(echo "$data" | jq -r '.[0].releases[0].downloads.linux.link')
           cd components/ide/jetbrains/image
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -D${{ inputs.productId }}DownloadUrl=$link .:${{ inputs.productId }}
+          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DjetbrainsBackendQualifier=latest -D${{ inputs.productId }}DownloadUrl=$link .:${{ inputs.productId }}
       - name: Slack Notification
         if: always()
         uses: rtCamp/action-slack-notify@v2

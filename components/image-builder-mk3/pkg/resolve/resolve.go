@@ -26,8 +26,13 @@ import (
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-// ErrNotFound is returned when the reference was not found
-var ErrNotFound = xerrors.Errorf("not found")
+var (
+	// ErrNotFound is returned when the reference was not found
+	ErrNotFound = xerrors.Errorf("not found")
+
+	// ErrNotFound is returned when we're not authorized to return the reference
+	ErrUnauthorized = xerrors.Errorf("not authorized")
+)
 
 // StandaloneRefResolver can resolve image references without a Docker daemon
 type StandaloneRefResolver struct {
@@ -96,8 +101,12 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 	span.LogKV("normalized-ref", nref)
 
 	res, desc, err := r.Resolve(ctx, nref)
-	if err != nil && strings.Contains(err.Error(), "not found") {
-		err = ErrNotFound
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			err = ErrNotFound
+		} else if strings.Contains(err.Error(), "Unauthorized") {
+			err = ErrUnauthorized
+		}
 		return
 	}
 	fetcher, err := r.Fetcher(ctx, res)
@@ -137,6 +146,9 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 
 	var dgst digest.Digest
 	for _, mf := range mfl.Manifests {
+		if mf.Platform == nil {
+			continue
+		}
 		if fmt.Sprintf("%s-%s", mf.Platform.OS, mf.Platform.Architecture) == "linux-amd64" {
 			dgst = mf.Digest
 			break
@@ -186,6 +198,7 @@ type DockerRefResolver interface {
 type PrecachingRefResolver struct {
 	Resolver   DockerRefResolver
 	Candidates []string
+	Auth       auth.RegistryAuthenticator
 
 	mu    sync.RWMutex
 	cache map[string]string
@@ -206,7 +219,24 @@ func (pr *PrecachingRefResolver) StartCaching(ctx context.Context, interval time
 	pr.cache = make(map[string]string)
 	for {
 		for _, c := range pr.Candidates {
-			res, err := pr.Resolver.Resolve(ctx, c)
+			var opts []DockerRefResolverOption
+			if pr.Auth != nil {
+				ref, err := reference.ParseNormalizedNamed(c)
+				if err != nil {
+					log.WithError(err).WithField("ref", c).Warn("unable to precache reference: cannot parse")
+					continue
+				}
+
+				auth, err := pr.Auth.Authenticate(reference.Domain(ref))
+				if err != nil {
+					log.WithError(err).WithField("ref", c).Warn("unable to precache reference: cannot authenticate")
+					continue
+				}
+
+				opts = append(opts, WithAuthentication(auth))
+			}
+
+			res, err := pr.Resolver.Resolve(ctx, c, opts...)
 			if err != nil {
 				log.WithError(err).WithField("ref", c).Warn("unable to precache reference")
 				continue

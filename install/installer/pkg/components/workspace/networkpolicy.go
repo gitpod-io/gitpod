@@ -81,6 +81,21 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 				},
+				{
+					Ports: []networkingv1.NetworkPolicyPort{
+						{
+							Protocol: common.TCPProtocol,
+							Port:     &intstr.IntOrString{IntVal: 22999},
+						},
+					},
+					From: []networkingv1.NetworkPolicyPeer{
+						{
+							PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+								"app.kubernetes.io/component": "prometheus",
+							}},
+						},
+					},
+				},
 			},
 			Egress: []networkingv1.NetworkPolicyEgressRule{
 				{

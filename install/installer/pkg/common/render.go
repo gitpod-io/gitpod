@@ -5,12 +5,17 @@
 package common
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/docker/distribution/reference"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 
 	"helm.sh/helm/v3/pkg/cli/values"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 )
 
 // Renderable turns the config into a set of Kubernetes runtime objects
@@ -30,6 +35,10 @@ func CompositeRenderFunc(f ...RenderFunc) RenderFunc {
 			obj, err := g(ctx)
 			if err != nil {
 				return nil, err
+			}
+			if len(obj) == 0 {
+				// the RenderFunc chose not to render anything, possibly based on config it received
+				continue
 			}
 			res = append(res, obj...)
 		}
@@ -81,6 +90,39 @@ func (r *RenderContext) WithExperimental(mod func(ucfg *experimental.Config) err
 	return mod(r.experimentalConfig)
 }
 
+func (r *RenderContext) RepoName(repo, name string) string {
+	var ref string
+	if repo == "" {
+		ref = name
+	} else {
+		ref = fmt.Sprintf("%s/%s", strings.TrimSuffix(repo, "/"), name)
+	}
+	pref, err := reference.ParseNormalizedNamed(ref)
+	if err != nil {
+		panic(fmt.Sprintf("cannot parse image repo %s: %v", ref, err))
+	}
+
+	if pointer.BoolDeref(r.Config.DropImageRepo, false) {
+		segs := strings.Split(reference.Path(pref), "/")
+		return fmt.Sprintf("%s/%s", r.Config.Repository, segs[len(segs)-1])
+	}
+
+	return pref.String()
+}
+
+func (r *RenderContext) ImageName(repo, name, tag string) string {
+	ref := fmt.Sprintf("%s:%s", r.RepoName(repo, name), tag)
+	pref, err := reference.ParseNamed(ref)
+	if err != nil {
+		panic(fmt.Sprintf("cannot parse image ref %s: %v", ref, err))
+	}
+	if _, ok := pref.(reference.Tagged); !ok {
+		panic(fmt.Sprintf("image ref %s has no tag: %v", ref, err))
+	}
+
+	return ref
+}
+
 // generateValues generates the random values used throughout the context
 // todo(sje): find a way of persisting these values for updates
 func (r *RenderContext) generateValues() error {
@@ -108,9 +150,18 @@ func (r *RenderContext) generateValues() error {
 	}
 	r.Values.InternalRegistryPassword = internalRegistryPassword
 
-	messageBusPassword, err := RandomString(20)
-	if err != nil {
-		return err
+	messageBusPassword := ""
+	_ = r.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Common != nil {
+			messageBusPassword = cfg.Common.StaticMessagebusPassword
+		}
+		return nil
+	})
+	if messageBusPassword == "" {
+		messageBusPassword, err = RandomString(20)
+		if err != nil {
+			return err
+		}
 	}
 	r.Values.MessageBusPassword = messageBusPassword
 

@@ -6,16 +6,18 @@ package config
 
 import (
 	"encoding/json"
-	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
 	"os"
+
+	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
 )
 
 // Config configures this service
 type Config struct {
-	BlobServe      blobserve.Config `json:"blobserve"`
-	AuthCfg        string           `json:"dockerAuth"`
-	PProfAddr      string           `json:"pprofAddr"`
-	PrometheusAddr string           `json:"prometheusAddr"`
+	BlobServe          blobserve.Config `json:"blobserve"`
+	AuthCfg            string           `json:"dockerAuth"`
+	PProfAddr          string           `json:"pprofAddr"`
+	PrometheusAddr     string           `json:"prometheusAddr"`
+	ReadinessProbeAddr string           `json:"readinessProbeAddr"`
 }
 
 // getConfig loads and validates the configuration

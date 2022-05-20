@@ -9,6 +9,21 @@ import { inject, injectable } from "inversify";
 import { TokenProvider } from "../../../src/user/token-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { Gitlab } from "@gitbeaker/node";
+import { ProjectSchemaDefault, NamespaceInfoSchemaDefault } from "@gitbeaker/core/dist/types/services/Projects";
+
+// Add missing fields to Gitbeaker's ProjectSchema type
+type ProjectSchema = ProjectSchemaDefault & {
+    last_activity_at: string;
+    namespace: NamespaceInfoSchemaDefault & {
+        avatar_url: string | null;
+        parent_id: number | null;
+    };
+    owner?: {
+        id: number;
+        name: string;
+        avatar_url: string | null;
+    };
+};
 
 @injectable()
 export class GitLabAppSupport {
@@ -38,12 +53,12 @@ export class GitLabAppSupport {
         //
         const projectsWithAccess = await api.Projects.all({ min_access_level: "40", perPage: 100 });
         for (const project of projectsWithAccess) {
-            const anyProject = project as any;
-            const path = anyProject.path as string;
-            const fullPath = anyProject.path_with_namespace as string;
-            const cloneUrl = anyProject.http_url_to_repo as string;
-            const updatedAt = anyProject.last_activity_at as string;
-            const accountAvatarUrl = anyProject.owner?.avatar_url as string;
+            const aProject = project as ProjectSchema;
+            const path = aProject.path as string;
+            const fullPath = aProject.path_with_namespace as string;
+            const cloneUrl = aProject.http_url_to_repo as string;
+            const updatedAt = aProject.last_activity_at as string;
+            const accountAvatarUrl = await this.getAccountAvatarUrl(aProject, params.provider.host);
             const account = fullPath.split("/")[0];
 
             (account === usersGitLabAccount ? ownersRepos : result).push({
@@ -60,5 +75,36 @@ export class GitLabAppSupport {
         // put owner's repos first. the frontend will pick first account to continue with
         result.unshift(...ownersRepos);
         return result;
+    }
+
+    protected async getAccountAvatarUrl(project: ProjectSchema, providerHost: string): Promise<string> {
+        let owner = project.owner;
+        if (!owner && project.namespace && !project.namespace.parent_id) {
+            // Fall back to "root namespace" / "top-level group"
+            owner = project.namespace;
+        }
+        if (!owner) {
+            // Could not determine account avatar
+            return "";
+        }
+        if (owner.avatar_url) {
+            const url = owner.avatar_url;
+            // Sometimes GitLab avatar URLs are relative -- ensure we always use the correct host
+            return url[0] === "/" ? `https://${providerHost}${url}` : url;
+        }
+        // If there is no avatar, generate the same default avatar that GitLab uses. Based on:
+        // - https://gitlab.com/gitlab-org/gitlab/-/blob/b2a22b6e85200ce55ab09b5c765043441b086c96/app/helpers/avatars_helper.rb#L151-161
+        // - https://gitlab.com/gitlab-org/gitlab/-/blob/861f52858a1db07bdb122fe947dec9b0a09ce807/app/assets/stylesheets/startup/startup-general.scss#L1611-1631
+        // - https://gitlab.com/gitlab-org/gitlab/-/blob/861f52858a1db07bdb122fe947dec9b0a09ce807/app/assets/stylesheets/startup/startup-general.scss#L420-422
+        const backgroundColors = ["#fcf1ef", "#f4f0ff", "#f1f1ff", "#e9f3fc", "#ecf4ee", "#fdf1dd", "#f0f0f0"];
+        const backgroundColor = backgroundColors[owner.id % backgroundColors.length];
+        // Uppercase first character of the name, support emojis, default to whitespace.
+        const text = String.fromCodePoint(owner.name.codePointAt(0) || 32 /* space */).toUpperCase();
+        const svg = `<svg viewBox="0 0 32 32" height="32" width="32" style="background-color: ${backgroundColor}" xmlns="http://www.w3.org/2000/svg">
+            <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" style='font-size: 0.875rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'>
+                ${text}
+            </text>
+        </svg>`;
+        return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " "))}`;
     }
 }

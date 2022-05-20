@@ -24,12 +24,32 @@ const (
 	LicenseTypeReplicated LicenseType = "replicated"
 )
 
+// LicenseSubscriptionLevel is initialized to have a standard license plan
+// between replicated and gitpod licenses
+type LicenseSubscriptionLevel string
+
+const (
+	LicenseTypeCommunity   LicenseSubscriptionLevel = "community"
+	LicenseTypePaid        LicenseSubscriptionLevel = "prod"
+	LicenseTypeTrial       LicenseSubscriptionLevel = "trial"
+	LicenseTypeDevelopment LicenseSubscriptionLevel = "dev"
+)
+
+// LicenseData has type specific info about the license
+type LicenseData struct {
+	Type            LicenseType              `json:"type"`
+	Payload         LicensePayload           `json:"payload"`
+	Plan            LicenseSubscriptionLevel `json:"plan"`
+	FallbackAllowed bool                     `json:"fallbackAllowed"`
+}
+
 // LicensePayload is the actual license content
 type LicensePayload struct {
 	ID         string       `json:"id"`
 	Domain     string       `json:"domain"`
 	Level      LicenseLevel `json:"level"`
 	ValidUntil time.Time    `json:"validUntil"`
+	// Type       LicenseType  `json:"type"`
 
 	// Seats == 0 means there's no seat limit
 	Seats int `json:"seats"`
@@ -130,6 +150,8 @@ var defaultLicense = LicensePayload{
 	// Domain, ValidUntil are free for all
 }
 
+// we match domains only for `gitpod` license and not with replicated license.
+// In the case of replicated this ensures faster client onboarding
 func matchesDomain(pattern, domain string) bool {
 	if pattern == "" {
 		return true
@@ -153,6 +175,7 @@ type Evaluator struct {
 	invalid       string
 	allowFallback bool // Paid licenses cannot fallback and prevent additional signups
 	lic           LicensePayload
+	plan          LicenseSubscriptionLevel // Specifies if it is a community/free plan or paid plan
 }
 
 // Validate returns false if the license isn't valid and a message explaining why that is.
@@ -210,6 +233,21 @@ func (e *Evaluator) HasEnoughSeats(seats int) bool {
 // those kinds of decisions must be part of the Evaluator.
 func (e *Evaluator) Inspect() LicensePayload {
 	return e.lic
+}
+
+func (e *Evaluator) LicenseData() LicenseData {
+	data := LicenseData{
+		Type:            LicenseType(e.GetLicenseType()),
+		Payload:         e.Inspect(),
+		FallbackAllowed: e.allowFallback,
+		Plan:            e.plan,
+	}
+
+	return data
+}
+
+func (e *Evaluator) GetLicenseType() string {
+	return os.Getenv("GITPOD_LICENSE_TYPE")
 }
 
 // Sign signs a license so that it can be used with the evaluator

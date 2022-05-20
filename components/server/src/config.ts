@@ -14,21 +14,28 @@ import { CodeSyncConfig } from "./code-sync/code-sync-service";
 import { ChargebeeProviderOptions, readOptionsFromFile } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { filePathTelepresenceAware, KubeStage, translateLegacyStagename } from "@gitpod/gitpod-protocol/lib/env";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 
 export const Config = Symbol("Config");
-export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOptionsFile"> & {
-    stage: KubeStage;
+export type Config = Omit<
+    ConfigSerialized,
+    "blockedRepositories" | "hostUrl" | "chargebeeProviderOptionsFile" | "licenseFile"
+> & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
+    builtinAuthProvidersConfigured: boolean;
+    blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[];
+    inactivityPeriodForRepos?: number;
 };
 
 export interface WorkspaceDefaults {
     workspaceImage: string;
     previewFeatureFlags: NamedWorkspaceFeatureFlag[];
     defaultFeatureFlags: NamedWorkspaceFeatureFlag[];
+    timeoutDefault?: string;
+    timeoutExtended?: string;
 }
 
 export interface WorkspaceGarbageCollection {
@@ -48,10 +55,8 @@ export interface ConfigSerialized {
     version: string;
     hostUrl: string;
     installationShortname: string;
-    stage: string;
     devBranch?: string;
     insecureNoDomain: boolean;
-    logLevel: LogrusLogLevel;
 
     // Use one or other - licenseFile reads from a file and populates license
     license?: string;
@@ -87,7 +92,6 @@ export interface ConfigSerialized {
 
     authProviderConfigs: AuthProviderParams[];
     authProviderConfigFiles: string[];
-    builtinAuthProvidersConfigured: boolean;
     disableDynamicAuthProviderLogin: boolean;
 
     /**
@@ -110,9 +114,6 @@ export interface ConfigSerialized {
     };
 
     makeNewUsersAdmin: boolean;
-
-    /** this value - if present - overrides the default naming scheme for the GCloud bucket that Theia Plugins are stored in */
-    theiaPluginsBucketNameOverride?: string;
 
     /** defaultBaseImageRegistryWhitelist is the list of registryies users get acces to by default */
     defaultBaseImageRegistryWhitelist: string[];
@@ -156,6 +157,18 @@ export interface ConfigSerialized {
      * Key '*' specifies the default rate limit for a cloneURL, unless overriden by a specific cloneURL.
      */
     prebuildLimiter: { [cloneURL: string]: number } & { "*": number };
+
+    /**
+     * List of repositories not allowed to be used for workspace starts.
+     * `blockUser` attribute to control handling of the user's account.
+     */
+    blockedRepositories?: { urlRegExp: string; blockUser: boolean }[];
+
+    /**
+     * If a numeric value interpreted as days is set, repositories not beeing opened with Gitpod are
+     * considered inactive.
+     */
+    inactivityPeriodForRepos?: number;
 }
 
 export namespace ConfigFile {
@@ -205,9 +218,23 @@ export namespace ConfigFile {
         if (licenseFile) {
             license = fs.readFileSync(filePathTelepresenceAware(licenseFile), "utf-8");
         }
+        const blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[] = [];
+        if (config.blockedRepositories) {
+            for (const { blockUser, urlRegExp } of config.blockedRepositories) {
+                blockedRepositories.push({
+                    blockUser,
+                    urlRegExp: new RegExp(urlRegExp),
+                });
+            }
+        }
+        let inactivityPeriodForRepos: number | undefined;
+        if (typeof config.inactivityPeriodForRepos === "number") {
+            if (config.inactivityPeriodForRepos >= 1) {
+                inactivityPeriodForRepos = config.inactivityPeriodForRepos;
+            }
+        }
         return {
             ...config,
-            stage: translateLegacyStagename(config.stage),
             hostUrl,
             authProviderConfigs,
             builtinAuthProvidersConfigured,
@@ -219,6 +246,8 @@ export namespace ConfigFile {
                     ? new Date(config.workspaceGarbageCollection.startDate).getTime()
                     : Date.now(),
             },
+            blockedRepositories,
+            inactivityPeriodForRepos,
         };
     }
 }

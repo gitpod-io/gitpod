@@ -19,13 +19,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = (function() {
-  if (this) { return this; }
-  if (typeof window !== 'undefined') { return window; }
-  if (typeof global !== 'undefined') { return global; }
-  if (typeof self !== 'undefined') { return self; }
-  return Function('return this')();
-}.call(null));
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
 goog.object.extend(proto, content$service$api_initializer_pb);
@@ -5101,7 +5095,8 @@ proto.wsman.WorkspaceSpec.toObject = function(includeInstance, msg) {
     proto.wsman.PortSpec.toObject, includeInstance),
     type: jspb.Message.getFieldWithDefault(msg, 6, 0),
     timeout: jspb.Message.getFieldWithDefault(msg, 7, ""),
-    ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f)
+    ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
+    pb_class: jspb.Message.getFieldWithDefault(msg, 9, "")
   };
 
   if (includeInstance) {
@@ -5171,6 +5166,10 @@ proto.wsman.WorkspaceSpec.deserializeBinaryFromReader = function(msg, reader) {
       var value = new proto.wsman.IDEImage;
       reader.readMessage(value,proto.wsman.IDEImage.deserializeBinaryFromReader);
       msg.setIdeImage(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setClass(value);
       break;
     default:
       reader.skipField();
@@ -5257,6 +5256,13 @@ proto.wsman.WorkspaceSpec.serializeBinaryToWriter = function(message, writer) {
       8,
       f,
       proto.wsman.IDEImage.serializeBinaryToWriter
+    );
+  }
+  f = message.getClass();
+  if (f.length > 0) {
+    writer.writeString(
+      9,
+      f
     );
   }
 };
@@ -5442,6 +5448,24 @@ proto.wsman.WorkspaceSpec.prototype.clearIdeImage = function() {
  */
 proto.wsman.WorkspaceSpec.prototype.hasIdeImage = function() {
   return jspb.Message.getField(this, 8) != null;
+};
+
+
+/**
+ * optional string class = 9;
+ * @return {string}
+ */
+proto.wsman.WorkspaceSpec.prototype.getClass = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.WorkspaceSpec} returns this
+ */
+proto.wsman.WorkspaceSpec.prototype.setClass = function(value) {
+  return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 
@@ -6697,12 +6721,12 @@ proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
     proto.wsman.PortSpec.toObject, includeInstance),
     envvarsList: jspb.Message.toObjectList(msg.getEnvvarsList(),
     proto.wsman.EnvironmentVariable.toObject, includeInstance),
-    checkoutLocation: jspb.Message.getFieldWithDefault(msg, 7, ""),
     workspaceLocation: jspb.Message.getFieldWithDefault(msg, 8, ""),
     git: (f = msg.getGit()) && proto.wsman.GitSpec.toObject(includeInstance, f),
     timeout: jspb.Message.getFieldWithDefault(msg, 10, ""),
     admission: jspb.Message.getFieldWithDefault(msg, 11, 0),
-    ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f)
+    ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
+    pb_class: jspb.Message.getFieldWithDefault(msg, 13, "")
   };
 
   if (includeInstance) {
@@ -6768,10 +6792,6 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
       reader.readMessage(value,proto.wsman.EnvironmentVariable.deserializeBinaryFromReader);
       msg.addEnvvars(value);
       break;
-    case 7:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setCheckoutLocation(value);
-      break;
     case 8:
       var value = /** @type {string} */ (reader.readString());
       msg.setWorkspaceLocation(value);
@@ -6793,6 +6813,10 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
       var value = new proto.wsman.IDEImage;
       reader.readMessage(value,proto.wsman.IDEImage.deserializeBinaryFromReader);
       msg.setIdeImage(value);
+      break;
+    case 13:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setClass(value);
       break;
     default:
       reader.skipField();
@@ -6868,13 +6892,6 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
       proto.wsman.EnvironmentVariable.serializeBinaryToWriter
     );
   }
-  f = message.getCheckoutLocation();
-  if (f.length > 0) {
-    writer.writeString(
-      7,
-      f
-    );
-  }
   f = message.getWorkspaceLocation();
   if (f.length > 0) {
     writer.writeString(
@@ -6910,6 +6927,13 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
       12,
       f,
       proto.wsman.IDEImage.serializeBinaryToWriter
+    );
+  }
+  f = message.getClass();
+  if (f.length > 0) {
+    writer.writeString(
+      13,
+      f
     );
   }
 };
@@ -7102,24 +7126,6 @@ proto.wsman.StartWorkspaceSpec.prototype.clearEnvvarsList = function() {
 
 
 /**
- * optional string checkout_location = 7;
- * @return {string}
- */
-proto.wsman.StartWorkspaceSpec.prototype.getCheckoutLocation = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.wsman.StartWorkspaceSpec} returns this
- */
-proto.wsman.StartWorkspaceSpec.prototype.setCheckoutLocation = function(value) {
-  return jspb.Message.setProto3StringField(this, 7, value);
-};
-
-
-/**
  * optional string workspace_location = 8;
  * @return {string}
  */
@@ -7244,6 +7250,24 @@ proto.wsman.StartWorkspaceSpec.prototype.clearIdeImage = function() {
  */
 proto.wsman.StartWorkspaceSpec.prototype.hasIdeImage = function() {
   return jspb.Message.getField(this, 12) != null;
+};
+
+
+/**
+ * optional string class = 13;
+ * @return {string}
+ */
+proto.wsman.StartWorkspaceSpec.prototype.getClass = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 13, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.setClass = function(value) {
+  return jspb.Message.setProto3StringField(this, 13, value);
 };
 
 
@@ -7991,7 +8015,8 @@ proto.wsman.WorkspacePhase = {
 proto.wsman.WorkspaceFeatureFlag = {
   NOOP: 0,
   FULL_WORKSPACE_BACKUP: 4,
-  FIXED_RESOURCES: 5
+  FIXED_RESOURCES: 5,
+  PERSISTENT_VOLUME_CLAIM: 7
 };
 
 /**

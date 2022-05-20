@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
@@ -95,6 +96,29 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	var podAntiAffinity *corev1.PodAntiAffinity
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.UsePodAntiAffinity {
+			podAntiAffinity = &corev1.PodAntiAffinity{
+				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{{
+					Weight: 100,
+					PodAffinityTerm: corev1.PodAffinityTerm{
+						LabelSelector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{{
+								Key:      "component",
+								Operator: "In",
+								Values:   []string{Component},
+							}},
+						},
+						TopologyKey: cluster.AffinityLabelMeta,
+					},
+				}},
+			}
+		}
+		return nil
+	})
+
+	const kubeRbacProxyContainerName = "kube-rbac-proxy"
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -105,7 +129,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
-				Replicas: pointer.Int32(1),
+				Replicas: common.Replicas(ctx, Component),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
@@ -117,7 +141,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 					Spec: corev1.PodSpec{
-						Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
+						Affinity: &corev1.Affinity{
+							NodeAffinity:    common.NodeAffinity(cluster.AffinityLabelMeta).NodeAffinity,
+							PodAntiAffinity: podAntiAffinity,
+						},
 						PriorityClassName:             common.SystemNodeCritical,
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),
@@ -130,7 +157,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Volumes: volumes,
 						InitContainers: []corev1.Container{{
 							Name:            "sysctl",
-							Image:           common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), InitContainerImage, InitContainerTag),
+							Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), InitContainerImage, InitContainerTag),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(true),
@@ -142,8 +169,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 						}},
 						Containers: []corev1.Container{{
-							Name:            "kube-rbac-proxy",
-							Image:           common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
+							Name:            kubeRbacProxyContainerName,
+							Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Args: []string{
 								"--v=10",
@@ -165,12 +192,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:          MetricsContainerName,
 								Protocol:      *common.TCPProtocol,
 							}},
-							Resources: corev1.ResourceRequirements{
+							Resources: common.ResourceRequirements(ctx, Component, kubeRbacProxyContainerName, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("1m"),
 									"memory": resource.MustParse("30Mi"),
 								},
-							},
+							}),
 							SecurityContext: &corev1.SecurityContext{
 								RunAsGroup:   pointer.Int64(65532),
 								RunAsNonRoot: pointer.Bool(true),
@@ -178,14 +205,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 						}, {
 							Name:            Component,
-							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Proxy.Version),
+							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Proxy.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Resources: corev1.ResourceRequirements{
+							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("100m"),
 									"memory": resource.MustParse("200Mi"),
 								},
-							},
+							}),
 							Ports: []corev1.ContainerPort{{
 								ContainerPort: ContainerHTTPPort,
 								Name:          "http",

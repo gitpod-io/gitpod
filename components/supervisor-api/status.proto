@@ -72,6 +72,13 @@ service StatusService {
         };
     }
 
+    // ResourcesStatus provides workspace resources status information.
+    rpc ResourcesStatus(ResourcesStatuRequest) returns (ResourcesStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/resources"
+        };
+    }
+
 }
 
 message SupervisorStatusRequest {}
@@ -219,4 +226,18 @@ message TaskPresentation {
     string name = 1;
     string open_in = 2;
     string open_mode = 3;
+}
+
+message ResourcesStatuRequest {
+
+}
+message ResourcesStatusResponse {
+    // Used memory and limit in bytes
+    ResourceStatus memory = 1;
+    // Used CPU and limit in millicores.
+    ResourceStatus cpu = 2;
+}
+message ResourceStatus {
+    int64 used = 1;
+    int64 limit = 2;
 }

@@ -11,22 +11,27 @@ import AlertBox from "../components/AlertBox";
 import CheckBox from "../components/CheckBox";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { ContextMenuEntry } from "../components/ContextMenu";
+import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon, ItemsList } from "../components/ItemsList";
 import Modal from "../components/Modal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
+import { PaymentContext } from "../payment-context";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
+import { isGitpodIo } from "../utils";
 import { SelectAccountModal } from "./SelectAccountModal";
-import settingsMenu from "./settings-menu";
+import getSettingsMenu from "./settings-menu";
 
 export default function Integrations() {
+    const { showPaymentUI } = useContext(PaymentContext);
+
     return (
         <div>
             <PageWithSubMenu
-                subMenu={settingsMenu}
+                subMenu={getSettingsMenu({ showPaymentUI })}
                 title="Integrations"
                 subtitle="Manage permissions for Git providers and integrations."
             >
@@ -443,7 +448,7 @@ function GitIntegrations() {
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
                     <h3>Git Integrations</h3>
-                    <h2>Manage Git integrations for GitLab, GitHub or Gitea self-hosted instances.</h2>
+                    <h2>Manage Git integrations for self-managed instances of GitLab, GitHub, Bitbucket or Gitea.</h2>
                 </div>
                 {providers.length !== 0 ? (
                     <div className="mt-3 flex mt-0">
@@ -548,6 +553,13 @@ export function GitIntegrationModal(
         setErrorMessage(undefined);
         validate();
     }, [clientId, clientSecret, type]);
+
+    // "bitbucket.org" is set as host value whenever "Bitbucket" is selected
+    useEffect(() => {
+        if (props.mode === "new") {
+            updateHostValue(type === "Bitbucket" ? "bitbucket.org" : "");
+        }
+    }, [type]);
 
     const onClose = () => props.onClose && props.onClose();
     const onUpdate = () => props.onUpdate && props.onUpdate();
@@ -698,11 +710,11 @@ export function GitIntegrationModal(
         return (
             <span>
                 Use this redirect URL to update the OAuth application. Go to{" "}
-                <a href={`https://${settingsUrl}`} target="_blank" rel="noopener" className="gp-link">
+                <a href={`https://${settingsUrl}`} target="_blank" rel="noreferrer noopener" className="gp-link">
                     developer settings
                 </a>{" "}
                 and setup the OAuth application.&nbsp;
-                <a href={docsUrl} target="_blank" rel="noopener" className="gp-link">
+                <a href={docsUrl} target="_blank" rel="noreferrer noopener" className="gp-link">
                     Learn more
                 </a>
                 .
@@ -716,6 +728,10 @@ export function GitIntegrationModal(
                 return "github.example.com";
             case "GitLab":
                 return "gitlab.example.com";
+            case "BitbucketServer":
+                return "bitbucket.example.com";
+            case "Bitbucket":
+                return "bitbucket.org";
             default:
                 return "";
         }
@@ -743,7 +759,7 @@ export function GitIntegrationModal(
                 <div className="flex flex-col">
                     <span className="text-gray-500">
                         {props.headerText ||
-                            "Configure a Git integration with a GitLab, GitHub or Gitea self-hosted instance."}
+                            "Configure an integration with a self-managed instance of GitLab, GitHub, Bitbucket or Gitea."}
                     </span>
                 </div>
 
@@ -763,8 +779,23 @@ export function GitIntegrationModal(
                                 <option value="GitHub">GitHub</option>
                                 <option value="GitLab">GitLab</option>
                                 <option value="Gitea">Gitea</option>
+                                {!isGitpodIo() && <option value="Bitbucket">Bitbucket</option>}
+                                <option value="BitbucketServer">Bitbucket Server</option>
                             </select>
                         </div>
+                    )}
+                    {mode === "new" && type === "BitbucketServer" && (
+                        <InfoBox className="my-4 mx-auto">
+                            OAuth 2.0 support in Bitbucket Server was added in version 7.20.{" "}
+                            <a
+                                target="_blank"
+                                href="https://confluence.atlassian.com/bitbucketserver/bitbucket-data-center-and-server-7-20-release-notes-1101934428.html"
+                                rel="noopener noreferrer"
+                                className="gp-link"
+                            >
+                                Learn more
+                            </a>
+                        </InfoBox>
                     )}
                     <div className="flex flex-col space-y-2">
                         <label htmlFor="hostName" className="font-medium">
@@ -772,7 +803,7 @@ export function GitIntegrationModal(
                         </label>
                         <input
                             name="hostName"
-                            disabled={mode === "edit"}
+                            disabled={mode === "edit" || type === "Bitbucket"}
                             type="text"
                             placeholder={getPlaceholderForIntegrationType(type)}
                             value={host}

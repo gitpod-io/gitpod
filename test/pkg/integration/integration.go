@@ -46,7 +46,6 @@ func NewPodExec(config rest.Config, clientset *kubernetes.Clientset) *PodExec {
 	config.APIPath = "/api"                                   // Make sure we target /api and not just /
 	config.GroupVersion = &schema.GroupVersion{Version: "v1"} // this targets the core api groups so the url path will be /api/v1
 	config.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
-	config.TLSClientConfig = rest.TLSClientConfig{Insecure: true}
 	return &PodExec{
 		RestConfig: &config,
 		Clientset:  clientset,
@@ -216,7 +215,7 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		}
 	}()
 
-	fwdReady, fwdErr := common.ForwardPort(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
+	fwdReady, fwdErr := common.ForwardPortOfPod(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
 	select {
 	case <-fwdReady:
 	case err := <-execErrs:

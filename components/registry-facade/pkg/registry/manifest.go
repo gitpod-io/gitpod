@@ -52,12 +52,13 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 	}
 
 	manifestHandler := &manifestHandler{
-		Context:        ctx,
-		Name:           name,
-		Spec:           spec,
-		Resolver:       reg.Resolver(),
-		Store:          reg.Store,
-		ConfigModifier: reg.ConfigModifier,
+		Context:          ctx,
+		Name:             name,
+		Spec:             spec,
+		Resolver:         reg.Resolver(),
+		Store:            reg.Store,
+		ConfigModifier:   reg.ConfigModifier,
+		ManifestModifier: reg.ipfsManifestModifier,
 	}
 	reference := getReference(ctx)
 	dgst, err := digest.Parse(reference)
@@ -86,10 +87,11 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 type manifestHandler struct {
 	Context context.Context
 
-	Spec           *api.ImageSpec
-	Resolver       remotes.Resolver
-	Store          content.Store
-	ConfigModifier ConfigModifier
+	Spec             *api.ImageSpec
+	Resolver         remotes.Resolver
+	Store            BlobStore
+	ConfigModifier   ConfigModifier
+	ManifestModifier func(*ociv1.Manifest) error
 
 	Name   string
 	Tag    string
@@ -142,21 +144,23 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		fetcher, err := mh.Resolver.Fetcher(ctx, ref)
-		if err != nil {
-			log.WithError(err).WithField("ref", ref).WithFields(logFields).Error("cannot get fetcher")
-			return distv2.ErrorCodeManifestUnknown.WithDetail(err)
-		}
-		rc, err := fetcher.Fetch(ctx, desc)
-		if err != nil {
-			log.WithError(err).WithField("ref", ref).WithField("desc", desc).WithFields(logFields).Error("cannot fetch manifest")
-			return distv2.ErrorCodeManifestUnknown.WithDetail(err)
-		}
-		defer rc.Close()
+		var fcache remotes.Fetcher
+		fetch := func() (remotes.Fetcher, error) {
+			if fcache != nil {
+				return fcache, nil
+			}
 
-		manifest, ndesc, err := DownloadManifest(ctx, fetcher, desc, WithStore(mh.Store))
+			fetcher, err := mh.Resolver.Fetcher(ctx, ref)
+			if err != nil {
+				return nil, err
+			}
+			fcache = fetcher
+			return fcache, nil
+		}
+
+		manifest, ndesc, err := DownloadManifest(ctx, fetch, desc, WithStore(mh.Store))
 		if err != nil {
-			log.WithError(err).WithField("desc", desc).WithFields(logFields).Error("cannot download manifest")
+			log.WithError(err).WithField("desc", desc).WithFields(logFields).WithField("ref", ref).Error("cannot download manifest")
 			return distv2.ErrorCodeManifestUnknown.WithDetail(err)
 		}
 		desc = *ndesc
@@ -165,7 +169,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 		switch desc.MediaType {
 		case images.MediaTypeDockerSchema2Manifest, ociv1.MediaTypeImageManifest:
 			// download config
-			cfg, err := DownloadConfig(ctx, fetcher, manifest.Config)
+			cfg, err := DownloadConfig(ctx, fetch, ref, manifest.Config, WithStore(mh.Store))
 			if err != nil {
 				log.WithError(err).WithFields(logFields).Error("cannot download config")
 				return err
@@ -187,26 +191,34 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 			}
 			cfgDgst := digest.FromBytes(rawCfg)
 
+			// update config digest in manifest
+			manifest.Config.Digest = cfgDgst
+			manifest.Config.URLs = nil
+			manifest.Config.Size = int64(len(rawCfg))
+
 			// optimization: we store the config in the store just in case the client attempts to download the config blob
 			// 				 from us. If they download it from a registry facade from which the manifest hasn't been downloaded
 			//               we'll re-create the config on the fly.
-			if w, err := mh.Store.Writer(ctx, content.WithRef(ref), content.WithDescriptor(desc)); err == nil {
+			if w, err := mh.Store.Writer(ctx, content.WithRef(ref), content.WithDescriptor(manifest.Config)); err == nil {
 				defer w.Close()
 
 				_, err = w.Write(rawCfg)
 				if err != nil {
 					log.WithError(err).WithFields(logFields).Warn("cannot write config to store - we'll regenerate it on demand")
 				}
-				err = w.Commit(ctx, 0, cfgDgst)
+				err = w.Commit(ctx, 0, cfgDgst, content.WithLabels(contentTypeLabel(manifest.Config.MediaType)))
 				if err != nil {
 					log.WithError(err).WithFields(logFields).Warn("cannot commit config to store - we'll regenerate it on demand")
 				}
 			}
 
-			// update config digest in manifest
-			manifest.Config.Digest = cfgDgst
-			manifest.Config.URLs = nil
-			manifest.Config.Size = int64(len(rawCfg))
+			// We might have additional modifications, e.g. adding IPFS URLs to the layers
+			if mh.ManifestModifier != nil {
+				err = mh.ManifestModifier(manifest)
+				if err != nil {
+					log.WithError(err).WithFields(logFields).Warn("cannot modify manifest")
+				}
+			}
 
 			// When serving images.MediaTypeDockerSchema2Manifest we have to set the mediaType in the manifest itself.
 			// Although somewhat compatible with the OCI manifest spec (see https://github.com/opencontainers/image-spec/blob/master/manifest.md),
@@ -247,71 +259,177 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 }
 
 // DownloadConfig downloads and unmarshales OCIv2 image config, referred to by an OCI descriptor.
-func DownloadConfig(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.Descriptor) (cfg *ociv1.Image, err error) {
+func DownloadConfig(ctx context.Context, fetch FetcherFunc, ref string, desc ociv1.Descriptor, options ...ManifestDownloadOption) (cfg *ociv1.Image, err error) {
 	if desc.MediaType != images.MediaTypeDockerSchema2Config &&
 		desc.MediaType != ociv1.MediaTypeImageConfig {
 
-		return nil, xerrors.Errorf("unsupported media type")
+		return nil, xerrors.Errorf("unsupported media type: %s", desc.MediaType)
 	}
 
-	rc, err := fetcher.Fetch(ctx, desc)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot download config: %w", err)
+	var opts manifestDownloadOptions
+	for _, o := range options {
+		o(&opts)
 	}
-	defer rc.Close()
+
+	var rc io.ReadCloser
+	if opts.Store != nil {
+		r, err := opts.Store.ReaderAt(ctx, desc)
+		if errors.Is(err, errdefs.ErrNotFound) {
+			// not cached yet
+		} else if err != nil {
+			log.WithError(err).WithField("desc", desc).Warn("cannot read config from store - fetching again")
+		} else {
+			defer r.Close()
+			rc = io.NopCloser(content.NewReader(r))
+		}
+	}
+	if rc == nil {
+		fetcher, err := fetch()
+		if err != nil {
+			return nil, err
+		}
+		rc, err = fetcher.Fetch(ctx, desc)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot download config: %w", err)
+		}
+		defer rc.Close()
+	}
+
+	buf, err := io.ReadAll(rc)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot read config: %w", err)
+	}
 
 	var res ociv1.Image
-	err = json.NewDecoder(rc).Decode(&res)
+	err = json.Unmarshal(buf, &res)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot decode config: %w", err)
+	}
+
+	if opts.Store != nil && ref != "" {
+		// ref can be empty for some users of DownloadConfig. However, some store implementations
+		// (e.g. the default containerd store) expect ref to be set. This would lead to stray errors.
+
+		err := func() error {
+			w, err := opts.Store.Writer(ctx, content.WithDescriptor(desc), content.WithRef(ref))
+			if err != nil {
+				return err
+			}
+			defer w.Close()
+
+			n, err := w.Write(buf)
+			if err != nil {
+				return err
+			}
+			if n != len(buf) {
+				return io.ErrShortWrite
+			}
+
+			return w.Commit(ctx, int64(len(buf)), digest.FromBytes(buf), content.WithLabels(contentTypeLabel(desc.MediaType)))
+		}()
+		if err != nil && !strings.Contains(err.Error(), "already exists") {
+			log.WithError(err).WithField("ref", ref).WithField("desc", desc).Warn("cannot cache config")
+		}
 	}
 
 	return &res, nil
 }
 
+func contentTypeLabel(mt string) map[string]string {
+	return map[string]string{"Content-Type": mt}
+}
+
 type manifestDownloadOptions struct {
-	Store content.Store
+	Store BlobStore
 }
 
 // ManifestDownloadOption alters the default manifest download behaviour
 type ManifestDownloadOption func(*manifestDownloadOptions)
 
 // WithStore caches a downloaded manifest in a store
-func WithStore(store content.Store) ManifestDownloadOption {
+func WithStore(store BlobStore) ManifestDownloadOption {
 	return func(o *manifestDownloadOptions) {
 		o.Store = store
 	}
 }
 
+type BlobStore interface {
+	ReaderAt(ctx context.Context, desc ociv1.Descriptor) (content.ReaderAt, error)
+
+	// Some implementations require WithRef to be included in opts.
+	Writer(ctx context.Context, opts ...content.WriterOpt) (content.Writer, error)
+
+	// Info will return metadata about content available in the content store.
+	//
+	// If the content is not present, ErrNotFound will be returned.
+	Info(ctx context.Context, dgst digest.Digest) (content.Info, error)
+}
+
+type FetcherFunc func() (remotes.Fetcher, error)
+
+func AsFetcherFunc(f remotes.Fetcher) FetcherFunc {
+	return func() (remotes.Fetcher, error) { return f, nil }
+}
+
 // DownloadManifest downloads and unmarshals the manifest of the given desc. If the desc points to manifest list
 // we choose the first manifest in that list.
-func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.Descriptor, options ...ManifestDownloadOption) (cfg *ociv1.Manifest, rdesc *ociv1.Descriptor, err error) {
+func DownloadManifest(ctx context.Context, fetch FetcherFunc, desc ociv1.Descriptor, options ...ManifestDownloadOption) (cfg *ociv1.Manifest, rdesc *ociv1.Descriptor, err error) {
 	var opts manifestDownloadOptions
 	for _, o := range options {
 		o(&opts)
 	}
 
 	var (
-		rc           io.ReadCloser
 		placeInStore bool
+		rc           io.ReadCloser
+		mediaType    = desc.MediaType
 	)
 	if opts.Store != nil {
-		r, err := opts.Store.ReaderAt(ctx, desc)
-		if errors.Cause(err) == errdefs.ErrNotFound {
-			// not in store yet
-		} else if err != nil {
-			log.WithError(err).WithField("desc", desc).Warn("cannot get manifest from store")
-		} else {
-			rc = &reader{ReaderAt: r}
-		}
+		func() {
+			nfo, err := opts.Store.Info(ctx, desc.Digest)
+			if errors.Is(err, errdefs.ErrNotFound) {
+				// not in store yet
+				return
+			}
+			if err != nil {
+				log.WithError(err).WithField("desc", desc).Warn("cannot get manifest from store")
+				return
+			}
+			if nfo.Labels["Content-Type"] == "" {
+				// we have broken data in the store - ignore it and overwrite
+				return
+			}
+
+			r, err := opts.Store.ReaderAt(ctx, desc)
+			if errors.Is(err, errdefs.ErrNotFound) {
+				// not in store yet
+				return
+			}
+			if err != nil {
+				log.WithError(err).WithField("desc", desc).Warn("cannot get manifest from store")
+				return
+			}
+
+			mediaType, rc = nfo.Labels["Content-Type"], &reader{ReaderAt: r}
+		}()
 	}
 	if rc == nil {
+		// did not find in store, or there was no store. Either way, let's fetch this
+		// thing from the remote.
 		placeInStore = true
-		rc, err = fetcher.Fetch(ctx, desc)
+
+		var fetcher remotes.Fetcher
+		fetcher, err = fetch()
 		if err != nil {
-			err = xerrors.Errorf("cannot download manifest: %w", err)
 			return
 		}
+
+		rc, err = fetcher.Fetch(ctx, desc)
+		if err != nil {
+			err = xerrors.Errorf("cannot fetch manifest: %w", err)
+			return
+		}
+		mediaType = desc.MediaType
 	}
 
 	inpt, err := io.ReadAll(rc)
@@ -322,9 +440,12 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 	}
 
 	rdesc = &desc
+	rdesc.MediaType = mediaType
 
 	switch rdesc.MediaType {
 	case images.MediaTypeDockerSchema2ManifestList, ociv1.MediaTypeImageIndex:
+		log.WithField("desc", rdesc).Debug("resolving image index")
+
 		// we received a manifest list which means we'll pick the default platform
 		// and fetch that manifest
 		var list ociv1.Index
@@ -338,7 +459,13 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 			return
 		}
 
-		// TODO: choose by platform, not just the first manifest
+		var fetcher remotes.Fetcher
+		fetcher, err = fetch()
+		if err != nil {
+			return
+		}
+
+		// TODO(cw): choose by platform, not just the first manifest
 		md := list.Manifests[0]
 		rc, err = fetcher.Fetch(ctx, md)
 		if err != nil {
@@ -357,7 +484,7 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 	switch rdesc.MediaType {
 	case images.MediaTypeDockerSchema2Manifest, ociv1.MediaTypeImageManifest:
 	default:
-		err = xerrors.Errorf("unsupported media type")
+		err = xerrors.Errorf("unsupported media type: %s", rdesc.MediaType)
 		return
 	}
 
@@ -374,14 +501,16 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 		// time one wishes to resolve desc.
 		w, err := opts.Store.Writer(ctx, content.WithDescriptor(desc), content.WithRef(desc.Digest.String()))
 		if err != nil {
-			log.WithError(err).WithField("desc", *rdesc).Warn("cannot store manifest")
+			if err != nil && !strings.Contains(err.Error(), "already exists") {
+				log.WithError(err).WithField("desc", *rdesc).Warn("cannot create store writer")
+			}
 		} else {
 			_, err = io.Copy(w, bytes.NewReader(inpt))
 			if err != nil {
-				log.WithError(err).WithField("desc", *rdesc).Warn("cannot store manifest")
+				log.WithError(err).WithField("desc", *rdesc).Warn("cannot copy manifest")
 			}
 
-			err = w.Commit(ctx, 0, digest.FromBytes(inpt))
+			err = w.Commit(ctx, 0, digest.FromBytes(inpt), content.WithLabels(map[string]string{"Content-Type": rdesc.MediaType}))
 			if err != nil {
 				log.WithError(err).WithField("desc", *rdesc).Warn("cannot store manifest")
 			}

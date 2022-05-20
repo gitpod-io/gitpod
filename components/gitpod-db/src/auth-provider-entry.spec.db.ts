@@ -81,6 +81,16 @@ export class AuthProviderEntryDBSpec {
         expect(await this.db.findAll([ap1.oauthRevision!]), "findAll([ap1])").to.deep.equal([ap2]);
     }
 
+    @test public async findAllHosts() {
+        const ap1 = this.authProvider({ id: "1", oauthRevision: "rev1", host: "foo" });
+        const ap2 = this.authProvider({ id: "2", oauthRevision: "rev2", host: "BAR" });
+        await this.db.storeAuthProvider(ap1, false);
+        await this.db.storeAuthProvider(ap2, false);
+
+        const all = await this.db.findAllHosts();
+        expect(all, "findAllHosts([])").to.deep.equal(["foo", "bar"]);
+    }
+
     @test public async oauthRevision() {
         const ap = this.authProvider({ id: "1" });
         await this.db.storeAuthProvider(ap, true);
@@ -88,7 +98,7 @@ export class AuthProviderEntryDBSpec {
         const loadedAp = await this.db.findByHost(ap.host);
         expect(loadedAp, "findByHost()").to.deep.equal(ap);
         expect(loadedAp?.oauthRevision, "findByHost()").to.equal(
-            "e05ea6fab8efcaba4b3246c2b2d3931af897c3bc2c1cf075c31614f0954f9840",
+            "b05eb3256a101f6cbca1d8885c8ee241891582e78c567b7305f097ab3556d5f0",
         );
     }
 }

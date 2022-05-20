@@ -47,7 +47,12 @@ import { LicenseService } from "./license-protocol";
 import { Emitter } from "./util/event";
 import { AccountStatement, CreditAlert } from "./accounting-protocol";
 import { GithubUpgradeURL, PlanCoupon } from "./payment-protocol";
-import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from "./team-subscription-protocol";
+import {
+    TeamSubscription,
+    TeamSubscription2,
+    TeamSubscriptionSlot,
+    TeamSubscriptionSlotResolved,
+} from "./team-subscription-protocol";
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
@@ -189,6 +194,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     // misc
     sendFeedback(feedback: string): Promise<string | undefined>;
+    isGitHubAppEnabled(): Promise<boolean>;
     registerGithubApp(installationId: string): Promise<void>;
 
     /**
@@ -234,7 +240,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      */
     getChargebeeSiteId(): Promise<string>;
     createPortalSession(): Promise<{}>;
+    createTeamPortalSession(teamId: string): Promise<{}>;
     checkout(planId: string, planQuantity?: number): Promise<{}>;
+    teamCheckout(teamId: string, planId: string): Promise<{}>;
     getAvailableCoupons(): Promise<PlanCoupon[]>;
     getAppliedCoupons(): Promise<PlanCoupon[]>;
 
@@ -246,6 +254,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     subscriptionCancel(subscriptionId: string): Promise<void>;
     subscriptionCancelDowngrade(subscriptionId: string): Promise<void>;
 
+    getTeamSubscription(teamId: string): Promise<TeamSubscription2 | undefined>;
     tsGet(): Promise<TeamSubscription[]>;
     tsGetSlots(): Promise<TeamSubscriptionSlotResolved[]>;
     tsGetUnassignedSlot(teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined>;
@@ -307,7 +316,7 @@ export interface ProviderRepository {
     account: string;
     accountAvatarUrl: string;
     cloneUrl: string;
-    updatedAt: string;
+    updatedAt?: string;
     installationId?: number;
     installationUpdatedAt?: string;
 
@@ -321,7 +330,16 @@ export interface ClientHeaderFields {
     clientRegion?: string;
 }
 
-export const WorkspaceTimeoutValues = ["30m", "60m", "180m"] as const;
+export const WORKSPACE_TIMEOUT_DEFAULT_SHORT = "short";
+export const WORKSPACE_TIMEOUT_DEFAULT_LONG = "long";
+export const WORKSPACE_TIMEOUT_EXTENDED = "extended";
+export const WORKSPACE_TIMEOUT_EXTENDED_ALT = "180m"; // for backwards compatibility since the IDE uses this
+export const WorkspaceTimeoutValues = [
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_TIMEOUT_EXTENDED,
+    WORKSPACE_TIMEOUT_EXTENDED_ALT,
+] as const;
 
 export const createServiceMock = function <C extends GitpodClient, S extends GitpodServer>(
     methods: Partial<JsonRpcProxy<S>>,
@@ -520,13 +538,14 @@ const hasWindow = typeof window !== "undefined";
 const phasesOrder: Record<WorkspaceInstancePhase, number> = {
     unknown: 0,
     preparing: 1,
-    pending: 2,
-    creating: 3,
-    initializing: 4,
-    running: 5,
-    interrupted: 6,
-    stopping: 7,
-    stopped: 8,
+    building: 2,
+    pending: 3,
+    creating: 4,
+    initializing: 5,
+    running: 6,
+    interrupted: 7,
+    stopping: 8,
+    stopped: 9,
 };
 export class WorkspaceInstanceUpdateListener {
     private readonly onDidChangeEmitter = new Emitter<void>();

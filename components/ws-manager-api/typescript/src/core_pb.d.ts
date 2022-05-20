@@ -647,6 +647,8 @@ export class WorkspaceSpec extends jspb.Message {
     clearIdeImage(): void;
     getIdeImage(): IDEImage | undefined;
     setIdeImage(value?: IDEImage): WorkspaceSpec;
+    getClass(): string;
+    setClass(value: string): WorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceSpec.AsObject;
@@ -668,6 +670,7 @@ export namespace WorkspaceSpec {
         type: WorkspaceType,
         timeout: string,
         ideImage?: IDEImage.AsObject,
+        pb_class: string,
     }
 }
 
@@ -852,8 +855,6 @@ export class StartWorkspaceSpec extends jspb.Message {
     getEnvvarsList(): Array<EnvironmentVariable>;
     setEnvvarsList(value: Array<EnvironmentVariable>): StartWorkspaceSpec;
     addEnvvars(value?: EnvironmentVariable, index?: number): EnvironmentVariable;
-    getCheckoutLocation(): string;
-    setCheckoutLocation(value: string): StartWorkspaceSpec;
     getWorkspaceLocation(): string;
     setWorkspaceLocation(value: string): StartWorkspaceSpec;
 
@@ -870,6 +871,8 @@ export class StartWorkspaceSpec extends jspb.Message {
     clearIdeImage(): void;
     getIdeImage(): IDEImage | undefined;
     setIdeImage(value?: IDEImage): StartWorkspaceSpec;
+    getClass(): string;
+    setClass(value: string): StartWorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -889,12 +892,12 @@ export namespace StartWorkspaceSpec {
         initializer?: content_service_api_initializer_pb.WorkspaceInitializer.AsObject,
         portsList: Array<PortSpec.AsObject>,
         envvarsList: Array<EnvironmentVariable.AsObject>,
-        checkoutLocation: string,
         workspaceLocation: string,
         git?: GitSpec.AsObject,
         timeout: string,
         admission: AdmissionLevel,
         ideImage?: IDEImage.AsObject,
+        pb_class: string,
     }
 }
 
@@ -1033,6 +1036,7 @@ export enum WorkspaceFeatureFlag {
     NOOP = 0,
     FULL_WORKSPACE_BACKUP = 4,
     FIXED_RESOURCES = 5,
+    PERSISTENT_VOLUME_CLAIM = 7,
 }
 
 export enum WorkspaceType {

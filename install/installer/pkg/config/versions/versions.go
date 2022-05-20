@@ -33,6 +33,7 @@ type Components struct {
 	OpenVSXProxy          Versioned `json:"openVSXProxy"`
 	PaymentEndpoint       Versioned `json:"paymentEndpoint"`
 	Proxy                 Versioned `json:"proxy"`
+	PublicAPIServer       Versioned `json:"public-api-server"`
 	RegistryFacade        Versioned `json:"registryFacade"`
 	Server                Versioned `json:"server"`
 	ServiceWaiter         Versioned `json:"serviceWaiter"`
@@ -45,9 +46,13 @@ type Components struct {
 			CodeDesktopImage         Versioned `json:"codeDesktop"`
 			CodeDesktopImageInsiders Versioned `json:"codeDesktopInsiders"`
 			IntelliJImage            Versioned `json:"intellij"`
+			IntelliJLatestImage      Versioned `json:"intellijLatest"`
 			GoLandImage              Versioned `json:"goland"`
+			GoLandLatestImage        Versioned `json:"golandLatest"`
 			PyCharmImage             Versioned `json:"pycharm"`
+			PyCharmLatestImage       Versioned `json:"pycharmLatest"`
 			PhpStormImage            Versioned `json:"phpstorm"`
+			PhpStormLatestImage      Versioned `json:"phpstormLatest"`
 		} `json:"desktopIdeImages"`
 	} `json:"workspace"`
 	WSDaemon struct {

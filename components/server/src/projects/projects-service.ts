@@ -7,7 +7,6 @@
 import { inject, injectable } from "inversify";
 import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
-    AuthProviderInfo,
     Branch,
     PrebuildWithStatus,
     CreateProjectParams,
@@ -19,7 +18,8 @@ import {
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PartialProject } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
+import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
+import { Config } from "../config";
 
 @injectable()
 export class ProjectsService {
@@ -28,6 +28,7 @@ export class ProjectsService {
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
+    @inject(Config) protected readonly config: Config;
 
     async getProject(projectId: string): Promise<Project | undefined> {
         return this.projectDB.findProjectById(projectId);
@@ -150,8 +151,13 @@ export class ProjectsService {
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const authProvider = hostContext && hostContext.authProvider.info;
         const type = authProvider && authProvider.authProviderType;
-        // TODO: handle gitea
-        if (type === "GitLab" || type === "Bitbucket" || AuthProviderInfo.isGitHubEnterprise(authProvider)) {
+        if (
+            type === "GitLab" ||
+            type === "Bitbucket" ||
+            type === "BitbucketServer" ||
+            type === "Gitea" ||
+            (type === "GitHub" && (authProvider?.host !== "github.com" || !this.config.githubApp?.enabled))
+        ) {
             const repositoryService = hostContext?.services?.repositoryService;
             if (repositoryService) {
                 // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier
@@ -243,5 +249,9 @@ export class ProjectsService {
 
     async deleteProjectEnvironmentVariable(variableId: string): Promise<void> {
         return this.projectDB.deleteProjectEnvironmentVariable(variableId);
+    }
+
+    async getProjectUsage(projectId: string): Promise<ProjectUsage | undefined> {
+        return this.projectDB.getProjectUsage(projectId);
     }
 }

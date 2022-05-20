@@ -26,7 +26,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	podSpec := corev1.PodSpec{
 		PriorityClassName:  common.SystemNodeCritical,
-		Affinity:           common.Affinity(cluster.AffinityLabelWorkspaceServices),
+		Affinity:           common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
 		EnableServiceLinks: pointer.Bool(false),
 		ServiceAccountName: Component,
 		SecurityContext: &corev1.PodSecurityContext{
@@ -35,43 +35,47 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Containers: []corev1.Container{{
 			Name:            Component,
 			Args:            []string{"run", "--config", "/config/config.json"},
-			Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManager.Version),
+			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManager.Version),
 			ImagePullPolicy: corev1.PullIfNotPresent,
-			Resources: corev1.ResourceRequirements{
+			Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					"cpu":    resource.MustParse("100m"),
 					"memory": resource.MustParse("32Mi"),
 				},
+			}),
+			Ports: []corev1.ContainerPort{
+				{
+					Name:          RPCPortName,
+					ContainerPort: RPCPort,
+				},
 			},
-			Ports: []corev1.ContainerPort{{
-				Name:          RPCPortName,
-				ContainerPort: RPCPort,
-			}},
 			SecurityContext: &corev1.SecurityContext{
 				Privileged: pointer.Bool(false),
 			},
 			Env: common.MergeEnv(
 				common.DefaultEnv(&ctx.Config),
-				common.TracingEnv(ctx),
+				common.WorkspaceTracingEnv(ctx),
 				[]corev1.EnvVar{{Name: "GRPC_GO_RETRY", Value: "on"}},
 			),
-			VolumeMounts: []corev1.VolumeMount{{
-				Name:      VolumeConfig,
-				MountPath: "/config",
-				ReadOnly:  true,
-			}, {
-				Name:      VolumeWorkspaceTemplate,
-				MountPath: WorkspaceTemplatePath,
-				ReadOnly:  true,
-			}, {
-				Name:      wsdaemon.VolumeTLSCerts,
-				MountPath: "/ws-daemon-tls-certs",
-				ReadOnly:  true,
-			}, {
-				Name:      VolumeTLSCerts,
-				MountPath: "/certs",
-				ReadOnly:  true,
-			}},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      VolumeConfig,
+					MountPath: "/config",
+					ReadOnly:  true,
+				}, {
+					Name:      VolumeWorkspaceTemplate,
+					MountPath: WorkspaceTemplatePath,
+					ReadOnly:  true,
+				}, {
+					Name:      wsdaemon.VolumeTLSCerts,
+					MountPath: "/ws-daemon-tls-certs",
+					ReadOnly:  true,
+				}, {
+					Name:      VolumeTLSCerts,
+					MountPath: "/certs",
+					ReadOnly:  true,
+				},
+			},
 		},
 			*common.KubeRBACProxyContainer(ctx),
 		},
@@ -112,6 +116,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
+		podSpec.Volumes = append(podSpec.Volumes, *vol)
+		container := podSpec.Containers[0]
+		container.VolumeMounts = append(container.VolumeMounts, *mnt)
+		podSpec.Containers[0] = container
+	}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -122,7 +133,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
-				Replicas: pointer.Int32(1),
+				Replicas: common.Replicas(ctx, Component),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{

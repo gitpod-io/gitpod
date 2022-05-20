@@ -5,10 +5,9 @@
 package common
 
 import (
+	"fmt"
 	"net/rpc"
 	"strings"
-
-	"golang.org/x/xerrors"
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 )
@@ -29,10 +28,10 @@ func (g GitClient) GetBranch(workspaceRoot string) (string, error) {
 		Args:    []string{"rev-parse", "--abbrev-ref", "HEAD"},
 	}, &resp)
 	if err != nil {
-		return "", xerrors.Errorf("getBranch error: %w", err)
+		return "", fmt.Errorf("getBranch error: %w", err)
 	}
 	if resp.ExitCode != 0 {
-		return "", xerrors.Errorf("getBranch rc!=0: %d", resp.ExitCode)
+		return "", fmt.Errorf("getBranch returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
 	}
 	return strings.Trim(resp.Stdout, " \t\n"), nil
 }
@@ -54,7 +53,57 @@ func (g GitClient) Add(dir string, files ...string) error {
 		return err
 	}
 	if resp.ExitCode != 0 {
-		return xerrors.Errorf("commit returned rc: %d", resp.ExitCode)
+		return fmt.Errorf("add returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
+	}
+	return nil
+}
+
+func (g GitClient) ConfigSafeDirectory(dir string) error {
+	var resp agent.ExecResponse
+	err := g.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+		Dir:     dir,
+		Command: "git",
+		Args:    []string{"config", "--global", "--add", "safe.directory", dir},
+	}, &resp)
+	if err != nil {
+		return err
+	}
+	if resp.ExitCode != 0 {
+		return fmt.Errorf("config returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
+	}
+	return nil
+}
+
+func (g GitClient) ConfigUserName(dir string) error {
+	args := []string{"config", "--local", "user.name", "integration-test"}
+	var resp agent.ExecResponse
+	err := g.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+		Dir:     dir,
+		Command: "git",
+		Args:    args,
+	}, &resp)
+	if err != nil {
+		return err
+	}
+	if resp.ExitCode != 0 {
+		return fmt.Errorf("config user name returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
+	}
+	return nil
+}
+
+func (g GitClient) ConfigUserEmail(dir string, files ...string) error {
+	args := []string{"config", "--local", "user.email", "integration-test@gitpod.io"}
+	var resp agent.ExecResponse
+	err := g.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+		Dir:     dir,
+		Command: "git",
+		Args:    args,
+	}, &resp)
+	if err != nil {
+		return err
+	}
+	if resp.ExitCode != 0 {
+		return fmt.Errorf("config user email returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
 	}
 	return nil
 }
@@ -74,7 +123,7 @@ func (g GitClient) Commit(dir string, message string, all bool) error {
 		return err
 	}
 	if resp.ExitCode != 0 {
-		return xerrors.Errorf("commit returned rc: %d", resp.ExitCode)
+		return fmt.Errorf("commit returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
 	}
 	return nil
 }
@@ -97,7 +146,7 @@ func (g GitClient) Push(dir string, force bool, moreArgs ...string) error {
 		return err
 	}
 	if resp.ExitCode != 0 {
-		return xerrors.Errorf("commit returned rc: %d", resp.ExitCode)
+		return fmt.Errorf("push returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
 	}
 	return nil
 }

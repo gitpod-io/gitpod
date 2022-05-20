@@ -5,6 +5,9 @@
  */
 
 export namespace ErrorCodes {
+    // 400 Unauthorized
+    export const BAD_REQUEST = 400;
+
     // 401 Unauthorized
     export const NOT_AUTHENTICATED = 401;
 

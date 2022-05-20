@@ -8,7 +8,7 @@
 
 # Installer
 
-The best way to get started with Gitpod
+The best way to get started with Gitpod is by using our recommended & default installation method [described in our documentation](https://www.gitpod.io/docs/self-hosted/latest/getting-started). In fact, our default installation method actually wraps this installer into a UI that helps you manage, update and configure Gitpod in a streamlined way. This document describes how to use the installer directly.
 
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/from-referrer/)
 
@@ -17,7 +17,7 @@ The best way to get started with Gitpod
 - A machine running Linux
     - MacOS and Windows are not currently supported, but may be in future
 - [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) installed
-- A [Kubernetes cluster configured](https://www.gitpod.io/docs/self-hosted/latest/installation)
+- A [Kubernetes cluster configured](https://www.gitpod.io/docs/self-hosted/latest)
 - A [TLS certificate](#tls-certificates)
 
 Or, [open a Gitpod workspace](https://gitpod.io/from-referrer/)
@@ -163,12 +163,21 @@ yq eval-all --inplace \
   gitpod.yaml
 ```
 
+Similarly, if you are doing a `Workspace` only install (specifying `Workspace`
+as the kind in config) you might want to change the service type of `ws-proxy` to `ClusterIP`
+instead of the default `LoadBalancer`. You can post-process the YAML to change that.
+
+```shell
+yq eval-all --inplace \
+  '(select(.kind == "Service" and .metadata.name == "ws-proxy") | .spec.type) |= "ClusterIP"' \
+  gitpod.yaml
+```
+
 ## Error validating `StatefulSet.status`
 
 ```shell
 error: error validating "gitpod.yaml": error validating data: ValidationError(StatefulSet.status): missing required field "availableReplicas" in io.k8s.api.apps.v1.StatefulSetStatus; if you choose to ignore these errors, turn validation off with --validate=false
 ```
-
 Depending upon your Kubernetes implementation, you may receive this error. This is
 due to a bug in the underlying StatefulSet dependency, which is used to generate the
 OpenVSX proxy (see [#8529](https://github.com/gitpod-io/gitpod/issues/8529)).

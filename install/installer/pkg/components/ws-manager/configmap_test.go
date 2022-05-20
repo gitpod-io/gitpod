@@ -105,8 +105,7 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 
 			act.TplConfig, objs, err = buildWorkspaceTemplates(&common.RenderContext{Config: configv1.Config{
 				ContainerRegistry: *test.ContainerRegistry,
-				Workspace:         configv1.Workspace{Templates: test.Config},
-			}})
+			}}, test.Config, "")
 			if err != nil {
 				t.Error(err)
 			}

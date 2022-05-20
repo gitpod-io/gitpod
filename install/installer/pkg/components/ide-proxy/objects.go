@@ -9,11 +9,6 @@ import "github.com/gitpod-io/gitpod/installer/pkg/common"
 var Objects = common.CompositeRenderFunc(
 	deployment,
 	rolebinding,
-	common.GenerateService(Component, map[string]common.ServicePort{
-		PortName: {
-			ContainerPort: ContainerPort,
-			ServicePort:   ServicePort,
-		},
-	}),
+	service,
 	common.DefaultServiceAccount(Component),
 )

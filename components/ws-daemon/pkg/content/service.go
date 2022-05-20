@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -153,10 +154,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	var (
 		wsloc string
 	)
-	if req.FullWorkspaceBackup {
-		if s.runtime == nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "full workspace backup is not available - not connected to container runtime")
-		}
+	if req.FullWorkspaceBackup || req.PersistentVolumeClaim {
 		var mf csapi.WorkspaceContentManifest
 		if len(req.ContentManifest) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument, "content manifest is required")
@@ -164,6 +162,10 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		err = json.Unmarshal(req.ContentManifest, &mf)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid content manifest: %s", err.Error())
+		}
+		if req.PersistentVolumeClaim {
+			// todo(pavel): setting wsloc as otherwise mkdir fails later on.
+			wsloc = filepath.Join(s.store.Location, req.Id)
 		}
 	} else {
 		wsloc = filepath.Join(s.store.Location, req.Id)
@@ -177,7 +179,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		return nil, err
 	}
 
-	if !req.FullWorkspaceBackup {
+	if !req.FullWorkspaceBackup && !req.PersistentVolumeClaim {
 		var remoteContent map[string]storage.DownloadInfo
 
 		// some workspaces don't have remote storage enabled. For those workspaces we clearly
@@ -239,6 +241,27 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		}
 	}
 
+	if req.PersistentVolumeClaim {
+		// create a folder that is used to store data from running prestophook
+		deamonDir := fmt.Sprintf("%s-daemon", req.Id)
+		prestophookDir := filepath.Join(s.config.WorkingArea, deamonDir, "prestophookdata")
+		err = os.MkdirAll(prestophookDir, 0755)
+		if err != nil {
+			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot create prestophookdata folder")
+			return nil, status.Error(codes.FailedPrecondition, fmt.Sprintf("cannot create prestophookdata: %v", err))
+		}
+		_, err = exec.CommandContext(ctx, "chown", "-R", fmt.Sprintf("%d:%d", wsinit.GitpodUID, wsinit.GitpodGID), prestophookDir).CombinedOutput()
+		if err != nil {
+			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot chown prestophookdata folder")
+			return nil, status.Error(codes.FailedPrecondition, fmt.Sprintf("cannot chown prestophookdata: %v", err))
+		}
+	}
+
+	err = workspace.UpdateGitSafeDirectory(ctx)
+	if err != nil {
+		log.WithError(err).WithField("workspaceId", req.Id).Warn("cannot update git safe directory")
+	}
+
 	// Tell the world we're done
 	err = workspace.MarkInitDone(ctx)
 	if err != nil {
@@ -250,17 +273,24 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 }
 
 func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.WorkspaceFactory {
+	var checkoutLocation string
+	allLocations := wsinit.GetCheckoutLocationsFromInitializer(req.Initializer)
+	if len(allLocations) > 0 {
+		checkoutLocation = allLocations[0]
+	}
 	return func(ctx context.Context, location string) (res *session.Workspace, err error) {
 		return &session.Workspace{
 			Location:              location,
-			CheckoutLocation:      getCheckoutLocation(req),
+			CheckoutLocation:      checkoutLocation,
 			CreatedAt:             time.Now(),
 			Owner:                 req.Metadata.Owner,
 			WorkspaceID:           req.Metadata.MetaId,
 			InstanceID:            req.Id,
 			FullWorkspaceBackup:   req.FullWorkspaceBackup,
+			PersistentVolumeClaim: req.PersistentVolumeClaim,
 			ContentManifest:       req.ContentManifest,
 			RemoteStorageDisabled: req.RemoteStorageDisabled,
+			StorageQuota:          int(req.StorageQuotaBytes),
 
 			ServiceLocDaemon: filepath.Join(s.config.WorkingArea, ServiceDirName(req.Id)),
 			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, ServiceDirName(req.Id)),
@@ -271,24 +301,6 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.Worksp
 // ServiceDirName produces the directory name for a workspace
 func ServiceDirName(instanceID string) string {
 	return instanceID + "-daemon"
-}
-
-// getCheckoutLocation returns the first checkout location found of any Git initializer configured by this request
-func getCheckoutLocation(req *api.InitWorkspaceRequest) string {
-	spec := req.Initializer.Spec
-	if ir, ok := spec.(*csapi.WorkspaceInitializer_Git); ok {
-		if ir.Git != nil {
-			return ir.Git.CheckoutLocation
-		}
-	}
-	if ir, ok := spec.(*csapi.WorkspaceInitializer_Prebuild); ok {
-		if ir.Prebuild != nil {
-			if len(ir.Prebuild.Git) > 0 {
-				return ir.Prebuild.Git[0].CheckoutLocation
-			}
-		}
-	}
-	return ""
 }
 
 // DisposeWorkspace cleans up a workspace, possibly after taking a final backup
@@ -306,7 +318,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 
 	sess := s.store.Get(req.Id)
 	if sess == nil {
-		return nil, status.Error(codes.NotFound, "workspace does not exist")
+		return nil, status.Error(codes.NotFound, "cannot find workspace during DisposeWorkspace")
 	}
 
 	// We were asked to do a backup of a session that was never ready. There seems to have been some state drift here - tell the caller.
@@ -396,6 +408,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 	span.SetTag("backup", backupName)
 	span.SetTag("manifest", mfName)
 	span.SetTag("full", sess.FullWorkspaceBackup)
+	span.SetTag("pvc", sess.PersistentVolumeClaim)
 	defer tracing.FinishSpan(span, &err)
 
 	var (
@@ -403,6 +416,11 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		opts []storage.UploadOption
 		mf   csapi.WorkspaceContentManifest
 	)
+
+	if sess.PersistentVolumeClaim {
+		// currently not supported (will be done differently via snapshots)
+		return status.Error(codes.FailedPrecondition, "uploadWorkspaceContent not supported yet when PVC feature is enabled")
+	}
 
 	if sess.FullWorkspaceBackup {
 		// Backup any change located in the upper overlay directory of the workspace in the node
@@ -443,7 +461,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		defer tmpf.Close()
 
 		var opts []archive.TarOption
-		opts = append(opts, archive.TarbalMaxSize(int64(s.config.WorkspaceSizeLimit)))
+		opts = append(opts)
 		if !sess.FullWorkspaceBackup {
 			mappings := []archive.IDMapping{
 				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
@@ -661,7 +679,7 @@ func (s *WorkspaceService) WaitForInit(ctx context.Context, req *api.WaitForInit
 
 	session := s.store.Get(req.Id)
 	if session == nil {
-		return nil, status.Error(codes.NotFound, "workspace does not exist")
+		return nil, status.Error(codes.NotFound, "cannot find workspace during WaitForInit")
 	}
 
 	// the next call will block until the workspace is initialized
@@ -682,13 +700,16 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 
 	sess := s.store.Get(req.Id)
 	if sess == nil {
-		return nil, status.Error(codes.NotFound, "workspace does not exist")
+		return nil, status.Error(codes.NotFound, "cannot find workspace during TakeSnapshot")
 	}
 	if !sess.IsReady() {
 		return nil, status.Error(codes.FailedPrecondition, "workspace is not ready")
 	}
 	if sess.RemoteStorageDisabled {
 		return nil, status.Error(codes.FailedPrecondition, "workspace has no remote storage")
+	}
+	if sess.PersistentVolumeClaim {
+		return nil, status.Error(codes.FailedPrecondition, "snapshots are not support yet when persistent volume claim feature is enabled")
 	}
 	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {
@@ -743,10 +764,13 @@ func (s *WorkspaceService) BackupWorkspace(ctx context.Context, req *api.BackupW
 		// i.e. location = /mnt/disks/ssd0/workspaces- + req.Id
 		// It would also need to setup the remote storagej
 		// ... but in the worse case we *could* backup locally and then upload manually
-		return nil, status.Error(codes.NotFound, "workspace does not exist")
+		return nil, status.Error(codes.NotFound, "cannot find workspace during BackupWorkspace")
 	}
 	if sess.RemoteStorageDisabled {
 		return nil, status.Errorf(codes.FailedPrecondition, "workspace has no remote storage")
+	}
+	if sess.PersistentVolumeClaim {
+		return nil, status.Errorf(codes.FailedPrecondition, "workspace backup not supported yet when persistent volume claim feature is enabled")
 	}
 	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {

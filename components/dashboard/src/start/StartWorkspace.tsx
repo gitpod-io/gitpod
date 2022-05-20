@@ -27,6 +27,8 @@ import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import { watchHeadlessLogs } from "../components/PrebuildLogs";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
+import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
+import Alert from "../components/Alert";
 const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
@@ -91,6 +93,8 @@ export interface StartWorkspaceState {
         clientID?: string;
     };
     ideOptions?: IDEOptions;
+    isSSHModalVisible?: boolean;
+    ownerToken?: string;
 }
 
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
@@ -195,8 +199,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 throw new Error("No result!");
             }
             console.log("/start: started workspace instance: " + result.instanceID);
+
             // redirect to workspaceURL if we are not yet running in an iframe
             if (!this.props.runsInIFrame && result.workspaceURL) {
+                // before redirect, make sure we actually have the auth cookie set!
+                await this.ensureWorkspaceAuth(result.instanceID);
                 this.redirectTo(result.workspaceURL);
                 return;
             }
@@ -324,12 +331,16 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
         // Redirect to workspaceURL if we are not yet running in an iframe.
         // It happens this late if we were waiting for a docker build.
-        if (!this.props.runsInIFrame && workspaceInstance.ideUrl && !this.props.dontAutostart) {
+        if (
+            !this.props.runsInIFrame &&
+            workspaceInstance.ideUrl &&
+            (!this.props.dontAutostart || workspaceInstance.status.phase === "running")
+        ) {
             this.redirectTo(workspaceInstance.ideUrl);
             return;
         }
 
-        if (workspaceInstance.status.phase === "preparing") {
+        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase == "preparing") {
             this.setState({ hasImageBuildLogs: true });
         }
 
@@ -384,16 +395,18 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         let title = undefined;
         let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
         const contextURL = ContextURL.getNormalizedURL(this.state.workspace)?.toString();
+        const useLatest = !!this.state.workspaceInstance?.configuration?.ideConfig?.useLatest;
 
         switch (this.state?.workspaceInstance?.status.phase) {
             // unknown indicates an issue within the system in that it cannot determine the actual phase of
             // a workspace. This phase is usually accompanied by an error.
             case "unknown":
                 break;
-
             // Preparing means that we haven't actually started the workspace instance just yet, but rather
-            // are still preparing for launch. This means we're building the Docker image for the workspace.
+            // are still preparing for launch.
             case "preparing":
+            // Building means we're building the Docker image for the workspace.
+            case "building":
                 return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
 
             // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
@@ -431,48 +444,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 }
                 if (!this.state.desktopIde) {
                     phase = StartPhase.Running;
-
-                    if (this.props.dontAutostart) {
-                        // hide the progress bar, as we're already running
-                        phase = undefined;
-                        title = "Running";
-
-                        // in case we dontAutostart the IDE we have to provide controls to do so
-                        statusMessage = (
-                            <div>
-                                <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
-                                    <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
-                                    <div>
-                                        <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                            {this.state.workspaceInstance.workspaceId}
-                                        </p>
-                                        <a target="_parent" href={contextURL}>
-                                            <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
-                                                {contextURL}
-                                            </p>
-                                        </a>
-                                    </div>
-                                </div>
-                                <div className="mt-10 justify-center flex space-x-2">
-                                    <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}>
-                                        <button className="secondary">Go to Dashboard</button>
-                                    </a>
-                                    <a
-                                        target="_parent"
-                                        href={
-                                            gitpodHostUrl
-                                                .asStart(this.props.workspaceId)
-                                                .toString() /** move over 'start' here to fetch fresh credentials in case this is an older tab */
-                                        }
-                                    >
-                                        <button>Open Workspace</button>
-                                    </a>
-                                </div>
-                            </div>
-                        );
-                    } else {
-                        statusMessage = <p className="text-base text-gray-400">Opening Workspace …</p>;
-                    }
+                    statusMessage = <p className="text-base text-gray-400">Opening Workspace …</p>;
                 } else {
                     phase = StartPhase.IdeReady;
                     const openLink = this.state.desktopIde.link;
@@ -520,6 +492,15 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                                 getGitpodService().server.stopWorkspace(this.props.workspaceId),
                                         },
                                         {
+                                            title: "Connect via SSH",
+                                            onClick: async () => {
+                                                const ownerToken = await getGitpodService().server.getOwnerToken(
+                                                    this.props.workspaceId,
+                                                );
+                                                this.setState({ isSSHModalVisible: true, ownerToken });
+                                            },
+                                        },
+                                        {
                                             title: "Go to Dashboard",
                                             href: gitpodHostUrl.asDashboard().toString(),
                                             target: "_parent",
@@ -549,13 +530,27 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                     {openLinkLabel}
                                 </button>
                             </div>
-                            <div className="text-sm text-gray-400 dark:text-gray-500 mt-5">
-                                These IDE options are based on{" "}
-                                <a className="gp-link" href={gitpodHostUrl.asPreferences().toString()} target="_parent">
-                                    your user preferences
-                                </a>
-                                .
-                            </div>
+                            {!useLatest && (
+                                <Alert type="info" className="mt-4 w-96">
+                                    You can change the default editor for opening workspaces in{" "}
+                                    <a
+                                        className="gp-link"
+                                        target="_blank"
+                                        href={gitpodHostUrl.asPreferences().toString()}
+                                    >
+                                        user preferences
+                                    </a>
+                                    .
+                                </Alert>
+                            )}
+                            {this.state.isSSHModalVisible === true && this.state.ownerToken && (
+                                <ConnectToSSHModal
+                                    workspaceId={this.props.workspaceId}
+                                    ownerToken={this.state.ownerToken}
+                                    ideUrl={this.state.workspaceInstance?.ideUrl.replaceAll("https://", "")}
+                                    onClose={() => this.setState({ isSSHModalVisible: false, ownerToken: "" })}
+                                />
+                            )}
                         </div>
                     );
                 }
@@ -650,9 +645,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 );
                 break;
         }
-
         return (
-            <StartPage phase={phase} error={error} title={title}>
+            <StartPage phase={phase} error={error} title={title} showLatestIdeWarning={useLatest}>
                 {statusMessage}
             </StartPage>
         );

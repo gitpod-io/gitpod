@@ -90,6 +90,10 @@
               "value": "/workspace/theia"
             },
             {
+              "name": "GITPOD_REPO_ROOTS",
+              "value": "/workspace/theia"
+            },
+            {
               "name": "GITPOD_CLI_APITOKEN",
               "value": ")$G+C*X4h.AbS0oWH[9I|/9J\u003c4U:1(M)"
             },

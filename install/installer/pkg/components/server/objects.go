@@ -29,6 +29,14 @@ var Objects = common.CompositeRenderFunc(
 			ContainerPort: InstallationAdminPort,
 			ServicePort:   InstallationAdminPort,
 		},
+		DebugPortName: {
+			ContainerPort: common.DebugPort,
+			ServicePort:   common.DebugPort,
+		},
+		DebugNodePortName: {
+			ContainerPort: common.DebugNodePort,
+			ServicePort:   common.DebugNodePort,
+		},
 	}),
 	common.DefaultServiceAccount(Component),
 )

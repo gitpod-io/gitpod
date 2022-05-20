@@ -20,6 +20,10 @@ import (
 var initScriptFiles embed.FS
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	if disableMigration := common.IsDatabaseMigrationDisabled(ctx); disableMigration {
+		return nil, nil
+	}
+
 	initScripts, err := fs.ReadDir(initScriptFiles, initScriptDir)
 	if err != nil {
 		return nil, err

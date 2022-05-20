@@ -14,4 +14,5 @@ const (
 	ServicePort     = common.BlobServeServicePort
 	ServicePortName = "service"
 	MaxSizeBytes    = 1024 * 1024 * 1024 // 1 Gibibyte
+	ReadinessPort   = 8086
 )

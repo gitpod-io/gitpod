@@ -5,16 +5,11 @@
  */
 
 import React, { Suspense, useContext, useEffect, useState } from "react";
-import { Project, StartPrebuildResult, WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import PrebuildLogs from "../components/PrebuildLogs";
+import { Project } from "@gitpod/gitpod-protocol";
 import TabMenuItem from "../components/TabMenuItem";
 import { getGitpodService } from "../service/service";
 import Spinner from "../icons/Spinner.svg";
 import NoAccess from "../icons/NoAccess.svg";
-import PrebuildLogsEmpty from "../images/prebuild-logs-empty.svg";
-import PrebuildLogsEmptyDark from "../images/prebuild-logs-empty-dark.svg";
-import { ThemeContext } from "../theme-context";
-import { PrebuildInstanceStatus } from "./Prebuilds";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { openAuthorizeWindow } from "../provider-utils";
 import { ProjectSettingsPage } from "./ProjectSettings";
@@ -30,15 +25,6 @@ const TASKS = {
       echo 'TODO: start app'`,
 };
 
-// const IMAGES = {
-//   Default: 'gitpod/workspace-full',
-//   '.NET': 'gitpod/workspace-dotnet',
-//   MongoDB: 'gitpod/workspace-mongodb',
-//   MySQL: 'gitpod/workspace-mysql',
-//   PostgreSQL: 'gitpod/workspace-postgres',
-//   'Virtual Desktop (VNC)': 'gitpod/workspace-full-vnc',
-// }
-
 export default function () {
     const { project } = useContext(ProjectContext);
     const [gitpodYml, setGitpodYml] = useState<string>("");
@@ -47,12 +33,7 @@ export default function () {
     const [selectedEditor, setSelectedEditor] = useState<".gitpod.yml" | ".gitpod.Dockerfile">(".gitpod.yml");
     const [isEditorDisabled, setIsEditorDisabled] = useState<boolean>(true);
     const [isDetecting, setIsDetecting] = useState<boolean>(true);
-    const [prebuildWasTriggered, setPrebuildWasTriggered] = useState<boolean>(false);
-    const [prebuildWasCancelled, setPrebuildWasCancelled] = useState<boolean>(false);
-    const [startPrebuildResult, setStartPrebuildResult] = useState<StartPrebuildResult | undefined>();
-    const [prebuildInstance, setPrebuildInstance] = useState<WorkspaceInstance | undefined>();
-    const { isDark } = useContext(ThemeContext);
-
+    const [progressMessage, setProgressMessage] = useState<string>("");
     const [showAuthBanner, setShowAuthBanner] = useState<{ host: string; scope?: string } | undefined>(undefined);
     const [buttonNewWorkspaceEnabled, setButtonNewWorkspaceEnabled] = useState<boolean>(true);
 
@@ -108,7 +89,7 @@ export default function () {
                 <EditorMessage
                     type="warning"
                     heading="Configuration already exists in git."
-                    message="Run a prebuild or open a new workspace to edit project configuration."
+                    message="Open a new workspace to edit project configuration."
                 />,
             );
             setGitpodYml(repoConfigString);
@@ -128,7 +109,7 @@ export default function () {
                 <EditorMessage
                     type="success"
                     heading="Project type detected."
-                    message="You can edit project configuration below before running a prebuild"
+                    message="You can edit project configuration below before starting a workspace."
                 />,
             );
             setGitpodYml(guessedConfigString);
@@ -138,7 +119,7 @@ export default function () {
             <EditorMessage
                 type="warning"
                 heading="Project type could not be detected."
-                message="You can edit project configuration below before running a prebuild."
+                message="You can edit project configuration below before starting a workspace."
             />,
         );
         setGitpodYml(TASKS.Other);
@@ -176,66 +157,39 @@ export default function () {
         });
     };
 
-    const buildProject = async () => {
-        if (!project) {
-            return;
-        }
-        setEditorMessage(null);
-        if (!!startPrebuildResult) {
-            setStartPrebuildResult(undefined);
-        }
-        if (!!prebuildInstance) {
-            setPrebuildInstance(undefined);
-        }
-        try {
-            setPrebuildWasTriggered(true);
-            if (!isEditorDisabled) {
-                await getGitpodService().server.setProjectConfiguration(project.id, gitpodYml);
-            }
-            const result = await getGitpodService().server.triggerPrebuild(project.id, null);
-            setStartPrebuildResult(result);
-        } catch (error) {
-            setPrebuildWasTriggered(false);
-            setEditorMessage(
-                <EditorMessage
-                    type="warning"
-                    heading="Could not run prebuild."
-                    message={String(error).replace(/Error: Request \w+ failed with message: /, "")}
-                />,
-            );
-        }
-    };
-
-    const cancelPrebuild = async () => {
-        if (!project || !startPrebuildResult) {
-            return;
-        }
-        setPrebuildWasCancelled(true);
-        try {
-            await getGitpodService().server.cancelPrebuild(project.id, startPrebuildResult.prebuildId);
-        } catch (error) {
-            setEditorMessage(
-                <EditorMessage
-                    type="warning"
-                    heading="Could not cancel prebuild."
-                    message={String(error).replace(/Error: Request \w+ failed with message: /, "")}
-                />,
-            );
-        } finally {
-            setPrebuildWasCancelled(false);
-        }
-    };
-
-    const onInstanceUpdate = (instance: WorkspaceInstance) => {
-        setPrebuildInstance(instance);
-    };
-
     useEffect(() => {
         document.title = "Configure Project — Gitpod";
     }, []);
 
     const onNewWorkspace = async () => {
+        if (!project) {
+            return;
+        }
+
         setButtonNewWorkspaceEnabled(false);
+
+        if (!isEditorDisabled) {
+            try {
+                setProgressMessage("Saving project configuration...");
+                await getGitpodService().server.setProjectConfiguration(project.id, gitpodYml);
+
+                setProgressMessage("Starting a new prebuild...");
+                await getGitpodService().server.triggerPrebuild(project.id, null);
+            } catch (error) {
+                setEditorMessage(
+                    <EditorMessage
+                        type="warning"
+                        heading="Could not run prebuild."
+                        message={String(error).replace(/Error: Request \w+ failed with message: /, "")}
+                    />,
+                );
+
+                setProgressMessage("");
+                setButtonNewWorkspaceEnabled(true);
+                return;
+            }
+        }
+
         const redirectToNewWorkspace = () => {
             // instead of `history.push` we want forcibly to redirect here in order to avoid a following redirect from `/` -> `/projects` (cf. App.tsx)
             const url = new URL(window.location.toString());
@@ -244,25 +198,15 @@ export default function () {
             window.location.href = url.toString();
         };
 
-        if (
-            prebuildInstance?.status.phase === "stopped" &&
-            !prebuildInstance?.status.conditions.failed &&
-            !prebuildInstance?.status.conditions.headlessTaskFailed
-        ) {
-            redirectToNewWorkspace();
-            return;
-        }
-        if (!prebuildWasTriggered) {
-            await buildProject();
-        }
         redirectToNewWorkspace();
+        return;
     };
 
     return (
         <ProjectSettingsPage project={project}>
-            <div className="grid xl:grid-cols-2 grid-cols-1 gap-4">
-                <div className="flex-1 h-96 rounded-xl overflow-hidden relative flex flex-col">
-                    <div className="flex bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 px-6 pt-3">
+            <div className="grid xl:grid-cols-1 grid-cols-1">
+                <div className="flex-1 h-96 overflow-hidden relative flex flex-col">
+                    <div className="flex bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 px-6 pt-3 rounded-t-xl">
                         <TabMenuItem
                             name=".gitpod.yml"
                             selected={selectedEditor === ".gitpod.yml"}
@@ -338,56 +282,10 @@ export default function () {
                         </div>
                     )}
                 </div>
-                <div className="flex-1 h-96 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex flex-col">
-                    <div className="flex-grow flex">
-                        {startPrebuildResult ? (
-                            <PrebuildLogs workspaceId={startPrebuildResult.wsid} onInstanceUpdate={onInstanceUpdate} />
-                        ) : (
-                            !prebuildWasTriggered && (
-                                <div className="flex-grow flex flex-col items-center justify-center">
-                                    <img
-                                        alt=""
-                                        className="w-14"
-                                        role="presentation"
-                                        src={isDark ? PrebuildLogsEmptyDark : PrebuildLogsEmpty}
-                                    />
-                                    <h3 className="text-center text-lg text-gray-500 dark:text-gray-50 mt-4">
-                                        No Recent Prebuild
-                                    </h3>
-                                    <p className="text-center text-base text-gray-500 dark:text-gray-400 mt-2 w-64">
-                                        Edit the project configuration on the left to get started.{" "}
-                                        <a className="gp-link" href="https://www.gitpod.io/docs/config-gitpod-file/">
-                                            Learn more
-                                        </a>
-                                    </p>
-                                </div>
-                            )
-                        )}
-                    </div>
-                    <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
-                        {prebuildWasTriggered && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} />}
-                        <div className="flex-grow" />
-                        {prebuildWasTriggered && prebuildInstance?.status.phase !== "stopped" ? (
-                            <button
-                                className="danger flex items-center space-x-2"
-                                disabled={
-                                    prebuildWasCancelled ||
-                                    (prebuildInstance?.status.phase !== "initializing" &&
-                                        prebuildInstance?.status.phase !== "running")
-                                }
-                                onClick={cancelPrebuild}
-                            >
-                                <span>Cancel Prebuild</span>
-                            </button>
-                        ) : (
-                            <button disabled={isDetecting} className="secondary" onClick={buildProject}>
-                                Run Prebuild
-                            </button>
-                        )}
-                        <button disabled={isDetecting && buttonNewWorkspaceEnabled} onClick={onNewWorkspace}>
-                            New Workspace
-                        </button>
-                    </div>
+                <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 flex flex-row-reverse space-x-2 rounded-b-xl">
+                    <button disabled={isDetecting || !buttonNewWorkspaceEnabled} onClick={onNewWorkspace}>
+                        {progressMessage === "" ? "New workspace" : progressMessage}
+                    </button>
                 </div>
             </div>
         </ProjectSettingsPage>

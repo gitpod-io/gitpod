@@ -51,7 +51,7 @@ func main() {
 	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("content available")
 
 	// code server args install extension with id
-	args := []string{"--start-server"}
+	args := []string{}
 
 	// install extension with filepath
 	extPathArgs := []string{}
@@ -59,6 +59,8 @@ func main() {
 	if os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true" {
 		args = append(args, "--inspect", "--log=trace")
 	}
+
+	args = append(args, "--install-builtin-extension", "gitpod.gitpod-theme")
 
 	wsContextUrl := wsInfo.GetWorkspaceContextUrl()
 	if ctxUrl, err := url.Parse(wsContextUrl); err == nil {
@@ -107,6 +109,7 @@ func main() {
 	// install extensions and run code server with exec
 	args = append(args, os.Args[1:]...)
 	args = append(args, "--do-not-sync")
+	args = append(args, "--start-server")
 	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("starting server")
 	if err := syscall.Exec(Code, append([]string{"gitpod-code"}, args...), os.Environ()); err != nil {
 		log.WithError(err).Error("install ext and start code server failed")

@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kyleb-kubecdl-qol.0
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -12,6 +12,15 @@ ports:
     onOpen: ignore
   - port: 4000
     onOpen: ignore
+  # VNC
+  - port: 5900
+    onOpen: ignore
+  # noVNC
+  - port: 6080
+    onOpen: ignore
+  # Werft
+  - port: 7777
+    onOpen: ignore
   - port: 9229
     onOpen: ignore
   # Go proxy
@@ -19,26 +28,25 @@ ports:
     onOpen: ignore
   - port: 13001
     onOpen: ignore
-  # Werft
-  - port: 7777
-    onOpen: ignore
   # Dev Theia
   - port: 13444
 tasks:
   - name: Add Harvester kubeconfig
     command: |
-      ./dev/preview/download-and-merge-harvester-kubeconfig.sh
+      ./dev/preview/util/download-and-merge-harvester-kubeconfig.sh
       exit 0
   - name: Java
-    init: |
-      leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
-      leeway exec --package components/ide/jetbrains/backend-plugin:plugin -- ./gradlew buildPlugin
-      leeway exec --package components/ide/jetbrains/gateway-plugin:publish -- ./gradlew buildPlugin
+    command: |
+      if [ -z "$RUN_GRADLE_TASK" ]; then
+        read -r -p "Press enter to continue Java gradle task"
+      fi
+      leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew --build-cache build
+      leeway exec --package components/ide/jetbrains/backend-plugin:plugin --package components/ide/jetbrains/gateway-plugin:publish --parallel -- ./gradlew --build-cache buildPlugin
   - name: TypeScript
     before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
   - name: Go
-    before: pre-commit install
+    before: pre-commit install --install-hooks
     init: leeway exec --filter-type go -v -- go mod verify
     openMode: split-right
 vscode:
@@ -56,3 +64,9 @@ vscode:
     - timonwong.shellcheck
     - vscjava.vscode-java-pack
     - fwcd.kotlin
+    - dbaeumer.vscode-eslint
+    - esbenp.prettier-vscode
+jetbrains:
+  goland:
+    prebuilds:
+      version: stable

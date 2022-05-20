@@ -5,8 +5,6 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -14,7 +12,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/config"
 )
 
 var (
@@ -47,23 +44,6 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func getConfig() *config.Config {
-	ctnt, err := os.ReadFile(configFile)
-	if err != nil {
-		log.WithError(err).Fatal("cannot read configuration. Maybe missing --config?")
-	}
-
-	var cfg config.Config
-	dec := json.NewDecoder(bytes.NewReader(ctnt))
-	dec.DisallowUnknownFields()
-	err = dec.Decode(&cfg)
-	if err != nil {
-		log.WithError(err).Fatal("cannot decode configuration. Maybe missing --config?")
-	}
-
-	return &cfg
 }
 
 func init() {

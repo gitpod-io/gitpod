@@ -16,6 +16,10 @@ spec:
           help_text: This will be the URL that you use to access your Gitpod instance. This should be in the format "gitpod.domain.com".
           type: text
           required: true
+        - name: openVsxUrl
+          title: What is your Open VSX Registry URL?
+          help_text: This will be the URL that you use to access [Open VSX](https://open-vsx.org). This should be a fully qualified domain name, including `https://`. Will default to `https://open-vsx.org` if not set.
+          type: text
 
     - name: container_registry
       title: Container registry
@@ -24,64 +28,70 @@ spec:
         - name: reg_incluster
           title: Use in-cluster container registry
           type: bool
+          when: '{{repl eq HasLocalRegistry false }}'
           default: "1"
           help_text: You may either use an in-cluster container registry or configure your own external container registry for better performance. This container registry must be accessible from your Kubernetes cluster.
           recommended: false
 
+        - name: reg_incluster_storage
+          title: In-cluster Storage provider
+          type: select_one
+          when: '{{repl (ConfigOptionEquals "reg_incluster" "1") }}'
+          default: none
+          help_text: You may configure your Docker registry to use an external storage backend. This setting is recommended for AWS users instead of using Elastic Container Registry.
+          items:
+            - name: none
+              title: None
+            - name: s3
+              title: S3
+
+        - name: reg_incluster_storage_s3_bucketname
+          title: S3 bucket name
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          help_text: The name of the bucket to act as your S3 storage backend.
+
+        - name: reg_incluster_storage_s3_accesskey
+          title: S3 access key
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          help_text: The access key to use for authentication of your S3 storage backend.
+
+        - name: reg_incluster_storage_s3_secretkey
+          title: S3 secret key
+          type: password
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          required: true
+          help_text: The secret key to use for authentication of your S3 storage backend.
+
         - name: reg_url
           title: Container registry URL
           type: text
-          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
+          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") }}'
           required: true
           help_text: The container registry URL. This will usually be the fully qualified domain of your registry.
 
         - name: reg_server
           title: Container registry server
           type: text
-          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
+          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") }}'
           help_text: The container registry server. This is used when [generating your credentials](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line). Depending upon your provider, this may or may not be the same as the registry URL. If not specified, the URL will be used.
 
         - name: reg_username
           title: Container registry username
           type: text
-          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
+          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") }}'
           required: true
           help_text: The username for your container registry.
 
         - name: reg_password
           title: Container registry password
           type: password
-          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
+          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") }}'
           required: true
           help_text: The password for your container registry.
-
-        - name: reg_s3storage
-          title: Use S3 storage for your container registry
-          type: bool
-          default: "0"
-          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
-          help_text: If using AWS as your container registry, you must configure an S3 storage backend.
-
-        - name: reg_bucketname
-          title: S3 bucket name
-          type: text
-          when: '{{repl and (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
-          required: true
-          help_text: The name of the bucket to act as your S3 storage backend.
-
-        - name: reg_accesskey
-          title: S3 access key
-          type: text
-          when: '{{repl and (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
-          required: true
-          help_text: The access key to use for authentication of your S3 storage backend.
-
-        - name: reg_secretkey
-          title: S3 secret key
-          type: password
-          when: '{{repl and (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
-          required: true
-          help_text: The secret key to use for authentication of your S3 storage backend.
 
     - name: database
       title: Database
@@ -253,7 +263,14 @@ spec:
           title: Use a self-signed TLS certificate
           type: bool
           default: "0"
-          help_text: A self-signed certficate should only be used if applying TLS termination to your load balancer or other proxy.
+          help_text: |
+            A self-signed certficate should only be used if applying TLS termination to your load balancer or other proxy.
+
+            If you are terminating your TLS connection with this certificate, you will need to download the [CA](https://en.wikipedia.org/wiki/Certificate_authority)
+            certificate and install it to your browser.
+
+            To download the certificate, run
+            `kubectl get secrets -n {{repl Namespace }}  ca-issuer-ca -o jsonpath='{.data.ca\.crt}' | base64 -d > ./ca.crt`
 
         - name: cert_manager_enabled
           title: Use cert-manager
@@ -297,6 +314,12 @@ spec:
           when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") }}'
           help_text: A file containing the TLS private key.
 
+        - name: tls_ca_crt
+          title: CA certificate
+          type: file
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") }}'
+          help_text: A file containing the Certificate Authority certificate. To be used if your certificate is signed by a non-public CA.
+
     - name: features
       title: Additional features
       items:
@@ -306,19 +329,37 @@ spec:
           default: "0"
           help_text: 'Enabling the SSH gateway allows use of additional desktop IDEs. IMPORTANT: This uses port 22 on your Kubernetes nodes. When enabled, this will prevent login to the cluster via SSH. If you wish to maintain SSH access to your cluster, please configure another SSH port on your nodes.'
 
-    - name: advanced
-      title: Advanced customizations (Expert Mode)
-      description: Use with care! Enable only when you know what you are doing!
+    - name: user_management
+      title: User management
       items:
-        - name: advanced_mode_enabled
-          title: Enable advanced mode
+        - name: user_management_block_enabled
+          title: Limit user registration
           type: bool
           default: "0"
-          help_text: Enables advanced customization options. Enable only when you know what you are doing!
+          help_text: New registrations can be limited to users in specific domains.
+
+        - name: user_management_block_passlist
+          title: Allow registration for domain(s)
+          type: text
+          when: '{{repl (ConfigOptionEquals "user_management_block_enabled" "1") }}'
+          help_text: |
+            Enable users with email addresses in these domains to register for this service. This must be the primary email address set for the provider.
+
+            Add the domain only (eg, `gitpod.io`). Separate multiple domains with spaces.
+
+    - name: advanced
+      title: Additional Options
+      description: Here are additional options that you should only make use of in coordination with us or when you know what you are doing.
+      items:
+        - name: advanced_mode_enabled
+          title: Enable additional options
+          type: bool
+          default: "0"
+          help_text: Enables additional customization options. Enable only when you know what you are doing!
 
         - name: config_patch
           title: Gitpod config patch (YAML file)
           type: file
           required: false
           when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
-          help_text: A file with Gitpod config that will be used to patch the generated Gitpod config.
+          help_text: A file with Gitpod config that will be used to patch the generated Gitpod config. Usually provided by Gitpod as a way to tailor your installation.

@@ -8,6 +8,7 @@ package init
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -19,6 +20,10 @@ import (
 )
 
 func job(ctx *common.RenderContext) ([]runtime.Object, error) {
+	if disableMigration := common.IsDatabaseMigrationDisabled(ctx); disableMigration {
+		return nil, nil
+	}
+
 	objectMeta := metav1.ObjectMeta{
 		Name:      fmt.Sprintf("%s-session", Component),
 		Namespace: ctx.Namespace,
@@ -33,7 +38,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: objectMeta,
 				Spec: corev1.PodSpec{
-					Affinity:           common.Affinity(cluster.AffinityLabelMeta),
+					Affinity:           common.NodeAffinity(cluster.AffinityLabelMeta),
 					RestartPolicy:      corev1.RestartPolicyNever,
 					ServiceAccountName: Component,
 					EnableServiceLinks: pointer.Bool(false),
@@ -47,7 +52,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 					InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx)},
 					Containers: []corev1.Container{{
 						Name:            fmt.Sprintf("%s-session", Component),
-						Image:           common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), dbSessionsImage, dbSessionsTag),
+						Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), dbSessionsImage, dbSessionsTag),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Env: common.MergeEnv(
 							common.DatabaseEnv(&ctx.Config),

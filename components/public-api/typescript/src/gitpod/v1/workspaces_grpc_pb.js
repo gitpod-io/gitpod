@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
 // GENERATED CODE -- DO NOT EDIT!
 
 'use strict';
@@ -5,7 +11,6 @@ var grpc = require('@grpc/grpc-js');
 var gitpod_v1_workspaces_pb = require('../../gitpod/v1/workspaces_pb.js');
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
-var google_rpc_status_pb = require('../../google/rpc/status_pb.js');
 var gitpod_v1_pagination_pb = require('../../gitpod/v1/pagination_pb.js');
 
 function serialize_gitpod_v1_CreateAndStartWorkspaceRequest(arg) {
@@ -50,6 +55,28 @@ function serialize_gitpod_v1_GetActiveWorkspaceInstanceResponse(arg) {
 
 function deserialize_gitpod_v1_GetActiveWorkspaceInstanceResponse(buffer_arg) {
   return gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_gitpod_v1_GetOwnerTokenRequest(arg) {
+  if (!(arg instanceof gitpod_v1_workspaces_pb.GetOwnerTokenRequest)) {
+    throw new Error('Expected argument of type gitpod.v1.GetOwnerTokenRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_gitpod_v1_GetOwnerTokenRequest(buffer_arg) {
+  return gitpod_v1_workspaces_pb.GetOwnerTokenRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_gitpod_v1_GetOwnerTokenResponse(arg) {
+  if (!(arg instanceof gitpod_v1_workspaces_pb.GetOwnerTokenResponse)) {
+    throw new Error('Expected argument of type gitpod.v1.GetOwnerTokenResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_gitpod_v1_GetOwnerTokenResponse(buffer_arg) {
+  return gitpod_v1_workspaces_pb.GetOwnerTokenResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_gitpod_v1_GetWorkspaceInstanceOwnerTokenRequest(arg) {
@@ -231,6 +258,18 @@ getWorkspace: {
     requestDeserialize: deserialize_gitpod_v1_GetWorkspaceRequest,
     responseSerialize: serialize_gitpod_v1_GetWorkspaceResponse,
     responseDeserialize: deserialize_gitpod_v1_GetWorkspaceResponse,
+  },
+  // GetOwnerToken returns an owner token.
+getOwnerToken: {
+    path: '/gitpod.v1.WorkspacesService/GetOwnerToken',
+    requestStream: false,
+    responseStream: false,
+    requestType: gitpod_v1_workspaces_pb.GetOwnerTokenRequest,
+    responseType: gitpod_v1_workspaces_pb.GetOwnerTokenResponse,
+    requestSerialize: serialize_gitpod_v1_GetOwnerTokenRequest,
+    requestDeserialize: deserialize_gitpod_v1_GetOwnerTokenRequest,
+    responseSerialize: serialize_gitpod_v1_GetOwnerTokenResponse,
+    responseDeserialize: deserialize_gitpod_v1_GetOwnerTokenResponse,
   },
   // CreateAndStartWorkspace creates a new workspace and starts it.
 createAndStartWorkspace: {

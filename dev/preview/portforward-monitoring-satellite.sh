@@ -19,9 +19,9 @@ done
 
 
 if [[ $CONTEXT == 'core-dev' ]]; then
-    "$THIS_DIR"/portforward-monitoring-satellite-core-dev.sh
+    "$THIS_DIR"/util/portforward-monitoring-satellite-core-dev.sh
 elif [[ $CONTEXT == 'harvester' ]]; then
-    "$THIS_DIR"/portforward-monitoring-satellite-harvester.sh
+    "$THIS_DIR"/util/portforward-monitoring-satellite-harvester.sh
 else
     log "Error: context should be one of the following: ['core-dev', 'harvester']"
     log "Usage: './dev/preview/portforward-monitoring-satellite.sh -c harvester' or './dev/preview/portforward-monitoring-satellite.sh -c core-dev'"

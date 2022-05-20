@@ -47,6 +47,10 @@ type ServiceContext struct {
 // Log is the application wide console logger
 var Log = log.WithFields(log.Fields{})
 
+func New() *log.Entry {
+	return Log.Dup()
+}
+
 // setup default log level for components without initial invocation of log.Init.
 func init() {
 	logLevelFromEnv()

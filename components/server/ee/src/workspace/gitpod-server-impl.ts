@@ -45,6 +45,7 @@ import {
     Workspace,
     FindPrebuildsParams,
     TeamMemberRole,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -58,7 +59,7 @@ import {
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { v4 as uuidv4 } from "uuid";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { LicenseEvaluator, LicenseKeySource } from "@gitpod/licensor/lib";
+import { LicenseKeySource } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { LicenseValidationResult, LicenseFeature } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
@@ -71,20 +72,22 @@ import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/paymen
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
+    TeamSubscription2,
     TeamSubscriptionSlot,
     TeamSubscriptionSlotResolved,
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import * as pThrottle from "p-throttle";
 import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
-import { FindUserByIdentityStrResult } from "../../../src/user/user-service";
+import { FindUserByIdentityStrResult, UserService } from "../../../src/user/user-service";
 import {
     Accounting,
     AccountService,
     SubscriptionService,
     TeamSubscriptionService,
+    TeamSubscription2Service,
 } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import { AccountingDB, TeamSubscriptionDB, EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
+import { AccountingDB, TeamSubscriptionDB, TeamSubscription2DB, EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
 import { ChargebeeProvider, UpgradeHelper } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import { ChargebeeCouponComputer } from "../user/coupon-computer";
 import { ChargebeeService } from "../user/chargebee-service";
@@ -101,7 +104,6 @@ import { UserCounter } from "../user/user-counter";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
-    @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
     @inject(LicenseKeySource) protected readonly licenseKeySource: LicenseKeySource;
@@ -115,8 +117,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(AccountingDB) protected readonly accountingDB: AccountingDB;
     @inject(EduEmailDomainDB) protected readonly eduDomainDb: EduEmailDomainDB;
 
+    @inject(TeamSubscription2DB) protected readonly teamSubscription2DB: TeamSubscription2DB;
     @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDB: TeamSubscriptionDB;
     @inject(TeamSubscriptionService) protected readonly teamSubscriptionService: TeamSubscriptionService;
+    @inject(TeamSubscription2Service) protected readonly teamSubscription2Service: TeamSubscription2Service;
 
     @inject(ChargebeeProvider) protected readonly chargebeeProvider: ChargebeeProvider;
     @inject(UpgradeHelper) protected readonly upgradeHelper: UpgradeHelper;
@@ -132,6 +136,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
     @inject(UserCounter) protected readonly userCounter: UserCounter;
+
+    @inject(UserService) protected readonly userService: UserService;
 
     initialize(
         client: GitpodClient | undefined,
@@ -230,7 +236,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const result = await this.eligibilityService.mayStartWorkspace(user, new Date(), runningInstances);
         if (!result.enoughCredits) {
-            throw new ResponseError(ErrorCodes.NOT_ENOUGH_CREDIT, `Not enough credits. Please book more.`);
+            throw new ResponseError(
+                ErrorCodes.NOT_ENOUGH_CREDIT,
+                `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`,
+            );
         }
         if (!!result.hitParallelWorkspaceLimit) {
             throw new ResponseError(
@@ -309,18 +318,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             (i) => i.workspaceId !== workspaceId && i.status.timeout !== defaultTimeout && i.status.phase === "running",
         );
         await Promise.all(
-            instancesWithReset.map((i) => {
+            instancesWithReset.map(async (i) => {
                 const req = new SetTimeoutRequest();
                 req.setId(i.id);
-                req.setDuration(defaultTimeout);
+                req.setDuration(this.userService.workspaceTimeoutToDuration(defaultTimeout));
 
+                const client = await this.workspaceManagerClientProvider.get(i.region);
                 return client.setTimeout(ctx, req);
             }),
         );
 
         const req = new SetTimeoutRequest();
         req.setId(runningInstance.id);
-        req.setDuration(duration);
+        req.setDuration(this.userService.workspaceTimeoutToDuration(duration));
         await client.setTimeout(ctx, req);
 
         return {
@@ -343,7 +353,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (!runningInstance) {
             log.warn({ userId: user.id, workspaceId }, "Can only get keep-alive for running workspaces");
-            return { duration: "30m", canChange };
+            return { duration: WORKSPACE_TIMEOUT_DEFAULT_SHORT, canChange };
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
 
@@ -352,7 +362,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
         const desc = await client.describeWorkspace(ctx, req);
-        const duration = desc.getStatus()!.getSpec()!.getTimeout() as WorkspaceTimeoutDuration;
+        const duration = this.userService.durationToWorkspaceTimeout(desc.getStatus()!.getSpec()!.getTimeout());
         return { duration, canChange };
     }
 
@@ -562,13 +572,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
 
-        const target = await this.userDB.findUserById(req.id);
-        if (!target) {
+        let targetUser;
+        try {
+            targetUser = await this.userService.blockUser(req.id, req.blocked);
+        } catch (error) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
         }
-
-        target.blocked = !!req.blocked;
-        await this.userDB.storeUser(target);
 
         const workspaceDb = this.workspaceDb.trace(ctx);
         const workspaces = await workspaceDb.findWorkspacesByUser(req.id);
@@ -581,7 +590,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
         // Returning `target` instead (which should be equivalent).
-        return this.censorUser(target);
+        return this.censorUser(targetUser);
     }
 
     async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
@@ -1103,6 +1112,37 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
     }
 
+    async createTeamPortalSession(ctx: TraceContext, teamId: string): Promise<{}> {
+        traceAPIParams(ctx, { teamId });
+
+        this.checkUser("createTeamPortalSession");
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+        }
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        await this.guardAccess({ kind: "team", subject: team, members }, "update");
+
+        return await new Promise((resolve, reject) => {
+            this.chargebeeProvider.portal_session
+                .create({
+                    customer: {
+                        id: "team:" + team.id,
+                    },
+                })
+                .request(function (error: any, result: any) {
+                    if (error) {
+                        log.error("Team portal session creation error", error);
+                        reject(error);
+                    } else {
+                        log.debug("Team portal session created");
+                        resolve(result.portal_session);
+                    }
+                });
+        });
+    }
+
     async checkout(ctx: TraceContext, planId: string, planQuantity?: number): Promise<{}> {
         traceAPIParams(ctx, { planId, planQuantity });
 
@@ -1116,6 +1156,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         try {
             const email = User.getPrimaryEmail(user);
+            if (!email) {
+                throw new Error("No identity with primary email for user");
+            }
 
             return new Promise((resolve, reject) => {
                 this.chargebeeProvider.hosted_page
@@ -1144,6 +1187,44 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             log.error(logContext, "Checkout error", err);
             throw err;
         }
+    }
+
+    async teamCheckout(ctx: TraceContext, teamId: string, planId: string): Promise<{}> {
+        traceAPIParams(ctx, { teamId, planId });
+
+        const user = this.checkUser("teamCheckout");
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+        }
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        await this.guardAccess({ kind: "team", subject: team, members }, "update");
+
+        const coupon = await this.findAvailableCouponForPlan(user, planId);
+
+        const email = User.getPrimaryEmail(user);
+        return new Promise((resolve, reject) => {
+            this.chargebeeProvider.hosted_page
+                .checkout_new({
+                    customer: {
+                        id: "team:" + team.id,
+                        email,
+                    },
+                    subscription: {
+                        plan_id: planId,
+                        plan_quantity: members.length,
+                        coupon,
+                    },
+                })
+                .request((error: any, result: any) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve(result.hosted_page);
+                });
+        });
     }
 
     protected async findAvailableCouponForPlan(user: User, planId: string): Promise<string | undefined> {
@@ -1296,9 +1377,102 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return chargebeeSubscriptionId;
     }
 
-    // Team Subscriptions
+    // Team Subscriptions 2
+    async getTeamSubscription(ctx: TraceContext, teamId: string): Promise<TeamSubscription2 | undefined> {
+        this.checkUser("getTeamSubscription");
+        await this.guardTeamOperation(teamId, "get");
+        return this.teamSubscription2DB.findForTeam(teamId, new Date().toISOString());
+    }
+
+    protected async onTeamMemberAdded(userId: string, teamId: string): Promise<void> {
+        const now = new Date();
+        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (!teamSubscription) {
+            // No team subscription, nothing to do 🌴
+            return;
+        }
+        await this.updateTeamSubscriptionQuantity(teamSubscription);
+        await this.teamSubscription2Service.addTeamMemberSubscription(teamSubscription, userId);
+    }
+
+    protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
+        const now = new Date();
+        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (!teamSubscription) {
+            // No team subscription, nothing to do 🌴
+            return;
+        }
+        await this.updateTeamSubscriptionQuantity(teamSubscription);
+        await this.teamSubscription2Service.cancelTeamMemberSubscription(
+            teamSubscription,
+            userId,
+            teamMembershipId,
+            now,
+        );
+    }
+
+    protected async onTeamDeleted(teamId: string): Promise<void> {
+        const now = new Date();
+        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (!teamSubscription) {
+            // No team subscription, nothing to do 🌴
+            return;
+        }
+        const chargebeeSubscriptionId = teamSubscription.paymentReference;
+        await this.chargebeeService.cancelSubscription(
+            chargebeeSubscriptionId,
+            {},
+            { teamId, chargebeeSubscriptionId },
+        );
+    }
+
+    protected async updateTeamSubscriptionQuantity(teamSubscription: TeamSubscription2): Promise<void> {
+        const members = await this.teamDB.findMembersByTeam(teamSubscription.teamId);
+        const oldQuantity = teamSubscription.quantity;
+        const newQuantity = members.length;
+        try {
+            if (oldQuantity < newQuantity) {
+                // Upgrade: Charge for it!
+                const chargebeeSubscription = await this.getChargebeeSubscription(
+                    {},
+                    teamSubscription.paymentReference,
+                );
+                let pricePerUnitInCents = chargebeeSubscription.plan_unit_price;
+                if (pricePerUnitInCents === undefined) {
+                    const plan = Plans.getById(teamSubscription.planId)!;
+                    pricePerUnitInCents = plan.pricePerMonth * 100;
+                }
+                const currentTermRemainingRatio =
+                    this.upgradeHelper.getCurrentTermRemainingRatio(chargebeeSubscription);
+                const diffInCents = Math.round(
+                    pricePerUnitInCents * (newQuantity - oldQuantity) * currentTermRemainingRatio,
+                );
+                const upgradeTimestamp = new Date().toISOString();
+                const description = `Pro-rated upgrade from '${oldQuantity}' to '${newQuantity}' team members (${formatDate(
+                    upgradeTimestamp,
+                )})`;
+                await this.upgradeHelper.chargeForUpgrade(
+                    "",
+                    teamSubscription.paymentReference,
+                    diffInCents,
+                    description,
+                    upgradeTimestamp,
+                );
+            }
+            await this.doUpdateSubscription("", teamSubscription.paymentReference, {
+                plan_quantity: newQuantity,
+                end_of_term: false,
+            });
+        } catch (err) {
+            if (chargebee.ApiError.is(err) && err.type === "payment") {
+                throw new ResponseError(ErrorCodes.PAYMENT_ERROR, `${err.api_error_code}: ${err.message}`);
+            }
+        }
+    }
+
+    // Team Subscriptions (legacy)
     async tsGet(ctx: TraceContext): Promise<TeamSubscription[]> {
-        const user = this.checkUser("getTeamSubscriptions");
+        const user = this.checkUser("tsGet");
         return this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
     }
 
@@ -1774,7 +1948,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const providerHost = params.provider;
         const provider = (await this.getAuthProviders(ctx)).find((ap) => ap.host === providerHost);
 
-        if (providerHost === "github.com") {
+        if (providerHost === "github.com" && this.config.githubApp?.enabled) {
             repositories.push(...(await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params })));
         } else if (provider?.authProviderType === "GitHub") {
             const hostContext = this.hostContextProvider.get(providerHost);
@@ -1785,6 +1959,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             }
         } else if (providerHost === "bitbucket.org" && provider) {
             repositories.push(...(await this.bitbucketAppSupport.getProviderRepositoriesForUser({ user, provider })));
+        } else if (provider?.authProviderType === "BitbucketServer") {
+            const hostContext = this.hostContextProvider.get(providerHost);
+            if (hostContext?.services) {
+                repositories.push(
+                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user)),
+                );
+            }
         } else if (provider?.authProviderType === "GitLab") {
             repositories.push(...(await this.gitLabAppSupport.getProviderRepositoriesForUser({ user, provider })));
         } else {

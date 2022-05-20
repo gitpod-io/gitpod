@@ -17,4 +17,5 @@ const (
 	DockerUpImage     = workspace.DockerUpImage
 	SupervisorImage   = workspace.SupervisorImage
 	WorkspacekitImage = workspace.WorkspacekitImage
+	ReadinessPort     = 8086
 )

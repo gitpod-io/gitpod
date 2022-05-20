@@ -34,12 +34,15 @@ var Helm = common.CompositeHelmFunc(
 					helm.KeyValue("mysql.initdbScriptsConfigMap", SQLInitScripts),
 					helm.KeyValue("mysql.serviceAccount.name", Component),
 					helm.ImagePullSecrets("mysql.image.pullSecrets", cfg),
-					helm.KeyValue("mysql.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
+					helm.KeyValue("mysql.image.registry", ""),
+					helm.KeyValue("mysql.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/mysql")),
 					helm.ImagePullSecrets("mysql.metrics.image.pullSecrets", cfg),
-					helm.KeyValue("mysql.metrics.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
+					helm.KeyValue("mysql.metrics.image.registry", ""),
+					helm.KeyValue("mysql.metrics.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/mysqld-exporter")),
 					helm.ImagePullSecrets("mysql.volumePermissions.image.pullSecrets", cfg),
 					helm.KeyValue("mysql.volumePermissions.image.pullPolicy", "IfNotPresent"),
-					helm.KeyValue("mysql.volumePermissions.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
+					helm.KeyValue("mysql.volumePermissions.image.registry", ""),
+					helm.KeyValue("mysql.volumePermissions.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/bitnami-shell")),
 
 					// improve start time
 					helm.KeyValue("mysql.primary.startupProbe.enabled", "false"),

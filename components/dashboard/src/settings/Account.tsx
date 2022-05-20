@@ -9,17 +9,19 @@ import { useContext, useState } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
-import settingsMenu from "./settings-menu";
+import getSettingsMenu from "./settings-menu";
 import ConfirmationModal from "../components/ConfirmationModal";
 import CodeText from "../components/CodeText";
+import { PaymentContext } from "../payment-context";
 
 export default function Account() {
     const { user } = useContext(UserContext);
+    const { showPaymentUI } = useContext(PaymentContext);
 
     const [modal, setModal] = useState(false);
     const [typedEmail, setTypedEmail] = useState("");
 
-    const primaryEmail = User.getPrimaryEmail(user!);
+    const primaryEmail = User.getPrimaryEmail(user!) || "---";
 
     const deleteAccount = async () => {
         await getGitpodService().server.deleteAccount();
@@ -53,7 +55,11 @@ export default function Account() {
                 <input autoFocus className="w-full" type="text" onChange={(e) => setTypedEmail(e.target.value)}></input>
             </ConfirmationModal>
 
-            <PageWithSubMenu subMenu={settingsMenu} title="Account" subtitle="Manage account and Git configuration.">
+            <PageWithSubMenu
+                subMenu={getSettingsMenu({ showPaymentUI })}
+                title="Account"
+                subtitle="Manage account and Git configuration."
+            >
                 <h3>Profile</h3>
                 <p className="text-base text-gray-500 pb-4 max-w-2xl">
                     The following information will be used to set up Git configuration. You can override Git author name
@@ -69,7 +75,7 @@ export default function Account() {
                         </div>
                         <div className="mt-4">
                             <h4>Email</h4>
-                            <input type="text" disabled={true} value={User.getPrimaryEmail(user!)} />
+                            <input type="text" disabled={true} value={primaryEmail} />
                         </div>
                     </div>
                     <div className="lg:pl-14">

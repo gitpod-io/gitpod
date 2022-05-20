@@ -68,13 +68,19 @@ export namespace User {
         });
         return res;
     }
-    export function getPrimaryEmail(user: User): string {
+
+    /**
+     * Tries to return the primaryEmail of the first identity this user signed up with.
+     * @param user
+     * @returns A primaryEmail, or undefined if there is none.
+     */
+    export function getPrimaryEmail(user: User): string | undefined {
         const identities = user.identities.filter((i) => !!i.primaryEmail);
         if (identities.length <= 0) {
-            throw new Error(`No identity with primary email for user: ${user.id}!`);
+            return undefined;
         }
 
-        return identities[0].primaryEmail!;
+        return identities[0].primaryEmail || undefined;
     }
     export function getName(user: User): string | undefined {
         const name = user.fullName || user.name;
@@ -88,6 +94,47 @@ export namespace User {
             }
         }
         return undefined;
+    }
+
+    export function hasPreferredIde(user: User) {
+        return (
+            typeof user?.additionalData?.ideSettings?.defaultIde !== "undefined" ||
+            typeof user?.additionalData?.ideSettings?.useLatestVersion !== "undefined"
+        );
+    }
+
+    export function isOnboardingUser(user: User) {
+        return !hasPreferredIde(user);
+    }
+
+    export function migrationIDESettings(user: User) {
+        if (
+            !user?.additionalData?.ideSettings ||
+            Object.keys(user.additionalData.ideSettings).length === 0 ||
+            user.additionalData.ideSettings.settingVersion === "2.0"
+        ) {
+            return;
+        }
+        const newIDESettings: IDESettings = {
+            settingVersion: "2.0",
+        };
+        const ideSettings = user.additionalData.ideSettings;
+        if (ideSettings.useDesktopIde) {
+            if (ideSettings.defaultDesktopIde === "code-desktop") {
+                newIDESettings.defaultIde = "code-desktop";
+            } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
+                newIDESettings.defaultIde = "code-desktop";
+                newIDESettings.useLatestVersion = true;
+            } else {
+                newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
+                newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
+            }
+        } else {
+            const useLatest = ideSettings.defaultIde === "code-latest";
+            newIDESettings.defaultIde = "code";
+            newIDESettings.useLatestVersion = useLatest;
+        }
+        user.additionalData.ideSettings = newIDESettings;
     }
 }
 
@@ -115,8 +162,11 @@ export interface EmailNotificationSettings {
 }
 
 export type IDESettings = {
+    settingVersion?: string;
     defaultIde?: string;
+    // DEPRECATED: Use defaultIde after `settingVersion: 2.0`, no more specialify desktop or browser.
     useDesktopIde?: boolean;
+    // DEPRECATED: Same with useDesktopIde.
     defaultDesktopIde?: string;
     useLatestVersion?: boolean;
 };
@@ -151,7 +201,11 @@ export interface UserFeatureSettings {
  * The values of this type MUST MATCH enum values in WorkspaceFeatureFlag from ws-manager/client/core_pb.d.ts
  * If they don't we'll break things during workspace startup.
  */
-export const WorkspaceFeatureFlags = { full_workspace_backup: undefined, fixed_resources: undefined };
+export const WorkspaceFeatureFlags = {
+    full_workspace_backup: undefined,
+    fixed_resources: undefined,
+    persistent_volume_claim: undefined,
+};
 export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
 
 export interface EnvVarWithValue {
@@ -178,6 +232,45 @@ export interface UserEnvVar extends UserEnvVarValue {
 }
 
 export namespace UserEnvVar {
+    /**
+     * @param variable
+     * @returns Either a string containing an error message or undefined.
+     */
+    export function validate(variable: UserEnvVarValue): string | undefined {
+        const name = variable.name;
+        const pattern = variable.repositoryPattern;
+        if (name.trim() === "") {
+            return "Name must not be empty.";
+        }
+        if (name.length > 255) {
+            return 'Name too long. Maximum name length is 255 characters.';
+        }
+        if (!/^[a-zA-Z_]+[a-zA-Z0-9_]*$/.test(name)) {
+            return "Name must match /^[a-zA-Z_]+[a-zA-Z0-9_]*$/.";
+        }
+        if (variable.value.trim() === "") {
+            return "Value must not be empty.";
+        }
+        if (variable.value.length > 32767) {
+            return 'Value too long. Maximum value length is 32767 characters.';
+        }
+        if (pattern.trim() === "") {
+            return "Scope must not be empty.";
+        }
+        const split = pattern.split("/");
+        if (split.length < 2) {
+            return "A scope must use the form 'organization/repo'.";
+        }
+        for (const name of split) {
+            if (name !== "*") {
+                if (!/^[a-zA-Z0-9_\-.\*]+$/.test(name)) {
+                    return "Invalid scope segment. Only ASCII characters, numbers, -, _, . or * are allowed.";
+                }
+            }
+        }
+        return undefined;
+    }
+
     // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function normalizeRepoPattern(pattern: string) {
         return pattern.toLocaleLowerCase();
@@ -395,6 +488,13 @@ export interface Snapshot {
     message?: string;
 }
 
+export interface VolumeSnapshot {
+    id: string;
+    creationTime: string;
+    originalWorkspaceId: string;
+    volumeHandle: string;
+}
+
 export type SnapshotState = "pending" | "available" | "error";
 
 export interface LayoutData {
@@ -532,6 +632,19 @@ export interface VSCodeConfig {
     extensions?: string[];
 }
 
+export interface JetBrainsConfig {
+    intellij?: JetBrainsProductConfig;
+    goland?: JetBrainsProductConfig;
+    pycharm?: JetBrainsProductConfig;
+    phpstorm?: JetBrainsProductConfig;
+}
+export interface JetBrainsProductConfig {
+    prebuilds?: JetBrainsPrebuilds;
+}
+export interface JetBrainsPrebuilds {
+    version?: "stable" | "latest" | "both";
+}
+
 export interface RepositoryCloneInformation {
     url: string;
     checkoutLocation?: string;
@@ -548,6 +661,7 @@ export interface WorkspaceConfig {
     gitConfig?: { [config: string]: string };
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;
+    jetbrains?: JetBrainsConfig;
 
     /** deprecated. Enabled by default **/
     experimentalNetwork?: boolean;
@@ -634,6 +748,7 @@ export interface PrebuiltWorkspace {
     buildWorkspaceId: string;
     creationTime: string;
     state: PrebuiltWorkspaceState;
+    statusVersion: number;
     error?: string;
     snapshot?: string;
 }
@@ -1015,6 +1130,8 @@ export interface Repository {
     owner: string;
     name: string;
     cloneUrl: string;
+    /* Optional kind to differentiate between repositories of orgs/groups/projects and personal repos. */
+    repoKind?: string;
     description?: string;
     avatarUrl?: string;
     webUrl?: string;
@@ -1141,12 +1258,6 @@ export interface AuthProviderInfo {
         readonly publicRepo: string[];
         readonly privateRepo: string[];
     };
-}
-
-export namespace AuthProviderInfo {
-    export function isGitHubEnterprise(info?: AuthProviderInfo): boolean {
-        return !!info && info.authProviderType === "GitHub" && info.host !== "github.com";
-    }
 }
 
 export interface AuthProviderEntry {

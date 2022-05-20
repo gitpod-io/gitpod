@@ -196,6 +196,10 @@ type WorkspaceConfig struct {
 	// is located. If there's no Git repo in this workspace, this will be empty.
 	RepoRoot string `env:"GITPOD_REPO_ROOT"`
 
+	// RepoRoots is the comma seprated list of locations in the filesystem where Git repositories
+	// are located. If there's no Git repo in this workspace, this will be empty.
+	RepoRoots string `env:"GITPOD_REPO_ROOTS"`
+
 	// PreventMetadataAccess exits supervisor/stops the workspace if we can access Google Cloud
 	// compute metadata from within the container.
 	PreventMetadataAccess bool `env:"GITPOD_PREVENT_METADATA_ACCESS"`
@@ -459,6 +463,10 @@ func loadWorkspaceConfigFromEnv() (*WorkspaceConfig, error) {
 	_, err := env.UnmarshalFromEnviron(&res)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot load workspace config: %w", err)
+	}
+	//TODO(sefftinge) remove me after deployment (backward compatibility)
+	if res.RepoRoots == "" {
+		res.RepoRoots = res.RepoRoot
 	}
 
 	return &res, nil

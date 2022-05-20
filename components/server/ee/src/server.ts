@@ -15,12 +15,14 @@ import { GithubApp } from "./prebuilds/github-app";
 import { GiteaApp } from './prebuilds/gitea-app';
 import { SnapshotService } from "./workspace/snapshot-service";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
+import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 
 export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Server<C, S> {
     @inject(GithubApp) protected readonly githubApp: GithubApp;
     @inject(GitLabApp) protected readonly gitLabApp: GitLabApp;
     @inject(BitbucketApp) protected readonly bitbucketApp: BitbucketApp;
     @inject(GiteaApp) protected readonly giteaApp: GiteaApp;
+    @inject(BitbucketServerApp) protected readonly bitbucketServerApp: BitbucketServerApp;
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
     @inject(GitHubEnterpriseApp) protected readonly gitHubEnterpriseApp: GitHubEnterpriseApp;
 
@@ -50,5 +52,8 @@ export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Se
 
         log.info("Registered GitHub EnterpriseApp app at " + GitHubEnterpriseApp.path);
         app.use(GitHubEnterpriseApp.path, this.gitHubEnterpriseApp.router);
+
+        log.info("Registered Bitbucket Server app at " + BitbucketServerApp.path);
+        app.use(BitbucketServerApp.path, this.bitbucketServerApp.router);
     }
 }

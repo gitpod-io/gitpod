@@ -4,11 +4,7 @@ packages:
     deps:
       - dev/image:docker
       - dev/poolkeeper:docker
-      - dev/sweeper:docker
       - :dev-utils
-    config:
-      commands:
-        - ["sh", "-c", "tail -n1 dev-sweeper--docker/imgnames.txt > sweeper.txt"]
   - name: all-app
     type: generic
     deps:

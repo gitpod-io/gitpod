@@ -7,6 +7,7 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/tests/workspace/common"
+	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
 type ContextTest struct {
@@ -94,7 +95,10 @@ func TestGitLabContexts(t *testing.T) {
 }
 
 func runContextTests(t *testing.T, tests []ContextTest) {
+	userToken, _ := os.LookupEnv("USER_TOKEN")
 	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+
 	f := features.New("context").
 		WithLabel("component", "server").
 		Assess("should run context tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -113,6 +117,11 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 					t.Cleanup(func() {
 						api.Done(t)
 					})
+
+					_, err := api.CreateUser(username, userToken)
+					if err != nil {
+						t.Fatal(err)
+					}
 
 					nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
 					if err != nil {
@@ -134,6 +143,10 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 
 					// get actual from workspace
 					git := common.Git(rsa)
+					err = git.ConfigSafeDirectory(test.WorkspaceRoot)
+					if err != nil {
+						t.Fatal(err)
+					}
 					actBranch, err := git.GetBranch(test.WorkspaceRoot)
 					if err != nil {
 						t.Fatal(err)

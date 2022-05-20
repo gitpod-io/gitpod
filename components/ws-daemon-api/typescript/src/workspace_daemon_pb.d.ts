@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class PrepareForUserNSRequest extends jspb.Message {
+export class PrepareForUserNSRequest extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrepareForUserNSRequest.AsObject;
@@ -29,11 +29,13 @@ export namespace PrepareForUserNSRequest {
     }
 }
 
-export class PrepareForUserNSResponse extends jspb.Message {
+export class PrepareForUserNSResponse extends jspb.Message { 
     getFsShift(): FSShiftMethod;
     setFsShift(value: FSShiftMethod): PrepareForUserNSResponse;
     getFullWorkspaceBackup(): boolean;
     setFullWorkspaceBackup(value: boolean): PrepareForUserNSResponse;
+    getPersistentVolumeClaim(): boolean;
+    setPersistentVolumeClaim(value: boolean): PrepareForUserNSResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrepareForUserNSResponse.AsObject;
@@ -49,10 +51,11 @@ export namespace PrepareForUserNSResponse {
     export type AsObject = {
         fsShift: FSShiftMethod,
         fullWorkspaceBackup: boolean,
+        persistentVolumeClaim: boolean,
     }
 }
 
-export class WriteIDMappingResponse extends jspb.Message {
+export class WriteIDMappingResponse extends jspb.Message { 
     getMessage(): string;
     setMessage(value: string): WriteIDMappingResponse;
     getErrorCode(): number;
@@ -75,7 +78,7 @@ export namespace WriteIDMappingResponse {
     }
 }
 
-export class WriteIDMappingRequest extends jspb.Message {
+export class WriteIDMappingRequest extends jspb.Message { 
     getPid(): number;
     setPid(value: number): WriteIDMappingRequest;
     getGid(): boolean;
@@ -103,7 +106,7 @@ export namespace WriteIDMappingRequest {
     }
 
 
-    export class Mapping extends jspb.Message {
+    export class Mapping extends jspb.Message { 
         getContainerId(): number;
         setContainerId(value: number): Mapping;
         getHostId(): number;
@@ -131,7 +134,7 @@ export namespace WriteIDMappingRequest {
 
 }
 
-export class EvacuateCGroupRequest extends jspb.Message {
+export class EvacuateCGroupRequest extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): EvacuateCGroupRequest.AsObject;
@@ -148,7 +151,7 @@ export namespace EvacuateCGroupRequest {
     }
 }
 
-export class EvacuateCGroupResponse extends jspb.Message {
+export class EvacuateCGroupResponse extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): EvacuateCGroupResponse.AsObject;
@@ -165,7 +168,7 @@ export namespace EvacuateCGroupResponse {
     }
 }
 
-export class MountProcRequest extends jspb.Message {
+export class MountProcRequest extends jspb.Message { 
     getTarget(): string;
     setTarget(value: string): MountProcRequest;
     getPid(): number;
@@ -188,7 +191,7 @@ export namespace MountProcRequest {
     }
 }
 
-export class MountProcResponse extends jspb.Message {
+export class MountProcResponse extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): MountProcResponse.AsObject;
@@ -205,7 +208,7 @@ export namespace MountProcResponse {
     }
 }
 
-export class UmountProcRequest extends jspb.Message {
+export class UmountProcRequest extends jspb.Message { 
     getTarget(): string;
     setTarget(value: string): UmountProcRequest;
     getPid(): number;
@@ -228,7 +231,7 @@ export namespace UmountProcRequest {
     }
 }
 
-export class UmountProcResponse extends jspb.Message {
+export class UmountProcResponse extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): UmountProcResponse.AsObject;
@@ -245,7 +248,7 @@ export namespace UmountProcResponse {
     }
 }
 
-export class TeardownRequest extends jspb.Message {
+export class TeardownRequest extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): TeardownRequest.AsObject;
@@ -262,7 +265,7 @@ export namespace TeardownRequest {
     }
 }
 
-export class TeardownResponse extends jspb.Message {
+export class TeardownResponse extends jspb.Message { 
     getSuccess(): boolean;
     setSuccess(value: boolean): TeardownResponse;
 
@@ -279,6 +282,43 @@ export class TeardownResponse extends jspb.Message {
 export namespace TeardownResponse {
     export type AsObject = {
         success: boolean,
+    }
+}
+
+export class SetupPairVethsRequest extends jspb.Message { 
+    getPid(): number;
+    setPid(value: number): SetupPairVethsRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): SetupPairVethsRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: SetupPairVethsRequest): SetupPairVethsRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: SetupPairVethsRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): SetupPairVethsRequest;
+    static deserializeBinaryFromReader(message: SetupPairVethsRequest, reader: jspb.BinaryReader): SetupPairVethsRequest;
+}
+
+export namespace SetupPairVethsRequest {
+    export type AsObject = {
+        pid: number,
+    }
+}
+
+export class SetupPairVethsResponse extends jspb.Message { 
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): SetupPairVethsResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: SetupPairVethsResponse): SetupPairVethsResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: SetupPairVethsResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): SetupPairVethsResponse;
+    static deserializeBinaryFromReader(message: SetupPairVethsResponse, reader: jspb.BinaryReader): SetupPairVethsResponse;
+}
+
+export namespace SetupPairVethsResponse {
+    export type AsObject = {
     }
 }
 

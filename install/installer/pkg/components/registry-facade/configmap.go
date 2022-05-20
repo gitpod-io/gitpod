@@ -9,6 +9,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	regfac "github.com/gitpod-io/gitpod/registry-facade/api/config"
 
 	corev1 "k8s.io/api/core/v1"
@@ -24,6 +25,35 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			PrivateKey:  "/mnt/certificates/tls.key",
 		}
 	}
+
+	var ipfsCache *regfac.IPFSCacheConfig
+	var redisCache *regfac.RedisCacheConfig
+
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace == nil {
+			return nil
+		}
+
+		if ucfg.Workspace.RegistryFacade.RedisCache.Enabled {
+			cacheCfg := ucfg.Workspace.RegistryFacade.RedisCache
+			redisCache = &regfac.RedisCacheConfig{
+				Enabled:       true,
+				MasterName:    cacheCfg.MasterName,
+				SentinelAddrs: cacheCfg.SentinelAddrs,
+				Username:      cacheCfg.Username,
+			}
+		}
+
+		if ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+			cacheCfg := ucfg.Workspace.RegistryFacade.IPFSCache
+			ipfsCache = &regfac.IPFSCacheConfig{
+				Enabled:  true,
+				IPFSAddr: cacheCfg.IPFSAddr,
+			}
+		}
+
+		return nil
+	})
 
 	rfcfg := regfac.ServiceConfig{
 		Registry: regfac.Config{
@@ -41,22 +71,25 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			RequireAuth: false,
 			StaticLayer: []regfac.StaticLayerCfg{
 				{
-					Ref:  common.ImageName(ctx.Config.Repository, SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
+					Ref:  ctx.ImageName(ctx.Config.Repository, SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 					Type: "image",
 				},
 				{
-					Ref:  common.ImageName(ctx.Config.Repository, WorkspacekitImage, ctx.VersionManifest.Components.Workspace.Workspacekit.Version),
+					Ref:  ctx.ImageName(ctx.Config.Repository, WorkspacekitImage, ctx.VersionManifest.Components.Workspace.Workspacekit.Version),
 					Type: "image",
 				},
 				{
-					Ref:  common.ImageName(ctx.Config.Repository, DockerUpImage, ctx.VersionManifest.Components.Workspace.DockerUp.Version),
+					Ref:  ctx.ImageName(ctx.Config.Repository, DockerUpImage, ctx.VersionManifest.Components.Workspace.DockerUp.Version),
 					Type: "image",
 				},
 			},
+			IPFSCache:  ipfsCache,
+			RedisCache: redisCache,
 		},
-		AuthCfg:        "/mnt/pull-secret.json",
-		PProfAddr:      ":6060",
-		PrometheusAddr: "127.0.0.1:9500",
+		AuthCfg:            "/mnt/pull-secret.json",
+		PProfAddr:          ":6060",
+		PrometheusAddr:     "127.0.0.1:9500",
+		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 	}
 
 	fc, err := common.ToJSONString(rfcfg)

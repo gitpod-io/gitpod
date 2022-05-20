@@ -22,6 +22,7 @@ import (
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -376,8 +377,9 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		}
 
 		_, gone := wso.Pod.Annotations[wsk8s.ContainerIsGoneAnnotation]
+		_, alreadyFinalized := wso.Pod.Annotations[startedDisposalAnnotation]
 
-		if terminated || gone {
+		if (terminated || gone) && !alreadyFinalized {
 			// We start finalizing the workspace content only after the container is gone. This way we ensure there's
 			// no process modifying the workspace content as we create the backup.
 			go m.finalizeWorkspaceContent(ctx, wso)
@@ -659,6 +661,7 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 // prior to this call this function returns once initialization is complete.
 func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error) {
 	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupAnnotation]
+	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureAnnotation]
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
@@ -667,6 +670,15 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	workspaceMeta := getWorkspaceMetadata(pod)
 	if workspaceMeta.Owner == "" {
 		return xerrors.Errorf("pod %s has no owner", pod.Name)
+	}
+
+	class, ok := m.manager.Config.WorkspaceClasses[pod.Labels[workspaceClassLabel]]
+	if !ok {
+		return xerrors.Errorf("pod %s has unknown workspace class", pod.Name, pod.Labels[workspaceClassLabel])
+	}
+	storage, err := class.Container.Limits.StorageQuantity()
+	if !ok {
+		return xerrors.Errorf("workspace class %s has invalid storage quantity: %w", pod.Labels[workspaceClassLabel], err)
 	}
 
 	var (
@@ -703,7 +715,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			return xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
 
-		if fullWorkspaceBackup {
+		if fullWorkspaceBackup || pvcFeatureEnabled {
 			_, mf, err := m.manager.Content.GetContentLayer(ctx, workspaceMeta.Owner, workspaceMeta.MetaId, &initializer)
 			if err != nil {
 				return xerrors.Errorf("cannot download workspace content manifest: %w", err)
@@ -734,7 +746,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		// we are already initialising
 		return nil
 	}
-
+	t := time.Now()
 	err = retryIfUnavailable(ctx, func(ctx context.Context) error {
 		_, err = snc.InitWorkspace(ctx, &wsdaemon.InitWorkspaceRequest{
 			Id: workspaceID,
@@ -744,8 +756,10 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			},
 			Initializer:           &initializer,
 			FullWorkspaceBackup:   fullWorkspaceBackup,
+			PersistentVolumeClaim: pvcFeatureEnabled,
 			ContentManifest:       contentManifest,
 			RemoteStorageDisabled: shouldDisableRemoteStorage(pod),
+			StorageQuotaBytes:     storage.Value(),
 		})
 		return err
 	})
@@ -755,6 +769,12 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	} else {
 		err = handleGRPCError(ctx, err)
 	}
+	wsType := pod.Labels[wsk8s.TypeLabel]
+	hist, errHist := m.manager.metrics.initializeTimeHistVec.GetMetricWithLabelValues(wsType)
+	if errHist != nil {
+		log.WithError(errHist).WithField("type", wsType).Warn("cannot get initialize time histogram metric")
+	}
+	hist.Observe(time.Since(t).Seconds())
 	if err != nil {
 		return xerrors.Errorf("cannot initialize workspace: %w", err)
 	}
@@ -850,6 +870,30 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			return false, nil, nil
 		}
 
+		// todo(pavel): once we add snapshot objects, this will be moved to a better place
+		if wso.Pod != nil {
+			_, pvcFeatureEnabled := wso.Pod.Labels[pvcWorkspaceFeatureAnnotation]
+			if pvcFeatureEnabled {
+				// pvc name is the same as pod name
+				pvcName := wso.Pod.Name
+				log.Infof("Deleting PVC: %s", pvcName)
+				// todo: once we add snapshot objects, this will be changed to create snapshot object first
+				pvcErr := m.manager.Clientset.Delete(ctx,
+					&corev1.PersistentVolumeClaim{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      pvcName,
+							Namespace: m.manager.Config.Namespace,
+						},
+					},
+				)
+				span.LogKV("event", "pvc deleted")
+
+				if pvcErr != nil {
+					log.WithError(pvcErr).Errorf("failed to delete pvc `%s`", pvcName)
+				}
+			}
+		}
+
 		// Maybe the workspace never made it to a phase where we actually initialized a workspace.
 		// Assuming that once we've had a nodeName we've spoken to ws-daemon it's safe to assume that if
 		// we don't have a nodeName we don't need to dipose the workspace.
@@ -878,6 +922,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			m.finalizerMapLock.Unlock()
 		}()
 
+		err = m.manager.markWorkspace(ctx, workspaceID, addMark(startedDisposalAnnotation, "true"))
+		if err != nil {
+			log.WithError(err).Error("was unable to update pod's start disposal state - this might cause an incorrect disposal state")
+		}
+
 		if doSnapshot {
 			// if this is a prebuild take a snapshot and mark the workspace
 			var res *wsdaemon.TakeSnapshotResponse
@@ -886,6 +935,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				tracing.LogError(span, err)
 				log.WithError(err).Warn("cannot take snapshot")
 				err = xerrors.Errorf("cannot take snapshot: %v", err)
+				err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+				if err != nil {
+					log.WithError(err).Warn("was unable to mark workspace as failed")
+				}
 			}
 
 			if res != nil {
@@ -894,6 +947,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					tracing.LogError(span, err)
 					log.WithError(err).Warn("cannot mark headless workspace with snapshot - that's one prebuild lost")
 					err = xerrors.Errorf("cannot remember snapshot: %v", err)
+					err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+					if err != nil {
+						log.WithError(err).Warn("was unable to mark workspace as failed")
+					}
 				}
 			}
 		}
@@ -916,6 +973,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		backupError error
 		gitStatus   *csapi.GitStatus
 	)
+	t := time.Now()
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		span.LogKV("attempt", i)
 		didSometing, gs, err := doFinalize()
@@ -959,6 +1017,12 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 		break
 	}
+	wsType := api.WorkspaceType_name[int32(tpe)]
+	hist, err := m.manager.metrics.finalizeTimeHistVec.GetMetricWithLabelValues(wsType)
+	if err != nil {
+		log.WithError(err).WithField("type", wsType).Warn("cannot get finalize time histogram metric")
+	}
+	hist.Observe(time.Since(t).Seconds())
 
 	disposalStatus = &workspaceDisposalStatus{
 		BackupComplete: true,

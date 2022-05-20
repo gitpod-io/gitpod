@@ -56,6 +56,7 @@ import {
     ImageConfigFile,
     ProjectEnvVar,
     ImageBuildLogInfo,
+    IDESettings,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -103,11 +104,12 @@ import * as grpc from "@grpc/grpc-js";
 import { IDEConfig, IDEConfigService } from "../ide-config";
 import { EnvVarWithValue } from "@gitpod/gitpod-protocol/src/protocol";
 import { WithReferrerContext } from "@gitpod/gitpod-protocol/lib/protocol";
-import { IDEOption } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
+import { IDEService } from "../ide-service";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -118,11 +120,71 @@ export interface StartWorkspaceOptions {
 const MAX_INSTANCE_START_RETRIES = 2;
 const INSTANCE_START_RETRY_INTERVAL_SECONDS = 2;
 
+// TODO(ak) move to IDE service
+export const migrationIDESettings = (user: User) => {
+    if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.0") {
+        return;
+    }
+    const newIDESettings: IDESettings = {
+        settingVersion: "2.0",
+    };
+    const ideSettings = user.additionalData.ideSettings;
+    if (ideSettings.useDesktopIde) {
+        if (ideSettings.defaultDesktopIde === "code-desktop") {
+            newIDESettings.defaultIde = "code-desktop";
+        } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
+            newIDESettings.defaultIde = "code-desktop";
+            newIDESettings.useLatestVersion = true;
+        } else {
+            newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
+            newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
+        }
+    } else {
+        const useLatest = ideSettings.defaultIde === "code-latest";
+        newIDESettings.defaultIde = "code";
+        newIDESettings.useLatestVersion = useLatest;
+    }
+    return newIDESettings;
+};
+
+// TODO(ak) move to IDE service
+export const chooseIDE = (
+    ideChoice: string,
+    ideOptions: IDEOptions,
+    useLatest: boolean,
+    hasIdeSettingPerm: boolean,
+) => {
+    const defaultIDEOption = ideOptions.options[ideOptions.defaultIde];
+    const defaultIdeImage = useLatest ? defaultIDEOption.latestImage ?? defaultIDEOption.image : defaultIDEOption.image;
+    const data: { desktopIdeImage?: string; ideImage: string } = {
+        ideImage: defaultIdeImage,
+    };
+    const chooseOption = ideOptions.options[ideChoice] ?? defaultIDEOption;
+    const isDesktopIde = chooseOption.type === "desktop";
+    if (isDesktopIde) {
+        data.desktopIdeImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
+        if (hasIdeSettingPerm) {
+            data.desktopIdeImage = data.desktopIdeImage || ideChoice;
+        }
+    } else {
+        data.ideImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
+        if (hasIdeSettingPerm) {
+            data.ideImage = data.ideImage || ideChoice;
+        }
+    }
+    if (!data.ideImage) {
+        data.ideImage = defaultIdeImage;
+        // throw new Error("cannot choose correct browser ide");
+    }
+    return data;
+};
+
 @injectable()
 export class WorkspaceStarter {
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
     @inject(Config) protected readonly config: Config;
     @inject(IDEConfigService) private readonly ideConfigService: IDEConfigService;
+    @inject(IDEService) private readonly ideService: IDEService;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(TracedUserDB) protected readonly userDB: DBWithTracing<UserDB>;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
@@ -148,8 +210,17 @@ export class WorkspaceStarter {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
         span.setTag("workspaceId", workspace.id);
 
+        if (workspace.projectId && workspace.type === "regular") {
+            /* tslint:disable-next-line */
+            /** no await */ this.projectDB.updateProjectUsage(workspace.projectId, {
+                lastWorkspaceStart: new Date().toISOString(),
+            });
+        }
+
         options = options || {};
         try {
+            await this.checkBlockedRepository(user, workspace.contextURL);
+
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
             // Whenever a such a workspace is re-started we'll give it an image source now. This is in line with how this thing used to work.
@@ -261,6 +332,22 @@ export class WorkspaceStarter {
         } finally {
             span.finish();
         }
+    }
+
+    protected async checkBlockedRepository(user: User, contextURL: string) {
+        const hit = this.config.blockedRepositories.find((r) => !!contextURL && r.urlRegExp.test(contextURL));
+        if (!hit) {
+            return;
+        }
+        if (hit.blockUser) {
+            try {
+                await this.userService.blockUser(user.id, true);
+                log.info({ userId: user.id }, "Blocked user.", { contextURL });
+            } catch (error) {
+                log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });
+            }
+        }
+        throw new Error(`${contextURL} is blocklisted on Gitpod.`);
     }
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself.
@@ -533,26 +620,42 @@ export class WorkspaceStarter {
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
     ): Promise<WorkspaceInstance> {
+        //#endregion IDE resolution TODO(ak) move to IDE service
+        // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
+        delete ideConfig.ideOptions.options["code-latest"];
+        delete ideConfig.ideOptions.options["code-desktop-insiders"];
+
+        const migratted = migrationIDESettings(user);
+        if (user.additionalData?.ideSettings && migratted) {
+            user.additionalData.ideSettings = migratted;
+        }
+
+        const ideChoice = user.additionalData?.ideSettings?.defaultIde;
+        const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
+
         // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
         //           give that value precedence over the default choice.
         const configuration: WorkspaceInstanceConfiguration = {
             ideImage: ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image,
             supervisorImage: ideConfig.supervisorImage,
+            ideConfig: {
+                // We only check user setting because if code(insider) but desktopIde has no latestImage
+                // it still need to notice user that this workspace is using latest IDE
+                useLatest: user.additionalData?.ideSettings?.useLatestVersion,
+            },
         };
 
-        const ideChoice = user.additionalData?.ideSettings?.defaultIde;
         if (!!ideChoice) {
-            const mappedImage = ideConfig.ideOptions.options[ideChoice];
-            if (!!mappedImage && mappedImage.image) {
-                configuration.ideImage = mappedImage.image;
-            } else if (this.authService.hasPermission(user, "ide-settings")) {
-                // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
-                // For now, this feature requires special permissions.
-                configuration.ideImage = ideChoice;
-            }
+            const choose = chooseIDE(
+                ideChoice,
+                ideConfig.ideOptions,
+                useLatest,
+                this.authService.hasPermission(user, "ide-settings"),
+            );
+            configuration.ideImage = choose.ideImage;
+            configuration.desktopIdeImage = choose.desktopIdeImage;
         }
 
-        const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
         const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
         if (referrerIde) {
             configuration.desktopIdeImage = useLatest
@@ -562,8 +665,8 @@ export class WorkspaceStarter {
                 // A user does not have IDE settings configured yet configure it with a referrer ide as default.
                 const additionalData = user?.additionalData || {};
                 const settings = additionalData.ideSettings || {};
-                settings.useDesktopIde = true;
-                settings.defaultDesktopIde = referrerIde.id;
+                settings.settingVersion = "2.0";
+                settings.defaultIde = referrerIde.id;
                 additionalData.ideSettings = settings;
                 user.additionalData = additionalData;
                 this.userDB
@@ -573,24 +676,8 @@ export class WorkspaceStarter {
                         log.error({ userId: user.id }, "cannot configure default desktop ide", e);
                     });
             }
-        } else {
-            const useDesktopIdeChoice = user.additionalData?.ideSettings?.useDesktopIde || false;
-            if (useDesktopIdeChoice) {
-                const desktopIdeChoice = user.additionalData?.ideSettings?.defaultDesktopIde;
-                if (!!desktopIdeChoice) {
-                    const mappedImage = ideConfig.ideOptions.options[desktopIdeChoice];
-                    if (!!mappedImage && mappedImage.image) {
-                        configuration.desktopIdeImage = useLatest
-                            ? mappedImage.latestImage ?? mappedImage.image
-                            : mappedImage.image;
-                    } else if (this.authService.hasPermission(user, "ide-settings")) {
-                        // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
-                        // For now, this feature requires special permissions.
-                        configuration.desktopIdeImage = desktopIdeChoice;
-                    }
-                }
-            }
         }
+        //#endregion
 
         let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
         featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
@@ -643,6 +730,7 @@ export class WorkspaceStarter {
         return instance;
     }
 
+    // TODO(ak) move to IDE service
     protected resolveReferrerIDE(
         workspace: Workspace,
         user: User,
@@ -868,6 +956,7 @@ export class WorkspaceStarter {
             req.setSource(src);
             req.setAuth(auth);
             req.setForceRebuild(forceRebuild);
+            req.setTriggeredBy(user.id);
 
             // Make sure we persist logInfo as soon as we retrieve it
             const imageBuildLogInfo = new Deferred<ImageBuildLogInfo>();
@@ -883,7 +972,12 @@ export class WorkspaceStarter {
                         .updateInstancePartial(instance.id, { imageBuildInfo })
                         .catch((err) => log.error("error writing image build log info to the DB", err));
                 })
-                .catch((err) => log.warn("image build: never received log info"));
+                .catch((err) =>
+                    log.warn("image build: never received log info", err, {
+                        instanceId: instance.id,
+                        workspaceId: instance.workspaceId,
+                    }),
+                );
 
             const result = await client.build({ span }, req, imageBuildLogInfo);
 
@@ -1066,12 +1160,13 @@ export class WorkspaceStarter {
         envvars.push(contextEnv);
 
         log.debug("Workspace config", workspace.config);
-        if (!!workspace.config.tasks) {
-            // The task config is interpreted by Theia only, there's little point in transforming it into something
+        const tasks = this.ideService.resolveGitpodTasks(workspace);
+        if (tasks.length) {
+            // The task config is interpreted by supervisor only, there's little point in transforming it into something
             // wsman understands and back into the very same structure.
             const ev = new EnvironmentVariable();
             ev.setName("GITPOD_TASKS");
-            ev.setValue(JSON.stringify(workspace.config.tasks));
+            ev.setValue(JSON.stringify(tasks));
             envvars.push(ev);
         }
 
@@ -1175,7 +1270,6 @@ export class WorkspaceStarter {
         }
 
         const spec = new StartWorkspaceSpec();
-        spec.setCheckoutLocation(checkoutLocation!);
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
         spec.setGit(this.createGitSpec(workspace, user));
@@ -1188,10 +1282,10 @@ export class WorkspaceStarter {
         spec.setIdeImage(startWorkspaceSpecIDEImage);
         spec.setDeprecatedIdeImage(ideImage);
         spec.setWorkspaceImage(instance.workspaceImage);
-        spec.setWorkspaceLocation(workspace.config.workspaceLocation || spec.getCheckoutLocation());
+        spec.setWorkspaceLocation(workspace.config.workspaceLocation || checkoutLocation);
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
         if (workspace.type === "regular") {
-            spec.setTimeout(await userTimeoutPromise);
+            spec.setTimeout(this.userService.workspaceTimeoutToDuration(await userTimeoutPromise));
         }
         spec.setAdmission(admissionLevel);
         return spec;
@@ -1317,7 +1411,11 @@ export class WorkspaceStarter {
         const disp = new DisposableCollection();
 
         if (mustHaveBackup) {
-            result.setBackup(new FromBackupInitializer());
+            const backup = new FromBackupInitializer();
+            if (CommitContext.is(context)) {
+                backup.setCheckoutLocation(context.checkoutLocation || "");
+            }
+            result.setBackup(backup);
         } else if (SnapshotContext.is(context)) {
             const snapshot = new SnapshotInitializer();
             snapshot.setSnapshot(context.snapshotBucketId);

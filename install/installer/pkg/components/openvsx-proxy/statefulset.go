@@ -28,6 +28,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	const redisContainerName = "redis"
 	return []runtime.Object{&appsv1.StatefulSet{
 		TypeMeta: common.TypeMetaStatefulSet,
 		ObjectMeta: metav1.ObjectMeta{
@@ -41,7 +42,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			ServiceName: Component,
 			// todo(sje): receive config value
-			Replicas: pointer.Int32(1),
+			Replicas: common.Replicas(ctx, Component),
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      Component,
@@ -52,7 +53,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				Spec: v1.PodSpec{
-					Affinity:                      common.Affinity(cluster.AffinityLabelIDE),
+					Affinity:                      common.NodeAffinity(cluster.AffinityLabelIDE),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",
@@ -68,7 +69,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}},
 					Containers: []v1.Container{{
 						Name:  Component,
-						Image: common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.OpenVSXProxy.Version),
+						Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.OpenVSXProxy.Version),
 						Args:  []string{"/config/config.json"},
 						ReadinessProbe: &v1.Probe{
 							ProbeHandler: v1.ProbeHandler{
@@ -79,12 +80,12 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 						},
 						ImagePullPolicy: v1.PullIfNotPresent,
-						Resources: v1.ResourceRequirements{
+						Resources: common.ResourceRequirements(ctx, Component, Component, v1.ResourceRequirements{
 							Requests: v1.ResourceList{
 								"cpu":    resource.MustParse("1m"),
-								"memory": resource.MustParse("2.25Gi"),
+								"memory": resource.MustParse("150Mi"),
 							},
-						},
+						}),
 						Ports: []v1.ContainerPort{{
 							Name:          PortName,
 							ContainerPort: ContainerPort,
@@ -99,8 +100,54 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Env: common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
 						),
-					}},
+					}, {
+						Name:  redisContainerName,
+						Image: ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/redis", "6.2"),
+						Command: []string{
+							"redis-server",
+							"/config/redis.conf",
+						},
+						Env: []v1.EnvVar{{
+							Name:  "MASTER",
+							Value: "true",
+						}},
+						ImagePullPolicy: "IfNotPresent",
+						Ports: []v1.ContainerPort{{
+							ContainerPort: 6379,
+						}},
+						Resources: common.ResourceRequirements(ctx, Component, redisContainerName, v1.ResourceRequirements{
+							Requests: v1.ResourceList{
+								"cpu":    resource.MustParse("1m"),
+								"memory": resource.MustParse("150Mi"),
+							},
+						}),
+						VolumeMounts: []v1.VolumeMount{{
+							Name:      "config",
+							MountPath: "/config",
+						}, {
+							Name:      "redis-data",
+							MountPath: "/data",
+						}},
+					},
+					},
 				},
+			},
+			VolumeClaimTemplates: []v1.PersistentVolumeClaim{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "redis-data",
+					Labels: labels,
+				},
+				Spec: v1.PersistentVolumeClaimSpec{
+					AccessModes: []v1.PersistentVolumeAccessMode{
+						v1.ReadWriteOnce,
+					},
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							"storage": resource.MustParse("8Gi"),
+						},
+					},
+				},
+			},
 			},
 		},
 	}}, nil

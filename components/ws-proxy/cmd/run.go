@@ -7,11 +7,26 @@ package cmd
 import (
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/bombsimon/logrusr/v2"
+	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
+	runtime_client "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
@@ -19,15 +34,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
-	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/healthz"
 )
 
 var (
@@ -64,21 +70,24 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal(err, "unable to start manager")
 		}
 
+		workspaceInfoProvider := proxy.NewRemoteWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
+		err = workspaceInfoProvider.SetupWithManager(mgr)
+		if err != nil {
+			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Pod")
+		}
+
 		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 			log.WithError(err).Fatal("unable to set up health check")
 		}
 		if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 			log.WithError(err).Fatal(err, "unable to set up ready check")
 		}
+		if err := mgr.AddReadyzCheck("readyz", readyCheck(mgr.GetClient(), cfg.Namespace)); err != nil {
+			log.WithError(err).Fatal(err, "unable to set up ready check")
+		}
 
 		if cfg.PProfAddr != "" {
 			go pprof.Serve(cfg.PProfAddr)
-		}
-
-		workspaceInfoProvider := proxy.NewRemoteWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
-		err = workspaceInfoProvider.SetupWithManager(mgr)
-		if err != nil {
-			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Pod")
 		}
 
 		log.Infof("workspace info provider started")
@@ -159,3 +168,21 @@ func init() {
 }
 
 var scheme = runtime.NewScheme()
+
+// Ready check that verify we can list pods
+func readyCheck(client runtime_client.Client, namespace string) func(*http.Request) error {
+	return func(*http.Request) error {
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
+		var wsProxyPod corev1.Pod
+		err := client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "readyz-pod"}, &wsProxyPod)
+		if errors.IsNotFound(err) {
+			// readyz-pod is not a valid name
+			// we just need to check there are no errors reaching the API server
+			return nil
+		}
+
+		return err
+	}
+}

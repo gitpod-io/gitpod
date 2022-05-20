@@ -55,19 +55,21 @@ type Workspace struct {
 	// workspace resides. If this workspace has no Git working copy, this field is an empty string.
 	CheckoutLocation string `json:"checkoutLocation"`
 
-	CreatedAt           time.Time        `json:"createdAt"`
-	DoBackup            bool             `json:"doBackup"`
-	Owner               string           `json:"owner"`
-	WorkspaceID         string           `json:"metaID"`
-	InstanceID          string           `json:"workspaceID"`
-	LastGitStatus       *csapi.GitStatus `json:"lastGitStatus"`
-	FullWorkspaceBackup bool             `json:"fullWorkspaceBackup"`
-	ContentManifest     []byte           `json:"contentManifest"`
+	CreatedAt             time.Time        `json:"createdAt"`
+	DoBackup              bool             `json:"doBackup"`
+	Owner                 string           `json:"owner"`
+	WorkspaceID           string           `json:"metaID"`
+	InstanceID            string           `json:"workspaceID"`
+	LastGitStatus         *csapi.GitStatus `json:"lastGitStatus"`
+	FullWorkspaceBackup   bool             `json:"fullWorkspaceBackup"`
+	PersistentVolumeClaim bool             `json:"persistentVolumeClaim"`
+	ContentManifest       []byte           `json:"contentManifest"`
 
 	ServiceLocNode   string `json:"serviceLocNode"`
 	ServiceLocDaemon string `json:"serviceLocDaemon"`
 
 	RemoteStorageDisabled bool `json:"remoteStorageDisabled,omitempty"`
+	StorageQuota          int  `json:"storageQuota,omitempty"`
 
 	XFSProjectID int `json:"xfsProjectID"`
 
@@ -215,6 +217,11 @@ func (s *Workspace) Dispose(ctx context.Context) (err error) {
 		return err
 	}
 
+	if s.PersistentVolumeClaim {
+		// nothing to dispose as files are on persistent volume claim
+		return nil
+	}
+
 	if !s.FullWorkspaceBackup {
 		err = os.RemoveAll(s.Location)
 	}
@@ -250,6 +257,28 @@ func (s *Workspace) SetGitStatus(status *csapi.GitStatus) error {
 	return s.persist()
 }
 
+func (s *Workspace) UpdateGitSafeDirectory(ctx context.Context) (err error) {
+	loc := s.Location
+	if loc == "" {
+		log.WithField("loc", loc).WithFields(s.OWI()).Debug("not updating Git safe directory of FWB workspace")
+		return nil
+	}
+
+	loc = filepath.Join(loc, s.CheckoutLocation)
+	if !git.IsWorkingCopy(loc) {
+		log.WithField("loc", loc).WithField("checkout location", s.CheckoutLocation).WithFields(s.OWI()).Warn("did not find a Git working copy - not updating safe directory")
+		return nil
+	}
+
+	c := git.Client{Location: loc}
+
+	err = c.Git(ctx, "config", "--global", "--add", "safe.directory", loc)
+	if err != nil {
+		log.WithError(err).WithFields(s.OWI()).Warn("cannot add safe directory into git global config")
+	}
+	return err
+}
+
 // UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
 func (s *Workspace) UpdateGitStatus(ctx context.Context) (res *csapi.GitStatus, err error) {
 	loc := s.Location
@@ -268,11 +297,12 @@ func (s *Workspace) UpdateGitStatus(ctx context.Context) (res *csapi.GitStatus, 
 
 	loc = filepath.Join(loc, s.CheckoutLocation)
 	if !git.IsWorkingCopy(loc) {
-		log.WithField("loc", loc).WithFields(s.OWI()).Debug("did not find a Git working copy - not updating Git status")
+		log.WithField("loc", loc).WithField("checkout location", s.CheckoutLocation).WithFields(s.OWI()).Debug("did not find a Git working copy - not updating Git status")
 		return nil, nil
 	}
 
 	c := git.Client{Location: loc}
+
 	stat, err := c.Status(ctx)
 	if err != nil {
 		return nil, err

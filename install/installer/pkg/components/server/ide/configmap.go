@@ -10,6 +10,8 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace/ide"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,14 +27,28 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	typeDesktop := "desktop"
 
 	codeDesktop := "code-desktop"
-	codeDesktopInsiders := "code-desktop-insiders"
 
 	intellij := "intellij"
 	goland := "goland"
 	pycharm := "pycharm"
 	phpstorm := "phpstorm"
+
+	resolveLatestImage := func(name string, tag string, bundledLatest versions.Versioned) string {
+		resolveLatest := true
+		ctx.WithExperimental(func(ucfg *experimental.Config) error {
+			if ucfg.IDE != nil && ucfg.IDE.ResolveLatest != nil {
+				resolveLatest = *ucfg.IDE.ResolveLatest
+			}
+			return nil
+		})
+		if resolveLatest {
+			return ctx.ImageName(ctx.Config.Repository, name, tag)
+		}
+		return ctx.ImageName(ctx.Config.Repository, name, bundledLatest.Version)
+	}
+
 	idecfg := IDEConfig{
-		SupervisorImage: common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
+		SupervisorImage: ctx.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 		IDEOptions: IDEOptions{
 			IDEClients: map[string]IDEClient{
 				"vscode": {
@@ -43,8 +59,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				"vscode-insiders": {
-					DefaultDesktopIDE: codeDesktopInsiders,
-					DesktopIDEs:       []string{codeDesktopInsiders},
+					DefaultDesktopIDE: codeDesktop,
+					DesktopIDEs:       []string{codeDesktop},
 					InstallationSteps: []string{
 						"If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'>VS Code Insiders</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
 					},
@@ -59,69 +75,53 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Options: map[string]IDEOption{
 				"code": {
-					OrderKey: pointer.String("00"),
-					Title:    "VS Code",
-					Type:     typeBrowser,
-					Logo:     getIdeLogoPath("vscode"),
-					Image:    common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
-				},
-				"code-latest": {
-					OrderKey:           pointer.String("01"),
-					Title:              "VS Code",
-					Type:               typeBrowser,
-					Logo:               getIdeLogoPath("vscodeInsiders"),
-					Tooltip:            pointer.String("Early access version, still subject to testing."),
-					Label:              pointer.String("Insiders"),
-					Image:              common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
-					ResolveImageDigest: pointer.Bool(true),
+					OrderKey:    pointer.String("00"),
+					Title:       "VS Code",
+					Type:        typeBrowser,
+					Label:       pointer.String("Browser"),
+					Logo:        getIdeLogoPath("vscode"),
+					Image:       ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
+					LatestImage: resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
 				},
 				codeDesktop: {
-					OrderKey: pointer.String("02"),
-					Title:    "VS Code",
-					Type:     typeDesktop,
-					Logo:     getIdeLogoPath("vscode"),
-					Image:    common.ImageName(ctx.Config.Repository, ide.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
-				},
-				codeDesktopInsiders: {
-					OrderKey: pointer.String("03"),
-					Title:    "VS Code",
-					Type:     typeDesktop,
-					Logo:     getIdeLogoPath("vscodeInsiders"),
-					Tooltip:  pointer.String("Visual Studio Code Insiders for early adopters."),
-					Label:    pointer.String("Insiders"),
-					Image:    common.ImageName(ctx.Config.Repository, ide.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
+					OrderKey:    pointer.String("02"),
+					Title:       "VS Code",
+					Type:        typeDesktop,
+					Logo:        getIdeLogoPath("vscode"),
+					Image:       ctx.ImageName(ctx.Config.Repository, ide.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
+					LatestImage: ctx.ImageName(ctx.Config.Repository, ide.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
 				},
 				intellij: {
 					OrderKey:    pointer.String("04"),
 					Title:       "IntelliJ IDEA",
 					Type:        typeDesktop,
 					Logo:        getIdeLogoPath("intellijIdeaLogo"),
-					Image:       common.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
-					LatestImage: common.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, "latest"),
+					Image:       ctx.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
+					LatestImage: resolveLatestImage(ide.IntelliJDesktopIDEImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJLatestImage),
 				},
 				goland: {
 					OrderKey:    pointer.String("05"),
 					Title:       "GoLand",
 					Type:        typeDesktop,
 					Logo:        getIdeLogoPath("golandLogo"),
-					Image:       common.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
-					LatestImage: common.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, "latest"),
+					Image:       ctx.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
+					LatestImage: resolveLatestImage(ide.GoLandDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandLatestImage),
 				},
 				pycharm: {
 					OrderKey:    pointer.String("06"),
 					Title:       "PyCharm",
 					Type:        typeDesktop,
 					Logo:        getIdeLogoPath("pycharmLogo"),
-					Image:       common.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmImage.Version),
-					LatestImage: common.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, "latest"),
+					Image:       ctx.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmImage.Version),
+					LatestImage: resolveLatestImage(ide.PyCharmDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmLatestImage),
 				},
 				phpstorm: {
 					OrderKey:    pointer.String("07"),
 					Title:       "PhpStorm",
 					Type:        typeDesktop,
 					Logo:        getIdeLogoPath("phpstormLogo"),
-					Image:       common.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormImage.Version),
-					LatestImage: common.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, "latest"),
+					Image:       ctx.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormImage.Version),
+					LatestImage: resolveLatestImage(ide.PhpStormDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormLatestImage),
 				},
 			},
 			DefaultIDE:        "code",

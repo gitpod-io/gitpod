@@ -52,6 +52,9 @@ type GitpodConfig struct {
 	// Configure VS Code integration
 	Vscode *Vscode `yaml:"vscode,omitempty"`
 
+	// Configure JetBrains integration
+	JetBrains *JetBrains `yaml:"jetbrains,omitempty"`
+
 	// Path to where the IDE's workspace should be opened.
 	WorkspaceLocation string `yaml:"workspaceLocation,omitempty"`
 }
@@ -140,6 +143,42 @@ type Vscode struct {
 
 	// List of extensions which should be installed for users of this workspace. The identifier of an extension is always '${publisher}.${name}'. For example: 'vscode.csharp'.
 	Extensions []string `yaml:"extensions,omitempty"`
+}
+
+// Configure JetBrains integration
+type JetBrains struct {
+
+	// List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.
+	Plugins []string `yaml:"plugins,omitempty"`
+
+	// Configure IntelliJ integration
+	IntelliJ *JetBrainsProduct `yaml:"intellij,omitempty"`
+
+	// Configure GoLand integration
+	GoLand *JetBrainsProduct `yaml:"goland,omitempty"`
+
+	// Configure PyCharm integration
+	PyCharm *JetBrainsProduct `yaml:"pycharm,omitempty"`
+
+	// Configure PhpStorm integration
+	PhpStorm *JetBrainsProduct `yaml:"phpstorm,omitempty"`
+}
+
+// Configure JetBrains product
+type JetBrainsProduct struct {
+
+	// List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.
+	Plugins []string `yaml:"plugins,omitempty"`
+
+	// Enable warming up of JetBrains product in prebuilds
+	Prebuilds *JetBrainsPrebuilds `yaml:"prebuilds,omitempty"`
+}
+
+// Enable warming up of JetBrains product in prebuilds
+type JetBrainsPrebuilds struct {
+
+	// Whether only stable, latest or both versions should be warmed up.
+	Version string `yaml:"version,omitempty"`
 }
 
 func (strct *Github) MarshalJSON() ([]byte, error) {

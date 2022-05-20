@@ -6,6 +6,8 @@ package cpulimit
 
 import (
 	"context"
+	"errors"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -98,11 +100,9 @@ type DispatchListener struct {
 }
 
 type workspace struct {
-	CFS        CFSController
-	OWI        logrus.Fields
-	BaseLimit  Bandwidth
-	BurstLimit Bandwidth
-	HardLimit  ResourceLimiter
+	CFS       CFSController
+	OWI       logrus.Fields
+	HardLimit ResourceLimiter
 
 	lastThrottled uint64
 }
@@ -116,9 +116,13 @@ func (d *DispatchListener) source(context.Context) ([]Workspace, error) {
 	for id, w := range d.workspaces {
 		usage, err := w.CFS.Usage()
 		if err != nil {
-			log.WithFields(w.OWI).WithError(err).Warn("cannot read CPU usage")
+			if !errors.Is(err, os.ErrNotExist) {
+				log.WithFields(w.OWI).WithError(err).Warn("cannot read CPU usage")
+			}
+
 			continue
 		}
+
 		throttled, err := w.CFS.NrThrottled()
 		if err != nil {
 			log.WithFields(w.OWI).WithError(err).Warn("cannot read times cgroup was throttled")
@@ -137,8 +141,6 @@ func (d *DispatchListener) source(context.Context) ([]Workspace, error) {
 			ID:          id,
 			NrThrottled: throttled,
 			Usage:       usage,
-			BaseLimit:   w.BaseLimit,
-			BurstLimit:  w.BurstLimit,
 		})
 	}
 	return res, nil
@@ -219,8 +221,7 @@ func (d *DispatchListener) WorkspaceUpdated(ctx context.Context, ws *dispatch.Wo
 		if err != nil {
 			return xerrors.Errorf("cannot enforce fixed CPU limit: %w", err)
 		}
-		wsinfo.BaseLimit = BandwidthFromQuantity(limit)
-		wsinfo.BurstLimit = BandwidthFromQuantity(limit)
+		wsinfo.HardLimit = FixedLimiter(BandwidthFromQuantity(limit))
 	}
 
 	return nil

@@ -416,6 +416,7 @@ export class HeadlessLogService {
 function isSupervisorAvailableSoon(wsi: WorkspaceInstance): boolean {
     switch (wsi.status.phase) {
         case "creating":
+        case "building":
         case "preparing":
         case "initializing":
         case "pending":

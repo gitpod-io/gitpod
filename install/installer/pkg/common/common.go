@@ -16,7 +16,6 @@ import (
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
-	"github.com/docker/distribution/reference"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -50,8 +49,7 @@ func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 
 	return []corev1.EnvVar{
 		{Name: "GITPOD_DOMAIN", Value: cfg.Domain},
-		{Name: "GITPOD_INSTALLATION_LONGNAME", Value: cfg.Domain},  // todo(sje): figure out these values
-		{Name: "GITPOD_INSTALLATION_SHORTNAME", Value: cfg.Domain}, // todo(sje): figure out these values
+		{Name: "GITPOD_INSTALLATION_SHORTNAME", Value: cfg.Metadata.InstallationShortname},
 		{Name: "GITPOD_REGION", Value: cfg.Metadata.Region},
 		{Name: "HOST_URL", Value: "https://" + cfg.Domain},
 		{Name: "KUBE_NAMESPACE", ValueFrom: &corev1.EnvVarSource{
@@ -64,7 +62,33 @@ func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 	}
 }
 
-func TracingEnv(context *RenderContext) (res []corev1.EnvVar) {
+func WorkspaceTracingEnv(context *RenderContext) (res []corev1.EnvVar) {
+	var tracing *experimental.Tracing
+
+	_ = context.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Workspace != nil {
+			tracing = cfg.Workspace.Tracing
+		}
+		return nil
+	})
+
+	return tracingEnv(context, tracing)
+}
+
+func WebappTracingEnv(context *RenderContext) (res []corev1.EnvVar) {
+	var tracing *experimental.Tracing
+
+	_ = context.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil {
+			tracing = cfg.WebApp.Tracing
+		}
+		return nil
+	})
+
+	return tracingEnv(context, tracing)
+}
+
+func tracingEnv(context *RenderContext, tracing *experimental.Tracing) (res []corev1.EnvVar) {
 	if context.Config.Observability.Tracing == nil {
 		res = append(res, corev1.EnvVar{Name: "JAEGER_DISABLED", Value: "true"})
 		return
@@ -83,17 +107,14 @@ func TracingEnv(context *RenderContext) (res []corev1.EnvVar) {
 	samplerType := experimental.TracingSampleTypeConst
 	samplerParam := "1"
 
-	_ = context.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg.Workspace != nil && ucfg.Workspace.Tracing != nil {
-			if ucfg.Workspace.Tracing.SamplerType != nil {
-				samplerType = *ucfg.Workspace.Tracing.SamplerType
-			}
-			if ucfg.Workspace.Tracing.SamplerParam != nil {
-				samplerParam = strconv.FormatFloat(*ucfg.Workspace.Tracing.SamplerParam, 'f', -1, 64)
-			}
+	if tracing != nil {
+		if tracing.SamplerType != nil {
+			samplerType = *tracing.SamplerType
 		}
-		return nil
-	})
+		if tracing.SamplerParam != nil {
+			samplerParam = strconv.FormatFloat(*tracing.SamplerParam, 'f', -1, 64)
+		}
+	}
 
 	res = append(res,
 		corev1.EnvVar{Name: "JAEGER_SAMPLER_TYPE", Value: string(samplerType)},
@@ -248,7 +269,7 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "database-waiter",
-		Image: ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
+		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
 		Args: []string{
 			"-v",
 			"database",
@@ -266,7 +287,7 @@ func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "msgbus-waiter",
-		Image: ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
+		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
 		Args: []string{
 			"-v",
 			"messagebus",
@@ -282,17 +303,21 @@ func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 }
 
 func KubeRBACProxyContainer(ctx *RenderContext) *corev1.Container {
+	return KubeRBACProxyContainerWithConfig(ctx, 9500, "http://127.0.0.1:9500/")
+}
+
+func KubeRBACProxyContainerWithConfig(ctx *RenderContext, listenPort int32, upstream string) *corev1.Container {
 	return &corev1.Container{
 		Name:  "kube-rbac-proxy",
-		Image: ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
+		Image: ctx.ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 		Args: []string{
 			"--v=5",
 			"--logtostderr",
-			"--insecure-listen-address=[$(IP)]:9500",
-			"--upstream=http://127.0.0.1:9500/",
+			fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", listenPort),
+			fmt.Sprintf("--upstream=%s", upstream),
 		},
 		Ports: []corev1.ContainerPort{
-			{Name: "metrics", ContainerPort: 9500},
+			{Name: "metrics", ContainerPort: listenPort},
 		},
 		Env: []corev1.EnvVar{
 			{
@@ -317,7 +342,7 @@ func KubeRBACProxyContainer(ctx *RenderContext) *corev1.Container {
 	}
 }
 
-func Affinity(orLabels ...string) *corev1.Affinity {
+func NodeAffinity(orLabels ...string) *corev1.Affinity {
 	var terms []corev1.NodeSelectorTerm
 	for _, lbl := range orLabels {
 		terms = append(terms, corev1.NodeSelectorTerm{
@@ -339,31 +364,44 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 	}
 }
 
-func RepoName(repo, name string) string {
-	var ref string
-	if repo == "" {
-		ref = name
-	} else {
-		ref = fmt.Sprintf("%s/%s", strings.TrimSuffix(repo, "/"), name)
-	}
-	pref, err := reference.ParseNormalizedNamed(ref)
-	if err != nil {
-		panic(fmt.Sprintf("cannot parse image repo %s: %v", ref, err))
-	}
-	return pref.String()
+func IsDatabaseMigrationDisabled(ctx *RenderContext) bool {
+	disableMigration := false
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil {
+			disableMigration = cfg.WebApp.DisableMigration
+		}
+		return nil
+	})
+	return disableMigration
 }
 
-func ImageName(repo, name, tag string) string {
-	ref := fmt.Sprintf("%s:%s", RepoName(repo, name), tag)
-	pref, err := reference.ParseNamed(ref)
-	if err != nil {
-		panic(fmt.Sprintf("cannot parse image ref %s: %v", ref, err))
-	}
-	if _, ok := pref.(reference.Tagged); !ok {
-		panic(fmt.Sprintf("image ref %s has no tag: %v", ref, err))
-	}
+func Replicas(ctx *RenderContext, component string) *int32 {
+	replicas := int32(1)
 
-	return ref
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Common != nil && cfg.Common.PodConfig[component] != nil {
+			if cfg.Common.PodConfig[component].Replicas != nil {
+				replicas = *cfg.Common.PodConfig[component].Replicas
+			}
+		}
+		return nil
+	})
+	return &replicas
+}
+
+func ResourceRequirements(ctx *RenderContext, component, containerName string, defaults corev1.ResourceRequirements) corev1.ResourceRequirements {
+	resources := defaults
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Common != nil && cfg.Common.PodConfig[component] != nil {
+			if cfg.Common.PodConfig[component].Resources[containerName] != nil {
+				resources = *cfg.Common.PodConfig[component].Resources[containerName]
+			}
+		}
+		return nil
+	})
+
+	return resources
 }
 
 // ObjectHash marshals the objects to YAML and produces a sha256 hash of the output.

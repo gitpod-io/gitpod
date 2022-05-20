@@ -185,7 +185,8 @@ export class CodeSyncService {
                     value = await this.getTheiaCodeSyncResource(req.user.id);
                     version = 5;
                 } else if (resourceKey === SyncResource.Settings) {
-                    const settings = await this.userStorageResourcesDB.get(req.user.id, userSettingsUri);
+                    let settings = await this.userStorageResourcesDB.get(req.user.id, userSettingsUri);
+                    settings = settings === "" ? "{}" : settings;
                     value = JSON.stringify(<ISettingsSyncContent>{ settings });
                     version = 2;
                 }

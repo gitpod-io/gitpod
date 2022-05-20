@@ -13,13 +13,14 @@ import { UserContext } from "./user-context";
 import { TeamsContext } from "./teams/teams-context";
 import { ThemeContext } from "./theme-context";
 import { AdminContext } from "./admin-context";
+import { LicenseContext } from "./license-context";
 import { getGitpodService } from "./service/service";
 import { shouldSeeWhatsNew, WhatsNew } from "./whatsnew/WhatsNew";
 import gitpodIcon from "./icons/gitpod.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useHistory } from "react-router-dom";
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from "./Analytics";
-import { User } from "@gitpod/gitpod-protocol";
+import { ContextURL, LicenseInfo, User } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Experiment } from "./experiments";
 import { workspacesPathMain } from "./workspaces/workspaces.routes";
@@ -44,6 +45,9 @@ import {
 import { refreshSearchData } from "./components/RepositoryFinder";
 import { StartWorkspaceModal } from "./workspaces/StartWorkspaceModal";
 import { parseProps } from "./start/StartWorkspace";
+import SelectIDEModal from "./settings/SelectIDEModal";
+import { StartPage, StartPhase } from "./start/StartPage";
+import { isGitpodIo } from "./utils";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -61,6 +65,7 @@ const NewTeam = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/New
 const JoinTeam = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/JoinTeam"));
 const Members = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/Members"));
 const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/TeamSettings"));
+const TeamBilling = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/TeamBilling"));
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/NewProject"));
 const ConfigureProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ConfigureProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Projects"));
@@ -77,18 +82,10 @@ const AdminSettings = React.lazy(() => import(/* webpackPrefetch: true */ "./adm
 const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/ProjectsSearch"));
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/TeamsSearch"));
 const OAuthClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ "./OauthClientApproval"));
+const License = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/License"));
 
 function Loading() {
     return <></>;
-}
-
-function isGitpodIo() {
-    return (
-        window.location.hostname === "gitpod.io" ||
-        window.location.hostname === "gitpod-staging.com" ||
-        window.location.hostname.endsWith("gitpod-dev.com") ||
-        window.location.hostname.endsWith("gitpod-io-dev.com")
-    );
 }
 
 function isWebsiteSlug(pathName: string) {
@@ -119,6 +116,28 @@ function isWebsiteSlug(pathName: string) {
     return slugs.some((slug) => pathName.startsWith("/" + slug + "/") || pathName === "/" + slug);
 }
 
+// A wrapper for <Route> that redirects to the workspaces screen if the user isn't a admin.
+// This wrapper only accepts the component property
+function AdminRoute({ component }: any) {
+    const { user } = useContext(UserContext);
+    return (
+        <Route
+            render={({ location }: any) =>
+                user?.rolesOrPermissions?.includes("admin") ? (
+                    <Route component={component}></Route>
+                ) : (
+                    <Redirect
+                        to={{
+                            pathname: "/workspaces",
+                            state: { from: location },
+                        }}
+                    />
+                )
+            }
+        />
+    );
+}
+
 export function getURLHash() {
     return window.location.hash.replace(/^[#/]+/, "");
 }
@@ -128,9 +147,11 @@ function App() {
     const { teams, setTeams } = useContext(TeamsContext);
     const { setAdminSettings } = useContext(AdminContext);
     const { setIsDark } = useContext(ThemeContext);
+    const { setLicense } = useContext(LicenseContext);
 
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
+    const [showUserIdePreference, setShowUserIdePreference] = useState(false);
     const [isSetupRequired, setSetupRequired] = useState(false);
     const history = useHistory();
 
@@ -164,6 +185,9 @@ function App() {
                 if (user?.rolesOrPermissions?.includes("admin")) {
                     const adminSettings = await getGitpodService().server.adminGetSettings();
                     setAdminSettings(adminSettings);
+
+                    var license: LicenseInfo = await getGitpodService().server.adminGetLicense();
+                    setLicense(license);
                 }
             } catch (error) {
                 console.error(error);
@@ -281,6 +305,7 @@ function App() {
     if (!user) {
         return <Login />;
     }
+
     if (window.location.pathname.startsWith("/blocked")) {
         return (
             <div className="mt-48 text-center">
@@ -340,11 +365,12 @@ function App() {
                     <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
                     <Route path="/from-referrer" exact component={FromReferrer} />
 
-                    <Route path="/admin/users" component={UserSearch} />
-                    <Route path="/admin/teams" component={TeamsSearch} />
-                    <Route path="/admin/workspaces" component={WorkspacesSearch} />
-                    <Route path="/admin/settings" component={AdminSettings} />
-                    <Route path="/admin/projects" component={ProjectsSearch} />
+                    <AdminRoute path="/admin/users" component={UserSearch} />
+                    <AdminRoute path="/admin/teams" component={TeamsSearch} />
+                    <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
+                    <AdminRoute path="/admin/projects" component={ProjectsSearch} />
+                    <AdminRoute path="/admin/license" component={License} />
+                    <AdminRoute path="/admin/settings" component={AdminSettings} />
 
                     <Route path={["/", "/login"]} exact>
                         <Redirect to={workspacesPathMain} />
@@ -374,6 +400,9 @@ function App() {
                             path={projectsPathMainWithParams}
                             render={(props) => {
                                 const { resourceOrPrebuild } = props.match.params;
+                                if (resourceOrPrebuild === "prebuilds") {
+                                    return <Prebuilds />;
+                                }
                                 if (resourceOrPrebuild === "settings") {
                                     return <ProjectSettings />;
                                 }
@@ -382,9 +411,6 @@ function App() {
                                 }
                                 if (resourceOrPrebuild === "variables") {
                                     return <ProjectVariables />;
-                                }
-                                if (resourceOrPrebuild === "prebuilds") {
-                                    return <Prebuilds />;
                                 }
                                 return resourceOrPrebuild ? <Prebuild /> : <Project />;
                             }}
@@ -417,6 +443,12 @@ function App() {
                                     if (maybeProject === "settings") {
                                         return <TeamSettings />;
                                     }
+                                    if (maybeProject === "billing") {
+                                        return <TeamBilling />;
+                                    }
+                                    if (resourceOrPrebuild === "prebuilds") {
+                                        return <Prebuilds />;
+                                    }
                                     if (resourceOrPrebuild === "settings") {
                                         return <ProjectSettings />;
                                     }
@@ -425,9 +457,6 @@ function App() {
                                     }
                                     if (resourceOrPrebuild === "variables") {
                                         return <ProjectVariables />;
-                                    }
-                                    if (resourceOrPrebuild === "prebuilds") {
-                                        return <Prebuilds />;
                                     }
                                     return resourceOrPrebuild ? <Prebuild /> : <Project />;
                                 }}
@@ -465,12 +494,31 @@ function App() {
         );
         return <div></div>;
     }
+    // Prefix with `/#referrer` will specify an IDE for workspace
+    // We don't need to show IDE preference in this case
+    const shouldUserIdePreferenceShown = User.isOnboardingUser(user) && !hash.startsWith(ContextURL.REFERRER_PREFIX);
+    if (shouldUserIdePreferenceShown !== showUserIdePreference) {
+        setShowUserIdePreference(shouldUserIdePreferenceShown);
+    }
+
     const isCreation = window.location.pathname === "/" && hash !== "";
     const isWsStart = /\/start\/?/.test(window.location.pathname) && hash !== "";
     if (isWhatsNewShown) {
         toRender = <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     } else if (isCreation) {
-        toRender = <CreateWorkspace contextUrl={hash} />;
+        if (showUserIdePreference) {
+            toRender = (
+                <StartPage phase={StartPhase.Checking}>
+                    <SelectIDEModal
+                        onClose={() => {
+                            setShowUserIdePreference(false);
+                        }}
+                    />
+                </StartPage>
+            );
+        } else {
+            toRender = <CreateWorkspace contextUrl={hash} />;
+        }
     } else if (isWsStart) {
         toRender = <StartWorkspace {...parseProps(hash, window.location.search)} />;
     } else if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {

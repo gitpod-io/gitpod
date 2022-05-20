@@ -7,24 +7,28 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: installer
+  # Appending cursor allows us to replace with new versions
+  name: installer-{{repl Cursor }}
   labels:
     app: gitpod
     component: gitpod-installer
+    cursor: "{{repl Cursor }}"
 spec:
-  ttlSecondsAfterFinished: 60
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 0
   template:
     metadata:
       labels:
         app: gitpod
         component: gitpod-installer
+        cursor: "{{repl Cursor }}"
     spec:
       serviceAccountName: installer
       restartPolicy: OnFailure
       containers:
         - name: installer
-          # This will normally be the release tag - using this tag as need the license evaluator
-          image: 'eu.gcr.io/gitpod-core-dev/build/installer:sje-installer-mini-config.0'
+          # This will normally be the release tag
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:release-2022.04.1.2"
           volumeMounts:
             - mountPath: /config-patch
               name: config-patch
@@ -50,8 +54,38 @@ spec:
             - |
               set -e
 
+              echo "Gitpod: Killing any in-progress installations"
+
+              kubectl delete jobs.batch -n {{repl Namespace }} -l component=gitpod-installer,cursor!={{repl Cursor }} --force --grace-period 0 || true
+              kubectl delete pod -n {{repl Namespace }} -l component=gitpod-installer,cursor!={{repl Cursor }} --force --grace-period 0 || true
+
+              if [ "$(helm status -n {{repl Namespace }} gitpod -o json | jq '.info.status == "deployed"')" = "false" ];
+              then
+                echo "Gitpod: Deployment in-progress - clearing"
+
+                VERSION="$(helm status -n {{repl Namespace }} gitpod -o json | jq '.version')"
+                if [ "${VERSION}" -le 1 ];
+                then
+                  echo "Gitpod: Uninstall application"
+                  helm uninstall -n {{repl Namespace }} gitpod --wait || true
+                else
+                  echo "Gitpod: Rolling back application"
+                  helm rollback -n {{repl Namespace }} gitpod --wait || true
+                fi
+              fi
+
               echo "Gitpod: Generate the base Installer config"
               /app/installer init > "${CONFIG_FILE}"
+
+              echo "Gitpod: auto-detecting ShiftFS support on host machine"
+              kubectl wait job -n {{repl Namespace }} --for=condition=complete -l component=shiftfs-module-loader --timeout=30s || true
+              ENABLE_SHIFTFS=$(kubectl get jobs.batch -n {{repl Namespace }} -l component=shiftfs-module-loader -o jsonpath='{.items[0].status.succeeded}')
+
+              if [ "${ENABLE_SHIFTFS}" = "1" ]; then
+                echo "Gitpod: enabling ShiftFS support"
+
+                yq e -i '.workspace.runtime.fsShiftMethod = "shiftfs"' "${CONFIG_FILE}"
+              fi
 
               echo "Gitpod: auto-detecting containerd location on host machine"
               if [ -d "/mnt/node0${CONTAINERD_DIR_K3S}" ]; then
@@ -70,6 +104,12 @@ spec:
               yq e -i '.domain = "{{repl ConfigOption "domain" }}"' "${CONFIG_FILE}"
               yq e -i '.license.kind = "secret"' "${CONFIG_FILE}"
               yq e -i '.license.name = "gitpod-license"' "${CONFIG_FILE}"
+
+              if [ '{{repl ConfigOptionNotEquals "openVsxUrl" "" }}' = "true" ];
+              then
+                echo "Gitpod: Setting Open VSX Registry URL"
+                yq e -i ".openVSX.url = \"{{repl ConfigOption "openVsxUrl" }}\"" "${CONFIG_FILE}"
+              fi
 
               if [ '{{repl and (ConfigOptionEquals "db_incluster" "0") (ConfigOptionEquals "db_cloudsql_enabled" "1") }}' = "true" ];
               then
@@ -90,7 +130,19 @@ spec:
                 yq e -i ".database.external.certificate.name = \"database\"" "${CONFIG_FILE}"
               fi
 
-              if [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
+              if [ '{{repl HasLocalRegistry }}' = "true" ];
+              then
+                echo "Gitpod: configuring mirrored container registry"
+
+                yq e -i ".containerRegistry.inCluster = false" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.external.url = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.external.certificate.name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
+                yq e -i ".repository = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
+                yq e -i ".imagePullSecrets[0].kind = \"secret\"" "${CONFIG_FILE}"
+                yq e -i ".imagePullSecrets[0].name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
+                yq e -i '.dropImageRepo = true' "${CONFIG_FILE}"
+              elif [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
               then
                 echo "Gitpod: configuring external container registry"
 
@@ -98,12 +150,12 @@ spec:
                 yq e -i ".containerRegistry.external.url = \"{{repl ConfigOption "reg_url" }}\"" "${CONFIG_FILE}"
                 yq e -i ".containerRegistry.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
                 yq e -i ".containerRegistry.external.certificate.name = \"container-registry\"" "${CONFIG_FILE}"
-
-              if [ '{{repl ConfigOptionEquals "reg_s3storage" "1" }}' = "true" ];
+              else
+                if [ '{{repl ConfigOptionEquals "reg_incluster_storage" "s3" }}' = "true" ];
                 then
                   echo "Gitpod: configuring container registry S3 backend"
 
-                  yq e -i ".containerRegistry.s3storage.bucket = \"{{repl ConfigOption "reg_bucketname" }}\"" "${CONFIG_FILE}"
+                  yq e -i ".containerRegistry.s3storage.bucket = \"{{repl ConfigOption "reg_incluster_storage_s3_bucketname" }}\"" "${CONFIG_FILE}"
                   yq e -i ".containerRegistry.s3storage.certificate.kind = \"secret\"" "${CONFIG_FILE}"
                   yq e -i ".containerRegistry.s3storage.certificate.name = \"container-registry-s3-backend\"" "${CONFIG_FILE}"
                 fi
@@ -153,6 +205,30 @@ spec:
                 yq e -i '.sshGatewayHostKey.name = "ssh-gateway-host-key"' "${CONFIG_FILE}"
               fi
 
+              if [ '{{repl ConfigOptionEquals "tls_self_signed_enabled" "1" }}' = "true" ];
+              then
+                echo "Gitpod: Generating a self-signed certificate with the internal CA"
+                yq e -i '.customCACert.kind = "secret"' "${CONFIG_FILE}"
+                yq e -i '.customCACert.name = "ca-issuer-ca"' "${CONFIG_FILE}"
+              elif [ '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") (ConfigOptionNotEquals "tls_ca_crt" "") }}' = "true" ];
+              then
+                echo "Gitpod: Setting CA to be used for certificate"
+                yq e -i '.customCACert.kind = "secret"' "${CONFIG_FILE}"
+                yq e -i '.customCACert.name = "ca-certificate"' "${CONFIG_FILE}"
+              fi
+
+              if [ '{{repl ConfigOptionEquals "user_management_block_enabled" "1" }}' = "true" ];
+              then
+                echo "Gitpod: Adding blockNewUsers to config"
+                yq e -i '.blockNewUsers.enabled = true' "${CONFIG_FILE}"
+
+                for domain in {{repl ConfigOption "user_management_block_passlist" }}
+                do
+                  echo "Gitpod: Adding domain \"${domain}\" to blockNewUsers config"
+                  yq e -i ".blockNewUsers.passlist += \"${domain}\"" "${CONFIG_FILE}"
+                done
+              fi
+
               echo "Gitpod: Patch Gitpod config"
               base64 -d "${CONFIG_PATCH_FILE}" > /tmp/patch.yaml
               config_patch=$(cat /tmp/patch.yaml)
@@ -186,8 +262,15 @@ spec:
               echo "Gitpod: Escape any Golang template values"
               sed -i -r 's/(.*\{\{.*)/{{`\1`}}/' "${GITPOD_OBJECTS}/templates/gitpod.yaml"
 
+              # If certificate secret already exists, set the timeout to 5m
+              CERT_SECRET=$(kubectl get secrets -n {{repl Namespace }} https-certificates -o jsonpath='{.metadata.name}' || echo '')
+              HELM_TIMEOUT="5m"
+              if [ "${CERT_SECRET}" = "" ]; then
+                HELM_TIMEOUT="1h"
+              fi
+
               # The long timeout is to ensure the TLS cert is created (if required)
-              echo "Gitpod: Apply the Kubernetes objects"
+              echo "Gitpod: Apply the Kubernetes objects with timeout of ${HELM_TIMEOUT}"
               helm upgrade \
                 --atomic \
                 --cleanup-on-fail \
@@ -195,10 +278,13 @@ spec:
                 --install \
                 --namespace="{{repl Namespace }}" \
                 --reset-values \
-                --timeout 1h \
+                --timeout "${HELM_TIMEOUT}" \
                 --wait \
                 gitpod \
                 "${GITPOD_OBJECTS}"
+
+              echo "Gitpod: Restarting installation status job"
+              kubectl delete pod -n {{repl Namespace }} -l component=gitpod-installer-status || true
 
               echo "Gitpod: Installer job finished - goodbye"
       volumes:

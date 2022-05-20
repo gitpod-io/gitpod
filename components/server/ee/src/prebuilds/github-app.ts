@@ -67,12 +67,14 @@ export class GithubApp {
         @inject(PrebuildStatusMaintainer) protected readonly statusMaintainer: PrebuildStatusMaintainer,
     ) {
         if (config.githubApp?.enabled) {
+            const logLevel = LogrusLogLevel.getFromEnv() ?? "info";
+
             this.server = new Server({
                 Probot: Probot.defaults({
                     appId: config.githubApp.appId,
                     privateKey: GithubApp.loadPrivateKey(config.githubApp.certPath),
                     secret: config.githubApp.webhookSecret,
-                    logLevel: GithubApp.mapToGitHubLogLevel(config.logLevel),
+                    logLevel: GithubApp.mapToGitHubLogLevel(logLevel),
                     baseUrl: config.githubApp.baseUrl,
                 }),
             });
@@ -240,8 +242,14 @@ export class GithubApp {
             const installationId = ctx.payload.installation?.id;
             const cloneURL = ctx.payload.repository.clone_url;
             let { user, project } = await this.findOwnerAndProject(installationId, cloneURL);
-            const logCtx: LogContext = { userId: user.id };
+            if (project) {
+                /* tslint:disable-next-line */
+                /** no await */ this.projectDB.updateProjectUsage(project.id, {
+                    lastWebhookReceived: new Date().toISOString(),
+                });
+            }
 
+            const logCtx: LogContext = { userId: user.id };
             if (!!user.blocked) {
                 log.info(logCtx, `Blocked user tried to start prebuild`, { repo: ctx.payload.repository });
                 return;
@@ -344,9 +352,20 @@ export class GithubApp {
         try {
             const installationId = ctx.payload.installation?.id;
             const cloneURL = ctx.payload.repository.clone_url;
+            // we are only interested in PRs that want to contribute to our repo
+            if (ctx.payload.pull_request?.base?.repo?.clone_url !== cloneURL) {
+                log.info("Ignoring inverse PR", ctx.payload.pull_request);
+                return;
+            }
             const pr = ctx.payload.pull_request;
             const contextURL = pr.html_url;
             let { user, project } = await this.findOwnerAndProject(installationId, cloneURL);
+            if (project) {
+                /* tslint:disable-next-line */
+                /** no await */ this.projectDB.updateProjectUsage(project.id, {
+                    lastWebhookReceived: new Date().toISOString(),
+                });
+            }
 
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
@@ -442,9 +461,9 @@ export class GithubApp {
             prebuildStartPromise.catch((err) => log.error(err, "Error while starting prebuild", { contextURL }));
             return prebuildStartPromise;
         } else {
-            log.debug({ userId: user.id }, `Not running prebuild, the user did not enable it for this context`, {
+            log.debug({ userId: user.id }, `Not running prebuild, the user did not enable it for this context`, null, {
                 contextURL,
-                user,
+                userId: user.id,
                 project,
             });
             return;

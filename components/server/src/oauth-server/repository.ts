@@ -48,6 +48,11 @@ export const inMemoryScopeRepository: OAuthScopeRepository = {
         client: OAuthClient,
         user_id?: string,
     ): Promise<OAuthScope[]> {
-        return scopes;
+        const clientScopes = client.scopes.map((s) => s.name);
+        if (scopes.every((s) => clientScopes.includes(s.name))) {
+            return scopes;
+        }
+
+        throw new Error("Requested scopes not allowed");
     },
 };

@@ -19,7 +19,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/cgroups"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sys/unix"
 	"golang.org/x/time/rate"
@@ -28,6 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
@@ -263,9 +263,15 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		}
 
 		log.WithFields(wbs.Session.OWI()).WithField("configuredShift", wbs.FSShift).WithField("fwb", wbs.Session.FullWorkspaceBackup).Info("fs-shift using fuse")
+
+		if err := wbs.createWorkspaceCgroup(ctx, wscontainerID); err != nil {
+			return nil, err
+		}
+
 		return &api.PrepareForUserNSResponse{
-			FsShift:             api.FSShiftMethod_FUSE,
-			FullWorkspaceBackup: wbs.Session.FullWorkspaceBackup,
+			FsShift:               api.FSShiftMethod_FUSE,
+			FullWorkspaceBackup:   wbs.Session.FullWorkspaceBackup,
+			PersistentVolumeClaim: wbs.Session.PersistentVolumeClaim,
 		}, nil
 	}
 
@@ -287,24 +293,95 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
 	}
 
-	if cgroups.Mode() == cgroups.Unified {
-		cgroupBase, err := rt.ContainerCGroupPath(ctx, wscontainerID)
-		if err != nil {
-			log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot find workspace container CGroup path")
-			return nil, status.Errorf(codes.NotFound, "cannot find workspace container cgroup")
-		}
-
-		err = evacuateToCGroup(ctx, wbs.CGroupMountPoint, cgroupBase, "workspace")
-		if err != nil {
-			log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot create workspace cgroup")
-			return nil, status.Errorf(codes.FailedPrecondition, "cannot create workspace cgroup")
-		}
+	if err := wbs.createWorkspaceCgroup(ctx, wscontainerID); err != nil {
+		return nil, err
 	}
 
 	return &api.PrepareForUserNSResponse{
-		FsShift:             api.FSShiftMethod_SHIFTFS,
-		FullWorkspaceBackup: wbs.Session.FullWorkspaceBackup,
+		FsShift:               api.FSShiftMethod_SHIFTFS,
+		FullWorkspaceBackup:   wbs.Session.FullWorkspaceBackup,
+		PersistentVolumeClaim: wbs.Session.PersistentVolumeClaim,
 	}, nil
+}
+
+func (wbs *InWorkspaceServiceServer) createWorkspaceCgroup(ctx context.Context, wscontainerID container.ID) error {
+	rt := wbs.Uidmapper.Runtime
+	if rt == nil {
+		return status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+	}
+
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		// log error and do not expose it to the user
+		log.WithError(err).Error("could not determine cgroup setup")
+		return status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
+	}
+
+	if !unified {
+		return nil
+	}
+
+	cgroupBase, err := rt.ContainerCGroupPath(ctx, wscontainerID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot find workspace container CGroup path")
+		return status.Errorf(codes.NotFound, "cannot find workspace container cgroup")
+	}
+
+	err = evacuateToCGroup(ctx, wbs.CGroupMountPoint, cgroupBase, "workspace")
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot create workspace cgroup")
+		return status.Errorf(codes.FailedPrecondition, "cannot create workspace cgroup")
+	}
+
+	return nil
+}
+
+func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *api.SetupPairVethsRequest) (*api.SetupPairVethsResponse, error) {
+	rt := wbs.Uidmapper.Runtime
+	if rt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+	}
+	wscontainerID, err := rt.WaitForContainer(ctx, wbs.Session.InstanceID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot find workspace container")
+		return nil, status.Errorf(codes.Internal, "cannot find workspace container")
+	}
+
+	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot find workspace container PID")
+		return nil, status.Errorf(codes.Internal, "cannnot setup a pair of veths")
+	}
+
+	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "setup-pair-veths", "--target-pid", strconv.Itoa(int(req.Pid)))
+	}, enterMountNS(true), enterPidNS(true), enterNetNS(true))
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot setup a pair of veths")
+		return nil, status.Errorf(codes.Internal, "cannot setup a pair of veths")
+	}
+
+	pid, err := wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
+	}
+	err = nsinsider(wbs.Session.InstanceID, int(pid), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "setup-peer-veth")
+	}, enterMountNS(true), enterPidNS(true), enterNetNS(true))
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot setup a peer veths")
+		return nil, status.Errorf(codes.Internal, "cannot setup a peer veths")
+	}
+
+	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "enable-ip-forward")
+	}, enterNetNS(true), enterMountNSPid(1))
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot enable IP forwarding")
+		return nil, status.Errorf(codes.Internal, "cannot enable IP forwarding")
+	}
+
+	return &api.SetupPairVethsResponse{}, nil
 }
 
 func evacuateToCGroup(ctx context.Context, mountpoint, oldGroup, child string) error {
@@ -688,9 +765,10 @@ func cleanupMaskedMount(owi map[string]interface{}, base string, paths []string)
 }
 
 type nsinsiderOpts struct {
-	MountNS bool
-	PidNS   bool
-	NetNS   bool
+	MountNS    bool
+	PidNS      bool
+	NetNS      bool
+	MountNSPid int
 }
 
 func enterMountNS(enter bool) nsinsiderOpt {
@@ -708,6 +786,13 @@ func enterPidNS(enter bool) nsinsiderOpt {
 func enterNetNS(enter bool) nsinsiderOpt {
 	return func(o *nsinsiderOpts) {
 		o.NetNS = enter
+	}
+}
+
+func enterMountNSPid(pid int) nsinsiderOpt {
+	return func(o *nsinsiderOpts) {
+		o.MountNS = true
+		o.MountNSPid = pid
 	}
 }
 
@@ -733,10 +818,14 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 	}
 	var nss []mnt
 	if cfg.MountNS {
+		tpid := targetPid
+		if cfg.MountNSPid != 0 {
+			tpid = cfg.MountNSPid
+		}
 		nss = append(nss,
-			mnt{"_LIBNSENTER_ROOTFD", fmt.Sprintf("/proc/%d/root", targetPid), unix.O_PATH},
-			mnt{"_LIBNSENTER_CWDFD", fmt.Sprintf("/proc/%d/cwd", targetPid), unix.O_PATH},
-			mnt{"_LIBNSENTER_MNTNSFD", fmt.Sprintf("/proc/%d/ns/mnt", targetPid), os.O_RDONLY},
+			mnt{"_LIBNSENTER_ROOTFD", fmt.Sprintf("/proc/%d/root", tpid), unix.O_PATH},
+			mnt{"_LIBNSENTER_CWDFD", fmt.Sprintf("/proc/%d/cwd", tpid), unix.O_PATH},
+			mnt{"_LIBNSENTER_MNTNSFD", fmt.Sprintf("/proc/%d/ns/mnt", tpid), os.O_RDONLY},
 		)
 	}
 	if cfg.PidNS {
@@ -767,7 +856,12 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 	err = cmd.Run()
 	log.FromBuffer(&cmdOut, log.WithFields(log.OWI("", "", instanceID)))
 	if err != nil {
-		return xerrors.Errorf("cannot run nsinsider: %w", err)
+		out, err := cmd.CombinedOutput()
+		return xerrors.Errorf("run nsinsider (%v) failed: %q\n%v",
+			cmd.Args,
+			string(out),
+			err,
+		)
 	}
 	return nil
 }
@@ -824,7 +918,13 @@ func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *ap
 // └── workspace       drwxr-xr-x 5 gitpodUid gitpodGid
 //     └── user        drwxr-xr-x 5 gitpodUid gitpodGid
 func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *api.EvacuateCGroupRequest) (*api.EvacuateCGroupResponse, error) {
-	if cgroups.Mode() != cgroups.Unified {
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		// log error and do not expose it to the user
+		log.WithError(err).Error("could not determine cgroup setup")
+		return nil, status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
+	}
+	if !unified {
 		return &api.EvacuateCGroupResponse{}, nil
 	}
 

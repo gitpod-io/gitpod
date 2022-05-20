@@ -16,6 +16,32 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
 	return []runtime.Object{
+		&rbacv1.ClusterRole{
+			TypeMeta: common.TypeMetaClusterRole,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      Component,
+				Namespace: ctx.Namespace,
+				Labels:    labels,
+			},
+			Rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{"snapshot.storage.k8s.io"},
+					Resources: []string{
+						"volumesnapshotcontents",
+					},
+					Verbs: []string{
+						"get",
+						"list",
+						"create",
+						"update",
+						"patch",
+						"watch",
+						"delete",
+						"deletecollection",
+					},
+				},
+			},
+		},
 		&rbacv1.Role{
 			TypeMeta: common.TypeMetaRole,
 			ObjectMeta: metav1.ObjectMeta{
@@ -33,6 +59,23 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"services",
 						"endpoints",
 						"configmaps",
+						"persistentvolumeclaims",
+					},
+					Verbs: []string{
+						"get",
+						"list",
+						"create",
+						"update",
+						"patch",
+						"watch",
+						"delete",
+						"deletecollection",
+					},
+				},
+				{
+					APIGroups: []string{"snapshot.storage.k8s.io"},
+					Resources: []string{
+						"volumesnapshots",
 					},
 					Verbs: []string{
 						"get",

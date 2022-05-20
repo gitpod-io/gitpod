@@ -42,18 +42,23 @@ export interface OpenPortalParams {
 export class ChargebeeClient {
     constructor(protected readonly client: chargebee.Client) {}
 
-    static async getOrCreate(): Promise<ChargebeeClient> {
+    static async getOrCreate(teamId?: string): Promise<ChargebeeClient> {
         const create = async () => {
             const chargebeeClient = await ChargebeeClientProvider.get();
             const client = new ChargebeeClient(chargebeeClient);
-            client.createPortalSession();
+            client.createPortalSession(teamId);
             return client;
         };
 
         const w = window as any;
         const _gp = w._gp || (w._gp = {});
-        const chargebeeClient = _gp.chargebeeClient || (_gp.chargebeeClient = await create());
-        return chargebeeClient;
+        if (teamId) {
+            if (!_gp.chargebeeClients) {
+                _gp.chargebeeClients = {};
+            }
+            return _gp.chargebeeClients[teamId] || (_gp.chargebeeClients[teamId] = await create());
+        }
+        return _gp.chargebeeClient || (_gp.chargebeeClient = await create());
     }
 
     checkout(
@@ -82,10 +87,10 @@ export class ChargebeeClient {
         });
     }
 
-    createPortalSession() {
+    createPortalSession(teamId?: string) {
         const paymentServer = getGitpodService().server;
         this.client.setPortalSession(async () => {
-            return paymentServer.createPortalSession();
+            return teamId ? paymentServer.createTeamPortalSession(teamId) : paymentServer.createPortalSession();
         });
     }
 

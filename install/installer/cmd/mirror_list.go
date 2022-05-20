@@ -13,7 +13,9 @@ import (
 
 	"github.com/docker/distribution/reference"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/spf13/cobra"
+	"k8s.io/utils/pointer"
 )
 
 type mirrorListRepo struct {
@@ -61,66 +63,10 @@ image to the "target" repo`,
 			return err
 		}
 
-		// Throw error if set to the default Gitpod repository
-		if cfg.Repository == common.GitpodContainerRegistry {
-			return fmt.Errorf("cannot mirror images to repository %s", common.GitpodContainerRegistry)
-		}
-
-		// Get the target repository from the config
-		targetRepo := strings.TrimRight(cfg.Repository, "/")
-
-		// Use the default Gitpod registry to pull from
-		cfg.Repository = common.GitpodContainerRegistry
-
-		k8s, err := renderKubernetesObjects(cfgVersion, cfg)
+		images, err := generateMirrorList(cfgVersion, cfg)
 		if err != nil {
 			return err
 		}
-
-		// Map of images used for deduping
-		allImages := make(map[string]bool)
-
-		rawImages := make([]string, 0)
-		for _, item := range k8s {
-			rawImages = append(rawImages, getPodImages(item)...)
-			rawImages = append(rawImages, getGenericImages(item)...)
-		}
-
-		images := make([]mirrorListRepo, 0)
-		for _, img := range rawImages {
-			// Dedupe
-			if _, ok := allImages[img]; ok {
-				continue
-			}
-			allImages[img] = true
-
-			// Convert target
-			target := img
-			if strings.Contains(img, cfg.Repository) {
-				// This is the Gitpod registry
-				target = strings.Replace(target, cfg.Repository, targetRepo, 1)
-			} else if !mirrorListOpts.ExcludeThirdParty {
-				// Amend third-party images - remove the first part
-				thirdPartyImg := strings.Join(strings.Split(img, "/")[1:], "/")
-				target = fmt.Sprintf("%s/%s", targetRepo, thirdPartyImg)
-			} else {
-				// Excluding third-party images - just skip this one
-				continue
-			}
-
-			images = append(images, mirrorListRepo{
-				Original: img,
-				Target:   target,
-			})
-		}
-
-		// Sort it by the Original
-		sort.Slice(images, func(i, j int) bool {
-			scoreI := images[i].Original
-			scoreJ := images[j].Original
-
-			return scoreI < scoreJ
-		})
 
 		fc, err := common.ToJSONString(images)
 		if err != nil {
@@ -138,6 +84,186 @@ func init() {
 
 	mirrorListCmd.Flags().BoolVar(&mirrorListOpts.ExcludeThirdParty, "exclude-third-party", false, "exclude non-Gitpod images")
 	mirrorListCmd.Flags().StringVarP(&mirrorListOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
+}
+
+func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]string, error) {
+	fns := []func() ([]string, error){
+		func() ([]string, error) {
+			// Render for in-cluster dependencies
+			return renderKubernetesObjects(cfgVersion, cfg)
+		},
+		func() ([]string, error) {
+			// Render for external depedencies - AWS
+			cfg.Database = configv1.Database{
+				InCluster: pointer.Bool(false),
+				External: &configv1.DatabaseExternal{
+					Certificate: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+			cfg.ContainerRegistry = configv1.ContainerRegistry{
+				InCluster: pointer.Bool(false),
+				External: &configv1.ContainerRegistryExternal{
+					URL: "some-url",
+					Certificate: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+				S3Storage: &configv1.S3Storage{
+					Bucket: "some-bucket",
+					Certificate: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+			cfg.ObjectStorage = configv1.ObjectStorage{
+				InCluster: pointer.Bool(false),
+				S3: &configv1.ObjectStorageS3{
+					Endpoint: "endpoint",
+					Credentials: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+			return renderKubernetesObjects(cfgVersion, cfg)
+		},
+		func() ([]string, error) {
+			// Render for external depedencies - Azure
+			cfg.Database.CloudSQL = nil
+			cfg.ContainerRegistry = configv1.ContainerRegistry{
+				InCluster: pointer.Bool(false),
+				External: &configv1.ContainerRegistryExternal{
+					URL: "some-url",
+					Certificate: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+			cfg.ObjectStorage = configv1.ObjectStorage{
+				InCluster: pointer.Bool(false),
+				Azure: &configv1.ObjectStorageAzure{
+					Credentials: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+
+			return renderKubernetesObjects(cfgVersion, cfg)
+		},
+		func() ([]string, error) {
+			// Render for external depedencies - GCP
+			cfg.Database = configv1.Database{
+				InCluster: pointer.Bool(false),
+				CloudSQL: &configv1.DatabaseCloudSQL{
+					Instance: "value",
+					ServiceAccount: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+			cfg.ObjectStorage = configv1.ObjectStorage{
+				InCluster: pointer.Bool(false),
+				CloudStorage: &configv1.ObjectStorageCloudStorage{
+					Project: "project",
+					ServiceAccount: configv1.ObjectRef{
+						Kind: configv1.ObjectRefSecret,
+						Name: "value",
+					},
+				},
+			}
+
+			return renderKubernetesObjects(cfgVersion, cfg)
+		},
+	}
+
+	var k8s []string
+	for _, fn := range fns {
+		data, err := fn()
+		if err != nil {
+			return nil, err
+		}
+
+		k8s = append(k8s, data...)
+	}
+
+	return k8s, nil
+}
+
+func generateMirrorList(cfgVersion string, cfg *configv1.Config) ([]mirrorListRepo, error) {
+	// Throw error if set to the default Gitpod repository
+	if cfg.Repository == common.GitpodContainerRegistry {
+		return nil, fmt.Errorf("cannot mirror images to repository %s", common.GitpodContainerRegistry)
+	}
+
+	// Get the target repository from the config
+	targetRepo := strings.TrimRight(cfg.Repository, "/")
+
+	// Use the default Gitpod registry to pull from
+	cfg.Repository = common.GitpodContainerRegistry
+
+	k8s, err := renderAllKubernetesObject(cfgVersion, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map of images used for deduping
+	allImages := make(map[string]bool)
+
+	rawImages := make([]string, 0)
+	for _, item := range k8s {
+		rawImages = append(rawImages, getPodImages(item)...)
+		rawImages = append(rawImages, getGenericImages(item)...)
+	}
+
+	images := make([]mirrorListRepo, 0)
+	for _, img := range rawImages {
+		// Ignore if the image equals the container registry
+		if img == common.GitpodContainerRegistry {
+			continue
+		}
+		// Dedupe
+		if _, ok := allImages[img]; ok {
+			continue
+		}
+		allImages[img] = true
+
+		// Convert target
+		target := img
+		if strings.Contains(img, cfg.Repository) {
+			// This is the Gitpod registry
+			target = strings.Replace(target, cfg.Repository, targetRepo, 1)
+		} else if !mirrorListOpts.ExcludeThirdParty {
+			// Amend third-party images - remove the first part
+			thirdPartyImg := strings.Join(strings.Split(img, "/")[1:], "/")
+			target = fmt.Sprintf("%s/%s", targetRepo, thirdPartyImg)
+		} else {
+			// Excluding third-party images - just skip this one
+			continue
+		}
+
+		images = append(images, mirrorListRepo{
+			Original: img,
+			Target:   target,
+		})
+	}
+
+	// Sort it by the Original
+	sort.Slice(images, func(i, j int) bool {
+		scoreI := images[i].Original
+		scoreJ := images[j].Original
+
+		return scoreI < scoreJ
+	})
+
+	return images, nil
 }
 
 // getGenericImages this is a bit brute force - anything starting "docker.io" or with Gitpod repo is found

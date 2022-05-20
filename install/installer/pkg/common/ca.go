@@ -10,17 +10,8 @@ import (
 
 const (
 	cacerts      = "cacerts"
-	etcSSLCerts  = "/etc/ssl/certs"
 	caVolumeName = "gitpod-ca-certificate"
 )
-
-func InternalCAVolumeMount() *corev1.VolumeMount {
-	return &corev1.VolumeMount{
-		Name:      cacerts,
-		ReadOnly:  true,
-		MountPath: etcSSLCerts,
-	}
-}
 
 func InternalCAVolume() *corev1.Volume {
 	return &corev1.Volume{
@@ -39,7 +30,7 @@ func InternalCAContainer(ctx *RenderContext, mod ...func(*corev1.Container)) *co
 	res := &corev1.Container{
 		Name: "update-ca-certificates",
 		// It's not possible to use images based on alpine due to errors running update-ca-certificates
-		Image:           ImageName(ctx.Config.Repository, "ca-updater", ctx.VersionManifest.Components.CAUpdater.Version),
+		Image:           ctx.ImageName(ctx.Config.Repository, "ca-updater", ctx.VersionManifest.Components.CAUpdater.Version),
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command: []string{
 			"bash", "-c",
@@ -63,4 +54,42 @@ func InternalCAContainer(ctx *RenderContext, mod ...func(*corev1.Container)) *co
 	}
 
 	return res
+}
+
+// CustomCACertVolume produces the objects required to mount custom CA certificates
+func CustomCACertVolume(ctx *RenderContext) (vol *corev1.Volume, mnt *corev1.VolumeMount, env []corev1.EnvVar, ok bool) {
+	if ctx.Config.CustomCACert == nil {
+		return nil, nil, nil, false
+	}
+
+	const (
+		volumeName = "custom-ca-cert"
+		mountPath  = "/etc/ssl/certs/custom-ca.crt"
+	)
+	vol = &corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: ctx.Config.CustomCACert.Name,
+				Items: []corev1.KeyToPath{
+					{
+						Key:  "ca.crt",
+						Path: "ca.crt",
+					},
+				},
+			},
+		},
+	}
+	mnt = &corev1.VolumeMount{
+		Name:      volumeName,
+		ReadOnly:  true,
+		MountPath: mountPath,
+		SubPath:   "ca.crt",
+	}
+	env = []corev1.EnvVar{
+		{Name: "NODE_EXTRA_CA_CERTS", Value: mountPath},
+		{Name: "GIT_SSL_CAINFO", Value: mountPath},
+	}
+	ok = true
+	return
 }

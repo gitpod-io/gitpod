@@ -4,21 +4,22 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
-import { useEffect, useRef, useState } from "react";
+import { UserEnvVar, UserEnvVarValue } from "@gitpod/gitpod-protocol";
+import { useContext, useEffect, useRef, useState } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
 import Modal from "../components/Modal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
-import settingsMenu from "./settings-menu";
+import getSettingsMenu from "./settings-menu";
 import CodeText from "../components/CodeText";
+import { PaymentContext } from "../payment-context";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
     onClose: () => void;
     save: (v: UserEnvVarValue) => void;
-    validate: (v: UserEnvVarValue) => string;
+    validate: (v: UserEnvVarValue) => string | undefined;
 }
 
 function AddEnvVarModal(p: EnvVarModalProps) {
@@ -41,7 +42,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
     let save = () => {
         const v = ref.current;
         const errorMsg = p.validate(v);
-        if (errorMsg !== "") {
+        if (!!errorMsg) {
             setError(errorMsg);
             return false;
         } else {
@@ -144,6 +145,7 @@ function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
 }
 
 export default function EnvVars() {
+    const { showPaymentUI } = useContext(PaymentContext);
     const [envVars, setEnvVars] = useState([] as UserEnvVarValue[]);
     const [currentEnvVar, setCurrentEnvVar] = useState({
         name: "",
@@ -190,41 +192,22 @@ export default function EnvVars() {
         await update();
     };
 
-    const validate = (variable: UserEnvVarValue) => {
+    const validate = (variable: UserEnvVarValue): string | undefined => {
         const name = variable.name;
         const pattern = variable.repositoryPattern;
-        if (name.trim() === "") {
-            return "Name must not be empty.";
-        }
-        if (!/^[a-zA-Z0-9_]*$/.test(name)) {
-            return "Name must match /[a-zA-Z_]+[a-zA-Z0-9_]*/.";
-        }
-        if (variable.value.trim() === "") {
-            return "Value must not be empty.";
-        }
-        if (pattern.trim() === "") {
-            return "Scope must not be empty.";
-        }
-        const split = pattern.split("/");
-        if (split.length < 2) {
-            return "A scope must use the form 'organization/repo'.";
-        }
-        for (const name of split) {
-            if (name !== "*") {
-                if (!/^[a-zA-Z0-9_\-.\*]+$/.test(name)) {
-                    return "Invalid scope segment. Only ASCII characters, numbers, -, _, . or * are allowed.";
-                }
-            }
+        const validationError = UserEnvVar.validate(variable);
+        if (validationError) {
+            return validationError;
         }
         if (!variable.id && envVars.some((v) => v.name === name && v.repositoryPattern === pattern)) {
             return "A variable with this name and scope already exists";
         }
-        return "";
+        return undefined;
     };
 
     return (
         <PageWithSubMenu
-            subMenu={settingsMenu}
+            subMenu={getSettingsMenu({ showPaymentUI })}
             title="Variables"
             subtitle="Configure environment variables for all workspaces."
         >

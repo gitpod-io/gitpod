@@ -29,7 +29,9 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
+	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/proxy"
 )
 
 // serveCmd represents the serve command
@@ -114,6 +116,7 @@ var runCmd = &cobra.Command{
 			log.WithField("ratelimits", cfg.RPCServer.RateLimits).Info("imposing rate limits on the gRPC interface")
 		}
 		ratelimits := common_grpc.NewRatelimitingInterceptor(cfg.RPCServer.RateLimits)
+		metrics.Registry.MustRegister(ratelimits)
 
 		grpcMetrics := grpc_prometheus.NewServerMetrics()
 		grpcMetrics.EnableHandlingTimeHistogram()
@@ -141,6 +144,16 @@ var runCmd = &cobra.Command{
 		grpcServer := grpc.NewServer(grpcOpts...)
 		defer grpcServer.Stop()
 		grpc_prometheus.Register(grpcServer)
+
+		if cfg.ImageBuilderProxy.TargetAddr != "" {
+			// Note: never use block here, because image-builder connects to ws-manager,
+			//       and if we blocked here, ws-manager wouldn't come up, hence we couldn't connect to ws-manager.
+			conn, err := grpc.Dial(cfg.ImageBuilderProxy.TargetAddr, grpc.WithInsecure())
+			if err != nil {
+				log.WithError(err).Fatal("failed to connect to image builder")
+			}
+			imgbldr.RegisterImageBuilderServer(grpcServer, proxy.ImageBuilder{D: imgbldr.NewImageBuilderClient(conn)})
+		}
 
 		manager.Register(grpcServer, mgmt)
 		lis, err := net.Listen("tcp", cfg.RPCServer.Addr)

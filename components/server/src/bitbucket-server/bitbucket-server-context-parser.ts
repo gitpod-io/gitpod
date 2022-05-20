@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { NavigatorContext, Repository, User, WorkspaceContext } from "@gitpod/gitpod-protocol";
+import { NavigatorContext, PullRequestContext, Repository, User, WorkspaceContext } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
@@ -25,12 +25,30 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
         const span = TraceContext.startSpan("BitbucketServerContextParser.handle", ctx);
 
         try {
-            const { resourceKind, host, owner, repoName /*moreSegments, searchParams*/ } = await this.parseURL(
+            const more: Partial<NavigatorContext> = {};
+            const { repoKind, host, owner, repoName, moreSegments, searchParams } = await this.parseURL(
                 user,
                 contextUrl,
             );
 
-            return await this.handleNavigatorContext(ctx, user, resourceKind, host, owner, repoName);
+            if (searchParams.has("at")) {
+                more.ref = decodeURIComponent(searchParams.get("at")!);
+                more.refType = "branch";
+            }
+
+            if (moreSegments[0] === "pull-requests" && !!moreSegments[1]) {
+                const more = { nr: parseInt(moreSegments[1]) };
+                return await this.handlePullRequestContext(ctx, user, repoKind, host, owner, repoName, more);
+            }
+
+            if (moreSegments[0] === "commits" && !!moreSegments[1]) {
+                more.ref = "";
+                more.revision = moreSegments[1];
+                more.refType = "revision";
+                return await this.handleNavigatorContext(ctx, user, repoKind, host, owner, repoName, more);
+            }
+
+            return await this.handleNavigatorContext(ctx, user, repoKind, host, owner, repoName, more);
         } catch (e) {
             span.addTags({ contextUrl }).log({ error: e });
             log.error({ userId: user.id }, "Error parsing Bitbucket context", e);
@@ -40,7 +58,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
         }
     }
 
-    public async parseURL(user: User, contextUrl: string): Promise<{ resourceKind: string } & URLParts> {
+    public async parseURL(user: User, contextUrl: string): Promise<{ repoKind: "projects" | "users" } & URLParts> {
         const url = new URL(contextUrl);
         const pathname = url.pathname.replace(/^\//, "").replace(/\/$/, ""); // pathname without leading and trailing slash
         const segments = pathname.split("/");
@@ -54,14 +72,31 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             segments.splice(0, lenghtOfRelativePath);
         }
 
-        const resourceKind = segments[0];
-        const owner: string = segments[1];
-        const repoName: string = segments[3];
-        const moreSegmentsStart: number = 4;
+        let firstSegment = segments[0];
+        let owner: string = segments[1];
+        let repoKind: "users" | "projects";
+        let repoName;
+        let moreSegmentsStart;
+        if (firstSegment === "scm") {
+            repoKind = "projects";
+            if (owner && owner.startsWith("~")) {
+                repoKind = "users";
+                owner = owner.substring(1);
+            }
+            repoName = segments[2];
+            moreSegmentsStart = 3;
+        } else if (firstSegment === "projects" || firstSegment === "users") {
+            repoKind = firstSegment;
+            repoName = segments[3];
+            moreSegmentsStart = 4;
+        } else {
+            throw new Error("Unexpected repo kind: " + firstSegment);
+        }
         const endsWithRepoName = segments.length === moreSegmentsStart;
+
         const searchParams = url.searchParams;
         return {
-            resourceKind,
+            repoKind,
             host,
             owner,
             repoName: this.parseRepoName(repoName, endsWithRepoName),
@@ -83,7 +118,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
     protected async handleNavigatorContext(
         ctx: TraceContext,
         user: User,
-        resourceKind: string,
+        repoKind: "projects" | "users",
         host: string,
         owner: string,
         repoName: string,
@@ -91,20 +126,17 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
     ): Promise<NavigatorContext> {
         const span = TraceContext.startSpan("BitbucketServerContextParser.handleNavigatorContext", ctx);
         try {
-            if (resourceKind !== "users" && resourceKind !== "projects") {
-                throw new Error("Only /users/ and /projects/ resources are supported.");
-            }
             const repo = await this.api.getRepository(user, {
-                kind: resourceKind,
-                userOrProject: owner,
+                repoKind,
+                owner,
                 repositorySlug: repoName,
             });
             const defaultBranch = await this.api.getDefaultBranch(user, {
-                kind: resourceKind,
-                userOrProject: owner,
+                repoKind,
+                owner,
                 repositorySlug: repoName,
             });
-            const repository = await this.toRepository(user, host, repo, defaultBranch);
+            const repository = this.toRepository(host, repo, repoKind, defaultBranch);
             span.log({ "request.finished": "" });
 
             if (!repo) {
@@ -124,10 +156,10 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
 
             if (!more.revision) {
                 const tipCommitOnDefaultBranch = await this.api.getCommits(user, {
-                    kind: resourceKind,
-                    userOrProject: owner,
+                    repoKind,
+                    owner,
                     repositorySlug: repoName,
-                    q: { limit: 1 },
+                    query: { limit: 1 },
                 });
                 const commits = tipCommitOnDefaultBranch?.values || [];
                 if (commits.length === 0) {
@@ -137,15 +169,19 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
                     more.refType = undefined;
                 } else {
                     more.revision = commits[0].id;
-                    more.refType = "revision";
+                    // more.refType = "revision";
                 }
             }
 
-            return {
-                ...more,
+            return <NavigatorContext>{
+                isFile: false,
+                path: "",
                 title: `${owner}/${repoName} - ${more.ref || more.revision}${more.path ? ":" + more.path : ""}`,
+                ref: more.ref,
+                refType: more.refType,
+                revision: more.revision,
                 repository,
-            } as NavigatorContext;
+            };
         } catch (e) {
             span.log({ error: e });
             log.error({ userId: user.id }, "Error parsing Bitbucket navigator request context", e);
@@ -155,29 +191,70 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
         }
     }
 
-    protected async toRepository(
-        user: User,
+    protected toRepository(
         host: string,
         repo: BitbucketServer.Repository,
+        repoKind: string,
         defaultBranch: BitbucketServer.Branch,
-    ): Promise<Repository> {
-        if (!repo) {
-            throw new Error("Unknown repository.");
-        }
-
+    ): Repository {
         const owner = repo.project.owner ? repo.project.owner.slug : repo.project.key;
         const name = repo.name;
         const cloneUrl = repo.links.clone.find((u) => u.name === "http")?.href!;
+        const webUrl = repo.links?.self[0]?.href?.replace(/\/browse$/, "");
 
         const result: Repository = {
+            webUrl,
             cloneUrl,
             host,
             name,
             owner,
+            repoKind,
             private: !repo.public,
             defaultBranch: defaultBranch.displayId || DEFAULT_BRANCH,
         };
 
         return result;
+    }
+
+    protected async handlePullRequestContext(
+        ctx: TraceContext,
+        user: User,
+        repoKind: "projects" | "users",
+        host: string,
+        owner: string,
+        repoName: string,
+        more: Partial<PullRequestContext> & { nr: number },
+    ): Promise<PullRequestContext> {
+        const pr = await this.api.getPullRequest(user, {
+            repoKind,
+            repositorySlug: repoName,
+            owner,
+            nr: more.nr,
+        });
+
+        const getRepository = async (ref: BitbucketServer.Ref) => {
+            const repoKindFromRef = ref.repository.project.type === "PERSONAL" ? "users" : "projects";
+            const defaultBranchFromRef = await this.api.getDefaultBranch(user, {
+                repoKind: repoKindFromRef,
+                owner: ref.repository.project.owner ? ref.repository.project.owner.slug : ref.repository.project.key,
+                repositorySlug: ref.repository.slug,
+            });
+            return this.toRepository(host, ref.repository, repoKindFromRef, defaultBranchFromRef);
+        };
+
+        return <PullRequestContext>{
+            repository: await getRepository(pr.fromRef),
+            title: pr.title,
+            ref: pr.fromRef.displayId,
+            refType: "branch",
+            revision: pr.fromRef.latestCommit,
+            base: {
+                repository: await getRepository(pr.toRef),
+                ref: pr.toRef.displayId,
+                refType: "branch",
+            },
+            ...more,
+            owner,
+        };
     }
 }

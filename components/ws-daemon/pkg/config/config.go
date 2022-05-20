@@ -5,7 +5,10 @@
 package config
 
 import (
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
+	"os"
 
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -15,11 +18,29 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
 )
 
+func Read(fn string) (*Config, error) {
+	ctnt, err := os.ReadFile(fn)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot read config file: %w", err)
+	}
+
+	var cfg Config
+	dec := json.NewDecoder(bytes.NewReader(ctnt))
+	dec.DisallowUnknownFields()
+	err = dec.Decode(&cfg)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot parse config file: %w", err)
+	}
+
+	return &cfg, nil
+}
+
 type Config struct {
-	Daemon     daemon.Config `json:"daemon"`
-	Service    AddrTLS       `json:"service"`
-	Prometheus Addr          `json:"prometheus"`
-	PProf      Addr          `json:"pprof"`
+	Daemon             daemon.Config `json:"daemon"`
+	Service            AddrTLS       `json:"service"`
+	Prometheus         Addr          `json:"prometheus"`
+	PProf              Addr          `json:"pprof"`
+	ReadinessProbeAddr string        `json:"readinessProbeAddr"`
 }
 
 type Addr struct {

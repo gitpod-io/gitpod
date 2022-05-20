@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
 // package: gitpod.v1
 // file: gitpod/v1/workspaces.proto
 
@@ -8,12 +14,12 @@ import * as grpc from "@grpc/grpc-js";
 import * as gitpod_v1_workspaces_pb from "../../gitpod/v1/workspaces_pb";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 import * as google_protobuf_field_mask_pb from "google-protobuf/google/protobuf/field_mask_pb";
-import * as google_rpc_status_pb from "../../google/rpc/status_pb";
 import * as gitpod_v1_pagination_pb from "../../gitpod/v1/pagination_pb";
 
 interface IWorkspacesServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     listWorkspaces: IWorkspacesServiceService_IListWorkspaces;
     getWorkspace: IWorkspacesServiceService_IGetWorkspace;
+    getOwnerToken: IWorkspacesServiceService_IGetOwnerToken;
     createAndStartWorkspace: IWorkspacesServiceService_ICreateAndStartWorkspace;
     startWorkspace: IWorkspacesServiceService_IStartWorkspace;
     getActiveWorkspaceInstance: IWorkspacesServiceService_IGetActiveWorkspaceInstance;
@@ -40,6 +46,15 @@ interface IWorkspacesServiceService_IGetWorkspace extends grpc.MethodDefinition<
     requestDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.GetWorkspaceRequest>;
     responseSerialize: grpc.serialize<gitpod_v1_workspaces_pb.GetWorkspaceResponse>;
     responseDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.GetWorkspaceResponse>;
+}
+interface IWorkspacesServiceService_IGetOwnerToken extends grpc.MethodDefinition<gitpod_v1_workspaces_pb.GetOwnerTokenRequest, gitpod_v1_workspaces_pb.GetOwnerTokenResponse> {
+    path: "/gitpod.v1.WorkspacesService/GetOwnerToken";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<gitpod_v1_workspaces_pb.GetOwnerTokenRequest>;
+    requestDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.GetOwnerTokenRequest>;
+    responseSerialize: grpc.serialize<gitpod_v1_workspaces_pb.GetOwnerTokenResponse>;
+    responseDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.GetOwnerTokenResponse>;
 }
 interface IWorkspacesServiceService_ICreateAndStartWorkspace extends grpc.MethodDefinition<gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse> {
     path: "/gitpod.v1.WorkspacesService/CreateAndStartWorkspace";
@@ -110,6 +125,7 @@ export const WorkspacesServiceService: IWorkspacesServiceService;
 export interface IWorkspacesServiceServer extends grpc.UntypedServiceImplementation {
     listWorkspaces: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.ListWorkspacesRequest, gitpod_v1_workspaces_pb.ListWorkspacesResponse>;
     getWorkspace: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.GetWorkspaceRequest, gitpod_v1_workspaces_pb.GetWorkspaceResponse>;
+    getOwnerToken: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.GetOwnerTokenRequest, gitpod_v1_workspaces_pb.GetOwnerTokenResponse>;
     createAndStartWorkspace: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse>;
     startWorkspace: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.StartWorkspaceRequest, gitpod_v1_workspaces_pb.StartWorkspaceResponse>;
     getActiveWorkspaceInstance: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest, gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse>;
@@ -126,6 +142,9 @@ export interface IWorkspacesServiceClient {
     getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
     getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
     getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    getOwnerToken(request: gitpod_v1_workspaces_pb.GetOwnerTokenRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetOwnerTokenResponse) => void): grpc.ClientUnaryCall;
+    getOwnerToken(request: gitpod_v1_workspaces_pb.GetOwnerTokenRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetOwnerTokenResponse) => void): grpc.ClientUnaryCall;
+    getOwnerToken(request: gitpod_v1_workspaces_pb.GetOwnerTokenRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetOwnerTokenResponse) => void): grpc.ClientUnaryCall;
     createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
     createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
     createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
@@ -154,6 +173,9 @@ export class WorkspacesServiceClient extends grpc.Client implements IWorkspacesS
     public getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public getOwnerToken(request: gitpod_v1_workspaces_pb.GetOwnerTokenRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetOwnerTokenResponse) => void): grpc.ClientUnaryCall;
+    public getOwnerToken(request: gitpod_v1_workspaces_pb.GetOwnerTokenRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetOwnerTokenResponse) => void): grpc.ClientUnaryCall;
+    public getOwnerToken(request: gitpod_v1_workspaces_pb.GetOwnerTokenRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetOwnerTokenResponse) => void): grpc.ClientUnaryCall;
     public createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;

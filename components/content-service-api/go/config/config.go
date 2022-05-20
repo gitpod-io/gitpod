@@ -5,14 +5,8 @@
 package config
 
 import (
-	"crypto/tls"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"os"
-
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-
-	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 )
 
 // StorageConfig configures the remote storage we use
@@ -96,7 +90,6 @@ type GCPConfig struct {
 	CredentialsFile string `json:"credentialsFile"`
 	Region          string `json:"region"`
 	Project         string `json:"projectId"`
-	ParallelUpload  int    `json:"parallelUpload"`
 
 	MaximumBackupCount int `json:"maximumBackupCount"`
 }
@@ -114,48 +107,11 @@ type MinIOConfig struct {
 	ParallelUpload uint   `json:"parallelUpload,omitempty"`
 }
 
-type Service struct {
-	Addr string    `json:"address"`
-	TLS  TLSConfig `json:"tls"`
-}
-
-type Prometheus struct {
-	Addr string `json:"address"`
-}
-
 type PProf struct {
 	Addr string `json:"address"`
 }
 
 type ServiceConfig struct {
-	// Daemon  daemon.Config `json:"daemon"`
-	Service    Service       `json:"service"`
-	Prometheus Prometheus    `json:"prometheus"`
-	PProf      PProf         `json:"pprof"`
-	Storage    StorageConfig `json:"storage"`
-}
-
-type TLSConfig struct {
-	Authority   string `json:"ca"`
-	Certificate string `json:"crt"`
-	PrivateKey  string `json:"key"`
-}
-
-// ServerOption produces the GRPC option that configures a server to use this TLS configuration
-func (c *TLSConfig) ServerOption() (grpc.ServerOption, error) {
-	if c.Authority == "" || c.Certificate == "" || c.PrivateKey == "" {
-		return nil, nil
-	}
-
-	tlsConfig, err := common_grpc.ClientAuthTLSConfig(
-		c.Authority, c.Certificate, c.PrivateKey,
-		common_grpc.WithSetClientCAs(true),
-		common_grpc.WithClientAuth(tls.RequireAndVerifyClientCert),
-		common_grpc.WithServerName("ws-manager"),
-	)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
-	}
-
-	return grpc.Creds(credentials.NewTLS(tlsConfig)), nil
+	Service baseserver.ServerConfiguration `json:"service"`
+	Storage StorageConfig                  `json:"storage"`
 }

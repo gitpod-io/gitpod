@@ -124,6 +124,7 @@ export interface Subscription {
     paymentReference?: string;
     paymentData?: PaymentData;
     teamSubscriptionSlotId?: string;
+    teamMembershipId?: string;
     /** marks the subscription as deleted */
     deleted?: boolean;
 }
@@ -155,6 +156,15 @@ export interface AssignedTeamSubscription extends Subscription {
 export namespace AssignedTeamSubscription {
     export function is(data: any): data is AssignedTeamSubscription {
         return !!data && data.hasOwnProperty("teamSubscriptionSlotId");
+    }
+}
+
+export interface AssignedTeamSubscription2 extends Subscription {
+    teamMembershipId: string;
+}
+export namespace AssignedTeamSubscription2 {
+    export function is(data: any): data is AssignedTeamSubscription2 {
+        return typeof data === "object" && data.hasOwnProperty("teamMembershipId");
     }
 }
 

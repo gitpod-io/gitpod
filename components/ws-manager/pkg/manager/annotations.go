@@ -63,6 +63,13 @@ const (
 	// fullWorkspaceBackupAnnotation is set on workspaces which operate using a full workspace backup
 	fullWorkspaceBackupAnnotation = "gitpod/fullWorkspaceBackup"
 
+	// pvcWorkspaceFeatureAnnotation is set on workspaces which are using persistent_volume_claim feature
+	pvcWorkspaceFeatureAnnotation = "gitpod.io/pvcFeature"
+
+	// startedDisposalAnnotation sets to true when finalizeWorkspaceContent is called to prevent finalize from
+	// being called more then once, which can happen due to race between disposalStatusAnnotation update and actOnPodEvent
+	startedDisposalAnnotation = "gitpod.io/startedDisposal"
+
 	// gitpodFinalizerName is the name of the Gitpod finalizer we use to clean up a workspace
 	gitpodFinalizerName = "gitpod.io/finalizer"
 
@@ -77,6 +84,9 @@ const (
 
 	// stoppedByRequestAnnotation is set on a pod when it was requested to stop using a StopWorkspace call
 	stoppedByRequestAnnotation = "gitpod.io/stoppedByRequest"
+
+	// attemptingToCreatePodAnnotation is set when ws-manager is trying to create pod and is removed when pod is successfully scheduled on the node
+	attemptingToCreatePodAnnotation = "gitpod.io/attemptingToCreate"
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod

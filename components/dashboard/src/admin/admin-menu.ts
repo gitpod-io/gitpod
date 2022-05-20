@@ -22,6 +22,10 @@ export const adminMenu = [
         link: ["/admin/teams"],
     },
     {
+        title: "License",
+        link: ["/admin/license"],
+    },
+    {
         title: "Settings",
         link: ["/admin/settings"],
     },

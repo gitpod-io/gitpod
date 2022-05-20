@@ -98,13 +98,37 @@ export class UserDeletionService {
         const runningWorkspaces = await this.workspaceDb.findRunningInstancesWithWorkspaces(undefined, user.id);
 
         await Promise.all(
-            runningWorkspaces.map(async (wsi) => {
+            runningWorkspaces.map(async (info) => {
+                const wsi = info.latestInstance;
+
                 const req = new StopWorkspaceRequest();
-                req.setId(wsi.latestInstance.id);
+                req.setId(wsi.id);
                 req.setPolicy(StopWorkspacePolicy.NORMALLY);
 
-                const manager = await this.workspaceManagerClientProvider.get(wsi.latestInstance.region);
-                await manager.stopWorkspace({}, req);
+                try {
+                    const manager = await this.workspaceManagerClientProvider.get(wsi.region);
+                    await manager.stopWorkspace({}, req);
+                } catch (err) {
+                    log.debug(
+                        {
+                            userId: info.workspace.ownerId,
+                            workspaceId: info.workspace.id,
+                            instanceId: wsi.id,
+                        },
+                        "Unable to stop workspace on account deletion",
+                        err,
+                    );
+
+                    // We cannot find a workspace manager client for this instances' region, or there is any other error while stopping that workspace properly.
+                    // This might be the case if the workspace cluster which we try to stop an instance on is no longer registered.
+                    // This is bad state, but might happen anyway. Instead of failing, we mark the workspace instance as stopped.
+                    await this.workspaceDb.updateInstancePartial(wsi.id, {
+                        status: {
+                            ...wsi.status,
+                            phase: "stopped",
+                        },
+                    });
+                }
             }),
         );
     }
@@ -130,7 +154,7 @@ export class UserDeletionService {
         const workspaces = await this.workspaceDb.findWorkspacesByUser(userId);
 
         await Promise.all(
-            workspaces.map((ws) => async () => {
+            workspaces.map(async (ws) => {
                 this.anonymizeWorkspace(ws);
                 await this.workspaceDb.store(ws);
             }),

@@ -16,6 +16,12 @@
 	order gitpod.workspace_download     before redir
 	order gitpod.headless_log_download	before rewrite
 	order gitpod.sec_websocket_key      before header
+
+	servers {
+        protocol {
+            allow_h2c
+        }
+    }
 }
 
 (compression) {
@@ -92,7 +98,7 @@
 }
 
 (debug_headers) {
-	header X-Gitpod-Region {$GITPOD_INSTALLATION_LONGNAME}
+	header X-Gitpod-Region {$GITPOD_REGION}.{$GITPOD_INSTALLATION_SHORTNAME}
 }
 
 (workspace_transport) {
@@ -135,6 +141,17 @@
 		disable_openmetrics
 	}
 }
+
+# public-api
+api.{$GITPOD_DOMAIN} {
+    log {
+        level DEBUG
+        output stdout
+    }
+
+    reverse_proxy h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
+}
+
 
 # always redirect to HTTPS
 http:// {
@@ -210,7 +227,7 @@ https://{$GITPOD_DOMAIN} {
 	@codesync path /code-sync*
 	handle @codesync {
 		gitpod.cors_origin {
-			base_domain {$GITPOD_DOMAIN}
+			any_domain true
 		}
 
 		import compression
@@ -305,19 +322,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 			import upstream_headers
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
-			header_up X-WSProxy-Host       {http.request.host}
-		}
-	}
-
-	# REMOVE this once all workspaces have updated to new vscode version
-	# old foreign content route used by vscode to serve webview and webworker resources
-	# origin should be decoupled from the workspace (port) origin but the workspace (port) prefix should be the path root for routing
-	@foreign_content header_regexp host Host ^.+-foreign.ws(-[a-z0-9]+)?.{$GITPOD_DOMAIN}
-	handle @foreign_content {
-		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
-			import workspace_transport
-			import upstream_headers
-
 			header_up X-WSProxy-Host       {http.request.host}
 		}
 	}

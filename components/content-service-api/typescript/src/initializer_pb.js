@@ -2328,7 +2328,7 @@ proto.contentservice.FromBackupInitializer.prototype.toObject = function(opt_inc
  */
 proto.contentservice.FromBackupInitializer.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+    checkoutLocation: jspb.Message.getFieldWithDefault(msg, 1, "")
   };
 
   if (includeInstance) {
@@ -2365,6 +2365,10 @@ proto.contentservice.FromBackupInitializer.deserializeBinaryFromReader = functio
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setCheckoutLocation(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2394,6 +2398,31 @@ proto.contentservice.FromBackupInitializer.prototype.serializeBinary = function(
  */
 proto.contentservice.FromBackupInitializer.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getCheckoutLocation();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional string checkout_location = 1;
+ * @return {string}
+ */
+proto.contentservice.FromBackupInitializer.prototype.getCheckoutLocation = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.FromBackupInitializer} returns this
+ */
+proto.contentservice.FromBackupInitializer.prototype.setCheckoutLocation = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 

@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
 // source: gitpod/v1/prebuilds.proto
 /**
  * @fileoverview
@@ -13,18 +19,10 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = (function() {
-  if (this) { return this; }
-  if (typeof window !== 'undefined') { return window; }
-  if (typeof global !== 'undefined') { return global; }
-  if (typeof self !== 'undefined') { return self; }
-  return Function('return this')();
-}.call(null));
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 var gitpod_v1_workspaces_pb = require('../../gitpod/v1/workspaces_pb.js');
 goog.object.extend(proto, gitpod_v1_workspaces_pb);
-var google_rpc_status_pb = require('../../google/rpc/status_pb.js');
-goog.object.extend(proto, google_rpc_status_pb);
 goog.exportSymbol('proto.gitpod.v1.GetPrebuildRequest', null, global);
 goog.exportSymbol('proto.gitpod.v1.GetPrebuildResponse', null, global);
 goog.exportSymbol('proto.gitpod.v1.GetRunningPrebuildRequest', null, global);
@@ -431,7 +429,6 @@ proto.gitpod.v1.GetPrebuildResponse.prototype.toObject = function(opt_includeIns
  */
 proto.gitpod.v1.GetPrebuildResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     prebuild: (f = msg.getPrebuild()) && proto.gitpod.v1.Prebuild.toObject(includeInstance, f)
   };
 
@@ -470,11 +467,6 @@ proto.gitpod.v1.GetPrebuildResponse.deserializeBinaryFromReader = function(msg, 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new google_rpc_status_pb.Status;
-      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
-      msg.setResponseStatus(value);
-      break;
-    case 2:
       var value = new proto.gitpod.v1.Prebuild;
       reader.readMessage(value,proto.gitpod.v1.Prebuild.deserializeBinaryFromReader);
       msg.setPrebuild(value);
@@ -508,18 +500,10 @@ proto.gitpod.v1.GetPrebuildResponse.prototype.serializeBinary = function() {
  */
 proto.gitpod.v1.GetPrebuildResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getResponseStatus();
-  if (f != null) {
-    writer.writeMessage(
-      1,
-      f,
-      google_rpc_status_pb.Status.serializeBinaryToWriter
-    );
-  }
   f = message.getPrebuild();
   if (f != null) {
     writer.writeMessage(
-      2,
+      1,
       f,
       proto.gitpod.v1.Prebuild.serializeBinaryToWriter
     );
@@ -528,49 +512,12 @@ proto.gitpod.v1.GetPrebuildResponse.serializeBinaryToWriter = function(message, 
 
 
 /**
- * optional google.rpc.Status response_status = 1;
- * @return {?proto.google.rpc.Status}
- */
-proto.gitpod.v1.GetPrebuildResponse.prototype.getResponseStatus = function() {
-  return /** @type{?proto.google.rpc.Status} */ (
-    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
-};
-
-
-/**
- * @param {?proto.google.rpc.Status|undefined} value
- * @return {!proto.gitpod.v1.GetPrebuildResponse} returns this
-*/
-proto.gitpod.v1.GetPrebuildResponse.prototype.setResponseStatus = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.gitpod.v1.GetPrebuildResponse} returns this
- */
-proto.gitpod.v1.GetPrebuildResponse.prototype.clearResponseStatus = function() {
-  return this.setResponseStatus(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.gitpod.v1.GetPrebuildResponse.prototype.hasResponseStatus = function() {
-  return jspb.Message.getField(this, 1) != null;
-};
-
-
-/**
- * optional Prebuild prebuild = 2;
+ * optional Prebuild prebuild = 1;
  * @return {?proto.gitpod.v1.Prebuild}
  */
 proto.gitpod.v1.GetPrebuildResponse.prototype.getPrebuild = function() {
   return /** @type{?proto.gitpod.v1.Prebuild} */ (
-    jspb.Message.getWrapperField(this, proto.gitpod.v1.Prebuild, 2));
+    jspb.Message.getWrapperField(this, proto.gitpod.v1.Prebuild, 1));
 };
 
 
@@ -579,7 +526,7 @@ proto.gitpod.v1.GetPrebuildResponse.prototype.getPrebuild = function() {
  * @return {!proto.gitpod.v1.GetPrebuildResponse} returns this
 */
 proto.gitpod.v1.GetPrebuildResponse.prototype.setPrebuild = function(value) {
-  return jspb.Message.setWrapperField(this, 2, value);
+  return jspb.Message.setWrapperField(this, 1, value);
 };
 
 
@@ -597,7 +544,7 @@ proto.gitpod.v1.GetPrebuildResponse.prototype.clearPrebuild = function() {
  * @return {boolean}
  */
 proto.gitpod.v1.GetPrebuildResponse.prototype.hasPrebuild = function() {
-  return jspb.Message.getField(this, 2) != null;
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -763,7 +710,6 @@ proto.gitpod.v1.GetRunningPrebuildResponse.prototype.toObject = function(opt_inc
  */
 proto.gitpod.v1.GetRunningPrebuildResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     prebuild: (f = msg.getPrebuild()) && proto.gitpod.v1.Prebuild.toObject(includeInstance, f)
   };
 
@@ -802,11 +748,6 @@ proto.gitpod.v1.GetRunningPrebuildResponse.deserializeBinaryFromReader = functio
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new google_rpc_status_pb.Status;
-      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
-      msg.setResponseStatus(value);
-      break;
-    case 2:
       var value = new proto.gitpod.v1.Prebuild;
       reader.readMessage(value,proto.gitpod.v1.Prebuild.deserializeBinaryFromReader);
       msg.setPrebuild(value);
@@ -840,18 +781,10 @@ proto.gitpod.v1.GetRunningPrebuildResponse.prototype.serializeBinary = function(
  */
 proto.gitpod.v1.GetRunningPrebuildResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getResponseStatus();
-  if (f != null) {
-    writer.writeMessage(
-      1,
-      f,
-      google_rpc_status_pb.Status.serializeBinaryToWriter
-    );
-  }
   f = message.getPrebuild();
   if (f != null) {
     writer.writeMessage(
-      2,
+      1,
       f,
       proto.gitpod.v1.Prebuild.serializeBinaryToWriter
     );
@@ -860,49 +793,12 @@ proto.gitpod.v1.GetRunningPrebuildResponse.serializeBinaryToWriter = function(me
 
 
 /**
- * optional google.rpc.Status response_status = 1;
- * @return {?proto.google.rpc.Status}
- */
-proto.gitpod.v1.GetRunningPrebuildResponse.prototype.getResponseStatus = function() {
-  return /** @type{?proto.google.rpc.Status} */ (
-    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
-};
-
-
-/**
- * @param {?proto.google.rpc.Status|undefined} value
- * @return {!proto.gitpod.v1.GetRunningPrebuildResponse} returns this
-*/
-proto.gitpod.v1.GetRunningPrebuildResponse.prototype.setResponseStatus = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.gitpod.v1.GetRunningPrebuildResponse} returns this
- */
-proto.gitpod.v1.GetRunningPrebuildResponse.prototype.clearResponseStatus = function() {
-  return this.setResponseStatus(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.gitpod.v1.GetRunningPrebuildResponse.prototype.hasResponseStatus = function() {
-  return jspb.Message.getField(this, 1) != null;
-};
-
-
-/**
- * optional Prebuild prebuild = 2;
+ * optional Prebuild prebuild = 1;
  * @return {?proto.gitpod.v1.Prebuild}
  */
 proto.gitpod.v1.GetRunningPrebuildResponse.prototype.getPrebuild = function() {
   return /** @type{?proto.gitpod.v1.Prebuild} */ (
-    jspb.Message.getWrapperField(this, proto.gitpod.v1.Prebuild, 2));
+    jspb.Message.getWrapperField(this, proto.gitpod.v1.Prebuild, 1));
 };
 
 
@@ -911,7 +807,7 @@ proto.gitpod.v1.GetRunningPrebuildResponse.prototype.getPrebuild = function() {
  * @return {!proto.gitpod.v1.GetRunningPrebuildResponse} returns this
 */
 proto.gitpod.v1.GetRunningPrebuildResponse.prototype.setPrebuild = function(value) {
-  return jspb.Message.setWrapperField(this, 2, value);
+  return jspb.Message.setWrapperField(this, 1, value);
 };
 
 
@@ -929,7 +825,7 @@ proto.gitpod.v1.GetRunningPrebuildResponse.prototype.clearPrebuild = function() 
  * @return {boolean}
  */
 proto.gitpod.v1.GetRunningPrebuildResponse.prototype.hasPrebuild = function() {
-  return jspb.Message.getField(this, 2) != null;
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -1095,7 +991,6 @@ proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.toObject = function(opt
  */
 proto.gitpod.v1.ListenToPrebuildStatusResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     status: (f = msg.getStatus()) && proto.gitpod.v1.PrebuildStatus.toObject(includeInstance, f)
   };
 
@@ -1134,11 +1029,6 @@ proto.gitpod.v1.ListenToPrebuildStatusResponse.deserializeBinaryFromReader = fun
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new google_rpc_status_pb.Status;
-      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
-      msg.setResponseStatus(value);
-      break;
-    case 2:
       var value = new proto.gitpod.v1.PrebuildStatus;
       reader.readMessage(value,proto.gitpod.v1.PrebuildStatus.deserializeBinaryFromReader);
       msg.setStatus(value);
@@ -1172,18 +1062,10 @@ proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.serializeBinary = funct
  */
 proto.gitpod.v1.ListenToPrebuildStatusResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getResponseStatus();
-  if (f != null) {
-    writer.writeMessage(
-      1,
-      f,
-      google_rpc_status_pb.Status.serializeBinaryToWriter
-    );
-  }
   f = message.getStatus();
   if (f != null) {
     writer.writeMessage(
-      2,
+      1,
       f,
       proto.gitpod.v1.PrebuildStatus.serializeBinaryToWriter
     );
@@ -1192,49 +1074,12 @@ proto.gitpod.v1.ListenToPrebuildStatusResponse.serializeBinaryToWriter = functio
 
 
 /**
- * optional google.rpc.Status response_status = 1;
- * @return {?proto.google.rpc.Status}
- */
-proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.getResponseStatus = function() {
-  return /** @type{?proto.google.rpc.Status} */ (
-    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
-};
-
-
-/**
- * @param {?proto.google.rpc.Status|undefined} value
- * @return {!proto.gitpod.v1.ListenToPrebuildStatusResponse} returns this
-*/
-proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.setResponseStatus = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.gitpod.v1.ListenToPrebuildStatusResponse} returns this
- */
-proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.clearResponseStatus = function() {
-  return this.setResponseStatus(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.hasResponseStatus = function() {
-  return jspb.Message.getField(this, 1) != null;
-};
-
-
-/**
- * optional PrebuildStatus status = 2;
+ * optional PrebuildStatus status = 1;
  * @return {?proto.gitpod.v1.PrebuildStatus}
  */
 proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.getStatus = function() {
   return /** @type{?proto.gitpod.v1.PrebuildStatus} */ (
-    jspb.Message.getWrapperField(this, proto.gitpod.v1.PrebuildStatus, 2));
+    jspb.Message.getWrapperField(this, proto.gitpod.v1.PrebuildStatus, 1));
 };
 
 
@@ -1243,7 +1088,7 @@ proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.getStatus = function() 
  * @return {!proto.gitpod.v1.ListenToPrebuildStatusResponse} returns this
 */
 proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.setStatus = function(value) {
-  return jspb.Message.setWrapperField(this, 2, value);
+  return jspb.Message.setWrapperField(this, 1, value);
 };
 
 
@@ -1261,7 +1106,7 @@ proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.clearStatus = function(
  * @return {boolean}
  */
 proto.gitpod.v1.ListenToPrebuildStatusResponse.prototype.hasStatus = function() {
-  return jspb.Message.getField(this, 2) != null;
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -1427,8 +1272,7 @@ proto.gitpod.v1.ListenToPrebuildLogsResponse.prototype.toObject = function(opt_i
  */
 proto.gitpod.v1.ListenToPrebuildLogsResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
-    line: jspb.Message.getFieldWithDefault(msg, 2, "")
+    line: jspb.Message.getFieldWithDefault(msg, 1, "")
   };
 
   if (includeInstance) {
@@ -1466,11 +1310,6 @@ proto.gitpod.v1.ListenToPrebuildLogsResponse.deserializeBinaryFromReader = funct
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new google_rpc_status_pb.Status;
-      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
-      msg.setResponseStatus(value);
-      break;
-    case 2:
       var value = /** @type {string} */ (reader.readString());
       msg.setLine(value);
       break;
@@ -1503,18 +1342,10 @@ proto.gitpod.v1.ListenToPrebuildLogsResponse.prototype.serializeBinary = functio
  */
 proto.gitpod.v1.ListenToPrebuildLogsResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getResponseStatus();
-  if (f != null) {
-    writer.writeMessage(
-      1,
-      f,
-      google_rpc_status_pb.Status.serializeBinaryToWriter
-    );
-  }
   f = message.getLine();
   if (f.length > 0) {
     writer.writeString(
-      2,
+      1,
       f
     );
   }
@@ -1522,48 +1353,11 @@ proto.gitpod.v1.ListenToPrebuildLogsResponse.serializeBinaryToWriter = function(
 
 
 /**
- * optional google.rpc.Status response_status = 1;
- * @return {?proto.google.rpc.Status}
- */
-proto.gitpod.v1.ListenToPrebuildLogsResponse.prototype.getResponseStatus = function() {
-  return /** @type{?proto.google.rpc.Status} */ (
-    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
-};
-
-
-/**
- * @param {?proto.google.rpc.Status|undefined} value
- * @return {!proto.gitpod.v1.ListenToPrebuildLogsResponse} returns this
-*/
-proto.gitpod.v1.ListenToPrebuildLogsResponse.prototype.setResponseStatus = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.gitpod.v1.ListenToPrebuildLogsResponse} returns this
- */
-proto.gitpod.v1.ListenToPrebuildLogsResponse.prototype.clearResponseStatus = function() {
-  return this.setResponseStatus(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.gitpod.v1.ListenToPrebuildLogsResponse.prototype.hasResponseStatus = function() {
-  return jspb.Message.getField(this, 1) != null;
-};
-
-
-/**
- * optional string line = 2;
+ * optional string line = 1;
  * @return {string}
  */
 proto.gitpod.v1.ListenToPrebuildLogsResponse.prototype.getLine = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
@@ -1572,7 +1366,7 @@ proto.gitpod.v1.ListenToPrebuildLogsResponse.prototype.getLine = function() {
  * @return {!proto.gitpod.v1.ListenToPrebuildLogsResponse} returns this
  */
 proto.gitpod.v1.ListenToPrebuildLogsResponse.prototype.setLine = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 

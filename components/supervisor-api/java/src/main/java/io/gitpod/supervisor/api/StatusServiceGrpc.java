@@ -12,7 +12,7 @@ import static io.grpc.MethodDescriptor.generateFullMethodName;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.41.0)",
+    value = "by gRPC proto compiler (version 1.45.0)",
     comments = "Source: status.proto")
 @io.grpc.stub.annotations.GrpcGenerated
 public final class StatusServiceGrpc {
@@ -208,6 +208,37 @@ public final class StatusServiceGrpc {
     return getTasksStatusMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Status.ResourcesStatuRequest,
+      io.gitpod.supervisor.api.Status.ResourcesStatusResponse> getResourcesStatusMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "ResourcesStatus",
+      requestType = io.gitpod.supervisor.api.Status.ResourcesStatuRequest.class,
+      responseType = io.gitpod.supervisor.api.Status.ResourcesStatusResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Status.ResourcesStatuRequest,
+      io.gitpod.supervisor.api.Status.ResourcesStatusResponse> getResourcesStatusMethod() {
+    io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Status.ResourcesStatuRequest, io.gitpod.supervisor.api.Status.ResourcesStatusResponse> getResourcesStatusMethod;
+    if ((getResourcesStatusMethod = StatusServiceGrpc.getResourcesStatusMethod) == null) {
+      synchronized (StatusServiceGrpc.class) {
+        if ((getResourcesStatusMethod = StatusServiceGrpc.getResourcesStatusMethod) == null) {
+          StatusServiceGrpc.getResourcesStatusMethod = getResourcesStatusMethod =
+              io.grpc.MethodDescriptor.<io.gitpod.supervisor.api.Status.ResourcesStatuRequest, io.gitpod.supervisor.api.Status.ResourcesStatusResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ResourcesStatus"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  io.gitpod.supervisor.api.Status.ResourcesStatuRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  io.gitpod.supervisor.api.Status.ResourcesStatusResponse.getDefaultInstance()))
+              .setSchemaDescriptor(new StatusServiceMethodDescriptorSupplier("ResourcesStatus"))
+              .build();
+        }
+      }
+    }
+    return getResourcesStatusMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -322,6 +353,16 @@ public final class StatusServiceGrpc {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getTasksStatusMethod(), responseObserver);
     }
 
+    /**
+     * <pre>
+     * ResourcesStatus provides workspace resources status information.
+     * </pre>
+     */
+    public void resourcesStatus(io.gitpod.supervisor.api.Status.ResourcesStatuRequest request,
+        io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Status.ResourcesStatusResponse> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getResourcesStatusMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -366,6 +407,13 @@ public final class StatusServiceGrpc {
                 io.gitpod.supervisor.api.Status.TasksStatusRequest,
                 io.gitpod.supervisor.api.Status.TasksStatusResponse>(
                   this, METHODID_TASKS_STATUS)))
+          .addMethod(
+            getResourcesStatusMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                io.gitpod.supervisor.api.Status.ResourcesStatuRequest,
+                io.gitpod.supervisor.api.Status.ResourcesStatusResponse>(
+                  this, METHODID_RESOURCES_STATUS)))
           .build();
     }
   }
@@ -455,6 +503,17 @@ public final class StatusServiceGrpc {
       io.grpc.stub.ClientCalls.asyncServerStreamingCall(
           getChannel().newCall(getTasksStatusMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     * <pre>
+     * ResourcesStatus provides workspace resources status information.
+     * </pre>
+     */
+    public void resourcesStatus(io.gitpod.supervisor.api.Status.ResourcesStatuRequest request,
+        io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Status.ResourcesStatusResponse> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getResourcesStatusMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -538,6 +597,16 @@ public final class StatusServiceGrpc {
       return io.grpc.stub.ClientCalls.blockingServerStreamingCall(
           getChannel(), getTasksStatusMethod(), getCallOptions(), request);
     }
+
+    /**
+     * <pre>
+     * ResourcesStatus provides workspace resources status information.
+     * </pre>
+     */
+    public io.gitpod.supervisor.api.Status.ResourcesStatusResponse resourcesStatus(io.gitpod.supervisor.api.Status.ResourcesStatuRequest request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getResourcesStatusMethod(), getCallOptions(), request);
+    }
   }
 
   /**
@@ -603,6 +672,17 @@ public final class StatusServiceGrpc {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getBackupStatusMethod(), getCallOptions()), request);
     }
+
+    /**
+     * <pre>
+     * ResourcesStatus provides workspace resources status information.
+     * </pre>
+     */
+    public com.google.common.util.concurrent.ListenableFuture<io.gitpod.supervisor.api.Status.ResourcesStatusResponse> resourcesStatus(
+        io.gitpod.supervisor.api.Status.ResourcesStatuRequest request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getResourcesStatusMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_SUPERVISOR_STATUS = 0;
@@ -611,6 +691,7 @@ public final class StatusServiceGrpc {
   private static final int METHODID_BACKUP_STATUS = 3;
   private static final int METHODID_PORTS_STATUS = 4;
   private static final int METHODID_TASKS_STATUS = 5;
+  private static final int METHODID_RESOURCES_STATUS = 6;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -652,6 +733,10 @@ public final class StatusServiceGrpc {
         case METHODID_TASKS_STATUS:
           serviceImpl.tasksStatus((io.gitpod.supervisor.api.Status.TasksStatusRequest) request,
               (io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Status.TasksStatusResponse>) responseObserver);
+          break;
+        case METHODID_RESOURCES_STATUS:
+          serviceImpl.resourcesStatus((io.gitpod.supervisor.api.Status.ResourcesStatuRequest) request,
+              (io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Status.ResourcesStatusResponse>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -720,6 +805,7 @@ public final class StatusServiceGrpc {
               .addMethod(getBackupStatusMethod())
               .addMethod(getPortsStatusMethod())
               .addMethod(getTasksStatusMethod())
+              .addMethod(getResourcesStatusMethod())
               .build();
         }
       }

@@ -26,15 +26,15 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 
 	return map[session.WorkspaceState][]session.WorkspaceLivecycleHook{
 		session.WorkspaceInitializing: {
-			hookSetupRemoteStorage(cfg),
 			hookSetupWorkspaceLocation,
-			hookInstallQuota(xfs, cfg.WorkspaceSizeLimit),
-			startIWS,
+			startIWS, // workspacekit is waiting for starting IWS, so it needs to start as soon as possible.
+			hookSetupRemoteStorage(cfg),
+			hookInstallQuota(xfs),
 		},
 		session.WorkspaceReady: {
-			hookSetupRemoteStorage(cfg),
-			hookInstallQuota(xfs, cfg.WorkspaceSizeLimit),
 			startIWS,
+			hookSetupRemoteStorage(cfg),
+			hookInstallQuota(xfs),
 		},
 		session.WorkspaceDisposed: {
 			iws.StopServingWorkspace,
@@ -93,11 +93,12 @@ func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) erro
 }
 
 // hookInstallQuota enforces filesystem quota on the workspace location (if the filesystem supports it)
-func hookInstallQuota(xfs *quota.XFS, size quota.Size) session.WorkspaceLivecycleHook {
+func hookInstallQuota(xfs *quota.XFS) session.WorkspaceLivecycleHook {
 	return func(ctx context.Context, ws *session.Workspace) error {
 		if xfs == nil {
 			return nil
 		}
+		size := quota.Size(ws.StorageQuota)
 		if size == 0 {
 			return nil
 		}

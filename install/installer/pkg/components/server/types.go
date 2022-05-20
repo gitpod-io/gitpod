@@ -4,7 +4,10 @@
 
 package server
 
-import "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+import (
+	"github.com/gitpod-io/gitpod/common-go/util"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+)
 
 // These types are from TypeScript files
 
@@ -13,19 +16,16 @@ type ConfigSerialized struct {
 	Version                           string   `json:"version"`
 	HostURL                           string   `json:"hostUrl"`
 	InstallationShortname             string   `json:"installationShortname"`
-	Stage                             string   `json:"stage"`
 	DevBranch                         string   `json:"devBranch"`
 	InsecureNoDomain                  bool     `json:"insecureNoDomain"`
 	License                           string   `json:"license"`
 	LicenseFile                       string   `json:"licenseFile"`
 	DefinitelyGpDisabled              bool     `json:"definitelyGpDisabled"`
 	EnableLocalApp                    bool     `json:"enableLocalApp"`
-	BuiltinAuthProvidersConfigured    bool     `json:"builtinAuthProvidersConfigured"`
 	DisableDynamicAuthProviderLogin   bool     `json:"disableDynamicAuthProviderLogin"`
 	MaxEnvvarPerUserCount             int32    `json:"maxEnvvarPerUserCount"`
 	MaxConcurrentPrebuildsPerRef      int32    `json:"maxConcurrentPrebuildsPerRef"`
 	MakeNewUsersAdmin                 bool     `json:"makeNewUsersAdmin"`
-	TheiaPluginsBucketNameOverride    string   `json:"theiaPluginsBucketNameOverride"`
 	DefaultBaseImageRegistryWhitelist []string `json:"defaultBaseImageRegistryWhitelist"`
 	RunDbDeleter                      bool     `json:"runDbDeleter"`
 	ContentServiceAddr                string   `json:"contentServiceAddr"`
@@ -42,12 +42,18 @@ type ConfigSerialized struct {
 	AuthProviderConfigFiles    []string                   `json:"authProviderConfigFiles"`
 	IncrementalPrebuilds       IncrementalPrebuilds       `json:"incrementalPrebuilds"`
 	BlockNewUsers              config.BlockNewUsers       `json:"blockNewUsers"`
+	BlockedRepositories        []BlockedRepository        `json:"blockedRepositories,omitempty"`
 	OAuthServer                OAuthServer                `json:"oauthServer"`
 	RateLimiter                RateLimiter                `json:"rateLimiter"`
 	CodeSync                   CodeSync                   `json:"codeSync"`
 	// PrebuildLimiter defines the number of prebuilds allowed for each cloneURL in a given 1 minute interval
 	// Key of "*" defines the default limit, unless there exists a cloneURL in the map which overrides it.
 	PrebuildLimiter map[string]int `json:"prebuildLimiter"`
+}
+
+type BlockedRepository struct {
+	UrlRegExp string `json:"urlRegExp"`
+	BlockUser bool   `json:"blockUser"`
 }
 
 type CodeSyncResources struct {
@@ -104,6 +110,7 @@ type GitHubApp struct {
 	CertPath        string `json:"certPath"`
 	MarketplaceName string `json:"marketplaceName"`
 	LogLevel        string `json:"logLevel"`
+	CertSecretName  string `json:"certSecretName"`
 }
 
 type Session struct {
@@ -120,6 +127,8 @@ type WorkspaceDefaults struct {
 	WorkspaceImage      string                      `json:"workspaceImage"`
 	PreviewFeatureFlags []NamedWorkspaceFeatureFlag `json:"previewFeatureFlags"`
 	DefaultFeatureFlags []NamedWorkspaceFeatureFlag `json:"defaultFeatureFlags"`
+	TimeoutDefault      *util.Duration              `json:"timeoutDefault,omitempty"`
+	TimeoutExtended     *util.Duration              `json:"timeoutExtended,omitempty"`
 }
 
 type NamedWorkspaceFeatureFlag string

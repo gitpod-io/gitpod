@@ -7,6 +7,7 @@ package initializer_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -27,6 +28,82 @@ type RecordingInitializer struct {
 func (f *RecordingInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
 	f.CallCount++
 	return csapi.WorkspaceInitFromOther, nil
+}
+
+func TestGetCheckoutLocationsFromInitializer(t *testing.T) {
+
+	var init []*csapi.WorkspaceInitializer
+	init = append(init, &csapi.WorkspaceInitializer{
+		Spec: &csapi.WorkspaceInitializer_Git{
+			Git: &csapi.GitInitializer{
+				CheckoutLocation: "/foo",
+				CloneTaget:       "head",
+				Config: &csapi.GitConfig{
+					Authentication: csapi.GitAuthMethod_NO_AUTH,
+				},
+				RemoteUri:  "somewhere-else",
+				TargetMode: csapi.CloneTargetMode_LOCAL_BRANCH,
+			},
+		},
+	})
+	init = append(init, &csapi.WorkspaceInitializer{
+		Spec: &csapi.WorkspaceInitializer_Git{
+			Git: &csapi.GitInitializer{
+				CheckoutLocation: "/bar",
+				CloneTaget:       "head",
+				Config: &csapi.GitConfig{
+					Authentication: csapi.GitAuthMethod_NO_AUTH,
+				},
+				RemoteUri:  "somewhere-else",
+				TargetMode: csapi.CloneTargetMode_LOCAL_BRANCH,
+			},
+		},
+	})
+
+	tests := []struct {
+		Name        string
+		Initializer *csapi.WorkspaceInitializer
+		Expectation string
+	}{
+		{
+			Name: "single git initializer",
+			Initializer: &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Git{
+					Git: &csapi.GitInitializer{
+						CheckoutLocation: "/foo",
+						CloneTaget:       "head",
+						Config: &csapi.GitConfig{
+							Authentication: csapi.GitAuthMethod_NO_AUTH,
+						},
+						RemoteUri:  "somewhere-else",
+						TargetMode: csapi.CloneTargetMode_LOCAL_BRANCH,
+					},
+				},
+			},
+			Expectation: "/foo",
+		},
+		{
+			Name: "multiple git initializer",
+			Initializer: &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Composite{
+					Composite: &csapi.CompositeInitializer{
+						Initializer: init,
+					},
+				},
+			},
+			Expectation: "/foo,/bar",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			locations := strings.Join(initializer.GetCheckoutLocationsFromInitializer(test.Initializer), ",")
+			if locations != test.Expectation {
+				t.Errorf("expected %s, got %s", test.Expectation, locations)
+			}
+		})
+	}
+
 }
 
 func TestCompositeInitializer(t *testing.T) {

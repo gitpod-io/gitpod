@@ -83,6 +83,11 @@ export class TeamDBImpl implements TeamDB {
         return infos.sort((a, b) => (a.memberSince < b.memberSince ? 1 : a.memberSince === b.memberSince ? 0 : -1));
     }
 
+    public async findTeamMembership(userId: string, teamId: string): Promise<DBTeamMembership | undefined> {
+        const membershipRepo = await this.getMembershipRepo();
+        return membershipRepo.findOne({ userId, teamId, deleted: false });
+    }
+
     public async findTeamsByUser(userId: string): Promise<Team[]> {
         const teamRepo = await this.getTeamRepo();
         const membershipRepo = await this.getMembershipRepo();
@@ -189,6 +194,21 @@ export class TeamDBImpl implements TeamDB {
             throw new Error("The user is not currently a member of this team");
         }
         membership.role = role;
+        await membershipRepo.save(membership);
+    }
+
+    public async setTeamMemberSubscription(userId: string, teamId: string, subscriptionId: string): Promise<void> {
+        const teamRepo = await this.getTeamRepo();
+        const team = await teamRepo.findOne(teamId);
+        if (!team || !!team.deleted) {
+            throw new Error("A team with this ID could not be found");
+        }
+        const membershipRepo = await this.getMembershipRepo();
+        const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
+        if (!membership) {
+            throw new Error("The user is not currently a member of this team");
+        }
+        membership.subscriptionId = subscriptionId;
         await membershipRepo.save(membership);
     }
 

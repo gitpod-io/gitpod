@@ -10,11 +10,11 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database"
 	ide_proxy "github.com/gitpod-io/gitpod/installer/pkg/components/ide-proxy"
-	imagebuildermk3 "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/migrations"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio"
 	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
+	public_api_server "github.com/gitpod-io/gitpod/installer/pkg/components/public-api-server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/rabbitmq"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	wsmanagerbridge "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-bridge"
@@ -25,7 +25,6 @@ var Objects = common.CompositeRenderFunc(
 	dashboard.Objects,
 	database.Objects,
 	ide_proxy.Objects,
-	imagebuildermk3.Objects,
 	migrations.Objects,
 	minio.Objects,
 	openvsxproxy.Objects,
@@ -33,6 +32,7 @@ var Objects = common.CompositeRenderFunc(
 	rabbitmq.Objects,
 	server.Objects,
 	wsmanagerbridge.Objects,
+	public_api_server.Objects,
 )
 
 var Helm = common.CompositeHelmFunc(

@@ -25,7 +25,7 @@ func Init(key *C.char, domain *C.char) (id int) {
 	id = nextID
 	switch os.Getenv("GITPOD_LICENSE_TYPE") {
 	case string(licensor.LicenseTypeReplicated):
-		instances[id] = licensor.NewReplicatedEvaluator(C.GoString(domain))
+		instances[id] = licensor.NewReplicatedEvaluator()
 		break
 	default:
 		instances[id] = licensor.NewGitpodEvaluator([]byte(C.GoString(key)), C.GoString(domain))
@@ -33,6 +33,24 @@ func Init(key *C.char, domain *C.char) (id int) {
 	nextID++
 
 	return id
+}
+
+// GetLicenseData returns the info about license for the admin dashboard
+//export GetLicenseData
+func GetLicenseData(id int) (licData *C.char, ok bool) {
+	e, ok := instances[id]
+	if !ok {
+		return
+	}
+
+	b, err := json.Marshal(e.LicenseData())
+	if err != nil {
+		log.WithError(err).Warn("GetLicenseData(): cannot retrieve license data")
+		return nil, false
+	}
+
+	return C.CString(string(b)), true
+
 }
 
 // Validate returns false if the license isn't valid and a message explaining why that is.

@@ -35,9 +35,6 @@
         "blacklists": {
           "$ref": "#/definitions/"
         },
-        "egressTraffic": {
-          "$ref": "#/definitions/"
-        },
         "enforcement": {
           "$ref": "#/definitions/"
         },
@@ -58,12 +55,6 @@
         },
         "systemMemoryLimitMib": {
           "type": "integer"
-        },
-        "hostURL": {
-          "type": "string"
-        },
-        "gitpodAPIToken": {
-          "type": "string"
         }
       },
       "additionalProperties": false,

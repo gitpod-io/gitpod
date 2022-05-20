@@ -1,4 +1,6 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
+Disallow: /
 
-Disallow: /from-referrer/
+# We prevent indexing of all web app pages, because only public website/docs/community pages
+# are relevant for search results: https://github.com/gitpod-io/gitpod/issues/9607

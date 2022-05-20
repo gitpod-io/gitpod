@@ -56,7 +56,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			WorkspacePodConfig: &proxy.WorkspacePodConfig{
 				TheiaPort:       workspace.ContainerPort,
 				SupervisorPort:  workspace.SupervisorPort,
-				SupervisorImage: common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
+				SupervisorImage: ctx.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 			},
 			BuiltinPages: proxy.BuiltinPagesConfig{
 				Location: "/app/public",
@@ -64,7 +64,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		PProfAddr:          ":60060",
 		PrometheusAddr:     "127.0.0.1:9500",
-		ReadinessProbeAddr: ":60088",
+		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 		WorkspaceManager: &config.WorkspaceManagerConn{
 			Addr: "ws-manager:8080",
 			TLS: struct {
