@@ -102,6 +102,12 @@ export class BitbucketServerApp {
             const cloneUrl = context.repository.cloneUrl;
             const commit = context.revision;
             const projectAndOwner = await this.findProjectAndOwner(cloneUrl, user);
+            if (projectAndOwner.project) {
+                /* tslint:disable-next-line */
+                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
+                    lastWebhookReceived: new Date().toISOString(),
+                });
+            }
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
                 console.log("Bitbucket push event: No config. No prebuild.");
