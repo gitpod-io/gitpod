@@ -237,22 +237,29 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 	if startContext.Class != nil {
 		PVCConfig = startContext.Class.PVC
 	}
-	storageClassName := PVCConfig.StorageClass
-	return &corev1.PersistentVolumeClaim{
+
+	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
 			Namespace: m.Config.Namespace,
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-			StorageClassName: &storageClassName,
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceName(corev1.ResourceStorage): PVCConfig.Size,
 				},
 			},
 		},
-	}, nil
+	}
+	if PVCConfig.StorageClass != "" {
+		// Specify the storageClassName when the storage class is non-empty.
+		// This way, the Kubernetes uses the default StorageClass within the cluster.
+		// Otherwise, the Kubernetes would try to request the PVC with no class.
+		pvc.Spec.StorageClassName = &PVCConfig.StorageClass
+	}
+
+	return pvc, nil
 }
 
 // createDefiniteWorkspacePod creates a workspace pod without regard for any template.
