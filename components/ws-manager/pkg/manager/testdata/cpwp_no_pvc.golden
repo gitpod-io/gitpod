@@ -1,0 +1,21 @@
+{
+    "reason": {
+        "metadata": {
+            "name": "ws-test",
+            "namespace": "default",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "accessModes": [
+                "ReadWriteOnce"
+            ],
+            "resources": {
+                "requests": {
+                    "storage": "0"
+                }
+            },
+            "storageClassName": ""
+        },
+        "status": {}
+    }
+}

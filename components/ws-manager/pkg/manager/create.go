@@ -233,7 +233,7 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 		prefix = "ws"
 	}
 
-	PVCConfig := m.Config.WorkspaceClasses[""].PVC
+	PVCConfig := m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC
 	if startContext.Class != nil {
 		PVCConfig = startContext.Class.PVC
 	}
