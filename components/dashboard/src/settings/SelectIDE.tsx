@@ -14,11 +14,18 @@ import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
 import { User } from "@gitpod/gitpod-protocol";
 
+export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
     updateUserContext?: boolean;
+    location: IDEChangedTrackLocation;
 }
 
-export const updateUserIDEInfo = async (user: User, selectedIde: string, useLatestVersion: boolean) => {
+export const updateUserIDEInfo = async (
+    user: User,
+    selectedIde: string,
+    useLatestVersion: boolean,
+    location: IDEChangedTrackLocation,
+) => {
     const additionalData = user?.additionalData ?? {};
     const settings = additionalData.ideSettings ?? {};
     settings.settingVersion = "2.0";
@@ -28,7 +35,10 @@ export const updateUserIDEInfo = async (user: User, selectedIde: string, useLate
     getGitpodService()
         .server.trackEvent({
             event: "ide_configuration_changed",
-            properties: settings,
+            properties: {
+                ...settings,
+                location,
+            },
         })
         .then()
         .catch(console.error);
@@ -44,7 +54,7 @@ export default function SelectIDE(props: SelectIDEProps) {
     }, []);
 
     const actualUpdateUserIDEInfo = async (user: User, selectedIde: string, useLatestVersion: boolean) => {
-        const newUserData = await updateUserIDEInfo(user, selectedIde, useLatestVersion);
+        const newUserData = await updateUserIDEInfo(user, selectedIde, useLatestVersion, props.location);
         props.updateUserContext && setUser({ ...newUserData });
     };
 
