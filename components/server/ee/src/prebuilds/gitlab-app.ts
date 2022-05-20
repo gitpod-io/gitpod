@@ -32,49 +32,55 @@ export class GitLabApp {
 
     @postConstruct()
     protected init() {
+        /**
+         * see https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#configure-your-webhook-receiver-endpoint
+         * for recommendation on creating webhook receivers:
+         *
+         *  - ignore unrecognized event payloads
+         *  - never return 500 status responses if the event has been handled
+         *  - prefer to return 200; indicate that the webhook is asynchronous by returning 201
+         *  - to support fast response times, perform I/O or computationally intensive operations asynchronously
+         */
         this._router.post("/", async (req, res) => {
             const event = req.header("X-Gitlab-Event");
-            if (event === "Push Hook") {
-                const context = req.body as GitLabPushHook;
-                const span = TraceContext.startSpan("GitLapApp.handleEvent", {});
-                span.setTag("request", context);
-                log.debug("GitLab push hook received", { event, context });
-                let user: User | undefined;
-                try {
-                    user = await this.findUser({ span }, context, req);
-                } catch (error) {
-                    TraceContext.setError({ span }, error);
-                    log.error("Cannot find user.", error, {});
-                }
-                if (!user) {
-                    res.statusCode = 503;
-                    res.send();
-                    span.finish();
-                    return;
-                }
-                try {
-                    await this.handlePushHook({ span }, context, user);
-                } catch (err) {
-                    TraceContext.setError({ span }, err);
-                    throw err;
-                } finally {
-                    span.finish();
-                }
-            } else {
-                log.debug("Unknown GitLab event received", { event });
+            const secretToken = req.header("X-Gitlab-Token");
+            const context = req.body as GitLabPushHook;
+            if (event !== "Push Hook" || !secretToken) {
+                log.warn("Unhandled GitLab event.", { event, secretToken: !!secretToken });
+                res.status(200).send("Unhandled event.");
+                return;
             }
-            res.send("OK");
+
+            const span = TraceContext.startSpan("GitLapApp.handleEvent", {});
+            span.setTag("request", context);
+            log.debug("GitLab push event received.", { event, context });
+            let user: User | undefined;
+            try {
+                user = await this.findUser({ span }, context, secretToken);
+            } catch (error) {
+                log.error("Cannot find user.", error, { context });
+                TraceContext.setError({ span }, error);
+            }
+            if (!user) {
+                // If the webhook installer is no longer found in Gitpod's DB
+                // we should send a UNAUTHORIZED signal.
+                span.finish();
+                res.status(401).send("Unauthorized.");
+                return;
+            }
+            /** no await */ this.handlePushHook({ span }, context, user).catch((error) => {
+                console.error(`Couldn't handle request.`, error, { headers: req.headers });
+                TraceContext.setError({ span }, error);
+            });
+
+            span.finish();
+            res.status(201).send("Prebuild request handled.");
         });
     }
 
-    protected async findUser(ctx: TraceContext, context: GitLabPushHook, req: express.Request): Promise<User> {
+    protected async findUser(ctx: TraceContext, context: GitLabPushHook, secretToken: string): Promise<User> {
         const span = TraceContext.startSpan("GitLapApp.findUser", ctx);
         try {
-            const secretToken = req.header("X-Gitlab-Token");
-            span.setTag("secret-token", secretToken);
-            if (!secretToken) {
-                throw new Error("No secretToken provided.");
-            }
             const [userid, tokenValue] = secretToken.split("|");
             const user = await this.userDB.findUserById(userid);
             if (!user) {
@@ -119,9 +125,11 @@ export class GitLabApp {
             const projectAndOwner = await this.findProjectAndOwner(context.repository.cloneUrl, user);
             if (projectAndOwner.project) {
                 /* tslint:disable-next-line */
-                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
-                    lastWebhookReceived: new Date().toISOString(),
-                });
+                /** no await */ this.projectDB
+                    .updateProjectUsage(projectAndOwner.project.id, {
+                        lastWebhookReceived: new Date().toISOString(),
+                    })
+                    .catch((e) => log.error(e));
             }
 
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
