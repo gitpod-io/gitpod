@@ -28,9 +28,6 @@
         "gitpod/url": "https://b246b28e-4776-47d5-961d-10548ffac9a8.ws-eu0.gitpod-staging.com",
         "gitpod/exposedPorts": "CgMIjC4KAwiQPw==",
         "kubernetes.io/psp": "workspace",
-        "prometheus.io/path": "/metrics",
-        "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true",
         "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
       }
     },
