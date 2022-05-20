@@ -1,0 +1,9 @@
+{
+    "status": {
+        "podStarts": 0,
+        "headless": false,
+        "conditions": {
+            "failed": "multiple pods exists - this should never happen"
+        }
+    }
+}

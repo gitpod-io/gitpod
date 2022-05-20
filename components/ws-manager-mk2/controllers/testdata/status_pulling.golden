@@ -1,0 +1,17 @@
+{
+    "status": {
+        "podStarts": 1,
+        "headless": false,
+        "url": "https://gitpodio-templatetypesc-xiqvq15h90z.ws.cw-ws-manager-mk2.preview.gitpod-dev.com",
+        "ownerToken": "TQgYKiFTjA7EVH3qVGDNHyJeZVaHrqw8",
+        "phase": "creating",
+        "conditions": {
+            "deployed": true
+        },
+        "runtime": {
+            "nodeName": "cw-ws-manager-mk2",
+            "podName": "ws-3a20cf86-ab3c-42d1-ac91-acb50b9ee05e",
+            "hostIP": "10.0.2.2"
+        }
+    }
+}
