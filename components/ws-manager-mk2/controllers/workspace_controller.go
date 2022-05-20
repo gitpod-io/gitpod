@@ -243,7 +243,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 				ws.Status.Conditions.Failed = msg
 
-				return r.Update(ctx, &ws)
+				return r.Status().Update(ctx, &ws)
 			})
 			if err != nil {
 				logger.Error(err, "was unable to mark workspace as failed")
