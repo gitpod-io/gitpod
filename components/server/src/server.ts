@@ -18,7 +18,7 @@ import { EventEmitter } from "events";
 import { toIWebSocket } from "@gitpod/gitpod-protocol/lib/messaging/node/connection";
 import { WsExpressHandler, WsRequestHandler } from "./express/ws-handler";
 import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from "./express-util";
-import { createWebSocketConnection } from "vscode-ws-jsonrpc/lib";
+import { createWebSocketConnection } from "@codingame/monaco-jsonrpc/lib";
 import { MessageBusIntegration } from "./workspace/messagebus-integration";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EnforcementController } from "./user/enforcement-endpoint";

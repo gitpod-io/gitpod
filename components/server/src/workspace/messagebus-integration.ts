@@ -19,7 +19,7 @@ import { HeadlessWorkspaceEvent, HeadlessWorkspaceEventType } from "@gitpod/gitp
 import { Channel, Message } from "amqplib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
-import { CancellationTokenSource } from "vscode-ws-jsonrpc";
+import { CancellationTokenSource } from "@codingame/monaco-jsonrpc";
 import { increaseMessagebusTopicReads } from "../prometheus-metrics";
 import { CreditAlert } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 

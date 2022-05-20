@@ -6,7 +6,7 @@
  */
 
 import * as ws from "ws";
-import { IWebSocket } from "vscode-ws-jsonrpc";
+import { IWebSocket } from "@codingame/monaco-jsonrpc";
 
 export function toIWebSocket(ws: ws) {
     return <IWebSocket>{

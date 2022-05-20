@@ -18,7 +18,7 @@ import { AbstractMessageBusIntegration, AbstractTopicListener } from "@gitpod/gi
 import { v4 as uuidv4 } from "uuid";
 import { EventEmitter } from "events";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { CancellationTokenSource } from "vscode-jsonrpc/lib/cancellation";
+import { CancellationTokenSource } from "vscode-jsonrpc";
 
 const exchangeConsensusLeader = "consensus-leader";
 const queueConsensusPeers = "consensus-peers";

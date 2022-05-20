@@ -5,13 +5,13 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { Logger, ConsoleLogger, toSocket, IWebSocket } from "vscode-ws-jsonrpc";
+import { Logger, ConsoleLogger, toSocket, IWebSocket } from "@codingame/monaco-jsonrpc";
 import { createMessageConnection } from "vscode-jsonrpc";
-import { AbstractMessageWriter } from "vscode-jsonrpc/lib/messageWriter";
-import { AbstractMessageReader } from "vscode-jsonrpc/lib/messageReader";
+import { AbstractMessageWriter, AbstractMessageReader } from "vscode-jsonrpc/browser";
 import { JsonRpcProxyFactory, JsonRpcProxy } from "../proxy-factory";
 import { ConnectionEventHandler, ConnectionHandler } from "../handler";
 import ReconnectingWebSocket, { Event } from "reconnecting-websocket";
+import { Disposable } from "../../util/disposable";
 
 export interface WebSocketOptions {
     onerror?: (event: Event) => void;
@@ -98,7 +98,7 @@ export class WebSocketConnectionProvider {
     }
 }
 
-// The following was extracted from vscode-ws-jsonrpc to make these changes:
+// The following was extracted from @codingame/monaco-jsonrpc to make these changes:
 //  - switch from WebSocket to ReconnectingWebSocket
 //  - webSocket.onopen: making sure it's only ever called once so we're re-using MessageConnection
 //  - WebSocketMessageWriter: buffer and re-try messages instead of throwing an error immidiately
@@ -137,7 +137,7 @@ function createWebSocketConnection(resocket: ReconnectingWebSocket, logger: Logg
 }
 
 /**
- * This takes vscode-ws-jsonrpc/lib/socket/writer/WebSocketMessageWriter and adds a buffer
+ * This takes @codingame/monaco-jsonrpc/lib/socket/writer/WebSocketMessageWriter and adds a buffer
  */
 class BufferingWebSocketMessageWriter extends AbstractMessageWriter {
     protected readonly socket: ReconnectingWebSocket;
@@ -154,7 +154,9 @@ class BufferingWebSocketMessageWriter extends AbstractMessageWriter {
         socket.addEventListener("open", (event: Event) => this.flushBuffer());
     }
 
-    write(msg: any) {
+    end() {}
+
+    async write(msg: any) {
         if (this.socket.readyState !== ReconnectingWebSocket.OPEN) {
             this.bufferMsg(msg);
             return;
@@ -191,7 +193,7 @@ class BufferingWebSocketMessageWriter extends AbstractMessageWriter {
 }
 
 /**
- * This takes vscode-ws-jsonrpc/lib/socket/reader/WebSocketMessageReader and removes the "onClose -> fireClose" connection
+ * This takes @codingame/monaco-jsonrpc/lib/socket/reader/WebSocketMessageReader and removes the "onClose -> fireClose" connection
  */
 class NonClosingWebSocketMessageReader extends AbstractMessageReader {
     protected readonly socket: IWebSocket;
@@ -230,6 +232,9 @@ class NonClosingWebSocketMessageReader extends AbstractMessageReader {
                 }
             }
         }
+        return Disposable.create(() => {
+            this.callback = () => {};
+        });
     }
     readMessage(message: any) {
         if (this.state === "initial") {

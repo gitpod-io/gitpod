@@ -7,8 +7,8 @@
 import { createGitpodService, GitpodClient } from '@gitpod/gitpod-protocol';
 import { WindowMessageReader, WindowMessageWriter } from "@gitpod/gitpod-protocol/lib/messaging/browser/window-connection";
 import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
-import { createMessageConnection } from 'vscode-jsonrpc/lib/main';
-import { ConsoleLogger } from 'vscode-ws-jsonrpc';
+import { createMessageConnection } from 'vscode-jsonrpc';
+import { ConsoleLogger } from '@codingame/monaco-jsonrpc';
 import { startUrl } from './urls';
 
 const serverOrigin = startUrl.url.origin;

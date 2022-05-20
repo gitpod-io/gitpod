@@ -11,7 +11,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { MessagebusConfiguration } from "./config";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { globalTracer, FORMAT_HTTP_HEADERS, childOf } from "opentracing";
-import { CancellationToken } from "vscode-jsonrpc/lib/cancellation";
+import { CancellationToken } from "vscode-jsonrpc";
 
 export type WorkspaceSubtopic = "updates" | "log" | "credit" | "headless-log" | "ports";
 
