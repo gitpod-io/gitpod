@@ -77,10 +77,13 @@ resource "google_dns_record_set" "a" {
   project      = var.gcp_project
 
   // TODO cleanup: the following regexp extracts IP address for the server endpoint in kubeconfig
-  rrdatas = regex("http[s]://(.+):.+", yamldecode(file(var.kubeconfig)).clusters[0].cluster.server)
+  rrdatas = regex("https?://(\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}):?", yamldecode(file(var.kubeconfig)).clusters[0].cluster.server)
 }
 
 resource "kubernetes_secret" "external_dns" {
+  depends_on = [
+    kubernetes_namespace.external_dns
+  ]
   metadata {
     name      = "external-dns"
     namespace = "external-dns"

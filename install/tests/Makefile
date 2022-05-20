@@ -21,10 +21,13 @@ help: Makefile
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
 
-
 .PHONY:
 ## gke-standard-cluster: Creates a zonal GKE cluster
 gke-standard-cluster:
+	terraform init --upgrade && \
+	terraform workspace new $(TF_VAR_sub_domain) && \
+	terraform apply -target=module.gke \
+	-var kubeconfig=${KUBECONFIG} --auto-approve
 
 .PHONY:
 ## k3s-standard-cluster: Creates a K3S cluster on GCP with one master and 1 worker node

@@ -3,9 +3,10 @@ terraform {
 }
 
 provider "google" {
-#   credentials = var.credentials
+  credentials = var.credentials
   project = var.project
   region  = var.region
+  zone = var.zone
 }
 
 resource "google_compute_network" "vpc" {
@@ -33,7 +34,7 @@ resource "google_compute_subnetwork" "subnet" {
 
 resource "google_container_cluster" "gitpod-cluster" {
   name     = var.name
-  location = var.region
+  location = "${var.zone}" == "" ? "${var.region}" : "${var.region}-${var.zone}"
 
   cluster_autoscaling {
     enabled = true
@@ -94,7 +95,7 @@ resource "google_container_cluster" "gitpod-cluster" {
 
 resource "google_container_node_pool" "services" {
   name       = "${var.name}-services"
-  location   = var.region
+  location   = google_container_cluster.gitpod-cluster.location
   cluster    = google_container_cluster.gitpod-cluster.name
   version    = var.kubernetes_version // kubernetes version
   initial_node_count = 1
@@ -102,13 +103,7 @@ resource "google_container_node_pool" "services" {
 
   node_config {
     oauth_scopes = [
-      "https://www.googleapis.com/auth/ndev.clouddns.readwrite",
-      "https://www.googleapis.com/auth/devstorage.read_only",
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring",
-      "https://www.googleapis.com/auth/service.management.readonly",
-      "https://www.googleapis.com/auth/servicecontrol",
-      "https://www.googleapis.com/auth/trace.append",
+      "https://www.googleapis.com/auth/cloud-platform"
     ]
 
     labels = {
@@ -141,7 +136,7 @@ resource "google_container_node_pool" "services" {
 
 resource "google_container_node_pool" "workspaces" {
   name       = "${var.name}-workspaces"
-  location   = var.region
+  location     = google_container_cluster.gitpod-cluster.location
   cluster    = google_container_cluster.gitpod-cluster.name
   version    = var.kubernetes_version // kubernetes version
   initial_node_count = 1
@@ -149,13 +144,7 @@ resource "google_container_node_pool" "workspaces" {
 
   node_config {
     oauth_scopes = [
-      "https://www.googleapis.com/auth/ndev.clouddns.readwrite",
-      "https://www.googleapis.com/auth/devstorage.read_only",
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring",
-      "https://www.googleapis.com/auth/service.management.readonly",
-      "https://www.googleapis.com/auth/servicecontrol",
-      "https://www.googleapis.com/auth/trace.append",
+      "https://www.googleapis.com/auth/cloud-platform"
     ]
 
     labels = {
@@ -196,4 +185,9 @@ module "gke_auth" {
   project_id   = var.project
   location     = google_container_cluster.gitpod-cluster.location
   cluster_name = var.name
+}
+
+resource "local_file" "kubeconfig" {
+  filename = var.kubeconfig
+  content = module.gke_auth.kubeconfig_raw
 }

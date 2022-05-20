@@ -15,6 +15,14 @@ terraform {
   }
 }
 
+module "gke" {
+    source      = "github.com/gitpod-io/gitpod//install/infra/terraform/gke?ref=nvn-infra-tf" # we can later use tags here
+
+    project = var.project
+    credentials = var.sa_creds
+    kubeconfig  = var.kubeconfig
+}
+
 module "k3s" {
     source      = "github.com/gitpod-io/gitpod//install/infra/terraform/k3s?ref=nvn-infra-tf" # we can later use tags here
 

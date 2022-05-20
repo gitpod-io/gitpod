@@ -71,14 +71,12 @@ pod:
         sudo chown -R gitpod:gitpod /workspace
         sudo apt update && apt install gettext-base
 
-        curl -sLS https://get.k3sup.dev | sh
-
         export TF_VAR_sub_domain=$(echo $RANDOM | md5sum | head -c 5; echo)
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
 
-        npx ts-node .werft/installer-tests.ts "STANDARD_K3S_TEST"
+        npx ts-node .werft/installer-tests.ts "STANDARD_GKE_TEST"
 # The bit below makes this a cron job
 # plugins:
 #   cron: "15 * * * *"

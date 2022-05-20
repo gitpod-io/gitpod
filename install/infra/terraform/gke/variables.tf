@@ -3,16 +3,27 @@ variable "project" {
   description = "The project ID to create the cluster."
 }
 
+variable "kubeconfig" {
+  type = string
+  description = "Path to write the kubeconfig output to"
+  default = "./kubeconfig"
+}
+
+variable "credentials" {
+  type        = string
+  description = "Path to the json file storing SA credentials."
+}
+
 variable "region" {
   type        = string
   description = "The region to create the cluster."
-  default     = "europe-west1-b"
+  default     = "europe-west1"
 }
 
-variable "zones" {
-  type        = list(string)
-  description = "The zones to create the cluster."
-  default     = []
+variable "zone" {
+  type        = string
+  description = "The zone to create the cluster."
+  default     = "b"
 }
 
 variable "kubernetes_version" {
@@ -24,11 +35,13 @@ variable "kubernetes_version" {
 variable "name" {
   type        = string
   description = "The name of the cluster."
+  default     = "sh-test"
 }
 
 variable "machine_type" {
   type        = string
   description = "Type of the node compute engines."
+  default     = "n2d-standard-4"
 }
 
 variable "min_count" {
@@ -49,14 +62,10 @@ variable "disk_size_gb" {
   default = 100
 }
 
-variable "service_account" {
-  type        = string
-  description = "The service account to run nodes as if not overridden in `node_pools`. The create_service_account variable default value (true) will cause a cluster-specific service account to be created."
-}
-
 variable "initial_node_count" {
   type        = number
   description = "The number of nodes to create in this cluster's default node pool."
+  default     = 1
 }
 
 variable "env_name" {

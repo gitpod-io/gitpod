@@ -4,7 +4,7 @@ import { Werft } from './util/werft';
 
 const testConfig: string = process.argv.length > 2 ? process.argv[2] : "gke"
 
-const makefilePath: string =  join(".werft/nightly-tests")
+const makefilePath: string =  join("install/tests")
 
 const werft = new Werft("installer-nightly-tests")
 
