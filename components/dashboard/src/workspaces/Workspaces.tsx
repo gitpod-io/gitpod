@@ -62,7 +62,9 @@ export default function () {
     return (
         <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
-            {isOnboardingUser && <SelectIDEModal />}
+
+            {isOnboardingUser && <SelectIDEModal location={"workspace_list"} />}
+
             {workspaceModel?.initialized &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ? (
                     <>

@@ -7,16 +7,21 @@
 import { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { User } from "@gitpod/gitpod-protocol";
-import SelectIDE, { updateUserIDEInfo } from "./SelectIDE";
+import SelectIDE, { IDEChangedTrackLocation, updateUserIDEInfo } from "./SelectIDE";
 import Modal from "../components/Modal";
 import { UserContext } from "../user-context";
 
-export default function (props: { onClose?: () => void }) {
+export interface SelectIDEModalProps {
+    location: IDEChangedTrackLocation;
+    onClose?: () => void;
+}
+
+export default function (props: SelectIDEModalProps) {
     const { user, setUser } = useContext(UserContext);
     const [visible, setVisible] = useState(true);
 
     const actualUpdateUserIDEInfo = async (user: User, selectedIde: string, useLatestVersion: boolean) => {
-        const newUserData = await updateUserIDEInfo(user, selectedIde, useLatestVersion);
+        const newUserData = await updateUserIDEInfo(user, selectedIde, useLatestVersion, props.location);
         setUser({ ...newUserData });
     };
 
@@ -43,7 +48,7 @@ export default function (props: { onClose?: () => void }) {
                     </Link>
                     .
                 </p>
-                <SelectIDE updateUserContext={false} />
+                <SelectIDE updateUserContext={false} location={props.location} />
             </div>
             <div className="flex justify-end mt-6">
                 <button onClick={handleContinue} className="ml-2">

@@ -509,11 +509,7 @@ function App() {
         if (showUserIdePreference) {
             toRender = (
                 <StartPage phase={StartPhase.Checking}>
-                    <SelectIDEModal
-                        onClose={() => {
-                            setShowUserIdePreference(false);
-                        }}
-                    />
+                    <SelectIDEModal location="workspace_start" onClose={() => setShowUserIdePreference(false)} />
                 </StartPage>
             );
         } else {
