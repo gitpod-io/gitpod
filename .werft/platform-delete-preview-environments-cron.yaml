@@ -24,7 +24,7 @@ pod:
       secretName: harvester-k3s-dockerhub-pull-account
   containers:
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-rebuild-dev-image.0
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     volumeMounts:
