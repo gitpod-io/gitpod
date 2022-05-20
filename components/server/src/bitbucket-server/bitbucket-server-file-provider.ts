@@ -48,7 +48,7 @@ export class BitbucketServerFileProvider implements FileProvider {
             const result = await this.api.fetchContent(user, `/${repoKind}/${owner}/repos/${name}/raw/${path}`);
             return result;
         } catch (err) {
-            console.error({ userId: user.id }, err);
+            console.debug({ userId: user.id }, err);
         }
     }
 }
