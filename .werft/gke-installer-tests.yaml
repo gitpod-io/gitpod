@@ -1,4 +1,4 @@
-# debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/k3s-nightly-tests.yaml -a debug=true`
+# debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/gke-installer-tests.yaml -a debug=true`
 pod:
   serviceAccount: werft
   affinity:

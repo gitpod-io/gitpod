@@ -72,6 +72,7 @@ kots-install-with-community-license: install-kots-cli
 	kubectl kots install ${CHANNEL} \
 	--skip-rbac-check --namespace gitpod --kubeconfig=${KUBECONFIG} \
                     --name gitpod --shared-password gitpod \
+					--license-file ${COMMUNITY_LICENSE} \
                     --no-port-forward \
                     --config-values tmp_config.yml
 
@@ -79,7 +80,7 @@ check-gitpod-installation:
 	sleep 120
 	kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager
 	sleep 300
-	kubectl --kubeconfig=${KUBECONFIG} kots get app gitpod -n gitpod | grep gitpod  | awk '{print $2}'
+	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $2}'
 
 cleanup:
 	terraform destroy -var kubeconfig=${KUBECONFIG} --auto-approve

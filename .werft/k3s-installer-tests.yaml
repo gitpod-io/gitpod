@@ -1,4 +1,4 @@
-# debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/k3s-nightly-tests.yaml -a debug=true`
+# debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/k3s-installer-tests.yaml -a debug=true`
 pod:
   serviceAccount: werft
   affinity:
@@ -19,13 +19,6 @@ pod:
   - name: sh-playground-dns-perm
     secret:
       secretName: sh-playground-dns-perm
-  # - name: deploy-key
-  #   secret:
-  #     secretName: deploy-key
-  # - name: github-ssh-key
-  #   secret:
-  #     secretName: github-ssh-key
-  #     defaultMode: 0600
   containers:
   - name: nightly-test
     image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
@@ -36,15 +29,7 @@ pod:
       mountPath: /mnt/secrets/sh-playground-sa-perm
     - name: sh-playground-dns-perm # this sa is used for the DNS management
       mountPath: /mnt/secrets/sh-playground-dns-perm
-    # - name: deploy-key
-    #   mountPath: /mnt/secrets/deploy-key
-    #   readOnly: true
-    # - name: github-ssh-key
-    #   mountPath: /mnt/secrets/github-ssh-key
-    #   readOnly: true
     env:
-    # - name: GOPROXY
-    #   value: http://athens-athens-proxy.athens.svc.cluster.local:9999
     - name: WERFT_HOST
       value: "werft.werft.svc.cluster.local:7777"
     - name: GOOGLE_APPLICATION_CREDENTIALS
