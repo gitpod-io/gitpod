@@ -32,7 +32,7 @@ module.exports = {
             {
                 test: /\.js$/,
                 // include only es6 dependencies to transpile them to es5 classes
-                include: /vscode-ws-jsonrpc|vscode-jsonrpc|vscode-languageserver-protocol|vscode-languageserver-types/,
+                include: /monaco-jsonrpc|vscode-jsonrpc/,
                 use: {
                     loader: 'babel-loader',
                     options: {

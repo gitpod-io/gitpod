@@ -53,11 +53,9 @@
         "reconnecting-websocket": "^4.4.0",
         "reflect-metadata": "^0.1.13",
         "uuid": "^8.3.2",
-        "vscode-jsonrpc": "^5.0.1",
-        "vscode-languageserver-protocol": "3.16.0",
-        "vscode-languageserver-types": "3.16.0",
+        "vscode-jsonrpc": "^8.0.1",
         "vscode-uri": "^1.0.1",
-        "vscode-ws-jsonrpc": "^0.2.0",
+        "@codingame/monaco-jsonrpc": "^0.4.0",
         "ws": "^7.4.6"
     }
 }
