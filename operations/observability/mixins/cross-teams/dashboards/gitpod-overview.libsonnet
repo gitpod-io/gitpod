@@ -82,6 +82,12 @@ local wsNodeLoadAverageGraph =
       topk(5, sum(nodepool:node_load1:normalized{%(clusterLabel)s=~"$cluster", nodepool=~".*workspace.*"}) by (node))
     ||| % _config, legendFormat='{{node}}'
   ))
+  .addTarget(prometheus.target(
+    |||
+      1
+    ||| % _config, legendFormat='Node Max Load Avg'
+  ))
+  .addSeriesOverride({ alias: 'Node Max Load Avg', color: '#FF0000' })
 ;
 
 local workspaceStartupTimeHeatMap =
