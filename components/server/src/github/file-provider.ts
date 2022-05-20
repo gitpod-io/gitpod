@@ -65,7 +65,7 @@ export class GithubFileProvider implements FileProvider {
             );
             return contents;
         } catch (err) {
-            log.error(err);
+            log.debug(err);
         }
     }
 }
