@@ -158,11 +158,9 @@ func (s *Server) ListenAndServe() error {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
 	// Await operating system signals, or server errors.
-	select {
-	case sig := <-signals:
-		s.Logger().Infof("Received system signal %s, closing server.", sig.String())
-		return nil
-	}
+	sig := <-signals
+	s.Logger().Infof("Received system signal %s, closing server.", sig.String())
+	return nil
 }
 
 func (s *Server) Close() error {
