@@ -1,0 +1,8 @@
+{
+    "status": {
+        "podStarts": 0,
+        "headless": false,
+        "phase": "stopped",
+        "conditions": {}
+    }
+}
