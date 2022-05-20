@@ -69,16 +69,6 @@ resource "helm_release" "cert" {
     value = "{${join(",", var.extraArgs)}}"
   }
 }
-resource "google_dns_record_set" "a" {
-  name         = "${var.gcp_sub_domain}.gitpod-self-hosted.com."
-  managed_zone = "gitpod-self-hosted-com"
-  type         = "A"
-  ttl          = 5
-  project      = var.gcp_project
-
-  // TODO cleanup: the following regexp extracts IP address for the server endpoint in kubeconfig
-  rrdatas = regex("https?://(\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}):?", yamldecode(file(var.kubeconfig)).clusters[0].cluster.server)
-}
 
 resource "kubernetes_secret" "external_dns" {
   depends_on = [
@@ -120,6 +110,10 @@ resource "helm_release" "external-dns" {
   set {
     name  = "google.serviceAccountSecret"
     value = "external-dns"
+  }
+  set {
+    name = "policy"
+    value = "sync"
   }
 }
 

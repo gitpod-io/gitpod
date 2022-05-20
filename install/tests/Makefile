@@ -27,8 +27,7 @@ gke-standard-cluster:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_sub_domain) && \
 	terraform apply -target=module.gke \
-	-var kubeconfig=${KUBECONFIG} --auto-approve && \
-	terraform output -raw kubeconfig > ${KUBECONFIG}
+	-var kubeconfig=${KUBECONFIG} --auto-approve
 
 .PHONY:
 ## k3s-standard-cluster: Creates a K3S cluster on GCP with one master and 1 worker node
@@ -81,10 +80,12 @@ check-gitpod-installation:
 	sleep 120
 	kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager
 	sleep 300
-	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $2}'
+	@kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}'
 
 cleanup:
-	terraform destroy -var kubeconfig=${KUBECONFIG} --auto-approve
+	terraform destroy -target=module.tools -var kubeconfig=${KUBECONFIG} --auto-approve && \
+	terraform destroy -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve && \
+	terraform destroy -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve
 
 get-results:
 	@echo "If you have gotten this far, it means your setup succeeded"

@@ -66,4 +66,4 @@ pod:
         npx ts-node .werft/installer-tests.ts "STANDARD_K3S_TEST"
 # The bit below makes this a cron job
 # plugins:
-#   cron: "15 * * * *"
+#   cron: "15 3 * * *"
