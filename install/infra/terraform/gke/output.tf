@@ -14,5 +14,5 @@ output "ca_certificate" {
 }
 
 output "kubeconfig" {
-  value = local_file.kubeconfig.filename
+  value = module.gke_auth.kubeconfig_raw
 }
