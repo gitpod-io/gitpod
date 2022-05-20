@@ -274,9 +274,11 @@ export class GithubApp {
             user = r.user;
             project = r.project;
 
-            const runPrebuild = this.appRules.shouldRunPrebuild(config, branch == repo.default_branch, false, false);
+            const runPrebuild =
+                this.prebuildManager.shouldPrebuild(config) &&
+                this.appRules.shouldRunPrebuild(config, branch == repo.default_branch, false, false);
             if (!runPrebuild) {
-                const reason = `Not running prebuild, the user did not enable it for this context`;
+                const reason = `Not running prebuild, the user did not enable it for this context or did not configure prebuild task(s)`;
                 log.debug(logCtx, reason, { contextURL });
                 span.log({ "not-running": reason, config: config });
                 return;
@@ -448,7 +450,8 @@ export class GithubApp {
         const contextURL = pr.html_url;
 
         const isFork = pr.head.repo.id !== pr.base.repo.id;
-        const runPrebuild = this.appRules.shouldRunPrebuild(config, false, true, isFork);
+        const runPrebuild =
+            this.prebuildManager.shouldPrebuild(config) && this.appRules.shouldRunPrebuild(config, false, true, isFork);
         let prebuildStartPromise: Promise<StartPrebuildResult> | undefined;
         if (runPrebuild) {
             const commitInfo = await this.getCommitInfo(user, ctx.payload.repository.html_url, pr.head.sha);
@@ -461,11 +464,16 @@ export class GithubApp {
             prebuildStartPromise.catch((err) => log.error(err, "Error while starting prebuild", { contextURL }));
             return prebuildStartPromise;
         } else {
-            log.debug({ userId: user.id }, `Not running prebuild, the user did not enable it for this context`, null, {
-                contextURL,
-                userId: user.id,
-                project,
-            });
+            log.debug(
+                { userId: user.id },
+                `Not running prebuild, the user did not enable it for this context or did not configure prebuild task(s)`,
+                null,
+                {
+                    contextURL,
+                    userId: user.id,
+                    project,
+                },
+            );
             return;
         }
     }
