@@ -18,7 +18,6 @@ import { EventEmitter } from "events";
 import { toIWebSocket } from "@gitpod/gitpod-protocol/lib/messaging/node/connection";
 import { WsExpressHandler, WsRequestHandler } from "./express/ws-handler";
 import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from "./express-util";
-import { createWebSocketConnection } from "@codingame/monaco-jsonrpc/lib";
 import { MessageBusIntegration } from "./workspace/messagebus-integration";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EnforcementController } from "./user/enforcement-endpoint";
@@ -48,6 +47,7 @@ import { DebugApp } from "./debug-app";
 import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
+import { createWebSocketConnection } from "./websocket/websocket-connection";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
