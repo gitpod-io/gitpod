@@ -1,6 +1,20 @@
 # Change Log
 
 ## May 2022
+- [server] Skip GitHub App prebuilds when the repository has no prebuild task(s) or .gitpod.yml ([#10154](https://github.com/gitpod-io/gitpod/pull/10154)) - [@jankeromnes](https://github.com/jankeromnes)
+- Terminate IDEs gracefully on workspace shutdown ([#10123](https://github.com/gitpod-io/gitpod/pull/10123)) - [@mustard-mh](https://github.com/mustard-mh)
+- [server] log less errors ([#10151](https://github.com/gitpod-io/gitpod/pull/10151)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Update dotfiles layout ([#10136](https://github.com/gitpod-io/gitpod/pull/10136)) - [@gtsiolis](https://github.com/gtsiolis)
+- Remove stargz snapshotter from image build ([#9492](https://github.com/gitpod-io/gitpod/pull/9492)) - [@Furisto](https://github.com/Furisto)
+- Users can send feedback from the Dashboard. ([#10061](https://github.com/gitpod-io/gitpod/pull/10061)) - [@laushinka](https://github.com/laushinka)
+- Fix conflicting auth selection for image-builder-bob ([#10094](https://github.com/gitpod-io/gitpod/pull/10094)) - [@princerachit](https://github.com/princerachit)
+- [installer] Use installation shortname when constructing ws-manager URL templates ([#10127](https://github.com/gitpod-io/gitpod/pull/10127)) - [@andrew-farries](https://github.com/andrew-farries)
+- Update spacing between theme options ([#10135](https://github.com/gitpod-io/gitpod/pull/10135)) - [@gtsiolis](https://github.com/gtsiolis)
+- Avoid prebuilding repositories were no workspaces got started for recently. ([#9976](https://github.com/gitpod-io/gitpod/pull/9976)) - [@AlexTugarev](https://github.com/AlexTugarev), [@svenefftinge](https://github.com/svenefftinge)
+- Update theme selection components ([#10111](https://github.com/gitpod-io/gitpod/pull/10111)) - [@gtsiolis](https://github.com/gtsiolis)
+- Add SSH connection analytics ([#10074](https://github.com/gitpod-io/gitpod/pull/10074)) - [@iQQBot](https://github.com/iQQBot)
+- Update GoLand IDE image to version 221.5591.52. ([#10095](https://github.com/gitpod-io/gitpod/pull/10095)) - [@roboquat](https://github.com/roboquat)
+- seccomp notify: correction of system call name in the log. ([#10114](https://github.com/gitpod-io/gitpod/pull/10114)) - [@utam0k](https://github.com/utam0k)
 - [db] enable overriding of expiryDate on tokens ([#10102](https://github.com/gitpod-io/gitpod/pull/10102)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Fix credential errors when json key is used as secret in image-builder-mk3 ([#10031](https://github.com/gitpod-io/gitpod/pull/10031)) - [@princerachit](https://github.com/princerachit)
 - [common-go] Add file watcher ([#10020](https://github.com/gitpod-io/gitpod/pull/10020)) - [@aledbf](https://github.com/aledbf)
