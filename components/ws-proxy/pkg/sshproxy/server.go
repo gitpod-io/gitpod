@@ -6,7 +6,6 @@ package sshproxy
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -17,16 +16,52 @@ import (
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	tracker "github.com/gitpod-io/gitpod/ws-proxy/pkg/analytics"
 	p "github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
 const GitpodUsername = "gitpod"
 
-var ErrWorkspaceNotFound = errors.New("not found workspace")
-var ErrAuthFailed = errors.New("auth failed")
-var ErrUsernameFormat = errors.New("username format is not correct")
+var (
+	SSHConnectionCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "gitpod_ws_proxy_ssh_connection_count",
+		Help: "Current number of SSH connection",
+	})
+
+	SSHAttemptTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "gitpod_ws_proxy_ssh_attempt_total",
+		Help: "Total number of SSH attempt",
+	}, []string{"status", "error_type"})
+)
+
+var (
+	ErrWorkspaceNotFound = NewSSHError("WS_NOTFOUND", "not found workspace")
+	ErrAuthFailed        = NewSSHError("AUTH_FAILED", "auth failed")
+	ErrUsernameFormat    = NewSSHError("USER_FORMAT", "username format is not correct")
+	ErrMissPrivateKey    = NewSSHError("MISS_KEY", "missing privateKey")
+	ErrConnFailed        = NewSSHError("CONN_FAILED", "cannot to connect with workspace")
+	ErrCreateSSHKey      = NewSSHError("CREATE_KEY_FAILED", "cannot create private pair in workspace")
+)
+
+type SSHError struct {
+	shortName   string
+	description string
+}
+
+func (e SSHError) Error() string {
+	return e.description
+}
+
+func (e SSHError) ShortName() string {
+	return e.shortName
+}
+
+func NewSSHError(shortName string, description string) SSHError {
+	return SSHError{shortName: shortName, description: description}
+}
 
 type Session struct {
 	Conn *ssh.ServerConn
@@ -43,6 +78,13 @@ type Server struct {
 
 	sshConfig             *ssh.ServerConfig
 	workspaceInfoProvider p.WorkspaceInfoProvider
+}
+
+func init() {
+	metrics.Registry.MustRegister(
+		SSHConnectionCount,
+		SSHAttemptTotal,
+	)
 }
 
 // New creates a new SSH proxy server
@@ -75,7 +117,7 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 				workspaceId, ownerToken = args[0], args[1]
 				wsInfo, err = server.Authenticator(workspaceId, ownerToken)
 				if err == nil {
-					err = errors.New("miss private key")
+					err = ErrMissPrivateKey
 				}
 				return
 			}
@@ -112,10 +154,25 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 	return server
 }
 
+func ReportSSHAttemptMetrics(err error) {
+	if err == nil {
+		SSHAttemptTotal.WithLabelValues("success").Inc()
+		return
+	}
+	errorType := "OTHERS"
+	if serverAuthErr, ok := err.(*ssh.ServerAuthError); ok && len(serverAuthErr.Errors) > 0 {
+		if authErr, ok := serverAuthErr.Errors[len(serverAuthErr.Errors)-1].(SSHError); ok {
+			errorType = authErr.ShortName()
+		}
+	}
+	SSHAttemptTotal.WithLabelValues("failed", errorType).Inc()
+}
+
 func (s *Server) HandleConn(c net.Conn) {
 	sshConn, chans, reqs, err := ssh.NewServerConn(c, s.sshConfig)
 	if err != nil {
 		c.Close()
+		ReportSSHAttemptMetrics(err)
 		return
 	}
 	defer sshConn.Close()
@@ -127,13 +184,16 @@ func (s *Server) HandleConn(c net.Conn) {
 	workspaceId := sshConn.Permissions.Extensions["workspaceId"]
 	wsInfo := s.workspaceInfoProvider.WorkspaceInfo(workspaceId)
 	if wsInfo == nil {
+		ReportSSHAttemptMetrics(ErrWorkspaceNotFound)
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	key, err := s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress)
 	if err != nil {
 		cancel()
-		s.TrackSSHConnection(wsInfo, "connect", err)
+		s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
+		ReportSSHAttemptMetrics(ErrCreateSSHKey)
+		log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Error("failed to create private pair in workspace")
 		return
 	}
 	cancel()
@@ -147,7 +207,8 @@ func (s *Server) HandleConn(c net.Conn) {
 	remoteAddr := wsInfo.IPAddress + ":23001"
 	conn, err := net.Dial("tcp", remoteAddr)
 	if err != nil {
-		s.TrackSSHConnection(wsInfo, "connect", err)
+		s.TrackSSHConnection(wsInfo, "connect", ErrConnFailed)
+		ReportSSHAttemptMetrics(ErrConnFailed)
 		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("dail failed")
 		return
 	}
@@ -164,7 +225,8 @@ func (s *Server) HandleConn(c net.Conn) {
 		Timeout: 10 * time.Second,
 	})
 	if err != nil {
-		s.TrackSSHConnection(wsInfo, "connect", err)
+		s.TrackSSHConnection(wsInfo, "connect", ErrConnFailed)
+		ReportSSHAttemptMetrics(ErrConnFailed)
 		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("connect failed")
 		return
 	}
@@ -173,10 +235,13 @@ func (s *Server) HandleConn(c net.Conn) {
 	ctx, cancel = context.WithCancel(context.Background())
 
 	s.TrackSSHConnection(wsInfo, "connect", nil)
+	SSHConnectionCount.Inc()
+	ReportSSHAttemptMetrics(nil)
 
 	go func() {
 		client.Wait()
 		cancel()
+		defer SSHConnectionCount.Dec()
 	}()
 
 	for newChannel := range chans {
