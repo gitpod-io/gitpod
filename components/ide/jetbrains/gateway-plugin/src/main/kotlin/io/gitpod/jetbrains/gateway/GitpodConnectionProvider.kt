@@ -9,7 +9,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.remote.RemoteCredentialsHolder
 import com.intellij.ssh.AskAboutHostKey
@@ -20,6 +22,7 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.util.EventDispatcher
 import com.intellij.util.application
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.ui.JBFont
@@ -32,6 +35,8 @@ import com.jetbrains.gateway.ssh.ClientOverSshTunnelConnector
 import com.jetbrains.gateway.thinClientLink.ThinClientHandle
 import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.onTermination
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
@@ -51,6 +56,26 @@ import kotlin.coroutines.coroutineContext
 class GitpodConnectionProvider : GatewayConnectionProvider {
 
     private val gitpod = service<GitpodConnectionService>()
+
+    companion object {
+        var jetbrainsClientMap: MutableMap<String, ThinClientHandle> = mutableMapOf()
+
+        private val dispatcher = EventDispatcher.create(Listener::class.java)
+
+        private interface Listener : EventListener {
+            fun didChange()
+        }
+
+        fun addListener(listener: () -> Unit): Disposable {
+            val internalListener = object : Listener {
+                override fun didChange() {
+                    listener()
+                }
+            }
+            dispatcher.addListener(internalListener);
+            return Disposable { dispatcher.removeListener(internalListener) }
+        }
+    }
 
     private val httpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.ALWAYS)
@@ -234,18 +259,27 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                     )
                                     val client = connector.connect()
                                     client.clientClosed.advise(connectionLifetime) {
+                                        thisLogger().d("clientClosed, ${client.prettyPrint()}")
                                         application.invokeLater {
+                                            connectionLifetime.onTermination {
+                                                thisLogger().d("clientTermination, clientClosed didChange fired, ${client.prettyPrint()}")
+                                                dispatcher.multicaster.didChange()
+                                            }
                                             connectionLifetime.terminate()
                                         }
                                     }
                                     client.onClientPresenceChanged.advise(connectionLifetime) {
+                                        thisLogger().d("presenceChanged, ${client.prettyPrint()}")
                                         application.invokeLater {
+                                            thisLogger().d("clientPresenceChanged didChange fired, ${client.prettyPrint()}")
+                                            dispatcher.multicaster.didChange()
                                             if (client.clientPresent) {
                                                 statusMessage.text = ""
                                             }
                                         }
                                     }
                                     thinClient = client
+                                    jetbrainsClientMap[update.workspaceId] = client
                                 } catch (t: Throwable) {
                                     if (t is CancellationException) {
                                         throw t
@@ -443,4 +477,12 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
 
     private data class SSHHostKey(val type: String, val hostKey: String)
 
+}
+
+fun ThinClientHandle.prettyPrint(): String {
+    return "uid=${uid}, clientPresent=${clientPresent}, lifeTime={status=${lifetime.status}, alive=${lifetime.isAlive}}"
+}
+
+fun Logger.d(message: String) {
+    thisLogger().info("[jb-gw] $message")
 }
