@@ -87,9 +87,9 @@ func main() {
 		}
 	}
 
-	err = configureXmx(alias)
+	err = configureVMOptions(alias)
 	if err != nil {
-		log.WithError(err).Error("failed to configure backend Xmx")
+		log.WithError(err).Error("failed to configure vmoptions")
 	}
 	go run(wsInfo, alias)
 
@@ -307,19 +307,65 @@ func handleSignal(projectPath string) {
 	log.Info("asked IDE to terminate")
 }
 
-func configureXmx(alias string) error {
-	xmx := os.Getenv(strings.ToUpper(alias) + "_XMX")
-	if xmx == "" {
-		return nil
+func configureVMOptions(alias string) error {
+	idePrefix := alias
+	if alias == "intellij" {
+		idePrefix = "idea"
 	}
-	launcherPath := "/ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh"
-	content, err := ioutil.ReadFile(launcherPath)
+	// [idea64|goland64|pycharm64|phpstorm64].vmoptions
+	path := fmt.Sprintf("/ide-desktop/backend/bin/%s64.vmoptions", idePrefix)
+	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
-	// by default remote dev already set -Xmx2048m, see /ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh
-	newContent := strings.Replace(string(content), "-Xmx2048m", "-Xmx"+xmx, 1)
-	return ioutil.WriteFile(launcherPath, []byte(newContent), 0)
+	newContent := updateVMOptions(alias, string(content))
+	return ioutil.WriteFile(path, []byte(newContent), 0)
+}
+
+// deduplicateVMOption append new VMOptions onto old VMOptions and remove any duplicated leftmost options
+func deduplicateVMOption(oldLines []string, newLines []string, predicate func(l, r string) bool) []string {
+	var result []string
+	var merged = append(oldLines, newLines...)
+	for i, left := range merged {
+		for _, right := range merged[i+1:] {
+			if predicate(left, right) {
+				left = ""
+				break
+			}
+		}
+		if left != "" {
+			result = append(result, left)
+		}
+	}
+	return result
+}
+
+func updateVMOptions(alias string, content string) string {
+	// inspired by how intellij platform merge the VMOptions
+	// https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/src/com/intellij/openapi/application/ConfigImportHelper.java#L1115
+	filterFunc := func(l, r string) bool {
+		isEqual := l == r
+		isXmx := strings.HasPrefix(l, "-Xmx") && strings.HasPrefix(r, "-Xmx")
+		isXms := strings.HasPrefix(l, "-Xms") && strings.HasPrefix(r, "-Xms")
+		isXss := strings.HasPrefix(l, "-Xss") && strings.HasPrefix(r, "-Xss")
+		isXXOptions := strings.HasPrefix(l, "-XX:") && strings.HasPrefix(r, "-XX:") &&
+			strings.Split(l, "=")[0] == strings.Split(r, "=")[0]
+		return isEqual || isXmx || isXms || isXss || isXXOptions
+	}
+	// original vmoptions (inherited from $JETBRAINS_IDE_HOME/bin/idea64.vmoptions)
+	ideaVMOptionsLines := strings.Fields(content)
+	// Gitpod's default customization
+	gitpodVMOptions := []string{"-Dgtw.disable.exit.dialog=true"}
+	vmoptions := deduplicateVMOption(ideaVMOptionsLines, gitpodVMOptions, filterFunc)
+
+	// user-defined vmoptions
+	userVMOptionsVar := os.Getenv(strings.ToUpper(alias) + "_VMOPTIONS")
+	userVMOptions := strings.Fields(userVMOptionsVar)
+	if len(userVMOptions) > 0 {
+		vmoptions = deduplicateVMOption(vmoptions, userVMOptions, filterFunc)
+	}
+	// vmoptions file should end with a newline
+	return strings.Join(vmoptions, "\n") + "\n"
 }
 
 /**
