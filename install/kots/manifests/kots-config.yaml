@@ -52,6 +52,13 @@ spec:
           when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
           help_text: The name of the bucket to act as your S3 storage backend.
 
+        - name: reg_incluster_storage_s3_region
+          title: S3 bucket region
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          help_text: The AWS region of the S3 bucket. Eg. `eu-central-1`.
+
         - name: reg_incluster_storage_s3_accesskey
           title: S3 access key
           type: text
