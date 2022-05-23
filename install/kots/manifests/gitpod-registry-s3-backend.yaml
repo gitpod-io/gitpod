@@ -9,7 +9,7 @@ metadata:
     app: gitpod
     component: gitpod-installer
   annotations:
-    kots.io/when: '{{repl and (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+    kots.io/when: '{{repl ConfigOptionEquals "reg_incluster_storage" "s3" }}'
 data:
   s3AccessKey: '{{repl ConfigOption "reg_incluster_storage_s3_accesskey" | Base64Encode }}'
   s3SecretKey: '{{repl ConfigOption "reg_incluster_storage_s3_secretkey" | Base64Encode }}'
