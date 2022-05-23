@@ -24,10 +24,10 @@ export function getTeamSettingsMenu(params: { team?: Team; showPaymentUI?: boole
         },
         ...(showPaymentUI
             ? [
-                  //   {
-                  //       title: "Billing",
-                  //       link: [`/t/${team?.slug}/billing`],
-                  //   },
+                  {
+                      title: "Billing",
+                      link: [`/t/${team?.slug}/billing`],
+                  },
               ]
             : []),
     ];
