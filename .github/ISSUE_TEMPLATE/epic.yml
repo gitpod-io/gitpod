@@ -102,3 +102,12 @@ body:
     placeholder: Useful if you want to spend the extra time to get stakeholders, the team, or customers excited.
   validations:
     required: false
+- type: textarea
+  id: signals
+  attributes:
+    label: Signals (internal)
+    description: Links to signals from [`gitpod-io/customers`](https://github.com/gitpod-io/customers/issues).
+    placeholder: Optional, add links to any existing signal.
+  validations:
+    required: false
+
