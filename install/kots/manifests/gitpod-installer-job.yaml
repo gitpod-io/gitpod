@@ -202,6 +202,7 @@ spec:
                   echo "Gitpod: configuring storage for S3"
 
                   yq e -i ".objectStorage.s3.endpoint = \"{{repl ConfigOption "store_s3_endpoint" }}\"" "${CONFIG_FILE}"
+                  yq e -i ".objectStorage.s3.bucket = \"{{repl ConfigOption "store_s3_bucket" }}\"" "${CONFIG_FILE}"
                   yq e -i ".objectStorage.s3.credentials.kind = \"secret\"" "${CONFIG_FILE}"
                   yq e -i ".objectStorage.s3.credentials.name = \"storage-s3\"" "${CONFIG_FILE}"
                 fi
