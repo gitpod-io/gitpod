@@ -870,11 +870,11 @@ func (p *PresignedGCPStorage) ObjectExists(ctx context.Context, bucket, obj stri
 }
 
 // BackupObject returns a backup's object name that a direct downloader would download
-func (p *PresignedGCPStorage) BackupObject(workspaceID string, name string) string {
+func (p *PresignedGCPStorage) BackupObject(ownerID string, workspaceID string, name string) string {
 	return fmt.Sprintf("workspaces/%s", gcpWorkspaceBackupObjectName(workspaceID, name))
 }
 
 // InstanceObject returns a instance's object name that a direct downloader would download
-func (p *PresignedGCPStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
-	return p.BackupObject(workspaceID, InstanceObjectName(instanceID, name))
+func (p *PresignedGCPStorage) InstanceObject(ownerID string, workspaceID string, instanceID string, name string) string {
+	return p.BackupObject(ownerID, workspaceID, InstanceObjectName(instanceID, name))
 }

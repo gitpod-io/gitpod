@@ -121,11 +121,11 @@ func (p *PresignedNoopStorage) ObjectExists(ctx context.Context, bucket, obj str
 }
 
 // BackupObject returns a backup's object name that a direct downloader would download
-func (*PresignedNoopStorage) BackupObject(workspaceID string, name string) string {
+func (*PresignedNoopStorage) BackupObject(ownerID string, workspaceID string, name string) string {
 	return ""
 }
 
 // InstanceObject returns a instance's object name that a direct downloader would download
-func (*PresignedNoopStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
+func (*PresignedNoopStorage) InstanceObject(ownerID string, workspaceID string, instanceID string, name string) string {
 	return ""
 }

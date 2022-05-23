@@ -41,17 +41,17 @@ func (m *MockPresignedAccess) EXPECT() *MockPresignedAccessMockRecorder {
 }
 
 // BackupObject mocks base method.
-func (m *MockPresignedAccess) BackupObject(arg0, arg1 string) string {
+func (m *MockPresignedAccess) BackupObject(arg0, arg1, arg2 string) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BackupObject", arg0, arg1)
+	ret := m.ctrl.Call(m, "BackupObject", arg0, arg1, arg2)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // BackupObject indicates an expected call of BackupObject.
-func (mr *MockPresignedAccessMockRecorder) BackupObject(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockPresignedAccessMockRecorder) BackupObject(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupObject", reflect.TypeOf((*MockPresignedAccess)(nil).BackupObject), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupObject", reflect.TypeOf((*MockPresignedAccess)(nil).BackupObject), arg0, arg1, arg2)
 }
 
 // BlobObject mocks base method.
@@ -141,17 +141,17 @@ func (mr *MockPresignedAccessMockRecorder) EnsureExists(arg0, arg1 interface{}) 
 }
 
 // InstanceObject mocks base method.
-func (m *MockPresignedAccess) InstanceObject(arg0, arg1, arg2 string) string {
+func (m *MockPresignedAccess) InstanceObject(arg0, arg1, arg2, arg3 string) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstanceObject", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "InstanceObject", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // InstanceObject indicates an expected call of InstanceObject.
-func (mr *MockPresignedAccessMockRecorder) InstanceObject(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockPresignedAccessMockRecorder) InstanceObject(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstanceObject", reflect.TypeOf((*MockPresignedAccess)(nil).InstanceObject), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstanceObject", reflect.TypeOf((*MockPresignedAccess)(nil).InstanceObject), arg0, arg1, arg2, arg3)
 }
 
 // ObjectExists mocks base method.
