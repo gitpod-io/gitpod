@@ -13,8 +13,7 @@
                 "requests": {
                     "storage": "0"
                 }
-            },
-            "storageClassName": ""
+            }
         },
         "status": {}
     }
