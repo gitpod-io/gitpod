@@ -244,11 +244,11 @@ func (s *testStorage) DeleteBucket(ctx context.Context, bucket string) error {
 	return nil
 }
 
-func (*testStorage) BackupObject(workspaceID string, name string) string {
+func (*testStorage) BackupObject(ownerID string, workspaceID string, name string) string {
 	return ""
 }
 
-func (*testStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
+func (*testStorage) InstanceObject(ownerID string, workspaceID string, instanceID string, name string) string {
 	return ""
 }
 
