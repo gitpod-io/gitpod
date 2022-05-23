@@ -398,7 +398,7 @@ export default function Menu() {
                                     },
                                     {
                                         title: "Help",
-                                        link: "https://www.gitpod.io/support",
+                                        href: "https://www.gitpod.io/support",
                                         separator: true,
                                     },
                                     {
