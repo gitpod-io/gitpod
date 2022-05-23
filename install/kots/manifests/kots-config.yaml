@@ -241,6 +241,13 @@ spec:
           when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
           help_text: The endpoint used to connect to the S3 storage.
 
+        - name: store_s3_bucket
+          title: S3 bucket name
+          type: text
+          required: false
+          when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
+          help_text: Name of the S3 bucket to be used as storage. If left empty, buckets will be created by Gitpod using the provided credentials.
+
         - name: store_s3_access_key_id
           title: Access Key
           type: text
