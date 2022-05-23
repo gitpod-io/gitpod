@@ -6,7 +6,7 @@
 
 import { Project, ProjectEnvVar } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
-import AlertBox from "../components/AlertBox";
+import Alert from "../components/Alert";
 import CheckBox from "../components/CheckBox";
 import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
@@ -132,17 +132,17 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
         >
             <h3 className="mb-4">New Variable</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
-                <AlertBox>
+                <Alert type="warning">
                     <strong>Project environment variables can be exposed.</strong>
                     <br />
                     Even if <strong>Hide Variable in Workspaces</strong> is enabled, anyone with read access to your
                     repository can access secret values if they are printed in the terminal, logged, or persisted to the
                     file system.
-                </AlertBox>
+                </Alert>
                 {error && (
-                    <AlertBox className="mt-4">
+                    <Alert type="error" className="mt-4">
                         {String(error).replace(/Error: Request \w+ failed with message: /, "")}
-                    </AlertBox>
+                    </Alert>
                 )}
                 <div className="mt-8">
                     <h4>Name</h4>

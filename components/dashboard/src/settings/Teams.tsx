@@ -7,7 +7,7 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { getGitpodService } from "../service/service";
-import AlertBox from "../components/AlertBox";
+import Alert from "../components/Alert";
 import Modal from "../components/Modal";
 import {
     AssigneeIdentifier,
@@ -727,7 +727,7 @@ function AddMembersModal(props: {
                     </select>
                 </div>
 
-                <AlertBox>Additional Charge: {expectedPrice} per month</AlertBox>
+                <Alert type="warning">Additional Charge: {expectedPrice} per month</Alert>
             </div>
             <div className="flex justify-end mt-6">
                 <button className={"ml-2"} onClick={() => props.onBuy(getPlan(), quantity, props.sub)}>
@@ -829,7 +829,9 @@ function NewTeamModal(props: {
                     </select>
                 </div>
 
-                <AlertBox className="mt-2">Total: {expectedPrice} per month</AlertBox>
+                <Alert type="warning" className="mt-2">
+                    Total: {expectedPrice} per month
+                </Alert>
             </div>
             <div className="flex justify-end mt-6">
                 <button className={"ml-2"} onClick={() => props.onBuy(plan, quantity)}>
