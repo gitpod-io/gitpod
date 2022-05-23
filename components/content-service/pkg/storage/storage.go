@@ -89,10 +89,10 @@ type PresignedAccess interface {
 	ObjectExists(ctx context.Context, bucket string, path string) (bool, error)
 
 	// BackupObject returns a backup's object name that a direct downloader would download
-	BackupObject(workspaceID string, name string) string
+	BackupObject(ownerID string, workspaceID string, name string) string
 
 	// InstanceObject returns a instance's object name that a direct downloader would download
-	InstanceObject(workspaceID string, instanceID string, name string) string
+	InstanceObject(ownerID string, workspaceID string, instanceID string, name string) string
 }
 
 // ObjectMeta describtes the metadata of a remote object

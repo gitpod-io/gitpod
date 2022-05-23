@@ -339,7 +339,11 @@ func (rs *DirectMinIOStorage) bucketName() string {
 }
 
 func (rs *DirectMinIOStorage) objectName(name string) string {
-	return minioWorkspaceBackupObjectName(rs.Username, rs.WorkspaceName, name)
+	var username string
+	if rs.MinIOConfig.BucketName != "" {
+		username = rs.Username
+	}
+	return minioWorkspaceBackupObjectName(username, rs.WorkspaceName, name)
 }
 
 func newPresignedMinIOAccess(cfg config.MinIOConfig) (*presignedMinIOStorage, error) {
@@ -532,13 +536,17 @@ func (s *presignedMinIOStorage) BlobObject(name string) (string, error) {
 }
 
 // BackupObject returns a backup's object name that a direct downloader would download
-func (s *presignedMinIOStorage) BackupObject(workspaceID, name string) string {
-	return minioWorkspaceBackupObjectName("", workspaceID, name)
+func (s *presignedMinIOStorage) BackupObject(ownerID string, workspaceID, name string) string {
+	var username string
+	if s.MinIOConfig.BucketName != "" {
+		username = ownerID
+	}
+	return minioWorkspaceBackupObjectName(username, workspaceID, name)
 }
 
 // InstanceObject returns a instance's object name that a direct downloader would download
-func (s *presignedMinIOStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
-	return s.BackupObject(workspaceID, InstanceObjectName(instanceID, name))
+func (s *presignedMinIOStorage) InstanceObject(ownerID string, workspaceID string, instanceID string, name string) string {
+	return s.BackupObject(ownerID, workspaceID, InstanceObjectName(instanceID, name))
 }
 
 func translateMinioError(err error) error {
