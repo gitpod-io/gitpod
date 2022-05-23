@@ -7,7 +7,7 @@
 import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import React, { useContext, useEffect, useState } from "react";
-import AlertBox from "../components/AlertBox";
+import Alert from "../components/Alert";
 import CheckBox from "../components/CheckBox";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { ContextMenuEntry } from "../components/ContextMenu";
@@ -751,7 +751,7 @@ export function GitIntegrationModal(
             <h3 className="pb-2">{mode === "new" ? "New Git Integration" : "Git Integration"}</h3>
             <div className="space-y-4 border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
                 {mode === "edit" && providerEntry?.status !== "verified" && (
-                    <AlertBox>You need to activate this integration.</AlertBox>
+                    <Alert type="warning">You need to activate this integration.</Alert>
                 )}
                 <div className="flex flex-col">
                     <span className="text-gray-500">

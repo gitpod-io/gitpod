@@ -16,7 +16,7 @@ import {
 import { PlanCoupon, GithubUpgradeURL } from "@gitpod/gitpod-protocol/lib/payment-protocol";
 import { Plans, Plan, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { ChargebeeClient } from "../chargebee/chargebee-client";
-import AlertBox from "../components/AlertBox";
+import Alert from "../components/Alert";
 import InfoBox from "../components/InfoBox";
 import Modal from "../components/Modal";
 import SelectableCard from "../components/SelectableCard";
@@ -737,12 +737,12 @@ export default function () {
                                     ). The new total will be effective from the next billing cycle.
                                 </InfoBox>
                             )}
-                            <AlertBox className="mb-4">
+                            <Alert type="warning" className="mb-4">
                                 Total:{" "}
                                 {(confirmUpgradeToPlan.currency === "EUR" ? "€" : "$") +
                                     confirmUpgradeToPlan.pricePerMonth}{" "}
                                 per month
-                            </AlertBox>
+                            </Alert>
                         </div>
                         <div className="flex justify-end mt-6">
                             <button onClick={doUpgrade}>Upgrade Plan</button>

@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import AlertBox from "./AlertBox";
+import Alert from "./Alert";
 import Modal from "./Modal";
 import { useRef, useEffect } from "react";
 
@@ -26,7 +26,7 @@ export default function ConfirmationModal(props: {
     ];
 
     if (props.warningText) {
-        children.unshift(<AlertBox>{props.warningText}</AlertBox>);
+        children.unshift(<Alert type="warning">{props.warningText}</Alert>);
     }
 
     const isEntity = (x: any): x is Entity => typeof x === "object" && "name" in x;
