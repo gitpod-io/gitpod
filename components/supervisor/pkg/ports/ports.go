@@ -412,6 +412,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		var public bool
 		config, kind, exists := pm.configs.Get(mp.LocalhostPort)
 		if exists {
+			// Handling configurations of port ranges
 			mp.Name = config.Name
 			mp.Description = config.Description
 			mp.OnExposed = getOnExposedAction(config, mp.LocalhostPort)
