@@ -70,6 +70,16 @@ resource "helm_release" "cert" {
   }
 }
 
+resource "google_dns_record_set" "a" {
+  name         = "${var.gcp_sub_domain}.gitpod-self-hosted.com."
+  managed_zone = "gitpod-self-hosted-com"
+  type         = "A"
+  ttl          = 5
+  project      = var.gcp_project
+
+  rrdatas = regex("https?://(\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}):?", yamldecode(file(var.kubeconfig)).clusters[0].cluster.server)
+}
+
 resource "kubernetes_secret" "external_dns" {
   depends_on = [
     kubernetes_namespace.external_dns

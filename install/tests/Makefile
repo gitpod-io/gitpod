@@ -43,6 +43,7 @@ CLUSTER_ISSUER_CLOUD_DNS := "./manifests/gcp-issuer.yaml"
 .PHONY:
 ## managed-dns-with-cert-manager: Installs cert-manager, external-dns, and setup up CloudDNS
 managed-dns-with-cert-manager: check-env-sub-domain
+	terraform workspace select $(TF_VAR_sub_domain) && \
 	terraform apply -target=module.tools -var kubeconfig=${KUBECONFIG} --auto-approve && \
 	kubectl --kubeconfig=${KUBECONFIG} apply -f ${CLUSTER_ISSUER_CLOUD_DNS}
 
@@ -52,8 +53,8 @@ get-kubeconfig:
 	${KUBECONFIG}
 
 KOTS_KONFIG := "./manifests/kots-config.yaml"
-CHANNEL = "gitpod/unstable"
-COMMUNITY_LICENSE := "../licenses/Community.yaml"
+CHANNEL = "gitpod/beta"
+COMMUNITY_LICENSE := "../licenses/Community (Beta).yaml"
 
 install-kots-cli:
 	curl https://kots.io/install | bash
@@ -83,8 +84,9 @@ check-gitpod-installation:
 	@kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}'
 
 cleanup:
-	terraform destroy -target=module.tools -var kubeconfig=${KUBECONFIG} --auto-approve && \
-	terraform destroy -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve && \
+	# terraform workspace select $(TF_VAR_sub_domain)
+	which ${KUBECONFIG} && terraform destroy -target=module.tools -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
+	terraform destroy -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 	terraform destroy -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve
 
 get-results:

@@ -106,7 +106,6 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
             "STANDARD_K3S_CLUSTER_ON_GCP",
             "GCP_MANAGED_DNS",
             "INSTALL_GITPOD_IGNORE_PREFLIGHTS",
-            // INFRA_PHASES.RUN_INTEGRATION_TESTS
             "CHECK_INSTALLATION",
             "RESULTS",
         ],
