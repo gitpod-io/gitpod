@@ -74,9 +74,11 @@ func (configs *Configs) Get(port uint32) (*gitpod.PortConfig, ConfigKind, bool) 
 	for _, rangeConfig := range configs.instanceRangeConfigs {
 		if rangeConfig.Start <= port && port <= rangeConfig.End {
 			return &gitpod.PortConfig{
-				Port:       float64(port),
-				OnOpen:     rangeConfig.OnOpen,
-				Visibility: rangeConfig.Visibility,
+				Port:        float64(port),
+				OnOpen:      rangeConfig.OnOpen,
+				Visibility:  rangeConfig.Visibility,
+				Description: rangeConfig.Description,
+				Name:        rangeConfig.Name,
 			}, RangeConfigKind, true
 		}
 	}
@@ -197,9 +199,11 @@ func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*g
 			_, exists := portConfigs[port]
 			if !exists {
 				portConfigs[port] = &gitpod.PortConfig{
-					OnOpen:     config.OnOpen,
-					Port:       float64(Port),
-					Visibility: config.Visibility,
+					OnOpen:      config.OnOpen,
+					Port:        float64(Port),
+					Visibility:  config.Visibility,
+					Description: config.Description,
+					Name:        config.Name,
 				}
 			}
 			continue
