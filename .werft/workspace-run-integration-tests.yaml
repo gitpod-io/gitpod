@@ -51,7 +51,7 @@ pod:
     - bash
     - -c
     - |
-      set -euo
+      set -euo pipefail
 
       BRANCH="inte-test/"$(date +%Y%m%d%H%M%S)
       export WERFT_CREDENTIAL_HELPER=/workspace/dev/preview/werft-credential-helper.sh
@@ -123,8 +123,9 @@ pod:
           echo "running integration for ${TEST_NAME}" | werft log slice "test-${TEST_NAME}"
 
           cd "${TEST_PATH}"
+          set +e
           go test -v ./... "${args[@]}" 2>&1 | tee "${TEST_NAME}".log | werft log slice "test-${TEST_NAME}"
-
+          set -e
 
           if [ "${PIPESTATUS[0]}" -ne "0" ]; then
             FAILURE_COUNT=$((FAILURE_COUNT+1))
