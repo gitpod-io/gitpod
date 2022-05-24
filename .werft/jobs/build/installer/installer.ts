@@ -107,6 +107,7 @@ export class Installer {
     private configureWorkspaces(slice: string) {
         exec(`yq w -i ${this.options.installerConfigPath} workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, { slice: slice });
         exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.cpu "100m"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.memory "128Mi"`, { slice: slice });
     }
 
     private configureIDE(slice: string) {
