@@ -102,6 +102,7 @@ type WebAppConfig struct {
 	Tracing                *Tracing               `json:"tracing,omitempty"`
 	UsePodAntiAffinity     bool                   `json:"usePodAntiAffinity"`
 	DisableMigration       bool                   `json:"disableMigration"`
+	Usage                  *UsageConfig           `json:"usage,omitempty"`
 }
 
 type WorkspaceDefaults struct {
@@ -157,6 +158,10 @@ type ProxyConfig struct {
 }
 
 type PublicAPIConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
+type UsageConfig struct {
 	Enabled bool `json:"enabled"`
 }
 

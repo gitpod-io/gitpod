@@ -37,6 +37,7 @@ type Components struct {
 	RegistryFacade        Versioned `json:"registryFacade"`
 	Server                Versioned `json:"server"`
 	ServiceWaiter         Versioned `json:"serviceWaiter"`
+	Usage                 Versioned `json:"usage"`
 	Workspace             struct {
 		CodeImage        Versioned `json:"codeImage"`
 		DockerUp         Versioned `json:"dockerUp"`
