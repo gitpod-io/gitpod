@@ -69,6 +69,7 @@ class HarvesterPreviewEnvironment {
     async removeDNSRecords(sliceID: string) {
         werft.log(sliceID, "Deleting harvester related DNS records for the preview environment")
         await Promise.all([
+            deleteDNSRecord('A', `*.ssh.ws.${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
             deleteDNSRecord('A', `*.ws.${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
             deleteDNSRecord('A', `*.${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
             deleteDNSRecord('A', `${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
