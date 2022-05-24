@@ -58,6 +58,7 @@ export class Installer {
         this.options.werft.log(slice, "Adding extra configuration");
         try {
             this.getDevCustomValues(slice)
+            this.configureMetadata(slice)
             this.configureContainerRegistry(slice)
             this.configureDomain(slice)
             this.configureWorkspaces(slice)
@@ -92,6 +93,14 @@ export class Installer {
 
         exec(`yq m -i --overwrite ${this.options.installerConfigPath} ${BLOCK_NEW_USER_CONFIG_PATH}`, { slice: slice });
         exec(`yq m -i ${this.options.installerConfigPath} ${WORKSPACE_SIZE_CONFIG_PATH}`, { slice: slice });
+    }
+
+    private configureMetadata(slice: string): void {
+        exec(`cat <<EOF > shortname.yaml
+metadata:
+  shortname: ""
+EOF`)
+        exec(`yq m -ix ${this.options.installerConfigPath} shortname.yaml`, { slice: slice });
     }
 
     private configureContainerRegistry(slice: string): void {
