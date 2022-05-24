@@ -1188,6 +1188,15 @@ export namespace WorkspaceInfo {
 
 export type RunningWorkspaceInfo = WorkspaceInfo & { latestInstance: WorkspaceInstance };
 
+export type WorkspaceUsageRecord = {
+    workspaceId: string;
+    instanceId: string;
+    userId: string;
+    projectId?: string;
+    fromTime: string;
+    toTime: string;
+};
+
 export interface WorkspaceCreationResult {
     createdWorkspaceId?: string;
     workspaceURL?: string;

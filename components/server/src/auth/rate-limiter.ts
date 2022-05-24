@@ -178,6 +178,8 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         getStripeClientSecret: { group: "default", points: 1 },
         getStripeCustomerIdOfUser: { group: "default", points: 1 },
         subscribeUserToStripe: { group: "default", points: 1 },
+        adminGetWorkspaceUsageRecords: { group: "default", points: 1 },
+        adminSendWorkspaceUsageToStripe: { group: "default", points: 1 },
         getRemainingUsageHours: { group: "default", points: 1 },
         getShowPaymentUI: { group: "default", points: 1 },
         isChargebeeCustomer: { group: "default", points: 1 },

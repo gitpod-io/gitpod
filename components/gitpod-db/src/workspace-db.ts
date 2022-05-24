@@ -20,6 +20,7 @@ import {
     RunningWorkspaceInfo,
     WorkspaceAndInstance,
     WorkspaceType,
+    WorkspaceUsageRecord,
     PrebuildInfo,
     AdminGetWorkspacesQuery,
     SnapshotState,
@@ -127,6 +128,7 @@ export interface WorkspaceDB {
     getWorkspaceCount(type?: String): Promise<Number>;
     getWorkspaceCountByCloneURL(cloneURL: string, sinceLastDays?: number, type?: string): Promise<number>;
     getInstanceCount(type?: string): Promise<number>;
+    getWorkspaceUsageRecordsByMonth(month: string): Promise<WorkspaceUsageRecord[]>;
 
     findAllWorkspaceInstances(
         offset: number,

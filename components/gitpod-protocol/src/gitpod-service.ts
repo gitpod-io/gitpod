@@ -24,6 +24,7 @@ import {
     GuessGitTokenScopesParams,
     GuessedGitTokenScopes,
     ProjectEnvVar,
+    WorkspaceUsageRecord,
 } from "./protocol";
 import {
     Team,
@@ -274,6 +275,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getStripeClientSecret(): Promise<string | undefined>;
     getStripeCustomerIdOfUser(): Promise<string | undefined>;
     subscribeUserToStripe(setupIntentId: string): Promise<void>;
+    adminGetWorkspaceUsageRecords(month: string): Promise<WorkspaceUsageRecord[]>;
+    adminSendWorkspaceUsageToStripe(): Promise<void>;
 
     /**
      * Analytics

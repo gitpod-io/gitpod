@@ -23,7 +23,6 @@ import {
     TeamDB,
     InstallationAdminDB,
     ProjectDB,
-    MaybeWorkspaceInstance,
 } from "@gitpod/gitpod-db/lib";
 import {
     AuthProviderEntry,
@@ -76,6 +75,7 @@ import {
     ClientHeaderFields,
     Permission,
     SnapshotContext,
+    WorkspaceUsageRecord,
 } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import {
@@ -694,17 +694,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
         }
 
-        const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspace.id);
-        log.info("Stopping the instance", { instance });
-        this.internalStopWorkspace(ctx, workspace)
-            .then(async () => {
-                // Report usage to Stripe
-                log.info("Reporting usage to Stripe!");
-                await this.reportWorkspaceUsage(user, instance);
-            })
-            .catch((err) => {
-                log.error(logCtx, "stopWorkspace error: ", err);
-            });
+        this.internalStopWorkspace(ctx, workspace).catch((err) => {
+            log.error(logCtx, "stopWorkspace error: ", err);
+        });
     }
 
     protected async internalStopWorkspace(
@@ -3053,22 +3045,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 
-    protected async findStripeCustomerForUser(user: User): Promise<Stripe.Customer | undefined> {
+    protected async findStripeCustomerForUser(userId: string): Promise<Stripe.Customer | undefined> {
         if (!this.stripe) {
             throw new Error("Stripe is not properly set up!");
         }
         const result = await this.stripe.customers.search({
-            query: `metadata['userId']:'${user.id}'`,
+            query: `metadata['userId']:'${userId}'`,
         });
         if (result.data.length > 1) {
-            throw new Error(`Found more than one Stripe customer for user '${user.id}'!`);
+            throw new Error(`Found more than one Stripe customer for user '${userId}'!`);
         }
         return result.data[0];
     }
 
     async getStripeCustomerIdOfUser(ctx: TraceContext): Promise<string | undefined> {
         const user = this.checkUser("getStripeCustomerIdOfUser");
-        const customer = await this.findStripeCustomerForUser(user);
+        const customer = await this.findStripeCustomerForUser(user.id);
         return customer?.id;
     }
 
@@ -3076,7 +3068,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!this.stripe) {
             throw new Error("Stripe is not properly set up!");
         }
-        let customer = await this.findStripeCustomerForUser(user);
+        let customer = await this.findStripeCustomerForUser(user.id);
         if (customer) {
             // Already exists
             return customer;
@@ -3106,48 +3098,40 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.stripe.paymentMethods.attach(setupIntent.payment_method, {
             customer: customer.id,
         });
-        // TODO(janx): Set this payment method as the default:
-        //   To use this PaymentMethod as the default for invoice or subscription payments, set
-        //   invoice_settings.default_payment_method, on the Customer to the PaymentMethod’s ID.
+        await this.stripe.customers.update(customer.id, {
+            invoice_settings: { default_payment_method: setupIntent.payment_method },
+        });
+        const { workspaceM, workspaceS } = await this.getStripeWorkspaceProducts();
+        const nextMonth = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month (YYYY-MM-01)
+        nextMonth.setMonth(nextMonth.getMonth() + 1); // Add one month
         await this.stripe.subscriptions.create({
             customer: customer.id,
             // FIXME(janx): Static 'EUR' prices, but currency should be dynamic.
             items: [
-                { price: "price_1L18L8GadRXm50o32n3f6jiQ" }, // Workspace M (monthly metered price: sum)
-                { price: "price_1L0RWgGadRXm50o3OXMt8hSU" }, // Workspace S (monthly metered price: last)
-                { price: "price_1L2Y0UGadRXm50o31EZ53x3G" }, // Workspace M (monthly price)
-                { price: "price_1L2Y1FGadRXm50o3vtqPI7BL" }, // Workspace S (monthly price)
+                { price: workspaceM.default_price ? String(workspaceM.default_price) : undefined },
+                { price: workspaceS.default_price ? String(workspaceS.default_price) : undefined },
             ],
+            billing_cycle_anchor: Math.round(nextMonth.getTime() / 1000),
         });
     }
 
-    protected async reportWorkspaceUsage(user: User, instance: MaybeWorkspaceInstance): Promise<string | undefined> {
+    protected async getStripeWorkspaceProducts(): Promise<{ workspaceM: Stripe.Product; workspaceS: Stripe.Product }> {
         if (!this.stripe) {
             throw new Error("Stripe is not properly set up!");
         }
-        const customer = await this.findStripeCustomerForUser(user);
-        if (!customer) {
-            // User is not a Stripe customer.
-            return;
+        const result = await this.stripe.products.list();
+        const workspaceM = result.data.find((p) => p.name === "Workspace M");
+        if (!workspaceM) {
+            throw new Error("No 'Workspace M' product in Stripe!");
         }
-        if (!instance) {
-            throw new Error("Cannot report Stripe usage without a workspace instance!");
+        const workspaceS = result.data.find((p) => p.name === "Workspace S");
+        if (!workspaceS) {
+            throw new Error("No 'Workspace S' product in Stripe!");
         }
-        const stoppedTime = instance.stoppedTime ? new Date(instance.stoppedTime).getTime() : Date.now();
-        const durationInSeconds = Math.round((stoppedTime - new Date(instance.creationTime).getTime()) / 1000);
-        const result = await this.stripe.subscriptions.list({
-            customer: customer.id,
-        });
-        const subscription = result.data[0];
-        if (!subscription) {
-            throw new Error(`User '${user.id}' (Stripe customerID '${customer.id}') does not have a subscription!`);
-        }
-        // FIXME(janx): Hard-coded 'Workspace M' (first subscription item) -- correct item should be picked according to workspace size.
-        const subscriptionItem = subscription.items.data[0];
-        /* const usageRecord = */ await this.stripe.subscriptionItems.createUsageRecord(subscriptionItem.id, {
-            quantity: durationInSeconds,
-            timestamp: Math.floor(Date.now() / 1000),
-        });
+        return {
+            workspaceM,
+            workspaceS,
+        };
     }
 
     async getStripeClientSecret(ctx: TraceContext): Promise<string | undefined> {
@@ -3157,6 +3141,68 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         const setupIntent = await this.stripe.setupIntents.create({ usage: "on_session" });
         return setupIntent.client_secret || undefined;
+    }
+
+    public async adminGetWorkspaceUsageRecords(ctx: TraceContext, month: string): Promise<WorkspaceUsageRecord[]> {
+        return await this.workspaceDb.trace(ctx).getWorkspaceUsageRecordsByMonth(month);
+    }
+
+    public async adminSendWorkspaceUsageToStripe(ctx: TraceContext): Promise<void> {
+        const usageRecords = await this.workspaceDb
+            .trace(ctx)
+            .getWorkspaceUsageRecordsByMonth(new Date().toISOString().slice(0, 7));
+        const usagePerUser: { [userId: string]: { workspaceM: number; workspaceS: number } } = {};
+        for (const record of usageRecords) {
+            if (!usagePerUser[record.userId]) {
+                usagePerUser[record.userId] = { workspaceM: 0, workspaceS: 0 };
+            }
+            // FIXME: hard-coded workspaceM
+            usagePerUser[record.userId].workspaceM +=
+                new Date(record.toTime).getTime() - new Date(record.fromTime).getTime();
+        }
+        log.info(`usagePerUser: ${JSON.stringify(usagePerUser)}`);
+        const { workspaceM, workspaceS } = await this.getStripeWorkspaceProducts();
+        for (const userId in usagePerUser) {
+            this.findStripeCustomerForUser(userId)
+                .then(async (customer) => {
+                    if (!customer) {
+                        // Not a Stripe customer, no need to report usage.
+                        return;
+                    }
+                    const result = await this.stripe!.subscriptions.list({
+                        customer: customer.id,
+                    });
+                    const subscription = result.data[0];
+                    if (!subscription) {
+                        throw new Error(
+                            `User '${userId}' (Stripe customerID '${customer.id}') does not have a subscription!`,
+                        );
+                    }
+                    const reportUsage = async (product: Stripe.Product, quantityMs: number) => {
+                        const subscriptionItem = subscription.items.data.find(
+                            (i) => i.price.id === product.default_price,
+                        );
+                        if (!subscriptionItem) {
+                            throw new Error(
+                                `Subscription '${subscription.id}' is not linked to the '${product.name}' price '${
+                                    product.default_price
+                                }'\nSubscription items: ${JSON.stringify(subscription.items.data)}`,
+                            );
+                        }
+                        await this.stripe!.subscriptionItems.createUsageRecord(subscriptionItem.id, {
+                            quantity: Math.round(quantityMs / 1000),
+                            timestamp: Math.floor(Date.now() / 1000),
+                        });
+                    };
+                    await Promise.all([
+                        reportUsage(workspaceM, usagePerUser[userId].workspaceM),
+                        reportUsage(workspaceS, usagePerUser[userId].workspaceS),
+                    ]);
+                })
+                .catch((error) => {
+                    log.error("Failed to report usage to Stripe", { error });
+                });
+        }
     }
 
     //

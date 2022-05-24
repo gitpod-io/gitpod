@@ -33,6 +33,7 @@ import {
     PrebuiltWorkspaceUpdatable,
     WorkspaceAndInstance,
     WorkspaceType,
+    WorkspaceUsageRecord,
     PrebuildInfo,
     AdminGetWorkspacesQuery,
     SnapshotState,
@@ -444,6 +445,35 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             .where("ws.type = :type", { type: type ? type.toString() : "regular" }); // only regular workspaces by default
 
         return await queryBuilder.getCount();
+    }
+
+    // month format: `YYYY-MM`
+    public async getWorkspaceUsageRecordsByMonth(month: string): Promise<WorkspaceUsageRecord[]> {
+        const conditions = [
+            "wsi.creationTime != ''",
+            `(wsi.creationTime < '${month}' OR wsi.creationTime like '${month}%')`,
+            `(wsi.stoppedTime = '' OR wsi.stoppedTime > '${month}')`,
+        ];
+        // if needed, trim usage records between START_OF_MONTH_UTC and MIN(RIGHT_NOW, START_OF_FOLLOWING_MONTH_UTC)
+        const monthStart = new Date(month + "-01");
+        let monthEnd = new Date(monthStart);
+        monthEnd.setMonth(monthStart.getMonth() + 1);
+        if (new Date() < monthEnd) {
+            monthEnd = new Date();
+        }
+        return await this.doJoinInstanceWithWorkspace<WorkspaceUsageRecord>(conditions, {}, [], {}, (wsi, ws) => {
+            return {
+                workspaceId: ws.id,
+                instanceId: wsi.id,
+                userId: ws.ownerId,
+                projectId: ws.projectId,
+                fromTime: wsi.creationTime > monthStart.toISOString() ? wsi.creationTime : monthStart.toISOString(),
+                toTime:
+                    wsi.stoppedTime && wsi.stoppedTime < monthEnd.toISOString()
+                        ? wsi.stoppedTime
+                        : monthEnd.toISOString(),
+            };
+        });
     }
 
     public async findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]> {
