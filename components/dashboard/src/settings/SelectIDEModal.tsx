@@ -38,23 +38,23 @@ export default function (props: SelectIDEModalProps) {
     };
 
     return (
-        <Modal visible={visible} onClose={handleContinue} closeable={true} className="_max-w-xl">
-            <h3 className="pb-2">Select Editor</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
-                <p className="text-gray-500 text-base pb-3">
-                    Choose the editor for opening workspaces. You can always change later the editor in{" "}
-                    <Link to={"/preferences"} className="gp-link">
-                        user preferences
-                    </Link>
-                    .
-                </p>
-                <SelectIDE updateUserContext={false} location={props.location} />
-            </div>
-            <div className="flex justify-end mt-6">
-                <button onClick={handleContinue} className="ml-2">
-                    Continue
-                </button>
-            </div>
+        <Modal
+            title="Select Editor"
+            specify={props.location}
+            visible={visible}
+            onClose={handleContinue}
+            closeable={true}
+            className="_max-w-xl"
+            buttons={<button onClick={handleContinue}>Continue</button>}
+        >
+            <p className="text-gray-500 dark:text-gray-400 text-base pb-3">
+                Choose the editor for opening workspaces. You can always change later the editor in{" "}
+                <Link to={"/preferences"} className="gp-link">
+                    user preferences
+                </Link>
+                .
+            </p>
+            <SelectIDE updateUserContext={false} location={props.location} />
         </Modal>
     );
 }

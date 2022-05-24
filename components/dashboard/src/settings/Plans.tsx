@@ -727,6 +727,7 @@ export default function () {
                     </a>
                 </InfoBox>
                 {!!confirmUpgradeToPlan && (
+                    // TODO: Use title and buttons props
                     <Modal visible={true} onClose={() => setConfirmUpgradeToPlan(undefined)}>
                         <h3>Upgrade to {confirmUpgradeToPlan.name}</h3>
                         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
@@ -755,6 +756,7 @@ export default function () {
                     </Modal>
                 )}
                 {!!confirmDowngradeToPlan && (
+                    // TODO: Use title and buttons props
                     <Modal visible={true} onClose={() => setConfirmDowngradeToPlan(undefined)}>
                         <h3>Downgrade to {confirmDowngradeToPlan.name}</h3>
                         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
@@ -784,6 +786,7 @@ export default function () {
                     </Modal>
                 )}
                 {isConfirmCancelDowngrade && (
+                    // TODO: Use title and buttons props
                     <Modal visible={true} onClose={() => setIsConfirmCancelDowngrade(false)}>
                         <h3>Cancel downgrade and stay with {currentPlan.name}</h3>
                         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
@@ -800,6 +803,7 @@ export default function () {
                     </Modal>
                 )}
                 {!!teamClaimModal && (
+                    // TODO: Use title and buttons props
                     <Modal visible={true} onClose={() => setTeamClaimModal(undefined)}>
                         <h3 className="pb-2">Team Invitation</h3>
                         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">

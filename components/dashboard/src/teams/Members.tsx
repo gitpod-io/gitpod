@@ -273,6 +273,7 @@ export default function () {
                 </ItemsList>
             </div>
             {genericInvite && showInviteModal && (
+                // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
                     <h3 className="mb-4">Invite Members</h3>
                     <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">

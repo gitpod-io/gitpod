@@ -99,6 +99,7 @@ export default function ConnectToSSHModal(props: {
     onClose: () => void;
 }) {
     return (
+        // TODO: Use title and buttons props
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="mb-4">Connect via SSH</h3>
             <SSHView workspaceId={props.workspaceId} ownerToken={props.ownerToken} ideUrl={props.ideUrl} />
