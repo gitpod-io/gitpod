@@ -452,6 +452,13 @@ async function addVMDNSRecord(werft: Werft, name: string, domain: string) {
             domain: `*.ws.${domain}`,
             projectId: "gitpod-core-dev",
             dnsZone: 'preview-gitpod-dev-com',
+            IP: ingressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `*.ssh.ws.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'preview-gitpod-dev-com',
             IP: proxyLBIP,
             slice: installerSlices.DNS_ADD_RECORD
         }),
