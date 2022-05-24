@@ -1,6 +1,9 @@
 # Change Log
 
 ## May 2022
+- Add some ssh connection metrics ([#10179](https://github.com/gitpod-io/gitpod/pull/10179)) - [@iQQBot](https://github.com/iQQBot)
+- Add support for JetBrains Gateway 2022.2 ([#10156](https://github.com/gitpod-io/gitpod/pull/10156)) - [@felladrin](https://github.com/felladrin)
+- [experimental] Workspace persistent volume claim (PVC) uses a default storage class within the Kubernetes cluster if the user does not configure it ([#10147](https://github.com/gitpod-io/gitpod/pull/10147)) - [@jenting](https://github.com/jenting)
 - [server] Skip GitHub App prebuilds when the repository has no prebuild task(s) or .gitpod.yml ([#10154](https://github.com/gitpod-io/gitpod/pull/10154)) - [@jankeromnes](https://github.com/jankeromnes)
 - Terminate IDEs gracefully on workspace shutdown ([#10123](https://github.com/gitpod-io/gitpod/pull/10123)) - [@mustard-mh](https://github.com/mustard-mh)
 - [server] log less errors ([#10151](https://github.com/gitpod-io/gitpod/pull/10151)) - [@AlexTugarev](https://github.com/AlexTugarev)
