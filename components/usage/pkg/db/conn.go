@@ -61,5 +61,5 @@ func ConnectForTests(t *testing.T) *gorm.DB {
 		require.NoError(t, rawConn.Close(), "must close database connection")
 	})
 
-	return conn
+	return conn.Debug()
 }
