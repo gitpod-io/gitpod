@@ -67,6 +67,7 @@ export class Installer {
             this.configureAuthProviders(slice)
             this.configureSSHGateway(slice)
             this.configurePublicAPIServer(slice)
+            this.configureUsage(slice)
 
             if (this.options.analytics) {
                 this.includeAnalytics(slice)
@@ -162,6 +163,10 @@ export class Installer {
 
     private configurePublicAPIServer(slice: string) {
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.publicApi.enabled true`, { slice: slice })
+    }
+
+    private configureUsage(slice: string) {
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.enabled true`, { slice: slice })
     }
 
     private includeAnalytics(slice: string): void {
