@@ -26,7 +26,7 @@ var Helm = common.CompositeHelmFunc(
 			helm.KeyValue("minio.volumePermissions.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/bitnami-shell")),
 		}
 
-		if cfg.Config.ObjectStorage.Resources.Requests.Memory() != nil {
+		if cfg.Config.ObjectStorage.Resources != nil && cfg.Config.ObjectStorage.Resources.Requests.Memory() != nil {
 			memoryRequests := resource.MustParse(cfg.Config.ObjectStorage.Resources.Requests.Memory().String())
 			commonHelmValues = append(commonHelmValues, helm.KeyValue("minio.resources.requests.memory", memoryRequests.String()))
 		}
