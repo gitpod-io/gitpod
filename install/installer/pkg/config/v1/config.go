@@ -117,7 +117,7 @@ type Metadata struct {
 	// Location for your objectStorage provider
 	Region string `json:"region" validate:"required"`
 	// InstallationShortname establishes the "identity" of the (application) cluster.
-	InstallationShortname string `json:"shortname" validate:"required"`
+	InstallationShortname string `json:"shortname"`
 }
 
 type Observability struct {
