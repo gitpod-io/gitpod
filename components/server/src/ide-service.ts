@@ -42,6 +42,7 @@ tar -xf /tmp/backend/backend.tar.gz --strip-components=1 --directory /tmp/backen
 
 echo 'configuring JB system config and caches aligned with runtime...'
 printf '\nshared.indexes.download.auto.consent=true' >> "/tmp/backend/bin/idea.properties"
+printf '\nmaven.modules.do.not.ignore.on.delete=true' >> "/tmp/backend/bin/idea.properties"
 unset JAVA_TOOL_OPTIONS
 export IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains
 export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains
@@ -64,6 +65,7 @@ tar -xf /tmp/backend-latest/backend-latest.tar.gz --strip-components=1 --directo
 
 echo 'configuring JB system config and caches aligned with runtime...'
 printf '\nshared.indexes.download.auto.consent=true' >> "/tmp/backend-latest/bin/idea.properties"
+printf '\nmaven.modules.do.not.ignore.on.delete=true' >> "/tmp/backend-latest/bin/idea.properties"
 unset JAVA_TOOL_OPTIONS
 export IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains-latest
 export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains-latest
