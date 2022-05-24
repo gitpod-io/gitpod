@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio/azure"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio/incluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
 )
 
@@ -23,6 +24,11 @@ var Helm = common.CompositeHelmFunc(
 			helm.ImagePullSecrets("minio.volumePermissions.image.pullSecrets", cfg),
 			helm.KeyValue("minio.volumePermissions.image.registry", ""),
 			helm.KeyValue("minio.volumePermissions.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/bitnami-shell")),
+		}
+
+		if cfg.Config.ObjectStorage.Resources.Requests.Memory() != nil {
+			memoryRequests := resource.MustParse(cfg.Config.ObjectStorage.Resources.Requests.Memory().String())
+			commonHelmValues = append(commonHelmValues, helm.KeyValue("minio.resources.requests.memory", memoryRequests.String()))
 		}
 
 		if pointer.BoolDeref(cfg.Config.ObjectStorage.InCluster, false) {

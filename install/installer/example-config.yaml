@@ -18,6 +18,9 @@ metadata:
   shortname: default
 objectStorage:
   inCluster: true
+  resources:
+    requests:
+      memory: 2Gi
 observability:
   logLevel: info
 openVSX:
@@ -27,6 +30,7 @@ workspace:
   maxLifetime: 36h0m0s
   pvc:
     size: 30Gi
+    snapshotClass: ""
     storageClass: ""
   resources:
     requests:
