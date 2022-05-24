@@ -246,7 +246,7 @@ spec:
           type: text
           required: false
           when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
-          help_text: Name of the S3 bucket to be used as storage. If left empty, buckets will be created by Gitpod using the provided credentials.
+          help_text: Name of S3 bucket to be used as storage. If left empty, Gitpod will create bucket per each user. If set, then all data will be stored inside one bucket.
 
         - name: store_s3_access_key_id
           title: Access Key
