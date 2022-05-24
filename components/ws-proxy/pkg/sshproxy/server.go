@@ -156,7 +156,7 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 
 func ReportSSHAttemptMetrics(err error) {
 	if err == nil {
-		SSHAttemptTotal.WithLabelValues("success").Inc()
+		SSHAttemptTotal.WithLabelValues("success", "").Inc()
 		return
 	}
 	errorType := "OTHERS"
