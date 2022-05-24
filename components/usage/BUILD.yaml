@@ -7,12 +7,20 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
+      - :init-testdb
     env:
       - CGO_ENABLED=0
       - GOOS=linux
     config:
       packaging: app
       buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/usage/cmd.Version=commit-${__git_commit}'"]
+
+  - name: init-testdb
+    type: generic
+    deps:
+      - components/gitpod-db:dbtest-init
+    ephemeral: true
+
   - name: docker
     type: docker
     deps:
