@@ -61,6 +61,7 @@ export class Installer {
             this.configureContainerRegistry(slice)
             this.configureDomain(slice)
             this.configureWorkspaces(slice)
+            this.configureObjectStorage(slice)
             this.configureIDE(slice)
             this.configureObservability(slice)
             this.configureAuthProviders(slice)
@@ -108,6 +109,10 @@ export class Installer {
         exec(`yq w -i ${this.options.installerConfigPath} workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, { slice: slice });
         exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.cpu "100m"`, { slice: slice });
         exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.memory "128Mi"`, { slice: slice });
+    }
+
+    private configureObjectStorage(slice: string) {
+        exec(`yq w -i ${this.options.installerConfigPath} objectStorage.resources.requests.memory "256Mi"`, { slice: slice });
     }
 
     private configureIDE(slice: string) {
@@ -182,7 +187,7 @@ export class Installer {
     }
 
     postProcessing(slice: string): void {
-        this.options.werft.log(slice, "Post processing YAML manfests");
+        this.options.werft.log(slice, "Post processing YAML manifests");
 
         this.configureLicense(slice)
         this.configureWorkspaceFeatureFlags(slice)

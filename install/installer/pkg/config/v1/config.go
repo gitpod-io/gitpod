@@ -49,6 +49,9 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Metadata.Region = "local"
 	cfg.Metadata.InstallationShortname = "default" // TODO(gpl): we're tied to "default" here because that's what we put into static bridges in the past
 	cfg.ObjectStorage.InCluster = pointer.Bool(true)
+	cfg.ObjectStorage.Resources.Requests = corev1.ResourceList{
+		corev1.ResourceMemory: resource.MustParse("2Gi"),
+	}
 	cfg.ContainerRegistry.InCluster = pointer.Bool(true)
 	cfg.Workspace.Resources.Requests = corev1.ResourceList{
 		corev1.ResourceCPU:    resource.MustParse("1000m"),
@@ -152,6 +155,7 @@ type ObjectStorage struct {
 	Azure              *ObjectStorageAzure        `json:"azure,omitempty"`
 	MaximumBackupCount *int                       `json:"maximumBackupCount,omitempty"`
 	BlobQuota          *int64                     `json:"blobQuota,omitempty"`
+	Resources          Resources                  `json:"resources,omitempty"`
 }
 
 type ObjectStorageS3 struct {
