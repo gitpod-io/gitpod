@@ -54,6 +54,7 @@ packages:
       - components/image-builder-mk3:docker
       - components/local-app:docker
       - components/public-api-server:docker
+      - components/usage:docker
       - components/openvsx-proxy:docker
       - components/proxy:docker
       - components/registry-facade:docker
