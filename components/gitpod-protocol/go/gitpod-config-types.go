@@ -72,7 +72,10 @@ type Image_object struct {
 // PortsItems
 type PortsItems struct {
 
-	// Port name (deprecated).
+	// A description to identify what is this port used for.
+	Description string `yaml:"description,omitempty"`
+
+	// Port name.
 	Name string `yaml:"name,omitempty"`
 
 	// What to do when a service on this port was detected. 'notify' (default) will show a notification asking the user what to do. 'open-browser' will open a new browser tab. 'open-preview' will open in the preview on the right of the IDE. 'ignore' will do nothing.
@@ -84,7 +87,7 @@ type PortsItems struct {
 	// The protocol to be used. (deprecated)
 	Protocol string `yaml:"protocol,omitempty"`
 
-	// Whether the port visibility should be private or public. 'public' (default) will allow everyone with the port URL to access the port. 'private' will only allow users with workspace access to access the port.
+	// Whether the port visibility should be private or public. 'private' (default) will only allow users with workspace access to access the port. 'public' will allow everyone with the port URL to access the port.
 	Visibility string `yaml:"visibility,omitempty"`
 }
 

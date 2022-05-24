@@ -411,6 +411,12 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 
 		var public bool
 		config, kind, exists := pm.configs.Get(mp.LocalhostPort)
+		if exists {
+			mp.Name = config.Name
+			mp.Description = config.Description
+			mp.OnExposed = getOnExposedAction(config, mp.LocalhostPort)
+		}
+
 		configured := exists && kind == PortConfigKind
 		if mp.Exposed || configured {
 			public = mp.Visibility == api.PortVisibility_public
