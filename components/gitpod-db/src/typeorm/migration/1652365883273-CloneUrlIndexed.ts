@@ -16,7 +16,7 @@ export class CloneUrlIndexed1652365883273 implements MigrationInterface {
         if (!(await columnExists(queryRunner, TABLE_NAME, COLUMN_NAME))) {
             await queryRunner.query(
                 `ALTER TABLE ${TABLE_NAME}
-                ADD COLUMN ${COLUMN_NAME} VARCHAR(255) NOT NULL DEFAULT ''`,
+                ADD COLUMN ${COLUMN_NAME} VARCHAR(255) NOT NULL DEFAULT '', ALGORITHM=INPLACE, LOCK=NONE`,
             );
         }
         if (!(await indexExists(queryRunner, TABLE_NAME, TYPE_INDEX_NAME))) {
