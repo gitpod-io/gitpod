@@ -5,8 +5,9 @@
 package config
 
 import (
-	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"os"
+
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 )
 
 // StorageConfig configures the remote storage we use
@@ -106,7 +107,7 @@ type MinIOConfig struct {
 	Region         string `json:"region"`
 	ParallelUpload uint   `json:"parallelUpload,omitempty"`
 
-	BucketName string `json:"bucket"`
+	BucketName string `json:"bucket,omitempty"`
 }
 
 type PProf struct {
