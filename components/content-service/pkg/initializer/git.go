@@ -70,7 +70,7 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	}
 
 	gitClone := func() error {
-		if err := os.MkdirAll(ws.Location, 0770); err != nil {
+		if err := os.MkdirAll(ws.Location, 0775); err != nil {
 			return err
 		}
 
