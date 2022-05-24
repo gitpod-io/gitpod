@@ -45,6 +45,7 @@ export function SelectAccountModal(
     };
 
     return (
+        // TODO: Use title and buttons props
         <Modal visible={true} onClose={props.close}>
             <h3 className="pb-2">Select Account</h3>
             <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4">

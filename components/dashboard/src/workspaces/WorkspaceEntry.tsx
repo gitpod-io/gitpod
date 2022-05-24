@@ -207,6 +207,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                     onConfirm={() => model.deleteWorkspace(ws.id)}
                 />
             )}
+            {/* TODO: Use title and buttons props */}
             <Modal
                 visible={isRenameModalVisible}
                 onClose={() => setRenameModalVisible(false)}

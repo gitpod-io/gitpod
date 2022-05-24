@@ -5,8 +5,13 @@
  */
 
 import { useEffect } from "react";
+import { getGitpodService } from "../service/service";
+
+type CloseModalManner = "esc" | "enter" | "x";
 
 export default function Modal(props: {
+    // specify a key if having the same title and window.location
+    specify?: string;
     title?: string;
     buttons?: React.ReactChild[] | React.ReactChild;
     children: React.ReactChild[] | React.ReactChild;
@@ -16,20 +21,35 @@ export default function Modal(props: {
     onClose: () => void;
     onEnter?: () => boolean;
 }) {
+    const closeModal = (manner: CloseModalManner) => {
+        props.onClose();
+        getGitpodService()
+            .server.trackEvent({
+                event: "modal_dismiss",
+                properties: {
+                    manner,
+                    title: props.title,
+                    specify: props.specify,
+                    path: window.location.pathname,
+                },
+            })
+            .then()
+            .catch(console.error);
+    };
     const handler = (evt: KeyboardEvent) => {
         if (evt.defaultPrevented) {
             return;
         }
         if (evt.key === "Escape") {
-            props.onClose();
+            closeModal("esc");
         }
         if (evt.key === "Enter") {
             if (props.onEnter) {
                 if (props.onEnter()) {
-                    props.onClose();
+                    closeModal("enter");
                 }
             } else {
-                props.onClose();
+                closeModal("enter");
             }
         }
     };
@@ -60,7 +80,7 @@ export default function Modal(props: {
                     {props.closeable !== false && (
                         <div
                             className="absolute right-7 top-6 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
-                            onClick={props.onClose}
+                            onClick={() => closeModal("x")}
                         >
                             <svg version="1.1" width="14px" height="14px" viewBox="0 0 100 100">
                                 <line x1="0" y1="0" x2="100" y2="100" stroke="currentColor" strokeWidth="10px" />

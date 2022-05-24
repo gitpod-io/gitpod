@@ -109,7 +109,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                                 </InfoBox>
                             )}
 
-                            <p className="text-left w-full text-gray-500">
+                            <p className="text-left w-full text-gray-500 dark:text-gray-400">
                                 The <strong>JetBrains desktop IDEs</strong> are currently in beta.{" "}
                                 <a
                                     href="https://github.com/gitpod-io/gitpod/issues/6576"

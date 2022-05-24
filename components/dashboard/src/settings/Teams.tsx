@@ -514,7 +514,7 @@ function AllTeams() {
                             <a
                                 href="https://www.gitpod.io/docs/teams/"
                                 target="_blank"
-                                rel="noopener"
+                                rel="noopener noreferrer"
                                 className="gp-link"
                             >
                                 Learn more
@@ -649,6 +649,7 @@ function InviteMembersModal(props: { sub: TeamSubscription; onClose: () => void 
     };
 
     return (
+        // TODO: Use title and buttons props
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="pb-2">Invite Members</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">
@@ -707,6 +708,7 @@ function AddMembersModal(props: {
     };
 
     return (
+        // TODO: Use title and buttons props
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="pb-2">Add Members</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
@@ -772,6 +774,7 @@ function NewTeamModal(props: {
     };
 
     return (
+        // TODO: Use title and buttons props
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="pb-2">New Team Plan</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">
@@ -851,6 +854,7 @@ function ManageTeamModal(props: { slots: Slot[]; slotInputHandler: SlotInputHand
     }, [props.slots]);
 
     return (
+        // TODO: Use title and buttons props
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="pb-2">Manage Team</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">

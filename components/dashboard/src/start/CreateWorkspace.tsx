@@ -202,6 +202,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
             return <StartWorkspace {...parseProps(result?.createdWorkspaceId, window.location.search)} />;
         } else if (result?.existingWorkspaces) {
             statusMessage = (
+                // TODO: Use title and buttons props
                 <Modal visible={true} closeable={false} onClose={() => {}}>
                     <h3>Running Workspaces</h3>
                     <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
@@ -294,6 +295,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
 function LimitReachedModal(p: { children: React.ReactNode }) {
     const { user } = useContext(UserContext);
     return (
+        // TODO: Use title and buttons props
         <Modal visible={true} closeable={false} onClose={() => {}}>
             <h3 className="flex">
                 <span className="flex-grow">Limit Reached</span>

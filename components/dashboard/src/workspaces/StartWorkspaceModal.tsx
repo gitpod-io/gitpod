@@ -20,6 +20,7 @@ export function StartWorkspaceModal() {
     }, [location]);
 
     return (
+        // TODO: Use title and buttons props
         <Modal
             onClose={() => setIsStartWorkspaceModalVisible(false)}
             onEnter={() => false}
