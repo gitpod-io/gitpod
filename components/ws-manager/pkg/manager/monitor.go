@@ -31,6 +31,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
@@ -268,7 +269,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		if status.Conditions.Failed != "" && !hasFailureAnnotation {
 			// If this marking operation failes that's ok - we'll still continue to shut down the workspace.
 			// The failure message won't persist while stopping the workspace though.
-			err := m.markWorkspace(ctx, workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, "true"))
+			err := m.markWorkspace(ctx, workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, util.BooleanTrueString))
 			if err != nil {
 				log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Debug("cannot mark workspace as workspaceFailedBeforeStoppingAnnotation")
 			}
@@ -380,22 +381,20 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		_, alreadyFinalized := wso.Pod.Annotations[startedDisposalAnnotation]
 
 		if (terminated || gone) && !alreadyFinalized {
-			if isFailed, ok := wso.Pod.Annotations[workspaceFailedBeforeStoppingAnnotation]; ok && isFailed == "true" {
-				if neverReady, ok := wso.Pod.Annotations[workspaceNeverReadyAnnotation]; ok && neverReady == "true" {
-					// The workspace is never ready, so there is no need for a finalizer.
-					if _, ok := pod.Annotations[workspaceExplicitFailAnnotation]; !ok {
-						failMessage := status.Conditions.Failed
-						if failMessage == "" {
-							failMessage = "workspace failed to start."
-						}
-						err := m.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, failMessage))
-						if err != nil {
-							log.WithError(err).Error("was unable to mark workspace as failed")
-						}
+			if wso.Pod.Annotations[workspaceFailedBeforeStoppingAnnotation] == util.BooleanTrueString && wso.Pod.Annotations[workspaceNeverReadyAnnotation] == util.BooleanTrueString {
+				// The workspace is never ready, so there is no need for a finalizer.
+				if _, ok := pod.Annotations[workspaceExplicitFailAnnotation]; !ok {
+					failMessage := status.Conditions.Failed
+					if failMessage == "" {
+						failMessage = "workspace failed to start."
 					}
-
-					return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
+					err := m.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, failMessage))
+					if err != nil {
+						log.WithError(err).Error("was unable to mark workspace as failed")
+					}
 				}
+
+				return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
 			} else {
 				// We start finalizing the workspace content only after the container is gone. This way we ensure there's
 				// no process modifying the workspace content as we create the backup.
@@ -940,7 +939,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			m.finalizerMapLock.Unlock()
 		}()
 
-		err = m.manager.markWorkspace(ctx, workspaceID, addMark(startedDisposalAnnotation, "true"))
+		err = m.manager.markWorkspace(ctx, workspaceID, addMark(startedDisposalAnnotation, util.BooleanTrueString))
 		if err != nil {
 			log.WithError(err).Error("was unable to update pod's start disposal state - this might cause an incorrect disposal state")
 		}
