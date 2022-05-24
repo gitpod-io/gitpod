@@ -51,13 +51,51 @@ pod:
     - bash
     - -c
     - |
-      set -euo
+      set -euo pipefail
 
       BRANCH="inte-test/"$(date +%Y%m%d%H%M%S)
+      FAILURE_COUNT=0
+      RUN_COUNT=0
+      declare -A FAILURE_TESTS
       export WERFT_CREDENTIAL_HELPER=/workspace/dev/preview/werft-credential-helper.sh
 
       function cleanup ()
       {
+        werft log phase "slack notification" "slack notification"
+        context_name="{{ .Name }}"
+        context_repo="{{ .Repository.Repo }}"
+        werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
+
+        if [ "${RUN_COUNT}" -eq "0" ]; then
+          title=":x: *Workspace integration test fail*"
+          title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
+
+          errs="Failed at preparing the preview environment"
+          BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errs}\\n\`\`\`\"}}]}"
+        elif [ "${FAILURE_COUNT}" -ne "0" ]; then
+          title=":x: *Workspace integration test fail*"
+          title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
+
+          errs=""
+          for TEST_NAME in ${!FAILURE_TESTS[*]}; do
+            title=$title"\n_Tests_: ${TEST_NAME}"
+            errs+="${FAILURE_TESTS["${TEST_NAME}"]}"
+          done
+          errs=$(echo "${errs}" | head)
+          BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errs}\\n\`\`\`\"}}]}"
+        else
+          title=":white_check_mark: *Workspace integration test pass*"
+
+          title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
+          BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}}]}"
+        fi
+
+        curl -X POST \
+          -H 'Content-type: application/json' \
+          -d "${BODY}" \
+          "https://hooks.slack.com/${SLACK_NOTIFICATION_PATH}"
+        werft log result "slack notification" "${PIPESTATUS[0]}"
+
         werft log phase "clean up" "clean up"
         git push origin "${BRANCH}" | werft log slice "clean up"
         werft log slice "clean up" --done
@@ -114,18 +152,17 @@ pod:
       [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
 
       WK_TEST_LIST=(/workspace/test/tests/components/content-service /workspace/test/tests/components/image-builder /workspace/test/tests/components/ws-daemon /workspace/test/tests/components/ws-manager /workspace/test/tests/workspace)
-
-      FAILURE_COUNT=0
-      declare -A FAILURE_TESTS
       for TEST_PATH in "${WK_TEST_LIST[@]}"
       do
           TEST_NAME=$(basename "${TEST_PATH}")
           echo "running integration for ${TEST_NAME}" | werft log slice "test-${TEST_NAME}"
 
           cd "${TEST_PATH}"
+          set +e
           go test -v ./... "${args[@]}" 2>&1 | tee "${TEST_NAME}".log | werft log slice "test-${TEST_NAME}"
+          set -e
 
-
+          RUN_COUNT=$((RUN_COUNT+1))
           if [ "${PIPESTATUS[0]}" -ne "0" ]; then
             FAILURE_COUNT=$((FAILURE_COUNT+1))
             FAILURE_TESTS["${TEST_NAME}"]=$(grep "\-\-\- FAIL: " "${TEST_PATH}"/"${TEST_NAME}".log)
@@ -134,35 +171,6 @@ pod:
             werft log slice "test-${TEST_NAME}" --done
           fi
       done
-
-      werft log phase "slack notification" "slack notification"
-      context_name="{{ .Name }}"
-      context_repo="{{ .Repository.Repo }}"
-      werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
-
-      if [ "${FAILURE_COUNT}" -ne "0" ]; then
-        title=":x: *Workspace integration test fail*"
-        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
-
-        errs=""
-        for TEST_NAME in ${!FAILURE_TESTS[*]}; do
-          title=$title"\n_Tests_: ${TEST_NAME}"
-          errs+="${FAILURE_TESTS["${TEST_NAME}"]}"
-        done
-        errs=$(echo "${errs}" | head)
-        BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errs}\\n\`\`\`\"}}]}"
-      else
-        title=":white_check_mark: *Workspace integration test pass*"
-
-        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
-        BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}}]}"
-      fi
-
-      curl -X POST \
-          -H 'Content-type: application/json' \
-          -d "${BODY}" \
-          "https://hooks.slack.com/${SLACK_NOTIFICATION_PATH}"
-      werft log result "slack notification" "${PIPESTATUS[0]}"
 
       exit $FAILURE_COUNT
 plugins:
