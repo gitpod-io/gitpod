@@ -45,6 +45,10 @@ spec:
               value: /run/k3s/containerd/io.containerd.runtime.v2.task/k8s.io
             - name: CONTAINERD_SOCKET_K3S
               value: /run/k3s/containerd/containerd.sock
+            - name: CONTAINERD_DIR_AL
+              value: /run/containerd/io.containerd.runtime.v2.task/k8s.io
+            - name: CONTAINERD_SOCKET_AL
+              value: /run/containerd/containerd.sock
             - name: GITPOD_OBJECTS
               value: /tmp/gitpod
           command:
@@ -92,12 +96,20 @@ spec:
                 echo "Gitpod: containerd dir detected as k3s"
 
                 yq e -i ".workspace.runtime.containerdRuntimeDir = \"${CONTAINERD_DIR_K3S}\"" "${CONFIG_FILE}"
+              elif [ -d "/mnt/node0${CONTAINERD_DIR_AL}" ]; then
+                echo "Gitpod: containerd dir detected as ${CONTAINERD_DIR_AL}"
+
+                yq e -i ".workspace.runtime.containerdRuntimeDir = \"${CONTAINERD_DIR_AL}\"" "${CONFIG_FILE}"
               fi
 
               if [ -S "/mnt/node0${CONTAINERD_SOCKET_K3S}" ]; then
                 echo "Gitpod: containerd socket detected as k3s"
 
                 yq e -i ".workspace.runtime.containerdSocket = \"${CONTAINERD_SOCKET_K3S}\"" "${CONFIG_FILE}"
+              elif [ -S "/mnt/node0${CONTAINERD_SOCKET_AL}" ]; then
+                echo "Gitpod: containerd socket detected as ${CONTAINERD_SOCKET_AL}"
+
+                yq e -i ".workspace.runtime.containerdSocket = \"${CONTAINERD_SOCKET_AL}\"" "${CONFIG_FILE}"
               fi
 
               echo "Gitpod: Inject the Replicated variables into the config"
