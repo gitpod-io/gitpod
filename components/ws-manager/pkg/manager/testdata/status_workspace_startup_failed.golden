@@ -21,7 +21,9 @@
             "class": "default"
         },
         "phase": 6,
-        "conditions": {},
+        "conditions": {
+            "volume_snapshot": {}
+        },
         "runtime": {
             "node_name": "to-failed-ws-start",
             "pod_name": "ws-7b26a643-d588-4346-bc9e-b46e70831078",
