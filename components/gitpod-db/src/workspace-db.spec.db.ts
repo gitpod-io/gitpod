@@ -17,6 +17,7 @@ import { DBWorkspace } from "./typeorm/entity/db-workspace";
 import { DBPrebuiltWorkspace } from "./typeorm/entity/db-prebuilt-workspace";
 import { DBWorkspaceInstance } from "./typeorm/entity/db-workspace-instance";
 import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { DBVolumeSnapshot } from "./typeorm/entity/db-volume-snapshot";
 
 @suite
 class WorkspaceDBSpec {
@@ -176,6 +177,7 @@ class WorkspaceDBSpec {
         await mnr.getRepository(DBWorkspace).delete({});
         await mnr.getRepository(DBWorkspaceInstance).delete({});
         await mnr.getRepository(DBPrebuiltWorkspace).delete({});
+        await mnr.getRepository(DBVolumeSnapshot).delete({});
     }
 
     @test(timeout(10000))
@@ -606,6 +608,70 @@ class WorkspaceDBSpec {
                 pws.id,
             ]);
         }
+    }
+    @test(timeout(10000))
+    public async testFindVolumeSnapshotWorkspacesForGC() {
+        await this.threeVolumeSnapshotsForTwoWorkspaces();
+
+        const wsIds = await this.db.findVolumeSnapshotWorkspacesForGC();
+        expect(wsIds).to.deep.equal(["ws-123"]);
+    }
+
+    @test(timeout(10000))
+    public async findVolumeSnapshotForGCByWorkspaceId() {
+        await this.threeVolumeSnapshotsForTwoWorkspaces();
+
+        const vss = (await this.db.findVolumeSnapshotForGCByWorkspaceId("ws-123")).map((vs) => ({
+            ...vs,
+            creationTime: "", // this is updated by the DB, so we need to blank for the sake of this test
+        }));
+        expect(vss).to.deep.equal([
+            {
+                creationTime: "",
+                id: "456",
+                volumeHandle: "some-handle2",
+                workspaceId: "ws-123",
+            },
+            {
+                creationTime: "",
+                id: "123",
+                volumeHandle: "some-handle",
+                workspaceId: "ws-123",
+            },
+        ]);
+    }
+
+    protected async threeVolumeSnapshotsForTwoWorkspaces() {
+        const connection = await this.typeorm.getConnection();
+        const repo = connection.getRepository(DBVolumeSnapshot);
+
+        const now = new Date(2018, 2, 16, 10, 0, 0).toISOString();
+        const id = "123";
+        const workspaceId = "ws-123";
+        await repo.save({
+            id,
+            creationTime: now,
+            volumeHandle: "some-handle",
+            workspaceId,
+        });
+        const beforeNow = new Date(2018, 2, 16, 11, 5, 10).toISOString();
+        const id2 = "456";
+        await repo.save({
+            id: id2,
+            creationTime: beforeNow,
+            volumeHandle: "some-handle2",
+            workspaceId,
+        });
+
+        const someOtherTime = new Date(2018, 2, 10, 6, 5).toISOString();
+        const id3 = "789";
+        const workspaceId2 = "ws-789";
+        await repo.save({
+            id: id3,
+            creationTime: someOtherTime,
+            volumeHandle: "some-handle3",
+            workspaceId: workspaceId2,
+        });
     }
 }
 module.exports = new WorkspaceDBSpec();

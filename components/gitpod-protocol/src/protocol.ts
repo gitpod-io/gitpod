@@ -490,6 +490,7 @@ export interface Snapshot {
 
 export interface VolumeSnapshot {
     id: string;
+    workspaceId: string;
     creationTime: string;
     volumeHandle: string;
 }

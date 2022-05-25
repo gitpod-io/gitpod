@@ -205,6 +205,21 @@ func (mr *MockWorkspaceManagerServerMockRecorder) ControlPort(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ControlPort", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).ControlPort), arg0, arg1)
 }
 
+// DeleteVolumeSnapshot mocks base method.
+func (m *MockWorkspaceManagerServer) DeleteVolumeSnapshot(arg0 context.Context, arg1 *api.DeleteVolumeSnapshotRequest) (*api.DeleteVolumeSnapshotResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteVolumeSnapshot", arg0, arg1)
+	ret0, _ := ret[0].(*api.DeleteVolumeSnapshotResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteVolumeSnapshot indicates an expected call of DeleteVolumeSnapshot.
+func (mr *MockWorkspaceManagerServerMockRecorder) DeleteVolumeSnapshot(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteVolumeSnapshot", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).DeleteVolumeSnapshot), arg0, arg1)
+}
+
 // DescribeWorkspace mocks base method.
 func (m *MockWorkspaceManagerServer) DescribeWorkspace(arg0 context.Context, arg1 *api.DescribeWorkspaceRequest) (*api.DescribeWorkspaceResponse, error) {
 	m.ctrl.T.Helper()
@@ -540,6 +555,26 @@ func (mr *MockWorkspaceManagerClientMockRecorder) ControlPort(arg0, arg1 interfa
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ControlPort", reflect.TypeOf((*MockWorkspaceManagerClient)(nil).ControlPort), varargs...)
+}
+
+// DeleteVolumeSnapshot mocks base method.
+func (m *MockWorkspaceManagerClient) DeleteVolumeSnapshot(arg0 context.Context, arg1 *api.DeleteVolumeSnapshotRequest, arg2 ...grpc.CallOption) (*api.DeleteVolumeSnapshotResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteVolumeSnapshot", varargs...)
+	ret0, _ := ret[0].(*api.DeleteVolumeSnapshotResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteVolumeSnapshot indicates an expected call of DeleteVolumeSnapshot.
+func (mr *MockWorkspaceManagerClientMockRecorder) DeleteVolumeSnapshot(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteVolumeSnapshot", reflect.TypeOf((*MockWorkspaceManagerClient)(nil).DeleteVolumeSnapshot), varargs...)
 }
 
 // DescribeWorkspace mocks base method.

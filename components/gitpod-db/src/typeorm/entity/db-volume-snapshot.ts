@@ -16,6 +16,10 @@ export class DBVolumeSnapshot implements VolumeSnapshot {
     @PrimaryColumn(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
     id: string;
 
+    @Column(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
+    @Index()
+    workspaceId: string;
+
     @Column({
         type: "timestamp",
         precision: 6,

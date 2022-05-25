@@ -45,6 +45,9 @@ export class WorkspaceGarbageCollector {
                 log.error("wsgc: error during content deletion", err),
             );
             this.deleteOldPrebuilds().catch((err) => log.error("wsgc: error during prebuild deletion", err));
+            this.deleteOutdatedVolumeSnapshots().catch((err) =>
+                log.error("wsgc: error during volume snapshot gc deletion", err),
+            );
         }
     }
 
@@ -117,6 +120,29 @@ export class WorkspaceGarbageCollector {
 
             log.info(`wsgc: successfully deleted ${deletes.length} prebuilds`);
             span.addTags({ nrOfCollectedPrebuilds: deletes.length });
+        } catch (err) {
+            TraceContext.setError({ span }, err);
+            throw err;
+        } finally {
+            span.finish();
+        }
+    }
+
+    // finds volume snapshots that have been superceded by newer volume snapshot and removes them
+    protected async deleteOutdatedVolumeSnapshots() {
+        const span = opentracing.globalTracer().startSpan("deleteOutdatedVolumeSnapshots");
+        try {
+            const workspaces = await this.workspaceDB.trace({ span }).findVolumeSnapshotWorkspacesForGC();
+            const volumeSnapshots = await Promise.all(
+                workspaces.map((ws) => this.workspaceDB.trace({ span }).findVolumeSnapshotForGCByWorkspaceId(ws)),
+            );
+
+            await Promise.all(
+                volumeSnapshots.map((vss) =>
+                    // skip the first volume snapshot, as it is most recent, and then pass the rest into deletion
+                    vss.slice(1).map((vs) => this.deletionService.garbageCollectVolumeSnapshot({ span }, vs)),
+                ),
+            );
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;

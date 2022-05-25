@@ -43,6 +43,7 @@ import (
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/clock"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
+	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 )
 
 // Manager is a kubernetes backed implementation of a workspace manager
@@ -225,8 +226,22 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 	}
 	if createPVC {
-		clog.Info("PVC feature detected, creating PVC object")
-		pvc, err = m.createPVCForWorkspacePod(startContext)
+		if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
+			var volumeSnapshot volumesnapshotv1.VolumeSnapshot
+			err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: startContext.VolumeSnapshot.VolumeSnapshotName}, &volumeSnapshot)
+			if k8serr.IsNotFound(err) {
+				// restore volume snapshot from handle
+				err = m.restoreVolumeSnapshotFromHandle(ctx, startContext.VolumeSnapshot.VolumeSnapshotName, startContext.VolumeSnapshot.VolumeSnapshotHandle)
+				if err != nil {
+					log.WithError(err).Error("was unable to restore volume snapshot")
+					return nil, err
+				}
+			} else if err != nil {
+				log.WithError(err).Error("was unable to get volume snapshot")
+				return nil, err
+			}
+		}
+		pvc, err := m.createPVCForWorkspacePod(startContext)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create pvc for workspace pod: %w", err)
 		}
@@ -366,6 +381,119 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 
 	m.metrics.OnWorkspaceStarted(req.Type, req.Spec.Class)
+
+	return okResponse, nil
+}
+
+func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, id, handle string) (err error) {
+	span, ctx := tracing.FromContext(ctx, "restoreVolumeSnapshotFromHandle")
+	defer tracing.FinishSpan(span, &err)
+
+	// restore is a two step process
+	// 1. create volume snapshot referencing not yet created volume snapshot content
+	// 2. create volume snapshot content referencing volume snapshot
+	// this creates correct bidirectional binding between those two
+
+	// todo(pavel): figure out if there is a way to find out which snapshot class we need to use here. For now use default class info.
+	var volumeSnapshotClassName string
+	if m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC.SnapshotClass != "" {
+		volumeSnapshotClassName = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC.SnapshotClass
+	}
+
+	var volumeSnapshotClass volumesnapshotv1.VolumeSnapshotClass
+	err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: "", Name: volumeSnapshotClassName}, &volumeSnapshotClass)
+	if err != nil {
+		return fmt.Errorf("was unable to get volume snapshot class: %v", err)
+	}
+
+	snapshotContentName := "restored-" + id
+	volumeSnapshot := &volumesnapshotv1.VolumeSnapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      id,
+			Namespace: m.Config.Namespace,
+		},
+		Spec: volumesnapshotv1.VolumeSnapshotSpec{
+			Source: volumesnapshotv1.VolumeSnapshotSource{
+				VolumeSnapshotContentName: &snapshotContentName,
+			},
+		},
+	}
+	if volumeSnapshotClassName != "" {
+		volumeSnapshot.Spec.VolumeSnapshotClassName = &volumeSnapshotClassName
+	}
+
+	err = m.Clientset.Create(ctx, volumeSnapshot)
+	if err != nil && !k8serr.IsAlreadyExists(err) {
+		return fmt.Errorf("cannot create volumesnapshot: %v", err)
+	}
+
+	volumeSnapshotContent := &volumesnapshotv1.VolumeSnapshotContent{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      snapshotContentName,
+			Namespace: "", // content is not namespaced
+		},
+		Spec: volumesnapshotv1.VolumeSnapshotContentSpec{
+			VolumeSnapshotRef: corev1.ObjectReference{
+				Kind:      "VolumeSnapshot",
+				Name:      id,
+				Namespace: m.Config.Namespace,
+			},
+			DeletionPolicy: "Delete",
+			Source: volumesnapshotv1.VolumeSnapshotContentSource{
+				SnapshotHandle: &handle,
+			},
+			Driver: volumeSnapshotClass.Driver,
+		},
+	}
+
+	err = m.Clientset.Create(ctx, volumeSnapshotContent)
+	if err != nil && !k8serr.IsAlreadyExists(err) {
+		return fmt.Errorf("cannot create volumesnapshotcontent: %v", err)
+	}
+
+	return nil
+}
+
+func (m *Manager) DeleteVolumeSnapshot(ctx context.Context, req *api.DeleteVolumeSnapshotRequest) (res *api.DeleteVolumeSnapshotResponse, err error) {
+	span, ctx := tracing.FromContext(ctx, "DeleteVolumeSnapshot")
+	tracing.LogRequestSafe(span, req)
+	defer tracing.FinishSpan(span, &err)
+	log := log.WithField("func", "DeleteVolumeSnapshot")
+
+	okResponse := &api.DeleteVolumeSnapshotResponse{}
+
+	var volumeSnapshot volumesnapshotv1.VolumeSnapshot
+	err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: req.Id}, &volumeSnapshot)
+	if k8serr.IsNotFound(err) {
+		if !req.SoftDelete {
+			err = m.restoreVolumeSnapshotFromHandle(ctx, req.Id, req.VolumeHandle)
+			if err != nil {
+				log.WithError(err).Error("was unable to restore volume snapshot")
+				return nil, err
+			}
+		} else {
+			return okResponse, nil
+		}
+	} else if err != nil {
+		log.WithError(err).Error("was unable to get volume snapshot")
+		return nil, err
+	}
+
+	err = m.Clientset.Delete(ctx,
+		&volumesnapshotv1.VolumeSnapshot{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      req.Id,
+				Namespace: m.Config.Namespace,
+			},
+		},
+	)
+	if err != nil && !k8serr.IsNotFound(err) {
+		log.WithError(err).Errorf("failed to delete volume snapshot `%s`", req.Id)
+		return nil, err
+	}
+	if !k8serr.IsNotFound(err) {
+		okResponse.WasDeleted = true
+	}
 
 	return okResponse, nil
 }
