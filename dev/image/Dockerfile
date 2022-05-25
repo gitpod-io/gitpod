@@ -50,6 +50,20 @@ RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | sudo apt-key
 ### MySQL client ###
 RUN install-packages mysql-client
 
+### MySQL Server ###
+RUN install-packages mysql-server \
+ && mkdir -p /var/run/mysqld /var/log/mysql \
+ && chown -R gitpod:gitpod /etc/mysql /var/run/mysqld /var/log/mysql /var/lib/mysql /var/lib/mysql-files /var/lib/mysql-keyring /var/lib/mysql-upgrade
+
+# Install our own MySQL config
+COPY mysql/mysql.cnf /etc/mysql/mysql.conf.d/mysqld.cnf
+
+# Install default-login for MySQL clients
+COPY mysql/client.cnf /etc/mysql/mysql.conf.d/client.cnf
+
+COPY mysql/mysql-bashrc-launch.sh /etc/mysql/mysql-bashrc-launch.sh
+
+
 ### CertManager's cmctl
 RUN cd /usr/bin && curl -L cmctl.tar.gz https://github.com/cert-manager/cert-manager/releases/download/v1.7.2/cmctl-linux-amd64.tar.gz | tar xzv cmctl
 
@@ -241,3 +255,6 @@ ENV WERFT_CREDENTIAL_HELPER=/workspace/gitpod/dev/preview/werft-credential-helpe
 # Copy our own tools
 ENV NEW_KUBECDL=1
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
+
+# MySQL Server launch
+RUN echo "/etc/mysql/mysql-bashrc-launch.sh" >> /home/gitpod/.bashrc.d/100-mysql-launch
