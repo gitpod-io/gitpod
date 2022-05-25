@@ -41,6 +41,9 @@ module.exports = {
             outline: {
                 blue: '1px solid #000033',
             },
+            brightness: {
+                10: 0.1
+            }
         },
         fontFamily: {
             sans: [
@@ -77,24 +80,16 @@ module.exports = {
             'small': '2px',
             'medium': '5px',
         },
-        filter: { // defaults to {}
-            // https://github.com/benface/tailwindcss-filters#usage
-            'none': 'none',
-            'grayscale': 'grayscale(1)',
-            'invert': 'invert(1)',
-            'brightness-10': 'brightness(10)',
-        },
     },
     variants: {
         extend: {
             opacity: ['disabled'],
             display: ['dark'],
+            invert: ['dark'],
         }
     },
     plugins: [
         require('@tailwindcss/forms'),
         require('tailwind-underline-utils'),
-        require('tailwindcss-filters'),
-        // ...
     ],
 };

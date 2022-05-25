@@ -16614,13 +16614,6 @@ tailwind-underline-utils@^1.1.2:
   resolved "https://registry.yarnpkg.com/tailwind-underline-utils/-/tailwind-underline-utils-1.1.3.tgz#e3c874d24679f1943b193cd57a0c2723b399f42f"
   integrity sha512-8FSynb8KOBFj7Y1wurCzx0MBAQtdOuRWlCk5wXFImI5ZfJ2yiRLvNbybiJ6pjWz5Htr+lStnowcTXl/00s8xRw==
 
-tailwindcss-filters@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/tailwindcss-filters/-/tailwindcss-filters-3.0.0.tgz#d5d40ca018a54b1aa2bdc57aeb6677529c24c8d8"
-  integrity sha512-xhortqs8fSp9id17EnneYhmruA5DfU6K0zvN6/mgDlEXKaHthjXlR74Ta+4lrX5Lp7tp6YigB09WO0TOWn7VEQ==
-  dependencies:
-    lodash "^4.17.15"
-
 tapable@^1.0.0, tapable@^1.1.3:
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/tapable/-/tapable-1.1.3.tgz#a1fccc06b58db61fd7a45da2da44f5f3a3e67ba2"

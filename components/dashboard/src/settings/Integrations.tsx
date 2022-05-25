@@ -288,7 +288,7 @@ function GitProviders() {
 
             {errorMessage && (
                 <div className="flex rounded-md bg-red-600 p-3 mb-4">
-                    <img className="w-4 h-4 mx-2 my-auto filter-brightness-10" src={exclamation} />
+                    <img className="w-4 h-4 mx-2 my-auto brightness-10" src={exclamation} />
                     <span className="text-white">{errorMessage}</span>
                 </div>
             )}
@@ -857,7 +857,7 @@ export function GitIntegrationModal(
 
                 {(errorMessage || validationError) && (
                     <div className="flex rounded-md bg-red-600 p-3">
-                        <img className="w-4 h-4 mx-2 my-auto filter-brightness-10" src={exclamation} />
+                        <img className="w-4 h-4 mx-2 my-auto brightness-10" src={exclamation} />
                         <span className="text-white">{errorMessage || validationError}</span>
                     </div>
                 )}

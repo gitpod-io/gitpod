@@ -40,9 +40,8 @@
     .btn-login {
         @apply rounded-md border-none bg-gray-100 hover:bg-gray-200 text-gray-500 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-600;
     }
-    .dark .dark\:filter-invert {
-        @apply filter-invert;
-    }
+
+
     .grayed {
         filter: grayscale(100%);
     }

@@ -181,7 +181,7 @@ function renderIdeOption(option: IDEOption, selected: boolean, onSelect: () => v
     const card = (
         <SelectableCardSolid className="w-36 h-40" title={option.title} selected={selected} onClick={onSelect}>
             <div className="flex justify-center mt-3">
-                <img className="w-16 filter-grayscale self-center" src={option.logo} alt="logo" />
+                <img className="w-16 grayscale self-center" src={option.logo} alt="logo" />
             </div>
             {label ? (
                 <div
