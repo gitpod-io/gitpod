@@ -46,7 +46,7 @@ var Helm = common.CompositeHelmFunc(
 
 		if inCluster && s3Storage != nil {
 			registryValues = append(registryValues,
-				helm.KeyValue("docker-registry.s3.region", s3Storage.Region),
+				helm.KeyValue("docker-registry.s3.region", cfg.Config.Metadata.Region),
 				helm.KeyValue("docker-registry.s3.bucket", s3Storage.Bucket),
 				helm.KeyValue("docker-registry.s3.encrypt", "true"),
 				helm.KeyValue("docker-registry.s3.secure", "true"),
