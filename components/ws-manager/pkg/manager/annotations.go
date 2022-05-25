@@ -6,6 +6,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -104,10 +105,10 @@ func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotat
 	err := retry.RetryOnConflict(backoff, func() error {
 		pod, err := m.findWorkspacePod(ctx, workspaceID)
 		if err != nil {
-			return xerrors.Errorf("cannot find workspace %s: %w", workspaceID, err)
+			return fmt.Errorf("cannot find workspace %s: %w", workspaceID, err)
 		}
 		if pod == nil {
-			return xerrors.Errorf("workspace %s does not exist", workspaceID)
+			return fmt.Errorf("workspace %s does not exist", workspaceID)
 		}
 
 		for _, a := range annotations {

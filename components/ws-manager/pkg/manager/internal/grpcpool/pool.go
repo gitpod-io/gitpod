@@ -5,18 +5,18 @@
 package grpcpool
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"time"
 
-	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 )
 
 var (
 	// ErrPoolClosed is returned if Get is called after Close
-	ErrPoolClosed = xerrors.Errorf("pool is closed")
+	ErrPoolClosed = fmt.Errorf("pool is closed")
 )
 
 // Factory is a function which creates new grpc connections
@@ -108,7 +108,7 @@ func (p *Pool) Close() error {
 	}
 
 	if len(errs) != 0 {
-		return xerrors.Errorf("pool close: %s", strings.Join(errs, "; "))
+		return fmt.Errorf("pool close: %s", strings.Join(errs, "; "))
 	}
 
 	return nil
