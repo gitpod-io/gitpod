@@ -308,25 +308,37 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 	state := make(map[uint32]*managedPort)
 
+	genManagedPort := func(port uint32) *managedPort {
+		if mp, exists := state[port]; exists {
+			return mp
+		}
+		config, _, exists := pm.configs.Get(port)
+		mp := &managedPort{
+			LocalhostPort: port,
+			OnExposed:     getOnExposedAction(config, port),
+		}
+		if exists {
+			mp.Name = config.Name
+			mp.Description = config.Description
+		}
+		state[port] = mp
+		return mp
+	}
+
 	// 1. first capture exposed and tunneled since they don't depend on configured or served ports
 	for _, exposed := range pm.exposed {
 		port := exposed.LocalPort
 		if pm.boundInternally(port) {
 			continue
 		}
-
-		config, _, _ := pm.configs.Get(port)
 		Visibility := api.PortVisibility_private
 		if exposed.Public {
 			Visibility = api.PortVisibility_public
 		}
-		state[port] = &managedPort{
-			LocalhostPort: port,
-			Exposed:       true,
-			Visibility:    Visibility,
-			URL:           exposed.URL,
-			OnExposed:     getOnExposedAction(config, port),
-		}
+		mp := genManagedPort(port)
+		mp.Exposed = true
+		mp.Visibility = Visibility
+		mp.URL = exposed.URL
 	}
 
 	for _, tunneled := range pm.tunneled {
@@ -334,13 +346,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		if pm.boundInternally(port) {
 			continue
 		}
-
-		mp, exists := state[port]
-		if !exists {
-			mp = &managedPort{}
-			state[port] = mp
-		}
-		mp.LocalhostPort = port
+		mp := genManagedPort(port)
 		mp.Tunneled = true
 		mp.TunneledTargetPort = tunneled.Desc.TargetPort
 		mp.TunneledVisibility = tunneled.Desc.Visibility
@@ -353,26 +359,12 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 			if pm.boundInternally(port) {
 				return
 			}
-
-			mp, exists := state[port]
-			if !exists {
-				mp = &managedPort{}
-				state[port] = mp
-			}
-			mp.LocalhostPort = port
-			mp.Description = config.Description
-			mp.Name = config.Name
-
+			mp := genManagedPort(port)
 			autoExpose, autoExposed := pm.autoExposed[port]
 			if autoExposed {
 				mp.AutoExposure = autoExpose.state
 			}
-			if mp.Exposed {
-				return
-			}
-			mp.OnExposed = getOnExposedAction(config, port)
-
-			if autoExposed {
+			if mp.Exposed || autoExposed {
 				return
 			}
 
@@ -393,14 +385,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		if pm.boundInternally(port) {
 			continue
 		}
-
-		mp, exists := state[port]
-		if !exists {
-			mp = &managedPort{}
-			state[port] = mp
-		}
-
-		mp.LocalhostPort = port
+		mp := genManagedPort(port)
 		mp.Served = true
 
 		autoExposure, autoExposed := pm.autoExposed[port]
@@ -411,12 +396,6 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 
 		var public bool
 		config, kind, exists := pm.configs.Get(mp.LocalhostPort)
-		if exists {
-			// Handling configurations of port ranges
-			mp.Name = config.Name
-			mp.Description = config.Description
-			mp.OnExposed = getOnExposedAction(config, mp.LocalhostPort)
-		}
 
 		configured := exists && kind == PortConfigKind
 		if mp.Exposed || configured {
