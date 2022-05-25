@@ -9,6 +9,7 @@ packages:
     srcs:
       - gcloud-default-config
       - kubeconfig.yaml
+      - mysql/*
     config:
       dockerfile: Dockerfile
       image:
