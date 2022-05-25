@@ -1,6 +1,12 @@
 # Change Log
 
 ## May 2022
+- [kots] Fix issue with s3 object storage ([#9942](https://github.com/gitpod-io/gitpod/pull/9942)) - [@Pothulapati](https://github.com/Pothulapati)
+- Reduce memory requests of minio in preview environments ([#10158](https://github.com/gitpod-io/gitpod/pull/10158)) - [@vulkoingim](https://github.com/vulkoingim)
+- [server] make sure to release websocket clients ([#10193](https://github.com/gitpod-io/gitpod/pull/10193)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- JetBrains Gateway: The "Connect" button now gets disabled while a JetBrains Client is connected to the workspace. ([#10177](https://github.com/gitpod-io/gitpod/pull/10177)) - [@yaohui-wyh](https://github.com/yaohui-wyh)
+- [registry-facade] Adjust Redis defaults ([#10019](https://github.com/gitpod-io/gitpod/pull/10019)) - [@aledbf](https://github.com/aledbf)
+- Fix port name and description not showing up on Gitpod VS Code Extension sidebar. ([#9797](https://github.com/gitpod-io/gitpod/pull/9797)) - [@mustard-mh](https://github.com/mustard-mh)
 - Add some ssh connection metrics ([#10179](https://github.com/gitpod-io/gitpod/pull/10179)) - [@iQQBot](https://github.com/iQQBot)
 - Add support for JetBrains Gateway 2022.2 ([#10156](https://github.com/gitpod-io/gitpod/pull/10156)) - [@felladrin](https://github.com/felladrin)
 - [experimental] Workspace persistent volume claim (PVC) uses a default storage class within the Kubernetes cluster if the user does not configure it ([#10147](https://github.com/gitpod-io/gitpod/pull/10147)) - [@jenting](https://github.com/jenting)
