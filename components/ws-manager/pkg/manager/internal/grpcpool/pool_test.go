@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 )
@@ -31,7 +32,7 @@ func getTestAddr() string {
 
 func getFactory(address string) func(host string) (*grpc.ClientConn, error) {
 	return func(host string) (*grpc.ClientConn, error) {
-		return grpc.Dial(address, grpc.WithInsecure())
+		return grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 }
 
