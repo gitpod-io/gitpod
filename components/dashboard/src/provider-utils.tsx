@@ -12,13 +12,13 @@ import { gitpodHostUrl } from "./service/service";
 function iconForAuthProvider(type: string) {
     switch (type) {
         case "GitHub":
-            return <img className="fill-current dark:filter-invert w-5 h-5 ml-3 mr-3 my-auto" src={github} />;
+            return <img className="fill-current dark:invert w-5 h-5 ml-3 mr-3 my-auto" src={github} />;
         case "GitLab":
-            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitlab} />;
+            return <img className="fill-current grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitlab} />;
         case "Bitbucket":
-            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} />;
+            return <img className="fill-current grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} />;
         case "BitbucketServer":
-            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} />;
+            return <img className="fill-current grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} />;
         default:
             return <></>;
     }
