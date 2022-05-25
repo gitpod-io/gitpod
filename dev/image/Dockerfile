@@ -50,6 +50,9 @@ RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | sudo apt-key
 ### MySQL client ###
 RUN install-packages mysql-client
 
+### CertManager's cmctl
+RUN cd /usr/bin && curl -L cmctl.tar.gz https://github.com/cert-manager/cert-manager/releases/download/v1.7.2/cmctl-linux-amd64.tar.gz | tar xzv cmctl
+
 # gokart
 RUN cd /usr/bin && curl -L https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv gokart
 
