@@ -54,7 +54,7 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 	return
 }
 
-func (a MapAuthorizer) AddIfNotExists(other MapAuthorizer) MapAuthorizer {
+func (a MapAuthorizer) OverrideWith(other MapAuthorizer) MapAuthorizer {
 	res := make(map[string]authConfig)
 	for k, v := range a {
 		res[k] = v

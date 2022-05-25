@@ -39,7 +39,7 @@ var proxyCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).WithField("auth", proxyOpts.Auth).Fatal("cannot unmarshal auth")
 		}
-		authP = authP.AddIfNotExists(authA)
+		authP = authP.OverrideWith(authA)
 
 		baseref, err := reference.ParseNormalizedNamed(proxyOpts.BaseRef)
 		if err != nil {
