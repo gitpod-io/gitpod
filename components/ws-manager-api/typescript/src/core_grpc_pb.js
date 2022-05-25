@@ -78,6 +78,28 @@ function deserialize_wsman_ControlPortResponse(buffer_arg) {
   return core_pb.ControlPortResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_wsman_DeleteVolumeSnapshotRequest(arg) {
+  if (!(arg instanceof core_pb.DeleteVolumeSnapshotRequest)) {
+    throw new Error('Expected argument of type wsman.DeleteVolumeSnapshotRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_DeleteVolumeSnapshotRequest(buffer_arg) {
+  return core_pb.DeleteVolumeSnapshotRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsman_DeleteVolumeSnapshotResponse(arg) {
+  if (!(arg instanceof core_pb.DeleteVolumeSnapshotResponse)) {
+    throw new Error('Expected argument of type wsman.DeleteVolumeSnapshotResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_DeleteVolumeSnapshotResponse(buffer_arg) {
+  return core_pb.DeleteVolumeSnapshotResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_wsman_DescribeWorkspaceRequest(arg) {
   if (!(arg instanceof core_pb.DescribeWorkspaceRequest)) {
     throw new Error('Expected argument of type wsman.DescribeWorkspaceRequest');
@@ -387,6 +409,18 @@ controlAdmission: {
     requestDeserialize: deserialize_wsman_ControlAdmissionRequest,
     responseSerialize: serialize_wsman_ControlAdmissionResponse,
     responseDeserialize: deserialize_wsman_ControlAdmissionResponse,
+  },
+  // deleteVolumeSnapshot asks ws-manager to delete specific volume snapshot and delete source from cloud provider as well
+deleteVolumeSnapshot: {
+    path: '/wsman.WorkspaceManager/DeleteVolumeSnapshot',
+    requestStream: false,
+    responseStream: false,
+    requestType: core_pb.DeleteVolumeSnapshotRequest,
+    responseType: core_pb.DeleteVolumeSnapshotResponse,
+    requestSerialize: serialize_wsman_DeleteVolumeSnapshotRequest,
+    requestDeserialize: deserialize_wsman_DeleteVolumeSnapshotRequest,
+    responseSerialize: serialize_wsman_DeleteVolumeSnapshotResponse,
+    responseDeserialize: deserialize_wsman_DeleteVolumeSnapshotResponse,
   },
 };
 

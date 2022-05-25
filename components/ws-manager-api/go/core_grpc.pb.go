@@ -48,6 +48,8 @@ type WorkspaceManagerClient interface {
 	TakeSnapshot(ctx context.Context, in *TakeSnapshotRequest, opts ...grpc.CallOption) (*TakeSnapshotResponse, error)
 	// controlAdmission makes a workspace accessible for everyone or for the owner only
 	ControlAdmission(ctx context.Context, in *ControlAdmissionRequest, opts ...grpc.CallOption) (*ControlAdmissionResponse, error)
+	// deleteVolumeSnapshot asks ws-manager to delete specific volume snapshot and delete source from cloud provider as well
+	DeleteVolumeSnapshot(ctx context.Context, in *DeleteVolumeSnapshotRequest, opts ...grpc.CallOption) (*DeleteVolumeSnapshotResponse, error)
 }
 
 type workspaceManagerClient struct {
@@ -180,6 +182,15 @@ func (c *workspaceManagerClient) ControlAdmission(ctx context.Context, in *Contr
 	return out, nil
 }
 
+func (c *workspaceManagerClient) DeleteVolumeSnapshot(ctx context.Context, in *DeleteVolumeSnapshotRequest, opts ...grpc.CallOption) (*DeleteVolumeSnapshotResponse, error) {
+	out := new(DeleteVolumeSnapshotResponse)
+	err := c.cc.Invoke(ctx, "/wsman.WorkspaceManager/DeleteVolumeSnapshot", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspaceManagerServer is the server API for WorkspaceManager service.
 // All implementations must embed UnimplementedWorkspaceManagerServer
 // for forward compatibility
@@ -206,6 +217,8 @@ type WorkspaceManagerServer interface {
 	TakeSnapshot(context.Context, *TakeSnapshotRequest) (*TakeSnapshotResponse, error)
 	// controlAdmission makes a workspace accessible for everyone or for the owner only
 	ControlAdmission(context.Context, *ControlAdmissionRequest) (*ControlAdmissionResponse, error)
+	// deleteVolumeSnapshot asks ws-manager to delete specific volume snapshot and delete source from cloud provider as well
+	DeleteVolumeSnapshot(context.Context, *DeleteVolumeSnapshotRequest) (*DeleteVolumeSnapshotResponse, error)
 	mustEmbedUnimplementedWorkspaceManagerServer()
 }
 
@@ -245,6 +258,9 @@ func (UnimplementedWorkspaceManagerServer) TakeSnapshot(context.Context, *TakeSn
 }
 func (UnimplementedWorkspaceManagerServer) ControlAdmission(context.Context, *ControlAdmissionRequest) (*ControlAdmissionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ControlAdmission not implemented")
+}
+func (UnimplementedWorkspaceManagerServer) DeleteVolumeSnapshot(context.Context, *DeleteVolumeSnapshotRequest) (*DeleteVolumeSnapshotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteVolumeSnapshot not implemented")
 }
 func (UnimplementedWorkspaceManagerServer) mustEmbedUnimplementedWorkspaceManagerServer() {}
 
@@ -460,6 +476,24 @@ func _WorkspaceManager_ControlAdmission_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceManager_DeleteVolumeSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteVolumeSnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceManagerServer).DeleteVolumeSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsman.WorkspaceManager/DeleteVolumeSnapshot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceManagerServer).DeleteVolumeSnapshot(ctx, req.(*DeleteVolumeSnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspaceManager_ServiceDesc is the grpc.ServiceDesc for WorkspaceManager service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -506,6 +540,10 @@ var WorkspaceManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ControlAdmission",
 			Handler:    _WorkspaceManager_ControlAdmission_Handler,
+		},
+		{
+			MethodName: "DeleteVolumeSnapshot",
+			Handler:    _WorkspaceManager_DeleteVolumeSnapshot_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
