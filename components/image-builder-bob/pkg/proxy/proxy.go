@@ -52,7 +52,7 @@ type Repo struct {
 	Auth func() docker.Authorizer
 }
 
-func rewriteURL(u *url.URL, fromRepo, toRepo, host, tag string) {
+func rewriteDockerAPIURL(u *url.URL, fromRepo, toRepo, host, tag string) {
 	var (
 		from = "/v2/" + strings.Trim(fromRepo, "/") + "/"
 		to   = "/v2/" + strings.Trim(toRepo, "/") + "/"
@@ -79,6 +79,27 @@ func rewriteURL(u *url.URL, fromRepo, toRepo, host, tag string) {
 	u.Host = host
 }
 
+// rewriteNonDockerAPIURL is used when a url has to be rewritten but the url
+// contains a non docker api path
+func rewriteNonDockerAPIURL(u *url.URL, fromPrefix, toPrefix, host string) {
+	var (
+		from = "/" + strings.Trim(fromPrefix, "/") + "/"
+		to   = "/" + strings.Trim(toPrefix, "/") + "/"
+	)
+	if fromPrefix == "" {
+		from = "/"
+	}
+	if toPrefix == "" {
+		to = "/"
+	}
+	u.Path = to + strings.TrimPrefix(u.Path, from)
+
+	// we reset the escaped encoding hint, because EscapedPath will produce a valid encoding.
+	u.RawPath = ""
+
+	u.Host = host
+}
+
 // ServeHTTP serves the proxy
 func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -88,9 +109,20 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		alias string
 	)
 	for k, v := range proxy.Aliases {
+		// Docker api request
 		if strings.HasPrefix(r.URL.Path, "/v2/"+k+"/") {
 			repo = &v
 			alias = k
+			rewriteDockerAPIURL(r.URL, alias, repo.Repo, repo.Host, repo.Tag)
+			break
+		}
+		// Non-Docker api request
+		if strings.HasPrefix(r.URL.Path, "/"+k+"/") {
+			// We will use the same repo/alias and its credentials but we will set target
+			// repo as empty
+			repo = &v
+			alias = k
+			rewriteNonDockerAPIURL(r.URL, alias, "", repo.Host)
 			break
 		}
 	}
@@ -99,7 +131,6 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rewriteURL(r.URL, alias, repo.Repo, repo.Host, repo.Tag)
 	r.Host = r.URL.Host
 
 	auth := repo.Auth()
@@ -186,13 +217,23 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 	rp.ModifyResponse = func(r *http.Response) error {
 		// Some registries return a Location header which we must rewrite to still push
 		// through this proxy.
+		// We support only relative URLs and not absolute URLs.
 		if loc := r.Header.Get("Location"); loc != "" {
 			lurl, err := url.Parse(loc)
 			if err != nil {
 				return err
 			}
 
-			rewriteURL(lurl, repo.Repo, alias, proxy.Host.Host, "")
+			if strings.HasPrefix(loc, "/v2/") {
+				rewriteDockerAPIURL(lurl, repo.Repo, alias, proxy.Host.Host, "")
+			} else {
+				// since this is a non docker api location we
+				// do not need to process the path.
+				// All docker api URLs always start with /v2/. See spec
+				// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#endpoints
+				rewriteNonDockerAPIURL(lurl, "", alias, repo.Host)
+			}
+
 			lurl.Host = proxy.Host.Host
 			// force scheme to http assuming this proxy never runs as https
 			lurl.Scheme = proxy.Host.Scheme
