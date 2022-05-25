@@ -28,8 +28,7 @@ var validateCmd = &cobra.Command{
 		var e *licensor.Evaluator
 		switch licensorType {
 		case string(licensor.LicenseTypeReplicated):
-			e = licensor.NewReplicatedEvaluator(domain)
-			break
+			e = licensor.NewReplicatedEvaluator()
 		default:
 			var lic []byte
 			if len(args) == 0 {
