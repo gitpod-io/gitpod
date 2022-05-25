@@ -894,11 +894,15 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	)
 	if wso.Pod != nil {
 		_, pvcFeatureEnabled = wso.Pod.Labels[pvcWorkspaceFeatureAnnotation]
-		wsClassName := ""
+
 		if _, ok := wso.Pod.Labels[workspaceClassLabel]; ok {
-			wsClassName = wso.Pod.Labels[workspaceClassLabel]
+			wsClassName := wso.Pod.Labels[workspaceClassLabel]
+
+			workspaceClass := m.manager.Config.WorkspaceClasses[wsClassName]
+			if workspaceClass != nil {
+				pvcVolumeSnapshotClassName = workspaceClass.PVC.SnapshotClass
+			}
 		}
-		pvcVolumeSnapshotClassName = m.manager.Config.WorkspaceClasses[wsClassName].PVC.SnapshotClass
 	}
 
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
