@@ -494,6 +494,52 @@ export namespace ControlAdmissionResponse {
     }
 }
 
+export class DeleteVolumeSnapshotRequest extends jspb.Message {
+    getId(): string;
+    setId(value: string): DeleteVolumeSnapshotRequest;
+    getVolumeHandle(): string;
+    setVolumeHandle(value: string): DeleteVolumeSnapshotRequest;
+    getSoftDelete(): boolean;
+    setSoftDelete(value: boolean): DeleteVolumeSnapshotRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DeleteVolumeSnapshotRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: DeleteVolumeSnapshotRequest): DeleteVolumeSnapshotRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DeleteVolumeSnapshotRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DeleteVolumeSnapshotRequest;
+    static deserializeBinaryFromReader(message: DeleteVolumeSnapshotRequest, reader: jspb.BinaryReader): DeleteVolumeSnapshotRequest;
+}
+
+export namespace DeleteVolumeSnapshotRequest {
+    export type AsObject = {
+        id: string,
+        volumeHandle: string,
+        softDelete: boolean,
+    }
+}
+
+export class DeleteVolumeSnapshotResponse extends jspb.Message {
+    getWasDeleted(): boolean;
+    setWasDeleted(value: boolean): DeleteVolumeSnapshotResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DeleteVolumeSnapshotResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: DeleteVolumeSnapshotResponse): DeleteVolumeSnapshotResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DeleteVolumeSnapshotResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DeleteVolumeSnapshotResponse;
+    static deserializeBinaryFromReader(message: DeleteVolumeSnapshotResponse, reader: jspb.BinaryReader): DeleteVolumeSnapshotResponse;
+}
+
+export namespace DeleteVolumeSnapshotResponse {
+    export type AsObject = {
+        wasDeleted: boolean,
+    }
+}
+
 export class BackupWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): BackupWorkspaceRequest;

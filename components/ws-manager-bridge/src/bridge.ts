@@ -366,16 +366,18 @@ export class WorkspaceManagerBridge implements Disposable {
                         status.conditions.volumeSnapshot.volumeSnapshotName,
                         instance.id,
                     );
-                }
-                let existingSnapshot = await this.workspaceDB
-                    .trace(ctx)
-                    .findVolumeSnapshotById(status.conditions.volumeSnapshot.volumeSnapshotName);
-                if (existingSnapshot === undefined) {
-                    await this.workspaceDB.trace(ctx).storeVolumeSnapshot({
-                        id: status.conditions.volumeSnapshot.volumeSnapshotName,
-                        creationTime: new Date().toISOString(),
-                        volumeHandle: status.conditions.volumeSnapshot.volumeSnapshotHandle,
-                    });
+                } else {
+                    let existingSnapshot = await this.workspaceDB
+                        .trace(ctx)
+                        .findVolumeSnapshotById(status.conditions.volumeSnapshot.volumeSnapshotName);
+                    if (existingSnapshot === undefined) {
+                        await this.workspaceDB.trace(ctx).storeVolumeSnapshot({
+                            id: status.conditions.volumeSnapshot.volumeSnapshotName,
+                            workspaceId: workspaceId,
+                            creationTime: new Date().toISOString(),
+                            volumeHandle: status.conditions.volumeSnapshot.volumeSnapshotHandle,
+                        });
+                    }
                 }
             }
 

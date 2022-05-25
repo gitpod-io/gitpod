@@ -268,10 +268,6 @@ func TestCreatePVCForWorkspacePod(t *testing.T) {
 					}
 				}
 
-				if req.Spec.Class == "" {
-					fmt.Println()
-				}
-
 				ctx, err := manager.newStartWorkspaceContext(context.Background(), &req)
 				if err != nil {
 					t.Errorf("cannot create startWorkspaceContext: %v", err)

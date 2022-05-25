@@ -40,6 +40,9 @@ service WorkspaceManager {
 
     // controlAdmission makes a workspace accessible for everyone or for the owner only
     rpc ControlAdmission(ControlAdmissionRequest) returns (ControlAdmissionResponse) {}
+
+    // deleteVolumeSnapshot asks ws-manager to delete specific volume snapshot and delete source from cloud provider as well
+    rpc DeleteVolumeSnapshot(DeleteVolumeSnapshotRequest) returns (DeleteVolumeSnapshotResponse) {}
 }
 
 // MetadataFilter describes conditions for matching a set of workspaces.
@@ -211,6 +214,23 @@ message ControlAdmissionRequest {
 }
 
 message ControlAdmissionResponse {}
+
+// DeleteVolumeSnapshotRequest deletes volume snapshot from the cluster and cloud provider
+message DeleteVolumeSnapshotRequest{
+    // ID is the name of volume snapshot, which is equal to instance id of workspace it was taken from
+    string id = 1;
+
+    // volume_handle is a unique string that is used to restore volume handle in k8s from cloud provider backend
+    string volume_handle = 2;
+
+    // soft_delete controls whether manager should attempt to restore volume snapshot from handle if it doesn't exist in the cluster yet
+    bool soft_delete = 3;
+}
+
+message DeleteVolumeSnapshotResponse {
+    // was_deleted will be true if we were able to delete volume snapshot from the cluster
+    bool was_deleted = 1;
+}
 
 enum AdmissionLevel {
     // WORKSPACE_ADMIT_OWNER_ONLY means the workspace can only be accessed using the owner token
