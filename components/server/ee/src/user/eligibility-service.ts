@@ -7,7 +7,13 @@
 import { inject, injectable } from "inversify";
 import { TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { TokenProvider } from "../../../src/user/token-provider";
-import { User, WorkspaceTimeoutDuration, WorkspaceInstance, WORKSPACE_TIMEOUT_DEFAULT_LONG, WORKSPACE_TIMEOUT_DEFAULT_SHORT } from "@gitpod/gitpod-protocol";
+import {
+    User,
+    WorkspaceTimeoutDuration,
+    WorkspaceInstance,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+} from "@gitpod/gitpod-protocol";
 import { RemainingHours } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Plans, MAX_PARALLEL_WORKSPACES } from "@gitpod/gitpod-protocol/lib/plans";
@@ -286,14 +292,9 @@ export class EligibilityService {
             user,
             new Date().toISOString(),
         );
-        const eligblePlans = [
-            Plans.PROFESSIONAL_EUR,
-            Plans.PROFESSIONAL_USD,
-            Plans.TEAM_PROFESSIONAL_EUR,
-            Plans.TEAM_PROFESSIONAL_USD,
-        ].map((p) => p.chargebeeId);
+        const eligiblePlans = [Plans.TEAM_PROFESSIONAL_EUR, Plans.TEAM_PROFESSIONAL_USD].map((p) => p.chargebeeId);
 
-        const relevantSubscriptions = subscriptions.filter((s) => eligblePlans.includes(s.planId!));
+        const relevantSubscriptions = subscriptions.filter((s) => eligiblePlans.includes(s.planId!));
         if (relevantSubscriptions.length === 0) {
             // user has no subscription that grants "more resources"
             return false;
