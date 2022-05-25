@@ -26,6 +26,7 @@ type Timeouts struct {
 	MetaInstanceCheckIntervalSeconds int32 `json:"metaInstanceCheckIntervalSeconds"`
 	PreparingPhaseSeconds            int32 `json:"preparingPhaseSeconds"`
 	StoppingPhaseSeconds             int32 `json:"stoppingPhaseSeconds"`
+	BuildingPhaseSeconds             int32 `json:"buildingPhaseSeconds"`
 	UnknownPhaseSeconds              int32 `json:"unknownPhaseSeconds"`
 }
 
