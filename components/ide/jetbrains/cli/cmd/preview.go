@@ -7,7 +7,6 @@ package cmd
 import (
 	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/spf13/cobra"
 )
@@ -15,10 +14,7 @@ import (
 var previewCmd = &cobra.Command{
 	Use: "preview",
 	Run: func(cmd *cobra.Command, args []string) {
-		url, err := url.Parse("http://localhost:63342/api/gitpod/cli")
-		if err != nil {
-			log.Fatal(err)
-		}
+		url := getCliApiUrl()
 		query := url.Query()
 		query.Add("op", "preview")
 		query.Add("url", args[0])

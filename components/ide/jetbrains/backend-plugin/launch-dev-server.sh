@@ -39,4 +39,14 @@ export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains
 # Enable host status endpoint
 export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
 
+# Build and move idea-cli, then overwrite environment variables initially defined by `components/ide/jetbrains/image/leeway.Dockerfile`
+IDEA_CLI_DEV_PATH=/ide-desktop/bin/idea-cli-dev
+(cd ../cli && go build -o $IDEA_CLI_DEV_PATH)
+export EDITOR="$IDEA_CLI_DEV_PATH open"
+export VISUAL="$EDITOR"
+export GP_OPEN_EDITOR="$EDITOR"
+export GIT_EDITOR="$EDITOR --wait"
+export GP_PREVIEW_BROWSER="$IDEA_CLI_DEV_PATH preview"
+export GP_EXTERNAL_BROWSER="$IDEA_CLI_DEV_PATH preview"
+
 $TEST_BACKEND_DIR/bin/remote-dev-server.sh run $TEST_DIR
