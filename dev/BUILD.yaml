@@ -11,6 +11,7 @@ packages:
       - dev/blowtorch:app
       - dev/gpctl:app
       - dev/loadgen:app
+      - dev/preview/previewctl:cli
   - name: dev-utils
     type: docker
     deps:
