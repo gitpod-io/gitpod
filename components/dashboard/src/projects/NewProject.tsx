@@ -412,13 +412,13 @@ export default function NewProject() {
                                 <img
                                     src={CaretDown}
                                     title="Select Account"
-                                    className="grayscale absolute top-1/2 right-3"
+                                    className="filter grayscale absolute top-1/2 right-3"
                                 />
                             </div>
                         </ContextMenu>
                         {showSearchInput && (
                             <div className="w-full relative ">
-                                <img src={search} title="Search" className="grayscale absolute top-1/3 left-3" />
+                                <img src={search} title="Search" className="filter grayscale absolute top-1/3 left-3" />
                                 <input
                                     className="w-96 pl-10 border-0"
                                     type="text"
@@ -603,7 +603,7 @@ export default function NewProject() {
                                     title="Select Account"
                                     className={`${
                                         showNewTeam ? "transform rotate-180" : ""
-                                    } grayscale absolute top-1/2 right-3 cursor-pointer`}
+                                    } filter grayscale absolute top-1/2 right-3 cursor-pointer`}
                                 />
                             )}
                         </div>

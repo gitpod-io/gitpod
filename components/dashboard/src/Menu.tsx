@@ -352,7 +352,7 @@ export default function Menu() {
                             <img
                                 alt=""
                                 aria-label="Toggle team selection menu"
-                                className="grayscale"
+                                className="filter grayscale"
                                 style={{ marginTop: 5, marginBottom: 5 }}
                                 src={CaretUpDown}
                             />
@@ -370,7 +370,7 @@ export default function Menu() {
                 )}
                 {prebuildId && (
                     <div className="flex h-full ml-2 py-1">
-                        <img alt="" className="mr-3 grayscale m-auto transform -rotate-90" src={CaretDown} />
+                        <img alt="" className="mr-3 filter grayscale m-auto transform -rotate-90" src={CaretDown} />
                         <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{prebuildId}</span>
                     </div>
                 )}

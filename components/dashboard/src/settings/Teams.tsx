@@ -1031,7 +1031,7 @@ function SlotInput(props: { slot: Slot; inputHandler: SlotInputHandler }) {
             )}
             {errorMsg && (
                 <div className="flex rounded-md bg-red-600 p-3">
-                    <img className="w-4 h-4 mx-2 my-auto brightness-10" src={exclamation} />
+                    <img className="w-4 h-4 mx-2 my-auto filter brightness-10" src={exclamation} />
                     <span className="text-white text-sm">{errorMsg}</span>
                 </div>
             )}
