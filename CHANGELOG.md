@@ -1,6 +1,13 @@
 # Change Log
 
 ## May 2022
+- [ws-manager] Check the pod contains a workspace class and exists ([#10265](https://github.com/gitpod-io/gitpod/pull/10265)) - [@aledbf](https://github.com/aledbf)
+- Fix `ranges port` name and description not sent when ports state changed ([#10250](https://github.com/gitpod-io/gitpod/pull/10250)) - [@mustard-mh](https://github.com/mustard-mh)
+- Feedback form under error messages on login and starting workspaces. ([#10071](https://github.com/gitpod-io/gitpod/pull/10071)) - [@laushinka](https://github.com/laushinka)
+- ws-manager: Make the pods be removed when workspacekit fails. ([#10085](https://github.com/gitpod-io/gitpod/pull/10085)) - [@utam0k](https://github.com/utam0k)
+- [kots] Add `S3 bucket name` option to KOTS config ([#10188](https://github.com/gitpod-io/gitpod/pull/10188)) - [@nandajavarma](https://github.com/nandajavarma)
+- [content-service] Add support to use a single S3 bucket ([#10073](https://github.com/gitpod-io/gitpod/pull/10073)) - [@aledbf](https://github.com/aledbf), [@sagor999](https://github.com/sagor999)
+- [experimental] add support for backing up and restoring workspace's persistent volume claim via snapshot volume. ([#9475](https://github.com/gitpod-io/gitpod/pull/9475)) - [@sagor999](https://github.com/sagor999)
 - [kots] Fix issue with s3 object storage ([#9942](https://github.com/gitpod-io/gitpod/pull/9942)) - [@Pothulapati](https://github.com/Pothulapati)
 - Reduce memory requests of minio in preview environments ([#10158](https://github.com/gitpod-io/gitpod/pull/10158)) - [@vulkoingim](https://github.com/vulkoingim)
 - [server] make sure to release websocket clients ([#10193](https://github.com/gitpod-io/gitpod/pull/10193)) - [@AlexTugarev](https://github.com/AlexTugarev)
