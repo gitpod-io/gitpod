@@ -20,6 +20,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/registry-facade/api/config"
+	"github.com/sirupsen/logrus"
 
 	"github.com/containerd/containerd/content/local"
 	"github.com/containerd/containerd/remotes"
@@ -29,6 +30,7 @@ import (
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	httpapi "github.com/ipfs/go-ipfs-http-client"
 	ma "github.com/multiformats/go-multiaddr"
@@ -368,6 +370,11 @@ func (reg *Registry) Serve() error {
 	reg.srv = &http.Server{
 		Addr:    addr,
 		Handler: mux,
+	}
+
+	if log.Log.Logger.IsLevelEnabled(logrus.DebugLevel) {
+		logHandler := handlers.LoggingHandler(os.Stdout, mux)
+		reg.srv.Handler = logHandler
 	}
 
 	if reg.Config.TLS != nil {
