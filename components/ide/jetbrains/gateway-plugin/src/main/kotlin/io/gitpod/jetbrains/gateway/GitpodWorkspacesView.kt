@@ -168,13 +168,6 @@ class GitpodWorkspacesView(
     init {
         refresh()
         loggedIn.addListener { refresh() }
-        GitpodConnectionProvider.addListener {
-            thisLogger().d("WorkspaceView refresh, " +
-                    GitpodConnectionProvider.jetbrainsClientMap
-                        .map { "[wsId=${it.key}, ${it.value.prettyPrint()}]" }
-                        .joinToString("; "))
-            refresh()
-        }
     }
 
     private fun startUpdateLoop(lifetime: Lifetime, workspacesPane: JBScrollPane): () -> Unit {
@@ -300,10 +293,7 @@ class GitpodWorkspacesView(
                                     )
                                 }
                                 label(getRelativeTimeSpan(info.latestInstance.creationTime))
-                                val jbClientConnected = GitpodConnectionProvider.jetbrainsClientMap[info.workspace.id]
-                                    ?.lifetime?.isAlive ?: false
-                                val btnText = if (jbClientConnected) "Connected" else "Connect"
-                                button(btnText) {
+                                button("Connect") {
                                     if (!canConnect) {
                                         BrowserUtil.browse(info.latestInstance.ideUrl)
                                     } else {
@@ -314,7 +304,7 @@ class GitpodWorkspacesView(
                                             )
                                         )
                                     }
-                                }.enabled(!jbClientConnected)
+                                }
                                 cell()
                             }.layout(RowLayout.PARENT_GRID)
                         }
