@@ -18,7 +18,6 @@ import { User } from "@gitpod/gitpod-protocol";
 import { useLocation } from "react-router";
 import { StartWorkspaceModalContext, StartWorkspaceModalKeyBinding } from "./start-workspace-modal-context";
 import SelectIDEModal from "../settings/SelectIDEModal";
-import { getExperimentsClient } from "../experiments/client";
 
 export interface WorkspacesProps {}
 
@@ -37,7 +36,6 @@ export default function () {
     const [inactiveWorkspaces, setInactiveWorkspaces] = useState<WorkspaceInfo[]>([]);
     const [workspaceModel, setWorkspaceModel] = useState<WorkspaceModel>();
     const { setIsStartWorkspaceModalVisible } = useContext(StartWorkspaceModalContext);
-    const [isExperimentEnabled, setExperiment] = useState<boolean>(false);
 
     useEffect(() => {
         (async () => {
@@ -47,17 +45,6 @@ export default function () {
     }, [teams, location]);
 
     const isOnboardingUser = user && User.isOnboardingUser(user);
-    useEffect(() => {
-        (async () => {
-            if (teams && teams.length > 0) {
-                const isEnabled = await getExperimentsClient().getValueAsync("isMyFirstFeatureEnabled", false, {
-                    teamName: teams[0]?.name,
-                });
-                setExperiment(isEnabled);
-            }
-        })();
-    }, [teams]);
-    console.log("Is experiment enabled? ", isExperimentEnabled);
 
     return (
         <>
