@@ -23,6 +23,7 @@ func RootCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		installContextCmd(),
+		getNameCmd(),
 	)
 	return cmd
 }
