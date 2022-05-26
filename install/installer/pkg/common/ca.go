@@ -63,8 +63,9 @@ func CustomCACertVolume(ctx *RenderContext) (vol *corev1.Volume, mnt *corev1.Vol
 	}
 
 	const (
-		volumeName = "custom-ca-cert"
-		mountPath  = "/etc/ssl/certs/custom-ca.crt"
+		volumeName        = "custom-ca-cert"
+		customCAMountPath = "/etc/ssl/certs/custom-ca.crt"
+		certsMountPath    = "/etc/ssl/certs/"
 	)
 	vol = &corev1.Volume{
 		Name: volumeName,
@@ -83,12 +84,13 @@ func CustomCACertVolume(ctx *RenderContext) (vol *corev1.Volume, mnt *corev1.Vol
 	mnt = &corev1.VolumeMount{
 		Name:      volumeName,
 		ReadOnly:  true,
-		MountPath: mountPath,
+		MountPath: customCAMountPath,
 		SubPath:   "ca.crt",
 	}
 	env = []corev1.EnvVar{
-		{Name: "NODE_EXTRA_CA_CERTS", Value: mountPath},
-		{Name: "GIT_SSL_CAINFO", Value: mountPath},
+		{Name: "NODE_EXTRA_CA_CERTS", Value: customCAMountPath},
+		{Name: "GIT_SSL_CAPATH", Value: certsMountPath},
+		{Name: "GIT_SSL_CAINFO", Value: customCAMountPath},
 	}
 	ok = true
 	return

@@ -181,6 +181,10 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 	if os.Getenv("https_proxy") != "" {
 		env = append(env, fmt.Sprintf("https_proxy=%s", os.Getenv("https_proxy")))
 	}
+	if v := os.Getenv("GIT_SSL_CAPATH"); v != "" {
+		env = append(env, fmt.Sprintf("GIT_SSL_CAPATH=%s", v))
+	}
+
 	if v := os.Getenv("GIT_SSL_CAINFO"); v != "" {
 		env = append(env, fmt.Sprintf("GIT_SSL_CAINFO=%s", v))
 	}
