@@ -396,6 +396,9 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	return resp, nil
 }
 
+// channel to limit the number of concurrent backups and uploads.
+var backupWorkspaceLimiter = make(chan bool, 3)
+
 func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName, mfName string) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadWorkspaceContent")
@@ -406,6 +409,15 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 	span.SetTag("full", sess.FullWorkspaceBackup)
 	span.SetTag("pvc", sess.PersistentVolumeClaim)
 	defer tracing.FinishSpan(span, &err)
+
+	// TODO: remove once we migrate to PVCs
+	// Avoid too many simultaneous backups in order to avoid excessive memory utilization.
+	waitStart := time.Now()
+	backupWorkspaceLimiter <- true
+	log.WithField("workspace", sess.WorkspaceID).Infof("waiting time for concurrent backups to finish was %v", time.Since(waitStart).String())
+	defer func() {
+		<-backupWorkspaceLimiter
+	}()
 
 	var (
 		loc  = sess.Location
