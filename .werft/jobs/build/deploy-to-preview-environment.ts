@@ -294,7 +294,8 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         installer.postProcessing(installerSlices.INSTALLER_POST_PROCESSING)
         installer.install(installerSlices.APPLY_INSTALL_MANIFESTS)
     } catch (err) {
-        werft.fail(phases.DEPLOY, err)
+        exec(`cat ${installer.options.installerConfigPath}`, { slice: phases.DEPLOY });
+        werft.fail(phases.DEPLOY, err);
     }
 
     werft.log(installerSlices.DEPLOYMENT_WAITING, "Waiting until all pods are ready.");
