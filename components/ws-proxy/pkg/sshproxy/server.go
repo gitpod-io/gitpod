@@ -6,7 +6,6 @@ package sshproxy
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -168,20 +167,29 @@ func ReportSSHAttemptMetrics(err error) {
 	SSHAttemptTotal.WithLabelValues("failed", errorType).Inc()
 }
 
+func (s *Server) RequestForward(reqs <-chan *ssh.Request, targetConn ssh.Conn) {
+	for req := range reqs {
+		result, payload, err := targetConn.SendRequest(req.Type, req.WantReply, req.Payload)
+		if err != nil {
+			continue
+		}
+		_ = req.Reply(result, payload)
+	}
+}
+
 func (s *Server) HandleConn(c net.Conn) {
-	sshConn, chans, reqs, err := ssh.NewServerConn(c, s.sshConfig)
+	clientConn, clientChans, clientReqs, err := ssh.NewServerConn(c, s.sshConfig)
 	if err != nil {
 		c.Close()
 		ReportSSHAttemptMetrics(err)
 		return
 	}
-	defer sshConn.Close()
+	defer clientConn.Close()
 
-	go ssh.DiscardRequests(reqs)
-	if sshConn.Permissions == nil || sshConn.Permissions.Extensions == nil || sshConn.Permissions.Extensions["workspaceId"] == "" {
+	if clientConn.Permissions == nil || clientConn.Permissions.Extensions == nil || clientConn.Permissions.Extensions["workspaceId"] == "" {
 		return
 	}
-	workspaceId := sshConn.Permissions.Extensions["workspaceId"]
+	workspaceId := clientConn.Permissions.Extensions["workspaceId"]
 	wsInfo := s.workspaceInfoProvider.WorkspaceInfo(workspaceId)
 	if wsInfo == nil {
 		ReportSSHAttemptMetrics(ErrWorkspaceNotFound)
@@ -199,7 +207,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	cancel()
 
 	session := &Session{
-		Conn:                sshConn,
+		Conn:                clientConn,
 		WorkspaceID:         workspaceId,
 		InstanceID:          wsInfo.InstanceID,
 		WorkspacePrivateKey: key,
@@ -214,7 +222,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	}
 	defer conn.Close()
 
-	clientConn, clientChans, clientReqs, err := ssh.NewClientConn(conn, remoteAddr, &ssh.ClientConfig{
+	workspaceConn, workspaceChans, workspaceReqs, err := ssh.NewClientConn(conn, remoteAddr, &ssh.ClientConfig{
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		User:            GitpodUsername,
 		Auth: []ssh.AuthMethod{
@@ -231,29 +239,51 @@ func (s *Server) HandleConn(c net.Conn) {
 		return
 	}
 	s.Heartbeater.SendHeartbeat(wsInfo.InstanceID, false)
-	client := ssh.NewClient(clientConn, clientChans, clientReqs)
 	ctx, cancel = context.WithCancel(context.Background())
 
 	s.TrackSSHConnection(wsInfo, "connect", nil)
 	SSHConnectionCount.Inc()
 	ReportSSHAttemptMetrics(nil)
 
-	go func() {
-		client.Wait()
-		cancel()
-		defer SSHConnectionCount.Dec()
-	}()
-
-	for newChannel := range chans {
-		switch newChannel.ChannelType() {
-		case "session", "direct-tcpip":
-			go s.ChannelForward(ctx, session, client, newChannel)
-		case "tcpip-forward":
-			newChannel.Reject(ssh.UnknownChannelType, "Gitpod SSH Gateway cannot remote forward ports")
-		default:
-			newChannel.Reject(ssh.UnknownChannelType, fmt.Sprintf("Gitpod SSH Gateway cannot handle %s channel types", newChannel.ChannelType()))
+	forwardRequests := func(reqs <-chan *ssh.Request, targetConn ssh.Conn) {
+		for req := range reqs {
+			result, payload, err := targetConn.SendRequest(req.Type, req.WantReply, req.Payload)
+			if err != nil {
+				continue
+			}
+			_ = req.Reply(result, payload)
 		}
 	}
+	// client -> workspace global request forward
+	go forwardRequests(clientReqs, workspaceConn)
+	// workspce -> client global request forward
+	go forwardRequests(workspaceReqs, clientConn)
+
+	go func() {
+		for newChannel := range workspaceChans {
+			go s.ChannelForward(ctx, session, clientConn, newChannel)
+		}
+	}()
+
+	go func() {
+		for newChannel := range clientChans {
+			go s.ChannelForward(ctx, session, workspaceConn, newChannel)
+		}
+	}()
+
+	go func() {
+		clientConn.Wait()
+		cancel()
+	}()
+	go func() {
+		workspaceConn.Wait()
+		cancel()
+	}()
+	<-ctx.Done()
+	SSHConnectionCount.Dec()
+	workspaceConn.Close()
+	clientConn.Close()
+	cancel()
 }
 
 func (s *Server) Authenticator(workspaceId, ownerToken string) (*p.WorkspaceInfo, error) {
