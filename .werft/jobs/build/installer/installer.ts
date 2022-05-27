@@ -79,6 +79,8 @@ export class Installer {
             if (this.options.withPayment) {
                 // let installer know that there is a chargbee config
                 exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.server.chargebeeSecret chargebee-config`, { slice: slice });
+                // let installer know that there is a stripe config
+                exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeSecret stripe-config`, { slice: slice });
             }
 
         } catch (err) {

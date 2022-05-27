@@ -15,6 +15,7 @@ const (
 	authProviderFilePath  = "/gitpod/auth-providers"
 	licenseFilePath       = "/gitpod/license"
 	chargebeeMountPath    = "/chargebee"
+	stripeMountPath       = "/stripe"
 	githubAppCertSecret   = "github-app-cert-secret"
 	PrometheusPort        = 9500
 	PrometheusPortName    = "metrics"
