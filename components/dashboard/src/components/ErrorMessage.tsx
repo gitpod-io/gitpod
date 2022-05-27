@@ -5,6 +5,7 @@
  */
 
 import FeedbackComponent from "../feedback-form/FeedbackComponent";
+import { isGitpodIo } from "../utils";
 
 function ErrorMessage(props: { imgSrc: string; imgAlt?: string; message: string }) {
     return (
@@ -17,12 +18,14 @@ function ErrorMessage(props: { imgSrc: string; imgAlt?: string; message: string 
                     <p className="text-gitpod-red text-sm">{props.message}</p>
                 </div>
             </div>
-            <FeedbackComponent
-                message={"Was this error message helpful?"}
-                initialSize={24}
-                isError={true}
-                isModal={false}
-            />
+            {isGitpodIo() && (
+                <FeedbackComponent
+                    message={"Was this error message helpful?"}
+                    initialSize={24}
+                    isError={true}
+                    isModal={false}
+                />
+            )}
         </>
     );
 }
