@@ -27,6 +27,7 @@ import { getProjectSettingsMenu } from "./projects/ProjectSettings";
 import { ProjectContext } from "./projects/project-context";
 import { PaymentContext } from "./payment-context";
 import FeedbackFormModal from "./feedback-form/FeedbackModal";
+import { isGitpodIo } from "./utils";
 
 interface Entry {
     title: string;
@@ -376,9 +377,11 @@ export default function Menu() {
                                             />
                                         </li>
                                     ))}
-                                <li className="cursor-pointer">
-                                    <PillMenuItem name="Feedback" onClick={handleFeedbackFormClick} />
-                                </li>
+                                {isGitpodIo() && (
+                                    <li className="cursor-pointer">
+                                        <PillMenuItem name="Feedback" onClick={handleFeedbackFormClick} />
+                                    </li>
+                                )}
                             </ul>
                         </nav>
                         <div
