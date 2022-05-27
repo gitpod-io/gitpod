@@ -1,6 +1,8 @@
 # Change Log
 
 ## May 2022
+- [ws-daemon] Limit the number of concurrent workspace backups to three to avoid excessive memory utilization ([#10274](https://github.com/gitpod-io/gitpod/pull/10274)) - [@aledbf](https://github.com/aledbf)
+- Correctly enforce the parallel workspace limit ([#9491](https://github.com/gitpod-io/gitpod/pull/9491)) - [@andrew-farries](https://github.com/andrew-farries)
 - [ws-manager] Check the pod contains a workspace class and exists ([#10265](https://github.com/gitpod-io/gitpod/pull/10265)) - [@aledbf](https://github.com/aledbf)
 - Fix `ranges port` name and description not sent when ports state changed ([#10250](https://github.com/gitpod-io/gitpod/pull/10250)) - [@mustard-mh](https://github.com/mustard-mh)
 - Feedback form under error messages on login and starting workspaces. ([#10071](https://github.com/gitpod-io/gitpod/pull/10071)) - [@laushinka](https://github.com/laushinka)
