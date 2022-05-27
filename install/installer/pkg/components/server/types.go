@@ -32,6 +32,7 @@ type ConfigSerialized struct {
 	ImageBuilderAddr                  string   `json:"imageBuilderAddr"`
 	VSXRegistryUrl                    string   `json:"vsxRegistryUrl"`
 	ChargebeeProviderOptionsFile      string   `json:"chargebeeProviderOptionsFile"`
+	StripeSettingsFile                string   `json:"stripeSettingsFile"`
 	EnablePayment                     bool     `json:"enablePayment"`
 
 	WorkspaceHeartbeat         WorkspaceHeartbeat         `json:"workspaceHeartbeat"`
