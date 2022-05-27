@@ -160,6 +160,13 @@ func TestWorkspaceURLTemplates(t *testing.T) {
 			ExpectedWorkspaceUrlTemplate:     "https://{{ .Prefix }}.ws.example.com",
 			ExpectedWorkspacePortURLTemplate: "https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.example.com",
 		},
+		{
+			Name:                             "With old default installation shortname for existing self-hosted installations",
+			Domain:                           "example.com",
+			InstallationShortname:            configv1.InstallationShortNameOldDefault,
+			ExpectedWorkspaceUrlTemplate:     "https://{{ .Prefix }}.ws.example.com",
+			ExpectedWorkspacePortURLTemplate: "https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.example.com",
+		},
 	}
 
 	for _, test := range tests {

@@ -47,7 +47,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Certificate.Name = "https-certificates"
 	cfg.Database.InCluster = pointer.Bool(true)
 	cfg.Metadata.Region = "local"
-	cfg.Metadata.InstallationShortname = "default" // TODO(gpl): we're tied to "default" here because that's what we put into static bridges in the past
+	cfg.Metadata.InstallationShortname = InstallationShortNameOldDefault // TODO(gpl): we're tied to "default" here because that's what we put into static bridges in the past
 	cfg.ObjectStorage.InCluster = pointer.Bool(true)
 	cfg.ObjectStorage.Resources = &Resources{
 		Requests: corev1.ResourceList{
@@ -119,6 +119,10 @@ type Metadata struct {
 	// InstallationShortname establishes the "identity" of the (application) cluster.
 	InstallationShortname string `json:"shortname"`
 }
+
+const (
+	InstallationShortNameOldDefault string = "default"
+)
 
 type Observability struct {
 	LogLevel LogLevel `json:"logLevel" validate:"required,log_level"`
