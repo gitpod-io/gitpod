@@ -11,8 +11,6 @@ import { useLocation, useRouteMatch } from "react-router";
 import { Location } from "history";
 import { countries } from "countries-list";
 import gitpodIcon from "./icons/gitpod.svg";
-import CaretDown from "./icons/CaretDown.svg";
-import CaretUpDown from "./icons/CaretUpDown.svg";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { UserContext } from "./user-context";
 import { TeamsContext, getCurrentTeam } from "./teams/teams-context";
@@ -108,6 +106,8 @@ export default function Menu() {
 
     // Hide most of the top menu when in a full-page form.
     const isMinimalUI = ["/new", "/teams/new", "/open"].includes(location.pathname);
+    const isWorkspacesUI = ["/workspaces"].includes(location.pathname);
+    const isAdminUI = window.location.pathname.startsWith("/admin");
 
     const [teamMembers, setTeamMembers] = useState<Record<string, TeamMemberInfo[]>>({});
     useEffect(() => {
@@ -229,11 +229,6 @@ export default function Menu() {
         // User menu
         return [
             {
-                title: "Workspaces",
-                link: "/workspaces",
-                alternatives: ["/"],
-            },
-            {
                 title: "Projects",
                 link: "/projects",
             },
@@ -255,8 +250,9 @@ export default function Menu() {
               ]
             : []),
         {
-            title: "Docs",
-            link: "https://www.gitpod.io/docs/",
+            title: "Workspaces",
+            link: "/workspaces",
+            alternatives: ["/"],
         },
     ];
 
@@ -268,25 +264,39 @@ export default function Menu() {
         setFeedbackFormVisible(false);
     };
     const renderTeamMenu = () => {
+        const classes =
+            "flex h-full text-base py-0 " +
+            (!projectSlug && !isWorkspacesUI && !isAdminUI && teamOrUserSlug
+                ? "text-gray-50 bg-gray-800 dark:text-gray-900 dark:bg-gray-50 border-gray-700"
+                : "text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700  dark:border-gray-700");
         return (
-            <div className="flex p-1 pl-3 ">
+            <div className="flex p-1 pl-3">
                 {projectSlug && (
-                    <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
-                        <Link to={team ? `/t/${team.slug}/projects` : `/projects`}>
-                            <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">
-                                {team?.name || userFullName}
-                            </span>
-                        </Link>
-                    </div>
+                    <Link to={team ? `/t/${team.slug}/projects` : `/projects`}>
+                        <span
+                            className={`${classes} rounded-tl-2xl rounded-bl-2xl  dark:border-gray-700 border-r pl-3 pr-2 py-1 bg-gray-50  font-semibold`}
+                        >
+                            {team?.name || userFullName}
+                        </span>
+                    </Link>
                 )}
-                <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                {!projectSlug && (
+                    <Link to={team ? `/t/${team.slug}/projects` : `/projects`}>
+                        <span
+                            className={`${classes} rounded-tl-2xl rounded-bl-2xl  dark:border-gray-200 border-r pl-3 pr-2 py-1 bg-gray-50  font-semibold`}
+                        >
+                            {team?.name || userFullName}
+                        </span>
+                    </Link>
+                )}
+                <div className={`${classes} rounded-tr-2xl rounded-br-2xl dark:border-gray-700  px-1 bg-gray-50`}>
                     <ContextMenu
                         customClasses="w-64 left-0"
                         menuEntries={[
                             {
                                 title: userFullName,
                                 customContent: (
-                                    <div className="w-full text-gray-400 flex flex-col">
+                                    <div className="w-full text-gray-500 flex flex-col">
                                         <span className="text-gray-800 dark:text-gray-100 text-base font-semibold">
                                             {userFullName}
                                         </span>
@@ -295,7 +305,7 @@ export default function Menu() {
                                 ),
                                 active: !team,
                                 separator: true,
-                                link: "/",
+                                link: "/projects",
                             },
                             ...(teams || [])
                                 .map((t) => ({
@@ -343,35 +353,50 @@ export default function Menu() {
                             },
                         ]}
                     >
-                        <div className="flex h-full px-2 py-1 space-x-3.5">
-                            {!projectSlug && (
-                                <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">
-                                    {team?.name || userFullName}
-                                </span>
-                            )}
-                            <img
-                                alt=""
-                                aria-label="Toggle team selection menu"
-                                className="filter-grayscale"
-                                style={{ marginTop: 5, marginBottom: 5 }}
-                                src={CaretUpDown}
-                            />
+                        <div className="flex h-full pl-0 pr-1 py-1.5 text-gray-50">
+                            <svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    fill-rule="evenodd"
+                                    clip-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z"
+                                    fill="#78716C"
+                                />
+                                <title>Toggle team selection menu</title>
+                            </svg>
                         </div>
                     </ContextMenu>
                 </div>
-                {projectSlug && (
-                    <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
-                        <Link to={`${teamOrUserSlug}/${projectSlug}${prebuildId ? "/prebuilds" : ""}`}>
-                            <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">
-                                {project?.name}
-                            </span>
-                        </Link>
-                    </div>
+                {projectSlug && !prebuildId && !isAdminUI && (
+                    <Link to={`${teamOrUserSlug}/${projectSlug}${prebuildId ? "/prebuilds" : ""}`}>
+                        <span className=" flex h-full text-base text-gray-50 bg-gray-800 dark:bg-gray-50 dark:text-gray-900 font-semibold ml-2 px-3 py-1 rounded-2xl border-gray-100">
+                            {project?.name}
+                        </span>
+                    </Link>
                 )}
                 {prebuildId && (
-                    <div className="flex h-full ml-2 py-1">
-                        <img alt="" className="mr-3 filter-grayscale m-auto transform -rotate-90" src={CaretDown} />
-                        <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{prebuildId}</span>
+                    <Link to={`${teamOrUserSlug}/${projectSlug}${prebuildId ? "/prebuilds" : ""}`}>
+                        <span className=" flex h-full text-base text-gray-500 bg-gray-50 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700 font-semibold ml-2 px-3 py-1 rounded-2xl border-gray-100">
+                            {project?.name}
+                        </span>
+                    </Link>
+                )}
+                {prebuildId && (
+                    <div className="flex ml-2">
+                        <div className="flex pl-0 pr-1 py-1.5">
+                            <svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    fill-rule="evenodd"
+                                    clip-rule="evenodd"
+                                    d="M7.293 14.707a1 1 0 0 1 0-1.414L10.586 10 7.293 6.707a1 1 0 1 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0Z"
+                                    fill="#78716C"
+                                />
+                            </svg>
+                        </div>
+                        <Link to={`${teamOrUserSlug}/${projectSlug}/${prebuildId}`}>
+                            <span className="flex h-full text-base text-gray-50 bg-gray-800 dark:bg-gray-50 dark:text-gray-900 font-semibold px-3 py-1 rounded-2xl border-gray-100">
+                                {prebuildId.substring(0, 8).trimEnd()}
+                            </span>
+                        </Link>
                     </div>
                 )}
             </div>
@@ -380,11 +405,8 @@ export default function Menu() {
 
     return (
         <>
-            <header
-                className={`app-container flex flex-col pt-4 space-y-4 ${isMinimalUI || !!prebuildId ? "pb-4" : ""}`}
-                data-analytics='{"button_type":"menu"}'
-            >
-                <div className="flex h-10">
+            <header className="app-container flex flex-col pt-4 space-y-4" data-analytics='{"button_type":"menu"}'>
+                <div className="flex h-10 mb-3">
                     <div className="flex justify-between items-center pr-3">
                         <Link to="/">
                             <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
@@ -393,7 +415,7 @@ export default function Menu() {
                     </div>
                     <div className="flex flex-1 items-center w-auto" id="menu">
                         <nav className="flex-1">
-                            <ul className="flex flex-1 items-center justify-between text-base text-gray-700 space-x-2">
+                            <ul className="flex flex-1 items-center justify-between text-base text-gray-500 dark:text-gray-400 space-x-2">
                                 <li className="flex-1"></li>
                                 {!isMinimalUI &&
                                     rightMenu.map((entry) => (
@@ -428,6 +450,10 @@ export default function Menu() {
                                         link: "/settings",
                                     },
                                     {
+                                        title: "Docs",
+                                        link: "https://www.gitpod.io/docs/",
+                                    },
+                                    {
                                         title: "Help",
                                         href: "https://www.gitpod.io/support",
                                         separator: true,
@@ -448,7 +474,7 @@ export default function Menu() {
                     </div>
                     {isFeedbackFormVisible && <FeedbackFormModal onClose={onFeedbackFormClose} />}
                 </div>
-                {!isMinimalUI && !prebuildId && (
+                {!isMinimalUI && !prebuildId && !isWorkspacesUI && !isAdminUI && (
                     <nav className="flex">
                         {leftMenu.map((entry: Entry) => (
                             <TabMenuItem
