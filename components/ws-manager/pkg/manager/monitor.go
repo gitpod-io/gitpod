@@ -880,6 +880,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		log.WithError(err).Warn("cannot determine workspace type - assuming this is a regular")
 		tpe = api.WorkspaceType_REGULAR
 	}
+	wsType := api.WorkspaceType_name[int32(tpe)]
 
 	var (
 		createdVolumeSnapshot        bool
@@ -891,6 +892,8 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		pvcVolumeSnapshotName        string = workspaceID
 		pvcVolumeSnapshotContentName string
 		pvcVolumeSnapshotClassName   string
+
+		volumeSnapshotTime time.Time
 	)
 	if wso.Pod != nil {
 		_, pvcFeatureEnabled = wso.Pod.Labels[pvcWorkspaceFeatureAnnotation]
@@ -973,6 +976,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					return true, nil, err
 				}
 				createdVolumeSnapshot = true
+				volumeSnapshotTime = time.Now()
 			}
 			if createdVolumeSnapshot {
 				backoff := wait.Backoff{
@@ -1016,6 +1020,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					return true, nil, err
 				}
 				readyVolumeSnapshot = true
+				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType)
+				if err != nil {
+					log.WithError(err).WithField("type", wsType).Warn("cannot get volume snapshot time histogram metric")
+				}
+				hist.Observe(time.Since(volumeSnapshotTime).Seconds())
 			}
 			if readyVolumeSnapshot && !markVolumeSnapshotAnnotation {
 				log = log.WithField("VolumeSnapshotContent.Name", pvcVolumeSnapshotContentName)
@@ -1154,7 +1163,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 		break
 	}
-	wsType := api.WorkspaceType_name[int32(tpe)]
+
 	hist, err := m.manager.metrics.finalizeTimeHistVec.GetMetricWithLabelValues(wsType)
 	if err != nil {
 		log.WithError(err).WithField("type", wsType).Warn("cannot get finalize time histogram metric")
