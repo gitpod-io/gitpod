@@ -145,7 +145,7 @@ function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
 }
 
 export default function EnvVars() {
-    const { showPaymentUI } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
     const [envVars, setEnvVars] = useState([] as UserEnvVarValue[]);
     const [currentEnvVar, setCurrentEnvVar] = useState({
         name: "",
@@ -207,7 +207,7 @@ export default function EnvVars() {
 
     return (
         <PageWithSubMenu
-            subMenu={getSettingsMenu({ showPaymentUI })}
+            subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
             title="Variables"
             subtitle="Configure environment variables for all workspaces."
         >

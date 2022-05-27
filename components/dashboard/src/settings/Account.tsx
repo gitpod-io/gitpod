@@ -16,7 +16,7 @@ import { PaymentContext } from "../payment-context";
 
 export default function Account() {
     const { user } = useContext(UserContext);
-    const { showPaymentUI } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
 
     const [modal, setModal] = useState(false);
     const [typedEmail, setTypedEmail] = useState("");
@@ -56,7 +56,7 @@ export default function Account() {
             </ConfirmationModal>
 
             <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI })}
+                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
                 title="Account"
                 subtitle="Manage account and Git configuration."
             >

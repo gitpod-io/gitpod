@@ -26,12 +26,12 @@ import { SelectAccountModal } from "./SelectAccountModal";
 import getSettingsMenu from "./settings-menu";
 
 export default function Integrations() {
-    const { showPaymentUI } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
 
     return (
         <div>
             <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI })}
+                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
                 title="Integrations"
                 subtitle="Manage permissions for Git providers and integrations."
             >

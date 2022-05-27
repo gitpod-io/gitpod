@@ -20,7 +20,7 @@ type Theme = "light" | "dark" | "system";
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
-    const { showPaymentUI } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
     const { setIsDark } = useContext(ThemeContext);
 
     const [theme, setTheme] = useState<Theme>(localStorage.theme || "system");
@@ -54,7 +54,7 @@ export default function Preferences() {
     return (
         <div>
             <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI })}
+                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
                 title="Preferences"
                 subtitle="Configure user preferences."
             >
