@@ -400,7 +400,6 @@
             "db",
             "db-sync",
             "messagebus",
-            "kedge",
             "payment-endpoint",
             "proxy",
             "server",
@@ -412,7 +411,6 @@
             "db",
             "db-sync",
             "messagebus",
-            "kedge",
             "payment-endpoint",
             "proxy",
             "server",
@@ -459,11 +457,6 @@
           },
           {
             "selected": true,
-            "text": "kedge",
-            "value": "kedge"
-          },
-          {
-            "selected": true,
             "text": "payment-endpoint",
             "value": "payment-endpoint"
           },
@@ -493,7 +486,7 @@
             "value": "image-builder-mk3"
           }
         ],
-        "query": "content-service, dashboard, db, db-sync, messagebus, kedge, payment-endpoint, proxy, server, ws-manager-bridge, image-builder, image-builder-mk3",
+        "query": "content-service, dashboard, db, db-sync, messagebus, payment-endpoint, proxy, server, ws-manager-bridge, image-builder, image-builder-mk3",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

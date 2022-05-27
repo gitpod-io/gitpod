@@ -29,9 +29,6 @@ var vhostDockerRegistry []byte
 //go:embed templates/configmap/vhost.empty.tpl
 var vhostEmptyTmpl []byte
 
-//go:embed templates/configmap/vhost.kedge.tpl
-var vhostKedgeTmpl []byte
-
 //go:embed templates/configmap/vhost.minio.tpl
 var vhostMinioTmpl []byte
 
@@ -110,21 +107,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	// todo(sje): can this be deleted?
-	kedge, err := renderTemplate(vhostKedgeTmpl, commonTpl{
-		Domain:       ctx.Config.Domain,
-		ReverseProxy: fmt.Sprintf("kedge.%s.%s:%d", ctx.Namespace, kubeDomain, 8080), // todo(sje): get port from (future) config
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	data := map[string]string{
 		"vhost.empty":            *empty,
 		"vhost.open-vsx":         *openVSX,
 		"vhost.payment-endpoint": *paymentEndpoint,
 		"vhost.ide-proxy":        *ideProxy,
-		"vhost.kedge":            *kedge,
 	}
 
 	if ctx.Config.ObjectStorage.CloudStorage == nil {

@@ -12,7 +12,6 @@
 /components/docker-up @gitpod-io/engineering-workspace
 /components/ee/agent-smith @gitpod-io/engineering-workspace
 /components/ee/db-sync @gitpod-io/engineering-webapp
-/components/ee/kedge @gitpod-io/engineering-webapp
 /components/ee/payment-endpoint @gitpod-io/engineering-webapp
 /components/gitpod-cli @gitpod-io/engineering-ide
 /components/gitpod-db @gitpod-io/engineering-webapp

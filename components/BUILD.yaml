@@ -36,7 +36,6 @@ packages:
       - components/docker-up:docker
       - components/ee/agent-smith:docker
       - components/ee/db-sync:docker
-      - components/ee/kedge:docker
       - components/ee/payment-endpoint:docker
       - components/gitpod-db:docker
       - components/ide/code-desktop:docker
@@ -97,7 +96,6 @@ packages:
       - components/docker-up:app
       - components/ee/agent-smith:app
       - components/ee/db-sync:app
-      - components/ee/kedge:app
       - components/ee/payment-endpoint:app
       - components/image-builder-mk3:app
       - components/openvsx-proxy:app
