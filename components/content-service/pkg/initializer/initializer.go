@@ -60,8 +60,9 @@ func (e *EmptyInitializer) Run(ctx context.Context, mappings []archive.IDMapping
 type CompositeInitializer []Initializer
 
 // Run calls run on all child initializers
-func (e CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
-	_, ctx = opentracing.StartSpanFromContext(ctx, "CompositeInitializer.Run")
+func (e CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (_ csapi.WorkspaceInitSource, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "CompositeInitializer.Run")
+	defer tracing.FinishSpan(span, &err)
 	for _, init := range e {
 		_, err := init.Run(ctx, mappings)
 		if err != nil {

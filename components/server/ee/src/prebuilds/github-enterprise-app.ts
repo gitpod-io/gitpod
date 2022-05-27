@@ -45,14 +45,24 @@ export class GitHubEnterpriseApp {
                 try {
                     user = await this.findUser({ span }, payload, req);
                 } catch (error) {
+                    TraceContext.setError({ span }, error);
                     log.error("Cannot find user.", error, {});
                 }
                 if (!user) {
                     res.statusCode = 401;
                     res.send();
+                    span.finish();
                     return;
                 }
-                await this.handlePushHook({ span }, payload, user);
+
+                try {
+                    await this.handlePushHook({ span }, payload, user);
+                } catch (err) {
+                    TraceContext.setError({ span }, err);
+                    throw err;
+                } finally {
+                    span.finish();
+                }
             } else {
                 log.info("Unknown GitHub Enterprise event received", { event });
             }

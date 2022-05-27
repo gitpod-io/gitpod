@@ -297,27 +297,34 @@ export class PrebuildManager {
     ) {
         const span = TraceContext.startSpan("storePrebuildInfo", ctx);
         const { userId, teamId, name: projectName, id: projectId } = project;
-        await this.workspaceDB.trace({ span }).storePrebuildInfo({
-            id: pws.id,
-            buildWorkspaceId: pws.buildWorkspaceId,
-            basedOnPrebuildId: ws.basedOnPrebuildId,
-            teamId,
-            userId,
-            projectName,
-            projectId,
-            startedAt: pws.creationTime,
-            startedBy: "", // TODO
-            startedByAvatar: "", // TODO
-            cloneUrl: pws.cloneURL,
-            branch: pws.branch || "unknown",
-            changeAuthor: commit.author,
-            changeAuthorAvatar: commit.authorAvatarUrl,
-            changeDate: commit.authorDate || "",
-            changeHash: commit.sha,
-            changeTitle: commit.commitMessage,
-            // changePR
-            changeUrl: ws.contextURL,
-        });
+        try {
+            await this.workspaceDB.trace({ span }).storePrebuildInfo({
+                id: pws.id,
+                buildWorkspaceId: pws.buildWorkspaceId,
+                basedOnPrebuildId: ws.basedOnPrebuildId,
+                teamId,
+                userId,
+                projectName,
+                projectId,
+                startedAt: pws.creationTime,
+                startedBy: "", // TODO
+                startedByAvatar: "", // TODO
+                cloneUrl: pws.cloneURL,
+                branch: pws.branch || "unknown",
+                changeAuthor: commit.author,
+                changeAuthorAvatar: commit.authorAvatarUrl,
+                changeDate: commit.authorDate || "",
+                changeHash: commit.sha,
+                changeTitle: commit.commitMessage,
+                // changePR
+                changeUrl: ws.contextURL,
+            });
+        } catch (err) {
+            TraceContext.setError(ctx, err);
+            throw err;
+        } finally {
+            span.finish();
+        }
     }
 
     private async shouldRateLimitPrebuild(span: opentracing.Span, cloneURL: string): Promise<boolean> {
@@ -367,6 +374,7 @@ export class PrebuildManager {
         const { inactivityPeriodForRepos } = this.config;
         if (!inactivityPeriodForRepos) {
             // skipping is disabled if `inactivityPeriodForRepos` is not set
+            span.finish();
             return false;
         }
         try {
@@ -377,7 +385,10 @@ export class PrebuildManager {
             );
         } catch (error) {
             log.error("cannot compute activity for repository", { cloneURL }, error);
+            TraceContext.setError(ctx, error);
             return false;
+        } finally {
+            span.finish();
         }
     }
 }

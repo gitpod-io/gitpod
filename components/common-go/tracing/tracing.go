@@ -110,7 +110,8 @@ func ApplyOWI(span opentracing.Span, owi logrus.Fields) {
 	}
 }
 
-// GetTraceID extracts the ueber-trace-id from the context
+// GetTraceID extracts the uber-trace-id from the context which encodes
+// {trace-id}:{span-id}:{parent-span-id}:{flags}
 func GetTraceID(span opentracing.Span) string {
 	var buf bytes.Buffer
 	err := opentracing.GlobalTracer().Inject(span.Context(), opentracing.Binary, &buf)

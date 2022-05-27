@@ -817,123 +817,131 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         mode: CreateWorkspaceMode,
     ): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
         const ctx = TraceContext.childContext("findPrebuiltWorkspace", parentCtx);
-
-        if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
-            return;
-        }
-
-        const commitSHAs = CommitContext.computeHash(context);
-
-        const logCtx: LogContext = { userId: user.id };
-        const cloneUrl = context.repository.cloneUrl;
-        const prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
-        const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
-        log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
-        if (!prebuiltWorkspace) {
-            return;
-        }
-
-        if (prebuiltWorkspace.state === "available") {
-            log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
-            const result: PrebuiltWorkspaceContext = {
-                title: context.title,
-                originalContext: context,
-                prebuiltWorkspace,
-            };
-            return result;
-        } else if (prebuiltWorkspace.state === "queued" || prebuiltWorkspace.state === "building") {
-            if (mode === CreateWorkspaceMode.ForceNew) {
-                // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
+        try {
+            if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
                 return;
-                // TODO(janx): Fall back to parent prebuild instead, if it's available:
-                //   const buildWorkspace = await this.workspaceDb.trace({span}).findById(prebuiltWorkspace.buildWorkspaceId);
-                //   const parentPrebuild = await this.workspaceDb.trace({span}).findPrebuildByID(buildWorkspace.basedOnPrebuildId);
-                // Also, make sure to initialize it by both printing the parent prebuild logs AND re-runnnig the before/init/prebuild tasks.
             }
 
-            const workspaceID = prebuiltWorkspace.buildWorkspaceId;
-            const makeResult = (instanceID: string): WorkspaceCreationResult => {
-                return <WorkspaceCreationResult>{
-                    runningWorkspacePrebuild: {
-                        prebuildID: prebuiltWorkspace.id,
-                        workspaceID,
-                        instanceID,
-                        starting: "queued",
-                        sameCluster: false,
-                    },
-                };
-            };
+            const commitSHAs = CommitContext.computeHash(context);
 
-            const wsi = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceID);
-            if (!wsi || wsi.stoppedTime !== undefined) {
-                if (prebuiltWorkspace.state === "queued") {
-                    if (Date.now() - Date.parse(prebuiltWorkspace.creationTime) > 1000 * 60) {
-                        // queued for long than a minute? Let's retrigger
-                        console.warn("Retriggering queued prebuild.", prebuiltWorkspace);
-                        try {
-                            await this.prebuildManager.retriggerPrebuild(ctx, user, workspaceID);
-                        } catch (err) {
-                            console.error(err);
+            const logCtx: LogContext = { userId: user.id };
+            const cloneUrl = context.repository.cloneUrl;
+            const prebuiltWorkspace = await this.workspaceDb
+                .trace(ctx)
+                .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+            const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
+            log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
+            if (!prebuiltWorkspace) {
+                return;
+            }
+
+            if (prebuiltWorkspace.state === "available") {
+                log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
+                const result: PrebuiltWorkspaceContext = {
+                    title: context.title,
+                    originalContext: context,
+                    prebuiltWorkspace,
+                };
+                return result;
+            } else if (prebuiltWorkspace.state === "queued" || prebuiltWorkspace.state === "building") {
+                if (mode === CreateWorkspaceMode.ForceNew) {
+                    // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
+                    return;
+                    // TODO(janx): Fall back to parent prebuild instead, if it's available:
+                    //   const buildWorkspace = await this.workspaceDb.trace({span}).findById(prebuiltWorkspace.buildWorkspaceId);
+                    //   const parentPrebuild = await this.workspaceDb.trace({span}).findPrebuildByID(buildWorkspace.basedOnPrebuildId);
+                    // Also, make sure to initialize it by both printing the parent prebuild logs AND re-runnnig the before/init/prebuild tasks.
+                }
+
+                const workspaceID = prebuiltWorkspace.buildWorkspaceId;
+                const makeResult = (instanceID: string): WorkspaceCreationResult => {
+                    return <WorkspaceCreationResult>{
+                        runningWorkspacePrebuild: {
+                            prebuildID: prebuiltWorkspace.id,
+                            workspaceID,
+                            instanceID,
+                            starting: "queued",
+                            sameCluster: false,
+                        },
+                    };
+                };
+
+                const wsi = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceID);
+                if (!wsi || wsi.stoppedTime !== undefined) {
+                    if (prebuiltWorkspace.state === "queued") {
+                        if (Date.now() - Date.parse(prebuiltWorkspace.creationTime) > 1000 * 60) {
+                            // queued for long than a minute? Let's retrigger
+                            console.warn("Retriggering queued prebuild.", prebuiltWorkspace);
+                            try {
+                                await this.prebuildManager.retriggerPrebuild(ctx, user, workspaceID);
+                            } catch (err) {
+                                console.error(err);
+                            }
+                        }
+                        return makeResult(wsi!.id);
+                    }
+
+                    return;
+                }
+                const result = makeResult(wsi.id);
+
+                const inSameCluster = wsi.region === this.config.installationShortname;
+                if (!inSameCluster) {
+                    if (mode === CreateWorkspaceMode.UsePrebuild) {
+                        /* We need to wait for this prebuild to finish before we return from here.
+                         * This creation mode is meant to be used once we have gone through default mode, have confirmation from the
+                         * message bus that the prebuild is done, and now only have to wait for dbsync to come through. Thus,
+                         * in this mode we'll poll the database until the prebuild is ready (or we time out).
+                         *
+                         * Note: This polling mechanism only makes sense if the prebuild runs in cluster different from ours.
+                         *       Otherwise there's no dbsync inbetween that we might have to wait for.
+                         *
+                         * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
+                         */
+                        const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(
+                            ctx,
+                            prebuiltWorkspace.id,
+                            20000,
+                        );
+                        if (!finishedPrebuiltWorkspace) {
+                            log.warn(
+                                logCtx,
+                                "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished",
+                                logPayload,
+                            );
+                            return;
+                        } else {
+                            return {
+                                title: context.title,
+                                originalContext: context,
+                                prebuiltWorkspace: finishedPrebuiltWorkspace,
+                            } as PrebuiltWorkspaceContext;
                         }
                     }
-                    return makeResult(wsi!.id);
                 }
 
-                return;
-            }
-            const result = makeResult(wsi.id);
-
-            const inSameCluster = wsi.region === this.config.installationShortname;
-            if (!inSameCluster) {
-                if (mode === CreateWorkspaceMode.UsePrebuild) {
-                    /* We need to wait for this prebuild to finish before we return from here.
-                     * This creation mode is meant to be used once we have gone through default mode, have confirmation from the
-                     * message bus that the prebuild is done, and now only have to wait for dbsync to come through. Thus,
-                     * in this mode we'll poll the database until the prebuild is ready (or we time out).
-                     *
-                     * Note: This polling mechanism only makes sense if the prebuild runs in cluster different from ours.
-                     *       Otherwise there's no dbsync inbetween that we might have to wait for.
-                     *
-                     * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
-                     */
-                    const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(
-                        ctx,
-                        prebuiltWorkspace.id,
-                        20000,
-                    );
-                    if (!finishedPrebuiltWorkspace) {
-                        log.warn(
-                            logCtx,
-                            "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished",
-                            logPayload,
-                        );
-                        return;
-                    } else {
-                        return {
-                            title: context.title,
-                            originalContext: context,
-                            prebuiltWorkspace: finishedPrebuiltWorkspace,
-                        } as PrebuiltWorkspaceContext;
-                    }
+                /* This is the default mode behaviour: we present the running prebuild to the user so that they can see the logs
+                 * or choose to force the creation of a workspace.
+                 */
+                if (wsi.status.phase != "running") {
+                    result.runningWorkspacePrebuild!.starting = "starting";
+                } else {
+                    result.runningWorkspacePrebuild!.starting = "running";
                 }
+                log.info(
+                    logCtx,
+                    `Found prebuilding (starting=${
+                        result.runningWorkspacePrebuild!.starting
+                    }) workspace for ${cloneUrl}:${commitSHAs}`,
+                    logPayload,
+                );
+                return result;
             }
-
-            /* This is the default mode behaviour: we present the running prebuild to the user so that they can see the logs
-             * or choose to force the creation of a workspace.
-             */
-            if (wsi.status.phase != "running") {
-                result.runningWorkspacePrebuild!.starting = "starting";
-            } else {
-                result.runningWorkspacePrebuild!.starting = "running";
-            }
-            log.info(
-                logCtx,
-                `Found prebuilding (starting=${
-                    result.runningWorkspacePrebuild!.starting
-                }) workspace for ${cloneUrl}:${commitSHAs}`,
-                logPayload,
-            );
-            return result;
+        } catch (e) {
+            TraceContext.setError(ctx, e);
+            throw e;
+        } finally {
+            ctx.span.finish();
         }
     }
 

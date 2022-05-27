@@ -237,8 +237,15 @@ export class PromisifiedImageBuilderClient {
 
         const stream = this.client.logs(request, withTracing({ span }));
         return new Promise<void>((resolve, reject) => {
-            stream.on('end', () => resolve())
-            stream.on('error', err => reject(err));
+            stream.on('end', () => {
+                span.finish();
+                resolve()
+            })
+            stream.on('error', err => {
+                TraceContext.setError({ span }, err);
+                span.finish();
+                reject(err)
+            });
             stream.on('data', (resp: LogsResponse) => {
                 if (cb(new TextDecoder("utf-8").decode(resp.getContent_asU8())) === 'stop') {
                     stream.cancel()
