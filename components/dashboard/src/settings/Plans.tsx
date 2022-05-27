@@ -45,7 +45,8 @@ type TeamClaimModal =
 
 export default function () {
     const { user } = useContext(UserContext);
-    const { showPaymentUI, currency, setCurrency, isStudent, isChargebeeCustomer } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI, currency, setCurrency, isStudent, isChargebeeCustomer } =
+        useContext(PaymentContext);
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
     const [availableCoupons, setAvailableCoupons] = useState<PlanCoupon[]>();
     const [appliedCoupons, setAppliedCoupons] = useState<PlanCoupon[]>();
@@ -636,7 +637,7 @@ export default function () {
     return (
         <div>
             <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI })}
+                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
                 title="Plans"
                 subtitle="Manage account usage and billing."
             >

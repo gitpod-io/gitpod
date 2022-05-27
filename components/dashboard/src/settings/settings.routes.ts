@@ -9,6 +9,7 @@ export const settingsPathMain = "/settings";
 export const settingsPathAccount = "/account";
 export const settingsPathIntegrations = "/integrations";
 export const settingsPathNotifications = "/notifications";
+export const settingsPathBilling = "/billing";
 export const settingsPathPlans = "/plans";
 export const settingsPathPreferences = "/preferences";
 

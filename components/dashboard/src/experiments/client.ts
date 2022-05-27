@@ -4,22 +4,26 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-// Attributes define attributes which can be used to segment audiences.
-// Set the attributes which you want to use to group audiences into.
+import { Team } from "@gitpod/gitpod-protocol";
 import { newNonProductionConfigCatClient, newProductionConfigCatClient } from "./configcat";
 import { newAlwaysReturningDefaultValueClient } from "./always-default";
 
+// Attributes define attributes which can be used to segment audiences.
+// Set the attributes which you want to use to group audiences into.
 export interface Attributes {
-    userID?: string;
+    userId?: string;
     email?: string;
 
-    // Gitpod Project ID
-    projectID?: string;
+    // Currently selected Gitpod Project ID
+    projectId?: string;
 
-    // Gitpod Team ID
-    teamID?: string;
-    // Gitpod Team Name
+    // Currently selected Gitpod Team ID
+    teamId?: string;
+    // Currently selected Gitpod Team Name
     teamName?: string;
+
+    // All the Gitpod Teams that the user is a member (or owner) of
+    teams?: Array<Team>;
 }
 
 export interface Client {
@@ -52,4 +56,6 @@ export function getExperimentsClient(): Client {
 
 export const PROJECT_ID_ATTRIBUTE = "project_id";
 export const TEAM_ID_ATTRIBUTE = "team_id";
+export const TEAM_IDS_ATTRIBUTE = "team_ids";
 export const TEAM_NAME_ATTRIBUTE = "team_name";
+export const TEAM_NAMES_ATTRIBUTE = "team_names";

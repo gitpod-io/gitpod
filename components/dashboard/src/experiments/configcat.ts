@@ -7,7 +7,15 @@
 import * as configcat from "configcat-js";
 import { IConfigCatClient } from "configcat-common/lib/ConfigCatClient";
 import { User } from "configcat-common/lib/RolloutEvaluator";
-import { Attributes, Client, PROJECT_ID_ATTRIBUTE, TEAM_ID_ATTRIBUTE, TEAM_NAME_ATTRIBUTE } from "./client";
+import {
+    Attributes,
+    Client,
+    PROJECT_ID_ATTRIBUTE,
+    TEAM_IDS_ATTRIBUTE,
+    TEAM_ID_ATTRIBUTE,
+    TEAM_NAMES_ATTRIBUTE,
+    TEAM_NAME_ATTRIBUTE,
+} from "./client";
 
 // newProductionConfigCatClient constructs a new ConfigCat client with production configuration.
 // DO NOT USE DIRECTLY! Use getExperimentsClient() instead.
@@ -51,19 +59,23 @@ class ConfigCatClient implements Client {
 }
 
 function attributesToUser(attributes: Attributes): User {
-    const userID = attributes.userID || "";
+    const userId = attributes.userId || "";
     const email = attributes.email || "";
 
     const custom: { [key: string]: string } = {};
-    if (attributes.projectID) {
-        custom[PROJECT_ID_ATTRIBUTE] = attributes.projectID;
+    if (attributes.projectId) {
+        custom[PROJECT_ID_ATTRIBUTE] = attributes.projectId;
     }
-    if (attributes.teamID) {
-        custom[TEAM_ID_ATTRIBUTE] = attributes.teamID;
+    if (attributes.teamId) {
+        custom[TEAM_ID_ATTRIBUTE] = attributes.teamId;
     }
     if (attributes.teamName) {
         custom[TEAM_NAME_ATTRIBUTE] = attributes.teamName;
     }
+    if (attributes.teams) {
+        custom[TEAM_NAMES_ATTRIBUTE] = attributes.teams.map((t) => t.name).join(",");
+        custom[TEAM_IDS_ATTRIBUTE] = attributes.teams.map((t) => t.id).join(",");
+    }
 
-    return new User(userID, email, "", custom);
+    return new User(userId, email, "", custom);
 }

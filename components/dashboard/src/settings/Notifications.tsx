@@ -15,7 +15,7 @@ import { PaymentContext } from "../payment-context";
 
 export default function Notifications() {
     const { user, setUser } = useContext(UserContext);
-    const { showPaymentUI } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
     const [isOnboardingMail, setOnboardingMail] = useState(
         !!user?.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
     );
@@ -84,7 +84,7 @@ export default function Notifications() {
     return (
         <div>
             <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI })}
+                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
                 title="Notifications"
                 subtitle="Choose when to be notified."
             >

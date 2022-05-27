@@ -26,12 +26,12 @@ import { Disposable } from "@gitpod/gitpod-protocol";
 import { PaymentContext } from "../payment-context";
 
 export default function Teams() {
-    const { showPaymentUI } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
 
     return (
         <div>
             <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI })}
+                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
                 title="Team Plans"
                 subtitle="View and manage subscriptions for your team with one centralized billing."
             >
