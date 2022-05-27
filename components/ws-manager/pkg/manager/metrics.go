@@ -37,12 +37,13 @@ const (
 type metrics struct {
 	manager *Manager
 
-	startupTimeHistVec    *prometheus.HistogramVec
-	initializeTimeHistVec *prometheus.HistogramVec
-	finalizeTimeHistVec   *prometheus.HistogramVec
-	totalStartsCounterVec *prometheus.CounterVec
-	totalStopsCounterVec  *prometheus.CounterVec
-	totalOpenPortGauge    prometheus.GaugeFunc
+	startupTimeHistVec        *prometheus.HistogramVec
+	initializeTimeHistVec     *prometheus.HistogramVec
+	finalizeTimeHistVec       *prometheus.HistogramVec
+	volumeSnapshotTimeHistVec *prometheus.HistogramVec
+	totalStartsCounterVec     *prometheus.CounterVec
+	totalStopsCounterVec      *prometheus.CounterVec
+	totalOpenPortGauge        prometheus.GaugeFunc
 
 	mu         sync.Mutex
 	phaseState map[string]api.WorkspacePhase
@@ -72,6 +73,13 @@ func newMetrics(m *Manager) *metrics {
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      "workspace_finalize_seconds",
 			Help:      "time it took to finalize workspace",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type"}),
+		volumeSnapshotTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "volume_snapshot_seconds",
+			Help:      "time it took to snapshot volume",
 			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
 		}, []string{"type"}),
 		totalStartsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -136,6 +144,7 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 		m.startupTimeHistVec,
 		m.initializeTimeHistVec,
 		m.finalizeTimeHistVec,
+		m.volumeSnapshotTimeHistVec,
 		newPhaseTotalVec(m.manager),
 		newWorkspaceActivityVec(m.manager),
 		newTimeoutSettingsVec(m.manager),
