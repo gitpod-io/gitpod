@@ -39,6 +39,8 @@ class GitpodConnector : GatewayConnector {
         return documentationLink
     }
 
+    override fun getConnectorId(): String = "gitpod.connector"
+
     override fun getRecentConnections(setContentCallback: (Component) -> Unit): GatewayRecentConnections? {
         return GitpodRecentConnections()
     }
