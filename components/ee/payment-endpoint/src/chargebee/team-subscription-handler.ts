@@ -11,9 +11,11 @@ import { TeamSubscription2DB } from "@gitpod/gitpod-db/lib/team-subscription-2-d
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { TeamSubscription, TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
+import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
 import { getCancelledAt, getStartDate } from "./chargebee-subscription-helper";
 import { Chargebee as chargebee } from "./chargebee-types";
 import { EventHandler } from "./chargebee-event-handler";
+import { UpgradeHelper } from "./upgrade-helper";
 import { TeamSubscriptionService } from "../accounting/team-subscription-service";
 import { TeamSubscription2Service } from "../accounting/team-subscription2-service";
 import { Config } from "../config";
@@ -25,6 +27,7 @@ export class TeamSubscriptionHandler implements EventHandler<chargebee.Subscript
     @inject(TeamSubscription2DB) protected readonly db2: TeamSubscription2DB;
     @inject(TeamSubscriptionService) protected readonly service: TeamSubscriptionService;
     @inject(TeamSubscription2Service) protected readonly service2: TeamSubscription2Service;
+    @inject(UpgradeHelper) protected readonly upgradeHelper: UpgradeHelper;
 
     canHandle(event: chargebee.Event<any>): boolean {
         if (event.event_type.startsWith("subscription")) {
@@ -133,6 +136,34 @@ export class TeamSubscriptionHandler implements EventHandler<chargebee.Subscript
                     const cancelledAt = getCancelledAt(chargebeeSubscription);
                     sub.endDate = cancelledAt;
                     await this.service2.cancelAllTeamMemberSubscriptions(sub, new Date(cancelledAt));
+                } else if (chargebeeSubscription.plan_quantity > sub.quantity) {
+                    // Upgrade: Charge for it!
+                    const oldQuantity = sub.quantity;
+                    const newQuantity = chargebeeSubscription.plan_quantity;
+                    let pricePerUnitInCents = chargebeeSubscription.plan_unit_price;
+                    if (pricePerUnitInCents === undefined) {
+                        const plan = Plans.getById(sub.planId)!;
+                        pricePerUnitInCents = plan.pricePerMonth * 100;
+                    }
+                    const currentTermRemainingRatio =
+                        this.upgradeHelper.getCurrentTermRemainingRatio(chargebeeSubscription);
+                    const diffInCents = Math.round(
+                        pricePerUnitInCents * (newQuantity - oldQuantity) * currentTermRemainingRatio,
+                    );
+                    const upgradeTimestamp = new Date().toISOString();
+                    const dateString = formatDate(upgradeTimestamp);
+                    const description = `Pro-rated upgrade from ${oldQuantity} to ${newQuantity} team members (${dateString})`;
+                    this.upgradeHelper
+                        .chargeForUpgrade("", sub.paymentReference, diffInCents, description, upgradeTimestamp)
+                        .catch((error) => {
+                            log.error(`Could not charge for upgrade on TeamSubscription2 quantity increase!`, {
+                                error,
+                                ts2Id: sub.id,
+                                chargebeeId: sub.paymentReference,
+                                oldQuantity,
+                                newQuantity,
+                            });
+                        });
                 }
                 sub.quantity = chargebeeSubscription.plan_quantity;
                 await db2.storeEntry(sub);

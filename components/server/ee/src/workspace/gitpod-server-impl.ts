@@ -1439,34 +1439,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const oldQuantity = teamSubscription.quantity;
         const newQuantity = members.length;
         try {
-            if (oldQuantity < newQuantity) {
-                // Upgrade: Charge for it!
-                const chargebeeSubscription = await this.getChargebeeSubscription(
-                    {},
-                    teamSubscription.paymentReference,
-                );
-                let pricePerUnitInCents = chargebeeSubscription.plan_unit_price;
-                if (pricePerUnitInCents === undefined) {
-                    const plan = Plans.getById(teamSubscription.planId)!;
-                    pricePerUnitInCents = plan.pricePerMonth * 100;
-                }
-                const currentTermRemainingRatio =
-                    this.upgradeHelper.getCurrentTermRemainingRatio(chargebeeSubscription);
-                const diffInCents = Math.round(
-                    pricePerUnitInCents * (newQuantity - oldQuantity) * currentTermRemainingRatio,
-                );
-                const upgradeTimestamp = new Date().toISOString();
-                const description = `Pro-rated upgrade from '${oldQuantity}' to '${newQuantity}' team members (${formatDate(
-                    upgradeTimestamp,
-                )})`;
-                await this.upgradeHelper.chargeForUpgrade(
-                    "",
-                    teamSubscription.paymentReference,
-                    diffInCents,
-                    description,
-                    upgradeTimestamp,
-                );
-            }
+            // We only charge for upgrades in the Chargebee callback, to avoid race conditions.
             await this.doUpdateSubscription("", teamSubscription.paymentReference, {
                 plan_quantity: newQuantity,
                 end_of_term: false,
