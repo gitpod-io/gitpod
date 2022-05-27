@@ -29,7 +29,6 @@ type Components struct {
 	} `json:"imageBuilderMk3"`
 	InstallationTelemetry Versioned `json:"installationTelemetry"`
 	IntegrationTests      Versioned `json:"integrationTests"`
-	Kedge                 Versioned `json:"kedge"`
 	OpenVSXProxy          Versioned `json:"openVSXProxy"`
 	PaymentEndpoint       Versioned `json:"paymentEndpoint"`
 	Proxy                 Versioned `json:"proxy"`

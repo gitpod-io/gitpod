@@ -32,9 +32,6 @@ flags:
   components-ee-agent-smith-app:
     paths:
       - components/ee/agent-smith/
-  components-ee-kedge-app:
-    paths:
-      - components/ee/kedge/
   components-gitpod-cli-app:
     paths:
       - components/gitpod-cli/
