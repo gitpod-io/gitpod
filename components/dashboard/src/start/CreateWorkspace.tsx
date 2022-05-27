@@ -24,6 +24,7 @@ import { SelectAccountModal } from "../settings/SelectAccountModal";
 import { watchHeadlessLogs } from "../components/PrebuildLogs";
 import CodeText from "../components/CodeText";
 import FeedbackComponent from "../feedback-form/FeedbackComponent";
+import { isGitpodIo } from "../utils";
 
 const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
 
@@ -433,7 +434,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
                 <CodeText>{repoFullName}</CodeText>
             </p>
             {statusMessage}
-            {p.error && (
+            {p.error && isGitpodIo() && (
                 <FeedbackComponent
                     isModal={false}
                     message={"Was this error message helpful?"}
