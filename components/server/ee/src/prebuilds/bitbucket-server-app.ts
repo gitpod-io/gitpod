@@ -45,9 +45,17 @@ export class BitbucketServerApp {
                         // we should send a UNAUTHORIZED signal.
                         res.statusCode = 401;
                         res.send();
+                        span.finish();
                         return;
                     }
-                    await this.handlePushHook({ span }, user, payload);
+                    try {
+                        await this.handlePushHook({ span }, user, payload);
+                    } catch (err) {
+                        TraceContext.setError({ span }, err);
+                        throw err;
+                    } finally {
+                        span.finish();
+                    }
                 } else {
                     console.warn(`Ignoring unsupported BBS event.`, { headers: req.headers });
                 }

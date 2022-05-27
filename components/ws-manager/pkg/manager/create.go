@@ -881,6 +881,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 
 	workspaceSpan := opentracing.StartSpan("workspace", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))
 	traceID := tracing.GetTraceID(workspaceSpan)
+	defer tracing.FinishSpan(workspaceSpan, &err)
 
 	clsName := req.Spec.Class
 	if _, ok := m.Config.WorkspaceClasses[req.Spec.Class]; clsName == "" || !ok {

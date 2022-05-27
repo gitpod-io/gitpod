@@ -331,6 +331,7 @@ export class ConfigProvider {
         span.setTag("repo", `${repository.owner}/${repository.name}`);
 
         if (this.config.definitelyGpDisabled) {
+            span.finish();
             return {
                 content: undefined,
                 basePath: `${repository.name}`,

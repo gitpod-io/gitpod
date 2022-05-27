@@ -43,14 +43,23 @@ export class GitLabApp {
                 try {
                     user = await this.findUser({ span }, context, req);
                 } catch (error) {
+                    TraceContext.setError({ span }, error);
                     log.error("Cannot find user.", error, {});
                 }
                 if (!user) {
                     res.statusCode = 503;
                     res.send();
+                    span.finish();
                     return;
                 }
-                await this.handlePushHook({ span }, context, user);
+                try {
+                    await this.handlePushHook({ span }, context, user);
+                } catch (err) {
+                    TraceContext.setError({ span }, err);
+                    throw err;
+                } finally {
+                    span.finish();
+                }
             } else {
                 log.debug("Unknown GitLab event received", { event });
             }

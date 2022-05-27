@@ -112,6 +112,7 @@ func runGitInit(ctx context.Context, gInit *GitInitializer) (err error) {
 		tracelog.String("IsWorkingCopy", fmt.Sprintf("%v", git.IsWorkingCopy(gInit.Location))),
 		tracelog.String("location", fmt.Sprintf("%v", gInit.Location)),
 	)
+	defer tracing.FinishSpan(span, &err)
 	if git.IsWorkingCopy(gInit.Location) {
 		out, err := gInit.GitWithOutput(ctx, "stash", "push", "-u")
 		if err != nil {
