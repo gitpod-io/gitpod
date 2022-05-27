@@ -7,7 +7,10 @@ package cmd
 import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/spf13/cobra"
+	"net"
+	"os"
 )
 
 func init() {
@@ -27,6 +30,16 @@ func run() *cobra.Command {
 			log.Init(ServiceName, Version, true, verbose)
 
 			log.Info("Hello world usage server")
+
+			_, err := db.Connect(db.ConnectionParams{
+				User:     os.Getenv("DB_USERNAME"),
+				Password: os.Getenv("DB_PASSWORD"),
+				Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
+				Database: "gitpod",
+			})
+			if err != nil {
+				log.WithError(err).Fatal("Failed to establish database connection.")
+			}
 
 			srv, err := baseserver.New("usage")
 			if err != nil {
