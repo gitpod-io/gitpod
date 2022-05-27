@@ -38,6 +38,13 @@ func renderContextWithUsageEnabled(t *testing.T) *common.RenderContext {
 				Usage: &experimental.UsageConfig{Enabled: true},
 			},
 		},
+		Database: config.Database{
+			CloudSQL: &config.DatabaseCloudSQL{
+				ServiceAccount: config.ObjectRef{
+					Name: "gcp-db-creds-service-account-name",
+				},
+			},
+		},
 	}, versions.Manifest{
 		Components: versions.Components{
 			Usage: versions.Versioned{
