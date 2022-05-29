@@ -174,6 +174,7 @@ type Config struct {
 	ExcessiveCPUCheck *ExcessiveCPUCheck `json:"excessiveCPUCheck,omitempty"`
 	SlackWebhooks     *SlackWebhooks     `json:"slackWebhooks,omitempty"`
 	Kubernetes        Kubernetes         `json:"kubernetes"`
+	TetragonAddr      string             `json:"tetragonAddr"`
 
 	ProbePath string `json:"probePath,omitempty"`
 }
