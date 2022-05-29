@@ -1,6 +1,14 @@
 # Change Log
 
 ## May 2022
+- SSH Gateway support remote port forward ([#10291](https://github.com/gitpod-io/gitpod/pull/10291)) - [@iQQBot](https://github.com/iQQBot)
+- [installer] Use installation shortname when constructing ws-manager URL templates ([#10152](https://github.com/gitpod-io/gitpod/pull/10152)) - [@andrew-farries](https://github.com/andrew-farries), [@geropl](https://github.com/geropl)
+- Feedback form only shows for SaaS gitpod-io users. ([#10297](https://github.com/gitpod-io/gitpod/pull/10297)) - [@laushinka](https://github.com/laushinka)
+- remove kedge ([#10292](https://github.com/gitpod-io/gitpod/pull/10292)) - [@geropl](https://github.com/geropl)
+- Fixed a bug that was preventing "gp preview" to work in JetBrains IDEs when executed as a task in ".gitpod.yml". ([#10129](https://github.com/gitpod-io/gitpod/pull/10129)) - [@felladrin](https://github.com/felladrin)
+- [registry-facade] Remove Redis expiration from resolve ([#10263](https://github.com/gitpod-io/gitpod/pull/10263)) - [@aledbf](https://github.com/aledbf)
+- [ws-daemon] Limit the number of concurrent workspace backups to three to avoid excessive memory utilization ([#10274](https://github.com/gitpod-io/gitpod/pull/10274)) - [@aledbf](https://github.com/aledbf)
+- Correctly enforce the parallel workspace limit ([#9491](https://github.com/gitpod-io/gitpod/pull/9491)) - [@andrew-farries](https://github.com/andrew-farries)
 - [ws-manager] Check the pod contains a workspace class and exists ([#10265](https://github.com/gitpod-io/gitpod/pull/10265)) - [@aledbf](https://github.com/aledbf)
 - Fix `ranges port` name and description not sent when ports state changed ([#10250](https://github.com/gitpod-io/gitpod/pull/10250)) - [@mustard-mh](https://github.com/mustard-mh)
 - Feedback form under error messages on login and starting workspaces. ([#10071](https://github.com/gitpod-io/gitpod/pull/10071)) - [@laushinka](https://github.com/laushinka)
