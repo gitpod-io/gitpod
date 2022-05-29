@@ -27,4 +27,6 @@ var Objects = common.CompositeRenderFunc(
 	imagebuildermk3.Objects,
 )
 
-var Helm = common.CompositeHelmFunc()
+var Helm = common.CompositeHelmFunc(
+	agentsmith.Helm,
+)
