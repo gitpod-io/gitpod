@@ -71,7 +71,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:me-cmctl.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-gh-cli-to-dev-image.0
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     resources:
