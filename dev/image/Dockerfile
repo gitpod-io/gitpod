@@ -210,6 +210,10 @@ RUN sudo curl -fsSL https://uploader.codecov.io/latest/codecov-linux -o /usr/loc
 RUN sudo install-packages shellcheck \
     && sudo python3 -m pip install pre-commit
 
+# gh (Github CLI) binary:
+RUN cd /usr/bin && curl -L https://github.com/cli/cli/releases/download/v2.11.3/gh_2.11.3_linux_amd64.tar.gz \
+    | sudo tar xzv --strip-components=2 gh_2.11.3_linux_amd64/bin/gh
+
 # Install observability-related binaries
 ARG PROM_VERSION="2.30.0"
 RUN curl -LO https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz && \
