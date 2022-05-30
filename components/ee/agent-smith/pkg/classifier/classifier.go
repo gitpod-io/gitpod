@@ -7,6 +7,7 @@ package classifier
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -196,8 +197,12 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	defer r.Close()
 
 	var serr error
+
+	src := SignatureReadCache{
+		Reader: r,
+	}
 	for _, sig := range sigcl.Signatures {
-		match, err := sig.Matches(r)
+		match, err := sig.Matches(&src)
 		if match {
 			sigcl.signatureHitTotal.Inc()
 			return &Classification{
@@ -215,6 +220,13 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	}
 
 	return sigNoMatch, nil
+}
+
+type SignatureReadCache struct {
+	Reader  io.ReaderAt
+	header  []byte
+	symbols []string
+	rodata  []byte
 }
 
 func (sigcl *SignatureMatchClassifier) Describe(d chan<- *prometheus.Desc) {
