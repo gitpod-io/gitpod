@@ -97,7 +97,7 @@ pod:
         werft log result "slack notification" "${PIPESTATUS[0]}"
 
         werft log phase "clean up" "clean up"
-        git push origin "${BRANCH}" | werft log slice "clean up"
+        git push origin :"${BRANCH}" | werft log slice "clean up"
         werft log slice "clean up" --done
       }
 
