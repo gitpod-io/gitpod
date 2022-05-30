@@ -87,7 +87,7 @@ export default function () {
                 title={
                     <span>
                         Enable Incremental Prebuilds{" "}
-                        <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">
+                        <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
                             Beta
                         </PillLabel>
                     </span>
