@@ -37,13 +37,22 @@ const (
 type metrics struct {
 	manager *Manager
 
+	// Histogram
 	startupTimeHistVec        *prometheus.HistogramVec
 	initializeTimeHistVec     *prometheus.HistogramVec
 	finalizeTimeHistVec       *prometheus.HistogramVec
 	volumeSnapshotTimeHistVec *prometheus.HistogramVec
-	totalStartsCounterVec     *prometheus.CounterVec
-	totalStopsCounterVec      *prometheus.CounterVec
-	totalOpenPortGauge        prometheus.GaugeFunc
+
+	// Counter
+	totalStartsCounterVec         *prometheus.CounterVec
+	totalStopsCounterVec          *prometheus.CounterVec
+	totalBackupSuccessCounterVec  *prometheus.CounterVec
+	totalBackupFailureCounterVec  *prometheus.CounterVec
+	totalRestoreSuccessCounterVec *prometheus.CounterVec
+	totalRestoreFailureCounterVec *prometheus.CounterVec
+
+	// Gauge
+	totalOpenPortGauge prometheus.GaugeFunc
 
 	mu         sync.Mutex
 	phaseState map[string]api.WorkspacePhase
@@ -94,6 +103,30 @@ func newMetrics(m *Manager) *metrics {
 			Name:      "workspace_stops_total",
 			Help:      "total number of workspaces stopped",
 		}, []string{"reason", "type", "class"}),
+		totalBackupSuccessCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_backups_success_total",
+			Help:      "total number of workspace backups success",
+		}, []string{"type", "class"}),
+		totalBackupFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_backups_failure_total",
+			Help:      "total number of workspace backups failure",
+		}, []string{"type", "class"}),
+		totalRestoreSuccessCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_restores_success_total",
+			Help:      "total number of workspace restores success",
+		}, []string{"type", "class"}),
+		totalRestoreFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_restores_failure_total",
+			Help:      "total number of workspace restores failure",
+		}, []string{"type", "class"}),
 		totalOpenPortGauge: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
@@ -151,6 +184,10 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 		newSubscriberQueueLevelVec(m.manager),
 		m.totalStartsCounterVec,
 		m.totalStopsCounterVec,
+		m.totalBackupSuccessCounterVec,
+		m.totalBackupFailureCounterVec,
+		m.totalRestoreSuccessCounterVec,
+		m.totalRestoreFailureCounterVec,
 		m.totalOpenPortGauge,
 	}
 	for _, c := range collectors {
