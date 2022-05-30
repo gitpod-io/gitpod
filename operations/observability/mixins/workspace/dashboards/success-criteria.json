@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -21,8 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 54,
-  "iteration": 1649063422822,
+  "iteration": 1653910692618,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -72,7 +74,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red"
+                "color": "red",
+                "value": null
               },
               {
                 "color": "green",
@@ -84,8 +87,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 22,
-        "w": 24,
+        "h": 9,
+        "w": 12,
         "x": 0,
         "y": 0
       },
@@ -108,15 +111,133 @@
             "uid": "${datasource}"
           },
           "exemplar": false,
-          "expr": "1-((\n  (\n    (sum(rate(gitpod_ws_manager_workspace_stops_total{reason=\"failed\"}[1d])) OR on() vector(0))\n    \/\n    sum(rate(gitpod_ws_manager_workspace_stops_total[1d]))\n  )\n) + (\n  (\n    (sum(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\"}[1d])) OR on() vector(0))\n    \/\n    sum(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\"}[1d]))\n  )\n))",
+          "expr": "1-((\n  (\n    (sum(rate(gitpod_ws_manager_workspace_stops_total{reason=\"failed\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum(rate(gitpod_ws_manager_workspace_stops_total{cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n) + (\n  (\n    (sum(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n))",
           "instant": false,
           "interval": "",
           "legendFormat": "Success Rate",
           "refId": "A"
         }
       ],
-      "title": "Workspace Success Rate Overall",
+      "title": "Workspace Success Rate",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 11,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "mappings": [],
+          "max": 200,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 40
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "interval": "",
+          "legendFormat": "P95",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(\n  0.5, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "hide": false,
+          "legendFormat": "P50",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Workspace Startup Time",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 8,
+      "panels": [],
+      "title": "By Cluster",
+      "type": "row"
     },
     {
       "datasource": {
@@ -180,7 +301,7 @@
         "h": 22,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 10
       },
       "id": 5,
       "options": {
@@ -201,14 +322,14 @@
             "uid": "${datasource}"
           },
           "exemplar": false,
-          "expr": "1-((\n  (\n    (sum by (cluster)(rate(gitpod_ws_manager_workspace_stops_total{reason=\"failed\"}[1d])) OR on() vector(0))\n    \/\n    sum by (cluster)(rate(gitpod_ws_manager_workspace_stops_total[1d]))\n  )\n) + (\n  (\n    (sum by (cluster)(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\"}[1d])) OR on() vector(0))\n    \/\n    sum by (cluster)(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\"}[1d]))\n  )\n))",
+          "expr": "1-((\n  (\n    (sum by (cluster)(rate(gitpod_ws_manager_workspace_stops_total{reason=\"failed\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum by (cluster)(rate(gitpod_ws_manager_workspace_stops_total{cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n) + (\n  (\n    (sum by (cluster)(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum by (cluster)(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n))",
           "instant": false,
           "interval": "",
           "legendFormat": "{{ cluster }}",
           "refId": "A"
         }
       ],
-      "title": "Workspace Success Rate Cluster Wise",
+      "title": "Workspace Success Rate (By Cluster)",
       "type": "timeseries"
     },
     {
@@ -272,9 +393,9 @@
         "h": 27,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 32
       },
-      "id": 2,
+      "id": 6,
       "options": {
         "legend": {
           "calcs": [],
@@ -293,18 +414,18 @@
             "uid": "${datasource}"
           },
           "exemplar": true,
-          "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\"}[1d])\n    ) by (le, cluster)\n  )",
+          "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le, cluster)\n  )",
           "interval": "",
           "legendFormat": "{{cluster}}",
           "refId": "A"
         }
       ],
-      "title": "Workspace Startup Time (95% case)",
+      "title": "Workspace P95 Startup Time (By Cluster)",
       "type": "timeseries"
     }
   ],
   "refresh": "1m",
-  "schemaVersion": 35,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [
     "workspace",
@@ -332,13 +453,9 @@
       },
       {
         "current": {
-          "selected": true,
-          "text": [
-            "us38"
-          ],
-          "value": [
-            "us38"
-          ]
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": {
           "type": "prometheus",
@@ -370,6 +487,6 @@
   "timezone": "",
   "title": "Success Criteria",
   "uid": "jgjwvIc7k",
-  "version": 4,
+  "version": 1,
   "weekStart": ""
 }
