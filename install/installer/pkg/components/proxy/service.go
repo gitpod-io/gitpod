@@ -31,25 +31,29 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	ports := map[string]common.ServicePort{
-		ContainerHTTPName: {
+	ports := []common.ServicePort{
+		{
+			Name:          ContainerHTTPName,
 			ContainerPort: ContainerHTTPPort,
 			ServicePort:   ContainerHTTPPort,
 		},
-		ContainerHTTPSName: {
+		{
+			Name:          ContainerHTTPSName,
 			ContainerPort: ContainerHTTPSPort,
 			ServicePort:   ContainerHTTPSPort,
 		},
-		MetricsContainerName: {
+		{
+			Name:          MetricsContainerName,
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},
 	}
 	if ctx.Config.SSHGatewayHostKey != nil {
-		ports[ContainerSSHName] = common.ServicePort{
+		ports = append(ports, common.ServicePort{
+			Name:          ContainerSSHName,
 			ContainerPort: ContainerSSHPort,
 			ServicePort:   ContainerSSHPort,
-		}
+		})
 	}
 
 	return common.GenerateService(Component, ports, func(service *corev1.Service) {

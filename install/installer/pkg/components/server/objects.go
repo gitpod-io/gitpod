@@ -16,24 +16,29 @@ var Objects = common.CompositeRenderFunc(
 	networkpolicy,
 	role,
 	rolebinding,
-	common.GenerateService(Component, map[string]common.ServicePort{
-		ContainerPortName: {
+	common.GenerateService(Component, []common.ServicePort{
+		{
+			Name:          ContainerPortName,
 			ContainerPort: ContainerPort,
 			ServicePort:   ServicePort,
 		},
-		PrometheusPortName: {
+		{
+			Name:          PrometheusPortName,
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},
-		InstallationAdminName: {
+		{
+			Name:          InstallationAdminName,
 			ContainerPort: InstallationAdminPort,
 			ServicePort:   InstallationAdminPort,
 		},
-		DebugPortName: {
+		{
+			Name:          DebugPortName,
 			ContainerPort: common.DebugPort,
 			ServicePort:   common.DebugPort,
 		},
-		DebugNodePortName: {
+		{
+			Name:          DebugNodePortName,
 			ContainerPort: common.DebugNodePort,
 			ServicePort:   common.DebugNodePort,
 		},
