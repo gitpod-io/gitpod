@@ -18,6 +18,8 @@ import (
 	"github.com/containerd/containerd/remotes"
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/gorilla/handlers"
+	files "github.com/ipfs/go-ipfs-files"
+	icorepath "github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
@@ -120,6 +122,11 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var srcs []BlobSource
+
+		if bh.IPFS != nil {
+			srcs = append(srcs, ipfsBlobSource{source: bh.IPFS})
+		}
+
 		srcs = append(srcs, storeBlobSource{Store: bh.Store})
 		srcs = append(srcs, proxyingBlobSource{Fetcher: fetcher, Blobs: manifest.Layers})
 		srcs = append(srcs, &configBlobSource{Fetcher: fetcher, Spec: bh.Spec, Manifest: manifest, ConfigModifier: bh.ConfigModifier})
@@ -127,10 +134,10 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		var src BlobSource
 		for _, s := range srcs {
-			if !s.HasBlob(ctx, bh.Spec, bh.Digest) {
-				continue
+			if s.HasBlob(ctx, bh.Spec, bh.Digest) {
+				src = s
+				break
 			}
-			src = s
 		}
 		if src == nil {
 			return distv2.ErrorCodeBlobUnknown
@@ -143,6 +150,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		if rc != nil {
 			defer rc.Close()
 		}
+
 		if url != "" {
 			http.Redirect(w, r, url, http.StatusPermanentRedirect)
 			return nil
@@ -164,6 +172,12 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		bh.Metrics.BlobDownloadSpeedHist.Observe(float64(n) / time.Since(t0).Seconds())
 
+		// we are returning a file from IPFS.
+		if _, ok := src.(ipfsBlobSource); ok {
+			log.WithField("digest", bh.Digest).Debug("skipping update of blob that already exists in IPFS")
+			return nil
+		}
+
 		go func() {
 			// we can do this only after the io.Copy above. Otherwise we might expect the blob
 			// to be in the blobstore when in reality it isn't.
@@ -176,7 +190,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 				log.WithField("digest", bh.Digest).Warn("cannot push to IPFS - blob is nil")
 				return
 			}
-			err = bh.IPFS.Store(context.Background(), bh.Digest, rc)
+			err = bh.IPFS.Store(context.Background(), bh.Digest, rc, mediaType)
 			if err != nil {
 				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS")
 			}
@@ -333,4 +347,56 @@ func (pbs *configBlobSource) getConfig(ctx context.Context) (rawCfg []byte, err 
 
 	rawCfg, err = json.Marshal(cfg)
 	return
+}
+
+type ipfsBlobSource struct {
+	source *IPFSBlobCache
+}
+
+func (sbs ipfsBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {
+	_, err := sbs.source.Redis.Get(ctx, dgst.String()).Result()
+	return err == nil
+}
+
+func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+	log := log.WithField("digest", dgst)
+
+	var ipfsCID string
+	ipfsCID, err = sbs.source.Redis.Get(ctx, dgst.String()).Result()
+	if err != nil {
+		log.WithError(err).Error("unable to get blob details from Redis")
+		err = distv2.ErrorCodeBlobUnknown
+		return
+	}
+
+	ipfsFile, err := sbs.source.IPFS.Unixfs().Get(ctx, icorepath.New(ipfsCID))
+	if err != nil {
+		log.WithError(err).Error("unable to get blob from IPFS")
+		err = distv2.ErrorCodeBlobUnknown
+		return
+	}
+
+	f, ok := ipfsFile.(interface {
+		files.File
+		io.ReaderAt
+	})
+	if !ok {
+		log.WithError(err).Error("IPFS file does not support io.ReaderAt")
+		err = distv2.ErrorCodeBlobUnknown
+		return
+	}
+
+	mediaType, err = sbs.source.Redis.Get(ctx, mediaTypeKeyFromDigest(dgst)).Result()
+	if err != nil {
+		log.WithError(err).Error("cannot get media type from Redis")
+		err = distv2.ErrorCodeBlobUnknown
+		return
+	}
+
+	log.Debug("returning blob from IPFS")
+	return mediaType, "", f, nil
+}
+
+func mediaTypeKeyFromDigest(dgst digest.Digest) string {
+	return "mtype:" + dgst.String()
 }
