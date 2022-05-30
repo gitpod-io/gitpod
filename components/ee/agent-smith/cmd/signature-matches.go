@@ -28,6 +28,10 @@ var signatureMatchesCmd = &cobra.Command{
 		}
 		defer f.Close()
 
+		sfc := classifier.SignatureReadCache{
+			Reader: f,
+		}
+
 		if cfgFile == "" {
 			log.Info("no config present - reading signature from STDIN")
 			var sig classifier.Signature
@@ -36,7 +40,7 @@ var signatureMatchesCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			match, err := sig.Matches(f)
+			match, err := sig.Matches(&sfc)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -60,7 +64,7 @@ var signatureMatchesCmd = &cobra.Command{
 		var res []*classifier.Signature
 		for _, bl := range cfg.Blocklists.Levels() {
 			for _, s := range bl.Signatures {
-				m, err := s.Matches(f)
+				m, err := s.Matches(&sfc)
 				if err != nil {
 					log.WithError(err).WithField("signature", s.Name).Warn("cannot match signature")
 					continue
