@@ -1294,7 +1294,7 @@ export class WorkspaceStarter {
             ideImage = ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image;
         }
 
-        let workspaceClass: string = "";
+        let workspaceClass: string = "default";
         if (await this.userService.userGetsMoreResources(user)) {
             workspaceClass = "gitpodio-internal-xl";
         }
