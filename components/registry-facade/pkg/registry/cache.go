@@ -74,7 +74,7 @@ func (store *IPFSBlobCache) Get(ctx context.Context, dgst digest.Digest) (ipfsUR
 }
 
 // Store stores a blob in IPFS. Will happily overwrite/re-upload a blob.
-func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, content io.Reader) (err error) {
+func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, content io.Reader, mediaType string) (err error) {
 	if store == nil || store.IPFS == nil || store.Redis == nil {
 		return nil
 	}
@@ -91,7 +91,10 @@ func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, conte
 		return err
 	}
 
-	res := store.Redis.Set(ctx, dgst.String(), p.Cid().String(), 0)
+	res := store.Redis.MSet(ctx,
+		dgst.String(), p.Cid().String(),
+		mediaTypeKeyFromDigest(dgst), mediaType,
+	)
 	if err := res.Err(); err != nil {
 		return err
 	}
