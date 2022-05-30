@@ -21,12 +21,14 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	ports := map[string]common.ServicePort{
-		PortName: {
+	ports := []common.ServicePort{
+		{
+			Name:          PortName,
 			ContainerPort: ContainerPort,
 			ServicePort:   ServicePort,
 		},
-		PrometheusPortName: {
+		{
+			Name:          PrometheusPortName,
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},

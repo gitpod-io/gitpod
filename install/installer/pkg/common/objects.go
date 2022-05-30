@@ -40,17 +40,18 @@ func DefaultServiceAccount(component string) RenderFunc {
 }
 
 type ServicePort struct {
+	Name          string
 	ContainerPort int32
 	ServicePort   int32
 }
 
-func GenerateService(component string, ports map[string]ServicePort, mod ...func(spec *corev1.Service)) RenderFunc {
+func GenerateService(component string, ports []ServicePort, mod ...func(spec *corev1.Service)) RenderFunc {
 	return func(cfg *RenderContext) ([]runtime.Object, error) {
 		var servicePorts []corev1.ServicePort
-		for name, port := range ports {
+		for _, port := range ports {
 			servicePorts = append(servicePorts, corev1.ServicePort{
 				Protocol:   *TCPProtocol,
-				Name:       name,
+				Name:       port.Name,
 				Port:       port.ServicePort,
 				TargetPort: intstr.IntOrString{IntVal: port.ContainerPort},
 			})
