@@ -41,7 +41,7 @@ export default function PendingChangesDropdown(props: { workspaceInstance?: Work
         return <div className="text-sm text-gray-400 dark:text-gray-500">No Changes</div>;
     }
     return (
-        <ContextMenu menuEntries={menuEntries} classes="w-64 max-h-48 overflow-scroll mx-auto left-0 right-0">
+        <ContextMenu menuEntries={menuEntries} customClasses="w-64 max-h-48 overflow-scroll mx-auto left-0 right-0">
             <p className="flex justify-center text-gitpod-red">
                 <span>
                     {totalChanges} Change{totalChanges === 1 ? "" : "s"}

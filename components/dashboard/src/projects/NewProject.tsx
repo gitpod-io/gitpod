@@ -376,7 +376,10 @@ export default function NewProject() {
                 </p>
                 <div className={`mt-2 flex-col ${noReposAvailable && isGitHub() ? "w-96" : ""}`}>
                     <div className="px-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
-                        <ContextMenu classes="w-full left-0 cursor-pointer" menuEntries={getDropDownEntries(accounts)}>
+                        <ContextMenu
+                            customClasses="w-full left-0 cursor-pointer"
+                            menuEntries={getDropDownEntries(accounts)}
+                        >
                             <div className="w-full">
                                 {!selectedAccount && user && user.name && user.avatarUrl && (
                                     <>

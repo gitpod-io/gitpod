@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 export interface ContextMenuProps {
     children?: React.ReactChild[] | React.ReactChild;
     menuEntries: ContextMenuEntry[];
-    classes?: string;
+    customClasses?: string;
 }
 
 export interface ContextMenuEntry {
@@ -98,7 +98,7 @@ function ContextMenu(props: ContextMenuProps) {
             {expanded ? (
                 <div
                     className={`mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated ${
-                        props.classes || "w-48 right-0"
+                        props.customClasses || "w-48 right-0"
                     }`}
                     data-analytics='{"button_type":"context_menu"}'
                 >
