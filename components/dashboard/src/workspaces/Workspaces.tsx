@@ -85,7 +85,7 @@ export default function () {
                             <div className="py-3 pl-3">
                                 <DropDown
                                     prefix="Limit: "
-                                    contextMenuWidth="w-32"
+                                    customClasses="w-32"
                                     activeEntry={workspaceModel ? workspaceModel?.limit + "" : undefined}
                                     entries={[
                                         {

@@ -10,7 +10,7 @@ import ContextMenu from "./ContextMenu";
 
 export interface DropDownProps {
     prefix?: string;
-    contextMenuWidth?: string;
+    customClasses?: string;
     activeEntry?: string;
     entries: DropDownEntry[];
 }
@@ -38,7 +38,7 @@ function DropDown(props: DropDownProps) {
     const font =
         "text-gray-400 dark:text-gray-500 text-sm leading-1 group hover:text-gray-600 dark:hover:text-gray-400 transition ease-in-out";
     return (
-        <ContextMenu menuEntries={enhancedEntries} classes={`${props.contextMenuWidth} right-0`}>
+        <ContextMenu menuEntries={enhancedEntries} customClasses={`${props.customClasses} right-0`}>
             <span className={`py-2 cursor-pointer ${font}`}>
                 {props.prefix}
                 {current}

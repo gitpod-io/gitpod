@@ -145,7 +145,7 @@ export default function () {
                     <div className="py-3 pl-3">
                         <DropDown
                             prefix="Role: "
-                            contextMenuWidth="w-32"
+                            customClasses="w-32"
                             activeEntry={roleFilter === "owner" ? "Owner" : roleFilter === "member" ? "Member" : "All"}
                             entries={[
                                 {
@@ -226,7 +226,7 @@ export default function () {
                                             m.role
                                         ) : (
                                             <DropDown
-                                                contextMenuWidth="w-32"
+                                                customClasses="w-32"
                                                 activeEntry={m.role}
                                                 entries={[
                                                     {
