@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 
@@ -188,11 +189,17 @@ func remapFile(name string, uid, gid int, xattrs map[string]string) error {
 	}
 
 	for key, value := range xattrs {
+		// do not set trusted attributes
+		if strings.HasPrefix(key, "trusted.") {
+			continue
+		}
+
 		if err := unix.Lsetxattr(name, key, []byte(value), 0); err != nil {
-			log.WithField("name", key).WithField("value", value).WithField("file", name).WithError(err).Error("restoring extended attributes")
 			if err == syscall.ENOTSUP || err == syscall.EPERM {
 				continue
 			}
+
+			log.WithField("name", key).WithField("value", value).WithField("file", name).WithError(err).Error("restoring extended attributes")
 
 			return err
 		}
