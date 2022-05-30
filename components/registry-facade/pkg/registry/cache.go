@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sync"
 	"time"
 
 	"github.com/containerd/containerd/content"
@@ -24,33 +23,6 @@ import (
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/xerrors"
 )
-
-// ipfsManifestModifier modifies a manifest and adds IPFS URLs to the layers
-func (reg *Registry) ipfsManifestModifier(mf *ociv1.Manifest) error {
-	if reg.IPFS == nil {
-		return nil
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	var wg sync.WaitGroup
-	for i, l := range mf.Layers {
-		wg.Add(1)
-		go func(i int, dgst digest.Digest) {
-			defer wg.Done()
-
-			url, _ := reg.IPFS.Get(ctx, dgst)
-			if url == "" {
-				return
-			}
-			mf.Layers[i].URLs = append(mf.Layers[i].URLs, url)
-		}(i, l.Digest)
-	}
-	wg.Wait()
-
-	return nil
-}
 
 // IPFSBlobCache can cache blobs in IPFS
 type IPFSBlobCache struct {
