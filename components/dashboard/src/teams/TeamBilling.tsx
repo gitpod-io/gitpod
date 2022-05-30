@@ -143,13 +143,14 @@ export default function TeamBilling() {
             title="Billing"
             subtitle="Manage team billing and plans."
         >
-            <h3>{!teamPlan ? "No billing plan" : "Plan"}</h3>
+            <h3>{!teamPlan ? "Upgrade Team Plan" : "Team Plan"}</h3>
             <h2 className="text-gray-500">
                 {!teamPlan ? (
                     <div className="flex space-x-1">
-                        <span>Select a new billing plan for this team. Currency:</span>
+                        <span>Upgrade team plan to access unlimited workspace hours, and more. Currency:</span>
                         <DropDown
                             customClasses="w-32"
+                            renderAsLink={true}
                             activeEntry={currency}
                             entries={[
                                 {
@@ -193,9 +194,20 @@ export default function TeamBilling() {
                                     onClick={() => checkout(tp)}
                                 >
                                     <div className="px-2 py-5 flex-grow flex flex-col">
-                                        <div className="font-medium text-base">{tp.name}</div>
-                                        <div className="font-semibold text-gray-500 text-sm">Unlimited hours</div>
-                                        <div className="mt-8 font-semibold text-sm">Includes:</div>
+                                        <div className="font-semibold text-gray-800 dark:text-gray-100 text-lg">
+                                            {tp.name}
+                                        </div>
+                                        <div className="font-semibold text-gray-400 dark:text-gray-600 text-sm">
+                                            Unlimited hours
+                                        </div>
+                                        <div className="mt-4">
+                                            <PillLabel type="warn" className="font-semibold normal-case text-sm">
+                                                {members.length} x {Currency.getSymbol(tp.currency)}
+                                                {tp.pricePerMonth} = {Currency.getSymbol(tp.currency)}
+                                                {members.length * tp.pricePerMonth} per month
+                                            </PillLabel>
+                                        </div>
+                                        <div className="mt-4 font-semibold text-sm">Includes:</div>
                                         <div className="flex flex-col items-start text-sm">
                                             {(featuresByPlanType[tp.type] || []).map((f) => (
                                                 <span className="inline-flex space-x-1">
@@ -204,13 +216,7 @@ export default function TeamBilling() {
                                                 </span>
                                             ))}
                                         </div>
-                                        <div className="flex-grow flex flex-col items-end justify-end">
-                                            <PillLabel type="warn" className="font-semibold normal-case text-sm">
-                                                {members.length} x {Currency.getSymbol(tp.currency)}
-                                                {tp.pricePerMonth} = {Currency.getSymbol(tp.currency)}
-                                                {members.length * tp.pricePerMonth} per month
-                                            </PillLabel>
-                                        </div>
+                                        <div className="flex-grow flex flex-col items-end justify-end"></div>
                                     </div>
                                 </SolidCard>
                             </>
@@ -221,8 +227,12 @@ export default function TeamBilling() {
                     <>
                         <Card>
                             <div className="px-2 py-5 flex-grow flex flex-col">
-                                <div className="font-bold text-base">{teamPlan.name}</div>
-                                <div className="font-semibold text-gray-500 text-sm">Unlimited hours</div>
+                                <div className="font-semibold text-gray-100 dark:text-gray-800 text-lg">
+                                    {teamPlan.name}
+                                </div>
+                                <div className="font-semibold text-gray-400 dark:text-gray-600 text-sm">
+                                    Unlimited hours
+                                </div>
                                 <div className="mt-8 font-semibold text-sm">Includes:</div>
                                 <div className="flex flex-col items-start text-sm">
                                     {(featuresByPlanType[teamPlan.type] || []).map((f) => (
@@ -244,10 +254,16 @@ export default function TeamBilling() {
                         ) : (
                             <SolidCard>
                                 <div className="px-2 py-5 flex-grow flex flex-col">
-                                    <div className="font-medium text-base text-gray-400">Members</div>
-                                    <div className="font-semibold text-base text-gray-600">{members.length}</div>
-                                    <div className="mt-8 font-medium text-base text-gray-400">Next invoice on</div>
-                                    <div className="font-semibold text-base text-gray-600">
+                                    <div className="font-medium text-base text-gray-400 dark:text-gray-600">
+                                        Members
+                                    </div>
+                                    <div className="font-semibold text-base text-gray-600 dark:text-gray-400">
+                                        {members.length}
+                                    </div>
+                                    <div className="mt-8 font-medium text-base text-gray-400 dark:text-gray-600">
+                                        Next invoice on
+                                    </div>
+                                    <div className="font-semibold text-base text-gray-600 dark:text-gray-400">
                                         {guessNextInvoiceDate(teamSubscription.startDate).toDateString()}
                                     </div>
                                     <div className="flex-grow flex flex-col items-end justify-end">
