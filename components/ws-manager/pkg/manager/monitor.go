@@ -795,8 +795,9 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	hist, errHist := m.manager.metrics.initializeTimeHistVec.GetMetricWithLabelValues(wsType)
 	if errHist != nil {
 		log.WithError(errHist).WithField("type", wsType).Warn("cannot get initialize time histogram metric")
+	} else {
+		hist.Observe(time.Since(t).Seconds())
 	}
-	hist.Observe(time.Since(t).Seconds())
 	if err != nil {
 		return xerrors.Errorf("cannot initialize workspace: %w", err)
 	}
@@ -1023,8 +1024,9 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType)
 				if err != nil {
 					log.WithError(err).WithField("type", wsType).Warn("cannot get volume snapshot time histogram metric")
+				} else {
+					hist.Observe(time.Since(volumeSnapshotTime).Seconds())
 				}
-				hist.Observe(time.Since(volumeSnapshotTime).Seconds())
 			}
 			if readyVolumeSnapshot && !markVolumeSnapshotAnnotation {
 				log = log.WithField("VolumeSnapshotContent.Name", pvcVolumeSnapshotContentName)
@@ -1167,8 +1169,9 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	hist, err := m.manager.metrics.finalizeTimeHistVec.GetMetricWithLabelValues(wsType)
 	if err != nil {
 		log.WithError(err).WithField("type", wsType).Warn("cannot get finalize time histogram metric")
+	} else {
+		hist.Observe(time.Since(t).Seconds())
 	}
-	hist.Observe(time.Since(t).Seconds())
 
 	disposalStatus = &workspaceDisposalStatus{
 		BackupComplete: true,
