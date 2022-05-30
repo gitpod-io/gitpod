@@ -52,13 +52,12 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 	}
 
 	manifestHandler := &manifestHandler{
-		Context:          ctx,
-		Name:             name,
-		Spec:             spec,
-		Resolver:         reg.Resolver(),
-		Store:            reg.Store,
-		ConfigModifier:   reg.ConfigModifier,
-		ManifestModifier: reg.ipfsManifestModifier,
+		Context:        ctx,
+		Name:           name,
+		Spec:           spec,
+		Resolver:       reg.Resolver(),
+		Store:          reg.Store,
+		ConfigModifier: reg.ConfigModifier,
 	}
 	reference := getReference(ctx)
 	dgst, err := digest.Parse(reference)
@@ -87,11 +86,10 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 type manifestHandler struct {
 	Context context.Context
 
-	Spec             *api.ImageSpec
-	Resolver         remotes.Resolver
-	Store            BlobStore
-	ConfigModifier   ConfigModifier
-	ManifestModifier func(*ociv1.Manifest) error
+	Spec           *api.ImageSpec
+	Resolver       remotes.Resolver
+	Store          BlobStore
+	ConfigModifier ConfigModifier
 
 	Name   string
 	Tag    string
@@ -209,14 +207,6 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 				err = w.Commit(ctx, 0, cfgDgst, content.WithLabels(contentTypeLabel(manifest.Config.MediaType)))
 				if err != nil {
 					log.WithError(err).WithFields(logFields).Warn("cannot commit config to store - we'll regenerate it on demand")
-				}
-			}
-
-			// We might have additional modifications, e.g. adding IPFS URLs to the layers
-			if mh.ManifestModifier != nil {
-				err = mh.ManifestModifier(manifest)
-				if err != nil {
-					log.WithError(err).WithFields(logFields).Warn("cannot modify manifest")
 				}
 			}
 
