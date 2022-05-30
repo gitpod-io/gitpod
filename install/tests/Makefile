@@ -83,6 +83,10 @@ check-gitpod-installation:
 	sleep 300
 	@kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}'
 
+.PHONY:
+run-tests:
+	tests.sh ${KUBECONFIG}
+
 cleanup:
 	terraform workspace select $(TF_VAR_TEST_ID)
 	which ${KUBECONFIG} && terraform destroy -target=module.tools -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"

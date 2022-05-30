@@ -50,9 +50,9 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         description: "Check gitpod installation",
     },
     RUN_INTEGRATION_TESTS: {
-        phase: "",
-        makeTarget: "",
-        description: "",
+        phase: "run-integration-tests",
+        makeTarget: "run-tests",
+        description: "Runs the existing integration tests on Gitpod",
     },
     DESTROY: {
         phase: "destroy",
@@ -81,7 +81,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
             "GCP_MANAGED_DNS",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
-            // INFRA_PHASES.RUN_INTEGRATION_TESTS,
+            "RUN_INTEGRATION_TESTS",
             "RESULTS",
             "DESTROY",
         ],
@@ -94,8 +94,8 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
             "STANDARD_K3S_CLUSTER_ON_GCP",
             "GCP_MANAGED_DNS",
             "INSTALL_GITPOD_IGNORE_PREFLIGHTS",
-            // INFRA_PHASES.RUN_INTEGRATION_TESTS
             "CHECK_INSTALLATION",
+            "RUN_INTEGRATION_TESTS",
             "RESULTS",
             "DESTROY",
         ],
@@ -122,7 +122,6 @@ if (config === undefined) {
 
 installerTests(TEST_CONFIGURATIONS[testConfig]).catch((err) => {
     cleanup();
-    // TODO handle the werft result
     console.error(err);
     process.exit(1);
 });
