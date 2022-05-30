@@ -143,7 +143,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 			return distv2.ErrorCodeBlobUnknown
 		}
 
-		mediaType, url, rc, err := src.GetBlob(ctx, bh.Spec, bh.Digest)
+		dontCache, mediaType, url, rc, err := src.GetBlob(ctx, bh.Spec, bh.Digest)
 		if err != nil {
 			return err
 		}
@@ -172,16 +172,14 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		bh.Metrics.BlobDownloadSpeedHist.Observe(float64(n) / time.Since(t0).Seconds())
 
-		// we are returning a file from IPFS.
-		if _, ok := src.(ipfsBlobSource); ok {
-			log.WithField("digest", bh.Digest).Debug("skipping update of blob that already exists in IPFS")
+		if dontCache {
 			return nil
 		}
 
 		go func() {
 			// we can do this only after the io.Copy above. Otherwise we might expect the blob
 			// to be in the blobstore when in reality it isn't.
-			_, _, rc, err := src.GetBlob(context.Background(), bh.Spec, bh.Digest)
+			_, _, _, rc, err := src.GetBlob(context.Background(), bh.Spec, bh.Digest)
 			if err != nil {
 				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS - unable to get blob")
 				return
@@ -240,7 +238,7 @@ type BlobSource interface {
 
 	// GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 	// call close on it eventually.
-	GetBlob(ctx context.Context, details *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error)
+	GetBlob(ctx context.Context, details *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error)
 }
 
 type storeBlobSource struct {
@@ -252,7 +250,7 @@ func (sbs storeBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgs
 	return err == nil
 }
 
-func (sbs storeBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (sbs storeBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	info, err := sbs.Store.Info(ctx, dgst)
 	if err != nil {
 		return
@@ -263,7 +261,7 @@ func (sbs storeBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgs
 		return
 	}
 
-	return info.Labels["Content-Type"], "", &reader{ReaderAt: r}, nil
+	return false, info.Labels["Content-Type"], "", &reader{ReaderAt: r}, nil
 }
 
 type proxyingBlobSource struct {
@@ -280,7 +278,7 @@ func (pbs proxyingBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, 
 	return false
 }
 
-func (pbs proxyingBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (pbs proxyingBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	var src ociv1.Descriptor
 	for _, b := range pbs.Blobs {
 		if b.Digest == dgst {
@@ -297,7 +295,7 @@ func (pbs proxyingBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, 
 	if err != nil {
 		return
 	}
-	return src.MediaType, "", r, nil
+	return false, src.MediaType, "", r, nil
 }
 
 type configBlobSource struct {
@@ -318,7 +316,7 @@ func (pbs *configBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, d
 	return cfgDgst == dgst
 }
 
-func (pbs *configBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (pbs *configBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	if !pbs.HasBlob(ctx, spec, dgst) {
 		err = distv2.ErrorCodeBlobUnknown
 		return
@@ -358,7 +356,7 @@ func (sbs ipfsBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst
 	return err == nil
 }
 
-func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	log := log.WithField("digest", dgst)
 
 	var ipfsCID string
@@ -394,7 +392,7 @@ func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 	}
 
 	log.Debug("returning blob from IPFS")
-	return mediaType, "", f, nil
+	return true, mediaType, "", f, nil
 }
 
 func mediaTypeKeyFromDigest(dgst digest.Digest) string {

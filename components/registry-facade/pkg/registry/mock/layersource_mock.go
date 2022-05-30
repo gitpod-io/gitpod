@@ -58,14 +58,15 @@ func (mr *MockLayerSourceMockRecorder) Envs(arg0, arg1 interface{}) *gomock.Call
 }
 
 // GetBlob mocks base method.
-func (m *MockLayerSource) GetBlob(arg0 context.Context, arg1 *api.ImageSpec, arg2 digest.Digest) (string, string, io.ReadCloser, error) {
+func (m *MockLayerSource) GetBlob(arg0 context.Context, arg1 *api.ImageSpec, arg2 digest.Digest) (bool, string, string, io.ReadCloser, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBlob", arg0, arg1, arg2)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(string)
-	ret2, _ := ret[2].(io.ReadCloser)
-	ret3, _ := ret[3].(error)
-	return ret0, ret1, ret2, ret3
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[0].(string)
+	ret2, _ := ret[1].(string)
+	ret3, _ := ret[2].(io.ReadCloser)
+	ret4, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3, ret4
 }
 
 // GetBlob indicates an expected call of GetBlob.
