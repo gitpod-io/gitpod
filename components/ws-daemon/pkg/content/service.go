@@ -39,6 +39,11 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 )
 
+// Metrics combine custom metrics exported by WorkspaceService
+type metrics struct {
+	BackupWaitingTimeHist prometheus.Histogram
+}
+
 // WorkspaceService implements the InitService and WorkspaceService
 type WorkspaceService struct {
 	config Config
@@ -47,6 +52,8 @@ type WorkspaceService struct {
 	ctx         context.Context
 	stopService context.CancelFunc
 	runtime     container.Runtime
+
+	metrics *metrics
 
 	api.UnimplementedInWorkspaceServiceServer
 	api.UnimplementedWorkspaceContentServiceServer
@@ -80,7 +87,13 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 	ctx, stopService := context.WithCancel(ctx)
 
 	if err := registerWorkingAreaDiskspaceGauge(cfg.WorkingArea, reg); err != nil {
-		log.WithError(err).Warn("cannot register Prometheus gauge for working area diskspace")
+		return nil, xerrors.Errorf("cannot register Prometheus gauge for working area diskspace: %w", err)
+	}
+
+	waitingTimeHist, err := registerConcurrentBackupWaitingTime(reg)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot register Prometheus gauge for babkup waiting time: %w", err)
+
 	}
 
 	return &WorkspaceService{
@@ -89,6 +102,8 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 		ctx:         ctx,
 		stopService: stopService,
 		runtime:     runtime,
+
+		metrics: &metrics{waitingTimeHist},
 	}, nil
 }
 
@@ -111,6 +126,21 @@ func registerWorkingAreaDiskspaceGauge(workingArea string, reg prometheus.Regist
 		bvail := stat.Bavail * uint64(stat.Bsize)
 		return float64(bvail)
 	}))
+}
+
+func registerConcurrentBackupWaitingTime(reg prometheus.Registerer) (prometheus.Histogram, error) {
+	backupWaitingTime := prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "concurrent_backup_waiting_seconds",
+		Help:    "waiting time for concurrent backups to finish",
+		Buckets: []float64{5, 10, 30, 60, 120, 180, 300, 600, 1800},
+	})
+
+	err := reg.Register(backupWaitingTime)
+	if err != nil {
+		return nil, err
+	}
+
+	return backupWaitingTime, nil
 }
 
 // Start starts this workspace service and returns when the service gets stopped.
@@ -414,7 +444,9 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 	// Avoid too many simultaneous backups in order to avoid excessive memory utilization.
 	waitStart := time.Now()
 	backupWorkspaceLimiter <- true
-	log.WithField("workspace", sess.WorkspaceID).Infof("waiting time for concurrent backups to finish was %v", time.Since(waitStart).String())
+
+	s.metrics.BackupWaitingTimeHist.Observe(time.Since(waitStart).Seconds())
+
 	defer func() {
 		<-backupWorkspaceLimiter
 	}()
