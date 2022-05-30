@@ -10,9 +10,9 @@ metadata:
     app: gitpod
     component: gitpod-installer
 data:
-  channelName: '{{repl ChannelName }}'
-  cursor: '{{repl Cursor }}'
-  isAirgap: '{{repl IsAirgap }}'
-  releaseNotes: '{{repl ReleaseNotes }}'
-  sequence: '{{repl Sequence }}'
-  version: '{{repl VersionLabel }}'
+  channelName: repl{{ ChannelName | quote }}
+  cursor: repl{{ Cursor | quote }}
+  isAirgap: repl{{ IsAirgap | quote }}
+  releaseNotes: repl{{ ReleaseNotes | quote }}
+  sequence: repl{{ Sequence | quote }}
+  version: repl{{ VersionLabel | quote }}
