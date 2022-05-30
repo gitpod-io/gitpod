@@ -114,7 +114,7 @@ func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *confi
 		overrideConfig = string(cfgBytes)
 	}
 
-	rawCfg, cfgVersion, err = config.Load(overrideConfig)
+	rawCfg, cfgVersion, err = config.Load(overrideConfig, rootOpts.StrictConfigParse)
 	if err != nil {
 		err = fmt.Errorf("error loading config: %w", err)
 		return

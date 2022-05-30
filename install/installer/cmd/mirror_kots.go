@@ -33,7 +33,7 @@ https://docs.replicated.com/reference/custom-resource-application#additionalimag
 	Example: "gitpod-installer mirror kots --file ../kots/manifests/kots-app.yaml",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Build a virtual config file
-		rawCfg, cfgVersion, err := config.Load("")
+		rawCfg, cfgVersion, err := config.Load("", rootOpts.StrictConfigParse)
 		if err != nil {
 			return err
 		}
