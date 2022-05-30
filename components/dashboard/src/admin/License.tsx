@@ -50,7 +50,7 @@ export default function License() {
                 subtitle="License associated with your Gitpod installation"
             >
                 <div className="flex flex-row space-x-4">
-                    <Card>
+                    <Card className="w-72 h-64">
                         <span>
                             {licenseLevel}
                             {paid}
@@ -70,7 +70,7 @@ export default function License() {
                             </div>
                         </span>
                     </Card>
-                    <SolidCard>
+                    <SolidCard className="w-72 h-64">
                         <span>
                             <div className="my-2">{statusMessage}</div>
                             <p className="dark:text-gray-500 font-semibold">Registered Users</p>
