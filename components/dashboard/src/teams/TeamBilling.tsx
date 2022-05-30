@@ -149,7 +149,7 @@ export default function TeamBilling() {
                     <div className="flex space-x-1">
                         <span>Select a new billing plan for this team. Currency:</span>
                         <DropDown
-                            contextMenuWidth="w-32"
+                            customClasses="w-32"
                             activeEntry={currency}
                             entries={[
                                 {

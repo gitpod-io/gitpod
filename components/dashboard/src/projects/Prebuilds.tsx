@@ -180,7 +180,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                     </div>
                     <div className="flex-1" />
                     <div className="py-3 pl-3">
-                        <DropDown prefix="Prebuild Status: " contextMenuWidth="w-32" entries={statusFilterEntries()} />
+                        <DropDown prefix="Prebuild Status: " customClasses="w-32" entries={statusFilterEntries()} />
                     </div>
                     {!isLoadingPrebuilds && prebuilds.length === 0 && !props.isAdminDashboard && (
                         <button onClick={() => triggerPrebuild(null)} className="ml-2">

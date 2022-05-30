@@ -281,7 +281,7 @@ export default function Menu() {
                 )}
                 <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
                     <ContextMenu
-                        classes="w-64 left-0"
+                        customClasses="w-64 left-0"
                         menuEntries={[
                             {
                                 title: userFullName,
