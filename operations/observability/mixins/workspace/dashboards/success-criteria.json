@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "iteration": 1653910692618,
+  "iteration": 1653910692634,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -160,7 +160,6 @@
             }
           },
           "mappings": [],
-          "max": 200,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -298,7 +297,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 22,
+        "h": 14,
         "w": 24,
         "x": 0,
         "y": 10
@@ -390,10 +389,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 27,
+        "h": 15,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 24
       },
       "id": 6,
       "options": {
