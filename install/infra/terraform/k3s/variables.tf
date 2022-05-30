@@ -20,3 +20,8 @@ variable "gcp_zone" {
 variable "credentials" {
     description = "Path to the JSON file storing Google service account credentials"
 }
+
+variable "name" {
+    description = "Prefix name for the nodes and firewall"
+    default = "k3s"
+}

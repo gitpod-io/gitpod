@@ -1,5 +1,5 @@
 variable "kubeconfig" {}
-variable "sub_domain" {
+variable "TEST_ID" {
     default = "nightly"
 }
 variable "project" {
@@ -18,6 +18,7 @@ terraform {
 module "gke" {
     source      = "github.com/gitpod-io/gitpod//install/infra/terraform/gke?ref=nvn-infra-tf" # we can later use tags here
 
+    name  = var.TEST_ID
     project = var.project
     credentials = var.sa_creds
     kubeconfig  = var.kubeconfig
@@ -26,6 +27,7 @@ module "gke" {
 module "k3s" {
     source      = "github.com/gitpod-io/gitpod//install/infra/terraform/k3s?ref=nvn-infra-tf" # we can later use tags here
 
+    name  = var.TEST_ID
     gcp_project = var.project
     credentials = var.sa_creds
     kubeconfig  = var.kubeconfig
@@ -37,5 +39,5 @@ module "tools" {
 
     kubeconfig      = var.kubeconfig
     credentials     = var.dns_sa_creds
-    gcp_sub_domain  = var.sub_domain
+    gcp_sub_domain  = var.TEST_ID
 }

@@ -31,7 +31,7 @@ resource "local_file" "ssh_private_key_pem" {
 }
 
 resource "google_compute_instance" "k3s_master_instance" {
-  name         = "k3s-master"
+  name    = "master-${var.name}"
   machine_type = "n2d-standard-4"
   tags         = ["k3s", "k3s-master", "http-server", "https-server"]
 
@@ -96,7 +96,7 @@ data "local_file" "kubeconfig" {
 }
 
 resource "google_compute_firewall" "k3s-firewall" {
-  name    = "k3s-firewall"
+  name    = "firewall-${var.name}"
   network = "default"
 
   allow {

@@ -8,8 +8,8 @@ TOPDIR=$(shell pwd)
 KUBECONFIG := "$(TOPDIR)/kubeconfig"
 
 check-env-sub-domain:
-ifndef TF_VAR_sub_domain
-	$(error TF_VAR_sub_domain is not defined)
+ifndef TF_VAR_TEST_ID
+	$(error TF_VAR_TEST_ID is not defined)
 endif
 
 .PHONY: help
@@ -25,7 +25,7 @@ help: Makefile
 ## gke-standard-cluster: Creates a zonal GKE cluster
 gke-standard-cluster:
 	terraform init --upgrade && \
-	terraform workspace new $(TF_VAR_sub_domain) && \
+	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.gke \
 	-var kubeconfig=${KUBECONFIG} --auto-approve
 
@@ -33,7 +33,7 @@ gke-standard-cluster:
 ## k3s-standard-cluster: Creates a K3S cluster on GCP with one master and 1 worker node
 k3s-standard-cluster:
 	terraform init --upgrade && \
-	terraform workspace new $(TF_VAR_sub_domain) && \
+	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.k3s \
 	-var kubeconfig=${KUBECONFIG} --auto-approve
 
@@ -43,7 +43,7 @@ CLUSTER_ISSUER_CLOUD_DNS := "./manifests/gcp-issuer.yaml"
 .PHONY:
 ## managed-dns-with-cert-manager: Installs cert-manager, external-dns, and setup up CloudDNS
 managed-dns-with-cert-manager: check-env-sub-domain
-	terraform workspace select $(TF_VAR_sub_domain) && \
+	terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.tools -var kubeconfig=${KUBECONFIG} --auto-approve && \
 	kubectl --kubeconfig=${KUBECONFIG} apply -f ${CLUSTER_ISSUER_CLOUD_DNS}
 
@@ -84,7 +84,7 @@ check-gitpod-installation:
 	@kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}'
 
 cleanup:
-	# terraform workspace select $(TF_VAR_sub_domain)
+	terraform workspace select $(TF_VAR_TEST_ID)
 	which ${KUBECONFIG} && terraform destroy -target=module.tools -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 	terraform destroy -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 	terraform destroy -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve
@@ -92,7 +92,7 @@ cleanup:
 get-results:
 	@echo "If you have gotten this far, it means your setup succeeded"
 	@echo
-	@echo "URL of your setup is: "https://$(TF_VAR_sub_domain).gitpod-self-hosted.com""
+	@echo "URL of your setup is: "https://$(TF_VAR_TEST_ID).gitpod-self-hosted.com""
 	@echo
 	@echo "Following is the KUBECONFIG you can use to connect to the cluster:"
 	@echo

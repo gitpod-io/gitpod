@@ -10,13 +10,13 @@ provider "google" {
 }
 
 resource "google_compute_network" "vpc" {
-  name                    = "${var.name}-vpc"
+  name                    = "vpc-${var.name}"
   auto_create_subnetworks = "false"
 }
 
 # Subnet
 resource "google_compute_subnetwork" "subnet" {
-  name          = "${var.name}-subnet"
+  name          = "subnet-${var.name}"
   region        = var.region
   network       = google_compute_network.vpc.name
   ip_cidr_range = "10.255.0.0/16"
@@ -33,7 +33,7 @@ resource "google_compute_subnetwork" "subnet" {
 }
 
 resource "google_container_cluster" "gitpod-cluster" {
-  name     = var.name
+  name     = "c${var.name}"
   location = "${var.zone}" == "" ? "${var.region}" : "${var.region}-${var.zone}"
 
   cluster_autoscaling {
@@ -94,7 +94,7 @@ resource "google_container_cluster" "gitpod-cluster" {
 }
 
 resource "google_container_node_pool" "services" {
-  name       = "${var.name}-services"
+  name       = "services-${var.name}"
   location   = google_container_cluster.gitpod-cluster.location
   cluster    = google_container_cluster.gitpod-cluster.name
   version    = var.kubernetes_version // kubernetes version
@@ -135,7 +135,7 @@ resource "google_container_node_pool" "services" {
 }
 
 resource "google_container_node_pool" "workspaces" {
-  name       = "${var.name}-workspaces"
+  name       = "workspaces-${var.name}"
   location     = google_container_cluster.gitpod-cluster.location
   cluster    = google_container_cluster.gitpod-cluster.name
   version    = var.kubernetes_version // kubernetes version
@@ -184,7 +184,7 @@ module "gke_auth" {
 
   project_id   = var.project
   location     = google_container_cluster.gitpod-cluster.location
-  cluster_name = var.name
+  cluster_name = "c${var.name}"
 }
 
 resource "local_file" "kubeconfig" {
