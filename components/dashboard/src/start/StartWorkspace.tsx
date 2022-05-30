@@ -131,7 +131,13 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
 
         try {
-            this.toDispose.push(getGitpodService().registerClient(this));
+            this.toDispose.push(
+                getGitpodService().registerClient({
+                    notifyDidOpenConnection: () => this.fetchWorkspaceInfo(undefined),
+                    onInstanceUpdate: (workspaceInstance: WorkspaceInstance) =>
+                        this.onInstanceUpdate(workspaceInstance),
+                }),
+            );
         } catch (error) {
             console.error(error);
             this.setState({ error });
@@ -295,10 +301,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     protected async fetchIDEOptions() {
         const ideOptions = await getGitpodService().server.getIDEOptions();
         this.setState({ ideOptions });
-    }
-
-    notifyDidOpenConnection() {
-        this.fetchWorkspaceInfo(undefined);
     }
 
     async onInstanceUpdate(workspaceInstance: WorkspaceInstance) {
