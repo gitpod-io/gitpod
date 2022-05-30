@@ -461,9 +461,9 @@ interface RunningPrebuildViewProps {
 }
 
 function RunningPrebuildView(props: RunningPrebuildViewProps) {
-    const logsEmitter = new EventEmitter();
-    let pollTimeout: NodeJS.Timeout | undefined;
-    let prebuildDoneTriggered: boolean = false;
+    const [logsEmitter] = useState(new EventEmitter());
+    const [pollTimeout, setPollTimeout] = useState<NodeJS.Timeout | undefined>();
+    const [prebuildDoneTriggered, setPrebuildDoneTriggered] = useState<boolean>(false);
 
     useEffect(() => {
         const checkIsPrebuildDone = async (): Promise<boolean> => {
@@ -476,7 +476,7 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
             if (done) {
                 // note: this treats "done" as "available" which is not equivalent.
                 // This works because the backend ignores prebuilds which are not "available", and happily starts a workspace as if there was no prebuild at all.
-                prebuildDoneTriggered = true;
+                setPrebuildDoneTriggered(true);
                 props.onPrebuildSucceeded();
                 return true;
             }
@@ -485,7 +485,7 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
         const pollIsPrebuildDone = async () => {
             clearTimeout(pollTimeout!);
             await checkIsPrebuildDone();
-            pollTimeout = setTimeout(pollIsPrebuildDone, 10000);
+            setPollTimeout(setTimeout(pollIsPrebuildDone, 10000));
         };
 
         const disposables = watchHeadlessLogs(

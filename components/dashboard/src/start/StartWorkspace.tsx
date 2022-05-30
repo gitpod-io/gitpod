@@ -19,7 +19,7 @@ import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import EventEmitter from "events";
 import * as queryString from "query-string";
-import React, { Suspense, useEffect } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { v4 } from "uuid";
 import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
@@ -661,7 +661,7 @@ interface ImageBuildViewProps {
 }
 
 function ImageBuildView(props: ImageBuildViewProps) {
-    const logsEmitter = new EventEmitter();
+    const [logsEmitter] = useState(new EventEmitter());
 
     useEffect(() => {
         let registered = false;
@@ -669,11 +669,12 @@ function ImageBuildView(props: ImageBuildViewProps) {
             if (registered) {
                 return;
             }
+            registered = true;
 
             getGitpodService()
                 .server.watchWorkspaceImageBuildLogs(props.workspaceId)
-                .then(() => (registered = true))
                 .catch((err) => {
+                    registered = false;
                     if (err?.code === ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE) {
                         // wait, and then retry
                         setTimeout(watchBuild, 5000);
@@ -718,7 +719,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
 }
 
 function HeadlessWorkspaceView(props: { instanceId: string }) {
-    const logsEmitter = new EventEmitter();
+    const [logsEmitter] = useState(new EventEmitter());
 
     useEffect(() => {
         const disposables = watchHeadlessLogs(
