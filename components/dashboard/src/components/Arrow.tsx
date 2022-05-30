@@ -4,10 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-function Arrow(props: { up: boolean }) {
+function Arrow(props: { up: boolean; customBorderClasses?: string }) {
     return (
         <span
-            className="mx-2 border-gray-400 dark:border-gray-600 group-hover:border-gray-600 dark:group-hover:border-gray-400"
+            className={
+                "mx-2 " +
+                (props.customBorderClasses ||
+                    "border-gray-400 dark:border-gray-600 group-hover:border-gray-600 dark:group-hover:border-gray-400")
+            }
             style={{
                 marginTop: 2,
                 marginBottom: 2,
