@@ -194,10 +194,19 @@ func remapFile(name string, uid, gid int, xattrs map[string]string) error {
 			continue
 		}
 
+		if strings.HasPrefix(key, "user.") {
+			// This is a marker to match inodes, such as when an upper layer copies a lower layer file in overlayfs.
+			// However, when restoring a content, the container in the workspace is not always running, so there is no problem ignoring the failure.
+			if strings.HasSuffix(key, ".overlay.impure") || strings.HasSuffix(key, ".overlay.origin") {
+				continue
+			}
+		}
+
 		if err := unix.Lsetxattr(name, key, []byte(value), 0); err != nil {
 			if err == syscall.ENOTSUP || err == syscall.EPERM {
 				continue
 			}
+
 			log.WithField("name", key).WithField("value", value).WithField("file", name).WithError(err).Warn("restoring extended attributes")
 		}
 	}
