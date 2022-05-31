@@ -13,30 +13,30 @@ import (
 // Workspace represents the underlying DB object
 type Workspace struct {
 	ID          string         `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
-	OwnerID     string         `gorm:"column:ownerId;type:char;size:36;" json:"owner_id"`
-	ProjectID   sql.NullString `gorm:"column:projectId;type:char;size:36;" json:"project_id"`
+	OwnerID     string         `gorm:"column:ownerId;type:char;size:36;" json:"ownerId"`
+	ProjectID   sql.NullString `gorm:"column:projectId;type:char;size:36;" json:"projectId"`
 	Description string         `gorm:"column:description;type:varchar;size:255;" json:"description"`
 	Type        string         `gorm:"column:type;type:char;size:16;default:regular;" json:"type"`
-	CloneURL    string         `gorm:"column:cloneURL;type:varchar;size:255;" json:"clone_url"`
+	CloneURL    string         `gorm:"column:cloneURL;type:varchar;size:255;" json:"cloneURL"`
 
-	ContextURL            string         `gorm:"column:contextURL;type:text;size:65535;" json:"context_url"`
+	ContextURL            string         `gorm:"column:contextURL;type:text;size:65535;" json:"contextURL"`
 	Context               datatypes.JSON `gorm:"column:context;type:text;size:65535;" json:"context"`
 	Config                datatypes.JSON `gorm:"column:config;type:text;size:65535;" json:"config"`
-	BasedOnPrebuildID     sql.NullString `gorm:"column:basedOnPrebuildId;type:char;size:36;" json:"based_on_prebuild_id"`
-	BasedOnSnapshotID     sql.NullString `gorm:"column:basedOnSnapshotId;type:char;size:36;" json:"based_on_snapshot_id"`
-	ImageSource           datatypes.JSON `gorm:"column:imageSource;type:text;size:65535;" json:"image_source"`
-	ImageNameResolved     string         `gorm:"column:imageNameResolved;type:varchar;size:255;" json:"image_name_resolved"`
-	BaseImageNameResolved string         `gorm:"column:baseImageNameResolved;type:varchar;size:255;" json:"base_image_name_resolved"`
+	BasedOnPrebuildID     sql.NullString `gorm:"column:basedOnPrebuildId;type:char;size:36;" json:"basedOnPrebuildId"`
+	BasedOnSnapshotID     sql.NullString `gorm:"column:basedOnSnapshotId;type:char;size:36;" json:"basedOnSnapshotId"`
+	ImageSource           datatypes.JSON `gorm:"column:imageSource;type:text;size:65535;" json:"imageSource"`
+	ImageNameResolved     string         `gorm:"column:imageNameResolved;type:varchar;size:255;" json:"imageNameResolved"`
+	BaseImageNameResolved string         `gorm:"column:baseImageNameResolved;type:varchar;size:255;" json:"baseImageNameResolved"`
 
-	CreationTime       VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creation_time"`
-	LastModified       time.Time   `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_last_modified"`
-	SoftDeletedTime    VarcharTime `gorm:"column:softDeletedTime;type:varchar;size:255;" json:"soft_deleted_time"`
-	ContentDeletedTime VarcharTime `gorm:"column:contentDeletedTime;type:varchar;size:255;" json:"content_deleted_time"`
+	CreationTime       VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	LastModified       time.Time   `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+	SoftDeletedTime    VarcharTime `gorm:"column:softDeletedTime;type:varchar;size:255;" json:"softDeletedTime"`
+	ContentDeletedTime VarcharTime `gorm:"column:contentDeletedTime;type:varchar;size:255;" json:"contentDeletedTime"`
 
 	Archived  int32 `gorm:"column:archived;type:tinyint;default:0;" json:"archived"`
 	Shareable int32 `gorm:"column:shareable;type:tinyint;default:0;" json:"shareable"`
 
-	SoftDeleted sql.NullString `gorm:"column:softDeleted;type:char;size:4;" json:"soft_deleted"`
+	SoftDeleted sql.NullString `gorm:"column:softDeleted;type:char;size:4;" json:"softDeleted"`
 	Pinned      int32          `gorm:"column:pinned;type:tinyint;default:0;" json:"pinned"`
 
 	// deleted is reserved for use by db-sync
