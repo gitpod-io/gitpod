@@ -4,6 +4,8 @@
 
 package io.gitpod.gitpodprotocol.api.entities;
 
+import java.util.Optional;
+
 public class WorkspaceContext {
     private String normalizedContextURL;
     private String ref;
@@ -16,8 +18,8 @@ public class WorkspaceContext {
         this.normalizedContextURL = normalizedContextURL;
     }
 
-    public String getRef() {
-        return ref;
+    public Optional<String> getRef() {
+        return Optional.ofNullable(ref);
     }
 
     public void setRef(String ref) {
