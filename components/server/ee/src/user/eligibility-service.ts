@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import { TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { TeamDB, TeamSubscription2DB, TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { TokenProvider } from "../../../src/user/token-provider";
 import {
     User,
@@ -50,11 +50,13 @@ export interface GitHubEducationPack {
 export class EligibilityService {
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
+    @inject(TeamDB) protected readonly teamDb: TeamDB;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
     @inject(EMailDomainService) protected readonly domainService: EMailDomainService;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(AccountStatementProvider) protected readonly accountStatementProvider: AccountStatementProvider;
     @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
+    @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
 
     /**
      * Whether the given user is recognized as a student within Gitpod
@@ -303,6 +305,17 @@ export class EligibilityService {
         // some TeamSubscriptions are marked with 'excludeFromMoreResources' to convey that those are _not_ receiving more resources
         const excludeFromMoreResources = await Promise.all(
             relevantSubscriptions.map(async (s): Promise<boolean> => {
+                if (s.teamMembershipId) {
+                    const team = await this.teamDb.findTeamByMembershipId(s.teamMembershipId);
+                    if (!team) {
+                        return true;
+                    }
+                    const ts2 = await this.teamSubscription2Db.findForTeam(team.id, new Date().toISOString());
+                    if (!ts2) {
+                        return true;
+                    }
+                    return ts2.excludeFromMoreResources;
+                }
                 if (!s.teamSubscriptionSlotId) {
                     return false;
                 }

@@ -64,6 +64,15 @@ export class TeamDBImpl implements TeamDB {
         return teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
     }
 
+    public async findTeamByMembershipId(membershipId: string): Promise<Team | undefined> {
+        const membershipRepo = await this.getMembershipRepo();
+        const membership = await membershipRepo.findOne({ id: membershipId, deleted: false });
+        if (!membership) {
+            return;
+        }
+        return this.findTeamById(membership.teamId);
+    }
+
     public async findMembersByTeam(teamId: string): Promise<TeamMemberInfo[]> {
         const membershipRepo = await this.getMembershipRepo();
         const userRepo = await this.getUserRepo();

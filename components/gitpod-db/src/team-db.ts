@@ -17,6 +17,7 @@ export interface TeamDB {
         searchTerm: string,
     ): Promise<{ total: number; rows: Team[] }>;
     findTeamById(teamId: string): Promise<Team | undefined>;
+    findTeamByMembershipId(membershipId: string): Promise<Team | undefined>;
     findMembersByTeam(teamId: string): Promise<TeamMemberInfo[]>;
     findTeamMembership(userId: string, teamId: string): Promise<DBTeamMembership | undefined>;
     findTeamsByUser(userId: string): Promise<Team[]>;
