@@ -1829,6 +1829,32 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return subscription;
     }
 
+    async getStripePublishableKey(ctx: TraceContext): Promise<string | undefined> {
+        this.checkAndBlockUser("getStripePublishableKey");
+        return this.config.stripeSettings?.publishableKey;
+    }
+
+    async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string | undefined> {
+        this.checkAndBlockUser("getStripeSetupIntentClientSecret");
+        const setupIntent = await this.stripeService.createSetupIntent();
+        return setupIntent.client_secret || undefined;
+    }
+
+    async getTeamStripeCustomerId(ctx: TraceContext, teamId: string): Promise<string | undefined> {
+        this.checkAndBlockUser("getTeamStripeCustomerId");
+        await this.guardTeamOperation(teamId, "update");
+        const customer = await this.stripeService.findCustomerByTeamId(teamId);
+        return customer?.id || undefined;
+    }
+
+    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
+        const user = this.checkAndBlockUser("subscribeUserToStripe");
+        await this.guardTeamOperation(teamId, "update");
+        const team = await this.teamDB.findTeamById(teamId);
+        await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
+        // TODO(janx): Create a Stripe usage-based Subscription for the customer
+    }
+
     // (SaaS) – admin
     async adminGetAccountStatement(ctx: TraceContext, userId: string): Promise<AccountStatement> {
         traceAPIParams(ctx, { userId });
