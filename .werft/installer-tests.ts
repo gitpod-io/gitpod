@@ -2,7 +2,9 @@ import { join } from "path";
 import { exec } from "./util/shell";
 import { Werft } from "./util/werft";
 
-const testConfig: string = process.argv.length > 2 ? process.argv[2] : "gke";
+const testConfig: string = process.argv.length > 2 ? process.argv[2] : "STANDARD_K3S_TEST";
+// we can provide the version of the gitpod to install (eg: 2022.4.2)
+const version: string = process.argv.length > 3 ? process.argv[3] : "";
 
 const makefilePath: string = join("install/tests");
 
@@ -36,15 +38,16 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     INSTALL_GITPOD_IGNORE_PREFLIGHTS: {
         phase: "install-gitpod-without-preflights",
-        makeTarget: "kots-install-without-preflight-with-community-license",
+        makeTarget: `kots-install channel=unstable version=${version} preflights=false`, // this is a bit of a hack, for now we pass params like this
         description: "Install gitpod using kots community edition without preflights",
     },
     INSTALL_GITPOD: {
         phase: "install-gitpod",
-        makeTarget: "kots-install-with-community-license",
+        makeTarget: `kots-install channel=unstable version=${version} preflights=true`,
         description: "Install gitpod using kots community edition",
     },
     CHECK_INSTALLATION: {
+        // this is a basic test for the Gitpod setup
         phase: "check-gitpod-installation",
         makeTarget: "check-gitpod-installation",
         description: "Check gitpod installation",
@@ -155,6 +158,7 @@ function callMakeTargets(phase: string, description: string, makeTarget: string)
         werft.fail(phase, "Operation failed");
     } else {
         werft.log(phase, response.stdout.toString());
+        werft.done(phase);
     }
 
     return response.code;

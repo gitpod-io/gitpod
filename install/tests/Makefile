@@ -5,7 +5,7 @@ PROJECTNAME := "installer-nightly-tests"
 
 TOPDIR=$(shell pwd)
 
-KUBECONFIG := "$(TOPDIR)/kubeconfig"
+KUBECONFIG := "/workspace/conf"
 
 check-env-sub-domain:
 ifndef TF_VAR_TEST_ID
@@ -53,37 +53,39 @@ get-kubeconfig:
 	${KUBECONFIG}
 
 KOTS_KONFIG := "./manifests/kots-config.yaml"
-CHANNEL = "gitpod/beta"
-COMMUNITY_LICENSE := "../licenses/Community (Beta).yaml"
+license_community_beta := "../licenses/Community (Beta).yaml"
+license_community_stable := "../licenses/Community.yaml"
+license_community_unstable := "../licenses/Community (Unstable).yaml"
 
 install-kots-cli:
 	curl https://kots.io/install | bash
 
-kots-install-without-preflight-with-community-license: install-kots-cli
+preflights ?= true
+channel ?= unstable
+version ?= -
+kots-install: version-flag = $(if $(version:-=),--app-version-label=$(version),)
+kots-install: preflight-flag = $(if $(preflights:true=),--skip-preflights,)
+kots-install: license-file =  $(license_community_$(channel))
+kots-install: install-kots-cli
 	envsubst < ${KOTS_KONFIG} > tmp_config.yml
-	kubectl kots install ${CHANNEL} \
-	--skip-rbac-check --skip-preflights --namespace gitpod --kubeconfig=${KUBECONFIG} \
+	kubectl kots install gitpod/${channel} \
+	--skip-rbac-check ${version-flag} ${preflight-flag} \
+					--namespace gitpod --kubeconfig=${KUBECONFIG} \
                     --name gitpod --shared-password gitpod \
-					--license-file ${COMMUNITY_LICENSE} \
+					--license-file ${license-file} \
                     --no-port-forward \
                     --config-values tmp_config.yml
 
-kots-install-with-community-license: install-kots-cli
-	envsubst < ${KOTS_KONFIG} > tmp_config.yml
-	kubectl kots install ${CHANNEL} \
-	--skip-rbac-check --namespace gitpod --kubeconfig=${KUBECONFIG} \
-                    --name gitpod --shared-password gitpod \
-					--license-file ${COMMUNITY_LICENSE} \
-                    --no-port-forward \
-                    --config-values tmp_config.yml
+delete-cm-setup:
+	sleep 120 && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep 300;
 
-check-gitpod-installation:
-	sleep 120
-	kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager
-	sleep 300
-	@kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}'
+check-kots-app:
+	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { echo "Gitpod is not ready"; exit 1; }
 
-.PHONY:
+check-gitpod-installation: delete-cm-setup check-kots-app check-env-sub-domain
+	@echo "Curling http://${TF_VAR_TEST_ID}.gitpod-self-hosted.com/api/version"
+	curl -i -X GET http://${TF_VAR_TEST_ID}.gitpod-self-hosted.com/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
+
 run-tests:
 	./tests.sh ${KUBECONFIG}
 

@@ -4,14 +4,9 @@ variable "project" {
 }
 
 variable "kubeconfig" {
-  type = string
-  description = "Path to write the kubeconfig output to"
-  default = "./kubeconfig"
-}
-
-variable "credentials" {
   type        = string
-  description = "Path to the json file storing SA credentials."
+  description = "Path to write the kubeconfig output to"
+  default     = "./kubeconfig"
 }
 
 variable "region" {
@@ -38,10 +33,16 @@ variable "name" {
   default     = "sh-test"
 }
 
-variable "machine_type" {
+variable "workspaces_machine_type" {
   type        = string
-  description = "Type of the node compute engines."
-  default     = "n2d-standard-4"
+  description = "Type of the node compute engines for workspace nodepool."
+  default     = "n2-standard-8"
+}
+
+variable "services_machine_type" {
+  type        = string
+  description = "Type of the node compute engines for services nodepool."
+  default     = "n2-standard-4"
 }
 
 variable "min_count" {
@@ -59,7 +60,7 @@ variable "max_count" {
 variable "disk_size_gb" {
   type        = number
   description = "Size of the node's disk."
-  default = 100
+  default     = 100
 }
 
 variable "initial_node_count" {
@@ -68,33 +69,13 @@ variable "initial_node_count" {
   default     = 1
 }
 
-variable "env_name" {
-  description = "The environment for the GKE cluster"
-  default     = "test"
-}
-
-variable "network" {
-  description = "The VPC network created to host the cluster in"
-  default     = "gitpod-gke-network"
-}
-
-variable "subnetwork" {
-  description = "The subnetwork created to host the cluster in"
-  default     = "gitpod-gke-subnet"
-}
-
-variable "ip_range_pods_name" {
-  description = "The secondary ip range to use for pods"
-  default     = "gitpod-ip-range-pods"
-}
-
-variable "ip_range_services_name" {
-  description = "The secondary ip range to use for services"
-  default     = "gitpod-ip-range-services"
-}
-
 variable "pre-emptible" {
-  type = bool
+  type        = bool
   description = "Set if the nodes are to be pre-emptible"
   default     = false
+}
+
+variable "credentials" {
+  description = "Path to the JSON file storing Google service account credentials"
+  default     = ""
 }

@@ -2,11 +2,18 @@ terraform {
   required_version = ">= 1.0.3"
 }
 
+terraform {
+  backend "gcs" {
+    bucket = "gitpod-gke"
+    prefix = "tf-state"
+  }
+}
+
 provider "google" {
+  project     = var.project
   credentials = var.credentials
-  project = var.project
-  region  = var.region
-  zone = var.zone
+  region      = var.region
+  zone        = var.zone
 }
 
 resource "google_compute_network" "vpc" {
@@ -14,7 +21,6 @@ resource "google_compute_network" "vpc" {
   auto_create_subnetworks = "false"
 }
 
-# Subnet
 resource "google_compute_subnetwork" "subnet" {
   name          = "subnet-${var.name}"
   region        = var.region
@@ -40,9 +46,9 @@ resource "google_container_cluster" "gitpod-cluster" {
     enabled = true
 
     resource_limits {
-        resource_type = "cpu"
-        minimum       = 2
-        maximum       = 8
+      resource_type = "cpu"
+      minimum       = 2
+      maximum       = 8
     }
 
     resource_limits {
@@ -79,27 +85,19 @@ resource "google_container_cluster" "gitpod-cluster" {
     horizontal_pod_autoscaling {
       disabled = false
     }
-
-
-    # only available in beta
-    # dns_cache_config {
-    #   enabled = true
-    # }
   }
 
   network    = google_compute_network.vpc.name
   subnetwork = google_compute_subnetwork.subnet.name
-
-
 }
 
 resource "google_container_node_pool" "services" {
-  name       = "services-${var.name}"
-  location   = google_container_cluster.gitpod-cluster.location
-  cluster    = google_container_cluster.gitpod-cluster.name
-  version    = var.kubernetes_version // kubernetes version
+  name               = "services-${var.name}"
+  location           = google_container_cluster.gitpod-cluster.location
+  cluster            = google_container_cluster.gitpod-cluster.name
+  version            = var.kubernetes_version // kubernetes version
   initial_node_count = 1
-  max_pods_per_node = 110
+  max_pods_per_node  = 110
 
   node_config {
     oauth_scopes = [
@@ -107,15 +105,15 @@ resource "google_container_node_pool" "services" {
     ]
 
     labels = {
-      "gitpod.io/workload_meta" =true
-      "gitpod.io/workload_ide" = true
+      "gitpod.io/workload_meta" = true
+      "gitpod.io/workload_ide"  = true
     }
 
     preemptible  = var.pre-emptible
-    image_type = "UBUNTU_CONTAINERD"
-    disk_type = "pd-ssd"
-    disk_size_gb  = var.disk_size_gb
-    machine_type = var.machine_type
+    image_type   = "UBUNTU_CONTAINERD"
+    disk_type    = "pd-ssd"
+    disk_size_gb = var.disk_size_gb
+    machine_type = var.services_machine_type
     tags         = ["gke-node", "${var.project}-gke"]
     metadata = {
       disable-legacy-endpoints = "true"
@@ -129,18 +127,18 @@ resource "google_container_node_pool" "services" {
 
 
   management {
-    auto_repair = true
+    auto_repair  = true
     auto_upgrade = false
   }
 }
 
 resource "google_container_node_pool" "workspaces" {
-  name       = "workspaces-${var.name}"
-  location     = google_container_cluster.gitpod-cluster.location
-  cluster    = google_container_cluster.gitpod-cluster.name
-  version    = var.kubernetes_version // kubernetes version
+  name               = "workspaces-${var.name}"
+  location           = google_container_cluster.gitpod-cluster.location
+  cluster            = google_container_cluster.gitpod-cluster.name
+  version            = var.kubernetes_version // kubernetes version
   initial_node_count = 1
-  max_pods_per_node = 110
+  max_pods_per_node  = 110
 
   node_config {
     oauth_scopes = [
@@ -148,18 +146,18 @@ resource "google_container_node_pool" "workspaces" {
     ]
 
     labels = {
-      "gitpod.io/workload_metal" =true
-      "gitpod.io/workload_ide" = true
+      "gitpod.io/workload_metal"              = true
+      "gitpod.io/workload_ide"                = true
       "gitpod.io/workload_workspace_services" = true
-      "gitpod.io/workload_workspace_regular" = true
+      "gitpod.io/workload_workspace_regular"  = true
       "gitpod.io/workload_workspace_headless" = true
     }
 
     preemptible  = var.pre-emptible
-    image_type = "UBUNTU_CONTAINERD"
-    disk_type = "pd-ssd"
-    disk_size_gb  = var.disk_size_gb
-    machine_type = var.machine_type
+    image_type   = "UBUNTU_CONTAINERD"
+    disk_type    = "pd-ssd"
+    disk_size_gb = var.disk_size_gb
+    machine_type = var.workspaces_machine_type
     tags         = ["gke-node", "${var.project}-gke"]
     metadata = {
       disable-legacy-endpoints = "true"
@@ -172,7 +170,7 @@ resource "google_container_node_pool" "workspaces" {
   }
 
   management {
-    auto_repair = true
+    auto_repair  = true
     auto_upgrade = false
   }
 }
@@ -189,5 +187,5 @@ module "gke_auth" {
 
 resource "local_file" "kubeconfig" {
   filename = var.kubeconfig
-  content = module.gke_auth.kubeconfig_raw
+  content  = module.gke_auth.kubeconfig_raw
 }
