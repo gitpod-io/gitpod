@@ -20,6 +20,20 @@
               description: 'Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 10 minutes.',
             },
             expr: |||
+              increase(kube_pod_container_status_restarts_total{container="ws-daemon"}[10m]) > 2
+            |||,
+          },
+          {
+            alert: 'GitpodWsDaemonRestarted',
+            labels: {
+              severity: 'warning',
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonCrashLooping.md',
+              summary: 'Ws-daemon just restarted.',
+              description: 'Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) restarted {{ printf "%.2f" $value }} times / 10 minutes.',
+            },
+            expr: |||
               increase(kube_pod_container_status_restarts_total{container="ws-daemon"}[10m]) > 0
             |||,
           },
