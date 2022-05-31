@@ -50,6 +50,9 @@ func renderContextWithUsageEnabled(t *testing.T) *common.RenderContext {
 			Usage: versions.Versioned{
 				Version: "commit-test-latest",
 			},
+			ServiceWaiter: versions.Versioned{
+				Version: "commit-test-latest",
+			},
 		},
 	}, "test-namespace")
 	require.NoError(t, err)
