@@ -390,21 +390,21 @@ async function addDNSRecord(werft: Werft, namespace: string, domain: string, isL
     await Promise.all([
         createDNSRecord({
             domain,
-            projectId: "gitpod-dev",
+            projectId: "gitpod-core-dev",
             dnsZone: 'gitpod-dev-com',
             IP: coreDevIngressIP,
             slice: installerSlices.DNS_ADD_RECORD
         }),
         createDNSRecord({
             domain: `*.${domain}`,
-            projectId: "gitpod-dev",
+            projectId: "gitpod-core-dev",
             dnsZone: 'gitpod-dev-com',
             IP: coreDevIngressIP,
             slice: installerSlices.DNS_ADD_RECORD
         }),
         createDNSRecord({
             domain: `*.ws-dev.${domain}`,
-            projectId: "gitpod-dev",
+            projectId: "gitpod-core-dev",
             dnsZone: 'gitpod-dev-com',
             IP: wsProxyLBIP,
             slice: installerSlices.DNS_ADD_RECORD
