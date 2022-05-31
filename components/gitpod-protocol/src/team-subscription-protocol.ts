@@ -43,6 +43,7 @@ export interface TeamSubscription2 {
     /** The Chargebee subscription id */
     paymentReference: string;
     cancellationDate?: string;
+    excludeFromMoreResources: boolean;
 }
 
 export namespace TeamSubscription2 {

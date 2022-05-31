@@ -46,6 +46,11 @@ export class DBTeamSubscription2 implements TeamSubscription2 {
     })
     cancellationDate?: string;
 
+    @Column({
+        default: true,
+    })
+    excludeFromMoreResources: boolean;
+
     // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
     @Column()
     deleted: boolean;
