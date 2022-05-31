@@ -5,6 +5,7 @@
  */
 
 import { useContext } from "react";
+import { Link } from "react-router-dom";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { PaymentContext } from "../payment-context";
 import getSettingsMenu from "./settings-menu";
@@ -18,7 +19,15 @@ export default function Billing() {
             title="Billing"
             subtitle="Usage-Based Billing."
         >
-            <h3>Billing</h3>
+            <h3>Usage-Based Billing</h3>
+            <h2 className="text-gray-500">Manage usage-based billing, spending limit, and payment method.</h2>
+            <p className="mt-8">
+                Hint:{" "}
+                <Link className="gp-link" to="/teams/new">
+                    Create a team
+                </Link>{" "}
+                to set up usage-based billing.
+            </p>
         </PageWithSubMenu>
     );
 }
