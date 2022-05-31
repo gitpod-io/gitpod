@@ -41,7 +41,8 @@ import (
 
 // Metrics combine custom metrics exported by WorkspaceService
 type metrics struct {
-	BackupWaitingTimeHist prometheus.Histogram
+	BackupWaitingTimeHist       prometheus.Histogram
+	BackupWaitingTimeoutCounter prometheus.Counter
 }
 
 // WorkspaceService implements the InitService and WorkspaceService
@@ -54,6 +55,9 @@ type WorkspaceService struct {
 	runtime     container.Runtime
 
 	metrics *metrics
+
+	// channel to limit the number of concurrent backups and uploads.
+	backupWorkspaceLimiter chan struct{}
 
 	api.UnimplementedInWorkspaceServiceServer
 	api.UnimplementedWorkspaceContentServiceServer
@@ -92,8 +96,15 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 
 	waitingTimeHist, err := registerConcurrentBackupWaitingTime(reg)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot register Prometheus gauge for babkup waiting time: %w", err)
-
+		return nil, xerrors.Errorf("cannot register Prometheus histogram for backup waiting time: %w", err)
+	}
+	waitingTimeoutCounter := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "concurrent_backup_waiting_timeout_total",
+		Help: "total count of backup rate limiting timeouts",
+	})
+	err = reg.Register(waitingTimeoutCounter)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot register Prometheus counter for backup waiting timeouts: %w", err)
 	}
 
 	return &WorkspaceService{
@@ -103,7 +114,12 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 		stopService: stopService,
 		runtime:     runtime,
 
-		metrics: &metrics{waitingTimeHist},
+		metrics: &metrics{
+			BackupWaitingTimeHist:       waitingTimeHist,
+			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
+		},
+		// we permit three concurrent backups at any given time, hence the three in the channel
+		backupWorkspaceLimiter: make(chan struct{}, 3),
 	}, nil
 }
 
@@ -426,9 +442,6 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	return resp, nil
 }
 
-// channel to limit the number of concurrent backups and uploads.
-var backupWorkspaceLimiter = make(chan bool, 3)
-
 func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName, mfName string) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadWorkspaceContent")
@@ -443,12 +456,19 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 	// TODO: remove once we migrate to PVCs
 	// Avoid too many simultaneous backups in order to avoid excessive memory utilization.
 	waitStart := time.Now()
-	backupWorkspaceLimiter <- true
+	select {
+	case s.backupWorkspaceLimiter <- struct{}{}:
+	case <-time.After(15 * time.Minute):
+		// we timed out on the rate limit - let's upload anyways, because we don't want to actually block
+		// an upload. If we reach this point, chances are other things are broken. No upload should ever
+		// take this long.
+		s.metrics.BackupWaitingTimeoutCounter.Inc()
+	}
 
 	s.metrics.BackupWaitingTimeHist.Observe(time.Since(waitStart).Seconds())
 
 	defer func() {
-		<-backupWorkspaceLimiter
+		<-s.backupWorkspaceLimiter
 	}()
 
 	var (
