@@ -198,10 +198,7 @@ func remapFile(name string, uid, gid int, xattrs map[string]string) error {
 			if err == syscall.ENOTSUP || err == syscall.EPERM {
 				continue
 			}
-
-			log.WithField("name", key).WithField("value", value).WithField("file", name).WithError(err).Error("restoring extended attributes")
-
-			return err
+			log.WithField("name", key).WithField("value", value).WithField("file", name).WithError(err).Warn("restoring extended attributes")
 		}
 	}
 
