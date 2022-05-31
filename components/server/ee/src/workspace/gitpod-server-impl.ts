@@ -92,6 +92,7 @@ import { ChargebeeProvider, UpgradeHelper } from "@gitpod/gitpod-payment-endpoin
 import { ChargebeeCouponComputer } from "../user/coupon-computer";
 import { ChargebeeService } from "../user/chargebee-service";
 import { Chargebee as chargebee } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
+import { StripeService } from "../user/stripe-service";
 
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
@@ -126,6 +127,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(UpgradeHelper) protected readonly upgradeHelper: UpgradeHelper;
     @inject(ChargebeeCouponComputer) protected readonly couponComputer: ChargebeeCouponComputer;
     @inject(ChargebeeService) protected readonly chargebeeService: ChargebeeService;
+    @inject(StripeService) protected readonly stripeService: StripeService;
 
     @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
     @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
