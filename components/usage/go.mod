@@ -58,8 +58,6 @@ require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/uuid v1.1.2
-	github.com/google/uuid v1.1.2
-	github.com/jackc/pgtype v1.10.0
 	github.com/relvacode/iso8601 v1.1.0
 	github.com/robfig/cron v1.2.0
 	github.com/spf13/cobra v1.4.0
@@ -73,14 +71,12 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
