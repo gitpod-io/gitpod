@@ -60,21 +60,21 @@ func newMetrics(m *Manager) *metrics {
 			Help:      "time it took for workspace pods to reach the running phase",
 			// same as components/ws-manager-bridge/src/prometheus-metrics-exporter.ts#L15
 			Buckets: prometheus.ExponentialBuckets(2, 2, 10),
-		}, []string{"type"}),
+		}, []string{"type", "class"}),
 		initializeTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      "workspace_initialize_seconds",
 			Help:      "time it took to initialize workspace",
 			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
-		}, []string{"type"}),
+		}, []string{"type", "class"}),
 		finalizeTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      "workspace_finalize_seconds",
 			Help:      "time it took to finalize workspace",
 			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
-		}, []string{"type"}),
+		}, []string{"type", "class"}),
 		volumeSnapshotTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
@@ -87,13 +87,13 @@ func newMetrics(m *Manager) *metrics {
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      "workspace_starts_total",
 			Help:      "total number of workspaces started",
-		}, []string{"type"}),
+		}, []string{"type", "class"}),
 		totalStopsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      "workspace_stops_total",
 			Help:      "total number of workspaces stopped",
-		}, []string{"reason", "type"}),
+		}, []string{"reason", "type", "class"}),
 		totalOpenPortGauge: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
@@ -163,9 +163,9 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 	return nil
 }
 
-func (m *metrics) OnWorkspaceStarted(tpe api.WorkspaceType) {
+func (m *metrics) OnWorkspaceStarted(tpe api.WorkspaceType, class string) {
 	nme := api.WorkspaceType_name[int32(tpe)]
-	counter, err := m.totalStartsCounterVec.GetMetricWithLabelValues(nme)
+	counter, err := m.totalStartsCounterVec.GetMetricWithLabelValues(nme, class)
 	if err != nil {
 		log.WithError(err).WithField("type", tpe).Warn("cannot get counter for workspace start metric")
 		return
@@ -198,7 +198,7 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 		}
 
 		t := status.Metadata.StartedAt.AsTime()
-		hist, err := m.startupTimeHistVec.GetMetricWithLabelValues(tpe)
+		hist, err := m.startupTimeHistVec.GetMetricWithLabelValues(tpe, status.Spec.Class)
 		if err != nil {
 			log.WithError(err).WithField("type", tpe).Warn("cannot get startup time histogram metric")
 			return
@@ -217,7 +217,7 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 			reason = "regular-stop"
 		}
 
-		counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason, tpe)
+		counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason, tpe, status.Spec.Class)
 		if err != nil {
 			log.WithError(err).WithField("reason", reason).Warn("cannot get counter for workspace stops metric")
 			return
@@ -240,7 +240,7 @@ func newPhaseTotalVec(m *Manager) *phaseTotalVec {
 	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, "workspace_phase_total")
 	return &phaseTotalVec{
 		name:    name,
-		desc:    prometheus.NewDesc(name, "Current number of workspaces per phase", []string{"phase", "type"}, prometheus.Labels(map[string]string{})),
+		desc:    prometheus.NewDesc(name, "Current number of workspaces per phase", []string{"phase", "type", "class"}, prometheus.Labels(map[string]string{})),
 		manager: m,
 	}
 }
@@ -276,16 +276,17 @@ func (m *phaseTotalVec) Collect(ch chan<- prometheus.Metric) {
 		}
 		status := api.WorkspacePhase_name[int32(rawStatus.Phase)]
 		tpe := api.WorkspaceType_name[int32(rawStatus.Spec.Type)]
+		class := rawStatus.Spec.Class
 
-		counts[tpe+"::"+status]++
+		counts[tpe+"::"+status+"::"+class]++
 	}
 
 	for key, cnt := range counts {
 		segs := strings.Split(key, "::")
-		tpe, phase := segs[0], segs[1]
+		tpe, phase, class := segs[0], segs[1], segs[2]
 
 		// metrics cannot be re-used, we have to create them every single time
-		metric, err := prometheus.NewConstMetric(m.desc, prometheus.GaugeValue, float64(cnt), phase, tpe)
+		metric, err := prometheus.NewConstMetric(m.desc, prometheus.GaugeValue, float64(cnt), phase, tpe, class)
 		if err != nil {
 			log.WithError(err).Warnf("cannot create workspace metric - %s will be inaccurate", m.name)
 			continue
