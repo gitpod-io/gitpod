@@ -33,11 +33,11 @@ type Workspace struct {
 	SoftDeletedTime    VarcharTime `gorm:"column:softDeletedTime;type:varchar;size:255;" json:"softDeletedTime"`
 	ContentDeletedTime VarcharTime `gorm:"column:contentDeletedTime;type:varchar;size:255;" json:"contentDeletedTime"`
 
-	Archived  int32 `gorm:"column:archived;type:tinyint;default:0;" json:"archived"`
-	Shareable int32 `gorm:"column:shareable;type:tinyint;default:0;" json:"shareable"`
+	Archived  bool `gorm:"column:archived;type:tinyint;default:0;" json:"archived"`
+	Shareable bool `gorm:"column:shareable;type:tinyint;default:0;" json:"shareable"`
 
 	SoftDeleted sql.NullString `gorm:"column:softDeleted;type:char;size:4;" json:"softDeleted"`
-	Pinned      int32          `gorm:"column:pinned;type:tinyint;default:0;" json:"pinned"`
+	Pinned      bool           `gorm:"column:pinned;type:tinyint;default:0;" json:"pinned"`
 
 	// deleted is reserved for use by db-sync
 	_ int32 `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
