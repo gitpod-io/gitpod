@@ -6,54 +6,83 @@ package db
 
 import (
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"github.com/relvacode/iso8601"
 	"time"
 )
 
 func NewVarcharTime(t time.Time) VarcharTime {
-	return VarcharTime(t.UTC())
+	return VarcharTime{
+		t:     t,
+		valid: true,
+	}
 }
 
 func NewVarcharTimeFromStr(s string) (VarcharTime, error) {
-	parsed, err := iso8601.ParseString(string(s))
-	if err != nil {
-		return VarcharTime{}, fmt.Errorf("failed to parse as ISO 8601: %w", err)
-	}
-	return VarcharTime(parsed), nil
+	var vt VarcharTime
+	err := vt.Scan(s)
+	return vt, err
 }
 
 // VarcharTime exists for cases where records are inserted into the DB as VARCHAR but actually contain a timestamp which is time.RFC3339
-type VarcharTime time.Time
+type VarcharTime struct {
+	t     time.Time
+	valid bool
+}
 
 // Scan implements the Scanner interface.
 func (n *VarcharTime) Scan(value interface{}) error {
 	if value == nil {
-		return fmt.Errorf("nil value")
+		n.valid = false
+		return nil
 	}
 
 	switch s := value.(type) {
 	case []uint8:
+		// Null value - empty string mean value is not set
 		if len(s) == 0 {
-			return errors.New("failed to parse empty varchar time")
+			n.valid = false
+			return nil
 		}
 
 		parsed, err := iso8601.ParseString(string(s))
 		if err != nil {
 			return fmt.Errorf("failed to parse %v into ISO8601: %w", string(s), err)
 		}
-		*n = VarcharTime(parsed.UTC())
+		n.valid = true
+		n.t = parsed.UTC()
+		return nil
+	case string:
+		if len(s) == 0 {
+			n.valid = false
+			return nil
+		}
+
+		parsed, err := iso8601.ParseString(s)
+		if err != nil {
+			return fmt.Errorf("failed to parse %v into ISO8601: %w", s, err)
+		}
+
+		n.valid = true
+		n.t = parsed.UTC()
 		return nil
 	}
 	return fmt.Errorf("unknown scan value for VarcharTime with value: %v", value)
 }
 
+func (n VarcharTime) Time() time.Time {
+	return n.t
+}
+
+func (n VarcharTime) IsSet() bool {
+	return n.valid
+}
+
 // Value implements the driver Valuer interface.
 func (n VarcharTime) Value() (driver.Value, error) {
-	return time.Time(n).UTC().Format(time.RFC3339Nano), nil
+	return n.t.UTC().Format(time.RFC3339Nano), nil
 }
 
 func (n VarcharTime) String() string {
-	return time.Time(n).Format(time.RFC3339Nano)
+	return n.t.Format(time.RFC3339Nano)
 }

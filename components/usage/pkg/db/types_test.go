@@ -11,43 +11,69 @@ import (
 )
 
 func TestVarcharTime_Scan(t *testing.T) {
+	type Expectation struct {
+		Time  VarcharTime
+		Error bool
+	}
+
 	for _, scenario := range []struct {
 		Name string
 
 		Input    interface{}
-		Expected time.Time
-		Error    bool
+		Expected Expectation
 	}{
 		{
-			Name:  "nil value errors",
+			Name:  "nil value does not error and sets invalid",
 			Input: nil,
-			Error: true,
+			Expected: Expectation{
+				Error: false,
+			},
 		},
 		{
-			Name:  "empty uint8 slice errors",
+			Name:  "empty uint8 slice does not error and sets invalid",
 			Input: []uint8{},
-			Error: true,
+			Expected: Expectation{
+				Error: false,
+			},
 		},
 		{
-			Name:  "fails with string",
+			Name:  "parses valid ISO 8601 from TypeScript from []uint8",
+			Input: []uint8("2019-05-10T09:54:28.185Z"),
+			Expected: Expectation{
+				Time: VarcharTime{
+					t:     time.Date(2019, 05, 10, 9, 54, 28, 185000000, time.UTC),
+					valid: true,
+				},
+				Error: false,
+			},
+		},
+		{
+			Name:  "invalid string errors",
+			Input: "2019-05-10T09:54:28.185Z-not-a-datetime",
+			Expected: Expectation{
+				Error: true,
+			},
+		},
+		{
+			Name:  "string is parsed",
 			Input: "2019-05-10T09:54:28.185Z",
-			Error: true,
-		},
-		{
-			Name:     "parses valid ISO 8601 from TypeScript",
-			Input:    []uint8("2019-05-10T09:54:28.185Z"),
-			Expected: time.Date(2019, 05, 10, 9, 54, 28, 185000000, time.UTC),
+			Expected: Expectation{
+				Time: VarcharTime{
+					t:     time.Date(2019, 05, 10, 9, 54, 28, 185000000, time.UTC),
+					valid: true,
+				},
+				Error: false,
+			},
 		},
 	} {
 		t.Run(scenario.Name, func(t *testing.T) {
 			var vt VarcharTime
 			err := vt.Scan(scenario.Input)
-			if scenario.Error {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, scenario.Expected, time.Time(vt))
-			}
+
+			require.Equal(t, scenario.Expected, Expectation{
+				Time:  vt,
+				Error: err != nil,
+			})
 		})
 	}
 }
