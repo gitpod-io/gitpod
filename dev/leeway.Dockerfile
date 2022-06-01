@@ -4,4 +4,4 @@
 
 FROM scratch
 
-COPY dev-gpctl--app/gpctl dev-kubecdl--app/kubecdl /app/
+COPY dev-gpctl--app/gpctl dev-kubecdl--app/kubecdl dev-preview-previewctl--cli/previewctl /app/

@@ -244,4 +244,8 @@ ENV WERFT_CREDENTIAL_HELPER=/workspace/gitpod/dev/preview/werft-credential-helpe
 
 # Copy our own tools
 ENV NEW_KUBECDL=1
-COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
+COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl dev-preview-previewctl--cli/previewctl /usr/bin/
+
+# Configure our tools' autocompletion
+RUN bash -c "echo . \<\(gpctl completion bash\) >> ~/.bashrc" && \
+    bash -c "echo . \<\(previewctl completion bash\) >> ~/.bashrc"

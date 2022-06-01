@@ -17,6 +17,7 @@ packages:
     deps:
       - dev/gpctl:app
       - dev/kubecdl:app
+      - dev/preview/previewctl:cli
     argdeps:
       - imageRepoBase
     config:
