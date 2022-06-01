@@ -6,7 +6,6 @@
 
 import { useContext, useState } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import PillLabel from "../components/PillLabel";
 import SelectableCardSolid from "../components/SelectableCardSolid";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
