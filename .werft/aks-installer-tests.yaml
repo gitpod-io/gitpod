@@ -1,0 +1,89 @@
+# debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/aks-installer-tests.yaml -a debug=true`
+pod:
+  serviceAccount: werft
+  affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: dev/workload
+          operator: In
+          values:
+          - "builds"
+  securityContext:
+    runAsUser: 0
+  volumes:
+  - name: sh-playground-sa-perm
+    secret:
+      secretName: sh-playground-sa-perm
+  - name: sh-playground-dns-perm
+    secret:
+      secretName: sh-playground-dns-perm
+  containers:
+  - name: nightly-test
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
+    workingDir: /workspace
+    imagePullPolicy: Always
+    volumeMounts:
+    - name: sh-playground-sa-perm
+      mountPath: /mnt/secrets/sh-playground-sa-perm
+    - name: sh-playground-dns-perm # this sa is used for the DNS management
+      mountPath: /mnt/secrets/sh-playground-dns-perm
+    env:
+    - name: ARM_SUBSCRIPTION_ID
+      valueFrom:
+        secretKeyRef:
+          name: aks-credentials
+          key: subscriptionid
+    - name: ARM_TENANT_ID
+      valueFrom:
+        secretKeyRef:
+          name: aks-credentials
+          key: tenantid
+    - name: ARM_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: aks-credentials
+          key: clientid
+    - name: ARM_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: aks-credentials
+          key: clientsecret
+    - name: WERFT_HOST
+      value: "werft.werft.svc.cluster.local:7777"
+    - name: GOOGLE_APPLICATION_CREDENTIALS
+      value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
+    - name: TF_VAR_sa_creds
+      value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
+    - name: TF_VAR_dns_sa_creds
+      value: "/mnt/secrets/sh-playground-dns-perm/sh-dns-sa.json"
+    - name: WERFT_K8S_NAMESPACE
+      value: "werft"
+    - name: WERFT_K8S_LABEL
+      value: "component=werft"
+    - name: NODENAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    command:
+      - bash
+      - -c
+      - |
+        sleep 1
+        set -Eeuo pipefail
+
+        sudo chown -R gitpod:gitpod /workspace
+        sudo apt update && apt install gettext-base
+
+        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+        export TF_VAR_TEST_ID=$(echo $RANDOM | md5sum | head -c 5; echo)
+
+        (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
+        printf '{{ toJson . }}' > context.json
+
+        npx ts-node .werft/installer-tests.ts "STANDARD_AKS_TEST"
+# The bit below makes this a cron job
+# plugins:
+#   cron: "15 3 * * *"

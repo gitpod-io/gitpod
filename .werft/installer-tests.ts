@@ -31,6 +31,11 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         makeTarget: "k3s-standard-cluster",
         description: "Creating a k3s cluster on GCP with 1 node",
     },
+    STANDARD_AKS_CLUSTER: {
+        phase: "create-std-aks-cluster",
+        makeTarget: "aks-standard-cluster",
+        description: "Creating an aks cluster(azure)",
+    },
     GCP_MANAGED_DNS: {
         phase: "setup-cert-manager-with-cloud-dns",
         makeTarget: "managed-dns-with-cert-manager",
@@ -81,6 +86,18 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         DESCRIPTION: "Deploy Gitpod on GKE, with managed DNS, and run integration tests",
         PHASES: [
             "STANDARD_GKE_CLUSTER",
+            "GCP_MANAGED_DNS",
+            "INSTALL_GITPOD",
+            "CHECK_INSTALLATION",
+            "RUN_INTEGRATION_TESTS",
+            "RESULTS",
+            "DESTROY",
+        ],
+    },
+    STANDARD_AKS_TEST: {
+        DESCRIPTION: "Deploy Gitpod on AKS, with managed DNS, and run integration tests",
+        PHASES: [
+            "STANDARD_AKS_CLUSTER",
             "GCP_MANAGED_DNS",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",

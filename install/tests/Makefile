@@ -5,7 +5,7 @@ PROJECTNAME := "installer-nightly-tests"
 
 TOPDIR=$(shell pwd)
 
-KUBECONFIG := "/workspace/conf"
+KUBECONFIG := "$(TOPDIR)/kubeconfig"
 
 check-env-sub-domain:
 ifndef TF_VAR_TEST_ID
@@ -27,6 +27,14 @@ gke-standard-cluster:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.gke \
+	-var kubeconfig=${KUBECONFIG} --auto-approve
+
+.PHONY:
+## aks-standard-cluster: Creates an AKS cluster
+aks-standard-cluster:
+	terraform init --upgrade && \
+	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
+	terraform apply -target=module.aks \
 	-var kubeconfig=${KUBECONFIG} --auto-approve
 
 .PHONY:
@@ -93,6 +101,7 @@ cleanup:
 	terraform workspace select $(TF_VAR_TEST_ID)
 	which ${KUBECONFIG} && terraform destroy -target=module.tools -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 	terraform destroy -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
+	terraform destroy -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
 	terraform destroy -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve
 
 get-results:
