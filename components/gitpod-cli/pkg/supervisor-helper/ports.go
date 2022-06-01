@@ -2,15 +2,21 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package supervisor
+package supervisor_helper
 
 import (
 	"context"
-	"github.com/gitpod-io/gitpod/supervisor/api"
+
+	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
-func GetPortsList(ctx context.Context, client api.StatusServiceClient) ([]*api.PortsStatus, error) {
-	portsStatusClient, portsStatusClientError := client.PortsStatus(ctx, &api.PortsStatusRequest{Observe: false})
+func GetPortsList(ctx context.Context) ([]*supervisor.PortsStatus, error) {
+	conn, err := Dial(ctx)
+	if err != nil {
+		return nil, err
+	}
+	client := supervisor.NewStatusServiceClient(conn)
+	portsStatusClient, portsStatusClientError := client.PortsStatus(ctx, &supervisor.PortsStatusRequest{Observe: false})
 
 	if portsStatusClientError != nil {
 		return nil, portsStatusClientError
