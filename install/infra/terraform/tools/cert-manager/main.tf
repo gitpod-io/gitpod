@@ -1,17 +1,6 @@
-provider "kubernetes" {
-  config_path = var.kubeconfig
-}
-
 provider "helm" {
   kubernetes {
     config_path = var.kubeconfig
-  }
-}
-
-#create namespace for cert mananger
-resource "kubernetes_namespace" "cert" {
-  metadata {
-    name = "cert-manager"
   }
 }
 
@@ -27,10 +16,11 @@ variable "extraArgs" {
 #deploy cert manager
 resource "helm_release" "cert" {
   name       = "cert-manager"
-  namespace  = kubernetes_namespace.cert.metadata[0].name
+  namespace  = "cert-manager"
+  create_namespace = true
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
-  depends_on = [kubernetes_namespace.cert]
+  wait       = true
   set {
     name  = "version"
     value = "v1.8.0"
@@ -44,6 +34,10 @@ resource "helm_release" "cert" {
     name  = "extraArgs"
     value = "{${join(",", var.extraArgs)}}"
   }
+
+  provisioner "local-exec" {
+    command = "echo 'Waiting for cert-manager validating webhook to get its CA injected, so we can start to apply custom resources ...' && sleep 60"
+  }
 }
 
 # the following is only for GCP managed DNS setup
@@ -51,6 +45,10 @@ resource "helm_release" "cert" {
 data local_file "gcp_credentials" {
   count    = var.credentials == null ? 0 : 1
   filename = var.credentials
+}
+
+provider "kubernetes" {
+  config_path = var.kubeconfig
 }
 
 resource "kubernetes_secret" "dns_solver" {
