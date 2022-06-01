@@ -29,12 +29,12 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 			hookSetupWorkspaceLocation,
 			startIWS, // workspacekit is waiting for starting IWS, so it needs to start as soon as possible.
 			hookSetupRemoteStorage(cfg),
-			hookInstallQuota(xfs),
+			hookInstallQuota(xfs, false),
 		},
 		session.WorkspaceReady: {
 			startIWS,
 			hookSetupRemoteStorage(cfg),
-			hookInstallQuota(xfs),
+			hookInstallQuota(xfs, true),
 		},
 		session.WorkspaceDisposed: {
 			iws.StopServingWorkspace,
@@ -93,7 +93,7 @@ func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) erro
 }
 
 // hookInstallQuota enforces filesystem quota on the workspace location (if the filesystem supports it)
-func hookInstallQuota(xfs *quota.XFS) session.WorkspaceLivecycleHook {
+func hookInstallQuota(xfs *quota.XFS, isHard bool) session.WorkspaceLivecycleHook {
 	return func(ctx context.Context, ws *session.Workspace) error {
 		if xfs == nil {
 			return nil
@@ -108,7 +108,7 @@ func hookInstallQuota(xfs *quota.XFS) session.WorkspaceLivecycleHook {
 			return nil
 		}
 
-		prj, err := xfs.SetQuota(ws.Location, size)
+		prj, err := xfs.SetQuota(ws.Location, size, isHard)
 		if err != nil {
 			log.WithFields(ws.OWI()).WithError(err).Warn("cannot enforce workspace size limit")
 		}
