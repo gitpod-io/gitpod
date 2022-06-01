@@ -22,6 +22,9 @@ pod:
   - name: harvester-k3s-dockerhub-pull-account
     secret:
       secretName: harvester-k3s-dockerhub-pull-account
+  - name: harvester-vm-ssh-keys
+    secret:
+      secretName: harvester-vm-ssh-keys
   containers:
   - name: build
     image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:me-cmctl.0
@@ -36,6 +39,8 @@ pod:
       readOnly: true
     - name: harvester-kubeconfig
       mountPath: /mnt/secrets/harvester-kubeconfig
+    - name: harvester-vm-ssh-keys
+      mountPath: /mnt/secrets/harvester-vm-ssh-keys
     - name: harvester-k3s-dockerhub-pull-account
       mountPath: /mnt/secrets/harvester-k3s-dockerhub-pull-account
     env:
@@ -56,6 +61,11 @@ pod:
         set -Eeuo pipefail
 
         sudo chown -R gitpod:gitpod /workspace
+        mkdir /workspace/.ssh
+        cp /mnt/secrets/harvester-vm-ssh-keys/id_rsa /workspace/.ssh/id_rsa_harvester_vm
+        cp /mnt/secrets/harvester-vm-ssh-keys/id_rsa.pub /workspace/.ssh/id_rsa_harvester_vm.pub
+        sudo chmod 600 /workspace/.ssh/id_rsa_harvester_vm
+        sudo chmod 644 /workspace/.ssh/id_rsa_harvester_vm.pub
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
 
