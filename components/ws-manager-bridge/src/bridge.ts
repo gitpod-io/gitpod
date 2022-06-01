@@ -291,10 +291,6 @@ export class WorkspaceManagerBridge implements Disposable {
                 };
             }
 
-            if (instance.status.conditions.deployed && !instance.deployedTime) {
-                instance.deployedTime = new Date().toISOString();
-            }
-
             let lifecycleHandler: (() => Promise<void>) | undefined;
             switch (status.phase) {
                 case WorkspacePhase.PENDING:
