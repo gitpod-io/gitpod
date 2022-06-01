@@ -51,7 +51,7 @@ func TestHasUser(t *testing.T) {
 			},
 			Expectation: Expectation{
 				Exists: true,
-				Error:  "user named gitpod exists but uses different UID 1000",
+				Error:  "user named gitpod exists but uses different UID 1000, should be: 33333",
 			},
 		},
 		{
@@ -145,7 +145,7 @@ func TestHasGroup(t *testing.T) {
 			},
 			Expectation: Expectation{
 				Exists: true,
-				Error:  "group named gitpod exists but uses different GID 1000",
+				Error:  "group named gitpod exists but uses different GID 1000, should be: 33333",
 			},
 		},
 		{
