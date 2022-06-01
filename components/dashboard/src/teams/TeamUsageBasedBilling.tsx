@@ -14,6 +14,8 @@ import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 
+type PendingStripeCustomer = { pendingSince: number };
+
 export default function TeamUsageBasedBilling() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
@@ -22,6 +24,8 @@ export default function TeamUsageBasedBilling() {
     const [stripeCustomerId, setStripeCustomerId] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
+    const [pendingStripeCustomer, setPendingStripeCustomer] = useState<PendingStripeCustomer | undefined>();
+    const [pollStripeCustomerTimeout, setPollStripeCustomerTimeout] = useState<NodeJS.Timeout | undefined>();
 
     useEffect(() => {
         if (!team) {
@@ -53,8 +57,60 @@ export default function TeamUsageBasedBilling() {
             const setupIntentId = params.get("setup_intent")!;
             window.history.replaceState({}, "", window.location.pathname);
             await getGitpodService().server.subscribeTeamToStripe(team.id, setupIntentId);
+            const pendingCustomer = { pendingSince: Date.now() };
+            setPendingStripeCustomer(pendingCustomer);
+            window.localStorage.setItem(`pendingStripeCustomerForTeam${team.id}`, JSON.stringify(pendingCustomer));
         })();
     }, [location.search, team]);
+
+    useEffect(() => {
+        setPendingStripeCustomer(undefined);
+        if (!team) {
+            return;
+        }
+        try {
+            const pendingStripeCustomer = window.localStorage.getItem(`pendingStripeCustomerForTeam${team.id}`);
+            if (!pendingStripeCustomer) {
+                return;
+            }
+            const pending = JSON.parse(pendingStripeCustomer);
+            setPendingStripeCustomer(pending);
+        } catch (error) {
+            console.error("Could not load pending stripe customer", team.id, error);
+        }
+    }, [team]);
+
+    useEffect(() => {
+        if (!pendingStripeCustomer || !team) {
+            return;
+        }
+        if (!!stripeCustomerId) {
+            // The upgrade was successful!
+            window.localStorage.removeItem(`pendingStripeCustomerForTeam${team.id}`);
+            clearTimeout(pollStripeCustomerTimeout!);
+            setPendingStripeCustomer(undefined);
+            return;
+        }
+        if (pendingStripeCustomer.pendingSince + 1000 * 60 * 5 < Date.now()) {
+            // Pending Stripe customer expires after 5 minutes
+            window.localStorage.removeItem(`pendingStripeCustomerForTeam${team.id}`);
+            clearTimeout(pollStripeCustomerTimeout!);
+            setPendingStripeCustomer(undefined);
+            return;
+        }
+        if (!pollStripeCustomerTimeout) {
+            // Refresh Stripe customer in 5 seconds in order to poll for upgrade confirmation
+            const timeout = setTimeout(async () => {
+                const customerId = await getGitpodService().server.getTeamStripeCustomerId(team.id);
+                setStripeCustomerId(customerId);
+                setPollStripeCustomerTimeout(undefined);
+            }, 5000);
+            setPollStripeCustomerTimeout(timeout);
+        }
+        return function cleanup() {
+            clearTimeout(pollStripeCustomerTimeout!);
+        };
+    }, [pendingStripeCustomer, pollStripeCustomerTimeout, stripeCustomerId, team]);
 
     if (!showUsageBasedUI) {
         return <></>;
@@ -67,12 +123,12 @@ export default function TeamUsageBasedBilling() {
             <div className="max-w-xl">
                 <div className="mt-4 h-32 p-4 flex flex-col rounded-xl bg-gray-100 dark:bg-gray-800">
                     <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
-                    {isLoading && (
+                    {(isLoading || pendingStripeCustomer) && (
                         <>
                             <Spinner className="m-2 h-5 w-5 animate-spin" />
                         </>
                     )}
-                    {!isLoading && !stripeCustomerId && (
+                    {!isLoading && !pendingStripeCustomer && !stripeCustomerId && (
                         <>
                             <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
                                 Inactive
@@ -82,7 +138,7 @@ export default function TeamUsageBasedBilling() {
                             </button>
                         </>
                     )}
-                    {!isLoading && !!stripeCustomerId && (
+                    {!isLoading && !pendingStripeCustomer && !!stripeCustomerId && (
                         <>
                             <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
                                 Active
