@@ -78,6 +78,7 @@ var benchmarkCommand = &cobra.Command{
 				WorkspaceImage:    "will-be-overriden",
 				WorkspaceLocation: "workspace-stress",
 				Envvars:           scenario.Environment,
+				Class:             scenario.WorkspaceClass,
 			},
 			Type: api.WorkspaceType_REGULAR,
 		}
@@ -194,6 +195,7 @@ type BenchmarkScenario struct {
 	RunningTimeout  string                     `json:"waitForRunning"`
 	StoppingTimeout string                     `json:"waitForStopping"`
 	SuccessRate     float32                    `json:"successRate"`
+	WorkspaceClass  string                     `json:"workspaceClass"`
 }
 
 func handleWorkspaceDeletion(timeout string, executor loadgen.Executor) error {
@@ -235,5 +237,8 @@ func stopWorkspaces(timeout string, executor loadgen.Executor) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), stopping)
 	defer cancel()
+	if err := executor.Dump("benchmark-result.json"); err != nil {
+		log.Warn("could not dump workspace state, trying to stop them anyway")
+	}
 	return executor.StopAll(ctx)
 }

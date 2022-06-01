@@ -160,6 +160,7 @@ type WorkspaceCfg struct {
 	CloneTarget    string                     `json:"cloneTarget"`
 	Score          int                        `json:"score"`
 	Environment    []*api.EnvironmentVariable `json:"environment"`
+	WorkspaceClass string                     `json:"workspaceClass"`
 }
 
 type MultiWorkspaceGenerator struct {
@@ -202,6 +203,9 @@ func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 		},
 	}
 	out.Spec.WorkspaceImage = repo.WorkspaceImage
+	if len(repo.WorkspaceClass) > 0 {
+		out.Spec.Class = repo.WorkspaceClass
+	}
 	out.Spec.Envvars = append(out.Spec.Envvars, repo.Environment...)
 	r := StartWorkspaceSpec(*out)
 	return &r, nil

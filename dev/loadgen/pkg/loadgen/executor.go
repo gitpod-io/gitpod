@@ -6,9 +6,11 @@ package loadgen
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
+	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -28,6 +30,9 @@ type Executor interface {
 
 	// StopAll stops all workspaces started by the executor
 	StopAll(ctx context.Context) error
+
+	// Dump dumps the executor state to a file
+	Dump(path string) error
 }
 
 // StartWorkspaceSpec specifies a workspace
@@ -112,7 +117,7 @@ type WsmanExecutor struct {
 
 // StartWorkspace starts a new workspace
 func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration time.Duration, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 240*time.Second)
 	defer cancel()
 
 	s := *spec
@@ -173,6 +178,14 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 		s()
 	}
 
+	listReq := api.GetWorkspacesRequest{
+		MustMatch: &api.MetadataFilter{
+			Annotations: map[string]string{
+				loadgenAnnotation: "true",
+			},
+		},
+	}
+
 	log.Info("stopping workspaces")
 	for _, id := range w.workspaces {
 		stopReq := api.StopWorkspaceRequest{
@@ -187,14 +200,6 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 	}
 
 	w.workspaces = make([]string, 0)
-
-	listReq := api.GetWorkspacesRequest{
-		MustMatch: &api.MetadataFilter{
-			Annotations: map[string]string{
-				loadgenAnnotation: "true",
-			},
-		},
-	}
 
 	for {
 		resp, err := w.C.GetWorkspaces(ctx, &listReq)
@@ -215,4 +220,53 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (w *WsmanExecutor) Dump(path string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	listReq := api.GetWorkspacesRequest{
+		MustMatch: &api.MetadataFilter{
+			Annotations: map[string]string{
+				loadgenAnnotation: "true",
+			},
+		},
+	}
+
+	resp, err := w.C.GetWorkspaces(ctx, &listReq)
+	if err != nil {
+		return err
+	}
+
+	var wss []WorkspaceState
+	for _, status := range resp.GetStatus() {
+		ws := WorkspaceState{
+			WorkspaceName: status.Metadata.MetaId,
+			InstanceId:    status.Id,
+			Phase:         status.Phase,
+			Class:         status.Spec.Class,
+			NodeName:      status.Runtime.NodeName,
+			Pod:           status.Runtime.PodName,
+			Context:       status.Metadata.Annotations["context-url"],
+		}
+
+		wss = append(wss, ws)
+	}
+
+	fc, err := json.MarshalIndent(wss, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, fc, 0644)
+}
+
+type WorkspaceState struct {
+	WorkspaceName string
+	InstanceId    string
+	Phase         api.WorkspacePhase
+	Class         string
+	NodeName      string
+	Pod           string
+	Context       string
 }
