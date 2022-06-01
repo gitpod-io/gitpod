@@ -11,8 +11,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
-	"github.com/gitpod-io/gitpod/supervisor/api"
+	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
+	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -26,10 +26,7 @@ var listPortsCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		conn := supervisor.Dial()
-		client := api.NewStatusServiceClient(conn)
-
-		ports, portsListError := supervisor.GetPortsList(ctx, client)
+		ports, portsListError := supervisor_helper.GetPortsList(ctx)
 
 		if portsListError != nil {
 			log.WithError(portsListError).Error("Could not get the ports list.")
@@ -54,7 +51,7 @@ var listPortsCmd = &cobra.Command{
 			status := "not served"
 			statusColor := tablewriter.FgHiBlackColor
 			if port.Exposed == nil && port.Tunneled == nil {
-				if port.AutoExposure == api.PortAutoExposure_failed {
+				if port.AutoExposure == supervisor.PortAutoExposure_failed {
 					status = "failed to expose"
 					statusColor = tablewriter.FgRedColor
 				} else {
@@ -63,7 +60,7 @@ var listPortsCmd = &cobra.Command{
 				}
 			} else if port.Served {
 				status = "open (" + port.Exposed.Visibility.String() + ")"
-				if port.Exposed.Visibility == api.PortVisibility_public {
+				if port.Exposed.Visibility == supervisor.PortVisibility_public {
 					statusColor = tablewriter.FgHiGreenColor
 				} else {
 					statusColor = tablewriter.FgHiCyanColor

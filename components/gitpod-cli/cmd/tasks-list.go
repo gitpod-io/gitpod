@@ -7,10 +7,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
+	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/spf13/cobra"
 
@@ -25,10 +26,10 @@ var listTasksCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		conn := supervisor.Dial()
-		client := api.NewStatusServiceClient(conn)
-
-		tasks := supervisor.GetTasksList(ctx, client)
+		tasks, err := supervisor_helper.GetTasksList(ctx)
+		if err != nil {
+			log.Fatalf("cannot get task list: %s", err)
+		}
 
 		if len(tasks) == 0 {
 			fmt.Println("No tasks detected")
