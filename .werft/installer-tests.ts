@@ -34,6 +34,11 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         makeTarget: "k3s-standard-cluster",
         description: "Creating a k3s cluster on GCP with 1 node",
     },
+    STANDARD_AKS_CLUSTER: {
+        phase: "create-std-aks-cluster",
+        makeTarget: "aks-standard-cluster",
+        description: "Creating an aks cluster(azure)",
+    },
     CERT_MANAGER: {
         phase: "setup-cert-manager",
         makeTarget: "cert-manager",
@@ -48,6 +53,21 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         phase: "generate-kots-config",
         makeTarget: "generate-kots-config",
         description: `Generate KOTS Config file`,
+    },
+    AZURE_ISSUER: {
+        phase: "setup-azure-cluster-issuer",
+        makeTarget: "azure-issuer",
+        description: "Deploys ClusterIssuer for azure",
+    },
+    AZURE_EXTERNALDNS: {
+        phase: "azure-external-dns",
+        makeTarget: "azure-external-dns",
+        description: "Deploys external-dns with azure provider",
+    },
+    ADD_NS_RECORD: {
+        phase: "add-ns-record",
+        makeTarget: "add-ns-record",
+        description: "Adds NS record for subdomain under gitpod-self-hosted.com",
     },
     INSTALL_GITPOD_IGNORE_PREFLIGHTS: {
         phase: "install-gitpod-without-preflights",
@@ -120,6 +140,22 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
             "CHECK_INSTALLATION",
             "KOTS_UPGRADE",
             "CHECK_INSTALLATION",
+            "DESTROY",
+        ],
+    },
+    STANDARD_AKS_TEST: {
+        DESCRIPTION: "Deploy Gitpod on AKS, with managed DNS, and run integration tests",
+        PHASES: [
+            "STANDARD_AKS_CLUSTER",
+            "CERT_MANAGER",
+            "AZURE_ISSUER",
+            "AZURE_EXTERNALDNS",
+            "ADD_NS_RECORD",
+            "GENERATE_KOTS_CONFIG",
+            "INSTALL_GITPOD",
+            "RESULTS",
+            "CHECK_INSTALLATION",
+            "RUN_INTEGRATION_TESTS",
             "DESTROY",
         ],
     },
