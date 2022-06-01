@@ -1,6 +1,17 @@
 # Change Log
 
 ## May 2022
+- Fixed an issue on JetBrains Gateway, preventing the workspace list from being displayed when a workspace had been created from a detached commit instead of a branch. ([#10377](https://github.com/gitpod-io/gitpod/pull/10377)) - [@felladrin](https://github.com/felladrin)
+- [registry-facade] Return content directly from IPFS ([#10346](https://github.com/gitpod-io/gitpod/pull/10346)) - [@aledbf](https://github.com/aledbf)
+- [installer] Command line flag to configure strict config parsing ([#10343](https://github.com/gitpod-io/gitpod/pull/10343)) - [@easyCZ](https://github.com/easyCZ)
+- [content-service] Improve restoration of extended attributes ([#10364](https://github.com/gitpod-io/gitpod/pull/10364)) - [@aledbf](https://github.com/aledbf)
+- Reduce cpu and memory consumption of agent-smith ([#10356](https://github.com/gitpod-io/gitpod/pull/10356)) - [@Furisto](https://github.com/Furisto)
+- [JetBrains] Show notification when port becomes available ([#10107](https://github.com/gitpod-io/gitpod/pull/10107)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- [experimental] add a metric to track volume snapshot time ([#10290](https://github.com/gitpod-io/gitpod/pull/10290)) - [@jenting](https://github.com/jenting)
+- Fix, polish, and release new simplified Team Billing ([#10182](https://github.com/gitpod-io/gitpod/pull/10182)) - [@jankeromnes](https://github.com/jankeromnes)
+- [kots]: correctly escape params in installation configmap ([#10354](https://github.com/gitpod-io/gitpod/pull/10354)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [ws-daemon] Use a metric for backup waiting time instead of logs ([#10339](https://github.com/gitpod-io/gitpod/pull/10339)) - [@aledbf](https://github.com/aledbf)
+- [initializer] Fix issue with publicly signed SCM's on a self-signed Gitpod instance ([#10280](https://github.com/gitpod-io/gitpod/pull/10280)) - [@Pothulapati](https://github.com/Pothulapati)
 - [dashboard] Introduce an experimental usage-based billing feature flag (off by default) ([#10302](https://github.com/gitpod-io/gitpod/pull/10302)) - [@jankeromnes](https://github.com/jankeromnes)
 - SSH Gateway support remote port forward ([#10291](https://github.com/gitpod-io/gitpod/pull/10291)) - [@iQQBot](https://github.com/iQQBot)
 - [installer] Use installation shortname when constructing ws-manager URL templates ([#10152](https://github.com/gitpod-io/gitpod/pull/10152)) - [@andrew-farries](https://github.com/andrew-farries), [@geropl](https://github.com/geropl)
