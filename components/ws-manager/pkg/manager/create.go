@@ -518,6 +518,10 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	if m.Config.DebugWorkspacePod {
+		pod.Finalizers = append(pod.Finalizers, "gitpod.io/debugfinalizer")
+	}
+
 	ffidx := make(map[api.WorkspaceFeatureFlag]struct{})
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
 		if _, seen := ffidx[feature]; seen {
