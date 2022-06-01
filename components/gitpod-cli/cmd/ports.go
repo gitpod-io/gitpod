@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"github.com/gitpod-io/gitpod/gitpod-cli/cmd/ports"
 	"github.com/spf13/cobra"
 )
 
@@ -19,13 +18,6 @@ var portsCmd = &cobra.Command{
 	},
 }
 
-var listPortsCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists the workspace ports and their states.",
-	Run:   ports.ListPortsCmd,
-}
-
 func init() {
 	rootCmd.AddCommand(portsCmd)
-	portsCmd.AddCommand(listPortsCmd)
 }
