@@ -4,8 +4,6 @@
 package usage
 
 import (
-	"fmt"
-
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -93,7 +91,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								TimeoutSeconds:   1,
 							},
 						},
-							*common.KubeRBACProxyContainerWithConfig(ctx, 9500, fmt.Sprintf("http://127.0.0.1:%d/", baseserver.BuiltinMetricsPort)),
+							*common.KubeRBACProxyContainerWithConfig(ctx),
 						},
 					},
 				},

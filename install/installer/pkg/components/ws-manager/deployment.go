@@ -5,8 +5,6 @@
 package wsmanager
 
 import (
-	"fmt"
-	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
@@ -79,7 +77,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
-			*common.KubeRBACProxyContainerWithConfig(ctx, 9500, fmt.Sprintf("http://127.0.0.1:%d/", baseserver.BuiltinMetricsPort)),
+			*common.KubeRBACProxyContainerWithConfig(ctx),
 		},
 		Volumes: []corev1.Volume{
 			{
