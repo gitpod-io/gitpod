@@ -79,7 +79,7 @@ var ring0Cmd = &cobra.Command{
 		cmd := exec.Command("sysctl", "-w net.netfilter.nf_conntrack_max=12345")
 		err := cmd.Run()
 		if err != nil {
-			log.Errorf("cannot run sysctl: %w", err)
+			log.Errorf("cannot run sysctl: %v", err)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
