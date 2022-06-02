@@ -40,8 +40,8 @@ interface AlertInfo {
 
 const infoMap: Record<AlertType, AlertInfo> = {
     warning: {
-        bgCls: "bg-yellow-100 dark:bg-yellow-700",
-        txtCls: "text-yellow-600 dark:text-yellow-50",
+        bgCls: "bg-yellow-100 dark:bg-orange-400",
+        txtCls: "text-yellow-600 dark:text-gray-800",
         icon: <Exclamation2 className="w-4 h-4"></Exclamation2>,
         iconColor: "text-yellow-400 dark:text-yellow-900",
     },
