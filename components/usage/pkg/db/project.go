@@ -29,7 +29,7 @@ type Project struct {
 	MarkedDeleted bool `gorm:"column:markedDeleted;type:tinyint;default:0;" json:"markedDeleted"`
 
 	// deleted is reserved for use by db-sync
-	_ int32 `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
+	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
 // TableName sets the insert table name for this struct type
