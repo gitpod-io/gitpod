@@ -26,3 +26,23 @@ variable "name" {
   description = "Prefix name for the nodes and firewall"
   default     = "k3s"
 }
+
+variable "dns_sa_creds" {
+  description = "Credentials with DNS admin rights to the project with managed DNS record"
+  default     = ""
+}
+
+variable "dns_project" {
+  description = "Project associated with the dns maanged zone"
+  default     = null
+}
+
+variable "domain_name" {
+  description = "Domain name to add to add DNS map to"
+  default     = null
+}
+
+variable "managed_dns_zone" {
+  description = "Name of the managed DNS record"
+  default     = null
+}

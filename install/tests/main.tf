@@ -10,8 +10,8 @@ terraform {
 }
 
 variable "project" { default = "sh-automated-tests" }
-variable "sa_creds" { default = "" }
-variable "dns_sa_creds" {default = "" }
+variable "sa_creds" { default = "/workspace/gcp.json" }
+variable "dns_sa_creds" {default = "/workspace/gitpod/gcp.json" }
 
 module "gke" {
   source = "github.com/gitpod-io/gitpod//install/infra/terraform/gke?ref=nvn-infra-tf" # we can later use tags here
@@ -23,12 +23,16 @@ module "gke" {
 }
 
 module "k3s" {
-  source = "github.com/gitpod-io/gitpod//install/infra/terraform/k3s?ref=nvn-infra-tf" # we can later use tags here
+  source = "github.com/gitpod-io/gitpod//install/infra/terraform/k3s?ref=nvn-infra-aks" # we can later use tags here
 
-  name        = var.TEST_ID
-  gcp_project = var.project
-  credentials = var.sa_creds
-  kubeconfig  = var.kubeconfig
+  name             = var.TEST_ID
+  gcp_project      = var.project
+  credentials      = var.sa_creds
+  kubeconfig       = var.kubeconfig
+  dns_sa_creds     = var.dns_sa_creds
+  dns_project      = "dns-for-playgrounds"
+  managed_dns_zone = "gitpod-self-hosted-com"
+  domain_name      = "${var.TEST_ID}.gitpod-self-hosted.com"
 }
 
 module "aks" {

@@ -21,6 +21,11 @@ provider "google" {
   zone        = var.gcp_zone
 }
 
+provider "google" {
+  alias       = "dns"
+  credentials = var.dns_sa_creds
+}
+
 resource "google_service_account" "gcp_instance" {
   account_id   = "gcp-k3s-compute"
   display_name = "Service Account"
@@ -92,6 +97,18 @@ resource "null_resource" "k3sup_install" {
               --k3s-extra-args=" --disable=traefik --node-label=gitpod.io/workload_meta=true --node-label=gitpod.io/workload_ide=true --node-label=gitpod.io/workload_workspace_services=true --node-label=gitpod.io/workload_workspace_regular=true --node-label=gitpod.io/workload_workspace_headless=true" \
           EOT
   }
+}
+
+resource "google_dns_record_set" "a" {
+  provider     = google.dns
+  count        = (var.domain_name == null) || (var.managed_dns_zone == null ) ? 0 : 1
+  name         = "${var.domain_name}."
+  managed_zone = var.managed_dns_zone
+  project      = var.dns_project == null ? var.gcp_project : var.dns_project
+  type         = "A"
+  ttl          = 5
+
+  rrdatas = [google_compute_instance.k3s_master_instance.network_interface[0].access_config[0].nat_ip]
 }
 
 data "local_file" "kubeconfig" {
