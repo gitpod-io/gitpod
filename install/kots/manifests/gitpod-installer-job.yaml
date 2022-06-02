@@ -264,7 +264,7 @@ spec:
               EOF
 
               echo "Gitpod: render Kubernetes manifests"
-              /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} > "${GITPOD_OBJECTS}/templates/gitpod.yaml"
+              /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} --use-experimental-config > "${GITPOD_OBJECTS}/templates/gitpod.yaml"
 
               # Workaround for #8532 and #8529
               echo "Gitpod: Remove the StatefulSet status object for OpenVSX Proxy"
