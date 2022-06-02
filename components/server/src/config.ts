@@ -217,7 +217,11 @@ export namespace ConfigFile {
         );
         let stripeSettings: { publishableKey: string; secretKey: string } | undefined;
         if (config.enablePayment && config.stripeSettingsFile) {
-            stripeSettings = JSON.parse(fs.readFileSync(filePathTelepresenceAware(config.stripeSettingsFile), "utf-8"));
+            try {
+                stripeSettings = JSON.parse(fs.readFileSync(filePathTelepresenceAware(config.stripeSettingsFile), "utf-8"));
+            } catch (error) {
+                console.error("Could not load Stripe settings", error);
+            }
         }
         let license = config.license;
         const licenseFile = config.licenseFile;
