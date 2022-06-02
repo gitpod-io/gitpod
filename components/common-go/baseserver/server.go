@@ -364,7 +364,7 @@ func newBuiltinServices(server *Server) *builtinServices {
 			Handler: server.healthEndpoint(),
 		},
 		Metrics: &http.Server{
-			Addr:    fmt.Sprintf(":%d", BuiltinMetricsPort),
+			Addr:    fmt.Sprintf("127.0.0.1:%d", BuiltinMetricsPort),
 			Handler: server.metricsEndpoint(),
 		},
 	}

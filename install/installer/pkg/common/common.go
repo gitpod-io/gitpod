@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
@@ -303,21 +304,20 @@ func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 }
 
 func KubeRBACProxyContainer(ctx *RenderContext) *corev1.Container {
-	return KubeRBACProxyContainerWithConfig(ctx, 9500, "http://127.0.0.1:9500/")
+	return KubeRBACProxyContainerWithConfig(ctx)
 }
 
-func KubeRBACProxyContainerWithConfig(ctx *RenderContext, listenPort int32, upstream string) *corev1.Container {
+func KubeRBACProxyContainerWithConfig(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "kube-rbac-proxy",
 		Image: ctx.ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 		Args: []string{
-			"--v=5",
 			"--logtostderr",
-			fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", listenPort),
-			fmt.Sprintf("--upstream=%s", upstream),
+			fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", baseserver.BuiltinMetricsPort),
+			fmt.Sprintf("--upstream=http://127.0.0.1:%d/", baseserver.BuiltinMetricsPort),
 		},
 		Ports: []corev1.ContainerPort{
-			{Name: "metrics", ContainerPort: listenPort},
+			{Name: "metrics", ContainerPort: baseserver.BuiltinMetricsPort},
 		},
 		Env: []corev1.EnvVar{
 			{
