@@ -120,7 +120,6 @@ var ring0Cmd = &cobra.Command{
 		cmd.Env = append(os.Environ(),
 			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
 			fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
-			"GITPOD_WORKSPACE_ID="+wsid,
 		)
 
 		if err := cmd.Start(); err != nil {
@@ -373,7 +372,6 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		env = append(env, "WORKSPACEKIT_WRAP_NETNS=true")
-		env = append(env, "GITPOD_WORKSPACE_ID="+wsid)
 
 		socketFN := filepath.Join(os.TempDir(), fmt.Sprintf("workspacekit-ring1-%d.unix", time.Now().UnixNano()))
 		skt, err := net.Listen("unix", socketFN)
@@ -521,6 +519,7 @@ var ring1Cmd = &cobra.Command{
 				Ring2PID:    cmd.Process.Pid,
 				Ring2Rootfs: ring2Root,
 				BindEvents:  make(chan seccomp.BindEvent),
+				WorkspaceId: wsid,
 			}
 
 			stp, errchan := seccomp.Handle(scmpfd, handler)
