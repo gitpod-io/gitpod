@@ -209,7 +209,14 @@
             "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
-            "securityContext": {},
+            "securityContext": {
+                "sysctls": [
+                    {
+                        "name": "net.netfilter.nf_conntrack_max",
+                        "value": "12345"
+                    }
+                ]
+            },
             "hostname": "foobar",
             "affinity": {
                 "nodeAffinity": {

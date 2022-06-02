@@ -76,12 +76,6 @@ var ring0Cmd = &cobra.Command{
 
 		defer log.Info("done")
 
-		cmd := exec.Command("sysctl", "-w net.netfilter.nf_conntrack_max=12345")
-		err := cmd.Run()
-		if err != nil {
-			log.Errorf("cannot run sysctl: %v", err)
-		}
-
 		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 		defer cancel()
 
@@ -115,7 +109,7 @@ var ring0Cmd = &cobra.Command{
 			}
 		}()
 
-		cmd = exec.Command("/proc/self/exe", "ring1")
+		cmd := exec.Command("/proc/self/exe", "ring1")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
 			Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | unix.CLONE_NEWCGROUP,

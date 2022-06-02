@@ -474,6 +474,10 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	PodSecContext := corev1.PodSecurityContext{}
+	PodSecContext.Sysctls = append(PodSecContext.Sysctls, corev1.Sysctl{
+		Name:  "net.netfilter.nf_conntrack_max",
+		Value: "12345",
+	})
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%s", prefix, req.Id),
