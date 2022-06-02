@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +13,7 @@ var (
 	branch = ""
 )
 
-func RootCmd() *cobra.Command {
+func RootCmd(logger *logrus.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "previewctl",
 		Short: "Your best friend when interacting with Preview Environments :)",
@@ -22,8 +23,8 @@ func RootCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVar(&branch, "branch", "", "From which branch's preview previewctl should interact with. By default it will use the result of \"git rev-parse --abbrev-ref HEAD\"")
 
 	cmd.AddCommand(
-		installContextCmd(),
-		getNameCmd(),
+		installContextCmd(logger),
+		getNameCmd(logger),
 	)
 	return cmd
 }

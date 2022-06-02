@@ -5,14 +5,20 @@
 package main
 
 import (
-	"log"
-
 	"github.com/gitpod-io/gitpod/previewctl/cmd"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	root := cmd.RootCmd()
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.TextFormatter{
+		DisableColors:   true,
+		FullTimestamp:   true,
+		TimestampFormat: "2006-01-02 15:04:05",
+	})
+
+	root := cmd.RootCmd(logger)
 	if err := root.Execute(); err != nil {
-		log.Fatal(err)
+		logger.WithFields(logrus.Fields{"err": err}).Fatal("command failed.")
 	}
 }

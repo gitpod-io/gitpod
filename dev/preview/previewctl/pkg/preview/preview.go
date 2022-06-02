@@ -7,33 +7,39 @@ package preview
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"log"
 	"os/exec"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Preview struct {
 	Branch string
+
+	logger *logrus.Entry
 }
 
-func New(branch string) *Preview {
+func New(branch string, logger *logrus.Logger) *Preview {
 	if branch == "" {
 		out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
 		if err != nil {
-			log.Fatalf("Could not retrieve branch name, err: %v", err)
+			logger.WithFields(logrus.Fields{"err": err}).Fatal("Could not retrieve branch name.")
 		}
 		branch = string(out)
 	} else {
 		_, err := exec.Command("git", "rev-parse", "--verify", branch).Output()
 		if err != nil {
-			log.Fatalf("Branch '%s' does not exist", branch)
+			logger.WithFields(logrus.Fields{"branch": branch, "err": err}).Fatal("Branch does not exist.")
 		}
 	}
 
+	logEntry := logger.WithFields(logrus.Fields{"branch": branch})
+
 	return &Preview{
 		Branch: branch,
+		logger: logEntry,
 	}
 }
 
@@ -48,10 +54,13 @@ func (p *Preview) InstallContext(watch bool) error {
 		for {
 			select {
 			case <-installTicker.C:
-				if err := installContext(p.Branch); err == nil {
-					// No error means successful context installation
-					return nil
+				err := installContext(p.Branch)
+				if err != nil {
+					p.logger.WithFields(logrus.Fields{"err": err}).Info("Failed to install context. Trying again in 30 seconds.")
+					continue
 				}
+				p.logger.Info("Context installed.")
+				return nil
 			}
 		}
 	}
