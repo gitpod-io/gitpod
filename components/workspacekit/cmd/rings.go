@@ -115,7 +115,7 @@ var ring0Cmd = &cobra.Command{
 			}
 		}()
 
-		cmd := exec.Command("/proc/self/exe", "ring1")
+		cmd = exec.Command("/proc/self/exe", "ring1")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
 			Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | unix.CLONE_NEWCGROUP,
