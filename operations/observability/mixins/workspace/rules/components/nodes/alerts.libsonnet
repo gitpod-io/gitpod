@@ -28,7 +28,7 @@
               severity: 'critical',
             },
             annotations: {
-              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/AutoscalerAddsNodesTooFast.md',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/AutoscalerAddsNodesTooFast.md',
               summary: "Autoscaler is adding new nodes rapidly",
               description: 'Autoscaler in cluster {{ $labels.cluster }} is rapidly adding new nodes.',
             },
