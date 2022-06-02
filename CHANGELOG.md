@@ -1,6 +1,18 @@
 # Change Log
 
-## May 2022
+## June 2022
+- [gpctl] Fix parsing error when running gpctl workspaces describe <instanceID> ([#10401](https://github.com/gitpod-io/gitpod/pull/10401)) - [@epk](https://github.com/epk)
+- Remove beta label from dotfiles in settings ([#10398](https://github.com/gitpod-io/gitpod/pull/10398)) - [@gtsiolis](https://github.com/gtsiolis), [@loujaybee](https://github.com/loujaybee)
+- Add Support for Google Artifact Registry as Container Registry ([#10266](https://github.com/gitpod-io/gitpod/pull/10266)) - [@princerachit](https://github.com/princerachit)
+- [kots]: add database to preflight checks ([#9759](https://github.com/gitpod-io/gitpod/pull/9759)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Gitpod CLI has a new command to list the ports from the workspace: gp ports list ([#10388](https://github.com/gitpod-io/gitpod/pull/10388)) - [@felladrin](https://github.com/felladrin)
+- content-service: Ignore errors in attributes settings ([#10372](https://github.com/gitpod-io/gitpod/pull/10372)) - [@utam0k](https://github.com/utam0k)
+- ws-daemon: Apply the xfs limit in stages. ([#10395](https://github.com/gitpod-io/gitpod/pull/10395)) - [@utam0k](https://github.com/utam0k)
+- [db] Deprecate WorkspaceInstance.deployedTime field ([#10400](https://github.com/gitpod-io/gitpod/pull/10400)) - [@easyCZ](https://github.com/easyCZ)
+- dashboard: single quote connect via ssh connection string ([#10394](https://github.com/gitpod-io/gitpod/pull/10394)) - [@ghuntley](https://github.com/ghuntley)
+- Ensure correct permissions are set on gitpod repo inside the workspace. ([#10229](https://github.com/gitpod-io/gitpod/pull/10229)) - [@sagor999](https://github.com/sagor999)
+
+##  May 2022
 - Fixed an issue on JetBrains Gateway, preventing the workspace list from being displayed when a workspace had been created from a detached commit instead of a branch. ([#10377](https://github.com/gitpod-io/gitpod/pull/10377)) - [@felladrin](https://github.com/felladrin)
 - [registry-facade] Return content directly from IPFS ([#10346](https://github.com/gitpod-io/gitpod/pull/10346)) - [@aledbf](https://github.com/aledbf)
 - [installer] Command line flag to configure strict config parsing ([#10343](https://github.com/gitpod-io/gitpod/pull/10343)) - [@easyCZ](https://github.com/easyCZ)
