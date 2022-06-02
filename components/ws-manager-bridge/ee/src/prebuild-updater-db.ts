@@ -70,6 +70,7 @@ export class PrebuildUpdaterDB implements PrebuildUpdater {
             prebuild.statusVersion = status.statusVersion;
 
             const update = this.prebuildStateMapper.mapWorkspaceStatusToPrebuild(status);
+            const terminatingStates = ["available", "timeout", "aborted", "failed"];
             if (update) {
                 const updatedPrebuild = {
                     ...prebuild,
@@ -78,6 +79,10 @@ export class PrebuildUpdaterDB implements PrebuildUpdater {
 
                 span.setTag("updatePrebuildWorkspace.prebuild.state", updatedPrebuild.state);
                 span.setTag("updatePrebuildWorkspace.prebuild.error", updatedPrebuild.error);
+
+                if (writeToDB && updatedPrebuild.state && terminatingStates.includes(updatedPrebuild.state)) {
+                    this.prometheusExporter.increasePrebuildsCompletedCounter(updatedPrebuild.state);
+                }
 
                 if (writeToDB) {
                     await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(updatedPrebuild);
