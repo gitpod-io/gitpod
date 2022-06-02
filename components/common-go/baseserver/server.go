@@ -268,7 +268,7 @@ func (s *Server) initializeGRPC() error {
 		grpc_logrus.UnaryServerInterceptor(s.Logger(),
 			grpc_logrus.WithDecider(func(fullMethodName string, err error) bool {
 				// Skip gRPC healthcheck logs, they are frequent and pollute our logging infra
-				return fullMethodName != "grpc.health.v1.Health/Check"
+				return fullMethodName != "/grpc.health.v1.Health/Check"
 			}),
 		),
 		grpcMetrics.UnaryServerInterceptor(),
