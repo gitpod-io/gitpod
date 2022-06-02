@@ -7,7 +7,7 @@
 import { WorkspaceManagerBridge } from "../../src/bridge";
 import { inject, injectable } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { WorkspaceStatus, WorkspaceType, WorkspacePhase } from "@gitpod/ws-manager/lib";
+import { WorkspaceStatus, WorkspaceType } from "@gitpod/ws-manager/lib";
 import { HeadlessWorkspaceEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -17,29 +17,6 @@ import { PrebuildStateMapper } from "../../src/prebuild-state-mapper";
 export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
     @inject(PrebuildStateMapper)
     protected readonly prebuildStateMapper: PrebuildStateMapper;
-
-    protected async cleanupProbeWorkspace(ctx: TraceContext, status: WorkspaceStatus.AsObject | undefined) {
-        if (!status) {
-            return;
-        }
-        if (status.spec && status.spec.type != WorkspaceType.PROBE) {
-            return;
-        }
-        if (status.phase !== WorkspacePhase.STOPPED) {
-            return;
-        }
-
-        const span = TraceContext.startSpan("cleanupProbeWorkspace", ctx);
-        try {
-            const workspaceId = status.metadata!.metaId!;
-            await this.workspaceDB.trace({ span }).hardDeleteWorkspace(workspaceId);
-        } catch (e) {
-            TraceContext.setError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
 
     protected async updatePrebuiltWorkspace(
         ctx: TraceContext,

@@ -384,8 +384,6 @@ export class WorkspaceManagerBridge implements Disposable {
 
                 // cleanup
                 // important: call this after the DB update
-                await this.cleanupProbeWorkspace(ctx, status);
-
                 if (!!lifecycleHandler) {
                     await lifecycleHandler();
                 }
@@ -471,10 +469,6 @@ export class WorkspaceManagerBridge implements Disposable {
             promises.push(this.stopPrebuildInstance(ctx, instance));
         }
         await Promise.all(promises);
-    }
-
-    protected async cleanupProbeWorkspace(ctx: TraceContext, status: WorkspaceStatus.AsObject | undefined) {
-        // probes are an EE feature - we just need the hook here
     }
 
     protected async updatePrebuiltWorkspace(
