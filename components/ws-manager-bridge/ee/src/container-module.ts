@@ -5,9 +5,9 @@
  */
 
 import { ContainerModule } from "inversify";
-import { WorkspaceManagerBridgeEE } from "./bridge";
-import { WorkspaceManagerBridge } from "../../src/bridge";
+import { PrebuildUpdater } from "../../src/prebuild-updater";
+import { PrebuildUpdaterDB } from "./prebuild-updater-db";
 
 export const containerModuleEE = new ContainerModule((bind, unbind, isBound, rebind) => {
-    rebind(WorkspaceManagerBridge).to(WorkspaceManagerBridgeEE).inRequestScope();
+    rebind(PrebuildUpdater).to(PrebuildUpdaterDB).inSingletonScope();
 });

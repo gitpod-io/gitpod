@@ -1,10 +1,9 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the Gitpod Enterprise Source Code License,
  * See License.enterprise.txt in the project root folder.
  */
 
-import { WorkspaceManagerBridge } from "../../src/bridge";
 import { inject, injectable } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceStatus, WorkspaceType } from "@gitpod/ws-manager/lib";
@@ -12,13 +11,27 @@ import { HeadlessWorkspaceEvent } from "@gitpod/gitpod-protocol/lib/headless-wor
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PrebuildStateMapper } from "../../src/prebuild-state-mapper";
+import { PrebuildUpdater } from "../../src/prebuild-updater";
+import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
+import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
+import { MessageBusIntegration } from "../../src/messagebus-integration";
+import { PrometheusMetricsExporter } from "../../src/prometheus-metrics-exporter";
 
 @injectable()
-export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
+export class PrebuildUpdaterDB implements PrebuildUpdater {
     @inject(PrebuildStateMapper)
     protected readonly prebuildStateMapper: PrebuildStateMapper;
 
-    protected async updatePrebuiltWorkspace(
+    @inject(TracedWorkspaceDB)
+    protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
+
+    @inject(MessageBusIntegration)
+    protected readonly messagebus: MessageBusIntegration;
+
+    @inject(PrometheusMetricsExporter)
+    protected readonly prometheusExporter: PrometheusMetricsExporter;
+
+    async updatePrebuiltWorkspace(
         ctx: TraceContext,
         userId: string,
         status: WorkspaceStatus.AsObject,
@@ -91,7 +104,7 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
         }
     }
 
-    protected async stopPrebuildInstance(ctx: TraceContext, instance: WorkspaceInstance): Promise<void> {
+    async stopPrebuildInstance(ctx: TraceContext, instance: WorkspaceInstance): Promise<void> {
         const span = TraceContext.startSpan("stopPrebuildInstance", ctx);
 
         const prebuild = await this.workspaceDB.trace({}).findPrebuildByWorkspaceID(instance.workspaceId);
