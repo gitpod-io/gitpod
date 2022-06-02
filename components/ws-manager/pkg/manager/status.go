@@ -595,7 +595,7 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 					// default way for headless workspaces to be done
 					return "", nil
 				}
-				return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that. error msg: %s", cs.Name, terminationState.Message), nil
+				return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that. Reason: %s", cs.Name, terminationState.Message), nil
 			} else if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerUnknownExitCode {
 				// if a container is terminated and it wasn't because of either:
 				//  - regular shutdown
