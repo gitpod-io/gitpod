@@ -41,7 +41,7 @@ packages:
         - ["mv", "components-docker-up--bin-runc-facade/docker-up", "runc-facade"]
         - ["rm", "-r", "components-docker-up--bin-runc-facade"]
         # Override docker-compose with custom version https://github.com/gitpod-io/compose/pull/1
-        - ["curl", "-sSL", "https://github.com/gitpod-io/compose/releases/download/2.5.0-gitpod.0/docker-compose-linux-x86_64", "-o", "docker-compose"]
+        - ["curl", "-sSL", "https://github.com/gitpod-io/compose/releases/download/2.6.0-gitpod.0/docker-compose-linux-x86_64", "-o", "docker-compose"]
         - ["chmod", "+x", "docker-compose"]
   - name: docker
     type: docker
