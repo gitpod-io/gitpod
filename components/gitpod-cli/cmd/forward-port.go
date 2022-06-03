@@ -21,7 +21,7 @@ import (
 var rewriteHostHeader bool
 
 var portFwdCmd = &cobra.Command{
-	Use:   "forward-port <local-port> [target-port]",
+	Use:   "forward <local-port> [target-port]",
 	Short: "Makes a port available on 0.0.0.0 so that it can be exposed to the internet",
 	Long:  ``,
 	Args:  cobra.RangeArgs(1, 2),
@@ -72,6 +72,6 @@ var portFwdCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(portFwdCmd)
+	portsCmd.AddCommand(portFwdCmd)
 	portFwdCmd.Flags().BoolVarP(&rewriteHostHeader, "rewrite-host-header", "r", false, "rewrites the host header of passing HTTP requests to localhost")
 }

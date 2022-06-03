@@ -1193,7 +1193,7 @@
                             "name": "GITPOD_WORKSPACE_CONTEXT"
                         },
                         {
-                            "value": "[{\"init\":\"yarn run bootstrap && cd ./examples/gatsbygram && yarn install && gatsby-dev --set-path-to-repo ../.. && gatsby-dev --scan-once && npx gatsby build && cd ../.. && touch /tmp/done.txt\\n\",\"command\":\"yarn run watch --scope={gatsby,gatsby-image,gatsby-link}\\n\"},{\"openMode\":\"split-right\",\"before\":\"cd ./examples/gatsbygram\\n\",\"command\":\"gp await-port 8000 && gatsby-dev --set-path-to-repo ../.. && gatsby-dev\\n\"},{\"before\":\"cd ./examples/gatsbygram\\n\",\"init\":\"until [ -f /tmp/done.txt ]\\ndo\\n    sleep 2\\ndone\\n\",\"command\":\"npx gatsby develop\\n\"}]",
+                            "value": "[{\"init\":\"yarn run bootstrap && cd ./examples/gatsbygram && yarn install && gatsby-dev --set-path-to-repo ../.. && gatsby-dev --scan-once && npx gatsby build && cd ../.. && touch /tmp/done.txt\\n\",\"command\":\"yarn run watch --scope={gatsby,gatsby-image,gatsby-link}\\n\"},{\"openMode\":\"split-right\",\"before\":\"cd ./examples/gatsbygram\\n\",\"command\":\"gp ports await 8000 && gatsby-dev --set-path-to-repo ../.. && gatsby-dev\\n\"},{\"before\":\"cd ./examples/gatsbygram\\n\",\"init\":\"until [ -f /tmp/done.txt ]\\ndo\\n    sleep 2\\ndone\\n\",\"command\":\"npx gatsby develop\\n\"}]",
                             "name": "GITPOD_TASKS"
                         },
                         {

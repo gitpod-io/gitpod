@@ -131,7 +131,7 @@
             },
             {
               "name": "GITPOD_TASKS",
-              "value": "[{\"init\":\"npm install\",\"command\":\"export CLIENT_URL=\\\"$(gp url 35729)/livereload.js?snipver=1\u0026port=443\\\"\\n{ gp await-port 5000 \u0026\u0026 sleep 5 \u0026\u0026 gp preview $(gp url 5000) \u0026 } \u0026\u003e /dev/null\\ngp open src/App.svelte\\nnpm run dev\\n\"}]"
+              "value": "[{\"init\":\"npm install\",\"command\":\"export CLIENT_URL=\\\"$(gp url 35729)/livereload.js?snipver=1\u0026port=443\\\"\\n{ gp ports await 5000 \u0026\u0026 sleep 5 \u0026\u0026 gp preview $(gp url 5000) \u0026 } \u0026\u003e /dev/null\\ngp open src/App.svelte\\nnpm run dev\\n\"}]"
             },
             {
               "name": "THEIA_SUPERVISOR_TOKENS",
