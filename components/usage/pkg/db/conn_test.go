@@ -2,14 +2,15 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package db
+package db_test
 
 import (
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestConnectForTests(t *testing.T) {
-	conn := ConnectForTests(t)
+	conn := db.ConnectForTests(t)
 	require.NotNil(t, conn)
 }
