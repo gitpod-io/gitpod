@@ -1,6 +1,13 @@
 # Change Log
 
 ## June 2022
+- Revert "[baseserver] Change default metrics port to 9502 to not clash with kube-rbac-proxy" ([#10442](https://github.com/gitpod-io/gitpod/pull/10442)) - [@aledbf](https://github.com/aledbf)
+- workspackit: put the workspace id into logs to trace. ([#10420](https://github.com/gitpod-io/gitpod/pull/10420)) - [@utam0k](https://github.com/utam0k)
+- [ws-manager] show why pod entered completed state ([#10414](https://github.com/gitpod-io/gitpod/pull/10414)) - [@sagor999](https://github.com/sagor999)
+- [installer] Bump MinIO helm chart to 11.6.3 ([#10428](https://github.com/gitpod-io/gitpod/pull/10428)) - [@csweichel](https://github.com/csweichel)
+- [installer] Bump MySQL helm chart to 9.1.2 ([#10428](https://github.com/gitpod-io/gitpod/pull/10428)) - [@csweichel](https://github.com/csweichel)
+- [installer] Bump RabbitMQ helm chart to 10.1.1 ([#10428](https://github.com/gitpod-io/gitpod/pull/10428)) - [@csweichel](https://github.com/csweichel)
+- [supervisor] improve error message around user group and uid ([#10413](https://github.com/gitpod-io/gitpod/pull/10413)) - [@sagor999](https://github.com/sagor999)
 - [gpctl] Fix parsing error when running gpctl workspaces describe <instanceID> ([#10401](https://github.com/gitpod-io/gitpod/pull/10401)) - [@epk](https://github.com/epk)
 - Remove beta label from dotfiles in settings ([#10398](https://github.com/gitpod-io/gitpod/pull/10398)) - [@gtsiolis](https://github.com/gtsiolis), [@loujaybee](https://github.com/loujaybee)
 - Add Support for Google Artifact Registry as Container Registry ([#10266](https://github.com/gitpod-io/gitpod/pull/10266)) - [@princerachit](https://github.com/princerachit)
