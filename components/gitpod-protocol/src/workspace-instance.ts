@@ -56,6 +56,12 @@ export interface WorkspaceInstance {
      * Contains information about the image build, if there was any
      */
     imageBuildInfo?: ImageBuildInfo;
+
+    /**
+     * workspace class, also known as workspace size, determines the type of
+     * resources that are provided to the workspace.
+     */
+    workspaceClass?: string;
 }
 
 // WorkspaceInstanceStatus describes the current state of a workspace instance
