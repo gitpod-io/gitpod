@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM alpine:3.15 as compress
+FROM alpine:3.16 as compress
 
 RUN apk add brotli gzip
 

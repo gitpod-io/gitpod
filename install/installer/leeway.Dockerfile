@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM alpine:3.15
+FROM alpine:3.16
 COPY --from=alpine/helm:3.8.0 /usr/bin/helm /usr/bin/helm
 COPY install-installer--app/installer install-installer--app/provenance-bundle.jsonl /app/
 RUN apk add --no-cache curl jq yq  \

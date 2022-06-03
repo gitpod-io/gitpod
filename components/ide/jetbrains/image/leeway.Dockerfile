@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM alpine:3.15 as download
+FROM alpine:3.16 as download
 ARG JETBRAINS_BACKEND_URL
 WORKDIR /workdir
 RUN apk add --no-cache --upgrade curl gzip tar unzip

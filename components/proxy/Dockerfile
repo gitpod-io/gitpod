@@ -22,7 +22,7 @@ RUN xcaddy build v2.4.5 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/jsonselect=/plugins/jsonselect \
   --with github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel=/plugins/sshtunnel
 
-FROM alpine:3.15
+FROM alpine:3.16
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
