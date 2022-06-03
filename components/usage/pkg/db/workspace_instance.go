@@ -5,9 +5,12 @@
 package db
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -28,10 +31,11 @@ type WorkspaceInstance struct {
 	LastModified time.Time   `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 	StoppingTime VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
 
-	LastHeartbeat  string         `gorm:"column:lastHeartbeat;type:varchar;size:255;" json:"lastHeartbeat"`
-	StatusOld      sql.NullString `gorm:"column:status_old;type:varchar;size:255;" json:"status_old"`
-	Status         datatypes.JSON `gorm:"column:status;type:json;" json:"status"`
-	Phase          sql.NullString `gorm:"column:phase;type:char;size:32;" json:"phase"`
+	LastHeartbeat string         `gorm:"column:lastHeartbeat;type:varchar;size:255;" json:"lastHeartbeat"`
+	StatusOld     sql.NullString `gorm:"column:status_old;type:varchar;size:255;" json:"status_old"`
+	Status        datatypes.JSON `gorm:"column:status;type:json;" json:"status"`
+	// Phase is derived from Status by extracting JSON from it. Read-only (-> property).
+	Phase          sql.NullString `gorm:"->:column:phase;type:char;size:32;" json:"phase"`
 	PhasePersisted string         `gorm:"column:phasePersisted;type:char;size:32;" json:"phasePersisted"`
 
 	// deleted is restricted for use by db-sync
@@ -41,4 +45,26 @@ type WorkspaceInstance struct {
 // TableName sets the insert table name for this struct type
 func (d *WorkspaceInstance) TableName() string {
 	return "d_b_workspace_instance"
+}
+
+// ListWorkspaceInstancesInRange lists WorkspaceInstances between from (inclusive) and to (exclusive).
+// This results in all instances which have existed in the specified period, regardless of their current status, this includes:
+// - terminated
+// - running
+// - instances which only just terminated after the start period
+// - instances which only just started in the period specified
+func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstance, error) {
+	var instances []WorkspaceInstance
+	tx := conn.WithContext(ctx).
+		Where(
+			conn.Where("stoppedTime >= ?", from).Or("stoppedTime = ?", ""),
+		).
+		Where("creationTime < ?", to).
+		Where("creationTime != ?", "").
+		Find(&instances)
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
+	}
+
+	return instances, nil
 }

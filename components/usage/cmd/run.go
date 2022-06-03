@@ -31,7 +31,7 @@ func run() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Init(ServiceName, Version, true, verbose)
 
-			_, err := db.Connect(db.ConnectionParams{
+			conn, err := db.Connect(db.ConnectionParams{
 				User:     os.Getenv("DB_USERNAME"),
 				Password: os.Getenv("DB_PASSWORD"),
 				Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
@@ -41,7 +41,7 @@ func run() *cobra.Command {
 				log.WithError(err).Fatal("Failed to establish database connection.")
 			}
 
-			ctrl, err := controller.New(1*time.Minute, controller.ReconcilerFunc(controller.HelloWorldReconciler))
+			ctrl, err := controller.New(1*time.Minute, controller.NewUsageReconciler(conn))
 			if err != nil {
 				log.WithError(err).Fatal("Failed to initialize usage controller.")
 			}

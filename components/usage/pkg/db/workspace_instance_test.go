@@ -5,6 +5,7 @@
 package db_test
 
 import (
+	"context"
 	"fmt"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"strings"
 	"testing"
+	"time"
 )
 
 var workspaceInstanceJSON = map[string]interface{}{
@@ -92,4 +94,87 @@ func insertRawObject(t *testing.T, conn *gorm.DB, columns []string, statement st
 	require.NoError(t, tx.Error)
 
 	return id
+}
+
+func TestListWorkspaceInstancesInRange(t *testing.T) {
+	conn := db.ConnectForTests(t)
+
+	workspaceID := "gitpodio-gitpod-gyjr82jkfnd"
+	status := []byte(`{"phase": "stopped", "conditions": {"deployed": false, "pullingImages": false, "serviceExists": false}}`)
+	valid := []*db.WorkspaceInstance{
+		// In the middle of May
+		{
+			ID:           uuid.New(),
+			WorkspaceID:  workspaceID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
+			Status:       status,
+		},
+		// Start of May
+		{
+			ID:           uuid.New(),
+			WorkspaceID:  workspaceID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)),
+			Status:       status,
+		},
+		// End of May
+		{
+			ID:           uuid.New(),
+			WorkspaceID:  workspaceID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 59, 59, 999999, time.UTC)),
+			Status:       status,
+		},
+		// Started in April, but continued into May
+		{
+			ID:           uuid.New(),
+			WorkspaceID:  workspaceID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 0, 0, 0, 0, time.UTC)),
+			Status:       status,
+		},
+		// Started in May, but continued into June
+		{
+			ID:           uuid.New(),
+			WorkspaceID:  workspaceID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+			Status:       status,
+		},
+		// Started in April, but continued into June (ran for all of May)
+		{
+			ID:           uuid.New(),
+			WorkspaceID:  workspaceID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+			Status:       status,
+		},
+	}
+	invalid := []*db.WorkspaceInstance{
+		// Start of June
+		{
+			ID:           uuid.New(),
+			WorkspaceID:  workspaceID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 06, 1, 00, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+			Status:       status,
+		},
+	}
+
+	var all []*db.WorkspaceInstance
+	all = append(all, valid...)
+	all = append(all, invalid...)
+
+	for _, instance := range all {
+		tx := conn.Create(instance)
+		require.NoError(t, tx.Error)
+	}
+
+	startOfMay := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
+	startOfJune := time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
+	retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
+	require.NoError(t, err)
+
+	require.Len(t, retrieved, len(valid))
 }
