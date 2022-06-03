@@ -501,6 +501,7 @@ export class WorkspaceStarter {
 
                 instance.status.phase = "pending";
                 instance.region = installation;
+                instance.workspaceClass = startRequest.getSpec()!.getClass();
                 await this.workspaceDb.trace(ctx).storeInstance(instance);
                 try {
                     await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
