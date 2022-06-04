@@ -89,20 +89,14 @@ export class GiteaRestApi {
             const response = (await operation(userApi)) as R;
             return response as R;
         } catch (error) {
-            if (error && typeof error?.response?.status === "number" && error?.response?.status !== 200) {
-                return new Gitea.ApiError(`Gitea responded with code ${error.response.status}`, error);
+            if (error && error?.type === "system") {
+                return new Gitea.ApiError(`Gitea Fetch Error: ${error?.message}`, error);
             }
-            if (error && error?.name === "HTTPError") {
-                // e.g.
-                //     {
-                //         "name": "HTTPError",
-                //         "timings": { },
-                //         "description": "404 Commit Not Found"
-                //     }
+            if (error?.error && !error?.data && error?.error?.errors) {
+                return new Gitea.ApiError(`Gitea Api Error: ${error?.error?.message}`, error?.error);
+            }
 
-                return new Gitea.ApiError(`Gitea Request Error: ${error?.description}`, error);
-            }
-            log.error(`Gitea request error`, error);
+            // log.error(`Gitea request error`, error);
             throw error;
         } finally {
             log.info(`Gitea request took ${new Date().getTime() - before} ms`);
