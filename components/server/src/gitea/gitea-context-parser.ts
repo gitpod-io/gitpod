@@ -422,14 +422,14 @@ export class GiteaContextParser extends AbstractContextParser implements IContex
         repoName: string,
         nr: number,
     ): Promise<IssueContext> {
-        const ctxPromise = this.handleDefaultContext(ctx, user, host, owner, repoName);
         const result = await this.giteaApi.run<Gitea.Issue>(user, async (g) => {
             return g.repos.issueGetIssue(owner, repoName, nr);
         });
         if (Gitea.ApiError.is(result) || !result.title || !result.id) {
             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
         }
-        const context = await ctxPromise;
+
+        const context = await this.handleDefaultContext(ctx, user, host, owner, repoName);
         return <IssueContext>{
             ...context,
             title: result.title,
