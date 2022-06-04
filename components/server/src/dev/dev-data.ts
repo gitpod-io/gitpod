@@ -77,7 +77,7 @@ export namespace DevData {
     export function createGiteaTestToken(): Token {
         return {
             ...getTokenFromEnv("GITPOD_TEST_TOKEN_GITEA"),
-            scopes: []
+            scopes: [],
         };
     }
 

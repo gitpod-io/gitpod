@@ -4,28 +4,39 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { giteaApi, Api, Commit as ICommit, Repository as IRepository, ContentsResponse as IContentsResponse, Branch as IBranch, Tag as ITag, PullRequest as IPullRequest, Issue as IIssue, User as IUser } from "gitea-js"
-import fetch from 'cross-fetch'
+import {
+    giteaApi,
+    Api,
+    Commit as ICommit,
+    Repository as IRepository,
+    ContentsResponse as IContentsResponse,
+    Branch as IBranch,
+    Tag as ITag,
+    PullRequest as IPullRequest,
+    Issue as IIssue,
+    User as IUser,
+} from "gitea-js";
+import fetch from "cross-fetch";
 
-import { User } from "@gitpod/gitpod-protocol"
-import { injectable, inject } from 'inversify';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { GiteaScope } from './scopes';
-import { AuthProviderParams } from '../auth/auth-provider';
-import { GiteaTokenHelper } from './gitea-token-helper';
+import { User } from "@gitpod/gitpod-protocol";
+import { injectable, inject } from "inversify";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { GiteaScope } from "./scopes";
+import { AuthProviderParams } from "../auth/auth-provider";
+import { GiteaTokenHelper } from "./gitea-token-helper";
 
 export namespace Gitea {
     export class ApiError extends Error {
-        readonly httpError: { name: string, description: string } | undefined;
+        readonly httpError: { name: string; description: string } | undefined;
         constructor(msg?: string, httpError?: any) {
             super(msg);
             this.httpError = httpError;
-            this.name = 'GiteaApiError';
+            this.name = "GiteaApiError";
         }
     }
     export namespace ApiError {
         export function is(something: any): something is ApiError {
-            return !!something && something.name === 'GiteaApiError';
+            return !!something && something.name === "GiteaApiError";
         }
         export function isNotFound(error: ApiError): boolean {
             return !!error.httpError?.description.startsWith("404");
@@ -54,12 +65,11 @@ export namespace Gitea {
 
 @injectable()
 export class GiteaRestApi {
-
     @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(GiteaTokenHelper) protected readonly tokenHelper: GiteaTokenHelper;
     protected async create(userOrToken: User | string) {
         let oauthToken: string | undefined;
-        if (typeof userOrToken === 'string') {
+        if (typeof userOrToken === "string") {
             oauthToken = userOrToken;
         } else {
             const giteaToken = await this.tokenHelper.getTokenWithScopes(userOrToken, GiteaScope.Requirements.DEFAULT);
@@ -69,11 +79,14 @@ export class GiteaRestApi {
         return api;
     }
 
-    public async run<R>(userOrToken: User | string, operation: (g: Api<unknown>) => Promise<any>): Promise<R | Gitea.ApiError> {
+    public async run<R>(
+        userOrToken: User | string,
+        operation: (g: Api<unknown>) => Promise<any>,
+    ): Promise<R | Gitea.ApiError> {
         const before = new Date().getTime();
         const userApi = await this.create(userOrToken);
         try {
-            const response = (await operation(userApi) as R);
+            const response = (await operation(userApi)) as R;
             return response as R;
         } catch (error) {
             if (error && typeof error?.response?.status === "number" && error?.response?.status !== 200) {
