@@ -24,7 +24,7 @@ const (
 	InClusterMessageQueueTLS    = "messagebus-certificates-secret-core"
 	KubeRBACProxyRepo           = "quay.io"
 	KubeRBACProxyImage          = "brancz/kube-rbac-proxy"
-	KubeRBACProxyTag            = "v0.11.0"
+	KubeRBACProxyTag            = "v0.12.0"
 	MinioServiceAPIPort         = 9000
 	MonitoringChart             = "monitoring"
 	ProxyComponent              = "proxy"
