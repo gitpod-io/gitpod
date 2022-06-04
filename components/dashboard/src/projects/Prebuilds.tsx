@@ -201,8 +201,8 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                         </ItemField>
                     </Item>
                     {isLoadingPrebuilds && (
-                        <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm pt-16 pb-40">
-                            <img alt="" className="h-4 w-4 animate-spin" src={Spinner} />
+                        <div className="flex justify-center items-center pt-16 pb-40 space-x-2 text-sm text-gray-400">
+                            <img alt="" className="w-4 h-4 animate-spin" src={Spinner} />
                             <span>Fetching prebuilds...</span>
                         </div>
                     )}
@@ -221,11 +221,8 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                         }`}
                                     >
                                         <div>
-                                            <div
-                                                className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1"
-                                                title={getPrebuildStatusDescription(p)}
-                                            >
-                                                <div className="inline-block align-text-bottom mr-2 w-4 h-4">
+                                            <div className="mb-1 text-base font-medium text-gray-900 uppercase dark:text-gray-50">
+                                                <div className="inline-block mr-2 w-4 h-4 align-text-bottom">
                                                     {prebuildStatusIcon(p)}
                                                 </div>
                                                 {prebuildStatusLabel(p)}
@@ -233,7 +230,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                             <p>
                                                 {p.info.startedByAvatar && (
                                                     <img
-                                                        className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2"
+                                                        className="inline-block mr-2 w-4 h-4 align-text-bottom rounded-full"
                                                         src={p.info.startedByAvatar || ""}
                                                         alt={p.info.startedBy}
                                                     />
@@ -242,7 +239,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                             </p>
                                         </div>
                                     </ItemField>
-                                    <ItemField className="flex items-center my-auto w-5/12">
+                                    <ItemField className="flex overflow-hidden items-center my-auto w-5/12">
                                         <div className="truncate">
                                             <a href={p.info.changeUrl} className="cursor-pointer">
                                                 <div
@@ -255,7 +252,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                             <p>
                                                 {p.info.changeAuthorAvatar && (
                                                     <img
-                                                        className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2 overflow-hidden"
+                                                        className="inline-block overflow-hidden mr-2 w-4 h-4 align-text-bottom rounded-full"
                                                         src={p.info.changeAuthorAvatar || ""}
                                                         alt={p.info.changeAuthor}
                                                     />
@@ -269,7 +266,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                         <a href={p.info.changeUrl} className="cursor-pointer">
                                             <div className="flex space-x-2 truncate">
                                                 <span
-                                                    className="font-medium text-gray-500 dark:text-gray-50 truncate"
+                                                    className="font-medium text-gray-500 truncate dark:text-gray-50"
                                                     title={p.info.branch}
                                                 >
                                                     {p.info.branch}
@@ -283,7 +280,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                         ))}
                 </ItemsList>
                 {!isLoadingPrebuilds && prebuilds.length === 0 && (
-                    <div className="p-3 text-gray-400 rounded-xl text-sm text-center">No prebuilds found.</div>
+                    <div className="p-3 text-sm text-center text-gray-400 rounded-xl">No prebuilds found.</div>
                 )}
             </div>
         </>
@@ -315,20 +312,20 @@ export function prebuildStatusIcon(prebuild?: PrebuildWithStatus) {
     switch (prebuild?.status) {
         case undefined: // Fall through
         case "queued":
-            return <img alt="" className="h-4 w-4" src={StatusPaused} />;
+            return <img alt="" className="w-4 h-4" src={StatusPaused} />;
         case "building":
-            return <img alt="" className="h-4 w-4" src={StatusRunning} />;
+            return <img alt="" className="w-4 h-4" src={StatusRunning} />;
         case "aborted":
-            return <img alt="" className="h-4 w-4" src={StatusCanceled} />;
+            return <img alt="" className="w-4 h-4" src={StatusCanceled} />;
         case "failed":
-            return <img alt="" className="h-4 w-4" src={StatusFailed} />;
+            return <img alt="" className="w-4 h-4" src={StatusFailed} />;
         case "timeout":
-            return <img alt="" className="h-4 w-4" src={StatusFailed} />;
+            return <img alt="" className="w-4 h-4" src={StatusFailed} />;
         case "available":
             if (prebuild?.error) {
-                return <img alt="" className="h-4 w-4" src={StatusFailed} />;
+                return <img alt="" className="w-4 h-4" src={StatusFailed} />;
             }
-            return <img alt="" className="h-4 w-4" src={StatusDone} />;
+            return <img alt="" className="w-4 h-4" src={StatusDone} />;
     }
 }
 
@@ -358,15 +355,15 @@ export function PrebuildStatus(props: { prebuild: PrebuildWithStatus }) {
     const prebuild = props.prebuild;
 
     return (
-        <div className="flex flex-col space-y-1 justify-center text-sm font-semibold">
+        <div className="flex flex-col justify-center space-y-1 text-sm font-semibold">
             <div>
-                <div className="flex space-x-1 items-center">
+                <div className="flex items-center space-x-1">
                     {prebuildStatusIcon(prebuild)}
                     {prebuildStatusLabel(prebuild)}
                 </div>
             </div>
-            <div className="flex space-x-1 items-center text-gray-400">
-                <span className="text-left">{getPrebuildStatusDescription(prebuild)}</span>
+            <div className="flex items-center space-x-1 text-gray-400">
+                {getPrebuildStatusDescription(prebuild)}
             </div>
         </div>
     );
