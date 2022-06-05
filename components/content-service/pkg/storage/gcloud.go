@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -182,15 +183,44 @@ func (rs *DirectGCPStorage) defaultObjectAccess(ctx context.Context, bkt, obj st
 
 func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bkt string, obj string, mappings []archive.IDMapping) (found bool, err error) {
 	//nolint:ineffassign
-	span, ctx := opentracing.StartSpanFromContext(ctx, "download")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.Download")
 	span.SetTag("gcsBkt", bkt)
 	span.SetTag("gcsObj", obj)
 	defer tracing.FinishSpan(span, &err)
 
-	rc, _, err := rs.ObjectAccess(ctx, bkt, obj)
-	if rc == nil {
-		return false, err
+	var rc io.ReadCloser
+	if os.Getenv("USE_GSUTIL_FOR_DOWNLOADS") == "true" {
+		tmpDir, err := os.MkdirTemp("ws-daemon", "gcs-download-")
+		if err != nil {
+			return false, fmt.Errorf("cannot create temportal file: %w", err)
+		}
+		defer os.RemoveAll(tmpDir)
+
+		args := fmt.Sprintf(`gcloud auth activate-service-account --key-file %v \
+		&& gsutil \
+		  -o "GSUtil:parallel_thread_count=1" \
+		  -o "GSUtil:sliced_object_download_max_components=8" \
+		  cp gs://%s %s`, rs.GCPConfig.CredentialsFile, filepath.Join(bkt, obj), tmpDir)
+
+		cmd := exec.Command("/bin/bash", []string{"-c", args}...)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file from GCS using gsutil")
+			return false, err
+		}
+
+		file := filepath.Base(bkt)
+		rc, err = os.Open(filepath.Join(tmpDir, file))
+		if err != nil {
+			return false, err
+		}
+	} else {
+		rc, _, err = rs.ObjectAccess(ctx, bkt, obj)
+		if rc == nil {
+			return false, err
+		}
 	}
+
 	defer rc.Close()
 
 	err = extractTarbal(ctx, destination, rc, mappings)
