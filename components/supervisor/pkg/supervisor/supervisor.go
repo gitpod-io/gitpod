@@ -375,7 +375,7 @@ func installDockerConfig() {
 		// config exists already
 		return
 	}
-	cfgStr := []byte("{\n:\"auths\": {},\n\"credsStore\": \"gp\"}")
+	cfgStr := []byte("{\n\"auths\": {},\n\"credsStore\": \"gp\"}")
 	err := os.WriteFile(dockerConfigPath, cfgStr, 0600)
 	if err != nil {
 		log.WithError(err).Warn("installing docker config failed")
@@ -611,8 +611,8 @@ func symlinkBinaries(cfg *Config) {
 	base := filepath.Dir(bin)
 
 	binaries := map[string]string{
-		"gitpod-cli": "gp",
-		"gp":         "docker-credential-gp",
+		"gitpod-cli":           "gp",
+		"docker-credential-gp": "docker-credential-gp",
 	}
 	for k, v := range binaries {
 		var (

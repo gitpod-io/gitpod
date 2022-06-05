@@ -12,6 +12,7 @@ COPY components-supervisor-frontend--app/node_modules/@gitpod/supervisor-fronten
 WORKDIR "/.supervisor"
 COPY components-supervisor--app/supervisor \
      supervisor-config.json \
+     docker-credential-gp \
      components-gitpod-cli--app/gitpod-cli \
      ./
 
