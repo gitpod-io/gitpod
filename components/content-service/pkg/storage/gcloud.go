@@ -188,10 +188,12 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 	span.SetTag("gcsObj", obj)
 	defer tracing.FinishSpan(span, &err)
 
+	start := time.Now()
+	useGsutil := os.Getenv("USE_GSUTIL_FOR_DOWNLOADS") == "true"
+	log.Infof("Using gsutil to download GCS content (%v)", useGsutil)
+
 	var rc io.ReadCloser
-	t0 := time.Now()
-	if os.Getenv("USE_GSUTIL_FOR_DOWNLOADS") == "true" {
-		log.Info("Using gsutil to download GCS content")
+	if useGsutil {
 		tmpDir, err := os.MkdirTemp("ws-daemon", "gcs-download-")
 		if err != nil {
 			return false, fmt.Errorf("cannot create temportal file: %w", err)
@@ -217,7 +219,7 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 			return false, err
 		}
 
-		log.WithField("object", filepath.Join(bkt, obj)).WithField("gsutil", args).WithField("pullTime", time.Since(t0)).Info("GCS content download time")
+		log.WithField("object", filepath.Join(bkt, obj)).WithField("gsutil", args).WithField("pullTime", time.Since(start)).Info("GCS content download time")
 	} else {
 		rc, _, err = rs.ObjectAccess(ctx, bkt, obj)
 		if rc == nil {
