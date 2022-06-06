@@ -184,10 +184,6 @@ func timespecToTime(ts syscall.Timespec) time.Time {
 func untarFile(f archiver.File, destination string, hdr *tar.Header) error {
 	to := filepath.Join(destination, hdr.Name)
 
-	if !f.IsDir() && fileExists(to) {
-		return fmt.Errorf("file already exists: %s", to)
-	}
-
 	switch hdr.Typeflag {
 	case tar.TypeDir:
 		return mkdir(to, f.Mode())
@@ -202,11 +198,6 @@ func untarFile(f archiver.File, destination string, hdr *tar.Header) error {
 	default:
 		return fmt.Errorf("%s: unknown type flag: %c", hdr.Name, hdr.Typeflag)
 	}
-}
-
-func fileExists(name string) bool {
-	_, err := os.Stat(name)
-	return !os.IsNotExist(err)
 }
 
 func mkdir(dirPath string, dirMode os.FileMode) error {
