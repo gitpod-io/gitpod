@@ -73,10 +73,6 @@ func insertRawWorkspace(t *testing.T, conn *gorm.DB, rawWorkspace map[string]int
 	) VALUES ?;`, strings.Join(columns, ", "))
 	id := insertRawObject(t, conn, columns, statement, rawWorkspace)
 
-	t.Cleanup(func() {
-		tx := conn.Delete(&db.Workspace{ID: id})
-		require.NoError(t, tx.Error)
-	})
 	return id
 }
 
