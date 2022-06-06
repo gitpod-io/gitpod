@@ -1,6 +1,11 @@
 # Change Log
 
 ## June 2022
+- [docker-up] Check docker-compose download ([#10469](https://github.com/gitpod-io/gitpod/pull/10469)) - [@aledbf](https://github.com/aledbf)
+- [docker-up] Update docker compose to v2.6.0 ([#10458](https://github.com/gitpod-io/gitpod/pull/10458)) - [@aledbf](https://github.com/aledbf)
+- Update PhpStorm IDE image to version 221.5787.33. ([#10452](https://github.com/gitpod-io/gitpod/pull/10452)) - [@roboquat](https://github.com/roboquat)
+- Simplify configuration of KubeRBACProxyContainerWithConfig and remove collision ([#10443](https://github.com/gitpod-io/gitpod/pull/10443)) - [@aledbf](https://github.com/aledbf)
+- Update GoLand IDE image to version 221.5787.30. ([#10453](https://github.com/gitpod-io/gitpod/pull/10453)) - [@roboquat](https://github.com/roboquat)
 - Revert "[baseserver] Change default metrics port to 9502 to not clash with kube-rbac-proxy" ([#10442](https://github.com/gitpod-io/gitpod/pull/10442)) - [@aledbf](https://github.com/aledbf)
 - workspackit: put the workspace id into logs to trace. ([#10420](https://github.com/gitpod-io/gitpod/pull/10420)) - [@utam0k](https://github.com/utam0k)
 - [ws-manager] show why pod entered completed state ([#10414](https://github.com/gitpod-io/gitpod/pull/10414)) - [@sagor999](https://github.com/sagor999)
