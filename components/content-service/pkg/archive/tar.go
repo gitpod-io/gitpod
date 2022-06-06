@@ -11,7 +11,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -62,6 +61,10 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 	span.LogKV("dst", dst)
 	defer tracing.FinishSpan(span, &err)
 
+	if err := ctx.Err(); err != nil {
+		return err // honor context cancellation
+	}
+
 	var cfg TarConfig
 	start := time.Now()
 	for _, opt := range opts {
@@ -70,6 +73,10 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 
 	format := archiver.Tar{}
 	handler := func(ctx context.Context, f archiver.File) error {
+		if err := ctx.Err(); err != nil {
+			return err // honor context cancellation
+		}
+
 		header, isTarHeader := f.Header.(*tar.Header)
 		if !isTarHeader {
 			log.WithField("path", f.NameInArchive).WithField("type", fmt.Sprintf("%T", f.Header)).Warn("invalid tar header")
@@ -81,9 +88,7 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 			return nil
 		}
 
-		dstFilePath := filepath.Join(dst, f.NameInArchive)
-
-		err = untarFile(f, dstFilePath, header)
+		err = untarFile(f, dst, header)
 		if err != nil {
 			return err
 		}
@@ -91,6 +96,7 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 		uid := toHostID(header.Uid, cfg.UIDMaps)
 		gid := toHostID(header.Gid, cfg.GIDMaps)
 
+		dstFilePath := filepath.Join(dst, f.NameInArchive)
 		err = remapFile(dstFilePath, uid, gid, header.Xattrs)
 		if err != nil {
 			log.WithError(err).WithField("uid", uid).WithField("gid", gid).WithField("path", dstFilePath).Debug("cannot chown")
@@ -224,7 +230,7 @@ func writeNewFile(fpath string, file archiver.File, fm os.FileMode) error {
 	defer out.Close()
 
 	err = out.Chmod(fm)
-	if err != nil && runtime.GOOS != "windows" {
+	if err != nil {
 		return fmt.Errorf("%s: changing file mode: %v", fpath, err)
 	}
 
