@@ -9,16 +9,14 @@ import (
 	"context"
 	"io"
 	"os"
-	"os/exec"
-	"path"
-	"sort"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/mholt/archiver/v4"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sys/unix"
-	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -73,80 +71,30 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 		opt(&cfg)
 	}
 
-	pipeReader, pipeWriter := io.Pipe()
-	teeReader := io.TeeReader(src, pipeWriter)
+	format := archiver.Tar{}
+	handler := func(ctx context.Context, f archiver.File) error {
+		header := f.Header.(tar.Header)
 
-	tarReader := tar.NewReader(pipeReader)
-
-	finished := make(chan bool)
-	m := make(map[string]Info)
-
-	go func() {
-		defer close(finished)
-		for {
-			hdr, err := tarReader.Next()
-			if err == io.EOF {
-				finished <- true
-				return
-			}
-
-			if err != nil {
-				log.WithError(err).Error("error reading tar")
-				return
-			}
-
-			m[hdr.Name] = Info{
-				UID:       hdr.Uid,
-				GID:       hdr.Gid,
-				IsSymlink: (hdr.Linkname != ""),
-				//nolint:staticcheck
-				Xattrs: hdr.Xattrs,
-			}
-		}
-	}()
-
-	// Be explicit about the tar flags. We want to restore the exact content without changes
-	tarcmd := exec.Command(
-		"tar",
-		"--extract",
-		"--preserve-permissions",
-		"--xattrs", "--xattrs-include=security.capability",
-	)
-	tarcmd.Dir = dst
-	tarcmd.Stdin = teeReader
-
-	var msg []byte
-	msg, err = tarcmd.CombinedOutput()
-	if err != nil {
-		return xerrors.Errorf("tar %s: %s", dst, err.Error()+";"+string(msg))
-	}
-
-	log.WithField("log", string(msg)).Debug("decompressing tar stream log")
-
-	<-finished
-
-	// lets create a sorted list of pathes and chown depth first.
-	paths := make([]string, 0, len(m))
-	for path := range m {
-		paths = append(paths, path)
-	}
-	sort.Sort(sort.Reverse(sort.StringSlice(paths)))
-
-	// We need to remap the UID and GID between the host and the container to avoid permission issues.
-	for _, p := range paths {
-		v := m[p]
-
-		if v.IsSymlink {
-			continue
+		isSymlink := (header.Linkname != "")
+		if isSymlink {
+			return nil
 		}
 
-		uid := toHostID(v.UID, cfg.UIDMaps)
-		gid := toHostID(v.GID, cfg.GIDMaps)
+		uid := toHostID(header.Uid, cfg.UIDMaps)
+		gid := toHostID(header.Gid, cfg.GIDMaps)
 
-		err = remapFile(path.Join(dst, p), uid, gid, v.Xattrs)
+		dstFilePath := filepath.Join(dst, f.NameInArchive)
+		err = remapFile(dstFilePath, uid, gid, header.Xattrs)
 		if err != nil {
-			log.WithError(err).WithField("uid", uid).WithField("gid", gid).WithField("path", p).Debug("cannot chown")
+			log.WithError(err).WithField("uid", uid).WithField("gid", gid).WithField("path", dstFilePath).Debug("cannot chown")
 		}
+
+		return nil
+	}
+
+	err = format.Extract(ctx, src, nil, handler)
+	if err != nil {
+		return err
 	}
 
 	log.WithField("duration", time.Since(start).Milliseconds()).Debug("untar complete")
