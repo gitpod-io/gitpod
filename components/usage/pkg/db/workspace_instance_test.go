@@ -150,6 +150,20 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 			Status:       status,
 		},
+		// Stopped in May, no creation time, should be retrieved but this is a poor data quality record.
+		{
+			ID:          uuid.New(),
+			WorkspaceID: workspaceID,
+			StoppedTime: db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
+			Status:      status,
+		},
+		// Started in April, no stop time, still running
+		{
+			ID:           uuid.New(),
+			WorkspaceID:  workspaceID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
+			Status:       status,
+		},
 	}
 	invalid := []*db.WorkspaceInstance{
 		// Start of June
