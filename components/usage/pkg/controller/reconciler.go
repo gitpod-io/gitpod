@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
@@ -38,6 +39,8 @@ type UsageReconcileStatus struct {
 
 	WorkspaceInstances        int
 	InvalidWorkspaceInstances int
+
+	Workspaces int
 }
 
 func (u *UsageReconciler) Reconcile() error {
@@ -71,9 +74,57 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	if len(invalidInstances) > 0 {
 		log.WithField("invalid_workspace_instances", invalidInstances).Errorf("Detected %d invalid instances. These will be skipped in the current run.", len(invalidInstances))
 	}
-
 	log.WithField("workspace_instances", instances).Debug("Successfully loaded workspace instances.")
+
+	workspaces, err := u.loadWorkspaces(ctx, instances)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load workspaces for workspace instances in time range: %w", err)
+	}
+	status.Workspaces = len(workspaces)
+
 	return status, nil
+}
+
+type workspaceWithInstances struct {
+	Workspace db.Workspace
+	Instances []db.WorkspaceInstance
+}
+
+func (u *UsageReconciler) loadWorkspaces(ctx context.Context, instances []db.WorkspaceInstance) ([]workspaceWithInstances, error) {
+	var workspaceIDs []string
+	for _, instance := range instances {
+		workspaceIDs = append(workspaceIDs, instance.WorkspaceID)
+	}
+
+	workspaces, err := db.ListWorkspacesByID(ctx, u.conn, toSet(workspaceIDs))
+	if err != nil {
+		return nil, fmt.Errorf("failed to find workspaces for provided workspace instances: %w", err)
+	}
+
+	// Map workspaces to corresponding instances
+	workspacesWithInstancesByID := map[string]workspaceWithInstances{}
+	for _, workspace := range workspaces {
+		workspacesWithInstancesByID[workspace.ID] = workspaceWithInstances{
+			Workspace: workspace,
+		}
+	}
+
+	// We need to also add the instances to corresponding records, a single workspace can have multiple instances
+	for _, instance := range instances {
+		item, ok := workspacesWithInstancesByID[instance.WorkspaceID]
+		if !ok {
+			return nil, errors.New("encountered instance without a corresponding workspace record")
+		}
+		item.Instances = append(item.Instances, instance)
+	}
+
+	// Flatten results into a list
+	var workspacesWithInstances []workspaceWithInstances
+	for _, w := range workspacesWithInstancesByID {
+		workspacesWithInstances = append(workspacesWithInstances, w)
+	}
+
+	return workspacesWithInstances, nil
 }
 
 func (u *UsageReconciler) loadWorkspaceInstances(ctx context.Context, from, to time.Time) ([]db.WorkspaceInstance, []invalidWorkspaceInstance, error) {
@@ -132,8 +183,8 @@ func trimStartStopTime(instances []db.WorkspaceInstance, maximumStart, minimumSt
 	var updated []db.WorkspaceInstance
 
 	for _, instance := range instances {
-		if instance.StartedTime.Time().Before(maximumStart) {
-			instance.StartedTime = db.NewVarcharTime(maximumStart)
+		if instance.CreationTime.Time().Before(maximumStart) {
+			instance.CreationTime = db.NewVarcharTime(maximumStart)
 		}
 
 		if instance.StoppedTime.Time().After(minimumStop) {
@@ -143,4 +194,17 @@ func trimStartStopTime(instances []db.WorkspaceInstance, maximumStart, minimumSt
 		updated = append(updated, instance)
 	}
 	return updated
+}
+
+func toSet(items []string) []string {
+	m := map[string]struct{}{}
+	for _, i := range items {
+		m[i] = struct{}{}
+	}
+
+	var result []string
+	for s := range m {
+		result = append(result, s)
+	}
+	return result
 }
