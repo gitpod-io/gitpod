@@ -70,11 +70,6 @@ func insertRawWorkspaceInstance(t *testing.T, conn *gorm.DB, object map[string]i
 	statement := fmt.Sprintf(`INSERT INTO d_b_workspace_instance (%s) VALUES ?;`, strings.Join(columns, ", "))
 	id := uuid.MustParse(insertRawObject(t, conn, columns, statement, object))
 
-	t.Cleanup(func() {
-		tx := conn.Delete(&db.WorkspaceInstance{ID: id})
-		require.NoError(t, tx.Error)
-	})
-
 	return id
 }
 
