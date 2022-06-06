@@ -7,6 +7,7 @@ package archive
 import (
 	"archive/tar"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -67,7 +68,11 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 
 	format := archiver.Tar{}
 	handler := func(ctx context.Context, f archiver.File) error {
-		header := f.Header.(tar.Header)
+		header, isTarHeader := f.Header.(*tar.Header)
+		if !isTarHeader {
+			log.WithField("path", f.NameInArchive).WithField("type", fmt.Sprintf("%T", f.Header)).Warn("invalid tar header")
+			return nil
+		}
 
 		isSymlink := (header.Linkname != "")
 		if isSymlink {
