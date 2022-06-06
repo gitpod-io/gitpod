@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -735,7 +736,9 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
 
-	result = append(result, corev1.EnvVar{Name: "USE_GSUTIL_FOR_DOWNLOADS", Value: "true"})
+	if os.Getenv("USE_GSUTIL_FOR_DOWNLOADS") == "true" {
+		result = append(result, corev1.EnvVar{Name: "USE_GSUTIL_FOR_DOWNLOADS", Value: "true"})
+	}
 
 	// We don't require that Git be configured for workspaces
 	if spec.Git != nil {
