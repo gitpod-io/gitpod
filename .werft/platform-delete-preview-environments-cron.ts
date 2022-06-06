@@ -79,7 +79,9 @@ class HarvesterPreviewEnvironment {
             deleteDNSRecord('A', `prometheus-${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
             deleteDNSRecord('TXT', `prometheus-${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
             deleteDNSRecord('A', `grafana-${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
-            deleteDNSRecord('TXT', `grafana-${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID)
+            deleteDNSRecord('TXT', `grafana-${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
+            deleteDNSRecord('A', `pyrra-${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
+            deleteDNSRecord('TXT', `pyrra-${this.name}.preview.gitpod-dev.com`, 'gitpod-core-dev', 'preview-gitpod-dev-com', sliceID),
         ])
     }
 
@@ -181,6 +183,8 @@ class CoreDevPreviewEnvironment {
             deleteDNSRecord('TXT', `prometheus-${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
             deleteDNSRecord('A', `grafana-${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
             deleteDNSRecord('TXT', `grafana-${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
+            deleteDNSRecord('A', `pyrra-${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
+            deleteDNSRecord('TXT', `pyrra-${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
             deleteDNSRecord('TXT', `_acme-challenge.${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
             deleteDNSRecord('TXT', `_acme-challenge.ws-dev.${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID)
         ])
