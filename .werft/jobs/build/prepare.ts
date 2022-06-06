@@ -3,7 +3,7 @@ import { exec } from '../../util/shell';
 import { Werft } from "../../util/werft";
 import * as VM from '../../vm/vm'
 import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH } from "./const";
-import { issueMetaCerts } from './deploy-to-preview-environment';
+import { issueCerts } from './deploy-to-preview-environment';
 import { JobConfig } from './job-config';
 import * as Manifests from '../../vm/manifests';
 
@@ -66,7 +66,7 @@ async function issueCertificate(werft: Werft, config: JobConfig) {
     const domain = config.withVM ? `${config.previewEnvironment.destname}.preview.gitpod-dev.com` : `${config.previewEnvironment.destname}.staging.gitpod-dev.com`;
 
     werft.log(prepareSlices.ISSUE_CERTIFICATES, prepareSlices.ISSUE_CERTIFICATES)
-    await issueMetaCerts(werft, certName, "certs", domain, config.withVM, prepareSlices.ISSUE_CERTIFICATES)
+    await issueCerts(werft, certName, "certs", domain, config.withVM, prepareSlices.ISSUE_CERTIFICATES)
     werft.done(prepareSlices.ISSUE_CERTIFICATES)
 }
 

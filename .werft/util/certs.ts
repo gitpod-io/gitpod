@@ -10,9 +10,7 @@ export class IssueCertificateParams {
     gcpSaPath: string
     dnsZoneDomain: string
     domain: string
-    ip: string
     additionalSubdomains: string[]
-    bucketPrefixTail: string
     certName: string
     certNamespace: string
     withVM: boolean

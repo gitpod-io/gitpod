@@ -138,7 +138,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
 
         try {
             werft.log(vmSlices.COPY_CERT_MANAGER_RESOURCES, 'Copy over CertManager resources from core-dev')
-            await installMetaCertificates(werft, jobConfig.repository.branch, withVM, 'default', PREVIEW_K3S_KUBECONFIG_PATH, vmSlices.COPY_CERT_MANAGER_RESOURCES)
+            await installCertificates(werft, jobConfig.repository.branch, withVM, 'default', PREVIEW_K3S_KUBECONFIG_PATH, vmSlices.COPY_CERT_MANAGER_RESOURCES)
             werft.done(vmSlices.COPY_CERT_MANAGER_RESOURCES)
         } catch (err) {
             werft.fail(vmSlices.COPY_CERT_MANAGER_RESOURCES, err);
@@ -235,7 +235,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         werft.done(installerSlices.SET_CONTEXT)
         try {
             werft.log(installerSlices.COPY_CERTIFICATES, "Copying cached certificate from 'certs' namespace");
-            await installMetaCertificates(werft, jobConfig.repository.branch, jobConfig.withVM, namespace, CORE_DEV_KUBECONFIG_PATH, installerSlices.COPY_CERTIFICATES);
+            await installCertificates(werft, jobConfig.repository.branch, jobConfig.withVM, namespace, CORE_DEV_KUBECONFIG_PATH, installerSlices.COPY_CERTIFICATES);
             werft.done(installerSlices.COPY_CERTIFICATES);
         } catch (err) {
             werft.fail(installerSlices.COPY_CERTIFICATES, err);
@@ -409,6 +409,27 @@ async function addDNSRecord(werft: Werft, namespace: string, domain: string, isL
             IP: wsProxyLBIP,
             slice: installerSlices.DNS_ADD_RECORD
         }),
+        createDNSRecord({
+            domain: `prometheus.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: coreDevIngressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `grafana.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: coreDevIngressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `pyrra.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: coreDevIngressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
     ])
     werft.done(installerSlices.DNS_ADD_RECORD);
 }
@@ -463,34 +484,55 @@ async function addVMDNSRecord(werft: Werft, name: string, domain: string) {
             IP: proxyLBIP,
             slice: installerSlices.DNS_ADD_RECORD
         }),
+        createDNSRecord({
+            domain: `prometheus.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: ingressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `grafana.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: ingressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
+        createDNSRecord({
+            domain: `pyrra.${domain}`,
+            projectId: "gitpod-core-dev",
+            dnsZone: 'gitpod-dev-com',
+            IP: ingressIP,
+            slice: installerSlices.DNS_ADD_RECORD
+        }),
     ])
     werft.done(installerSlices.DNS_ADD_RECORD);
 }
 
-export async function issueMetaCerts(werft: Werft, certName: string, certsNamespace: string, domain: string, withVM: boolean, slice: string) {
-    const additionalSubdomains: string[] = ["", "*.", `*.ws${withVM ? '' : '-dev'}.`]
-    var metaClusterCertParams = new IssueCertificateParams();
-    metaClusterCertParams.pathToTemplate = "/workspace/.werft/util/templates";
-    metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-    metaClusterCertParams.certName = certName;
-    metaClusterCertParams.certNamespace = certsNamespace;
-    metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
-    metaClusterCertParams.domain = domain;
-    metaClusterCertParams.ip = getCoreDevIngressIP();
-    metaClusterCertParams.bucketPrefixTail = ""
-    metaClusterCertParams.additionalSubdomains = additionalSubdomains
-    metaClusterCertParams.withVM = withVM
-    await issueCertificate(werft, metaClusterCertParams, { ...metaEnv(), slice });
+export async function issueCerts(werft: Werft, certName: string, certsNamespace: string, domain: string, withVM: boolean, slice: string) {
+    const additionalSubdomains: string[] = ["", "*.", `*.ws${withVM ? '' : '-dev'}.`, "prometheus.", "grafana.", "pyrra."]
+    var certParams = new IssueCertificateParams();
+    certParams.pathToTemplate = "/workspace/.werft/util/templates";
+    certParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
+    certParams.certName = certName;
+    certParams.certNamespace = certsNamespace;
+    certParams.dnsZoneDomain = "gitpod-dev.com";
+    certParams.domain = domain;
+    certParams.additionalSubdomains = additionalSubdomains
+    certParams.withVM = withVM
+
+    await issueCertificate(werft, certParams, { ...metaEnv(), slice })
 }
 
-async function installMetaCertificates(werft: Werft, branch: string, withVM: boolean, destNamespace: string, destinationKubeconfig: string, slice: string) {
-    const metaInstallCertParams = new InstallCertificateParams()
-    metaInstallCertParams.certName = withVM ? `harvester-${previewNameFromBranchName(branch)}` : `staging-${previewNameFromBranchName(branch)}`;
-    metaInstallCertParams.certNamespace = "certs"
-    metaInstallCertParams.certSecretName = PROXY_SECRET_NAME
-    metaInstallCertParams.destinationNamespace = destNamespace
-    metaInstallCertParams.destinationKubeconfig = destinationKubeconfig
-    await installCertificate(werft, metaInstallCertParams, { ...metaEnv(), slice: slice });
+async function installCertificates(werft: Werft, branch: string, withVM: boolean, destNamespace: string, destinationKubeconfig: string, slice: string) {
+    const installCertParams = new InstallCertificateParams()
+    installCertParams.certName = withVM ? `harvester-${previewNameFromBranchName(branch)}` : `staging-${previewNameFromBranchName(branch)}`;
+    installCertParams.certNamespace = "certs"
+    installCertParams.certSecretName = PROXY_SECRET_NAME
+    installCertParams.destinationNamespace = destNamespace
+    installCertParams.destinationKubeconfig = destinationKubeconfig
+
+    await installCertificate(werft, installCertParams, { ...metaEnv(), slice: slice })
 }
 
 // returns the static IP address

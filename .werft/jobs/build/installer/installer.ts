@@ -268,6 +268,9 @@ EOF`)
         exec(`kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f k8s.yaml`, { silent: true });
 
         exec(`werft log result -d "dev installation" -c github-check-preview-env url https://${this.options.domain}/workspaces`);
+        exec(`werft log result -d "Prometheus" -c github-check-preview-env url https://prometheus.${this.options.domain}`);
+        exec(`werft log result -d "Grafana" -c github-check-preview-env url https://grafana.${this.options.domain}`);
+        exec(`werft log result -d "Pyrra" -c github-check-preview-env url https://pyrra.${this.options.domain}`);
         this.options.werft.done(slice)
     }
 
