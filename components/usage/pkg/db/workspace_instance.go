@@ -57,10 +57,11 @@ func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to 
 	var instances []WorkspaceInstance
 	tx := conn.WithContext(ctx).
 		Where(
-			conn.Where("stoppedTime >= ?", from).Or("stoppedTime = ?", ""),
+			conn.Where("stoppedTime >= ?", TimeToISO8601(from)).Or("stoppedTime = ?", ""),
 		).
-		Where("creationTime < ?", to).
-		Where("creationTime != ?", "").
+		Where(
+			conn.Where("creationTime < ?", TimeToISO8601(to)).Or("creationTime = ?", ""),
+		).
 		Find(&instances)
 	if tx.Error != nil {
 		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
