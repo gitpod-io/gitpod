@@ -39,35 +39,34 @@ func (n *VarcharTime) Scan(value interface{}) error {
 
 	switch s := value.(type) {
 	case []uint8:
-		// Null value - empty string mean value is not set
-		if len(s) == 0 {
-			n.valid = false
-			return nil
-		}
-
-		parsed, err := iso8601.ParseString(string(s))
-		if err != nil {
-			return fmt.Errorf("failed to parse %v into ISO8601: %w", string(s), err)
-		}
-		n.valid = true
-		n.t = parsed.UTC()
-		return nil
+		return n.parseString(string(s))
 	case string:
-		if len(s) == 0 {
-			n.valid = false
-			return nil
-		}
-
-		parsed, err := iso8601.ParseString(s)
-		if err != nil {
-			return fmt.Errorf("failed to parse %v into ISO8601: %w", s, err)
-		}
-
-		n.valid = true
-		n.t = parsed.UTC()
-		return nil
+		return n.parseString(s)
 	}
 	return fmt.Errorf("unknown scan value for VarcharTime with value: %v", value)
+}
+
+func (n *VarcharTime) parseString(s string) error {
+	// Null value - empty string mean value is not set
+	if len(s) == 0 {
+		n.valid = false
+		return nil
+	}
+
+	parsed, err := iso8601.ParseString(s)
+	if err != nil {
+		return fmt.Errorf("failed to parse %v into ISO8601: %w", s, err)
+	}
+
+	if parsed.UTC().IsZero() {
+		n.t = time.Time{}.UTC()
+		n.valid = false
+		return nil
+	}
+
+	n.valid = true
+	n.t = parsed.UTC()
+	return nil
 }
 
 func (n VarcharTime) Time() time.Time {
@@ -80,9 +79,21 @@ func (n VarcharTime) IsSet() bool {
 
 // Value implements the driver Valuer interface.
 func (n VarcharTime) Value() (driver.Value, error) {
-	return n.t.UTC().Format(time.RFC3339Nano), nil
+	if n.IsSet() {
+		return TimeToISO8601(n.t), nil
+	}
+	return "", nil
 }
 
 func (n VarcharTime) String() string {
-	return n.t.Format(time.RFC3339Nano)
+	if n.IsSet() {
+		return TimeToISO8601(n.t)
+	}
+	return ""
+}
+
+const ISO8601Format = "2006-01-02T15:04:05.000Z"
+
+func TimeToISO8601(t time.Time) string {
+	return t.UTC().Format(ISO8601Format)
 }
