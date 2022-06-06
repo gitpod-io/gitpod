@@ -5,15 +5,19 @@
 package db
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
+	"github.com/google/uuid"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 	"time"
 )
 
 // Workspace represents the underlying DB object
 type Workspace struct {
 	ID          string         `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
-	OwnerID     string         `gorm:"column:ownerId;type:char;size:36;" json:"ownerId"`
+	OwnerID     uuid.UUID      `gorm:"column:ownerId;type:char;size:36;" json:"ownerId"`
 	ProjectID   sql.NullString `gorm:"column:projectId;type:char;size:36;" json:"projectId"`
 	Description string         `gorm:"column:description;type:varchar;size:255;" json:"description"`
 	Type        string         `gorm:"column:type;type:char;size:16;default:regular;" json:"type"`
@@ -45,4 +49,18 @@ type Workspace struct {
 
 func (d *Workspace) TableName() string {
 	return "d_b_workspace"
+}
+
+func ListWorkspacesByID(ctx context.Context, conn *gorm.DB, ids []string) ([]Workspace, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	var workspaces []Workspace
+	tx := conn.WithContext(ctx).Where(ids).Find(&workspaces)
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to list workspaces by id: %w", tx.Error)
+	}
+
+	return workspaces, nil
 }
