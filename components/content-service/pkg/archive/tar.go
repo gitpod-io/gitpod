@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/mholt/archiver/v4"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -79,10 +81,16 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 			return nil
 		}
 
+		dstFilePath := filepath.Join(dst, f.NameInArchive)
+
+		err = untarFile(f, dstFilePath, header)
+		if err != nil {
+			return err
+		}
+
 		uid := toHostID(header.Uid, cfg.UIDMaps)
 		gid := toHostID(header.Gid, cfg.GIDMaps)
 
-		dstFilePath := filepath.Join(dst, f.NameInArchive)
 		err = remapFile(dstFilePath, uid, gid, header.Xattrs)
 		if err != nil {
 			log.WithError(err).WithField("uid", uid).WithField("gid", gid).WithField("path", dstFilePath).Debug("cannot chown")
@@ -165,4 +173,113 @@ func remapFile(name string, uid, gid int, xattrs map[string]string) error {
 
 func timespecToTime(ts syscall.Timespec) time.Time {
 	return time.Unix(int64(ts.Sec), int64(ts.Nsec))
+}
+
+func untarFile(f archiver.File, destination string, hdr *tar.Header) error {
+	to := filepath.Join(destination, hdr.Name)
+
+	if !f.IsDir() && fileExists(to) {
+		return fmt.Errorf("file already exists: %s", to)
+	}
+
+	switch hdr.Typeflag {
+	case tar.TypeDir:
+		return mkdir(to, f.Mode())
+	case tar.TypeReg, tar.TypeRegA, tar.TypeChar, tar.TypeBlock, tar.TypeFifo, tar.TypeGNUSparse:
+		return writeNewFile(to, f, f.Mode())
+	case tar.TypeSymlink:
+		return writeNewSymbolicLink(to, hdr.Linkname)
+	case tar.TypeLink:
+		return writeNewHardLink(to, filepath.Join(destination, hdr.Linkname))
+	case tar.TypeXGlobalHeader:
+		return nil // ignore the pax global header from git-generated tarballs
+	default:
+		return fmt.Errorf("%s: unknown type flag: %c", hdr.Name, hdr.Typeflag)
+	}
+}
+
+func fileExists(name string) bool {
+	_, err := os.Stat(name)
+	return !os.IsNotExist(err)
+}
+
+func mkdir(dirPath string, dirMode os.FileMode) error {
+	err := os.MkdirAll(dirPath, dirMode)
+	if err != nil {
+		return fmt.Errorf("%s: making directory: %v", dirPath, err)
+	}
+	return nil
+}
+
+func writeNewFile(fpath string, file archiver.File, fm os.FileMode) error {
+	err := os.MkdirAll(filepath.Dir(fpath), 0755)
+	if err != nil {
+		return fmt.Errorf("%s: making directory for file: %v", fpath, err)
+	}
+
+	out, err := os.Create(fpath)
+	if err != nil {
+		return fmt.Errorf("%s: creating new file: %v", fpath, err)
+	}
+	defer out.Close()
+
+	err = out.Chmod(fm)
+	if err != nil && runtime.GOOS != "windows" {
+		return fmt.Errorf("%s: changing file mode: %v", fpath, err)
+	}
+
+	in, err := file.Open()
+	if err != nil {
+		return fmt.Errorf("%s: cannot open file: %v", fpath, err)
+	}
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return fmt.Errorf("%s: writing file: %v", fpath, err)
+	}
+
+	return nil
+}
+
+func writeNewSymbolicLink(fpath string, target string) error {
+	err := os.MkdirAll(filepath.Dir(fpath), 0755)
+	if err != nil {
+		return fmt.Errorf("%s: making directory for file: %v", fpath, err)
+	}
+
+	_, err = os.Lstat(fpath)
+	if err == nil {
+		err = os.Remove(fpath)
+		if err != nil {
+			return fmt.Errorf("%s: failed to unlink: %+v", fpath, err)
+		}
+	}
+
+	err = os.Symlink(target, fpath)
+	if err != nil {
+		return fmt.Errorf("%s: making symbolic link for: %v", fpath, err)
+	}
+	return nil
+}
+
+func writeNewHardLink(fpath string, target string) error {
+	err := os.MkdirAll(filepath.Dir(fpath), 0755)
+	if err != nil {
+		return xerrors.Errorf("%s: making directory for file: %v", fpath, err)
+	}
+
+	_, err = os.Lstat(fpath)
+	if err == nil {
+		err = os.Remove(fpath)
+		if err != nil {
+			return xerrors.Errorf("%s: failed to unlink: %+v", fpath, err)
+		}
+	}
+
+	err = os.Link(target, fpath)
+	if err != nil {
+		return xerrors.Errorf("%s: making hard link for: %v", fpath, err)
+	}
+
+	return nil
 }
