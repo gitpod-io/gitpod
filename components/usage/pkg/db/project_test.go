@@ -64,10 +64,5 @@ func insertRawProject(t *testing.T, conn *gorm.DB, obj map[string]interface{}) u
 	tx := conn.Exec(statement, values)
 	require.NoError(t, tx.Error)
 
-	t.Cleanup(func() {
-		tx = conn.Delete(&db.Project{ID: id})
-		require.NoError(t, tx.Error)
-	})
-
 	return id
 }

@@ -72,12 +72,26 @@ func ConnectForTests(t *testing.T) *gorm.DB {
 	})
 	require.NoError(t, err, "Failed to establish connection to DB. In a workspace, run `leeway build components/usage:init-testdb` once to bootstrap the DB.")
 
+	conn = conn.Debug()
+
 	t.Cleanup(func() {
+		// Delete records for known models from the DB
+		log.Info("Cleaning up DB between connections.")
+		for _, model := range []interface{}{
+			&WorkspaceInstance{},
+			&Workspace{},
+			&Project{},
+			&Team{},
+		} {
+			// See https://gorm.io/docs/delete.html#Block-Global-Delete
+			tx := conn.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(model)
+			require.NoError(t, tx.Error)
+		}
+
 		rawConn, err := conn.DB()
 		require.NoError(t, err)
-
 		require.NoError(t, rawConn.Close(), "must close database connection")
 	})
 
-	return conn.Debug()
+	return conn
 }
