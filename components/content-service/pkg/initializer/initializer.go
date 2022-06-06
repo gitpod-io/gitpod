@@ -191,7 +191,7 @@ func (bi *fromBackupInitializer) Run(ctx context.Context, mappings []archive.IDM
 
 	hasBackup, err := bi.RemoteStorage.Download(ctx, bi.Location, storage.DefaultBackup, mappings)
 	if !hasBackup {
-		return src, xerrors.Errorf("no backup found")
+		return src, xerrors.Errorf("no backup found: %w", err)
 	}
 	if err != nil {
 		return src, xerrors.Errorf("cannot restore backup: %w", err)
