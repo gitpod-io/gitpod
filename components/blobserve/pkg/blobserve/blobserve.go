@@ -215,7 +215,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 
 	// The blobFor operation's context must be independent of this request. Even if we do not
 	// serve this request in time, we might want to serve another from the same ref in the future.
-	blob, hash, err := reg.refstore.BlobFor(context.Background(), ref, req.Header.Get("X-BlobServe-ReadOnly") == "true")
+	blob, hash, err := reg.refstore.BlobFor(context.Background(), ref, false)
 	if err == errdefs.ErrNotFound {
 		http.Error(w, fmt.Sprintf("image %s not found: %q", html.EscapeString(ref), err), http.StatusNotFound)
 		return
