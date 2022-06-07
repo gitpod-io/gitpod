@@ -378,9 +378,10 @@ func getHistfileCommand(task *task, commands []*string, contentSource csapi.Work
 		return ""
 	}
 
-	// the space at beginning of the HISTFILE command prevents the HISTFILE command itself from appearing in
+	// the printf command clears out the terminal buffer
+	// the space at beginning of the printf command prevents our injected commands itself from appearing in
 	// the bash history.
-	return " HISTFILE=" + histfile + " history -r"
+	return " printf '\\e[3J\033c\\e[3J'" + " && " + "HISTFILE=" + histfile + " history -r"
 }
 
 func getCommands(task *task, isHeadless bool, contentSource csapi.WorkspaceInitSource, storeLocation string) []*string {
