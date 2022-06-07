@@ -6,13 +6,14 @@
 
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
-import { loadStripe, Stripe } from "@stripe/stripe-js";
+import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import Modal from "../components/Modal";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
+import { ThemeContext } from "../theme-context";
 
 type PendingStripeCustomer = { pendingSince: number };
 
@@ -143,9 +144,9 @@ export default function TeamUsageBasedBilling() {
                             <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
                                 Active
                             </div>
-                            <button className="self-end secondary" disabled={true}>
+                            {/* <button className="self-end secondary" disabled={true}>
                                 Manage →
-                            </button>
+                            </button> */}
                         </>
                     )}
                 </div>
@@ -156,6 +157,7 @@ export default function TeamUsageBasedBilling() {
 }
 
 function BillingSetupModal(props: { onClose: () => void }) {
+    const { isDark } = useContext(ThemeContext);
     const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | undefined>();
     const [stripeSetupIntentClientSecret, setStripeSetupIntentClientSecret] = useState<string | undefined>();
 
@@ -167,12 +169,21 @@ function BillingSetupModal(props: { onClose: () => void }) {
         ]).then((setters) => setters.forEach((s) => s()));
     }, []);
 
+    const getStripeAppearance = (): Appearance => {
+        return {
+            theme: isDark ? "night" : "stripe",
+        };
+    };
+
     return (
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="flex">Upgrade Billing</h3>
             <div className="border-t border-gray-200 dark:border-gray-800 mt-4 pt-2 h-96 -mx-6 px-6 flex flex-col">
                 {!!stripePromise && !!stripeSetupIntentClientSecret && (
-                    <Elements stripe={stripePromise} options={{ clientSecret: stripeSetupIntentClientSecret }}>
+                    <Elements
+                        stripe={stripePromise}
+                        options={{ appearance: getStripeAppearance(), clientSecret: stripeSetupIntentClientSecret }}
+                    >
                         <CreditCardInputForm />
                     </Elements>
                 )}
