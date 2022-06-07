@@ -6,7 +6,7 @@ require (
 	github.com/containerd/console v1.0.3
 	github.com/containerd/containerd v1.6.3-0.20220401172941-5ff8fce1fcc6
 	github.com/docker/cli v20.10.13+incompatible
-	github.com/docker/distribution v2.8.0+incompatible
+	github.com/docker/distribution v2.8.1+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gofrs/flock v0.8.0 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0

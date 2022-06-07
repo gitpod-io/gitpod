@@ -4,9 +4,9 @@ go 1.18
 
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20210526225647-edb03dcab7bc
-	github.com/containerd/containerd v1.6.2
-	github.com/docker/cli v20.10.7+incompatible
-	github.com/docker/distribution v2.8.0+incompatible
+	github.com/containerd/containerd v1.6.6
+	github.com/docker/cli v20.10.17+incompatible
+	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -20,7 +20,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/mattn/go-isatty v0.0.11
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/image-spec v1.0.2
+	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/sirupsen/logrus v1.8.1
@@ -56,7 +56,7 @@ require (
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
+	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	golang.org/x/tools v0.1.2 // indirect
