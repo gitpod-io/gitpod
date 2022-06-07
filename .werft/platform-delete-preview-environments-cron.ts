@@ -412,7 +412,7 @@ async function removePreviewEnvironment(previewEnvironment: PreviewEnvironment) 
 }
 
 async function removeCertificate(preview: string, kubectlConfig: string, slice: string) {
-    return exec(`kubectl --kubeconfig ${kubectlConfig} -n certs delete --ignore-not-found=true cert ${preview}`, {slice: slice, async: true})
+    return exec(`kubectl --kubeconfig ${kubectlConfig} -n certs delete --ignore-not-found=true cert harvester-${preview} ${preview}`, {slice: slice, async: true})
 }
 
 async function cleanLoadbalancer() {
