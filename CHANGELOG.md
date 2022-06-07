@@ -1,6 +1,9 @@
 # Change Log
 
 ## June 2022
+- Update IntelliJ IDEA IDE image to version 221.5787.30. ([#10431](https://github.com/gitpod-io/gitpod/pull/10431)) - [@roboquat](https://github.com/roboquat)
+- Update PyCharm IDE image to version 221.5787.24. ([#10432](https://github.com/gitpod-io/gitpod/pull/10432)) - [@roboquat](https://github.com/roboquat)
+- [ws-manager] Add metrics to record backup success/failure count ([#10342](https://github.com/gitpod-io/gitpod/pull/10342)) - [@jenting](https://github.com/jenting)
 - [docker-up] Check docker-compose download ([#10469](https://github.com/gitpod-io/gitpod/pull/10469)) - [@aledbf](https://github.com/aledbf)
 - [docker-up] Update docker compose to v2.6.0 ([#10458](https://github.com/gitpod-io/gitpod/pull/10458)) - [@aledbf](https://github.com/aledbf)
 - Update PhpStorm IDE image to version 221.5787.33. ([#10452](https://github.com/gitpod-io/gitpod/pull/10452)) - [@roboquat](https://github.com/roboquat)
