@@ -451,11 +451,11 @@ export default function Menu() {
                                     },
                                     {
                                         title: "Docs",
-                                        link: "https://www.gitpod.io/docs/",
+                                        href: "https://www.gitpod.io/docs/",
                                     },
                                     {
                                         title: "Help",
-                                        href: "https://www.gitpod.io/support",
+                                        href: "https://www.gitpod.io/support/",
                                         separator: true,
                                     },
                                     {
