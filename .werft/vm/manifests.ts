@@ -168,6 +168,18 @@ spec:
       protocol: TCP
       port: 443
       targetPort: 4430
+    - name: grafana
+      protocol: TCP
+      port: 3000
+      targetPort: 32000
+    - name: prometheus
+      protocol: TCP
+      port: 9090
+      targetPort: 32001
+    - name: pyrra
+      protocol: TCP
+      port: 9099
+      targetPort: 32002
   selector:
     gitpod.io/lbName: ${name}
   type: LoadBalancer
@@ -216,6 +228,9 @@ spec:
             - svc/proxy
             - '4430:443'
             - '2200:22'
+            - '32000:3000'  # Grafana
+            - '32001:9090'  # Prometheus
+            - '32002:9099'  # Pyrra
           resources: {}
           volumeMounts:
             - name: kubeconfig

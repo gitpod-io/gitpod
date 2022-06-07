@@ -163,10 +163,10 @@ export class MonitoringSatelliteInstaller {
         werft.log(sliceName, "Post-processing manifests so it works on Harvester");
         exec(`yq w -i observability/monitoring-satellite/manifests/grafana/service.yaml spec.type 'NodePort'`);
         exec(`yq w -i observability/monitoring-satellite/manifests/prometheus/service.yaml spec.type 'NodePort'`);
+        exec(`yq w -i observability/monitoring-satellite/manifests/pyrra/apiService.yaml spec.type 'NodePort'`);
 
-        exec(
-            `yq w -i observability/monitoring-satellite/manifests/prometheus/service.yaml spec.ports[0].nodePort 32001`,
-        );
         exec(`yq w -i observability/monitoring-satellite/manifests/grafana/service.yaml spec.ports[0].nodePort 32000`);
+        exec(`yq w -i observability/monitoring-satellite/manifests/prometheus/service.yaml spec.ports[0].nodePort 32001`);
+        exec(`yq w -i observability/monitoring-satellite/manifests/grafana/apiService.yaml spec.ports[0].nodePort 32002`);
     }
 }
