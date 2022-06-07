@@ -224,6 +224,13 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// warm-up, didn't need response content
+	if req.Method == http.MethodHead {
+		w.Header().Set("Cache-Control", "no-cache")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	log.WithField("path", req.URL.Path).Debug("handling blobserve")
 	pathPrefix := fmt.Sprintf("/%s", ref)
 	if req.URL.Path == pathPrefix {
@@ -231,7 +238,13 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("ETag", hash)
-	w.Header().Set("Cache-Control", "no-cache")
+
+	inlineVarsValue := req.Header.Get("X-BlobServe-InlineVars")
+	if inlineVarsValue == "" {
+		w.Header().Set("Cache-Control", "public, max-age=31536000")
+	} else {
+		w.Header().Set("Cache-Control", "no-cache")
+	}
 
 	// http.FileServer has a special case where ServeFile redirects any request where r.URL.Path
 	// ends in "/index.html" to the same path, without the final "index.html".
