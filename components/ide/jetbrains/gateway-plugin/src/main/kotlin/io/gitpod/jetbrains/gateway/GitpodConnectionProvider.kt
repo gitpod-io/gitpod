@@ -11,6 +11,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.remote.RemoteCredentialsHolder
 import com.intellij.ssh.AskAboutHostKey
 import com.intellij.ssh.OpenSshLikeHostKeyVerifier
@@ -301,7 +302,11 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         credentials.port = 22
         credentials.userName = userName
         credentials.password = password
-        credentials.connectionBuilder().withSshConnectionConfig {
+        credentials.connectionBuilder(
+            null,
+            ProgressManager.getGlobalProgressIndicator(),
+            false
+        ).withSshConnectionConfig {
             val hostKeyVerifier = it.hostKeyVerifier
             if (hostKeyVerifier is OpenSshLikeHostKeyVerifier) {
                 val acceptHostKey = acceptHostKey(ideUrl, hostKeys)
