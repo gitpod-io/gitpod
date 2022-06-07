@@ -102,6 +102,7 @@ import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/webs
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
+import { getExperimentsClient } from "../../../src/experiments";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -1829,19 +1830,40 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return subscription;
     }
 
+    protected async ensureIsUsageBasedFeatureFlagEnabled(user: User): Promise<void> {
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        const isUsageBasedBillingEnabled = await getExperimentsClient().getValueAsync(
+            "isUsageBasedBillingEnabled",
+            false,
+            {
+                identifier: user.id,
+                custom: {
+                    team_ids: teams.map((t) => t.id).join(","),
+                    team_names: teams.map((t) => t.name).join(","),
+                },
+            },
+        );
+        if (!isUsageBasedBillingEnabled) {
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+        }
+    }
+
     async getStripePublishableKey(ctx: TraceContext): Promise<string | undefined> {
-        this.checkAndBlockUser("getStripePublishableKey");
+        const user = this.checkAndBlockUser("getStripePublishableKey");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         return this.config.stripeSettings?.publishableKey;
     }
 
     async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string | undefined> {
-        this.checkAndBlockUser("getStripeSetupIntentClientSecret");
+        const user = this.checkAndBlockUser("getStripeSetupIntentClientSecret");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         const setupIntent = await this.stripeService.createSetupIntent();
         return setupIntent.client_secret || undefined;
     }
 
     async getTeamStripeCustomerId(ctx: TraceContext, teamId: string): Promise<string | undefined> {
-        this.checkAndBlockUser("getTeamStripeCustomerId");
+        const user = this.checkAndBlockUser("getTeamStripeCustomerId");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         await this.guardTeamOperation(teamId, "update");
         const customer = await this.stripeService.findCustomerByTeamId(teamId);
         return customer?.id || undefined;
@@ -1849,6 +1871,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
         const user = this.checkAndBlockUser("subscribeUserToStripe");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         await this.guardTeamOperation(teamId, "update");
         const team = await this.teamDB.findTeamById(teamId);
         await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
