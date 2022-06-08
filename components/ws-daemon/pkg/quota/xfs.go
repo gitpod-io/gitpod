@@ -113,6 +113,15 @@ func (xfs *XFS) SetQuota(path string, quota Size, isHard bool) (projectID int, e
 		}
 	}()
 
+	_, err = xfs.SetQuotaWithPrjId(path, quota, prjID, isHard)
+	if err != nil {
+		return 0, err
+	}
+
+	return prjID, nil
+}
+
+func (xfs *XFS) SetQuotaWithPrjId(path string, quota Size, prjID int, isHard bool) (projectID int, err error) {
 	_, err = xfs.exec(xfs.Dir, fmt.Sprintf("project -s -d 1 -p %s %d", path, prjID))
 	if err != nil {
 		return 0, err
@@ -121,7 +130,7 @@ func (xfs *XFS) SetQuota(path string, quota Size, isHard bool) (projectID int, e
 	if isHard {
 		_, err = xfs.exec(xfs.Dir, fmt.Sprintf("limit -p bhard=%d %d", quota, prjID))
 	} else {
-		_, err = xfs.exec(xfs.Dir, fmt.Sprintf("limit -p bsoft=%d bhard=%d %d", quota, quota, prjID))
+		_, err = xfs.exec(xfs.Dir, fmt.Sprintf("limit -p bsoft=%d %d", quota, prjID))
 	}
 
 	if err != nil {
