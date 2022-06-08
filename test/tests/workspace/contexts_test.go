@@ -108,7 +108,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 						t.SkipNow()
 					}
 
-					t.Parallel()
+					// t.Parallel()
 
 					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 					defer cancel()
