@@ -462,39 +462,28 @@ interface RunningPrebuildViewProps {
 
 function RunningPrebuildView(props: RunningPrebuildViewProps) {
     const [logsEmitter] = useState(new EventEmitter());
-    const [pollTimeout, setPollTimeout] = useState<NodeJS.Timeout | undefined>();
-    const [prebuildDoneTriggered, setPrebuildDoneTriggered] = useState<boolean>(false);
 
     useEffect(() => {
-        const checkIsPrebuildDone = async (): Promise<boolean> => {
-            if (prebuildDoneTriggered) {
-                console.debug("prebuild done already triggered, doing nothing");
-                return true;
-            }
-
-            const done = await getGitpodService().server.isPrebuildDone(props.runningPrebuild.prebuildID);
-            if (done) {
-                // note: this treats "done" as "available" which is not equivalent.
-                // This works because the backend ignores prebuilds which are not "available", and happily starts a workspace as if there was no prebuild at all.
-                setPrebuildDoneTriggered(true);
-                props.onPrebuildSucceeded();
-                return true;
-            }
-            return false;
-        };
-        const pollIsPrebuildDone = async () => {
-            clearTimeout(pollTimeout!);
-            await checkIsPrebuildDone();
-            setPollTimeout(setTimeout(pollIsPrebuildDone, 10000));
-        };
-
         const disposables = watchHeadlessLogs(
             props.runningPrebuild.instanceID,
             (chunk) => logsEmitter.emit("logs", chunk),
-            checkIsPrebuildDone,
+            async () => false,
         );
+
+        disposables.push(
+            getGitpodService().registerClient({
+                onInstanceUpdate: (update) => {
+                    if (update.workspaceId !== props.runningPrebuild.workspaceID) {
+                        return;
+                    }
+                    if (update.status.phase === "stopped") {
+                        props.onPrebuildSucceeded();
+                    }
+                },
+            }),
+        );
+
         return function cleanup() {
-            clearTimeout(pollTimeout!);
             disposables.dispose();
         };
     }, []);
@@ -507,7 +496,6 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
             <button
                 className="mt-6 secondary"
                 onClick={() => {
-                    clearTimeout(pollTimeout!);
                     props.onIgnorePrebuild();
                 }}
             >
