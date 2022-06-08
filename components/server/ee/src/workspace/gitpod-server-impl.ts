@@ -544,7 +544,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             res.rows = res.rows.map(this.censorUser);
             return res;
         } catch (e) {
-            throw new ResponseError(500, e.toString());
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
     }
 
@@ -559,7 +559,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         try {
             result = await this.userDB.findUserById(userId);
         } catch (e) {
-            throw new ResponseError(500, e.toString());
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
 
         if (!result) {
@@ -606,7 +606,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         try {
             await this.userDeletionService.deleteUser(userId);
         } catch (e) {
-            throw new ResponseError(500, e.toString());
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
     }
 
@@ -1862,7 +1862,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             return setupIntent.client_secret || undefined;
         } catch (error) {
             log.error("Failed to create Stripe SetupIntent", error);
-            throw new ResponseError(500, "Failed to create Stripe SetupIntent");
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to create Stripe SetupIntent");
         }
     }
 
@@ -1875,7 +1875,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             return customer?.id || undefined;
         } catch (error) {
             log.error(`Failed to get Stripe Customer ID for team '${teamId}'`, error);
-            throw new ResponseError(500, `Failed to get Stripe Customer ID for team '${teamId}'`);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to get Stripe Customer ID for team '${teamId}'`,
+            );
         }
     }
 
@@ -1889,7 +1892,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             // TODO(janx): Create a Stripe usage-based Subscription for the customer
         } catch (error) {
             log.error(`Failed to subscribe team '${teamId}' to Stripe`, error);
-            throw new ResponseError(500, `Failed to subscribe team '${teamId}' to Stripe`);
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, `Failed to subscribe team '${teamId}' to Stripe`);
         }
     }
 
