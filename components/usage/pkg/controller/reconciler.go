@@ -41,6 +41,8 @@ type UsageReconcileStatus struct {
 	InvalidWorkspaceInstances int
 
 	Workspaces int
+
+	Teams int
 }
 
 func (u *UsageReconciler) Reconcile() error {
@@ -82,7 +84,58 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	}
 	status.Workspaces = len(workspaces)
 
+	// match workspaces to teams
+	teams, err := u.loadTeamsForWorkspaces(ctx, workspaces)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load teams for workspaces: %w", err)
+	}
+	status.Teams = len(teams)
+
 	return status, nil
+}
+
+type teamWithWorkspaces struct {
+	TeamID     uuid.UUID
+	Workspaces []workspaceWithInstances
+}
+
+func (u *UsageReconciler) loadTeamsForWorkspaces(ctx context.Context, workspaces []workspaceWithInstances) ([]teamWithWorkspaces, error) {
+	// find owner IDs of these workspaces
+	var ownerIDs []uuid.UUID
+	for _, workspace := range workspaces {
+		ownerIDs = append(ownerIDs, workspace.Workspace.OwnerID)
+	}
+
+	// Retrieve memberships. This gives a link between an Owner and a Team they belong to.
+	memberships, err := db.ListTeamMembershipsForUserIDs(ctx, u.conn, ownerIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list team memberships: %w", err)
+	}
+
+	membershipsByUserID := map[uuid.UUID]db.TeamMembership{}
+	for _, membership := range memberships {
+		// User can belong to multiple teams. For now, we're choosing the membership at random.
+		membershipsByUserID[membership.UserID] = membership
+	}
+
+	// Convert workspaces into a lookup so that we can index into them by Owner ID, needed for joining Teams with Workspaces
+	workspacesByOwnerID := map[uuid.UUID][]workspaceWithInstances{}
+	for _, workspace := range workspaces {
+		workspacesByOwnerID[workspace.Workspace.OwnerID] = append(workspacesByOwnerID[workspace.Workspace.OwnerID], workspace)
+	}
+
+	// Finally, join the datasets
+	// Because we iterate over memberships, and not workspaces, we're in effect ignoring Workspaces which are not in a team.
+	// This is intended as we focus on Team usage for now.
+	var teamsWithWorkspaces []teamWithWorkspaces
+	for userID, membership := range membershipsByUserID {
+		teamsWithWorkspaces = append(teamsWithWorkspaces, teamWithWorkspaces{
+			TeamID:     membership.TeamID,
+			Workspaces: workspacesByOwnerID[userID],
+		})
+	}
+
+	return teamsWithWorkspaces, nil
 }
 
 type workspaceWithInstances struct {
