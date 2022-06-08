@@ -46,7 +46,7 @@ func TestGitHubContexts(t *testing.T) {
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/issues/88",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
 			ExpectedBranchFunc: func(username string) string {
-				return fmt.Sprintf("%s/integration-tests-test-context-88", username)
+				return fmt.Sprintf("%s/integration-88", username)
 			},
 		},
 		{
