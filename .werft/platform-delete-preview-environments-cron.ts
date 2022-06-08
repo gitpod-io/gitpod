@@ -375,11 +375,6 @@ async function determineStalePreviewEnvironments(options: {previews: PreviewEnvi
     werft.done(SLICES.CHECKING_FOR_DB_ACTIVITY)
 
     const previewsToDelete = previews.filter((preview: PreviewEnvironment) => {
-        if (!previewNamespacesWithNoDBActivity.has(preview.namespace)){
-            werft.log(SLICES.DETERMINING_STALE_PREVIEW_ENVIRONMENTS, `Considering ${preview.name} (${preview.namespace}) active due to recent DB activity`)
-            return false
-        }
-
         if (!previewNamespaceBasedOnBranches.has(preview.namespace)) {
             werft.log(SLICES.DETERMINING_STALE_PREVIEW_ENVIRONMENTS, `Considering ${preview.name} (${preview.namespace}) stale due to missing branch`)
             return true
