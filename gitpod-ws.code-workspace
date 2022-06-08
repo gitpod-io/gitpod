@@ -25,7 +25,8 @@
         { "path": "dev/gpctl" },
         { "path": "dev/loadgen" },
         { "path": "dev/poolkeeper" },
-        { "path": "install/installer" }
+        { "path": "install/installer" },
+        { "path": "components/ee/autoscaler-expander" }
     ],
     "settings": {
         "typescript.tsdk": "gitpod/node_modules/typescript/lib",

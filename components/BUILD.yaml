@@ -37,6 +37,7 @@ packages:
       - components/ee/agent-smith:docker
       - components/ee/db-sync:docker
       - components/ee/payment-endpoint:docker
+      - components/ee/autoscaler-expander:docker
       - components/gitpod-db:docker
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders

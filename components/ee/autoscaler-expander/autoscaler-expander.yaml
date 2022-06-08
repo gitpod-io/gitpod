@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoscaler-expander
+  namespace: kube-system
+  labels:
+    k8s-app: autoscaler-expander
+spec:
+  selector:
+    matchLabels:
+      app: gitpod
+      component: autoscaler-expander
+  template:
+    metadata:
+      name: autoscaler-expander
+      namespace: kube-system
+      labels:
+        app: gitpod
+        component: autoscaler-expander
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+        - key: CriticalAddonsOnly
+          value: "true"
+          effect: NoExecute
+      nodeSelector:
+        node-role.kubernetes.io/master: "true"
+      priorityClassName: system-cluster-critical
+      containers:
+        - name: autoscaler-expander
+          image: docker.io/aledbf/autoscaler-expander:12
+          args:
+            - run
+            - --config
+            - /config/config.json
+          volumeMounts:
+            - mountPath: /config
+              name: config
+            - mountPath: /certs
+              name: certs
+      volumes:
+        - name: certs
+          secret:
+            secretName: expander-grpc
+        - name: config
+          configMap:
+            name: grpc-expander-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: gitpod
+    component: autoscaler-expander
+    kind: service
+  name: autoscaler-expander
+  namespace: kube-system
+spec:
+  ports:
+    - name: rpc
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: gitpod
+    component: autoscaler-expander
+  type: ClusterIP
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: grpc-issuer
+  namespace: kube-system
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: expander-grpc
+  namespace: kube-system
+spec:
+  secretName: expander-grpc
+  issuerRef:
+    name: grpc-issuer
+    kind: Issuer
+  dnsNames:
+    - autoscaler-expander.kube-system
+    - autoscaler-expander.kube-system.svc
+    - autoscaler-expander.kube-system.svc.cluster.local
