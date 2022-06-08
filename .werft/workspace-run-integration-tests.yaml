@@ -160,13 +160,14 @@ pod:
           cd "${TEST_PATH}"
           set +e
           go test -v ./... "${args[@]}" 2>&1 | tee "${TEST_NAME}".log | werft log slice "test-${TEST_NAME}"
+          RC=${PIPESTATUS[0]}
           set -e
 
           RUN_COUNT=$((RUN_COUNT+1))
-          if [ "${PIPESTATUS[0]}" -ne "0" ]; then
+          if [ "${RC}" -ne "0" ]; then
             FAILURE_COUNT=$((FAILURE_COUNT+1))
             FAILURE_TESTS["${TEST_NAME}"]=$(grep "\-\-\- FAIL: " "${TEST_PATH}"/"${TEST_NAME}".log)
-            werft log slice "test-${TEST_NAME}" --fail "${PIPESTATUS[0]}"
+            werft log slice "test-${TEST_NAME}" --fail "${RC}"
           else
             werft log slice "test-${TEST_NAME}" --done
           fi
