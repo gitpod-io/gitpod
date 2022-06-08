@@ -63,6 +63,9 @@ export default function ProjectDetail(props: { project: Project; owner: string |
                     <Property name="Incremental Prebuilds">
                         {props.project.settings?.useIncrementalPrebuilds ? "Yes" : "No"}
                     </Property>
+                    <Property name="Persistent Volume Claim">
+                        {props.project.settings?.usePersistentVolumeClaim ? "Yes" : "No"}
+                    </Property>
                     <Property name="Marked Deleted">{props.project.markedDeleted ? "Yes" : "No"}</Property>
                 </div>
             </div>
