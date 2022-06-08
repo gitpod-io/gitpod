@@ -39,37 +39,44 @@ var Helm = common.CompositeHelmFunc(
 			return nil, err
 		}
 
+		configValues := []string{
+			helm.KeyValue("mysql.auth.existingSecret", SQLPasswordName),
+			helm.KeyValue("mysql.auth.database", Database),
+			helm.KeyValue("mysql.auth.username", Username),
+			helm.KeyValue("mysql.initdbScriptsConfigMap", SQLInitScripts),
+			helm.KeyValue("mysql.serviceAccount.name", Component),
+			helm.ImagePullSecrets("mysql.image.pullSecrets", cfg),
+			helm.KeyValue("mysql.image.registry", ""),
+			helm.KeyValue("mysql.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/mysql")),
+			helm.ImagePullSecrets("mysql.metrics.image.pullSecrets", cfg),
+			helm.KeyValue("mysql.metrics.image.registry", ""),
+			helm.KeyValue("mysql.metrics.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/mysqld-exporter")),
+			helm.ImagePullSecrets("mysql.volumePermissions.image.pullSecrets", cfg),
+			helm.KeyValue("mysql.volumePermissions.image.pullPolicy", "IfNotPresent"),
+			helm.KeyValue("mysql.volumePermissions.image.registry", ""),
+			helm.KeyValue("mysql.volumePermissions.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/bitnami-shell")),
+
+			// improve start time
+			helm.KeyValue("mysql.primary.startupProbe.enabled", "false"),
+			helm.KeyValue("mysql.primary.livenessProbe.initialDelaySeconds", "30"),
+
+			// Configure KOTS backup
+			helm.KeyValue("mysql.primary.podAnnotations.backup\\.velero\\.io/backup-volumes", "backup"),
+			helm.KeyValue("mysql.primary.podAnnotations.pre\\.hook\\.backup\\.velero\\.io/timeout", "5m"),
+			helm.KeyValue("mysql.primary.extraVolumes[0].name", "backup"),
+			helm.KeyValue("mysql.primary.extraVolumeMounts[0].name", "backup"),
+			helm.KeyValue("mysql.primary.extraVolumeMounts[0].mountPath", "/scratch"),
+		}
+
+		for key, value := range helm.DefaultLabels(Component) {
+			configValues = append(configValues, helm.KeyValue("mysql.commonLabels."+key, value))
+			configValues = append(configValues, helm.KeyValue("mysql.primary.podLabels."+key, value))
+		}
+
 		return &common.HelmConfig{
 			Enabled: true,
 			Values: &values.Options{
-				Values: []string{
-					helm.KeyValue("mysql.auth.existingSecret", SQLPasswordName),
-					helm.KeyValue("mysql.auth.database", Database),
-					helm.KeyValue("mysql.auth.username", Username),
-					helm.KeyValue("mysql.initdbScriptsConfigMap", SQLInitScripts),
-					helm.KeyValue("mysql.serviceAccount.name", Component),
-					helm.ImagePullSecrets("mysql.image.pullSecrets", cfg),
-					helm.KeyValue("mysql.image.registry", ""),
-					helm.KeyValue("mysql.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/mysql")),
-					helm.ImagePullSecrets("mysql.metrics.image.pullSecrets", cfg),
-					helm.KeyValue("mysql.metrics.image.registry", ""),
-					helm.KeyValue("mysql.metrics.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/mysqld-exporter")),
-					helm.ImagePullSecrets("mysql.volumePermissions.image.pullSecrets", cfg),
-					helm.KeyValue("mysql.volumePermissions.image.pullPolicy", "IfNotPresent"),
-					helm.KeyValue("mysql.volumePermissions.image.registry", ""),
-					helm.KeyValue("mysql.volumePermissions.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/bitnami-shell")),
-
-					// improve start time
-					helm.KeyValue("mysql.primary.startupProbe.enabled", "false"),
-					helm.KeyValue("mysql.primary.livenessProbe.initialDelaySeconds", "30"),
-
-					// Configure KOTS backup
-					helm.KeyValue("mysql.primary.podAnnotations.backup\\.velero\\.io/backup-volumes", "backup"),
-					helm.KeyValue("mysql.primary.podAnnotations.pre\\.hook\\.backup\\.velero\\.io/timeout", "5m"),
-					helm.KeyValue("mysql.primary.extraVolumes[0].name", "backup"),
-					helm.KeyValue("mysql.primary.extraVolumeMounts[0].name", "backup"),
-					helm.KeyValue("mysql.primary.extraVolumeMounts[0].mountPath", "/scratch"),
-				},
+				Values: configValues,
 				// This is too complex to be sent as a string
 				FileValues: []string{
 					primaryAffinityTemplate,

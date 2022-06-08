@@ -6,9 +6,22 @@ package helm
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"os"
+	"strings"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
+
+// DefaultLabels escapes any dots in the key
+func DefaultLabels(component string) map[string]string {
+	labels := map[string]string{}
+
+	for k, v := range common.DefaultLabels(component) {
+		labels[strings.Replace(k, ".", "\\.", -1)] = v
+	}
+
+	return labels
+}
 
 // KeyValue ensure that a key/value pair is correctly formatted for Values
 func KeyValue(key string, value string) string {

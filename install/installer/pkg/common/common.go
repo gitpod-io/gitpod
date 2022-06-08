@@ -30,8 +30,10 @@ import (
 
 func DefaultLabels(component string) map[string]string {
 	return map[string]string{
-		"app":       AppName,
-		"component": component,
+		"app":              AppName,
+		"component":        component,
+		"kots.io/app-slug": AppName,
+		"kots.io/backup":   "velero",
 	}
 }
 
