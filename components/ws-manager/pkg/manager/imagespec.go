@@ -18,6 +18,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 )
 
@@ -54,7 +55,10 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if _, ok := pod.Labels[fullWorkspaceBackupAnnotation]; ok {
+	_, fullWorkspaceBackupEnabled := pod.Labels[fullWorkspaceBackupAnnotation]
+	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureAnnotation]
+
+	if fullWorkspaceBackupEnabled || pvcFeatureEnabled {
 		owner := pod.Labels[wsk8s.OwnerLabel]
 		workspaceID := pod.Labels[wsk8s.MetaIDLabel]
 		initializerRaw, ok := pod.Annotations[workspaceInitializerAnnotation]
@@ -70,7 +74,12 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 		if err != nil {
 			return nil, xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
-		cl, _, err := m.Content.GetContentLayer(ctx, owner, workspaceID, &initializer)
+		var cl []layer.Layer
+		if pvcFeatureEnabled {
+			cl, _, err = m.Content.GetContentLayerPVC(ctx, owner, workspaceID, &initializer)
+		} else {
+			cl, _, err = m.Content.GetContentLayer(ctx, owner, workspaceID, &initializer)
+		}
 		if err != nil {
 			return nil, xerrors.Errorf("cannot get content layer: %w", err)
 		}

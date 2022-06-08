@@ -32,6 +32,7 @@ type ConfigSerialized struct {
 	ImageBuilderAddr                  string   `json:"imageBuilderAddr"`
 	VSXRegistryUrl                    string   `json:"vsxRegistryUrl"`
 	ChargebeeProviderOptionsFile      string   `json:"chargebeeProviderOptionsFile"`
+	StripeSettingsFile                string   `json:"stripeSettingsFile"`
 	EnablePayment                     bool     `json:"enablePayment"`
 
 	WorkspaceHeartbeat         WorkspaceHeartbeat         `json:"workspaceHeartbeat"`
@@ -42,12 +43,18 @@ type ConfigSerialized struct {
 	AuthProviderConfigFiles    []string                   `json:"authProviderConfigFiles"`
 	IncrementalPrebuilds       IncrementalPrebuilds       `json:"incrementalPrebuilds"`
 	BlockNewUsers              config.BlockNewUsers       `json:"blockNewUsers"`
+	BlockedRepositories        []BlockedRepository        `json:"blockedRepositories,omitempty"`
 	OAuthServer                OAuthServer                `json:"oauthServer"`
 	RateLimiter                RateLimiter                `json:"rateLimiter"`
 	CodeSync                   CodeSync                   `json:"codeSync"`
 	// PrebuildLimiter defines the number of prebuilds allowed for each cloneURL in a given 1 minute interval
 	// Key of "*" defines the default limit, unless there exists a cloneURL in the map which overrides it.
 	PrebuildLimiter map[string]int `json:"prebuildLimiter"`
+}
+
+type BlockedRepository struct {
+	UrlRegExp string `json:"urlRegExp"`
+	BlockUser bool   `json:"blockUser"`
 }
 
 type CodeSyncResources struct {

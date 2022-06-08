@@ -41,7 +41,6 @@ func TestGitActions(t *testing.T) {
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
 			Action: func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) (err error) {
-
 				var resp agent.ExecResponse
 				err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 					Dir:     workspaceRoot,
@@ -51,6 +50,10 @@ func TestGitActions(t *testing.T) {
 						"echo \"another test run...\" >> file_to_commit.txt",
 					},
 				}, &resp)
+				if err != nil {
+					return err
+				}
+				err = git.ConfigSafeDirectory(workspaceRoot)
 				if err != nil {
 					return err
 				}
@@ -79,7 +82,6 @@ func TestGitActions(t *testing.T) {
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
 			Action: func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) (err error) {
-
 				var resp agent.ExecResponse
 				err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 					Dir:     workspaceRoot,
@@ -89,6 +91,10 @@ func TestGitActions(t *testing.T) {
 						"echo \"another test run...\" >> file_to_commit.txt",
 					},
 				}, &resp)
+				if err != nil {
+					return err
+				}
+				err = git.ConfigSafeDirectory(workspaceRoot)
 				if err != nil {
 					return err
 				}
@@ -165,6 +171,40 @@ func TestGitActions(t *testing.T) {
 					}
 				})
 			}
+
+			return ctx
+		}).
+		Feature()
+
+	testEnv.Test(t, f)
+}
+
+func TestGitLFSSupport(t *testing.T) {
+	userToken, _ := os.LookupEnv("USER_TOKEN")
+	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+
+	f := features.New("GitLFSSupport").
+		WithLabel("component", "server").
+		Assess("it can open a repo with Git LFS support", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
+
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			t.Cleanup(func() {
+				api.Done(t)
+			})
+
+			_, err := api.CreateUser(username, userToken)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/atduarte/lfs-test", username, api)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stopWs(true)
 
 			return ctx
 		}).

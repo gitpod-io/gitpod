@@ -19,13 +19,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = (function() {
-  if (this) { return this; }
-  if (typeof window !== 'undefined') { return window; }
-  if (typeof global !== 'undefined') { return global; }
-  if (typeof self !== 'undefined') { return self; }
-  return Function('return this')();
-}.call(null));
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 goog.exportSymbol('proto.contentservice.CloneTargetMode', null, global);
 goog.exportSymbol('proto.contentservice.CompositeInitializer', null, global);
@@ -2328,7 +2322,8 @@ proto.contentservice.FromBackupInitializer.prototype.toObject = function(opt_inc
  */
 proto.contentservice.FromBackupInitializer.toObject = function(includeInstance, msg) {
   var f, obj = {
-    checkoutLocation: jspb.Message.getFieldWithDefault(msg, 1, "")
+    checkoutLocation: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    fromVolumeSnapshot: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -2369,6 +2364,10 @@ proto.contentservice.FromBackupInitializer.deserializeBinaryFromReader = functio
       var value = /** @type {string} */ (reader.readString());
       msg.setCheckoutLocation(value);
       break;
+    case 2:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setFromVolumeSnapshot(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2405,6 +2404,13 @@ proto.contentservice.FromBackupInitializer.serializeBinaryToWriter = function(me
       f
     );
   }
+  f = message.getFromVolumeSnapshot();
+  if (f) {
+    writer.writeBool(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -2423,6 +2429,24 @@ proto.contentservice.FromBackupInitializer.prototype.getCheckoutLocation = funct
  */
 proto.contentservice.FromBackupInitializer.prototype.setCheckoutLocation = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional bool from_volume_snapshot = 2;
+ * @return {boolean}
+ */
+proto.contentservice.FromBackupInitializer.prototype.getFromVolumeSnapshot = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.contentservice.FromBackupInitializer} returns this
+ */
+proto.contentservice.FromBackupInitializer.prototype.setFromVolumeSnapshot = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
 

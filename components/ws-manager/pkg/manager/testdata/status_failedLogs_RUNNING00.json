@@ -32,9 +32,6 @@
         "gitpod/traceid": "AAAAAAAAAAAIuijPmzFhvQa1VjCvXSjXQDcRV3oeudEBAAAAAA==",
         "gitpod/url": "https://ba826db9-9d93-4f3b-a10e-8bc08bbb99f1.ws-dev.cw-debug-registry-facade.staging.gitpod-dev.com",
         "kubernetes.io/psp": "staging-cw-debug-registry-facade-ns-workspace",
-        "prometheus.io/path": "/metrics",
-        "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true",
         "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
       }
     },
@@ -65,6 +62,10 @@
           "env": [
             {
               "name": "GITPOD_REPO_ROOT",
+              "value": "/workspace/django-locallibrary-tutorial"
+            },
+            {
+              "name": "GITPOD_REPO_ROOTS",
               "value": "/workspace/django-locallibrary-tutorial"
             },
             {
@@ -321,7 +322,7 @@
             "terminated": {
               "exitCode": 1,
               "reason": "Error",
-              "message": "source:workspace::ba826db9-9d93-4f3b-a10e-8bc08bbb99f1::get/update\":{},\"resource:workspaceInstance::f07f0f2e-08fb-433a-8282-fef07b596909::get/update/delete\":{}},\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"info\",\"time\":\"2020-11-06T06:48:51Z\"}\n{\"error\":\"open /workspace/.gitpod/content.json: no such file or directory\",\"message\":\"no content init descriptor found - not trying to run it\",\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"info\",\"time\":\"2020-11-06T06:48:51Z\"}\n{\"args\":[\"/workspace/django-locallibrary-tutorial\",\"--port\",\"23000\",\"--hostname\",\"0.0.0.0\"],\"entrypoint\":\"/theia/node_modules/@gitpod/gitpod-ide/startup.sh\",\"message\":\"launching IDE\",\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"info\",\"time\":\"2020-11-06T06:48:51Z\"}\n{\"envvar\":\"SUPERVISOR_ADDR\",\"message\":\"passing environment variable to IDE\",\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"debug\",\"time\":\"2020-11-06T06:48:51Z\"}\n{\"envvar\":[\"PATH\",\"HOSTNAME\",\"LANG\",\"HOME\",\"TRIGGER_REBUILD\",\"APACHE_DOCROOT_IN_REPO\",\"NGINX_DOCROOT_IN_REPO\",\"MANPATH\",\"INFOPATH\",\"HOMEBREW_NO_AUTO_UPDATE\",\"GO_VERSION\",\"GOPATH\",\"GOROOT\",\"GRADLE_USER_HOME\",\"NODE_VERSION\",\"THEIA_WEBVIEW_EXTERNAL_ENDPOINT\",\"GITPOD_RESOLVED_EXTENSIONS\",\"GITPOD_CLI_APITOKEN\",\"GITPOD_INSTANCE_ID\",\"GITPOD_WORKSPACE_URL\",\"GITPOD_TASKS\",\"GITPOD_REPO_ROOT\",\"GITPOD_THEIA_PORT\",\"THEIA_WORKSPACE_ROOT\",\"GITPOD_HOST\",\"GITPOD_MEMORY\",\"THEIA_RATELIMIT_LOG\",\"GITPOD_WORKSPACE_ID\",\"GITPOD_GIT_USER_NAME\",\"GITPOD_GIT_USER_EMAIL\",\"GITPOD_INTERVAL\",\"SUPERVISOR_ADDR\"],\"message\":\"passing environment variables to IDE\",\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"debug\",\"time\":\"2020-11-06T06:48:51Z\"}\n{\"@type\":\"type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent\",\"error\":\"fork/exec /theia/node_modules/@gitpod/gitpod-ide/startup.sh: no such file or directory\",\"message\":\"IDE failed to start\",\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"fatal\",\"time\":\"2020-11-06T06:48:51Z\"}\n",
+              "message": "source:workspace::ba826db9-9d93-4f3b-a10e-8bc08bbb99f1::get/update\":{},\"resource:workspaceInstance::f07f0f2e-08fb-433a-8282-fef07b596909::get/update/delete\":{}},\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"info\",\"time\":\"2020-11-06T06:48:51Z\"}\n{\"error\":\"open /workspace/.gitpod/content.json: no such file or directory\",\"message\":\"no content init descriptor found - not trying to run it\",\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"info\",\"time\":\"2020-11-06T06:48:51Z\"}\n{\"args\":[\"/workspace/django-locallibrary-tutorial\",\"--port\",\"23000\",\"--hostname\",\"0.0.0.0\"],\"entrypoint\":\"/theia/node_modules/@gitpod/gitpod-ide/startup.sh\",\"message\":\"launching IDE\",\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"info\",\"time\":\"2020-11-06T06:48:51Z\"}\n{\"envvar\":\"SUPERVISOR_ADDR\",\"message\":\"passing environment variable to IDE\",\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"debug\",\"time\":\"2020-11-06T06:48:51Z\"}\n{\"envvar\":[\"PATH\",\"HOSTNAME\",\"LANG\",\"HOME\",\"TRIGGER_REBUILD\",\"APACHE_DOCROOT_IN_REPO\",\"NGINX_DOCROOT_IN_REPO\",\"MANPATH\",\"INFOPATH\",\"HOMEBREW_NO_AUTO_UPDATE\",\"GO_VERSION\",\"GOPATH\",\"GOROOT\",\"GRADLE_USER_HOME\",\"NODE_VERSION\",\"THEIA_WEBVIEW_EXTERNAL_ENDPOINT\",\"GITPOD_RESOLVED_EXTENSIONS\",\"GITPOD_CLI_APITOKEN\",\"GITPOD_INSTANCE_ID\",\"GITPOD_WORKSPACE_URL\",\"GITPOD_TASKS\",\"GITPOD_REPO_ROOT\",\"GITPOD_REPO_ROOTS\",\"GITPOD_THEIA_PORT\",\"THEIA_WORKSPACE_ROOT\",\"GITPOD_HOST\",\"GITPOD_MEMORY\",\"THEIA_RATELIMIT_LOG\",\"GITPOD_WORKSPACE_ID\",\"GITPOD_GIT_USER_NAME\",\"GITPOD_GIT_USER_EMAIL\",\"GITPOD_INTERVAL\",\"SUPERVISOR_ADDR\"],\"message\":\"passing environment variables to IDE\",\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"debug\",\"time\":\"2020-11-06T06:48:51Z\"}\n{\"@type\":\"type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent\",\"error\":\"fork/exec /theia/node_modules/@gitpod/gitpod-ide/startup.sh: no such file or directory\",\"message\":\"IDE failed to start\",\"serviceContext\":{\"service\":\"supervisor\",\"version\":\"\"},\"severity\":\"fatal\",\"time\":\"2020-11-06T06:48:51Z\"}\n",
               "startedAt": "2020-11-06T06:48:51Z",
               "finishedAt": "2020-11-06T06:48:51Z",
               "containerID": "containerd://a7cd7934699be3e9538a17305abbe86a6dc63e859d05a7f14cd4fc7cb4ba6a01"

@@ -64,6 +64,7 @@ async function checkWorkspaceHealth(
         timestamp: Date.now(),
     };
     if (extra && numUnhealthy > 0) {
+        span.finish();
         return {
             ...returnValue,
             extra: {

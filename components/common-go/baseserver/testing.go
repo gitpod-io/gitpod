@@ -7,10 +7,12 @@ package baseserver
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/require"
+	"net"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 // NewForTests constructs a *baseserver.Server which is automatically closed after the test finishes.
@@ -18,8 +20,7 @@ func NewForTests(t *testing.T, opts ...Option) *Server {
 	t.Helper()
 
 	defaultTestOpts := []Option{
-		WithGRPCPort(0),
-		WithHTTPPort(0),
+		WithUnderTest(),
 		WithCloseTimeout(1 * time.Second),
 	}
 
@@ -32,6 +33,33 @@ func NewForTests(t *testing.T, opts ...Option) *Server {
 	})
 
 	return srv
+}
+
+func MustUseRandomLocalAddress(t *testing.T) *ServerConfiguration {
+	t.Helper()
+
+	return &ServerConfiguration{
+		Address: fmt.Sprintf("localhost:%d", MustFindFreePort(t)),
+	}
+}
+
+func MustFindFreePort(t *testing.T) int {
+	t.Helper()
+
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		t.Fatalf("cannot find free port: %v", err)
+		return 0
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		t.Fatalf("cannot find free port: %v", err)
+		return 0
+	}
+	defer l.Close()
+
+	return l.Addr().(*net.TCPAddr).Port
 }
 
 // StartServerForTests starts the server for test purposes.
@@ -60,12 +88,13 @@ func waitForServerToBeReachable(t *testing.T, srv *Server, timeout time.Duration
 	}
 
 	for {
+		healthURL := fmt.Sprintf("%s/ready", srv.HealthAddr())
+
 		select {
 		case <-ctx.Done():
-			require.Failf(t, "server did not become reachable in %s", timeout.String())
+			t.Fatalf("server did not become reachable in %s on %s", timeout.String(), healthURL)
 		case <-ticker.C:
 			// We retrieve the URL on each tick, because the HTTPAddress is only available once the server is listening.
-			healthURL := fmt.Sprintf("%s/ready", srv.HTTPAddress())
 			_, err := client.Get(healthURL)
 			if err != nil {
 				continue

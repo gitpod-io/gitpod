@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -129,6 +130,7 @@ func (rs *DirectMinIOStorage) Init(ctx context.Context, owner, workspace, instan
 	rs.Username = owner
 	rs.WorkspaceName = workspace
 	rs.InstanceID = instance
+
 	err = rs.Validate()
 	if err != nil {
 		return err
@@ -205,7 +207,7 @@ func (rs *DirectMinIOStorage) download(ctx context.Context, destination string, 
 
 	rc, err := rs.ObjectAccess(ctx, bkt, obj)
 	if rc == nil {
-		return false, nil
+		return false, err
 	}
 	defer rc.Close()
 
@@ -310,17 +312,21 @@ func (rs *DirectMinIOStorage) Upload(ctx context.Context, source string, name st
 	return
 }
 
-func minioBucketName(ownerID string) string {
+func minioBucketName(ownerID, bucketName string) string {
+	if bucketName != "" {
+		return bucketName
+	}
+
 	return fmt.Sprintf("gitpod-user-%s", ownerID)
 }
 
-func minioWorkspaceBackupObjectName(workspaceID string, name string) string {
-	return fmt.Sprintf("workspaces/%s/%s", workspaceID, name)
+func minioWorkspaceBackupObjectName(ownerID, workspaceID, name string) string {
+	return filepath.Join(ownerID, "workspaces", workspaceID, name)
 }
 
 // Bucket provides the bucket name for a particular user
 func (rs *DirectMinIOStorage) Bucket(ownerID string) string {
-	return minioBucketName(ownerID)
+	return minioBucketName(ownerID, rs.MinIOConfig.BucketName)
 }
 
 // BackupObject returns a backup's object name that a direct downloader would download
@@ -329,11 +335,15 @@ func (rs *DirectMinIOStorage) BackupObject(name string) string {
 }
 
 func (rs *DirectMinIOStorage) bucketName() string {
-	return minioBucketName(rs.Username)
+	return minioBucketName(rs.Username, rs.MinIOConfig.BucketName)
 }
 
 func (rs *DirectMinIOStorage) objectName(name string) string {
-	return minioWorkspaceBackupObjectName(rs.WorkspaceName, name)
+	var username string
+	if rs.MinIOConfig.BucketName != "" {
+		username = rs.Username
+	}
+	return minioWorkspaceBackupObjectName(username, rs.WorkspaceName, name)
 }
 
 func newPresignedMinIOAccess(cfg config.MinIOConfig) (*presignedMinIOStorage, error) {
@@ -517,7 +527,7 @@ func annotationToAmzMetaHeader(annotation string) string {
 
 // Bucket provides the bucket name for a particular user
 func (s *presignedMinIOStorage) Bucket(ownerID string) string {
-	return minioBucketName(ownerID)
+	return minioBucketName(ownerID, s.MinIOConfig.BucketName)
 }
 
 // BlobObject returns a blob's object name
@@ -526,13 +536,17 @@ func (s *presignedMinIOStorage) BlobObject(name string) (string, error) {
 }
 
 // BackupObject returns a backup's object name that a direct downloader would download
-func (s *presignedMinIOStorage) BackupObject(workspaceID string, name string) string {
-	return minioWorkspaceBackupObjectName(workspaceID, name)
+func (s *presignedMinIOStorage) BackupObject(ownerID string, workspaceID, name string) string {
+	var username string
+	if s.MinIOConfig.BucketName != "" {
+		username = ownerID
+	}
+	return minioWorkspaceBackupObjectName(username, workspaceID, name)
 }
 
 // InstanceObject returns a instance's object name that a direct downloader would download
-func (s *presignedMinIOStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
-	return s.BackupObject(workspaceID, InstanceObjectName(instanceID, name))
+func (s *presignedMinIOStorage) InstanceObject(ownerID string, workspaceID string, instanceID string, name string) string {
+	return s.BackupObject(ownerID, workspaceID, InstanceObjectName(instanceID, name))
 }
 
 func translateMinioError(err error) error {

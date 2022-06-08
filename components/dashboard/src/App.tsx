@@ -20,12 +20,13 @@ import gitpodIcon from "./icons/gitpod.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useHistory } from "react-router-dom";
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from "./Analytics";
-import { LicenseInfo, User } from "@gitpod/gitpod-protocol";
+import { ContextURL, LicenseInfo, User } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Experiment } from "./experiments";
 import { workspacesPathMain } from "./workspaces/workspaces.routes";
 import {
     settingsPathAccount,
+    settingsPathBilling,
     settingsPathIntegrations,
     settingsPathMain,
     settingsPathNotifications,
@@ -45,11 +46,15 @@ import {
 import { refreshSearchData } from "./components/RepositoryFinder";
 import { StartWorkspaceModal } from "./workspaces/StartWorkspaceModal";
 import { parseProps } from "./start/StartWorkspace";
+import SelectIDEModal from "./settings/SelectIDEModal";
+import { StartPage, StartPhase } from "./start/StartPage";
+import { isGitpodIo } from "./utils";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Account"));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Notifications"));
+const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Billing"));
 const Plans = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Plans"));
 const Teams = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Teams"));
 const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/EnvironmentVariables"));
@@ -62,6 +67,7 @@ const NewTeam = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/New
 const JoinTeam = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/JoinTeam"));
 const Members = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/Members"));
 const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/TeamSettings"));
+const TeamBilling = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/TeamBilling"));
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/NewProject"));
 const ConfigureProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ConfigureProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Projects"));
@@ -82,15 +88,6 @@ const License = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/Lic
 
 function Loading() {
     return <></>;
-}
-
-function isGitpodIo() {
-    return (
-        window.location.hostname === "gitpod.io" ||
-        window.location.hostname === "gitpod-staging.com" ||
-        window.location.hostname.endsWith("gitpod-dev.com") ||
-        window.location.hostname.endsWith("gitpod-io-dev.com")
-    );
 }
 
 function isWebsiteSlug(pathName: string) {
@@ -156,6 +153,7 @@ function App() {
 
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
+    const [showUserIdePreference, setShowUserIdePreference] = useState(false);
     const [isSetupRequired, setSetupRequired] = useState(false);
     const history = useHistory();
 
@@ -363,6 +361,7 @@ function App() {
                     <Route path={settingsPathAccount} exact component={Account} />
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
                     <Route path={settingsPathNotifications} exact component={Notifications} />
+                    <Route path={settingsPathBilling} exact component={Billing} />
                     <Route path={settingsPathPlans} exact component={Plans} />
                     <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
                     <Route path={settingsPathPreferences} exact component={Preferences} />
@@ -447,6 +446,9 @@ function App() {
                                     if (maybeProject === "settings") {
                                         return <TeamSettings />;
                                     }
+                                    if (maybeProject === "billing") {
+                                        return <TeamBilling />;
+                                    }
                                     if (resourceOrPrebuild === "prebuilds") {
                                         return <Prebuilds />;
                                     }
@@ -495,12 +497,27 @@ function App() {
         );
         return <div></div>;
     }
+    // Prefix with `/#referrer` will specify an IDE for workspace
+    // We don't need to show IDE preference in this case
+    const shouldUserIdePreferenceShown = User.isOnboardingUser(user) && !hash.startsWith(ContextURL.REFERRER_PREFIX);
+    if (shouldUserIdePreferenceShown !== showUserIdePreference) {
+        setShowUserIdePreference(shouldUserIdePreferenceShown);
+    }
+
     const isCreation = window.location.pathname === "/" && hash !== "";
     const isWsStart = /\/start\/?/.test(window.location.pathname) && hash !== "";
     if (isWhatsNewShown) {
         toRender = <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     } else if (isCreation) {
-        toRender = <CreateWorkspace contextUrl={hash} />;
+        if (showUserIdePreference) {
+            toRender = (
+                <StartPage phase={StartPhase.Checking}>
+                    <SelectIDEModal location="workspace_start" onClose={() => setShowUserIdePreference(false)} />
+                </StartPage>
+            );
+        } else {
+            toRender = <CreateWorkspace contextUrl={hash} />;
+        }
     } else if (isWsStart) {
         toRender = <StartWorkspace {...parseProps(hash, window.location.search)} />;
     } else if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {

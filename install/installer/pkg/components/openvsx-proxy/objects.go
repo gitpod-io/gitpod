@@ -13,15 +13,6 @@ var Objects = common.CompositeRenderFunc(
 	networkpolicy,
 	rolebinding,
 	statefulset,
-	common.GenerateService(Component, map[string]common.ServicePort{
-		PortName: {
-			ContainerPort: ContainerPort,
-			ServicePort:   ServicePort,
-		},
-		PrometheusPortName: {
-			ContainerPort: PrometheusPort,
-			ServicePort:   PrometheusPort,
-		},
-	}),
+	service,
 	common.DefaultServiceAccount(Component),
 )

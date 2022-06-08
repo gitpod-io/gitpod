@@ -4,6 +4,8 @@
 
 package wsdaemon
 
+import "github.com/gitpod-io/gitpod/common-go/baseserver"
+
 const (
 	Component            = "ws-daemon"
 	ServicePort          = 8080
@@ -12,5 +14,5 @@ const (
 	HostBackupPath       = "/var/gitpod/tmp/backup"
 	TLSSecretName        = "ws-daemon-tls"
 	VolumeTLSCerts       = "ws-daemon-tls-certs"
-	ReadinessPort        = 8086
+	ReadinessPort        = baseserver.BuiltinHealthPort
 )

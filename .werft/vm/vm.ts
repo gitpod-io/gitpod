@@ -3,6 +3,7 @@ import { exec } from '../util/shell';
 import { getGlobalWerftInstance } from '../util/werft';
 
 import * as Manifests from './manifests'
+import * as shell from "shelljs";
 
 /**
  * Convenience function to kubectl apply a manifest from stdin.
@@ -115,6 +116,39 @@ export function vmExists(options: { name: string }) {
     const namespace = `preview-${options.name}`
     const status = exec(`kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name}`, { dontCheckRc: true, silent: true })
     return status.code == 0
+}
+
+export class NotFoundError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "NotFoundError";
+    }
+}
+
+export class KubectlError extends Error{
+    constructor(message: string) {
+        super(message);
+        this.name = "KubectlError";
+    }
+}
+
+export function get(options: { name: string }): shell.ShellString {
+    const namespace = `preview-${options.name}`
+    const vmErrNotFound = `Error from server (NotFound): virtualmachineinstances.kubevirt.io "${this.name}" not found`
+    const namespaceErrNotFound = `Error from server (NotFound): namespaces "${namespace}" not found`
+    const vm = exec(`kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name}`, { dontCheckRc: true, silent: true })
+
+    if (vm.code != 0){
+        switch (vm.stderr){
+            case vmErrNotFound:
+            case namespaceErrNotFound:
+                throw new NotFoundError("The VM or Namespace doesn't exist")
+            default:
+                throw new KubectlError(vm.stderr)
+        }
+    }
+
+    return vm
 }
 
 /**

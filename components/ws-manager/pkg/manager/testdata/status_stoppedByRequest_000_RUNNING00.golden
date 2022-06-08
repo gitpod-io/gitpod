@@ -38,7 +38,8 @@
                 "seconds": 1634238703,
                 "nanos": 983492544
             },
-            "stopped_by_request": 1
+            "stopped_by_request": 1,
+            "volume_snapshot": {}
         },
         "runtime": {
             "node_name": "gke-core-dev-workspace-3-a69c4dd8-jqzs",

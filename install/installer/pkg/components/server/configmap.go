@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
@@ -58,8 +59,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	enableLocalApp := true
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
-			enableLocalApp = cfg.WebApp.Server.EnableLocalApp
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.EnableLocalApp != nil {
+			enableLocalApp = *cfg.WebApp.Server.EnableLocalApp
+		}
+		return nil
+	})
+
+	runDbDeleter := true
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.RunDbDeleter != nil {
+			runDbDeleter = *cfg.WebApp.Server.RunDbDeleter
 		}
 		return nil
 	})
@@ -73,6 +82,50 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 		return nil
 	})
+
+	chargebeeSecret := ""
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
+			chargebeeSecret = cfg.WebApp.Server.ChargebeeSecret
+		}
+		return nil
+	})
+
+	stripeSecret := ""
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
+			stripeSecret = cfg.WebApp.Server.StripeSecret
+		}
+		return nil
+	})
+
+	disableWsGarbageCollection := false
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
+			disableWsGarbageCollection = cfg.WebApp.Server.DisableWorkspaceGarbageCollection
+		}
+		return nil
+	})
+
+	var blockedRepositories []BlockedRepository
+	err = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && len(cfg.WebApp.Server.BlockedRepositories) > 0 {
+			for _, repo := range cfg.WebApp.Server.BlockedRepositories {
+				_, err := regexp.Compile(repo.UrlRegExp)
+				if err != nil {
+					return fmt.Errorf("invalid regexp %q for blocked user URL: %w", repo.UrlRegExp, err)
+				}
+				blockedRepositories = append(blockedRepositories, BlockedRepository{
+					UrlRegExp: repo.UrlRegExp,
+					BlockUser: repo.BlockUser,
+				})
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	githubApp := GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
@@ -117,7 +170,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ChunkLimit:                 1000,
 			ContentChunkLimit:          1000,
 			ContentRetentionPeriodDays: 21,
-			Disabled:                   false,
+			Disabled:                   disableWsGarbageCollection,
 			MinAgeDays:                 14,
 			MinAgePrebuildDays:         7,
 		},
@@ -137,9 +190,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		MaxConcurrentPrebuildsPerRef:      10,
 		IncrementalPrebuilds:              IncrementalPrebuilds{CommitHistory: 100, RepositoryPasslist: []string{}},
 		BlockNewUsers:                     ctx.Config.BlockNewUsers,
+		BlockedRepositories:               blockedRepositories,
 		MakeNewUsersAdmin:                 false,
 		DefaultBaseImageRegistryWhitelist: defaultBaseImageRegistryWhitelist,
-		RunDbDeleter:                      true,
+		RunDbDeleter:                      runDbDeleter,
 		OAuthServer: OAuthServer{
 			Enabled:   true,
 			JWTSecret: jwtSecret,
@@ -162,9 +216,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ImageBuilderAddr:             "image-builder-mk3:8080",
 		CodeSync:                     CodeSync{},
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
-		EnablePayment:                false,
+		EnablePayment:                chargebeeSecret != "" || stripeSecret != "",
+		ChargebeeProviderOptionsFile: fmt.Sprintf("%s/providerOptions", chargebeeMountPath),
+		StripeSettingsFile:           fmt.Sprintf("%s/settings", stripeMountPath),
 		InsecureNoDomain:             false,
-		ChargebeeProviderOptionsFile: "/chargebee/providerOptions",
 		PrebuildLimiter: map[string]int{
 			// default limit for all cloneURLs
 			"*": 50,

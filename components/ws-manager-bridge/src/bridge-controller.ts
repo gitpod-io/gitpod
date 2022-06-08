@@ -90,7 +90,7 @@ export class BridgeController {
                 const bridge = await this.createAndStartBridge(newCluster);
                 this.bridges.set(newCluster.name, bridge);
             }
-            log.info("done reconciling.", { allClusters: Array.from(allClusters.values()) });
+            log.info("done reconciling.", { allClusters: Array.from(allClusters.keys()) });
         });
     }
 

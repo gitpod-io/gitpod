@@ -21,16 +21,17 @@ import { PaymentContext } from "../payment-context";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
+import { isGitpodIo } from "../utils";
 import { SelectAccountModal } from "./SelectAccountModal";
 import getSettingsMenu from "./settings-menu";
 
 export default function Integrations() {
-    const { showPaymentUI } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
 
     return (
         <div>
             <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI })}
+                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
                 title="Integrations"
                 subtitle="Manage permissions for Git providers and integrations."
             >
@@ -293,6 +294,7 @@ function GitProviders() {
             )}
 
             {editModal && (
+                // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setEditModal(undefined)}>
                     <h3 className="pb-2">Edit Permissions</h3>
                     <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
@@ -553,6 +555,13 @@ export function GitIntegrationModal(
         validate();
     }, [clientId, clientSecret, type]);
 
+    // "bitbucket.org" is set as host value whenever "Bitbucket" is selected
+    useEffect(() => {
+        if (props.mode === "new") {
+            updateHostValue(type === "Bitbucket" ? "bitbucket.org" : "");
+        }
+    }, [type]);
+
     const onClose = () => props.onClose && props.onClose();
     const onUpdate = () => props.onUpdate && props.onUpdate();
 
@@ -696,11 +705,11 @@ export function GitIntegrationModal(
         return (
             <span>
                 Use this redirect URL to update the OAuth application. Go to{" "}
-                <a href={`https://${settingsUrl}`} target="_blank" rel="noopener" className="gp-link">
+                <a href={`https://${settingsUrl}`} target="_blank" rel="noreferrer noopener" className="gp-link">
                     developer settings
                 </a>{" "}
                 and setup the OAuth application.&nbsp;
-                <a href={docsUrl} target="_blank" rel="noopener" className="gp-link">
+                <a href={docsUrl} target="_blank" rel="noreferrer noopener" className="gp-link">
                     Learn more
                 </a>
                 .
@@ -716,6 +725,8 @@ export function GitIntegrationModal(
                 return "gitlab.example.com";
             case "BitbucketServer":
                 return "bitbucket.example.com";
+            case "Bitbucket":
+                return "bitbucket.org";
             default:
                 return "";
         }
@@ -734,6 +745,7 @@ export function GitIntegrationModal(
     };
 
     return (
+        // TODO: Use title and buttons props
         <Modal visible={!!props} onClose={onClose} closeable={props.closeable}>
             <h3 className="pb-2">{mode === "new" ? "New Git Integration" : "Git Integration"}</h3>
             <div className="space-y-4 border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
@@ -762,6 +774,7 @@ export function GitIntegrationModal(
                             >
                                 <option value="GitHub">GitHub</option>
                                 <option value="GitLab">GitLab</option>
+                                {!isGitpodIo() && <option value="Bitbucket">Bitbucket</option>}
                                 <option value="BitbucketServer">Bitbucket Server</option>
                             </select>
                         </div>
@@ -785,7 +798,7 @@ export function GitIntegrationModal(
                         </label>
                         <input
                             name="hostName"
-                            disabled={mode === "edit"}
+                            disabled={mode === "edit" || type === "Bitbucket"}
                             type="text"
                             placeholder={getPlaceholderForIntegrationType(type)}
                             value={host}

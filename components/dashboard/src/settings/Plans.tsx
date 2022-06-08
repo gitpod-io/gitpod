@@ -10,6 +10,7 @@ import {
     Subscription,
     UserPaidSubscription,
     AssignedTeamSubscription,
+    AssignedTeamSubscription2,
     CreditDescription,
 } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { PlanCoupon, GithubUpgradeURL } from "@gitpod/gitpod-protocol/lib/payment-protocol";
@@ -44,7 +45,8 @@ type TeamClaimModal =
 
 export default function () {
     const { user } = useContext(UserContext);
-    const { showPaymentUI, currency, setCurrency, isStudent, isChargebeeCustomer } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI, currency, setCurrency, isStudent, isChargebeeCustomer } =
+        useContext(PaymentContext);
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
     const [availableCoupons, setAvailableCoupons] = useState<PlanCoupon[]>();
     const [appliedCoupons, setAppliedCoupons] = useState<PlanCoupon[]>();
@@ -80,16 +82,18 @@ export default function () {
     const paidSubscription = activeSubscriptions.find((s) => UserPaidSubscription.is(s));
     const paidPlan = paidSubscription && Plans.getById(paidSubscription.planId);
 
-    const assignedTeamSubscriptions = activeSubscriptions.filter((s) => AssignedTeamSubscription.is(s));
+    const assignedTeamSubscriptions = activeSubscriptions.filter(
+        (s) => AssignedTeamSubscription.is(s) || AssignedTeamSubscription2.is(s),
+    );
     const getAssignedTs = (type: PlanType) =>
         assignedTeamSubscriptions.find((s) => {
             const p = Plans.getById(s.planId);
             return !!p && p.type === type;
         });
-    const assignedProfessionalTs = getAssignedTs("professional-new");
     const assignedUnleashedTs = getAssignedTs("professional");
     const assignedStudentUnleashedTs = getAssignedTs("student");
-    const assignedTs = assignedProfessionalTs || assignedUnleashedTs || assignedStudentUnleashedTs;
+    const assignedProfessionalTs = getAssignedTs("professional-new");
+    const assignedTs = assignedUnleashedTs || assignedStudentUnleashedTs || assignedProfessionalTs;
 
     const claimedTeamSubscriptionId = new URL(window.location.href).searchParams.get("teamid");
     if (
@@ -633,7 +637,7 @@ export default function () {
     return (
         <div>
             <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI })}
+                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
                 title="Plans"
                 subtitle="Manage account usage and billing."
             >
@@ -671,7 +675,7 @@ export default function () {
                         )}
                         <p className="text-sm">
                             <a
-                                className={`text-blue-light hover:underline" ${isChargebeeCustomer ? "" : "invisible"}`}
+                                className={`gp-link ${isChargebeeCustomer ? "" : "invisible"}`}
                                 href="javascript:void(0)"
                                 onClick={() => {
                                     ChargebeeClient.getOrCreate().then((chargebeeClient) =>
@@ -720,6 +724,7 @@ export default function () {
                     </a>
                 </InfoBox>
                 {!!confirmUpgradeToPlan && (
+                    // TODO: Use title and buttons props
                     <Modal visible={true} onClose={() => setConfirmUpgradeToPlan(undefined)}>
                         <h3>Upgrade to {confirmUpgradeToPlan.name}</h3>
                         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
@@ -748,6 +753,7 @@ export default function () {
                     </Modal>
                 )}
                 {!!confirmDowngradeToPlan && (
+                    // TODO: Use title and buttons props
                     <Modal visible={true} onClose={() => setConfirmDowngradeToPlan(undefined)}>
                         <h3>Downgrade to {confirmDowngradeToPlan.name}</h3>
                         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
@@ -777,6 +783,7 @@ export default function () {
                     </Modal>
                 )}
                 {isConfirmCancelDowngrade && (
+                    // TODO: Use title and buttons props
                     <Modal visible={true} onClose={() => setIsConfirmCancelDowngrade(false)}>
                         <h3>Cancel downgrade and stay with {currentPlan.name}</h3>
                         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
@@ -793,6 +800,7 @@ export default function () {
                     </Modal>
                 )}
                 {!!teamClaimModal && (
+                    // TODO: Use title and buttons props
                     <Modal visible={true} onClose={() => setTeamClaimModal(undefined)}>
                         <h3 className="pb-2">Team Invitation</h3>
                         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">

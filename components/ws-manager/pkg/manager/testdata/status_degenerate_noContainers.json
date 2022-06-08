@@ -19,10 +19,7 @@
         "gitpod/id": "foobaz",
         "gitpod/servicePrefix": "foobaz",
         "gitpod/url": "http://10.0.0.114:8082",
-        "gitpod/never-ready": "true",
-        "prometheus.io/path": "/metrics",
-        "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true"
+        "gitpod/never-ready": "true"
       }
     },
     "spec": {

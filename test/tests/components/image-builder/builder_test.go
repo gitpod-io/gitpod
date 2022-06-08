@@ -40,6 +40,7 @@ func TestBaseImageBuild(t *testing.T) {
 
 			bld, err := client.Build(ctx, &imgapi.BuildRequest{
 				ForceRebuild: true,
+				TriggeredBy:  "integration-test",
 				Source: &imgapi.BuildSource{
 					From: &imgapi.BuildSource_File{
 						File: &imgapi.BuildSourceDockerfile{
@@ -116,6 +117,7 @@ func TestParallelBaseImageBuild(t *testing.T) {
 
 			req := &imgapi.BuildRequest{
 				ForceRebuild: true,
+				TriggeredBy:  "integration-test",
 				Source: &imgapi.BuildSource{
 					From: &imgapi.BuildSource_File{
 						File: &imgapi.BuildSourceDockerfile{

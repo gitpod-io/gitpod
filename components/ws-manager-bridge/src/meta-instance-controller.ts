@@ -41,6 +41,7 @@ export class MetaInstanceController implements Disposable {
                     const creationTime = new Date(instance.latestInstance.creationTime).getTime();
                     const stoppingTime = new Date(instance.latestInstance.stoppingTime ?? now).getTime(); // stoppingTime only set if entered stopping state
                     const timedOutInPreparing = now >= creationTime + this.config.timeouts.preparingPhaseSeconds * 1000;
+                    const timedOutInBuilding = now >= creationTime + this.config.timeouts.buildingPhaseSeconds * 1000;
                     const timedOutInStopping = now >= stoppingTime + this.config.timeouts.stoppingPhaseSeconds * 1000;
                     const timedOutInUnknown = now >= creationTime + this.config.timeouts.unknownPhaseSeconds * 1000;
                     const currentPhase = instance.latestInstance.status.phase;
@@ -56,6 +57,7 @@ export class MetaInstanceController implements Disposable {
 
                     if (
                         (currentPhase === "preparing" && timedOutInPreparing) ||
+                        (currentPhase === "building" && timedOutInBuilding) ||
                         (currentPhase === "stopping" && timedOutInStopping) ||
                         (currentPhase === "unknown" && timedOutInUnknown)
                     ) {

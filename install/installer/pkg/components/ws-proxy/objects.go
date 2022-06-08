@@ -18,20 +18,24 @@ var Objects = common.CompositeRenderFunc(
 	rolebinding,
 	role,
 	func(cfg *common.RenderContext) ([]runtime.Object, error) {
-		ports := map[string]common.ServicePort{
-			HTTPProxyPortName: {
+		ports := []common.ServicePort{
+			{
+				Name:          HTTPProxyPortName,
 				ContainerPort: HTTPProxyPort,
 				ServicePort:   HTTPProxyPort,
 			},
-			HTTPSProxyPortName: {
+			{
+				Name:          HTTPSProxyPortName,
 				ContainerPort: HTTPSProxyPort,
 				ServicePort:   HTTPSProxyPort,
 			},
-			MetricsPortName: {
+			{
+				Name:          MetricsPortName,
 				ContainerPort: MetricsPort,
 				ServicePort:   MetricsPort,
 			},
-			SSHPortName: {
+			{
+				Name:          SSHPortName,
 				ContainerPort: SSHTargetPort,
 				ServicePort:   SSHServicePort,
 			},

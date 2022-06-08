@@ -8,7 +8,8 @@ local dashboards =
   (import 'cross-teams/mixin.libsonnet').grafanaDashboards +
   (import 'IDE/mixin.libsonnet').grafanaDashboards +
   (import 'meta/mixin.libsonnet').grafanaDashboards +
-  (import 'workspace/mixin.libsonnet').grafanaDashboards
+  (import 'workspace/mixin.libsonnet').grafanaDashboards +
+  (import 'self-hosted/mixin.libsonnet').grafanaDashboards
 ;
 
 {

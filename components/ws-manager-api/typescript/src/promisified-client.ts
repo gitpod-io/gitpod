@@ -78,6 +78,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
                     if (attempt < 3 && err.message.indexOf('already exists') !== -1) {
                         // lets wait a bit more
                     } else {
+                        TraceContext.setError(ctx, err);
                         reject(err);
                     }
                 } else {
@@ -94,6 +95,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
             this.client.stopWorkspace(request, withTracing({span}), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
+                    TraceContext.setError(ctx, err);
                     reject(err);
                 } else {
                     resolve(resp);
@@ -109,6 +111,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
             this.client.markActive(request, withTracing({span}), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
+                    TraceContext.setError(ctx, err);
                     reject(err);
                 } else {
                     resolve(resp);
@@ -124,6 +127,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
             this.client.setTimeout(request, withTracing({span}), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
+                    TraceContext.setError(ctx, err);
                     reject(err);
                 } else {
                     resolve(resp);
@@ -139,6 +143,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
             this.client.controlPort(request, withTracing({span}), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
+                    TraceContext.setError(ctx, err);
                     reject(err);
                 } else {
                     resolve(resp);
@@ -154,6 +159,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
             this.client.describeWorkspace(request, withTracing({span}), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
+                    TraceContext.setError(ctx, err);
                     reject(err);
                 } else {
                     resolve(resp);
@@ -169,6 +175,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
             this.client.getWorkspaces(request, withTracing({span}), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
+                    TraceContext.setError(ctx, err);
                     reject(err);
                 } else {
                     resolve(resp);
@@ -185,6 +192,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
             this.client.takeSnapshot(request, withTracing({span}), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
+                    TraceContext.setError(ctx, err);
                     reject(err);
                 } else {
                     resolve(resp);
@@ -201,6 +209,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
             this.client.controlAdmission(request, withTracing({span}), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
+                    TraceContext.setError(ctx, err);
                     reject(err);
                 } else {
                     resolve(resp);
@@ -215,7 +224,10 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
             try {
                 resolve(this.client.subscribe(request, withTracing({span})));
             } catch(err) {
+                TraceContext.setError(ctx, err);
                 reject(err);
+            } finally {
+                span.finish()
             }
         });
     }

@@ -70,7 +70,7 @@ func TestListLogs(t *testing.T) {
 				daFactory: daFactory,
 			}
 
-			s.EXPECT().InstanceObject(gomock.Any(), gomock.Any(), gomock.Any()).
+			s.EXPECT().InstanceObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return("")
 			da.EXPECT().Init(gomock.Any(), gomock.Eq(OwnerId), gomock.Eq(WorkspaceId), gomock.Not(gomock.Eq(""))).
 				Times(1)

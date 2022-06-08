@@ -33,6 +33,8 @@ import { MetaInstanceController } from "./meta-instance-controller";
 import { IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./preparing-update-emulator";
+import { PrebuildStateMapper } from "./prebuild-state-mapper";
+import { PrebuildUpdater, PrebuildUpdaterNoOp } from "./prebuild-updater";
 
 export const containerModule = new ContainerModule((bind) => {
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
@@ -80,4 +82,7 @@ export const containerModule = new ContainerModule((bind) => {
 
     bind(PreparingUpdateEmulator).toSelf().inRequestScope();
     bind(PreparingUpdateEmulatorFactory).toAutoFactory(PreparingUpdateEmulator);
+
+    bind(PrebuildStateMapper).toSelf().inSingletonScope();
+    bind(PrebuildUpdater).to(PrebuildUpdaterNoOp).inSingletonScope();
 });

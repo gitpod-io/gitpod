@@ -36,7 +36,6 @@ packages:
       - components/docker-up:docker
       - components/ee/agent-smith:docker
       - components/ee/db-sync:docker
-      - components/ee/kedge:docker
       - components/ee/payment-endpoint:docker
       - components/gitpod-db:docker
       - components/ide/code-desktop:docker
@@ -54,6 +53,7 @@ packages:
       - components/image-builder-mk3:docker
       - components/local-app:docker
       - components/public-api-server:docker
+      - components/usage:docker
       - components/openvsx-proxy:docker
       - components/proxy:docker
       - components/registry-facade:docker
@@ -70,6 +70,8 @@ packages:
       - components/ws-manager:docker
       - components/ws-proxy:docker
       - components/ide-proxy:docker
+      - components/kots-config-check/database:docker
+      - components/kots-config-check/storage:docker
       - test:docker
       - dev/version-manifest:app
     config:
@@ -86,6 +88,7 @@ packages:
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor-api/typescript-grpcweb:publish
       - components/ide/jetbrains/gateway-plugin:publish
+      - components/public-api/typescript:publish
   - name: all-apps
     type: generic
     deps:
@@ -95,7 +98,6 @@ packages:
       - components/docker-up:app
       - components/ee/agent-smith:app
       - components/ee/db-sync:app
-      - components/ee/kedge:app
       - components/ee/payment-endpoint:app
       - components/image-builder-mk3:app
       - components/openvsx-proxy:app

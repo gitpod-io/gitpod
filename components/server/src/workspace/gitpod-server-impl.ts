@@ -97,6 +97,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
 import {
     TeamSubscription,
+    TeamSubscription2,
     TeamSubscriptionSlot,
     TeamSubscriptionSlotResolved,
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
@@ -160,6 +161,7 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
+import { getExperimentsClient } from "../experiments";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -924,7 +926,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async internalGetWorkspace(id: string, db: WorkspaceDB): Promise<Workspace> {
         const ws = await db.findById(id);
         if (!ws) {
-            throw new Error(`No workspace with id '${id}' found.`);
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Workspace not found.");
         }
         return ws;
     }
@@ -1545,7 +1547,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
             const wsi = await this.workspaceDb.trace(ctx).findInstanceById(instance.id);
-            if (!wsi || (wsi.status.phase !== "preparing" && wsi.status.phase !== "building")) {
+            if (!wsi || wsi.status.phase !== "building") {
                 log.debug(logCtx, `imagebuild logs: instance is not/no longer in 'building' state`, {
                     phase: wsi?.status.phase,
                 });
@@ -2021,6 +2023,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         ctx.span?.setTag("teamId", invite.teamId);
         await this.teamDB.addMemberToTeam(user.id, invite.teamId);
+        await this.onTeamMemberAdded(user.id, invite.teamId);
         const team = await this.teamDB.findTeamById(invite.teamId);
 
         this.analytics.track({
@@ -2028,6 +2031,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             event: "team_joined",
             properties: {
                 team_id: invite.teamId,
+                team_name: team?.name,
+                team_slug: team?.slug,
                 invite_id: inviteId,
             },
         });
@@ -2053,7 +2058,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = this.checkAndBlockUser("removeTeamMember");
         // Users are free to leave any team themselves, but only owners can remove others from their teams.
         await this.guardTeamOperation(teamId, user.id === userId ? "get" : "update");
+        const membership = await this.teamDB.findTeamMembership(userId, teamId);
+        if (!membership) {
+            throw new Error(`Could not find membership for user '${userId}' in team '${teamId}'`);
+        }
         await this.teamDB.removeMemberFromTeam(userId, teamId);
+        await this.onTeamMemberRemoved(userId, teamId, membership.id);
         this.analytics.track({
             userId: user.id,
             event: "team_user_removed",
@@ -2126,6 +2136,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // Anyone who can read a team's information (i.e. any team member) can create a new project.
             await this.guardTeamOperation(params.teamId, "get");
         }
+
+        const isFeatureEnabled = await getExperimentsClient().getValueAsync("isMyFirstFeatureEnabled", false, {
+            identifier: user.id,
+            custom: {
+                project_name: params.name,
+            },
+        });
+        if (isFeatureEnabled) {
+            throw new ResponseError(
+                ErrorCodes.NOT_FOUND,
+                `Feature is disabled for this user or project - sample usage of experiements`,
+            );
+        }
+
         const project = this.projectsService.createProject(params, user);
         this.analytics.track({
             userId: user.id,
@@ -2167,19 +2191,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const teamProjects = await this.projectsService.getTeamProjects(teamId);
         teamProjects.forEach((project) => {
-            /** no awat */ this.deleteProject(ctx, project.id).catch((err) => {
+            /** no await */ this.deleteProject(ctx, project.id).catch((err) => {
                 /** ignore */
             });
         });
 
         const teamMembers = await this.teamDB.findMembersByTeam(teamId);
         teamMembers.forEach((member) => {
-            /** no awat */ this.removeTeamMember(ctx, teamId, member.userId).catch((err) => {
+            /** no await */ this.removeTeamMember(ctx, teamId, member.userId).catch((err) => {
                 /** ignore */
             });
         });
 
         await this.teamDB.deleteTeam(teamId);
+        await this.onTeamDeleted(teamId);
 
         return this.analytics.track({
             userId: user.id,
@@ -2915,7 +2940,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async createPortalSession(ctx: TraceContext): Promise<{}> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+    async createTeamPortalSession(ctx: TraceContext, teamId: string): Promise<{}> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
     async checkout(ctx: TraceContext, planId: string, planQuantity?: number): Promise<{}> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async teamCheckout(ctx: TraceContext, teamId: string, planId: string): Promise<{}> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getAvailableCoupons(ctx: TraceContext): Promise<PlanCoupon[]> {
@@ -2941,6 +2972,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
     async subscriptionCancelDowngrade(ctx: TraceContext, subscriptionId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getTeamSubscription(ctx: TraceContext, teamId: string): Promise<TeamSubscription2 | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    protected async onTeamMemberAdded(userId: string, teamId: string): Promise<void> {
+        // Extension point for EE
+    }
+    protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
+        // Extension point for EE
+    }
+    protected async onTeamDeleted(teamId: string): Promise<void> {
+        // Extension point for EE
     }
     async tsGet(ctx: TraceContext): Promise<TeamSubscription[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
@@ -2988,6 +3031,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getGithubUpgradeUrls(ctx: TraceContext): Promise<GithubUpgradeURL[]> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getStripePublishableKey(ctx: TraceContext): Promise<string | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getTeamStripeCustomerId(ctx: TraceContext, teamId: string): Promise<string | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     //

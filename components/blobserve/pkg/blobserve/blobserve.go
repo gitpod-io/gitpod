@@ -215,12 +215,19 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 
 	// The blobFor operation's context must be independent of this request. Even if we do not
 	// serve this request in time, we might want to serve another from the same ref in the future.
-	blob, hash, err := reg.refstore.BlobFor(context.Background(), ref, req.Header.Get("X-BlobServe-ReadOnly") == "true")
+	blob, hash, err := reg.refstore.BlobFor(context.Background(), ref, false)
 	if err == errdefs.ErrNotFound {
 		http.Error(w, fmt.Sprintf("image %s not found: %q", html.EscapeString(ref), err), http.StatusNotFound)
 		return
 	} else if err != nil {
 		http.Error(w, fmt.Sprintf("internal error: %q", err), http.StatusInternalServerError)
+		return
+	}
+
+	// warm-up, didn't need response content
+	if req.Method == http.MethodHead {
+		w.Header().Set("Cache-Control", "no-cache")
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -231,7 +238,13 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("ETag", hash)
-	w.Header().Set("Cache-Control", "no-cache")
+
+	inlineVarsValue := req.Header.Get("X-BlobServe-InlineVars")
+	if inlineVarsValue == "" {
+		w.Header().Set("Cache-Control", "public, max-age=31536000")
+	} else {
+		w.Header().Set("Cache-Control", "no-cache")
+	}
 
 	// http.FileServer has a special case where ServeFile redirects any request where r.URL.Path
 	// ends in "/index.html" to the same path, without the final "index.html".

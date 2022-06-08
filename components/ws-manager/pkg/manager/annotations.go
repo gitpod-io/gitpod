@@ -6,6 +6,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -63,6 +64,16 @@ const (
 	// fullWorkspaceBackupAnnotation is set on workspaces which operate using a full workspace backup
 	fullWorkspaceBackupAnnotation = "gitpod/fullWorkspaceBackup"
 
+	// pvcWorkspaceFeatureAnnotation is set on workspaces which are using persistent_volume_claim feature
+	pvcWorkspaceFeatureAnnotation = "gitpod.io/pvcFeature"
+
+	// pvcWorkspaceVolumeSnapshotAnnotation stores volume snapshot name when snapshot was created from pvc
+	pvcWorkspaceVolumeSnapshotAnnotation = "gitpod.io/volumeSnapshotName"
+
+	// startedDisposalAnnotation sets to true when finalizeWorkspaceContent is called to prevent finalize from
+	// being called more then once, which can happen due to race between disposalStatusAnnotation update and actOnPodEvent
+	startedDisposalAnnotation = "gitpod.io/startedDisposal"
+
 	// gitpodFinalizerName is the name of the Gitpod finalizer we use to clean up a workspace
 	gitpodFinalizerName = "gitpod.io/finalizer"
 
@@ -97,10 +108,10 @@ func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotat
 	err := retry.RetryOnConflict(backoff, func() error {
 		pod, err := m.findWorkspacePod(ctx, workspaceID)
 		if err != nil {
-			return xerrors.Errorf("cannot find workspace %s: %w", workspaceID, err)
+			return fmt.Errorf("cannot find workspace %s: %w", workspaceID, err)
 		}
 		if pod == nil {
-			return xerrors.Errorf("workspace %s does not exist", workspaceID)
+			return fmt.Errorf("workspace %s does not exist", workspaceID)
 		}
 
 		for _, a := range annotations {
@@ -163,6 +174,12 @@ type workspaceDisposalStatus struct {
 	BackupComplete bool             `json:"backupComplete,omitempty"`
 	BackupFailure  string           `json:"backupFailure,omitempty"`
 	GitStatus      *csapi.GitStatus `json:"gitStatus,omitempty"`
+}
+
+// workspaceVolumeSnapshotStatus stores the status of volume snapshot
+type workspaceVolumeSnapshotStatus struct {
+	VolumeSnapshotName   string `json:"volumeSnapshotName,omitempty"`
+	VolumeSnapshotHandle string `json:"volumeSnapshotHandle,omitempty"`
 }
 
 func (m *Manager) modifyFinalizer(ctx context.Context, workspaceID string, finalizer string, add bool) error {

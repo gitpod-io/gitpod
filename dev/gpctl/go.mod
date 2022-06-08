@@ -24,6 +24,8 @@ require (
 	k8s.io/client-go v0.0.0
 )
 
+require github.com/gitpod-io/gitpod/public-api v0.0.0-00010101000000-000000000000
+
 require (
 	cloud.google.com/go v0.81.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -86,6 +88,8 @@ replace github.com/gitpod-io/gitpod/common-go => ../../components/common-go // l
 replace github.com/gitpod-io/gitpod/content-service/api => ../../components/content-service-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-builder-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/public-api => ../../components/public-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../../components/registry-facade-api/go // leeway
 

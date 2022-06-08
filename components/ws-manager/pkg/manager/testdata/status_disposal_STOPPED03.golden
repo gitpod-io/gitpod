@@ -32,7 +32,8 @@
         },
         "phase": 6,
         "conditions": {
-            "final_backup_complete": 1
+            "final_backup_complete": 1,
+            "volume_snapshot": {}
         },
         "repo": {
             "branch": "master",

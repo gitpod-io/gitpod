@@ -33,6 +33,7 @@ export interface Configuration {
     timeouts: {
         metaInstanceCheckIntervalSeconds: number;
         preparingPhaseSeconds: number;
+        buildingPhaseSeconds: number;
         stoppingPhaseSeconds: number;
         unknownPhaseSeconds: number;
     };

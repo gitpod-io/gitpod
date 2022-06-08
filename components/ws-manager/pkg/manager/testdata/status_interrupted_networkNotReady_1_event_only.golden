@@ -22,7 +22,9 @@
             "ide_image": {}
         },
         "phase": 4,
-        "conditions": {},
+        "conditions": {
+            "volume_snapshot": {}
+        },
         "runtime": {
             "node_name": "gke-production--gitp-workspace-pool-1-ee6c94af-h6lj",
             "pod_name": "ws-da9ffbf1-a12d-4a58-8593-475394eedb00",

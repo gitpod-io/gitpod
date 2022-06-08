@@ -54,7 +54,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Env: common.MergeEnv(
 				common.DefaultEnv(&ctx.Config),
-				common.TracingEnv(ctx),
+				common.WorkspaceTracingEnv(ctx),
 				[]corev1.EnvVar{{Name: "GRPC_GO_RETRY", Value: "on"}},
 			),
 			VolumeMounts: []corev1.VolumeMount{
@@ -77,7 +77,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
-			*common.KubeRBACProxyContainer(ctx),
+			*common.KubeRBACProxyContainerWithConfig(ctx),
 		},
 		Volumes: []corev1.Volume{
 			{

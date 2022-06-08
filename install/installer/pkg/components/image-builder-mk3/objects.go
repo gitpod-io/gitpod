@@ -12,8 +12,9 @@ var Objects = common.CompositeRenderFunc(
 	deployment,
 	networkpolicy,
 	rolebinding,
-	common.GenerateService(Component, map[string]common.ServicePort{
-		RPCPortName: {
+	common.GenerateService(Component, []common.ServicePort{
+		{
+			Name:          RPCPortName,
 			ContainerPort: RPCPort,
 			ServicePort:   RPCPort,
 		},

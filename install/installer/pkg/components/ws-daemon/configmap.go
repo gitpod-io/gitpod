@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
@@ -127,21 +128,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				}},
 			},
 		},
-		Service: wsdconfig.AddrTLS{
-			Addr: fmt.Sprintf(":%d", ServicePort),
-			TLS: &wsdconfig.TLS{
-				Authority:   "/certs/ca.crt",
-				Certificate: "/certs/tls.crt",
-				PrivateKey:  "/certs/tls.key",
+		Service: baseserver.ServerConfiguration{
+			Address: fmt.Sprintf(":%d", ServicePort),
+			TLS: &baseserver.TLSConfiguration{
+				CAPath:   "/certs/ca.crt",
+				CertPath: "/certs/tls.crt",
+				KeyPath:  "/certs/tls.key",
 			},
 		},
-		Prometheus: wsdconfig.Addr{
-			Addr: "localhost:9500",
-		},
-		PProf: wsdconfig.Addr{
-			Addr: "localhost:6060",
-		},
-		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 	}
 	fc, err := common.ToJSONString(wsdcfg)
 	if err != nil {

@@ -5,121 +5,150 @@
 package baseserver
 
 import (
+	"context"
 	"fmt"
+	"time"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
-	"time"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-type config struct {
+type options struct {
 	logger *logrus.Entry
 
-	// hostname is the hostname on which our servers will listen.
-	hostname string
-	// grpcPort is the port we listen on for gRPC traffic
-	grpcPort int
-	// httpPort is the port we listen on for HTTP traffic
-	httpPort int
+	config *Configuration
 
 	// closeTimeout is the amount we allow for the server to shut down cleanly
 	closeTimeout time.Duration
+
+	underTest bool
 
 	// metricsRegistry configures the metrics registry to use for exporting metrics. When not set, the default prometheus registry is used.
 	metricsRegistry *prometheus.Registry
 
 	healthHandler healthcheck.Handler
+
+	grpcHealthCheck grpc_health_v1.HealthServer
 }
 
-func defaultConfig() *config {
-	return &config{
-		logger:        log.New(),
-		hostname:      "localhost",
-		httpPort:      9000,
-		grpcPort:      9001,
-		closeTimeout:  5 * time.Second,
-		healthHandler: healthcheck.NewHandler(),
+func defaultOptions() *options {
+	return &options{
+		logger: log.New(),
+		config: &Configuration{
+			Services: ServicesConfiguration{
+				GRPC: nil, // disabled by default
+				HTTP: nil, // disabled by default
+			},
+		},
+
+		closeTimeout:    5 * time.Second,
+		healthHandler:   healthcheck.NewHandler(),
+		metricsRegistry: prometheus.NewRegistry(),
+		grpcHealthCheck: &GrpcHealthService{},
 	}
 }
 
-type Option func(cfg *config) error
+type Option func(opts *options) error
 
-func WithHostname(hostname string) Option {
-	return func(cfg *config) error {
-		cfg.hostname = hostname
+// WithConfig uses a config struct to initialise the services
+func WithConfig(config *Configuration) Option {
+	return func(opts *options) error {
+		opts.config = config
 		return nil
 	}
 }
 
-func WithHTTPPort(port int) Option {
-	return func(cfg *config) error {
-		if port < 0 {
-			return fmt.Errorf("http must not be negative, got: %d", port)
-		}
-
-		cfg.httpPort = port
+func WithUnderTest() Option {
+	return func(opts *options) error {
+		opts.underTest = true
 		return nil
 	}
 }
 
-func WithGRPCPort(port int) Option {
-	return func(cfg *config) error {
-		if port < 0 {
-			return fmt.Errorf("grpc port must not be negative, got: %d", port)
-		}
+// WithHTTP configures and enables the HTTP server.
+func WithHTTP(cfg *ServerConfiguration) Option {
+	return func(opts *options) error {
+		opts.config.Services.HTTP = cfg
+		return nil
+	}
+}
 
-		cfg.grpcPort = port
+// WithGRPC configures and enables the GRPC server.
+func WithGRPC(cfg *ServerConfiguration) Option {
+	return func(opts *options) error {
+		opts.config.Services.GRPC = cfg
 		return nil
 	}
 }
 
 func WithLogger(logger *logrus.Entry) Option {
-	return func(cfg *config) error {
+	return func(opts *options) error {
 		if logger == nil {
 			return fmt.Errorf("nil logger specified")
 		}
 
-		cfg.logger = logger
+		opts.logger = logger
 		return nil
 	}
 }
 
 func WithCloseTimeout(d time.Duration) Option {
-	return func(cfg *config) error {
-		cfg.closeTimeout = d
+	return func(opts *options) error {
+		opts.closeTimeout = d
 		return nil
 	}
 }
 
 func WithMetricsRegistry(r *prometheus.Registry) Option {
-	return func(cfg *config) error {
+	return func(opts *options) error {
 		if r == nil {
 			return fmt.Errorf("nil prometheus registry received")
 		}
 
-		cfg.metricsRegistry = r
+		opts.metricsRegistry = r
 		return nil
 	}
 }
 
 func WithHealthHandler(handler healthcheck.Handler) Option {
-	return func(cfg *config) error {
+	return func(opts *options) error {
 		if handler == nil {
 			return fmt.Errorf("nil healthcheck handler provided")
 		}
 
-		cfg.healthHandler = handler
+		opts.healthHandler = handler
 		return nil
 	}
 }
 
-func evaluateOptions(cfg *config, opts ...Option) (*config, error) {
+func WithGRPCHealthService(svc grpc_health_v1.HealthServer) Option {
+	return func(opts *options) error {
+		if svc == nil {
+			return fmt.Errorf("nil healthcheck handler provided")
+		}
+
+		opts.grpcHealthCheck = svc
+		return nil
+	}
+}
+
+func evaluateOptions(cfg *options, opts ...Option) (*options, error) {
 	for _, opt := range opts {
 		if err := opt(cfg); err != nil {
-			return nil, fmt.Errorf("failed to evaluate config: %w", err)
+			return nil, fmt.Errorf("failed to evaluate options: %w", err)
 		}
 	}
 
 	return cfg, nil
+}
+
+type GrpcHealthService struct {
+	grpc_health_v1.UnimplementedHealthServer
+}
+
+func (g *GrpcHealthService) Check(ctx context.Context, request *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
+	return &grpc_health_v1.HealthCheckResponse{Status: grpc_health_v1.HealthCheckResponse_SERVING}, nil
 }

@@ -44,11 +44,19 @@ export class BitbucketApp {
                         // we should send a UNAUTHORIZED signal.
                         res.statusCode = 401;
                         res.send();
+                        span.finish();
                         return;
                     }
-                    const data = toData(req.body);
-                    if (data) {
-                        await this.handlePushHook({ span }, data, user);
+                    try {
+                        const data = toData(req.body);
+                        if (data) {
+                            await this.handlePushHook({ span }, data, user);
+                        }
+                    } catch (err) {
+                        TraceContext.setError({ span }, err);
+                        throw err;
+                    } finally {
+                        span.finish();
                     }
                 } else {
                     console.warn(`Ignoring unsupported bitbucket event: ${req.header("X-Event-Key")}`);

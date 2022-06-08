@@ -1,6 +1,8 @@
+import * as fs from 'fs';
 import { exec } from "../../../util/shell";
 import { Werft } from "../../../util/werft";
 import { getNodePoolIndex } from "../deploy-to-preview-environment";
+import { renderPayment } from "../payment/render";
 
 const BLOCK_NEW_USER_CONFIG_PATH = './blockNewUsers';
 const WORKSPACE_SIZE_CONFIG_PATH = './workspaceSizing';
@@ -34,6 +36,7 @@ export type InstallerOptions = {
     workspaceFeatureFlags: string[]
     gitpodDaemonsetPorts: GitpodDaemonsetPorts
     smithToken: string
+    withPayment: boolean
 }
 
 export class Installer {
@@ -55,20 +58,31 @@ export class Installer {
         this.options.werft.log(slice, "Adding extra configuration");
         try {
             this.getDevCustomValues(slice)
+            this.configureMetadata(slice)
             this.configureContainerRegistry(slice)
             this.configureDomain(slice)
             this.configureWorkspaces(slice)
+            this.configureObjectStorage(slice)
             this.configureIDE(slice)
             this.configureObservability(slice)
             this.configureAuthProviders(slice)
             this.configureSSHGateway(slice)
             this.configurePublicAPIServer(slice)
+            this.configureUsage(slice)
 
             if (this.options.analytics) {
                 this.includeAnalytics(slice)
             } else {
                 this.dontIncludeAnalytics(slice)
             }
+
+            if (this.options.withPayment) {
+                // let installer know that there is a chargbee config
+                exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.server.chargebeeSecret chargebee-config`, { slice: slice });
+                // let installer know that there is a stripe config
+                exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeSecret stripe-config`, { slice: slice });
+            }
+
         } catch (err) {
             throw new Error(err)
         }
@@ -81,6 +95,14 @@ export class Installer {
 
         exec(`yq m -i --overwrite ${this.options.installerConfigPath} ${BLOCK_NEW_USER_CONFIG_PATH}`, { slice: slice });
         exec(`yq m -i ${this.options.installerConfigPath} ${WORKSPACE_SIZE_CONFIG_PATH}`, { slice: slice });
+    }
+
+    private configureMetadata(slice: string): void {
+        exec(`cat <<EOF > shortname.yaml
+metadata:
+  shortname: ""
+EOF`)
+        exec(`yq m -ix ${this.options.installerConfigPath} shortname.yaml`, { slice: slice });
     }
 
     private configureContainerRegistry(slice: string): void {
@@ -98,6 +120,11 @@ export class Installer {
     private configureWorkspaces(slice: string) {
         exec(`yq w -i ${this.options.installerConfigPath} workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, { slice: slice });
         exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.cpu "100m"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.memory "128Mi"`, { slice: slice });
+    }
+
+    private configureObjectStorage(slice: string) {
+        exec(`yq w -i ${this.options.installerConfigPath} objectStorage.resources.requests.memory "256Mi"`, { slice: slice });
     }
 
     private configureIDE(slice: string) {
@@ -149,6 +176,10 @@ export class Installer {
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.publicApi.enabled true`, { slice: slice })
     }
 
+    private configureUsage(slice: string) {
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.enabled true`, { slice: slice })
+    }
+
     private includeAnalytics(slice: string): void {
         exec(`yq w -i ${this.options.installerConfigPath} analytics.writer segment`, { slice: slice });
         exec(`yq w -i ${this.options.installerConfigPath} analytics.segmentKey ${this.options.analytics.token}`, { slice: slice });
@@ -172,10 +203,11 @@ export class Installer {
     }
 
     postProcessing(slice: string): void {
-        this.options.werft.log(slice, "Post processing YAML manfests");
+        this.options.werft.log(slice, "Post processing YAML manifests");
 
         this.configureLicense(slice)
         this.configureWorkspaceFeatureFlags(slice)
+        this.configurePayment(slice)
         this.process(slice)
 
         this.options.werft.done(slice)
@@ -200,7 +232,26 @@ export class Installer {
             })
             // post-process.sh looks for /tmp/defaultFeatureFlags
             // each "flag" string gets added to the configmap
+            // also watches aout for /tmp/payment
         }
+    }
+
+    private configurePayment(slice: string): void {
+        // 1. Read versions from docker image
+        this.options.werft.log(slice, "configuring withPayment...");
+        try {
+            exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${this.options.version} cat /versions.yaml > versions.yaml`);
+        } catch (err) {
+            this.options.werft.fail(slice, err);
+        }
+        const serviceWaiterVersion = exec("yq r ./versions.yaml 'components.serviceWaiter.version'").stdout.toString().trim();
+        const paymentEndpointVersion = exec("yq r ./versions.yaml 'components.paymentEndpoint.version'").stdout.toString().trim();
+
+        // 2. render chargebee-config and payment-endpoint
+        const paymentYamls = renderPayment(this.options.deploymentNamespace, paymentEndpointVersion, serviceWaiterVersion);
+        fs.writeFileSync("/tmp/payment", paymentYamls);
+
+        this.options.werft.log(slice, "done configuring withPayment.");
     }
 
     private process(slice: string): void {

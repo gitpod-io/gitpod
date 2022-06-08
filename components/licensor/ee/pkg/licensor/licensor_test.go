@@ -79,7 +79,7 @@ func (test *licenseTest) Run(t *testing.T) {
 				payload, err := json.Marshal(replicatedLicensePayload{
 					LicenseType: func() LicenseSubscriptionLevel {
 						if test.ReplicatedLicenseType == nil {
-							return ReplicatedLicenseTypePaid
+							return LicenseTypePaid
 						}
 						return *test.ReplicatedLicenseType
 					}(),
@@ -126,9 +126,9 @@ func (test *licenseTest) Run(t *testing.T) {
 			})
 
 			if test.License == nil {
-				eval = newReplicatedEvaluator(client, domain)
+				eval = newReplicatedEvaluator(client)
 			} else {
-				eval = newReplicatedEvaluator(client, test.License.Domain)
+				eval = newReplicatedEvaluator(client)
 			}
 		} else {
 			t.Fatalf("unknown license type: '%s'", test.Type)
@@ -210,8 +210,8 @@ func TestSeats(t *testing.T) {
 }
 
 func TestFeatures(t *testing.T) {
-	replicatedCommunity := ReplicatedLicenseTypeCommunity
-	replicatedPaid := ReplicatedLicenseTypePaid
+	replicatedCommunity := LicenseTypeCommunity
+	replicatedPaid := LicenseTypePaid
 
 	tests := []struct {
 		Name                  string

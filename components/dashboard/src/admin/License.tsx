@@ -19,6 +19,7 @@ import { ReactComponent as CheckSvg } from "../images/check.svg";
 import { ReactComponent as LinkSvg } from "../images/external-link.svg";
 import SolidCard from "../components/SolidCard";
 import Card from "../components/Card";
+import { isGitpodIo } from "../utils";
 
 export default function License() {
     const { license, setLicense } = useContext(LicenseContext);
@@ -37,7 +38,7 @@ export default function License() {
     const features = license?.features;
 
     // if user seats is 0, it means that there is no user limit in the license
-    const userLimit = license?.seats == 0 ? "Unlimited" : license?.seats;
+    const userLimit = license?.seats === 0 ? "Unlimited" : license?.seats;
 
     const [licenseLevel, paid, statusMessage] = license ? getSubscriptionLevel(license) : defaultMessage();
 
@@ -49,41 +50,45 @@ export default function License() {
                 subtitle="License associated with your Gitpod installation"
             >
                 <div className="flex flex-row space-x-4">
-                    <Card>
-                        {licenseLevel}
-                        {paid}
-                        <div className="mt-4 font-semibold text-sm">Available features:</div>
-                        <div className="flex flex-col items-start text-sm">
-                            {features &&
-                                features.map((feat: string) => (
-                                    <span className="inline-flex space-x-1">
-                                        {featureList?.includes(feat) ? (
-                                            <CheckSvg fill="currentColor" className="self-center mt-1" />
-                                        ) : (
-                                            <XSvg fill="currentColor" className="self-center h-2 mt-1" />
-                                        )}
-                                        <span>{capitalizeInitials(feat)}</span>
-                                    </span>
-                                ))}
-                        </div>
-                    </Card>
-                    <SolidCard>
-                        <div className="my-2">{statusMessage}</div>
-                        <p className="dark:text-gray-500 font-semibold">Registered Users</p>
-                        <span className="dark:text-gray-300 text-lg">{license?.userCount || 0}</span>
-                        <span className="dark:text-gray-500 text-gray-400 pt-1 text-lg"> / {userLimit} </span>
-                        <p className="dark:text-gray-500 pt-2 font-semibold">License Type</p>
-                        <h4 className="dark:text-gray-300 text-lg">{capitalizeInitials(license?.type || "")}</h4>
-                        <a
-                            className="gp-link flex flex-row mr-2 justify-end font-semibold space-x-2 mt-6"
-                            href="https://www.gitpod.io/self-hosted"
-                            target="_blank"
-                        >
-                            <span className="text-sm">Compare Plans</span>
-                            <div className="self-end">
-                                <LinkSvg />
+                    <Card className="w-72 h-64">
+                        <span>
+                            {licenseLevel}
+                            {paid}
+                            <div className="mt-4 font-semibold text-sm">Available features:</div>
+                            <div className="flex flex-col items-start text-sm">
+                                {features &&
+                                    features.map((feat: string) => (
+                                        <span className="inline-flex space-x-1">
+                                            {featureList?.includes(feat) ? (
+                                                <CheckSvg fill="currentColor" className="self-center mt-1" />
+                                            ) : (
+                                                <XSvg fill="currentColor" className="self-center h-2 mt-1" />
+                                            )}
+                                            <span>{capitalizeInitials(feat)}</span>
+                                        </span>
+                                    ))}
                             </div>
-                        </a>
+                        </span>
+                    </Card>
+                    <SolidCard className="w-72 h-64">
+                        <span>
+                            <div className="my-2">{statusMessage}</div>
+                            <p className="dark:text-gray-500 font-semibold">Registered Users</p>
+                            <span className="dark:text-gray-300 text-lg">{license?.userCount || 0}</span>
+                            <span className="dark:text-gray-500 text-gray-400 pt-1 text-lg"> / {userLimit} </span>
+                            <p className="dark:text-gray-500 pt-2 font-semibold">License Type</p>
+                            <h4 className="dark:text-gray-300 text-lg">{capitalizeInitials(license?.type || "")}</h4>
+                            <a
+                                className="gp-link flex flex-row mr-2 justify-end font-semibold space-x-2 mt-6"
+                                href="https://www.gitpod.io/self-hosted"
+                                target="_blank"
+                            >
+                                <span className="text-sm">Compare Plans</span>
+                                <div className="self-end">
+                                    <LinkSvg />
+                                </div>
+                            </a>
+                        </span>
                     </SolidCard>
                 </div>
             </PageWithSubMenu>
@@ -126,7 +131,7 @@ function defaultMessage(): ReactElement[] {
         return (
             <span className="text-gray-600 dark:text-gray-50 flex font-semibold items-center">
                 <div>Inactive or unknown license</div>
-                <div className="flex justify-right my-4 mx-1">
+                <div className="flex justify-right my-4 mr-2 ml-4">
                     <Alert fill="grey" className="h-8 w-8" />
                 </div>
             </span>
@@ -141,21 +146,22 @@ function professionalPlan(userCount: number, seats: number, trial: boolean, vali
         return aboveLimit ? (
             <span className="text-red-700 dark:text-red-400 flex font-semibold items-center">
                 <div>You have exceeded the usage limit.</div>
-                <div className="flex justify-right my-4 mx-1">
+                <div className="flex justify-right my-4 mr-2 ml-4">
                     <Alert className="h-6 w-6" />
                 </div>
             </span>
         ) : (
             <span className="text-green-600 dark:text-green-400 flex font-semibold items-center">
                 <div>You have an active professional license.</div>
-                <div className="flex justify-right my-4 mx-1">
+                <div className="flex justify-right my-4 mr-2 ml-4">
                     <Success className="h-8 w-8" />
                 </div>
             </span>
         );
     };
 
-    const aboveLimit: boolean = userCount > seats;
+    // seats === 0 means unlimited number of users
+    const aboveLimit: boolean = seats === 0 ? false : userCount > seats;
 
     const licenseTitle = () => {
         const expDate = new Date(validUntil);
@@ -178,14 +184,14 @@ function communityPlan(userCount: number, seats: number, fallbackAllowed: boolea
             return fallbackAllowed ? (
                 <div className="text-gray-600 dark:text-gray-50 flex font-semibold items-center">
                     <div>No active license. You are using community edition.</div>
-                    <div className="my-4 mx-1 ">
+                    <div className="my-4 mr-2 ml-4">
                         <Success className="h-8 w-8" />
                     </div>
                 </div>
             ) : (
                 <span className="text-red-700 dark:text-red-400 flex font-semibold items-center">
                     <div>No active license. You have exceeded the usage limit.</div>
-                    <div className="flex justify-right my-4 mx-1">
+                    <div className="flex justify-right my-4 mr-2 ml-4">
                         <Alert className="h-8 w-8" />
                     </div>
                 </span>
@@ -194,7 +200,7 @@ function communityPlan(userCount: number, seats: number, fallbackAllowed: boolea
             return (
                 <span className="text-green-600 dark:text-green-400 flex font-semibold items-center">
                     <div>You are using the free community edition.</div>
-                    <div className="flex justify-right my-4 mx-1">
+                    <div className="flex justify-right my-4 mr-2 ml-4">
                         <Success fill="green" className="h-8 w-8" />
                     </div>
                 </span>
@@ -202,11 +208,8 @@ function communityPlan(userCount: number, seats: number, fallbackAllowed: boolea
         }
     };
 
-    const aboveLimit: boolean = userCount > seats;
+    // seats === 0 means unlimited number of users
+    const aboveLimit: boolean = seats === 0 ? false : userCount > seats;
 
     return [licenseLevel("Community"), additionalLicenseInfo("Free"), alertMessage(aboveLimit)];
-}
-
-function isGitpodIo() {
-    return window.location.hostname === "gitpod.io" || window.location.hostname === "gitpod-staging.com";
 }

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -25,10 +24,7 @@ var openCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		url, err := url.Parse("http://localhost:63342/api/gitpod/cli")
-		if err != nil {
-			log.Fatal(err)
-		}
+		url := getCliApiUrl()
 		query := url.Query()
 		query.Add("op", "open")
 		query.Add("file", file)

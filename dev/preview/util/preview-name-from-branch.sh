@@ -8,7 +8,16 @@
 #        See the file for implementation notes.
 #
 function preview-name-from-branch {
-    branch_name=$(git symbolic-ref HEAD 2>&1) || error "Cannot get current branch"
+    set +u
+    local BRANCH="$1"
+
+    if [ "$BRANCH" == "" ]; then
+        branch_name=$(git symbolic-ref HEAD 2>&1) || error "Cannot get current branch"
+    else
+        branch_name=$BRANCH
+    fi
+
+
     sanitizedd_branch_name=$(echo "$branch_name" | awk '{ sub(/^refs\/heads\//, ""); $0 = tolower($0); gsub(/[^-a-z0-9]/, "-"); print }')
     length=$(echo -n "$sanitizedd_branch_name" | wc -c)
 

@@ -45,14 +45,24 @@ export class GitHubEnterpriseApp {
                 try {
                     user = await this.findUser({ span }, payload, req);
                 } catch (error) {
+                    TraceContext.setError({ span }, error);
                     log.error("Cannot find user.", error, {});
                 }
                 if (!user) {
                     res.statusCode = 401;
                     res.send();
+                    span.finish();
                     return;
                 }
-                await this.handlePushHook({ span }, payload, user);
+
+                try {
+                    await this.handlePushHook({ span }, payload, user);
+                } catch (err) {
+                    TraceContext.setError({ span }, err);
+                    throw err;
+                } finally {
+                    span.finish();
+                }
             } else {
                 log.info("Unknown GitHub Enterprise event received", { event });
             }
@@ -67,9 +77,14 @@ export class GitHubEnterpriseApp {
     ): Promise<User> {
         const span = TraceContext.startSpan("GitHubEnterpriseApp.findUser", ctx);
         try {
-            const host = req.header("X-Github-Enterprise-Host");
+            let host = req.header("X-Github-Enterprise-Host");
+            if (!host) {
+                // If the GitHub installation doesn't identify itself, we fall back to the hostname from the repository URL.
+                const repoUrl = new URL(payload.repository.url);
+                host = repoUrl.hostname;
+            }
             const hostContext = this.hostContextProvider.get(host || "");
-            if (!host || !hostContext) {
+            if (!hostContext) {
                 throw new Error("Unsupported GitHub Enterprise host: " + host);
             }
             const { authProviderId } = hostContext.authProvider;

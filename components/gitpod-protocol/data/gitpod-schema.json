@@ -1,5 +1,5 @@
 {
-    "$id": "https://gitpod.io/gitpod.schema.json",
+    "$id": "https://gitpod.io/schemas/gitpod-schema.json",
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Gitpod Config",
     "type": "object",

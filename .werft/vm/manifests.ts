@@ -33,7 +33,7 @@ kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-xcx77"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-xcx77-onereplica"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-swrlp"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-swrlp-onereplica"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
@@ -324,6 +324,10 @@ write_files:
 
       kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
       kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
+
+      # install CSI snapshotter CRDs and snapshot controller
+      kubectl apply -f /var/lib/gitpod/manifests/csi-snapshotter-crd.yaml
+      kubectl apply -f /var/lib/gitpod/manifests/csi-snapshot-controller.yaml
 
       cat <<EOF >> /etc/bash.bashrc
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml

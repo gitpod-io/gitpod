@@ -27,6 +27,9 @@ import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
+import io.prometheus.client.CollectorRegistry
+import io.prometheus.client.Gauge
+import io.prometheus.client.exporter.PushGateway
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
@@ -52,11 +55,46 @@ class GitpodManager : Disposable {
     }
 
     val devMode = System.getenv("JB_DEV").toBoolean()
+    private val backendKind = System.getenv("JETBRAINS_GITPOD_BACKEND_KIND") ?: "unknown"
+    private val backendQualifier = System.getenv("JETBRAINS_BACKEND_QUALIFIER") ?: "unknown"
 
     private val lifetime = Lifetime.Eternal.createNested()
 
     override fun dispose() {
         lifetime.terminate()
+    }
+
+    init {
+        val monitoringJob =  GlobalScope.launch {
+            if (application.isHeadlessEnvironment) {
+                return@launch
+            }
+            val pg = PushGateway("localhost:22999")
+            val registry = CollectorRegistry()
+            val allocatedGauge = Gauge.build()
+                    .name("gitpod_jb_backend_memory_max_bytes")
+                    .help("Total allocated memory of JB backend in bytes.")
+                    .labelNames("product", "qualifier")
+                    .register(registry)
+            val usedGauge = Gauge.build()
+                    .name("gitpod_jb_backend_memory_used_bytes")
+                    .help("Used memory of JB backend in bytes.")
+                    .labelNames("product", "qualifier")
+                    .register(registry)
+            while(isActive) {
+                val totalMemory = Runtime.getRuntime().totalMemory()
+                allocatedGauge.labels(backendKind, backendQualifier).set(totalMemory.toDouble())
+                val usedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())
+                usedGauge.labels(backendKind, backendQualifier).set(usedMemory.toDouble())
+                try {
+                    pg.push(registry, "jb_backend")
+                } catch (t: Throwable) {
+                    thisLogger().error("gitpod: failed to push monitoring metrics:", t)
+                }
+                delay(5000)
+            }
+        }
+        lifetime.onTerminationOrNow { monitoringJob.cancel() }
     }
 
     init {
@@ -95,7 +133,7 @@ class GitpodManager : Disposable {
         GitVcsApplicationSettings.getInstance().isUseCredentialHelper = true
     }
 
-    private val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
+    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
     private val notificationsJob = GlobalScope.launch {
         if (application.isHeadlessEnvironment) {
             return@launch
@@ -196,6 +234,7 @@ class GitpodManager : Disposable {
                     .setHost(info.gitpodApi.host)
                     .addScope("function:sendHeartBeat")
                     .addScope("function:trackEvent")
+                    .addScope("function:openPort")
                     .setKind("gitpod")
                     .build()
 

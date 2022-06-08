@@ -29,17 +29,21 @@ func TestPortsConfig(t *testing.T) {
 			Desc: "workspace port config",
 			WorkspacePorts: []*gitpod.PortConfig{
 				{
-					Port:       9229,
-					OnOpen:     "ignore",
-					Visibility: "public",
+					Port:        9229,
+					OnOpen:      "ignore",
+					Visibility:  "public",
+					Name:        "Nice Port Name",
+					Description: "Nice Port Description",
 				},
 			},
 			Expectation: &PortConfigTestExpectations{
 				WorkspaceConfigs: []*gitpod.PortConfig{
 					{
-						Port:       9229,
-						OnOpen:     "ignore",
-						Visibility: "public",
+						Port:        9229,
+						OnOpen:      "ignore",
+						Visibility:  "public",
+						Name:        "Nice Port Name",
+						Description: "Nice Port Description",
 					},
 				},
 			},
@@ -49,18 +53,22 @@ func TestPortsConfig(t *testing.T) {
 			GitpodConfig: &gitpod.GitpodConfig{
 				Ports: []*gitpod.PortsItems{
 					{
-						Port:       9229,
-						OnOpen:     "ignore",
-						Visibility: "public",
+						Port:        9229,
+						OnOpen:      "ignore",
+						Visibility:  "public",
+						Name:        "Nice Port Name",
+						Description: "Nice Port Description",
 					},
 				},
 			},
 			Expectation: &PortConfigTestExpectations{
 				InstancePortConfigs: []*gitpod.PortConfig{
 					{
-						Port:       9229,
-						OnOpen:     "ignore",
-						Visibility: "public",
+						Port:        9229,
+						OnOpen:      "ignore",
+						Visibility:  "public",
+						Name:        "Nice Port Name",
+						Description: "Nice Port Description",
 					},
 				},
 			},
@@ -70,9 +78,11 @@ func TestPortsConfig(t *testing.T) {
 			GitpodConfig: &gitpod.GitpodConfig{
 				Ports: []*gitpod.PortsItems{
 					{
-						Port:       "9229-9339",
-						OnOpen:     "ignore",
-						Visibility: "public",
+						Port:        "9229-9339",
+						OnOpen:      "ignore",
+						Visibility:  "public",
+						Name:        "Nice Port Name",
+						Description: "Nice Port Description",
 					},
 				},
 			},
@@ -80,9 +90,11 @@ func TestPortsConfig(t *testing.T) {
 				InstanceRangeConfigs: []*RangeConfig{
 					{
 						PortsItems: &gitpod.PortsItems{
-							Port:       "9229-9339",
-							OnOpen:     "ignore",
-							Visibility: "public",
+							Port:        "9229-9339",
+							OnOpen:      "ignore",
+							Visibility:  "public",
+							Description: "Nice Port Description",
+							Name:        "Nice Port Name",
 						},
 						Start: 9229,
 						End:   9339,

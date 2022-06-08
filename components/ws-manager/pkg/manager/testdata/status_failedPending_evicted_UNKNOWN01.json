@@ -29,9 +29,6 @@
         "gitpod/url": "https://ab451d8b-7a3a-42ec-b173-20a0e49773d4.ws-eu01.gitpod.io",
         "gitpod/never-ready": "true",
         "kubernetes.io/psp": "default-ns-workspace",
-        "prometheus.io/path": "/metrics",
-        "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true",
         "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
       }
     },

@@ -29,8 +29,10 @@ const (
 type LicenseSubscriptionLevel string
 
 const (
-	CommunityLicense    LicenseSubscriptionLevel = "community"
-	ProfessionalLicense LicenseSubscriptionLevel = "prod"
+	LicenseTypeCommunity   LicenseSubscriptionLevel = "community"
+	LicenseTypePaid        LicenseSubscriptionLevel = "prod"
+	LicenseTypeTrial       LicenseSubscriptionLevel = "trial"
+	LicenseTypeDevelopment LicenseSubscriptionLevel = "dev"
 )
 
 // LicenseData has type specific info about the license
@@ -148,6 +150,8 @@ var defaultLicense = LicensePayload{
 	// Domain, ValidUntil are free for all
 }
 
+// we match domains only for `gitpod` license and not with replicated license.
+// In the case of replicated this ensures faster client onboarding
 func matchesDomain(pattern, domain string) bool {
 	if pattern == "" {
 		return true

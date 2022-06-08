@@ -13,6 +13,7 @@ jobs:
       productId: intellij
       productCode: IIU
       productType: release
+      exampleRepo: https://github.com/gitpod-io/spring-petclinic
     secrets:
       slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
   goland:
@@ -22,6 +23,7 @@ jobs:
       productId: goland
       productCode: GO
       productType: release
+      exampleRepo: https://github.com/gitpod-io/template-golang-cli
     secrets:
       slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
   pycharm:
@@ -31,6 +33,7 @@ jobs:
       productId: pycharm
       productCode: PCP
       productType: release
+      exampleRepo: https://github.com/gitpod-io/template-python-django
     secrets:
       slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
   phpstorm:
@@ -40,5 +43,6 @@ jobs:
       productId: phpstorm
       productCode: PS
       productType: release
+      exampleRepo: https://github.com/gitpod-io/template-php-laravel-mysql
     secrets:
       slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}

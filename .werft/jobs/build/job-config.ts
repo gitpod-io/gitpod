@@ -21,7 +21,6 @@ export interface JobConfig {
     storage: string;
     version: string;
     withContrib: boolean
-    withHelm: boolean
     withIntegrationTests: boolean;
     withObservability: boolean
     withPayment: boolean
@@ -79,7 +78,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withIntegrationTests = "with-integration-tests" in buildConfig && !mainBuild;
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
-    const publishToKots = "publish-to-kots" in buildConfig || mainBuild;
+    const publishToKots = "publish-to-kots" in buildConfig;
     const analytics = buildConfig["analytics"];
     const localAppVersion = mainBuild || ("with-localapp-version" in buildConfig) ? version : "unknown";
     const retag = ("with-retag" in buildConfig) ? "" : "--dont-retag";
@@ -87,7 +86,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const installEELicense = !("without-ee-license" in buildConfig) || mainBuild;
     const withPayment = "with-payment" in buildConfig && !mainBuild;
     const withObservability = "with-observability" in buildConfig && !mainBuild;
-    const withHelm = "with-helm" in buildConfig && !mainBuild;
     const repository: Repository = {
         owner: context.Repository.owner,
         repo: context.Repository.repo,
@@ -134,7 +132,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         storage,
         version,
         withContrib,
-        withHelm,
         withIntegrationTests,
         withObservability,
         withPayment,

@@ -19,6 +19,8 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +33,7 @@ import (
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 )
 
 // Protobuf structures often require pointer to boolean values (as that's Go's best means of expression optionallity).
@@ -217,6 +220,58 @@ func mergeProbe(dst, src reflect.Value) (err error) {
 	return nil
 }
 
+func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) (*corev1.PersistentVolumeClaim, error) {
+	req := startContext.Request
+	var prefix string
+	switch req.Type {
+	case api.WorkspaceType_PREBUILD:
+		prefix = "prebuild"
+	case api.WorkspaceType_PROBE:
+		prefix = "probe"
+	case api.WorkspaceType_IMAGEBUILD:
+		prefix = "imagebuild"
+	default:
+		prefix = "ws"
+	}
+
+	PVCConfig := m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC
+	if startContext.Class != nil {
+		PVCConfig = startContext.Class.PVC
+	}
+
+	PVC := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
+			Namespace: m.Config.Namespace,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceName(corev1.ResourceStorage): PVCConfig.Size,
+				},
+			},
+		},
+	}
+	if PVCConfig.StorageClass != "" {
+		// Specify the storageClassName when the storage class is non-empty.
+		// This way, the Kubernetes uses the default StorageClass within the cluster.
+		// Otherwise, the Kubernetes would try to request the PVC with no class.
+		PVC.Spec.StorageClassName = &PVCConfig.StorageClass
+	}
+
+	if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
+		snapshotApiGroup := volumesnapshotv1.GroupName
+		PVC.Spec.DataSource = &corev1.TypedLocalObjectReference{
+			APIGroup: &snapshotApiGroup,
+			Kind:     "VolumeSnapshot",
+			Name:     startContext.VolumeSnapshot.VolumeSnapshotName,
+		}
+	}
+
+	return PVC, nil
+}
+
 // createDefiniteWorkspacePod creates a workspace pod without regard for any template.
 // The result of this function can be deployed and it would work.
 func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext) (*corev1.Pod, error) {
@@ -299,9 +354,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	annotations := map[string]string{
-		"prometheus.io/scrape":                  "true",
-		"prometheus.io/path":                    "/metrics",
-		"prometheus.io/port":                    strconv.Itoa(int(startContext.IDEPort)),
 		workspaceIDAnnotation:                   req.Id,
 		servicePrefixAnnotation:                 getServicePrefix(req),
 		kubernetes.WorkspaceURLAnnotation:       startContext.WorkspaceURL,
@@ -421,6 +473,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	PodSecContext := corev1.PodSecurityContext{}
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%s", prefix, req.Id),
@@ -436,6 +489,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
 			Affinity:                     affinity,
+			SecurityContext:              &PodSecContext,
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
@@ -464,6 +518,10 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	if m.Config.DebugWorkspacePod {
+		pod.Finalizers = append(pod.Finalizers, "gitpod.io/debugfinalizer")
+	}
+
 	ffidx := make(map[api.WorkspaceFeatureFlag]struct{})
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
 		if _, seen := ffidx[feature]; seen {
@@ -488,6 +546,36 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			pod.Annotations[wsk8s.CPULimitAnnotation] = cpuLimit
 
 		case api.WorkspaceFeatureFlag_NOOP:
+
+		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
+			pod.Labels[pvcWorkspaceFeatureAnnotation] = "true"
+
+			// update volume to use persistent volume claim, and name of it is the same as pod's name
+			pvcName := pod.ObjectMeta.Name
+			pod.Spec.Volumes[0].VolumeSource = corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: pvcName,
+				},
+			}
+
+			// SubPath so that lost+found is not visible
+			pod.Spec.Containers[0].VolumeMounts[0].SubPath = "workspace"
+			// not needed, since it is using dedicated disk
+			pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
+
+			// add prestop hook to capture git status
+			pod.Spec.Containers[0].Lifecycle = &corev1.Lifecycle{
+				PreStop: &corev1.LifecycleHandler{
+					Exec: &corev1.ExecAction{
+						Command: []string{"/bin/sh", "-c", "/.supervisor/workspacekit lift /.supervisor/prestophook.sh"},
+					},
+				},
+			}
+
+			// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
+			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
+			gitpodGUID := int64(133332)
+			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
 
 		default:
 			return nil, xerrors.Errorf("unknown feature flag: %v", feature)
@@ -574,7 +662,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			PeriodSeconds:       1,
 			SuccessThreshold:    1,
 			TimeoutSeconds:      1,
-			InitialDelaySeconds: 3,
+			InitialDelaySeconds: 2,
 		}
 	)
 
@@ -587,6 +675,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports: []corev1.ContainerPort{
 			{ContainerPort: startContext.IDEPort},
+			{ContainerPort: startContext.SupervisorPort, Name: "supervisor"},
 		},
 		Resources: corev1.ResourceRequirements{
 			Limits:   limits,
@@ -611,6 +700,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 	}, nil
 }
+
 func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext) ([]corev1.EnvVar, error) {
 	spec := startContext.Request.Spec
 
@@ -619,11 +709,18 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 		return filepath.Join("/workspace", strings.TrimPrefix(segment, "/workspace"))
 	}
 
-	repoRoot := content.GetCheckoutLocationFromInitializer(spec.Initializer)
+	allRepoRoots := content.GetCheckoutLocationsFromInitializer(spec.Initializer)
+	if len(allRepoRoots) == 0 {
+		allRepoRoots = []string{""} // for backward compatibility, we are adding a single empty location (translates to /workspace/)
+	}
+	for i, root := range allRepoRoots {
+		allRepoRoots[i] = getWorkspaceRelativePath(root)
+	}
 
 	// Envs that start with GITPOD_ are appended to the Terminal environments
 	result := []corev1.EnvVar{}
-	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOT", Value: getWorkspaceRelativePath(repoRoot)})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOT", Value: allRepoRoots[0]})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOTS", Value: strings.Join(allRepoRoots, ",")})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_CLI_APITOKEN", Value: startContext.CLIAPIKey})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_OWNER_ID", Value: startContext.Request.Metadata.Owner})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_ID", Value: startContext.Request.Metadata.MetaId})
@@ -785,6 +882,21 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 
 	workspaceSpan := opentracing.StartSpan("workspace", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))
 	traceID := tracing.GetTraceID(workspaceSpan)
+	defer tracing.FinishSpan(workspaceSpan, &err)
+
+	clsName := req.Spec.Class
+	if _, ok := m.Config.WorkspaceClasses[req.Spec.Class]; clsName == "" || !ok {
+		// For the time being, if the requested workspace class is unknown, or if
+		// no class is specified, we'll fall back to the default class.
+		clsName = config.DefaultWorkspaceClass
+	}
+
+	var class *config.WorkspaceClass
+	if cls, ok := m.Config.WorkspaceClasses[clsName]; ok {
+		class = cls
+	} else {
+		return nil, status.Errorf(codes.InvalidArgument, "workspace class \"%s\" is unknown", clsName)
+	}
 
 	labels := map[string]string{
 		"app":                  "gitpod",
@@ -795,17 +907,15 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		wsk8s.TypeLabel:        workspaceType,
 		headlessLabel:          fmt.Sprintf("%v", headless),
 		markerLabel:            "true",
+		workspaceClassLabel:    clsName,
 	}
 
-	var class *config.WorkspaceClass
-	if cls, ok := m.Config.WorkspaceClasses[req.Spec.Class]; ok {
-		class = cls
-		if req.Spec.Class != "" {
-			labels[workspaceClassLabel] = req.Spec.Class
+	var volumeSnapshot *workspaceVolumeSnapshotStatus
+	if req.Spec.VolumeSnapshot != nil {
+		volumeSnapshot = &workspaceVolumeSnapshotStatus{
+			VolumeSnapshotName:   req.Spec.VolumeSnapshot.VolumeSnapshotName,
+			VolumeSnapshotHandle: req.Spec.VolumeSnapshot.VolumeSnapshotHandle,
 		}
-	} else {
-		// TODO(cw): in the future we should fail the request here. Until we've migrated server, let's not be that strict
-		// return nil, status.Errorf(codes.InvalidArgument, "workspace class \"%s\" is unknown", req.Spec.Class)
 	}
 
 	return &startWorkspaceContext{
@@ -819,6 +929,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		TraceID:        traceID,
 		Headless:       headless,
 		Class:          class,
+		VolumeSnapshot: volumeSnapshot,
 	}, nil
 }
 

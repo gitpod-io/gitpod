@@ -700,6 +700,29 @@ export namespace PortSpec {
     }
 }
 
+export class VolumeSnapshotInfo extends jspb.Message {
+    getVolumeSnapshotName(): string;
+    setVolumeSnapshotName(value: string): VolumeSnapshotInfo;
+    getVolumeSnapshotHandle(): string;
+    setVolumeSnapshotHandle(value: string): VolumeSnapshotInfo;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): VolumeSnapshotInfo.AsObject;
+    static toObject(includeInstance: boolean, msg: VolumeSnapshotInfo): VolumeSnapshotInfo.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: VolumeSnapshotInfo, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): VolumeSnapshotInfo;
+    static deserializeBinaryFromReader(message: VolumeSnapshotInfo, reader: jspb.BinaryReader): VolumeSnapshotInfo;
+}
+
+export namespace VolumeSnapshotInfo {
+    export type AsObject = {
+        volumeSnapshotName: string,
+        volumeSnapshotHandle: string,
+    }
+}
+
 export class WorkspaceConditions extends jspb.Message {
     getFailed(): string;
     setFailed(value: string): WorkspaceConditions;
@@ -725,6 +748,11 @@ export class WorkspaceConditions extends jspb.Message {
     getStoppedByRequest(): WorkspaceConditionBool;
     setStoppedByRequest(value: WorkspaceConditionBool): WorkspaceConditions;
 
+    hasVolumeSnapshot(): boolean;
+    clearVolumeSnapshot(): void;
+    getVolumeSnapshot(): VolumeSnapshotInfo | undefined;
+    setVolumeSnapshot(value?: VolumeSnapshotInfo): WorkspaceConditions;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceConditions.AsObject;
     static toObject(includeInstance: boolean, msg: WorkspaceConditions): WorkspaceConditions.AsObject;
@@ -747,6 +775,7 @@ export namespace WorkspaceConditions {
         firstUserActivity?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         headlessTaskFailed: string,
         stoppedByRequest: WorkspaceConditionBool,
+        volumeSnapshot?: VolumeSnapshotInfo.AsObject,
     }
 }
 
@@ -874,6 +903,11 @@ export class StartWorkspaceSpec extends jspb.Message {
     getClass(): string;
     setClass(value: string): StartWorkspaceSpec;
 
+    hasVolumeSnapshot(): boolean;
+    clearVolumeSnapshot(): void;
+    getVolumeSnapshot(): VolumeSnapshotInfo | undefined;
+    setVolumeSnapshot(value?: VolumeSnapshotInfo): StartWorkspaceSpec;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
     static toObject(includeInstance: boolean, msg: StartWorkspaceSpec): StartWorkspaceSpec.AsObject;
@@ -898,6 +932,7 @@ export namespace StartWorkspaceSpec {
         admission: AdmissionLevel,
         ideImage?: IDEImage.AsObject,
         pb_class: string,
+        volumeSnapshot?: VolumeSnapshotInfo.AsObject,
     }
 }
 

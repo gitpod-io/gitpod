@@ -68,6 +68,7 @@ export function WhatsNew(props: { onClose: () => void }) {
     };
 
     return (
+        // TODO: Use title and buttons props
         <Modal visible={!!visibleEntry} onClose={internalClose}>
             <h3 className="pb-4">What's New 🎁</h3>
             <>{visibleEntry && user ? visibleEntry.children(user, setUser) : <></>}</>

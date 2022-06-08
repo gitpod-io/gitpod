@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -38,6 +39,12 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 )
 
+// Metrics combine custom metrics exported by WorkspaceService
+type metrics struct {
+	BackupWaitingTimeHist       prometheus.Histogram
+	BackupWaitingTimeoutCounter prometheus.Counter
+}
+
 // WorkspaceService implements the InitService and WorkspaceService
 type WorkspaceService struct {
 	config Config
@@ -46,6 +53,11 @@ type WorkspaceService struct {
 	ctx         context.Context
 	stopService context.CancelFunc
 	runtime     container.Runtime
+
+	metrics *metrics
+
+	// channel to limit the number of concurrent backups and uploads.
+	backupWorkspaceLimiter chan struct{}
 
 	api.UnimplementedInWorkspaceServiceServer
 	api.UnimplementedWorkspaceContentServiceServer
@@ -79,7 +91,20 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 	ctx, stopService := context.WithCancel(ctx)
 
 	if err := registerWorkingAreaDiskspaceGauge(cfg.WorkingArea, reg); err != nil {
-		log.WithError(err).Warn("cannot register Prometheus gauge for working area diskspace")
+		return nil, xerrors.Errorf("cannot register Prometheus gauge for working area diskspace: %w", err)
+	}
+
+	waitingTimeHist, err := registerConcurrentBackupWaitingTime(reg)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot register Prometheus histogram for backup waiting time: %w", err)
+	}
+	waitingTimeoutCounter := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "concurrent_backup_waiting_timeout_total",
+		Help: "total count of backup rate limiting timeouts",
+	})
+	err = reg.Register(waitingTimeoutCounter)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot register Prometheus counter for backup waiting timeouts: %w", err)
 	}
 
 	return &WorkspaceService{
@@ -88,6 +113,13 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 		ctx:         ctx,
 		stopService: stopService,
 		runtime:     runtime,
+
+		metrics: &metrics{
+			BackupWaitingTimeHist:       waitingTimeHist,
+			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
+		},
+		// we permit three concurrent backups at any given time, hence the three in the channel
+		backupWorkspaceLimiter: make(chan struct{}, 3),
 	}, nil
 }
 
@@ -110,6 +142,21 @@ func registerWorkingAreaDiskspaceGauge(workingArea string, reg prometheus.Regist
 		bvail := stat.Bavail * uint64(stat.Bsize)
 		return float64(bvail)
 	}))
+}
+
+func registerConcurrentBackupWaitingTime(reg prometheus.Registerer) (prometheus.Histogram, error) {
+	backupWaitingTime := prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "concurrent_backup_waiting_seconds",
+		Help:    "waiting time for concurrent backups to finish",
+		Buckets: []float64{5, 10, 30, 60, 120, 180, 300, 600, 1800},
+	})
+
+	err := reg.Register(backupWaitingTime)
+	if err != nil {
+		return nil, err
+	}
+
+	return backupWaitingTime, nil
 }
 
 // Start starts this workspace service and returns when the service gets stopped.
@@ -154,9 +201,6 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		wsloc string
 	)
 	if req.FullWorkspaceBackup {
-		if s.runtime == nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "full workspace backup is not available - not connected to container runtime")
-		}
 		var mf csapi.WorkspaceContentManifest
 		if len(req.ContentManifest) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument, "content manifest is required")
@@ -177,7 +221,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		return nil, err
 	}
 
-	if !req.FullWorkspaceBackup {
+	if !req.FullWorkspaceBackup && !req.PersistentVolumeClaim {
 		var remoteContent map[string]storage.DownloadInfo
 
 		// some workspaces don't have remote storage enabled. For those workspaces we clearly
@@ -239,6 +283,27 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		}
 	}
 
+	if req.PersistentVolumeClaim {
+		// create a folder that is used to store data from running prestophook
+		deamonDir := fmt.Sprintf("%s-daemon", req.Id)
+		prestophookDir := filepath.Join(s.config.WorkingArea, deamonDir, "prestophookdata")
+		err = os.MkdirAll(prestophookDir, 0755)
+		if err != nil {
+			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot create prestophookdata folder")
+			return nil, status.Error(codes.FailedPrecondition, fmt.Sprintf("cannot create prestophookdata: %v", err))
+		}
+		_, err = exec.CommandContext(ctx, "chown", "-R", fmt.Sprintf("%d:%d", wsinit.GitpodUID, wsinit.GitpodGID), prestophookDir).CombinedOutput()
+		if err != nil {
+			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot chown prestophookdata folder")
+			return nil, status.Error(codes.FailedPrecondition, fmt.Sprintf("cannot chown prestophookdata: %v", err))
+		}
+	}
+
+	err = workspace.UpdateGitSafeDirectory(ctx)
+	if err != nil {
+		log.WithError(err).WithField("workspaceId", req.Id).Warn("cannot update git safe directory")
+	}
+
 	// Tell the world we're done
 	err = workspace.MarkInitDone(ctx)
 	if err != nil {
@@ -250,15 +315,21 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 }
 
 func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.WorkspaceFactory {
+	var checkoutLocation string
+	allLocations := wsinit.GetCheckoutLocationsFromInitializer(req.Initializer)
+	if len(allLocations) > 0 {
+		checkoutLocation = allLocations[0]
+	}
 	return func(ctx context.Context, location string) (res *session.Workspace, err error) {
 		return &session.Workspace{
 			Location:              location,
-			CheckoutLocation:      wsinit.GetCheckoutLocationFromInitializer(req.Initializer),
+			CheckoutLocation:      checkoutLocation,
 			CreatedAt:             time.Now(),
 			Owner:                 req.Metadata.Owner,
 			WorkspaceID:           req.Metadata.MetaId,
 			InstanceID:            req.Id,
 			FullWorkspaceBackup:   req.FullWorkspaceBackup,
+			PersistentVolumeClaim: req.PersistentVolumeClaim,
 			ContentManifest:       req.ContentManifest,
 			RemoteStorageDisabled: req.RemoteStorageDisabled,
 			StorageQuota:          int(req.StorageQuotaBytes),
@@ -346,7 +417,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	}
 
 	// Update the git status prior to deleting the workspace
-	repo, err = sess.UpdateGitStatus(ctx)
+	repo, err = sess.UpdateGitStatus(ctx, sess.PersistentVolumeClaim)
 	if err != nil {
 		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot get git status")
 		span.LogKV("error", err.Error())
@@ -379,13 +450,37 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 	span.SetTag("backup", backupName)
 	span.SetTag("manifest", mfName)
 	span.SetTag("full", sess.FullWorkspaceBackup)
+	span.SetTag("pvc", sess.PersistentVolumeClaim)
 	defer tracing.FinishSpan(span, &err)
+
+	// TODO: remove once we migrate to PVCs
+	// Avoid too many simultaneous backups in order to avoid excessive memory utilization.
+	waitStart := time.Now()
+	select {
+	case s.backupWorkspaceLimiter <- struct{}{}:
+	case <-time.After(15 * time.Minute):
+		// we timed out on the rate limit - let's upload anyways, because we don't want to actually block
+		// an upload. If we reach this point, chances are other things are broken. No upload should ever
+		// take this long.
+		s.metrics.BackupWaitingTimeoutCounter.Inc()
+	}
+
+	s.metrics.BackupWaitingTimeHist.Observe(time.Since(waitStart).Seconds())
+
+	defer func() {
+		<-s.backupWorkspaceLimiter
+	}()
 
 	var (
 		loc  = sess.Location
 		opts []storage.UploadOption
 		mf   csapi.WorkspaceContentManifest
 	)
+
+	if sess.PersistentVolumeClaim {
+		// currently not supported (will be done differently via snapshots)
+		return status.Error(codes.FailedPrecondition, "uploadWorkspaceContent not supported yet when PVC feature is enabled")
+	}
 
 	if sess.FullWorkspaceBackup {
 		// Backup any change located in the upper overlay directory of the workspace in the node
@@ -673,6 +768,9 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 	if sess.RemoteStorageDisabled {
 		return nil, status.Error(codes.FailedPrecondition, "workspace has no remote storage")
 	}
+	if sess.PersistentVolumeClaim {
+		return nil, status.Error(codes.FailedPrecondition, "snapshots are not support yet when persistent volume claim feature is enabled")
+	}
 	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {
 		log.WithFields(sess.OWI()).WithError(err).Error("cannot upload snapshot: no remote storage configured")
@@ -730,6 +828,9 @@ func (s *WorkspaceService) BackupWorkspace(ctx context.Context, req *api.BackupW
 	}
 	if sess.RemoteStorageDisabled {
 		return nil, status.Errorf(codes.FailedPrecondition, "workspace has no remote storage")
+	}
+	if sess.PersistentVolumeClaim {
+		return nil, status.Errorf(codes.FailedPrecondition, "workspace backup not supported yet when persistent volume claim feature is enabled")
 	}
 	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {

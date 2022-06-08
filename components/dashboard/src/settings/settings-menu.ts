@@ -4,39 +4,59 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export default function getSettingsMenu(params: { showPaymentUI?: boolean }) {
+import {
+    settingsPathAccount,
+    settingsPathBilling,
+    settingsPathIntegrations,
+    settingsPathMain,
+    settingsPathNotifications,
+    settingsPathPlans,
+    settingsPathPreferences,
+    settingsPathTeams,
+    settingsPathVariables,
+} from "./settings.routes";
+
+export default function getSettingsMenu(params: { showPaymentUI?: boolean; showUsageBasedUI?: boolean }) {
     return [
         {
             title: "Account",
-            link: ["/account", "/settings"],
+            link: [settingsPathAccount, settingsPathMain],
         },
         {
             title: "Notifications",
-            link: ["/notifications"],
+            link: [settingsPathNotifications],
         },
         ...(params.showPaymentUI
             ? [
+                  ...(params.showUsageBasedUI
+                      ? [
+                            {
+                                title: "Billing",
+                                link: [settingsPathBilling],
+                            },
+                        ]
+                      : []),
                   {
                       title: "Plans",
-                      link: ["/plans"],
+                      link: [settingsPathPlans],
                   },
                   {
                       title: "Team Plans",
-                      link: ["/teams"],
+                      link: [settingsPathTeams],
                   },
               ]
             : []),
         {
             title: "Variables",
-            link: ["/variables"],
+            link: [settingsPathVariables],
         },
         {
             title: "Integrations",
-            link: ["/integrations", "/access-control"],
+            link: [settingsPathIntegrations, "/access-control"],
         },
         {
             title: "Preferences",
-            link: ["/preferences"],
+            link: [settingsPathPreferences],
         },
     ];
 }

@@ -45,9 +45,17 @@ export class BitbucketServerApp {
                         // we should send a UNAUTHORIZED signal.
                         res.statusCode = 401;
                         res.send();
+                        span.finish();
                         return;
                     }
-                    await this.handlePushHook({ span }, user, payload);
+                    try {
+                        await this.handlePushHook({ span }, user, payload);
+                    } catch (err) {
+                        TraceContext.setError({ span }, err);
+                        throw err;
+                    } finally {
+                        span.finish();
+                    }
                 } else {
                     console.warn(`Ignoring unsupported BBS event.`, { headers: req.headers });
                 }
@@ -102,6 +110,12 @@ export class BitbucketServerApp {
             const cloneUrl = context.repository.cloneUrl;
             const commit = context.revision;
             const projectAndOwner = await this.findProjectAndOwner(cloneUrl, user);
+            if (projectAndOwner.project) {
+                /* tslint:disable-next-line */
+                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
+                    lastWebhookReceived: new Date().toISOString(),
+                });
+            }
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
                 console.log("Bitbucket push event: No config. No prebuild.");

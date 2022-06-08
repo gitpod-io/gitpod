@@ -230,6 +230,14 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		admission = api.AdmissionLevel(av)
 	}
 
+	var volumeSnapshotStatus workspaceVolumeSnapshotStatus
+	if rawVolumeSnapshotStatus, ok := wso.Pod.Annotations[pvcWorkspaceVolumeSnapshotAnnotation]; ok {
+		err := json.Unmarshal([]byte(rawVolumeSnapshotStatus), &volumeSnapshotStatus)
+		if err != nil {
+			return nil, xerrors.Errorf("invalid volume snapshot status: %w", err)
+		}
+	}
+
 	status = &api.WorkspaceStatus{
 		Id:            id,
 		StatusVersion: m.clock.Tick(),
@@ -250,6 +258,10 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		},
 		Conditions: &api.WorkspaceConditions{
 			Snapshot: wso.Pod.Annotations[workspaceSnapshotAnnotation],
+			VolumeSnapshot: &api.VolumeSnapshotInfo{
+				VolumeSnapshotName:   volumeSnapshotStatus.VolumeSnapshotName,
+				VolumeSnapshotHandle: volumeSnapshotStatus.VolumeSnapshotHandle,
+			},
 		},
 		Runtime: &api.WorkspaceRuntimeInfo{
 			NodeName: wso.Pod.Spec.NodeName,
@@ -342,6 +354,11 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 			// While the pod is being deleted we do not care or want to know about any failure state.
 			// If the pod got stopped because it failed we will have sent out a Stopping status with a "failure"
 			result.Conditions.Failed = ""
+		} else {
+			if _, ok := pod.Annotations[workspaceNeverReadyAnnotation]; ok {
+				// The workspace is never ready, so there is no need for a stopping phase.
+				result.Phase = api.WorkspacePhase_STOPPED
+			}
 		}
 
 		var hasFinalizer bool
@@ -578,7 +595,7 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 					// default way for headless workspaces to be done
 					return "", nil
 				}
-				return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that", cs.Name), nil
+				return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that. Reason: %s", cs.Name, terminationState.Message), nil
 			} else if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerUnknownExitCode {
 				// if a container is terminated and it wasn't because of either:
 				//  - regular shutdown

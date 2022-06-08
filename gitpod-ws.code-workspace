@@ -25,7 +25,6 @@
         { "path": "dev/gpctl" },
         { "path": "dev/loadgen" },
         { "path": "dev/poolkeeper" },
-        { "path": "dev/sweeper" },
         { "path": "install/installer" }
     ],
     "settings": {

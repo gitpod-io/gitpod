@@ -14,26 +14,36 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/pointer"
 )
 
 func TestConfigMap(t *testing.T) {
 	type Expectation struct {
 		EnableLocalApp                    bool
+		RunDbDeleter                      bool
 		DisableDynamicAuthProviderLogin   bool
+		DisableWorkspaceGarbageCollection bool
 		DefaultBaseImageRegistryWhiteList []string
 		WorkspaceImage                    string
 		JWTSecret                         string
 		SessionSecret                     string
+		BlockedRepositories               []experimental.BlockedRepository
 		GitHubApp                         experimental.GithubApp
 	}
 
 	expectation := Expectation{
 		EnableLocalApp:                    true,
 		DisableDynamicAuthProviderLogin:   true,
+		RunDbDeleter:                      false,
+		DisableWorkspaceGarbageCollection: true,
 		DefaultBaseImageRegistryWhiteList: []string{"some-registry"},
 		WorkspaceImage:                    "some-workspace-image",
 		JWTSecret:                         "some-jwt-secret",
 		SessionSecret:                     "some-session-secret",
+		BlockedRepositories: []experimental.BlockedRepository{{
+			UrlRegExp: "https://github.com/some-user/some-bad-repo",
+			BlockUser: true,
+		}},
 		GitHubApp: experimental.GithubApp{
 			AppId:           123,
 			AuthProviderId:  "some-auth-provider-id",
@@ -52,7 +62,9 @@ func TestConfigMap(t *testing.T) {
 			WebApp: &experimental.WebAppConfig{
 				Server: &experimental.ServerConfig{
 					DisableDynamicAuthProviderLogin:   expectation.DisableDynamicAuthProviderLogin,
-					EnableLocalApp:                    expectation.EnableLocalApp,
+					EnableLocalApp:                    pointer.Bool(expectation.EnableLocalApp),
+					RunDbDeleter:                      pointer.Bool(expectation.RunDbDeleter),
+					DisableWorkspaceGarbageCollection: expectation.DisableWorkspaceGarbageCollection,
 					DefaultBaseImageRegistryWhiteList: expectation.DefaultBaseImageRegistryWhiteList,
 					WorkspaceDefaults: experimental.WorkspaceDefaults{
 						WorkspaceImage: expectation.WorkspaceImage,
@@ -63,7 +75,8 @@ func TestConfigMap(t *testing.T) {
 					Session: experimental.Session{
 						Secret: expectation.SessionSecret,
 					},
-					GithubApp: &expectation.GitHubApp,
+					GithubApp:           &expectation.GitHubApp,
+					BlockedRepositories: expectation.BlockedRepositories,
 				},
 			},
 		},
@@ -94,10 +107,22 @@ func TestConfigMap(t *testing.T) {
 	actual := Expectation{
 		DisableDynamicAuthProviderLogin:   config.DisableDynamicAuthProviderLogin,
 		EnableLocalApp:                    config.EnableLocalApp,
+		RunDbDeleter:                      config.RunDbDeleter,
+		DisableWorkspaceGarbageCollection: config.WorkspaceGarbageCollection.Disabled,
 		DefaultBaseImageRegistryWhiteList: config.DefaultBaseImageRegistryWhitelist,
 		WorkspaceImage:                    config.WorkspaceDefaults.WorkspaceImage,
 		JWTSecret:                         config.OAuthServer.JWTSecret,
 		SessionSecret:                     config.Session.Secret,
+		BlockedRepositories: func(config ConfigSerialized) []experimental.BlockedRepository {
+			var blockedRepos []experimental.BlockedRepository
+			for _, repo := range config.BlockedRepositories {
+				blockedRepos = append(blockedRepos, experimental.BlockedRepository{
+					UrlRegExp: repo.UrlRegExp,
+					BlockUser: repo.BlockUser,
+				})
+			}
+			return blockedRepos
+		}(config),
 		GitHubApp: experimental.GithubApp{
 			AppId:           config.GitHubApp.AppId,
 			AuthProviderId:  config.GitHubApp.AuthProviderId,
@@ -112,4 +137,26 @@ func TestConfigMap(t *testing.T) {
 	}
 
 	assert.Equal(t, expectation, actual)
+}
+
+func TestInvalidBlockedRepositoryRegularExpressions(t *testing.T) {
+	const invalidRegexp = "["
+
+	ctx, err := common.NewRenderContext(config.Config{
+		Experimental: &experimental.Config{
+			WebApp: &experimental.WebAppConfig{
+				Server: &experimental.ServerConfig{
+					BlockedRepositories: []experimental.BlockedRepository{{
+						UrlRegExp: invalidRegexp,
+						BlockUser: false,
+					}},
+				},
+			},
+		},
+	}, versions.Manifest{}, "test_namespace")
+	require.NoError(t, err)
+
+	_, err = configmap(ctx)
+
+	require.Error(t, err, "expected to fail when rendering configmap with invalid blocked repo regexp %q", invalidRegexp)
 }

@@ -24,7 +24,8 @@ type Config struct {
 }
 
 type CommonConfig struct {
-	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
+	PodConfig                map[string]*PodConfig `json:"podConfig,omitempty"`
+	StaticMessagebusPassword string                `json:"staticMessagebusPassword"`
 }
 
 type PodConfig struct {
@@ -66,13 +67,26 @@ type WorkspaceConfig struct {
 	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
 }
 
+type PersistentVolumeClaim struct {
+	// Size is a size of persistent volume claim to use
+	Size resource.Quantity `json:"size" validate:"required"`
+
+	// StorageClass is a storage class of persistent volume claim to use
+	StorageClass string `json:"storageClass"`
+
+	// SnapshotClass is a snapshot class name that is used to create volume snapshot
+	SnapshotClass string `json:"snapshotClass"`
+}
+
 type WorkspaceClass struct {
 	Resources struct {
 		Requests corev1.ResourceList `json:"requests" validate:"required"`
 		Limits   corev1.ResourceList `json:"limits,omitempty"`
 	} `json:"resources" validate:"required"`
-	Templates WorkspaceTemplates `json:"templates,omitempty"`
+	Templates WorkspaceTemplates    `json:"templates,omitempty"`
+	PVC       PersistentVolumeClaim `json:"pvc" validate:"required"`
 }
+
 type WorkspaceTemplates struct {
 	Default    *corev1.Pod `json:"default"`
 	Prebuild   *corev1.Pod `json:"prebuild"`
@@ -81,9 +95,14 @@ type WorkspaceTemplates struct {
 }
 
 type WebAppConfig struct {
-	PublicAPI          *PublicAPIConfig `json:"publicApi,omitempty"`
-	Server             *ServerConfig    `json:"server,omitempty"`
-	UsePodAntiAffinity bool             `json:"usePodAntiAffinity"`
+	PublicAPI              *PublicAPIConfig       `json:"publicApi,omitempty"`
+	Server                 *ServerConfig          `json:"server,omitempty"`
+	ProxyConfig            *ProxyConfig           `json:"proxy,omitempty"`
+	WorkspaceManagerBridge *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`
+	Tracing                *Tracing               `json:"tracing,omitempty"`
+	UsePodAntiAffinity     bool                   `json:"usePodAntiAffinity"`
+	DisableMigration       bool                   `json:"disableMigration"`
+	Usage                  *UsageConfig           `json:"usage,omitempty"`
 }
 
 type WorkspaceDefaults struct {
@@ -110,23 +129,56 @@ type GithubApp struct {
 	CertSecretName  string `json:"certSecretName"`
 }
 
+type WsManagerBridgeConfig struct {
+	SkipSelf bool `json:"skipSelf"`
+}
+
 type ServerConfig struct {
-	WorkspaceDefaults                 WorkspaceDefaults `json:"workspaceDefaults"`
-	OAuthServer                       OAuthServer       `json:"oauthServer"`
-	Session                           Session           `json:"session"`
-	GithubApp                         *GithubApp        `json:"githubApp"`
-	DisableDynamicAuthProviderLogin   bool              `json:"disableDynamicAuthProviderLogin"`
-	EnableLocalApp                    bool              `json:"enableLocalApp"`
-	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`
+	WorkspaceDefaults                 WorkspaceDefaults   `json:"workspaceDefaults"`
+	OAuthServer                       OAuthServer         `json:"oauthServer"`
+	Session                           Session             `json:"session"`
+	GithubApp                         *GithubApp          `json:"githubApp"`
+	ChargebeeSecret                   string              `json:"chargebeeSecret"`
+	StripeSecret                      string              `json:"stripeSecret"`
+	DisableDynamicAuthProviderLogin   bool                `json:"disableDynamicAuthProviderLogin"`
+	EnableLocalApp                    *bool               `json:"enableLocalApp"`
+	RunDbDeleter                      *bool               `json:"runDbDeleter"`
+	DefaultBaseImageRegistryWhiteList []string            `json:"defaultBaseImageRegistryWhitelist"`
+	DisableWorkspaceGarbageCollection bool                `json:"disableWorkspaceGarbageCollection"`
+	BlockedRepositories               []BlockedRepository `json:"blockedRepositories,omitempty"`
+}
+
+type BlockedRepository struct {
+	UrlRegExp string `json:"urlRegExp"`
+	BlockUser bool   `json:"blockUser"`
+}
+
+type ProxyConfig struct {
+	StaticIP           string            `json:"staticIP"`
+	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
 }
 
 type PublicAPIConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
+type UsageConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
 type IDEConfig struct {
 	// Disable resolution of latest images and use bundled latest versions instead
-	ResolveLatest *bool `json:"resolveLatest,omitempty"`
+	ResolveLatest  *bool           `json:"resolveLatest,omitempty"`
+	IDEProxyConfig *IDEProxyConfig `json:"ideProxy,omitempty"`
+	VSXProxyConfig *VSXProxyConfig `json:"openvsxProxy,omitempty"`
+}
+
+type IDEProxyConfig struct {
+	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
+}
+
+type VSXProxyConfig struct {
+	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
 }
 
 type TracingSampleType string

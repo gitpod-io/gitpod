@@ -18,11 +18,17 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 
 export const Config = Symbol("Config");
-export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOptionsFile" | "licenseFile"> & {
+export type Config = Omit<
+    ConfigSerialized,
+    "blockedRepositories" | "hostUrl" | "chargebeeProviderOptionsFile" | "stripeSettingsFile" | "licenseFile"
+> & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
+    stripeSettings?: { publishableKey: string; secretKey: string };
     builtinAuthProvidersConfigured: boolean;
+    blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[];
+    inactivityPeriodForRepos?: number;
 };
 
 export interface WorkspaceDefaults {
@@ -145,6 +151,7 @@ export interface ConfigSerialized {
      * Payment related options
      */
     chargebeeProviderOptionsFile?: string;
+    stripeSettingsFile?: string;
     enablePayment?: boolean;
 
     /**
@@ -152,6 +159,18 @@ export interface ConfigSerialized {
      * Key '*' specifies the default rate limit for a cloneURL, unless overriden by a specific cloneURL.
      */
     prebuildLimiter: { [cloneURL: string]: number } & { "*": number };
+
+    /**
+     * List of repositories not allowed to be used for workspace starts.
+     * `blockUser` attribute to control handling of the user's account.
+     */
+    blockedRepositories?: { urlRegExp: string; blockUser: boolean }[];
+
+    /**
+     * If a numeric value interpreted as days is set, repositories not beeing opened with Gitpod are
+     * considered inactive.
+     */
+    inactivityPeriodForRepos?: number;
 }
 
 export namespace ConfigFile {
@@ -196,10 +215,33 @@ export namespace ConfigFile {
         const chargebeeProviderOptions = readOptionsFromFile(
             filePathTelepresenceAware(config.chargebeeProviderOptionsFile || ""),
         );
+        let stripeSettings: { publishableKey: string; secretKey: string } | undefined;
+        if (config.enablePayment && config.stripeSettingsFile) {
+            try {
+                stripeSettings = JSON.parse(fs.readFileSync(filePathTelepresenceAware(config.stripeSettingsFile), "utf-8"));
+            } catch (error) {
+                console.error("Could not load Stripe settings", error);
+            }
+        }
         let license = config.license;
         const licenseFile = config.licenseFile;
         if (licenseFile) {
             license = fs.readFileSync(filePathTelepresenceAware(licenseFile), "utf-8");
+        }
+        const blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[] = [];
+        if (config.blockedRepositories) {
+            for (const { blockUser, urlRegExp } of config.blockedRepositories) {
+                blockedRepositories.push({
+                    blockUser,
+                    urlRegExp: new RegExp(urlRegExp),
+                });
+            }
+        }
+        let inactivityPeriodForRepos: number | undefined;
+        if (typeof config.inactivityPeriodForRepos === "number") {
+            if (config.inactivityPeriodForRepos >= 1) {
+                inactivityPeriodForRepos = config.inactivityPeriodForRepos;
+            }
         }
         return {
             ...config,
@@ -207,6 +249,7 @@ export namespace ConfigFile {
             authProviderConfigs,
             builtinAuthProvidersConfigured,
             chargebeeProviderOptions,
+            stripeSettings,
             license,
             workspaceGarbageCollection: {
                 ...config.workspaceGarbageCollection,
@@ -214,6 +257,8 @@ export namespace ConfigFile {
                     ? new Date(config.workspaceGarbageCollection.startDate).getTime()
                     : Date.now(),
             },
+            blockedRepositories,
+            inactivityPeriodForRepos,
         };
     }
 }

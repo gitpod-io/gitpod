@@ -32,9 +32,6 @@ flags:
   components-ee-agent-smith-app:
     paths:
       - components/ee/agent-smith/
-  components-ee-kedge-app:
-    paths:
-      - components/ee/kedge/
   components-gitpod-cli-app:
     paths:
       - components/gitpod-cli/
@@ -98,9 +95,6 @@ flags:
   dev-poolkeeper-app:
     paths:
       - dev/poolkeeper/
-  dev-sweeper-app:
-    paths:
-      - dev/sweeper/
   dev-version-manifest-app:
     paths:
       - dev/version-manifest/

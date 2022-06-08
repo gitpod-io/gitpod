@@ -7,154 +7,175 @@ package baseserver
 import (
 	"context"
 	"fmt"
-	gitpod_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
-	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
+
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 func New(name string, opts ...Option) (*Server, error) {
-	cfg, err := evaluateOptions(defaultConfig(), opts...)
+	options, err := evaluateOptions(defaultOptions(), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
 	server := &Server{
-		Name: name,
-		cfg:  cfg,
+		Name:    name,
+		options: options,
+	}
+	server.builtinServices = newBuiltinServices(server)
+
+	server.httpMux = http.NewServeMux()
+	server.http = &http.Server{Handler: server.httpMux}
+
+	err = server.initializeMetrics()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize metrics: %w", err)
 	}
 
-	if initErr := server.initializeHTTP(); initErr != nil {
-		return nil, fmt.Errorf("failed to initialize http server: %w", initErr)
-	}
-	if initErr := server.initializeGRPC(); initErr != nil {
-		return nil, fmt.Errorf("failed to initialize grpc server: %w", initErr)
+	err = server.initializeGRPC()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize gRPC server: %w", err)
 	}
 
 	return server, nil
 }
 
+// Server is a packaged server with batteries included. It is designed to be standard across components where it makes sense.
+// Server implements graceful shutdown making it suitable for usage in integration tests. See server_test.go.
+//
+// Server is composed of the following:
+// 	* Debug server which serves observability and debug endpoints
+//		- /metrics for Prometheus metrics
+//		- /pprof for Golang profiler
+//		- /ready for kubernetes readiness check
+//		- /live for kubernetes liveness check
+//	* (optional) gRPC server with standard interceptors and configuration
+//		- Started when baseserver is configured WithGRPCPort (port is non-negative)
+//		- Use Server.GRPC() to get access to the underlying grpc.Server and register services
+//	* (optional) HTTP server
+//		- Currently does not come with any standard HTTP middlewares
+//		- Started when baseserver is configured WithHTTPPort (port is non-negative)
+// 		- Use Server.HTTPMux() to get access to the root handler and register your endpoints
 type Server struct {
 	// Name is the name of this server, used for logging context
 	Name string
 
-	cfg *config
+	options *options
 
-	// http is an http Server
+	builtinServices *builtinServices
+
+	// http is an http Server, only used when port is specified in cfg
 	http         *http.Server
 	httpMux      *http.ServeMux
 	httpListener net.Listener
 
-	// grpc is a grpc Server
+	// grpc is a grpc Server, only used when port is specified in cfg
 	grpc         *grpc.Server
 	grpcListener net.Listener
 
 	// listening indicates the server is serving. When closed, the server is in the process of graceful termination.
 	listening chan struct{}
+	closeOnce sync.Once
+}
+
+func serveHTTP(cfg *ServerConfiguration, srv *http.Server, l net.Listener) (err error) {
+	if cfg.TLS == nil {
+		err = srv.Serve(l)
+	} else {
+		err = srv.ServeTLS(l, cfg.TLS.CertPath, cfg.TLS.KeyPath)
+	}
+	return
 }
 
 func (s *Server) ListenAndServe() error {
 	var err error
-	s.grpcListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.grpcPort))
-	if err != nil {
-		return fmt.Errorf("failed to acquire port %d", s.cfg.grpcPort)
-	}
 
-	s.httpListener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.httpPort))
-	if err != nil {
-		return fmt.Errorf("failed to acquire port %d", s.cfg.httpPort)
-	}
-
-	errors := make(chan error)
-	defer close(errors)
 	s.listening = make(chan struct{})
-
-	go func() {
-		s.Logger().
-			WithField("protocol", "grpc").
-			Infof("Serving gRPC on %s", s.grpcListener.Addr().String())
-		if serveErr := s.grpc.Serve(s.grpcListener); serveErr != nil {
-			if s.isClosing() {
-				return
-			}
-
-			errors <- serveErr
+	defer func() {
+		err := s.Close()
+		if err != nil {
+			s.Logger().WithError(err).Errorf("cannot close gracefully")
 		}
 	}()
 
 	go func() {
-		s.Logger().
-			WithField("protocol", "http").
-			Infof("Serving http on %s", s.httpListener.Addr().String())
-		if serveErr := s.http.Serve(s.httpListener); serveErr != nil {
-			if s.isClosing() {
-				return
-			}
-
-			errors <- serveErr
+		err := s.builtinServices.ListenAndServe()
+		if err != nil {
+			s.Logger().WithError(err).Errorf("builtin services encountered an error - closing remaining servers.")
+			s.Close()
 		}
 	}()
+
+	if srv := s.options.config.Services.HTTP; srv != nil {
+		s.httpListener, err = net.Listen("tcp", srv.Address)
+		if err != nil {
+			return fmt.Errorf("failed to start HTTP server: %w", err)
+		}
+		s.http.Addr = srv.Address
+
+		go func() {
+			err := serveHTTP(srv, s.http, s.httpListener)
+			if err != nil {
+				s.Logger().WithError(err).Errorf("HTTP server encountered an error - closing remaining servers.")
+				s.Close()
+			}
+		}()
+	}
+
+	if srv := s.options.config.Services.GRPC; srv != nil {
+		s.grpcListener, err = net.Listen("tcp", srv.Address)
+		if err != nil {
+			return fmt.Errorf("failed to start gRPC server: %w", err)
+		}
+
+		go func() {
+			err := s.grpc.Serve(s.grpcListener)
+			if err != nil {
+				s.Logger().WithError(err).Errorf("gRPC server encountered an error - closing remaining servers.")
+				s.Close()
+			}
+		}()
+	}
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
 	// Await operating system signals, or server errors.
-	select {
-	case sig := <-signals:
-		s.Logger().Infof("Received system signal %s, closing server.", sig.String())
-		if closeErr := s.Close(); closeErr != nil {
-			s.Logger().WithError(closeErr).Error("Failed to close server.")
-			return closeErr
-		}
-
-		return nil
-	case serverErr := <-errors:
-		s.Logger().WithError(serverErr).Errorf("Server encountered an error. Closing remaining servers.")
-		if closeErr := s.Close(); closeErr != nil {
-			return fmt.Errorf("failed to close server after one of the servers errored: %w", closeErr)
-		}
-
-		return serverErr
-	}
+	sig := <-signals
+	s.Logger().Infof("Received system signal %s, closing server.", sig.String())
+	return nil
 }
 
 func (s *Server) Close() error {
-	ctx, cancel := context.WithTimeout(context.Background(), s.cfg.closeTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), s.options.closeTimeout)
 	defer cancel()
 
-	return s.close(ctx)
+	var err error
+	s.closeOnce.Do(func() {
+		err = s.close(ctx)
+	})
+	return err
 }
 
 func (s *Server) Logger() *logrus.Entry {
-	return s.cfg.logger
-}
-
-// HTTPAddress returns address of the HTTP Server
-// HTTPAddress() is only available once the server has been started.
-func (s *Server) HTTPAddress() string {
-	if s.httpListener == nil {
-		return ""
-	}
-	protocol := "http"
-	addr := s.httpListener.Addr().(*net.TCPAddr)
-	return fmt.Sprintf("%s://%s:%d", protocol, s.cfg.hostname, addr.Port)
-}
-
-// GRPCAddress returns address of the gRPC Server
-// GRPCAddress() is only available once the server has been started.
-func (s *Server) GRPCAddress() string {
-	if s.grpcListener == nil {
-		return ""
-	}
-	addr := s.grpcListener.Addr().(*net.TCPAddr)
-	return fmt.Sprintf("%s:%d", s.cfg.hostname, addr.Port)
+	return s.options.logger
 }
 
 func (s *Server) HTTPMux() *http.ServeMux {
@@ -165,30 +186,46 @@ func (s *Server) GRPC() *grpc.Server {
 	return s.grpc
 }
 
+func (s *Server) MetricsRegistry() *prometheus.Registry {
+	return s.options.metricsRegistry
+}
+
 func (s *Server) close(ctx context.Context) error {
 	if s.listening == nil {
 		return fmt.Errorf("server is not running, invalid close operation")
 	}
 
 	if s.isClosing() {
-		s.Logger().Info("Server is already closing.")
+		s.Logger().Debug("Server is already closing.")
 		return nil
 	}
 
 	s.Logger().Info("Received graceful shutdown request.")
 	close(s.listening)
 
-	s.grpc.GracefulStop()
-	// s.grpc.GracefulStop() also closes the underlying net.Listener, we just release the reference.
-	s.grpcListener = nil
-	s.Logger().Info("GRPC server terminated.")
-
-	if err := s.http.Shutdown(ctx); err != nil {
-		return fmt.Errorf("failed to close http server: %w", err)
+	if s.grpc != nil {
+		s.grpc.GracefulStop()
+		// s.grpc.GracefulStop() also closes the underlying net.Listener, we just release the reference.
+		s.grpcListener = nil
+		s.Logger().Info("GRPC server terminated.")
 	}
-	// s.http.Shutdown() also closes the underlying net.Listener, we just release the reference.
-	s.httpListener = nil
-	s.Logger().Info("HTTP server terminated.")
+
+	if s.http != nil {
+		err := s.http.Shutdown(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to close http server: %w", err)
+		}
+		// s.http.Shutdown() also closes the underlying net.Listener, we just release the reference.
+		s.httpListener = nil
+		s.Logger().Info("HTTP server terminated.")
+	}
+
+	// Always terminate builtin server last, we want to keep it running for as long as possible
+	err := s.builtinServices.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close debug server: %w", err)
+	}
+	s.Logger().Info("Debug server terminated.")
 
 	return nil
 }
@@ -203,51 +240,177 @@ func (s *Server) isClosing() bool {
 	}
 }
 
-func (s *Server) initializeHTTP() error {
-	s.httpMux = s.newHTTPMux()
-	s.http = &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.cfg.httpPort),
-		Handler: s.httpMux,
-	}
-
-	return nil
+func (s *Server) healthEndpoint() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ready", s.options.healthHandler.ReadyEndpoint)
+	mux.HandleFunc("/live", s.options.healthHandler.LiveEndpoint)
+	return mux
 }
 
-func (s *Server) newHTTPMux() *http.ServeMux {
+func (s *Server) metricsEndpoint() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/ready", s.cfg.healthHandler.ReadyEndpoint)
-	s.Logger().WithField("protocol", "http").Debug("Serving readiness handler on /ready")
-
-	mux.HandleFunc("/live", s.cfg.healthHandler.LiveEndpoint)
-	s.Logger().WithField("protocol", "http").Debug("Serving liveliness handler on /live")
-
-	// Metrics endpoint
-	metricsHandler := promhttp.Handler()
-	if s.cfg.metricsRegistry != nil {
-		metricsHandler = promhttp.InstrumentMetricHandler(
-			s.cfg.metricsRegistry, promhttp.HandlerFor(s.cfg.metricsRegistry, promhttp.HandlerOpts{}),
-		)
-	}
-	mux.Handle("/metrics", metricsHandler)
-	s.Logger().WithField("protocol", "http").Debug("Serving metrics on /metrics")
-
-	mux.Handle(pprof.Path, pprof.Handler())
-	s.Logger().WithField("protocol", "http").Debug("Serving profiler on /debug/pprof")
-
+	mux.Handle("/metrics", promhttp.InstrumentMetricHandler(
+		s.options.metricsRegistry, promhttp.HandlerFor(s.options.metricsRegistry, promhttp.HandlerOpts{}),
+	))
 	return mux
 }
 
 func (s *Server) initializeGRPC() error {
-	gitpod_grpc.SetupLogging()
+	common_grpc.SetupLogging()
+
+	grpcMetrics := grpc_prometheus.NewServerMetrics()
+	grpcMetrics.EnableHandlingTimeHistogram(
+		grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
+	)
+	if err := s.MetricsRegistry().Register(grpcMetrics); err != nil {
+		return fmt.Errorf("failed to register grpc metrics: %w", err)
+	}
 
 	unary := []grpc.UnaryServerInterceptor{
-		grpc_logrus.UnaryServerInterceptor(s.Logger()),
+		grpc_logrus.UnaryServerInterceptor(s.Logger(),
+			grpc_logrus.WithDecider(func(fullMethodName string, err error) bool {
+				// Skip gRPC healthcheck logs, they are frequent and pollute our logging infra
+				return fullMethodName != "/grpc.health.v1.Health/Check"
+			}),
+		),
+		grpcMetrics.UnaryServerInterceptor(),
 	}
 	stream := []grpc.StreamServerInterceptor{
 		grpc_logrus.StreamServerInterceptor(s.Logger()),
+		grpcMetrics.StreamServerInterceptor(),
 	}
 
-	s.grpc = grpc.NewServer(gitpod_grpc.ServerOptionsWithInterceptors(stream, unary)...)
+	opts := common_grpc.ServerOptionsWithInterceptors(stream, unary)
+	if cfg := s.options.config.Services.GRPC; cfg != nil && cfg.TLS != nil {
+		tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+			cfg.TLS.CAPath, cfg.TLS.CertPath, cfg.TLS.KeyPath,
+			common_grpc.WithSetClientCAs(true),
+			common_grpc.WithServerName(s.Name),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to load certificates: %w", err)
+		}
+
+		opts = append(opts, grpc.Creds(credentials.NewTLS(tlsConfig)))
+	}
+
+	s.grpc = grpc.NewServer(opts...)
+
+	reflection.Register(s.grpc)
+
+	// Register health service by default
+	grpc_health_v1.RegisterHealthServer(s.grpc, s.options.grpcHealthCheck)
 
 	return nil
+}
+
+func (s *Server) initializeMetrics() error {
+	err := s.MetricsRegistry().Register(collectors.NewGoCollector())
+	if err != nil {
+		return fmt.Errorf("faile to register go collectors: %w", err)
+	}
+
+	err = s.MetricsRegistry().Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+	if err != nil {
+		return fmt.Errorf("failed to register process collectors: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Server) DebugAddress() string {
+	if s.builtinServices == nil {
+		return ""
+	}
+	return "http://" + s.builtinServices.Debug.Addr
+}
+func (s *Server) HealthAddr() string {
+	if s.builtinServices == nil {
+		return ""
+	}
+	return "http://" + s.builtinServices.Health.Addr
+}
+func (s *Server) HTTPAddress() string {
+	return httpAddress(s.options.config.Services.HTTP, s.httpListener)
+}
+func (s *Server) GRPCAddress() string { return s.options.config.Services.GRPC.GetAddress() }
+
+const (
+	BuiltinDebugPort   = 6060
+	BuiltinMetricsPort = 9500
+	BuiltinHealthPort  = 9501
+)
+
+type builtinServices struct {
+	underTest bool
+
+	Debug   *http.Server
+	Health  *http.Server
+	Metrics *http.Server
+}
+
+func newBuiltinServices(server *Server) *builtinServices {
+	healthAddr := fmt.Sprintf(":%d", BuiltinHealthPort)
+	if server.options.underTest {
+		healthAddr = ":0"
+	}
+
+	return &builtinServices{
+		underTest: server.options.underTest,
+		Debug: &http.Server{
+			Addr:    fmt.Sprintf(":%d", BuiltinDebugPort),
+			Handler: pprof.Handler(),
+		},
+		Health: &http.Server{
+			Addr:    healthAddr,
+			Handler: server.healthEndpoint(),
+		},
+		Metrics: &http.Server{
+			Addr:    fmt.Sprintf("127.0.0.1:%d", BuiltinMetricsPort),
+			Handler: server.metricsEndpoint(),
+		},
+	}
+}
+
+func (s *builtinServices) ListenAndServe() error {
+	if s == nil {
+		return nil
+	}
+
+	var eg errgroup.Group
+	if !s.underTest {
+		eg.Go(func() error { return s.Debug.ListenAndServe() })
+		eg.Go(func() error { return s.Metrics.ListenAndServe() })
+	}
+	eg.Go(func() error {
+		// health is the only service which has a variable address,
+		// because we need the health service to figure out if the
+		// server started at all
+		l, err := net.Listen("tcp", s.Health.Addr)
+		if err != nil {
+			return err
+		}
+		s.Health.Addr = l.Addr().String()
+		return s.Health.Serve(l)
+	})
+	return eg.Wait()
+}
+
+func (s *builtinServices) Close() error {
+	var eg errgroup.Group
+	eg.Go(func() error { return s.Debug.Close() })
+	eg.Go(func() error { return s.Metrics.Close() })
+	eg.Go(func() error { return s.Health.Close() })
+	return eg.Wait()
+}
+
+func httpAddress(cfg *ServerConfiguration, l net.Listener) string {
+	if l == nil {
+		return ""
+	}
+	protocol := "http"
+	if cfg != nil && cfg.TLS != nil {
+		protocol = "https"
+	}
+	return fmt.Sprintf("%s://%s", protocol, l.Addr().String())
 }

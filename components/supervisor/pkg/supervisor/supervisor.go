@@ -33,6 +33,7 @@ import (
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"github.com/prometheus/common/route"
 	"github.com/prometheus/procfs"
 	"github.com/soheilhy/cmux"
 	"golang.org/x/crypto/ssh"
@@ -55,6 +56,12 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	dto "github.com/prometheus/client_model/go"
+	"github.com/prometheus/pushgateway/handler"
+	"github.com/prometheus/pushgateway/storage"
 )
 
 const (
@@ -98,7 +105,7 @@ func WithArgs(args []string) RunOption {
 
 // The sum of those timeBudget* times has to fit within the terminationGracePeriod of the workspace pod.
 const (
-	timeBudgetIDEShutdown = 5 * time.Second
+	timeBudgetIDEShutdown = 15 * time.Second
 )
 
 const (
@@ -319,21 +326,23 @@ func Run(options ...RunOption) {
 
 	if !cfg.isHeadless() {
 		go func() {
-			<-cstate.ContentReady()
+			for _, repoRoot := range strings.Split(cfg.RepoRoots, ",") {
+				<-cstate.ContentReady()
 
-			start := time.Now()
-			defer func() {
-				log.Debugf("unshallow of local repository took %v", time.Since(start))
-			}()
+				start := time.Now()
+				defer func() {
+					log.Debugf("unshallow of local repository took %v", time.Since(start))
+				}()
 
-			cmd := runAsGitpodUser(exec.Command("git", "fetch", "--unshallow", "--tags"))
-			cmd.Env = childProcEnvvars
-			cmd.Dir = cfg.RepoRoot
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			err := cmd.Run()
-			if err != nil {
-				log.WithError(err).Error("git fetch error")
+				cmd := runAsGitpodUser(exec.Command("git", "fetch", "--unshallow", "--tags"))
+				cmd.Env = childProcEnvvars
+				cmd.Dir = repoRoot
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				err := cmd.Run()
+				if err != nil {
+					log.WithError(err).Error("git fetch error")
+				}
 			}
 		}()
 	}
@@ -704,9 +713,9 @@ supervisorLoop:
 			// we've been asked to shut down
 			ideStatus = statusShouldShutdown
 			if cmd == nil || cmd.Process == nil {
-				log.WithField("ide", ide.String()).Error("cmd or cmd.Process is nil, cannot send Interrupt signal")
+				log.WithField("ide", ide.String()).Error("cmd or cmd.Process is nil, cannot send SIGTERM signal")
 			} else {
-				_ = cmd.Process.Signal(os.Interrupt)
+				_ = cmd.Process.Signal(syscall.SIGTERM)
 			}
 			break supervisorLoop
 		}
@@ -934,6 +943,7 @@ func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (deskt
 	if ide == DesktopIDE {
 		defaultProbePort = desktopIDEPort
 	}
+
 	switch ideConfig.ReadinessProbe.Type {
 	case ReadinessProcessProbe:
 		return
@@ -944,46 +954,60 @@ func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (deskt
 			host   = defaultIfEmpty(ideConfig.ReadinessProbe.HTTPProbe.Host, "localhost")
 			port   = defaultIfZero(ideConfig.ReadinessProbe.HTTPProbe.Port, defaultProbePort)
 			url    = fmt.Sprintf("%s://%s:%d/%s", schema, host, port, strings.TrimPrefix(ideConfig.ReadinessProbe.HTTPProbe.Path, "/"))
-			client = http.Client{Timeout: 1 * time.Second}
-			tick   = time.NewTicker(500 * time.Millisecond)
 		)
-		defer tick.Stop()
 
 		t0 := time.Now()
 
-		for {
-			<-tick.C
-
-			resp, err := client.Get(url)
+		var body []byte
+		for range time.Tick(250 * time.Millisecond) {
+			var err error
+			body, err = ideStatusRequest(url)
 			if err != nil {
+				log.WithField("ide", ide.String()).WithError(err).Debug("Error running IDE readiness probe")
 				continue
 			}
-			defer resp.Body.Close()
 
-			if resp.StatusCode == http.StatusOK {
-				log.WithField("ide", ide.String()).WithField("status", resp.StatusCode).Infof("IDE readiness took %.3f seconds", time.Since(t0).Seconds())
-
-				if ide == DesktopIDE {
-					bodyBytes, err := ioutil.ReadAll(resp.Body)
-					log.WithField("ide", ide.String()).Infof("IDE status probe body: %s", string(bodyBytes))
-					if err != nil {
-						log.WithField("ide", ide.String()).WithError(err).Infof("Error reading response body from IDE status probe.")
-						break
-					}
-					err = json.Unmarshal(bodyBytes, &desktopIDEStatus)
-					if err != nil {
-						log.WithField("ide", ide.String()).WithError(err).WithField("body", bodyBytes).Debugf("Error parsing JSON body from IDE status probe.")
-						break
-					}
-					log.WithField("ide", ide.String()).Infof("Desktop IDE status: %s", desktopIDEStatus)
-				}
-				break
-			}
-
-			log.WithField("ide", ide.String()).WithField("status", resp.StatusCode).Info("IDE readiness probe came back with non-200 status code")
+			break
 		}
+
+		log.WithField("ide", ide.String()).Infof("IDE readiness took %.3f seconds", time.Since(t0).Seconds())
+
+		if ide != DesktopIDE {
+			return
+		}
+
+		err := json.Unmarshal(body, &desktopIDEStatus)
+		if err != nil {
+			log.WithField("ide", ide.String()).WithError(err).WithField("body", body).Debugf("Error parsing JSON body from IDE status probe.")
+			return
+		}
+
+		log.WithField("ide", ide.String()).Infof("Desktop IDE status: %s", desktopIDEStatus)
+		return
 	}
+
 	return
+}
+
+func ideStatusRequest(url string) ([]byte, error) {
+	client := http.Client{Timeout: 1 * time.Second}
+
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, xerrors.Errorf("IDE readiness probe came back with non-200 status code (%v)", resp.StatusCode)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
 
 func isBlacklistedEnvvar(name string) bool {
@@ -1045,6 +1069,22 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	grpcWebServer := grpcweb.WrapServer(grpcServer, grpcweb.WithWebsockets(true), grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
 		return true
 	}))
+
+	ms := storage.NewDiskMetricStore("", time.Minute*5, prometheus.DefaultGatherer, nil)
+	g := prometheus.Gatherers{
+		prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) { return ms.GetMetricFamilies(), nil }),
+	}
+	r := route.New()
+
+	r.Get("/metrics", promhttp.HandlerFor(g, promhttp.HandlerOpts{}).ServeHTTP)
+	r.Put("/metrics/job/:job/*labels", handler.Push(ms, true, true, false, nil))
+	r.Post("/metrics/job/:job/*labels", handler.Push(ms, false, true, false, nil))
+	r.Del("/metrics/job/:job/*labels", handler.Delete(ms, false, nil))
+	r.Put("/metrics/job/:job", handler.Push(ms, true, true, false, nil))
+	r.Post("/metrics/job/:job", handler.Push(ms, false, true, false, nil))
+
+	routes.Handle("/", r)
+
 	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") ||
 			websocket.IsWebSocketUpgrade(r) {
@@ -1221,6 +1261,12 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 	}()
 
 	fn := "/workspace/.gitpod/content.json"
+	fnReady := "/workspace/.gitpod/ready"
+	if _, err := os.Stat("/.workspace/.gitpod/content.json"); !os.IsNotExist(err) {
+		fn = "/.workspace/.gitpod/content.json"
+		fnReady = "/.workspace/.gitpod/ready"
+		log.Info("Detected content.json in /.workspace folder, assuming PVC feature enabled")
+	}
 	f, err := os.Open(fn)
 	if os.IsNotExist(err) {
 		log.WithError(err).Info("no content init descriptor found - not trying to run it")
@@ -1230,7 +1276,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		// TODO: rewrite using fsnotify
 		t := time.NewTicker(100 * time.Millisecond)
 		for range t.C {
-			b, err := os.ReadFile("/workspace/.gitpod/ready")
+			b, err := os.ReadFile(fnReady)
 			if err != nil {
 				if !os.IsNotExist(err) {
 					log.WithError(err).Error("cannot read content ready file")

@@ -29,7 +29,6 @@ type Components struct {
 	} `json:"imageBuilderMk3"`
 	InstallationTelemetry Versioned `json:"installationTelemetry"`
 	IntegrationTests      Versioned `json:"integrationTests"`
-	Kedge                 Versioned `json:"kedge"`
 	OpenVSXProxy          Versioned `json:"openVSXProxy"`
 	PaymentEndpoint       Versioned `json:"paymentEndpoint"`
 	Proxy                 Versioned `json:"proxy"`
@@ -37,6 +36,7 @@ type Components struct {
 	RegistryFacade        Versioned `json:"registryFacade"`
 	Server                Versioned `json:"server"`
 	ServiceWaiter         Versioned `json:"serviceWaiter"`
+	Usage                 Versioned `json:"usage"`
 	Workspace             struct {
 		CodeImage        Versioned `json:"codeImage"`
 		DockerUp         Versioned `json:"dockerUp"`

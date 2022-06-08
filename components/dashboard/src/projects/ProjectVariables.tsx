@@ -121,6 +121,7 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
     };
 
     return (
+        // TODO: Use title and buttons props
         <Modal
             visible={true}
             onClose={props.onClose}

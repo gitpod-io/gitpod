@@ -24,7 +24,7 @@ const (
 	InClusterMessageQueueTLS    = "messagebus-certificates-secret-core"
 	KubeRBACProxyRepo           = "quay.io"
 	KubeRBACProxyImage          = "brancz/kube-rbac-proxy"
-	KubeRBACProxyTag            = "v0.11.0"
+	KubeRBACProxyTag            = "v0.12.0"
 	MinioServiceAPIPort         = 9000
 	MonitoringChart             = "monitoring"
 	ProxyComponent              = "proxy"
@@ -45,6 +45,8 @@ const (
 	WSProxyComponent            = "ws-proxy"
 	ImageBuilderComponent       = "image-builder-mk3"
 	ImageBuilderRPCPort         = 8080
+	DebugPort                   = 6060
+	DebugNodePort               = 9229
 
 	AnnotationConfigChecksum = "gitpod.io/checksum_config"
 )

@@ -45,7 +45,6 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 				Region:             context.Config.Metadata.Region,
 				Project:            context.Config.ObjectStorage.CloudStorage.Project,
 				CredentialsFile:    filepath.Join(storageMount, "service-account.json"),
-				ParallelUpload:     6,
 				MaximumBackupCount: maximumBackupCount,
 			},
 		}
@@ -61,6 +60,8 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 				Secure:              true,
 				Region:              context.Config.Metadata.Region,
 				ParallelUpload:      100,
+
+				BucketName: context.Config.ObjectStorage.S3.BucketName,
 			},
 		}
 	}

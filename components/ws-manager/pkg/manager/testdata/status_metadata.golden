@@ -23,7 +23,9 @@
             "ide_image": {}
         },
         "phase": 4,
-        "conditions": {},
+        "conditions": {
+            "volume_snapshot": {}
+        },
         "runtime": {
             "node_name": "minikube",
             "pod_name": "ws-foobas",

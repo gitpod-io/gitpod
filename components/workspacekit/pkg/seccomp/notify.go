@@ -186,6 +186,7 @@ type InWorkspaceHandler struct {
 	Ring2PID    int
 	Ring2Rootfs string
 	BindEvents  chan<- BindEvent
+	WorkspaceId string
 }
 
 // BindEvent describes a process binding to a socket
@@ -196,9 +197,10 @@ type BindEvent struct {
 // Mount handles mount syscalls
 func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	log := log.WithFields(map[string]interface{}{
-		"syscall": "mount",
-		"pid":     req.Pid,
-		"id":      req.ID,
+		"syscall":     "mount",
+		"worksapceId": h.WorkspaceId,
+		"pid":         req.Pid,
+		"id":          req.ID,
 	})
 
 	memFile, err := readarg.OpenMem(req.Pid)
@@ -301,9 +303,10 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 func (h *InWorkspaceHandler) Umount(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	nme, _ := req.Data.Syscall.GetName()
 	log := log.WithFields(map[string]interface{}{
-		"syscall": nme,
-		"pid":     req.Pid,
-		"id":      req.ID,
+		"syscall":     nme,
+		"workspaceId": h.WorkspaceId,
+		"pid":         req.Pid,
+		"id":          req.ID,
 	})
 
 	memFile, err := readarg.OpenMem(req.Pid)
@@ -380,9 +383,10 @@ func (h *InWorkspaceHandler) Umount(req *libseccomp.ScmpNotifReq) (val uint64, e
 
 func (h *InWorkspaceHandler) Bind(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	log := log.WithFields(map[string]interface{}{
-		"syscall": "bind",
-		"pid":     req.Pid,
-		"id":      req.ID,
+		"syscall":     "bind",
+		"workspaceId": h.WorkspaceId,
+		"pid":         req.Pid,
+		"id":          req.ID,
 	})
 	// We want the syscall to succeed, no matter what we do in this handler.
 	// The Kernel will execute the syscall for us.
@@ -425,9 +429,10 @@ func (h *InWorkspaceHandler) Bind(req *libseccomp.ScmpNotifReq) (val uint64, err
 
 func (h *InWorkspaceHandler) Chown(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	log := log.WithFields(map[string]interface{}{
-		"syscall": "bind",
-		"pid":     req.Pid,
-		"id":      req.ID,
+		"syscall":     "chown",
+		"workspaceId": h.WorkspaceId,
+		"pid":         req.Pid,
+		"id":          req.ID,
 	})
 
 	memFile, err := readarg.OpenMem(req.Pid)

@@ -80,7 +80,7 @@ func (s FileLayerSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst 
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (s FileLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (s FileLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	var src filebackedLayer
 	for _, l := range s {
 		if l.Descriptor.Digest == dgst {
@@ -102,7 +102,7 @@ func (s FileLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst 
 		return
 	}
 
-	return src.Descriptor.MediaType, "", f, nil
+	return false, src.Descriptor.MediaType, "", f, nil
 }
 
 // NewFileLayerSource produces a static layer source where each file is expected to be a gzipped layer
@@ -196,7 +196,7 @@ func (s ImageLayerSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (s ImageLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (s ImageLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	var src imagebackedLayer
 	for _, l := range s.layers {
 		if l.Descriptor.Digest == dgst {
@@ -213,7 +213,7 @@ func (s ImageLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 		return
 	}
 
-	return src.Descriptor.MediaType, "", rc, nil
+	return false, src.Descriptor.MediaType, "", rc, nil
 }
 
 const (
@@ -352,7 +352,7 @@ func (cs CompositeLayerSource) HasBlob(ctx context.Context, spec *api.ImageSpec,
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (cs CompositeLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (cs CompositeLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	for _, s := range cs {
 		if s.HasBlob(ctx, spec, dgst) {
 			return s.GetBlob(ctx, spec, dgst)
@@ -426,7 +426,7 @@ func (src *SpecMappedImagedSource) HasBlob(ctx context.Context, spec *api.ImageS
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (src *SpecMappedImagedSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (src *SpecMappedImagedSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	lsrc, err := src.getDelegate(ctx, spec)
 	if err != nil {
 		return
@@ -549,15 +549,15 @@ func (src *ContentLayerSource) HasBlob(ctx context.Context, spec *api.ImageSpec,
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (src *ContentLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (src *ContentLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	if blob, ok := src.blobCache.Get(dgst); ok {
-		return ociv1.MediaTypeImageLayer, "", io.NopCloser(bytes.NewReader(blob.([]byte))), nil
+		return false, ociv1.MediaTypeImageLayer, "", io.NopCloser(bytes.NewReader(blob.([]byte))), nil
 	}
 
 	for _, layer := range spec.ContentLayer {
 		if dl := layer.GetDirect(); dl != nil {
 			if digest.FromBytes(dl.Content) == dgst {
-				return ociv1.MediaTypeImageLayer, "", io.NopCloser(bytes.NewReader(dl.Content)), nil
+				return false, ociv1.MediaTypeImageLayer, "", io.NopCloser(bytes.NewReader(dl.Content)), nil
 			}
 		}
 
@@ -568,7 +568,7 @@ func (src *ContentLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec,
 					mt = ociv1.MediaTypeImageLayer
 				}
 
-				return mt, rl.Url, nil, nil
+				return false, mt, rl.Url, nil, nil
 			}
 		}
 	}
@@ -716,7 +716,7 @@ func (src *RevisioningLayerSource) HasBlob(ctx context.Context, details *api.Ima
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (src *RevisioningLayerSource) GetBlob(ctx context.Context, details *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (src *RevisioningLayerSource) GetBlob(ctx context.Context, details *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	src.mu.RLock()
 	defer src.mu.RUnlock()
 

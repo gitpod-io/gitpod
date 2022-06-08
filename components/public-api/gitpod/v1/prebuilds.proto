@@ -3,7 +3,6 @@ syntax = "proto3";
 package gitpod.v1;
 
 import "gitpod/v1/workspaces.proto";
-import "google/rpc/status.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/public-api/v1";
 
@@ -34,36 +33,28 @@ message GetPrebuildRequest {
     string prebuild_id = 1;
 }
 message GetPrebuildResponse {
-    google.rpc.Status response_status = 1;
-
-    Prebuild prebuild = 2;
+    Prebuild prebuild = 1;
 }
 
 message GetRunningPrebuildRequest {
     string context_url = 1;
 }
 message GetRunningPrebuildResponse {
-    google.rpc.Status response_status = 1;
-
-    Prebuild prebuild = 2;
+    Prebuild prebuild = 1;
 }
 
 message ListenToPrebuildStatusRequest{
     string prebuild_id = 1;
 }
 message ListenToPrebuildStatusResponse {
-    google.rpc.Status response_status = 1;
-
-    PrebuildStatus status = 2;
+    PrebuildStatus status = 1;
 }
 
 message ListenToPrebuildLogsRequest {
     string prebuild_id = 1;
 }
 message ListenToPrebuildLogsResponse {
-    google.rpc.Status response_status = 1;
-
-    string line = 2;
+    string line = 1;
 }
 
 ////////////////////////////////

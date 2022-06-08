@@ -14,29 +14,29 @@ import (
 	"golang.org/x/net/context"
 )
 
-func (s *Server) ChannelForward(ctx context.Context, session *Session, client *ssh.Client, newChannel ssh.NewChannel) {
-	workspaceChan, workspaceReqs, err := client.OpenChannel(newChannel.ChannelType(), newChannel.ExtraData())
+func (s *Server) ChannelForward(ctx context.Context, session *Session, targetConn ssh.Conn, originChannel ssh.NewChannel) {
+	targetChan, targetReqs, err := targetConn.OpenChannel(originChannel.ChannelType(), originChannel.ExtraData())
 	if err != nil {
-		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Error("open workspace channel error")
-		newChannel.Reject(ssh.ConnectionFailed, "open workspace channel error")
+		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Error("open target channel error")
+		originChannel.Reject(ssh.ConnectionFailed, "open target channel error")
 		return
 	}
-	defer workspaceChan.Close()
+	defer targetChan.Close()
 
-	clientChan, clientReqs, err := newChannel.Accept()
+	originChan, originReqs, err := originChannel.Accept()
 	if err != nil {
-		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Error("accept new channel failed")
+		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Error("accept origin channel failed")
 		return
 	}
-	if newChannel.ChannelType() == "session" {
-		clientChan = startHeartbeatingChannel(clientChan, s.Heartbeater, session.InstanceID)
+	if originChannel.ChannelType() == "session" {
+		originChan = startHeartbeatingChannel(originChan, s.Heartbeater, session.InstanceID)
 	}
-	defer clientChan.Close()
+	defer originChan.Close()
 
 	maskedReqs := make(chan *ssh.Request, 1)
 
 	go func() {
-		for req := range clientReqs {
+		for req := range originReqs {
 			switch req.Type {
 			case "pty-req", "shell":
 				log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debugf("forwarding %s request", req.Type)
@@ -51,13 +51,13 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, client *s
 	}()
 
 	go func() {
-		io.Copy(workspaceChan, clientChan)
-		workspaceChan.CloseWrite()
+		io.Copy(targetChan, originChan)
+		targetChan.CloseWrite()
 	}()
 
 	go func() {
-		io.Copy(clientChan, workspaceChan)
-		clientChan.CloseWrite()
+		io.Copy(originChan, targetChan)
+		originChan.CloseWrite()
 	}()
 
 	wg := sync.WaitGroup{}
@@ -82,8 +82,8 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, client *s
 	}
 
 	wg.Add(2)
-	go forward(maskedReqs, workspaceChan)
-	go forward(workspaceReqs, clientChan)
+	go forward(maskedReqs, targetChan)
+	go forward(targetReqs, originChan)
 
 	wg.Wait()
 	log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debug("session forward stop")

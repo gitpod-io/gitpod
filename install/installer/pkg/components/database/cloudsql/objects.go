@@ -14,8 +14,9 @@ var Objects = common.CompositeRenderFunc(
 	dbinit.Objects,
 	rolebinding,
 	common.DefaultServiceAccount(Component),
-	common.GenerateService(Component, map[string]common.ServicePort{
-		Component: {
+	common.GenerateService(Component, []common.ServicePort{
+		{
+			Name:          Component,
 			ContainerPort: Port,
 			ServicePort:   Port,
 		},

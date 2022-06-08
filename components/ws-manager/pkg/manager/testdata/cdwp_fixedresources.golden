@@ -8,6 +8,7 @@
                 "app": "gitpod",
                 "component": "workspace",
                 "gitpod.io/networkpolicy": "default",
+                "gitpod.io/workspaceClass": "default",
                 "gpwsman": "true",
                 "headless": "false",
                 "metaID": "foobar",
@@ -29,9 +30,6 @@
                 "gitpod/servicePrefix": "foobarservice",
                 "gitpod/traceid": "",
                 "gitpod/url": "test-foobarservice-gitpod.io",
-                "prometheus.io/path": "/metrics",
-                "prometheus.io/port": "23000",
-                "prometheus.io/scrape": "true",
                 "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace-default"
             },
             "finalizers": [
@@ -66,11 +64,19 @@
                     "ports": [
                         {
                             "containerPort": 23000
+                        },
+                        {
+                            "name": "supervisor",
+                            "containerPort": 22999
                         }
                     ],
                     "env": [
                         {
                             "name": "GITPOD_REPO_ROOT",
+                            "value": "/workspace"
+                        },
+                        {
+                            "name": "GITPOD_REPO_ROOTS",
                             "value": "/workspace"
                         },
                         {
@@ -167,7 +173,7 @@
                             "port": 22999,
                             "scheme": "HTTP"
                         },
-                        "initialDelaySeconds": 3,
+                        "initialDelaySeconds": 2,
                         "timeoutSeconds": 1,
                         "periodSeconds": 1,
                         "successThreshold": 1,
@@ -208,6 +214,7 @@
             "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
+            "securityContext": {},
             "hostname": "foobar",
             "affinity": {
                 "nodeAffinity": {

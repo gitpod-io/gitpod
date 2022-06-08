@@ -23,6 +23,8 @@ import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
 import { watchHeadlessLogs } from "../components/PrebuildLogs";
 import CodeText from "../components/CodeText";
+import FeedbackComponent from "../feedback-form/FeedbackComponent";
+import { isGitpodIo } from "../utils";
 
 const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
 
@@ -200,6 +202,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
             return <StartWorkspace {...parseProps(result?.createdWorkspaceId, window.location.search)} />;
         } else if (result?.existingWorkspaces) {
             statusMessage = (
+                // TODO: Use title and buttons props
                 <Modal visible={true} closeable={false} onClose={() => {}}>
                     <h3>Running Workspaces</h3>
                     <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
@@ -292,6 +295,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
 function LimitReachedModal(p: { children: React.ReactNode }) {
     const { user } = useContext(UserContext);
     return (
+        // TODO: Use title and buttons props
         <Modal visible={true} closeable={false} onClose={() => {}}>
             <h3 className="flex">
                 <span className="flex-grow">Limit Reached</span>
@@ -432,6 +436,14 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
                 <CodeText>{repoFullName}</CodeText>
             </p>
             {statusMessage}
+            {p.error && isGitpodIo() && (
+                <FeedbackComponent
+                    isModal={false}
+                    message={"Was this error message helpful?"}
+                    isError={true}
+                    initialSize={24}
+                />
+            )}
         </StartPage>
     );
 }
@@ -449,40 +461,29 @@ interface RunningPrebuildViewProps {
 }
 
 function RunningPrebuildView(props: RunningPrebuildViewProps) {
-    const logsEmitter = new EventEmitter();
-    let pollTimeout: NodeJS.Timeout | undefined;
-    let prebuildDoneTriggered: boolean = false;
+    const [logsEmitter] = useState(new EventEmitter());
 
     useEffect(() => {
-        const checkIsPrebuildDone = async (): Promise<boolean> => {
-            if (prebuildDoneTriggered) {
-                console.debug("prebuild done already triggered, doing nothing");
-                return true;
-            }
-
-            const done = await getGitpodService().server.isPrebuildDone(props.runningPrebuild.prebuildID);
-            if (done) {
-                // note: this treats "done" as "available" which is not equivalent.
-                // This works because the backend ignores prebuilds which are not "available", and happily starts a workspace as if there was no prebuild at all.
-                prebuildDoneTriggered = true;
-                props.onPrebuildSucceeded();
-                return true;
-            }
-            return false;
-        };
-        const pollIsPrebuildDone = async () => {
-            clearTimeout(pollTimeout!);
-            await checkIsPrebuildDone();
-            pollTimeout = setTimeout(pollIsPrebuildDone, 10000);
-        };
-
         const disposables = watchHeadlessLogs(
             props.runningPrebuild.instanceID,
             (chunk) => logsEmitter.emit("logs", chunk),
-            checkIsPrebuildDone,
+            async () => false,
         );
+
+        disposables.push(
+            getGitpodService().registerClient({
+                onInstanceUpdate: (update) => {
+                    if (update.workspaceId !== props.runningPrebuild.workspaceID) {
+                        return;
+                    }
+                    if (update.status.phase === "stopped") {
+                        props.onPrebuildSucceeded();
+                    }
+                },
+            }),
+        );
+
         return function cleanup() {
-            clearTimeout(pollTimeout!);
             disposables.dispose();
         };
     }, []);
@@ -495,7 +496,6 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
             <button
                 className="mt-6 secondary"
                 onClick={() => {
-                    clearTimeout(pollTimeout!);
                     props.onIgnorePrebuild();
                 }}
             >

@@ -66,10 +66,21 @@ export class Werft {
         cmd.toString().split("\n").forEach((line: string) => this.log(slice, line))
     }
 
+    /**
+     * Use this when you intend to fail the werft job
+     */
     public fail(slice, err) {
+        const span = this.sliceSpans[slice];
+
+        if (span) {
+            span.end()
+        } else {
+            console.log(`[${slice}] tracing warning: No slice span by name ${slice}`)
+        }
+
         // Set the status on the span for the slice and also propagate the status to the phase and root span
         // as well so we can query on all phases that had an error regardless of which slice produced the error.
-        [this.sliceSpans[slice], this.rootSpan, this.currentPhaseSpan].forEach((span: Span) => {
+        [span, this.rootSpan, this.currentPhaseSpan].forEach((span: Span) => {
             if (!span) {
                 return
             }
@@ -79,10 +90,24 @@ export class Werft {
             })
         })
 
-        this.endAllSpans()
-
         console.log(`[${slice}|FAIL] ${err}`);
         throw err;
+    }
+
+    /**
+     * Use this when you intend to fail a single slice, but not the entire Werft job.
+     */
+    public failSlice(slice: string, error: Error) {
+        const span = this.sliceSpans[slice]
+        if (span) {
+            span.setStatus({
+                code: SpanStatusCode.ERROR,
+                message: error.message
+            })
+            span.end()
+            delete this.sliceSpans[slice]
+        }
+        console.log(`[${slice}|FAIL] ${error}`)
     }
 
     public done(slice: string) {

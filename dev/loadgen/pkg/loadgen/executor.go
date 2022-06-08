@@ -6,12 +6,16 @@ package loadgen
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
+	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
@@ -25,7 +29,10 @@ type Executor interface {
 	Observe() (<-chan WorkspaceUpdate, error)
 
 	// StopAll stops all workspaces started by the executor
-	StopAll() error
+	StopAll(ctx context.Context) error
+
+	// Dump dumps the executor state to a file
+	Dump(path string) error
 }
 
 // StartWorkspaceSpec specifies a workspace
@@ -99,18 +106,22 @@ func (fe *FakeExecutor) StopAll() error {
 	return nil
 }
 
+const loadgenAnnotation = "loadgen"
+
 // WsmanExecutor talks to a ws manager
 type WsmanExecutor struct {
-	C   api.WorkspaceManagerClient
-	Sub []context.CancelFunc
+	C          api.WorkspaceManagerClient
+	Sub        []context.CancelFunc
+	workspaces []string
 }
 
 // StartWorkspace starts a new workspace
 func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration time.Duration, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 240*time.Second)
 	defer cancel()
 
 	s := *spec
+	s.Metadata.Annotations[loadgenAnnotation] = "true"
 	ss := api.StartWorkspaceRequest(s)
 
 	t0 := time.Now()
@@ -118,6 +129,8 @@ func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration t
 	if err != nil {
 		return 0, err
 	}
+
+	w.workspaces = append(w.workspaces, ss.Id)
 	return time.Since(t0), nil
 }
 
@@ -137,10 +150,9 @@ func (w *WsmanExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 		for {
 			resp, err := sub.Recv()
 			if err != nil {
-				if err != io.EOF {
+				if err != io.EOF && status.Code(err) != codes.Canceled {
 					log.WithError(err).Warn("subscription failure")
 				}
-				close(res)
 				return
 			}
 			status := resp.GetStatus()
@@ -161,10 +173,100 @@ func (w *WsmanExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 }
 
 // StopAll stops all workspaces started by the executor
-func (w *WsmanExecutor) StopAll() error {
+func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 	for _, s := range w.Sub {
 		s()
 	}
-	fmt.Println("kubectl delete pod -l component=workspace")
+
+	listReq := api.GetWorkspacesRequest{
+		MustMatch: &api.MetadataFilter{
+			Annotations: map[string]string{
+				loadgenAnnotation: "true",
+			},
+		},
+	}
+
+	log.Info("stopping workspaces")
+	for _, id := range w.workspaces {
+		stopReq := api.StopWorkspaceRequest{
+			Id:     id,
+			Policy: api.StopWorkspacePolicy_NORMALLY,
+		}
+
+		_, err := w.C.StopWorkspace(ctx, &stopReq)
+		if err != nil {
+			log.Warnf("failed to stop %s", id)
+		}
+	}
+
+	w.workspaces = make([]string, 0)
+
+	for {
+		resp, err := w.C.GetWorkspaces(ctx, &listReq)
+		if len(resp.Status) == 0 {
+			break
+		}
+
+		if err != nil {
+			log.Warnf("could not get workspaces: %v", err)
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("not all workspaces could be stopped")
+		default:
+			time.Sleep(5 * time.Second)
+		}
+	}
+
 	return nil
+}
+
+func (w *WsmanExecutor) Dump(path string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	listReq := api.GetWorkspacesRequest{
+		MustMatch: &api.MetadataFilter{
+			Annotations: map[string]string{
+				loadgenAnnotation: "true",
+			},
+		},
+	}
+
+	resp, err := w.C.GetWorkspaces(ctx, &listReq)
+	if err != nil {
+		return err
+	}
+
+	var wss []WorkspaceState
+	for _, status := range resp.GetStatus() {
+		ws := WorkspaceState{
+			WorkspaceName: status.Metadata.MetaId,
+			InstanceId:    status.Id,
+			Phase:         status.Phase,
+			Class:         status.Spec.Class,
+			NodeName:      status.Runtime.NodeName,
+			Pod:           status.Runtime.PodName,
+			Context:       status.Metadata.Annotations["context-url"],
+		}
+
+		wss = append(wss, ws)
+	}
+
+	fc, err := json.MarshalIndent(wss, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, fc, 0644)
+}
+
+type WorkspaceState struct {
+	WorkspaceName string
+	InstanceId    string
+	Phase         api.WorkspacePhase
+	Class         string
+	NodeName      string
+	Pod           string
+	Context       string
 }

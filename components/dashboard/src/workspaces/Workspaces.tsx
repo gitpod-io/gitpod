@@ -50,7 +50,7 @@ export default function () {
         <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
 
-            {isOnboardingUser && <SelectIDEModal />}
+            {isOnboardingUser && <SelectIDEModal location={"workspace_list"} />}
 
             {workspaceModel?.initialized &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ? (
@@ -85,7 +85,7 @@ export default function () {
                             <div className="py-3 pl-3">
                                 <DropDown
                                     prefix="Limit: "
-                                    contextMenuWidth="w-32"
+                                    customClasses="w-32"
                                     activeEntry={workspaceModel ? workspaceModel?.limit + "" : undefined}
                                     entries={[
                                         {

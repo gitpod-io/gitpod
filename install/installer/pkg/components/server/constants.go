@@ -14,9 +14,14 @@ const (
 	ContainerPortName     = "http"
 	authProviderFilePath  = "/gitpod/auth-providers"
 	licenseFilePath       = "/gitpod/license"
+	chargebeeMountPath    = "/chargebee"
+	stripeMountPath       = "/stripe"
+	githubAppCertSecret   = "github-app-cert-secret"
 	PrometheusPort        = 9500
 	PrometheusPortName    = "metrics"
 	InstallationAdminPort = common.ServerInstallationAdminPort
-	InstallationAdminName = "installation-admin"
+	InstallationAdminName = "install-admin"
+	DebugPortName         = "debug"
+	DebugNodePortName     = "debugnode"
 	ServicePort           = 3000
 )

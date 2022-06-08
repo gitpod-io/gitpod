@@ -18,7 +18,6 @@ COMPONENTS_DIR="$ROOT_DIR"/components
 source "$ROOT_DIR"/scripts/protoc-generator.sh
 
 lint
-leeway run .:lint
 
 install_dependencies
 go_protoc "$COMPONENTS_DIR" "gitpod/v1"

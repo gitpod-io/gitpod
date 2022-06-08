@@ -37,9 +37,6 @@
         "gitpod/servicePrefix": "amber-swallow-sbhsd9w0",
         "gitpod/url": "https://amber-swallow-sbhsd9w0.ws-dev.cw-wsdaemon-patch.staging.gitpod-dev.com",
         "kubernetes.io/psp": "staging-cw-wsdaemon-patch-ns-workspace",
-        "prometheus.io/path": "/metrics",
-        "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true",
         "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_cw-wsdaemon-patch.0.json"
       },
       "finalizers": [
@@ -87,6 +84,10 @@
           "env": [
             {
               "name": "GITPOD_REPO_ROOT",
+              "value": "/workspace/theia"
+            },
+            {
+              "name": "GITPOD_REPO_ROOTS",
               "value": "/workspace/theia"
             },
             {

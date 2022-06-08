@@ -242,11 +242,17 @@ export namespace UserEnvVar {
         if (name.trim() === "") {
             return "Name must not be empty.";
         }
+        if (name.length > 255) {
+            return "Name too long. Maximum name length is 255 characters.";
+        }
         if (!/^[a-zA-Z_]+[a-zA-Z0-9_]*$/.test(name)) {
             return "Name must match /^[a-zA-Z_]+[a-zA-Z0-9_]*$/.";
         }
         if (variable.value.trim() === "") {
             return "Value must not be empty.";
+        }
+        if (variable.value.length > 32767) {
+            return "Value too long. Maximum value length is 32767 characters.";
         }
         if (pattern.trim() === "") {
             return "Scope must not be empty.";
@@ -480,6 +486,12 @@ export interface Snapshot {
     layoutData?: string;
     state: SnapshotState;
     message?: string;
+}
+
+export interface VolumeSnapshot {
+    id: string;
+    creationTime: string;
+    volumeHandle: string;
 }
 
 export type SnapshotState = "pending" | "available" | "error";
@@ -742,7 +754,9 @@ export interface PrebuiltWorkspace {
 
 export namespace PrebuiltWorkspace {
     export function isDone(pws: PrebuiltWorkspace) {
-        return pws.state === "available" || pws.state === "timeout" || pws.state === "aborted";
+        return (
+            pws.state === "available" || pws.state === "timeout" || pws.state === "aborted" || pws.state === "failed"
+        );
     }
 
     export function isAvailable(pws: PrebuiltWorkspace) {
@@ -866,6 +880,7 @@ export namespace ExternalImageConfigFile {
 
 export interface WorkspaceContext {
     title: string;
+    ref?: string;
     /** This contains the URL portion of the contextURL (which might contain other modifiers as well). It's optional because it's not set for older workspaces. */
     normalizedContextURL?: string;
     forceCreateNewWorkspace?: boolean;

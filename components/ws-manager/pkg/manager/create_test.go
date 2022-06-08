@@ -54,7 +54,8 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 		CACertSecret string                    `json:"caCertSecret,omitempty"`
 		Classes      map[string]WorkspaceClass `json:"classes,omitempty"`
 
-		EnforceAffinity bool `json:"enforceAffinity,omitempty"`
+		EnforceAffinity   bool `json:"enforceAffinity,omitempty"`
+		DebugWorkspacePod bool `json:"debugWorkspacePod,omitempty"`
 	}
 	type gold struct {
 		Pod   corev1.Pod `json:"reason,omitempty"`
@@ -69,36 +70,28 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 
 			mgmtCfg := forTestingOnlyManagerConfig()
 			mgmtCfg.WorkspaceCACertSecret = fixture.CACertSecret
+			mgmtCfg.DebugWorkspacePod = fixture.DebugWorkspacePod
 
 			if fixture.Classes == nil {
 				fixture.Classes = make(map[string]WorkspaceClass)
 			}
 
-			var (
-				files   []tpl
-				classes = make(map[string]*config.WorkspaceClass)
-			)
-			classes[""] = mgmtCfg.WorkspaceClasses[""]
-			fixture.Classes[""] = fixture.WorkspaceClass
-			if fixture.Classes[""].ResourceLimits == nil {
-				v := fixture.Classes[""]
-				v.ResourceLimits = mgmtCfg.WorkspaceClasses[""].Container.Limits
-				fixture.Classes[""] = v
+			var files []tpl
+			if _, exists := fixture.Classes[config.DefaultWorkspaceClass]; !exists {
+				if fixture.WorkspaceClass.ResourceLimits != nil || fixture.WorkspaceClass.ResourceRequests != nil {
+					// there's no default class in the fixture. If there are limits configured, use those
+					fixture.Classes[config.DefaultWorkspaceClass] = fixture.WorkspaceClass
+				}
 			}
-			if fixture.Classes[""].ResourceRequests == nil {
-				v := fixture.Classes[""]
-				v.ResourceRequests = mgmtCfg.WorkspaceClasses[""].Container.Requests
-				fixture.Classes[""] = v
-			}
+
 			for n, cls := range fixture.Classes {
 				var cfgCls config.WorkspaceClass
 				cfgCls.Container.Requests = cls.ResourceRequests
 				cfgCls.Container.Limits = cls.ResourceLimits
 
 				files = append(files, toTpl(n, cls, &cfgCls.Templates)...)
-				classes[n] = &cfgCls
+				mgmtCfg.WorkspaceClasses[n] = &cfgCls
 			}
-			mgmtCfg.WorkspaceClasses = classes
 
 			manager := &Manager{Config: mgmtCfg}
 
@@ -178,6 +171,127 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 				return &result
 			}
 			result.Pod = *pod
+
+			return &result
+		},
+		Fixture: func() interface{} { return &fixture{} },
+		Gold:    func() interface{} { return &gold{} },
+	}
+	test.Run()
+}
+
+func TestCreatePVCForWorkspacePod(t *testing.T) {
+	type WorkspaceClass struct {
+		PVCConfig        *config.PVCConfiguration      `json:"pvcConfig,omitempty"`
+		ResourceRequests *config.ResourceConfiguration `json:"resourceRequests,omitempty"`
+		ResourceLimits   *config.ResourceConfiguration `json:"resourceLimits,omitempty"`
+	}
+	type fixture struct {
+		WorkspaceClass
+
+		Spec         *json.RawMessage          `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
+		Request      *json.RawMessage          `json:"request,omitempty"` // *api.StartWorkspaceRequest
+		Context      *startWorkspaceContext    `json:"context,omitempty"`
+		CACertSecret string                    `json:"caCertSecret,omitempty"`
+		Classes      map[string]WorkspaceClass `json:"classes,omitempty"`
+
+		EnforceAffinity bool `json:"enforceAffinity,omitempty"`
+	}
+	type gold struct {
+		PVC   corev1.PersistentVolumeClaim `json:"reason,omitempty"`
+		Error string                       `json:"error,omitempty"`
+	}
+
+	test := ctesting.FixtureTest{
+		T:    t,
+		Path: "testdata/cpwp_*.json",
+		Test: func(t *testing.T, input interface{}) interface{} {
+			fixture := input.(*fixture)
+
+			mgmtCfg := forTestingOnlyManagerConfig()
+			mgmtCfg.WorkspaceCACertSecret = fixture.CACertSecret
+
+			if fixture.Classes == nil {
+				fixture.Classes = make(map[string]WorkspaceClass)
+			}
+
+			if _, exists := fixture.Classes[config.DefaultWorkspaceClass]; !exists {
+				if fixture.WorkspaceClass.ResourceLimits != nil || fixture.WorkspaceClass.ResourceRequests != nil {
+					// there's no default class in the fixture. If there are limits configured, use those
+					fixture.Classes[config.DefaultWorkspaceClass] = fixture.WorkspaceClass
+				}
+			}
+
+			for n, cls := range fixture.Classes {
+				var cfgCls config.WorkspaceClass
+				cfgCls.Container.Requests = cls.ResourceRequests
+				cfgCls.Container.Limits = cls.ResourceLimits
+				if cls.PVCConfig != nil {
+					cfgCls.PVC = *cls.PVCConfig
+				}
+
+				mgmtCfg.WorkspaceClasses[n] = &cfgCls
+			}
+
+			manager := &Manager{Config: mgmtCfg}
+
+			if fixture.Context == nil {
+				var req api.StartWorkspaceRequest
+				if fixture.Request == nil {
+					if fixture.Spec == nil {
+						t.Errorf("fixture has neither context, nor request, nor spec")
+						return nil
+					}
+
+					var spec api.StartWorkspaceSpec
+					err := protojson.Unmarshal([]byte(*fixture.Spec), &spec)
+					if err != nil {
+						t.Errorf("cannot unmarshal StartWorkspaceSpec: %v", err)
+						return nil
+					}
+
+					req = api.StartWorkspaceRequest{
+						Type: api.WorkspaceType_REGULAR,
+						Id:   "test",
+						Metadata: &api.WorkspaceMetadata{
+							Owner:  "tester",
+							MetaId: "foobar",
+						},
+						ServicePrefix: "foobarservice",
+						Spec:          &spec,
+					}
+				} else {
+					err := protojson.Unmarshal([]byte(*fixture.Request), &req)
+					if err != nil {
+						t.Errorf("cannot unmarshal StartWorkspaceReq: %v", err)
+						return nil
+					}
+				}
+
+				if req.Spec.Class == "" {
+					fmt.Println()
+				}
+
+				ctx, err := manager.newStartWorkspaceContext(context.Background(), &req)
+				if err != nil {
+					t.Errorf("cannot create startWorkspaceContext: %v", err)
+					return nil
+				}
+
+				// tie down values that would otherwise change for each test
+				ctx.CLIAPIKey = "Ab=5=rRA*9:C'T{;RRB\u003e]vK2p6`fFfrS"
+				ctx.OwnerToken = "%7J'[Of/8NDiWE+9F,I6^Jcj_1\u0026}-F8p"
+
+				fixture.Context = ctx
+			}
+
+			pvc, serr := manager.createPVCForWorkspacePod(fixture.Context)
+			result := gold{}
+			if serr != nil {
+				result.Error = serr.Error()
+				return &result
+			}
+			result.PVC = *pvc
 
 			return &result
 		},

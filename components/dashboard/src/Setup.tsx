@@ -38,6 +38,7 @@ export default function Setup() {
     return (
         <div>
             {!showModal && (
+                // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => {}} closeable={false}>
                     <h3 className="pb-2">Welcome to Gitpod 🎉</h3>
                     <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">

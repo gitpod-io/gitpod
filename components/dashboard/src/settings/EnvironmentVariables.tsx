@@ -53,6 +53,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
     };
 
     return (
+        // TODO: Use title and buttons props
         <Modal visible={true} onClose={p.onClose} onEnter={save}>
             <h3 className="mb-4">{isNew ? "New" : "Edit"} Variable</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
@@ -145,7 +146,7 @@ function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
 }
 
 export default function EnvVars() {
-    const { showPaymentUI } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
     const [envVars, setEnvVars] = useState([] as UserEnvVarValue[]);
     const [currentEnvVar, setCurrentEnvVar] = useState({
         name: "",
@@ -207,7 +208,7 @@ export default function EnvVars() {
 
     return (
         <PageWithSubMenu
-            subMenu={getSettingsMenu({ showPaymentUI })}
+            subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
             title="Variables"
             subtitle="Configure environment variables for all workspaces."
         >

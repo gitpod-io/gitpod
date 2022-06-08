@@ -76,7 +76,7 @@ func LoadConfigVersion(version string) (ConfigVersion, error) {
 // Load takes a config string and overrides that onto the default
 // config for that version (passed in the config). If no config version
 // is passed, It overrides it onto the default CurrentVersion of the binary
-func Load(overrideConfig string) (cfg interface{}, version string, err error) {
+func Load(overrideConfig string, strict bool) (cfg interface{}, version string, err error) {
 	var overrideVS struct {
 		APIVersion string `json:"apiVersion"`
 	}
@@ -110,7 +110,11 @@ func Load(overrideConfig string) (cfg interface{}, version string, err error) {
 	overrideConfig = apiVersionRegexp.ReplaceAllString(overrideConfig, "")
 
 	// Override passed configuration onto the default
-	err = yaml.UnmarshalStrict([]byte(overrideConfig), cfg)
+	if strict {
+		err = yaml.UnmarshalStrict([]byte(overrideConfig), cfg)
+	} else {
+		err = yaml.Unmarshal([]byte(overrideConfig), cfg)
+	}
 	if err != nil {
 		return
 	}

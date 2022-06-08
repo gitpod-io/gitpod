@@ -29,10 +29,7 @@
         "gitpod/servicePrefix": "eb694666-269a-4d8c-a031-3cd6ea8135f9",
         "gitpod/traceid": "AAAAAAAAAABTzL35m/Bap1e6UVPvjbr1azpj2MJJhIkBAAAAAA==",
         "gitpod/url": "http://eb694666-269a-4d8c-a031-3cd6ea8135f9.ws-eu.gh-2510.staging.gitpod.io",
-        "gitpod/never-ready": "true",
-        "prometheus.io/path": "/metrics",
-        "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true"
+        "gitpod/never-ready": "true"
       }
     },
     "spec": {
@@ -58,6 +55,10 @@
           "env": [
             {
               "name": "GITPOD_REPO_ROOT",
+              "value": "/workspace/bel"
+            },
+            {
+              "name": "GITPOD_REPO_ROOTS",
               "value": "/workspace/bel"
             },
             {

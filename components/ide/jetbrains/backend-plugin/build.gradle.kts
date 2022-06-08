@@ -39,6 +39,7 @@ dependencies {
             type = "jar"
         }
     }
+    implementation("io.prometheus:simpleclient_pushgateway:0.15.0")
     compileOnly("javax.websocket:javax.websocket-api:1.1")
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
     testImplementation(kotlin("test"))

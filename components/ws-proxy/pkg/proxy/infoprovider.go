@@ -61,6 +61,8 @@ type WorkspaceInfo struct {
 
 	Auth      *wsapi.WorkspaceAuthentication
 	StartedAt time.Time
+
+	OwnerUserId string
 }
 
 // RemoteWorkspaceInfoProvider provides (cached) infos about running workspaces that it queries from ws-manager.
@@ -159,6 +161,7 @@ func mapPodToWorkspaceInfo(pod *corev1.Pod) *WorkspaceInfo {
 		Ports:           extractExposedPorts(pod).Ports,
 		Auth:            &wsapi.WorkspaceAuthentication{Admission: admission, OwnerToken: ownerToken},
 		StartedAt:       pod.CreationTimestamp.Time,
+		OwnerUserId:     pod.Labels[kubernetes.OwnerLabel],
 	}
 }
 

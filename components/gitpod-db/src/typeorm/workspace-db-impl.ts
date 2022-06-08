@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import * as crypto from "crypto";
 import { injectable, inject } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder, Brackets } from "typeorm";
 import {
@@ -25,6 +26,7 @@ import {
     WorkspaceInstanceUser,
     WhitelistedRepository,
     Snapshot,
+    VolumeSnapshot,
     LayoutData,
     PrebuiltWorkspace,
     RunningWorkspaceInfo,
@@ -41,6 +43,7 @@ import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
 import { DBLayoutData } from "./entity/db-layout-data";
 import { DBSnapshot } from "./entity/db-snapshot";
+import { DBVolumeSnapshot } from "./entity/db-volume-snapshot";
 import { DBWorkspaceInstanceUser } from "./entity/db-workspace-instance-user";
 import { DBRepositoryWhiteList } from "./entity/db-repository-whitelist";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -77,6 +80,10 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     protected async getSnapshotRepo(): Promise<Repository<DBSnapshot>> {
         return await (await this.getManager()).getRepository<DBSnapshot>(DBSnapshot);
+    }
+
+    protected async getVolumeSnapshotRepo(): Promise<Repository<DBVolumeSnapshot>> {
+        return await (await this.getManager()).getRepository<DBVolumeSnapshot>(DBVolumeSnapshot);
     }
 
     protected async getPrebuiltWorkspaceRepo(): Promise<Repository<DBPrebuiltWorkspace>> {
@@ -132,8 +139,22 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     public async store(workspace: Workspace) {
         const workspaceRepo = await this.getWorkspaceRepo();
         const dbWorkspace = workspace as DBWorkspace;
+
+        // `cloneUrl` is stored redundandly to optimize for `getWorkspaceCountByCloneURL`.
+        // As clone URLs are lesser constrained we want to shorten the value to work well with the indexed column.
+        let cloneUrl: string = this.toCloneUrl255((workspace as any).context?.repository?.cloneUrl || "");
+
+        dbWorkspace.cloneUrl = cloneUrl;
         return await workspaceRepo.save(dbWorkspace);
     }
+
+    protected toCloneUrl255(cloneUrl: string) {
+        if (cloneUrl.length > 255) {
+            return `cloneUrl-sha:${crypto.createHash("sha256").update(cloneUrl, "utf8").digest("hex")}`;
+        }
+        return cloneUrl;
+    }
+
     public async updatePartial(workspaceId: string, partial: DeepPartial<Workspace>) {
         const workspaceRepo = await this.getWorkspaceRepo();
         await workspaceRepo.update(workspaceId, partial);
@@ -348,6 +369,22 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     public async findWorkspacesByUser(userId: string): Promise<Workspace[]> {
         const workspaceRepo = await this.getWorkspaceRepo();
         return workspaceRepo.find({ ownerId: userId });
+    }
+
+    public async getWorkspaceCountByCloneURL(
+        cloneURL: string,
+        sinceLastDays: number = 7,
+        type: string = "regular",
+    ): Promise<number> {
+        const workspaceRepo = await this.getWorkspaceRepo();
+        const since = new Date();
+        since.setDate(since.getDate() - sinceLastDays);
+        return workspaceRepo
+            .createQueryBuilder("ws")
+            .where("cloneURL = :cloneURL", { cloneURL: this.toCloneUrl255(cloneURL) })
+            .andWhere("creationTime > :since", { since: since.toISOString() })
+            .andWhere("type = :type", { type })
+            .getCount();
     }
 
     public async findCurrentInstance(workspaceId: string): Promise<MaybeWorkspaceInstance> {
@@ -698,6 +735,29 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     public async findSnapshotsByWorkspaceId(workspaceId: string): Promise<Snapshot[]> {
         const snapshots = await this.getSnapshotRepo();
         return snapshots.find({ where: { originalWorkspaceId: workspaceId } });
+    }
+
+    public async findVolumeSnapshotById(volumeSnapshotId: string): Promise<VolumeSnapshot | undefined> {
+        const volumeSnapshots = await this.getVolumeSnapshotRepo();
+        return volumeSnapshots.findOne(volumeSnapshotId);
+    }
+
+    public async storeVolumeSnapshot(volumeSnapshot: VolumeSnapshot): Promise<VolumeSnapshot> {
+        const volumeSnapshots = await this.getVolumeSnapshotRepo();
+        const dbVolumeSnapshot = volumeSnapshot as DBVolumeSnapshot;
+        return await volumeSnapshots.save(dbVolumeSnapshot);
+    }
+
+    public async deleteVolumeSnapshot(volumeSnapshotId: string): Promise<void> {
+        const volumeSnapshots = await this.getVolumeSnapshotRepo();
+        await volumeSnapshots.delete(volumeSnapshotId);
+    }
+
+    public async updateVolumeSnapshot(
+        volumeSnapshot: DeepPartial<VolumeSnapshot> & Pick<VolumeSnapshot, "id">,
+    ): Promise<void> {
+        const volumeSnapshots = await this.getVolumeSnapshotRepo();
+        await volumeSnapshots.update(volumeSnapshot.id, volumeSnapshot);
     }
 
     public async storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace> {

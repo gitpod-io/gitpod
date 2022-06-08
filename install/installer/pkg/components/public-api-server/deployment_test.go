@@ -4,9 +4,11 @@
 package public_api_server
 
 import (
+	corev1 "k8s.io/api/core/v1"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
-	"testing"
 )
 
 func TestDeployment(t *testing.T) {
@@ -19,4 +21,35 @@ func TestDeployment(t *testing.T) {
 
 	dpl := objects[0].(*appsv1.Deployment)
 	require.Len(t, dpl.Spec.Template.Spec.Containers, 2, "must render 2 containers")
+}
+
+func TestDeployment_ServerArguments(t *testing.T) {
+	ctx := renderContextWithPublicAPIEnabled(t)
+
+	objects, err := deployment(ctx)
+	require.NoError(t, err)
+
+	require.Len(t, objects, 1, "must render only one object")
+
+	dpl := objects[0].(*appsv1.Deployment)
+	containers := dpl.Spec.Template.Spec.Containers
+	require.Equal(t, Component, containers[0].Name)
+
+	apiContainer := containers[0]
+	require.EqualValues(t, []string{
+		"run",
+		"--config=/config.json",
+		`--json-log=true`,
+	}, apiContainer.Args)
+
+	require.Equal(t, []corev1.Volume{{
+		Name: configmapVolume,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: Component,
+				},
+			},
+		},
+	}}, dpl.Spec.Template.Spec.Volumes, "must bind config as a volume")
 }

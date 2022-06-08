@@ -145,7 +145,7 @@ export default function () {
                     <div className="py-3 pl-3">
                         <DropDown
                             prefix="Role: "
-                            contextMenuWidth="w-32"
+                            customClasses="w-32"
                             activeEntry={roleFilter === "owner" ? "Owner" : roleFilter === "member" ? "Member" : "All"}
                             entries={[
                                 {
@@ -226,7 +226,7 @@ export default function () {
                                             m.role
                                         ) : (
                                             <DropDown
-                                                contextMenuWidth="w-32"
+                                                customClasses="w-32"
                                                 activeEntry={m.role}
                                                 entries={[
                                                     {
@@ -273,6 +273,7 @@ export default function () {
                 </ItemsList>
             </div>
             {genericInvite && showInviteModal && (
+                // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
                     <h3 className="mb-4">Invite Members</h3>
                     <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">

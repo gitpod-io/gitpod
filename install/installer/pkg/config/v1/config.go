@@ -47,8 +47,13 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Certificate.Name = "https-certificates"
 	cfg.Database.InCluster = pointer.Bool(true)
 	cfg.Metadata.Region = "local"
-	cfg.Metadata.InstallationShortname = "default" // TODO(gpl): we're tied to "default" here because that's what we put into static bridges in the past
+	cfg.Metadata.InstallationShortname = InstallationShortNameOldDefault // TODO(gpl): we're tied to "default" here because that's what we put into static bridges in the past
 	cfg.ObjectStorage.InCluster = pointer.Bool(true)
+	cfg.ObjectStorage.Resources = &Resources{
+		Requests: corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse("2Gi"),
+		},
+	}
 	cfg.ContainerRegistry.InCluster = pointer.Bool(true)
 	cfg.Workspace.Resources.Requests = corev1.ResourceList{
 		corev1.ResourceCPU:    resource.MustParse("1000m"),
@@ -58,6 +63,9 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
 	cfg.Workspace.MaxLifetime = util.Duration(36 * time.Hour)
+	cfg.Workspace.PVC.Size = resource.MustParse("30Gi")
+	cfg.Workspace.PVC.StorageClass = ""
+	cfg.Workspace.PVC.SnapshotClass = ""
 	cfg.OpenVSX.URL = "https://open-vsx.org"
 	cfg.DisableDefinitelyGP = true
 
@@ -109,8 +117,12 @@ type Metadata struct {
 	// Location for your objectStorage provider
 	Region string `json:"region" validate:"required"`
 	// InstallationShortname establishes the "identity" of the (application) cluster.
-	InstallationShortname string `json:"shortname" validate:"required"`
+	InstallationShortname string `json:"shortname"`
 }
+
+const (
+	InstallationShortNameOldDefault string = "default"
+)
 
 type Observability struct {
 	LogLevel LogLevel `json:"logLevel" validate:"required,log_level"`
@@ -149,11 +161,16 @@ type ObjectStorage struct {
 	Azure              *ObjectStorageAzure        `json:"azure,omitempty"`
 	MaximumBackupCount *int                       `json:"maximumBackupCount,omitempty"`
 	BlobQuota          *int64                     `json:"blobQuota,omitempty"`
+	Resources          *Resources                 `json:"resources,omitempty"`
 }
 
 type ObjectStorageS3 struct {
 	Endpoint    string    `json:"endpoint" validate:"required"`
 	Credentials ObjectRef `json:"credentials" validate:"required"`
+
+	// BucketName sets the name of an existing bucket to enable the "single bucket mode"
+	// If no name is configured, the old "one bucket per user" behaviour kicks in.
+	BucketName string `json:"bucket"`
 }
 
 type ObjectStorageCloudStorage struct {
@@ -238,10 +255,24 @@ type WorkspaceTemplates struct {
 	Regular    *corev1.Pod `json:"regular"`
 }
 
+type PersistentVolumeClaim struct {
+	// Size is a size of persistent volume claim to use
+	Size resource.Quantity `json:"size" validate:"required"`
+
+	// StorageClass is a storage class of persistent volume claim to use
+	StorageClass string `json:"storageClass"`
+
+	// SnapshotClass is a snapshot class name that is used to create volume snapshot
+	SnapshotClass string `json:"snapshotClass"`
+}
+
 type Workspace struct {
 	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
 	Resources Resources           `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`
+
+	// PVC is the struct that describes how to setup persistent volume claim for workspace
+	PVC PersistentVolumeClaim `json:"pvc" validate:"required"`
 
 	// MaxLifetime is the maximum time a workspace is allowed to run. After that, the workspace times out despite activity
 	MaxLifetime util.Duration `json:"maxLifetime" validate:"required"`

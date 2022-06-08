@@ -44,11 +44,6 @@ export class GithubAppRules {
             return false;
         }
 
-        const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.before || !!t.init || !!t.prebuild);
-        if (!hasPrebuildTask) {
-            return false;
-        }
-
         const prebuildCfg = this.mergeWithDefaultConfig(config).prebuilds!;
         if (isPR) {
             if (isFork) {

@@ -14,7 +14,7 @@ type GitpodServerMethodType =
     | keyof Omit<GitpodServer, "dispose" | "setClient">
     | typeof accessCodeSyncStorage
     | typeof accessHeadlessLogs;
-type GroupKey = "default" | "startWorkspace";
+type GroupKey = "default" | "startWorkspace" | "createWorkspace";
 type GroupsConfig = {
     [key: string]: {
         points: number;
@@ -42,6 +42,10 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
             points: 1, // 1 workspace start per user per 10s
             durationsSec: 10,
         },
+        createWorkspace: {
+            points: 3, // 3 workspace creates per user per 10s
+            durationsSec: 10,
+        },
     };
     const defaultFunctions: FunctionsConfig = {
         getLoggedInUser: { group: "default", points: 1 },
@@ -66,7 +70,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         getWorkspace: { group: "default", points: 1 },
         isWorkspaceOwner: { group: "default", points: 1 },
         getOwnerToken: { group: "default", points: 1 },
-        createWorkspace: { group: "default", points: 1 },
+        createWorkspace: { group: "createWorkspace", points: 1 },
         startWorkspace: { group: "startWorkspace", points: 1 },
         stopWorkspace: { group: "default", points: 1 },
         deleteWorkspace: { group: "default", points: 1 },
@@ -167,7 +171,9 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         adminSetProfessionalOpenSource: { group: "default", points: 1 },
         adminGrantExtraHours: { group: "default", points: 1 },
         checkout: { group: "default", points: 1 },
+        teamCheckout: { group: "default", points: 1 },
         createPortalSession: { group: "default", points: 1 },
+        createTeamPortalSession: { group: "default", points: 1 },
         getAccountStatement: { group: "default", points: 1 },
         getAppliedCoupons: { group: "default", points: 1 },
         getAvailableCoupons: { group: "default", points: 1 },
@@ -184,11 +190,16 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         tsAddSlots: { group: "default", points: 1 },
         tsAssignSlot: { group: "default", points: 1 },
         tsDeactivateSlot: { group: "default", points: 1 },
+        getTeamSubscription: { group: "default", points: 1 },
         tsGet: { group: "default", points: 1 },
         tsGetSlots: { group: "default", points: 1 },
         tsGetUnassignedSlot: { group: "default", points: 1 },
         tsReactivateSlot: { group: "default", points: 1 },
         tsReassignSlot: { group: "default", points: 1 },
+        getStripePublishableKey: { group: "default", points: 1 },
+        getStripeSetupIntentClientSecret: { group: "default", points: 1 },
+        getTeamStripeCustomerId: { group: "default", points: 1 },
+        subscribeTeamToStripe: { group: "default", points: 1 },
         trackEvent: { group: "default", points: 1 },
         trackLocation: { group: "default", points: 1 },
         identifyUser: { group: "default", points: 1 },

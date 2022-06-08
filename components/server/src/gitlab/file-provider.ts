@@ -53,7 +53,7 @@ export class GitlabFileProvider implements FileProvider {
             const result = await this.gitlabApi.getRawContents(user, org, name, commitish, path);
             return result;
         } catch (error) {
-            log.error(error);
+            log.debug(error);
         }
     }
 }

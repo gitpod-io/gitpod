@@ -19,6 +19,7 @@ import moment from "moment";
 import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
 import exclamation from "../images/exclamation.svg";
+import ErrorMessage from "../components/ErrorMessage";
 
 export default function NewProject() {
     const location = useLocation();
@@ -368,14 +369,17 @@ export default function NewProject() {
                 <p className="text-gray-500 text-center text-base mt-12">
                     {loaded && noReposAvailable ? "Select account on " : "Select a Git repository on "}
                     <b>{selectedProviderHost}</b> (
-                    <a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>
+                    <button className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>
                         change
-                    </a>
+                    </button>
                     )
                 </p>
                 <div className={`mt-2 flex-col ${noReposAvailable && isGitHub() ? "w-96" : ""}`}>
                     <div className="px-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
-                        <ContextMenu classes="w-full left-0 cursor-pointer" menuEntries={getDropDownEntries(accounts)}>
+                        <ContextMenu
+                            customClasses="w-full left-0 cursor-pointer"
+                            menuEntries={getDropDownEntries(accounts)}
+                        >
                             <div className="w-full">
                                 {!selectedAccount && user && user.name && user.avatarUrl && (
                                     <>
@@ -493,13 +497,12 @@ export default function NewProject() {
                     <div>
                         <div className="text-gray-500 text-center w-96 mx-8">
                             Repository not found?{" "}
-                            <a
-                                href="javascript:void(0)"
+                            <button
                                 onClick={(e) => reconfigure()}
-                                className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600"
+                                className="gp-link text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600"
                             >
                                 Reconfigure
-                            </a>
+                            </button>
                         </div>
                     </div>
                 )}
@@ -745,16 +748,7 @@ function GitProviders(props: {
                     })}
                 </div>
 
-                {errorMessage && (
-                    <div className="mt-16 flex space-x-2 py-6 px-6 w-96 justify-between bg-gitpod-kumquat-light rounded-xl">
-                        <div className="pr-3 self-center w-6">
-                            <img src={exclamation} />
-                        </div>
-                        <div className="flex-1 flex flex-col">
-                            <p className="text-gitpod-red text-sm">{errorMessage}</p>
-                        </div>
-                    </div>
-                )}
+                {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
             </div>
         </div>
     );

@@ -77,7 +77,19 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 		rc[storage.DefaultBackup] = *backup
 	}
 
-	if si := initializer.GetSnapshot(); si != nil {
+	si := initializer.GetSnapshot()
+	pi := initializer.GetPrebuild()
+	if ci := initializer.GetComposite(); ci != nil {
+		for _, c := range ci.Initializer {
+			if c.GetSnapshot() != nil {
+				si = c.GetSnapshot()
+			}
+			if c.GetPrebuild() != nil {
+				pi = c.GetPrebuild()
+			}
+		}
+	}
+	if si != nil {
 		bkt, obj, err := storage.ParseSnapshotName(si.Snapshot)
 		if err != nil {
 			return nil, err
@@ -92,8 +104,8 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 
 		rc[si.Snapshot] = *info
 	}
-	if si := initializer.GetPrebuild(); si != nil && si.Prebuild != nil && si.Prebuild.Snapshot != "" {
-		bkt, obj, err := storage.ParseSnapshotName(si.Prebuild.Snapshot)
+	if pi != nil && pi.Prebuild != nil && pi.Prebuild.Snapshot != "" {
+		bkt, obj, err := storage.ParseSnapshotName(pi.Prebuild.Snapshot)
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +115,7 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 		} else if err != nil {
 			return nil, xerrors.Errorf("cannot find prebuild: %w", err)
 		} else {
-			rc[si.Prebuild.Snapshot] = *info
+			rc[pi.Prebuild.Snapshot] = *info
 		}
 	}
 
@@ -190,7 +202,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	spec.Process.User.GID = opts.GID
 	spec.Process.Args = []string{"/app/content-initializer"}
 	for _, e := range os.Environ() {
-		if strings.HasPrefix(e, "JAEGER_") || strings.HasPrefix(e, "GIT_SSL_CAINFO=") {
+		if strings.HasPrefix(e, "JAEGER_") || strings.HasPrefix(e, "GIT_SSL_CAPATH=") || strings.HasPrefix(e, "GIT_SSL_CAINFO=") {
 			spec.Process.Env = append(spec.Process.Env, e)
 		}
 	}

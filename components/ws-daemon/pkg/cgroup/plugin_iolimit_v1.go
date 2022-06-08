@@ -179,7 +179,7 @@ func (c *IOLimiterV1) produceLimits(kind string, value int64, useCache bool) []s
 		return val.([]string)
 	}
 
-	lines := make([]string, len(c.devices))
+	lines := make([]string, 0, len(c.devices))
 	for _, dev := range c.devices {
 		lines = append(lines, fmt.Sprintf("%s %d", dev, value))
 	}
@@ -196,6 +196,9 @@ func writeLimit(limitPath string, content []string) error {
 	}
 
 	for _, l := range content {
+		if l == "" {
+			continue
+		}
 		err = os.WriteFile(limitPath, []byte(l), 0644)
 		if err != nil {
 			log.WithError(err).WithField("limitPath", limitPath).WithField("line", l).Warn("cannot write limit")

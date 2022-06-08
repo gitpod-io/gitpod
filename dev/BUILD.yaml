@@ -4,22 +4,20 @@ packages:
     deps:
       - dev/image:docker
       - dev/poolkeeper:docker
-      - dev/sweeper:docker
       - :dev-utils
-    config:
-      commands:
-        - ["sh", "-c", "tail -n1 dev-sweeper--docker/imgnames.txt > sweeper.txt"]
   - name: all-app
     type: generic
     deps:
       - dev/blowtorch:app
       - dev/gpctl:app
       - dev/loadgen:app
+      - dev/preview/previewctl:cli
   - name: dev-utils
     type: docker
     deps:
       - dev/gpctl:app
       - dev/kubecdl:app
+      - dev/preview/previewctl:cli
     argdeps:
       - imageRepoBase
     config:

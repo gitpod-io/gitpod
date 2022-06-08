@@ -15,7 +15,7 @@ export enum Feature {
 export interface LicenseData {
     type: LicenseType
     payload: LicensePayload
-    plan: string
+    plan: LicenseSubscriptionLevel
     fallbackAllowed: boolean
 }
 
@@ -31,6 +31,12 @@ export interface LicensePayload {
     seats: number
 }
 
+export enum LicenseSubscriptionLevel {
+    LicenseTypeCommunity = "community",
+    LicenseTypePaid = "prod",
+    LicenseTypeTrial = "trial",
+    LicenseTypeDevelopment = "dev",
+}
 export enum LicenseType {
     LicenseTypeGitpod = "gitpod",
     LicenseTypeReplicated = "replicated",

@@ -54,7 +54,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	classes := map[string]*config.WorkspaceClass{
-		"": {
+		config.DefaultWorkspaceClass: {
 			Container: config.ContainerConfiguration{
 				Requests: &config.ResourceConfiguration{
 					CPU:              quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceCPU),
@@ -68,6 +68,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			Templates: templatesCfg,
+			PVC: config.PVCConfiguration{
+				Size:          ctx.Config.Workspace.PVC.Size,
+				StorageClass:  ctx.Config.Workspace.PVC.StorageClass,
+				SnapshotClass: ctx.Config.Workspace.PVC.SnapshotClass,
+			},
 		},
 	}
 	err = ctx.WithExperimental(func(ucfg *experimental.Config) error {
@@ -98,6 +103,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				Templates: tplsCfg,
+				PVC:       config.PVCConfiguration(c.PVC),
 			}
 			tpls = append(tpls, ctpls...)
 		}
@@ -105,6 +111,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	installationShortNameSuffix := ""
+	if ctx.Config.Metadata.InstallationShortname != "" && ctx.Config.Metadata.InstallationShortname != configv1.InstallationShortNameOldDefault {
+		installationShortNameSuffix = "-" + ctx.Config.Metadata.InstallationShortname
 	}
 
 	wsmcfg := config.ServiceConfiguration{
@@ -131,8 +142,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			InitProbe: config.InitProbeConfiguration{
 				Timeout: (1 * time.Second).String(),
 			},
-			WorkspaceURLTemplate:     fmt.Sprintf("https://{{ .Prefix }}.ws.%s", ctx.Config.Domain),
-			WorkspacePortURLTemplate: fmt.Sprintf("https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.%s", ctx.Config.Domain),
+			WorkspaceURLTemplate:     fmt.Sprintf("https://{{ .Prefix }}.ws%s.%s", installationShortNameSuffix, ctx.Config.Domain),
+			WorkspacePortURLTemplate: fmt.Sprintf("https://{{ .WorkspacePort }}-{{ .Prefix }}.ws%s.%s", installationShortNameSuffix, ctx.Config.Domain),
 			WorkspaceHostPath:        wsdaemon.HostWorkingArea,
 			Timeouts: config.WorkspaceTimeoutConfiguration{
 				AfterClose:          timeoutAfterClose,

@@ -9,7 +9,7 @@ const expect = chai.expect;
 import { suite, test, timeout } from "mocha-typescript";
 import { fail } from "assert";
 
-import { WorkspaceInstance, Workspace, PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
+import { WorkspaceInstance, Workspace, PrebuiltWorkspace, CommitContext } from "@gitpod/gitpod-protocol";
 import { testContainer } from "./test-container";
 import { TypeORMWorkspaceDBImpl } from "./typeorm/workspace-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
@@ -49,6 +49,7 @@ class WorkspaceDBSpec {
         id: "123",
         ideUrl: "example.org",
         region: "unknown",
+        workspaceClass: undefined,
         workspaceImage: "abc.io/test/image:123",
         creationTime: this.timeBefore,
         startedTime: undefined,
@@ -70,6 +71,7 @@ class WorkspaceDBSpec {
         id: "1234",
         ideUrl: "example.org",
         region: "unknown",
+        workspaceClass: undefined,
         workspaceImage: "abc.io/test/image:123",
         creationTime: this.timeAfter,
         startedTime: undefined,
@@ -106,6 +108,7 @@ class WorkspaceDBSpec {
         id: "4",
         ideUrl: "example.org",
         region: "unknown",
+        workspaceClass: undefined,
         workspaceImage: "abc.io/test/image:123",
         creationTime: this.timeBefore,
         startedTime: undefined,
@@ -142,6 +145,7 @@ class WorkspaceDBSpec {
         id: "3_1",
         ideUrl: "example.org",
         region: "unknown",
+        workspaceClass: undefined,
         workspaceImage: "abc.io/test/image:123",
         creationTime: this.timeBefore,
         startedTime: undefined,
@@ -537,6 +541,52 @@ class WorkspaceDBSpec {
         const minuteAgo = secondsBefore(now.toISOString(), 60);
         const unabortedCount = await this.db.countUnabortedPrebuildsSince(cloneURL, new Date(minuteAgo));
         expect(unabortedCount).to.eq(1);
+    }
+
+    @test(timeout(10000))
+    public async testGetWorkspaceCountForCloneURL() {
+        const now = new Date();
+        const eightDaysAgo = new Date();
+        eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
+        const activeRepo = "http://github.com/myorg/active.git";
+        const inactiveRepo = "http://github.com/myorg/inactive.git";
+        await Promise.all([
+            this.db.store({
+                id: "12345",
+                creationTime: eightDaysAgo.toISOString(),
+                description: "something",
+                contextURL: "http://github.com/myorg/inactive",
+                ownerId: "1221423",
+                context: <CommitContext>{
+                    title: "my title",
+                    repository: {
+                        cloneUrl: inactiveRepo,
+                    },
+                },
+                config: {},
+                type: "regular",
+            }),
+            this.db.store({
+                id: "12346",
+                creationTime: now.toISOString(),
+                description: "something",
+                contextURL: "http://github.com/myorg/active",
+                ownerId: "1221423",
+                context: <CommitContext>{
+                    title: "my title",
+                    repository: {
+                        cloneUrl: activeRepo,
+                    },
+                },
+                config: {},
+                type: "regular",
+            }),
+        ]);
+
+        const inactiveCount = await this.db.getWorkspaceCountByCloneURL(inactiveRepo, 7, "regular");
+        expect(inactiveCount).to.eq(0, "there should be no regular workspaces in the past 7 days");
+        const activeCount = await this.db.getWorkspaceCountByCloneURL(activeRepo, 7, "regular");
+        expect(activeCount).to.eq(1, "there should be exactly one regular workspace");
     }
 
     private async storePrebuiltWorkspace(pws: PrebuiltWorkspace) {

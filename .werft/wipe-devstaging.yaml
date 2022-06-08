@@ -5,7 +5,7 @@ args:
 pod:
   serviceAccount: werft
   nodeSelector:
-    dev/workload: workload
+    dev/workload: builds
   imagePullSecrets:
   - name: eu-gcr-io-pull-secret
   volumes:
@@ -14,9 +14,9 @@ pod:
       secretName: gcp-sa-gitpod-dev-deployer
   containers:
   - name: wipe-devstaging
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go.4
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:me-me-image.1
     workingDir: /workspace
-    imagePullPolicy: Always
+    imagePullPolicy: IfNotPresent
     volumeMounts:
     - name: gcp-sa
       mountPath: /mnt/secrets/gcp-sa

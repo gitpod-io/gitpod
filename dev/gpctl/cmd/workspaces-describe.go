@@ -54,7 +54,6 @@ Conditions:
 {{- if not (eq .Conditions.Failed "") }}  Failed:	{{ .Conditions.Failed }}{{ end }}
 {{- if not (eq .Conditions.Timeout "") }}  Timeout:	{{ .Conditions.Timeout }}{{ end }}
   PullingImages:	{{ .Conditions.PullingImages }}
-  ServiceExists:	{{ .Conditions.ServiceExists }}
   Deployed:	{{ .Conditions.Deployed }}
   FinalBackupComplete:	{{ .Conditions.FinalBackupComplete }}
 Spec:

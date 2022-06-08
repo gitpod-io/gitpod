@@ -19,8 +19,8 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/ipfs/go-ipfs-files v0.1.1
-	github.com/ipfs/go-ipfs-http-client v0.3.0
-	github.com/ipfs/interface-go-ipfs-core v0.6.2
+	github.com/ipfs/go-ipfs-http-client v0.3.1
+	github.com/ipfs/interface-go-ipfs-core v0.7.0
 	github.com/multiformats/go-multiaddr v0.5.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.2-0.20211117181255-693428a734f5
@@ -40,6 +40,7 @@ require (
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
+	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-test/deep v1.0.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -89,6 +90,7 @@ require (
 	github.com/multiformats/go-base32 v0.0.3 // indirect
 	github.com/multiformats/go-base36 v0.1.0 // indirect
 	github.com/multiformats/go-multibase v0.0.3 // indirect
+	github.com/multiformats/go-multicodec v0.4.1 // indirect
 	github.com/multiformats/go-multihash v0.0.15 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
 	github.com/polydawn/refmt v0.0.0-20201211092308-30ac6d18308e // indirect

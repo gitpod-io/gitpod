@@ -150,31 +150,39 @@ export class HeadlessLogController {
             authenticateAndAuthorize,
             asyncHandler(async (req: express.Request, res: express.Response) => {
                 const span = opentracing.globalTracer().startSpan(HEADLESS_LOG_DOWNLOAD_PATH_PREFIX);
-                const params = { instanceId: req.params.instanceId, taskId: req.params.taskId };
-                const user = req.user as User; // verified by authenticateAndAuthorize
-
-                const instanceId = params.instanceId;
-                const ws = await this.authorizeHeadlessLogAccess(span, user, instanceId, res);
-                if (!ws) {
-                    return;
-                }
-                const { workspace, instance } = ws;
-
-                const logCtx = { userId: user.id, instanceId, workspaceId: workspace!.id };
-                log.debug(logCtx, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX);
 
                 try {
-                    const taskId = params.taskId;
-                    const downloadUrl = await this.headlessLogService.getHeadlessLogDownloadUrl(
-                        user.id,
-                        instance,
-                        workspace.ownerId,
-                        taskId,
-                    );
-                    res.send(downloadUrl); // cmp. headless_log_download.go
-                } catch (err) {
-                    log.error(logCtx, "error retrieving headless log download URL", err);
-                    res.status(500);
+                    const params = { instanceId: req.params.instanceId, taskId: req.params.taskId };
+                    const user = req.user as User; // verified by authenticateAndAuthorize
+
+                    const instanceId = params.instanceId;
+                    const ws = await this.authorizeHeadlessLogAccess(span, user, instanceId, res);
+                    if (!ws) {
+                        return;
+                    }
+                    const { workspace, instance } = ws;
+
+                    const logCtx = { userId: user.id, instanceId, workspaceId: workspace!.id };
+                    log.debug(logCtx, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX);
+
+                    try {
+                        const taskId = params.taskId;
+                        const downloadUrl = await this.headlessLogService.getHeadlessLogDownloadUrl(
+                            user.id,
+                            instance,
+                            workspace.ownerId,
+                            taskId,
+                        );
+                        res.send(downloadUrl); // cmp. headless_log_download.go
+                    } catch (err) {
+                        log.error(logCtx, "error retrieving headless log download URL", err);
+                        res.status(500);
+                    }
+                } catch (e) {
+                    TraceContext.setError({ span }, e);
+                    throw e;
+                } finally {
+                    span.finish();
                 }
             }),
         ]);

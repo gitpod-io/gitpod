@@ -28,8 +28,13 @@ echo "Use node pool index $NODE_POOL_INDEX"
 LICENSE=$(cat /tmp/license)
 # default, no, we do not add feature flags, file is empty
 DEFAULT_FEATURE_FLAGS=$(cat /tmp/defaultFeatureFlags)
-
-
+# if payment is configured: Append the YAML objects
+if [[ -f "/tmp/payment" ]] ; then
+   echo "found /tmp/payment, appending to k8s.yaml now"
+   # do not make any assumptions about new lines
+   printf \\n'---'\\n >> k8s.yaml
+   cat "/tmp/payment" >> k8s.yaml
+fi
 
 # count YAML like lines in the k8s manifest file
 MATCHES="$(grep -c -- --- k8s.yaml)"
@@ -49,6 +54,18 @@ while [ "$documentIndex" -le "$DOCS" ]; do
    if [[ "$SIZE" -ne "0" ]] && [[ "$NAME" == "registry-facade" ]] && [[ "$KIND" == "DaemonSet" ]] ; then
       echo "setting $NAME to $REG_DAEMON_PORT"
       yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].ports.[0].hostPort "$REG_DAEMON_PORT"
+      echo "setting $NAME probe period to 120s"
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].livenessProbe.periodSeconds 120
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].livenessProbe.initialDelaySeconds 15
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].readinessProbe.periodSeconds 120
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].readinessProbe.initialDelaySeconds 15
+   fi
+   if [[ "$NAME" == "blobserve" ]] && [[ "$KIND" == "Deployment" ]] ; then
+      echo "setting $NAME probe period to 120s"
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].livenessProbe.periodSeconds 120
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].livenessProbe.initialDelaySeconds 15
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].readinessProbe.periodSeconds 120
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].livenessProbe.initialDelaySeconds 15
    fi
    if [[ "$SIZE" -ne "0" ]] && [[ "$NAME" == "ws-daemon" ]] && [[ "$KIND" == "DaemonSet" ]] ; then
       echo "setting $NAME to $WS_DAEMON_PORT"
@@ -379,9 +396,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
    #    # merge base into k8s.yaml
    #    yq m -x -i -d "$documentIndex" k8s.yaml /tmp/"$NAME"-"$KIND".yaml
    # fi
-
-   # TODO: integrate with chargebees
-   # won't fix now, use Helm
 
    documentIndex=$((documentIndex + 1))
 done

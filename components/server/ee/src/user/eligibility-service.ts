@@ -5,9 +5,15 @@
  */
 
 import { inject, injectable } from "inversify";
-import { TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { TeamDB, TeamSubscription2DB, TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { TokenProvider } from "../../../src/user/token-provider";
-import { User, WorkspaceTimeoutDuration, WorkspaceInstance, WORKSPACE_TIMEOUT_DEFAULT_LONG, WORKSPACE_TIMEOUT_DEFAULT_SHORT } from "@gitpod/gitpod-protocol";
+import {
+    User,
+    WorkspaceTimeoutDuration,
+    WorkspaceInstance,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+} from "@gitpod/gitpod-protocol";
 import { RemainingHours } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Plans, MAX_PARALLEL_WORKSPACES } from "@gitpod/gitpod-protocol/lib/plans";
@@ -44,11 +50,13 @@ export interface GitHubEducationPack {
 export class EligibilityService {
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
+    @inject(TeamDB) protected readonly teamDb: TeamDB;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
     @inject(EMailDomainService) protected readonly domainService: EMailDomainService;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(AccountStatementProvider) protected readonly accountStatementProvider: AccountStatementProvider;
     @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
+    @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
 
     /**
      * Whether the given user is recognized as a student within Gitpod
@@ -141,7 +149,7 @@ export class EligibilityService {
 
         const hasHitParallelWorkspaceLimit = async (): Promise<HitParallelWorkspaceLimit | undefined> => {
             const max = await this.getMaxParallelWorkspaces(user);
-            const instances = (await runningInstances).filter((i) => i.status.phase !== "unknown");
+            const instances = (await runningInstances).filter((i) => i.status.phase !== "preparing");
             const current = instances.length; // >= parallelWorkspaceAllowance;
             if (current >= max) {
                 return {
@@ -286,14 +294,9 @@ export class EligibilityService {
             user,
             new Date().toISOString(),
         );
-        const eligblePlans = [
-            Plans.PROFESSIONAL_EUR,
-            Plans.PROFESSIONAL_USD,
-            Plans.TEAM_PROFESSIONAL_EUR,
-            Plans.TEAM_PROFESSIONAL_USD,
-        ].map((p) => p.chargebeeId);
+        const eligiblePlans = [Plans.TEAM_PROFESSIONAL_EUR, Plans.TEAM_PROFESSIONAL_USD].map((p) => p.chargebeeId);
 
-        const relevantSubscriptions = subscriptions.filter((s) => eligblePlans.includes(s.planId!));
+        const relevantSubscriptions = subscriptions.filter((s) => eligiblePlans.includes(s.planId!));
         if (relevantSubscriptions.length === 0) {
             // user has no subscription that grants "more resources"
             return false;
@@ -302,6 +305,17 @@ export class EligibilityService {
         // some TeamSubscriptions are marked with 'excludeFromMoreResources' to convey that those are _not_ receiving more resources
         const excludeFromMoreResources = await Promise.all(
             relevantSubscriptions.map(async (s): Promise<boolean> => {
+                if (s.teamMembershipId) {
+                    const team = await this.teamDb.findTeamByMembershipId(s.teamMembershipId);
+                    if (!team) {
+                        return true;
+                    }
+                    const ts2 = await this.teamSubscription2Db.findForTeam(team.id, new Date().toISOString());
+                    if (!ts2) {
+                        return true;
+                    }
+                    return ts2.excludeFromMoreResources;
+                }
                 if (!s.teamSubscriptionSlotId) {
                     return false;
                 }

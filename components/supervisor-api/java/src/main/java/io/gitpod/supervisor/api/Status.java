@@ -1455,7 +1455,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setOk(boolean value) {
-        
+
         ok_ = value;
         onChanged();
         return this;
@@ -1465,7 +1465,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearOk() {
-        
+
         ok_ = false;
         onChanged();
         return this;
@@ -1966,7 +1966,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setWait(boolean value) {
-        
+
         wait_ = value;
         onChanged();
         return this;
@@ -1981,7 +1981,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearWait() {
-        
+
         wait_ = false;
         onChanged();
         return this;
@@ -2332,7 +2332,7 @@ public final class Status {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           link_ = s;
@@ -2348,7 +2348,7 @@ public final class Status {
           getLinkBytes() {
         java.lang.Object ref = link_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           link_ = b;
@@ -2370,7 +2370,7 @@ public final class Status {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           label_ = s;
@@ -2386,7 +2386,7 @@ public final class Status {
           getLabelBytes() {
         java.lang.Object ref = label_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           label_ = b;
@@ -2408,7 +2408,7 @@ public final class Status {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           clientID_ = s;
@@ -2424,7 +2424,7 @@ public final class Status {
           getClientIDBytes() {
         java.lang.Object ref = clientID_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           clientID_ = b;
@@ -2446,7 +2446,7 @@ public final class Status {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.protobuf.ByteString bs = 
+          com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           kind_ = s;
@@ -2462,7 +2462,7 @@ public final class Status {
           getKindBytes() {
         java.lang.Object ref = kind_;
         if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           kind_ = b;
@@ -2850,7 +2850,7 @@ public final class Status {
             getLinkBytes() {
           java.lang.Object ref = link_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             link_ = b;
@@ -2869,7 +2869,7 @@ public final class Status {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           link_ = value;
           onChanged();
           return this;
@@ -2879,7 +2879,7 @@ public final class Status {
          * @return This builder for chaining.
          */
         public Builder clearLink() {
-          
+
           link_ = getDefaultInstance().getLink();
           onChanged();
           return this;
@@ -2895,7 +2895,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           link_ = value;
           onChanged();
           return this;
@@ -2926,7 +2926,7 @@ public final class Status {
             getLabelBytes() {
           java.lang.Object ref = label_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             label_ = b;
@@ -2945,7 +2945,7 @@ public final class Status {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           label_ = value;
           onChanged();
           return this;
@@ -2955,7 +2955,7 @@ public final class Status {
          * @return This builder for chaining.
          */
         public Builder clearLabel() {
-          
+
           label_ = getDefaultInstance().getLabel();
           onChanged();
           return this;
@@ -2971,7 +2971,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           label_ = value;
           onChanged();
           return this;
@@ -3002,7 +3002,7 @@ public final class Status {
             getClientIDBytes() {
           java.lang.Object ref = clientID_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             clientID_ = b;
@@ -3021,7 +3021,7 @@ public final class Status {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           clientID_ = value;
           onChanged();
           return this;
@@ -3031,7 +3031,7 @@ public final class Status {
          * @return This builder for chaining.
          */
         public Builder clearClientID() {
-          
+
           clientID_ = getDefaultInstance().getClientID();
           onChanged();
           return this;
@@ -3047,7 +3047,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           clientID_ = value;
           onChanged();
           return this;
@@ -3078,7 +3078,7 @@ public final class Status {
             getKindBytes() {
           java.lang.Object ref = kind_;
           if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString b =
                 com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             kind_ = b;
@@ -3097,7 +3097,7 @@ public final class Status {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           kind_ = value;
           onChanged();
           return this;
@@ -3107,7 +3107,7 @@ public final class Status {
          * @return This builder for chaining.
          */
         public Builder clearKind() {
-          
+
           kind_ = getDefaultInstance().getKind();
           onChanged();
           return this;
@@ -3123,7 +3123,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           kind_ = value;
           onChanged();
           return this;
@@ -3566,7 +3566,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setOk(boolean value) {
-        
+
         ok_ = value;
         onChanged();
         return this;
@@ -3576,7 +3576,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearOk() {
-        
+
         ok_ = false;
         onChanged();
         return this;
@@ -3669,7 +3669,7 @@ public final class Status {
        * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
        */
       public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder getDesktopBuilder() {
-        
+
         onChanged();
         return getDesktopFieldBuilder().getBuilder();
       }
@@ -3688,7 +3688,7 @@ public final class Status {
        * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder> 
+          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder>
           getDesktopFieldBuilder() {
         if (desktopBuilder_ == null) {
           desktopBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -4196,7 +4196,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setWait(boolean value) {
-        
+
         wait_ = value;
         onChanged();
         return this;
@@ -4211,7 +4211,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearWait() {
-        
+
         wait_ = false;
         onChanged();
         return this;
@@ -4777,7 +4777,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setAvailable(boolean value) {
-        
+
         available_ = value;
         onChanged();
         return this;
@@ -4791,7 +4791,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearAvailable() {
-        
+
         available_ = false;
         onChanged();
         return this;
@@ -4819,7 +4819,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setSourceValue(int value) {
-        
+
         source_ = value;
         onChanged();
         return this;
@@ -4851,7 +4851,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         source_ = value.getNumber();
         onChanged();
         return this;
@@ -4865,7 +4865,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearSource() {
-        
+
         source_ = 0;
         onChanged();
         return this;
@@ -5766,7 +5766,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setCanaryAvailable(boolean value) {
-        
+
         canaryAvailable_ = value;
         onChanged();
         return this;
@@ -5776,7 +5776,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearCanaryAvailable() {
-        
+
         canaryAvailable_ = false;
         onChanged();
         return this;
@@ -6277,7 +6277,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setObserve(boolean value) {
-        
+
         observe_ = value;
         onChanged();
         return this;
@@ -6292,7 +6292,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearObserve() {
-        
+
         observe_ = false;
         onChanged();
         return this;
@@ -6357,7 +6357,7 @@ public final class Status {
     /**
      * <code>repeated .supervisor.PortsStatus ports = 1;</code>
      */
-    java.util.List<io.gitpod.supervisor.api.Status.PortsStatus> 
+    java.util.List<io.gitpod.supervisor.api.Status.PortsStatus>
         getPortsList();
     /**
      * <code>repeated .supervisor.PortsStatus ports = 1;</code>
@@ -6370,7 +6370,7 @@ public final class Status {
     /**
      * <code>repeated .supervisor.PortsStatus ports = 1;</code>
      */
-    java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder> 
+    java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder>
         getPortsOrBuilderList();
     /**
      * <code>repeated .supervisor.PortsStatus ports = 1;</code>
@@ -6484,7 +6484,7 @@ public final class Status {
      * <code>repeated .supervisor.PortsStatus ports = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder> 
+    public java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder>
         getPortsOrBuilderList() {
       return ports_;
     }
@@ -6815,7 +6815,7 @@ public final class Status {
               portsBuilder_ = null;
               ports_ = other.ports_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              portsBuilder_ = 
+              portsBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getPortsFieldBuilder() : null;
             } else {
@@ -7048,7 +7048,7 @@ public final class Status {
       /**
        * <code>repeated .supervisor.PortsStatus ports = 1;</code>
        */
-      public java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder> 
+      public java.util.List<? extends io.gitpod.supervisor.api.Status.PortsStatusOrBuilder>
            getPortsOrBuilderList() {
         if (portsBuilder_ != null) {
           return portsBuilder_.getMessageOrBuilderList();
@@ -7074,12 +7074,12 @@ public final class Status {
       /**
        * <code>repeated .supervisor.PortsStatus ports = 1;</code>
        */
-      public java.util.List<io.gitpod.supervisor.api.Status.PortsStatus.Builder> 
+      public java.util.List<io.gitpod.supervisor.api.Status.PortsStatus.Builder>
            getPortsBuilderList() {
         return getPortsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.PortsStatus, io.gitpod.supervisor.api.Status.PortsStatus.Builder, io.gitpod.supervisor.api.Status.PortsStatusOrBuilder> 
+          io.gitpod.supervisor.api.Status.PortsStatus, io.gitpod.supervisor.api.Status.PortsStatus.Builder, io.gitpod.supervisor.api.Status.PortsStatusOrBuilder>
           getPortsFieldBuilder() {
         if (portsBuilder_ == null) {
           portsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -7350,7 +7350,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         url_ = s;
@@ -7370,7 +7370,7 @@ public final class Status {
         getUrlBytes() {
       java.lang.Object ref = url_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         url_ = b;
@@ -7763,7 +7763,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setVisibilityValue(int value) {
-        
+
         visibility_ = value;
         onChanged();
         return this;
@@ -7795,7 +7795,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         visibility_ = value.getNumber();
         onChanged();
         return this;
@@ -7809,7 +7809,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearVisibility() {
-        
+
         visibility_ = 0;
         onChanged();
         return this;
@@ -7848,7 +7848,7 @@ public final class Status {
           getUrlBytes() {
         java.lang.Object ref = url_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           url_ = b;
@@ -7871,7 +7871,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         url_ = value;
         onChanged();
         return this;
@@ -7885,7 +7885,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearUrl() {
-        
+
         url_ = getDefaultInstance().getUrl();
         onChanged();
         return this;
@@ -7905,7 +7905,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         url_ = value;
         onChanged();
         return this;
@@ -7933,7 +7933,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setOnExposedValue(int value) {
-        
+
         onExposed_ = value;
         onChanged();
         return this;
@@ -7965,7 +7965,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         onExposed_ = value.getNumber();
         onChanged();
         return this;
@@ -7979,7 +7979,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearOnExposed() {
-        
+
         onExposed_ = 0;
         onChanged();
         return this;
@@ -8293,7 +8293,7 @@ public final class Status {
           java.lang.String, java.lang.Integer> defaultEntry =
               com.google.protobuf.MapEntry
               .<java.lang.String, java.lang.Integer>newDefaultInstance(
-                  io.gitpod.supervisor.api.Status.internal_static_supervisor_TunneledPortInfo_ClientsEntry_descriptor, 
+                  io.gitpod.supervisor.api.Status.internal_static_supervisor_TunneledPortInfo_ClientsEntry_descriptor,
                   com.google.protobuf.WireFormat.FieldType.STRING,
                   "",
                   com.google.protobuf.WireFormat.FieldType.UINT32,
@@ -8776,7 +8776,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setTargetPort(int value) {
-        
+
         targetPort_ = value;
         onChanged();
         return this;
@@ -8790,7 +8790,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearTargetPort() {
-        
+
         targetPort_ = 0;
         onChanged();
         return this;
@@ -8820,7 +8820,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setVisibilityValue(int value) {
-        
+
         visibility_ = value;
         onChanged();
         return this;
@@ -8854,7 +8854,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         visibility_ = value.getNumber();
         onChanged();
         return this;
@@ -8869,7 +8869,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearVisibility() {
-        
+
         visibility_ = 0;
         onChanged();
         return this;
@@ -9011,7 +9011,7 @@ public final class Status {
           java.lang.String key,
           int value) {
         if (key == null) { throw new NullPointerException("map key"); }
-        
+
         internalGetMutableClients().getMutableMap()
             .put(key, value);
         return this;
@@ -9525,7 +9525,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         description_ = s;
@@ -9545,7 +9545,7 @@ public final class Status {
         getDescriptionBytes() {
       java.lang.Object ref = description_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         description_ = b;
@@ -9571,7 +9571,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         name_ = s;
@@ -9591,7 +9591,7 @@ public final class Status {
         getNameBytes() {
       java.lang.Object ref = name_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         name_ = b;
@@ -10062,7 +10062,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setLocalPort(int value) {
-        
+
         localPort_ = value;
         onChanged();
         return this;
@@ -10080,7 +10080,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearLocalPort() {
-        
+
         localPort_ = 0;
         onChanged();
         return this;
@@ -10109,7 +10109,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setServed(boolean value) {
-        
+
         served_ = value;
         onChanged();
         return this;
@@ -10123,7 +10123,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearServed() {
-        
+
         served_ = false;
         onChanged();
         return this;
@@ -10251,7 +10251,7 @@ public final class Status {
        * <code>.supervisor.ExposedPortInfo exposed = 5;</code>
        */
       public io.gitpod.supervisor.api.Status.ExposedPortInfo.Builder getExposedBuilder() {
-        
+
         onChanged();
         return getExposedFieldBuilder().getBuilder();
       }
@@ -10280,7 +10280,7 @@ public final class Status {
        * <code>.supervisor.ExposedPortInfo exposed = 5;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.ExposedPortInfo, io.gitpod.supervisor.api.Status.ExposedPortInfo.Builder, io.gitpod.supervisor.api.Status.ExposedPortInfoOrBuilder> 
+          io.gitpod.supervisor.api.Status.ExposedPortInfo, io.gitpod.supervisor.api.Status.ExposedPortInfo.Builder, io.gitpod.supervisor.api.Status.ExposedPortInfoOrBuilder>
           getExposedFieldBuilder() {
         if (exposedBuilder_ == null) {
           exposedBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -10315,7 +10315,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setAutoExposureValue(int value) {
-        
+
         autoExposure_ = value;
         onChanged();
         return this;
@@ -10347,7 +10347,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         autoExposure_ = value.getNumber();
         onChanged();
         return this;
@@ -10361,7 +10361,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearAutoExposure() {
-        
+
         autoExposure_ = 0;
         onChanged();
         return this;
@@ -10489,7 +10489,7 @@ public final class Status {
        * <code>.supervisor.TunneledPortInfo tunneled = 6;</code>
        */
       public io.gitpod.supervisor.api.Status.TunneledPortInfo.Builder getTunneledBuilder() {
-        
+
         onChanged();
         return getTunneledFieldBuilder().getBuilder();
       }
@@ -10518,7 +10518,7 @@ public final class Status {
        * <code>.supervisor.TunneledPortInfo tunneled = 6;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.TunneledPortInfo, io.gitpod.supervisor.api.Status.TunneledPortInfo.Builder, io.gitpod.supervisor.api.Status.TunneledPortInfoOrBuilder> 
+          io.gitpod.supervisor.api.Status.TunneledPortInfo, io.gitpod.supervisor.api.Status.TunneledPortInfo.Builder, io.gitpod.supervisor.api.Status.TunneledPortInfoOrBuilder>
           getTunneledFieldBuilder() {
         if (tunneledBuilder_ == null) {
           tunneledBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -10564,7 +10564,7 @@ public final class Status {
           getDescriptionBytes() {
         java.lang.Object ref = description_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           description_ = b;
@@ -10587,7 +10587,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         description_ = value;
         onChanged();
         return this;
@@ -10601,7 +10601,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearDescription() {
-        
+
         description_ = getDefaultInstance().getDescription();
         onChanged();
         return this;
@@ -10621,7 +10621,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         description_ = value;
         onChanged();
         return this;
@@ -10660,7 +10660,7 @@ public final class Status {
           getNameBytes() {
         java.lang.Object ref = name_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           name_ = b;
@@ -10683,7 +10683,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         name_ = value;
         onChanged();
         return this;
@@ -10697,7 +10697,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearName() {
-        
+
         name_ = getDefaultInstance().getName();
         onChanged();
         return this;
@@ -10717,7 +10717,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         name_ = value;
         onChanged();
         return this;
@@ -11218,7 +11218,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setObserve(boolean value) {
-        
+
         observe_ = value;
         onChanged();
         return this;
@@ -11233,7 +11233,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearObserve() {
-        
+
         observe_ = false;
         onChanged();
         return this;
@@ -11298,7 +11298,7 @@ public final class Status {
     /**
      * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
      */
-    java.util.List<io.gitpod.supervisor.api.Status.TaskStatus> 
+    java.util.List<io.gitpod.supervisor.api.Status.TaskStatus>
         getTasksList();
     /**
      * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
@@ -11311,7 +11311,7 @@ public final class Status {
     /**
      * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
      */
-    java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder> 
+    java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder>
         getTasksOrBuilderList();
     /**
      * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
@@ -11425,7 +11425,7 @@ public final class Status {
      * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder> 
+    public java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder>
         getTasksOrBuilderList() {
       return tasks_;
     }
@@ -11756,7 +11756,7 @@ public final class Status {
               tasksBuilder_ = null;
               tasks_ = other.tasks_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              tasksBuilder_ = 
+              tasksBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getTasksFieldBuilder() : null;
             } else {
@@ -11989,7 +11989,7 @@ public final class Status {
       /**
        * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
        */
-      public java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder> 
+      public java.util.List<? extends io.gitpod.supervisor.api.Status.TaskStatusOrBuilder>
            getTasksOrBuilderList() {
         if (tasksBuilder_ != null) {
           return tasksBuilder_.getMessageOrBuilderList();
@@ -12015,12 +12015,12 @@ public final class Status {
       /**
        * <code>repeated .supervisor.TaskStatus tasks = 1;</code>
        */
-      public java.util.List<io.gitpod.supervisor.api.Status.TaskStatus.Builder> 
+      public java.util.List<io.gitpod.supervisor.api.Status.TaskStatus.Builder>
            getTasksBuilderList() {
         return getTasksFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.TaskStatus, io.gitpod.supervisor.api.Status.TaskStatus.Builder, io.gitpod.supervisor.api.Status.TaskStatusOrBuilder> 
+          io.gitpod.supervisor.api.Status.TaskStatus, io.gitpod.supervisor.api.Status.TaskStatus.Builder, io.gitpod.supervisor.api.Status.TaskStatusOrBuilder>
           getTasksFieldBuilder() {
         if (tasksBuilder_ == null) {
           tasksBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -12265,7 +12265,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         id_ = s;
@@ -12281,7 +12281,7 @@ public final class Status {
         getIdBytes() {
       java.lang.Object ref = id_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         id_ = b;
@@ -12322,7 +12322,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         terminal_ = s;
@@ -12338,7 +12338,7 @@ public final class Status {
         getTerminalBytes() {
       java.lang.Object ref = terminal_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         terminal_ = b;
@@ -12764,7 +12764,7 @@ public final class Status {
           getIdBytes() {
         java.lang.Object ref = id_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           id_ = b;
@@ -12783,7 +12783,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         id_ = value;
         onChanged();
         return this;
@@ -12793,7 +12793,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearId() {
-        
+
         id_ = getDefaultInstance().getId();
         onChanged();
         return this;
@@ -12809,7 +12809,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         id_ = value;
         onChanged();
         return this;
@@ -12829,7 +12829,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder setStateValue(int value) {
-        
+
         state_ = value;
         onChanged();
         return this;
@@ -12853,7 +12853,7 @@ public final class Status {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         state_ = value.getNumber();
         onChanged();
         return this;
@@ -12863,7 +12863,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearState() {
-        
+
         state_ = 0;
         onChanged();
         return this;
@@ -12894,7 +12894,7 @@ public final class Status {
           getTerminalBytes() {
         java.lang.Object ref = terminal_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           terminal_ = b;
@@ -12913,7 +12913,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         terminal_ = value;
         onChanged();
         return this;
@@ -12923,7 +12923,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearTerminal() {
-        
+
         terminal_ = getDefaultInstance().getTerminal();
         onChanged();
         return this;
@@ -12939,7 +12939,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         terminal_ = value;
         onChanged();
         return this;
@@ -13032,7 +13032,7 @@ public final class Status {
        * <code>.supervisor.TaskPresentation presentation = 4;</code>
        */
       public io.gitpod.supervisor.api.Status.TaskPresentation.Builder getPresentationBuilder() {
-        
+
         onChanged();
         return getPresentationFieldBuilder().getBuilder();
       }
@@ -13051,7 +13051,7 @@ public final class Status {
        * <code>.supervisor.TaskPresentation presentation = 4;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.gitpod.supervisor.api.Status.TaskPresentation, io.gitpod.supervisor.api.Status.TaskPresentation.Builder, io.gitpod.supervisor.api.Status.TaskPresentationOrBuilder> 
+          io.gitpod.supervisor.api.Status.TaskPresentation, io.gitpod.supervisor.api.Status.TaskPresentation.Builder, io.gitpod.supervisor.api.Status.TaskPresentationOrBuilder>
           getPresentationFieldBuilder() {
         if (presentationBuilder_ == null) {
           presentationBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -13268,7 +13268,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         name_ = s;
@@ -13284,7 +13284,7 @@ public final class Status {
         getNameBytes() {
       java.lang.Object ref = name_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         name_ = b;
@@ -13306,7 +13306,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         openIn_ = s;
@@ -13322,7 +13322,7 @@ public final class Status {
         getOpenInBytes() {
       java.lang.Object ref = openIn_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         openIn_ = b;
@@ -13344,7 +13344,7 @@ public final class Status {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         openMode_ = s;
@@ -13360,7 +13360,7 @@ public final class Status {
         getOpenModeBytes() {
       java.lang.Object ref = openMode_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         openMode_ = b;
@@ -13731,7 +13731,7 @@ public final class Status {
           getNameBytes() {
         java.lang.Object ref = name_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           name_ = b;
@@ -13750,7 +13750,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         name_ = value;
         onChanged();
         return this;
@@ -13760,7 +13760,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearName() {
-        
+
         name_ = getDefaultInstance().getName();
         onChanged();
         return this;
@@ -13776,7 +13776,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         name_ = value;
         onChanged();
         return this;
@@ -13807,7 +13807,7 @@ public final class Status {
           getOpenInBytes() {
         java.lang.Object ref = openIn_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           openIn_ = b;
@@ -13826,7 +13826,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         openIn_ = value;
         onChanged();
         return this;
@@ -13836,7 +13836,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearOpenIn() {
-        
+
         openIn_ = getDefaultInstance().getOpenIn();
         onChanged();
         return this;
@@ -13852,7 +13852,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         openIn_ = value;
         onChanged();
         return this;
@@ -13883,7 +13883,7 @@ public final class Status {
           getOpenModeBytes() {
         java.lang.Object ref = openMode_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           openMode_ = b;
@@ -13902,7 +13902,7 @@ public final class Status {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         openMode_ = value;
         onChanged();
         return this;
@@ -13912,7 +13912,7 @@ public final class Status {
        * @return This builder for chaining.
        */
       public Builder clearOpenMode() {
-        
+
         openMode_ = getDefaultInstance().getOpenMode();
         onChanged();
         return this;
@@ -13928,7 +13928,7 @@ public final class Status {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         openMode_ = value;
         onChanged();
         return this;
@@ -13986,101 +13986,2044 @@ public final class Status {
 
   }
 
+  public interface ResourcesStatuRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.ResourcesStatuRequest)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code supervisor.ResourcesStatuRequest}
+   */
+  public static final class ResourcesStatuRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.ResourcesStatuRequest)
+      ResourcesStatuRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ResourcesStatuRequest.newBuilder() to construct.
+    private ResourcesStatuRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ResourcesStatuRequest() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ResourcesStatuRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ResourcesStatuRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatuRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatuRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.Status.ResourcesStatuRequest.class, io.gitpod.supervisor.api.Status.ResourcesStatuRequest.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.Status.ResourcesStatuRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.Status.ResourcesStatuRequest other = (io.gitpod.supervisor.api.Status.ResourcesStatuRequest) obj;
+
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.Status.ResourcesStatuRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.ResourcesStatuRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.ResourcesStatuRequest)
+        io.gitpod.supervisor.api.Status.ResourcesStatuRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatuRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatuRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Status.ResourcesStatuRequest.class, io.gitpod.supervisor.api.Status.ResourcesStatuRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.Status.ResourcesStatuRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatuRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.ResourcesStatuRequest getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Status.ResourcesStatuRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.ResourcesStatuRequest build() {
+        io.gitpod.supervisor.api.Status.ResourcesStatuRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.ResourcesStatuRequest buildPartial() {
+        io.gitpod.supervisor.api.Status.ResourcesStatuRequest result = new io.gitpod.supervisor.api.Status.ResourcesStatuRequest(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.Status.ResourcesStatuRequest) {
+          return mergeFrom((io.gitpod.supervisor.api.Status.ResourcesStatuRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.Status.ResourcesStatuRequest other) {
+        if (other == io.gitpod.supervisor.api.Status.ResourcesStatuRequest.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.Status.ResourcesStatuRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.Status.ResourcesStatuRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.ResourcesStatuRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.ResourcesStatuRequest)
+    private static final io.gitpod.supervisor.api.Status.ResourcesStatuRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Status.ResourcesStatuRequest();
+    }
+
+    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ResourcesStatuRequest>
+        PARSER = new com.google.protobuf.AbstractParser<ResourcesStatuRequest>() {
+      @java.lang.Override
+      public ResourcesStatuRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ResourcesStatuRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ResourcesStatuRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ResourcesStatuRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Status.ResourcesStatuRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface ResourcesStatusResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.ResourcesStatusResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * Used memory and limit in bytes
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus memory = 1;</code>
+     * @return Whether the memory field is set.
+     */
+    boolean hasMemory();
+    /**
+     * <pre>
+     * Used memory and limit in bytes
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus memory = 1;</code>
+     * @return The memory.
+     */
+    io.gitpod.supervisor.api.Status.ResourceStatus getMemory();
+    /**
+     * <pre>
+     * Used memory and limit in bytes
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus memory = 1;</code>
+     */
+    io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder getMemoryOrBuilder();
+
+    /**
+     * <pre>
+     * Used CPU and limit in millicores.
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus cpu = 2;</code>
+     * @return Whether the cpu field is set.
+     */
+    boolean hasCpu();
+    /**
+     * <pre>
+     * Used CPU and limit in millicores.
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus cpu = 2;</code>
+     * @return The cpu.
+     */
+    io.gitpod.supervisor.api.Status.ResourceStatus getCpu();
+    /**
+     * <pre>
+     * Used CPU and limit in millicores.
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus cpu = 2;</code>
+     */
+    io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder getCpuOrBuilder();
+  }
+  /**
+   * Protobuf type {@code supervisor.ResourcesStatusResponse}
+   */
+  public static final class ResourcesStatusResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.ResourcesStatusResponse)
+      ResourcesStatusResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ResourcesStatusResponse.newBuilder() to construct.
+    private ResourcesStatusResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ResourcesStatusResponse() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ResourcesStatusResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ResourcesStatusResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              io.gitpod.supervisor.api.Status.ResourceStatus.Builder subBuilder = null;
+              if (memory_ != null) {
+                subBuilder = memory_.toBuilder();
+              }
+              memory_ = input.readMessage(io.gitpod.supervisor.api.Status.ResourceStatus.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(memory_);
+                memory_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            case 18: {
+              io.gitpod.supervisor.api.Status.ResourceStatus.Builder subBuilder = null;
+              if (cpu_ != null) {
+                subBuilder = cpu_.toBuilder();
+              }
+              cpu_ = input.readMessage(io.gitpod.supervisor.api.Status.ResourceStatus.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(cpu_);
+                cpu_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatusResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatusResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.Status.ResourcesStatusResponse.class, io.gitpod.supervisor.api.Status.ResourcesStatusResponse.Builder.class);
+    }
+
+    public static final int MEMORY_FIELD_NUMBER = 1;
+    private io.gitpod.supervisor.api.Status.ResourceStatus memory_;
+    /**
+     * <pre>
+     * Used memory and limit in bytes
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus memory = 1;</code>
+     * @return Whether the memory field is set.
+     */
+    @java.lang.Override
+    public boolean hasMemory() {
+      return memory_ != null;
+    }
+    /**
+     * <pre>
+     * Used memory and limit in bytes
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus memory = 1;</code>
+     * @return The memory.
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Status.ResourceStatus getMemory() {
+      return memory_ == null ? io.gitpod.supervisor.api.Status.ResourceStatus.getDefaultInstance() : memory_;
+    }
+    /**
+     * <pre>
+     * Used memory and limit in bytes
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus memory = 1;</code>
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder getMemoryOrBuilder() {
+      return getMemory();
+    }
+
+    public static final int CPU_FIELD_NUMBER = 2;
+    private io.gitpod.supervisor.api.Status.ResourceStatus cpu_;
+    /**
+     * <pre>
+     * Used CPU and limit in millicores.
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus cpu = 2;</code>
+     * @return Whether the cpu field is set.
+     */
+    @java.lang.Override
+    public boolean hasCpu() {
+      return cpu_ != null;
+    }
+    /**
+     * <pre>
+     * Used CPU and limit in millicores.
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus cpu = 2;</code>
+     * @return The cpu.
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Status.ResourceStatus getCpu() {
+      return cpu_ == null ? io.gitpod.supervisor.api.Status.ResourceStatus.getDefaultInstance() : cpu_;
+    }
+    /**
+     * <pre>
+     * Used CPU and limit in millicores.
+     * </pre>
+     *
+     * <code>.supervisor.ResourceStatus cpu = 2;</code>
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder getCpuOrBuilder() {
+      return getCpu();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (memory_ != null) {
+        output.writeMessage(1, getMemory());
+      }
+      if (cpu_ != null) {
+        output.writeMessage(2, getCpu());
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (memory_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, getMemory());
+      }
+      if (cpu_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getCpu());
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.Status.ResourcesStatusResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.Status.ResourcesStatusResponse other = (io.gitpod.supervisor.api.Status.ResourcesStatusResponse) obj;
+
+      if (hasMemory() != other.hasMemory()) return false;
+      if (hasMemory()) {
+        if (!getMemory()
+            .equals(other.getMemory())) return false;
+      }
+      if (hasCpu() != other.hasCpu()) return false;
+      if (hasCpu()) {
+        if (!getCpu()
+            .equals(other.getCpu())) return false;
+      }
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasMemory()) {
+        hash = (37 * hash) + MEMORY_FIELD_NUMBER;
+        hash = (53 * hash) + getMemory().hashCode();
+      }
+      if (hasCpu()) {
+        hash = (37 * hash) + CPU_FIELD_NUMBER;
+        hash = (53 * hash) + getCpu().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.Status.ResourcesStatusResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.ResourcesStatusResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.ResourcesStatusResponse)
+        io.gitpod.supervisor.api.Status.ResourcesStatusResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatusResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatusResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Status.ResourcesStatusResponse.class, io.gitpod.supervisor.api.Status.ResourcesStatusResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.Status.ResourcesStatusResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        if (memoryBuilder_ == null) {
+          memory_ = null;
+        } else {
+          memory_ = null;
+          memoryBuilder_ = null;
+        }
+        if (cpuBuilder_ == null) {
+          cpu_ = null;
+        } else {
+          cpu_ = null;
+          cpuBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatusResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.ResourcesStatusResponse getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Status.ResourcesStatusResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.ResourcesStatusResponse build() {
+        io.gitpod.supervisor.api.Status.ResourcesStatusResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.ResourcesStatusResponse buildPartial() {
+        io.gitpod.supervisor.api.Status.ResourcesStatusResponse result = new io.gitpod.supervisor.api.Status.ResourcesStatusResponse(this);
+        if (memoryBuilder_ == null) {
+          result.memory_ = memory_;
+        } else {
+          result.memory_ = memoryBuilder_.build();
+        }
+        if (cpuBuilder_ == null) {
+          result.cpu_ = cpu_;
+        } else {
+          result.cpu_ = cpuBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.Status.ResourcesStatusResponse) {
+          return mergeFrom((io.gitpod.supervisor.api.Status.ResourcesStatusResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.Status.ResourcesStatusResponse other) {
+        if (other == io.gitpod.supervisor.api.Status.ResourcesStatusResponse.getDefaultInstance()) return this;
+        if (other.hasMemory()) {
+          mergeMemory(other.getMemory());
+        }
+        if (other.hasCpu()) {
+          mergeCpu(other.getCpu());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.Status.ResourcesStatusResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.Status.ResourcesStatusResponse) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private io.gitpod.supervisor.api.Status.ResourceStatus memory_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Status.ResourceStatus, io.gitpod.supervisor.api.Status.ResourceStatus.Builder, io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder> memoryBuilder_;
+      /**
+       * <pre>
+       * Used memory and limit in bytes
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus memory = 1;</code>
+       * @return Whether the memory field is set.
+       */
+      public boolean hasMemory() {
+        return memoryBuilder_ != null || memory_ != null;
+      }
+      /**
+       * <pre>
+       * Used memory and limit in bytes
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus memory = 1;</code>
+       * @return The memory.
+       */
+      public io.gitpod.supervisor.api.Status.ResourceStatus getMemory() {
+        if (memoryBuilder_ == null) {
+          return memory_ == null ? io.gitpod.supervisor.api.Status.ResourceStatus.getDefaultInstance() : memory_;
+        } else {
+          return memoryBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * Used memory and limit in bytes
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus memory = 1;</code>
+       */
+      public Builder setMemory(io.gitpod.supervisor.api.Status.ResourceStatus value) {
+        if (memoryBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          memory_ = value;
+          onChanged();
+        } else {
+          memoryBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Used memory and limit in bytes
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus memory = 1;</code>
+       */
+      public Builder setMemory(
+          io.gitpod.supervisor.api.Status.ResourceStatus.Builder builderForValue) {
+        if (memoryBuilder_ == null) {
+          memory_ = builderForValue.build();
+          onChanged();
+        } else {
+          memoryBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Used memory and limit in bytes
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus memory = 1;</code>
+       */
+      public Builder mergeMemory(io.gitpod.supervisor.api.Status.ResourceStatus value) {
+        if (memoryBuilder_ == null) {
+          if (memory_ != null) {
+            memory_ =
+              io.gitpod.supervisor.api.Status.ResourceStatus.newBuilder(memory_).mergeFrom(value).buildPartial();
+          } else {
+            memory_ = value;
+          }
+          onChanged();
+        } else {
+          memoryBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Used memory and limit in bytes
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus memory = 1;</code>
+       */
+      public Builder clearMemory() {
+        if (memoryBuilder_ == null) {
+          memory_ = null;
+          onChanged();
+        } else {
+          memory_ = null;
+          memoryBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Used memory and limit in bytes
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus memory = 1;</code>
+       */
+      public io.gitpod.supervisor.api.Status.ResourceStatus.Builder getMemoryBuilder() {
+
+        onChanged();
+        return getMemoryFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * Used memory and limit in bytes
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus memory = 1;</code>
+       */
+      public io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder getMemoryOrBuilder() {
+        if (memoryBuilder_ != null) {
+          return memoryBuilder_.getMessageOrBuilder();
+        } else {
+          return memory_ == null ?
+              io.gitpod.supervisor.api.Status.ResourceStatus.getDefaultInstance() : memory_;
+        }
+      }
+      /**
+       * <pre>
+       * Used memory and limit in bytes
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus memory = 1;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Status.ResourceStatus, io.gitpod.supervisor.api.Status.ResourceStatus.Builder, io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder>
+          getMemoryFieldBuilder() {
+        if (memoryBuilder_ == null) {
+          memoryBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.gitpod.supervisor.api.Status.ResourceStatus, io.gitpod.supervisor.api.Status.ResourceStatus.Builder, io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder>(
+                  getMemory(),
+                  getParentForChildren(),
+                  isClean());
+          memory_ = null;
+        }
+        return memoryBuilder_;
+      }
+
+      private io.gitpod.supervisor.api.Status.ResourceStatus cpu_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Status.ResourceStatus, io.gitpod.supervisor.api.Status.ResourceStatus.Builder, io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder> cpuBuilder_;
+      /**
+       * <pre>
+       * Used CPU and limit in millicores.
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus cpu = 2;</code>
+       * @return Whether the cpu field is set.
+       */
+      public boolean hasCpu() {
+        return cpuBuilder_ != null || cpu_ != null;
+      }
+      /**
+       * <pre>
+       * Used CPU and limit in millicores.
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus cpu = 2;</code>
+       * @return The cpu.
+       */
+      public io.gitpod.supervisor.api.Status.ResourceStatus getCpu() {
+        if (cpuBuilder_ == null) {
+          return cpu_ == null ? io.gitpod.supervisor.api.Status.ResourceStatus.getDefaultInstance() : cpu_;
+        } else {
+          return cpuBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * Used CPU and limit in millicores.
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus cpu = 2;</code>
+       */
+      public Builder setCpu(io.gitpod.supervisor.api.Status.ResourceStatus value) {
+        if (cpuBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          cpu_ = value;
+          onChanged();
+        } else {
+          cpuBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Used CPU and limit in millicores.
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus cpu = 2;</code>
+       */
+      public Builder setCpu(
+          io.gitpod.supervisor.api.Status.ResourceStatus.Builder builderForValue) {
+        if (cpuBuilder_ == null) {
+          cpu_ = builderForValue.build();
+          onChanged();
+        } else {
+          cpuBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Used CPU and limit in millicores.
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus cpu = 2;</code>
+       */
+      public Builder mergeCpu(io.gitpod.supervisor.api.Status.ResourceStatus value) {
+        if (cpuBuilder_ == null) {
+          if (cpu_ != null) {
+            cpu_ =
+              io.gitpod.supervisor.api.Status.ResourceStatus.newBuilder(cpu_).mergeFrom(value).buildPartial();
+          } else {
+            cpu_ = value;
+          }
+          onChanged();
+        } else {
+          cpuBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Used CPU and limit in millicores.
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus cpu = 2;</code>
+       */
+      public Builder clearCpu() {
+        if (cpuBuilder_ == null) {
+          cpu_ = null;
+          onChanged();
+        } else {
+          cpu_ = null;
+          cpuBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Used CPU and limit in millicores.
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus cpu = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Status.ResourceStatus.Builder getCpuBuilder() {
+
+        onChanged();
+        return getCpuFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * Used CPU and limit in millicores.
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus cpu = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder getCpuOrBuilder() {
+        if (cpuBuilder_ != null) {
+          return cpuBuilder_.getMessageOrBuilder();
+        } else {
+          return cpu_ == null ?
+              io.gitpod.supervisor.api.Status.ResourceStatus.getDefaultInstance() : cpu_;
+        }
+      }
+      /**
+       * <pre>
+       * Used CPU and limit in millicores.
+       * </pre>
+       *
+       * <code>.supervisor.ResourceStatus cpu = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Status.ResourceStatus, io.gitpod.supervisor.api.Status.ResourceStatus.Builder, io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder>
+          getCpuFieldBuilder() {
+        if (cpuBuilder_ == null) {
+          cpuBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.gitpod.supervisor.api.Status.ResourceStatus, io.gitpod.supervisor.api.Status.ResourceStatus.Builder, io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder>(
+                  getCpu(),
+                  getParentForChildren(),
+                  isClean());
+          cpu_ = null;
+        }
+        return cpuBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.ResourcesStatusResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.ResourcesStatusResponse)
+    private static final io.gitpod.supervisor.api.Status.ResourcesStatusResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Status.ResourcesStatusResponse();
+    }
+
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ResourcesStatusResponse>
+        PARSER = new com.google.protobuf.AbstractParser<ResourcesStatusResponse>() {
+      @java.lang.Override
+      public ResourcesStatusResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ResourcesStatusResponse(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ResourcesStatusResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ResourcesStatusResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Status.ResourcesStatusResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface ResourceStatusOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.ResourceStatus)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int64 used = 1;</code>
+     * @return The used.
+     */
+    long getUsed();
+
+    /**
+     * <code>int64 limit = 2;</code>
+     * @return The limit.
+     */
+    long getLimit();
+  }
+  /**
+   * Protobuf type {@code supervisor.ResourceStatus}
+   */
+  public static final class ResourceStatus extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.ResourceStatus)
+      ResourceStatusOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ResourceStatus.newBuilder() to construct.
+    private ResourceStatus(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ResourceStatus() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ResourceStatus();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ResourceStatus(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              used_ = input.readInt64();
+              break;
+            }
+            case 16: {
+
+              limit_ = input.readInt64();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourceStatus_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourceStatus_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.Status.ResourceStatus.class, io.gitpod.supervisor.api.Status.ResourceStatus.Builder.class);
+    }
+
+    public static final int USED_FIELD_NUMBER = 1;
+    private long used_;
+    /**
+     * <code>int64 used = 1;</code>
+     * @return The used.
+     */
+    @java.lang.Override
+    public long getUsed() {
+      return used_;
+    }
+
+    public static final int LIMIT_FIELD_NUMBER = 2;
+    private long limit_;
+    /**
+     * <code>int64 limit = 2;</code>
+     * @return The limit.
+     */
+    @java.lang.Override
+    public long getLimit() {
+      return limit_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (used_ != 0L) {
+        output.writeInt64(1, used_);
+      }
+      if (limit_ != 0L) {
+        output.writeInt64(2, limit_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (used_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, used_);
+      }
+      if (limit_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(2, limit_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.Status.ResourceStatus)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.Status.ResourceStatus other = (io.gitpod.supervisor.api.Status.ResourceStatus) obj;
+
+      if (getUsed()
+          != other.getUsed()) return false;
+      if (getLimit()
+          != other.getLimit()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + USED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getUsed());
+      hash = (37 * hash) + LIMIT_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getLimit());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Status.ResourceStatus parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.Status.ResourceStatus prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.ResourceStatus}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.ResourceStatus)
+        io.gitpod.supervisor.api.Status.ResourceStatusOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourceStatus_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourceStatus_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Status.ResourceStatus.class, io.gitpod.supervisor.api.Status.ResourceStatus.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.Status.ResourceStatus.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        used_ = 0L;
+
+        limit_ = 0L;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourceStatus_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.ResourceStatus getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Status.ResourceStatus.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.ResourceStatus build() {
+        io.gitpod.supervisor.api.Status.ResourceStatus result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.ResourceStatus buildPartial() {
+        io.gitpod.supervisor.api.Status.ResourceStatus result = new io.gitpod.supervisor.api.Status.ResourceStatus(this);
+        result.used_ = used_;
+        result.limit_ = limit_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.Status.ResourceStatus) {
+          return mergeFrom((io.gitpod.supervisor.api.Status.ResourceStatus)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.Status.ResourceStatus other) {
+        if (other == io.gitpod.supervisor.api.Status.ResourceStatus.getDefaultInstance()) return this;
+        if (other.getUsed() != 0L) {
+          setUsed(other.getUsed());
+        }
+        if (other.getLimit() != 0L) {
+          setLimit(other.getLimit());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.Status.ResourceStatus parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.Status.ResourceStatus) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private long used_ ;
+      /**
+       * <code>int64 used = 1;</code>
+       * @return The used.
+       */
+      @java.lang.Override
+      public long getUsed() {
+        return used_;
+      }
+      /**
+       * <code>int64 used = 1;</code>
+       * @param value The used to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUsed(long value) {
+
+        used_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 used = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUsed() {
+
+        used_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long limit_ ;
+      /**
+       * <code>int64 limit = 2;</code>
+       * @return The limit.
+       */
+      @java.lang.Override
+      public long getLimit() {
+        return limit_;
+      }
+      /**
+       * <code>int64 limit = 2;</code>
+       * @param value The limit to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLimit(long value) {
+
+        limit_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 limit = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLimit() {
+
+        limit_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.ResourceStatus)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.ResourceStatus)
+    private static final io.gitpod.supervisor.api.Status.ResourceStatus DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Status.ResourceStatus();
+    }
+
+    public static io.gitpod.supervisor.api.Status.ResourceStatus getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ResourceStatus>
+        PARSER = new com.google.protobuf.AbstractParser<ResourceStatus>() {
+      @java.lang.Override
+      public ResourceStatus parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ResourceStatus(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ResourceStatus> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ResourceStatus> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Status.ResourceStatus getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SupervisorStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SupervisorStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_SupervisorStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_SupervisorStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_IDEStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_IDEStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_IDEStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_IDEStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_IDEStatusResponse_DesktopStatus_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_IDEStatusResponse_DesktopStatus_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ContentStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ContentStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ContentStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ContentStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_BackupStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_BackupStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_BackupStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_BackupStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_PortsStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_PortsStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_PortsStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_PortsStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ExposedPortInfo_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ExposedPortInfo_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TunneledPortInfo_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TunneledPortInfo_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TunneledPortInfo_ClientsEntry_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TunneledPortInfo_ClientsEntry_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_PortsStatus_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_PortsStatus_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TasksStatusRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TasksStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TasksStatusResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TasksStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TaskStatus_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TaskStatus_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_TaskPresentation_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TaskPresentation_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_ResourcesStatuRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_ResourcesStatuRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_ResourcesStatusResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_ResourcesStatusResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_ResourceStatus_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_ResourceStatus_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -14128,38 +16071,46 @@ public final class Status {
       "\0222\n\014presentation\030\004 \001(\0132\034.supervisor.Task" +
       "Presentation\"D\n\020TaskPresentation\022\014\n\004name" +
       "\030\001 \001(\t\022\017\n\007open_in\030\002 \001(\t\022\021\n\topen_mode\030\003 \001" +
-      "(\t*C\n\rContentSource\022\016\n\nfrom_other\020\000\022\017\n\013f" +
-      "rom_backup\020\001\022\021\n\rfrom_prebuild\020\002*?\n\016PortV" +
-      "isibility\022\026\n\022private_visibility\020\000\022\025\n\021pub" +
-      "lic_visibility\020\001*e\n\023OnPortExposedAction\022" +
-      "\n\n\006ignore\020\000\022\020\n\014open_browser\020\001\022\020\n\014open_pr" +
-      "eview\020\002\022\n\n\006notify\020\003\022\022\n\016notify_private\020\004*" +
-      "9\n\020PortAutoExposure\022\n\n\006trying\020\000\022\r\n\tsucce" +
-      "eded\020\001\022\n\n\006failed\020\002*1\n\tTaskState\022\013\n\007openi" +
-      "ng\020\000\022\013\n\007running\020\001\022\n\n\006closed\020\0022\313\006\n\rStatus" +
-      "Service\022|\n\020SupervisorStatus\022#.supervisor" +
-      ".SupervisorStatusRequest\032$.supervisor.Su" +
-      "pervisorStatusResponse\"\035\202\323\344\223\002\027\022\025/v1/stat" +
-      "us/supervisor\022\203\001\n\tIDEStatus\022\034.supervisor" +
-      ".IDEStatusRequest\032\035.supervisor.IDEStatus" +
-      "Response\"9\202\323\344\223\0023\022\016/v1/status/ideZ!\022\037/v1/" +
-      "status/ide/wait/{wait=true}\022\227\001\n\rContentS" +
-      "tatus\022 .supervisor.ContentStatusRequest\032" +
-      "!.supervisor.ContentStatusResponse\"A\202\323\344\223" +
-      "\002;\022\022/v1/status/contentZ%\022#/v1/status/con" +
-      "tent/wait/{wait=true}\022l\n\014BackupStatus\022\037." +
-      "supervisor.BackupStatusRequest\032 .supervi" +
-      "sor.BackupStatusResponse\"\031\202\323\344\223\002\023\022\021/v1/st" +
-      "atus/backup\022\225\001\n\013PortsStatus\022\036.supervisor" +
-      ".PortsStatusRequest\032\037.supervisor.PortsSt" +
-      "atusResponse\"C\202\323\344\223\002=\022\020/v1/status/portsZ)" +
-      "\022\'/v1/status/ports/observe/{observe=true" +
-      "}0\001\022\225\001\n\013TasksStatus\022\036.supervisor.TasksSt" +
-      "atusRequest\032\037.supervisor.TasksStatusResp" +
-      "onse\"C\202\323\344\223\002=\022\020/v1/status/tasksZ)\022\'/v1/st" +
-      "atus/tasks/observe/{observe=true}0\001BF\n\030i" +
-      "o.gitpod.supervisor.apiZ*github.com/gitp" +
-      "od-io/gitpod/supervisor/apib\006proto3"
+      "(\t\"\027\n\025ResourcesStatuRequest\"n\n\027Resources" +
+      "StatusResponse\022*\n\006memory\030\001 \001(\0132\032.supervi" +
+      "sor.ResourceStatus\022\'\n\003cpu\030\002 \001(\0132\032.superv" +
+      "isor.ResourceStatus\"-\n\016ResourceStatus\022\014\n" +
+      "\004used\030\001 \001(\003\022\r\n\005limit\030\002 \001(\003*C\n\rContentSou" +
+      "rce\022\016\n\nfrom_other\020\000\022\017\n\013from_backup\020\001\022\021\n\r" +
+      "from_prebuild\020\002*?\n\016PortVisibility\022\026\n\022pri" +
+      "vate_visibility\020\000\022\025\n\021public_visibility\020\001" +
+      "*e\n\023OnPortExposedAction\022\n\n\006ignore\020\000\022\020\n\014o" +
+      "pen_browser\020\001\022\020\n\014open_preview\020\002\022\n\n\006notif" +
+      "y\020\003\022\022\n\016notify_private\020\004*9\n\020PortAutoExpos" +
+      "ure\022\n\n\006trying\020\000\022\r\n\tsucceeded\020\001\022\n\n\006failed" +
+      "\020\002*1\n\tTaskState\022\013\n\007opening\020\000\022\013\n\007running\020" +
+      "\001\022\n\n\006closed\020\0022\304\007\n\rStatusService\022|\n\020Super" +
+      "visorStatus\022#.supervisor.SupervisorStatu" +
+      "sRequest\032$.supervisor.SupervisorStatusRe" +
+      "sponse\"\035\202\323\344\223\002\027\022\025/v1/status/supervisor\022\203\001" +
+      "\n\tIDEStatus\022\034.supervisor.IDEStatusReques" +
+      "t\032\035.supervisor.IDEStatusResponse\"9\202\323\344\223\0023" +
+      "\022\016/v1/status/ideZ!\022\037/v1/status/ide/wait/" +
+      "{wait=true}\022\227\001\n\rContentStatus\022 .supervis" +
+      "or.ContentStatusRequest\032!.supervisor.Con" +
+      "tentStatusResponse\"A\202\323\344\223\002;\022\022/v1/status/c" +
+      "ontentZ%\022#/v1/status/content/wait/{wait=" +
+      "true}\022l\n\014BackupStatus\022\037.supervisor.Backu" +
+      "pStatusRequest\032 .supervisor.BackupStatus" +
+      "Response\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022\225\001\n\013" +
+      "PortsStatus\022\036.supervisor.PortsStatusRequ" +
+      "est\032\037.supervisor.PortsStatusResponse\"C\202\323" +
+      "\344\223\002=\022\020/v1/status/portsZ)\022\'/v1/status/por" +
+      "ts/observe/{observe=true}0\001\022\225\001\n\013TasksSta" +
+      "tus\022\036.supervisor.TasksStatusRequest\032\037.su" +
+      "pervisor.TasksStatusResponse\"C\202\323\344\223\002=\022\020/v" +
+      "1/status/tasksZ)\022\'/v1/status/tasks/obser" +
+      "ve/{observe=true}0\001\022w\n\017ResourcesStatus\022!" +
+      ".supervisor.ResourcesStatuRequest\032#.supe" +
+      "rvisor.ResourcesStatusResponse\"\034\202\323\344\223\002\026\022\024" +
+      "/v1/status/resourcesBF\n\030io.gitpod.superv" +
+      "isor.apiZ*github.com/gitpod-io/gitpod/su" +
+      "pervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -14281,6 +16232,24 @@ public final class Status {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_TaskPresentation_descriptor,
         new java.lang.String[] { "Name", "OpenIn", "OpenMode", });
+    internal_static_supervisor_ResourcesStatuRequest_descriptor =
+      getDescriptor().getMessageTypes().get(17);
+    internal_static_supervisor_ResourcesStatuRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_ResourcesStatuRequest_descriptor,
+        new java.lang.String[] { });
+    internal_static_supervisor_ResourcesStatusResponse_descriptor =
+      getDescriptor().getMessageTypes().get(18);
+    internal_static_supervisor_ResourcesStatusResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_ResourcesStatusResponse_descriptor,
+        new java.lang.String[] { "Memory", "Cpu", });
+    internal_static_supervisor_ResourceStatus_descriptor =
+      getDescriptor().getMessageTypes().get(19);
+    internal_static_supervisor_ResourceStatus_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_ResourceStatus_descriptor,
+        new java.lang.String[] { "Used", "Limit", });
     com.google.protobuf.ExtensionRegistry registry =
         com.google.protobuf.ExtensionRegistry.newInstance();
     registry.add(com.google.api.AnnotationsProto.http);

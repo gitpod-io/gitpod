@@ -60,8 +60,9 @@ func (e *EmptyInitializer) Run(ctx context.Context, mappings []archive.IDMapping
 type CompositeInitializer []Initializer
 
 // Run calls run on all child initializers
-func (e CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
-	_, ctx = opentracing.StartSpanFromContext(ctx, "CompositeInitializer.Run")
+func (e CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (_ csapi.WorkspaceInitSource, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "CompositeInitializer.Run")
+	defer tracing.FinishSpan(span, &err)
 	for _, init := range e {
 		_, err := init.Run(ctx, mappings)
 		if err != nil {
@@ -171,17 +172,23 @@ func newFileDownloadInitializer(loc string, req *csapi.FileDownloadInitializer) 
 // newFromBackupInitializer creates a backup restoration initializer for a request
 func newFromBackupInitializer(loc string, rs storage.DirectDownloader, req *csapi.FromBackupInitializer) (*fromBackupInitializer, error) {
 	return &fromBackupInitializer{
-		Location:      loc,
-		RemoteStorage: rs,
+		Location:           loc,
+		RemoteStorage:      rs,
+		FromVolumeSnapshot: req.FromVolumeSnapshot,
 	}, nil
 }
 
 type fromBackupInitializer struct {
-	Location      string
-	RemoteStorage storage.DirectDownloader
+	Location           string
+	RemoteStorage      storage.DirectDownloader
+	FromVolumeSnapshot bool
 }
 
 func (bi *fromBackupInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
+	if bi.FromVolumeSnapshot {
+		return csapi.WorkspaceInitFromBackup, nil
+	}
+
 	hasBackup, err := bi.RemoteStorage.Download(ctx, bi.Location, storage.DefaultBackup, mappings)
 	if !hasBackup {
 		return src, xerrors.Errorf("no backup found")
@@ -517,21 +524,24 @@ func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.W
 	return nil
 }
 
-func GetCheckoutLocationFromInitializer(init *csapi.WorkspaceInitializer) string {
+func GetCheckoutLocationsFromInitializer(init *csapi.WorkspaceInitializer) []string {
 	switch {
 	case init.GetGit() != nil:
-		return init.GetGit().CheckoutLocation
+		return []string{init.GetGit().CheckoutLocation}
 	case init.GetPrebuild() != nil && len(init.GetPrebuild().Git) > 0:
-		return init.GetPrebuild().Git[0].CheckoutLocation
-	case init.GetBackup() != nil:
-		return init.GetBackup().CheckoutLocation
-	case init.GetComposite() != nil:
-		for _, c := range init.GetComposite().Initializer {
-			loc := GetCheckoutLocationFromInitializer(c)
-			if loc != "" {
-				return loc
-			}
+		var result = make([]string, len(init.GetPrebuild().Git))
+		for i, c := range init.GetPrebuild().Git {
+			result[i] = c.CheckoutLocation
 		}
+		return result
+	case init.GetBackup() != nil:
+		return []string{init.GetBackup().CheckoutLocation}
+	case init.GetComposite() != nil:
+		var result []string
+		for _, c := range init.GetComposite().Initializer {
+			result = append(result, GetCheckoutLocationsFromInitializer(c)...)
+		}
+		return result
 	}
-	return ""
+	return nil
 }

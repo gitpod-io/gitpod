@@ -7,6 +7,7 @@ package server
 import (
 	"encoding/base64"
 	"fmt"
+	"path"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
@@ -73,7 +74,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	env := common.MergeEnv(
 		common.DefaultEnv(&ctx.Config),
 		common.DatabaseEnv(&ctx.Config),
-		common.TracingEnv(ctx),
+		common.WebappTracingEnv(ctx),
 		common.AnalyticsEnv(&ctx.Config),
 		common.MessageBusEnv(&ctx.Config),
 		[]corev1.EnvVar{
@@ -164,6 +165,73 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		env = append(env, envv...)
 	}
 
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.ChargebeeSecret != "" {
+			chargebeeSecret := cfg.WebApp.Server.ChargebeeSecret
+
+			volumes = append(volumes,
+				corev1.Volume{
+					Name: "chargebee-config",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: chargebeeSecret,
+						},
+					},
+				})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      "chargebee-config",
+				MountPath: chargebeeMountPath,
+				ReadOnly:  true,
+			})
+		}
+		return nil
+	})
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.StripeSecret != "" {
+			stripeSecret := cfg.WebApp.Server.StripeSecret
+
+			volumes = append(volumes,
+				corev1.Volume{
+					Name: "stripe-config",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: stripeSecret,
+						},
+					},
+				})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      "stripe-config",
+				MountPath: stripeMountPath,
+				ReadOnly:  true,
+			})
+		}
+		return nil
+	})
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
+			volumes = append(volumes,
+				corev1.Volume{
+					Name: githubAppCertSecret,
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: cfg.WebApp.Server.GithubApp.CertSecretName,
+						},
+					},
+				})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      githubAppCertSecret,
+				MountPath: path.Dir(cfg.WebApp.Server.GithubApp.CertPath),
+				ReadOnly:  true,
+			})
+		}
+		return nil
+	})
+
 	var podAntiAffinity *corev1.PodAntiAffinity
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.UsePodAntiAffinity {
@@ -215,7 +283,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						PriorityClassName:  common.SystemNodeCritical,
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
-						// todo(sje): conditionally add github-app-cert-secret in
 						// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
 						Volumes: append(
 							[]corev1.Volume{
@@ -268,16 +335,18 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:          PrometheusPortName,
 								ContainerPort: PrometheusPort,
 							}, {
-								Name:          "debug",
-								ContainerPort: 6060,
+								Name:          InstallationAdminName,
+								ContainerPort: InstallationAdminPort,
 							}, {
-								Name:          "debugnode",
-								ContainerPort: 9229,
+								Name:          DebugPortName,
+								ContainerPort: common.DebugPort,
+							}, {
+								Name:          DebugNodePortName,
+								ContainerPort: common.DebugNodePort,
 							},
 							},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
 							Env: env,
-							// todo(sje): conditionally add github-app-cert-secret in
 							// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
 							VolumeMounts: append(
 								[]corev1.VolumeMount{

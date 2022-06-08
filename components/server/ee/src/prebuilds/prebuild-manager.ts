@@ -195,6 +195,11 @@ export class PrebuildManager {
                 prebuild.error =
                     "Project is inactive. Please start a new workspace for this project to re-enable prebuilds.";
                 await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
+            } else if (!project && (await this.shouldSkipInactiveRepository({ span }, cloneURL))) {
+                prebuild.state = "aborted";
+                prebuild.error =
+                    "Repository is inactive. Please create a project for this repository to re-enable prebuilds.";
+                await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
             } else {
                 span.setTag("starting", true);
                 const projectEnvVars = await projectEnvVarsPromise;
@@ -252,7 +257,7 @@ export class PrebuildManager {
             return false;
         }
 
-        const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.init || !!t.prebuild);
+        const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.before || !!t.init || !!t.prebuild);
         if (!hasPrebuildTask) {
             return false;
         }
@@ -292,27 +297,34 @@ export class PrebuildManager {
     ) {
         const span = TraceContext.startSpan("storePrebuildInfo", ctx);
         const { userId, teamId, name: projectName, id: projectId } = project;
-        await this.workspaceDB.trace({ span }).storePrebuildInfo({
-            id: pws.id,
-            buildWorkspaceId: pws.buildWorkspaceId,
-            basedOnPrebuildId: ws.basedOnPrebuildId,
-            teamId,
-            userId,
-            projectName,
-            projectId,
-            startedAt: pws.creationTime,
-            startedBy: "", // TODO
-            startedByAvatar: "", // TODO
-            cloneUrl: pws.cloneURL,
-            branch: pws.branch || "unknown",
-            changeAuthor: commit.author,
-            changeAuthorAvatar: commit.authorAvatarUrl,
-            changeDate: commit.authorDate || "",
-            changeHash: commit.sha,
-            changeTitle: commit.commitMessage,
-            // changePR
-            changeUrl: ws.contextURL,
-        });
+        try {
+            await this.workspaceDB.trace({ span }).storePrebuildInfo({
+                id: pws.id,
+                buildWorkspaceId: pws.buildWorkspaceId,
+                basedOnPrebuildId: ws.basedOnPrebuildId,
+                teamId,
+                userId,
+                projectName,
+                projectId,
+                startedAt: pws.creationTime,
+                startedBy: "", // TODO
+                startedByAvatar: "", // TODO
+                cloneUrl: pws.cloneURL,
+                branch: pws.branch || "unknown",
+                changeAuthor: commit.author,
+                changeAuthorAvatar: commit.authorAvatarUrl,
+                changeDate: commit.authorDate || "",
+                changeHash: commit.sha,
+                changeTitle: commit.commitMessage,
+                // changePR
+                changeUrl: ws.contextURL,
+            });
+        } catch (err) {
+            TraceContext.setError(ctx, err);
+            throw err;
+        } finally {
+            span.finish();
+        }
     }
 
     private async shouldRateLimitPrebuild(span: opentracing.Span, cloneURL: string): Promise<boolean> {
@@ -355,5 +367,28 @@ export class PrebuildManager {
         const lastUse = new Date(usage.lastWorkspaceStart).getTime();
         const inactiveProjectTime = 1000 * 60 * 60 * 24 * 7 * 1; // 1 week
         return now - lastUse > inactiveProjectTime;
+    }
+
+    private async shouldSkipInactiveRepository(ctx: TraceContext, cloneURL: string): Promise<boolean> {
+        const span = TraceContext.startSpan("shouldSkipInactiveRepository", ctx);
+        const { inactivityPeriodForRepos } = this.config;
+        if (!inactivityPeriodForRepos) {
+            // skipping is disabled if `inactivityPeriodForRepos` is not set
+            span.finish();
+            return false;
+        }
+        try {
+            return (
+                (await this.workspaceDB
+                    .trace({ span })
+                    .getWorkspaceCountByCloneURL(cloneURL, inactivityPeriodForRepos /* in days */, "regular")) === 0
+            );
+        } catch (error) {
+            log.error("cannot compute activity for repository", { cloneURL }, error);
+            TraceContext.setError(ctx, error);
+            return false;
+        } finally {
+            span.finish();
+        }
     }
 }

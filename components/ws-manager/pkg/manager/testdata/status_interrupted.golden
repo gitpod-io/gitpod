@@ -23,7 +23,9 @@
             "ide_image": {}
         },
         "phase": 7,
-        "conditions": {},
+        "conditions": {
+            "volume_snapshot": {}
+        },
         "message": "container workspace was terminated unexpectedly - workspace should recover",
         "runtime": {
             "node_name": "gke-gitpod-staging-e-workspace-pool-2-2eb903d0-g86k",

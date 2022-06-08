@@ -8,7 +8,7 @@
                 "app": "gitpod",
                 "component": "workspace",
                 "gitpod.io/networkpolicy": "default",
-                "gitpod.io/workspaceClass": "foobar",
+                "gitpod.io/workspaceClass": "gitpodio-internal-foobar",
                 "gpwsman": "true",
                 "headless": "false",
                 "metaID": "foobar",
@@ -29,9 +29,6 @@
                 "gitpod/servicePrefix": "foobarservice",
                 "gitpod/traceid": "",
                 "gitpod/url": "test-foobarservice-gitpod.io",
-                "prometheus.io/path": "/metrics",
-                "prometheus.io/port": "23000",
-                "prometheus.io/scrape": "true",
                 "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace-default"
             },
             "finalizers": [
@@ -66,11 +63,19 @@
                     "ports": [
                         {
                             "containerPort": 23000
+                        },
+                        {
+                            "name": "supervisor",
+                            "containerPort": 22999
                         }
                     ],
                     "env": [
                         {
                             "name": "GITPOD_REPO_ROOT",
+                            "value": "/workspace"
+                        },
+                        {
+                            "name": "GITPOD_REPO_ROOTS",
                             "value": "/workspace"
                         },
                         {
@@ -142,7 +147,14 @@
                             "value": "foofoo"
                         }
                     ],
-                    "resources": {},
+                    "resources": {
+                        "limits": {
+                            "cpu": "900m"
+                        },
+                        "requests": {
+                            "cpu": "900m"
+                        }
+                    },
                     "volumeMounts": [
                         {
                             "name": "vol-this-workspace",
@@ -161,7 +173,7 @@
                             "port": 22999,
                             "scheme": "HTTP"
                         },
-                        "initialDelaySeconds": 3,
+                        "initialDelaySeconds": 2,
                         "timeoutSeconds": 1,
                         "periodSeconds": 1,
                         "successThreshold": 1,
@@ -203,10 +215,8 @@
             "dnsPolicy": "None",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
+            "securityContext": {},
             "imagePullSecrets": [
-                {
-                    "name": "dockerhub-typefox"
-                },
                 {
                     "name": "eu.gcr.io-gitpod"
                 }
@@ -231,10 +241,10 @@
                                         "operator": "Exists"
                                     },
                                     {
-                                        "key": "gitpod.io/workload_workspace_regular",
+                                        "key": "gitpod.io/workspaceClass",
                                         "operator": "In",
                                         "values": [
-                                            "true"
+                                            "gitpodio-internal-foobar"
                                         ]
                                     }
                                 ]

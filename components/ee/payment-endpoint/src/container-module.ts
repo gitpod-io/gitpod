@@ -17,6 +17,7 @@ import { TeamSubscriptionHandler } from "./chargebee/team-subscription-handler";
 import { CompositeEventHandler, EventHandler } from "./chargebee/chargebee-event-handler";
 import { UpgradeHelper } from "./chargebee/upgrade-helper";
 import { TeamSubscriptionService } from "./accounting/team-subscription-service";
+import { TeamSubscription2Service } from "./accounting/team-subscription2-service";
 import { AccountService } from "./accounting/account-service";
 import { AccountServiceImpl } from "./accounting/account-service-impl";
 import { GithubEndpointController } from "./github/endpoint-controller";
@@ -46,6 +47,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(SubscriptionService).toSelf().inSingletonScope();
     bind(TeamSubscriptionService).toSelf().inSingletonScope();
+    bind(TeamSubscription2Service).toSelf().inSingletonScope();
     bind(AccountService).to(AccountServiceImpl).inSingletonScope();
 
     bind(ChargebeeProvider).toSelf().inSingletonScope();

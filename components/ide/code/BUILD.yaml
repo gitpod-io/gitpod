@@ -9,12 +9,14 @@ packages:
     argdeps:
       - imageRepoBase
       - codeCommit
+      - codeQuality
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.codeImage
       buildArgs:
         CODE_COMMIT: ${codeCommit}
+        CODE_QUALITY: ${codeQuality}
       image:
         - ${imageRepoBase}/ide/code:${version}
         - ${imageRepoBase}/ide/code:commit-${__git_commit}

@@ -68,16 +68,17 @@ type Manager struct {
 }
 
 type startWorkspaceContext struct {
-	Request        *api.StartWorkspaceRequest `json:"request"`
-	Labels         map[string]string          `json:"labels"`
-	CLIAPIKey      string                     `json:"cliApiKey"`
-	OwnerToken     string                     `json:"ownerToken"`
-	IDEPort        int32                      `json:"idePort"`
-	SupervisorPort int32                      `json:"supervisorPort"`
-	WorkspaceURL   string                     `json:"workspaceURL"`
-	TraceID        string                     `json:"traceID"`
-	Headless       bool                       `json:"headless"`
-	Class          *config.WorkspaceClass     `json:"class"`
+	Request        *api.StartWorkspaceRequest     `json:"request"`
+	Labels         map[string]string              `json:"labels"`
+	CLIAPIKey      string                         `json:"cliApiKey"`
+	OwnerToken     string                         `json:"ownerToken"`
+	IDEPort        int32                          `json:"idePort"`
+	SupervisorPort int32                          `json:"supervisorPort"`
+	WorkspaceURL   string                         `json:"workspaceURL"`
+	TraceID        string                         `json:"traceID"`
+	Headless       bool                           `json:"headless"`
+	Class          *config.WorkspaceClass         `json:"class"`
+	VolumeSnapshot *workspaceVolumeSnapshotStatus `json:"volumeSnapshot"`
 }
 
 func (swctx *startWorkspaceContext) ContainerConfiguration() config.ContainerConfiguration {
@@ -166,6 +167,8 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	case api.WorkspaceType_IMAGEBUILD:
 		wss, err := m.GetWorkspaces(ctx, &api.GetWorkspacesRequest{
 			MustMatch: &api.MetadataFilter{
+				Owner:       req.Metadata.Owner,
+				MetaId:      req.Metadata.MetaId,
 				Annotations: req.Metadata.Annotations,
 			},
 		})
@@ -211,6 +214,25 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	span.LogKV("event", "pod description created")
 
+	var createPVC bool
+	for _, feature := range startContext.Request.Spec.FeatureFlags {
+		if feature == api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM {
+			createPVC = true
+			break
+		}
+	}
+	if createPVC {
+		clog.Info("PVC feature detected, creating PVC object")
+		pvc, err := m.createPVCForWorkspacePod(startContext)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create pvc for workspace pod: %w", err)
+		}
+		err = m.Clientset.Create(ctx, pvc)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create pvc object for workspace pod: %w", err)
+		}
+	}
+
 	// create the Pod in the cluster and wait until is scheduled
 	// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.22.md#workloads-that-saturate-nodes-with-pods-may-see-pods-that-fail-due-to-node-admission
 	backoff := wait.Backoff{
@@ -239,7 +261,8 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			return false, err
 		}
 
-		err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, podRunning(m.Clientset, pod.Name, pod.Namespace))
+		// wait at least 60 seconds before deleting pending pod and trying again due to pending PVC attachment
+		err = wait.PollWithContext(ctx, 100*time.Millisecond, 60*time.Second, podRunning(m.Clientset, pod.Name, pod.Namespace))
 		if err != nil {
 			jsonPod, _ := json.Marshal(pod)
 			safePod, _ := log.RedactJSON(jsonPod)
@@ -251,8 +274,10 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			// We do below in loop as sometimes the pod might be already deleted or modified when we attempt to remove the finalizer
 			// so we first get the pod and then attempt to remove the finalizer
 			// in case the pod is not found in the first place, we return success
+			rmCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
 			for i := 0; i < 3 && !finalizerRemoved; i++ {
-				getErr := m.Clientset.Get(ctx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
+				getErr := m.Clientset.Get(rmCtx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
 				if getErr != nil {
 					if k8serr.IsNotFound(getErr) {
 						// pod doesn't exist, so we are safe to proceed with retry
@@ -264,7 +289,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				}
 				// we successfully got the pod, now we attempt to remove finalizer
 				tempPod.Finalizers = []string{}
-				updateErr := m.Clientset.Update(ctx, &tempPod)
+				updateErr := m.Clientset.Update(rmCtx, &tempPod)
 				if updateErr != nil {
 					if k8serr.IsNotFound(updateErr) {
 						// pod doesn't exist, so we are safe to proceed with retry
@@ -280,7 +305,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				return false, retryErr
 			}
 
-			deleteErr := m.Clientset.Delete(ctx, &tempPod)
+			deleteErr := m.Clientset.Delete(rmCtx, &tempPod)
 			if deleteErr != nil && !k8serr.IsNotFound(deleteErr) {
 				clog.WithError(deleteErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to delete pod")
 				// failed to delete pod, so not going to be able to create a new pod, so bail out
@@ -316,7 +341,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		OwnerToken: startContext.OwnerToken,
 	}
 
-	m.metrics.OnWorkspaceStarted(req.Type)
+	m.metrics.OnWorkspaceStarted(req.Type, req.Spec.Class)
 
 	return okResponse, nil
 }

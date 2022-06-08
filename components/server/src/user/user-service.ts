@@ -269,6 +269,16 @@ export class UserService {
         return false;
     }
 
+    async blockUser(targetUserId: string, block: boolean): Promise<User> {
+        const target = await this.userDb.findUserById(targetUserId);
+        if (!target) {
+            throw new Error("Not found.");
+        }
+
+        target.blocked = !!block;
+        return await this.userDb.storeUser(target);
+    }
+
     async findUserForLogin(params: { candidate: Identity }) {
         let user = await this.userDb.findUserByIdentity(params.candidate);
         return user;

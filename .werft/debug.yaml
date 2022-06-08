@@ -53,9 +53,9 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go.4
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:me-me-image.1
     workingDir: /workspace
-    imagePullPolicy: Always
+    imagePullPolicy: IfNotPresent
     volumeMounts:
     - name: monitoring-satellite-preview-token
       mountPath: /mnt/secrets/monitoring-satellite-preview-token

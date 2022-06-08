@@ -2,9 +2,9 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full-vnc:latest
+FROM gitpod/workspace-full:latest
 
-ENV TRIGGER_REBUILD 17
+ENV TRIGGER_REBUILD 18
 
 USER root
 
@@ -49,6 +49,9 @@ RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | sudo apt-key
 
 ### MySQL client ###
 RUN install-packages mysql-client
+
+### CertManager's cmctl
+RUN cd /usr/bin && curl -L cmctl.tar.gz https://github.com/cert-manager/cert-manager/releases/download/v1.7.2/cmctl-linux-amd64.tar.gz | tar xzv cmctl
 
 # gokart
 RUN cd /usr/bin && curl -L https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv gokart
@@ -124,7 +127,7 @@ RUN install-packages netcat
 USER gitpod
 
 # Fix node version we develop against
-ARG GITPOD_NODE_VERSION=16.14.2
+ARG GITPOD_NODE_VERSION=16.15.0
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
     && npm install -g typescript yarn"
@@ -207,6 +210,10 @@ RUN sudo curl -fsSL https://uploader.codecov.io/latest/codecov-linux -o /usr/loc
 RUN sudo install-packages shellcheck \
     && sudo python3 -m pip install pre-commit
 
+# gh (Github CLI) binary:
+RUN cd /usr/bin && curl -L https://github.com/cli/cli/releases/download/v2.11.3/gh_2.11.3_linux_amd64.tar.gz \
+    | sudo tar xzv --strip-components=2 gh_2.11.3_linux_amd64/bin/gh
+
 # Install observability-related binaries
 ARG PROM_VERSION="2.30.0"
 RUN curl -LO https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz && \
@@ -233,6 +240,12 @@ RUN curl -LO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJSONT
 RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/v0.38.0/install.sh | sudo bash && \
     curl https://kots.io/install/1.65.0 | bash
 
+ENV WERFT_CREDENTIAL_HELPER=/workspace/gitpod/dev/preview/werft-credential-helper.sh
+
 # Copy our own tools
 ENV NEW_KUBECDL=1
-COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
+COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl dev-preview-previewctl--cli/previewctl /usr/bin/
+
+# Configure our tools' autocompletion
+RUN bash -c "echo . \<\(gpctl completion bash\) >> ~/.bashrc" && \
+    bash -c "echo . \<\(previewctl completion bash\) >> ~/.bashrc"

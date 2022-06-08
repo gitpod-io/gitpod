@@ -86,6 +86,7 @@ import {
     StartWorkspaceRequest,
     WorkspaceMetadata,
     WorkspaceType,
+    VolumeSnapshotInfo,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
@@ -219,6 +220,8 @@ export class WorkspaceStarter {
 
         options = options || {};
         try {
+            await this.checkBlockedRepository(user, workspace.contextURL);
+
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
             // Whenever a such a workspace is re-started we'll give it an image source now. This is in line with how this thing used to work.
@@ -256,9 +259,15 @@ export class WorkspaceStarter {
 
             // check if there has been an instance before, i.e. if this is a restart
             const pastInstances = await this.workspaceDb.trace({ span }).findInstances(workspace.id);
-            const mustHaveBackup = pastInstances.some(
+            const hasValidBackup = pastInstances.some(
                 (i) => !!i.status && !!i.status.conditions && !i.status.conditions.failed,
             );
+            let lastValidWorkspaceInstanceId = "";
+            if (hasValidBackup) {
+                lastValidWorkspaceInstanceId = pastInstances.reduce((previousValue, currentValue) =>
+                    currentValue.creationTime > previousValue.creationTime ? currentValue : previousValue,
+                ).id;
+            }
 
             const ideConfig = await this.ideConfigService.config;
 
@@ -302,7 +311,7 @@ export class WorkspaceStarter {
                     instance,
                     workspace,
                     user,
-                    mustHaveBackup,
+                    lastValidWorkspaceInstanceId,
                     ideConfig,
                     userEnvVars,
                     projectEnvVars,
@@ -317,7 +326,7 @@ export class WorkspaceStarter {
                 instance,
                 workspace,
                 user,
-                mustHaveBackup,
+                lastValidWorkspaceInstanceId,
                 ideConfig,
                 userEnvVars,
                 projectEnvVars,
@@ -332,13 +341,29 @@ export class WorkspaceStarter {
         }
     }
 
+    protected async checkBlockedRepository(user: User, contextURL: string) {
+        const hit = this.config.blockedRepositories.find((r) => !!contextURL && r.urlRegExp.test(contextURL));
+        if (!hit) {
+            return;
+        }
+        if (hit.blockUser) {
+            try {
+                await this.userService.blockUser(user.id, true);
+                log.info({ userId: user.id }, "Blocked user.", { contextURL });
+            } catch (error) {
+                log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });
+            }
+        }
+        throw new Error(`${contextURL} is blocklisted on Gitpod.`);
+    }
+
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself.
     protected async actuallyStartWorkspace(
         ctx: TraceContext,
         instance: WorkspaceInstance,
         workspace: Workspace,
         user: User,
-        mustHaveBackup: boolean,
+        lastValidWorkspaceInstanceId: string,
         ideConfig: IDEConfig,
         userEnvVars: UserEnvVar[],
         projectEnvVars: ProjectEnvVar[],
@@ -373,7 +398,7 @@ export class WorkspaceStarter {
                 user,
                 workspace,
                 instance,
-                mustHaveBackup,
+                lastValidWorkspaceInstanceId,
                 ideConfig,
                 userEnvVars,
                 projectEnvVars,
@@ -476,6 +501,7 @@ export class WorkspaceStarter {
 
                 instance.status.phase = "pending";
                 instance.region = installation;
+                instance.workspaceClass = startRequest.getSpec()!.getClass();
                 await this.workspaceDb.trace(ctx).storeInstance(instance);
                 try {
                     await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
@@ -693,7 +719,7 @@ export class WorkspaceStarter {
             workspaceImage: "", // Initially empty, filled during starting process
             status: {
                 conditions: {},
-                phase: "unknown",
+                phase: "preparing",
             },
             configuration,
         };
@@ -837,6 +863,7 @@ export class WorkspaceStarter {
                         workspace,
                         workspace.context,
                         user,
+                        "",
                         false,
                     );
                     source = initializer;
@@ -971,7 +998,7 @@ export class WorkspaceStarter {
             // Update workspace instance to tell the world we're building an image
             const workspaceImage = result.ref;
             const status: WorkspaceInstanceStatus = result.actuallyNeedsBuild
-                ? { ...instance.status, phase: "preparing" }
+                ? { ...instance.status, phase: "building" }
                 : instance.status;
             instance = await this.workspaceDb
                 .trace({ span })
@@ -1024,7 +1051,7 @@ export class WorkspaceStarter {
             }
 
             instance = await this.workspaceDb.trace({ span }).updateInstancePartial(instance.id, {
-                status: { ...instance.status, phase: "preparing", conditions: { failed: message }, message },
+                status: { ...instance.status, phase: "building", conditions: { failed: message }, message },
             });
             await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
 
@@ -1060,7 +1087,7 @@ export class WorkspaceStarter {
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
-        mustHaveBackup: boolean,
+        lastValidWorkspaceInstanceId: string,
         ideConfig: IDEConfig,
         userEnvVars: UserEnvVarValue[],
         projectEnvVars: ProjectEnvVar[],
@@ -1239,7 +1266,24 @@ export class WorkspaceStarter {
                 checkoutLocation = ".";
             }
         }
-        const initializerPromise = this.createInitializer(traceCtx, workspace, workspace.context, user, mustHaveBackup);
+
+        let volumeSnapshotInfo = new VolumeSnapshotInfo();
+        const volumeSnapshots = await this.workspaceDb
+            .trace(traceCtx)
+            .findVolumeSnapshotById(lastValidWorkspaceInstanceId);
+        if (volumeSnapshots !== undefined) {
+            volumeSnapshotInfo.setVolumeSnapshotName(volumeSnapshots.id);
+            volumeSnapshotInfo.setVolumeSnapshotHandle(volumeSnapshots.volumeHandle);
+        }
+
+        const initializerPromise = this.createInitializer(
+            traceCtx,
+            workspace,
+            workspace.context,
+            user,
+            lastValidWorkspaceInstanceId,
+            volumeSnapshots !== undefined,
+        );
         const userTimeoutPromise = this.userService.getDefaultWorkspaceTimeout(user);
 
         const featureFlags = instance.configuration!.featureFlags || [];
@@ -1249,6 +1293,11 @@ export class WorkspaceStarter {
             ideImage = instance.configuration?.ideImage;
         } else {
             ideImage = ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image;
+        }
+
+        let workspaceClass: string = "default";
+        if (await this.userService.userGetsMoreResources(user)) {
+            workspaceClass = "gitpodio-internal-xl";
         }
 
         const spec = new StartWorkspaceSpec();
@@ -1266,10 +1315,12 @@ export class WorkspaceStarter {
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || checkoutLocation);
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
+        spec.setClass(workspaceClass);
         if (workspace.type === "regular") {
             spec.setTimeout(this.userService.workspaceTimeoutToDuration(await userTimeoutPromise));
         }
         spec.setAdmission(admissionLevel);
+        spec.setVolumeSnapshot(volumeSnapshotInfo);
         return spec;
     }
 
@@ -1387,16 +1438,18 @@ export class WorkspaceStarter {
         workspace: Workspace,
         context: WorkspaceContext,
         user: User,
-        mustHaveBackup: boolean,
+        lastValidWorkspaceInstanceId: string,
+        hasVolumeSnapshot: boolean,
     ): Promise<{ initializer: WorkspaceInitializer; disposable: Disposable }> {
         let result = new WorkspaceInitializer();
         const disp = new DisposableCollection();
 
-        if (mustHaveBackup) {
+        if (lastValidWorkspaceInstanceId != "") {
             const backup = new FromBackupInitializer();
             if (CommitContext.is(context)) {
                 backup.setCheckoutLocation(context.checkoutLocation || "");
             }
+            backup.setFromVolumeSnapshot(hasVolumeSnapshot);
             result.setBackup(backup);
         } else if (SnapshotContext.is(context)) {
             const snapshot = new SnapshotInitializer();

@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -28,7 +29,8 @@ import (
 )
 
 var runOpts struct {
-	TLSPath string
+	TLSPath     string
+	Interactive bool
 }
 
 // runCmd represents the run command
@@ -134,20 +136,21 @@ var runCmd = &cobra.Command{
 				}),
 			},
 			PostLoadWait: func() {
-				<-make(chan struct{})
 				log.Info("load generation complete - press Ctrl+C to finish of")
-
+				<-make(chan struct{})
 			},
 		}
 
+		sctx, scancel := context.WithCancel(context.Background())
 		go func() {
 			sigc := make(chan os.Signal, 1)
 			signal.Notify(sigc, syscall.SIGINT)
 			<-sigc
+			scancel()
 			os.Exit(0)
 		}()
 
-		err = session.Run()
+		err = session.Run(sctx)
 		if err != nil {
 			log.WithError(err).Fatal()
 		}

@@ -15,7 +15,9 @@
             "ide_image": {}
         },
         "phase": 3,
-        "conditions": {},
+        "conditions": {
+            "volume_snapshot": {}
+        },
         "message": "workspace initializer is running",
         "runtime": {
             "node_name": "minikube",

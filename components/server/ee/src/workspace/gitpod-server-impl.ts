@@ -72,6 +72,7 @@ import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/paymen
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
+    TeamSubscription2,
     TeamSubscriptionSlot,
     TeamSubscriptionSlotResolved,
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
@@ -84,12 +85,14 @@ import {
     AccountService,
     SubscriptionService,
     TeamSubscriptionService,
+    TeamSubscription2Service,
 } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import { AccountingDB, TeamSubscriptionDB, EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
+import { AccountingDB, TeamSubscriptionDB, TeamSubscription2DB, EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
 import { ChargebeeProvider, UpgradeHelper } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import { ChargebeeCouponComputer } from "../user/coupon-computer";
 import { ChargebeeService } from "../user/chargebee-service";
 import { Chargebee as chargebee } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
+import { StripeService } from "../user/stripe-service";
 
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
@@ -99,6 +102,7 @@ import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/webs
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
+import { getExperimentsClient } from "../../../src/experiments";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -115,13 +119,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(AccountingDB) protected readonly accountingDB: AccountingDB;
     @inject(EduEmailDomainDB) protected readonly eduDomainDb: EduEmailDomainDB;
 
+    @inject(TeamSubscription2DB) protected readonly teamSubscription2DB: TeamSubscription2DB;
     @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDB: TeamSubscriptionDB;
     @inject(TeamSubscriptionService) protected readonly teamSubscriptionService: TeamSubscriptionService;
+    @inject(TeamSubscription2Service) protected readonly teamSubscription2Service: TeamSubscription2Service;
 
     @inject(ChargebeeProvider) protected readonly chargebeeProvider: ChargebeeProvider;
     @inject(UpgradeHelper) protected readonly upgradeHelper: UpgradeHelper;
     @inject(ChargebeeCouponComputer) protected readonly couponComputer: ChargebeeCouponComputer;
     @inject(ChargebeeService) protected readonly chargebeeService: ChargebeeService;
+    @inject(StripeService) protected readonly stripeService: StripeService;
 
     @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
     @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
@@ -232,7 +239,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const result = await this.eligibilityService.mayStartWorkspace(user, new Date(), runningInstances);
         if (!result.enoughCredits) {
-            throw new ResponseError(ErrorCodes.NOT_ENOUGH_CREDIT, `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`);
+            throw new ResponseError(
+                ErrorCodes.NOT_ENOUGH_CREDIT,
+                `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`,
+            );
         }
         if (!!result.hitParallelWorkspaceLimit) {
             throw new ResponseError(
@@ -565,13 +575,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
 
-        const target = await this.userDB.findUserById(req.id);
-        if (!target) {
+        let targetUser;
+        try {
+            targetUser = await this.userService.blockUser(req.id, req.blocked);
+        } catch (error) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
         }
-
-        target.blocked = !!req.blocked;
-        await this.userDB.storeUser(target);
 
         const workspaceDb = this.workspaceDb.trace(ctx);
         const workspaces = await workspaceDb.findWorkspacesByUser(req.id);
@@ -584,7 +593,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
         // Returning `target` instead (which should be equivalent).
-        return this.censorUser(target);
+        return this.censorUser(targetUser);
     }
 
     async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
@@ -811,123 +820,131 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         mode: CreateWorkspaceMode,
     ): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
         const ctx = TraceContext.childContext("findPrebuiltWorkspace", parentCtx);
-
-        if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
-            return;
-        }
-
-        const commitSHAs = CommitContext.computeHash(context);
-
-        const logCtx: LogContext = { userId: user.id };
-        const cloneUrl = context.repository.cloneUrl;
-        const prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
-        const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
-        log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
-        if (!prebuiltWorkspace) {
-            return;
-        }
-
-        if (prebuiltWorkspace.state === "available") {
-            log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
-            const result: PrebuiltWorkspaceContext = {
-                title: context.title,
-                originalContext: context,
-                prebuiltWorkspace,
-            };
-            return result;
-        } else if (prebuiltWorkspace.state === "queued" || prebuiltWorkspace.state === "building") {
-            if (mode === CreateWorkspaceMode.ForceNew) {
-                // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
+        try {
+            if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
                 return;
-                // TODO(janx): Fall back to parent prebuild instead, if it's available:
-                //   const buildWorkspace = await this.workspaceDb.trace({span}).findById(prebuiltWorkspace.buildWorkspaceId);
-                //   const parentPrebuild = await this.workspaceDb.trace({span}).findPrebuildByID(buildWorkspace.basedOnPrebuildId);
-                // Also, make sure to initialize it by both printing the parent prebuild logs AND re-runnnig the before/init/prebuild tasks.
             }
 
-            const workspaceID = prebuiltWorkspace.buildWorkspaceId;
-            const makeResult = (instanceID: string): WorkspaceCreationResult => {
-                return <WorkspaceCreationResult>{
-                    runningWorkspacePrebuild: {
-                        prebuildID: prebuiltWorkspace.id,
-                        workspaceID,
-                        instanceID,
-                        starting: "queued",
-                        sameCluster: false,
-                    },
-                };
-            };
+            const commitSHAs = CommitContext.computeHash(context);
 
-            const wsi = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceID);
-            if (!wsi || wsi.stoppedTime !== undefined) {
-                if (prebuiltWorkspace.state === "queued") {
-                    if (Date.now() - Date.parse(prebuiltWorkspace.creationTime) > 1000 * 60) {
-                        // queued for long than a minute? Let's retrigger
-                        console.warn("Retriggering queued prebuild.", prebuiltWorkspace);
-                        try {
-                            await this.prebuildManager.retriggerPrebuild(ctx, user, workspaceID);
-                        } catch (err) {
-                            console.error(err);
+            const logCtx: LogContext = { userId: user.id };
+            const cloneUrl = context.repository.cloneUrl;
+            const prebuiltWorkspace = await this.workspaceDb
+                .trace(ctx)
+                .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+            const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
+            log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
+            if (!prebuiltWorkspace) {
+                return;
+            }
+
+            if (prebuiltWorkspace.state === "available") {
+                log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
+                const result: PrebuiltWorkspaceContext = {
+                    title: context.title,
+                    originalContext: context,
+                    prebuiltWorkspace,
+                };
+                return result;
+            } else if (prebuiltWorkspace.state === "queued" || prebuiltWorkspace.state === "building") {
+                if (mode === CreateWorkspaceMode.ForceNew) {
+                    // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
+                    return;
+                    // TODO(janx): Fall back to parent prebuild instead, if it's available:
+                    //   const buildWorkspace = await this.workspaceDb.trace({span}).findById(prebuiltWorkspace.buildWorkspaceId);
+                    //   const parentPrebuild = await this.workspaceDb.trace({span}).findPrebuildByID(buildWorkspace.basedOnPrebuildId);
+                    // Also, make sure to initialize it by both printing the parent prebuild logs AND re-runnnig the before/init/prebuild tasks.
+                }
+
+                const workspaceID = prebuiltWorkspace.buildWorkspaceId;
+                const makeResult = (instanceID: string): WorkspaceCreationResult => {
+                    return <WorkspaceCreationResult>{
+                        runningWorkspacePrebuild: {
+                            prebuildID: prebuiltWorkspace.id,
+                            workspaceID,
+                            instanceID,
+                            starting: "queued",
+                            sameCluster: false,
+                        },
+                    };
+                };
+
+                const wsi = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceID);
+                if (!wsi || wsi.stoppedTime !== undefined) {
+                    if (prebuiltWorkspace.state === "queued") {
+                        if (Date.now() - Date.parse(prebuiltWorkspace.creationTime) > 1000 * 60) {
+                            // queued for long than a minute? Let's retrigger
+                            console.warn("Retriggering queued prebuild.", prebuiltWorkspace);
+                            try {
+                                await this.prebuildManager.retriggerPrebuild(ctx, user, workspaceID);
+                            } catch (err) {
+                                console.error(err);
+                            }
+                        }
+                        return makeResult(wsi!.id);
+                    }
+
+                    return;
+                }
+                const result = makeResult(wsi.id);
+
+                const inSameCluster = wsi.region === this.config.installationShortname;
+                if (!inSameCluster) {
+                    if (mode === CreateWorkspaceMode.UsePrebuild) {
+                        /* We need to wait for this prebuild to finish before we return from here.
+                         * This creation mode is meant to be used once we have gone through default mode, have confirmation from the
+                         * message bus that the prebuild is done, and now only have to wait for dbsync to come through. Thus,
+                         * in this mode we'll poll the database until the prebuild is ready (or we time out).
+                         *
+                         * Note: This polling mechanism only makes sense if the prebuild runs in cluster different from ours.
+                         *       Otherwise there's no dbsync inbetween that we might have to wait for.
+                         *
+                         * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
+                         */
+                        const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(
+                            ctx,
+                            prebuiltWorkspace.id,
+                            20000,
+                        );
+                        if (!finishedPrebuiltWorkspace) {
+                            log.warn(
+                                logCtx,
+                                "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished",
+                                logPayload,
+                            );
+                            return;
+                        } else {
+                            return {
+                                title: context.title,
+                                originalContext: context,
+                                prebuiltWorkspace: finishedPrebuiltWorkspace,
+                            } as PrebuiltWorkspaceContext;
                         }
                     }
-                    return makeResult(wsi!.id);
                 }
 
-                return;
-            }
-            const result = makeResult(wsi.id);
-
-            const inSameCluster = wsi.region === this.config.installationShortname;
-            if (!inSameCluster) {
-                if (mode === CreateWorkspaceMode.UsePrebuild) {
-                    /* We need to wait for this prebuild to finish before we return from here.
-                     * This creation mode is meant to be used once we have gone through default mode, have confirmation from the
-                     * message bus that the prebuild is done, and now only have to wait for dbsync to come through. Thus,
-                     * in this mode we'll poll the database until the prebuild is ready (or we time out).
-                     *
-                     * Note: This polling mechanism only makes sense if the prebuild runs in cluster different from ours.
-                     *       Otherwise there's no dbsync inbetween that we might have to wait for.
-                     *
-                     * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
-                     */
-                    const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(
-                        ctx,
-                        prebuiltWorkspace.id,
-                        20000,
-                    );
-                    if (!finishedPrebuiltWorkspace) {
-                        log.warn(
-                            logCtx,
-                            "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished",
-                            logPayload,
-                        );
-                        return;
-                    } else {
-                        return {
-                            title: context.title,
-                            originalContext: context,
-                            prebuiltWorkspace: finishedPrebuiltWorkspace,
-                        } as PrebuiltWorkspaceContext;
-                    }
+                /* This is the default mode behaviour: we present the running prebuild to the user so that they can see the logs
+                 * or choose to force the creation of a workspace.
+                 */
+                if (wsi.status.phase != "running") {
+                    result.runningWorkspacePrebuild!.starting = "starting";
+                } else {
+                    result.runningWorkspacePrebuild!.starting = "running";
                 }
+                log.info(
+                    logCtx,
+                    `Found prebuilding (starting=${
+                        result.runningWorkspacePrebuild!.starting
+                    }) workspace for ${cloneUrl}:${commitSHAs}`,
+                    logPayload,
+                );
+                return result;
             }
-
-            /* This is the default mode behaviour: we present the running prebuild to the user so that they can see the logs
-             * or choose to force the creation of a workspace.
-             */
-            if (wsi.status.phase != "running") {
-                result.runningWorkspacePrebuild!.starting = "starting";
-            } else {
-                result.runningWorkspacePrebuild!.starting = "running";
-            }
-            log.info(
-                logCtx,
-                `Found prebuilding (starting=${
-                    result.runningWorkspacePrebuild!.starting
-                }) workspace for ${cloneUrl}:${commitSHAs}`,
-                logPayload,
-            );
-            return result;
+        } catch (e) {
+            TraceContext.setError(ctx, e);
+            throw e;
+        } finally {
+            ctx.span.finish();
         }
     }
 
@@ -1106,6 +1123,37 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
     }
 
+    async createTeamPortalSession(ctx: TraceContext, teamId: string): Promise<{}> {
+        traceAPIParams(ctx, { teamId });
+
+        this.checkUser("createTeamPortalSession");
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+        }
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        await this.guardAccess({ kind: "team", subject: team, members }, "update");
+
+        return await new Promise((resolve, reject) => {
+            this.chargebeeProvider.portal_session
+                .create({
+                    customer: {
+                        id: "team:" + team.id,
+                    },
+                })
+                .request(function (error: any, result: any) {
+                    if (error) {
+                        log.error("Team portal session creation error", error);
+                        reject(error);
+                    } else {
+                        log.debug("Team portal session created");
+                        resolve(result.portal_session);
+                    }
+                });
+        });
+    }
+
     async checkout(ctx: TraceContext, planId: string, planQuantity?: number): Promise<{}> {
         traceAPIParams(ctx, { planId, planQuantity });
 
@@ -1150,6 +1198,44 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             log.error(logContext, "Checkout error", err);
             throw err;
         }
+    }
+
+    async teamCheckout(ctx: TraceContext, teamId: string, planId: string): Promise<{}> {
+        traceAPIParams(ctx, { teamId, planId });
+
+        const user = this.checkUser("teamCheckout");
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+        }
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        await this.guardAccess({ kind: "team", subject: team, members }, "update");
+
+        const coupon = await this.findAvailableCouponForPlan(user, planId);
+
+        const email = User.getPrimaryEmail(user);
+        return new Promise((resolve, reject) => {
+            this.chargebeeProvider.hosted_page
+                .checkout_new({
+                    customer: {
+                        id: "team:" + team.id,
+                        email,
+                    },
+                    subscription: {
+                        plan_id: planId,
+                        plan_quantity: members.length,
+                        coupon,
+                    },
+                })
+                .request((error: any, result: any) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve(result.hosted_page);
+                });
+        });
     }
 
     protected async findAvailableCouponForPlan(user: User, planId: string): Promise<string | undefined> {
@@ -1302,9 +1388,74 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return chargebeeSubscriptionId;
     }
 
-    // Team Subscriptions
+    // Team Subscriptions 2
+    async getTeamSubscription(ctx: TraceContext, teamId: string): Promise<TeamSubscription2 | undefined> {
+        this.checkUser("getTeamSubscription");
+        await this.guardTeamOperation(teamId, "get");
+        return this.teamSubscription2DB.findForTeam(teamId, new Date().toISOString());
+    }
+
+    protected async onTeamMemberAdded(userId: string, teamId: string): Promise<void> {
+        const now = new Date();
+        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (!teamSubscription) {
+            // No team subscription, nothing to do 🌴
+            return;
+        }
+        await this.updateTeamSubscriptionQuantity(teamSubscription);
+        await this.teamSubscription2Service.addTeamMemberSubscription(teamSubscription, userId);
+    }
+
+    protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
+        const now = new Date();
+        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (!teamSubscription) {
+            // No team subscription, nothing to do 🌴
+            return;
+        }
+        await this.updateTeamSubscriptionQuantity(teamSubscription);
+        await this.teamSubscription2Service.cancelTeamMemberSubscription(
+            teamSubscription,
+            userId,
+            teamMembershipId,
+            now,
+        );
+    }
+
+    protected async onTeamDeleted(teamId: string): Promise<void> {
+        const now = new Date();
+        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (!teamSubscription) {
+            // No team subscription, nothing to do 🌴
+            return;
+        }
+        const chargebeeSubscriptionId = teamSubscription.paymentReference;
+        await this.chargebeeService.cancelSubscription(
+            chargebeeSubscriptionId,
+            {},
+            { teamId, chargebeeSubscriptionId },
+        );
+    }
+
+    protected async updateTeamSubscriptionQuantity(teamSubscription: TeamSubscription2): Promise<void> {
+        const members = await this.teamDB.findMembersByTeam(teamSubscription.teamId);
+        const newQuantity = members.length;
+        try {
+            // We only charge for upgrades in the Chargebee callback, to avoid race conditions.
+            await this.doUpdateSubscription("", teamSubscription.paymentReference, {
+                plan_quantity: newQuantity,
+                end_of_term: false,
+            });
+        } catch (err) {
+            if (chargebee.ApiError.is(err) && err.type === "payment") {
+                throw new ResponseError(ErrorCodes.PAYMENT_ERROR, `${err.api_error_code}: ${err.message}`);
+            }
+        }
+    }
+
+    // Team Subscriptions (legacy)
     async tsGet(ctx: TraceContext): Promise<TeamSubscription[]> {
-        const user = this.checkUser("getTeamSubscriptions");
+        const user = this.checkUser("tsGet");
         return this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
     }
 
@@ -1677,6 +1828,69 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw err;
         }
         return subscription;
+    }
+
+    protected async ensureIsUsageBasedFeatureFlagEnabled(user: User): Promise<void> {
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        const isUsageBasedBillingEnabled = await getExperimentsClient().getValueAsync(
+            "isUsageBasedBillingEnabled",
+            false,
+            {
+                identifier: user.id,
+                custom: {
+                    team_ids: teams.map((t) => t.id).join(","),
+                    team_names: teams.map((t) => t.name).join(","),
+                },
+            },
+        );
+        if (!isUsageBasedBillingEnabled) {
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+        }
+    }
+
+    async getStripePublishableKey(ctx: TraceContext): Promise<string | undefined> {
+        const user = this.checkAndBlockUser("getStripePublishableKey");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        return this.config.stripeSettings?.publishableKey;
+    }
+
+    async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string | undefined> {
+        const user = this.checkAndBlockUser("getStripeSetupIntentClientSecret");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        try {
+            const setupIntent = await this.stripeService.createSetupIntent();
+            return setupIntent.client_secret || undefined;
+        } catch (error) {
+            log.error("Failed to create Stripe SetupIntent", error);
+            throw new ResponseError(500, "Failed to create Stripe SetupIntent");
+        }
+    }
+
+    async getTeamStripeCustomerId(ctx: TraceContext, teamId: string): Promise<string | undefined> {
+        const user = this.checkAndBlockUser("getTeamStripeCustomerId");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.guardTeamOperation(teamId, "update");
+        try {
+            const customer = await this.stripeService.findCustomerByTeamId(teamId);
+            return customer?.id || undefined;
+        } catch (error) {
+            log.error(`Failed to get Stripe Customer ID for team '${teamId}'`, error);
+            throw new ResponseError(500, `Failed to get Stripe Customer ID for team '${teamId}'`);
+        }
+    }
+
+    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
+        const user = this.checkAndBlockUser("subscribeUserToStripe");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.guardTeamOperation(teamId, "update");
+        const team = await this.teamDB.findTeamById(teamId);
+        try {
+            await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
+            // TODO(janx): Create a Stripe usage-based Subscription for the customer
+        } catch (error) {
+            log.error(`Failed to subscribe team '${teamId}' to Stripe`, error);
+            throw new ResponseError(500, `Failed to subscribe team '${teamId}' to Stripe`);
+        }
     }
 
     // (SaaS) – admin

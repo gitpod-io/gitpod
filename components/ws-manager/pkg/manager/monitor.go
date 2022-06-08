@@ -22,7 +22,11 @@ import (
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
+	k8serr "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -30,10 +34,13 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/workpool"
+
+	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 )
 
 const (
@@ -267,7 +274,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		if status.Conditions.Failed != "" && !hasFailureAnnotation {
 			// If this marking operation failes that's ok - we'll still continue to shut down the workspace.
 			// The failure message won't persist while stopping the workspace though.
-			err := m.markWorkspace(ctx, workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, "true"))
+			err := m.markWorkspace(ctx, workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, util.BooleanTrueString))
 			if err != nil {
 				log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Debug("cannot mark workspace as workspaceFailedBeforeStoppingAnnotation")
 			}
@@ -376,12 +383,28 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		}
 
 		_, gone := wso.Pod.Annotations[wsk8s.ContainerIsGoneAnnotation]
-		_, alreadyFinalized := wso.Pod.Annotations[disposalStatusAnnotation]
+		_, alreadyFinalized := wso.Pod.Annotations[startedDisposalAnnotation]
 
 		if (terminated || gone) && !alreadyFinalized {
-			// We start finalizing the workspace content only after the container is gone. This way we ensure there's
-			// no process modifying the workspace content as we create the backup.
-			go m.finalizeWorkspaceContent(ctx, wso)
+			if wso.Pod.Annotations[workspaceFailedBeforeStoppingAnnotation] == util.BooleanTrueString && wso.Pod.Annotations[workspaceNeverReadyAnnotation] == util.BooleanTrueString {
+				// The workspace is never ready, so there is no need for a finalizer.
+				if _, ok := pod.Annotations[workspaceExplicitFailAnnotation]; !ok {
+					failMessage := status.Conditions.Failed
+					if failMessage == "" {
+						failMessage = "workspace failed to start."
+					}
+					err := m.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, failMessage))
+					if err != nil {
+						log.WithError(err).Error("was unable to mark workspace as failed")
+					}
+				}
+
+				return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
+			} else {
+				// We start finalizing the workspace content only after the container is gone. This way we ensure there's
+				// no process modifying the workspace content as we create the backup.
+				go m.finalizeWorkspaceContent(ctx, wso)
+			}
 		}
 	}
 
@@ -660,6 +683,7 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 // prior to this call this function returns once initialization is complete.
 func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error) {
 	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupAnnotation]
+	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureAnnotation]
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
@@ -754,6 +778,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			},
 			Initializer:           &initializer,
 			FullWorkspaceBackup:   fullWorkspaceBackup,
+			PersistentVolumeClaim: pvcFeatureEnabled,
 			ContentManifest:       contentManifest,
 			RemoteStorageDisabled: shouldDisableRemoteStorage(pod),
 			StorageQuotaBytes:     storage.Value(),
@@ -766,16 +791,32 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	} else {
 		err = handleGRPCError(ctx, err)
 	}
-	wsType := pod.Labels[wsk8s.TypeLabel]
-	hist, errHist := m.manager.metrics.initializeTimeHistVec.GetMetricWithLabelValues(wsType)
+	wsType := strings.ToUpper(pod.Labels[wsk8s.TypeLabel])
+	wsClass := pod.Labels[workspaceClassLabel]
+	hist, errHist := m.manager.metrics.initializeTimeHistVec.GetMetricWithLabelValues(wsType, wsClass)
 	if errHist != nil {
 		log.WithError(errHist).WithField("type", wsType).Warn("cannot get initialize time histogram metric")
+	} else {
+		hist.Observe(time.Since(t).Seconds())
 	}
-	hist.Observe(time.Since(t).Seconds())
+
 	if err != nil {
+		c, cErr := m.manager.metrics.totalRestoreFailureCounterVec.GetMetricWithLabelValues(wsType, wsClass)
+		if cErr != nil {
+			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore failure counter")
+		} else {
+			c.Inc()
+		}
+
 		return xerrors.Errorf("cannot initialize workspace: %w", err)
 	}
 
+	c, cErr := m.manager.metrics.totalRestoreSuccessCounterVec.GetMetricWithLabelValues(wsType, wsClass)
+	if cErr != nil {
+		log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore success counter")
+	} else {
+		c.Inc()
+	}
 	return nil
 }
 
@@ -855,6 +896,33 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		log.WithError(err).Warn("cannot determine workspace type - assuming this is a regular")
 		tpe = api.WorkspaceType_REGULAR
 	}
+	wsType := api.WorkspaceType_name[int32(tpe)]
+
+	var (
+		createdVolumeSnapshot        bool
+		readyVolumeSnapshot          bool
+		deletedPVC                   bool
+		pvcFeatureEnabled            bool
+		markVolumeSnapshotAnnotation bool
+		// volume snapshot name is 1:1 mapped to workspace id
+		pvcVolumeSnapshotName        string = workspaceID
+		pvcVolumeSnapshotContentName string
+		pvcVolumeSnapshotClassName   string
+
+		volumeSnapshotTime time.Time
+	)
+	if wso.Pod != nil {
+		_, pvcFeatureEnabled = wso.Pod.Labels[pvcWorkspaceFeatureAnnotation]
+
+		if _, ok := wso.Pod.Labels[workspaceClassLabel]; ok {
+			wsClassName := wso.Pod.Labels[workspaceClassLabel]
+
+			workspaceClass := m.manager.Config.WorkspaceClasses[wsClassName]
+			if workspaceClass != nil {
+				pvcVolumeSnapshotClassName = workspaceClass.PVC.SnapshotClass
+			}
+		}
+	}
 
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
 	doBackupLogs := tpe == api.WorkspaceType_PREBUILD
@@ -895,7 +963,134 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			m.finalizerMapLock.Unlock()
 		}()
 
-		if doSnapshot {
+		err = m.manager.markWorkspace(ctx, workspaceID, addMark(startedDisposalAnnotation, util.BooleanTrueString))
+		if err != nil {
+			log.WithError(err).Error("was unable to update pod's start disposal state - this might cause an incorrect disposal state")
+		}
+
+		if pvcFeatureEnabled {
+			// pvc was created with the name of the pod. see createDefiniteWorkspacePod()
+			pvcName := wso.Pod.Name
+			if !createdVolumeSnapshot {
+				// create snapshot object out of PVC
+				volumeSnapshot := &volumesnapshotv1.VolumeSnapshot{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      pvcVolumeSnapshotName,
+						Namespace: m.manager.Config.Namespace,
+					},
+					Spec: volumesnapshotv1.VolumeSnapshotSpec{
+						Source: volumesnapshotv1.VolumeSnapshotSource{
+							PersistentVolumeClaimName: &pvcName,
+						},
+						VolumeSnapshotClassName: &pvcVolumeSnapshotClassName,
+					},
+				}
+
+				err = m.manager.Clientset.Create(ctx, volumeSnapshot)
+				if err != nil && !k8serr.IsAlreadyExists(err) {
+					err = xerrors.Errorf("cannot create volumesnapshot: %v", err)
+					return true, nil, err
+				}
+				createdVolumeSnapshot = true
+				volumeSnapshotTime = time.Now()
+			}
+			if createdVolumeSnapshot {
+				backoff := wait.Backoff{
+					Steps:    30,
+					Duration: 100 * time.Millisecond,
+					Factor:   1.5,
+					Jitter:   0.1,
+					Cap:      10 * time.Minute,
+				}
+				log = log.WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName)
+				err = wait.ExponentialBackoff(backoff, func() (bool, error) {
+					var volumeSnapshot volumesnapshotv1.VolumeSnapshot
+					err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: m.manager.Config.Namespace, Name: pvcVolumeSnapshotName}, &volumeSnapshot)
+					if err != nil {
+						if k8serr.IsNotFound(err) {
+							// volumesnapshot doesn't exist yet, retry again
+							return false, nil
+						}
+						log.WithError(err).Error("was unable to get volume snapshot")
+						return false, err
+					}
+					if volumeSnapshot.Status != nil {
+						if volumeSnapshot.Status.ReadyToUse != nil && *(volumeSnapshot.Status.ReadyToUse) && volumeSnapshot.Status.BoundVolumeSnapshotContentName != nil {
+							pvcVolumeSnapshotContentName = *volumeSnapshot.Status.BoundVolumeSnapshotContentName
+							return true, nil
+						}
+						if volumeSnapshot.Status.Error != nil {
+							if volumeSnapshot.Status.Error.Message != nil {
+								err = xerrors.Errorf("error during volume snapshot creation: %s", *volumeSnapshot.Status.Error.Message)
+								log.WithError(err).Error("unable to create volume snapshot")
+								return false, err
+							}
+							log.Error("unknown error during volume snapshot creation")
+							return false, xerrors.Errorf("unknown error during volume snapshot creation")
+						}
+					}
+					return false, nil
+				})
+				if err != nil {
+					log.WithError(err).Errorf("failed while waiting for volume snapshot to get ready")
+					return true, nil, err
+				}
+				readyVolumeSnapshot = true
+				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType)
+				if err != nil {
+					log.WithError(err).WithField("type", wsType).Warn("cannot get volume snapshot time histogram metric")
+				} else {
+					hist.Observe(time.Since(volumeSnapshotTime).Seconds())
+				}
+			}
+			if readyVolumeSnapshot && !markVolumeSnapshotAnnotation {
+				log = log.WithField("VolumeSnapshotContent.Name", pvcVolumeSnapshotContentName)
+				var volumeSnapshotContent volumesnapshotv1.VolumeSnapshotContent
+				err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: "", Name: pvcVolumeSnapshotContentName}, &volumeSnapshotContent)
+				if err != nil {
+					log.WithError(err).Error("was unable to get volume snapshot content")
+					return true, nil, err
+				}
+
+				if volumeSnapshotContent.Status == nil {
+					return true, nil, xerrors.Errorf("volume snapshot content status is nil")
+				}
+				if volumeSnapshotContent.Status.SnapshotHandle == nil {
+					return true, nil, xerrors.Errorf("volume snapshot content's snapshot handle is nil")
+				}
+				snapshotHandle := *volumeSnapshotContent.Status.SnapshotHandle
+
+				b, err := json.Marshal(workspaceVolumeSnapshotStatus{VolumeSnapshotName: pvcVolumeSnapshotName, VolumeSnapshotHandle: snapshotHandle})
+				if err != nil {
+					return true, nil, err
+				}
+
+				err = m.manager.markWorkspace(context.Background(), workspaceID, addMark(pvcWorkspaceVolumeSnapshotAnnotation, string(b)))
+				if err != nil {
+					log.WithError(err).Error("cannot mark workspace with volume snapshot name - snapshot will be orphaned and backup lost")
+					return true, nil, err
+				}
+
+				markVolumeSnapshotAnnotation = true
+			}
+
+			// backup is done and we are ready to kill the pod, mark PVC for deletion
+			if readyVolumeSnapshot && !deletedPVC {
+				// todo: once we add snapshot objects, this will be changed to create snapshot object first
+				pvcErr := m.manager.Clientset.Delete(ctx,
+					&corev1.PersistentVolumeClaim{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      pvcName,
+							Namespace: m.manager.Config.Namespace,
+						},
+					},
+				)
+				if pvcErr != nil && !k8serr.IsNotFound(pvcErr) {
+					log.WithError(pvcErr).Errorf("failed to delete pvc `%s`", pvcName)
+				}
+				deletedPVC = true
+			}
+		} else if doSnapshot {
 			// if this is a prebuild take a snapshot and mark the workspace
 			var res *wsdaemon.TakeSnapshotResponse
 			res, err = snc.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: workspaceID})
@@ -903,6 +1098,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				tracing.LogError(span, err)
 				log.WithError(err).Warn("cannot take snapshot")
 				err = xerrors.Errorf("cannot take snapshot: %v", err)
+				err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+				if err != nil {
+					log.WithError(err).Warn("was unable to mark workspace as failed")
+				}
 			}
 
 			if res != nil {
@@ -911,6 +1110,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					tracing.LogError(span, err)
 					log.WithError(err).Warn("cannot mark headless workspace with snapshot - that's one prebuild lost")
 					err = xerrors.Errorf("cannot remember snapshot: %v", err)
+					err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+					if err != nil {
+						log.WithError(err).Warn("was unable to mark workspace as failed")
+					}
 				}
 			}
 		}
@@ -919,7 +1122,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		// This is unlike the initialization process where we wait for things to finish in a later phase.
 		resp, err := snc.DisposeWorkspace(ctx, &wsdaemon.DisposeWorkspaceRequest{
 			Id:         workspaceID,
-			Backup:     doBackup,
+			Backup:     doBackup && !pvcFeatureEnabled,
 			BackupLogs: doBackupLogs,
 		})
 		if resp != nil {
@@ -977,18 +1180,26 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 		break
 	}
-	wsType := api.WorkspaceType_name[int32(tpe)]
-	hist, err := m.manager.metrics.finalizeTimeHistVec.GetMetricWithLabelValues(wsType)
+
+	hist, err := m.manager.metrics.finalizeTimeHistVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
 	if err != nil {
 		log.WithError(err).WithField("type", wsType).Warn("cannot get finalize time histogram metric")
+	} else {
+		hist.Observe(time.Since(t).Seconds())
 	}
-	hist.Observe(time.Since(t).Seconds())
 
 	disposalStatus = &workspaceDisposalStatus{
 		BackupComplete: true,
 		GitStatus:      gitStatus,
 	}
 	if backupError != nil {
+		c, cErr := m.manager.metrics.totalBackupFailureCounterVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
+		if cErr != nil {
+			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace backup failure metric")
+		} else {
+			c.Inc()
+		}
+
 		if dataloss {
 			disposalStatus.BackupFailure = backupError.Error()
 		} else {
@@ -996,6 +1207,13 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			// state management or cleanup. No need to worry the user.
 			log.WithError(backupError).WithFields(wso.GetOWI()).Warn("internal error while disposing workspace content")
 			tracing.LogError(span, backupError)
+		}
+	} else {
+		c, cErr := m.manager.metrics.totalBackupSuccessCounterVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
+		if cErr != nil {
+			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace backup success counter")
+		} else {
+			c.Inc()
 		}
 	}
 }

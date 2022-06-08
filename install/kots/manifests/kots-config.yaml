@@ -33,6 +33,39 @@ spec:
           help_text: You may either use an in-cluster container registry or configure your own external container registry for better performance. This container registry must be accessible from your Kubernetes cluster.
           recommended: false
 
+        - name: reg_incluster_storage
+          title: In-cluster Storage provider
+          type: select_one
+          when: '{{repl (ConfigOptionEquals "reg_incluster" "1") }}'
+          default: none
+          help_text: You may configure your Docker registry to use an external storage backend. This setting is recommended for AWS users instead of using Elastic Container Registry.
+          items:
+            - name: none
+              title: None
+            - name: s3
+              title: S3
+
+        - name: reg_incluster_storage_s3_bucketname
+          title: S3 bucket name
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          help_text: The name of the bucket to act as your S3 storage backend.
+
+        - name: reg_incluster_storage_s3_accesskey
+          title: S3 access key
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          help_text: The access key to use for authentication of your S3 storage backend.
+
+        - name: reg_incluster_storage_s3_secretkey
+          title: S3 secret key
+          type: password
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          required: true
+          help_text: The secret key to use for authentication of your S3 storage backend.
+
         - name: reg_url
           title: Container registry URL
           type: text
@@ -59,34 +92,6 @@ spec:
           when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") }}'
           required: true
           help_text: The password for your container registry.
-
-        - name: reg_s3storage
-          title: Use S3 storage for your container registry
-          type: bool
-          default: "0"
-          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") }}'
-          help_text: If using AWS as your container registry, you must configure an S3 storage backend.
-
-        - name: reg_bucketname
-          title: S3 bucket name
-          type: text
-          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
-          required: true
-          help_text: The name of the bucket to act as your S3 storage backend.
-
-        - name: reg_accesskey
-          title: S3 access key
-          type: text
-          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
-          required: true
-          help_text: The access key to use for authentication of your S3 storage backend.
-
-        - name: reg_secretkey
-          title: S3 secret key
-          type: password
-          when: '{{repl and (eq HasLocalRegistry false) (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
-          required: true
-          help_text: The secret key to use for authentication of your S3 storage backend.
 
     - name: database
       title: Database
@@ -236,19 +241,26 @@ spec:
           when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
           help_text: The endpoint used to connect to the S3 storage.
 
+        - name: store_s3_bucket
+          title: S3 bucket name
+          type: text
+          required: false
+          when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
+          help_text: Name of S3 bucket to be used as storage. If left empty, Gitpod will create bucket per each user. If set, then all data will be stored inside one bucket.
+
         - name: store_s3_access_key_id
-          title: Username
+          title: Access Key
           type: text
           required: true
           when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
-          help_text: The username that has access to the S3 account. In AWS, this is an IAM user's credentials with `AmazonS3FullAccess` policy.
+          help_text: Access key of IAM user's credentials with `AmazonS3FullAccess` policy.
 
         - name: store_s3_secret_access_key
-          title: Password
+          title: Secret Key
           type: password
           required: true
           when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
-          help_text: The password that has access to the S3 account. In AWS, this is an IAM user's credentials with `AmazonS3FullAccess` policy.
+          help_text: Secret key of IAM user's credentials with `AmazonS3FullAccess` policy.
 
     - name: certs
       title: TLS certificates
@@ -324,19 +336,37 @@ spec:
           default: "0"
           help_text: 'Enabling the SSH gateway allows use of additional desktop IDEs. IMPORTANT: This uses port 22 on your Kubernetes nodes. When enabled, this will prevent login to the cluster via SSH. If you wish to maintain SSH access to your cluster, please configure another SSH port on your nodes.'
 
-    - name: advanced
-      title: Advanced customizations (Expert Mode)
-      description: Use with care! Enable only when you know what you are doing!
+    - name: user_management
+      title: User management
       items:
-        - name: advanced_mode_enabled
-          title: Enable advanced mode
+        - name: user_management_block_enabled
+          title: Limit user registration
           type: bool
           default: "0"
-          help_text: Enables advanced customization options. Enable only when you know what you are doing!
+          help_text: New registrations can be limited to users in specific domains.
+
+        - name: user_management_block_passlist
+          title: Allow registration for domain(s)
+          type: text
+          when: '{{repl (ConfigOptionEquals "user_management_block_enabled" "1") }}'
+          help_text: |
+            Enable users with email addresses in these domains to register for this service. This must be the primary email address set for the provider.
+
+            Add the domain only (eg, `gitpod.io`). Separate multiple domains with spaces.
+
+    - name: advanced
+      title: Additional Options
+      description: Here are additional options that you should only make use of in coordination with us or when you know what you are doing.
+      items:
+        - name: advanced_mode_enabled
+          title: Enable additional options
+          type: bool
+          default: "0"
+          help_text: Enables additional customization options. Enable only when you know what you are doing!
 
         - name: config_patch
           title: Gitpod config patch (YAML file)
           type: file
           required: false
           when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
-          help_text: A file with Gitpod config that will be used to patch the generated Gitpod config.
+          help_text: A file with Gitpod config that will be used to patch the generated Gitpod config. Usually provided by Gitpod as a way to tailor your installation.
