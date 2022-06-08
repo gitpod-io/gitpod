@@ -13,6 +13,7 @@ import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
+import { getExperimentsClient } from "./../experiments/client";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? "t/" + team.slug : "projects";
@@ -50,9 +51,14 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
 
 export default function () {
     const { project } = useContext(ProjectContext);
+    const location = useLocation();
+    const { teams } = useContext(TeamsContext);
+    const team = getCurrentTeam(location, teams);
 
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isIncrementalPrebuildsEnabled, setIsIncrementalPrebuildsEnabled] = useState<boolean>(false);
+    const [isPersistentVolumeClaimEnabled, setIsPersistentVolumeClaimEnabled] = useState<boolean>(false);
+    const [isShowPersistentVolumeClaim, setIsShowPersistentVolumeClaim] = useState<boolean>(false);
 
     useEffect(() => {
         if (!project) {
@@ -60,7 +66,22 @@ export default function () {
         }
         setIsLoading(false);
         setIsIncrementalPrebuildsEnabled(!!project.settings?.useIncrementalPrebuilds);
-    }, [project]);
+        setIsPersistentVolumeClaimEnabled(!!project.settings?.usePersistentVolumeClaim);
+
+        (async () => {
+            const showPersistentVolumeClaim = await getExperimentsClient().getValueAsync(
+                "persistent_volume_claim",
+                false,
+                {
+                    projectId: project?.id,
+                    teamId: team?.id,
+                    teamName: team?.name,
+                    teams,
+                },
+            );
+            setIsShowPersistentVolumeClaim(showPersistentVolumeClaim);
+        })();
+    }, [project, team, teams]);
 
     const toggleIncrementalPrebuilds = async () => {
         if (!project) {
@@ -75,6 +96,24 @@ export default function () {
                 },
             });
             setIsIncrementalPrebuildsEnabled(!isIncrementalPrebuildsEnabled);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const togglePersistentVolumeClaim = async () => {
+        if (!project) {
+            return;
+        }
+        setIsLoading(true);
+        try {
+            await getGitpodService().server.updateProjectPartial({
+                id: project.id,
+                settings: {
+                    usePersistentVolumeClaim: !isPersistentVolumeClaimEnabled,
+                },
+            });
+            setIsPersistentVolumeClaimEnabled(!isPersistentVolumeClaimEnabled);
         } finally {
             setIsLoading(false);
         }
@@ -105,6 +144,22 @@ export default function () {
                 checked={isIncrementalPrebuildsEnabled}
                 disabled={isLoading}
                 onChange={toggleIncrementalPrebuilds}
+            />
+            <br></br>
+            <h3>Persistent Volume Claim</h3>
+            <CheckBox
+                title={
+                    <span>
+                        Enable Persistent Volume Claim{" "}
+                        <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
+                            Experimental
+                        </PillLabel>
+                    </span>
+                }
+                desc={<span>Experimental feature that is still under development.</span>}
+                checked={isPersistentVolumeClaimEnabled}
+                disabled={isLoading || !isShowPersistentVolumeClaim}
+                onChange={togglePersistentVolumeClaim}
             />
         </ProjectSettingsPage>
     );

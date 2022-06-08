@@ -14,6 +14,7 @@ export interface ProjectConfig {
 
 export interface ProjectSettings {
     useIncrementalPrebuilds?: boolean;
+    usePersistentVolumeClaim?: boolean;
 }
 
 export interface Project {
