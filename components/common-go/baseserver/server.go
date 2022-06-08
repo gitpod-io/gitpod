@@ -259,7 +259,9 @@ func (s *Server) initializeGRPC() error {
 	common_grpc.SetupLogging()
 
 	grpcMetrics := grpc_prometheus.NewServerMetrics()
-	grpcMetrics.EnableHandlingTimeHistogram()
+	grpcMetrics.EnableHandlingTimeHistogram(
+		grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
+	)
 	if err := s.MetricsRegistry().Register(grpcMetrics); err != nil {
 		return fmt.Errorf("failed to register grpc metrics: %w", err)
 	}

@@ -125,7 +125,9 @@ var runCmd = &cobra.Command{
 		metrics.Registry.MustRegister(ratelimits)
 
 		grpcMetrics := grpc_prometheus.NewServerMetrics()
-		grpcMetrics.EnableHandlingTimeHistogram()
+		grpcMetrics.EnableHandlingTimeHistogram(
+			grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
+		)
 		metrics.Registry.MustRegister(grpcMetrics)
 
 		grpcOpts := common_grpc.ServerOptionsWithInterceptors(
