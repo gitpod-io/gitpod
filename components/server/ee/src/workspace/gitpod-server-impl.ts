@@ -1857,16 +1857,26 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string | undefined> {
         const user = this.checkAndBlockUser("getStripeSetupIntentClientSecret");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
-        const setupIntent = await this.stripeService.createSetupIntent();
-        return setupIntent.client_secret || undefined;
+        try {
+            const setupIntent = await this.stripeService.createSetupIntent();
+            return setupIntent.client_secret || undefined;
+        } catch (error) {
+            log.error("Failed to create Stripe SetupIntent", error);
+            throw new ResponseError(500, "Failed to create Stripe SetupIntent");
+        }
     }
 
     async getTeamStripeCustomerId(ctx: TraceContext, teamId: string): Promise<string | undefined> {
         const user = this.checkAndBlockUser("getTeamStripeCustomerId");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         await this.guardTeamOperation(teamId, "update");
-        const customer = await this.stripeService.findCustomerByTeamId(teamId);
-        return customer?.id || undefined;
+        try {
+            const customer = await this.stripeService.findCustomerByTeamId(teamId);
+            return customer?.id || undefined;
+        } catch (error) {
+            log.error(`Failed to get Stripe Customer ID for team '${teamId}'`, error);
+            throw new ResponseError(500, `Failed to get Stripe Customer ID for team '${teamId}'`);
+        }
     }
 
     async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
@@ -1874,8 +1884,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         await this.guardTeamOperation(teamId, "update");
         const team = await this.teamDB.findTeamById(teamId);
-        await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
-        // TODO(janx): Create a Stripe usage-based Subscription for the customer
+        try {
+            await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
+            // TODO(janx): Create a Stripe usage-based Subscription for the customer
+        } catch (error) {
+            log.error(`Failed to subscribe team '${teamId}' to Stripe`, error);
+            throw new ResponseError(500, `Failed to subscribe team '${teamId}' to Stripe`);
+        }
     }
 
     // (SaaS) – admin
