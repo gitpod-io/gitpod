@@ -14,11 +14,29 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+var allowedServiceTypes = map[corev1.ServiceType]struct{}{
+	corev1.ServiceTypeLoadBalancer: {},
+	corev1.ServiceTypeClusterIP:    {},
+	corev1.ServiceTypeNodePort:     {},
+	corev1.ServiceTypeExternalName: {},
+}
+
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
+	serviceType := corev1.ServiceTypeLoadBalancer
+
 	loadBalancerIP := ""
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil && cfg.WebApp.ProxyConfig.StaticIP != "" {
-			loadBalancerIP = cfg.WebApp.ProxyConfig.StaticIP
+		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil {
+			if cfg.WebApp.ProxyConfig.StaticIP != "" {
+				loadBalancerIP = cfg.WebApp.ProxyConfig.StaticIP
+			}
+			st := cfg.WebApp.ProxyConfig.ServiceType
+			if st != nil {
+				_, allowed := allowedServiceTypes[corev1.ServiceType(*st)]
+				if allowed {
+					serviceType = *st
+				}
+			}
 		}
 		return nil
 	})
@@ -57,8 +75,10 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	return common.GenerateService(Component, ports, func(service *corev1.Service) {
-		service.Spec.Type = corev1.ServiceTypeLoadBalancer
-		service.Spec.LoadBalancerIP = loadBalancerIP
+		service.Spec.Type = serviceType
+		if serviceType == corev1.ServiceTypeLoadBalancer {
+			service.Spec.LoadBalancerIP = loadBalancerIP
+		}
 
 		service.Annotations["external-dns.alpha.kubernetes.io/hostname"] = fmt.Sprintf("%s,*.%s,*.ws.%s", ctx.Config.Domain, ctx.Config.Domain, ctx.Config.Domain)
 		service.Annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {}}}`
