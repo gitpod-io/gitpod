@@ -29,6 +29,7 @@ export interface JobConfig {
     previewEnvironment: PreviewEnvironmentConfig,
     repository: Repository
     observability: Observability
+    noCache: boolean;
 }
 
 export interface PreviewEnvironmentConfig {
@@ -92,6 +93,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         ref: context.Repository.ref,
         branch: context.Repository.ref,
     }
+    const noCache = "no-cache" in buildConfig
     const refsPrefix = "refs/heads/";
     if (repository.branch.startsWith(refsPrefix)) {
         repository.branch = repository.branch.substring(refsPrefix.length);
@@ -137,6 +139,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withPayment,
         withVM,
         workspaceFeatureFlags,
+        noCache
     }
 
     werft.log("job config", JSON.stringify(jobConfig));

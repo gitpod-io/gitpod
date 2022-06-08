@@ -16,13 +16,13 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     const {
         publishRelease,
         dontTest,
-        withContrib,
         retag,
         version,
         localAppVersion,
         publishToJBMarketplace,
         publishToNpm,
         coverageOutput,
+        noCache,
     } = jobConfig;
 
     const releaseBranch = jobConfig.repository.ref;
@@ -30,12 +30,14 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     werft.phase("build", "build running");
     const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
 
+    const cache = noCache ? "none" : "remote";
+
     exec(
         `LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || { echo "[build|FAIL] There are some license headers missing. Please run 'leeway run components:update-license-header'."; exit 1; }`,
     );
     exec(`leeway vet --ignore-warnings`);
     exec(
-        `leeway build --docker-build-options network=host --werft=true -c remote ${
+        `leeway build --docker-build-options network=host --werft=true -c ${cache} ${
             dontTest ? "--dont-test" : ""
         } --dont-retag --coverage-output-path=${coverageOutput} --save /tmp/dev.tar.gz -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`,
     );
