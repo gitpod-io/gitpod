@@ -116,7 +116,7 @@ func TestSetQuota(t *testing.T) {
 				ProjectIDs: []int{1000},
 				Execs: []string{
 					"project -s -d 1 -p /foo 1000",
-					"limit -p bsoft=102400 bhard=102400 1000",
+					"limit -p bsoft=102400 1000",
 				},
 			},
 		},
