@@ -82,6 +82,7 @@ func ConnectForTests(t *testing.T) *gorm.DB {
 			&Workspace{},
 			&Project{},
 			&Team{},
+			&TeamMembership{},
 		} {
 			// See https://gorm.io/docs/delete.html#Block-Global-Delete
 			tx := conn.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(model)
