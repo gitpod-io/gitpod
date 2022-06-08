@@ -1,6 +1,12 @@
 # Change Log
 
 ## June 2022
+- Fix JetBrains Gateway Plugin to work on v222.2889.2 ([#10505](https://github.com/gitpod-io/gitpod/pull/10505)) - [@felladrin](https://github.com/felladrin)
+- Update to new stable alpine version v3.16 ([#10466](https://github.com/gitpod-io/gitpod/pull/10466)) - [@aledbf](https://github.com/aledbf)
+- Update sigs.k8s.io/e2e-framework to v0.0.7 ([#10475](https://github.com/gitpod-io/gitpod/pull/10475)) - [@aledbf](https://github.com/aledbf)
+- Update dashboard navigation ([#10309](https://github.com/gitpod-io/gitpod/pull/10309)) - [@gtsiolis](https://github.com/gtsiolis)
+- [installer] Update kube-rbac-proxy to v0.12.0 ([#10471](https://github.com/gitpod-io/gitpod/pull/10471)) - [@aledbf](https://github.com/aledbf)
+- Fix: Don't skip prebuilds if .gitpod.yml has a 'before' task but no 'init' task ([#10352](https://github.com/gitpod-io/gitpod/pull/10352)) - [@jankeromnes](https://github.com/jankeromnes)
 - Update IntelliJ IDEA IDE image to version 221.5787.30. ([#10431](https://github.com/gitpod-io/gitpod/pull/10431)) - [@roboquat](https://github.com/roboquat)
 - Update PyCharm IDE image to version 221.5787.24. ([#10432](https://github.com/gitpod-io/gitpod/pull/10432)) - [@roboquat](https://github.com/roboquat)
 - [ws-manager] Add metrics to record backup success/failure count ([#10342](https://github.com/gitpod-io/gitpod/pull/10342)) - [@jenting](https://github.com/jenting)
