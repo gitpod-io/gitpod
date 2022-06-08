@@ -152,11 +152,6 @@ func TestGitActions(t *testing.T) {
 
 					defer stopWS(false)
 
-					_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
-					if err != nil {
-						t.Fatal(err)
-					}
-
 					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
 					if err != nil {
 						t.Fatal(err)
