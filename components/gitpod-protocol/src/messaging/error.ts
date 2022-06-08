@@ -62,6 +62,9 @@ export namespace ErrorCodes {
     // 490 Too Many Running Workspace
     export const TOO_MANY_RUNNING_WORKSPACES = 490;
 
+    // 500 Internal Server Error
+    export const INTERNAL_SERVER_ERROR = 500;
+
     // 501 EE Feature
     export const EE_FEATURE = 501;
 
