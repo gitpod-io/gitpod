@@ -157,7 +157,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 						expectedBranch = test.ExpectedBranchFunc(username)
 					}
 					if actBranch != expectedBranch {
-						t.Fatalf("expected branch '%s', got '%s'!", test.ExpectedBranch, actBranch)
+						t.Fatalf("expected branch '%s', got '%s'!", expectedBranch, actBranch)
 					}
 				})
 			}
