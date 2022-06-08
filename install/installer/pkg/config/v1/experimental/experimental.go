@@ -24,8 +24,15 @@ type Config struct {
 }
 
 type CommonConfig struct {
-	PodConfig                map[string]*PodConfig `json:"podConfig,omitempty"`
-	StaticMessagebusPassword string                `json:"staticMessagebusPassword"`
+	PodConfig                map[string]*PodConfig     `json:"podConfig,omitempty"`
+	ServiceConfig            map[string]*ServiceConfig `json:"serviceConfig,omitempty"`
+	StaticMessagebusPassword string                    `json:"staticMessagebusPassword"`
+}
+
+// ServiceConfig enables modification of type of service to `ClusterIP` if needed,
+// currently supported only for `proxy` service
+type ServiceConfig struct {
+	ServiceType string `json:"serviceType,omitempty"`
 }
 
 type PodConfig struct {
