@@ -13,13 +13,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/tests/workspace/common"
-	"github.com/google/go-cmp/cmp"
+	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
 func TestCgroupV2(t *testing.T) {
