@@ -5,6 +5,8 @@
 package experimental
 
 import (
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/go-playground/validator/v10"
 )
@@ -16,9 +18,20 @@ var TracingSampleTypeList = map[TracingSampleType]struct{}{
 	TracingSampleTypeRemote:        {},
 }
 
+var ServiceTypeList = map[corev1.ServiceType]struct{}{
+	corev1.ServiceTypeLoadBalancer: {},
+	corev1.ServiceTypeClusterIP:    {},
+	corev1.ServiceTypeNodePort:     {},
+	corev1.ServiceTypeExternalName: {},
+}
+
 var ValidationChecks = map[string]validator.Func{
 	"tracing_sampler_type": func(fl validator.FieldLevel) bool {
 		_, ok := TracingSampleTypeList[TracingSampleType(fl.Field().String())]
+		return ok
+	},
+	"service_config_type": func(fl validator.FieldLevel) bool {
+		_, ok := ServiceTypeList[corev1.ServiceType(fl.Field().String())]
 		return ok
 	},
 }
