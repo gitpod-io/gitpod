@@ -14,7 +14,7 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/tests/workspace/common"
+	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
 func TestK3s(t *testing.T) {
