@@ -26,6 +26,8 @@
 	header @bin_asset {
 		Content-Type application/octet-stream
 		Content-Disposition attachment
+		# static assets configure cache headers
+		Cache-Control "public, max-age=600"
 	}
 
 	@static_path {
@@ -34,6 +36,12 @@
 
 	handle @static_path {
 		try_files {path}
+		# static assets configure cache headers and do not check for changes
+		header {
+			Cache-Control "public, max-age=31536000"
+			# remove Last-Modified header
+			-Last-Modified
+		}
 	}
 
 	handle {
