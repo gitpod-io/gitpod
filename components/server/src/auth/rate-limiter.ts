@@ -198,7 +198,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         tsReassignSlot: { group: "default", points: 1 },
         getStripePublishableKey: { group: "default", points: 1 },
         getStripeSetupIntentClientSecret: { group: "default", points: 1 },
-        getTeamStripeCustomerId: { group: "default", points: 1 },
+        findStripeCustomerIdForTeam: { group: "default", points: 1 },
         subscribeTeamToStripe: { group: "default", points: 1 },
         trackEvent: { group: "default", points: 1 },
         trackLocation: { group: "default", points: 1 },

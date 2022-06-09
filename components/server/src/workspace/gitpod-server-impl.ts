@@ -3033,13 +3033,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getGithubUpgradeUrls(ctx: TraceContext): Promise<GithubUpgradeURL[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async getStripePublishableKey(ctx: TraceContext): Promise<string | undefined> {
+    async getStripePublishableKey(ctx: TraceContext): Promise<string> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string | undefined> {
+    async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async getTeamStripeCustomerId(ctx: TraceContext, teamId: string): Promise<string | undefined> {
+    async findStripeCustomerIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
