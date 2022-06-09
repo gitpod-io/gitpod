@@ -59,7 +59,7 @@ var runCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go func() {
-			runLogs := console.Observe(log)
+			runLogs := console.Observe(log, filepath.Join("/workspace", cfg.WorkspaceLocation))
 			err := runtime.StartWorkspace(ctx, runLogs, ref, cfg)
 			if err != nil {
 				runLogs.Show()

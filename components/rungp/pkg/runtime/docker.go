@@ -29,6 +29,10 @@ func (dr DockerRuntime) StartWorkspace(ctx context.Context, logs io.WriteCloser,
 	if checkoutLocation == "" {
 		checkoutLocation = filepath.Base(dr.Workdir)
 	}
+	workspaceLocation := cfg.WorkspaceLocation
+	if workspaceLocation == "" {
+		workspaceLocation = checkoutLocation
+	}
 
 	name := fmt.Sprintf("rungp-%d", time.Now().UnixNano())
 	args := []string{"run", "--rm", "--user", "root", "--privileged", "-p", "8080:22999", "-v", fmt.Sprintf("%s:%s", dr.Workdir, filepath.Join("/workspace", checkoutLocation)), "--name", name}
@@ -42,7 +46,7 @@ func (dr DockerRuntime) StartWorkspace(ctx context.Context, logs io.WriteCloser,
 		"GITPOD_WORKSPACE_URL":           "http://localhost",
 		"GITPOD_THEIA_PORT":              "23000",
 		"GITPOD_IDE_ALIAS":               "code",
-		"THEIA_WORKSPACE_ROOT":           filepath.Join("/workspace", cfg.WorkspaceLocation),
+		"THEIA_WORKSPACE_ROOT":           filepath.Join("/workspace", workspaceLocation),
 		"GITPOD_REPO_ROOT":               filepath.Join("/workspace", checkoutLocation),
 		"GITPOD_PREVENT_METADATA_ACCESS": "false",
 		"GITPOD_WORKSPACE_ID":            "a-random-name",

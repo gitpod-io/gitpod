@@ -6,11 +6,12 @@ package console
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"strings"
 )
 
-func Observe(log Log) Logs {
+func Observe(log Log, workspaceFolder string) Logs {
 	rr, rw := io.Pipe()
 
 	var (
@@ -32,8 +33,13 @@ func Observe(log Log) Logs {
 
 			switch {
 			case strings.Contains(line, "Web UI available"):
+				prefix := "folder"
+				if strings.HasSuffix(workspaceFolder, ".code-workspace") {
+					prefix = "workspace"
+				}
+
 				phase = "running"
-				steady = "workspace at http://localhost:8080"
+				steady = fmt.Sprintf("workspace at http://localhost:8080/?%s=%s", prefix, workspaceFolder)
 			case strings.Contains(line, "Installing extensions"):
 				phase = "installing extensions"
 				steady = "running " + steady
