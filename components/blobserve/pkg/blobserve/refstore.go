@@ -6,18 +6,20 @@ package blobserve
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/remotes"
 	"github.com/docker/distribution/reference"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 )
 
 const (
@@ -304,7 +306,7 @@ func resolveRef(ctx context.Context, ref string, resolver remotes.Resolver) (*oc
 	if err != nil {
 		return nil, err
 	}
-	manifest, _, err := registry.DownloadManifest(ctx, registry.AsFetcherFunc(fetcher), desc)
+	manifest, _, err := downloadManifest(ctx, asFetcherFunc(fetcher), desc)
 	if err != nil {
 		return nil, err
 	}
@@ -319,4 +321,92 @@ func resolveRef(ctx context.Context, ref string, resolver remotes.Resolver) (*oc
 	}
 	blobLayer := manifest.Layers[0]
 	return &blobLayer, nil
+}
+
+type fetcherFunc func() (remotes.Fetcher, error)
+
+func asFetcherFunc(f remotes.Fetcher) fetcherFunc {
+	return func() (remotes.Fetcher, error) { return f, nil }
+}
+
+// DownloadManifest downloads and unmarshals the manifest of the given desc. If the desc points to manifest list
+// we choose the first manifest in that list.
+func downloadManifest(ctx context.Context, fetch fetcherFunc, desc ociv1.Descriptor) (cfg *ociv1.Manifest, rdesc *ociv1.Descriptor, err error) {
+	var fetcher remotes.Fetcher
+	fetcher, err = fetch()
+	if err != nil {
+		return
+	}
+
+	rc, err := fetcher.Fetch(ctx, desc)
+	if err != nil {
+		err = xerrors.Errorf("cannot fetch manifest: %w", err)
+		return
+	}
+
+	inpt, err := io.ReadAll(rc)
+	rc.Close()
+	if err != nil {
+		err = xerrors.Errorf("cannot download manifest: %w", err)
+		return
+	}
+
+	rdesc = &desc
+	rdesc.MediaType = desc.MediaType
+
+	switch rdesc.MediaType {
+	case images.MediaTypeDockerSchema2ManifestList, ociv1.MediaTypeImageIndex:
+		log.WithField("desc", rdesc).Debug("resolving image index")
+
+		// we received a manifest list which means we'll pick the default platform
+		// and fetch that manifest
+		var list ociv1.Index
+		err = json.Unmarshal(inpt, &list)
+		if err != nil {
+			err = xerrors.Errorf("cannot unmarshal index: %w", err)
+			return
+		}
+		if len(list.Manifests) == 0 {
+			err = xerrors.Errorf("empty manifest")
+			return
+		}
+
+		var fetcher remotes.Fetcher
+		fetcher, err = fetch()
+		if err != nil {
+			return
+		}
+
+		// TODO(cw): choose by platform, not just the first manifest
+		md := list.Manifests[0]
+		rc, err = fetcher.Fetch(ctx, md)
+		if err != nil {
+			err = xerrors.Errorf("cannot download config: %w", err)
+			return
+		}
+		rdesc = &md
+		inpt, err = io.ReadAll(rc)
+		rc.Close()
+		if err != nil {
+			err = xerrors.Errorf("cannot download manifest: %w", err)
+			return
+		}
+	}
+
+	switch rdesc.MediaType {
+	case images.MediaTypeDockerSchema2Manifest, ociv1.MediaTypeImageManifest:
+	default:
+		err = xerrors.Errorf("unsupported media type: %s", rdesc.MediaType)
+		return
+	}
+
+	var res ociv1.Manifest
+	err = json.Unmarshal(inpt, &res)
+	if err != nil {
+		err = xerrors.Errorf("cannot decode config: %w", err)
+		return
+	}
+
+	cfg = &res
+	return
 }

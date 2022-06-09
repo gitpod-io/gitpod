@@ -9,7 +9,6 @@ packages:
     deps:
       - components/common-go:lib
       - components/registry-facade-api/go:lib
-      - components/registry-facade:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -41,7 +40,6 @@ packages:
     deps:
       - components/common-go:lib
       - components/registry-facade-api/go:lib
-      - components/registry-facade:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux

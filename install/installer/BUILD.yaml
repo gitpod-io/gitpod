@@ -23,7 +23,6 @@ packages:
       - components/openvsx-proxy:lib
       - components/public-api/go:lib
       - components/registry-facade-api/go:lib
-      - components/registry-facade:lib
       - components/ws-daemon-api/go:lib
       - components/ws-daemon:lib
       - components/ws-manager-api/go:lib
