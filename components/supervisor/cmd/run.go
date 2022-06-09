@@ -20,10 +20,16 @@ var runCmd = &cobra.Command{
 		log.Init(ServiceName, Version, true, false)
 		common_grpc.SetupLogging()
 		supervisor.Version = Version
-		supervisor.Run()
+		supervisor.Run(supervisor.ForRunGP(runOpts.RunGP))
 	},
+}
+
+var runOpts struct {
+	RunGP bool
 }
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+
+	runCmd.Flags().BoolVar(&runOpts.RunGP, "rungp", false, "disables a host of functionality to make this compatible with rungp")
 }

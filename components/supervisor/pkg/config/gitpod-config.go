@@ -12,7 +12,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 )

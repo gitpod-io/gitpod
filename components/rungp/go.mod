@@ -6,6 +6,7 @@ replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // 
 
 require (
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
+	github.com/pterm/pterm v0.12.41
 	github.com/spf13/cobra v1.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -17,7 +18,6 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
-	github.com/pterm/pterm v0.12.41 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37 // indirect

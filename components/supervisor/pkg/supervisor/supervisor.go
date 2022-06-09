@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -90,7 +91,8 @@ func AddAPIEndpointOpts(opts ...grpc.ServerOption) {
 }
 
 type runOptions struct {
-	Args []string
+	Args  []string
+	RunGP bool
 }
 
 // RunOption customizes the run behaviour.
@@ -100,6 +102,13 @@ type RunOption func(*runOptions)
 func WithArgs(args []string) RunOption {
 	return func(r *runOptions) {
 		r.Args = args
+	}
+}
+
+// ForRunGP disables a host of functionality only required in a Gitpod workspace
+func ForRunGP(val bool) RunOption {
+	return func(ro *runOptions) {
+		ro.RunGP = val
 	}
 }
 
@@ -165,11 +174,13 @@ func Run(options ...RunOption) {
 	//         URL, which would fail if we tried another time.
 	childProcEnvvars := buildChildProcEnv(cfg, nil)
 
-	err = AddGitpodUserIfNotExists()
-	if err != nil {
-		log.WithError(err).Fatal("cannot ensure Gitpod user exists")
+	if !opts.RunGP {
+		err = AddGitpodUserIfNotExists()
+		if err != nil {
+			log.WithError(err).Fatal("cannot ensure Gitpod user exists")
+		}
+		symlinkBinaries(cfg)
 	}
-	symlinkBinaries(cfg)
 	configureGit(cfg, childProcEnvvars)
 
 	tokenService := NewInMemoryTokenService()
@@ -208,25 +219,15 @@ func Run(options ...RunOption) {
 	}
 
 	var (
-		shutdown                           = make(chan ShutdownReason, 1)
-		ideReady                           = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
-		desktopIdeReady     *ideReadyState = nil
-		cstate                             = NewInMemoryContentState(cfg.RepoRoot)
-		gitpodService                      = createGitpodService(cfg, tokenService)
-		gitpodConfigService                = config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
-		portMgmt                           = ports.NewManager(
-			createExposedPortsImpl(cfg, gitpodService),
-			&ports.PollingServedPortsObserver{
-				RefreshInterval: 2 * time.Second,
-			},
-			ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
-			tunneledPortsService,
-			internalPorts...,
-		)
-		termMux             = terminal.NewMux()
-		termMuxSrv          = terminal.NewMuxTerminalService(termMux)
-		taskManager         = newTasksManager(cfg, termMuxSrv, cstate, nil)
-		analytics           = analytics.NewFromEnvironment()
+		ideReady                       = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
+		desktopIdeReady *ideReadyState = nil
+		cstate                         = NewInMemoryContentState(cfg.RepoRoot)
+		gitpodService                  = createGitpodService(cfg, tokenService)
+
+		termMux     = terminal.NewMux()
+		termMuxSrv  = terminal.NewMuxTerminalService(termMux)
+		taskManager = newTasksManager(cfg, termMuxSrv, cstate, nil)
+
 		notificationService = NewNotificationService()
 	)
 	if cfg.DesktopIDE != nil {
@@ -237,10 +238,28 @@ func Run(options ...RunOption) {
 	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
-	go gitpodConfigService.Watch(ctx)
+	var portMgmt *ports.Manager
+	if opts.RunGP {
+		cstate.MarkContentReady(csapi.WorkspaceInitFromOther)
+	} else {
+		gitpodConfigService := config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
 
-	defer analytics.Close()
-	go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
+		go gitpodConfigService.Watch(ctx)
+
+		portMgmt = ports.NewManager(
+			createExposedPortsImpl(cfg, gitpodService),
+			&ports.PollingServedPortsObserver{
+				RefreshInterval: 2 * time.Second,
+			},
+			ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
+			tunneledPortsService,
+			internalPorts...,
+		)
+
+		analytics := analytics.NewFromEnvironment()
+		defer analytics.Close()
+		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
+	}
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	if cfg.WorkspaceRoot != "" {
@@ -297,18 +316,21 @@ func Run(options ...RunOption) {
 	go startContentInit(ctx, cfg, &wg, cstate)
 	wg.Add(1)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, apiEndpointOpts...)
-	wg.Add(1)
-	go startSSHServer(ctx, cfg, &wg, childProcEnvvars)
+	if !opts.RunGP {
+		wg.Add(1)
+		go startSSHServer(ctx, cfg, &wg, childProcEnvvars)
+	}
 	wg.Add(1)
 	tasksSuccessChan := make(chan taskSuccess, 1)
 	go taskManager.Run(ctx, &wg, tasksSuccessChan)
 	wg.Add(1)
 	go socketActivationForDocker(ctx, &wg, termMux)
 
+	shutdown := make(chan ShutdownReason, 1)
 	if cfg.isHeadless() {
 		wg.Add(1)
 		go stopWhenTasksAreDone(ctx, &wg, shutdown, tasksSuccessChan)
-	} else {
+	} else if !opts.RunGP {
 		wg.Add(1)
 		go portMgmt.Run(ctx, &wg)
 	}
@@ -1074,17 +1096,19 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	g := prometheus.Gatherers{
 		prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) { return ms.GetMetricFamilies(), nil }),
 	}
-	r := route.New()
 
-	r.Get("/metrics", promhttp.HandlerFor(g, promhttp.HandlerOpts{}).ServeHTTP)
-	r.Put("/metrics/job/:job/*labels", handler.Push(ms, true, true, false, nil))
-	r.Post("/metrics/job/:job/*labels", handler.Push(ms, false, true, false, nil))
-	r.Del("/metrics/job/:job/*labels", handler.Delete(ms, false, nil))
-	r.Put("/metrics/job/:job", handler.Push(ms, true, true, false, nil))
-	r.Post("/metrics/job/:job", handler.Push(ms, false, true, false, nil))
+	metrics := route.New()
+	metrics.Get("/", promhttp.HandlerFor(g, promhttp.HandlerOpts{}).ServeHTTP)
+	metrics.Put("/job/:job/*labels", handler.Push(ms, true, true, false, nil))
+	metrics.Post("/job/:job/*labels", handler.Push(ms, false, true, false, nil))
+	metrics.Del("/job/:job/*labels", handler.Delete(ms, false, nil))
+	metrics.Put("/job/:job", handler.Push(ms, true, true, false, nil))
+	metrics.Post("/job/:job", handler.Push(ms, false, true, false, nil))
+	routes.Handle("/metrics", metrics)
 
-	routes.Handle("/", r)
-
+	ideURL, _ := url.Parse(fmt.Sprintf("http://localhost:%d", cfg.IDEPort))
+	routes.Handle("/", httputil.NewSingleHostReverseProxy(ideURL))
+	routes.Handle("/_supervisor/frontend/", http.StripPrefix("/_supervisor/frontend", http.FileServer(http.Dir(cfg.StaticConfig.FrontendLocation))))
 	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") ||
 			websocket.IsWebSocketUpgrade(r) {

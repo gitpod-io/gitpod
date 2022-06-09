@@ -32,7 +32,6 @@ require (
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0
-	gopkg.in/yaml.v2 v2.4.0
 	nhooyr.io/websocket v1.8.7 // indirect
 )
 
@@ -105,7 +104,7 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
