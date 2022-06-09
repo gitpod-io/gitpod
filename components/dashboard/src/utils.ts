@@ -79,3 +79,24 @@ export function inResource(pathname: string, resources: string[]): boolean {
     // E.g. "api/userspace/resource" path is a part of resource "api/userspace"
     return resources.map((res) => trimmedResource.startsWith(trimResource(res))).some(Boolean);
 }
+
+/**
+ * Implementation for [`scrollIntoViewIfNeeded`](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoViewIfNeeded).
+ *
+ * Reference: https://github.com/nuxodin/lazyfill/blob/main/polyfills/Element/prototype/scrollIntoViewIfNeeded.js
+ */
+export function scrollIntoViewIfNeeded(el: Element, centerIfNeeded = true) {
+    const observer = new IntersectionObserver(function ([entry]) {
+        const ratio = entry.intersectionRatio;
+        if (ratio < 1) {
+            const place = ratio <= 0 && centerIfNeeded ? "center" : "nearest";
+            el.scrollIntoView({
+                block: place,
+                inline: place,
+            });
+        }
+        observer.disconnect();
+    });
+
+    observer.observe(el);
+}

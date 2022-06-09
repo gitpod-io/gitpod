@@ -4,9 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import React, { HTMLAttributeAnchorTarget } from "react";
+import React, { HTMLAttributeAnchorTarget, useRef } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { scrollIntoViewIfNeeded } from "../utils";
 
 export interface ContextMenuProps {
     children?: React.ReactChild[] | React.ReactChild;
@@ -30,6 +31,8 @@ export interface ContextMenuEntry {
 }
 
 function ContextMenu(props: ContextMenuProps) {
+    const menuRef = useRef<HTMLDivElement>(null);
+
     const [expanded, setExpanded] = useState(false);
     const toggleExpanded = () => {
         setExpanded(!expanded);
@@ -64,6 +67,14 @@ function ContextMenu(props: ContextMenuProps) {
         };
     }, []); // Empty array ensures that effect is only run on mount and unmount
 
+    useEffect(() => {
+        if (!expanded || !menuRef.current) {
+            return;
+        }
+
+        scrollIntoViewIfNeeded(menuRef.current);
+    }, [expanded]);
+
     const font = "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100";
 
     const menuId = String(Math.random());
@@ -97,6 +108,7 @@ function ContextMenu(props: ContextMenuProps) {
             </div>
             {expanded ? (
                 <div
+                    ref={menuRef}
                     className={`mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated ${
                         props.customClasses || "w-48 right-0"
                     }`}
