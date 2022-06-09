@@ -111,6 +111,10 @@
                             "value": "test-foobarservice-gitpod.io"
                         },
                         {
+                            "name": "GITPOD_WORKSPACE_CLASS",
+                            "value": "gitpodio-internal-foobar"
+                        },
+                        {
                             "name": "THEIA_SUPERVISOR_ENDPOINT",
                             "value": ":22999"
                         },
