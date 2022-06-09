@@ -96,6 +96,7 @@ function copyCachedSecret(werft: Werft, params: InstallCertificateParams, slice:
     | yq d - 'metadata.uid' \
     | yq d - 'metadata.resourceVersion' \
     | yq d - 'metadata.creationTimestamp' \
+    | yq d - 'metadata.ownerReferences' \
     | sed 's/${params.certName}/${params.certSecretName}/g' \
     | kubectl --kubeconfig ${params.destinationKubeconfig} apply --namespace=${params.destinationNamespace} -f -`
 
