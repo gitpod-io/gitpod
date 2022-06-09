@@ -613,7 +613,7 @@ class WorkspaceDBSpec {
     public async testFindVolumeSnapshotWorkspacesForGC() {
         await this.threeVolumeSnapshotsForTwoWorkspaces();
 
-        const wsIds = await this.db.findVolumeSnapshotWorkspacesForGC();
+        const wsIds = await this.db.findVolumeSnapshotWorkspacesForGC(10);
         expect(wsIds).to.deep.equal(["ws-123"]);
     }
 
@@ -621,7 +621,7 @@ class WorkspaceDBSpec {
     public async findVolumeSnapshotForGCByWorkspaceId() {
         await this.threeVolumeSnapshotsForTwoWorkspaces();
 
-        const vss = (await this.db.findVolumeSnapshotForGCByWorkspaceId("ws-123")).map((vs) => ({
+        const vss = (await this.db.findVolumeSnapshotForGCByWorkspaceId("ws-123", 10)).map((vs) => ({
             ...vs,
             creationTime: "", // this is updated by the DB, so we need to blank for the sake of this test
         }));

@@ -107,7 +107,9 @@ export class WorkspaceDeletionService {
         const span = TraceContext.startSpan("deleteWorkspaceStorage", ctx);
         try {
             await this.storageClient.deleteWorkspaceBackups(ws.ownerId, ws.id, includeSnapshots);
-            let vss = await this.db.trace({ span }).findVolumeSnapshotForGCByWorkspaceId(ws.id);
+            let vss = await this.db
+                .trace({ span })
+                .findVolumeSnapshotForGCByWorkspaceId(ws.id, this.config.workspaceGarbageCollection.chunkLimit);
             await Promise.all(vss.map((vs) => this.garbageCollectVolumeSnapshot({ span }, vs)));
         } catch (err) {
             TraceContext.setError({ span }, err);
@@ -119,7 +121,7 @@ export class WorkspaceDeletionService {
     }
 
     /**
-     * Perform deletion of volume snapshot from all clusters and from gloud provider:
+     * Perform deletion of volume snapshot from all clusters and from cloud provider:
      *  - throws an error if something went wrong during deletion
      *  - returns true in case of successful deletion
      * @param ctx
