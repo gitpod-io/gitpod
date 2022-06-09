@@ -36,7 +36,7 @@ export default function TeamUsageBasedBilling() {
             setStripeCustomerId(undefined);
             setIsLoading(true);
             try {
-                const customerId = await getGitpodService().server.getTeamStripeCustomerId(team.id);
+                const customerId = await getGitpodService().server.findStripeCustomerIdForTeam(team.id);
                 setStripeCustomerId(customerId);
             } catch (error) {
                 console.error(error);
@@ -102,7 +102,7 @@ export default function TeamUsageBasedBilling() {
         if (!pollStripeCustomerTimeout) {
             // Refresh Stripe customer in 5 seconds in order to poll for upgrade confirmation
             const timeout = setTimeout(async () => {
-                const customerId = await getGitpodService().server.getTeamStripeCustomerId(team.id);
+                const customerId = await getGitpodService().server.findStripeCustomerIdForTeam(team.id);
                 setStripeCustomerId(customerId);
                 setPollStripeCustomerTimeout(undefined);
             }, 5000);
@@ -164,7 +164,7 @@ function BillingSetupModal(props: { onClose: () => void }) {
     useEffect(() => {
         const { server } = getGitpodService();
         Promise.all([
-            server.getStripePublishableKey().then((v) => () => setStripePromise(loadStripe(v || ""))),
+            server.getStripePublishableKey().then((v) => () => setStripePromise(loadStripe(v))),
             server.getStripeSetupIntentClientSecret().then((v) => () => setStripeSetupIntentClientSecret(v)),
         ]).then((setters) => setters.forEach((s) => s()));
     }, []);

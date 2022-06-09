@@ -1848,26 +1848,36 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async getStripePublishableKey(ctx: TraceContext): Promise<string | undefined> {
+    async getStripePublishableKey(ctx: TraceContext): Promise<string> {
         const user = this.checkAndBlockUser("getStripePublishableKey");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
-        return this.config.stripeSettings?.publishableKey;
+        const publishableKey = this.config.stripeSettings?.publishableKey;
+        if (!publishableKey) {
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                "Stripe is not properly configured (no publishable key)",
+            );
+        }
+        return publishableKey;
     }
 
-    async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string | undefined> {
+    async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string> {
         const user = this.checkAndBlockUser("getStripeSetupIntentClientSecret");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         try {
             const setupIntent = await this.stripeService.createSetupIntent();
-            return setupIntent.client_secret || undefined;
+            if (!setupIntent.client_secret) {
+                throw new Error("No client secret in the SetupIntent");
+            }
+            return setupIntent.client_secret;
         } catch (error) {
             log.error("Failed to create Stripe SetupIntent", error);
             throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to create Stripe SetupIntent");
         }
     }
 
-    async getTeamStripeCustomerId(ctx: TraceContext, teamId: string): Promise<string | undefined> {
-        const user = this.checkAndBlockUser("getTeamStripeCustomerId");
+    async findStripeCustomerIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
+        const user = this.checkAndBlockUser("findStripeCustomerIdForTeam");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         await this.guardTeamOperation(teamId, "update");
         try {
