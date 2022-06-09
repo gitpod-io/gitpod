@@ -456,7 +456,7 @@ public final class Control {
        * @return This builder for chaining.
        */
       public Builder setPort(int value) {
-        
+
         port_ = value;
         onChanged();
         return this;
@@ -470,7 +470,7 @@ public final class Control {
        * @return This builder for chaining.
        */
       public Builder clearPort() {
-        
+
         port_ = 0;
         onChanged();
         return this;
@@ -1494,7 +1494,7 @@ public final class Control {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         privateKey_ = s;
@@ -1514,7 +1514,7 @@ public final class Control {
         getPrivateKeyBytes() {
       java.lang.Object ref = privateKey_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         privateKey_ = b;
@@ -1859,7 +1859,7 @@ public final class Control {
           getPrivateKeyBytes() {
         java.lang.Object ref = privateKey_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           privateKey_ = b;
@@ -1882,7 +1882,7 @@ public final class Control {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         privateKey_ = value;
         onChanged();
         return this;
@@ -1896,7 +1896,7 @@ public final class Control {
        * @return This builder for chaining.
        */
       public Builder clearPrivateKey() {
-        
+
         privateKey_ = getDefaultInstance().getPrivateKey();
         onChanged();
         return this;
@@ -1916,7 +1916,7 @@ public final class Control {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         privateKey_ = value;
         onChanged();
         return this;
@@ -1976,22 +1976,22 @@ public final class Control {
 
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ExposePortRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ExposePortRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ExposePortResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_ExposePortResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_CreateSSHKeyPairRequest_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_CreateSSHKeyPairRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_CreateSSHKeyPairResponse_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_CreateSSHKeyPairResponse_fieldAccessorTable;
 
