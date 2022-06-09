@@ -5,7 +5,7 @@ import { Werft } from "./util/werft";
 const testConfig: string = process.argv.length > 2 ? process.argv[2] : "STANDARD_K3S_TEST";
 // we can provide the version of the gitpod to install (eg: 2022.4.2)
 // "-" is the default value which will install the latest version
-const version: string = process.argv.length > 3 ? process.argv[3] : "";
+const version: string = process.argv.length > 3 ? process.argv[3] : "-";
 
 const channel: string = process.argv.length > 4 ? process.argv[4] : "";
 
@@ -75,6 +75,11 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         makeTarget: "get-results",
         description: "Get the result of the setup",
     },
+    DONE: {
+        phase: "done-msg",
+        makeTarget: "done-msg",
+        description: "The operation has terminated",
+    },
 };
 
 interface TestConfig {
@@ -120,6 +125,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
             "INSTALL_GITPOD_IGNORE_PREFLIGHTS",
             "CHECK_INSTALLATION",
             "RESULTS",
+            "DONE", // this is a temporary hack to print clean msg
         ],
     },
 };

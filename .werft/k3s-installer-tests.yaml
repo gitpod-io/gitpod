@@ -86,7 +86,7 @@ pod:
 
         export VERSION="{{ .Annotations.version }}"
         if [[ "$VERSION" == "<no value>" ]]; then
-          VERSION=""
+          VERSION="-"
         fi
 
         export CHANNEL="{{ .Annotations.channel }}"

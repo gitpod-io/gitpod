@@ -106,6 +106,9 @@ get-results:
 	@echo "Following is the KUBECONFIG you can use to connect to the cluster:"
 	@cat ${KUBECONFIG}
 
+done-msg:
+	@echo "Your operation has completed"
+
 list-state:
 	terraform state list
 # end
