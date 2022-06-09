@@ -15,7 +15,7 @@ components:
         secretName: chargebee-config
     - name: stripe-config
       secret:
-        secretName: stripe-config
+        secretName: stripe-api-keys
 
   paymentEndpoint:
     disabled: false
