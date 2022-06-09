@@ -42,8 +42,20 @@ type WorkspaceInstance struct {
 	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
+// TotalRuntime computes how long this WorkspaceInstance has been running.
+// If the instance is still running (no stop time set), maxStopTime is used to to compute the duration - this is an upper bound on stop
+func (i *WorkspaceInstance) TotalRuntime(maxStopTime time.Time) time.Duration {
+	start := i.StartedTime.Time()
+	stop := maxStopTime
+	if i.StoppedTime.IsSet() {
+		stop = i.StoppedTime.Time()
+	}
+
+	return stop.Sub(start)
+}
+
 // TableName sets the insert table name for this struct type
-func (d *WorkspaceInstance) TableName() string {
+func (i *WorkspaceInstance) TableName() string {
 	return "d_b_workspace_instance"
 }
 

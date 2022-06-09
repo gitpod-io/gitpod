@@ -6,12 +6,15 @@ package controller
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -26,11 +29,12 @@ func (f ReconcilerFunc) Reconcile() error {
 }
 
 type UsageReconciler struct {
-	conn *gorm.DB
+	nowFunc func() time.Time
+	conn    *gorm.DB
 }
 
 func NewUsageReconciler(conn *gorm.DB) *UsageReconciler {
-	return &UsageReconciler{conn: conn}
+	return &UsageReconciler{conn: conn, nowFunc: time.Now}
 }
 
 type UsageReconcileStatus struct {
@@ -43,6 +47,8 @@ type UsageReconcileStatus struct {
 	Workspaces int
 
 	Teams int
+
+	Report []TeamUsage
 }
 
 func (u *UsageReconciler) Reconcile() error {
@@ -57,10 +63,32 @@ func (u *UsageReconciler) Reconcile() error {
 		return err
 	}
 	log.WithField("usage_reconcile_status", status).Info("Reconcile completed.")
+
+	// For now, write the report to a temp directory so we can manually retrieve it
+	dir := os.TempDir()
+	f, err := ioutil.TempFile(dir, fmt.Sprintf("%s-*", now.Format(time.RFC3339)))
+	if err != nil {
+		return fmt.Errorf("failed to create temporary file: %w", err)
+	}
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	err = enc.Encode(status.Report)
+	if err != nil {
+		return fmt.Errorf("failed to marshal report to JSON: %w", err)
+	}
+
+	stat, err := f.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to get file stats: %w", err)
+	}
+	log.Infof("Wrote usage report into %s", filepath.Join(dir, stat.Name()))
+
 	return nil
 }
 
 func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.Time) (*UsageReconcileStatus, error) {
+	now := u.nowFunc().UTC()
 	log.Infof("Gathering usage data from %s to %s", from, to)
 	status := &UsageReconcileStatus{
 		StartTime: from,
@@ -91,7 +119,31 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	}
 	status.Teams = len(teams)
 
+	report, err := generateUsageReport(teams, now)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate usage report: %w", err)
+	}
+	status.Report = report
+
 	return status, nil
+}
+
+func generateUsageReport(teams []teamWithWorkspaces, maxStopTime time.Time) ([]TeamUsage, error) {
+	var report []TeamUsage
+	for _, team := range teams {
+		var teamTotalRuntime time.Duration
+		for _, workspace := range team.Workspaces {
+			for _, instance := range workspace.Instances {
+				teamTotalRuntime += instance.TotalRuntime(maxStopTime)
+			}
+		}
+
+		report = append(report, TeamUsage{
+			TeamID:            team.TeamID.String(),
+			WorkspacesRuntime: teamTotalRuntime,
+		})
+	}
+	return report, nil
 }
 
 type teamWithWorkspaces struct {
@@ -154,27 +206,24 @@ func (u *UsageReconciler) loadWorkspaces(ctx context.Context, instances []db.Wor
 		return nil, fmt.Errorf("failed to find workspaces for provided workspace instances: %w", err)
 	}
 
-	// Map workspaces to corresponding instances
-	workspacesWithInstancesByID := map[string]workspaceWithInstances{}
+	workspacesByID := map[string]db.Workspace{}
 	for _, workspace := range workspaces {
-		workspacesWithInstancesByID[workspace.ID] = workspaceWithInstances{
-			Workspace: workspace,
-		}
+		workspacesByID[workspace.ID] = workspace
 	}
 
 	// We need to also add the instances to corresponding records, a single workspace can have multiple instances
+	instancesByWorkspaceID := map[string][]db.WorkspaceInstance{}
 	for _, instance := range instances {
-		item, ok := workspacesWithInstancesByID[instance.WorkspaceID]
-		if !ok {
-			return nil, errors.New("encountered instance without a corresponding workspace record")
-		}
-		item.Instances = append(item.Instances, instance)
+		instancesByWorkspaceID[instance.WorkspaceID] = append(instancesByWorkspaceID[instance.WorkspaceID], instance)
 	}
 
 	// Flatten results into a list
 	var workspacesWithInstances []workspaceWithInstances
-	for _, w := range workspacesWithInstancesByID {
-		workspacesWithInstances = append(workspacesWithInstances, w)
+	for workspaceID, workspace := range workspacesByID {
+		workspacesWithInstances = append(workspacesWithInstances, workspaceWithInstances{
+			Workspace: workspace,
+			Instances: instancesByWorkspaceID[workspaceID],
+		})
 	}
 
 	return workspacesWithInstances, nil
@@ -260,4 +309,9 @@ func toSet(items []string) []string {
 		result = append(result, s)
 	}
 	return result
+}
+
+type TeamUsage struct {
+	TeamID            string        `json:"team_id"`
+	WorkspacesRuntime time.Duration `json:"workspaces_runtime"`
 }
