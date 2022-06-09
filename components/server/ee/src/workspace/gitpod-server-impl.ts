@@ -1851,7 +1851,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async getStripePublishableKey(ctx: TraceContext): Promise<string> {
         const user = this.checkAndBlockUser("getStripePublishableKey");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
-        const publishableKey = this.config.stripeSettings?.publishableKey;
+        const publishableKey = this.config.stripeSecrets?.publishableKey;
         if (!publishableKey) {
             throw new ResponseError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,

@@ -194,7 +194,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 			volumes = append(volumes,
 				corev1.Volume{
-					Name: "stripe-config",
+					Name: "stripe-secret",
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
 							SecretName: stripeSecret,
@@ -203,7 +203,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				})
 
 			volumeMounts = append(volumeMounts, corev1.VolumeMount{
-				Name:      "stripe-config",
+				Name:      "stripe-secret",
 				MountPath: stripeMountPath,
 				ReadOnly:  true,
 			})
