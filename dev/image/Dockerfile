@@ -66,7 +66,7 @@ RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/downl
 # werft CLI
 ENV WERFT_K8S_NAMESPACE=werft
 ENV WERFT_DIAL_MODE=kubernetes
-RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/download/v0.3.0/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
+RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/download/v0.3.3/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
 
 # yq - jq for YAML files
 # Note: we rely on version 3.x.x in various places, 4.x breaks this!
