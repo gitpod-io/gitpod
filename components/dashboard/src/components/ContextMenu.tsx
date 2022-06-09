@@ -68,11 +68,9 @@ function ContextMenu(props: ContextMenuProps) {
     }, []); // Empty array ensures that effect is only run on mount and unmount
 
     useEffect(() => {
-        if (!expanded || !menuRef.current) {
-            return;
+        if (expanded) {
+            scrollIntoViewIfNeeded(menuRef.current!);
         }
-
-        scrollIntoViewIfNeeded(menuRef.current);
     }, [expanded]);
 
     const font = "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100";
