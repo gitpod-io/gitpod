@@ -190,7 +190,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                 </div>
                 <ItemsList className="mt-2">
                     <Item header={true}>
-                        <ItemField className="my-auto w-5/12">
+                        <ItemField className="my-auto md:w-3/12 xl:w-4/12">
                             <span>Prebuild</span>
                         </ItemField>
                         <ItemField className="my-auto w-5/12">
@@ -216,7 +216,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                             >
                                 <Item key={`prebuild-${p.info.id}`}>
                                     <ItemField
-                                        className={`flex items-center my-auto w-5/12 ${
+                                        className={`flex items-center my-auto md:w-3/12 xl:w-4/12 ${
                                             props.isAdminDashboard ? "pointer-events-none" : ""
                                         }`}
                                     >
