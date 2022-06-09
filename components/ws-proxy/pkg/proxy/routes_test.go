@@ -224,11 +224,11 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
 					"Location": {
-						"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/favicon.ico",
+						"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/favicon.ico",
 					},
 					"Vary": {"Accept-Encoding"},
 				},
-				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/favicon.ico\">See Other</a>.\n\n",
+				Body: "<a href=\"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/favicon.ico\">See Other</a>.\n\n",
 			},
 		},
 		{
@@ -241,10 +241,10 @@ func TestRoutes(t *testing.T) {
 				Status: http.StatusSeeOther,
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://blobserve.ws.test-domain.com/gitpod-io/ide:latest/__files__/"},
+					"Location":     {"https://ide.test-domain.com/blobserve/gitpod-io/ide:latest/__files__/"},
 					"Vary":         {"Accept-Encoding"},
 				},
-				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/ide:latest/__files__/\">See Other</a>.\n\n",
+				Body: "<a href=\"https://ide.test-domain.com/blobserve/gitpod-io/ide:latest/__files__/\">See Other</a>.\n\n",
 			},
 		},
 		{
@@ -257,11 +257,11 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Content-Length": {"218"},
+					"Content-Length": {"220"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 					"Vary":           {"Accept-Encoding"},
 				},
-				Body: "blobserve hit: /gitpod-io/ide:latest/\ninlineVars: {\"ide\":\"https://blobserve.ws.test-domain.com/gitpod-io/ide:latest/__files__\",\"supervisor\":\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__\"}\n",
+				Body: "blobserve hit: /gitpod-io/ide:latest/\ninlineVars: {\"ide\":\"https://ide.test-domain.com/blobserve/gitpod-io/ide:latest/__files__\",\"supervisor\":\"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__\"}\n",
 			},
 		},
 		{
@@ -274,11 +274,11 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Content-Length": {"218"},
+					"Content-Length": {"220"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 					"Vary":           {"Accept-Encoding"},
 				},
-				Body: "blobserve hit: /gitpod-io/ide:latest/\ninlineVars: {\"ide\":\"https://blobserve.ws.test-domain.com/gitpod-io/ide:latest/__files__\",\"supervisor\":\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__\"}\n",
+				Body: "blobserve hit: /gitpod-io/ide:latest/\ninlineVars: {\"ide\":\"https://ide.test-domain.com/blobserve/gitpod-io/ide:latest/__files__\",\"supervisor\":\"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__\"}\n",
 			},
 		},
 		{
@@ -467,10 +467,10 @@ func TestRoutes(t *testing.T) {
 				Status: http.StatusSeeOther,
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js"},
+					"Location":     {"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/main.js"},
 					"Vary":         {"Accept-Encoding"},
 				},
-				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
+				Body: "<a href=\"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
 			},
 		},
 		{
@@ -493,10 +493,10 @@ func TestRoutes(t *testing.T) {
 				Status: http.StatusSeeOther,
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js"},
+					"Location":     {"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/main.js"},
 					"Vary":         {"Accept-Encoding"},
 				},
-				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
+				Body: "<a href=\"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
 			},
 		},
 		{

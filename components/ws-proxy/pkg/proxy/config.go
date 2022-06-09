@@ -120,8 +120,9 @@ func (c *GitpodInstallation) Validate() error {
 
 // BlobServerConfig configures where to serve the IDE from.
 type BlobServerConfig struct {
-	Scheme string `json:"scheme"`
-	Host   string `json:"host"`
+	Scheme     string `json:"scheme"`
+	Host       string `json:"host"`
+	PathPrefix string `json:"pathPrefix"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime.
