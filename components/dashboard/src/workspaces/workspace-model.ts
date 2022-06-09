@@ -11,6 +11,7 @@ import {
     WorkspaceInfo,
     WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
+import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { getGitpodService } from "../service/service";
 
 export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
@@ -145,8 +146,12 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
     }
 
     protected isActive(info: WorkspaceInfo): boolean {
+        const lastSessionStart = WorkspaceInfo.lastActiveISODate(info);
+        const twentyfourHoursAgo = hoursBefore(new Date().toISOString(), 24);
         return (
-            (info.workspace.pinned || (!!info.latestInstance && info.latestInstance.status?.phase !== "stopped")) &&
+            (info.workspace.pinned ||
+                (!!info.latestInstance && info.latestInstance.status?.phase !== "stopped") ||
+                isDateSmallerOrEqual(twentyfourHoursAgo, lastSessionStart)) &&
             !info.workspace.softDeleted
         );
     }
