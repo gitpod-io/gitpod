@@ -12,6 +12,7 @@ import (
 	"errors"
 
 	"golang.org/x/xerrors"
+	"gopkg.in/yaml.v3"
 )
 
 // Env Environment variables to set.
@@ -41,7 +42,7 @@ type GitpodConfig struct {
 	Ide interface{} `yaml:"ide,omitempty"`
 
 	// The Docker image to run your workspace in.
-	Image interface{} `yaml:"image,omitempty"`
+	Image *ImageObjectOrString `yaml:"image,omitempty"`
 
 	// List of exposed ports.
 	Ports []*PortsItems `yaml:"ports,omitempty"`
@@ -59,9 +60,22 @@ type GitpodConfig struct {
 	WorkspaceLocation string `yaml:"workspaceLocation,omitempty"`
 }
 
-// Image_object The Docker image to run your workspace in.
-type Image_object struct {
+type ImageObjectOrString struct {
+	Ref string
+	Obj ImageObject
+}
 
+func (res *ImageObjectOrString) UnmarshalYAML(value *yaml.Node) error {
+	switch value.Kind {
+	case yaml.ScalarNode:
+		return value.Decode(&res.Ref)
+	default:
+		return value.Decode(&res.Obj)
+	}
+}
+
+// ImageObject The Docker image to run your workspace in.
+type ImageObject struct {
 	// Relative path to the context path (optional). Should only be set if you need to copy files into the image.
 	Context string `yaml:"context,omitempty"`
 
@@ -384,7 +398,7 @@ func (strct *GitpodConfig) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (strct *Image_object) MarshalJSON() ([]byte, error) {
+func (strct *ImageObject) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0))
 	buf.WriteString("{")
 	comma := false
@@ -418,7 +432,7 @@ func (strct *Image_object) MarshalJSON() ([]byte, error) {
 	return rv, nil
 }
 
-func (strct *Image_object) UnmarshalJSON(b []byte) error {
+func (strct *ImageObject) UnmarshalJSON(b []byte) error {
 	fileReceived := false
 	var jsonMap map[string]json.RawMessage
 	if err := json.Unmarshal(b, &jsonMap); err != nil {
