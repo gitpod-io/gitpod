@@ -90,8 +90,8 @@ func TestListWorkspacesByID(t *testing.T) {
 	conn := db.ConnectForTests(t)
 
 	workspaces := []db.Workspace{
-		dbtest.NewWorkspace(t, "gitpodio-gitpod-aaaaaaaaaaa"),
-		dbtest.NewWorkspace(t, "gitpodio-gitpod-bbbbbbbbbbb"),
+		dbtest.NewWorkspace(t, db.Workspace{ID: "gitpodio-gitpod-aaaaaaaaaaa"}),
+		dbtest.NewWorkspace(t, db.Workspace{ID: "gitpodio-gitpod-bbbbbbbbbbb"}),
 	}
 	tx := conn.Create(workspaces)
 	require.NoError(t, tx.Error)

@@ -19,7 +19,7 @@ func TestUsageReconciler_Reconcile(t *testing.T) {
 	instanceStatus := []byte(`{"phase": "stopped", "conditions": {"deployed": false, "pullingImages": false, "serviceExists": false}}`)
 	startOfMay := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
 	startOfJune := time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
-	workspace := dbtest.NewWorkspace(t, "gitpodio-gitpod-gyjr82jkfnd")
+	workspace := dbtest.NewWorkspace(t, db.Workspace{ID: "gitpodio-gitpod-gyjr82jkfnd"})
 	instances := []db.WorkspaceInstance{
 		// Ran throughout the reconcile period
 		{

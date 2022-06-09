@@ -20,7 +20,7 @@ type Workspace struct {
 	OwnerID     uuid.UUID      `gorm:"column:ownerId;type:char;size:36;" json:"ownerId"`
 	ProjectID   sql.NullString `gorm:"column:projectId;type:char;size:36;" json:"projectId"`
 	Description string         `gorm:"column:description;type:varchar;size:255;" json:"description"`
-	Type        string         `gorm:"column:type;type:char;size:16;default:regular;" json:"type"`
+	Type        WorkspaceType  `gorm:"column:type;type:char;size:16;default:regular;" json:"type"`
 	CloneURL    string         `gorm:"column:cloneURL;type:varchar;size:255;" json:"cloneURL"`
 
 	ContextURL            string         `gorm:"column:contextURL;type:text;size:65535;" json:"contextURL"`
@@ -50,6 +50,14 @@ type Workspace struct {
 func (d *Workspace) TableName() string {
 	return "d_b_workspace"
 }
+
+type WorkspaceType string
+
+const (
+	WorkspaceType_Prebuild WorkspaceType = "prebuild"
+	WorkspaceType_Probe    WorkspaceType = "probe"
+	WorkspaceType_Regular  WorkspaceType = "regular"
+)
 
 func ListWorkspacesByID(ctx context.Context, conn *gorm.DB, ids []string) ([]Workspace, error) {
 	if len(ids) == 0 {
