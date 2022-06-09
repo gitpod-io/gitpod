@@ -18,12 +18,14 @@ type Result struct {
 type Builder interface {
 	BaseBuilder
 	WorkspaceImageBuilder
+
+	BuildImage(logs io.WriteCloser, ref string, cfg *gitpod.GitpodConfig) (err error)
 }
 
 type BaseBuilder interface {
-	BuildBaseImage(logs io.WriteCloser, cfg gitpod.ImageObject) (ref string, err error)
+	BuildBaseImage(logs io.WriteCloser, ref string, cfg gitpod.ImageObject) (err error)
 }
 
 type WorkspaceImageBuilder interface {
-	BuildWorkspaceImage(logs io.WriteCloser, baseRef string) (ref string, err error)
+	BuildWorkspaceImage(logs io.WriteCloser, ref string, baseRef string) (err error)
 }

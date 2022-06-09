@@ -5,8 +5,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+	"time"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -29,35 +35,14 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		runtime, err := getRuntime(rootOpts.Workdir)
+		if err != nil {
+			return err
+		}
 
 		if cfg.Image == nil {
 			// TODO(cw) fall back to default image
 			return fmt.Errorf(".gitpod.yml is missing the image section")
-		}
-
-		var baseRef string
-		switch {
-		case cfg.Image == nil:
-			baseRef = "gitpod/workspace-full:latest"
-		case cfg.Image.Ref != "":
-			baseRef = cfg.Image.Ref
-		default:
-			spinner, err := pterm.DefaultSpinner.Start("building base image")
-			if err != nil {
-				return err
-			}
-
-			area, _ := pterm.DefaultArea.Start("")
-
-			ref, err := bb.BuildBaseImage(noopWriteCloser{&areaWriter{Area: area}}, cfg.Image.Obj)
-
-			if err != nil {
-				spinner.Fail(err)
-				return err
-			}
-			area.Stop()
-			spinner.Success()
-			baseRef = ref
 		}
 
 		spinner, err := pterm.DefaultSpinner.Start("building workspace image")
@@ -65,18 +50,41 @@ var runCmd = &cobra.Command{
 			return err
 		}
 
-		area, _ := pterm.DefaultArea.Start("")
+		pterm.Println()
 
-		ref, err := bb.BuildWorkspaceImage(noopWriteCloser{&areaWriter{Area: area}}, baseRef)
-
-		if err != nil {
-			spinner.Fail(err)
-			return err
+		ref := filepath.Join("local/workspace-image:latest")
+		{
+			area, _ := pterm.DefaultArea.Start("")
+			err = bb.BuildImage(noopWriteCloser{&areaWriter{Area: area}}, ref, cfg)
+			if err != nil {
+				spinner.Fail(err)
+				return err
+			}
+			area.Stop()
+			spinner.Success()
 		}
-		area.Stop()
-		spinner.Success()
 
-		fmt.Println(ref)
+		shutdown := make(chan struct{})
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go func() {
+			err := runtime.StartWorkspace(ctx, os.Stdout, ref, cfg)
+			if err != nil {
+				pterm.Error.Print(err)
+				close(shutdown)
+			}
+		}()
+
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+		select {
+		case <-sigChan:
+			// give things a change to shut down
+			pterm.Warning.Println("Received SIGTERM, shutting down")
+			cancel()
+			time.Sleep(1 * time.Second)
+		case <-shutdown:
+		}
 
 		return nil
 	},

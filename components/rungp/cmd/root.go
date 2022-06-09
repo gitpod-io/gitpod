@@ -15,6 +15,7 @@ import (
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/rungp/pkg/builder"
+	"github.com/gitpod-io/gitpod/rungp/pkg/runtime"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -67,4 +68,8 @@ func getBuilder(workdir string) (builder.Builder, error) {
 		Workdir: workdir,
 		Images:  builder.DefaultImages,
 	}, nil
+}
+
+func getRuntime(workdir string) (runtime.Runtime, error) {
+	return &runtime.DockerRuntime{Workdir: workdir}, nil
 }
