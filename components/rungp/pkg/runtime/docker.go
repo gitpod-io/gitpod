@@ -25,10 +25,13 @@ type DockerRuntime struct {
 func (dr DockerRuntime) StartWorkspace(ctx context.Context, logs io.WriteCloser, workspaceImage string, cfg *gitpod.GitpodConfig) error {
 	defer logs.Close()
 
-	name := fmt.Sprintf("rungp-%d", time.Now().UnixNano())
-	args := []string{"run", "--rm", "--user", "root", "--privileged", "-p", "8080:22999", "-v", fmt.Sprintf("%s:/workspace", dr.Workdir), "--name", name}
-
 	checkoutLocation := cfg.CheckoutLocation
+	if checkoutLocation == "" {
+		checkoutLocation = filepath.Base(dr.Workdir)
+	}
+
+	name := fmt.Sprintf("rungp-%d", time.Now().UnixNano())
+	args := []string{"run", "--rm", "--user", "root", "--privileged", "-p", "8080:22999", "-v", fmt.Sprintf("%s:%s", dr.Workdir, filepath.Join("/workspace", checkoutLocation)), "--name", name}
 
 	tasks, err := json.Marshal(cfg.Tasks)
 	if err != nil {
@@ -60,10 +63,12 @@ func (dr DockerRuntime) StartWorkspace(ctx context.Context, logs io.WriteCloser,
 	args = append(args, "--env-file", tmpf.Name())
 	defer os.Remove(tmpf.Name())
 
+	for _, p := range cfg.Ports {
+		args = append(args, "-p", fmt.Sprintf("%d:%d", p.Port, p.Port))
+	}
+
 	args = append(args, workspaceImage)
 	args = append(args, "/.supervisor/supervisor", "run", "--rungp")
-
-	fmt.Println(args)
 
 	cmd := exec.Command("docker", args...)
 	cmd.Dir = dr.Workdir

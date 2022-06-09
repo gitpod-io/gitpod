@@ -7,14 +7,13 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 	"time"
 
-	"github.com/pterm/pterm"
+	"github.com/gitpod-io/gitpod/rungp/pkg/console"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +23,7 @@ var runCmd = &cobra.Command{
 	Short: "Starts a workspace",
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pterm.DefaultSpinner.ShowTimer = true
+		log := console.PTermLog{}
 
 		cfg, err := getConfig()
 		if err != nil {
@@ -45,33 +44,27 @@ var runCmd = &cobra.Command{
 			return fmt.Errorf(".gitpod.yml is missing the image section")
 		}
 
-		spinner, err := pterm.DefaultSpinner.Start("building workspace image")
+		buildingPhase := log.StartPhase("[building]", "workspace image")
+		ref := filepath.Join("local/workspace-image:latest")
+		bldLog := log.Log()
+		err = bb.BuildImage(bldLog, ref, cfg)
 		if err != nil {
+			buildingPhase.Failure(err.Error())
+			bldLog.Show()
 			return err
 		}
-
-		pterm.Println()
-
-		ref := filepath.Join("local/workspace-image:latest")
-		{
-			area, _ := pterm.DefaultArea.Start("")
-			err = bb.BuildImage(noopWriteCloser{&areaWriter{Area: area}}, ref, cfg)
-			if err != nil {
-				spinner.Fail(err)
-				return err
-			}
-			area.Stop()
-			spinner.Success()
-		}
+		buildingPhase.Success()
 
 		shutdown := make(chan struct{})
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go func() {
-			err := runtime.StartWorkspace(ctx, os.Stdout, ref, cfg)
+			runLogs := console.Observe(log)
+			err := runtime.StartWorkspace(ctx, runLogs, ref, cfg)
 			if err != nil {
-				pterm.Error.Print(err)
+				runLogs.Show()
 				close(shutdown)
+				return
 			}
 		}()
 
@@ -80,7 +73,7 @@ var runCmd = &cobra.Command{
 		select {
 		case <-sigChan:
 			// give things a change to shut down
-			pterm.Warning.Println("Received SIGTERM, shutting down")
+			log.FixedMessagef("Received SIGTERM, shutting down")
 			cancel()
 			time.Sleep(1 * time.Second)
 		case <-shutdown:
@@ -92,21 +85,4 @@ var runCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-}
-
-type noopWriteCloser struct{ io.Writer }
-
-func (noopWriteCloser) Close() error {
-	return nil
-}
-
-type areaWriter struct {
-	buf  string
-	Area *pterm.AreaPrinter
-}
-
-func (a *areaWriter) Write(buf []byte) (n int, err error) {
-	a.buf += string(buf)
-	a.Area.Update(a.buf)
-	return len(buf), nil
 }

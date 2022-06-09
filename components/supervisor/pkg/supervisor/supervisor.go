@@ -238,24 +238,22 @@ func Run(options ...RunOption) {
 	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
-	var portMgmt *ports.Manager
+	gitpodConfigService := config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
+	go gitpodConfigService.Watch(ctx)
+
+	portMgmt := ports.NewManager(
+		createExposedPortsImpl(cfg, gitpodService),
+		&ports.PollingServedPortsObserver{
+			RefreshInterval: 2 * time.Second,
+		},
+		ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
+		tunneledPortsService,
+		internalPorts...,
+	)
+
 	if opts.RunGP {
 		cstate.MarkContentReady(csapi.WorkspaceInitFromOther)
 	} else {
-		gitpodConfigService := config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
-
-		go gitpodConfigService.Watch(ctx)
-
-		portMgmt = ports.NewManager(
-			createExposedPortsImpl(cfg, gitpodService),
-			&ports.PollingServedPortsObserver{
-				RefreshInterval: 2 * time.Second,
-			},
-			ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
-			tunneledPortsService,
-			internalPorts...,
-		)
-
 		analytics := analytics.NewFromEnvironment()
 		defer analytics.Close()
 		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
@@ -601,7 +599,7 @@ func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.API
 	return gitpodService
 }
 
-func createExposedPortsImpl(cfg *Config, gitpodService *gitpod.APIoverJSONRPC) ports.ExposedPortsInterface {
+func createExposedPortsImpl(cfg *Config, gitpodService gitpod.APIInterface) ports.ExposedPortsInterface {
 	if gitpodService == nil {
 		log.Error("auto-port exposure won't work")
 		return &ports.NoopExposedPorts{}

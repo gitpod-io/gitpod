@@ -50,12 +50,17 @@ func (db DockerBuilder) BuildImage(logs io.WriteCloser, ref string, cfg *gitpod.
 	COPY --from=supervisor /.supervisor /.supervisor/
 	COPY --from=openvscode --chown=33333:33333 /home/.openvscode-server /ide/
 	COPY --from=webide --chown=33333:33333 /ide/startup.sh /ide/codehelper /ide/
+	COPY --from=webide --chown=33333:33333 /ide/extensions/gitpod-web /ide/extensions/gitpod-web/
 	RUN echo '{"entrypoint": "/ide/startup.sh", "entrypointArgs": [ "--port", "{IDEPORT}", "--host", "0.0.0.0", "--without-connection-token", "--server-data-dir", "/workspace/.vscode-remote" ]}' > /ide/supervisor-ide-config.json && \
 		(echo '#!/bin/bash -li'; echo 'cd /ide || exit'; echo 'exec /ide/codehelper "$@"') > /ide/startup.sh && \
 		chmod +x /ide/startup.sh && \
 		mv /ide/bin/openvscode-server /ide/bin/gitpod-code
 
+
 	USER root
+	RUN rm /usr/bin/gp-vncsession || true
+	RUN mkdir -p /workspace && \
+		chown -R 33333:33333 /workspace
 	`
 	df = strings.ReplaceAll(df, "$SUPERVISOR", db.Images.Supervisor)
 	df = strings.ReplaceAll(df, "$WEBIDE", db.Images.WebIDE)
