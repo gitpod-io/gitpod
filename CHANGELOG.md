@@ -1,6 +1,12 @@
 # Change Log
 
 ## June 2022
+- [content-service] make sure to show error if there was one when attempting to download backup ([#10491](https://github.com/gitpod-io/gitpod/pull/10491)) - [@sagor999](https://github.com/sagor999)
+- [kots]: add storage to preflight checks ([#9939](https://github.com/gitpod-io/gitpod/pull/9939)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Fix hanging "Prebuild in Progress" page ([#10357](https://github.com/gitpod-io/gitpod/pull/10357)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [gitlab] get rid of UnhandledPromiseRejectionWarning ([#10148](https://github.com/gitpod-io/gitpod/pull/10148)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- ws-daemon: Soft limit of the xfs at first to ensure that the contents can be restored ([#10519](https://github.com/gitpod-io/gitpod/pull/10519)) - [@utam0k](https://github.com/utam0k)
+- Revert "Always keep preview envs on db activity" ([#10517](https://github.com/gitpod-io/gitpod/pull/10517)) - [@vulkoingim](https://github.com/vulkoingim)
 - Fix JetBrains Gateway Plugin to work on v222.2889.2 ([#10505](https://github.com/gitpod-io/gitpod/pull/10505)) - [@felladrin](https://github.com/felladrin)
 - Update to new stable alpine version v3.16 ([#10466](https://github.com/gitpod-io/gitpod/pull/10466)) - [@aledbf](https://github.com/aledbf)
 - Update sigs.k8s.io/e2e-framework to v0.0.7 ([#10475](https://github.com/gitpod-io/gitpod/pull/10475)) - [@aledbf](https://github.com/aledbf)
