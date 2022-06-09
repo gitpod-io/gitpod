@@ -5,7 +5,10 @@
 package db
 
 import (
+	"context"
+	"fmt"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -36,3 +39,19 @@ const (
 	TeamMembershipRole_Owner  = TeamMembershipRole("owner")
 	TeamMembershipRole_Member = TeamMembershipRole("member")
 )
+
+func ListTeamMembershipsForUserIDs(ctx context.Context, conn *gorm.DB, userIDs []uuid.UUID) ([]TeamMembership, error) {
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+
+	var memberships []TeamMembership
+	tx := conn.WithContext(ctx).
+		Where("userId IN ?", userIDs).
+		Find(&memberships)
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to list team memberships for user IDs: %w", tx.Error)
+	}
+
+	return memberships, nil
+}
