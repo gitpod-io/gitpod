@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -28,6 +29,7 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
 import io.prometheus.client.CollectorRegistry
+import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
 import io.prometheus.client.exporter.PushGateway
 import kotlinx.coroutines.GlobalScope
@@ -64,13 +66,29 @@ class GitpodManager : Disposable {
         lifetime.terminate()
     }
 
+    val registry = CollectorRegistry()
+
     init {
-        val monitoringJob =  GlobalScope.launch {
+        // Rate of low memory after GC notifications in the last 5 minutes:
+        // rate(gitpod_jb_backend_low_memory_after_gc_total[5m])
+        val lowMemoryCounter = Counter.build()
+            .name("gitpod_jb_backend_low_memory_after_gc")
+            .help("Low memory notifications after GC")
+            .labelNames("product", "qualifier")
+            .register(registry)
+        LowMemoryWatcher.register({
+            lowMemoryCounter.labels(backendKind, backendQualifier).inc()
+         }, LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC, this)
+    }
+
+    init {
+        val monitoringJob = GlobalScope.launch {
             if (application.isHeadlessEnvironment) {
                 return@launch
             }
-            val pg = PushGateway("localhost:22999")
-            val registry = CollectorRegistry()
+            val pg = if(devMode) null else PushGateway("localhost:22999")
+            // Heap usage at any time in the last 5 minutes:
+            // max_over_time(gitpod_jb_backend_memory_used_bytes[5m:])/max_over_time(gitpod_jb_backend_memory_max_bytes[5m:])
             val allocatedGauge = Gauge.build()
                     .name("gitpod_jb_backend_memory_max_bytes")
                     .help("Total allocated memory of JB backend in bytes.")
@@ -81,13 +99,14 @@ class GitpodManager : Disposable {
                     .help("Used memory of JB backend in bytes.")
                     .labelNames("product", "qualifier")
                     .register(registry)
-            while(isActive) {
+
+            while (isActive) {
                 val totalMemory = Runtime.getRuntime().totalMemory()
                 allocatedGauge.labels(backendKind, backendQualifier).set(totalMemory.toDouble())
                 val usedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())
                 usedGauge.labels(backendKind, backendQualifier).set(usedMemory.toDouble())
                 try {
-                    pg.push(registry, "jb_backend")
+                    pg?.push(registry, "jb_backend")
                 } catch (t: Throwable) {
                     thisLogger().error("gitpod: failed to push monitoring metrics:", t)
                 }
@@ -108,7 +127,7 @@ class GitpodManager : Disposable {
                     .connectTimeout(Duration.ofSeconds(5))
                     .build()
                 val httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:24000/gatewayLink?backendPort=${backendPort}"))
+                    .uri(URI.create("http://localhost:24000/gatewayLink?backendPort=$backendPort"))
                     .GET()
                     .build()
                 val response =
@@ -260,14 +279,14 @@ class GitpodManager : Disposable {
                         tokenResponse.token
                 )
             } finally {
-                Thread.currentThread().contextClassLoader = originalClassLoader;
+                Thread.currentThread().contextClassLoader = originalClassLoader
             }
         }
 
         val minReconnectionDelay = 2 * 1000L
         val maxReconnectionDelay = 30 * 1000L
-        val reconnectionDelayGrowFactor = 1.5;
-        var reconnectionDelay = minReconnectionDelay;
+        val reconnectionDelayGrowFactor = 1.5
+        var reconnectionDelay = minReconnectionDelay
         val gitpodHost = info.gitpodApi.host
         var closeReason: Any = "cancelled"
         try {

@@ -10,27 +10,48 @@ import com.intellij.ide.CommandLineProcessor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientSession
 import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.application
+import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
+import io.prometheus.client.exporter.common.TextFormat
 import org.jetbrains.ide.RestService
+import org.jetbrains.io.response
+import java.io.OutputStreamWriter
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 @Suppress("UnstableApiUsage")
 class GitpodCLIService : RestService() {
 
+    private val manager = service<GitpodManager>()
+
     override fun getServiceName() = SERVICE_NAME
 
     override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
+        val operation = getStringParameter("op", urlDecoder)
         if (application.isHeadlessEnvironment) {
             return "not supported in headless mode"
         }
-        val operation = getStringParameter("op", urlDecoder)
+        /**
+         * prod: curl http://localhost:63342/api/gitpod/cli?op=metrics
+         * dev:  curl http://localhost:63343/api/gitpod/cli?op=metrics
+         */
+        if (operation == "metrics") {
+            val out = BufferExposingByteArrayOutputStream()
+            val writer = OutputStreamWriter(out)
+            TextFormat.write004(writer, manager.registry.metricFamilySamples())
+            writer.close()
+            val response = response(TextFormat.CONTENT_TYPE_004, Unpooled.wrappedBuffer(out.internalBuffer, 0, out.size()))
+            sendResponse(request, context, response)
+            return null
+        }
         if (operation == "open") {
             val fileStr = getStringParameter("file", urlDecoder)
             if (fileStr.isNullOrBlank()) {

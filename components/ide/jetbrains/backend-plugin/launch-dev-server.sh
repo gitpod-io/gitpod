@@ -49,4 +49,6 @@ export GIT_EDITOR="$EDITOR --wait"
 export GP_PREVIEW_BROWSER="$IDEA_CLI_DEV_PATH preview"
 export GP_EXTERNAL_BROWSER="$IDEA_CLI_DEV_PATH preview"
 
+export JETBRAINS_GITPOD_BACKEND_KIND=intellij
+
 $TEST_BACKEND_DIR/bin/remote-dev-server.sh run $TEST_DIR
