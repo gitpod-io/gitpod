@@ -44,6 +44,59 @@ type targetResolver func(*Config, WorkspaceInfoProvider, *http.Request) (*url.UR
 
 type responseHandler func(*http.Response, *http.Request) error
 
+func singleJoiningSlash(a, b string) string {
+	aslash := strings.HasSuffix(a, "/")
+	bslash := strings.HasPrefix(b, "/")
+	switch {
+	case aslash && bslash:
+		return a + b[1:]
+	case !aslash && !bslash:
+		return a + "/" + b
+	}
+	return a + b
+}
+
+func joinURLPath(a, b *url.URL) (path, rawpath string) {
+	if a.RawPath == "" && b.RawPath == "" {
+		return singleJoiningSlash(a.Path, b.Path), ""
+	}
+	// Same as singleJoiningSlash, but uses EscapedPath to determine
+	// whether a slash should be added
+	apath := a.EscapedPath()
+	bpath := b.EscapedPath()
+
+	aslash := strings.HasSuffix(apath, "/")
+	bslash := strings.HasPrefix(bpath, "/")
+
+	switch {
+	case aslash && bslash:
+		return a.Path + b.Path[1:], apath + bpath[1:]
+	case !aslash && !bslash:
+		return a.Path + "/" + b.Path, apath + "/" + bpath
+	}
+	return a.Path + b.Path, apath + bpath
+}
+
+func NewSingleHostReverseProxy(target *url.URL) *httputil.ReverseProxy {
+	targetQuery := target.RawQuery
+	director := func(req *http.Request) {
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+		req.Host = target.Host
+		req.URL.Path, req.URL.RawPath = joinURLPath(target, req.URL)
+		if targetQuery == "" || req.URL.RawQuery == "" {
+			req.URL.RawQuery = targetQuery + req.URL.RawQuery
+		} else {
+			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+		}
+		if _, ok := req.Header["User-Agent"]; !ok {
+			// explicitly disable User-Agent so it's not set to default value
+			req.Header.Set("User-Agent", "")
+		}
+	}
+	return &httputil.ReverseProxy{Director: director}
+}
+
 // proxyPass is the function that assembles a ProxyHandler from the config, a resolver and various options and returns a http.HandlerFunc.
 func proxyPass(config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider, resolver targetResolver, opts ...proxyPassOpt) http.HandlerFunc {
 	h := proxyPassConfig{
@@ -76,7 +129,8 @@ func proxyPass(config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider, r
 		originalURL := *req.URL
 
 		// TODO(cw): we should cache the proxy for some time for each target URL
-		proxy := httputil.NewSingleHostReverseProxy(targetURL)
+
+		proxy := NewSingleHostReverseProxy(targetURL)
 		proxy.Transport = h.Transport
 		proxy.ModifyResponse = func(resp *http.Response) error {
 			url := resp.Request.URL
