@@ -3,32 +3,34 @@ import { Werft } from "../../util/werft";
 import { previewNameFromBranchName } from "../../util/preview";
 
 export interface JobConfig {
-    analytics: string
+    analytics: string;
     buildConfig: any;
-    cleanSlateDeployment: boolean
-    coverageOutput: string
+    cleanSlateDeployment: boolean;
+    coverageOutput: string;
     dontTest: boolean;
     dynamicCPULimits: boolean;
-    installEELicense: boolean
-    localAppVersion: string
+    installEELicense: boolean;
+    localAppVersion: string;
     mainBuild: boolean;
     noPreview: boolean;
     publishRelease: boolean;
-    publishToJBMarketplace: string
-    publishToNpm: string
+    publishToJBMarketplace: string;
+    publishToNpm: string;
     publishToKots: boolean;
-    retag: string
+    retag: string;
     storage: string;
     version: string;
-    withContrib: boolean
+    withContrib: boolean;
     withIntegrationTests: boolean;
-    withObservability: boolean
-    withPayment: boolean
-    withVM: boolean
+    withUpgradeTests: boolean;
+    fromVersion: string;
+    withObservability: boolean;
+    withPayment: boolean;
+    withVM: boolean;
     workspaceFeatureFlags: string[];
-    previewEnvironment: PreviewEnvironmentConfig,
-    repository: Repository
-    observability: Observability
+    previewEnvironment: PreviewEnvironmentConfig;
+    repository: Repository;
+    observability: Observability;
 }
 
 export interface PreviewEnvironmentConfig {
@@ -45,14 +47,14 @@ export interface Repository {
 
 export interface Observability {
     // The branch of gitpod-io/observability to use
-    branch: string
+    branch: string;
 }
 
 export function jobConfig(werft: Werft, context: any): JobConfig {
-    const sliceId = 'Parsing job configuration'
-    werft.phase('Job configuration')
-    werft.log(sliceId , "Parsing the job configuration")
-    const version = parseVersion(context)
+    const sliceId = "Parsing job configuration";
+    werft.phase("Job configuration");
+    werft.log(sliceId, "Parsing the job configuration");
+    const version = parseVersion(context);
     const repo = `${context.Repository.host}/${context.Repository.owner}/${context.Repository.repo}`;
     const mainBuild = repo === "github.com/gitpod-io/gitpod" && context.Repository.ref.includes("refs/heads/main");
 
@@ -64,7 +66,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         if (!raw) {
             return [];
         }
-        return raw.split(",").map(e => e.trim());
+        return raw.split(",").map((e) => e.trim());
     })();
 
     const coverageOutput = exec("mktemp -d", { silent: true }).stdout.trim();
@@ -76,13 +78,15 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const noPreview = ("no-preview" in buildConfig && buildConfig["no-preview"] !== "false") || publishRelease;
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = "with-integration-tests" in buildConfig && !mainBuild;
+    const withUpgradeTests = "with-upgrade-tests" in buildConfig && !mainBuild;
+    const fromVersion = withUpgradeTests ? buildConfig["from-version"] : "";
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
     const publishToKots = "publish-to-kots" in buildConfig;
     const analytics = buildConfig["analytics"];
-    const localAppVersion = mainBuild || ("with-localapp-version" in buildConfig) ? version : "unknown";
-    const retag = ("with-retag" in buildConfig) ? "" : "--dont-retag";
-    const cleanSlateDeployment = mainBuild || ("with-clean-slate-deployment" in buildConfig);
+    const localAppVersion = mainBuild || "with-localapp-version" in buildConfig ? version : "unknown";
+    const retag = "with-retag" in buildConfig ? "" : "--dont-retag";
+    const cleanSlateDeployment = mainBuild || "with-clean-slate-deployment" in buildConfig;
     const installEELicense = !("without-ee-license" in buildConfig) || mainBuild;
     const withPayment = "with-payment" in buildConfig && !mainBuild;
     const withObservability = "with-observability" in buildConfig && !mainBuild;
@@ -91,7 +95,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         repo: context.Repository.repo,
         ref: context.Repository.ref,
         branch: context.Repository.ref,
-    }
+    };
     const refsPrefix = "refs/heads/";
     if (repository.branch.startsWith(refsPrefix)) {
         repository.branch = repository.branch.substring(refsPrefix.length);
@@ -99,16 +103,16 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withoutVM = "without-vm" in buildConfig;
     const withVM = !withoutVM || mainBuild;
 
-    const previewName = previewNameFromBranchName(repository.branch)
+    const previewName = previewNameFromBranchName(repository.branch);
     const previewEnvironmentNamespace = withVM ? `default` : `staging-${previewName}`;
     const previewEnvironment = {
         destname: previewName,
-        namespace: previewEnvironmentNamespace
-    }
+        namespace: previewEnvironmentNamespace,
+    };
 
     const observability: Observability = {
-        branch: context.Annotations.withObservabilityBranch || "main"
-    }
+        branch: context.Annotations.withObservabilityBranch || "main",
+    };
 
     const jobConfig = {
         analytics,
@@ -117,6 +121,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         coverageOutput,
         dontTest,
         dynamicCPULimits,
+        fromVersion,
         installEELicense,
         localAppVersion,
         mainBuild,
@@ -135,21 +140,24 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withIntegrationTests,
         withObservability,
         withPayment,
+        withUpgradeTests,
         withVM,
         workspaceFeatureFlags,
-    }
+    };
 
     werft.log("job config", JSON.stringify(jobConfig));
-    const globalAttributes = Object.fromEntries(Object.entries(jobConfig).map((kv) => {
-        const [key, value] = kv
-        return [`werft.job.config.${key}`, value]
-    }))
-    globalAttributes['werft.job.config.branch'] = context.Repository.ref
-    werft.addAttributes(globalAttributes)
+    const globalAttributes = Object.fromEntries(
+        Object.entries(jobConfig).map((kv) => {
+            const [key, value] = kv;
+            return [`werft.job.config.${key}`, value];
+        }),
+    );
+    globalAttributes["werft.job.config.branch"] = context.Repository.ref;
+    werft.addAttributes(globalAttributes);
 
-    werft.done(sliceId)
+    werft.done(sliceId);
 
-    return jobConfig
+    return jobConfig;
 }
 
 function parseVersion(context: any) {
@@ -163,5 +171,5 @@ function parseVersion(context: any) {
     if (version.substr(0, PREFIX_TO_STRIP.length) === PREFIX_TO_STRIP) {
         version = version.substr(PREFIX_TO_STRIP.length);
     }
-    return version
+    return version;
 }

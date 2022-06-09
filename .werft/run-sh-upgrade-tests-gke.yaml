@@ -1,40 +1,59 @@
-# debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/k3s-installer-tests.yaml -a debug=true`
+# debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/run-sh-upgrade-tests-gke.yaml -a debug=true`
 args:
-- name: destroy
-  desc: "Should the setup be destroyed or not"
-  required: false
-  default: true
+- name: fromVersion
+  desc: "The version from which you want to test upgrading to the latest"
+  required: true
 - name: channel
   desc: "Replicated channel to use"
   required: false
-  default: ""
-- name: version
-  desc: "Version of gitpod to install initially"
-  required: false
-  default: ""
 pod:
   serviceAccount: werft
-  affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: dev/workload
-          operator: In
-          values:
-          - "builds"
-  securityContext:
-    runAsUser: 0
+  nodeSelector:
+    dev/workload: builds
+  imagePullSecrets:
+  - name: eu-gcr-io-pull-secret
   volumes:
+  - name: gcp-sa
+    secret:
+      secretName: gcp-sa-gitpod-dev-deployer
+  - name: config
+    emptyDir: {}
   - name: sh-playground-sa-perm
     secret:
       secretName: sh-playground-sa-perm
   - name: sh-playground-dns-perm
     secret:
       secretName: sh-playground-dns-perm
+  initContainers:
+  - name: gcloud
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-gh-cli-to-dev-image.0
+    workingDir: /workspace
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+    - name: gcp-sa
+      mountPath: /mnt/secrets/gcp-sa
+      readOnly: true
+    - name: config
+      mountPath: /config
+      readOnly: false
+    command:
+    - bash
+    - -c
+    - |
+
+      echo "[prep] preparing config."
+
+      gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
+      cp -R /home/gitpod/.config/gcloud /config/gcloud
+      cp /home/gitpod/.kube/config /config/kubeconfig
+
+      echo "[prep] copied config..."
+
+  securityContext:
+    runAsUser: 0
   containers:
   - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-gh-cli-to-dev-image.0
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
@@ -43,6 +62,9 @@ pod:
     - name: sh-playground-dns-perm # this sa is used for the DNS management
       mountPath: /mnt/secrets/sh-playground-dns-perm
     env:
+    - name: config
+      mountPath: /config
+      readOnly: false
     - name: WERFT_HOST
       value: "werft.werft.svc.cluster.local:7777"
     - name: GOOGLE_APPLICATION_CREDENTIALS
@@ -68,33 +90,21 @@ pod:
 
         sudo chown -R gitpod:gitpod /workspace
         sudo apt update && apt install gettext-base
-
-        curl -sLS https://get.k3sup.dev | sh
+        export WERFT_CREDENTIAL_HELPER=/workspace/dev/preview/werft-credential-helper.sh
 
         export TF_VAR_TEST_ID=$(echo $RANDOM | md5sum | head -c 5; echo)
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
 
-        export DESTROY="{{ .Annotations.destroy }}"
-
-        if [ $DESTROY == "false" ]; then
-          export STAGE=STANDARD_K3S_PREVIEW
-        else
-          export STAGE=STANDARD_K3S_TEST
-        fi
-
-        export VERSION="{{ .Annotations.version }}"
-        if [[ "$VERSION" == "<no value>" ]]; then
-          VERSION=""
-        fi
+        FROM_VERSION="{{ .Annotations.fromVersion }}"
 
         export CHANNEL="{{ .Annotations.channel }}"
         if [[ "$CHANNEL" == "<no value>" ]]; then
-          CHANNEL=""
+          CHANNEL="beta"
         fi
 
-        npx ts-node .werft/installer-tests.ts ${STAGE} ${VERSION} ${CHANNEL}
+        npx ts-node .werft/installer-tests.ts "STANDARD_GKE_UPGRADE_TEST" ${FROM_VERSION} ${CHANNEL}
 # The bit below makes this a cron job
-plugins:
-  cron: "15 3 * * *"
+# plugins:
+#   cron: "15 4 * * *"

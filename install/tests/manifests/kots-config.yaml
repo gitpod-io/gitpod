@@ -5,3 +5,6 @@ spec:
       domain:
         value: "${TF_VAR_TEST_ID}.gitpod-self-hosted.com"
         data: "domain"
+      ssh_gateway:
+        value: "1"
+        data: "ssh_gateway"
