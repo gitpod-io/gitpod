@@ -218,7 +218,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
 		EnablePayment:                chargebeeSecret != "" || stripeSecret != "",
 		ChargebeeProviderOptionsFile: fmt.Sprintf("%s/providerOptions", chargebeeMountPath),
-		StripeSettingsFile:           fmt.Sprintf("%s/settings", stripeMountPath),
+		StripeSecretsFile:            fmt.Sprintf("%s/apikeys", stripeMountPath),
 		InsecureNoDomain:             false,
 		PrebuildLimiter: map[string]int{
 			// default limit for all cloneURLs

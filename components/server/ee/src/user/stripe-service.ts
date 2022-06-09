@@ -17,10 +17,10 @@ export class StripeService {
 
     protected getStripe(): Stripe {
         if (!this._stripe) {
-            if (!this.config.stripeSettings?.secretKey) {
+            if (!this.config.stripeSecrets?.secretKey) {
                 throw new Error("Stripe is not properly configured");
             }
-            this._stripe = new Stripe(this.config.stripeSettings.secretKey, { apiVersion: "2020-08-27" });
+            this._stripe = new Stripe(this.config.stripeSecrets.secretKey, { apiVersion: "2020-08-27" });
         }
         return this._stripe;
     }

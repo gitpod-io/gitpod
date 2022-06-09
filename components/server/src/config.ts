@@ -20,12 +20,12 @@ import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 export const Config = Symbol("Config");
 export type Config = Omit<
     ConfigSerialized,
-    "blockedRepositories" | "hostUrl" | "chargebeeProviderOptionsFile" | "stripeSettingsFile" | "licenseFile"
+    "blockedRepositories" | "hostUrl" | "chargebeeProviderOptionsFile" | "stripeSecretsFile" | "licenseFile"
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
-    stripeSettings?: { publishableKey: string; secretKey: string };
+    stripeSecrets?: { publishableKey: string; secretKey: string };
     builtinAuthProvidersConfigured: boolean;
     blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[];
     inactivityPeriodForRepos?: number;
@@ -151,7 +151,7 @@ export interface ConfigSerialized {
      * Payment related options
      */
     chargebeeProviderOptionsFile?: string;
-    stripeSettingsFile?: string;
+    stripeSecretsFile?: string;
     enablePayment?: boolean;
 
     /**
@@ -215,12 +215,14 @@ export namespace ConfigFile {
         const chargebeeProviderOptions = readOptionsFromFile(
             filePathTelepresenceAware(config.chargebeeProviderOptionsFile || ""),
         );
-        let stripeSettings: { publishableKey: string; secretKey: string } | undefined;
-        if (config.enablePayment && config.stripeSettingsFile) {
+        let stripeSecrets: { publishableKey: string; secretKey: string } | undefined;
+        if (config.enablePayment && config.stripeSecretsFile) {
             try {
-                stripeSettings = JSON.parse(fs.readFileSync(filePathTelepresenceAware(config.stripeSettingsFile), "utf-8"));
+                stripeSecrets = JSON.parse(
+                    fs.readFileSync(filePathTelepresenceAware(config.stripeSecretsFile), "utf-8"),
+                );
             } catch (error) {
-                console.error("Could not load Stripe settings", error);
+                console.error("Could not load Stripe secrets", error);
             }
         }
         let license = config.license;
@@ -249,7 +251,7 @@ export namespace ConfigFile {
             authProviderConfigs,
             builtinAuthProvidersConfigured,
             chargebeeProviderOptions,
-            stripeSettings,
+            stripeSecrets,
             license,
             workspaceGarbageCollection: {
                 ...config.workspaceGarbageCollection,
