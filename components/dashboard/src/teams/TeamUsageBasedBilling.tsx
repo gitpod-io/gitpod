@@ -27,6 +27,7 @@ export default function TeamUsageBasedBilling() {
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [pendingStripeCustomer, setPendingStripeCustomer] = useState<PendingStripeCustomer | undefined>();
     const [pollStripeCustomerTimeout, setPollStripeCustomerTimeout] = useState<NodeJS.Timeout | undefined>();
+    const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
 
     useEffect(() => {
         if (!team) {
@@ -45,6 +46,16 @@ export default function TeamUsageBasedBilling() {
             }
         })();
     }, [team]);
+
+    useEffect(() => {
+        if (!team || !stripeCustomerId) {
+            return;
+        }
+        (async () => {
+            const portalUrl = await getGitpodService().server.getStripePortalUrlForTeam(team.id);
+            setStripePortalUrl(portalUrl);
+        })();
+    }, [team, stripeCustomerId]);
 
     useEffect(() => {
         if (!team) {
@@ -144,9 +155,11 @@ export default function TeamUsageBasedBilling() {
                             <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
                                 Active
                             </div>
-                            {/* <button className="self-end secondary" disabled={true}>
-                                Manage →
-                            </button> */}
+                            <a className="self-end" href={stripePortalUrl}>
+                                <button className="secondary" disabled={!stripePortalUrl}>
+                                    Manage Billing →
+                                </button>
+                            </a>
                         </>
                     )}
                 </div>
@@ -154,6 +167,12 @@ export default function TeamUsageBasedBilling() {
             {showBillingSetupModal && <BillingSetupModal onClose={() => setShowBillingSetupModal(false)} />}
         </div>
     );
+}
+
+function getStripeAppearance(isDark?: boolean): Appearance {
+    return {
+        theme: isDark ? "night" : "stripe",
+    };
 }
 
 function BillingSetupModal(props: { onClose: () => void }) {
@@ -169,12 +188,6 @@ function BillingSetupModal(props: { onClose: () => void }) {
         ]).then((setters) => setters.forEach((s) => s()));
     }, []);
 
-    const getStripeAppearance = (): Appearance => {
-        return {
-            theme: isDark ? "night" : "stripe",
-        };
-    };
-
     return (
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="flex">Upgrade Billing</h3>
@@ -182,7 +195,10 @@ function BillingSetupModal(props: { onClose: () => void }) {
                 {!!stripePromise && !!stripeSetupIntentClientSecret && (
                     <Elements
                         stripe={stripePromise}
-                        options={{ appearance: getStripeAppearance(), clientSecret: stripeSetupIntentClientSecret }}
+                        options={{
+                            appearance: getStripeAppearance(isDark),
+                            clientSecret: stripeSetupIntentClientSecret,
+                        }}
                     >
                         <CreditCardInputForm />
                     </Elements>

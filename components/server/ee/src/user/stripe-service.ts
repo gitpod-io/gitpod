@@ -101,4 +101,16 @@ export class StripeService {
         });
         return customer;
     }
+
+    async getPortalUrlForTeam(team: Team): Promise<string> {
+        const customer = await this.findCustomerByTeamId(team.id);
+        if (!customer) {
+            throw new Error(`No Stripe Customer ID found for team '${team.id}'`);
+        }
+        const session = await this.getStripe().billingPortal.sessions.create({
+            customer: customer.id,
+            return_url: this.config.hostUrl.with(() => ({ pathname: `/t/${team.slug}/billing` })).toString(),
+        });
+        return session.url;
+    }
 }

@@ -200,6 +200,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         getStripeSetupIntentClientSecret: { group: "default", points: 1 },
         findStripeCustomerIdForTeam: { group: "default", points: 1 },
         subscribeTeamToStripe: { group: "default", points: 1 },
+        getStripePortalUrlForTeam: { group: "default", points: 1 },
         trackEvent: { group: "default", points: 1 },
         trackLocation: { group: "default", points: 1 },
         identifyUser: { group: "default", points: 1 },

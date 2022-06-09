@@ -1906,6 +1906,23 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    async getStripePortalUrlForTeam(ctx: TraceContext, teamId: string): Promise<string> {
+        const user = this.checkAndBlockUser("getStripePortalUrlForTeam");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.guardTeamOperation(teamId, "update");
+        const team = await this.teamDB.findTeamById(teamId);
+        try {
+            const url = await this.stripeService.getPortalUrlForTeam(team!);
+            return url;
+        } catch (error) {
+            log.error(`Failed to get Stripe portal URL for team '${teamId}'`, error);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to get Stripe portal URL for team '${teamId}'`,
+            );
+        }
+    }
+
     // (SaaS) – admin
     async adminGetAccountStatement(ctx: TraceContext, userId: string): Promise<AccountStatement> {
         traceAPIParams(ctx, { userId });
