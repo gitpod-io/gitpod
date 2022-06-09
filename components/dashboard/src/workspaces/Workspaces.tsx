@@ -58,7 +58,7 @@ export default function () {
 
             <ConfirmationModal
                 title="Delete Inactive Workspaces"
-                areYouSureText="You are about to permanently delete your inactive workspaces."
+                areYouSureText="Are you sure you want to delete all inactive workspaces?"
                 buttonText="Delete Inactive Workspaces"
                 visible={!!deleteModalVisible}
                 onClose={() => setDeleteModalVisible(false)}
@@ -146,42 +146,49 @@ export default function () {
                             })}
                             {activeWorkspaces.length > 0 && <div className="py-6"></div>}
                             {inactiveWorkspaces.length > 0 && (
-                                <div className="pt-14">
-                                    <div className="border-t border-gray-200 dark:border-gray-800"></div>
+                                <div>
                                     <div
                                         onClick={() => setShowInactive(!showInactive)}
-                                        className="flex cursor-pointer py-6"
+                                        className="flex cursor-pointer py-6 px-6 flex-row text-gray-400 bg-gray-50  hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl mb-2"
                                     >
-                                        <div className="flex flex-col">
-                                            <h2 className="">Inactive Workspaces</h2>
+                                        <div className="pr-2">
+                                            <Arrow up={!!showInactive} />
                                         </div>
-                                        <div>
-                                            <Arrow
-                                                up={!!showInactive}
-                                                customBorderClasses="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
-                                            />
+                                        <div className="flex flex-grow flex-col ">
+                                            <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
+                                                <span>Inactive Workspaces&nbsp;</span>
+                                                <span className="text-gray-400 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 rounded-xl px-2 py-0.5 text-xs">
+                                                    {inactiveWorkspaces.length}
+                                                </span>
+                                            </div>
+                                            <div className="text-sm flex-auto">
+                                                Unpinned workspaces that have been inactive for more than 14 days will
+                                                be automatically deleted.{" "}
+                                                <a
+                                                    className="gp-link"
+                                                    href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection"
+                                                    onClick={(evt) => evt.stopPropagation()}
+                                                >
+                                                    Learn more
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div className="self-center">
+                                            {showInactive ? (
+                                                <button
+                                                    onClick={(evt) => {
+                                                        setDeleteModalVisible(true);
+                                                        evt.stopPropagation();
+                                                    }}
+                                                    className="secondary danger"
+                                                >
+                                                    Delete Inactive Workspaces
+                                                </button>
+                                            ) : null}
                                         </div>
                                     </div>
                                     {showInactive ? (
                                         <>
-                                            <div className="flex flex-row p-3 text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                                                <div className="text-sm flex-auto py-3">
-                                                    Unpinned workspaces that have been inactive for more than 14 days
-                                                    will be automatically deleted.{" "}
-                                                    <a
-                                                        className="gp-link"
-                                                        href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection"
-                                                    >
-                                                        Learn more
-                                                    </a>
-                                                </div>
-                                                <button
-                                                    onClick={() => setDeleteModalVisible(true)}
-                                                    className="ml-2 danger secondary w-64 p-2"
-                                                >
-                                                    Delete Inactive Workspaces
-                                                </button>
-                                            </div>
                                             {inactiveWorkspaces.map((e) => {
                                                 return (
                                                     <WorkspaceEntry
