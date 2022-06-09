@@ -1,4 +1,17 @@
 # debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/k3s-installer-tests.yaml -a debug=true`
+args:
+- name: destroy
+  desc: "Should the setup be destroyed or not"
+  required: false
+  default: true
+- name: channel
+  desc: "Replicated channel to use"
+  required: false
+  default: ""
+- name: version
+  desc: "Version of gitpod to install initially"
+  required: false
+  default: ""
 pod:
   serviceAccount: werft
   affinity:
@@ -63,7 +76,25 @@ pod:
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
 
-        npx ts-node .werft/installer-tests.ts "STANDARD_K3S_TEST"
+        export DESTROY="{{ .Annotations.destroy }}"
+
+        if [ $DESTROY == "false" ]; then
+          export STAGE=STANDARD_K3S_PREVIEW
+        else
+          export STAGE=STANDARD_K3S_TEST
+        fi
+
+        export VERSION="{{ .Annotations.version }}"
+        if [[ "$VERSION" == "<no value>" ]]; then
+          VERSION=""
+        fi
+
+        export CHANNEL="{{ .Annotations.channel }}"
+        if [[ "$CHANNEL" == "<no value>" ]]; then
+          CHANNEL=""
+        fi
+
+        npx ts-node .werft/installer-tests.ts ${STAGE} ${VERSION} ${CHANNEL}
 # The bit below makes this a cron job
 plugins:
   cron: "15 3 * * *"

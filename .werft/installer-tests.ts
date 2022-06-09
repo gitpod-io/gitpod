@@ -4,7 +4,10 @@ import { Werft } from "./util/werft";
 
 const testConfig: string = process.argv.length > 2 ? process.argv[2] : "STANDARD_K3S_TEST";
 // we can provide the version of the gitpod to install (eg: 2022.4.2)
+// "-" is the default value which will install the latest version
 const version: string = process.argv.length > 3 ? process.argv[3] : "";
+
+const channel: string = process.argv.length > 4 ? process.argv[4] : "";
 
 const makefilePath: string = join("install/tests");
 
@@ -43,12 +46,12 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     INSTALL_GITPOD_IGNORE_PREFLIGHTS: {
         phase: "install-gitpod-without-preflights",
-        makeTarget: `kots-install channel=unstable version=${version} preflights=false`, // this is a bit of a hack, for now we pass params like this
+        makeTarget: `kots-install channel=${channel} version=${version} preflights=false`, // this is a bit of a hack, for now we pass params like this
         description: "Install gitpod using kots community edition without preflights",
     },
     INSTALL_GITPOD: {
         phase: "install-gitpod",
-        makeTarget: `kots-install channel=unstable version=${version} preflights=true`,
+        makeTarget: `kots-install channel=${channel} version=${version} preflights=true`,
         description: "Install gitpod using kots community edition",
     },
     CHECK_INSTALLATION: {
@@ -113,7 +116,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         DESCRIPTION: "Create a SH Gitpod preview environment on a K3s cluster, created on a GCP instance",
         PHASES: [
             "STANDARD_K3S_CLUSTER_ON_GCP",
-            "GCP_MANAGED_DNS",
+            "CERT_MANAGER",
             "INSTALL_GITPOD_IGNORE_PREFLIGHTS",
             "CHECK_INSTALLATION",
             "RESULTS",

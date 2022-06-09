@@ -59,6 +59,7 @@ KOTS_KONFIG := "./manifests/kots-config.yaml"
 license_community_beta := "../licenses/Community (Beta).yaml"
 license_community_stable := "../licenses/Community.yaml"
 license_community_unstable := "../licenses/Community (Unstable).yaml"
+license_community_$(channel) := "../licenses/$(channel).yaml"
 
 install-kots-cli:
 	curl https://kots.io/install | bash
@@ -68,7 +69,7 @@ channel ?= unstable
 version ?= -
 kots-install: version-flag = $(if $(version:-=),--app-version-label=$(version),)
 kots-install: preflight-flag = $(if $(preflights:true=),--skip-preflights,)
-kots-install: license-file =  $(license_community_$(channel))
+kots-install: license-file = $(license_community_$(channel))
 kots-install: install-kots-cli
 	envsubst < ${KOTS_KONFIG} > tmp_config.yml
 	kubectl kots install gitpod/${channel} \
@@ -101,11 +102,8 @@ cleanup:
 
 get-results:
 	@echo "If you have gotten this far, it means your setup succeeded"
-	@echo
-	@echo "URL of your setup is: "https://$(TF_VAR_TEST_ID).gitpod-self-hosted.com""
-	@echo
+	@echo "The IP address of you setup is "$(TF_VAR_TEST_ID).gitpod-self-hosted.com""
 	@echo "Following is the KUBECONFIG you can use to connect to the cluster:"
-	@echo
 	@cat ${KUBECONFIG}
 
 list-state:
