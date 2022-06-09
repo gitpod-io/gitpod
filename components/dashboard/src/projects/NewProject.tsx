@@ -21,6 +21,8 @@ import { trackEvent } from "../Analytics";
 import exclamation from "../images/exclamation.svg";
 import ErrorMessage from "../components/ErrorMessage";
 
+const SELECTED_PROVIDER_HOST_KEY = "gitpod.new-project.selected-provider-host";
+
 export default function NewProject() {
     const location = useLocation();
     const { teams } = useContext(TeamsContext);
@@ -55,19 +57,33 @@ export default function NewProject() {
 
     useEffect(() => {
         if (user && authProviders && selectedProviderHost === undefined) {
+            const storedSelectedProviderHost = localStorage.getItem(SELECTED_PROVIDER_HOST_KEY);
+
+            const authProvider = authProviders.find((p) => p.host === storedSelectedProviderHost);
+
+            // if the stored provider exists and is in one of the user's identities, use it
+            if (authProvider && user.identities.some((idt) => idt.authProviderId === authProvider.authProviderId)) {
+                return setSelectedProviderHost(authProvider.host);
+            }
+
+            // otherwise, use the last provider in the user's identities that also exists in the providers
             for (let i = user.identities.length - 1; i >= 0; i--) {
-                const candidate = user.identities[i];
-                if (candidate) {
-                    const authProvider = authProviders.find((ap) => ap.authProviderId === candidate.authProviderId);
-                    const host = authProvider?.host;
-                    if (host) {
-                        setSelectedProviderHost(host);
-                        break;
-                    }
+                const idt = user.identities[i]!;
+
+                const authProvider = authProviders.find((ap) => ap.authProviderId === idt.authProviderId);
+                const host = authProvider?.host;
+                if (host) {
+                    return setSelectedProviderHost(host);
                 }
             }
         }
     }, [user, authProviders, selectedProviderHost]);
+
+    useEffect(() => {
+        if (selectedProviderHost) {
+            localStorage.setItem(SELECTED_PROVIDER_HOST_KEY, selectedProviderHost);
+        }
+    }, [selectedProviderHost]);
 
     useEffect(() => {
         setIsGitHubWebhooksUnauthorized(false);
