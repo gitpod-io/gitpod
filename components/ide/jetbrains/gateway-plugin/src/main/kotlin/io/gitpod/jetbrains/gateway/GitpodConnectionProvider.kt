@@ -124,10 +124,9 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                 }
                             }
                             row {
-                                browserLink(
-                                    workspace.context.normalizedContextURL,
-                                    workspace.context.normalizedContextURL
-                                )
+                                workspace.context.normalizedContextURL.ifPresent {
+                                    browserLink(it, it)
+                                }
                             }
                         }.horizontalAlign(HorizontalAlign.CENTER)
                         row {
