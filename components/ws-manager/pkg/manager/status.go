@@ -521,7 +521,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 		return nil
 	}
 
-	log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithField("pod", pod).Debug("cannot determine workspace phase")
+	log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithField("pod", pod).Error("cannot determine workspace phase")
 	result.Phase = api.WorkspacePhase_UNKNOWN
 	result.Message = "cannot determine workspace phase. We should never get here."
 	return nil
