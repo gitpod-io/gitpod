@@ -8,6 +8,7 @@ import { Container } from "inversify";
 import * as express from "express";
 import * as prometheusClient from "prom-client";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { MessageBusIntegration } from "./messagebus-integration";
 import { TypeORM } from "@gitpod/gitpod-db/lib/typeorm/typeorm";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -38,6 +39,9 @@ export const start = async (container: Container) => {
         const metricsHttpServer = metricsApp.listen(metricsPort, "localhost", () => {
             log.info(`prometheus metrics server running on: localhost:${metricsPort}`);
         });
+
+        const debugApp = container.get<DebugApp>(DebugApp);
+        debugApp.start();
 
         const bridgeController = container.get<BridgeController>(BridgeController);
         await bridgeController.start();
