@@ -45,6 +45,22 @@ spec:
             - name: s3
               title: S3
 
+        # S3 help_text
+        - name: reg_incluster_storage_s3_region
+          title: Storage region
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          help_text: ID of the region where your storage exists, such as `eu-west-2`.
+
+        - name: reg_incluster_storage_s3_endpoint
+          title: Endpoint
+          type: text
+          required: true
+          value: s3.amazonaws.com
+          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          help_text: The endpoint used to connect to the S3 storage.
+
         - name: reg_incluster_storage_s3_bucketname
           title: S3 bucket name
           type: text
