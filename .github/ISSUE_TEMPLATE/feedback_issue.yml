@@ -1,0 +1,15 @@
+name: Feedback Issue
+description: Open a feedback issue to gather feedback, suggestions, and experiences from users.
+title: "Feedback Issue: "
+labels: ["feedback-issue"]
+body:
+- type: markdown
+  attributes:
+    value: Before raising a feedback issue, please search for [existing feedback issues](https://github.com/gitpod-io/gitpod/issues?q=is%3Aopen+is%3Aissue+label%3Afeedback-issue) to avoid creating duplicates.
+- type: textarea
+  id: objective
+  attributes:
+    label: Objective
+    description: Include the objective of this issue and any relevant features 
+  validations:
+    required: true
