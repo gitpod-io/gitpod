@@ -67,6 +67,7 @@ func TestObjectAccessToNonExistentObj(t *testing.T) {
 	}
 }
 
+//nolint:unused
 var runWithDocker = flag.Bool("with-docker", false, "run fake-gcs-server in docker")
 
 func TestObjectUpload(t *testing.T) {
@@ -86,6 +87,8 @@ func TestObjectUpload(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
+			t.Skip()
+
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
@@ -271,6 +274,7 @@ type fakeGCSContainer struct {
 	URI string
 }
 
+//nolint:unused
 func setupFakeStorage(ctx context.Context) (*fakeGCSContainer, error) {
 	req := testcontainers.ContainerRequest{
 		Image:        "fsouza/fake-gcs-server",
