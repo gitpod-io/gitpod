@@ -102,4 +102,10 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     workspaceClass?: string;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    attributedTeamId?: string;
 }
