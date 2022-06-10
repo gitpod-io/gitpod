@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/base64"
 
-	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,17 +28,7 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 		return nil, status.Error(codes.NotFound, "not found")
 	}
 
-	var (
-		span        opentracing.Span
-		traceID, ok = pod.Annotations[wsk8s.TraceIDAnnotation]
-	)
-	if ok {
-		spanCtx := tracing.FromTraceID(traceID)
-		span = opentracing.StartSpan("GetImageSpec", opentracing.FollowsFrom(spanCtx))
-		ctx = opentracing.ContextWithSpan(ctx, span)
-	} else {
-		span, ctx = tracing.FromContext(ctx, "GetImageSpec")
-	}
+	span, ctx := tracing.FromContext(ctx, "GetImageSpec")
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 	defer func() {
 		tracing.LogMessageSafe(span, "resp", resp)

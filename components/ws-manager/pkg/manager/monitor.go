@@ -204,7 +204,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	// subsequent handling of the matter or not. However, we want to respond quickly to events,
 	// thus we start OnChange as a goroutine.
 	// BEWARE beyond this point one must not modify status anymore - we've already sent it out BEWARE
-	span := m.traceWorkspace("handle-"+status.Phase.String(), wso)
+	span := m.traceWorkspaceState(status.Phase.String(), wso)
 	ctx = opentracing.ContextWithSpan(context.Background(), span)
 	onChangeDone := make(chan bool)
 	go func() {
@@ -351,14 +351,11 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 			return xerrors.Errorf("cannot add gitpod finalizer: %w", err)
 		}
 
-		// once a regular workspace is up and running, we'll remove the traceID information so that the parent span
-		// ends once the workspace has started.
-		//
-		// Also, in case the pod gets evicted we would not know the hostIP that pod ran on anymore.
+		// In case the pod gets evicted we would not know the hostIP that pod ran on anymore.
 		// In preparation for those cases, we'll add it as an annotation.
-		err := m.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation), addMark(nodeNameAnnotation, wso.NodeName()))
+		err := m.markWorkspace(ctx, workspaceID, addMark(nodeNameAnnotation, wso.NodeName()))
 		if err != nil {
-			log.WithError(err).Warn("was unable to remove traceID and/or add host IP annotation from/to workspace")
+			log.WithError(err).Warn("was unable to add host IP annotation from/to workspace")
 		}
 	}
 
@@ -512,25 +509,14 @@ func (m *Monitor) writeEventTraceLog(status *api.WorkspaceStatus, wso *workspace
 	json.NewEncoder(out).Encode(entry)
 }
 
-// traceWorkspace updates the workspace span if the workspace has OpenTracing information associated with it.
-// The resulting context may be associated with trace information that can be used to trace the effects of this status
-// update throughout the rest of the system.
-func (m *Monitor) traceWorkspace(occasion string, wso *workspaceObjects) opentracing.Span {
-	var traceID string
-	if traceID == "" && wso.Pod != nil {
-		traceID = wso.Pod.Annotations[wsk8s.TraceIDAnnotation]
-	}
-	spanCtx := tracing.FromTraceID(traceID)
-	if spanCtx == nil {
-		// no trace information available
-		return opentracing.NoopTracer{}.StartSpan("noop")
-	}
-
-	span := opentracing.StartSpan(fmt.Sprintf("/workspace/%s", occasion), opentracing.FollowsFrom(spanCtx))
+// traceWorkspaceState creates a new span that records the phase of workspace
+func (m *Monitor) traceWorkspaceState(state string, wso *workspaceObjects) opentracing.Span {
+	span := opentracing.StartSpan(fmt.Sprintf("/workspace/%s", state))
 	if wso.Pod != nil {
 		tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&wso.Pod.ObjectMeta))
+		span.LogKV("timeToState", time.Since(wso.Pod.CreationTimestamp.Time))
 	}
-	span.LogKV("occasion", occasion)
+	span.LogKV("wsState", state)
 
 	// OpenTracing does not support creating a span from a SpanContext https://github.com/opentracing/specification/issues/81.
 	// Until that changes we just finish the span immediately after calling on-change.

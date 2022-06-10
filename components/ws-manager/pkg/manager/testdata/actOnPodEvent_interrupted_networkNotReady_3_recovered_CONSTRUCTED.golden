@@ -13,11 +13,6 @@
             "Params": {
                 "annotations": [
                     {
-                        "Name": "gitpod/traceid",
-                        "Value": "",
-                        "Delete": true
-                    },
-                    {
                         "Name": "gitpod.io/nodeName",
                         "Value": "gke-production--gitp-workspace-pool-1-c73d13c7-fzbk",
                         "Delete": false
