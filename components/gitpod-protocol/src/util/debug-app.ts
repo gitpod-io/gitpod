@@ -7,7 +7,7 @@
 import * as http from "http";
 import * as express from "express";
 import { injectable, postConstruct } from "inversify";
-import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log, LogrusLogLevel } from "./logging";
 
 export interface SetLogLevelRequest {
     level: LogrusLogLevel;
@@ -53,7 +53,7 @@ export class DebugApp {
         return app;
     }
 
-    public start(port: number) {
+    public start(port: number = 6060) {
         this.httpServer = this._app.listen(port, "localhost", () => {
             log.info(`debug server listening on port: ${port}`);
         });
