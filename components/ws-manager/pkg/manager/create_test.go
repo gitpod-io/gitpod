@@ -133,8 +133,10 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 						Type: api.WorkspaceType_REGULAR,
 						Id:   "test",
 						Metadata: &api.WorkspaceMetadata{
-							Owner:  "tester",
-							MetaId: "foobar",
+							Owner:   "tester",
+							MetaId:  "foobar",
+							Team:    "awesome",
+							Project: "gitpod",
 						},
 						ServicePrefix: "foobarservice",
 						Spec:          &spec,

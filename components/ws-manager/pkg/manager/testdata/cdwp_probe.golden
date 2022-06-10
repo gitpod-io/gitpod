@@ -13,6 +13,8 @@
                 "headless": "true",
                 "metaID": "foobar",
                 "owner": "tester",
+                "project": "",
+                "team": "",
                 "workspaceID": "foobar",
                 "workspaceType": "probe"
             },
