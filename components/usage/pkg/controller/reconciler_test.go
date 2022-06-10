@@ -138,7 +138,7 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 					Report: []TeamUsage{
 						{
 							TeamID:           teamID.String(),
-							WorkspaceSeconds: 9.223372036854766e+11,
+							WorkspaceSeconds: instances[0].WorkspaceRuntimeSeconds(runTime) * 100,
 						},
 					},
 				},
