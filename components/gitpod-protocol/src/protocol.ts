@@ -357,6 +357,68 @@ export namespace UserEnvVar {
     }
 }
 
+export interface SSHPublicKeyValue {
+    name: string;
+    key: string;
+}
+export interface UserSSHPublicKey extends SSHPublicKeyValue {
+    id: string;
+    key: string;
+    userId: string;
+    fingerprint: string;
+    creationTime: string;
+    lastUsedTime?: string;
+}
+
+export type UserSSHPublicKeyValue = Omit<UserSSHPublicKey, "key" | "userId">;
+
+export namespace SSHPublicKeyValue {
+    export function validate(value: SSHPublicKeyValue): string | undefined {
+        if (value.name.length === 0) {
+            return "Title must not be empty.";
+        }
+        if (value.name.length > 255) {
+            return "Title too long. Maximum value length is 255 characters.";
+        }
+        if (value.key.length === 0) {
+            return "Key must not be empty.";
+        }
+        try {
+            getData(value);
+        } catch (e) {
+            return "Key is invalid. You must supply a key in OpenSSH public key format.";
+        }
+        return;
+    }
+
+    export function getData(value: SSHPublicKeyValue) {
+        // Begins with 'ssh-rsa', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-ed25519', 'sk-ecdsa-sha2-nistp256@openssh.com', or 'sk-ssh-ed25519@openssh.com'.
+        const regex =
+            /^(?<type>ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521|ssh-ed25519|sk-ecdsa-sha2-nistp256@openssh\.com|sk-ssh-ed25519@openssh\.com) (?<key>.*?)( (?<email>.*?))?$/;
+        const resultGroup = regex.exec(value.key.trim());
+        if (!resultGroup) {
+            throw new Error("Key is invalid.");
+        }
+        return {
+            type: resultGroup.groups?.["type"] as string,
+            key: resultGroup.groups?.["key"] as string,
+            email: resultGroup.groups?.["email"] || undefined,
+        };
+    }
+
+    export function getFingerprint(value: SSHPublicKeyValue) {
+        const data = getData(value);
+        let buf = Buffer.from(data.key, "base64");
+        // gitlab style
+        // const hash = createHash("md5").update(buf).digest("hex");
+        // github style
+        const hash = createHash("sha256").update(buf).digest("base64");
+        return hash;
+    }
+
+    export const MAXIMUM_KEY_LENGTH = 5;
+}
+
 export interface GitpodToken {
     /** Hash value (SHA256) of the token (primary key). */
     tokenHash: string;

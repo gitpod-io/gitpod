@@ -370,6 +370,22 @@ func (f *FakeGitpodAPI) DeleteEnvVar(ctx context.Context, variable *gitpod.UserE
 	panic("implement me")
 }
 
+func (f *FakeGitpodAPI) HasSSHPublicKey(ctx context.Context) (res bool, err error) {
+	panic("implement me")
+}
+
+func (f *FakeGitpodAPI) GetSSHPublicKeys(ctx context.Context) (res []*gitpod.UserSSHPublicKeyValue, err error) {
+	panic("implement me")
+}
+
+func (f *FakeGitpodAPI) AddSSHPublicKey(ctx context.Context, value *gitpod.SSHPublicKeyValue) (res *gitpod.UserSSHPublicKeyValue, err error) {
+	panic("implement me")
+}
+
+func (f *FakeGitpodAPI) DeleteSSHPublicKey(ctx context.Context, id string) (err error) {
+	panic("implement me")
+}
+
 func (f *FakeGitpodAPI) GetContentBlobUploadURL(ctx context.Context, name string) (url string, err error) {
 	panic("implement me")
 }
