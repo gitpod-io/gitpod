@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -361,45 +362,47 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	uploadSpan.SetTag("bucket", bucket)
 	uploadSpan.SetTag("obj", object)
 
+	err = gcpEnsureExists(ctx, rs.client, bucket, rs.GCPConfig)
+	if err != nil {
+		err = xerrors.Errorf("unexpected error: %w", err)
+		return
+	}
+
 	var firstBackup bool
 	if _, e := obj.Attrs(ctx); e == gcpstorage.ErrObjectNotExist {
 		firstBackup = true
 	}
 
 	var wg sync.WaitGroup
-	var written int64
 
 	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
 
-		wc := obj.NewWriter(ctx)
-		wc.Metadata = options.Annotations
-		wc.ContentType = options.ContentType
-		// Increase chunk size for faster uploading
-		wc.ChunkSize = googleapi.DefaultUploadChunkSize * 4
-
-		written, err = io.Copy(wc, sfn)
-		if err != nil {
-			log.WithError(err).WithField("name", name).Error("Error while uploading file")
-			return
+		sa := ""
+		if rs.GCPConfig.CredentialsFile != "" {
+			sa = fmt.Sprintf(`gcloud auth activate-service-account --key-file %v &&`, rs.GCPConfig.CredentialsFile)
 		}
+		args := fmt.Sprintf(`%v gsutil -m \
+		  -o "GSUtil:parallel_composite_upload_threshold=150M" \
+		  -o "GSUtil:parallel_thread_count=8" \
+		  cp %s gs://%s`, sa, source, filepath.Join(bucket, object))
 
-		// persist changes in GCS
-		err = wc.Close()
+		log.WithField("flags", args).Info("gsutil flags")
+
+		cmd := exec.Command("/bin/bash", []string{"-c", args}...)
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		err = cmd.Run()
 		if err != nil {
-			log.WithError(err).WithField("name", name).Error("Error while uploading file")
+			log.WithError(err).Error("unexpected error updloading file to GCS using gsutil")
+			err = xerrors.Errorf("unexpected error updloading backup")
 			return
 		}
 	}()
 
 	wg.Wait()
-
-	if written != totalSize {
-		err = xerrors.Errorf("Wrote fewer bytes than it should have, %d instead of %d", written, totalSize)
-		return
-	}
 
 	// maintain backup trail if we're asked to - we do this prior to overwriting the regular backup file
 	// to make sure we're trailign the previous backup.
