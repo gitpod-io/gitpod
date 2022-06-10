@@ -272,9 +272,12 @@ class GitpodWorkspacesView(
                                     }
                                 ).gap(RightGap.SMALL)
                                 panel {
-                                    row {
+                                    val contextUrlRow = row {
                                         browserLink(info.workspace.id, info.latestInstance.ideUrl)
-                                    }.rowComment("<a href='${info.workspace.context.normalizedContextURL}'>${info.workspace.context.normalizedContextURL}</a>")
+                                    }
+                                    info.workspace.context.normalizedContextURL.ifPresent {
+                                        contextUrlRow.rowComment("<a href='${it}'>${it}</a>")
+                                    }
                                 }
                                 label("").resizableColumn().horizontalAlign(HorizontalAlign.FILL)
                                 panel {
@@ -283,11 +286,7 @@ class GitpodWorkspacesView(
                                         it.totalUncommitedFiles + it.totalUntrackedFiles + it.totalUnpushedCommits
                                     } ?: 0
                                     row {
-                                        if (info.workspace.context.ref.isPresent()) {
-                                            label(info.workspace.context.ref.get())
-                                        } else {
-                                            label("(detached)")
-                                        }
+                                        info.workspace.context.ref.ifPresentOrElse({ label(it) },{ label("(detached)") })
                                     }.rowComment(
                                         when {
                                             changes == 1 -> "<b>$changes Change</b>"
