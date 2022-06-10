@@ -10,10 +10,12 @@ import {
     GitpodTokenType,
     Identity,
     IdentityLookup,
+    SSHPublicKeyValue,
     Token,
     TokenEntry,
     User,
     UserEnvVar,
+    UserSSHPublicKey,
 } from "@gitpod/gitpod-protocol";
 import { OAuthTokenRepository, OAuthUserRepository } from "@jmondi/oauth2-server";
 import { Repository } from "typeorm";
@@ -116,6 +118,12 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
     setEnvVar(envVar: UserEnvVar): Promise<void>;
     deleteEnvVar(envVar: UserEnvVar): Promise<void>;
     getEnvVars(userId: string): Promise<UserEnvVar[]>;
+
+    // User SSH Keys
+    hasSSHPublicKey(userId: string): Promise<boolean>;
+    getSSHPublicKeys(userId: string): Promise<UserSSHPublicKey[]>;
+    addSSHPublicKey(userId: string, value: SSHPublicKeyValue): Promise<UserSSHPublicKey>;
+    deleteSSHPublicKey(userId: string, id: string): Promise<void>;
 
     findAllUsers(
         offset: number,

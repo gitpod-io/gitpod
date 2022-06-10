@@ -75,6 +75,8 @@ import {
     ClientHeaderFields,
     Permission,
     SnapshotContext,
+    SSHPublicKeyValue,
+    UserSSHPublicKeyValue,
 } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import {
@@ -119,6 +121,7 @@ import {
     PortSpec,
     PortVisibility as ProtoPortVisibility,
     StopWorkspacePolicy,
+    UpdateSSHKeyRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
@@ -1928,6 +1931,61 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.analytics.track({ event: "envvar-deleted", userId });
 
         await this.userDB.deleteEnvVar(envvar);
+    }
+
+    async hasSSHPublicKey(ctx: TraceContext): Promise<boolean> {
+        const user = this.checkUser("hasSSHPublicKey");
+        return this.userDB.hasSSHPublicKey(user.id);
+    }
+
+    async getSSHPublicKeys(ctx: TraceContext): Promise<UserSSHPublicKeyValue[]> {
+        const user = this.checkUser("getSSHPublicKeys");
+        const list = await this.userDB.getSSHPublicKeys(user.id);
+        return list.map((e) => ({
+            id: e.id,
+            name: e.name,
+            fingerprint: e.fingerprint,
+            creationTime: e.creationTime,
+            lastUsedTime: e.lastUsedTime,
+        }));
+    }
+
+    async addSSHPublicKey(ctx: TraceContext, value: SSHPublicKeyValue): Promise<UserSSHPublicKeyValue> {
+        const user = this.checkUser("addSSHPublicKey");
+        const data = await this.userDB.addSSHPublicKey(user.id, value);
+        this.updateSSHKeysForRegularRunningInstances(ctx, user.id).catch(console.error);
+        return {
+            id: data.id,
+            name: data.name,
+            fingerprint: data.fingerprint,
+            creationTime: data.creationTime,
+            lastUsedTime: data.lastUsedTime,
+        };
+    }
+
+    async deleteSSHPublicKey(ctx: TraceContext, id: string): Promise<void> {
+        const user = this.checkUser("deleteSSHPublicKey");
+        await this.userDB.deleteSSHPublicKey(user.id, id);
+        this.updateSSHKeysForRegularRunningInstances(ctx, user.id).catch(console.error);
+        return;
+    }
+
+    protected async updateSSHKeysForRegularRunningInstances(ctx: TraceContext, userId: string) {
+        const keys = (await this.userDB.getSSHPublicKeys(userId)).map((e) => e.key);
+        const instances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(userId);
+        const updateKeyOfInstance = async (instance: WorkspaceInstance) => {
+            try {
+                const req = new UpdateSSHKeyRequest();
+                req.setId(instance.id);
+                req.setKeysList(keys);
+                const cli = await this.workspaceManagerClientProvider.get(instance.region);
+                await cli.updateSSHPublicKey(ctx, req);
+            } catch (err) {
+                const logCtx = { userId, instanceId: instance.id };
+                log.error(logCtx, "Could not update ssh public key for instance", err);
+            }
+        };
+        return Promise.allSettled(instances.map((e) => updateKeyOfInstance(e)));
     }
 
     async setProjectEnvironmentVariable(

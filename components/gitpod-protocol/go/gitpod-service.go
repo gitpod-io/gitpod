@@ -64,6 +64,10 @@ type APIInterface interface {
 	GetEnvVars(ctx context.Context) (res []*UserEnvVarValue, err error)
 	SetEnvVar(ctx context.Context, variable *UserEnvVarValue) (err error)
 	DeleteEnvVar(ctx context.Context, variable *UserEnvVarValue) (err error)
+	HasSSHPublicKey(ctx context.Context) (res bool, err error)
+	GetSSHPublicKeys(ctx context.Context) (res []*UserSSHPublicKeyValue, err error)
+	AddSSHPublicKey(ctx context.Context, value *SSHPublicKeyValue) (res *UserSSHPublicKeyValue, err error)
+	DeleteSSHPublicKey(ctx context.Context, id string) (err error)
 	GetContentBlobUploadURL(ctx context.Context, name string) (url string, err error)
 	GetContentBlobDownloadURL(ctx context.Context, name string) (url string, err error)
 	GetGitpodTokens(ctx context.Context) (res []*APIToken, err error)
@@ -168,6 +172,14 @@ const (
 	FunctionSetEnvVar FunctionName = "setEnvVar"
 	// FunctionDeleteEnvVar is the name of the deleteEnvVar function
 	FunctionDeleteEnvVar FunctionName = "deleteEnvVar"
+	// FunctionHasSSHPublicKey is the name of the hasSSHPublicKey function
+	FunctionHasSSHPublicKey FunctionName = "hasSSHPublicKey"
+	// FunctionGetSSHPublicKeys is the name of the getSSHPublicKeys function
+	FunctionGetSSHPublicKeys FunctionName = "getSSHPublicKeys"
+	// FunctionAddSSHPublicKey is the name of the addSSHPublicKey function
+	FunctionAddSSHPublicKey FunctionName = "addSSHPublicKey"
+	// FunctionDeleteSSHPublicKey is the name of the deleteSSHPublicKey function
+	FunctionDeleteSSHPublicKey FunctionName = "deleteSSHPublicKey"
 	// FunctionGetContentBlobUploadURL is the name fo the getContentBlobUploadUrl function
 	FunctionGetContentBlobUploadURL FunctionName = "getContentBlobUploadUrl"
 	// FunctionGetContentBlobDownloadURL is the name fo the getContentBlobDownloadUrl function
@@ -1117,6 +1129,50 @@ func (gp *APIoverJSONRPC) DeleteEnvVar(ctx context.Context, variable *UserEnvVar
 	return
 }
 
+// HasSSHPublicKey calls hasSSHPublicKey on the server
+func (gp *APIoverJSONRPC) HasSSHPublicKey(ctx context.Context) (res bool, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+	err = gp.C.Call(ctx, "hasSSHPublicKey", _params, &res)
+	return
+}
+
+// GetSSHPublicKeys calls getSSHPublicKeys on the server
+func (gp *APIoverJSONRPC) GetSSHPublicKeys(ctx context.Context) (res []*UserSSHPublicKeyValue, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+	err = gp.C.Call(ctx, "getSSHPublicKeys", _params, &res)
+	return
+}
+
+// AddSSHPublicKey calls addSSHPublicKey on the server
+func (gp *APIoverJSONRPC) AddSSHPublicKey(ctx context.Context, value *SSHPublicKeyValue) (res *UserSSHPublicKeyValue, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{value}
+	err = gp.C.Call(ctx, "addSSHPublicKey", _params, &res)
+	return
+}
+
+// DeleteSSHPublicKey calls deleteSSHPublicKey on the server
+func (gp *APIoverJSONRPC) DeleteSSHPublicKey(ctx context.Context, id string) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{id}
+	err = gp.C.Call(ctx, "deleteSSHPublicKey", _params, nil)
+	return
+}
+
 // GetContentBlobUploadURL calls getContentBlobUploadUrl on the server
 func (gp *APIoverJSONRPC) GetContentBlobUploadURL(ctx context.Context, name string) (url string, err error) {
 	if gp == nil {
@@ -1788,6 +1844,19 @@ type UserEnvVarValue struct {
 	Name              string `json:"name,omitempty"`
 	RepositoryPattern string `json:"repositoryPattern,omitempty"`
 	Value             string `json:"value,omitempty"`
+}
+
+type SSHPublicKeyValue struct {
+	Name string `json:"name,omitempty"`
+	Key  string `json:"key,omitempty"`
+}
+
+type UserSSHPublicKeyValue struct {
+	ID           string `json:"id,omitempty"`
+	Name         string `json:"name,omitempty"`
+	Fingerprint  string `json:"fingerprint,omitempty"`
+	CreationTime string `json:"creationTime,omitempty"`
+	LastUsedTime string `json:"lastUsedTime,omitempty"`
 }
 
 // GenerateNewGitpodTokenOptions is the GenerateNewGitpodTokenOptions message type

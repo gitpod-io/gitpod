@@ -10,10 +10,12 @@ import {
     GitpodTokenType,
     Identity,
     IdentityLookup,
+    SSHPublicKeyValue,
     Token,
     TokenEntry,
     User,
     UserEnvVar,
+    UserSSHPublicKey,
 } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import {
@@ -41,6 +43,7 @@ import { DBTokenEntry } from "./entity/db-token-entry";
 import { DBUser } from "./entity/db-user";
 import { DBUserEnvVar } from "./entity/db-user-env-vars";
 import { DBWorkspace } from "./entity/db-workspace";
+import { DBUserSshPublicKey } from "./entity/db-user-ssh-public-key";
 import { TypeORM } from "./typeorm";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
@@ -93,6 +96,10 @@ export class TypeORMUserDBImpl implements UserDB {
 
     protected async getUserEnvVarRepo(): Promise<Repository<DBUserEnvVar>> {
         return (await this.getEntityManager()).getRepository<DBUserEnvVar>(DBUserEnvVar);
+    }
+
+    protected async getSSHPublicKeyRepo(): Promise<Repository<DBUserSshPublicKey>> {
+        return (await this.getEntityManager()).getRepository<DBUserSshPublicKey>(DBUserSshPublicKey);
     }
 
     public async newUser(): Promise<User> {
@@ -395,6 +402,43 @@ export class TypeORMUserDBImpl implements UserDB {
         envVar.deleted = true;
         const repo = await this.getUserEnvVarRepo();
         await repo.save(envVar);
+    }
+
+    public async hasSSHPublicKey(userId: string): Promise<boolean> {
+        const repo = await this.getSSHPublicKeyRepo();
+        return !!(await repo.findOne({ where: { userId, deleted: false } }));
+    }
+
+    public async getSSHPublicKeys(userId: string): Promise<UserSSHPublicKey[]> {
+        const repo = await this.getSSHPublicKeyRepo();
+        return repo.find({ where: { userId, deleted: false }, order: { creationTime: "ASC" } });
+    }
+
+    public async addSSHPublicKey(userId: string, value: SSHPublicKeyValue): Promise<UserSSHPublicKey> {
+        const repo = await this.getSSHPublicKeyRepo();
+        const fingerprint = SSHPublicKeyValue.getFingerprint(value);
+        const allKeys = await repo.find({ where: { userId, deleted: false } });
+        const prevOne = allKeys.find((e) => e.fingerprint === fingerprint);
+        if (!!prevOne) {
+            throw new Error(`Key already in use`);
+        }
+        if (allKeys.length > SSHPublicKeyValue.MAXIMUM_KEY_LENGTH) {
+            throw new Error(`The maximum of public keys is ${SSHPublicKeyValue.MAXIMUM_KEY_LENGTH}`);
+        }
+        return repo.save({
+            id: uuidv4(),
+            userId,
+            fingerprint,
+            name: value.name,
+            key: value.key,
+            creationTime: new Date().toISOString(),
+            deleted: false,
+        });
+    }
+
+    public async deleteSSHPublicKey(userId: string, id: string): Promise<void> {
+        const repo = await this.getSSHPublicKeyRepo();
+        await repo.update({ userId, id }, { deleted: true });
     }
 
     public async findAllUsers(
