@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/imdario/mergo"
-	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -362,7 +361,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		kubernetes.WorkspaceAdmissionAnnotation: admissionLevel,
 		kubernetes.WorkspaceImageSpecAnnotation: imageSpec,
 		kubernetes.OwnerTokenAnnotation:         startContext.OwnerToken,
-		wsk8s.TraceIDAnnotation:                 startContext.TraceID,
 		attemptingToCreatePodAnnotation:         "true",
 		// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 		"container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
@@ -856,8 +854,7 @@ func (m *Manager) createDefaultSecurityContext() (*corev1.SecurityContext, error
 }
 
 func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWorkspaceRequest) (res *startWorkspaceContext, err error) {
-	// we deliberately do not shadow ctx here as we need the original context later to extract the TraceID
-	span, ctx := tracing.FromContext(ctx, "newStartWorkspaceContext")
+	span, _ := tracing.FromContext(ctx, "newStartWorkspaceContext")
 	defer tracing.FinishSpan(span, &err)
 
 	workspaceType := strings.ToLower(api.WorkspaceType_name[int32(req.Type)])
@@ -880,10 +877,6 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create owner token: %w", err)
 	}
-
-	workspaceSpan := opentracing.StartSpan("workspace", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))
-	traceID := tracing.GetTraceID(workspaceSpan)
-	defer tracing.FinishSpan(workspaceSpan, &err)
 
 	clsName := req.Spec.Class
 	if _, ok := m.Config.WorkspaceClasses[req.Spec.Class]; clsName == "" || !ok {
@@ -927,7 +920,6 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		IDEPort:        23000,
 		SupervisorPort: 22999,
 		WorkspaceURL:   workspaceURL,
-		TraceID:        traceID,
 		Headless:       headless,
 		Class:          class,
 		VolumeSnapshot: volumeSnapshot,

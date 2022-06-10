@@ -37,9 +37,6 @@ const (
 	// ServiceTypeLabel help differentiate between port service and IDE service
 	ServiceTypeLabel = "serviceType"
 
-	// TraceIDAnnotation adds a Jaeger/OpenTracing header to the pod so that we can trace it's behaviour
-	TraceIDAnnotation = "gitpod/traceid"
-
 	// CPULimitAnnotation enforces a strict CPU limit on a workspace by virtue of ws-daemon
 	CPULimitAnnotation = "gitpod.io/cpuLimit"
 
