@@ -1,6 +1,10 @@
 # Change Log
 
 ## June 2022
+- use `ide.gitpod.io/blobserve` to serve blobfile ([#10514](https://github.com/gitpod-io/gitpod/pull/10514)) - [@iQQBot](https://github.com/iQQBot)
+- Add GITPOD_WORKSPACE_CLASS environment variable to workspaces to allow easier identification of the workspace class ([#10562](https://github.com/gitpod-io/gitpod/pull/10562)) - [@Furisto](https://github.com/Furisto)
+- Added action to delete all inactive workspaces ([#10450](https://github.com/gitpod-io/gitpod/pull/10450)) - [@svenefftinge](https://github.com/svenefftinge)
+- bump werft cli version in dev image ([#10548](https://github.com/gitpod-io/gitpod/pull/10548)) - [@liam-j-bennett](https://github.com/liam-j-bennett)
 - [content-service] make sure to show error if there was one when attempting to download backup ([#10491](https://github.com/gitpod-io/gitpod/pull/10491)) - [@sagor999](https://github.com/sagor999)
 - [kots]: add storage to preflight checks ([#9939](https://github.com/gitpod-io/gitpod/pull/9939)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Fix hanging "Prebuild in Progress" page ([#10357](https://github.com/gitpod-io/gitpod/pull/10357)) - [@AlexTugarev](https://github.com/AlexTugarev)
