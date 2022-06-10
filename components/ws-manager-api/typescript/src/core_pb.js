@@ -6712,7 +6712,9 @@ proto.wsman.WorkspaceMetadata.toObject = function(includeInstance, msg) {
     owner: jspb.Message.getFieldWithDefault(msg, 1, ""),
     metaId: jspb.Message.getFieldWithDefault(msg, 2, ""),
     startedAt: (f = msg.getStartedAt()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-    annotationsMap: (f = msg.getAnnotationsMap()) ? f.toObject(includeInstance, undefined) : []
+    annotationsMap: (f = msg.getAnnotationsMap()) ? f.toObject(includeInstance, undefined) : [],
+    team: jspb.Message.getFieldWithDefault(msg, 5, ""),
+    project: jspb.Message.getFieldWithDefault(msg, 6, "")
   };
 
   if (includeInstance) {
@@ -6768,6 +6770,14 @@ proto.wsman.WorkspaceMetadata.deserializeBinaryFromReader = function(msg, reader
         jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
          });
       break;
+    case 5:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setTeam(value);
+      break;
+    case 6:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setProject(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -6822,6 +6832,20 @@ proto.wsman.WorkspaceMetadata.serializeBinaryToWriter = function(message, writer
   f = message.getAnnotationsMap(true);
   if (f && f.getLength() > 0) {
     f.serializeBinary(4, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+  }
+  f = message.getTeam();
+  if (f.length > 0) {
+    writer.writeString(
+      5,
+      f
+    );
+  }
+  f = message.getProject();
+  if (f.length > 0) {
+    writer.writeString(
+      6,
+      f
+    );
   }
 };
 
@@ -6919,6 +6943,42 @@ proto.wsman.WorkspaceMetadata.prototype.getAnnotationsMap = function(opt_noLazyC
 proto.wsman.WorkspaceMetadata.prototype.clearAnnotationsMap = function() {
   this.getAnnotationsMap().clear();
   return this;};
+
+
+/**
+ * optional string team = 5;
+ * @return {string}
+ */
+proto.wsman.WorkspaceMetadata.prototype.getTeam = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.WorkspaceMetadata} returns this
+ */
+proto.wsman.WorkspaceMetadata.prototype.setTeam = function(value) {
+  return jspb.Message.setProto3StringField(this, 5, value);
+};
+
+
+/**
+ * optional string project = 6;
+ * @return {string}
+ */
+proto.wsman.WorkspaceMetadata.prototype.getProject = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.WorkspaceMetadata} returns this
+ */
+proto.wsman.WorkspaceMetadata.prototype.setProject = function(value) {
+  return jspb.Message.setProto3StringField(this, 6, value);
+};
 
 
 

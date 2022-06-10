@@ -838,6 +838,10 @@ export class WorkspaceMetadata extends jspb.Message {
 
     getAnnotationsMap(): jspb.Map<string, string>;
     clearAnnotationsMap(): void;
+    getTeam(): string;
+    setTeam(value: string): WorkspaceMetadata;
+    getProject(): string;
+    setProject(value: string): WorkspaceMetadata;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceMetadata.AsObject;
@@ -856,6 +860,8 @@ export namespace WorkspaceMetadata {
         startedAt?: google_protobuf_timestamp_pb.Timestamp.AsObject,
 
         annotationsMap: Array<[string, string]>,
+        team: string,
+        project: string,
     }
 }
 
