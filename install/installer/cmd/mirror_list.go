@@ -113,7 +113,9 @@ func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]strin
 					},
 				},
 				S3Storage: &configv1.S3Storage{
-					Bucket: "some-bucket",
+					Bucket:   "some-bucket",
+					Region:   "some-region",
+					Endpoint: "some-url",
 					Certificate: configv1.ObjectRef{
 						Kind: configv1.ObjectRefSecret,
 						Name: "value",

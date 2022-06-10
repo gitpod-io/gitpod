@@ -214,6 +214,8 @@ type ContainerRegistryExternal struct {
 
 type S3Storage struct {
 	Bucket      string    `json:"bucket" validate:"required"`
+	Region      string    `json:"region" validate:"required"`
+	Endpoint    string    `json:"endpoint" validate:"required"`
 	Certificate ObjectRef `json:"certificate" validate:"required"`
 }
 
