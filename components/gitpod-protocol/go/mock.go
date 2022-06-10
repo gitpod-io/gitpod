@@ -38,6 +38,21 @@ func (m *MockAPIInterface) EXPECT() *MockAPIInterfaceMockRecorder {
 	return m.recorder
 }
 
+// AddSSHPublicKey mocks base method.
+func (m *MockAPIInterface) AddSSHPublicKey(ctx context.Context, value *SSHPublicKeyValue) (*UserSSHPublicKeyValue, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddSSHPublicKey", ctx, value)
+	ret0, _ := ret[0].(*UserSSHPublicKeyValue)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddSSHPublicKey indicates an expected call of AddSSHPublicKey.
+func (mr *MockAPIInterfaceMockRecorder) AddSSHPublicKey(ctx, value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSSHPublicKey", reflect.TypeOf((*MockAPIInterface)(nil).AddSSHPublicKey), ctx, value)
+}
+
 // AdminBlockUser mocks base method.
 func (m *MockAPIInterface) AdminBlockUser(ctx context.Context, req *AdminBlockUserRequest) error {
 	m.ctrl.T.Helper()
@@ -149,6 +164,20 @@ func (m *MockAPIInterface) DeleteOwnAuthProvider(ctx context.Context, params *De
 func (mr *MockAPIInterfaceMockRecorder) DeleteOwnAuthProvider(ctx, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOwnAuthProvider", reflect.TypeOf((*MockAPIInterface)(nil).DeleteOwnAuthProvider), ctx, params)
+}
+
+// DeleteSSHPublicKey mocks base method.
+func (m *MockAPIInterface) DeleteSSHPublicKey(ctx context.Context, id string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSSHPublicKey", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSSHPublicKey indicates an expected call of DeleteSSHPublicKey.
+func (mr *MockAPIInterfaceMockRecorder) DeleteSSHPublicKey(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSSHPublicKey", reflect.TypeOf((*MockAPIInterface)(nil).DeleteSSHPublicKey), ctx, id)
 }
 
 // DeleteWorkspace mocks base method.
@@ -405,6 +434,21 @@ func (mr *MockAPIInterfaceMockRecorder) GetPortAuthenticationToken(ctx, workspac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPortAuthenticationToken", reflect.TypeOf((*MockAPIInterface)(nil).GetPortAuthenticationToken), ctx, workspaceID)
 }
 
+// GetSSHPublicKeys mocks base method.
+func (m *MockAPIInterface) GetSSHPublicKeys(ctx context.Context) ([]*UserSSHPublicKeyValue, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSSHPublicKeys", ctx)
+	ret0, _ := ret[0].([]*UserSSHPublicKeyValue)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSSHPublicKeys indicates an expected call of GetSSHPublicKeys.
+func (mr *MockAPIInterfaceMockRecorder) GetSSHPublicKeys(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSSHPublicKeys", reflect.TypeOf((*MockAPIInterface)(nil).GetSSHPublicKeys), ctx)
+}
+
 // GetSnapshots mocks base method.
 func (m *MockAPIInterface) GetSnapshots(ctx context.Context, workspaceID string) ([]*string, error) {
 	m.ctrl.T.Helper()
@@ -553,6 +597,21 @@ func (m *MockAPIInterface) HasPermission(ctx context.Context, permission *Permis
 func (mr *MockAPIInterfaceMockRecorder) HasPermission(ctx, permission interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasPermission", reflect.TypeOf((*MockAPIInterface)(nil).HasPermission), ctx, permission)
+}
+
+// HasSSHPublicKey mocks base method.
+func (m *MockAPIInterface) HasSSHPublicKey(ctx context.Context) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasSSHPublicKey", ctx)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HasSSHPublicKey indicates an expected call of HasSSHPublicKey.
+func (mr *MockAPIInterfaceMockRecorder) HasSSHPublicKey(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasSSHPublicKey", reflect.TypeOf((*MockAPIInterface)(nil).HasSSHPublicKey), ctx)
 }
 
 // InstanceUpdates mocks base method.
