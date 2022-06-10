@@ -40,6 +40,7 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
     })
     startedTime?: string;
 
+    // DEPRECATED
     @Column({
         default: "",
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
@@ -95,4 +96,10 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
 
     @Column("simple-json", { nullable: true })
     imageBuildInfo?: ImageBuildInfo;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    workspaceClass?: string;
 }

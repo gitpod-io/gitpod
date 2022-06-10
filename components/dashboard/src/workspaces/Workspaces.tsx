@@ -18,6 +18,8 @@ import { User } from "@gitpod/gitpod-protocol";
 import { useLocation } from "react-router";
 import { StartWorkspaceModalContext, StartWorkspaceModalKeyBinding } from "./start-workspace-modal-context";
 import SelectIDEModal from "../settings/SelectIDEModal";
+import Arrow from "../components/Arrow";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 export interface WorkspacesProps {}
 
@@ -25,6 +27,8 @@ export interface WorkspacesState {
     workspaces: WorkspaceInfo[];
     isTemplateModelOpen: boolean;
     repos: WhitelistedRepository[];
+    showInactive: boolean;
+    deleteModalVisible: boolean;
 }
 
 export default function () {
@@ -35,6 +39,8 @@ export default function () {
     const [activeWorkspaces, setActiveWorkspaces] = useState<WorkspaceInfo[]>([]);
     const [inactiveWorkspaces, setInactiveWorkspaces] = useState<WorkspaceInfo[]>([]);
     const [workspaceModel, setWorkspaceModel] = useState<WorkspaceModel>();
+    const [showInactive, setShowInactive] = useState<boolean>();
+    const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>();
     const { setIsStartWorkspaceModalVisible } = useContext(StartWorkspaceModalContext);
 
     useEffect(() => {
@@ -49,6 +55,18 @@ export default function () {
     return (
         <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
+
+            <ConfirmationModal
+                title="Delete Inactive Workspaces"
+                areYouSureText="Are you sure you want to delete all inactive workspaces?"
+                buttonText="Delete Inactive Workspaces"
+                visible={!!deleteModalVisible}
+                onClose={() => setDeleteModalVisible(false)}
+                onConfirm={() => {
+                    inactiveWorkspaces.forEach((ws) => workspaceModel?.deleteWorkspace(ws.workspace.id));
+                    setDeleteModalVisible(false);
+                }}
+            ></ConfirmationModal>
 
             {isOnboardingUser && <SelectIDEModal location={"workspace_list"} />}
 
@@ -128,27 +146,65 @@ export default function () {
                             })}
                             {activeWorkspaces.length > 0 && <div className="py-6"></div>}
                             {inactiveWorkspaces.length > 0 && (
-                                <div className="p-3 text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-center">
-                                    Unpinned workspaces that have been inactive for more than 14 days will be
-                                    automatically deleted.{" "}
-                                    <a
-                                        className="gp-link"
-                                        href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection"
+                                <div>
+                                    <div
+                                        onClick={() => setShowInactive(!showInactive)}
+                                        className="flex cursor-pointer py-6 px-6 flex-row text-gray-400 bg-gray-50  hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl mb-2"
                                     >
-                                        Learn more
-                                    </a>
+                                        <div className="pr-2">
+                                            <Arrow up={!!showInactive} />
+                                        </div>
+                                        <div className="flex flex-grow flex-col ">
+                                            <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
+                                                <span>Inactive Workspaces&nbsp;</span>
+                                                <span className="text-gray-400 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 rounded-xl px-2 py-0.5 text-xs">
+                                                    {inactiveWorkspaces.length}
+                                                </span>
+                                            </div>
+                                            <div className="text-sm flex-auto">
+                                                Unpinned workspaces that have been inactive for more than 14 days will
+                                                be automatically deleted.{" "}
+                                                <a
+                                                    className="gp-link"
+                                                    href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection"
+                                                    onClick={(evt) => evt.stopPropagation()}
+                                                >
+                                                    Learn more
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div className="self-center">
+                                            {showInactive ? (
+                                                <button
+                                                    onClick={(evt) => {
+                                                        setDeleteModalVisible(true);
+                                                        evt.stopPropagation();
+                                                    }}
+                                                    className="secondary danger"
+                                                >
+                                                    Delete Inactive Workspaces
+                                                </button>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                    {showInactive ? (
+                                        <>
+                                            {inactiveWorkspaces.map((e) => {
+                                                return (
+                                                    <WorkspaceEntry
+                                                        key={e.workspace.id}
+                                                        desc={e}
+                                                        model={workspaceModel}
+                                                        stopWorkspace={(wsId) =>
+                                                            getGitpodService().server.stopWorkspace(wsId)
+                                                        }
+                                                    />
+                                                );
+                                            })}
+                                        </>
+                                    ) : null}
                                 </div>
                             )}
-                            {inactiveWorkspaces.map((e) => {
-                                return (
-                                    <WorkspaceEntry
-                                        key={e.workspace.id}
-                                        desc={e}
-                                        model={workspaceModel}
-                                        stopWorkspace={(wsId) => getGitpodService().server.stopWorkspace(wsId)}
-                                    />
-                                );
-                            })}
                         </ItemsList>
                     </>
                 ) : (

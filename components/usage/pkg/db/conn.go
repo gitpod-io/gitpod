@@ -6,10 +6,13 @@ package db
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	driver_mysql "github.com/go-sql-driver/mysql"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"testing"
 	"time"
 )
@@ -38,7 +41,22 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 	}
 
 	// refer to https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
-	return gorm.Open(mysql.Open(cfg.FormatDSN()), &gorm.Config{})
+	return gorm.Open(mysql.Open(cfg.FormatDSN()), &gorm.Config{
+		Logger: logger.New(log.Log, logger.Config{
+			SlowThreshold: 200 * time.Millisecond,
+			Colorful:      false,
+			LogLevel: (func() logger.LogLevel {
+				switch log.Log.Level {
+				case logrus.PanicLevel, logrus.FatalLevel, logrus.ErrorLevel:
+					return logger.Error
+				case logrus.WarnLevel:
+					return logger.Warn
+				default:
+					return logger.Info
+				}
+			})(),
+		}),
+	})
 }
 
 func ConnectForTests(t *testing.T) *gorm.DB {
@@ -54,10 +72,25 @@ func ConnectForTests(t *testing.T) *gorm.DB {
 	})
 	require.NoError(t, err, "Failed to establish connection to DB. In a workspace, run `leeway build components/usage:init-testdb` once to bootstrap the DB.")
 
+	conn = conn.Debug()
+
 	t.Cleanup(func() {
+		// Delete records for known models from the DB
+		log.Info("Cleaning up DB between connections.")
+		for _, model := range []interface{}{
+			&WorkspaceInstance{},
+			&Workspace{},
+			&Project{},
+			&Team{},
+			&TeamMembership{},
+		} {
+			// See https://gorm.io/docs/delete.html#Block-Global-Delete
+			tx := conn.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(model)
+			require.NoError(t, tx.Error)
+		}
+
 		rawConn, err := conn.DB()
 		require.NoError(t, err)
-
 		require.NoError(t, rawConn.Close(), "must close database connection")
 	})
 

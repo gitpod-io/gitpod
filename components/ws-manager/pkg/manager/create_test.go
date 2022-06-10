@@ -54,7 +54,8 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 		CACertSecret string                    `json:"caCertSecret,omitempty"`
 		Classes      map[string]WorkspaceClass `json:"classes,omitempty"`
 
-		EnforceAffinity bool `json:"enforceAffinity,omitempty"`
+		EnforceAffinity   bool `json:"enforceAffinity,omitempty"`
+		DebugWorkspacePod bool `json:"debugWorkspacePod,omitempty"`
 	}
 	type gold struct {
 		Pod   corev1.Pod `json:"reason,omitempty"`
@@ -69,6 +70,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 
 			mgmtCfg := forTestingOnlyManagerConfig()
 			mgmtCfg.WorkspaceCACertSecret = fixture.CACertSecret
+			mgmtCfg.DebugWorkspacePod = fixture.DebugWorkspacePod
 
 			if fixture.Classes == nil {
 				fixture.Classes = make(map[string]WorkspaceClass)

@@ -20,11 +20,12 @@ import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 export const Config = Symbol("Config");
 export type Config = Omit<
     ConfigSerialized,
-    "blockedRepositories" | "hostUrl" | "chargebeeProviderOptionsFile" | "licenseFile"
+    "blockedRepositories" | "hostUrl" | "chargebeeProviderOptionsFile" | "stripeSettingsFile" | "licenseFile"
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
+    stripeSettings?: { publishableKey: string; secretKey: string };
     builtinAuthProvidersConfigured: boolean;
     blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[];
     inactivityPeriodForRepos?: number;
@@ -150,6 +151,7 @@ export interface ConfigSerialized {
      * Payment related options
      */
     chargebeeProviderOptionsFile?: string;
+    stripeSettingsFile?: string;
     enablePayment?: boolean;
 
     /**
@@ -213,6 +215,14 @@ export namespace ConfigFile {
         const chargebeeProviderOptions = readOptionsFromFile(
             filePathTelepresenceAware(config.chargebeeProviderOptionsFile || ""),
         );
+        let stripeSettings: { publishableKey: string; secretKey: string } | undefined;
+        if (config.enablePayment && config.stripeSettingsFile) {
+            try {
+                stripeSettings = JSON.parse(fs.readFileSync(filePathTelepresenceAware(config.stripeSettingsFile), "utf-8"));
+            } catch (error) {
+                console.error("Could not load Stripe settings", error);
+            }
+        }
         let license = config.license;
         const licenseFile = config.licenseFile;
         if (licenseFile) {
@@ -239,6 +249,7 @@ export namespace ConfigFile {
             authProviderConfigs,
             builtinAuthProvidersConfigured,
             chargebeeProviderOptions,
+            stripeSettings,
             license,
             workspaceGarbageCollection: {
                 ...config.workspaceGarbageCollection,

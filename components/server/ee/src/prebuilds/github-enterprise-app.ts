@@ -77,9 +77,14 @@ export class GitHubEnterpriseApp {
     ): Promise<User> {
         const span = TraceContext.startSpan("GitHubEnterpriseApp.findUser", ctx);
         try {
-            const host = req.header("X-Github-Enterprise-Host");
+            let host = req.header("X-Github-Enterprise-Host");
+            if (!host) {
+                // If the GitHub installation doesn't identify itself, we fall back to the hostname from the repository URL.
+                const repoUrl = new URL(payload.repository.url);
+                host = repoUrl.hostname;
+            }
             const hostContext = this.hostContextProvider.get(host || "");
-            if (!host || !hostContext) {
+            if (!hostContext) {
                 throw new Error("Unsupported GitHub Enterprise host: " + host);
             }
             const { authProviderId } = hostContext.authProvider;

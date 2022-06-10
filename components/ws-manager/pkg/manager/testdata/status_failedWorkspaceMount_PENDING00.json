@@ -23,10 +23,7 @@
         "gitpod/servicePrefix": "d4562d0d-46ae-4a4b-b0a4-a5e94ea4a2f3",
         "gitpod/traceid": "AAAAAAAAAAAKKiUk7m4PY1BOxC/NSqfQCUjtNDaUFjkBAAAAAA==",
         "gitpod/url": "http://d4562d0d-46ae-4a4b-b0a4-a5e94ea4a2f3.ws-eu.cw-fail-on-mount-failure.staging.gitpod.io",
-        "gitpod/never-ready": "true",
-        "prometheus.io/path": "/metrics",
-        "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true"
+        "gitpod/never-ready": "true"
       }
     },
     "spec": {

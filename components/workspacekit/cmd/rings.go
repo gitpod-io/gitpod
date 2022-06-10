@@ -60,7 +60,14 @@ var ring0Cmd = &cobra.Command{
 	Short: "starts ring0 - enter here",
 	Run: func(_ *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, false)
-		log := log.WithField("ring", 0)
+
+		wsid := os.Getenv("GITPOD_WORKSPACE_ID")
+		if wsid == "" {
+			log.Error("cannot find GITPOD_WORKSPACE_ID")
+			return
+		}
+
+		log := log.WithField("ring", 0).WithField("workspaceId", wsid)
 
 		common_grpc.SetupLogging()
 
@@ -186,7 +193,13 @@ var ring1Cmd = &cobra.Command{
 	Short: "starts ring1",
 	Run: func(_cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, false)
-		log := log.WithField("ring", 1)
+
+		wsid := os.Getenv("GITPOD_WORKSPACE_ID")
+		if wsid == "" {
+			log.Error("cannot find GITPOD_WORKSPACE_ID")
+			return
+		}
+		log := log.WithField("ring", 1).WithField("workspaceId", wsid)
 
 		common_grpc.SetupLogging()
 
@@ -506,6 +519,7 @@ var ring1Cmd = &cobra.Command{
 				Ring2PID:    cmd.Process.Pid,
 				Ring2Rootfs: ring2Root,
 				BindEvents:  make(chan seccomp.BindEvent),
+				WorkspaceId: wsid,
 			}
 
 			stp, errchan := seccomp.Handle(scmpfd, handler)
@@ -738,7 +752,13 @@ var ring2Cmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(_cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, false)
-		log := log.WithField("ring", 2)
+
+		wsid := os.Getenv("GITPOD_WORKSPACE_ID")
+		if wsid == "" {
+			log.Error("cannot find GITPOD_WORKSPACE_ID")
+			return
+		}
+		log := log.WithField("ring", 2).WithField("workspaceId", wsid)
 
 		common_grpc.SetupLogging()
 

@@ -2,9 +2,9 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full-vnc:latest
+FROM gitpod/workspace-full:latest
 
-ENV TRIGGER_REBUILD 18
+ENV TRIGGER_REBUILD 19
 
 USER root
 
@@ -23,7 +23,7 @@ RUN mkdir -p /tmp/helm/ \
 
 ### kubernetes ###
 RUN mkdir -p /usr/local/kubernetes/ && \
-    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.23.6/kubernetes.tar.gz \
+    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.24.1/kubernetes.tar.gz \
     | tar -xzvC /usr/local/kubernetes/ --strip-components=1 \
     && KUBERNETES_SKIP_CONFIRM=true /usr/local/kubernetes/cluster/get-kube-binaries.sh \
     && chown gitpod:gitpod -R /usr/local/kubernetes
@@ -34,7 +34,7 @@ ENV PATH=$PATH:/usr/local/kubernetes/cluster/:/usr/local/kubernetes/client/bin/
 RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
     # really 'xenial'
     && add-apt-repository -yu "deb https://apt.kubernetes.io/ kubernetes-xenial main" \
-    && install-packages kubectl=1.23.5-00 \
+    && install-packages kubectl=1.24.1-00 \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl
 
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
@@ -51,22 +51,22 @@ RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | sudo apt-key
 RUN install-packages mysql-client
 
 ### CertManager's cmctl
-RUN cd /usr/bin && curl -L cmctl.tar.gz https://github.com/cert-manager/cert-manager/releases/download/v1.7.2/cmctl-linux-amd64.tar.gz | tar xzv cmctl
+RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cmctl-linux-amd64.tar.gz | tar xzv --no-anchored cmctl
 
 # gokart
-RUN cd /usr/bin && curl -L https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv gokart
+RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
 
 # leeway
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
 RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.17/leeway_0.2.17_Linux_x86_64.tar.gz | tar xz
 
 # dazzle
-RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/download/v0.1.11/dazzle_0.1.11_Linux_x86_64.tar.gz| tar xz
+RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/download/v0.1.11/dazzle_0.1.11_Linux_x86_64.tar.gz | tar xz
 
 # werft CLI
 ENV WERFT_K8S_NAMESPACE=werft
 ENV WERFT_DIAL_MODE=kubernetes
-RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/download/v0.3.0/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
+RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/download/v0.3.3/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
 
 # yq - jq for YAML files
 # Note: we rely on version 3.x.x in various places, 4.x breaks this!
@@ -80,7 +80,7 @@ RUN cd /usr/bin && curl -fsSL https://github.com/c4milo/github-release/releases/
 ### Protobuf
 RUN set -ex \
     && tmpdir=$(mktemp -d) \
-    && curl -fsSL -o $tmpdir/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-linux-x86_64.zip \
+    && curl -fsSL -o $tmpdir/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protoc-3.20.1-linux-x86_64.zip \
     && mkdir -p /usr/lib/protoc && cd /usr/lib/protoc && unzip $tmpdir/protoc.zip \
     && chmod -R o+r+x /usr/lib/protoc/include \
     && chmod -R +x /usr/lib/protoc/bin \
@@ -145,7 +145,7 @@ ARG GCS_DIR=/opt/google-cloud-sdk
 ENV PATH=$GCS_DIR/bin:$PATH
 RUN sudo chown gitpod: /opt \
     && mkdir $GCS_DIR \
-    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-376.0.0-linux-x86_64.tar.gz \
+    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-388.0.0-linux-x86_64.tar.gz \
     | tar -xzvC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
     --additional-components docker-credential-gcr alpha beta \
@@ -211,28 +211,28 @@ RUN sudo install-packages shellcheck \
     && sudo python3 -m pip install pre-commit
 
 # gh (Github CLI) binary:
-RUN cd /usr/bin && curl -L https://github.com/cli/cli/releases/download/v2.11.3/gh_2.11.3_linux_amd64.tar.gz \
+RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v2.11.3/gh_2.11.3_linux_amd64.tar.gz \
     | sudo tar xzv --strip-components=2 gh_2.11.3_linux_amd64/bin/gh
 
 # Install observability-related binaries
-ARG PROM_VERSION="2.30.0"
+ARG PROM_VERSION="2.36.0"
 RUN curl -LO https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz && \
     tar -xzvf prometheus-${PROM_VERSION}.linux-amd64.tar.gz && \
     sudo mv prometheus-${PROM_VERSION}.linux-amd64/promtool /usr/local/bin/promtool && \
     rm -rf prometheus-${PROM_VERSION}.linux-amd64/
 
 ARG JSONNET_BUNDLER_VERSION="0.4.0"
-RUN curl -L -o jb https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v${JSONNET_BUNDLER_VERSION}/jb-linux-amd64 && \
+RUN curl -fsSL -o jb https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v${JSONNET_BUNDLER_VERSION}/jb-linux-amd64 && \
     chmod +x jb && sudo mv jb /usr/local/bin
 
 ARG JSONNET_VERSION="0.17.0"
-RUN curl -LO https://github.com/google/go-jsonnet/releases/download/v${JSONNET_VERSION}/go-jsonnet_${JSONNET_VERSION}_Linux_x86_64.tar.gz && \
+RUN curl -fsSLO https://github.com/google/go-jsonnet/releases/download/v${JSONNET_VERSION}/go-jsonnet_${JSONNET_VERSION}_Linux_x86_64.tar.gz && \
     tar -xzvf go-jsonnet_${JSONNET_VERSION}_Linux_x86_64.tar.gz && \
     sudo mv jsonnet /usr/local/bin/jsonnet && \
     sudo mv jsonnetfmt /usr/local/bin/jsonnetfmt
 
 ARG GOJSONTOYAML_VERSION="0.1.0"
-RUN curl -LO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJSONTOYAML_VERSION}/gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
+RUN curl -fsSLO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJSONTOYAML_VERSION}/gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
     tar -xzvf gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
     sudo mv gojsontoyaml /usr/local/bin/gojsontoyaml
 
@@ -244,4 +244,8 @@ ENV WERFT_CREDENTIAL_HELPER=/workspace/gitpod/dev/preview/werft-credential-helpe
 
 # Copy our own tools
 ENV NEW_KUBECDL=1
-COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
+COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl dev-preview-previewctl--cli/previewctl /usr/bin/
+
+# Configure our tools' autocompletion
+RUN bash -c "echo . \<\(gpctl completion bash\) >> ~/.bashrc" && \
+    bash -c "echo . \<\(previewctl completion bash\) >> ~/.bashrc"

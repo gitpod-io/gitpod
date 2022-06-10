@@ -92,6 +92,7 @@ import { ChargebeeProvider, UpgradeHelper } from "@gitpod/gitpod-payment-endpoin
 import { ChargebeeCouponComputer } from "../user/coupon-computer";
 import { ChargebeeService } from "../user/chargebee-service";
 import { Chargebee as chargebee } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
+import { StripeService } from "../user/stripe-service";
 
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
@@ -101,6 +102,7 @@ import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/webs
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
+import { getExperimentsClient } from "../../../src/experiments";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -126,6 +128,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(UpgradeHelper) protected readonly upgradeHelper: UpgradeHelper;
     @inject(ChargebeeCouponComputer) protected readonly couponComputer: ChargebeeCouponComputer;
     @inject(ChargebeeService) protected readonly chargebeeService: ChargebeeService;
+    @inject(StripeService) protected readonly stripeService: StripeService;
 
     @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
     @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
@@ -541,7 +544,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             res.rows = res.rows.map(this.censorUser);
             return res;
         } catch (e) {
-            throw new ResponseError(500, e.toString());
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
     }
 
@@ -556,7 +559,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         try {
             result = await this.userDB.findUserById(userId);
         } catch (e) {
-            throw new ResponseError(500, e.toString());
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
 
         if (!result) {
@@ -603,7 +606,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         try {
             await this.userDeletionService.deleteUser(userId);
         } catch (e) {
-            throw new ResponseError(500, e.toString());
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
     }
 
@@ -1825,6 +1828,99 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw err;
         }
         return subscription;
+    }
+
+    protected async ensureIsUsageBasedFeatureFlagEnabled(user: User): Promise<void> {
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        const isUsageBasedBillingEnabled = await getExperimentsClient().getValueAsync(
+            "isUsageBasedBillingEnabled",
+            false,
+            {
+                identifier: user.id,
+                custom: {
+                    team_ids: teams.map((t) => t.id).join(","),
+                    team_names: teams.map((t) => t.name).join(","),
+                },
+            },
+        );
+        if (!isUsageBasedBillingEnabled) {
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+        }
+    }
+
+    async getStripePublishableKey(ctx: TraceContext): Promise<string> {
+        const user = this.checkAndBlockUser("getStripePublishableKey");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        const publishableKey = this.config.stripeSettings?.publishableKey;
+        if (!publishableKey) {
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                "Stripe is not properly configured (no publishable key)",
+            );
+        }
+        return publishableKey;
+    }
+
+    async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string> {
+        const user = this.checkAndBlockUser("getStripeSetupIntentClientSecret");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        try {
+            const setupIntent = await this.stripeService.createSetupIntent();
+            if (!setupIntent.client_secret) {
+                throw new Error("No client secret in the SetupIntent");
+            }
+            return setupIntent.client_secret;
+        } catch (error) {
+            log.error("Failed to create Stripe SetupIntent", error);
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to create Stripe SetupIntent");
+        }
+    }
+
+    async findStripeCustomerIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
+        const user = this.checkAndBlockUser("findStripeCustomerIdForTeam");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.guardTeamOperation(teamId, "update");
+        try {
+            const customer = await this.stripeService.findCustomerByTeamId(teamId);
+            return customer?.id || undefined;
+        } catch (error) {
+            log.error(`Failed to get Stripe Customer ID for team '${teamId}'`, error);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to get Stripe Customer ID for team '${teamId}'`,
+            );
+        }
+    }
+
+    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
+        const user = this.checkAndBlockUser("subscribeUserToStripe");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.guardTeamOperation(teamId, "update");
+        const team = await this.teamDB.findTeamById(teamId);
+        try {
+            await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
+            // TODO(janx): Create a Stripe usage-based Subscription for the customer
+        } catch (error) {
+            log.error(`Failed to subscribe team '${teamId}' to Stripe`, error);
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, `Failed to subscribe team '${teamId}' to Stripe`);
+        }
+    }
+
+    async getStripePortalUrlForTeam(ctx: TraceContext, teamId: string): Promise<string> {
+        const user = this.checkAndBlockUser("getStripePortalUrlForTeam");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.guardTeamOperation(teamId, "update");
+        const team = await this.teamDB.findTeamById(teamId);
+        try {
+            const url = await this.stripeService.getPortalUrlForTeam(team!);
+            return url;
+        } catch (error) {
+            log.error(`Failed to get Stripe portal URL for team '${teamId}'`, error);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to get Stripe portal URL for team '${teamId}'`,
+            );
+        }
     }
 
     // (SaaS) – admin

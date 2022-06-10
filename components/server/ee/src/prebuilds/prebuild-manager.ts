@@ -257,7 +257,7 @@ export class PrebuildManager {
             return false;
         }
 
-        const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.init || !!t.prebuild);
+        const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.before || !!t.init || !!t.prebuild);
         if (!hasPrebuildTask) {
             return false;
         }

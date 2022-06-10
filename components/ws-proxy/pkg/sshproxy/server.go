@@ -7,6 +7,7 @@ package sshproxy
 import (
 	"context"
 	"net"
+	"regexp"
 	"strings"
 	"time"
 
@@ -24,6 +25,9 @@ import (
 
 const GitpodUsername = "gitpod"
 
+// This is copy from proxy/workspacerouter.go
+const workspaceIDRegex = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11})"
+
 var (
 	SSHConnectionCount = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "gitpod_ws_proxy_ssh_connection_count",
@@ -37,12 +41,13 @@ var (
 )
 
 var (
-	ErrWorkspaceNotFound = NewSSHError("WS_NOTFOUND", "not found workspace")
-	ErrAuthFailed        = NewSSHError("AUTH_FAILED", "auth failed")
-	ErrUsernameFormat    = NewSSHError("USER_FORMAT", "username format is not correct")
-	ErrMissPrivateKey    = NewSSHError("MISS_KEY", "missing privateKey")
-	ErrConnFailed        = NewSSHError("CONN_FAILED", "cannot to connect with workspace")
-	ErrCreateSSHKey      = NewSSHError("CREATE_KEY_FAILED", "cannot create private pair in workspace")
+	ErrWorkspaceNotFound  = NewSSHError("WS_NOTFOUND", "not found workspace")
+	ErrWorkspaceIDInvalid = NewSSHError("WS_ID_INVALID", "workspace id invalid")
+	ErrAuthFailed         = NewSSHError("AUTH_FAILED", "auth failed")
+	ErrUsernameFormat     = NewSSHError("USER_FORMAT", "username format is not correct")
+	ErrMissPrivateKey     = NewSSHError("MISS_KEY", "missing privateKey")
+	ErrConnFailed         = NewSSHError("CONN_FAILED", "cannot to connect with workspace")
+	ErrCreateSSHKey       = NewSSHError("CREATE_KEY_FAILED", "cannot create private pair in workspace")
 )
 
 type SSHError struct {
@@ -289,7 +294,10 @@ func (s *Server) HandleConn(c net.Conn) {
 func (s *Server) Authenticator(workspaceId, ownerToken string) (*p.WorkspaceInfo, error) {
 	wsInfo := s.workspaceInfoProvider.WorkspaceInfo(workspaceId)
 	if wsInfo == nil {
-		return nil, ErrWorkspaceNotFound
+		if matched, _ := regexp.Match(workspaceIDRegex, []byte(workspaceId)); matched {
+			return nil, ErrWorkspaceNotFound
+		}
+		return nil, ErrWorkspaceIDInvalid
 	}
 	if wsInfo.Auth.OwnerToken != ownerToken {
 		return wsInfo, ErrAuthFailed

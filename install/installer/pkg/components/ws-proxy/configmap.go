@@ -44,8 +44,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				MaxIdleConnsPerHost: 100,
 			},
 			BlobServer: &proxy.BlobServerConfig{
-				Scheme: "http",
-				Host:   fmt.Sprintf("blobserve.%s.svc.cluster.local:%d", ctx.Namespace, common.BlobServeServicePort),
+				Scheme:     "https",
+				Host:       fmt.Sprintf("ide.%s", ctx.Config.Domain),
+				PathPrefix: "/blobserve",
 			},
 			GitpodInstallation: &proxy.GitpodInstallation{
 				Scheme:                   "https",

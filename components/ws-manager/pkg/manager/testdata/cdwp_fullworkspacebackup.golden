@@ -31,9 +31,6 @@
                 "gitpod/servicePrefix": "foobarservice",
                 "gitpod/traceid": "",
                 "gitpod/url": "test-foobarservice-gitpod.io",
-                "prometheus.io/path": "/metrics",
-                "prometheus.io/port": "23000",
-                "prometheus.io/scrape": "true",
                 "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace-default"
             },
             "finalizers": [

@@ -23,11 +23,13 @@ func Execute() {
 }
 
 var rootOpts struct {
-	VersionMF string
+	VersionMF         string
+	StrictConfigParse bool
 }
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&rootOpts.VersionMF, "debug-version-file", "", "path to a version manifest - not intended for production use")
+	rootCmd.PersistentFlags().BoolVar(&rootOpts.StrictConfigParse, "strict-parse", true, "toggle strict configuration parsing")
 }
 
 type kubeConfig struct {

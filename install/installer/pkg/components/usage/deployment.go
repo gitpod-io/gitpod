@@ -4,8 +4,6 @@
 package usage
 
 import (
-	"fmt"
-
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -46,6 +44,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						DNSPolicy:                     "ClusterFirst",
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
+						InitContainers:                []corev1.Container{*common.DatabaseWaiterContainer(ctx)},
 						Containers: []corev1.Container{{
 							Name:  Component,
 							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Usage.Version),
@@ -92,7 +91,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								TimeoutSeconds:   1,
 							},
 						},
-							*common.KubeRBACProxyContainerWithConfig(ctx, 9500, fmt.Sprintf("http://127.0.0.1:%d/", baseserver.BuiltinMetricsPort)),
+							*common.KubeRBACProxyContainerWithConfig(ctx),
 						},
 					},
 				},

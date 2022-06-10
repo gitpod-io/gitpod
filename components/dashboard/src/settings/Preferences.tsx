@@ -6,7 +6,6 @@
 
 import { useContext, useState } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import PillLabel from "../components/PillLabel";
 import SelectableCardSolid from "../components/SelectableCardSolid";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
@@ -118,9 +117,6 @@ export default function Preferences() {
 
                 <h3 className="mt-12">
                     Dotfiles{" "}
-                    <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
-                        Beta
-                    </PillLabel>
                 </h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Customize workspaces using dotfiles.</p>
                 <div className="mt-4 max-w-xl">

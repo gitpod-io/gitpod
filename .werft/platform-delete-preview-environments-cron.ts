@@ -4,7 +4,7 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import { wipePreviewEnvironmentAndNamespace, helmInstallName, listAllPreviewNamespaces } from './util/kubectl';
 import { exec } from './util/shell';
 import { previewNameFromBranchName } from './util/preview';
-import { CORE_DEV_KUBECONFIG_PATH, HARVESTER_KUBECONFIG_PATH } from './jobs/build/const';
+import {CORE_DEV_KUBECONFIG_PATH, HARVESTER_KUBECONFIG_PATH, PREVIEW_K3S_KUBECONFIG_PATH} from './jobs/build/const';
 import {deleteDNSRecord} from "./util/gcloud";
 import * as VM from "./vm/vm";
 
@@ -18,7 +18,7 @@ const SLICES = {
     FETCHING_PREVIEW_ENVIRONMENTS: "Fetching preview environments",
     FETCHING_BRANCHES: "Fetching branches",
     CHECKING_FOR_STALE_BRANCHES: "Checking for stale branches",
-    CHECKING_FOR_NO_DB_ACTIVITY: "Checking for DB activity",
+    CHECKING_FOR_DB_ACTIVITY: "Checking for DB activity",
     DETERMINING_STALE_PREVIEW_ENVIRONMENTS: "Determining stale preview environments",
     DELETING_PREVIEW_ENVIRONMNETS: "Deleting preview environments"
 }
@@ -54,8 +54,11 @@ class HarvesterPreviewEnvironment {
     // The name of the namespace that the VM and related resources are in, e.g. preview-my-branch
     namespace: string
 
-    // Then name of the preview environment, e.g. my-branch
+    // The name of the preview environment, e.g. my-branch
     name: string
+
+    // The namespace in the k3s cluster where all resources are (default)
+    k3sNamespace: string = "default"
 
     constructor (namespace: string) {
         this.namespace = namespace
@@ -80,12 +83,64 @@ class HarvesterPreviewEnvironment {
         ])
     }
 
-    isInactive(): boolean {
-        // We'll port over the logic from CoreDevPreviewEnvironment later, for now we consider
-        // Harvester preview environments to never be stale due to inactivity.
-        const sliceID = SLICES.CHECKING_FOR_NO_DB_ACTIVITY
-        werft.log(sliceID, `${this.name} (${this.namespace}) - is-inactive=false - Harvester based `)
-        return false
+    /**
+     * Checks whether a preview environment is active based on the db activity.
+     *
+     * It errs on the side of caution, so in case of connection issues etc. it will consider the
+     * preview environment active.
+     */
+    isActive(): boolean {
+        const sliceID = SLICES.CHECKING_FOR_DB_ACTIVITY
+        try {
+            try {
+                VM.get({name: this.name});
+            } catch(e){
+                if (e instanceof VM.NotFoundError){
+                    werft.log(sliceID, `${this.name} - is-active=false - The VM doesn't exist, deleting the environment`)
+                    return false
+                }
+                werft.log(sliceID, `${this.name} - is-active=true - Unexpected error trying to get the VM. Marking env as active: ${e.message}`)
+                return true
+            }
+
+            // The preview env is its own k3s cluster, so we need to get the kubeconfig for it
+            VM.startSSHProxy({ name: this.name, slice: sliceID })
+            exec('sleep 5', { silent: true, slice: sliceID })
+
+            VM.copyk3sKubeconfig({ name: this.name, timeoutMS: 1000 * 60 * 3, slice: sliceID })
+            const kubectclCmd = `KUBECONFIG=${PREVIEW_K3S_KUBECONFIG_PATH} kubectl --insecure-skip-tls-verify`
+
+            werft.log(sliceID, `${this.name} (${this.k3sNamespace}) - Checking status of the MySQL pod`)
+            const statusDB = exec(`${kubectclCmd} get pods mysql-0 -n ${this.k3sNamespace} -o jsonpath='{.status.phase}'`, { slice: sliceID})
+            const statusDbContainer = exec(`${kubectclCmd} get pods mysql-0 -n ${this.k3sNamespace} -o jsonpath='{.status.containerStatuses.*.ready}'`, { slice: sliceID})
+
+            if (statusDB.code != 0 || statusDB != "Running" || statusDbContainer == "false") {
+                werft.log(sliceID, `${this.name} (${this.k3sNamespace}) - is-active=true - The database is not reachable, assuming env is active`)
+                return true
+            }
+
+            const dbPassword = exec(`${kubectclCmd} get secret db-password -n ${this.k3sNamespace} -o jsonpath='{.data.mysql-root-password}' | base64 -d`, {silent: true}).stdout.trim()
+
+            // MySQL runs in the preview env cluster that is not reachable form the job's pod, so we have to port forward
+            exec(`${kubectclCmd} -n ${this.k3sNamespace} port-forward svc/mysql 33061:3306`, { async: true, silent:true, slice: sliceID, dontCheckRc: true })
+            exec('sleep 5', { silent: true, slice: sliceID })
+
+            // Using MYSQL_PWD instead of a flag for the pwd suppresses "[Warning] Using a password on the command line interface can be insecure."
+            const dbConn = `MYSQL_PWD=${dbPassword} mysql --host=127.0.0.1 --port=33061 --user=root --database=gitpod -s -N`
+            const active = isDbActive(this, dbConn, sliceID)
+
+            // clean after ourselves, as we'll be running this for quite a few environments
+            VM.stopKubectlPortForwards()
+            exec(`rm ${PREVIEW_K3S_KUBECONFIG_PATH}`, { silent :true, slice: sliceID })
+
+            return active
+        } catch (err) {
+            // cleanup in case of an error
+            VM.stopKubectlPortForwards()
+            exec(`rm ${PREVIEW_K3S_KUBECONFIG_PATH}`, { silent :true, slice: sliceID })
+            werft.log(sliceID, `${this.name} (${this.k3sNamespace}) - is-active=true - Unable to check DB activity, assuming env is active`)
+            return true
+        }
     }
 
     /**
@@ -132,19 +187,19 @@ class CoreDevPreviewEnvironment {
     }
 
     /**
-     * Checks whether or not a preview environment is considered inactive.
+     * Checks whether a preview environment is active based on the db activity.
      *
-     * It errors on the side of caution, so in case of connection issues etc. it will consider the
+     * It errs on the side of caution, so in case of connection issues etc. it will consider the
      * preview environment active.
      */
-    isInactive(): boolean {
-        const sliceID = SLICES.CHECKING_FOR_NO_DB_ACTIVITY
+    isActive(): boolean {
+        const sliceID = SLICES.CHECKING_FOR_DB_ACTIVITY
         try {
             const statusNS = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} kubectl get ns ${this.namespace} -o jsonpath='{.status.phase}'`, { slice: sliceID })
 
             if (statusNS != "Active") {
-                werft.log(sliceID, `${this.name} (${this.namespace}) - is-inactive=false - The namespace is ${statusNS}`)
-                return false
+                werft.log(sliceID, `${this.name} (${this.namespace}) - is-active=true - The namespace is ${statusNS}, assuming env is active`)
+                return true
             }
 
             werft.log(sliceID, `${this.name} (${this.namespace}) - Checking status of the MySQL pod`)
@@ -152,31 +207,18 @@ class CoreDevPreviewEnvironment {
             const statusDbContainer = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} kubectl get pods mysql-0 -n ${this.namespace} -o jsonpath='{.status.containerStatuses.*.ready}'`, { slice: sliceID})
 
             if (statusDB.code != 0 || statusDB != "Running" || statusDbContainer == "false") {
-                werft.log(sliceID, `${this.name} (${this.namespace}) - is-inactive=false - The database is not reachable`)
-                return false
+                werft.log(sliceID, `${this.name} (${this.namespace}) - is-active=true - The database is not reachable, assuming env is active`)
+                return true
             }
 
             const dbPassword = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} kubectl get secret db-password -n ${this.namespace} -o jsonpath='{.data.mysql-root-password}' | base64 -d`, {silent: true}).stdout.trim()
-            const connectionToDb = `mysql --host=db.${this.namespace}.svc.cluster.local --port=3306 --user=root --database=gitpod -s -N --password=${dbPassword}`
 
-            const latestInstanceTimeout = 48
-            const latestInstance = exec(`${connectionToDb} --execute="SELECT creationTime FROM d_b_workspace_instance WHERE creationTime > DATE_SUB(NOW(), INTERVAL '${latestInstanceTimeout}' HOUR) LIMIT 1"`, { slice: sliceID})
+            const dbConn = `MYSQL_PWD=${dbPassword} mysql --host=db.${this.namespace}.svc.cluster.local --port=3306 --user=root --database=gitpod -s -N`
 
-            const latestUserTimeout = 48
-            const latestUser= exec(`${connectionToDb} --execute="SELECT creationDate FROM d_b_user WHERE creationDate > DATE_SUB(NOW(), INTERVAL '${latestUserTimeout}' HOUR) LIMIT 1"`, { slice: sliceID})
-
-            const lastModifiedTimeout = 48
-            const lastModified= exec(`${connectionToDb} --execute="SELECT _lastModified FROM d_b_user WHERE _lastModified > DATE_SUB(NOW(), INTERVAL '${lastModifiedTimeout}' HOUR) LIMIT 1"`, { slice: sliceID})
-
-            const heartbeatTimeout = 48
-            const heartbeat= exec(`${connectionToDb} --execute="SELECT lastSeen FROM d_b_workspace_instance_user WHERE lastSeen > DATE_SUB(NOW(), INTERVAL '${heartbeatTimeout}' HOUR) LIMIT 1"`, { slice: sliceID})
-
-            const isInactive = (heartbeat.length < 1) && (latestInstance.length < 1) && (latestUser.length < 1) && (lastModified.length < 1)
-            werft.log(sliceID, `${this.name} (${this.namespace}) - is-inactive=${isInactive}`)
-            return isInactive
+            return isDbActive(this, dbConn, sliceID)
         } catch (err) {
-            werft.log(sliceID, `${this.name} (${this.namespace}) - is-inactive=false - Unable to check DB activity`)
-            return false
+            werft.log(sliceID, `${this.name} (${this.namespace}) - is-active=true - Unable to check DB activity, assuming env is active`)
+            return true
         }
     }
 
@@ -323,14 +365,14 @@ async function determineStalePreviewEnvironments(options: {previews: PreviewEnvi
         ]))
     werft.done(SLICES.CHECKING_FOR_STALE_BRANCHES)
 
-    werft.log(SLICES.CHECKING_FOR_NO_DB_ACTIVITY, `Checking ${previews.length} preview environments for DB activity`)
+    werft.log(SLICES.CHECKING_FOR_DB_ACTIVITY, `Checking ${previews.length} preview environments for DB activity`)
     const previewNamespacesWithNoDBActivity = new Set(
         previews
-            .filter((preview) => preview.isInactive())
+            .filter((preview) => !preview.isActive())
             .map((preview) => preview.namespace)
     )
 
-    werft.done(SLICES.CHECKING_FOR_NO_DB_ACTIVITY)
+    werft.done(SLICES.CHECKING_FOR_DB_ACTIVITY)
 
     const previewsToDelete = previews.filter((preview: PreviewEnvironment) => {
         if (!previewNamespaceBasedOnBranches.has(preview.namespace)) {
@@ -338,13 +380,8 @@ async function determineStalePreviewEnvironments(options: {previews: PreviewEnvi
             return true
         }
 
-        if (previewNamespaceBasedOnStaleBranches.has(preview.namespace)) {
-            werft.log(SLICES.DETERMINING_STALE_PREVIEW_ENVIRONMENTS, `Considering ${preview.name} (${preview.namespace}) stale due to no recent commit activity`)
-            return true
-        }
-
-        if (previewNamespacesWithNoDBActivity.has(preview.namespace)) {
-            werft.log(SLICES.DETERMINING_STALE_PREVIEW_ENVIRONMENTS, `Considering ${preview.name} (${preview.namespace}) stale due to no recent DB activity`)
+        if (previewNamespaceBasedOnStaleBranches.has(preview.namespace) && previewNamespacesWithNoDBActivity.has(preview.namespace)) {
+            werft.log(SLICES.DETERMINING_STALE_PREVIEW_ENVIRONMENTS, `Considering ${preview.name} (${preview.namespace}) stale due to no recent commit and DB activity`)
             return true
         }
 
@@ -370,7 +407,7 @@ async function removePreviewEnvironment(previewEnvironment: PreviewEnvironment) 
 }
 
 async function removeCertificate(preview: string, kubectlConfig: string, slice: string) {
-    return exec(`kubectl --kubeconfig ${kubectlConfig} -n certs delete --ignore-not-found=true cert ${preview}`, {slice: slice, async: true})
+    return exec(`kubectl --kubeconfig ${kubectlConfig} -n certs delete --ignore-not-found=true cert harvester-${preview} ${preview}`, {slice: slice, async: true})
 }
 
 async function cleanLoadbalancer() {
@@ -406,4 +443,40 @@ async function cleanLoadbalancer() {
 
 function getAllBranches(): string[] {
     return exec(`git branch -r | grep -v '\\->' | sed "s,\\x1B\\[[0-9;]*[a-zA-Z],,g" | while read remote; do echo "\${remote#origin/}"; done`).stdout.trim().split('\n');
+}
+
+/**
+ * Determines if the db of a preview environment is active
+ * by looking if there were relevant entries in the workspace and user tables in the last 48h
+ *
+ */
+function isDbActive(previewEnvironment: PreviewEnvironment, dbConn: string, sliceID: string): boolean{
+    const timeout = 48
+    let isActive = false
+
+    const queries = {
+        "d_b_workspace_instance": `SELECT TIMESTAMPDIFF(HOUR, creationTime, NOW()) FROM d_b_workspace_instance WHERE creationTime > DATE_SUB(NOW(), INTERVAL '${timeout}' HOUR) ORDER BY creationTime DESC LIMIT 1`,
+        "d_b_user-created": `SELECT TIMESTAMPDIFF(HOUR, creationDate, NOW()) FROM d_b_user WHERE creationDate > DATE_SUB(NOW(), INTERVAL '${timeout}' HOUR) ORDER BY creationDate DESC LIMIT 1`,
+        "d_b_user-modified": `SELECT TIMESTAMPDIFF(HOUR, _lastModified, NOW()) FROM d_b_user WHERE _lastModified > DATE_SUB(NOW(), INTERVAL '${timeout}' HOUR) ORDER BY _lastModified DESC LIMIT 1`,
+        "d_b_workspace_instance_user": `SELECT TIMESTAMPDIFF(HOUR, lastSeen, NOW()) FROM d_b_workspace_instance_user WHERE lastSeen > DATE_SUB(NOW(), INTERVAL '${timeout}' HOUR) ORDER BY lastSeen DESC LIMIT 1`
+    }
+
+    const result = {}
+    // let logLine = `Last Activity (hours ago):`
+    for (const [key, query] of Object.entries(queries)) {
+        // explicitly set to null, so we get an output in the logs for those queries
+        result[key] = null
+        const queryResult = exec(`${dbConn} --execute="${query}"`, { silent:true, slice: sliceID})
+        if (queryResult.length > 0) {
+            result[key] = queryResult.stdout.trim()
+            isActive = true
+        }
+    }
+
+    const logLines = Object.entries(result).map((kv) => `${kv.join(":")}`)
+    const logLine = `Last Activity (hours ago): ${logLines.join(",")}`
+
+    werft.log(sliceID, `${previewEnvironment.name} (${previewEnvironment.namespace}) - is-active=${isActive} ${logLine}`)
+
+    return isActive
 }

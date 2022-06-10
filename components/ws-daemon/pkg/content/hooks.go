@@ -29,12 +29,15 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 			hookSetupWorkspaceLocation,
 			startIWS, // workspacekit is waiting for starting IWS, so it needs to start as soon as possible.
 			hookSetupRemoteStorage(cfg),
-			hookInstallQuota(xfs),
+			// When starting a workspace, use soft limit for the following reason to ensure content is restored
+			// - workspacekit needs to generate some temporary file when starting a workspace
+			// - when extracting tar file, tar command create some symlinks following a original content
+			hookInstallQuota(xfs, false),
 		},
 		session.WorkspaceReady: {
 			startIWS,
 			hookSetupRemoteStorage(cfg),
-			hookInstallQuota(xfs),
+			hookInstallQuota(xfs, true),
 		},
 		session.WorkspaceDisposed: {
 			iws.StopServingWorkspace,
@@ -93,22 +96,29 @@ func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) erro
 }
 
 // hookInstallQuota enforces filesystem quota on the workspace location (if the filesystem supports it)
-func hookInstallQuota(xfs *quota.XFS) session.WorkspaceLivecycleHook {
+func hookInstallQuota(xfs *quota.XFS, isHard bool) session.WorkspaceLivecycleHook {
 	return func(ctx context.Context, ws *session.Workspace) error {
 		if xfs == nil {
 			return nil
 		}
-		size := quota.Size(ws.StorageQuota)
-		if size == 0 {
+
+		if ws.StorageQuota == 0 {
 			return nil
 		}
 
+		size := quota.Size(ws.StorageQuota)
+
+		var (
+			prj int
+			err error
+		)
 		if ws.XFSProjectID != 0 {
 			xfs.RegisterProject(ws.XFSProjectID)
-			return nil
+			prj, err = xfs.SetQuotaWithPrjId(ws.Location, size, ws.XFSProjectID, isHard)
+		} else {
+			prj, err = xfs.SetQuota(ws.Location, size, isHard)
 		}
 
-		prj, err := xfs.SetQuota(ws.Location, size)
 		if err != nil {
 			log.WithFields(ws.OWI()).WithError(err).Warn("cannot enforce workspace size limit")
 		}

@@ -46,7 +46,7 @@ func TestGitHubContexts(t *testing.T) {
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/issues/88",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
 			ExpectedBranchFunc: func(username string) string {
-				return fmt.Sprintf("%s/integration-tests-test-context-88", username)
+				return fmt.Sprintf("%s/integration-88", username)
 			},
 		},
 		{
@@ -108,7 +108,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 						t.SkipNow()
 					}
 
-					t.Parallel()
+					// t.Parallel()
 
 					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 					defer cancel()
@@ -128,11 +128,6 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 						t.Fatal(err)
 					}
 					defer stopWS(false) // we do not wait for stopped here as it does not matter for this test case and speeds things up
-
-					_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
-					if err != nil {
-						t.Fatal(err)
-					}
 
 					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
 					if err != nil {
@@ -157,7 +152,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 						expectedBranch = test.ExpectedBranchFunc(username)
 					}
 					if actBranch != expectedBranch {
-						t.Fatalf("expected branch '%s', got '%s'!", test.ExpectedBranch, actBranch)
+						t.Fatalf("expected branch '%s', got '%s'!", expectedBranch, actBranch)
 					}
 				})
 			}

@@ -791,16 +791,32 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	} else {
 		err = handleGRPCError(ctx, err)
 	}
-	wsType := pod.Labels[wsk8s.TypeLabel]
-	hist, errHist := m.manager.metrics.initializeTimeHistVec.GetMetricWithLabelValues(wsType)
+	wsType := strings.ToUpper(pod.Labels[wsk8s.TypeLabel])
+	wsClass := pod.Labels[workspaceClassLabel]
+	hist, errHist := m.manager.metrics.initializeTimeHistVec.GetMetricWithLabelValues(wsType, wsClass)
 	if errHist != nil {
 		log.WithError(errHist).WithField("type", wsType).Warn("cannot get initialize time histogram metric")
+	} else {
+		hist.Observe(time.Since(t).Seconds())
 	}
-	hist.Observe(time.Since(t).Seconds())
+
 	if err != nil {
+		c, cErr := m.manager.metrics.totalRestoreFailureCounterVec.GetMetricWithLabelValues(wsType, wsClass)
+		if cErr != nil {
+			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore failure counter")
+		} else {
+			c.Inc()
+		}
+
 		return xerrors.Errorf("cannot initialize workspace: %w", err)
 	}
 
+	c, cErr := m.manager.metrics.totalRestoreSuccessCounterVec.GetMetricWithLabelValues(wsType, wsClass)
+	if cErr != nil {
+		log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore success counter")
+	} else {
+		c.Inc()
+	}
 	return nil
 }
 
@@ -880,6 +896,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		log.WithError(err).Warn("cannot determine workspace type - assuming this is a regular")
 		tpe = api.WorkspaceType_REGULAR
 	}
+	wsType := api.WorkspaceType_name[int32(tpe)]
 
 	var (
 		createdVolumeSnapshot        bool
@@ -891,6 +908,8 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		pvcVolumeSnapshotName        string = workspaceID
 		pvcVolumeSnapshotContentName string
 		pvcVolumeSnapshotClassName   string
+
+		volumeSnapshotTime time.Time
 	)
 	if wso.Pod != nil {
 		_, pvcFeatureEnabled = wso.Pod.Labels[pvcWorkspaceFeatureAnnotation]
@@ -973,6 +992,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					return true, nil, err
 				}
 				createdVolumeSnapshot = true
+				volumeSnapshotTime = time.Now()
 			}
 			if createdVolumeSnapshot {
 				backoff := wait.Backoff{
@@ -1016,6 +1036,12 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					return true, nil, err
 				}
 				readyVolumeSnapshot = true
+				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType)
+				if err != nil {
+					log.WithError(err).WithField("type", wsType).Warn("cannot get volume snapshot time histogram metric")
+				} else {
+					hist.Observe(time.Since(volumeSnapshotTime).Seconds())
+				}
 			}
 			if readyVolumeSnapshot && !markVolumeSnapshotAnnotation {
 				log = log.WithField("VolumeSnapshotContent.Name", pvcVolumeSnapshotContentName)
@@ -1154,18 +1180,26 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 		break
 	}
-	wsType := api.WorkspaceType_name[int32(tpe)]
-	hist, err := m.manager.metrics.finalizeTimeHistVec.GetMetricWithLabelValues(wsType)
+
+	hist, err := m.manager.metrics.finalizeTimeHistVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
 	if err != nil {
 		log.WithError(err).WithField("type", wsType).Warn("cannot get finalize time histogram metric")
+	} else {
+		hist.Observe(time.Since(t).Seconds())
 	}
-	hist.Observe(time.Since(t).Seconds())
 
 	disposalStatus = &workspaceDisposalStatus{
 		BackupComplete: true,
 		GitStatus:      gitStatus,
 	}
 	if backupError != nil {
+		c, cErr := m.manager.metrics.totalBackupFailureCounterVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
+		if cErr != nil {
+			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace backup failure metric")
+		} else {
+			c.Inc()
+		}
+
 		if dataloss {
 			disposalStatus.BackupFailure = backupError.Error()
 		} else {
@@ -1173,6 +1207,13 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			// state management or cleanup. No need to worry the user.
 			log.WithError(backupError).WithFields(wso.GetOWI()).Warn("internal error while disposing workspace content")
 			tracing.LogError(span, backupError)
+		}
+	} else {
+		c, cErr := m.manager.metrics.totalBackupSuccessCounterVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
+		if cErr != nil {
+			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace backup success counter")
+		} else {
+			c.Inc()
 		}
 	}
 }

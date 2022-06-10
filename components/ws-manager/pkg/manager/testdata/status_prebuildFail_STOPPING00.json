@@ -33,9 +33,6 @@
         "gitpod/servicePrefix": "gray-lemming-0wlyvzy5",
         "gitpod/url": "https://gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com",
         "kubernetes.io/psp": "staging-gpl-headless-log-wsman-ns-workspace",
-        "prometheus.io/path": "/metrics",
-        "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true",
         "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_gpl-headless-log-wsman.25.json"
       },
       "finalizers": [

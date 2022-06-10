@@ -36,9 +36,6 @@
         "gitpod/traceid": "AAAAAAAAAACM7yugXD1iBw82TVMeQGhTGJ1evGDyusIBAAAAAA==",
         "gitpod/url": "https://sapphire-alligator-jakcgz44.ws-dev.csweichel-don-t-abort-prebuild-4964.staging.gitpod-dev.com",
         "kubernetes.io/psp": "staging-csweichel-don-t-abort-prebuild-4964-ns-workspace",
-        "prometheus.io/path": "/metrics",
-        "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true",
         "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_csweichel-don-t-abort-prebuild-4964.0.json"
       },
       "managedFields": [
@@ -79,9 +76,6 @@
                 "f:gitpod/servicePrefix": {},
                 "f:gitpod/traceid": {},
                 "f:gitpod/url": {},
-                "f:prometheus.io/path": {},
-                "f:prometheus.io/port": {},
-                "f:prometheus.io/scrape": {},
                 "f:seccomp.security.alpha.kubernetes.io/pod": {}
               },
               "f:labels": {

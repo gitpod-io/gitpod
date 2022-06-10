@@ -115,6 +115,8 @@ type Configuration struct {
 	WorkspaceClusterHost string `json:"workspaceClusterHost"`
 	// WorkspaceClasses provide different resource classes for workspaces
 	WorkspaceClasses map[string]*WorkspaceClass `json:"workspaceClass"`
+	// DebugWorkspacePod adds extra finalizer to workspace to prevent it from shutting down. Helps to debug.
+	DebugWorkspacePod bool `json:"debugWorkspacePod,omitempty"`
 }
 
 type WorkspaceClass struct {

@@ -4,11 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import React, { useContext, useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { Currency, Plan, Plans, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import React, { useContext, useEffect, useState } from "react";
-import { useLocation } from "react-router";
 import { ChargebeeClient } from "../chargebee/chargebee-client";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import Card from "../components/Card";
@@ -21,6 +21,7 @@ import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getTeamSettingsMenu } from "./TeamSettings";
+import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
 
 type PendingPlan = Plan & { pendingSince: number };
 
@@ -143,6 +144,7 @@ export default function TeamBilling() {
             title="Billing"
             subtitle="Manage team billing and plans."
         >
+            <TeamUsageBasedBilling />
             <h3>{!teamPlan ? "Upgrade Team Plan" : "Team Plan"}</h3>
             <h2 className="text-gray-500">
                 {!teamPlan ? (

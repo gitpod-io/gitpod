@@ -189,6 +189,29 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	})
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.StripeSecret != "" {
+			stripeSecret := cfg.WebApp.Server.StripeSecret
+
+			volumes = append(volumes,
+				corev1.Volume{
+					Name: "stripe-config",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: stripeSecret,
+						},
+					},
+				})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      "stripe-config",
+				MountPath: stripeMountPath,
+				ReadOnly:  true,
+			})
+		}
+		return nil
+	})
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
 			volumes = append(volumes,
 				corev1.Volume{

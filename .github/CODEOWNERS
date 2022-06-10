@@ -4,7 +4,7 @@
 #
 /.github/CODEOWNERS
 
-/components/blobserve @gitpod-io/engineering-workspace
+/components/blobserve @gitpod-io/engineering-ide
 /components/common-go @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp
 /components/content-service-api @csweichel @geropl @corneliusludmann
 /components/content-service @gitpod-io/engineering-workspace
@@ -61,6 +61,7 @@
 /components/service-waiter @gitpod-io/engineering-webapp
 /components/supervisor-api @csweichel @akosyakov
 /components/supervisor @gitpod-io/engineering-ide
+/components/usage @gitpod-io/engineering-webapp
 /components/workspacekit @gitpod-io/engineering-workspace
 /components/ws-daemon-api @aledbf @Furisto
 /components/ws-daemon @gitpod-io/engineering-workspace

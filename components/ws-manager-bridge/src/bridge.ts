@@ -37,6 +37,7 @@ import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster"
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./preparing-update-emulator";
 import { performance } from "perf_hooks";
+import { PrebuildUpdater } from "./prebuild-updater";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -72,6 +73,9 @@ export class WorkspaceManagerBridge implements Disposable {
 
     @inject(IAnalyticsWriter)
     protected readonly analytics: IAnalyticsWriter;
+
+    @inject(PrebuildUpdater)
+    protected readonly prebuildUpdater: PrebuildUpdater;
 
     protected readonly disposables = new DisposableCollection();
     protected readonly queues = new Map<string, Queue>();
@@ -291,10 +295,6 @@ export class WorkspaceManagerBridge implements Disposable {
                 };
             }
 
-            if (instance.status.conditions.deployed && !instance.deployedTime) {
-                instance.deployedTime = new Date().toISOString();
-            }
-
             let lifecycleHandler: (() => Promise<void>) | undefined;
             switch (status.phase) {
                 case WorkspacePhase.PENDING:
@@ -352,7 +352,7 @@ export class WorkspaceManagerBridge implements Disposable {
             span.setTag("after", JSON.stringify(instance));
 
             // now notify all prebuild listeners about updates - and update DB if needed
-            await this.updatePrebuiltWorkspace({ span }, userId, status, writeToDB);
+            await this.prebuildUpdater.updatePrebuiltWorkspace({ span }, userId, status, writeToDB);
 
             // update volume snapshot information
             if (
@@ -384,8 +384,6 @@ export class WorkspaceManagerBridge implements Disposable {
 
                 // cleanup
                 // important: call this after the DB update
-                await this.cleanupProbeWorkspace(ctx, status);
-
                 if (!!lifecycleHandler) {
                     await lifecycleHandler();
                 }
@@ -468,26 +466,9 @@ export class WorkspaceManagerBridge implements Disposable {
             instance.stoppedTime = new Date().toISOString();
             promises.push(this.workspaceDB.trace({}).storeInstance(instance));
             promises.push(this.onInstanceStopped({}, ri.workspace.ownerId, instance));
-            promises.push(this.stopPrebuildInstance(ctx, instance));
+            promises.push(this.prebuildUpdater.stopPrebuildInstance(ctx, instance));
         }
         await Promise.all(promises);
-    }
-
-    protected async cleanupProbeWorkspace(ctx: TraceContext, status: WorkspaceStatus.AsObject | undefined) {
-        // probes are an EE feature - we just need the hook here
-    }
-
-    protected async updatePrebuiltWorkspace(
-        ctx: TraceContext,
-        userId: string,
-        status: WorkspaceStatus.AsObject,
-        writeToDB: boolean,
-    ) {
-        // prebuilds are an EE feature - we just need the hook here
-    }
-
-    protected async stopPrebuildInstance(ctx: TraceContext, instance: WorkspaceInstance): Promise<void> {
-        // prebuilds are an EE feature - we just need the hook here
     }
 
     protected async onInstanceStopped(
