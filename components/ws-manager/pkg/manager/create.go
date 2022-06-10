@@ -721,6 +721,8 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOTS", Value: strings.Join(allRepoRoots, ",")})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_CLI_APITOKEN", Value: startContext.CLIAPIKey})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_OWNER_ID", Value: startContext.Request.Metadata.Owner})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_PROJECT_ID", Value: startContext.Request.Metadata.Project})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_TEAM_ID", Value: startContext.Request.Metadata.Team})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_ID", Value: startContext.Request.Metadata.MetaId})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INSTANCE_ID", Value: startContext.Request.Id})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_THEIA_PORT", Value: strconv.Itoa(int(startContext.IDEPort))})
@@ -898,6 +900,8 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		wsk8s.WorkspaceIDLabel: req.Id,
 		wsk8s.OwnerLabel:       req.Metadata.Owner,
 		wsk8s.MetaIDLabel:      req.Metadata.MetaId,
+		wsk8s.ProjectLabel:     req.Metadata.Project,
+		wsk8s.TeamLabel:        req.Metadata.Team,
 		wsk8s.TypeLabel:        workspaceType,
 		headlessLabel:          fmt.Sprintf("%v", headless),
 		markerLabel:            "true",

@@ -405,9 +405,7 @@ export class WorkspaceStarter {
             );
 
             // create start workspace request
-            const metadata = new WorkspaceMetadata();
-            metadata.setOwner(workspace.ownerId);
-            metadata.setMetaId(workspace.id);
+            const metadata = await this.createMetadata(workspace);
             const startRequest = new StartWorkspaceRequest();
             startRequest.setId(instance.id);
             startRequest.setMetadata(metadata);
@@ -482,6 +480,21 @@ export class WorkspaceStarter {
         } finally {
             span.finish();
         }
+    }
+
+    protected async createMetadata(workspace: Workspace): Promise<WorkspaceMetadata> {
+        let metadata = new WorkspaceMetadata();
+        metadata.setOwner(workspace.ownerId);
+        metadata.setMetaId(workspace.id);
+        if (workspace.projectId) {
+            metadata.setProject(workspace.projectId);
+            let project = await this.projectDB.findProjectById(workspace.projectId);
+            if (project && project.teamId) {
+                metadata.setTeam(project.teamId);
+            }
+        }
+
+        return metadata;
     }
 
     protected async tryStartOnCluster(
