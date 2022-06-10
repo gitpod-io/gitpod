@@ -721,8 +721,6 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOTS", Value: strings.Join(allRepoRoots, ",")})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_CLI_APITOKEN", Value: startContext.CLIAPIKey})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_OWNER_ID", Value: startContext.Request.Metadata.Owner})
-	result = append(result, corev1.EnvVar{Name: "GITPOD_PROJECT_ID", Value: startContext.Request.Metadata.Project})
-	result = append(result, corev1.EnvVar{Name: "GITPOD_TEAM_ID", Value: startContext.Request.Metadata.Team})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_ID", Value: startContext.Request.Metadata.MetaId})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INSTANCE_ID", Value: startContext.Request.Id})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_THEIA_PORT", Value: strconv.Itoa(int(startContext.IDEPort))})

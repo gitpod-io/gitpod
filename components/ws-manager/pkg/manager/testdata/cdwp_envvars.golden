@@ -13,6 +13,8 @@
                 "headless": "false",
                 "metaID": "foobar",
                 "owner": "tester",
+                "project": "gitpod",
+                "team": "awesome",
                 "workspaceID": "test",
                 "workspaceType": "regular"
             },
