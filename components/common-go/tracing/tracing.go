@@ -100,7 +100,7 @@ func FromContext(ctx context.Context, name string) (opentracing.Span, context.Co
 
 // ApplyOWI sets the owner, workspace and instance tags on a span
 func ApplyOWI(span opentracing.Span, owi logrus.Fields) {
-	for _, k := range []string{log.OwnerField, log.WorkspaceField, log.InstanceField} {
+	for _, k := range []string{log.OwnerField, log.WorkspaceField, log.InstanceField, log.ProjectField, log.TeamField} {
 		val, ok := owi[k]
 		if !ok {
 			continue

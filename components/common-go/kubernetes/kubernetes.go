@@ -31,6 +31,12 @@ const (
 	// MetaIDLabel is the label of the workspace meta ID (just workspace ID outside of wsman)
 	MetaIDLabel = "metaID"
 
+	// ProjectLabel is the label for the workspace's project
+	ProjectLabel = "project"
+
+	// TeamLabel is the label for the workspace's team
+	TeamLabel = "team"
+
 	// TypeLabel marks the workspace type
 	TypeLabel = "workspaceType"
 
@@ -71,7 +77,9 @@ func GetOWIFromObject(pod *metav1.ObjectMeta) logrus.Fields {
 	owner := pod.Labels[OwnerLabel]
 	workspace := pod.Labels[MetaIDLabel]
 	instance := pod.Labels[WorkspaceIDLabel]
-	return log.OWI(owner, workspace, instance)
+	project := pod.Labels[ProjectLabel]
+	team := pod.Labels[TeamLabel]
+	return log.LogContext(owner, workspace, instance, project, team)
 }
 
 // UnlimitedRateLimiter implements an empty, unlimited flowcontrol.RateLimiter
