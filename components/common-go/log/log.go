@@ -23,6 +23,10 @@ const (
 	WorkspaceField = "workspaceId"
 	// InstanceField is the log field name of a workspace instance ID
 	InstanceField = "instanceId"
+	// ProjectField is the log field name of the project
+	ProjectField = "projectId"
+	// TeamField is the log field name of the team
+	TeamField = "teamId"
 )
 
 // OWI builds a structure meant for logrus which contains the owner, workspace and instance.
@@ -34,6 +38,35 @@ func OWI(owner, workspace, instance string) log.Fields {
 		WorkspaceField: workspace,
 		InstanceField:  instance,
 	}
+}
+
+// LogContext builds a structure meant for logrus which contains the owner, workspace and instance.
+// Beware that this refers to the terminology outside of wsman which maps like:
+//    owner = owner, workspace = metaID, instance = workspaceID
+func LogContext(owner, workspace, instance, project, team string) log.Fields {
+	logFields := log.Fields{}
+
+	if owner != "" {
+		logFields[OwnerField] = owner
+	}
+
+	if workspace != "" {
+		logFields[WorkspaceField] = workspace
+	}
+
+	if instance != "" {
+		logFields[InstanceField] = instance
+	}
+
+	if project != "" {
+		logFields[ProjectField] = project
+	}
+
+	if team != "" {
+		logFields[TeamField] = team
+	}
+
+	return logFields
 }
 
 // ServiceContext is the shape required for proper error logging in the GCP context.
