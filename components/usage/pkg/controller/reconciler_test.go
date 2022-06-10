@@ -43,7 +43,7 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 				Role:   db.TeamMembershipRole_Member,
 			}
 			workspace := dbtest.NewWorkspace(t, db.Workspace{
-				ID:      "gitpodio-gitpod-gyjr82jkfnd",
+				ID:      "gitpodio-gitpod-gyjr82jkfna",
 				OwnerID: userID,
 			})
 			instances := []db.WorkspaceInstance{
@@ -71,7 +71,7 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 				},
 			}
 
-			expectedRuntime := instances[0].TotalRuntime(scenarioRunTime) + instances[1].TotalRuntime(scenarioRunTime)
+			expectedRuntime := instances[0].WorkspaceRuntimeSeconds(scenarioRunTime) + instances[1].WorkspaceRuntimeSeconds(scenarioRunTime)
 
 			return Scenario{
 				Name:        "oen team with one workspace",
@@ -88,8 +88,57 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 					Teams:                     1,
 					Report: []TeamUsage{
 						{
-							TeamID:            teamID.String(),
-							WorkspacesRuntime: expectedRuntime,
+							TeamID:           teamID.String(),
+							WorkspaceSeconds: expectedRuntime,
+						},
+					},
+				},
+			}
+		})(),
+		(func() Scenario {
+			runTime := time.Date(2022, 05, 31, 23, 59, 59, 999999, time.UTC)
+			teamID, userID := uuid.New(), uuid.New()
+			workspaceID := "gitpodio-gitpod-gyjr82jkfnd"
+			var instances []db.WorkspaceInstance
+			for i := 0; i < 100; i++ {
+				instances = append(instances, db.WorkspaceInstance{
+					ID:           uuid.New(),
+					WorkspaceID:  workspaceID,
+					CreationTime: db.NewVarcharTime(time.Date(2022, 05, 01, 00, 00, 00, 00, time.UTC)),
+					StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 59, 59, 999999, time.UTC)),
+					Status:       instanceStatus,
+				})
+			}
+
+			return Scenario{
+				Name:    "many long running instances do not overflow number of seconds in usage",
+				NowFunc: func() time.Time { return runTime },
+				Memberships: []db.TeamMembership{
+					{
+						ID:     uuid.New(),
+						TeamID: teamID,
+						UserID: userID,
+						Role:   db.TeamMembershipRole_Member,
+					},
+				},
+				Workspaces: []db.Workspace{
+					dbtest.NewWorkspace(t, db.Workspace{
+						ID:      workspaceID,
+						OwnerID: userID,
+					}),
+				},
+				Instances: instances,
+				Expected: &UsageReconcileStatus{
+					StartTime:                 startOfMay,
+					EndTime:                   startOfJune,
+					WorkspaceInstances:        100,
+					InvalidWorkspaceInstances: 0,
+					Workspaces:                1,
+					Teams:                     1,
+					Report: []TeamUsage{
+						{
+							TeamID:           teamID.String(),
+							WorkspaceSeconds: 9.223372036854766e+11,
 						},
 					},
 				},
@@ -98,18 +147,21 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		conn := db.ConnectForTests(t)
-		require.NoError(t, conn.Create(scenario.Memberships).Error)
-		require.NoError(t, conn.Create(scenario.Workspaces).Error)
-		require.NoError(t, conn.Create(scenario.Instances).Error)
+		t.Run(scenario.Name, func(t *testing.T) {
+			conn := db.ConnectForTests(t)
+			require.NoError(t, conn.Create(scenario.Memberships).Error)
+			require.NoError(t, conn.Create(scenario.Workspaces).Error)
+			require.NoError(t, conn.Create(scenario.Instances).Error)
 
-		reconciler := &UsageReconciler{
-			nowFunc: scenario.NowFunc,
-			conn:    conn,
-		}
-		status, err := reconciler.ReconcileTimeRange(context.Background(), startOfMay, startOfJune)
-		require.NoError(t, err)
+			reconciler := &UsageReconciler{
+				nowFunc: scenario.NowFunc,
+				conn:    conn,
+			}
+			status, err := reconciler.ReconcileTimeRange(context.Background(), startOfMay, startOfJune)
+			require.NoError(t, err)
 
-		require.Equal(t, scenario.Expected, status)
+			require.Equal(t, scenario.Expected, status)
+		})
+
 	}
 }
