@@ -12,7 +12,7 @@ You can find a short explanation of this tool in this [loom video](https://www.l
 - Fetch the TLS config from ws-manager
 `gpctl clusters get-tls-config`
 - Port-forward ws-manager
-`kubectl port-forward $(kubectl get pods --template '{{range .items}}{{.metadata.name}}{{end}}' -l component=ws-manager) 12001:8080`
+`kubectl port-forward deployment/ws-manager 12001:8080`
 - Now you can start the benchmark with loadgen. If you want to keep the workspaces around after testing, add --interactive. Loadgen will then ask you before taking any destructive action.
 `loadgen benchmark [config-file] --host localhost:12001 --tls ./wsman-tls --interactive`
 
