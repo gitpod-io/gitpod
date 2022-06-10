@@ -11,8 +11,8 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
     // Java support
     id("java")
-    // Kotlin support
-    id("org.jetbrains.kotlin.jvm") version "1.5.10"
+    // Kotlin support - check the latest version at https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
+    id("org.jetbrains.kotlin.jvm") version "1.7.0"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
     id("org.jetbrains.intellij") version "1.6.0"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
@@ -135,6 +135,11 @@ tasks {
             }
         }
         channels.set(listOf(pluginChannel))
+    }
+
+    // TODO: Remove the following three lines to reenable 'buildSearchableOptions' task if it's working fine next time we update 'platformVersion' on 'gradle.properties'.
+    buildSearchableOptions {
+        isEnabled = false
     }
 
     register("buildFromLeeway") {
