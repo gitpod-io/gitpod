@@ -152,7 +152,7 @@ var benchmarkCommand = &cobra.Command{
 				}
 			},
 			Termination: func(executor loadgen.Executor) error {
-				return handleWorkspaceDeletion(scenario.StoppingTimeout, executor)
+				return handleWorkspaceDeletion(scenario.StoppingTimeout, executor, false)
 			},
 		}
 
@@ -165,7 +165,7 @@ var benchmarkCommand = &cobra.Command{
 			// cancel workspace creation so that no new workspaces are created while we are deleting them
 			scancel()
 
-			if err := handleWorkspaceDeletion(scenario.StoppingTimeout, session.Executor); err != nil {
+			if err := handleWorkspaceDeletion(scenario.StoppingTimeout, session.Executor, true); err != nil {
 				log.Warnf("could not delete workspaces: %v", err)
 				os.Exit(1)
 			}
@@ -198,21 +198,21 @@ type BenchmarkScenario struct {
 	WorkspaceClass  string                     `json:"workspaceClass"`
 }
 
-func handleWorkspaceDeletion(timeout string, executor loadgen.Executor) error {
+func handleWorkspaceDeletion(timeout string, executor loadgen.Executor, canceled bool) error {
 	if runOpts.Interactive {
 		if !confirmDeletion() {
 			return nil
 		}
 
-		if err := stopWorkspaces(timeout, executor); err != nil {
-			return err
-		}
+		return stopWorkspaces(timeout, executor)
 	} else {
-		if err := stopWorkspaces(timeout, executor); err != nil {
-			return err
+		if !canceled {
+			fmt.Println("Waiting for 2 minutes before deleting workspaces")
+			time.Sleep(2 * time.Minute)
 		}
+
+		return stopWorkspaces(timeout, executor)
 	}
-	return nil
 }
 
 func confirmDeletion() bool {
