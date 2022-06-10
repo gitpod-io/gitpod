@@ -44,7 +44,7 @@ import {
 } from "./workspace/headless-log-controller";
 import { NewsletterSubscriptionController } from "./user/newsletter-subscription-controller";
 import { Config } from "./config";
-import { DebugApp } from "./debug-app";
+import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
@@ -334,7 +334,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
-        this.debugApp.start(6060);
+        this.debugApp.start();
     }
 
     public async stop() {
