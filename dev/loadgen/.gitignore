@@ -1,1 +1,4 @@
 stats.json
+/wsman-tls/
+/benchmark-result.json
+/loadgen
