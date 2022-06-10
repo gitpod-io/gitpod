@@ -6,7 +6,6 @@ package proxy
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -15,14 +14,22 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+var allowedServiceTypes = map[corev1.ServiceType]struct{}{
+	corev1.ServiceTypeLoadBalancer: {},
+	corev1.ServiceTypeClusterIP:    {},
+	corev1.ServiceTypeNodePort:     {},
+	corev1.ServiceTypeExternalName: {},
+}
+
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 	serviceType := corev1.ServiceTypeLoadBalancer
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.Common != nil && cfg.Common.ServiceConfig != nil {
 			st, ok := cfg.Common.ServiceConfig["proxy"]
 			if ok {
-				if strings.ToLower(st.ServiceType) == "clusterip" {
-					serviceType = corev1.ServiceTypeClusterIP
+				_, allowed := allowedServiceTypes[corev1.ServiceType(*st.ServiceType)]
+				if allowed {
+					serviceType = *st.ServiceType
 				}
 			}
 		}
