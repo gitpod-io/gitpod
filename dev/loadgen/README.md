@@ -13,7 +13,7 @@ You can find a short explanation of this tool in this [loom video](https://www.l
 `gpctl clusters get-tls-config`
 - Port-forward ws-manager
 `kubectl port-forward deployment/ws-manager 12001:8080`
-- Now you can start the benchmark with loadgen. If you want to keep the workspaces around after testing, add --interactive. Loadgen will then ask you before taking any destructive action.
+- Now you can start the benchmark with loadgen. If you want to keep the workspaces around after testing, add --interactive. Loadgen will then ask you before taking any destructive action. If you do not specify `--interative` loadgen will wait 2 minutes before workspaces are deleted.
 `loadgen benchmark [config-file] --host localhost:12001 --tls ./wsman-tls --interactive`
 
 In order to configure the benchmark, you can use the configuration file
