@@ -3,6 +3,7 @@ import { exec } from "../../../util/shell";
 import { Werft } from "../../../util/werft";
 import { getNodePoolIndex } from "../deploy-to-preview-environment";
 import { renderPayment } from "../payment/render";
+import { CORE_DEV_KUBECONFIG_PATH } from "../const";
 
 const BLOCK_NEW_USER_CONFIG_PATH = './blockNewUsers';
 const WORKSPACE_SIZE_CONFIG_PATH = './workspaceSizing';
@@ -66,6 +67,7 @@ export class Installer {
             this.configureIDE(slice)
             this.configureObservability(slice)
             this.configureAuthProviders(slice)
+            this.configureStripeAPIKeys(slice)
             this.configureSSHGateway(slice)
             this.configurePublicAPIServer(slice)
             this.configureUsage(slice)
@@ -159,6 +161,19 @@ EOF`)
                 --dry-run=client -o yaml | \
                 kubectl --kubeconfig "${this.options.kubeconfigPath}" replace --force -f -
         done`, { slice: slice })
+    }
+
+    private configureStripeAPIKeys(slice: string) {
+        exec(
+            `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n werft get secret stripe-api-keys -o yaml > stripe-api-keys.secret.yaml`,
+            { slice },
+        );
+        exec(`yq w -i stripe-api-keys.secret.yaml metadata.namespace "default"`, { slice });
+        exec(`yq d -i stripe-api-keys.secret.yaml metadata.creationTimestamp`, { slice });
+        exec(`yq d -i stripe-api-keys.secret.yaml metadata.uid`, { slice });
+        exec(`yq d -i stripe-api-keys.secret.yaml metadata.resourceVersion`, { slice });
+        exec(`kubectl --kubeconfig "${this.options.kubeconfigPath}" apply -f stripe-api-keys.secret.yaml`, { slice });
+        exec(`rm -f stripe-api-keys.secret.yaml`, { slice });
     }
 
     private configureSSHGateway(slice: string) {
