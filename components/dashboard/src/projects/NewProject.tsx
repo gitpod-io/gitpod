@@ -62,7 +62,7 @@ export default function NewProject() {
             const authProvider = authProviders.find((p) => p.host === storedSelectedProviderHost);
 
             // if the stored provider exists and is in one of the user's identities, use it
-            if (authProvider && user.identities.some((idt) => idt.authProviderId === authProvider.authProviderId)) {
+            if (storedSelectedProviderHost && authProvider && user.identities.some((idt) => idt.authProviderId === authProvider.authProviderId)) {
                 return setSelectedProviderHost(authProvider.host);
             }
 
