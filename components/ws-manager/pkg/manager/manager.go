@@ -75,7 +75,6 @@ type startWorkspaceContext struct {
 	IDEPort        int32                          `json:"idePort"`
 	SupervisorPort int32                          `json:"supervisorPort"`
 	WorkspaceURL   string                         `json:"workspaceURL"`
-	TraceID        string                         `json:"traceID"`
 	Headless       bool                           `json:"headless"`
 	Class          *config.WorkspaceClass         `json:"class"`
 	VolumeSnapshot *workspaceVolumeSnapshotStatus `json:"volumeSnapshot"`
