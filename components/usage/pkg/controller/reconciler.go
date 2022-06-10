@@ -131,7 +131,7 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 func generateUsageReport(teams []teamWithWorkspaces, maxStopTime time.Time) ([]TeamUsage, error) {
 	var report []TeamUsage
 	for _, team := range teams {
-		var teamTotalRuntime float64
+		var teamTotalRuntime int64
 		for _, workspace := range team.Workspaces {
 			for _, instance := range workspace.Instances {
 				teamTotalRuntime += instance.WorkspaceRuntimeSeconds(maxStopTime)
@@ -312,6 +312,6 @@ func toSet(items []string) []string {
 }
 
 type TeamUsage struct {
-	TeamID           string  `json:"team_id"`
-	WorkspaceSeconds float64 `json:"workspace_seconds"`
+	TeamID           string `json:"team_id"`
+	WorkspaceSeconds int64  `json:"workspace_seconds"`
 }
