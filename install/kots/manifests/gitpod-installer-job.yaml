@@ -28,7 +28,7 @@ spec:
       containers:
         - name: installer
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:release-2022.04.1.2"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-airgap-openssh.0"
           volumeMounts:
             - mountPath: /config-patch
               name: config-patch
@@ -211,7 +211,6 @@ spec:
               if [ '{{repl ConfigOptionEquals "ssh_gateway" "1" }}' = "true" ];
               then
                 echo "Gitpod: Generate SSH host key"
-                apk update && apk add --no-cache openssh-keygen # TODO: Move installation of openssh-keygen to installer image
                 ssh-keygen -t rsa -q -N "" -f host.key
                 kubectl create secret generic ssh-gateway-host-key --from-file=host.key -n {{repl Namespace }} || echo "SSH Gateway Host Key secret has not been created. Does it exist already?"
                 yq e -i '.sshGatewayHostKey.kind = "secret"' "${CONFIG_FILE}"
