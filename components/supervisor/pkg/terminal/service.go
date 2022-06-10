@@ -99,7 +99,7 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 	if cmd.Dir == "" {
 		cmd.Dir = srv.DefaultWorkdir
 	}
-	cmd.Env = append(srv.Env, "TERM=xterm-color")
+	cmd.Env = append(srv.Env, "TERM=xterm-256color")
 	for key, value := range req.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", key, value))
 	}
