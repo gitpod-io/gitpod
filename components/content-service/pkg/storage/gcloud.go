@@ -380,29 +380,40 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	go func() {
 		defer wg.Done()
 
-		sa := ""
+		var args []string
+
 		if rs.GCPConfig.CredentialsFile != "" {
-			sa = fmt.Sprintf(`gcloud auth activate-service-account --key-file %v &&`, rs.GCPConfig.CredentialsFile)
+			args = append(args, fmt.Sprintf(`gcloud auth activate-service-account --key-file %v &&`, rs.GCPConfig.CredentialsFile))
 		}
-		args := fmt.Sprintf(`%v gsutil -m \
-		  -o "GSUtil:parallel_composite_upload_threshold=150M" \
-		  -o "GSUtil:parallel_thread_count=8" \
-		  cp %s gs://%s`, sa, source, filepath.Join(bucket, object))
 
-		log.WithField("flags", args).Info("gsutil flags")
+		args = append(args, "gcloud alpha storage cp")
 
-		cmd := exec.Command("/bin/bash", []string{"-c", args}...)
+		if len(options.Annotations) > 0 {
+			args = append(args, fmt.Sprintf("--custom-metadata=%v", options.Annotations))
+		}
+
+		if options.ContentType != "" {
+			args = append(args, fmt.Sprintf("--content-type %v", options.ContentType))
+		}
+
+		args = append(args, fmt.Sprintf("%s gs://%s", source, filepath.Join(bucket, object)))
+
+		cmd := exec.Command("/bin/bash", []string{"-c", strings.Join(args, " ")}...)
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
 		err = cmd.Run()
 		if err != nil {
 			log.WithError(err).Error("unexpected error updloading file to GCS using gsutil")
 			err = xerrors.Errorf("unexpected error updloading backup")
-			return
 		}
 	}()
 
 	wg.Wait()
+
+	if err != nil {
+		err = xerrors.Errorf("unexpected error updloading backup")
+		return
+	}
 
 	// maintain backup trail if we're asked to - we do this prior to overwriting the regular backup file
 	// to make sure we're trailign the previous backup.
