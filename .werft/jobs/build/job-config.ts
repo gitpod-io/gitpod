@@ -78,7 +78,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withIntegrationTests = "with-integration-tests" in buildConfig && !mainBuild;
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
-    const publishToKots = "publish-to-kots" in buildConfig;
+    const publishToKots = "publish-to-kots" in buildConfig || mainBuild;
     const analytics = buildConfig["analytics"];
     const localAppVersion = mainBuild || ("with-localapp-version" in buildConfig) ? version : "unknown";
     const retag = ("with-retag" in buildConfig) ? "" : "--dont-retag";
