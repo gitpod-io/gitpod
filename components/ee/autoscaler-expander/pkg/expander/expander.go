@@ -6,7 +6,6 @@ package expander
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -64,11 +63,17 @@ type AutoscalerExpander struct {
 	location string
 }
 
+const (
+	doNotRemove = -1
+)
+
 func (ae *AutoscalerExpander) BestOptions(ctx context.Context, req *protos.BestOptionsRequest) (*protos.BestOptionsResponse, error) {
 	expansionOptions := req.GetOptions()
 	log.Infof("Received BestOption Request with %v options", len(expansionOptions))
 
-	for _, option := range expansionOptions {
+	optionToRemove := doNotRemove
+
+	for idx, option := range expansionOptions {
 		nodeGroupId := option.NodeGroupId
 
 		project, zone, instanceGroup, err := gce_cloudprovider.ParseMigUrl(nodeGroupId)
@@ -77,20 +82,18 @@ func (ae *AutoscalerExpander) BestOptions(ctx context.Context, req *protos.BestO
 			continue
 		}
 
-		found := false
-
 		for nodeGroupPrefix, maxPendingPods := range ae.config.WorkspaceClassPerNode {
 			if !strings.HasPrefix(instanceGroup, nodeGroupPrefix) {
 				continue
 			}
-
-			found = true
 
 			pendingPods := len(option.Pod)
 			if maxPendingPods >= pendingPods {
 				log.WithField("pendingPods", pendingPods).WithField("maxPendingPods", maxPendingPods).Info("no need to add additional nodes")
 				break
 			}
+
+			optionToRemove = idx
 
 			go func() {
 				time.Sleep(10 * time.Second)
@@ -116,12 +119,18 @@ func (ae *AutoscalerExpander) BestOptions(ctx context.Context, req *protos.BestO
 			}()
 		}
 
-		if !found {
+		if optionToRemove == doNotRemove {
 			log.Warnf(`node group '%s' not found in expander configuration. The group won't be used`, nodeGroupId)
 			continue
 		}
 
 		break
+	}
+
+	// do not return the option used to scale up to avoid any change cluster autoscaler choose the same one
+	// this could still happen is the node groups are unbalanced
+	if optionToRemove != doNotRemove {
+		expansionOptions = append(expansionOptions[:optionToRemove], expansionOptions[optionToRemove+1:]...)
 	}
 
 	return &protos.BestOptionsResponse{
@@ -145,7 +154,7 @@ func waitForOp(operation *gce.Operation, project, zone string, client *gce.Servi
 			log.Infof("Operation %s %s %s status: %s", project, zone, operation.Name, op.Status)
 			if op.Status == "DONE" {
 				if op.Error != nil {
-					return fmt.Errorf("error while getting operation %s on %s: %v", operation.Name, operation.TargetLink, err)
+					return xerrors.Errorf("error while getting operation %s on %s: %v", operation.Name, operation.TargetLink, err)
 				}
 
 				return nil
@@ -154,5 +163,5 @@ func waitForOp(operation *gce.Operation, project, zone string, client *gce.Servi
 			log.Warningf("Error while getting operation %s on %s: %v", operation.Name, operation.TargetLink, err)
 		}
 	}
-	return fmt.Errorf("timeout while waiting for operation %s on %s to complete.", operation.Name, operation.TargetLink)
+	return xerrors.Errorf("timeout while waiting for operation %s on %s to complete.", operation.Name, operation.TargetLink)
 }
