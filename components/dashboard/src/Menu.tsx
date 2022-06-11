@@ -13,7 +13,7 @@ import { countries } from "countries-list";
 import gitpodIcon from "./icons/gitpod.svg";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { UserContext } from "./user-context";
-import { TeamsContext, getCurrentTeam } from "./teams/teams-context";
+import { TeamsContext, getCurrentTeam, setCurrentTeam } from "./teams/teams-context";
 import getSettingsMenu from "./settings/settings-menu";
 import { adminMenu } from "./admin/admin-menu";
 import ContextMenu from "./components/ContextMenu";
@@ -96,13 +96,6 @@ export default function Menu() {
     }
 
     const userFullName = user?.fullName || user?.name || "...";
-
-    {
-        // updating last team selection
-        try {
-            localStorage.setItem("team-selection", team ? team.slug : "");
-        } catch {}
-    }
 
     // Hide most of the top menu when in a full-page form.
     const isMinimalUI = ["/new", "/teams/new", "/open"].includes(location.pathname);
@@ -306,6 +299,7 @@ export default function Menu() {
                                 active: !team,
                                 separator: true,
                                 link: "/projects",
+                                onClick: () => setCurrentTeam(),
                             },
                             ...(teams || [])
                                 .map((t) => ({
@@ -327,6 +321,7 @@ export default function Menu() {
                                     active: team && team.id === t.id,
                                     separator: true,
                                     link: `/t/${t.slug}`,
+                                    onClick: () => setCurrentTeam(t),
                                 }))
                                 .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1)),
                             {

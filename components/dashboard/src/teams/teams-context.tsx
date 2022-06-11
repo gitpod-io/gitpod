@@ -5,8 +5,10 @@
  */
 
 import { Team } from "@gitpod/gitpod-protocol";
-import React, { createContext, useState } from "react";
 import { Location } from "history";
+import React, { createContext, useState } from "react";
+
+export const SELECTED_TEAM_SLUG = "team-selection";
 
 export const TeamsContext = createContext<{
     teams?: Team[];
@@ -20,10 +22,44 @@ export const TeamsContextProvider: React.FC = ({ children }) => {
     return <TeamsContext.Provider value={{ teams, setTeams }}>{children}</TeamsContext.Provider>;
 };
 
-export function getCurrentTeam(location: Location<any>, teams?: Team[]): Team | undefined {
-    const slug = location.pathname.startsWith("/t/") ? location.pathname.split("/")[2] : undefined;
-    if (!slug || !teams) {
+function getTeamFromLocation<T extends Pick<Team, "slug">>(
+    location: Pick<Location, "pathname">,
+    teams?: T[],
+): T | undefined {
+    if (!teams) {
         return;
     }
-    return teams.find((t) => t.slug === slug);
+
+    const urlTeamSlug = location.pathname.startsWith("/t/") ? location.pathname.split("/")[2] : undefined;
+
+    if (!urlTeamSlug) {
+        return;
+    }
+
+    return teams.find((t) => t.slug === urlTeamSlug);
+}
+
+export function getCurrentTeam<T extends Pick<Team, "slug">>(
+    location: Pick<Location, "pathname">,
+    teams?: T[],
+): T | undefined {
+    if (!teams) {
+        return;
+    }
+
+    const teamFromUrl = getTeamFromLocation(location, teams);
+    if (teamFromUrl) {
+        return teamFromUrl;
+    }
+
+    const storedTeamSlug = localStorage.getItem(SELECTED_TEAM_SLUG);
+    if (!storedTeamSlug) {
+        return;
+    }
+
+    return teams.find((t) => t.slug === storedTeamSlug);
+}
+
+export function setCurrentTeam(team: Pick<Team, "slug"> = { slug: "" }) {
+    localStorage.setItem(SELECTED_TEAM_SLUG, team.slug);
 }
