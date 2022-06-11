@@ -16,7 +16,7 @@ import (
 )
 
 var awaitPortCmd = &cobra.Command{
-	Use:   "await-port <port>",
+	Use:   "await <port>",
 	Short: "Waits for a process to listen on a port",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -54,6 +54,18 @@ var awaitPortCmd = &cobra.Command{
 	},
 }
 
+var awaitPortCmdAlias = &cobra.Command{
+	Hidden:     true,
+	Deprecated: "please use `ports await` instead.",
+	Use:        "await-port <port>",
+	Short:      awaitPortCmd.Short,
+	Long:       awaitPortCmd.Long,
+	Args:       awaitPortCmd.Args,
+	Run:        awaitPortCmd.Run,
+}
+
 func init() {
-	rootCmd.AddCommand(awaitPortCmd)
+	portsCmd.AddCommand(awaitPortCmd)
+
+	rootCmd.AddCommand(awaitPortCmdAlias)
 }
