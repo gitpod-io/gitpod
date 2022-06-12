@@ -397,10 +397,16 @@ func (agent *Smith) Describe(d chan<- *prometheus.Desc) {
 	agent.metrics.Describe(d)
 	agent.classifier.Describe(d)
 	agent.detector.Describe(d)
+	if agent.tetragon != nil {
+		agent.tetragon.Describe(d)
+	}
 }
 
 func (agent *Smith) Collect(m chan<- prometheus.Metric) {
 	agent.metrics.Collect(m)
 	agent.classifier.Collect(m)
 	agent.detector.Collect(m)
+	if agent.tetragon != nil {
+		agent.tetragon.Collect(m)
+	}
 }

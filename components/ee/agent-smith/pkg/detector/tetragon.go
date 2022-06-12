@@ -11,6 +11,7 @@ import (
 
 	"github.com/cilium/tetragon/api/v1/tetragon"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -18,7 +19,8 @@ import (
 
 type TetragonDetector struct {
 	tetragon      tetragon.FineGuidanceSensorsClient
-	workspacePods map[string]int32
+	workspacePods map[string]uint32
+	connections   *prometheus.GaugeVec
 }
 
 func NewTetragonDetector(address string) (*TetragonDetector, error) {
@@ -32,9 +34,19 @@ func NewTetragonDetector(address string) (*TetragonDetector, error) {
 
 	tetragon := tetragon.NewFineGuidanceSensorsClient(conn)
 
+	workspaceConnections := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: "gitpod",
+			Subsystem: "agent_smith",
+			Name:      "workspace_tcp_connections_total",
+			Help:      "The total number of tpc connections a workspace has currently open.",
+		}, []string{"workspace"},
+	)
+
 	return &TetragonDetector{
 		tetragon:      tetragon,
-		workspacePods: make(map[string]int32),
+		workspacePods: make(map[string]uint32),
+		connections:   workspaceConnections,
 	}, nil
 }
 
@@ -69,7 +81,8 @@ func (t *TetragonDetector) Watch(ctx context.Context) error {
 						}
 
 						t.workspacePods[wsName] = t.workspacePods[wsName] + 1
-						log.Infof("Number of connections for ws %s is %v", wsName, t.workspacePods[wsName])
+						t.connections.WithLabelValues(wsName).Add(float64(t.workspacePods[wsName]))
+						log.Infof("Number of connections for %s is %v", wsName, t.workspacePods[wsName])
 					case "tcp_close":
 						if _, ok := t.workspacePods[wsName]; !ok {
 							continue
@@ -80,7 +93,8 @@ func (t *TetragonDetector) Watch(ctx context.Context) error {
 						}
 
 						t.workspacePods[wsName] = t.workspacePods[wsName] - 1
-						log.Infof("Number of connections for ws %s is %v", wsName, t.workspacePods[wsName])
+						t.connections.WithLabelValues(wsName).Add(float64(t.workspacePods[wsName]))
+						log.Infof("Number of connections for %s is %v", wsName, t.workspacePods[wsName])
 					}
 				}
 			}
@@ -88,6 +102,14 @@ func (t *TetragonDetector) Watch(ctx context.Context) error {
 	}()
 
 	return nil
+}
+
+func (t *TetragonDetector) Describe(d chan<- *prometheus.Desc) {
+	t.connections.Describe(d)
+}
+
+func (t *TetragonDetector) Collect(m chan<- prometheus.Metric) {
+	t.connections.Collect(m)
 }
 
 func isWorkspaceProcess(process *tetragon.Process) bool {
