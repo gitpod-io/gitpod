@@ -37,6 +37,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			GitpodAPI: config.GitpodAPI{
 				HostURL: fmt.Sprintf("https://%s", ctx.Config.Domain),
 			},
+			TetragonAddr: "localhost:54321",
 		},
 	}
 

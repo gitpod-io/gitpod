@@ -58,7 +58,7 @@ func (t *TetragonProcDetector) Discover(ctx context.Context) (<-chan Process, er
 
 			resp, err := events.Recv()
 			if err != nil {
-				log.Errorf("could not receive events: %w", err)
+				log.Errorf("could not receive events: %v", err)
 				return
 			}
 
@@ -94,6 +94,33 @@ func (t *TetragonProcDetector) Discover(ctx context.Context) (<-chan Process, er
 	}()
 
 	return eventChan, nil
+}
+
+func (t *TetragonProcDetector) WatchNetwork(ctx context.Context) error {
+	events, err := t.client.GetEvents(ctx, &tetragon.GetEventsRequest{})
+	if err != nil {
+		return xerrors.Errorf("could not subscribe to events: %w", err)
+	}
+
+	go func() {
+		for {
+
+			resp, err := events.Recv()
+			if err != nil {
+				log.Errorf("could not receive events: %v", err)
+				return
+			}
+
+			switch e := resp.Event.(type) {
+			case *tetragon.GetEventsResponse_ProcessExec:
+				log.Infof("Process exec in pod %s", e.ProcessExec.Process.Pod.Name)
+			case *tetragon.GetEventsResponse_ProcessKprobe:
+				log.Infof("Kprobe in pod %s", e.ProcessKprobe.Process.Pod.Name)
+			}
+		}
+	}()
+
+	return nil
 }
 
 func isWorkspacekit(cmdLine []string) bool {

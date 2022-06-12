@@ -45,6 +45,7 @@ type Smith struct {
 	notifiedInfringements *lru.Cache
 
 	detector   detector.ProcessDetector
+	tetragon   *detector.TetragonProcDetector
 	classifier classifier.ProcessClassifier
 }
 
@@ -101,6 +102,14 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 		return nil, err
 	}
 
+	tetragon, err := detector.NewTetragonProcDetector(cfg.TetragonAddr)
+	if err != nil {
+		return nil, err
+	}
+	if err := tetragon.WatchNetwork(context.Background()); err != nil {
+		return nil, err
+	}
+
 	class, err := cfg.Blocklists.Classifier()
 	if err != nil {
 		return nil, err
@@ -120,6 +129,7 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 		Kubernetes: clientset,
 
 		detector:   detec,
+		tetragon:   tetragon,
 		classifier: class,
 
 		notifiedInfringements: lru.New(notificationCacheSize),
