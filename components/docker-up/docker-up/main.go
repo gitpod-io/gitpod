@@ -285,7 +285,7 @@ var prerequisites = map[string]func() error{
 	"docker-compose": installDockerCompose,
 	"iptables":       installIptables,
 	"uidmap":         installUidMap,
-	"runcV1.1.0":     installRunc,
+	"runcV1.1.3":     installRunc,
 }
 
 func ensurePrerequisites() error {
