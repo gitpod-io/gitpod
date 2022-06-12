@@ -102,12 +102,15 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 		return nil, err
 	}
 
-	tetragon, err := detector.NewTetragonProcDetector(cfg.TetragonAddr)
-	if err != nil {
-		return nil, err
-	}
-	if err := tetragon.WatchNetwork(context.Background()); err != nil {
-		return nil, err
+	var tetragon *detector.TetragonProcDetector
+	if cfg.Tetragon.Enabled {
+		tetragon, err = detector.NewTetragonProcDetector(cfg.Tetragon.Addr)
+		if err != nil {
+			return nil, err
+		}
+		if err := tetragon.WatchNetwork(context.Background()); err != nil {
+			return nil, err
+		}
 	}
 
 	class, err := cfg.Blocklists.Classifier()

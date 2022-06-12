@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +19,18 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	var tetragonConfig config.Tetragon
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Workspace == nil {
+			return nil
+		}
+
+		tetragonConfig.Enabled = cfg.Workspace.Tetragon.Enabled
+		tetragonConfig.Addr = cfg.Workspace.Tetragon.Addr
+
+		return nil
+	})
+
 	ascfg := config.ServiceConfig{
 		PProfAddr:      fmt.Sprintf("localhost:%d", PProfPort),
 		PrometheusAddr: fmt.Sprintf("localhost:%d", PrometheusPort),
@@ -37,7 +50,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			GitpodAPI: config.GitpodAPI{
 				HostURL: fmt.Sprintf("https://%s", ctx.Config.Domain),
 			},
-			TetragonAddr: "localhost:54321",
+			Tetragon: tetragonConfig,
 		},
 	}
 

@@ -65,6 +65,11 @@ type WorkspaceConfig struct {
 	} `json:"registryFacade"`
 
 	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
+
+	Tetragon struct {
+		Enabled bool   `json:"enabled"`
+		Addr    string `json:"addr"`
+	} `json:"tetragon"`
 }
 
 type PersistentVolumeClaim struct {

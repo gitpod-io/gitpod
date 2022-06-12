@@ -163,6 +163,11 @@ type Kubernetes struct {
 	Kubeconfig string `json:"kubeconfig,omitempty"`
 }
 
+type Tetragon struct {
+	Enabled bool   `json:"enabled"`
+	Addr    string `json:"addr"`
+}
+
 // Config configures Agent Smith
 type Config struct {
 	GitpodAPI           GitpodAPI `json:"gitpodAPI"`
@@ -174,7 +179,7 @@ type Config struct {
 	ExcessiveCPUCheck *ExcessiveCPUCheck `json:"excessiveCPUCheck,omitempty"`
 	SlackWebhooks     *SlackWebhooks     `json:"slackWebhooks,omitempty"`
 	Kubernetes        Kubernetes         `json:"kubernetes"`
-	TetragonAddr      string             `json:"tetragonAddr"`
+	Tetragon          Tetragon           `json:"tetragon"`
 
 	ProbePath string `json:"probePath,omitempty"`
 }
