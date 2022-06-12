@@ -17,7 +17,7 @@ import (
 )
 
 type TetragonDetector struct {
-	client        tetragon.FineGuidanceSensorsClient
+	tetragon      tetragon.FineGuidanceSensorsClient
 	workspacePods map[string]int32
 }
 
@@ -30,16 +30,22 @@ func NewTetragonDetector(address string) (*TetragonDetector, error) {
 		return nil, xerrors.Errorf("could not establish connection to tetragon: %w", err)
 	}
 
-	client := tetragon.NewFineGuidanceSensorsClient(conn)
+	tetragon := tetragon.NewFineGuidanceSensorsClient(conn)
 
 	return &TetragonDetector{
-		client:        client,
+		tetragon:      tetragon,
 		workspacePods: make(map[string]int32),
 	}, nil
 }
 
-func (t *TetragonDetector) WatchNetwork(ctx context.Context) error {
-	events, err := t.client.GetEvents(ctx, &tetragon.GetEventsRequest{})
+func (t *TetragonDetector) Watch(ctx context.Context) error {
+	events, err := t.tetragon.GetEvents(ctx, &tetragon.GetEventsRequest{
+		AllowList: []*tetragon.Filter{
+			{
+				EventSet: []tetragon.EventType{tetragon.EventType_PROCESS_KPROBE},
+			},
+		},
+	})
 	if err != nil {
 		return xerrors.Errorf("could not subscribe to events: %w", err)
 	}
@@ -66,6 +72,10 @@ func (t *TetragonDetector) WatchNetwork(ctx context.Context) error {
 						log.Infof("Number of connections for ws %s is %v", wsName, t.workspacePods[wsName])
 					case "tcp_close":
 						if _, ok := t.workspacePods[wsName]; !ok {
+							continue
+						}
+
+						if t.workspacePods[wsName] <= 0 {
 							continue
 						}
 

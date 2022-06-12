@@ -108,7 +108,7 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := tetragon.WatchNetwork(context.Background()); err != nil {
+		if err := tetragon.Watch(context.Background()); err != nil {
 			return nil, err
 		}
 	}
