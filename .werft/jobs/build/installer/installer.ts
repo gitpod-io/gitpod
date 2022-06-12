@@ -265,6 +265,8 @@ EOF`)
         this.options.werft.log(slice, "Installing Gitpod");
         exec(`kubectl --kubeconfig ${this.options.kubeconfigPath} delete -n ${this.options.deploymentNamespace} job migrations || true`, { silent: true });
         // errors could result in outputing a secret to the werft log when kubernetes patches existing objects...
+        exec(`sed -i -E 's/status: \{\}//g' k8s.yaml`);
+        exec(`cat k8s.yaml`);
         exec(`kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f k8s.yaml`, { silent: true });
 
         exec(`werft log result -d "dev installation" -c github-check-preview-env url https://${this.options.domain}/workspaces`);
