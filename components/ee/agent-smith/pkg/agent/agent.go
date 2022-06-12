@@ -45,7 +45,7 @@ type Smith struct {
 	notifiedInfringements *lru.Cache
 
 	detector   detector.ProcessDetector
-	tetragon   *detector.TetragonProcDetector
+	tetragon   *detector.TetragonDetector
 	classifier classifier.ProcessClassifier
 }
 
@@ -102,9 +102,9 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 		return nil, err
 	}
 
-	var tetragon *detector.TetragonProcDetector
+	var tetragon *detector.TetragonDetector
 	if cfg.Tetragon.Enabled {
-		tetragon, err = detector.NewTetragonProcDetector(cfg.Tetragon.Addr)
+		tetragon, err = detector.NewTetragonDetector(cfg.Tetragon.Addr)
 		if err != nil {
 			return nil, err
 		}
