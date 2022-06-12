@@ -31,7 +31,7 @@ spec:
       priorityClassName: system-cluster-critical
       containers:
         - name: autoscaler-expander
-          image: docker.io/aledbf/autoscaler-expander:12
+          image: docker.io/aledbf/autoscaler-expander:17
           args:
             - run
             - --config

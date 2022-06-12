@@ -6,6 +6,7 @@ package expander
 
 import (
 	"context"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -88,12 +89,20 @@ func (ae *AutoscalerExpander) BestOptions(ctx context.Context, req *protos.BestO
 			}
 
 			pendingPods := len(option.Pod)
+			log.Infof("we have %v pods in Pending state", pendingPods)
+
 			if maxPendingPods >= pendingPods {
 				log.WithField("pendingPods", pendingPods).WithField("maxPendingPods", maxPendingPods).Info("no need to add additional nodes")
 				break
 			}
 
 			optionToRemove = idx
+
+			randomScale := func() int64 {
+				min := 1
+				max := 2
+				return int64(rand.Intn(max-min+1) + min)
+			}
 
 			go func() {
 				time.Sleep(10 * time.Second)
@@ -104,8 +113,10 @@ func (ae *AutoscalerExpander) BestOptions(ctx context.Context, req *protos.BestO
 					return
 				}
 
-				instances := igm.TargetSize + 1
-				log.WithField("nodeGroupId", nodeGroupId).WithField("count", instances).Infof("increasing MIG size")
+				random := randomScale()
+				instances := igm.TargetSize + random
+				log.WithField("nodeGroupId", nodeGroupId).WithField("from", igm.TargetSize).WithField("random", random).Infof("increasing MIG size to %v", instances)
+
 				op, err := ae.gce.InstanceGroupManagers.Resize(project, zone, instanceGroup, instances).Do()
 				if err != nil {
 					log.WithError(err).WithField("nodeGroupId", nodeGroupId).Errorf("waiting MIG scale-up")
