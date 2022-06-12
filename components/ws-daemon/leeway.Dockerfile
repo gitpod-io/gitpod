@@ -18,9 +18,10 @@ RUN apk add --no-cache git git-lfs bash openssh-client lz4 e2fsprogs coreutils t
 
 RUN apk add --no-cache kubectl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 
-ARG CLOUD_SDK_VERSION=388.0.0
+ARG CLOUD_SDK_VERSION=389.0.0
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
 ENV PATH /google-cloud-sdk/bin:$PATH
+ENV CLOUDSDK_CORE_DISABLE_PROMPTS=1
 
 # Source: https://github.com/GoogleCloudPlatform/cloud-sdk-docker/blob/master/alpine/Dockerfile
 RUN apk --no-cache add \
@@ -33,13 +34,13 @@ RUN apk --no-cache add \
         openssh-client \
         git \
         gnupg \
-    && curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    gcloud config set core/disable_usage_reporting true && \
-    gcloud config set component_manager/disable_update_check true && \
-    gcloud config set metrics/environment github_docker_image && \
-    gcloud --version
+    && curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz \
+    && tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz \
+    && rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz \
+    && gcloud config set core/disable_usage_reporting true \
+    && gcloud config set component_manager/disable_update_check true \
+    && gcloud config set metrics/environment github_docker_image \
+    && gcloud --version
 
 COPY --from=dl /dl/runc.amd64 /usr/bin/runc
 
