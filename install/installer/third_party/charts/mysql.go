@@ -15,7 +15,7 @@ var mysql embed.FS
 
 func MySQL() *Chart {
 	return &Chart{
-		Name:     "MySQL",
+		Name:     "mysql",
 		Location: "mysql/",
 		Content:  &mysql,
 	}
