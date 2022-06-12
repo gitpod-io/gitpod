@@ -12,15 +12,15 @@ import (
 	"github.com/cilium/tetragon/api/v1/tetragon"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/prometheus/procfs"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type TetragonProcDetector struct {
-	client tetragon.FineGuidanceSensorsClient
-	procFs procfs.FS
+	client     tetragon.FineGuidanceSensorsClient
+	procFs     realProcfs
+	workspaces map[string]int32
 }
 
 func NewTetragonProcDetector(address string) (*TetragonProcDetector, error) {
@@ -34,14 +34,17 @@ func NewTetragonProcDetector(address string) (*TetragonProcDetector, error) {
 
 	client := tetragon.NewFineGuidanceSensorsClient(conn)
 
-	procFs, err := procfs.NewFS("/proc")
-	if err != nil {
-		return nil, err
-	}
+	procFs := realProcfs{}
+
+	// procFs, err := procfs.NewFS("/proc")
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &TetragonProcDetector{
-		client: client,
-		procFs: procFs,
+		client:     client,
+		procFs:     procFs,
+		workspaces: make(map[string]int32),
 	}, nil
 }
 
@@ -113,9 +116,44 @@ func (t *TetragonProcDetector) WatchNetwork(ctx context.Context) error {
 
 			switch e := resp.Event.(type) {
 			case *tetragon.GetEventsResponse_ProcessExec:
-				log.Infof("Process exec in pod %s", e.ProcessExec.Process.Pod.Name)
+				if e.ProcessExec.Process.Pod != nil && len(e.ProcessExec.Process.Pod.Name) > 0 {
+					//proc := e.ProcessExec.Process
+					//log.Infof("Process exec in pod %s, binary: %v, arguments: %v", proc.Pod.Name, proc.Binary, proc.Arguments)
+				}
 			case *tetragon.GetEventsResponse_ProcessKprobe:
-				log.Infof("Kprobe in pod %s", e.ProcessKprobe.Process.Pod.Name)
+				kprobe := e.ProcessKprobe
+
+				if workspaceFilter(kprobe.Process) {
+					log.Infof("Kprobe in pod %s, args: %v", kprobe.Process.Binary, kprobe.Process.Arguments)
+					log.Infof("struct %v", kprobe)
+
+					if kprobe.FunctionName == "tcp_connect" {
+						ws := extractWorkspaceFromWorkspacekit(t.procFs, int(kprobe.Process.Pid.Value))
+						if _, ok := t.workspaces[ws.InstanceID]; !ok {
+							t.workspaces[ws.InstanceID] = 0
+						}
+
+						t.workspaces[ws.InstanceID] = t.workspaces[ws.InstanceID] + 1
+						log.Infof("Number of connections for ws %s is %v", ws.InstanceID, t.workspaces[ws.InstanceID])
+					}
+
+					if kprobe.FunctionName == "tcp_close" {
+						ws := extractWorkspaceFromWorkspacekit(t.procFs, int(kprobe.Process.Pid.Value))
+						if ws == nil {
+							log.Info("process is already gone")
+						}
+						if _, ok := t.workspaces[ws.InstanceID]; !ok {
+							t.workspaces[ws.InstanceID] = 0
+						}
+
+						t.workspaces[ws.InstanceID] = t.workspaces[ws.InstanceID] - 1
+						log.Infof("Number of connections for ws %s is %v", ws.InstanceID, t.workspaces[ws.InstanceID])
+					}
+
+					// for _, a := range kprobe.Args {
+					// 	a.GetArg()
+					// }
+				}
 			}
 		}
 	}()
@@ -125,4 +163,11 @@ func (t *TetragonProcDetector) WatchNetwork(ctx context.Context) error {
 
 func isWorkspacekit(cmdLine []string) bool {
 	return len(cmdLine) >= 2 && cmdLine[0] == "/proc/self/exe" && cmdLine[1] == "ring1"
+}
+
+func workspaceFilter(process *tetragon.Process) bool {
+	return process.Pod != nil &&
+		strings.HasPrefix(process.Pod.Name, "ws-") &&
+		process.Pod.Container.Name == "workspace" &&
+		process.Binary != "/.supervisor/supervisor"
 }
