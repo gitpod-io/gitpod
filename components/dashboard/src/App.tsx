@@ -174,7 +174,7 @@ function App() {
                     const hash = getURLHash();
                     const isRoot = window.location.pathname === "/" && hash === "";
                     if (isRoot) {
-                        const teamSlug = getCurrentTeam(window.location, teams)?.slug;
+                        const teamSlug = getCurrentTeam(teams)?.slug;
                         if (teamSlug) {
                             history.push(`/t/${teamSlug}`);
                         }

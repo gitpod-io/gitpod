@@ -13,7 +13,7 @@ import { countries } from "countries-list";
 import gitpodIcon from "./icons/gitpod.svg";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { UserContext } from "./user-context";
-import { TeamsContext, getCurrentTeam, setCurrentTeam } from "./teams/teams-context";
+import { TeamsContext, useCurrentTeam } from "./teams/teams-context";
 import getSettingsMenu from "./settings/settings-menu";
 import { adminMenu } from "./admin/admin-menu";
 import ContextMenu from "./components/ContextMenu";
@@ -38,7 +38,8 @@ export default function Menu() {
     const { user } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const { team, setStoredTeamSlug } = useCurrentTeam();
+
     const {
         showPaymentUI,
         setShowPaymentUI,
@@ -299,7 +300,7 @@ export default function Menu() {
                                 active: !team,
                                 separator: true,
                                 link: "/projects",
-                                onClick: () => setCurrentTeam(),
+                                onClick: () => setStoredTeamSlug(),
                             },
                             ...(teams || [])
                                 .map((t) => ({
@@ -321,7 +322,7 @@ export default function Menu() {
                                     active: team && team.id === t.id,
                                     separator: true,
                                     link: `/t/${t.slug}`,
-                                    onClick: () => setCurrentTeam(t),
+                                    onClick: () => setStoredTeamSlug(t.slug),
                                 }))
                                 .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1)),
                             {

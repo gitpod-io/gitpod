@@ -7,11 +7,11 @@
 import moment from "moment";
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
+import { useHistory, useRouteMatch } from "react-router";
 import Header from "../components/Header";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
+import { TeamsContext, useCurrentTeam } from "../teams/teams-context";
 import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 import { shortCommitMessage, toRemoteURL } from "./render-utils";
 import Spinner from "../icons/Spinner.svg";
@@ -20,11 +20,10 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { openAuthorizeWindow } from "../provider-utils";
 
 export default function () {
-    const location = useLocation();
     const history = useHistory();
 
     const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
+    const { team } = useCurrentTeam();
 
     const match = useRouteMatch<{ team: string; resource: string }>("/(t/)?:team/:resource");
     const projectSlug = match?.params?.resource;

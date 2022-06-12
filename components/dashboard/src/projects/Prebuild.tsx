@@ -7,21 +7,20 @@
 import moment from "moment";
 import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
+import { useHistory, useRouteMatch } from "react-router";
 import Header from "../components/Header";
 import PrebuildLogs from "../components/PrebuildLogs";
 import Spinner from "../icons/Spinner.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
+import { TeamsContext, useCurrentTeam } from "../teams/teams-context";
 import { PrebuildStatus } from "./Prebuilds";
 import { shortCommitMessage } from "./render-utils";
 
 export default function () {
     const history = useHistory();
-    const location = useLocation();
 
     const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
+    const { team } = useCurrentTeam();
 
     const match = useRouteMatch<{ team: string; project: string; prebuildId: string }>(
         "/(t/)?:team/:project/:prebuildId",

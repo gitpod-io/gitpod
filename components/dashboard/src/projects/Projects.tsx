@@ -9,10 +9,10 @@ import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import projectsEmpty from "../images/projects-empty.svg";
 import projectsEmptyDark from "../images/projects-empty-dark.svg";
-import { useHistory, useLocation } from "react-router";
+import { useHistory } from "react-router";
 import { useContext, useEffect, useState } from "react";
 import { getGitpodService } from "../service/service";
-import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
+import { useCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import { toRemoteURL } from "./render-utils";
@@ -21,11 +21,10 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { prebuildStatusIcon } from "./Prebuilds";
 
 export default function () {
-    const location = useLocation();
     const history = useHistory();
 
     const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
+    const { team } = useCurrentTeam();
     const [projects, setProjects] = useState<Project[]>([]);
     const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildWithStatus>>(new Map());
 

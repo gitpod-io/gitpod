@@ -6,14 +6,14 @@
 
 import { Team } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
-import { Redirect, useLocation } from "react-router";
+import { Redirect } from "react-router";
 import CodeText from "../components/CodeText";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
-import { getCurrentTeam, TeamsContext } from "./teams-context";
+import { useCurrentTeam } from "./teams-context";
 
 export function getTeamSettingsMenu(params: { team?: Team; showPaymentUI?: boolean }) {
     const { team, showPaymentUI } = params;
@@ -37,10 +37,8 @@ export default function TeamSettings() {
     const [modal, setModal] = useState(false);
     const [teamSlug, setTeamSlug] = useState("");
     const [isUserOwner, setIsUserOwner] = useState(true);
-    const { teams } = useContext(TeamsContext);
     const { user } = useContext(UserContext);
-    const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const { team, setStoredTeamSlug } = useCurrentTeam();
     const { showPaymentUI } = useContext(PaymentContext);
 
     const close = () => setModal(false);
@@ -52,7 +50,7 @@ export default function TeamSettings() {
             const currentUserInTeam = members.find((member) => member.userId === user?.id);
             setIsUserOwner(currentUserInTeam?.role === "owner");
         })();
-    }, []);
+    }, [team, user?.id]);
 
     if (!isUserOwner) {
         return <Redirect to="/" />;
@@ -63,6 +61,7 @@ export default function TeamSettings() {
         }
         await getGitpodService().server.deleteTeam(team.id, user.id);
         document.location.href = gitpodHostUrl.asDashboard().toString();
+        setStoredTeamSlug();
     };
 
     return (

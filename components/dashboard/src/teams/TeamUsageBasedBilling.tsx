@@ -8,7 +8,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { getCurrentTeam, TeamsContext } from "./teams-context";
+import { useCurrentTeam } from "./teams-context";
 import Modal from "../components/Modal";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { PaymentContext } from "../payment-context";
@@ -18,9 +18,8 @@ import { ThemeContext } from "../theme-context";
 type PendingStripeCustomer = { pendingSince: number };
 
 export default function TeamUsageBasedBilling() {
-    const { teams } = useContext(TeamsContext);
     const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const { team } = useCurrentTeam();
     const { showUsageBasedUI } = useContext(PaymentContext);
     const [stripeCustomerId, setStripeCustomerId] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState<boolean>(true);

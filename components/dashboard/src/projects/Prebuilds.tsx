@@ -7,7 +7,7 @@
 import moment from "moment";
 import { PrebuildWithStatus, PrebuiltWorkspaceState, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
-import { useLocation, useRouteMatch } from "react-router";
+import { useRouteMatch } from "react-router";
 import Header from "../components/Header";
 import DropDown, { DropDownEntry } from "../components/DropDown";
 import { ItemsList, Item, ItemField } from "../components/ItemsList";
@@ -18,16 +18,14 @@ import StatusCanceled from "../icons/StatusCanceled.svg";
 import StatusPaused from "../icons/StatusPaused.svg";
 import StatusRunning from "../icons/StatusRunning.svg";
 import { getGitpodService } from "../service/service";
-import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
+import { TeamsContext, useCurrentTeam } from "../teams/teams-context";
 import { shortCommitMessage } from "./render-utils";
 import { Link } from "react-router-dom";
 import { Disposable } from "vscode-jsonrpc";
 
 export default function (props: { project?: Project; isAdminDashboard?: boolean }) {
-    const location = useLocation();
-
     const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
+    const { team } = useCurrentTeam();
 
     const match = useRouteMatch<{ team: string; resource: string }>("/(t/)?:team/:resource");
     const projectSlug = props.isAdminDashboard ? props.project?.slug : match?.params?.resource;

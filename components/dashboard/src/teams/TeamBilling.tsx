@@ -5,7 +5,6 @@
  */
 
 import React, { useContext, useEffect, useState } from "react";
-import { useLocation } from "react-router";
 import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { Currency, Plan, Plans, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
@@ -19,16 +18,14 @@ import { ReactComponent as CheckSvg } from "../images/check.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
-import { getCurrentTeam, TeamsContext } from "./teams-context";
+import { useCurrentTeam } from "./teams-context";
 import { getTeamSettingsMenu } from "./TeamSettings";
 import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
 
 type PendingPlan = Plan & { pendingSince: number };
 
 export default function TeamBilling() {
-    const { teams } = useContext(TeamsContext);
-    const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const { team } = useCurrentTeam();
     const [members, setMembers] = useState<TeamMemberInfo[]>([]);
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
     const { showPaymentUI, currency, setCurrency } = useContext(PaymentContext);

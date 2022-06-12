@@ -5,11 +5,10 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { useLocation } from "react-router";
 import { Project, Team } from "@gitpod/gitpod-protocol";
 import CheckBox from "../components/CheckBox";
 import { getGitpodService } from "../service/service";
-import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
+import { useCurrentTeam } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
@@ -33,9 +32,7 @@ export function getProjectSettingsMenu(project?: Project, team?: Team) {
 }
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
-    const location = useLocation();
-    const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
+    const { team } = useCurrentTeam();
 
     return (
         <PageWithSubMenu
