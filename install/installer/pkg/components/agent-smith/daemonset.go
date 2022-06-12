@@ -45,6 +45,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					HostPID:                       true,
+					HostNetwork:                   true,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",
 					RestartPolicy:                 "Always",
