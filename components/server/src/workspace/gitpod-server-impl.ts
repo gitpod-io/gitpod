@@ -162,6 +162,7 @@ import { InstallationAdminTelemetryDataProvider } from "../installation-admin/te
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { getExperimentsClient } from "../experiments";
+import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -3042,7 +3043,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async findStripeCustomerIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
+    async subscribeTeamToStripe(
+        ctx: TraceContext,
+        teamId: string,
+        setupIntentId: string,
+        currency: Currency,
+    ): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getStripePortalUrlForTeam(ctx: TraceContext, teamId: string): Promise<string> {

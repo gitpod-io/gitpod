@@ -76,7 +76,7 @@ import {
     TeamSubscriptionSlot,
     TeamSubscriptionSlotResolved,
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import { Currency, Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import * as pThrottle from "p-throttle";
 import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
 import { FindUserByIdentityStrResult, UserService } from "../../../src/user/user-service";
@@ -1892,14 +1892,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
+    async subscribeTeamToStripe(
+        ctx: TraceContext,
+        teamId: string,
+        setupIntentId: string,
+        currency: Currency,
+    ): Promise<void> {
         const user = this.checkAndBlockUser("subscribeUserToStripe");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         await this.guardTeamOperation(teamId, "update");
         const team = await this.teamDB.findTeamById(teamId);
         try {
-            await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
-            // TODO(janx): Create a Stripe usage-based Subscription for the customer
+            const customer = await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
+            await this.stripeService.createSubscriptionForCustomer(customer.id, currency);
         } catch (error) {
             log.error(`Failed to subscribe team '${teamId}' to Stripe`, error);
             throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, `Failed to subscribe team '${teamId}' to Stripe`);
