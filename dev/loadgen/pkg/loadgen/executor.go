@@ -187,6 +187,7 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 	}
 
 	log.Info("stopping workspaces")
+	start := time.Now()
 	for _, id := range w.workspaces {
 		stopReq := api.StopWorkspaceRequest{
 			Id:     id,
@@ -213,11 +214,15 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("not all workspaces could be stopped")
+			elapsed := time.Since(start)
+			return fmt.Errorf("not all workspaces could be stopped: %s", elapsed)
 		default:
 			time.Sleep(5 * time.Second)
 		}
 	}
+
+	elapsed := time.Since(start)
+	log.Infof("Time taken to stop workspaces: %s", elapsed)
 
 	return nil
 }
