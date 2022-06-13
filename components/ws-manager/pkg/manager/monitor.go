@@ -1036,7 +1036,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					return true, nil, err
 				}
 				readyVolumeSnapshot = true
-				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType)
+				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
 				if err != nil {
 					log.WithError(err).WithField("type", wsType).Warn("cannot get volume snapshot time histogram metric")
 				} else {
