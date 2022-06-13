@@ -21,8 +21,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-var noColor bool
-
 func outputTable(workspaceResources *supervisor.ResourcesStatusResponse) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"CPU (millicores)", "Memory (bytes)"})
