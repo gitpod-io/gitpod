@@ -32,7 +32,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, fmt.Errorf("%s: invalid container registry config", Component)
 	}
 
-	secretName, err := pullSecretName(ctx)
+	pss, err := pullSecrets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +46,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				PrivateKey:  "/wsman-certs/tls.key",
 			},
 		},
-		PullSecret:               secretName,
-		PullSecretFile:           PullSecretFile,
+		PullSecrets:              pss,
 		BaseImageRepository:      fmt.Sprintf("%s/base-images", registryName),
 		BuilderImage:             ctx.ImageName(ctx.Config.Repository, BuilderImage, ctx.VersionManifest.Components.ImageBuilderMk3.BuilderImage.Version),
 		WorkspaceImageRepository: fmt.Sprintf("%s/workspace-images", registryName),

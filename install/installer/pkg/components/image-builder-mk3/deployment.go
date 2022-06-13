@@ -7,7 +7,9 @@ package image_builder_mk3
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
@@ -33,6 +35,34 @@ func pullSecretName(ctx *common.RenderContext) (string, error) {
 	return secretName, nil
 }
 
+func pullSecrets(ctx *common.RenderContext) ([]config.PullSecret, error) {
+	secretName, err := pullSecretName(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []config.PullSecret
+	res = append(res, config.PullSecret{
+		Name:      secretName,
+		MountPath: fmt.Sprintf("/config/pull-secret_%03d.json", len(res)),
+	})
+
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace == nil {
+			return nil
+		}
+		for _, s := range ucfg.Workspace.ImageBuilderPullSecrets {
+			res = append(res, config.PullSecret{
+				Name:      s,
+				MountPath: fmt.Sprintf("/config/pull-secret_%03d.json", len(res)),
+			})
+		}
+		return nil
+	})
+
+	return res, nil
+}
+
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
@@ -43,11 +73,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		hashObj = append(hashObj, objs...)
 	}
 
-	secretName, err := pullSecretName(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	if objs, err := common.DockerRegistryHash(ctx); err != nil {
 		return nil, err
 	} else {
@@ -55,6 +80,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	configHash, err := common.ObjectHash(hashObj, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	pss, err := pullSecrets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -76,14 +106,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
-		{
-			Name: "pull-secret",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretName,
-				},
-			},
-		},
 		*common.InternalCAVolume(),
 		*common.NewEmptyDirVolume("cacerts"),
 	}
@@ -98,15 +120,26 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MountPath: "/wsman-certs",
 			ReadOnly:  true,
 		},
-		{
-			Name:      "pull-secret",
-			MountPath: PullSecretFile,
-			SubPath:   ".dockerconfigjson",
-		},
 	}
 	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
 		volumes = append(volumes, *vol)
 		volumeMounts = append(volumeMounts, *mnt)
+	}
+	for i, ps := range pss {
+		vol := corev1.Volume{
+			Name: fmt.Sprintf("pull-secret-%03d", i),
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ps.Name,
+				},
+			},
+		}
+		volumes = append(volumes, vol)
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      vol.Name,
+			MountPath: ps.MountPath,
+			SubPath:   ".dockerconfigjson",
+		})
 	}
 
 	return []runtime.Object{&appsv1.Deployment{
@@ -140,35 +173,36 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					InitContainers: []corev1.Container{
 						*common.InternalCAContainer(ctx),
 					},
-					Containers: []corev1.Container{{
-						Name:            Component,
-						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
-						ImagePullPolicy: corev1.PullIfNotPresent,
-						Args: []string{
-							"run",
-							"--config",
-							"/config/image-builder.json",
-						},
-						Env: common.MergeEnv(
-							common.DefaultEnv(&ctx.Config),
-							common.WorkspaceTracingEnv(ctx),
-						),
-						Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								"cpu":    resource.MustParse("100m"),
-								"memory": resource.MustParse("200Mi"),
+					Containers: []corev1.Container{
+						{
+							Name:            Component,
+							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Args: []string{
+								"run",
+								"--config",
+								"/config/image-builder.json",
 							},
-						}),
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: RPCPort,
-							Name:          RPCPortName,
-						}},
-						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.Bool(false),
-							RunAsUser:  pointer.Int64(33333),
+							Env: common.MergeEnv(
+								common.DefaultEnv(&ctx.Config),
+								common.WorkspaceTracingEnv(ctx),
+							),
+							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    resource.MustParse("100m"),
+									"memory": resource.MustParse("200Mi"),
+								},
+							}),
+							Ports: []corev1.ContainerPort{{
+								ContainerPort: RPCPort,
+								Name:          RPCPortName,
+							}},
+							SecurityContext: &corev1.SecurityContext{
+								Privileged: pointer.Bool(false),
+								RunAsUser:  pointer.Int64(33333),
+							},
+							VolumeMounts: volumeMounts,
 						},
-						VolumeMounts: volumeMounts,
-					},
 						*common.KubeRBACProxyContainer(ctx),
 					},
 				},

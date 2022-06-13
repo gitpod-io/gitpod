@@ -65,6 +65,8 @@ type WorkspaceConfig struct {
 	} `json:"registryFacade"`
 
 	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
+
+	ImageBuilderPullSecrets []string `json:"imagesPullSecrets,omitempty"`
 }
 
 type PersistentVolumeClaim struct {
