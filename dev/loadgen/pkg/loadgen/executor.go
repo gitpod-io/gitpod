@@ -204,12 +204,12 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 
 	for {
 		resp, err := w.C.GetWorkspaces(ctx, &listReq)
-		if len(resp.Status) == 0 {
-			break
-		}
-
 		if err != nil {
 			log.Warnf("could not get workspaces: %v", err)
+		} else {
+			if len(resp.GetStatus()) == 0 {
+				break
+			}
 		}
 
 		select {
