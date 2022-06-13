@@ -74,7 +74,7 @@ function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
     if (shouldCreateVM(config)) {
         createVM(werft, config)
     } else {
-        werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", false)
+        werft.currentPhaseSpan.setAttribute("preview.created_vm", false)
     }
     if (config.withVM) {
         applyLoadBalancer({ name: config.previewEnvironment.destname })
@@ -99,7 +99,7 @@ function createVM(werft: Werft, config: JobConfig) {
 
     werft.log(prepareSlices.BOOT_VM, 'Creating  VM')
     VM.startVM({ name: config.previewEnvironment.destname })
-    werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", true)
+    werft.currentPhaseSpan.setAttribute("preview.created_vm", true)
 }
 
 function applyLoadBalancer(option: { name: string }) {
