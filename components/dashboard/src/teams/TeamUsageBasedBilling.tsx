@@ -21,7 +21,7 @@ export default function TeamUsageBasedBilling() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const { showUsageBasedUI } = useContext(PaymentContext);
+    const { showUsageBasedUI, currency } = useContext(PaymentContext);
     const [stripeCustomerId, setStripeCustomerId] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
@@ -68,7 +68,7 @@ export default function TeamUsageBasedBilling() {
         (async () => {
             const setupIntentId = params.get("setup_intent")!;
             window.history.replaceState({}, "", window.location.pathname);
-            await getGitpodService().server.subscribeTeamToStripe(team.id, setupIntentId);
+            await getGitpodService().server.subscribeTeamToStripe(team.id, setupIntentId, currency);
             const pendingCustomer = { pendingSince: Date.now() };
             setPendingStripeCustomer(pendingCustomer);
             window.localStorage.setItem(`pendingStripeCustomerForTeam${team.id}`, JSON.stringify(pendingCustomer));
