@@ -24,9 +24,9 @@ var allowedServiceTypes = map[corev1.ServiceType]struct{}{
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 	serviceType := corev1.ServiceTypeLoadBalancer
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Common != nil && cfg.Common.ServiceConfig != nil {
-			st, ok := cfg.Common.ServiceConfig["proxy"]
-			if ok {
+		if cfg.Common != nil {
+			st := cfg.Common.ProxyConfig
+			if st != nil {
 				_, allowed := allowedServiceTypes[corev1.ServiceType(*st.ServiceType)]
 				if allowed {
 					serviceType = *st.ServiceType
