@@ -148,8 +148,6 @@ spec:
 
                 yq e -i ".containerRegistry.inCluster = false" "${CONFIG_FILE}"
                 yq e -i ".containerRegistry.external.url = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
-                yq e -i ".containerRegistry.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
-                yq e -i ".containerRegistry.external.certificate.name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
                 yq e -i ".repository = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
                 yq e -i ".imagePullSecrets[0].kind = \"secret\"" "${CONFIG_FILE}"
                 yq e -i ".imagePullSecrets[0].name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
@@ -160,8 +158,6 @@ spec:
 
                 yq e -i ".containerRegistry.inCluster = false" "${CONFIG_FILE}"
                 yq e -i ".containerRegistry.external.url = \"{{repl ConfigOption "reg_url" }}\"" "${CONFIG_FILE}"
-                yq e -i ".containerRegistry.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
-                yq e -i ".containerRegistry.external.certificate.name = \"container-registry\"" "${CONFIG_FILE}"
               else
                 if [ '{{repl ConfigOptionEquals "reg_incluster_storage" "s3" }}' = "true" ];
                 then
@@ -174,6 +170,9 @@ spec:
                   yq e -i ".containerRegistry.s3storage.certificate.name = \"container-registry-s3-backend\"" "${CONFIG_FILE}"
                 fi
               fi
+              # merged-registry-auths will be created below
+              yq e -i ".containerRegistry.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
+              yq e -i ".containerRegistry.external.certificate.name = \"merged-registry-auths\"" "${CONFIG_FILE}"
 
               if [ '{{repl ConfigOptionNotEquals "store_provider" "incluster" }}' = "true" ];
               then
@@ -272,6 +271,26 @@ spec:
               yq eval-all --inplace \
                 'del(select(.kind == "StatefulSet" and .metadata.name == "openvsx-proxy").status)' \
                 "${GITPOD_OBJECTS}/templates/gitpod.yaml"
+
+              # Merge different docker pull secrets into one secret
+              if [ '{{repl HasLocalRegistry }}' = "true" ];
+              then
+                kubectl get secret "{{repl ImagePullSecretName }}" -o=jsonpath="{.data['\.dockerconfigjson']}" | base64 -d | yq -P - > registry-auth-airgap.yaml
+              fi
+              if [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
+              then
+                kubectl get secret "container-registry" -o=jsonpath="{.data['\.dockerconfigjson']}" | base64 -d | yq -P - > registry-auth-external.yaml
+              else
+                yq eval 'select(.kind == "Secret" and .metadata.name == "builtin-registry-auth").data.".dockerconfigjson"' \
+                  "${GITPOD_OBJECTS}/templates/gitpod.yaml" | base64 -d | yq -P - > registry-auth-builtin.yaml
+              fi
+              # merge all files together (https://mikefarah.gitbook.io/yq/operators/reduce#merge-all-yaml-files-together)
+              yq -o=json eval-all '. as $item ireduce ({}; . * $item )' registry-auth-*.yaml > merged-registry-auths.yaml
+              # create secret and update if exists (https://stackoverflow.com/a/45881259/1364435)
+              kubectl create secret generic merged-registry-auths \
+                --save-config --dry-run=client \
+                --from-file=.dockerconfigjson=./merged-registry-auths.yaml \
+                -o yaml > "${GITPOD_OBJECTS}/templates/merged-registry-auths.yaml"
 
               echo "Gitpod: Escape any Golang template values"
               sed -i -r 's/(.*\{\{.*)/{{`\1`}}/' "${GITPOD_OBJECTS}/templates/gitpod.yaml"
