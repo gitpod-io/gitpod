@@ -91,7 +91,7 @@ func newMetrics(m *Manager) *metrics {
 			Name:      "volume_snapshot_seconds",
 			Help:      "time it took to snapshot volume",
 			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
-		}, []string{"type"}),
+		}, []string{"type", "class"}),
 		volumeRestoreTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
