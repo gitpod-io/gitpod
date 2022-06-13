@@ -259,14 +259,14 @@ EOF`)
         const flags = this.options.withVM ? "WITH_VM=true " : ""
 
         exec(`${flags}./.werft/jobs/build/installer/post-process.sh ${this.options.gitpodDaemonsetPorts.registryFacade} ${this.options.gitpodDaemonsetPorts.wsDaemon} ${nodepoolIndex} ${this.options.previewName} ${this.options.smithToken}`, { slice: slice });
+        exec(`sed -i -E 's/status: \{\}//g' k8s.yaml`);
+        exec(`cat k8s.yaml`);
     }
 
     install(slice: string): void {
         this.options.werft.log(slice, "Installing Gitpod");
         exec(`kubectl --kubeconfig ${this.options.kubeconfigPath} delete -n ${this.options.deploymentNamespace} job migrations || true`, { silent: true });
         // errors could result in outputing a secret to the werft log when kubernetes patches existing objects...
-        exec(`sed -i -E 's/status: \{\}//g' k8s.yaml`);
-        exec(`cat k8s.yaml`);
         exec(`kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f k8s.yaml`, { silent: true });
 
         exec(`werft log result -d "dev installation" -c github-check-preview-env url https://${this.options.domain}/workspaces`);
