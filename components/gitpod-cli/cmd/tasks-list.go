@@ -12,6 +12,7 @@ import (
 	"time"
 
 	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/spf13/cobra"
 
@@ -48,7 +49,13 @@ var listTasksCmd = &cobra.Command{
 		}
 
 		for _, task := range tasks {
-			table.Rich([]string{task.Terminal, task.Presentation.Name, task.State.String()}, []tablewriter.Colors{{}, {}, {mapStatusToColor[task.State]}})
+			colors := []tablewriter.Colors{}
+
+			if !noColor && utils.ColorsEnabled() {
+				colors = []tablewriter.Colors{{}, {}, {mapStatusToColor[task.State]}}
+			}
+
+			table.Rich([]string{task.Terminal, task.Presentation.Name, task.State.String()}, colors)
 		}
 
 		table.Render()
@@ -56,5 +63,6 @@ var listTasksCmd = &cobra.Command{
 }
 
 func init() {
+	listTasksCmd.Flags().BoolVarP(&noColor, "no-color", "", false, "Disable output colorization")
 	tasksCmd.AddCommand(listTasksCmd)
 }

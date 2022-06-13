@@ -18,6 +18,8 @@ var rootCmd = &cobra.Command{
 	Short: "Command line interface for Gitpod",
 }
 
+var noColor bool
+
 // Execute runs the root command
 func Execute() {
 	entrypoint := strings.TrimPrefix(filepath.Base(os.Args[0]), "gp-")
