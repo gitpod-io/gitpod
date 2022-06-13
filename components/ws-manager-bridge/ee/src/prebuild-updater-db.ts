@@ -45,7 +45,7 @@ export class PrebuildUpdaterDB implements PrebuildUpdater {
         const workspaceId = status.metadata!.metaId!;
         const logCtx: LogContext = { instanceId, workspaceId, userId };
 
-        log.info("Handling prebuild workspace update.", status);
+        log.info(logCtx, "Handling prebuild workspace update.", status);
 
         const span = TraceContext.startSpan("updatePrebuiltWorkspace", ctx);
         try {
@@ -57,7 +57,7 @@ export class PrebuildUpdaterDB implements PrebuildUpdater {
             }
             span.setTag("updatePrebuiltWorkspace.prebuildId", prebuild.id);
             span.setTag("updatePrebuiltWorkspace.workspaceInstance.statusVersion", status.statusVersion);
-            log.info("Found prebuild record in database.", prebuild);
+            log.info(logCtx, "Found prebuild record in database.", prebuild);
 
             // prebuild.statusVersion = 0 is the default value in the DB, these shouldn't be counted as stale in our metrics
             if (prebuild.statusVersion > 0 && prebuild.statusVersion >= status.statusVersion) {
@@ -80,7 +80,15 @@ export class PrebuildUpdaterDB implements PrebuildUpdater {
                 span.setTag("updatePrebuildWorkspace.prebuild.state", updatedPrebuild.state);
                 span.setTag("updatePrebuildWorkspace.prebuild.error", updatedPrebuild.error);
 
-                if (writeToDB && updatedPrebuild.state && terminatingStates.includes(updatedPrebuild.state)) {
+                // Here we make sure that we increment the counter only when:
+                // 1. the instance is governing ("writeToDB"), so that we don't get metrics from multiple pods,
+                // 2. the state changes (we can receive multiple events with the same state)
+                if (
+                    writeToDB &&
+                    updatedPrebuild.state &&
+                    terminatingStates.includes(updatedPrebuild.state) &&
+                    updatedPrebuild.state !== prebuild.state
+                ) {
                     this.prometheusExporter.increasePrebuildsCompletedCounter(updatedPrebuild.state);
                 }
 
