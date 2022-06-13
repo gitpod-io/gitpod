@@ -79,6 +79,9 @@ export class MonitoringSatelliteInstaller {
             },
             kubescape: {},
             pyrra: {},
+            probe: {
+                targets: ['http://google.com'],
+            },
         }" \
         monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
         find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
