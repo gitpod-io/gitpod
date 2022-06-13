@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/distribution/reference"
@@ -34,6 +35,21 @@ var proxyCmd = &cobra.Command{
 		authP, err := proxy.NewAuthorizerFromDockerEnvVar(proxyOpts.Auth)
 		if err != nil {
 			log.WithError(err).WithField("auth", proxyOpts.Auth).Fatal("cannot unmarshal auth")
+		}
+		for _, env := range os.Environ() {
+			segs := strings.Split(env, "=")
+			if len(segs) != 2 {
+				continue
+			}
+			n, v := segs[0], segs[1]
+			if !strings.HasPrefix(n, "WORKSPACEKIT_BOBPROXY_AUTH_") {
+				continue
+			}
+			auth, err := proxy.NewAuthorizerFromEnvVar(v)
+			if err != nil {
+				log.WithError(err).WithField("auth", proxyOpts.Auth).Fatal("cannot unmarshal auth")
+			}
+			authP.AddIfNotExists(auth)
 		}
 		authA, err := proxy.NewAuthorizerFromEnvVar(proxyOpts.AdditionalAuth)
 		if err != nil {
