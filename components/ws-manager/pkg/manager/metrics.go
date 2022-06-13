@@ -42,6 +42,7 @@ type metrics struct {
 	initializeTimeHistVec     *prometheus.HistogramVec
 	finalizeTimeHistVec       *prometheus.HistogramVec
 	volumeSnapshotTimeHistVec *prometheus.HistogramVec
+	volumeRestoreTimeHistVec  *prometheus.HistogramVec
 
 	// Counter
 	totalStartsCounterVec         *prometheus.CounterVec
@@ -89,6 +90,13 @@ func newMetrics(m *Manager) *metrics {
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      "volume_snapshot_seconds",
 			Help:      "time it took to snapshot volume",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type"}),
+		volumeRestoreTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "volume_restore_seconds",
+			Help:      "time it took to restore volume",
 			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
 		}, []string{"type"}),
 		totalStartsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -178,6 +186,7 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 		m.initializeTimeHistVec,
 		m.finalizeTimeHistVec,
 		m.volumeSnapshotTimeHistVec,
+		m.volumeRestoreTimeHistVec,
 		newPhaseTotalVec(m.manager),
 		newWorkspaceActivityVec(m.manager),
 		newTimeoutSettingsVec(m.manager),

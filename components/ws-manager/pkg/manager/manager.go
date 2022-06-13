@@ -214,7 +214,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	span.LogKV("event", "pod description created")
 
-	var createPVC bool
+	var (
+		createPVC         bool
+		pvc               *corev1.PersistentVolumeClaim
+		volumeRestoreTime time.Time
+	)
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
 		if feature == api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM {
 			createPVC = true
@@ -223,14 +227,15 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	if createPVC {
 		clog.Info("PVC feature detected, creating PVC object")
-		pvc, err := m.createPVCForWorkspacePod(startContext)
+		pvc, err = m.createPVCForWorkspacePod(startContext)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create pvc for workspace pod: %w", err)
 		}
 		err = m.Clientset.Create(ctx, pvc)
-		if err != nil {
+		if err != nil && !k8serr.IsAlreadyExists(err) {
 			return nil, xerrors.Errorf("cannot create pvc object for workspace pod: %w", err)
 		}
+		volumeRestoreTime = time.Now()
 	}
 
 	// create the Pod in the cluster and wait until is scheduled
@@ -259,6 +264,21 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 
 			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to start workspace")
 			return false, err
+		}
+
+		if createPVC {
+			err = wait.PollWithContext(ctx, 100*time.Millisecond, time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
+			if err != nil {
+				return false, nil
+			}
+
+			wsType := api.WorkspaceType_name[int32(req.Type)]
+			hist, err := m.metrics.volumeRestoreTimeHistVec.GetMetricWithLabelValues(wsType)
+			if err != nil {
+				log.WithError(err).WithField("type", wsType).Warn("cannot get volume restore time histogram metric")
+			} else {
+				hist.Observe(time.Since(volumeRestoreTime).Seconds())
+			}
 		}
 
 		// wait at least 60 seconds before deleting pending pod and trying again due to pending PVC attachment
@@ -378,6 +398,20 @@ func podRunning(clientset client.Client, podName, namespace string) wait.Conditi
 		}
 
 		return false, xerrors.Errorf("pod in unknown state: %s", pod.Status.Phase)
+	}
+}
+
+func pvcRunning(clientset client.Client, pvcName, namespace string) wait.ConditionWithContextFunc {
+	return func(ctx context.Context) (bool, error) {
+		var pvc corev1.PersistentVolumeClaim
+		err := clientset.Get(ctx, types.NamespacedName{Namespace: namespace, Name: pvcName}, &pvc)
+		if err != nil {
+			return false, nil
+		}
+		if pvc.Status.Phase == corev1.ClaimBound {
+			return true, nil
+		}
+		return false, nil
 	}
 }
 
