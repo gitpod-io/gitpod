@@ -98,7 +98,7 @@ func newMetrics(m *Manager) *metrics {
 			Name:      "volume_restore_seconds",
 			Help:      "time it took to restore volume",
 			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
-		}, []string{"type"}),
+		}, []string{"type", "class"}),
 		totalStartsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
