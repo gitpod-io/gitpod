@@ -55,17 +55,22 @@ const (
 
 // NewOrchestratingBuilder creates a new orchestrating image builder
 func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err error) {
-	var authentication auth.RegistryAuthenticator
-	if cfg.PullSecretFile != "" {
-		fn := cfg.PullSecretFile
+	var authentication auth.CompositeRegistryAuthenticator
+	for _, p := range cfg.PullSecrets {
+		fn := p.MountPath
+		if fn == "" {
+			continue
+		}
+
 		if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
 			fn = filepath.Join(tproot, fn)
 		}
 
-		authentication, err = auth.NewDockerConfigFileAuth(fn)
+		a, err := auth.NewDockerConfigFileAuth(fn)
 		if err != nil {
-			return
+			return nil, err
 		}
+		authentication = append(authentication, a)
 	}
 
 	var wsman wsmanapi.WorkspaceManagerClient
@@ -340,6 +345,32 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		}
 	}
 
+	envs := []*wsmanapi.EnvironmentVariable{
+		{Name: "BOB_TARGET_REF", Value: "localhost:8080/target:latest"},
+		{Name: "BOB_BASE_REF", Value: bobBaseref},
+		{Name: "BOB_BUILD_BASE", Value: buildBase},
+		{Name: "BOB_DOCKERFILE_PATH", Value: dockerfilePath},
+		{Name: "BOB_CONTEXT_DIR", Value: contextPath},
+		{Name: "GITPOD_TASKS", Value: `[{"name": "build", "init": "sudo -E /app/bob build"}]`},
+		{Name: "WORKSPACEKIT_RING2_ENCLAVE", Value: "/app/bob proxy"},
+		{Name: "WORKSPACEKIT_BOBPROXY_BASEREF", Value: baseref},
+		{Name: "WORKSPACEKIT_BOBPROXY_TARGETREF", Value: wsrefstr},
+		{
+			Name:  "WORKSPACEKIT_BOBPROXY_ADDITIONALAUTH",
+			Value: string(additionalAuth),
+		},
+		{Name: "SUPERVISOR_DEBUG_ENABLE", Value: fmt.Sprintf("%v", log.Log.Logger.IsLevelEnabled(logrus.DebugLevel))},
+	}
+	for i, a := range o.Config.PullSecrets {
+		envs = append(envs, &wsmanapi.EnvironmentVariable{
+			Name: fmt.Sprintf("WORKSPACEKIT_BOBPROXY_AUTH_%03d", i),
+			Secret: &wsmanapi.EnvironmentVariable_SecretKeyRef{
+				SecretName: a.Name,
+				Key:        ".dockerconfigjson",
+			},
+		})
+	}
+
 	var swr *wsmanapi.StartWorkspaceResponse
 	err = retry(ctx, func(ctx context.Context) (err error) {
 		swr, err = o.wsman.StartWorkspace(ctx, &wsmanapi.StartWorkspaceRequest{
@@ -363,29 +394,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					WebRef: o.Config.BuilderImage,
 				},
 				WorkspaceLocation: contextPath,
-				Envvars: []*wsmanapi.EnvironmentVariable{
-					{Name: "BOB_TARGET_REF", Value: "localhost:8080/target:latest"},
-					{Name: "BOB_BASE_REF", Value: bobBaseref},
-					{Name: "BOB_BUILD_BASE", Value: buildBase},
-					{Name: "BOB_DOCKERFILE_PATH", Value: dockerfilePath},
-					{Name: "BOB_CONTEXT_DIR", Value: contextPath},
-					{Name: "GITPOD_TASKS", Value: `[{"name": "build", "init": "sudo -E /app/bob build"}]`},
-					{Name: "WORKSPACEKIT_RING2_ENCLAVE", Value: "/app/bob proxy"},
-					{Name: "WORKSPACEKIT_BOBPROXY_BASEREF", Value: baseref},
-					{Name: "WORKSPACEKIT_BOBPROXY_TARGETREF", Value: wsrefstr},
-					{
-						Name: "WORKSPACEKIT_BOBPROXY_AUTH",
-						Secret: &wsmanapi.EnvironmentVariable_SecretKeyRef{
-							SecretName: o.Config.PullSecret,
-							Key:        ".dockerconfigjson",
-						},
-					},
-					{
-						Name:  "WORKSPACEKIT_BOBPROXY_ADDITIONALAUTH",
-						Value: string(additionalAuth),
-					},
-					{Name: "SUPERVISOR_DEBUG_ENABLE", Value: fmt.Sprintf("%v", log.Log.Logger.IsLevelEnabled(logrus.DebugLevel))},
-				},
+				Envvars:           envs,
 			},
 			Type: wsmanapi.WorkspaceType_IMAGEBUILD,
 		})

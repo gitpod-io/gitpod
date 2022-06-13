@@ -24,6 +24,26 @@ type RegistryAuthenticator interface {
 	Authenticate(registry string) (auth *Authentication, err error)
 }
 
+type CompositeRegistryAuthenticator []RegistryAuthenticator
+
+func (cra CompositeRegistryAuthenticator) Authenticate(registry string) (auth *Authentication, err error) {
+	for _, c := range cra {
+		res, err := c.Authenticate(registry)
+		if err != nil {
+			return nil, err
+		}
+		if res.Username == "" && res.Password == "" && res.RegistryToken == "" {
+			continue
+		}
+
+		if res != nil {
+			return res, nil
+		}
+	}
+
+	return &Authentication{}, nil
+}
+
 // NewDockerConfigFileAuth reads a docker config file to provide authentication
 func NewDockerConfigFileAuth(fn string) (*DockerConfigFileAuth, error) {
 	fp, err := os.OpenFile(fn, os.O_RDONLY, 0600)
