@@ -5,5 +5,6 @@
 package usage
 
 const (
-	Component = "usage"
+	Component             = "usage"
+	stripeSecretMountPath = "stripe-secret"
 )

@@ -7,6 +7,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -18,6 +19,31 @@ import (
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
+
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.StripeSecret != "" {
+			stripeSecret := cfg.WebApp.Server.StripeSecret
+
+			volumes = append(volumes,
+				corev1.Volume{
+					Name: "stripe-secret",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: stripeSecret,
+						},
+					},
+				})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      "stripe-secret",
+				MountPath: stripeSecretMountPath,
+				ReadOnly:  true,
+			})
+		}
+		return nil
+	})
 
 	return []runtime.Object{
 		&appsv1.Deployment{
@@ -45,6 +71,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						InitContainers:                []corev1.Container{*common.DatabaseWaiterContainer(ctx)},
+						Volumes:                       volumes,
 						Containers: []corev1.Container{{
 							Name:  Component,
 							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Usage.Version),
@@ -66,6 +93,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								common.DefaultEnv(&ctx.Config),
 								common.DatabaseEnv(&ctx.Config),
 							),
+							VolumeMounts: volumeMounts,
 							LivenessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
