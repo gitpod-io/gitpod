@@ -19,6 +19,7 @@ type Log interface {
 
 	StartPhase(name, description string) Phase
 	FixedMessagef(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
 }
 
 type Logs interface {
@@ -55,6 +56,10 @@ func (ptl PTermLog) Log() Logs {
 		return &VerboseLogs{res}
 	}
 	return res
+}
+
+func (ptl PTermLog) Warnf(format string, args ...interface{}) {
+	pterm.Warning.Printf(format, args...)
 }
 
 type filebackedLogs struct {
@@ -119,6 +124,10 @@ func (c ConsoleLog) FixedMessagef(format string, args ...interface{}) {
 // Log implements Log
 func (c ConsoleLog) Log() Logs {
 	return noopWriteCloser{c.w}
+}
+
+func (c ConsoleLog) Warnf(format string, args ...interface{}) {
+	c.FixedMessagef("[WARN] "+format, args...)
 }
 
 // StartPhase implements Log

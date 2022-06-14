@@ -19,5 +19,7 @@ type StartOpts struct {
 	PortOffset       int
 	NoPortForwarding bool
 	IDEPort          int
+	SSHPort          int
+	SSHPublicKey     string
 	Logs             io.WriteCloser
 }

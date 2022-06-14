@@ -73,6 +73,20 @@ func (dr DockerRuntime) StartWorkspace(ctx context.Context, workspaceImage strin
 	args = append(args, "--env-file", tmpf.Name())
 	defer os.Remove(tmpf.Name())
 
+	if opts.SSHPublicKey != "" {
+		tmpf, err := ioutil.TempFile("", "rungp-*.pub")
+		if err != nil {
+			return err
+		}
+		tmpf.WriteString(opts.SSHPublicKey)
+		tmpf.Close()
+		args = append(args, "-v", fmt.Sprintf("%s:/home/gitpod/.ssh/authorized_keys", tmpf.Name()))
+		defer os.Remove(tmpf.Name())
+	}
+	if opts.SSHPort > 0 {
+		args = append(args, "-p", fmt.Sprintf("%d:23001", opts.SSHPort))
+	}
+
 	if !opts.NoPortForwarding {
 		for _, p := range cfg.Ports {
 			args = append(args, "-p", fmt.Sprintf("%d:%d", p.Port.(int)+opts.PortOffset, p.Port))

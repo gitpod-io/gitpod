@@ -7,9 +7,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -58,6 +60,24 @@ var runCmd = &cobra.Command{
 		}
 		buildingPhase.Success()
 
+		var (
+			publicSSHKey   string
+			publicSSHKeyFN = runOpts.SSHPublicKeyPath
+		)
+		if strings.HasPrefix(publicSSHKeyFN, "~") {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return err
+			}
+			publicSSHKeyFN = filepath.Join(home, strings.TrimPrefix(publicSSHKeyFN, "~"))
+		}
+
+		if fc, err := ioutil.ReadFile(publicSSHKeyFN); err == nil {
+			publicSSHKey = string(fc)
+		} else if rootOpts.Verbose {
+			return fmt.Errorf("cannot read public SSH key from %s: %v", publicSSHKeyFN, err)
+		}
+
 		shutdown := make(chan struct{})
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -65,6 +85,7 @@ var runCmd = &cobra.Command{
 			runLogs := console.Observe(log, filepath.Join("/workspace", cfg.WorkspaceLocation))
 			opts := runOpts.StartOpts
 			opts.Logs = runLogs
+			opts.SSHPublicKey = publicSSHKey
 			err := runtime.StartWorkspace(ctx, ref, cfg, opts)
 			if err != nil {
 				runLogs.Show()
@@ -89,7 +110,8 @@ var runCmd = &cobra.Command{
 }
 
 var runOpts struct {
-	StartOpts runtime.StartOpts
+	StartOpts        runtime.StartOpts
+	SSHPublicKeyPath string
 }
 
 func init() {
@@ -97,4 +119,6 @@ func init() {
 	runCmd.Flags().BoolVar(&runOpts.StartOpts.NoPortForwarding, "no-port-forwarding", false, "disable port-forwarding for ports in the .gitpod.yml")
 	runCmd.Flags().IntVar(&runOpts.StartOpts.PortOffset, "port-offset", 0, "shift exposed ports by this number")
 	runCmd.Flags().IntVar(&runOpts.StartOpts.IDEPort, "ide-port", 8080, "port to expose open vs code server")
+	runCmd.Flags().IntVar(&runOpts.StartOpts.SSHPort, "ssh-port", 8082, "port to expose SSH on (set to 0 to disable SSH)")
+	runCmd.Flags().StringVar(&runOpts.SSHPublicKeyPath, "ssh-public-key-path", "~/.ssh/id_rsa.pub", "path to the user's public SSH key")
 }
