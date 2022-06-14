@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/rungp/pkg/console"
+	"github.com/gitpod-io/gitpod/rungp/pkg/runtime"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +24,9 @@ var runCmd = &cobra.Command{
 	Short: "Starts a workspace",
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		log := console.PTermLog{}
+		log := console.PTermLog{
+			Verbose: rootOpts.Verbose,
+		}
 
 		cfg, err := getConfig()
 		if err != nil {
@@ -60,7 +63,9 @@ var runCmd = &cobra.Command{
 		defer cancel()
 		go func() {
 			runLogs := console.Observe(log, filepath.Join("/workspace", cfg.WorkspaceLocation))
-			err := runtime.StartWorkspace(ctx, runLogs, ref, cfg)
+			opts := runOpts.StartOpts
+			opts.Logs = runLogs
+			err := runtime.StartWorkspace(ctx, ref, cfg, opts)
 			if err != nil {
 				runLogs.Show()
 				close(shutdown)
@@ -83,6 +88,13 @@ var runCmd = &cobra.Command{
 	},
 }
 
+var runOpts struct {
+	StartOpts runtime.StartOpts
+}
+
 func init() {
 	rootCmd.AddCommand(runCmd)
+	runCmd.Flags().BoolVar(&runOpts.StartOpts.NoPortForwarding, "no-port-forwarding", false, "disable port-forwarding for ports in the .gitpod.yml")
+	runCmd.Flags().IntVar(&runOpts.StartOpts.PortOffset, "port-offset", 0, "shift exposed ports by this number")
+	runCmd.Flags().IntVar(&runOpts.StartOpts.IDEPort, "ide-port", 8080, "port to expose open vs code server")
 }

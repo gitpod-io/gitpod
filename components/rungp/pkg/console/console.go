@@ -31,15 +31,30 @@ type Phase interface {
 	Failure(reason string)
 }
 
-type PTermLog struct{}
+type VerboseLogs struct {
+	Logs
+}
 
-func (PTermLog) Log() Logs {
+func (w *VerboseLogs) Write(p []byte) (int, error) {
+	os.Stdout.Write(p)
+	return w.Logs.Write(p)
+}
+
+type PTermLog struct {
+	Verbose bool
+}
+
+func (ptl PTermLog) Log() Logs {
 	f, err := ioutil.TempFile("", "rungp-*.log")
 	if err != nil {
 		return noopWriteCloser{&areaWriter{Area: &pterm.DefaultArea}}
 	}
 
-	return &filebackedLogs{f}
+	res := &filebackedLogs{f}
+	if ptl.Verbose {
+		return &VerboseLogs{res}
+	}
+	return res
 }
 
 type filebackedLogs struct {

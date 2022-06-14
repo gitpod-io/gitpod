@@ -27,6 +27,7 @@ var rootCmd = &cobra.Command{
 var rootOpts struct {
 	Workdir      string
 	GitpodYamlFN string
+	Verbose      bool
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -52,6 +53,7 @@ func init() {
 	}
 	rootCmd.PersistentFlags().StringVarP(&rootOpts.Workdir, "workdir", "w", wd, "Path to the working directory")
 	rootCmd.PersistentFlags().StringVarP(&rootOpts.GitpodYamlFN, "gitpod-yaml", "f", ".gitpod.yml", "path to the .gitpod.yml file relative to the working directory")
+	rootCmd.PersistentFlags().BoolVarP(&rootOpts.Verbose, "verbose", "v", false, "verbose output")
 }
 
 func getConfig() (*gitpod.GitpodConfig, error) {

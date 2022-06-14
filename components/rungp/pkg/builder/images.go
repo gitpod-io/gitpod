@@ -10,6 +10,6 @@ type GitpodImages struct {
 }
 
 var DefaultImages = GitpodImages{
-	Supervisor: "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-ea272aeb66e4113811add50f62e419b702842616",
+	Supervisor: "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-fb50e48965d22ca1ed8db18a93d365fedc08071f",
 	WebIDE:     "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-86282e8b797054f1f8db1f902d3b16b3d121710d",
 }

@@ -12,5 +12,12 @@ import (
 )
 
 type Runtime interface {
-	StartWorkspace(ctx context.Context, logs io.WriteCloser, imageRef string, cfg *gitpod.GitpodConfig) error
+	StartWorkspace(ctx context.Context, imageRef string, cfg *gitpod.GitpodConfig, opts StartOpts) error
+}
+
+type StartOpts struct {
+	PortOffset       int
+	NoPortForwarding bool
+	IDEPort          int
+	Logs             io.WriteCloser
 }
