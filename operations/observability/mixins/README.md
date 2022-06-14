@@ -295,22 +295,11 @@ This `jsonnetfile.json` lists all dependencies that we use, which includes this 
 
 ### How do I review dashboards before merging PRs?
 
-There are a couple of options to trigger a werft job that will deploy a preview environment with Prometheus+Grafana with your changes:
+Now with Harvester VM's being default, Monitoring-satellite should be deployed automatically in your preview environments.
 
-#### Pull request description
+But if you want to use Gitpod helm charts to deploy a preview, add the observability annotation to the pull request
+description
 
-By adding werft annotations to Pull Request descriptions, you make sure that all following job will have those annotations set.
-
-The following combination of annotations can be used to deploy monitoring satellite
-* Use harvester previews. Monitoring-satellite is deployed on those previews by default
-```
-/werft with-vm=true
-# Just in case your PR requires extra configuration on Prometheus side (and you have a new branch on https://github.com/gitpod-io/observability with such changes)
-# You can add the line below
-/werft withObservabilityBranch=<my-branch>
-```
-
-* Use Gitpod helm charts to deploy a preview, and add the observability annotation
 ```
 /werft with-helm=true with-observability=true
 # Just in case your PR requires extra configuration on Prometheus side (and you have a new branch on https://github.com/gitpod-io/observability with such changes)
@@ -318,15 +307,8 @@ The following combination of annotations can be used to deploy monitoring satell
 /werft withObservabilityBranch=<my-branch>
 ```
 
-#### Github comment
-
 If you want to run **one** particular job with different annotations, you can add them to a particular Github comment
 
-```
-/werft run with-vm=true
-/werft run withObservabilityBranch=<my-branch>
-```
-or
 ```
 /werft run with-helm=true with-observability=true
 /werft run withObservabilityBranch=<my-branch>

@@ -41,10 +41,23 @@ local clusterTemplate =
     sort=1
   );
 
+local nodepoolTemplate =
+  template.new(
+    name='nodepool',
+    datasource='$datasource',
+    query='label_values(kube_node_labels{%s="$cluster"}, nodepool)' % _config.clusterLabel,
+    current='all',
+    refresh=2,
+    includeAll=true,
+    multi=true,
+    sort=1
+  )
+;
+
 // Panels
 local runningWorkspacesGraph =
   graphPanel.new(
-    '$cluster: Running Workspaces',
+    '$cluster/$nodepool: Running Workspaces',
     datasource='$datasource',
     format='none',
     stack=false,
@@ -53,8 +66,8 @@ local runningWorkspacesGraph =
     min=0,
     repeat='cluster',
   )
-  .addTarget(prometheus.target('sum(gitpod_ws_manager_workspace_phase_total{%(clusterLabel)s=~"$cluster", phase="RUNNING"}) by (type)' % _config, legendFormat='{{ type }}'))
-  .addTarget(prometheus.target('sum(gitpod_ws_manager_workspace_activity_total{%(clusterLabel)s=~"$cluster",active="false"})' % _config, legendFormat='Regular Not Active'))
+  .addTarget(prometheus.target('sum(gitpod_ws_manager_workspace_phase_total{%(clusterLabel)s=~"$cluster", nodepool=~"$nodepool", phase="RUNNING"}) by (type)' % _config, legendFormat='{{ type }}'))
+  .addTarget(prometheus.target('sum(gitpod_ws_manager_workspace_activity_total{%(clusterLabel)s=~"$cluster", nodepool=~"$nodepool", active="false"})' % _config, legendFormat='Regular Not Active'))
   .addSeriesOverride({ alias: 'REGULAR', color: '#73BF69' })
   .addSeriesOverride({ alias: 'PREBUILD', color: '#5794F2' })
   .addSeriesOverride({ alias: 'PROBE', color: '#B877D9' })
@@ -64,7 +77,7 @@ local runningWorkspacesGraph =
 local wsNodeLoadAverageGraph =
   graphPanel.new(
     datasource='$datasource',
-    title="$cluster: Workspace node's normalized load average",
+    title="$cluster/$nodepool: Workspace node's normalized load average",
     description=
     |||
       Nodes with a high normalized load average do not represent a real problem, it only means that pods should probably not be scheduled to them.
@@ -75,11 +88,11 @@ local wsNodeLoadAverageGraph =
     fill=1,
     fillGradient=5,
     min=0,
-    repeat='cluster',
+    repeat='nodepool',
   )
   .addTarget(prometheus.target(
     |||
-      topk(5, sum(nodepool:node_load1:normalized{%(clusterLabel)s=~"$cluster", nodepool=~".*workspace.*"}) by (node))
+      topk(5, sum(nodepool:node_load1:normalized{%(clusterLabel)s=~"$cluster", nodepool=~"$nodepool"}) by (node))
     ||| % _config, legendFormat='{{node}}'
   ))
   .addTarget(prometheus.target(
@@ -104,7 +117,7 @@ local workspaceStartupTimeHeatMap =
     repeat='cluster',
   )
   .addTarget(prometheus.target(
-    'sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="REGULAR"}[$__rate_interval])) by (le)' % _config,
+    'sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",nodepool=~"$nodepool",type="REGULAR"}[$__rate_interval])) by (le)' % _config,
     legendFormat='{{le}}' % _config,
     format='heatmap'
   ))
@@ -124,7 +137,7 @@ local workspaceFailuresGraph =
   .addTarget(prometheus.target(
     |||
       sum(
-        rate(gitpod_ws_manager_workspace_stops_total{%(clusterLabel)s=~"$cluster", reason="failed"}[5m])
+        rate(gitpod_ws_manager_workspace_stops_total{%(clusterLabel)s=~"$cluster", nodepool=~"$nodepool", reason="failed"}[5m])
       ) by (%(clusterLabel)s, type)
     ||| % _config, legendFormat='{{type}}'
   ))
@@ -135,16 +148,16 @@ local workspaceFailuresGraph =
 
 local workspacePhasesGraph =
   graphPanel.new(
-    '$cluster: Workspace Phases',
+    '$cluster/$nodepool: Workspace Phases',
     datasource='$datasource',
     format='none',
     stack=false,
     fill=1,
     fillGradient=5,
     min=0,
-    repeat='cluster',
+    repeat='nodepool',
   )
-  .addTarget(prometheus.target('gitpod_ws_manager_workspace_phase_total{%(clusterLabel)s=~"$cluster", phase!="RUNNING"}' % _config, legendFormat='{{type}} - {{phase}}'))
+  .addTarget(prometheus.target('gitpod_ws_manager_workspace_phase_total{%(clusterLabel)s=~"$cluster", nodepool=~"$nodepool", phase!="RUNNING"}' % _config, legendFormat='{{type}} - {{phase}}'))
   // Regular use different levels of green
   .addSeriesOverride({ alias: 'REGULAR - INITIALIZING', color: '#C8F2C2' })
   .addSeriesOverride({ alias: 'REGULAR - CREATING', color: '#96D98D' })
@@ -168,9 +181,9 @@ local clusterScaleSizeGraph =
     fill=1,
     fillGradient=5,
     min=0,
-    repeat='cluster',
+    repeat='nodepool',
   )
-  .addTarget(prometheus.target('count(kube_node_labels{%(clusterLabel)s=~"$cluster"}) by (nodepool)' % _config, legendFormat='{{nodepool}}'))
+  .addTarget(prometheus.target('count(kube_node_labels{%(clusterLabel)s=~"$cluster"}, nodepool=~"$nodepool")' % _config))
 ;
 
 {
@@ -187,6 +200,7 @@ local clusterScaleSizeGraph =
       )
       .addTemplate(datasourceTemplate)
       .addTemplate(clusterTemplate)
+      .addTemplate(nodepoolTemplate)
       .addRow(
         row.new('Running workspaces')
         .addPanel(runningWorkspacesGraph)
