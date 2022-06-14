@@ -11,7 +11,6 @@ import { Session } from "../express";
 
 export interface TosFlow {
     flowId?: string;
-    termsAcceptanceRequired?: boolean;
     isBlocked?: boolean;
     authHost?: string;
 }

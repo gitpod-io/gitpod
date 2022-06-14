@@ -42,7 +42,6 @@ import {
     SetWorkspaceTimeoutResult,
     StartPrebuildContext,
     StartWorkspaceResult,
-    Terms,
     Token,
     User,
     UserEnvVar,
@@ -132,7 +131,6 @@ import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from "../auth/
 import { Config } from "../config";
 import { NotFoundError, UnauthorizedError } from "../errors";
 import { RepoURL } from "../repohost/repo-url";
-import { TermsProvider } from "../terms/terms-provider";
 import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
 import { UserDeletionService } from "../user/user-deletion-service";
@@ -208,8 +206,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(IClientDataPrometheusAdapter) protected readonly clientDataPrometheusAdapter: IClientDataPrometheusAdapter;
 
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-
-    @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
 
     @inject(CachingBlobServiceClientProvider)
     protected readonly blobServiceClientProvider: CachingBlobServiceClientProvider;
@@ -392,17 +388,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             if (updatedUser) {
                 this.user = updatedUser;
             }
-        }
-    }
-    protected termsAccepted: boolean | undefined;
-    protected async checkTermsAcceptance() {
-        if (!this.termsAccepted) {
-            if (this.user) {
-                this.termsAccepted = await this.userService.checkTermsAccepted(this.user);
-            }
-        }
-        if (!this.termsAccepted) {
-            throw new ResponseError(ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED, "You need to accept the terms.");
         }
     }
 
@@ -605,7 +590,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceWI(ctx, { workspaceId });
 
         const user = this.checkAndBlockUser("startWorkspace", undefined, { workspaceId });
-        await this.checkTermsAcceptance();
 
         const mayStartPromise = this.mayStartWorkspace(
             ctx,
@@ -997,7 +981,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         try {
             const user = this.checkAndBlockUser("createWorkspace", { mode });
-            await this.checkTermsAcceptance();
 
             const envVars = this.userDB.getEnvVars(user.id);
             logContext = { userId: user.id };
@@ -2890,12 +2873,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             context: event.context,
         };
         this.analytics.identify(identifyMessage);
-    }
-
-    async getTerms(ctx: TraceContext): Promise<Terms> {
-        // Terms are publicly available, thus no user check here.
-
-        return this.termsProvider.getCurrent();
     }
 
     async getIDEOptions(ctx: TraceContext): Promise<IDEOptions> {

@@ -15,7 +15,6 @@ import {
     CreateWorkspaceMode,
     Token,
     UserEnvVarValue,
-    Terms,
     Configuration,
     UserInfo,
     GitpodTokenType,
@@ -75,7 +74,6 @@ export const GitpodServer = Symbol("GitpodServer");
 export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, LicenseService, IDEServer {
     // User related API
     getLoggedInUser(): Promise<User>;
-    getTerms(): Promise<Terms>;
     updateLoggedInUser(user: Partial<User>): Promise<User>;
     getAuthProviders(): Promise<AuthProviderInfo[]>;
     getOwnAuthProviders(): Promise<AuthProviderEntry[]>;

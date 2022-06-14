@@ -1313,18 +1313,3 @@ export interface Configuration {
     readonly daysBeforeGarbageCollection: number;
     readonly garbageCollectionStartDate: number;
 }
-
-export interface TermsAcceptanceEntry {
-    readonly userId: string;
-    readonly termsRevision: string;
-    readonly acceptionTime: string;
-}
-
-export interface Terms {
-    readonly revision: string;
-    readonly activeSince: string;
-    readonly adminOnlyTerms: boolean;
-    readonly updateMessage: string;
-    readonly content: string;
-    readonly formElements?: object;
-}

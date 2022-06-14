@@ -16,17 +16,16 @@ import {
     WORKSPACE_TIMEOUT_EXTENDED,
     WORKSPACE_TIMEOUT_EXTENDED_ALT,
 } from "@gitpod/gitpod-protocol";
-import { TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
 import { AuthProviderParams, AuthUser } from "../auth/auth-provider";
 import { BlockedUserFilter } from "../auth/blocked-user-filter";
 import { v4 as uuidv4 } from "uuid";
-import { TermsProvider } from "../terms/terms-provider";
 import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
+import { UserDB } from "@gitpod/gitpod-db/lib";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -39,11 +38,6 @@ export interface CheckSignUpParams {
     identity: Identity;
 }
 
-export interface CheckTermsParams {
-    config: AuthProviderParams;
-    identity?: Identity;
-    user?: User;
-}
 export interface CreateUserParams {
     identity: Identity;
     token?: Token;
@@ -61,8 +55,6 @@ export class UserService {
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
-    @inject(TermsAcceptanceDB) protected readonly termsAcceptanceDb: TermsAcceptanceDB;
-    @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User
@@ -212,46 +204,6 @@ export class UserService {
      */
     async checkSignUp(params: CheckSignUpParams) {
         // no-op
-    }
-
-    async checkTermsAcceptanceRequired(params: CheckTermsParams): Promise<boolean> {
-        // // todo@alex: clarify if this would be a loophole for Gitpod SH.
-        // // if (params.config.requireTOS === false) {
-        // //     // AuthProvider config might disable terms acceptance
-        // //     return false;
-        // // }
-
-        // const { user } = params;
-        // if (!user) {
-        //     const userCount = await this.userDb.getUserCount();
-        //     if (userCount === 0) {
-        //         // the very first user, which will become admin, needs to accept the terms. always.
-        //         return true;
-        //     }
-        // }
-
-        // // admin users need to accept the terms.
-        // if (user && user.rolesOrPermissions && user.rolesOrPermissions.some(r => r === "admin")) {
-        //     return (await this.checkTermsAccepted(user)) === false;
-        // }
-
-        // // non-admin users won't need to accept the terms.
-        return false;
-    }
-
-    async acceptCurrentTerms(user: User) {
-        const terms = this.termsProvider.getCurrent();
-        return await this.termsAcceptanceDb.updateAcceptedRevision(user.id, terms.revision);
-    }
-
-    async checkTermsAccepted(user: User) {
-        // disabled terms acceptance check for now
-
-        return true;
-
-        // const terms = this.termsProvider.getCurrent();
-        // const accepted = await this.termsAcceptanceDb.getAcceptedRevision(user.id);
-        // return !!accepted && (accepted.termsRevision === terms.revision);
     }
 
     async checkAutomaticOssEligibility(user: User): Promise<boolean> {

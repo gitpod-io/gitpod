@@ -32,6 +32,8 @@ import { LoginCompletionHandler } from "./login-completion-handler";
 import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from "../../src/prometheus-metrics";
 import { OutgoingHttpHeaders } from "http2";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { trackSignup } from "../analytics";
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -69,6 +71,7 @@ export class GenericAuthProvider implements AuthProvider {
     @inject(UserService) protected readonly userService: UserService;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
+    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
 
     @postConstruct()
     init() {
@@ -443,22 +446,9 @@ export class GenericAuthProvider implements AuthProvider {
         }
 
         if (flowContext) {
-            if (
-                TosFlow.WithIdentity.is(flowContext) ||
-                (TosFlow.WithUser.is(flowContext) && flowContext.termsAcceptanceRequired)
-            ) {
-                // This is the regular path on sign up. We just went through the OAuth2 flow but didn't create a Gitpod
-                // account yet, as we require to accept the terms first.
-                log.info(context, `(${strategyName}) Redirect to /api/tos`, {
-                    info: flowContext,
-                    ...defaultLogPayload,
-                });
-
-                // attach the sign up info to the session, in order to proceed after acceptance of terms
-                await TosFlow.attach(request.session!, flowContext);
-
-                response.redirect(this.config.hostUrl.withApi({ pathname: "/tos", search: "mode=login" }).toString());
-                return;
+            if (TosFlow.WithIdentity.is(flowContext)) {
+                // This is the regular path on sign up.
+                await this.signUpNewUser(request, response, authFlow, flowContext);
             } else {
                 const { user, elevateScopes } = flowContext as TosFlow.WithUser;
                 log.info(context, `(${strategyName}) Directly log in and proceed.`, {
@@ -476,6 +466,44 @@ export class GenericAuthProvider implements AuthProvider {
                 });
             }
         }
+    }
+
+    protected async signUpNewUser(
+        req: express.Request,
+        res: express.Response,
+        authFlow: AuthFlow,
+        tosFlowInfo: TosFlow.WithIdentity,
+    ) {
+        const { candidate, token } = tosFlowInfo;
+        const { returnTo, host } = authFlow;
+        const user = await this.userService.createUser({
+            identity: candidate,
+            token,
+            userUpdate: (newUser) => {
+                const { authUser } = tosFlowInfo;
+                newUser.name = authUser.authName;
+                newUser.fullName = authUser.name || undefined;
+                newUser.avatarUrl = authUser.avatarUrl;
+                newUser.blocked = newUser.blocked || tosFlowInfo.isBlocked;
+            },
+        });
+
+        const { additionalIdentity, additionalToken, envVars } = tosFlowInfo;
+        if (additionalIdentity && additionalToken) {
+            await this.userService.updateUserIdentity(user, additionalIdentity, additionalToken);
+        }
+
+        if (user.blocked) {
+            log.warn({ user: user.id }, "user blocked on signup");
+        }
+
+        await this.userService.updateUserEnvVarsOnLogin(user, envVars);
+
+        /** no await */ trackSignup(user, req, this.analytics).catch((err) =>
+            log.warn({ userId: user.id }, "trackSignup", err),
+        );
+
+        await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnTo, authHost: host });
     }
 
     protected sendCompletionRedirectWithError(response: express.Response, error: object): void {
@@ -603,11 +631,6 @@ export class GenericAuthProvider implements AuthProvider {
             );
 
             if (currentGitpodUser) {
-                const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({
-                    config,
-                    identity: candidate,
-                    user: currentGitpodUser,
-                });
                 const elevateScopes = authFlow.overrideScopes
                     ? undefined
                     : await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
@@ -619,17 +642,11 @@ export class GenericAuthProvider implements AuthProvider {
                 flowContext = <TosFlow.WithUser>{
                     user: User.censor(currentGitpodUser),
                     isBlocked,
-                    termsAcceptanceRequired,
                     returnToUrl: authFlow.returnTo,
                     authHost: this.host,
                     elevateScopes,
                 };
             } else {
-                const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({
-                    config,
-                    identity: candidate,
-                });
-
                 // `checkSignUp` might throgh `AuthError`s with the intention to block the signup process.
                 await this.userService.checkSignUp({ config, identity: candidate });
 
@@ -644,7 +661,6 @@ export class GenericAuthProvider implements AuthProvider {
                     additionalToken: githubToken,
                     authHost: this.host,
                     isBlocked,
-                    termsAcceptanceRequired,
                 };
             }
             done(undefined, currentGitpodUser || candidate, flowContext);

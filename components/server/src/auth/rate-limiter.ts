@@ -49,7 +49,6 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
     };
     const defaultFunctions: FunctionsConfig = {
         getLoggedInUser: { group: "default", points: 1 },
-        getTerms: { group: "default", points: 1 },
         updateLoggedInUser: { group: "default", points: 1 },
         getAuthProviders: { group: "default", points: 1 },
         getOwnAuthProviders: { group: "default", points: 1 },

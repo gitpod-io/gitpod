@@ -4,8 +4,15 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { UserService, CheckSignUpParams, CheckTermsParams } from "../../../src/user/user-service";
-import { User, WorkspaceTimeoutDuration, WORKSPACE_TIMEOUT_EXTENDED, WORKSPACE_TIMEOUT_EXTENDED_ALT, WORKSPACE_TIMEOUT_DEFAULT_LONG, WORKSPACE_TIMEOUT_DEFAULT_SHORT } from "@gitpod/gitpod-protocol";
+import { UserService, CheckSignUpParams } from "../../../src/user/user-service";
+import {
+    User,
+    WorkspaceTimeoutDuration,
+    WORKSPACE_TIMEOUT_EXTENDED,
+    WORKSPACE_TIMEOUT_EXTENDED_ALT,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+} from "@gitpod/gitpod-protocol";
 import { inject } from "inversify";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
@@ -85,24 +92,6 @@ export class UserServiceEE extends UserService {
 
         // 2. check defaults
         await super.checkSignUp(params);
-    }
-
-    async checkTermsAcceptanceRequired(params: CheckTermsParams): Promise<boolean> {
-        ///////////////////////////////////////////////////////////////////////////
-        // Currently, we don't check for ToS on login.
-        ///////////////////////////////////////////////////////////////////////////
-
-        return false;
-    }
-
-    async checkTermsAccepted(user: User) {
-        // called from GitpodServer implementation
-
-        ///////////////////////////////////////////////////////////////////////////
-        // Currently, we don't check for ToS on Gitpod API calls.
-        ///////////////////////////////////////////////////////////////////////////
-
-        return true;
     }
 
     async checkAutomaticOssEligibility(user: User): Promise<boolean> {
