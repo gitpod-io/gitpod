@@ -217,7 +217,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	var (
 		createPVC          bool
 		pvc                *corev1.PersistentVolumeClaim
-		startTime, endTime time.Time
+		startTime, endTime time.Time // the start time and end time of PVC restoring from VolumeSnapshot
 	)
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
 		if feature == api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM {
@@ -235,7 +235,10 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		if err != nil && !k8serr.IsAlreadyExists(err) {
 			return nil, xerrors.Errorf("cannot create pvc object for workspace pod: %w", err)
 		}
-		startTime = time.Now()
+		// we only calculate the time that PVC restoring from VolumeSnapshot
+		if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
+			startTime = time.Now()
+		}
 	}
 
 	// create the Pod in the cluster and wait until is scheduled
@@ -266,7 +269,8 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			return false, err
 		}
 
-		if createPVC {
+		// we only calculate the time that PVC restoring from VolumeSnapshot
+		if createPVC && startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
 			err = wait.PollWithContext(ctx, 100*time.Millisecond, time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
 			if err != nil {
 				return false, nil
