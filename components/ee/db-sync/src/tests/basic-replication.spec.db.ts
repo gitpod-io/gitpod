@@ -100,7 +100,8 @@ describe("Basic unidirectional replication", () => {
 
     it("Should replicate with an end date");
 
-    it("Should overwrite outdated values and keep newer ones intact", async () => {
+    it("Should overwrite outdated values and keep newer ones intact", async function () {
+        this.timeout(10000);
         await query(
             source,
             `INSERT INTO names VALUES ("9fa18735-c43b-4651-81c5-ddfbdee1035c", "Foo Old", "1970-01-01 00:00:01.001", 0)`,
@@ -161,7 +162,8 @@ describe("Basic unidirectional replication", () => {
         expect(Date.now() - new Date(lastExport[0].value).getTime()).to.be.greaterThan(0);
     });
 
-    it("Should pick up from the last replication time", async () => {
+    it("Should pick up from the last replication time", async function () {
+        this.timeout(10000);
         await query(
             source,
             `INSERT INTO names VALUES ("9fa18735-c43b-4651-81c5-ddfbdee1035c", "Foo", "1970-01-01 00:00:01.001", 0)`,
