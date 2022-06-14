@@ -10,7 +10,7 @@ function Arrow(props: { up: boolean; customBorderClasses?: string }) {
             className={
                 "mx-2 " +
                 (props.customBorderClasses ||
-                    "border-gray-400 dark:border-gray-500 group-hover:border-gray-600 dark:group-hover:border-gray-400")
+                    "border-gray-400 dark:border-gray-600 group-hover:border-gray-600 dark:group-hover:border-gray-400")
             }
             style={{
                 marginTop: 2,
