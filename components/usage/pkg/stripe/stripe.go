@@ -6,7 +6,9 @@ package stripe
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/stripe/stripe-go/v72"
 )
@@ -30,4 +32,26 @@ func Authenticate(apiKeyFile string) error {
 
 	stripe.Key = stripeKeys.SecretKey
 	return nil
+}
+
+// queriesForCustomersWithTeamIds constructs Stripe query strings to find the Stripe Customer for each teamId
+// It returns multiple queries, each being a big disjunction of subclauses so that we can process multiple teamIds in one query.
+// `clausesPerQuery` is a limit enforced by the Stripe API.
+func queriesForCustomersWithTeamIds(teamIds []string) []string {
+	const clausesPerQuery = 10
+	var queries []string
+	sb := strings.Builder{}
+
+	for i := 0; i < len(teamIds); i += clausesPerQuery {
+		sb.Reset()
+		for j := 0; j < clausesPerQuery && i+j < len(teamIds); j++ {
+			sb.WriteString(fmt.Sprintf("metadata['teamId']:'%s'", teamIds[i+j]))
+			if j < clausesPerQuery-1 && i+j < len(teamIds)-1 {
+				sb.WriteString(" OR ")
+			}
+		}
+		queries = append(queries, sb.String())
+	}
+
+	return queries
 }
