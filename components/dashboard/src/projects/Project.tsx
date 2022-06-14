@@ -34,7 +34,7 @@ export default function () {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(false);
     const [branches, setBranches] = useState<Project.BranchDetails[]>([]);
-    const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildWithStatus | undefined>>(new Map());
+    const [prebuilds, setPrebuilds] = useState<Map<string, PrebuildWithStatus | undefined>>(new Map());
     const [prebuildLoaders] = useState<Set<string>>(new Set());
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
@@ -122,18 +122,18 @@ export default function () {
         });
     };
 
-    const lastPrebuild = (branch: Project.BranchDetails) => {
-        const lastPrebuild = lastPrebuilds.get(branch.name);
-        if (!lastPrebuild) {
+    const matchingPrebuild = (branch: Project.BranchDetails) => {
+        const matchingPrebuild = prebuilds.get(branch.name);
+        if (!matchingPrebuild) {
             // do not await here.
             loadPrebuild(branch);
         }
-        return lastPrebuild;
+        return matchingPrebuild;
     };
 
     const loadPrebuild = async (branch: Project.BranchDetails) => {
-        if (prebuildLoaders.has(branch.name) || lastPrebuilds.has(branch.name)) {
-            // `lastPrebuilds.has(branch.name)` will be true even if loading finished with no prebuild found.
+        if (prebuildLoaders.has(branch.name) || prebuilds.has(branch.name)) {
+            // `prebuilds.has(branch.name)` will be true even if loading finished with no prebuild found.
             // TODO(at): this need to be revised once prebuild events are integrated
             return;
         }
@@ -141,12 +141,12 @@ export default function () {
             return;
         }
         prebuildLoaders.add(branch.name);
-        const lastPrebuild = await getGitpodService().server.findPrebuilds({
+        const branchPrebuilds = await getGitpodService().server.findPrebuilds({
             projectId: project.id,
             branch: branch.name,
             latest: true,
         });
-        setLastPrebuilds((prev) => new Map(prev).set(branch.name, lastPrebuild[0]));
+        setPrebuilds((prev) => new Map(prev).set(branch.name, branchPrebuilds[0]));
         prebuildLoaders.delete(branch.name);
     };
 
@@ -269,8 +269,10 @@ export default function () {
                                 .filter(filter)
                                 .slice(0, 10)
                                 .map((branch, index) => {
-                                    const prebuild = lastPrebuild(branch); // this might lazily trigger fetching of prebuild details
-
+                                    let prebuild = matchingPrebuild(branch); // this might lazily trigger fetching of prebuild details
+                                    if (prebuild && prebuild.info.changeHash !== branch.changeHash) {
+                                        prebuild = undefined;
+                                    }
                                     const avatar = branch.changeAuthorAvatar && (
                                         <img
                                             className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2 overflow-hidden"
@@ -360,7 +362,8 @@ export default function () {
                                                                       title: "Cancel Prebuild",
                                                                       customFontStyle:
                                                                           "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                                                      onClick: () => cancelPrebuild(prebuild.info.id),
+                                                                      onClick: () =>
+                                                                          prebuild && cancelPrebuild(prebuild.info.id),
                                                                   },
                                                               ]
                                                             : []
