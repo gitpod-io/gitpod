@@ -6,138 +6,140 @@ package cgroup
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
-	"time"
+	"sync"
 
+	v2 "github.com/containerd/cgroups/v2"
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
-var clearLimits = ioLimitOptions{
-	WriteBytesPerSecond: 0,
-	ReadBytesPerSecond:  0,
-	WriteIOPs:           0,
-	ReadIOPs:            0,
-}
-
-type ioLimitOptions struct {
-	WriteBytesPerSecond int64
-	ReadBytesPerSecond  int64
-	WriteIOPs           int64
-	ReadIOPs            int64
-}
-
 type IOLimiterV2 struct {
-	limits ioLimitOptions
+	limits *v2.Resources
+
+	cond *sync.Cond
+
+	devices []string
 }
 
-func NewIOLimiterV2(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) *IOLimiterV2 {
-	limits := ioLimitOptions{
-		WriteBytesPerSecond: writeBytesPerSecond,
-		ReadBytesPerSecond:  readBytesPerSecond,
-		WriteIOPs:           writeIOPs,
-		ReadIOPs:            readIOPs,
-	}
-
+func NewIOLimiterV2(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) (*IOLimiterV2, error) {
+	devices := buildDevices()
+	log.WithField("devices", devices).Info("io limiting devices")
 	return &IOLimiterV2{
-		limits: limits,
-	}
+		limits: buildV2Limits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs, devices),
+
+		cond:    sync.NewCond(&sync.Mutex{}),
+		devices: devices,
+	}, nil
 }
 
 func (c *IOLimiterV2) Name() string  { return "iolimiter-v2" }
 func (c *IOLimiterV2) Type() Version { return Version2 }
 
 func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) error {
+	update := make(chan struct{}, 1)
 	go func() {
-		log.WithField("cgroupPath", cgroupPath).Debug("starting io limiting")
-		// We are racing workspacekit and the interaction with disks.
-		// If we did this just once there's a chance we haven't interacted with all
-		// devices yet, and hence would not impose IO limits on them.
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
+		// TODO(cw): this Go-routine will leak per workspace, until we update config or restart ws-daemon
+		defer close(update)
 
-		ioMaxFile := filepath.Join(basePath, cgroupPath)
+		for {
+			c.cond.L.Lock()
+			c.cond.Wait()
+			c.cond.L.Unlock()
+
+			if ctx.Err() != nil {
+				return
+			}
+
+			update <- struct{}{}
+		}
+	}()
+
+	go func() {
+		log.WithField("cgroupPath", cgroupPath).Info("starting io limiting")
+
+		_, err := v2.NewManager(basePath, filepath.Join("/", cgroupPath), c.limits)
+		if err != nil {
+			log.WithError(err).WithField("basePath", basePath).WithField("cgroupPath", cgroupPath).WithField("limits", c.limits).Error("cannot write IO limits")
+		}
 
 		for {
 			select {
+			case <-update:
+				_, err := v2.NewManager(basePath, filepath.Join("/", cgroupPath), c.limits)
+				if err != nil {
+					log.WithError(err).WithField("basePath", basePath).WithField("cgroupPath", cgroupPath).WithField("limits", c.limits).Error("cannot write IO limits")
+				}
 			case <-ctx.Done():
 				// Prior to shutting down though, we need to reset the IO limits to ensure we don't have
 				// processes stuck in the uninterruptable "D" (disk sleep) state. This would prevent the
 				// workspace pod from shutting down.
-
-				err := c.writeIOMax(ioMaxFile, clearLimits)
+				_, err := v2.NewManager(basePath, filepath.Join("/", cgroupPath), &v2.Resources{})
 				if err != nil {
 					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
 				}
-				log.WithField("cgroupPath", cgroupPath).Debug("stopping io limiting")
+				log.WithField("cgroupPath", cgroupPath).Info("stopping io limiting")
 				return
-			case <-ticker.C:
-				err := c.writeIOMax(ioMaxFile, c.limits)
-				if err != nil {
-					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
-				}
 			}
 		}
 	}()
+
 	return nil
 }
 
-func (c *IOLimiterV2) writeIOMax(cgroupPath string, options ioLimitOptions) error {
-	iostat, err := os.ReadFile(filepath.Join(string(cgroupPath), "io.stat"))
-	if os.IsNotExist(err) {
-		// cgroup gone is ok due to the dispatch/container race
-		return nil
+func (c *IOLimiterV2) Update(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) {
+	c.cond.L.Lock()
+	defer c.cond.L.Unlock()
+
+	log.WithField("limits", c.limits).Info("updating I/O cgroups v2 limits")
+	c.limits = buildV2Limits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs, c.devices)
+
+	c.cond.Broadcast()
+}
+
+func buildV2Limits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64, devices []string) *v2.Resources {
+	resources := &v2.Resources{
+		IO: &v2.IO{},
 	}
 
-	if err != nil {
-		return err
-	}
-
-	// 8 block	SCSI disk devices (0-15)
-	// 9 char	SCSI tape devices
-	// 9 block	Metadisk (RAID) devices
-	// source https://www.kernel.org/doc/Documentation/admin-guide/devices.txt
-	var classesToLimit = []string{"8", "9"}
-	var devs []string
-	for _, line := range strings.Split(string(iostat), "\n") {
-		fields := strings.Fields(line)
-		if len(fields) < 1 {
+	for _, device := range devices {
+		majmin := strings.Split(device, ":")
+		if len(majmin) != 2 {
+			log.WithField("device", device).Info("invalid device")
 			continue
 		}
 
-		for _, class := range classesToLimit {
-			if strings.HasPrefix(fields[0], fmt.Sprintf("%v:", class)) {
-				devs = append(devs, fields[0])
-			}
-		}
-	}
-
-	ioMaxPath := filepath.Join(string(cgroupPath), "io.max")
-	for _, dev := range devs {
-		limit := fmt.Sprintf(
-			"%s wbps=%s rbps=%s wiops=%s riops=%s",
-			dev,
-			getLimit(options.WriteBytesPerSecond),
-			getLimit(options.ReadBytesPerSecond),
-			getLimit(options.WriteIOPs),
-			getLimit(options.ReadIOPs),
-		)
-
-		log.WithField("limit", limit).WithField("ioMaxPath", ioMaxPath).Debug("creating io.max limit")
-		err := os.WriteFile(ioMaxPath, []byte(limit), 0644)
+		major, err := strconv.ParseInt(majmin[0], 10, 64)
 		if err != nil {
-			log.WithField("dev", dev).WithError(err).Warn("cannot write io.max")
+			log.WithError(err).Info("invalid major device")
+			continue
+		}
+
+		minor, err := strconv.ParseInt(majmin[1], 10, 64)
+		if err != nil {
+			log.WithError(err).Info("invalid minor device")
+			continue
+		}
+
+		if readBytesPerSecond > 0 {
+			resources.IO.Max = append(resources.IO.Max, v2.Entry{Major: major, Minor: minor, Type: v2.ReadBPS, Rate: uint64(readBytesPerSecond)})
+		}
+
+		if readIOPs > 0 {
+			resources.IO.Max = append(resources.IO.Max, v2.Entry{Major: major, Minor: minor, Type: v2.ReadIOPS, Rate: uint64(readIOPs)})
+		}
+
+		if writeBytesPerSecond > 0 {
+			resources.IO.Max = append(resources.IO.Max, v2.Entry{Major: major, Minor: minor, Type: v2.WriteBPS, Rate: uint64(writeBytesPerSecond)})
+		}
+
+		if writeIOPs > 0 {
+			resources.IO.Max = append(resources.IO.Max, v2.Entry{Major: major, Minor: minor, Type: v2.WriteIOPS, Rate: uint64(writeIOPs)})
 		}
 	}
 
-	return nil
-}
+	log.WithField("resources", resources).Info("cgroups v2 limits")
 
-func getLimit(v int64) string {
-	if v <= 0 {
-		return "max"
-	}
-	return fmt.Sprintf("%d", v)
+	return resources
 }
