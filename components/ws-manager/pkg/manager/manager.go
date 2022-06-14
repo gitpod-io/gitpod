@@ -215,9 +215,9 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	span.LogKV("event", "pod description created")
 
 	var (
-		createPVC         bool
-		pvc               *corev1.PersistentVolumeClaim
-		volumeRestoreTime time.Time
+		createPVC          bool
+		pvc                *corev1.PersistentVolumeClaim
+		startTime, endTime time.Time
 	)
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
 		if feature == api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM {
@@ -235,7 +235,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		if err != nil && !k8serr.IsAlreadyExists(err) {
 			return nil, xerrors.Errorf("cannot create pvc object for workspace pod: %w", err)
 		}
-		volumeRestoreTime = time.Now()
+		startTime = time.Now()
 	}
 
 	// create the Pod in the cluster and wait until is scheduled
@@ -276,8 +276,9 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			hist, err := m.metrics.volumeRestoreTimeHistVec.GetMetricWithLabelValues(wsType, req.Spec.Class)
 			if err != nil {
 				log.WithError(err).WithField("type", wsType).Warn("cannot get volume restore time histogram metric")
-			} else {
-				hist.Observe(time.Since(volumeRestoreTime).Seconds())
+			} else if endTime.IsZero() {
+				endTime = time.Now()
+				hist.Observe(endTime.Sub(startTime).Seconds())
 			}
 		}
 
