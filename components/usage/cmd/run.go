@@ -9,6 +9,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/controller"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/spf13/cobra"
 	"net"
 	"os"
@@ -21,7 +22,8 @@ func init() {
 
 func run() *cobra.Command {
 	var (
-		verbose bool
+		verbose    bool
+		apiKeyFile string
 	)
 
 	cmd := &cobra.Command{
@@ -39,6 +41,11 @@ func run() *cobra.Command {
 			})
 			if err != nil {
 				log.WithError(err).Fatal("Failed to establish database connection.")
+			}
+
+			err = stripe.Authenticate(apiKeyFile)
+			if err != nil {
+				log.WithError(err).Fatal("Failed to initialize stripe client.")
 			}
 
 			ctrl, err := controller.New(1*time.Minute, controller.NewUsageReconciler(conn))
@@ -65,6 +72,7 @@ func run() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&verbose, "verbose", false, "Toggle verbose logging (debug level)")
+	cmd.Flags().StringVar(&apiKeyFile, "api-key-file", "/stripe-secret/apikeys", "Location of the stripe credentials file on disk")
 
 	return cmd
 }
