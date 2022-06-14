@@ -786,22 +786,28 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		hist.Observe(time.Since(t).Seconds())
 	}
 
+	_, isBackup := initializer.Spec.(*csapi.WorkspaceInitializer_Backup)
+
 	if err != nil {
-		c, cErr := m.manager.metrics.totalRestoreFailureCounterVec.GetMetricWithLabelValues(wsType, wsClass)
-		if cErr != nil {
-			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore failure counter")
-		} else {
-			c.Inc()
+		if isBackup {
+			c, cErr := m.manager.metrics.totalRestoreFailureCounterVec.GetMetricWithLabelValues(wsType, wsClass)
+			if cErr != nil {
+				log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore failure counter")
+			} else {
+				c.Inc()
+			}
 		}
 
 		return xerrors.Errorf("cannot initialize workspace: %w", err)
 	}
 
-	c, cErr := m.manager.metrics.totalRestoreSuccessCounterVec.GetMetricWithLabelValues(wsType, wsClass)
-	if cErr != nil {
-		log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore success counter")
-	} else {
-		c.Inc()
+	if isBackup {
+		c, cErr := m.manager.metrics.totalRestoreSuccessCounterVec.GetMetricWithLabelValues(wsType, wsClass)
+		if cErr != nil {
+			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore success counter")
+		} else {
+			c.Inc()
+		}
 	}
 	return nil
 }
