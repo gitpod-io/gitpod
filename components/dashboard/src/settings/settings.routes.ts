@@ -18,3 +18,5 @@ export const settingsPathTeamsJoin = [settingsPathTeams, "join"].join("/");
 export const settingsPathTeamsNew = [settingsPathTeams, "new"].join("/");
 
 export const settingsPathVariables = "/variables";
+
+export const settingsPathSSHKeys = "/keys";

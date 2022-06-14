@@ -19,7 +19,7 @@ export default function Modal(props: {
     closeable?: boolean;
     className?: string;
     onClose: () => void;
-    onEnter?: () => boolean;
+    onEnter?: () => boolean | Promise<boolean>;
 }) {
     const closeModal = (manner: CloseModalManner) => {
         props.onClose();
@@ -36,7 +36,7 @@ export default function Modal(props: {
             .then()
             .catch(console.error);
     };
-    const handler = (evt: KeyboardEvent) => {
+    const handler = async (evt: KeyboardEvent) => {
         if (!props.visible) {
             return;
         }
@@ -48,7 +48,7 @@ export default function Modal(props: {
         }
         if (evt.key === "Enter") {
             if (props.onEnter) {
-                if (props.onEnter()) {
+                if (await props.onEnter()) {
                     closeModal("enter");
                 }
             } else {
