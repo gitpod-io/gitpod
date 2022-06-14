@@ -14,6 +14,7 @@ import {
     settingsPathPreferences,
     settingsPathTeams,
     settingsPathVariables,
+    settingsPathSSHKeys,
 } from "./settings.routes";
 
 export default function getSettingsMenu(params: { showPaymentUI?: boolean; showUsageBasedUI?: boolean }) {
@@ -49,6 +50,10 @@ export default function getSettingsMenu(params: { showPaymentUI?: boolean; showU
         {
             title: "Variables",
             link: [settingsPathVariables],
+        },
+        {
+            title: "SSH Keys",
+            link: [settingsPathSSHKeys],
         },
         {
             title: "Integrations",

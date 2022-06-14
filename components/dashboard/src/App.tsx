@@ -34,6 +34,7 @@ import {
     settingsPathTeamsJoin,
     settingsPathTeamsNew,
     settingsPathVariables,
+    settingsPathSSHKeys,
 } from "./settings/settings.routes";
 import {
     projectsPathInstallGitHubApp,
@@ -56,6 +57,7 @@ const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/
 const Plans = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Plans"));
 const Teams = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Teams"));
 const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/EnvironmentVariables"));
+const SSHKeys = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/SSHKeys"));
 const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Integrations"));
 const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Preferences"));
 const Open = React.lazy(() => import(/* webpackPrefetch: true */ "./start/Open"));
@@ -352,6 +354,7 @@ function App() {
                     <Route path={settingsPathBilling} exact component={Billing} />
                     <Route path={settingsPathPlans} exact component={Plans} />
                     <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
+                    <Route path={settingsPathSSHKeys} exact component={SSHKeys} />
                     <Route path={settingsPathPreferences} exact component={Preferences} />
                     <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
                     <Route path="/from-referrer" exact component={FromReferrer} />
