@@ -223,13 +223,12 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 			d.mu.Unlock()
 
 			for _, l := range d.Listener {
-				l := l
-				go func() {
-					err := l.WorkspaceAdded(containerCtx, s.Workspace)
+				go func(listener Listener) {
+					err := listener.WorkspaceAdded(containerCtx, s.Workspace)
 					if err != nil {
 						log.WithError(err).WithFields(owi).Error("dispatch listener failed")
 					}
-				}()
+				}(l)
 			}
 		}()
 		go func() {
