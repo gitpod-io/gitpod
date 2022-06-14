@@ -122,6 +122,9 @@ export class WorkspaceDeletionService {
 
     /**
      * Perform deletion of volume snapshot from all clusters and from cloud provider:
+     * ws-manager (workspace) takes care of deleting actual disk snapshots from cloud provider
+     * to reduce load on k8s api server, we try to clean up volume snapshot k8s objects from
+     * all clusters prior to deleting them from cloud provider.
      *  - throws an error if something went wrong during deletion
      *  - returns true in case of successful deletion
      * @param ctx
