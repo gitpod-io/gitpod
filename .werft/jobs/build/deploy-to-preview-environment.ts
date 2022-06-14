@@ -161,6 +161,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             clusterName: deploymentConfig.namespace,
             nodeExporterPort: 9100,
             previewDomain: deploymentConfig.domain,
+            previewName: previewNameFromBranchName(jobConfig.repository.branch),
             stackdriverServiceAccount: STACKDRIVER_SERVICEACCOUNT,
             withVM: withVM,
             werft: werft

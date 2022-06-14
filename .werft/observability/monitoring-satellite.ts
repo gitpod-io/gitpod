@@ -9,6 +9,7 @@ type MonitoringSatelliteInstallerOptions = {
     clusterName: string;
     nodeExporterPort: number;
     branch: string;
+    previewName: string;
     previewDomain: string;
     stackdriverServiceAccount: any;
     withVM: boolean;
@@ -30,6 +31,7 @@ export class MonitoringSatelliteInstaller {
             stackdriverServiceAccount,
             withVM,
             previewDomain,
+            previewName,
             nodeExporterPort,
         } = this.options;
 
@@ -57,7 +59,7 @@ export class MonitoringSatelliteInstaller {
         let jsonnetRenderCmd = `cd observability && jsonnet -c -J vendor -m monitoring-satellite/manifests \
         --ext-code config="{
             namespace: '${satelliteNamespace}',
-            clusterName: '${satelliteNamespace}',
+            clusterName: '${previewName}',
             tracing: {
                 honeycombAPIKey: '${process.env.HONEYCOMB_API_KEY}',
                 honeycombDataset: 'preview-environments',
@@ -73,6 +75,9 @@ export class MonitoringSatelliteInstaller {
                 privateKey: '${stackdriverServiceAccount.private_key}',
             },
             prometheus: {
+                externalLabels: {
+                    environment: 'preview-environments',
+                },
                 resources: {
                     requests: { memory: '200Mi', cpu: '50m' },
                 },
