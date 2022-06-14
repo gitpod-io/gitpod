@@ -21,8 +21,6 @@ import { OneTimeSecretDB } from "./one-time-secret-db";
 import { DeletedEntryGC } from "./typeorm/deleted-entry-gc";
 import { TypeORMAppInstallationDBImpl } from "./typeorm/app-installation-db-impl";
 import { AppInstallationDB } from "./app-installation-db";
-import { TheiaPluginDBImpl } from "./typeorm/theia-plugin-db-impl";
-import { TheiaPluginDB } from "./theia-plugin-db";
 import { TypeORMOneTimeSecretDBImpl } from "./typeorm/one-time-secret-db-impl";
 import { PendingGithubEventDB, TransactionalPendingGithubEventDBFactory } from "./pending-github-event-db";
 import {
@@ -91,9 +89,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
 
     bind(TypeORMAppInstallationDBImpl).toSelf().inSingletonScope();
     bind(AppInstallationDB).toService(TypeORMAppInstallationDBImpl);
-
-    bind(TheiaPluginDBImpl).toSelf().inSingletonScope();
-    bind(TheiaPluginDB).toService(TheiaPluginDBImpl);
 
     bind(TypeORMOneTimeSecretDBImpl).toSelf().inSingletonScope();
     bind(OneTimeSecretDB).toService(TypeORMOneTimeSecretDBImpl);
