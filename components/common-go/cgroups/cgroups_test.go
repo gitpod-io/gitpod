@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-var cgroupPath = []string{"kubepods", "burstable", "pods234sdf", "234as8df34"}
+var cgroupPath = []string{"/kubepods", "burstable", "pods234sdf", "234as8df34"}
 
 func createHierarchy(t *testing.T, cpuEnabled bool) (string, string) {
 	testRoot := t.TempDir()
