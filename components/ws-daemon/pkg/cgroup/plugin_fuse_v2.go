@@ -23,9 +23,9 @@ func (c *FuseDeviceEnablerV2) Type() Version { return Version2 }
 
 func (c *FuseDeviceEnablerV2) Apply(ctx context.Context, basePath, cgroupPath string) error {
 	fullCgroupPath := filepath.Join(basePath, cgroupPath)
-	cgroupFD, err := unix.Open(fullCgroupPath, unix.O_DIRECTORY|unix.O_RDONLY, 0o600)
+	cgroupFD, err := unix.Open(fullCgroupPath, unix.O_DIRECTORY|unix.O_RDONLY|unix.O_CLOEXEC, 0600)
 	if err != nil {
-		return xerrors.Errorf("cannot get directory fd for %s", fullCgroupPath)
+		return xerrors.Errorf("cannot get directory fd for %s: %w", fullCgroupPath, err)
 	}
 	defer unix.Close(cgroupFD)
 
