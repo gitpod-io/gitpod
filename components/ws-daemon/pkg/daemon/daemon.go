@@ -58,12 +58,17 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, err
 	}
 
+	cgroupV2IOLimiter, err := cgroup.NewIOLimiterV2(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
+	if err != nil {
+		return nil, err
+	}
+
 	cgroupPlugins, err := cgroup.NewPluginHost(config.CPULimit.CGroupBasePath,
 		&cgroup.CacheReclaim{},
+		cgroupV1IOLimiter,
+		cgroupV2IOLimiter,
 		&cgroup.FuseDeviceEnablerV1{},
 		&cgroup.FuseDeviceEnablerV2{},
-		cgroupV1IOLimiter,
-		cgroup.NewIOLimiterV2(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS),
 	)
 	if err != nil {
 		return nil, err
@@ -76,6 +81,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	var configReloader CompositeConfigReloader
 	configReloader = append(configReloader, ConfigReloaderFunc(func(ctx context.Context, config *Config) error {
 		cgroupV1IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
+		cgroupV2IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
 		return nil
 	}))
 

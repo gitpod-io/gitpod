@@ -184,7 +184,7 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 
 	controller, err := newCFSController(d.Config.CGroupBasePath, cgroupPath)
 	if err != nil {
-		return err
+		return xerrors.Errorf("cannot start CFS controller: %w", err)
 	}
 
 	d.workspaces[ws.InstanceID] = &workspace{
@@ -235,8 +235,8 @@ func newCFSController(basePath, cgroupPath string) (CFSController, error) {
 
 	if unified {
 		fullPath := filepath.Join(basePath, cgroupPath)
-		if err := cgroups.EnsureCpuControllerEnabled(basePath, cgroupPath); err != nil {
-			return nil, err
+		if err := cgroups.EnsureCpuControllerEnabled(basePath, filepath.Join("/", cgroupPath)); err != nil {
+			return nil, xerrors.Errorf("could not check CPU controller is enabled: %w", err)
 		}
 
 		return CgroupV2CFSController(fullPath), nil
