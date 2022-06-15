@@ -24,7 +24,6 @@ packages:
     argdeps:
       - imageRepoBase
       - intellijDownloadUrl
-      - jetbrainsBackendQualifier
     config:
       dockerfile: leeway.Dockerfile
       metadata:
@@ -32,9 +31,8 @@ packages:
       buildArgs:
         JETBRAINS_BACKEND_URL: ${intellijDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
-        JETBRAINS_BACKEND_QUALIFIER: ${jetbrainsBackendQualifier}
+        JETBRAINS_BACKEND_QUALIFIER: stable
       image:
-        - ${imageRepoBase}/ide/intellij:${version}
         - ${imageRepoBase}/ide/intellij:commit-${__git_commit}
   - name: intellij-latest
     type: docker
@@ -56,7 +54,7 @@ packages:
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
-        - ${imageRepoBase}/ide/intellij:${version}-latest
+        - ${imageRepoBase}/ide/intellij:${version}
         - ${imageRepoBase}/ide/intellij:commit-${__git_commit}-latest
   - name: goland
     type: docker
@@ -70,7 +68,6 @@ packages:
     argdeps:
       - imageRepoBase
       - golandDownloadUrl
-      - jetbrainsBackendQualifier
     config:
       dockerfile: leeway.Dockerfile
       metadata:
@@ -78,9 +75,8 @@ packages:
       buildArgs:
         JETBRAINS_BACKEND_URL: ${golandDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
-        JETBRAINS_BACKEND_QUALIFIER: ${jetbrainsBackendQualifier}
+        JETBRAINS_BACKEND_QUALIFIER: stable
       image:
-        - ${imageRepoBase}/ide/goland:${version}
         - ${imageRepoBase}/ide/goland:commit-${__git_commit}
   - name: goland-latest
     type: docker
@@ -102,7 +98,7 @@ packages:
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
-        - ${imageRepoBase}/ide/goland:${version}-latest
+        - ${imageRepoBase}/ide/goland:${version}
         - ${imageRepoBase}/ide/goland:commit-${__git_commit}-latest
   - name: pycharm
     type: docker
@@ -116,7 +112,6 @@ packages:
     argdeps:
       - imageRepoBase
       - pycharmDownloadUrl
-      - jetbrainsBackendQualifier
     config:
       dockerfile: leeway.Dockerfile
       metadata:
@@ -124,9 +119,8 @@ packages:
       buildArgs:
         JETBRAINS_BACKEND_URL: ${pycharmDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_pycharm.json
-        JETBRAINS_BACKEND_QUALIFIER: ${jetbrainsBackendQualifier}
+        JETBRAINS_BACKEND_QUALIFIER: stable
       image:
-        - ${imageRepoBase}/ide/pycharm:${version}
         - ${imageRepoBase}/ide/pycharm:commit-${__git_commit}
   - name: pycharm-latest
     type: docker
@@ -148,7 +142,7 @@ packages:
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_pycharm.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
-        - ${imageRepoBase}/ide/pycharm:${version}-latest
+        - ${imageRepoBase}/ide/pycharm:${version}
         - ${imageRepoBase}/ide/pycharm:commit-${__git_commit}-latest
   - name: phpstorm
     type: docker
@@ -162,7 +156,6 @@ packages:
     argdeps:
       - imageRepoBase
       - phpstormDownloadUrl
-      - jetbrainsBackendQualifier
     config:
       dockerfile: leeway.Dockerfile
       metadata:
@@ -170,9 +163,8 @@ packages:
       buildArgs:
         JETBRAINS_BACKEND_URL: ${phpstormDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
-        JETBRAINS_BACKEND_QUALIFIER: ${jetbrainsBackendQualifier}
+        JETBRAINS_BACKEND_QUALIFIER: stable
       image:
-        - ${imageRepoBase}/ide/phpstorm:${version}
         - ${imageRepoBase}/ide/phpstorm:commit-${__git_commit}
   - name: phpstorm-latest
     type: docker
@@ -194,5 +186,5 @@ packages:
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
-        - ${imageRepoBase}/ide/phpstorm:${version}-latest
+        - ${imageRepoBase}/ide/phpstorm:${version}
         - ${imageRepoBase}/ide/phpstorm:commit-${__git_commit}-latest
