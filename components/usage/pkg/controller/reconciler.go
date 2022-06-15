@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"io/ioutil"
@@ -125,7 +126,24 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	}
 	status.Report = report
 
+	submitUsageReport(status.Report)
+
 	return status, nil
+}
+
+func submitUsageReport(report []TeamUsage) {
+	var teamIdSet = make(map[string]bool)
+
+	// Convert the usage report into a set of teamIds occurring in the report
+	for _, usageEntry := range report {
+		teamIdSet[usageEntry.TeamID] = true
+	}
+	teamIds := make([]string, 0, len(teamIdSet))
+	for k := range teamIdSet {
+		teamIds = append(teamIds, k)
+	}
+
+	stripe.FindCustomersForTeamIds(teamIds)
 }
 
 func generateUsageReport(teams []teamWithWorkspaces, maxStopTime time.Time) ([]TeamUsage, error) {
