@@ -2650,6 +2650,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async adminGetLicense(ctx: TraceContext): Promise<LicenseInfo> {
+        traceAPIParams(ctx, {});
+
+        await this.guardAdminAccess("adminGetLicense", {}, Permission.ADMIN_API);
+
         const licenseData = this.licenseEvaluator.getLicenseData();
         const licensePayload = licenseData.payload;
         const licenseValid = this.licenseEvaluator.validate();
@@ -2674,7 +2678,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
     }
 
-    async licenseFeatures(ctx: TraceContext, features: string[], userCount: number): Promise<string[]> {
+    protected async licenseFeatures(ctx: TraceContext, features: string[], userCount: number): Promise<string[]> {
         var enabledFeatures: string[] = [];
         for (const feature of features) {
             const featureName: Feature = Feature[feature as keyof typeof Feature];
