@@ -895,17 +895,23 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         const repo = await this.getPrebuiltWorkspaceUpdatableRepo();
         await repo.update(updatableId, { isResolved: true });
     }
-    public async getUnresolvedUpdatables(): Promise<PrebuiltUpdatableAndWorkspace[]> {
+    public async getUnresolvedUpdatables(limit?: number): Promise<PrebuiltUpdatableAndWorkspace[]> {
         const pwsuRepo = await this.getPrebuiltWorkspaceUpdatableRepo();
 
         // select * from d_b_prebuilt_workspace_updatable as pwsu left join d_b_prebuilt_workspace pws ON pws.id = pwsu.prebuiltWorkspaceId left join d_b_workspace ws on pws.buildWorkspaceId = ws.id left join d_b_workspace_instance wsi on ws.id = wsi.workspaceId where pwsu.isResolved = 0
-        return (await pwsuRepo
+        const query = pwsuRepo
             .createQueryBuilder("pwsu")
             .innerJoinAndMapOne("pwsu.prebuild", DBPrebuiltWorkspace, "pws", "pwsu.prebuiltWorkspaceId = pws.id")
             .innerJoinAndMapOne("pwsu.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id")
             .innerJoinAndMapOne("pwsu.instance", DBWorkspaceInstance, "wsi", "ws.id = wsi.workspaceId")
             .where("pwsu.isResolved = 0")
-            .getMany()) as any;
+            .orderBy("ws.creationTime", "DESC");
+
+        if (!!limit) {
+            query.limit(limit);
+        }
+
+        return (await query.getMany()) as any;
     }
 
     public async findLayoutDataByWorkspaceId(workspaceId: string): Promise<LayoutData | undefined> {

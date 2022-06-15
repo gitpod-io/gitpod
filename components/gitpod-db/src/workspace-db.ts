@@ -179,7 +179,7 @@ export interface WorkspaceDB {
     attachUpdatableToPrebuild(pwsid: string, update: PrebuiltWorkspaceUpdatable): Promise<void>;
     findUpdatablesForPrebuild(pwsid: string): Promise<PrebuiltWorkspaceUpdatable[]>;
     markUpdatableResolved(updatableId: string): Promise<void>;
-    getUnresolvedUpdatables(): Promise<PrebuiltUpdatableAndWorkspace[]>;
+    getUnresolvedUpdatables(limit?: number): Promise<PrebuiltUpdatableAndWorkspace[]>;
 
     findLayoutDataByWorkspaceId(workspaceId: string): Promise<LayoutData | undefined>;
     storeLayoutData(layoutData: LayoutData): Promise<LayoutData>;

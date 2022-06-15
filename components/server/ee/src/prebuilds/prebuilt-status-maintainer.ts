@@ -28,8 +28,10 @@ export interface CheckRunInfo {
     details_url: string;
 }
 
-// 6 hours
-const MAX_UPDATABLE_AGE = 6 * 60 * 60 * 1000;
+const MAX_UPDATABLE_AGE = 6 * 60 * 60 * 1000; // 6h
+const MAX_UPDATABLES = 100; // to be processed at a time
+const IGNORED_UPDATEABLE_AGE = 24 * 60 * 60 * 1000; // 24h
+
 const DEFAULT_STATUS_DESCRIPTION = "Open a prebuilt online workspace in Gitpod";
 const NON_PREBUILT_STATUS_DESCRIPTION = "Open an online workspace in Gitpod";
 
@@ -181,7 +183,6 @@ export class PrebuildStatusMaintainer implements Disposable {
                     return;
                 }
 
-                let found = true;
                 try {
                     await githubApi.repos.createCommitStatus({
                         owner: updatable.owner,
@@ -197,25 +198,10 @@ export class PrebuildStatusMaintainer implements Disposable {
                                 : "success",
                     });
                 } catch (err) {
-                    if (err.message == "Not Found") {
-                        log.info(
-                            "Did not find repository while updating updatable. Probably we lost the GitHub permission for the repo.",
-                            { owner: updatable.owner, repo: updatable.repo },
-                        );
-                        found = true;
-                    } else {
-                        throw err;
-                    }
+                    log.info("Could not create commit status.", { updatable, errorMessage: err?.message });
+                    // (AT) this might happen e.g. when a commit is removed from remote repository (force push).
+                    // Note, we're ignoring those errors for tracing.
                 }
-                TraceContext.addNestedTags(
-                    { span },
-                    {
-                        doUpdate: {
-                            update: "done",
-                            found,
-                        },
-                    },
-                );
 
                 await this.workspaceDB.trace({ span }).markUpdatableResolved(updatable.id);
                 log.info(`Resolved updatable. Marked check on ${updatable.contextUrl} as ${conclusion}`);
@@ -243,14 +229,19 @@ export class PrebuildStatusMaintainer implements Disposable {
         const ctx = TraceContext.childContext("periodicUpdatableCheck", {});
 
         try {
-            const unresolvedUpdatables = await this.workspaceDB.trace(ctx).getUnresolvedUpdatables();
+            const unresolvedUpdatables = await this.workspaceDB.trace(ctx).getUnresolvedUpdatables(MAX_UPDATABLES);
             for (const updatable of unresolvedUpdatables) {
-                if (Date.now() - Date.parse(updatable.workspace.creationTime) > MAX_UPDATABLE_AGE) {
+                const age = Date.now() - Date.parse(updatable.workspace.creationTime);
+                if (age > MAX_UPDATABLE_AGE && age < IGNORED_UPDATEABLE_AGE) {
                     log.info(
                         "found unresolved updatable that's older than MAX_UPDATABLE_AGE and is inconclusive. Resolving.",
                         updatable,
                     );
-                    await this.doUpdate(ctx, updatable, updatable.prebuild);
+                    try {
+                        await this.doUpdate(ctx, updatable, updatable.prebuild);
+                    } catch (error) {
+                        log.error("Failed to process prebuild updatable.", error, { updatable });
+                    }
                 }
             }
         } catch (err) {
