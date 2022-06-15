@@ -146,17 +146,32 @@ spec:
               then
                 echo "Gitpod: configuring mirrored container registry"
 
-                yq e -i ".containerRegistry.inCluster = false" "${CONFIG_FILE}"
-                yq e -i ".containerRegistry.external.url = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
-                yq e -i ".containerRegistry.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
-                yq e -i ".containerRegistry.external.certificate.name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
                 yq e -i ".repository = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
                 yq e -i ".imagePullSecrets[0].kind = \"secret\"" "${CONFIG_FILE}"
                 yq e -i ".imagePullSecrets[0].name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
                 yq e -i '.dropImageRepo = true' "${CONFIG_FILE}"
-              elif [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
+              fi
+
+              # Output the local registry secret - this is proxy.replicated.com if user hasn't set their own
+              echo "{{repl LocalRegistryImagePullSecret }}" | base64 -d > /tmp/kotsregistry.json
+
+              if [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
               then
                 echo "Gitpod: configuring external container registry"
+
+                # Create a container-registry secret merging the external registry and KOTS registry keys
+                echo '{{repl printf "{\"auths\": {\"%s\": {\"username\": \"%s\", \"password\": %s, \"auth\": \"%s\"}}}" (ConfigOption "reg_server" | default (ConfigOption "reg_url")) (ConfigOption "reg_username") (ConfigOption "reg_password" | toJson) (printf "%s:%s" (ConfigOption "reg_username") (ConfigOption "reg_password") | Base64Encode) }}' \
+                  | yq -o=json '.' - \
+                  > /tmp/gitpodregistry.json
+
+                cat /tmp/kotsregistry.json /tmp/gitpodregistry.json | jq -s '.[0] * .[1]' - - > /tmp/container-registry-secret
+
+                echo "Gitpod: create the container-registry secret"
+                kubectl create secret docker-registry container-registry \
+                  --namespace "{{repl Namespace }}" \
+                  --from-file=.dockerconfigjson=/tmp/container-registry-secret \
+                  -o yaml --dry-run=client | \
+                  kubectl replace --namespace "{{repl Namespace }}" --force -f -
 
                 yq e -i ".containerRegistry.inCluster = false" "${CONFIG_FILE}"
                 yq e -i ".containerRegistry.external.url = \"{{repl ConfigOption "reg_url" }}\"" "${CONFIG_FILE}"
@@ -272,6 +287,23 @@ spec:
               yq eval-all --inplace \
                 'del(select(.kind == "StatefulSet" and .metadata.name == "openvsx-proxy").status)' \
                 "${GITPOD_OBJECTS}/templates/gitpod.yaml"
+
+              if [ '{{repl ConfigOptionEquals "reg_incluster" "1" }}' = "true" ];
+              then
+                echo "Gitpod: Add the local registry secret to the in-cluster registry secret"
+
+                # Get the in-cluster registry secret
+                yq eval-all '(select(.kind == "Secret" and .metadata.name == "builtin-registry-auth") | .data.".dockerconfigjson")' \
+                  "${GITPOD_OBJECTS}/templates/gitpod.yaml" \
+                  | base64 -d \
+                  > /tmp/gitpodregistry.json
+
+                export REGISTRY_SECRET=$(cat /tmp/kotsregistry.json /tmp/gitpodregistry.json | jq -s '.[0] * .[1]' - - | base64 -w 0)
+
+                echo "Gitpod: update the in-cluster registry secret"
+                yq eval-all --inplace '(select(.kind == "Secret" and .metadata.name == "builtin-registry-auth") | .data.".dockerconfigjson") |= env(REGISTRY_SECRET)' \
+                  "${GITPOD_OBJECTS}/templates/gitpod.yaml"
+              fi
 
               echo "Gitpod: Escape any Golang template values"
               sed -i -r 's/(.*\{\{.*)/{{`\1`}}/' "${GITPOD_OBJECTS}/templates/gitpod.yaml"
