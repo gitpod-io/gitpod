@@ -24,6 +24,7 @@ func run() *cobra.Command {
 	var (
 		verbose    bool
 		apiKeyFile string
+		schedule   time.Duration
 	)
 
 	cmd := &cobra.Command{
@@ -48,7 +49,7 @@ func run() *cobra.Command {
 				log.WithError(err).Fatal("Failed to initialize stripe client.")
 			}
 
-			ctrl, err := controller.New(1*time.Minute, controller.NewUsageReconciler(conn))
+			ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn))
 			if err != nil {
 				log.WithError(err).Fatal("Failed to initialize usage controller.")
 			}
@@ -72,6 +73,7 @@ func run() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&verbose, "verbose", false, "Toggle verbose logging (debug level)")
+	cmd.Flags().DurationVar(&schedule, "schedule", 1*time.Hour, "The schedule on which the reconciler should run")
 	cmd.Flags().StringVar(&apiKeyFile, "api-key-file", "/stripe-secret/apikeys", "Location of the stripe credentials file on disk")
 
 	return cmd
