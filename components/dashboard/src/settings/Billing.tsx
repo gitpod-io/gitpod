@@ -4,14 +4,40 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
+import { Team } from "@gitpod/gitpod-protocol";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import DropDown from "../components/DropDown";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { PaymentContext } from "../payment-context";
+import { getGitpodService } from "../service/service";
+import { TeamsContext } from "../teams/teams-context";
+import { UserContext } from "../user-context";
 import getSettingsMenu from "./settings-menu";
 
 export default function Billing() {
+    const { user } = useContext(UserContext);
     const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
+    const { teams } = useContext(TeamsContext);
+    const [teamsWithBillingEnabled, setTeamsWithBillingEnabled] = useState<Team[]>([]);
+
+    const userFullName = user?.fullName || user?.name || "...";
+
+    useEffect(() => {
+        if (!teams) {
+            setTeamsWithBillingEnabled([]);
+            return;
+        }
+        const teamsWithBilling: Team[] = [];
+        Promise.all(
+            teams.map(async (t) => {
+                const customerId = await getGitpodService().server.findStripeCustomerIdForTeam(t.id);
+                if (customerId) {
+                    teamsWithBilling.push(t);
+                }
+            }),
+        ).then(() => setTeamsWithBillingEnabled(teamsWithBilling));
+    }, [teams]);
 
     return (
         <PageWithSubMenu
@@ -28,6 +54,24 @@ export default function Billing() {
                 </Link>{" "}
                 to set up usage-based billing.
             </p>
+            <div className="flex space-x-4">
+                Bill all usage to:
+                <DropDown
+                    customClasses="w-32"
+                    activeEntry={userFullName}
+                    entries={[
+                        {
+                            title: userFullName,
+                            onClick: () => {},
+                        },
+                    ].concat(
+                        teamsWithBillingEnabled.map((t) => ({
+                            title: t.name,
+                            onClick: () => {},
+                        })),
+                    )}
+                />
+            </div>
         </PageWithSubMenu>
     );
 }
