@@ -29,7 +29,7 @@ export class WorkspaceGarbageCollector {
 
     public async start(): Promise<Disposable> {
         if (this.config.workspaceGarbageCollection.disabled) {
-            console.log("wsgc: Garabage collection is disabled");
+            console.log("wsgc: Garbage collection is disabled");
             return {
                 dispose: () => {},
             };
