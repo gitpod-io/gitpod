@@ -65,14 +65,15 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 
 	cgroupPlugins, err := cgroup.NewPluginHost(config.CPULimit.CGroupBasePath,
 		&cgroup.CacheReclaim{},
-		cgroupV1IOLimiter,
-		cgroupV2IOLimiter,
 		&cgroup.FuseDeviceEnablerV1{},
 		&cgroup.FuseDeviceEnablerV2{},
+		cgroupV1IOLimiter,
+		cgroupV2IOLimiter,
 	)
 	if err != nil {
 		return nil, err
 	}
+
 	err = reg.Register(cgroupPlugins)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot register cgroup plugin metrics: %w", err)

@@ -7,6 +7,9 @@ package container
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -455,6 +458,8 @@ func (s *Containerd) IsContainerdReady(ctx context.Context) (bool, error) {
 	return s.Client.IsServing(ctx)
 }
 
+var kubepodsRegexp = regexp.MustCompile(`([^/]+)-([^/]+)-pod`)
+
 // ExtractCGroupPathFromContainer retrieves the CGroupPath from the linux section
 // in a container's OCI spec.
 func ExtractCGroupPathFromContainer(container containers.Container) (cgroupPath string, err error) {
@@ -466,5 +471,25 @@ func ExtractCGroupPathFromContainer(container containers.Container) (cgroupPath 
 	if spec.Linux == nil {
 		return "", xerrors.Errorf("container spec has no Linux section")
 	}
+
+	// systemd: /kubepods.slice/kubepods-<QoS-class>.slice/kubepods-<QoS-class>-pod<pod-UID>.slice:<prefix>:<container-iD>
+	// cgroupfs: /kubepods/<QoS-class>/pod<pod-UID>/<container-iD>
+	fields := strings.SplitN(spec.Linux.CgroupsPath, ":", 3)
+	if len(fields) != 3 {
+		return spec.Linux.CgroupsPath, nil
+	}
+
+	if match := kubepodsRegexp.FindStringSubmatch(fields[0]); len(match) == 3 {
+		root, class := match[1], match[2]
+
+		return filepath.Join(
+			"/",
+			fmt.Sprintf("%v.slice", root),
+			fmt.Sprintf("%v-%v.slice", root, class),
+			fields[0],
+			fmt.Sprintf("%v-%v.scope", fields[1], fields[2]),
+		), nil
+	}
+
 	return spec.Linux.CgroupsPath, nil
 }
