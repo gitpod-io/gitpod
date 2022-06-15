@@ -116,6 +116,7 @@ export interface StartWorkspaceOptions {
     rethrow?: boolean;
     forceDefaultImage?: boolean;
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
+    forcePVC?: boolean;
 }
 
 const MAX_INSTANCE_START_RETRIES = 2;
@@ -275,7 +276,14 @@ export class WorkspaceStarter {
             let instance = await this.workspaceDb
                 .trace({ span })
                 .storeInstance(
-                    await this.newInstance(ctx, workspace, user, options.excludeFeatureFlags || [], ideConfig),
+                    await this.newInstance(
+                        ctx,
+                        workspace,
+                        user,
+                        options.excludeFeatureFlags || [],
+                        ideConfig,
+                        options.forcePVC || false,
+                    ),
                 );
             span.log({ newInstance: instance.id });
 
@@ -640,6 +648,7 @@ export class WorkspaceStarter {
         user: User,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
+        forcePVC: boolean,
     ): Promise<WorkspaceInstance> {
         //#endregion IDE resolution TODO(ak) move to IDE service
         // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
@@ -715,6 +724,10 @@ export class WorkspaceStarter {
         }
 
         featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
+
+        if (forcePVC === true) {
+            featureFlags = featureFlags.concat(["persistent_volume_claim"]);
+        }
 
         if (!!featureFlags) {
             // only set feature flags if there actually are any. Otherwise we waste the
@@ -1283,10 +1296,13 @@ export class WorkspaceStarter {
             }
         }
 
+        let volumeSnapshotId = lastValidWorkspaceInstanceId;
+        // if this is snapshot or prebuild context, then try to find volume snapshot id in it
+        if (SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) {
+            volumeSnapshotId = workspace.context.snapshotBucketId;
+        }
         let volumeSnapshotInfo = new VolumeSnapshotInfo();
-        const volumeSnapshots = await this.workspaceDb
-            .trace(traceCtx)
-            .findVolumeSnapshotById(lastValidWorkspaceInstanceId);
+        const volumeSnapshots = await this.workspaceDb.trace(traceCtx).findVolumeSnapshotById(volumeSnapshotId);
         if (volumeSnapshots !== undefined) {
             volumeSnapshotInfo.setVolumeSnapshotName(volumeSnapshots.id);
             volumeSnapshotInfo.setVolumeSnapshotHandle(volumeSnapshots.volumeHandle);
@@ -1302,7 +1318,10 @@ export class WorkspaceStarter {
         );
         const userTimeoutPromise = this.userService.getDefaultWorkspaceTimeout(user);
 
-        const featureFlags = instance.configuration!.featureFlags || [];
+        let featureFlags = instance.configuration!.featureFlags || [];
+        if (volumeSnapshots !== undefined) {
+            featureFlags = featureFlags.concat(["persistent_volume_claim"]);
+        }
 
         let ideImage: string;
         if (!!instance.configuration?.ideImage) {
@@ -1470,6 +1489,7 @@ export class WorkspaceStarter {
         } else if (SnapshotContext.is(context)) {
             const snapshot = new SnapshotInitializer();
             snapshot.setSnapshot(context.snapshotBucketId);
+            snapshot.setFromVolumeSnapshot(hasVolumeSnapshot);
             result.setSnapshot(snapshot);
         } else if (WithPrebuild.is(context)) {
             if (!CommitContext.is(context)) {
@@ -1478,6 +1498,7 @@ export class WorkspaceStarter {
 
             const snapshot = new SnapshotInitializer();
             snapshot.setSnapshot(context.snapshotBucketId);
+            snapshot.setFromVolumeSnapshot(hasVolumeSnapshot);
             const { initializer } = await this.createCommitInitializer(traceCtx, workspace, context, user);
             const init = new PrebuildInitializer();
             init.setPrebuild(snapshot);

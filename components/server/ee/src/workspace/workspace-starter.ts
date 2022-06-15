@@ -32,8 +32,9 @@ export class WorkspaceStarterEE extends WorkspaceStarter {
         user: User,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
+        forcePVC: boolean,
     ): Promise<WorkspaceInstance> {
-        const instance = await super.newInstance(ctx, workspace, user, excludeFeatureFlags, ideConfig);
+        const instance = await super.newInstance(ctx, workspace, user, excludeFeatureFlags, ideConfig, forcePVC);
         if (await this.eligibilityService.hasFixedWorkspaceResources(user)) {
             const config: WorkspaceInstanceConfiguration = instance.configuration!;
             const ff = config.featureFlags || [];

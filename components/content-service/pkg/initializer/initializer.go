@@ -265,9 +265,10 @@ func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitialize
 
 func newSnapshotInitializer(loc string, rs storage.DirectDownloader, req *csapi.SnapshotInitializer) (*SnapshotInitializer, error) {
 	return &SnapshotInitializer{
-		Location: loc,
-		Snapshot: req.Snapshot,
-		Storage:  rs,
+		Location:           loc,
+		Snapshot:           req.Snapshot,
+		Storage:            rs,
+		FromVolumeSnapshot: req.FromVolumeSnapshot,
 	}, nil
 }
 
