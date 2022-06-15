@@ -646,9 +646,9 @@ export class WorkspaceStarter {
         delete ideConfig.ideOptions.options["code-latest"];
         delete ideConfig.ideOptions.options["code-desktop-insiders"];
 
-        const migratted = migrationIDESettings(user);
-        if (user.additionalData?.ideSettings && migratted) {
-            user.additionalData.ideSettings = migratted;
+        const migrated = migrationIDESettings(user);
+        if (user.additionalData?.ideSettings && migrated) {
+            user.additionalData.ideSettings = migrated;
         }
 
         const ideChoice = user.additionalData?.ideSettings?.defaultIde;
@@ -722,6 +722,8 @@ export class WorkspaceStarter {
             configuration.featureFlags = featureFlags;
         }
 
+        const attributedTeamId = await this.userService.getWorkspaceUsageAttributionTeamId(user, workspace.projectId);
+
         const now = new Date().toISOString();
         const instance: WorkspaceInstance = {
             id: uuidv4(),
@@ -735,6 +737,7 @@ export class WorkspaceStarter {
                 phase: "preparing",
             },
             configuration,
+            attributedTeamId,
         };
         if (WithReferrerContext.is(workspace.context)) {
             this.analytics.track({
