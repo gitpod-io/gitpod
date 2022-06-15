@@ -140,6 +140,7 @@ type ServerConfig struct {
 	GithubApp                         *GithubApp          `json:"githubApp"`
 	ChargebeeSecret                   string              `json:"chargebeeSecret"`
 	StripeSecret                      string              `json:"stripeSecret"`
+	StripeConfig                      string              `json:"stripeConfig"`
 	DisableDynamicAuthProviderLogin   bool                `json:"disableDynamicAuthProviderLogin"`
 	EnableLocalApp                    *bool               `json:"enableLocalApp"`
 	RunDbDeleter                      *bool               `json:"runDbDeleter"`
