@@ -24,11 +24,12 @@ import { v4 } from "uuid";
 import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
-import { watchHeadlessLogs } from "../components/PrebuildLogs";
+import PrebuildLogs from "../components/PrebuildLogs";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
+
 const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
@@ -391,8 +392,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     render() {
         const { error } = this.state;
-        const isHeadless = this.state.workspace?.type !== "regular";
-        const isPrebuilt = WithPrebuild.is(this.state.workspace?.context);
+        const isPrebuild = this.state.workspace?.type === "prebuild";
+        const withPrebuild = WithPrebuild.is(this.state.workspace?.context);
         let phase: StartPhase | undefined = StartPhase.Preparing;
         let title = undefined;
         let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
@@ -433,7 +434,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 phase = StartPhase.Starting;
                 statusMessage = (
                     <p className="text-base text-gray-400">
-                        {isPrebuilt ? "Loading prebuild …" : "Initializing content …"}
+                        {withPrebuild ? "Loading prebuild …" : "Initializing content …"}
                     </p>
                 );
                 break;
@@ -441,8 +442,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // Running means the workspace is able to actively perform work, either by serving a user through Theia,
             // or as a headless workspace.
             case "running":
-                if (isHeadless) {
-                    return <HeadlessWorkspaceView instanceId={this.state.workspaceInstance.id} />;
+                if (isPrebuild) {
+                    return <PrebuildLogs workspaceId={this.props.workspaceId} />;
                 }
                 if (!this.state.desktopIde) {
                     phase = StartPhase.Running;
@@ -568,8 +569,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
             // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
             case "stopping":
-                if (isHeadless) {
-                    return <HeadlessWorkspaceView instanceId={this.state.workspaceInstance.id} />;
+                if (isPrebuild) {
+                    return <PrebuildLogs workspaceId={this.props.workspaceId} />;
                 }
                 phase = StartPhase.Stopping;
                 statusMessage = (
@@ -613,7 +614,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                         />
                     );
                 }
-                if (!isHeadless && this.state.workspaceInstance.status.conditions.timeout) {
+                if (!isPrebuild && this.state.workspaceInstance.status.conditions.timeout) {
                     title = "Timed Out";
                 }
                 statusMessage = (
@@ -716,31 +717,6 @@ function ImageBuildView(props: ImageBuildViewProps) {
                     Continue with Default Image
                 </button>
             )}
-        </StartPage>
-    );
-}
-
-function HeadlessWorkspaceView(props: { instanceId: string }) {
-    const [logsEmitter] = useState(new EventEmitter());
-
-    useEffect(() => {
-        const disposables = watchHeadlessLogs(
-            props.instanceId,
-            (chunk) => logsEmitter.emit("logs", chunk),
-            async () => {
-                return false;
-            },
-        );
-        return function cleanup() {
-            disposables.dispose();
-        };
-    }, []);
-
-    return (
-        <StartPage title="Prebuild in Progress">
-            <Suspense fallback={<div />}>
-                <WorkspaceLogs logsEmitter={logsEmitter} />
-            </Suspense>
         </StartPage>
     );
 }

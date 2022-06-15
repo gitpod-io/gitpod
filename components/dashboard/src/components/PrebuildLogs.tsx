@@ -13,13 +13,17 @@ import {
     WorkspaceImageBuild,
     HEADLESS_LOG_STREAM_STATUS_CODE_REGEX,
     Disposable,
+    PrebuildWithStatus,
 } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
+import { PrebuildStatus } from "../projects/Prebuilds";
 
 const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 
 export interface PrebuildLogsProps {
-    workspaceId?: string;
+    workspaceId: string | undefined;
+    onIgnorePrebuild?: () => void;
+    children?: React.ReactNode;
 }
 
 export default function PrebuildLogs(props: PrebuildLogsProps) {
@@ -27,6 +31,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
     const [workspaceInstance, setWorkspaceInstance] = useState<WorkspaceInstance | undefined>();
     const [error, setError] = useState<Error | undefined>();
     const [logsEmitter] = useState(new EventEmitter());
+    const [prebuild, setPrebuild] = useState<PrebuildWithStatus | undefined>();
 
     useEffect(() => {
         const disposables = new DisposableCollection();
@@ -37,9 +42,14 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
             }
             try {
                 const info = await getGitpodService().server.getWorkspace(props.workspaceId);
+                const pbws = await getGitpodService().server.findPrebuildByWorkspaceID(props.workspaceId);
                 if (info.latestInstance) {
                     setWorkspace(info.workspace);
                     setWorkspaceInstance(info.latestInstance);
+                }
+                if (pbws) {
+                    const foundPrebuild = await getGitpodService().server.getPrebuild(pbws.id);
+                    setPrebuild(foundPrebuild);
                 }
                 disposables.push(
                     getGitpodService().registerClient({
@@ -56,6 +66,11 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                                 return;
                             }
                             logsEmitter.emit("logs", content.text);
+                        },
+                        onPrebuildUpdate(update: PrebuildWithStatus) {
+                            if (update.info && update.info.buildWorkspaceId === props.workspaceId) {
+                                setPrebuild(update);
+                            }
                         },
                     }),
                 );
@@ -91,9 +106,16 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
     }, [props.workspaceId, workspaceInstance?.status.phase]);
 
     return (
-        <Suspense fallback={<div />}>
-            <WorkspaceLogs classes="h-full w-full" logsEmitter={logsEmitter} errorMessage={error?.message} />
-        </Suspense>
+        <>
+            <Suspense fallback={<div />}>
+                <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={error?.message} />
+            </Suspense>
+            <div className="h-20 px-6 border-gray-200 dark:border-gray-600 flex space-x-2">
+                {prebuild && <PrebuildStatus prebuild={prebuild} />}
+                <div className="flex-grow" />
+                {props.children}
+            </div>
+        </>
     );
 }
 
