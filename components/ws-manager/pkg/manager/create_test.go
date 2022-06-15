@@ -21,6 +21,11 @@ import (
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 )
 
+var (
+	team    = "awesome"
+	project = "gitpod"
+)
+
 func TestCreateDefiniteWorkspacePod(t *testing.T) {
 	type WorkspaceClass struct {
 		DefaultTemplate    *corev1.Pod                   `json:"defaultTemplate,omitempty"`
@@ -135,9 +140,10 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 						Metadata: &api.WorkspaceMetadata{
 							Owner:   "tester",
 							MetaId:  "foobar",
-							Team:    "awesome",
-							Project: "gitpod",
+							Team:    &team,
+							Project: &project,
 						},
+
 						ServicePrefix: "foobarservice",
 						Spec:          &spec,
 					}

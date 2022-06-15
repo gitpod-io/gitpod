@@ -151,7 +151,7 @@ func (m *Manager) Close() {
 
 // StartWorkspace creates a new running workspace within the manager's cluster
 func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
-	owi := log.LogContext(req.Metadata.Owner, req.Metadata.MetaId, req.Id, req.Metadata.Project, req.Metadata.Team)
+	owi := log.LogContext(req.Metadata.Owner, req.Metadata.MetaId, req.Id, req.Metadata.GetProject(), req.Metadata.GetTeam())
 	clog := log.WithFields(owi)
 	span, ctx := tracing.FromContext(ctx, "StartWorkspace")
 	tracing.LogRequestSafe(span, req)

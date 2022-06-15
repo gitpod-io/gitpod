@@ -467,11 +467,11 @@ message WorkspaceMetadata {
     // This is primarily intended for annotating headless workspace loads.
     map<string, string> annotations = 4;
 
-    // team the workspace belongs to
-    string team = 5;
+    // team the workspace belongs to, if the workspace is not associated with a team, this property will be empty
+    optional string team = 5;
 
-    // project the workspace belongs to
-    string project = 6;
+    // project the workspace belongs to, if the workspace is not associated with a project, this property will be empty
+    optional string project = 6;
 }
 
 // WorkspaceRuntimeInfo details the workspace's runtime, e.g. executing system, node other information
