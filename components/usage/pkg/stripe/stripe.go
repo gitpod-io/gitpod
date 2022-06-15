@@ -20,6 +20,7 @@ type stripeKeys struct {
 	SecretKey      string `json:"secretKey"`
 }
 
+// Authenticate authenticates the Stripe client using a provided file containing a Stripe secret key.
 func Authenticate(apiKeyFile string) error {
 	bytes, err := os.ReadFile(apiKeyFile)
 	if err != nil {
