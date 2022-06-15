@@ -2224,9 +2224,34 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async findPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         traceAPIParams(ctx, { params });
 
-        const user = this.checkAndBlockUser("getPrebuilds");
+        const user = this.checkAndBlockUser("findPrebuilds");
         await this.guardProjectOperation(user, params.projectId, "get");
         return this.projectsService.findPrebuilds(params);
+    }
+
+    public async getPrebuild(ctx: TraceContext, prebuildId: string): Promise<PrebuildWithStatus | undefined> {
+        traceAPIParams(ctx, { prebuildId });
+        this.checkAndBlockUser("getPrebuild");
+
+        const pbws = await this.workspaceDb.trace(ctx).findPrebuiltWorkspaceById(prebuildId);
+        const info = (await this.workspaceDb.trace(ctx).findPrebuildInfos([prebuildId]))[0];
+
+        if (info && pbws) {
+            const result: PrebuildWithStatus = { info, status: pbws.state };
+            if (pbws.error) {
+                result.error = pbws.error;
+            }
+            return result;
+        }
+    }
+
+    public async findPrebuildByWorkspaceID(
+        ctx: TraceContext,
+        workspaceId: string,
+    ): Promise<PrebuiltWorkspace | undefined> {
+        traceAPIParams(ctx, { workspaceId });
+        this.checkAndBlockUser("findPrebuildByWorkspaceID");
+        return this.workspaceDb.trace(ctx).findPrebuildByWorkspaceID(workspaceId);
     }
 
     public async getProjectOverview(ctx: TraceContext, projectId: string): Promise<Project.Overview | undefined> {

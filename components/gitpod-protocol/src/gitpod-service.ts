@@ -24,6 +24,7 @@ import {
     GuessGitTokenScopesParams,
     GuessedGitTokenScopes,
     ProjectEnvVar,
+    PrebuiltWorkspace,
 } from "./protocol";
 import {
     Team,
@@ -172,6 +173,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getUserProjects(): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
+    findPrebuildByWorkspaceID(workspaceId: string): Promise<PrebuiltWorkspace | undefined>;
+    getPrebuild(prebuildId: string): Promise<PrebuildWithStatus | undefined>;
     triggerPrebuild(projectId: string, branchName: string | null): Promise<StartPrebuildResult>;
     cancelPrebuild(projectId: string, prebuildId: string): Promise<void>;
     fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
