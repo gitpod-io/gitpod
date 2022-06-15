@@ -11,4 +11,4 @@ packages:
       - REPLICATED_APP
     config:
       commands:
-        - ["make", "lint"]
+        - ["make", "helm", "lint"]
