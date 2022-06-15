@@ -100,28 +100,15 @@ yq e -i '.observability.logLevel = "debug"' config.yaml
 yq e -i '.workspace.runtime.containerdSocket = "/run/k3s/containerd/containerd.sock"' config.yaml
 yq e -i '.workspace.runtime.containerdRuntimeDir = "/var/lib/rancher/k3s/agent/containerd/io.containerd.runtime.v2.task/k8s.io/"' config.yaml
 
-echo "extracting images to download ahead..."
-/gitpod-installer render --config config.yaml | grep 'image:' | sed 's/ *//g' | sed 's/image://g' | sed 's/\"//g' | sed 's/^-//g' | sort | uniq > /gitpod-images.txt
-echo "downloading images..."
-while read -r image "$(cat /gitpod-images.txt)"; do
-   # shellcheck disable=SC2154
-   ctr images pull "$image" >/dev/null &
-done
-
+echo "extracting workspace image to download ahead..."
 ctr images pull "docker.io/gitpod/workspace-full:latest" >/dev/null &
 
-/gitpod-installer render --config config.yaml --output-split-files /var/lib/rancher/k3s/server/manifests/gitpod
-for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/gitpod.debug; done
-rm /var/lib/rancher/k3s/server/manifests/gitpod/*NetworkPolicy*
-for f in /var/lib/rancher/k3s/server/manifests/gitpod/*PersistentVolumeClaim*.yaml; do yq e -i '.spec.storageClassName="local-path"' "$f"; done
-yq eval-all -i ". as \$item ireduce ({}; . *+ \$item)" /var/lib/rancher/k3s/server/manifests/gitpod/*_StatefulSet_messagebus.yaml /app/manifests/messagebus.yaml
-for f in /var/lib/rancher/k3s/server/manifests/gitpod/*StatefulSet*.yaml; do yq e -i '.spec.volumeClaimTemplates[0].spec.storageClassName="local-path"' "$f"; done
+/gitpod-installer render --config config.yaml > /var/lib/rancher/k3s/server/manifests/gitpod.yaml
 
 # removing init container from ws-daemon (systemd and Ubuntu)
-yq eval-all -i 'del(.spec.template.spec.initContainers[0])' /var/lib/rancher/k3s/server/manifests/gitpod/*_DaemonSet_ws-daemon.yaml
-
-for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/manifests/gitpod.yaml; done
-rm -rf /var/lib/rancher/k3s/server/manifests/gitpod
+yq eval-all --inplace \
+  'del(select(.kind == "DaemonSet" and .metadata.name == "ws-daemon").spec.template.spec.initContainers[0])' \
+  /var/lib/rancher/k3s/server/manifests/gitpod.yaml
 
 /bin/k3s server --disable traefik \
   --node-label gitpod.io/workload_meta=true \
