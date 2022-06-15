@@ -99,6 +99,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	stripeConfig := ""
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
+			stripeConfig = cfg.WebApp.Server.StripeConfig
+		}
+		return nil
+	})
+
 	disableWsGarbageCollection := false
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
@@ -216,9 +224,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ImageBuilderAddr:             "image-builder-mk3:8080",
 		CodeSync:                     CodeSync{},
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
-		EnablePayment:                chargebeeSecret != "" || stripeSecret != "",
+		EnablePayment:                chargebeeSecret != "" || stripeSecret != "" || stripeConfig != "",
 		ChargebeeProviderOptionsFile: fmt.Sprintf("%s/providerOptions", chargebeeMountPath),
-		StripeSecretsFile:            fmt.Sprintf("%s/apikeys", stripeMountPath),
+		StripeSecretsFile:            fmt.Sprintf("%s/apikeys", stripeSecretMountPath),
+		StripeConfigFile:             fmt.Sprintf("%s/config", stripeConfigMountPath),
 		InsecureNoDomain:             false,
 		PrebuildLimiter: map[string]int{
 			// default limit for all cloneURLs
