@@ -591,6 +591,51 @@ class WorkspaceDBSpec {
         expect(activeCount).to.eq(1, "there should be exactly one regular workspace");
     }
 
+    @test(timeout(10000))
+    public async testGetUnresolvedUpdatables() {
+        {
+            // setup ws, wsi, pws, and updatables
+            const timeWithOffset = (offsetInHours: number) => {
+                const date = new Date();
+                date.setHours(date.getHours() - offsetInHours);
+                return date;
+            };
+
+            for (let i = 1; i <= 10; i++) {
+                const ws = await this.db.store({
+                    ...this.ws,
+                    id: `ws-${i}`,
+                    creationTime: timeWithOffset(i).toISOString(),
+                });
+                const pws = await this.db.storePrebuiltWorkspace({
+                    buildWorkspaceId: ws.id,
+                    cloneURL: ws.cloneUrl!,
+                    commit: "abc",
+                    creationTime: ws.creationTime,
+                    id: ws.id + "-pws",
+                    state: "queued",
+                    statusVersion: 123,
+                });
+                await this.db.storeInstance({
+                    ...this.wsi1,
+                    workspaceId: ws.id,
+                    id: ws.id + "-wsi",
+                });
+                await this.db.attachUpdatableToPrebuild("pwsid-which-is-ignored-anyways", {
+                    id: `pwu-${i}`,
+                    installationId: "foobar",
+                    isResolved: false,
+                    owner: "owner",
+                    repo: "repo",
+                    prebuiltWorkspaceId: pws.id,
+                });
+            }
+        }
+
+        expect((await this.db.getUnresolvedUpdatables()).length).to.eq(10, "there should be 10 updatables in total");
+        expect((await this.db.getUnresolvedUpdatables(5)).length).to.eq(5, "there should be 5 updatables");
+    }
+
     private async storePrebuiltWorkspace(pws: PrebuiltWorkspace) {
         // store the creationTime directly, before it is modified by the store function in the ORM layer
         const creationTime = pws.creationTime;
