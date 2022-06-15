@@ -136,8 +136,23 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
                         .indexOf(this.searchTerm!.toLowerCase()) !== -1,
             );
         }
+        const now = new Date().toISOString();
+        function activeDate(info: WorkspaceInfo): string {
+            if (!info.latestInstance) {
+                return info.workspace.creationTime;
+            }
+            if (info.latestInstance.status.phase === "stopped" || info.latestInstance.status.phase === "unknown") {
+                return WorkspaceInfo.lastActiveISODate(info);
+            }
+            return info.latestInstance.stoppedTime || info.latestInstance.stoppingTime || now;
+        }
         infos = infos.sort((a, b) => {
-            return WorkspaceInfo.lastActiveISODate(b).localeCompare(WorkspaceInfo.lastActiveISODate(a));
+            const result = activeDate(b).localeCompare(activeDate(a));
+            if (result === 0) {
+                // both active now? order by creationtime
+                return WorkspaceInfo.lastActiveISODate(b).localeCompare(WorkspaceInfo.lastActiveISODate(a));
+            }
+            return result;
         });
         const activeInfo = infos.filter((ws) => this.isActive(ws));
         const inActiveInfo = infos.filter((ws) => !this.isActive(ws));
