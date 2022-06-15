@@ -154,8 +154,8 @@ function publishKots(werft: Werft, jobConfig: JobConfig) {
         { slice: phases.PUBLISH_KOTS },
     );
 
-    // Generate the logo
-    exec(`make logo -C ${REPLICATED_DIR}`, { slice: phases.PUBLISH_KOTS });
+    // Generate the logo and pull any Helm charts
+    exec(`make logo helm -C ${REPLICATED_DIR}`, { slice: phases.PUBLISH_KOTS });
 
     // Update the additionalImages in the kots-app.yaml
     exec(`/tmp/installer mirror kots --file ${REPLICATED_YAML_DIR}/kots-app.yaml`, { slice: phases.PUBLISH_KOTS });
