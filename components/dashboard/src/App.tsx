@@ -12,15 +12,13 @@ import { Login } from "./Login";
 import { UserContext } from "./user-context";
 import { TeamsContext } from "./teams/teams-context";
 import { ThemeContext } from "./theme-context";
-import { AdminContext } from "./admin-context";
-import { LicenseContext } from "./license-context";
 import { getGitpodService } from "./service/service";
 import { shouldSeeWhatsNew, WhatsNew } from "./whatsnew/WhatsNew";
 import gitpodIcon from "./icons/gitpod.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useHistory } from "react-router-dom";
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from "./Analytics";
-import { ContextURL, LicenseInfo, User } from "@gitpod/gitpod-protocol";
+import { ContextURL, User } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Experiment } from "./experiments";
 import { workspacesPathMain } from "./workspaces/workspaces.routes";
@@ -147,9 +145,7 @@ export function getURLHash() {
 function App() {
     const { user, setUser } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
-    const { setAdminSettings } = useContext(AdminContext);
     const { setIsDark } = useContext(ThemeContext);
-    const { setLicense } = useContext(LicenseContext);
 
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
@@ -183,14 +179,6 @@ function App() {
                     }
                 }
                 setTeams(teams);
-
-                if (user?.rolesOrPermissions?.includes("admin")) {
-                    const adminSettings = await getGitpodService().server.adminGetSettings();
-                    setAdminSettings(adminSettings);
-
-                    var license: LicenseInfo = await getGitpodService().server.adminGetLicense();
-                    setLicense(license);
-                }
             } catch (error) {
                 console.error(error);
                 if (error && "code" in error) {
