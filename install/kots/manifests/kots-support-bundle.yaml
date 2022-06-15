@@ -38,12 +38,20 @@ spec:
     - clusterInfo: {}
     - clusterResources: {}
     - logs:
+        name: logs
         selector:
           - app=gitpod
         namespace: '{{repl Namespace }}'
         limits:
           maxAge: 720h
           maxLines: 10000
+    - copy:
+        name: log-collector
+        selector:
+          - component=gitpod-log-collector
+        namespace: '{{repl Namespace }}'
+        containerPath: /gitpod/log-collector
+        containerName: kots
     - configMap:
         selector:
           - app=gitpod
