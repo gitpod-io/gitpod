@@ -13,6 +13,7 @@ export default function Modal(props: {
     // specify a key if having the same title and window.location
     specify?: string;
     title?: string;
+    hideDivider?: boolean;
     buttons?: React.ReactChild[] | React.ReactChild;
     children: React.ReactChild[] | React.ReactChild;
     visible: boolean;
@@ -94,7 +95,12 @@ export default function Modal(props: {
                     {props.title ? (
                         <>
                             <h3 className="pb-2">{props.title}</h3>
-                            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
+                            <div
+                                className={
+                                    "border-gray-200 dark:border-gray-800 -mx-6 px-6 " +
+                                    (props.hideDivider ? "" : "border-t border-b mt-2 py-4")
+                                }
+                            >
                                 {props.children}
                             </div>
                             <div className="flex justify-end mt-6 space-x-2">{props.buttons}</div>
