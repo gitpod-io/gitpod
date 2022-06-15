@@ -5,7 +5,15 @@
  */
 
 import { UserService, CheckSignUpParams, CheckTermsParams } from "../../../src/user/user-service";
-import { User, WorkspaceTimeoutDuration, WORKSPACE_TIMEOUT_EXTENDED, WORKSPACE_TIMEOUT_EXTENDED_ALT, WORKSPACE_TIMEOUT_DEFAULT_LONG, WORKSPACE_TIMEOUT_DEFAULT_SHORT } from "@gitpod/gitpod-protocol";
+import {
+    User,
+    WorkspaceTimeoutDuration,
+    WORKSPACE_TIMEOUT_EXTENDED,
+    WORKSPACE_TIMEOUT_EXTENDED_ALT,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+    Project,
+} from "@gitpod/gitpod-protocol";
 import { inject } from "inversify";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
@@ -15,6 +23,8 @@ import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/account
 import { OssAllowListDB } from "@gitpod/gitpod-db/lib/oss-allowlist-db";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { Config } from "../../../src/config";
+import { TeamDB } from "@gitpod/gitpod-db/lib";
+import { StripeService } from "./stripe-service";
 
 export class UserServiceEE extends UserService {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
@@ -23,6 +33,8 @@ export class UserServiceEE extends UserService {
     @inject(OssAllowListDB) protected readonly OssAllowListDb: OssAllowListDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
+    @inject(TeamDB) protected readonly teamDb: TeamDB;
+    @inject(StripeService) protected readonly stripeService: StripeService;
 
     async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
         if (this.config.enablePayment) {
@@ -71,6 +83,33 @@ export class UserServiceEE extends UserService {
         }
 
         return false;
+    }
+
+    async getWorkspaceUsageAttributionTeamId(user: User, projectId?: string): Promise<string | undefined> {
+        let project: Project | undefined;
+        if (projectId) {
+            project = await this.projectDb.findProjectById(projectId);
+        }
+        if (!this.config.enablePayment) {
+            // If the project is owned by a team, we attribute workspace usage to that team.
+            // Otherwise, we return `undefined` to attribute to the user (default).
+            return project?.teamId;
+        }
+        // If payment is enabled, we attribute workspace usage to a team that has billing enabled.
+        const teams = await this.teamDb.findTeamsByUser(user.id);
+        const customers = await this.stripeService.findCustomersByTeamIds(teams.map((t) => t.id));
+        if (customers.length === 0) {
+            // No teams with billing enabled, fall back to user attribution.
+            return undefined;
+        }
+        // TODO(janx): Allow users to pick a "cost center" team, and use it here.
+
+        // If there are multiple teams with billing enabled, we prefer the one owning the project if possible.
+        if (project?.teamId && customers.find((c) => c.metadata.teamId === project!.teamId)) {
+            return project.teamId;
+        }
+        // Otherwise, we just pick the first team with billing enabled.
+        return customers[0].metadata.teamId;
     }
 
     async checkSignUp(params: CheckSignUpParams) {

@@ -50,6 +50,13 @@ export class StripeService {
         return result.data[0];
     }
 
+    async findCustomersByTeamIds(teamIds: string[]): Promise<Array<Stripe.Customer>> {
+        const result = await this.getStripe().customers.search({
+            query: teamIds.map((teamId) => `metadata['teamId']:'${teamId}'`).join(" OR "),
+        });
+        return result.data;
+    }
+
     async createCustomerForUser(user: User, setupIntentId: string): Promise<Stripe.Customer> {
         if (await this.findCustomerByUserId(user.id)) {
             throw new Error(`A Stripe customer already exists for user '${user.id}'`);
