@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -156,7 +157,7 @@ var runCmd = &cobra.Command{
 		if cfg.ImageBuilderProxy.TargetAddr != "" {
 			// Note: never use block here, because image-builder connects to ws-manager,
 			//       and if we blocked here, ws-manager wouldn't come up, hence we couldn't connect to ws-manager.
-			conn, err := grpc.Dial(cfg.ImageBuilderProxy.TargetAddr, grpc.WithInsecure())
+			conn, err := grpc.Dial(cfg.ImageBuilderProxy.TargetAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				log.WithError(err).Fatal("failed to connect to image builder")
 			}

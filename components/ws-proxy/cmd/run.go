@@ -17,6 +17,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -94,7 +95,7 @@ var runCmd = &cobra.Command{
 
 		var heartbeat sshproxy.Heartbeat
 		if wsm := cfg.WorkspaceManager; wsm != nil {
-			var dialOption grpc.DialOption = grpc.WithInsecure()
+			var dialOption grpc.DialOption = grpc.WithTransportCredentials(insecure.NewCredentials())
 			if wsm.TLS.CA != "" && wsm.TLS.Cert != "" && wsm.TLS.Key != "" {
 				tlsConfig, err := common_grpc.ClientAuthTLSConfig(
 					wsm.TLS.CA, wsm.TLS.Cert, wsm.TLS.Key,

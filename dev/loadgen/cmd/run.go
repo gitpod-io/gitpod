@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -108,7 +109,7 @@ var runCmd = &cobra.Command{
 			})
 			opts = append(opts, grpc.WithTransportCredentials(creds))
 		} else {
-			opts = append(opts, grpc.WithInsecure())
+			opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		}
 
 		conn, err := grpc.Dial("localhost:8080", opts...)

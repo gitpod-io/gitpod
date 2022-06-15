@@ -17,6 +17,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
@@ -42,7 +43,7 @@ func init() {
 
 func getWorkspacesClient(ctx context.Context) (*grpc.ClientConn, api.WorkspaceManagerClient, error) {
 	var addr string
-	secopt := grpc.WithInsecure()
+	secopt := grpc.WithTransportCredentials(insecure.NewCredentials())
 	if host, _ := workspacesCmd.PersistentFlags().GetString("host"); host == "" {
 		cfg, namespace, err := getKubeconfig()
 		if err != nil {

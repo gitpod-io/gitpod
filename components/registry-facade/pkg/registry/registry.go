@@ -36,6 +36,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // BuildStaticLayer builds a layer set from a static layer configuration
@@ -194,7 +195,7 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 
 			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
 		} else {
-			grpcOpts = append(grpcOpts, grpc.WithInsecure())
+			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		}
 
 		specprov, err := NewCachingSpecProvider(128, NewRemoteSpecProvider(cfg.RemoteSpecProvider.Addr, grpcOpts))

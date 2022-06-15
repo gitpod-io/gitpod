@@ -19,6 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
@@ -71,7 +72,7 @@ var credentialHelper = &cobra.Command{
 		if supervisorAddr == "" {
 			supervisorAddr = "localhost:22999"
 		}
-		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.WithError(err).Print("error connecting to supervisor")
 			return

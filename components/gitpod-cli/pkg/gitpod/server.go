@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
@@ -29,7 +30,7 @@ func GetWSInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
 	if supervisorAddr == "" {
 		supervisorAddr = "localhost:22999"
 	}
-	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}
@@ -46,7 +47,7 @@ func ConnectToServer(ctx context.Context, wsInfo *supervisor.WorkspaceInfoRespon
 	if supervisorAddr == "" {
 		supervisorAddr = "localhost:22999"
 	}
-	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}

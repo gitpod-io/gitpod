@@ -20,6 +20,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
@@ -329,7 +330,7 @@ func (s *Server) TrackSSHConnection(wsInfo *p.WorkspaceInfo, phase string, err e
 }
 
 func (s *Server) GetWorkspaceSSHKey(ctx context.Context, workspaceIP string) (ssh.Signer, error) {
-	supervisorConn, err := grpc.Dial(workspaceIP+":22999", grpc.WithInsecure())
+	supervisorConn, err := grpc.Dial(workspaceIP+":22999", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}

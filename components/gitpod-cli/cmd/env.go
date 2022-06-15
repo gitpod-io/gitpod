@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
@@ -80,7 +81,7 @@ func connectToServer(ctx context.Context) (*connectToServerResult, error) {
 	if supervisorAddr == "" {
 		supervisorAddr = "localhost:22999"
 	}
-	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}

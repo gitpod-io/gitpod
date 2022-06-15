@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"sigs.k8s.io/yaml"
 
@@ -102,7 +103,7 @@ var benchmarkCommand = &cobra.Command{
 			})
 			opts = append(opts, grpc.WithTransportCredentials(creds))
 		} else {
-			opts = append(opts, grpc.WithInsecure())
+			opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		}
 
 		conn, err := grpc.Dial(benchmarkOpts.Host, opts...)
