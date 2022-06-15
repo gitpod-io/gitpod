@@ -28,7 +28,7 @@ spec:
       containers:
         - name: installer
           # This will normally be the release tag
-          image: eu.gcr.io/gitpod-core-dev/build/installer:clu-multiple-pull-secrets.1
+          image: eu.gcr.io/gitpod-core-dev/build/installer:clu-multiple-pull-secrets.5
           volumeMounts:
             - mountPath: /config-patch
               name: config-patch
@@ -57,7 +57,6 @@ spec:
           args:
             - |
               set -e
-              set -x
 
               echo "Gitpod: Killing any in-progress installations"
 
@@ -141,28 +140,27 @@ spec:
                 yq e -i ".database.inCluster = false" "${CONFIG_FILE}"
                 yq e -i ".database.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
                 yq e -i ".database.external.certificate.name = \"database\"" "${CONFIG_FILE}"
+
               fi
 
-              # we really don't care if we deploy from a mirror
               if [ '{{repl HasLocalRegistry }}' = "true" ];
               then
                 echo "Gitpod: configuring mirrored container registry"
-
-                # yq e -i ".containerRegistry.external.url = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
-                # yq e -i ".repository = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
-                # yq e -i ".imagePullSecrets[0].kind = \"secret\"" "${CONFIG_FILE}"
-                # yq e -i ".imagePullSecrets[0].name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
-                # yq e -i '.dropImageRepo = false' "${CONFIG_FILE}"
+                yq e -i ".repository = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
+                yq e -i ".imagePullSecrets[0].kind = \"secret\"" "${CONFIG_FILE}"
+                yq e -i ".imagePullSecrets[0].name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
+                yq e -i '.dropImageRepo = true' "${CONFIG_FILE}"
               fi
 
-              # separate to using the internal registry we need to create an incluster or use an external registry still
               if [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
               then
                 echo "Gitpod: configuring external container registry"
+
                 yq e -i ".containerRegistry.inCluster = false" "${CONFIG_FILE}"
                 yq e -i ".containerRegistry.external.url = \"{{repl ConfigOption "reg_url" }}\"" "${CONFIG_FILE}"
                 yq e -i ".containerRegistry.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
-                yq e -i ".containerRegistry.external.certificate.name = \"gitpod-registry\"" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.external.certificate.name = \"container-registry\"" "${CONFIG_FILE}"
+
               else
                 if [ '{{repl ConfigOptionEquals "reg_incluster_storage" "s3" }}' = "true" ];
                 then
@@ -215,7 +213,7 @@ spec:
               if [ '{{repl ConfigOptionEquals "ssh_gateway" "1" }}' = "true" ];
               then
                 echo "Gitpod: Generate SSH host key"
-                ssh-keygen -t ecdsa -q -N "" -f host.key
+                ssh-keygen -t rsa -q -N "" -f host.key
                 kubectl create secret generic ssh-gateway-host-key --from-file=host.key -n {{repl Namespace }} || echo "SSH Gateway Host Key secret has not been created. Does it exist already?"
                 yq e -i '.sshGatewayHostKey.kind = "secret"' "${CONFIG_FILE}"
                 yq e -i '.sshGatewayHostKey.name = "ssh-gateway-host-key"' "${CONFIG_FILE}"
@@ -275,47 +273,34 @@ spec:
                 'del(select(.kind == "StatefulSet" and .metadata.name == "openvsx-proxy").status)' \
                 "${GITPOD_OBJECTS}/templates/gitpod.yaml"
 
-              # If we have a local registry, cache it's credentials to be merged into whichever secret we use
+              # If we have a airgap registry, cache it's credentials to be merged into whichever secret we use
               # to access a registry for registry-facade
-              if [ '{{repl HasLocalRegistry }}' = "true" ];
-              then
+              if [ '{{repl HasLocalRegistry }}' = "true" ]; then
+                echo "Gitpod: Found airgap registry information"
                 kubectl get secret "{{repl ImagePullSecretName }}" -o=jsonpath="{.data['\.dockerconfigjson']}" | base64 -d | yq -P - > registry-auth-airgap.yaml
               fi
 
-              if [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
-              then
+              # if we successfully cached the airgap registry key, append it to the credentials we use for built in or external registry
+              if [ -f ./registry-auth-airgap.yaml ] && [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ]; then
+                echo "Gitpod: Appending airgap registry to external registry list"
                 kubectl get secret "container-registry" -o=jsonpath="{.data['\.dockerconfigjson']}" | base64 -d | yq -P - > registry-auth-external.yaml
+                yq -o=json eval-all 'select(fi == 0) * select(filename == "registry-auth-airgap.yaml")' registry-auth-external.yaml registry-auth-airgap.yaml > merged-registry-auths.json
 
-                if [[ -f ./registry-auth-airgap.yaml ]]
-                then
-                  yq -o=json eval-all 'select(fi == 0) * select(filename == "registry-auth-airgap.yaml")' registry-auth-external.yaml registry-auth-airgap.yaml > merged-registry-auths.json
-                  # create secret and update if exists (https://stackoverflow.com/a/45881259/1364435)
-                  kubectl create secret generic container-registry \
-                    --save-config --dry-run=client \
-                    --from-file=.dockerconfigjson=./merged-registry-auths.json \
-                    -o yaml | kubectl apply -f -
-                fi
-              else
+                kubectl create secret generic container-registry \
+                  --save-config --dry-run=client \
+                  --from-file=.dockerconfigjson=./merged-registry-auths.json \
+                  -o yaml | kubectl apply -f -
+
+              elif [ -f ./registry-auth-airgap.yaml ]; then
+                echo "Gitpod: Appending airgap registry to internal registry list"
                 yq eval 'select(.kind == "Secret" and .metadata.name == "builtin-registry-auth").data.".dockerconfigjson"' \
-                  "${GITPOD_OBJECTS}/templates/gitpod.yaml" | base64 -d | yq -P - > registry-auth-builtin.yaml
+                "${GITPOD_OBJECTS}/templates/gitpod.yaml" | base64 -d | yq -P - > registry-auth-builtin.yaml
 
-                echo " ------------builtin auth output"
-                cat registry-auth-builtin.yaml
+                yq -o=json eval-all 'select(fi == 0) * select(filename == "registry-auth-airgap.yaml")' registry-auth-builtin.yaml registry-auth-airgap.yaml > merged-registry-auths.json
 
-                if [[ -f ./registry-auth-airgap.yaml ]]
-                then
-                  echo " ------------mirror output"
-                  cat registry-auth-airgap.yaml
-                  yq -o=json eval-all 'select(fi == 0) * select(filename == "registry-auth-airgap.yaml")' registry-auth-builtin.yaml registry-auth-airgap.yaml > merged-registry-auths.json
-                  echo " ------------merged"
-                  cat merged-registry-auths.json
-                  # create secret and update if exists (https://stackoverflow.com/a/45881259/1364435)
-                  export NEW_SECRETS=$(base64 -w 0 merged-registry-auths.json)
-                  yq e -i "select(.kind == \"Secret\" and .metadata.name == \"builtin-registry-auth\").data.\".dockerconfigjson\" = \"${NEW_SECRETS}\"" \
-                  "${GITPOD_OBJECTS}/templates/gitpod.yaml"
-                  yq e 'select(.kind == "Secret" and .metadata.name == "builtin-registry-auth")' "${GITPOD_OBJECTS}/templates/gitpod.yaml"
-                fi
-
+                export NEW_SECRETS=$(base64 -w 0 merged-registry-auths.json)
+                yq e -i "select(.kind == \"Secret\" and .metadata.name == \"builtin-registry-auth\").data.\".dockerconfigjson\" = \"${NEW_SECRETS}\"" \
+                "${GITPOD_OBJECTS}/templates/gitpod.yaml"
               fi
 
               echo "Gitpod: Escape any Golang template values"
