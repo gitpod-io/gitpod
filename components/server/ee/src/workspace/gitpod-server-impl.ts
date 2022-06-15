@@ -886,6 +886,34 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
                     return;
                 }
+
+                // (AT) At this point we found a running/building prebuild, which might also include
+                // image build in current state.
+                //
+                // The owner's client connection is automatically registered to listen on instance updates.
+                // For the remaining client connections which would handle `createWorkspace` and end up here, it
+                // also would be reasonable to listen on the instance updates of a running prebuild, or image build.
+                //
+                // We need to be forwarded the WorkspaceInstanceUpdates in the frontend, because we do not have
+                // any other means to reliably learn about the status about image builds, yet.
+                // Once we have those, we should remove this.
+                //
+                const ws = await this.workspaceDb.trace(ctx).findById(workspaceID);
+                if (!!ws && !!wsi && ws.ownerId !== this.user?.id) {
+                    const resetListener = this.localMessageBroker.listenForWorkspaceInstanceUpdates(
+                        ws.ownerId,
+                        (ctx, instance) => {
+                            if (instance.id === wsi.id) {
+                                this.forwardInstanceUpdateToClient(ctx, instance);
+                                if (instance.status.phase === "stopped") {
+                                    resetListener.dispose();
+                                }
+                            }
+                        },
+                    );
+                    this.disposables.push(resetListener);
+                }
+
                 const result = makeResult(wsi.id);
 
                 const inSameCluster = wsi.region === this.config.installationShortname;
