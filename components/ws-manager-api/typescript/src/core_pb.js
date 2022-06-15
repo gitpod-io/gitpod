@@ -6833,15 +6833,15 @@ proto.wsman.WorkspaceMetadata.serializeBinaryToWriter = function(message, writer
   if (f && f.getLength() > 0) {
     f.serializeBinary(4, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
   }
-  f = message.getTeam();
-  if (f.length > 0) {
+  f = /** @type {string} */ (jspb.Message.getField(message, 5));
+  if (f != null) {
     writer.writeString(
       5,
       f
     );
   }
-  f = message.getProject();
-  if (f.length > 0) {
+  f = /** @type {string} */ (jspb.Message.getField(message, 6));
+  if (f != null) {
     writer.writeString(
       6,
       f
@@ -6959,7 +6959,25 @@ proto.wsman.WorkspaceMetadata.prototype.getTeam = function() {
  * @return {!proto.wsman.WorkspaceMetadata} returns this
  */
 proto.wsman.WorkspaceMetadata.prototype.setTeam = function(value) {
-  return jspb.Message.setProto3StringField(this, 5, value);
+  return jspb.Message.setField(this, 5, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.wsman.WorkspaceMetadata} returns this
+ */
+proto.wsman.WorkspaceMetadata.prototype.clearTeam = function() {
+  return jspb.Message.setField(this, 5, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.wsman.WorkspaceMetadata.prototype.hasTeam = function() {
+  return jspb.Message.getField(this, 5) != null;
 };
 
 
@@ -6977,7 +6995,25 @@ proto.wsman.WorkspaceMetadata.prototype.getProject = function() {
  * @return {!proto.wsman.WorkspaceMetadata} returns this
  */
 proto.wsman.WorkspaceMetadata.prototype.setProject = function(value) {
-  return jspb.Message.setProto3StringField(this, 6, value);
+  return jspb.Message.setField(this, 6, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.wsman.WorkspaceMetadata} returns this
+ */
+proto.wsman.WorkspaceMetadata.prototype.clearProject = function() {
+  return jspb.Message.setField(this, 6, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.wsman.WorkspaceMetadata.prototype.hasProject = function() {
+  return jspb.Message.getField(this, 6) != null;
 };
 
 
