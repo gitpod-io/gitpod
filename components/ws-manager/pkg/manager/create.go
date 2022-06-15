@@ -381,6 +381,17 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	for k, v := range req.Metadata.Annotations {
 		annotations[workspaceAnnotationPrefix+k] = v
 	}
+	if len(startContext.Request.Spec.SshPublicKeys) != 0 {
+		spec := &api.SSHPublicKeys{
+			Keys: startContext.Request.Spec.SshPublicKeys,
+		}
+		sshSpec, err := proto.Marshal(spec)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create remarshal of ssh key spec: %w", err)
+		}
+		sshSpecString := base64.StdEncoding.EncodeToString(sshSpec)
+		annotations[kubernetes.WorkspaceSSHPublicKeys] = sshSpecString
+	}
 
 	// By default we embue our workspace pods with some tolerance towards pressure taints,
 	// see https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/#taint-based-evictions

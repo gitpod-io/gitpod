@@ -28,6 +28,8 @@ import {
     DeleteVolumeSnapshotRequest,
     DeleteVolumeSnapshotResponse,
     TakeSnapshotResponse,
+    UpdateSSHKeyRequest,
+    UpdateSSHKeyResponse,
 } from "./core_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
@@ -370,6 +372,31 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
                 span.finish();
             }
         });
+    }
+
+    public updateSSHPublicKey(ctx: TraceContext, request: UpdateSSHKeyRequest): Promise<UpdateSSHKeyResponse> {
+        // we do not use the default options here as takeSnapshot can take a very long time - much longer than the default deadline allows
+        return this.retryIfUnavailable(
+            (attempt: number) =>
+                new Promise<ControlAdmissionResponse>((resolve, reject) => {
+                    const span = TraceContext.startSpan(`/ws-manager/updateSSHPublicKey`, ctx);
+                    span.log({ attempt });
+                    this.client.updateSSHKey(
+                        request,
+                        withTracing({ span }),
+                        this.getDefaultUnaryOptions(),
+                        (err, resp) => {
+                            span.finish();
+                            if (err) {
+                                TraceContext.setError(ctx, err);
+                                reject(err);
+                            } else {
+                                resolve(resp);
+                            }
+                        },
+                    );
+                }),
+        );
     }
 
     protected getDefaultUnaryOptions(): Partial<grpc.CallOptions> {

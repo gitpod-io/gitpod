@@ -43,6 +43,9 @@ service WorkspaceManager {
 
     // deleteVolumeSnapshot asks ws-manager to delete specific volume snapshot and delete source from cloud provider as well
     rpc DeleteVolumeSnapshot(DeleteVolumeSnapshotRequest) returns (DeleteVolumeSnapshotResponse) {}
+
+    // UpdateSSHKey update ssh keys
+    rpc UpdateSSHKey(UpdateSSHKeyRequest) returns (UpdateSSHKeyResponse) {}
 }
 
 // MetadataFilter describes conditions for matching a set of workspaces.
@@ -251,6 +254,18 @@ message BackupWorkspaceResponse {
     // URL is the location of the backup
     string url = 1;
 }
+
+// UpdateSSHKeyRequest update ssh public key
+message UpdateSSHKeyRequest {
+    // ID is the unique identifier of the workspace
+    string id = 1;
+
+    // keys is a set of authorized_keys
+    repeated string keys = 2;
+}
+
+// UpdateSSHKeyResponse is the answer to a upload ssh key request
+message UpdateSSHKeyResponse {}
 
 // WorkspaceStatus describes a workspace status
 message WorkspaceStatus {
@@ -540,6 +555,9 @@ message StartWorkspaceSpec {
 
     // volume_snapshot to use to restore PVC from, if set
     VolumeSnapshotInfo volume_snapshot = 14;
+
+    // ssh_public_keys is user's uploaded ssh public keys
+    repeated string ssh_public_keys = 15;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces
@@ -623,4 +641,10 @@ enum WorkspaceType {
 message ExposedPorts {
     // ports is the set of ports which ought to be exposed to the internet
     repeated PortSpec ports = 1;
+}
+
+// SSHPublicKeys describes the user's uploaded ssh public keys, it will be used only in annotations.
+message SSHPublicKeys {
+    // keys is the set of ssh public key
+    repeated string keys = 1;
 }

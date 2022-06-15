@@ -580,6 +580,48 @@ export namespace BackupWorkspaceResponse {
     }
 }
 
+export class UpdateSSHKeyRequest extends jspb.Message {
+    getId(): string;
+    setId(value: string): UpdateSSHKeyRequest;
+    clearKeysList(): void;
+    getKeysList(): Array<string>;
+    setKeysList(value: Array<string>): UpdateSSHKeyRequest;
+    addKeys(value: string, index?: number): string;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UpdateSSHKeyRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: UpdateSSHKeyRequest): UpdateSSHKeyRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UpdateSSHKeyRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UpdateSSHKeyRequest;
+    static deserializeBinaryFromReader(message: UpdateSSHKeyRequest, reader: jspb.BinaryReader): UpdateSSHKeyRequest;
+}
+
+export namespace UpdateSSHKeyRequest {
+    export type AsObject = {
+        id: string,
+        keysList: Array<string>,
+    }
+}
+
+export class UpdateSSHKeyResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UpdateSSHKeyResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: UpdateSSHKeyResponse): UpdateSSHKeyResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UpdateSSHKeyResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UpdateSSHKeyResponse;
+    static deserializeBinaryFromReader(message: UpdateSSHKeyResponse, reader: jspb.BinaryReader): UpdateSSHKeyResponse;
+}
+
+export namespace UpdateSSHKeyResponse {
+    export type AsObject = {
+    }
+}
+
 export class WorkspaceStatus extends jspb.Message {
     getId(): string;
     setId(value: string): WorkspaceStatus;
@@ -965,6 +1007,10 @@ export class StartWorkspaceSpec extends jspb.Message {
     clearVolumeSnapshot(): void;
     getVolumeSnapshot(): VolumeSnapshotInfo | undefined;
     setVolumeSnapshot(value?: VolumeSnapshotInfo): StartWorkspaceSpec;
+    clearSshPublicKeysList(): void;
+    getSshPublicKeysList(): Array<string>;
+    setSshPublicKeysList(value: Array<string>): StartWorkspaceSpec;
+    addSshPublicKeys(value: string, index?: number): string;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -991,6 +1037,7 @@ export namespace StartWorkspaceSpec {
         ideImage?: IDEImage.AsObject,
         pb_class: string,
         volumeSnapshot?: VolumeSnapshotInfo.AsObject,
+        sshPublicKeysList: Array<string>,
     }
 }
 
@@ -1090,6 +1137,28 @@ export class ExposedPorts extends jspb.Message {
 export namespace ExposedPorts {
     export type AsObject = {
         portsList: Array<PortSpec.AsObject>,
+    }
+}
+
+export class SSHPublicKeys extends jspb.Message {
+    clearKeysList(): void;
+    getKeysList(): Array<string>;
+    setKeysList(value: Array<string>): SSHPublicKeys;
+    addKeys(value: string, index?: number): string;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): SSHPublicKeys.AsObject;
+    static toObject(includeInstance: boolean, msg: SSHPublicKeys): SSHPublicKeys.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: SSHPublicKeys, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): SSHPublicKeys;
+    static deserializeBinaryFromReader(message: SSHPublicKeys, reader: jspb.BinaryReader): SSHPublicKeys;
+}
+
+export namespace SSHPublicKeys {
+    export type AsObject = {
+        keysList: Array<string>,
     }
 }
 

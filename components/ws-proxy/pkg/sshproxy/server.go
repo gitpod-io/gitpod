@@ -6,6 +6,7 @@ package sshproxy
 
 import (
 	"context"
+	"crypto/subtle"
 	"net"
 	"regexp"
 	"strings"
@@ -107,24 +108,27 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 		ServerVersion: "SSH-2.0-GITPOD-GATEWAY",
 		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (perm *ssh.Permissions, err error) {
 			workspaceId, ownerToken := conn.User(), string(password)
-			wsInfo, err := server.Authenticator(workspaceId, ownerToken)
+			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
 			defer func() {
 				server.TrackSSHConnection(wsInfo, "auth", err)
 			}()
 			if err != nil {
-				if err == ErrAuthFailed {
-					return
-				}
 				args := strings.Split(conn.User(), "#")
 				if len(args) != 2 {
 					return
 				}
 				workspaceId, ownerToken = args[0], args[1]
-				wsInfo, err = server.Authenticator(workspaceId, ownerToken)
-				if err == nil {
-					err = ErrMissPrivateKey
+				wsInfo, err = server.GetWorkspaceInfo(workspaceId)
+				if err != nil {
+					return nil, ErrWorkspaceNotFound
 				}
-				return
+				if wsInfo.Auth.OwnerToken == ownerToken {
+					return nil, ErrMissPrivateKey
+				}
+				return nil, ErrAuthFailed
+			}
+			if wsInfo.Auth.OwnerToken != ownerToken {
+				return nil, ErrAuthFailed
 			}
 			return &ssh.Permissions{
 				Extensions: map[string]string{
@@ -132,19 +136,29 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 				},
 			}, nil
 		},
-		PublicKeyCallback: func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
+		PublicKeyCallback: func(conn ssh.ConnMetadata, pk ssh.PublicKey) (perm *ssh.Permissions, err error) {
 			args := strings.Split(conn.User(), "#")
-			// workspaceId#ownerToken
-			if len(args) != 2 {
-				return nil, ErrUsernameFormat
+			workspaceId := args[0]
+			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
+			if err != nil {
+				return nil, err
 			}
-			workspaceId, ownerToken := args[0], args[1]
-			wsInfo, err := server.Authenticator(workspaceId, ownerToken)
 			defer func() {
 				server.TrackSSHConnection(wsInfo, "auth", err)
 			}()
-			if err != nil {
-				return nil, err
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+			ok, _ := server.VerifyPublicKey(ctx, wsInfo, pk)
+			if ok {
+				return &ssh.Permissions{
+					Extensions: map[string]string{
+						"workspaceId": workspaceId,
+					},
+				}, nil
+			}
+			// workspaceId#ownerToken
+			if len(args) != 2 || wsInfo.Auth.OwnerToken != args[1] {
+				return nil, ErrAuthFailed
 			}
 			return &ssh.Permissions{
 				Extensions: map[string]string{
@@ -292,16 +306,13 @@ func (s *Server) HandleConn(c net.Conn) {
 	cancel()
 }
 
-func (s *Server) Authenticator(workspaceId, ownerToken string) (*p.WorkspaceInfo, error) {
+func (s *Server) GetWorkspaceInfo(workspaceId string) (*p.WorkspaceInfo, error) {
 	wsInfo := s.workspaceInfoProvider.WorkspaceInfo(workspaceId)
 	if wsInfo == nil {
 		if matched, _ := regexp.Match(workspaceIDRegex, []byte(workspaceId)); matched {
 			return nil, ErrWorkspaceNotFound
 		}
 		return nil, ErrWorkspaceIDInvalid
-	}
-	if wsInfo.Auth.OwnerToken != ownerToken {
-		return wsInfo, ErrAuthFailed
 	}
 	return wsInfo, nil
 }
@@ -327,6 +338,21 @@ func (s *Server) TrackSSHConnection(wsInfo *p.WorkspaceInfo, phase string, err e
 		Event:      "ssh_connection",
 		Properties: propertics,
 	})
+}
+
+func (s *Server) VerifyPublicKey(ctx context.Context, wsInfo *p.WorkspaceInfo, pk ssh.PublicKey) (bool, error) {
+	for _, keyStr := range wsInfo.SSHPublicKeys {
+		key, _, _, _, err := ssh.ParseAuthorizedKey([]byte(keyStr))
+		if err != nil {
+			continue
+		}
+		keyData := key.Marshal()
+		pkd := pk.Marshal()
+		if len(keyData) == len(pkd) && subtle.ConstantTimeCompare(keyData, pkd) == 1 {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (s *Server) GetWorkspaceSSHKey(ctx context.Context, workspaceIP string) (ssh.Signer, error) {

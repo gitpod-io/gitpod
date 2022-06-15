@@ -339,6 +339,21 @@ func (mr *MockWorkspaceManagerServerMockRecorder) TakeSnapshot(arg0, arg1 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TakeSnapshot", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).TakeSnapshot), arg0, arg1)
 }
 
+// UpdateSSHKey mocks base method.
+func (m *MockWorkspaceManagerServer) UpdateSSHKey(arg0 context.Context, arg1 *api.UpdateSSHKeyRequest) (*api.UpdateSSHKeyResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateSSHKey", arg0, arg1)
+	ret0, _ := ret[0].(*api.UpdateSSHKeyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateSSHKey indicates an expected call of UpdateSSHKey.
+func (mr *MockWorkspaceManagerServerMockRecorder) UpdateSSHKey(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSSHKey", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).UpdateSSHKey), arg0, arg1)
+}
+
 // mustEmbedUnimplementedWorkspaceManagerServer mocks base method.
 func (m *MockWorkspaceManagerServer) mustEmbedUnimplementedWorkspaceManagerServer() {
 	m.ctrl.T.Helper()
@@ -735,4 +750,24 @@ func (mr *MockWorkspaceManagerClientMockRecorder) TakeSnapshot(arg0, arg1 interf
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TakeSnapshot", reflect.TypeOf((*MockWorkspaceManagerClient)(nil).TakeSnapshot), varargs...)
+}
+
+// UpdateSSHKey mocks base method.
+func (m *MockWorkspaceManagerClient) UpdateSSHKey(arg0 context.Context, arg1 *api.UpdateSSHKeyRequest, arg2 ...grpc.CallOption) (*api.UpdateSSHKeyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateSSHKey", varargs...)
+	ret0, _ := ret[0].(*api.UpdateSSHKeyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateSSHKey indicates an expected call of UpdateSSHKey.
+func (mr *MockWorkspaceManagerClientMockRecorder) UpdateSSHKey(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSSHKey", reflect.TypeOf((*MockWorkspaceManagerClient)(nil).UpdateSSHKey), varargs...)
 }
