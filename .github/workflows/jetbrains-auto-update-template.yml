@@ -37,19 +37,16 @@ jobs:
         with:
           distribution: zulu
           java-version: "11"
-      - name: Leeway build
+      - name: Setup Google Cloud
         uses: google-github-actions/setup-gcloud@v0
         with:
           project_id: ${{ secrets.projectId }}
-        env:
-          LEEWAY_REMOTE_CACHE_BUCKET: gitpod-core-leeway-cache-branch
-      - run: |
+      - name: Leeway build
+        run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
-          data=$(curl -sSL "https://data.services.jetbrains.com/products?code=${{ inputs.productCode }}&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000")
-          link=$(echo "$data" | jq -r '.[0].releases[0].downloads.linux.link')
           cd components/ide/jetbrains/image
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DjetbrainsBackendQualifier=latest -D${{ inputs.productId }}DownloadUrl=$link .:${{ inputs.productId }}
+          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build .:${{ inputs.productId }}-latest
       - name: Slack Notification
         if: always()
         uses: rtCamp/action-slack-notify@v2
