@@ -1,6 +1,16 @@
 # Change Log
 
 ## June 2022
+- Revert "[dashboard] Move inactive workspaces out of sight" ([#10663](https://github.com/gitpod-io/gitpod/pull/10663)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Added alias for forward and await in ports CLI namespace ([#10538](https://github.com/gitpod-io/gitpod/pull/10538)) - [@CuriousCorrelation](https://github.com/CuriousCorrelation)
+- Added a new command to gitpod-cli: "gp top" which displays workspace resources (CPU/Memory usage) ([#10570](https://github.com/gitpod-io/gitpod/pull/10570)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- [experimental] add a metric to track volume restore time ([#10623](https://github.com/gitpod-io/gitpod/pull/10623)) - [@jenting](https://github.com/jenting)
+- Update runc to v1.1.3 ([#10608](https://github.com/gitpod-io/gitpod/pull/10608)) - [@aledbf](https://github.com/aledbf)
+- Add command `gp timeout extend` to extend timeout of current workspace ([#10619](https://github.com/gitpod-io/gitpod/pull/10619)) - [@mustard-mh](https://github.com/mustard-mh)
+- [Installer]: configure endpoint/region of registry S3 backing ([#10577](https://github.com/gitpod-io/gitpod/pull/10577)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- - Allow customize VMOptions for JetBrains backend server, by setting `INTELLIJ_VMOPTIONS` (also GoLand/PyCharm/PhpStorm) environment variable ([#10175](https://github.com/gitpod-io/gitpod/pull/10175)) - [@yaohui-wyh](https://github.com/yaohui-wyh)
+- [kots]: move the openssh installation to the container image ([#10582](https://github.com/gitpod-io/gitpod/pull/10582)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Revert "[werft]: disable publish to kots on main build" ([#10604](https://github.com/gitpod-io/gitpod/pull/10604)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - use `ide.gitpod.io/blobserve` to serve blobfile ([#10514](https://github.com/gitpod-io/gitpod/pull/10514)) - [@iQQBot](https://github.com/iQQBot)
 - Add GITPOD_WORKSPACE_CLASS environment variable to workspaces to allow easier identification of the workspace class ([#10562](https://github.com/gitpod-io/gitpod/pull/10562)) - [@Furisto](https://github.com/Furisto)
 - Added action to delete all inactive workspaces ([#10450](https://github.com/gitpod-io/gitpod/pull/10450)) - [@svenefftinge](https://github.com/svenefftinge)
