@@ -282,9 +282,27 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 	// At this point we've found neither a full-workspace-backup, nor a legacy backup.
 	// It's time to use the initializer.
 	if gis := initializer.GetSnapshot(); gis != nil {
+		if gis.FromVolumeSnapshot {
+			layer, err = contentDescriptorToLayerPVC([]byte{})
+			if err != nil {
+				return nil, nil, err
+			}
+
+			l = []Layer{*layer}
+			return l, manifest, nil
+		}
 		return s.getSnapshotContentLayer(ctx, gis)
 	}
 	if pis := initializer.GetPrebuild(); pis != nil {
+		if pis.Prebuild.FromVolumeSnapshot {
+			layer, err = contentDescriptorToLayerPVC([]byte{})
+			if err != nil {
+				return nil, nil, err
+			}
+
+			l = []Layer{*layer}
+			return l, manifest, nil
+		}
 		l, manifest, err = s.getPrebuildContentLayer(ctx, pis)
 		if err != nil {
 			log.WithError(err).WithFields(log.OWI(owner, workspaceID, "")).Warn("cannot initialize from prebuild - falling back to Git")
@@ -481,6 +499,7 @@ git config --global --add safe.directory ${GITPOD_REPO_ROOT}
 git status --porcelain=v2 --branch -uall > /.workspace/prestophookdata/git_status.txt
 git log --pretty='%h: %s' --branches --not --remotes > /.workspace/prestophookdata/git_log_1.txt
 git log --pretty=%H -n 1 > /.workspace/prestophookdata/git_log_2.txt
+cp /workspace/.gitpod/prebuild-log* /.workspace/prestophookdata/
 `
 
 // version of this function for persistent volume claim feature
