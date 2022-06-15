@@ -37,6 +37,9 @@ export default function Modal(props: {
             .catch(console.error);
     };
     const handler = (evt: KeyboardEvent) => {
+        if (!props.visible) {
+            return;
+        }
         if (evt.defaultPrevented) {
             return;
         }
