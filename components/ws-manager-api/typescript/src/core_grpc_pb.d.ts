@@ -28,6 +28,7 @@ interface IWorkspaceManagerService extends grpc.ServiceDefinition<grpc.UntypedSe
     takeSnapshot: IWorkspaceManagerService_ITakeSnapshot;
     controlAdmission: IWorkspaceManagerService_IControlAdmission;
     deleteVolumeSnapshot: IWorkspaceManagerService_IDeleteVolumeSnapshot;
+    updateSSHKey: IWorkspaceManagerService_IUpdateSSHKey;
 }
 
 interface IWorkspaceManagerService_IGetWorkspaces extends grpc.MethodDefinition<core_pb.GetWorkspacesRequest, core_pb.GetWorkspacesResponse> {
@@ -138,6 +139,15 @@ interface IWorkspaceManagerService_IDeleteVolumeSnapshot extends grpc.MethodDefi
     responseSerialize: grpc.serialize<core_pb.DeleteVolumeSnapshotResponse>;
     responseDeserialize: grpc.deserialize<core_pb.DeleteVolumeSnapshotResponse>;
 }
+interface IWorkspaceManagerService_IUpdateSSHKey extends grpc.MethodDefinition<core_pb.UpdateSSHKeyRequest, core_pb.UpdateSSHKeyResponse> {
+    path: "/wsman.WorkspaceManager/UpdateSSHKey";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<core_pb.UpdateSSHKeyRequest>;
+    requestDeserialize: grpc.deserialize<core_pb.UpdateSSHKeyRequest>;
+    responseSerialize: grpc.serialize<core_pb.UpdateSSHKeyResponse>;
+    responseDeserialize: grpc.deserialize<core_pb.UpdateSSHKeyResponse>;
+}
 
 export const WorkspaceManagerService: IWorkspaceManagerService;
 
@@ -154,6 +164,7 @@ export interface IWorkspaceManagerServer extends grpc.UntypedServiceImplementati
     takeSnapshot: grpc.handleUnaryCall<core_pb.TakeSnapshotRequest, core_pb.TakeSnapshotResponse>;
     controlAdmission: grpc.handleUnaryCall<core_pb.ControlAdmissionRequest, core_pb.ControlAdmissionResponse>;
     deleteVolumeSnapshot: grpc.handleUnaryCall<core_pb.DeleteVolumeSnapshotRequest, core_pb.DeleteVolumeSnapshotResponse>;
+    updateSSHKey: grpc.handleUnaryCall<core_pb.UpdateSSHKeyRequest, core_pb.UpdateSSHKeyResponse>;
 }
 
 export interface IWorkspaceManagerClient {
@@ -192,6 +203,9 @@ export interface IWorkspaceManagerClient {
     deleteVolumeSnapshot(request: core_pb.DeleteVolumeSnapshotRequest, callback: (error: grpc.ServiceError | null, response: core_pb.DeleteVolumeSnapshotResponse) => void): grpc.ClientUnaryCall;
     deleteVolumeSnapshot(request: core_pb.DeleteVolumeSnapshotRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.DeleteVolumeSnapshotResponse) => void): grpc.ClientUnaryCall;
     deleteVolumeSnapshot(request: core_pb.DeleteVolumeSnapshotRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.DeleteVolumeSnapshotResponse) => void): grpc.ClientUnaryCall;
+    updateSSHKey(request: core_pb.UpdateSSHKeyRequest, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
+    updateSSHKey(request: core_pb.UpdateSSHKeyRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
+    updateSSHKey(request: core_pb.UpdateSSHKeyRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class WorkspaceManagerClient extends grpc.Client implements IWorkspaceManagerClient {
@@ -231,4 +245,7 @@ export class WorkspaceManagerClient extends grpc.Client implements IWorkspaceMan
     public deleteVolumeSnapshot(request: core_pb.DeleteVolumeSnapshotRequest, callback: (error: grpc.ServiceError | null, response: core_pb.DeleteVolumeSnapshotResponse) => void): grpc.ClientUnaryCall;
     public deleteVolumeSnapshot(request: core_pb.DeleteVolumeSnapshotRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.DeleteVolumeSnapshotResponse) => void): grpc.ClientUnaryCall;
     public deleteVolumeSnapshot(request: core_pb.DeleteVolumeSnapshotRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.DeleteVolumeSnapshotResponse) => void): grpc.ClientUnaryCall;
+    public updateSSHKey(request: core_pb.UpdateSSHKeyRequest, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
+    public updateSSHKey(request: core_pb.UpdateSSHKeyRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
+    public updateSSHKey(request: core_pb.UpdateSSHKeyRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
 }

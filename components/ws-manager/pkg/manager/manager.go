@@ -6,6 +6,7 @@ package manager
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -23,6 +24,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -958,6 +960,46 @@ func (m *Manager) DescribeWorkspace(ctx context.Context, req *api.DescribeWorksp
 		result.LastActivity = lastActivity.UTC().Format(time.RFC3339Nano)
 	}
 	return result, nil
+}
+
+// UpdateSSHKey update ssh keys
+func (m *Manager) UpdateSSHKey(ctx context.Context, req *api.UpdateSSHKeyRequest) (res *api.UpdateSSHKeyResponse, err error) {
+	span, ctx := tracing.FromContext(ctx, "UpdateSSHKey")
+	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
+	defer tracing.FinishSpan(span, &err)
+
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
+		pod, err := m.findWorkspacePod(ctx, req.Id)
+		if err != nil {
+			return status.Errorf(codes.NotFound, "cannot find workspace: %v", err)
+		}
+		if pod == nil {
+			return status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
+		}
+		tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
+
+		// update pod annotation
+		rspec, err := proto.Marshal(&api.SSHPublicKeys{
+			Keys: req.Keys,
+		})
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, "cannot serialise SSH keys: %v", err)
+		}
+		data := base64.StdEncoding.EncodeToString(rspec)
+
+		if pod.Annotations[wsk8s.WorkspaceSSHPublicKeys] != data {
+			pod.Annotations[wsk8s.WorkspaceSSHPublicKeys] = data
+			// update pod
+			err = m.Clientset.Update(ctx, pod)
+			if err != nil {
+				// do not wrap error so we don't break the retry mechanism
+				return err
+			}
+		}
+		return nil
+	})
+
+	return &api.UpdateSSHKeyResponse{}, err
 }
 
 // Subscribe streams all status updates to a client
