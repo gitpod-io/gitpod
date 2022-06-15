@@ -341,6 +341,10 @@ func (c *Client) Fetch(ctx context.Context) (err error) {
 	return c.Git(ctx, "fetch", "-p", "-P", "--tags", "-f")
 }
 
+func (c *Client) AddSafeDirectory(ctx context.Context, dir string) (err error) {
+	return c.Git(ctx, "config", "--global", "--add", "safe.directory", dir)
+}
+
 // UpdateRemote performs a git fetch on the upstream remote URI
 func (c *Client) UpdateRemote(ctx context.Context) (err error) {
 	//nolint:staticcheck,ineffassign

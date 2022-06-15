@@ -658,8 +658,12 @@ func (s *WorkspaceService) uploadWorkspaceLogs(ctx context.Context, sess *sessio
 		return xerrors.Errorf("no remote storage configured")
 	}
 
+	logLocation := sess.Location
+	if sess.PersistentVolumeClaim {
+		logLocation = filepath.Join(sess.ServiceLocDaemon, "prestophookdata")
+	}
 	// currently we're only uploading prebuild log files
-	logFiles, err := logs.ListPrebuildLogFiles(ctx, sess.Location)
+	logFiles, err := logs.ListPrebuildLogFiles(ctx, logLocation)
 	if err != nil {
 		return err
 	}
