@@ -9,6 +9,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // clientCmd represents the client command
@@ -31,7 +32,7 @@ func init() {
 }
 
 func getGRPCConnection() (*grpc.ClientConn, error) {
-	secopt := grpc.WithInsecure()
+	secopt := grpc.WithTransportCredentials(insecure.NewCredentials())
 	if clientConfig.cert != "" {
 		creds, err := credentials.NewClientTLSFromFile(clientConfig.cert, "")
 		if err != nil {

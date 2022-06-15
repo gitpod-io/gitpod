@@ -19,6 +19,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -105,7 +106,7 @@ func (s *statusService) RegisterGRPC(srv *grpc.Server) {
 }
 
 func (s *statusService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterStatusServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
+	return api.RegisterStatusServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 func (s *statusService) SupervisorStatus(context.Context, *api.SupervisorStatusRequest) (*api.SupervisorStatusResponse, error) {
@@ -284,7 +285,7 @@ func (s RegistrableTokenService) RegisterGRPC(srv *grpc.Server) {
 
 // RegisterREST registers a REST service.
 func (s RegistrableTokenService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterTokenServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
+	return api.RegisterTokenServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // NewInMemoryTokenService produces a new InMemoryTokenService.
@@ -634,7 +635,7 @@ func (is *InfoService) RegisterGRPC(srv *grpc.Server) {
 
 // RegisterREST registers the REST info service.
 func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterInfoServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
+	return api.RegisterInfoServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // WorkspaceInfo provides information about the workspace.
@@ -829,7 +830,7 @@ func (s *portService) RegisterGRPC(srv *grpc.Server) {
 }
 
 func (s *portService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterPortServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
+	return api.RegisterPortServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // Tunnel opens a new tunnel.

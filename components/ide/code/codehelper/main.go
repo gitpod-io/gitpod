@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -122,7 +123,7 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.ContentStatusRespons
 		if supervisorAddr == "" {
 			supervisorAddr = "localhost:22999"
 		}
-		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			err = errors.New("dial supervisor failed: " + err.Error())
 			return
