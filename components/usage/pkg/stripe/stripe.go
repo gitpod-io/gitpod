@@ -10,7 +10,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/customer"
 )
 
 type stripeKeys struct {
@@ -32,6 +34,21 @@ func Authenticate(apiKeyFile string) error {
 
 	stripe.Key = stripeKeys.SecretKey
 	return nil
+}
+
+// FindCustomersForTeamIds queries the stripe API to find all customers with a teamId in `teamIds`.
+func FindCustomersForTeamIds(teamIds []string) {
+	queries := queriesForCustomersWithTeamIds(teamIds)
+
+	for _, query := range queries {
+		log.Infof("about to make query %q", query)
+		params := &stripe.CustomerSearchParams{SearchParams: stripe.SearchParams{Query: query}}
+		iter := customer.Search(params)
+		for iter.Next() {
+			customer := iter.Customer()
+			log.Infof("found customer %q for teamId %q", customer.Name, customer.Metadata["teamId"])
+		}
+	}
 }
 
 // queriesForCustomersWithTeamIds constructs Stripe query strings to find the Stripe Customer for each teamId
