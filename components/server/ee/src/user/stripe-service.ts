@@ -116,16 +116,15 @@ export class StripeService {
     }
 
     async createSubscriptionForCustomer(customerId: string, currency: Currency): Promise<void> {
-        // FIXME(janx): Use configmap.
-        const prices = {
-            EUR: "price_1LAE0AGadRXm50o3xjegX0Kd",
-            USD: "price_1LAE0AGadRXm50o3rKoktPiJ",
-        };
+        const priceId = this.config?.stripeConfig?.usageProductPriceIds[currency];
+        if (!priceId) {
+            throw new Error(`No Stripe Price ID configured for currency '${currency}'`);
+        }
         const startOfNextMonth = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month (YYYY-MM-01)
         startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1); // Add one month
         await this.getStripe().subscriptions.create({
             customer: customerId,
-            items: [{ price: prices[currency] }],
+            items: [{ price: priceId }],
             billing_cycle_anchor: Math.round(startOfNextMonth.getTime() / 1000),
         });
     }

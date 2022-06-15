@@ -84,6 +84,7 @@ export class Installer {
 
                 // let installer know that there is a stripe config
                 exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeSecret stripe-api-keys`, { slice: slice });
+                exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeConfig stripe-config`, { slice: slice });
             }
 
         } catch (err) {
