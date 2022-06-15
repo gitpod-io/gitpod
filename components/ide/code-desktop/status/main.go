@@ -16,6 +16,7 @@ import (
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -89,7 +90,7 @@ func GetWSInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
 	if supervisorAddr == "" {
 		supervisorAddr = "localhost:22999"
 	}
-	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}

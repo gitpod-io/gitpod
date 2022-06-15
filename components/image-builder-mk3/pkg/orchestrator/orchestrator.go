@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -86,7 +87,7 @@ func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err e
 
 			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
 		} else {
-			grpcOpts = append(grpcOpts, grpc.WithInsecure())
+			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		}
 		conn, err := grpc.Dial(cfg.WorkspaceManager.Address, grpcOpts...)
 		if err != nil {

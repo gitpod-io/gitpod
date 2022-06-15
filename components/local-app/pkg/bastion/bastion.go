@@ -29,6 +29,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -356,7 +357,7 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 
 		if ws.supervisorClient == nil && ws.supervisorListener != nil {
 			var err error
-			ws.supervisorClient, err = grpc.Dial(ws.supervisorListener.LocalAddr, grpc.WithInsecure())
+			ws.supervisorClient, err = grpc.Dial(ws.supervisorListener.LocalAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				logrus.WithError(err).WithField("workspace", ws.WorkspaceID).Error("error connecting to supervisor")
 			} else {

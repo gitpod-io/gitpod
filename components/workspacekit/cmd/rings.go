@@ -32,6 +32,7 @@ import (
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -955,7 +956,7 @@ func connectToInWorkspaceDaemonService(ctx context.Context) (*inWorkspaceService
 		}
 	}
 
-	conn, err := grpc.DialContext(ctx, "unix://"+socketFN, grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "unix://"+socketFN, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
