@@ -24,3 +24,6 @@ spec:
     - deployment/ws-manager-bridge
     - deployment/ws-proxy
     - service/proxy
+  additionalImages:
+    - cr.fluentbit.io/fluent/fluent-bit:1.9.4 # Defined by Fluent Bit Helm chart
+    - busybox:1 # Used to pull log files to pull from Fluent Bit, which doesn't container tar binary
