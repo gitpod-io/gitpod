@@ -11,20 +11,14 @@ RUN apk add --no-cache curl \
 FROM ubuntu:22.04
 
 ## Installing coreutils is super important here as otherwise the loopback device creation fails!
-RUN apt update \
-  && apt dist-upgrade -y \
-  && apt install -yq --no-install-recommends git git-lfs openssh-client lz4 e2fsprogs coreutils tar strace xfsprogs curl ca-certificates
-
-RUN cd /usr/bin \
-  && curl -fsSL https://github.com/atkrad/wait4x/releases/download/v2.4.0/wait4x-linux-amd64.tar.gz | tar xzv --no-anchored wait4x
-
 ARG CLOUD_SDK_VERSION=390.0.0
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
 ENV CLOUDSDK_CORE_DISABLE_PROMPTS=1
-ENV PATH "$PATH:/opt/google-cloud-sdk/bin/"
 
-RUN apt update -qqy \
-  && apt install -qqy --no-install-recommends \
+RUN apt update \
+  && apt dist-upgrade -y \
+  && apt install -yq --no-install-recommends \
+      git git-lfs openssh-client lz4 e2fsprogs coreutils tar strace xfsprogs curl ca-certificates strace \
       apt-transport-https \
       python3-crcmod \
       gnupg \
@@ -41,6 +35,9 @@ RUN apt update -qqy \
     /var/lib/apt/lists/* \
     /tmp/* \
     /var/tmp/*
+
+RUN cd /usr/bin \
+  && curl -fsSL https://github.com/atkrad/wait4x/releases/download/v2.4.0/wait4x-linux-amd64.tar.gz | tar xzv --no-anchored wait4x
 
 COPY --from=dl /dl/runc.amd64 /usr/bin/runc
 

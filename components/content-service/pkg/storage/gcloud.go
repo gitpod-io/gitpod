@@ -382,14 +382,16 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 
 		sa := ""
 		if rs.GCPConfig.CredentialsFile != "" {
-			sa = fmt.Sprintf(`gcloud auth activate-service-account --key-file %v &&`, rs.GCPConfig.CredentialsFile)
+			sa = fmt.Sprintf(`-o "Credentials:gs_service_key_file=%v`, rs.GCPConfig.CredentialsFile)
 		}
-		args := fmt.Sprintf(`%v gsutil -m \
+
+		args := fmt.Sprintf(`gsutil -q -m %v\
 		  -o "GSUtil:parallel_composite_upload_threshold=150M" \
+		  -o "GSUtil:parallel_process_count=4" \
 		  -o "GSUtil:parallel_thread_count=8" \
 		  cp %s gs://%s`, sa, source, filepath.Join(bucket, object))
 
-		log.WithField("flags", args).Info("gsutil flags")
+		log.WithField("flags", args).Debug("gsutil flags")
 
 		cmd := exec.Command("/bin/bash", []string{"-c", args}...)
 		cmd.Stderr = os.Stderr
