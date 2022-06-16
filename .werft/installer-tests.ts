@@ -186,11 +186,50 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
 
 
 const TESTS: { [name: string]: InfraConfig } = {
-    // TODO(nvn): make this more atomic
-    INTEGRATION_TESTS: {
-        phase: "run-tests",
-        makeTarget: "run-tests",
-        description: "Run the integration tests",
+    WORKSPACE_TEST: {
+        phase: "run-workspace-tests",
+        makeTarget: "run-workspace-tests",
+        description: "Run the test for workspaces",
+    },
+    VSCODE_IDE_TEST: {
+        phase: "run-vscode-ide-tests",
+        makeTarget: "run-vscode-ide-tests",
+        description: "Run the test for vscode IDE",
+    },
+    JB_IDE_TEST: {
+        phase: "run-jb-ide-tests",
+        makeTarget: "run-jb-ide-tests",
+        description: "Run the test for jetbrains IDE",
+    },
+    CONTENTSERVICE_TEST: {
+        phase: "run-cs-component-tests",
+        makeTarget: "run-cs-component-tests",
+        description: "Run the test for content-service component",
+    },
+    DB_TEST: {
+        phase: "run-db-component-tests",
+        makeTarget: "run-db-component-tests",
+        description: "Run the test for database component",
+    },
+    IMAGEBUILDER_TEST: {
+        phase: "run-ib-component-tests",
+        makeTarget: "run-ib-component-tests",
+        description: "Run the test for image-builder component",
+    },
+    SERVER_TEST: {
+        phase: "run-server-component-tests",
+        makeTarget: "run-server-component-tests",
+        description: "Run the test for server component",
+    },
+    WS_DAEMON_TEST: {
+        phase: "run-wsd-component-tests",
+        makeTarget: "run-wsd-component-tests",
+        description: "Run the test for ws-daemon component",
+    },
+    WS_MNGR_TEST: {
+        phase: "run-wsm-component-tests",
+        makeTarget: "run-wsm-component-tests",
+        description: "Run the test for ws-manager component",
     },
 }
 
@@ -250,6 +289,8 @@ if (upgrade === "true") {
             `werft log result -d  "self-hosted preview url" url "https://${process.env["TF_VAR_TEST_ID"]}.tests.gitpod-self-hosted.com"`,
         );
 
+        exec(`werft log result -d  "Terraform state" url "Terraform state file name is ${process.env["TF_VAR_TEST_ID"]}"`);
+
         werft.done("print-output");
     } else {
         // if we are not doing preview, we delete the infrastructure
@@ -261,7 +302,7 @@ function runIntegrationTests() {
     werft.phase("run-integration-tests", "Run all existing integration tests");
     for (let test in TESTS) {
         const testPhase = TESTS[test];
-        // we just let tests fail
+        // todo(nvn): handle the test failures by alerting teams
         const ret = callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
         if (ret) {
             exec(
