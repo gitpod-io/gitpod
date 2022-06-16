@@ -29,33 +29,38 @@ gke-standard-cluster:
 	terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 
 .PHONY:
+## eks-standard-cluster: Creates an EKS cluster
+eks-standard-cluster:
+	terraform init --upgrade && \
+	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
+	terraform apply -target=module.eks -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done creating EKS cluster"
+
+.PHONY:
 ## aks-standard-cluster: Creates an AKS cluster
 aks-standard-cluster:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
-	terraform apply -target=module.aks -var k8s_flavor="aks" -var kubeconfig=${KUBECONFIG} --auto-approve
+	terraform apply -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done creating AKS cluster"
 
-.PHONY:
-## azure-external-dns: Sets up external-dns with azure provider
-azure-external-dns:
-azure-external-dns:
-	terraform init --upgrade && \
-	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
-	terraform apply -target=module.azure-externaldns  -var kubeconfig=${KUBECONFIG} --auto-approve
-
+cloud ?= azure
 .PHONY:
 ## add-ns-record: Adds NS record for subdomain under gitpod-selfhosted.com
 add-ns-record:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
-	terraform apply -target=module.add_gcp_nameservers  -var kubeconfig=${KUBECONFIG} --auto-approve
+	terraform apply -target=module.$(cloud)-add-dns-record  -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done adding NS record"
 
+cloud ?= azure
 .PHONY:
-## azure-issuer: Creates a cluster issuer with AD access
-azure-issuer:
+## cluster-issuer: Creates a cluster issuer for the correspondign provider
+cluster-issuer:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
-	terraform apply -target=module.azure-issuer  -var kubeconfig=${KUBECONFIG} --auto-approve
+	terraform apply -target=module.$(cloud)-issuer  -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done creating cluster issuer"
 
 .PHONY:
 ## k3s-standard-cluster: Creates a K3S cluster on GCP with one master and 1 worker node
@@ -63,21 +68,29 @@ k3s-standard-cluster:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve
-
-CLUSTER_ISSUER_CLOUD_DNS := "./manifests/gcp-issuer.yaml"
+	@echo "Done creating k3s cluster"
 
 .PHONY:
 ## cert-manager: Installs cert-manager, optionally create secret for cloud-dns access
 cert-manager:
 	terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done installing cert-manager"
 
 .PHONY:
 ## managed-dns: Installs external-dns, and setup up CloudDNS access
 managed-dns: check-env-sub-domain
 	terraform workspace select $(TF_VAR_TEST_ID) && \
-	terraform apply -target=module.externaldns -var kubeconfig=${KUBECONFIG} --auto-approve && \
-    kubectl --kubeconfig=${KUBECONFIG} apply -f ${CLUSTER_ISSUER_CLOUD_DNS}
+	terraform apply -target=module.clouddns-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done created GCP managed DNS"
+
+cloud ?= "azure"
+.PHONY:
+## external-dns: Installs external-dns
+external-dns: check-env-sub-domain
+	terraform workspace select $(TF_VAR_TEST_ID) && \
+	terraform apply -target=module.$(cloud)-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done creating externaldns for ${cloud}"
 
 .PHONY:
 ## get-kubeconfig: Returns KUBECONFIG of a just created cluster
@@ -111,24 +124,47 @@ get-config-gcp-db:
 	envsubst '$${TF_VAR_TEST_ID}' < tmp_4_config.yml > tmp_5_config.yml
 	yq m -i tmp_config.yml tmp_5_config.yml
 
+get-config-azure-registry:
+	export SERVER=$$(terraform output -json azure_registry | yq r - 'server') && \
+	export PASSWORD=$$(terraform output -json azure_registry | yq r - 'password') && \
+	export USERNAME=$$(terraform output -json azure_registry | yq r - 'username') && \
+	envsubst < ./manifests/kots-config-azure-registry.yaml > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
 get-config-azure-storage:
-	export PASSWORD=$$(terraform output -json storage | yq r - 'password') && \
-	export USERNAME=$$(terraform output -json storage | yq r - 'username') && \
+	export PASSWORD=$$(terraform output -json azure_storage | yq r - 'password') && \
+	export USERNAME=$$(terraform output -json azure_storage | yq r - 'username') && \
 	envsubst < ./manifests/kots-config-azure-storage.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
 
 get-config-azure-db:
-	export DBHOST=$$(terraform output -json database | yq r - 'host') && \
-	export DBPASS=$$(terraform output -json database | yq r - 'password') && \
-	export DBUSER=$$(terraform output -json database | yq r - 'username') && \
+	export DBHOST=$$(terraform output -json azure_database | yq r - 'host') && \
+	export DBPASS=$$(terraform output -json azure_database | yq r - 'password') && \
+	export DBUSER=$$(terraform output -json azure_database | yq r - 'username') && \
 	envsubst < ./manifests/kots-config-azure-db.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
 
-get-config-azure-registry:
-	export SERVER=$$(terraform output -json registry | yq r - 'server') && \
-	export PASSWORD=$$(terraform output -json registry | yq r - 'password') && \
-	export USERNAME=$$(terraform output -json registry | yq r - 'username') && \
-	envsubst < ./manifests/kots-config-azure-registry.yaml > tmp_2_config.yml
+get-config-aws-db:
+	export DBHOST=$$(terraform output -json aws_database | yq r - 'host') && \
+	export DBPASS=$$(terraform output -json aws_database | yq r - 'password') && \
+	export DBUSER=$$(terraform output -json aws_database | yq r - 'username') && \
+	envsubst < ./manifests/kots-config-aws-db.yaml > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
+get-config-aws-storage:
+	export REGION=$$(terraform output -json aws_storage | yq r - 'region') && \
+	export ENDPOINT=$$(terraform output -json aws_storage | yq r - 'endpoint') && \
+	export BUCKET=$$(terraform output -json aws_storage | yq r - 'bucket_name') && \
+	export S3_ACCESS_KEY_ID=$$(terraform output -json aws_storage | yq r - 'access_key_id') && \
+	export S3_SECRET_ACCESS_KEY=$$(terraform output -json aws_storage | yq r - 'secret_access_key') && \
+	envsubst < ./manifests/kots-config-aws-storage.yaml > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
+get-config-aws-registry:
+	export SERVER=$$(terraform output -json aws_registry | yq r - 'server' | cut -d / -f 1) && \
+	export PASSWORD=$$(terraform output -json aws_registry | yq r - 'password') && \
+	export USERNAME=$$(terraform output -json aws_registry | yq r - 'username') && \
+	envsubst < ./manifests/kots-config-aws-registry.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
 
 storage ?= incluster
@@ -173,38 +209,35 @@ check-gitpod-installation: delete-cm-setup check-kots-app check-env-sub-domain
 run-tests:
 	./tests.sh ${KUBECONFIG}
 
-kots-uprgade:
+kots-upgrade:
 	@echo "Upgrade gitpod KOTS app to latest"
 	kubectl kots upstream upgrade --kubeconfig=${KUBECONFIG} gitpod -n gitpod --deploy
 
-cleanup: destroy-gcp-externaldns destroy-gcpns destroy-aks-edns destroy-aks-issuer destroy-certmanager destroy-k3s destroy-gke destroy-aks
+cloud ?= gcp
+cleanup: destroy-$(cloud)
 
 select-workspace:
 	terraform workspace select $(TF_VAR_TEST_ID)
 
-destroy-gcp-externaldns: select-workspace
-	ls ${KUBECONFIG} && terraform destroy -target=module.externaldns -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
-
-destroy-certmanager: select-workspace
+destroy-gcp: select-workspace
+	ls ${KUBECONFIG} && terraform destroy -target=module.clouddns-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 	ls ${KUBECONFIG} && terraform destroy -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
-
-destroy-gcpns: select-workspace
-	terraform destroy -target=module.add_gcp_nameservers -var kubeconfig=${KUBECONFIG} --auto-approve
-
-destroy-aks-edns: select-workspace
-	ls ${KUBECONFIG} && terraform destroy -target=module.azure-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve  || echo "No kubeconfig file"
-
-destroy-aks-issuer: select-workspace
-	ls ${KUBECONFIG} && terraform destroy -target=module.azure-issuer -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
-
-destroy-gke: select-workspace
+	terraform destroy -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve
 	terraform destroy -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 
-destroy-k3s: select-workspace
-	terraform destroy -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve
+destroy-aws: select-workspace
+	terraform destroy -target=module.aws-add-dns-record -var kubeconfig=${KUBECONFIG} --auto-approve
+	ls ${KUBECONFIG} && terraform destroy -target=module.aws-issuer -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
+	ls ${KUBECONFIG} && terraform destroy -target=module.aws-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
+	ls ${KUBECONFIG} && terraform destroy -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
+	terraform destroy -target=module.eks -var kubeconfig=${KUBECONFIG} --auto-approve
 
-destroy-aks: select-workspace
-	terraform destroy -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
+destroy-azure: select-workspace
+	ls ${KUBECONFIG} && terraform destroy -target=module.azure-issuer -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
+	terraform destroy -target=module.azure-add-dns-record -var kubeconfig=${KUBECONFIG} --auto-approve
+	ls ${KUBECONFIG} && terraform destroy -target=module.azure-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
+	ls ${KUBECONFIG} && terraform destroy -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
+	[ -z "$$ARM_SUBSCRIPTION_ID" ] || terraform destroy -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
 
 get-results:
 	@echo "If you have gotten this far, it means your setup succeeded"
