@@ -1,18 +1,29 @@
-locals {
-    cloud = var.k8s_flavor == "aks" ? module.aks : null
+output "aws_storage" {
+    sensitive = true
+    value = try(module.eks.storage, null)
 }
 
-output "storage" {
+output "aws_registry" {
     sensitive = true
-    value = try(lookup(local.cloud, "storage"), {})
+    value = try(module.eks.registry, null)
 }
 
-output "registry" {
+output "aws_database" {
     sensitive = true
-    value = try(lookup(local.cloud, "registry"), {})
+    value = try(module.eks.database, null)
 }
 
-output "database" {
+output "azure_database" {
     sensitive = true
-    value = try(lookup(local.cloud, "database"), {})
+    value = try(module.aks.database, null)
+}
+
+output "azure_registry" {
+    sensitive = true
+    value = try(module.aks.registry, null)
+}
+
+output "azure_storage" {
+    sensitive = true
+    value = try(module.aks.storage, null)
 }
