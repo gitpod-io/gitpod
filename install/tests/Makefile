@@ -29,6 +29,13 @@ gke-standard-cluster:
 	terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 
 .PHONY:
+## eks-standard-cluster: Creates an EKS cluster
+eks-standard-cluster:
+	terraform init --upgrade && \
+	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
+	terraform apply -target=module.eks -var kubeconfig=${KUBECONFIG} --auto-approve
+
+.PHONY:
 ## aks-standard-cluster: Creates an AKS cluster
 aks-standard-cluster:
 	terraform init --upgrade && \
@@ -197,7 +204,7 @@ kots-uprgade:
 	@echo "Upgrade gitpod KOTS app to latest"
 	kubectl kots upstream upgrade --kubeconfig=${KUBECONFIG} gitpod -n gitpod --deploy
 
-cleanup: destroy-gcp-externaldns destroy-gcpns destroy-aks-edns destroy-aks-issuer destroy-certmanager destroy-k3s destroy-gke destroy-aks
+cleanup: destroy-gcp-externaldns destroy-gcpns destroy-aks-edns destroy-aks-issuer destroy-certmanager destroy-clusters
 
 select-workspace:
 	terraform workspace select $(TF_VAR_TEST_ID)
@@ -212,19 +219,16 @@ destroy-gcpns: select-workspace
 	terraform destroy -target=module.add_gcp_nameservers -var kubeconfig=${KUBECONFIG} --auto-approve
 
 destroy-aks-edns: select-workspace
-	ls ${KUBECONFIG} && terraform destroy -target=module.azure-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve  || echo "No kubeconfig file"
+	ls ${KUBECONFIG} && terraform destroy -target=module.azure-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 
 destroy-aks-issuer: select-workspace
 	ls ${KUBECONFIG} && terraform destroy -target=module.azure-issuer -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 
-destroy-gke: select-workspace
+destroy-clusters: select-workspace
 	terraform destroy -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
-
-destroy-k3s: select-workspace
+	terraform destroy -target=module.eks -var kubeconfig=${KUBECONFIG} --auto-approve
 	terraform destroy -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve
-
-destroy-aks: select-workspace
-	terraform destroy -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
+	[ -z "$$ARM_SUBSCRIPTION_ID" ] || terraform destroy -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
 
 get-results:
 	@echo "If you have gotten this far, it means your setup succeeded"

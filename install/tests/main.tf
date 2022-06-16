@@ -54,6 +54,12 @@ module "aks" {
   workspace_name           = var.TEST_ID
 }
 
+module "eks" {
+  source = "../infra/terraform/eks"
+  cluster_name = var.TEST_ID
+  kubeconfig   = var.kubeconfig
+}
+
 module "certmanager" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/cert-manager?ref=main"
   source = "../infra/terraform/tools/cert-manager"
@@ -67,7 +73,6 @@ module "externaldns" {
   source = "../infra/terraform/tools/external-dns"
   kubeconfig     = var.kubeconfig
   credentials    = var.dns_sa_creds
-  txt_owner_id   = var.TEST_ID
 }
 
 module "azure-externaldns" {

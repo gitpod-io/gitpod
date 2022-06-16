@@ -103,6 +103,24 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
             "DESTROY",
         ],
     },
+    STANDARD_EKS_TEST: {
+        CLOUD: "aws",
+        DESCRIPTION: "Create an EKS cluster",
+        PHASES: [
+            "STANDARD_EKS_CLUSTER",
+            "CERT_MANAGER",
+            // TODO phases are:
+            // 1) register domains in AWS, associate with route53
+            // 2) add the associated ns record to gcp(since we use gitpod-self-hsoted.com domain)
+            // 3) create cluster issuer with route53 as solver
+            "GENERATE_KOTS_CONFIG",
+            "INSTALL_GITPOD",
+            // "CHECK_INSTALLATION",
+            // "RUN_INTEGRATION_TESTS",
+            "RESULTS",
+            "DESTROY",
+        ],
+    },
 };
 
 const config: TestConfig = TEST_CONFIGURATIONS[testConfig];
@@ -127,6 +145,11 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         phase: "create-std-aks-cluster",
         makeTarget: "aks-standard-cluster",
         description: "Creating an aks cluster(azure)",
+    },
+    STANDARD_EKS_CLUSTER: {
+        phase: "create-std-eks-cluster",
+        makeTarget: "eks-standard-cluster",
+        description: "Creating a EKS cluster with 1 nodepool each for workspace and server",
     },
     CERT_MANAGER: {
         phase: "setup-cert-manager",
