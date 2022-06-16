@@ -1,6 +1,12 @@
 # Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
+FROM golang:1.18 as prettylog
+
+WORKDIR /app
+COPY prettylog/* ./
+RUN CGO_ENABLED=0 go build .
+
 FROM rancher/k3s:v1.21.12-k3s1
 
 ADD https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64 /bin/mkcert
@@ -16,6 +22,7 @@ RUN chmod +x /bin/yq
 
 COPY manifests/* /app/manifests/
 COPY install-installer--app/installer /gitpod-installer
+COPY --from=prettylog /app/prettylog /prettylog
 
 COPY entrypoint.sh /entrypoint.sh
 
