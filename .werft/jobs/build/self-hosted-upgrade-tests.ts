@@ -2,37 +2,68 @@ import { exec } from "../../util/shell";
 import { Werft } from "../../util/werft";
 import { JobConfig } from "./job-config";
 
-const phases = {
-    TRIGGER_UPGRADE_TESTS: "trigger self-hosted upgrade tests",
+interface config {
+    phase: string;
+    description: string;
+}
+
+const phases: { [name: string]: config } = {
+    gke: {
+        phase: "trigger upgrade test in GKE",
+        description: "Triggers upgrade test on supplied version from Beta channel on GKE cluster",
+    },
+    aks: {
+        phase: "trigger upgrade test in AKS",
+        description: "Triggers upgrade test on supplied version from Beta channel on AKS cluster",
+    },
+    k3s: {
+        phase: "trigger upgrade test in K3S",
+        description: "Triggers upgrade test on supplied version from Beta channel on K3S cluster",
+    },
+    eks: {
+        phase: "trigger upgrade test in EKS",
+        description: "Triggers upgrade test on supplied version from Beta channel on EKS cluster",
+    },
 };
 
 /**
  * Trigger self hosted upgrade tests
  */
 export async function triggerUpgradeTests(werft: Werft, config: JobConfig, username: string) {
-    werft.phase(phases.TRIGGER_UPGRADE_TESTS, "Trigger upgrade tests on self-hosted gitpod");
-
     if (!config.withUpgradeTests || !config.fromVersion) {
-        werft.log(phases.TRIGGER_UPGRADE_TESTS, "Skipped upgrade tests");
-        werft.done(phases.TRIGGER_UPGRADE_TESTS);
+        werft.log("Triger upgrade tests", "Skipped upgrade tests");
+        werft.done("trigger upgrade tests");
         return;
     }
 
-    try {
-        exec(`git config --global user.name "${username}"`);
-        const annotation = `-a fromVersion=${config.fromVersion}`;
-        exec(
-            `WERFT_CREDENTIAL_HELPER="" KUBECONFIG=/workspace/gitpod/kubeconfigs/core-dev werft run --remote-job-path .werft/run-sh-upgrade-tests-gke.yaml ${annotation} github`,
-            {
-                slice: phases.TRIGGER_UPGRADE_TESTS,
-            },
-        ).trim();
+    const channel: string = config.replicatedChannel || "beta";
 
-        werft.done(phases.TRIGGER_UPGRADE_TESTS);
-    } catch (err) {
-        if (!config.mainBuild) {
-            werft.fail(phases.TRIGGER_UPGRADE_TESTS, err);
+    exec(`git config --global user.name "${username}"`);
+    var annotation = `-a version=${config.fromVersion} -a upgrade=true -a channel=${channel} -a preview=true`;
+
+    for (let phase in phases) {
+        const upgradeConfig = phases[phase];
+
+        werft.phase(upgradeConfig.phase, upgradeConfig.description);
+
+        annotation = `${annotation} -a cluster=${phase}`
+
+        const testFile: string = ".werft/self-hosted-installer-tests.yaml";
+
+        try {
+            exec(
+                `WERFT_HOST="werft-grpc.gitpod-dev.com:443" WERFT_TLS_MODE="system" GITHUB_TOKEN_PATH="/mnt/secrets/gitpod-bot-github-token/token" WERFT_CREDENTIAL_HELPER="./dev/preview/werft-credential-helper.sh" KUBECONFIG=/workspace/gitpod/kubeconfigs/core-dev werft run --remote-job-path ${testFile} ${annotation} github`,
+                {
+                    slice: upgradeConfig.phase,
+                },
+            ).trim();
+
+            werft.done(upgradeConfig.phase);
+        } catch (err) {
+            if (!config.mainBuild) {
+                werft.fail(upgradeConfig.phase, err);
+            }
+            exec("exit 0");
         }
-        exec("exit 0");
     }
 }

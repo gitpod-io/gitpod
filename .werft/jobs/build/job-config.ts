@@ -9,6 +9,7 @@ export interface JobConfig {
     coverageOutput: string;
     dontTest: boolean;
     dynamicCPULimits: boolean;
+    fromVersion: string;
     installEELicense: boolean;
     localAppVersion: string;
     mainBuild: boolean;
@@ -18,12 +19,12 @@ export interface JobConfig {
     publishToNpm: string;
     publishToKots: boolean;
     retag: string;
+    replicatedChannel: string;
     storage: string;
     version: string;
     withContrib: boolean;
     withIntegrationTests: boolean;
     withUpgradeTests: boolean;
-    fromVersion: string;
     withObservability: boolean;
     withPayment: boolean;
     workspaceFeatureFlags: string[];
@@ -79,6 +80,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withIntegrationTests = "with-integration-tests" in buildConfig && !mainBuild;
     const withUpgradeTests = "with-upgrade-tests" in buildConfig && !mainBuild;
     const fromVersion = withUpgradeTests ? buildConfig["from-version"] : "";
+    const replicatedChannel = withUpgradeTests ? buildConfig["channel"] : "";
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
     const publishToKots = "publish-to-kots" in buildConfig || mainBuild;
@@ -129,6 +131,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         publishToJBMarketplace,
         publishToNpm,
         publishToKots,
+        replicatedChannel,
         repository,
         retag,
         storage,
