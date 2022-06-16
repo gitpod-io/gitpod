@@ -92,14 +92,31 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         PHASES: [
             "STANDARD_AKS_CLUSTER",
             "CERT_MANAGER",
-            "AZURE_ISSUER",
-            "AZURE_EXTERNALDNS",
+            "CLUSTER_ISSUER",
+            "EXTERNALDNS",
             "ADD_NS_RECORD",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "RESULTS",
             "CHECK_INSTALLATION",
             "RUN_INTEGRATION_TESTS",
+            "DESTROY",
+        ],
+    },
+    STANDARD_EKS_TEST: {
+        CLOUD: "aws",
+        DESCRIPTION: "Create an EKS cluster",
+        PHASES: [
+            "STANDARD_EKS_CLUSTER",
+            "CERT_MANAGER",
+            "EXTERNALDNS",
+            "CLUSTER_ISSUER",
+            "ADD_NS_RECORD",
+            "GENERATE_KOTS_CONFIG",
+            "RESULTS",
+            "INSTALL_GITPOD",
+            "CHECK_INSTALLATION",
+            // "RUN_INTEGRATION_TESTS",
             "DESTROY",
         ],
     },
@@ -128,6 +145,11 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         makeTarget: "aks-standard-cluster",
         description: "Creating an aks cluster(azure)",
     },
+    STANDARD_EKS_CLUSTER: {
+        phase: "create-std-eks-cluster",
+        makeTarget: "eks-standard-cluster",
+        description: "Creating a EKS cluster with 1 nodepool each for workspace and server",
+    },
     CERT_MANAGER: {
         phase: "setup-cert-manager",
         makeTarget: "cert-manager",
@@ -146,18 +168,18 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         )} db=${randomize("db", cloud)}`,
         description: `Generate KOTS Config file`,
     },
-    AZURE_ISSUER: {
-        phase: "setup-azure-cluster-issuer",
+    CLUSTER_ISSUER: {
+        phase: `setup-azure-cluster-issuer cloud=${cloud}`,
         makeTarget: "azure-issuer",
         description: "Deploys ClusterIssuer for azure",
     },
-    AZURE_EXTERNALDNS: {
-        phase: "azure-external-dns",
-        makeTarget: "azure-external-dns",
-        description: "Deploys external-dns with azure provider",
+    EXTERNALDNS: {
+        phase: "external-dns",
+        makeTarget: `external-dns cloud=${cloud}`,
+        description: `Deploys external-dns with ${cloud} provider`,
     },
     ADD_NS_RECORD: {
-        phase: "add-ns-record",
+        phase: `add-ns-record cloud=${cloud}`,
         makeTarget: "add-ns-record",
         description: "Adds NS record for subdomain under gitpod-self-hosted.com",
     },
@@ -189,7 +211,7 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     DESTROY: {
         phase: "destroy",
-        makeTarget: "cleanup",
+        makeTarget: `cleanup cloud=${cloud}`,
         description: "Destroy the created infrastucture",
     },
     RESULTS: {
@@ -254,7 +276,10 @@ function cleanup() {
     const phase = "destroy-infrastructure";
     werft.phase(phase, "Destroying all the created resources");
 
-    const response = exec(`make -C ${makefilePath} cleanup`, { slice: "run-terrafrom-destroy", dontCheckRc: true });
+    const response = exec(`make -C ${makefilePath} cleanup cloud=${cloud}`, {
+        slice: "run-terrafrom-destroy",
+        dontCheckRc: true,
+    });
 
     // if the destroy command fail, we check if any resources are pending to be removed
     // if nothing is yet to be cleaned, we return with success
