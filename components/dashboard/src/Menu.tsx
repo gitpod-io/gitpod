@@ -25,7 +25,7 @@ import { getProjectSettingsMenu } from "./projects/ProjectSettings";
 import { ProjectContext } from "./projects/project-context";
 import { PaymentContext } from "./payment-context";
 import FeedbackFormModal from "./feedback-form/FeedbackModal";
-import { isGitpodIo } from "./utils";
+import { inResource, isGitpodIo } from "./utils";
 import { getExperimentsClient } from "./experiments/client";
 
 interface Entry {
@@ -105,9 +105,9 @@ export default function Menu() {
     }
 
     // Hide most of the top menu when in a full-page form.
-    const isMinimalUI = ["/new", "/teams/new", "/open"].includes(location.pathname);
-    const isWorkspacesUI = ["/workspaces"].includes(location.pathname);
-    const isAdminUI = window.location.pathname.startsWith("/admin");
+    const isMinimalUI = inResource(location.pathname, ["new", "teams/new", "open"]);
+    const isWorkspacesUI = inResource(location.pathname, ["workspaces"]);
+    const isAdminUI = inResource(window.location.pathname, ["admin"]);
 
     const [teamMembers, setTeamMembers] = useState<Record<string, TeamMemberInfo[]>>({});
     useEffect(() => {
