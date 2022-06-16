@@ -29,26 +29,12 @@
               severity: 'warning',
             },
             annotations: {
-              runbook_url: '',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonExcessiveGC.md',
               summary: 'Ws-daemon is doing excessive garbage collection.',
               description: 'Ws-daemon has excessive garbage collection time. Collecting garbage for more than 1 second.',
             },
             expr: |||
               go_gc_duration_seconds{job="ws-daemon", quantile="1"} > 1
-            |||,
-          },
-          {
-            alert: 'GitpodWsDaemonExcessiveGC',
-            labels: {
-              severity: 'critical',
-            },
-            annotations: {
-              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonExcessiveGC.md',
-              summary: 'Ws-daemon is doing excessive garbage collection.',
-              description: 'Ws-daemon has excessive garbage collection time. Collecting garbage for more than 1 minute.',
-            },
-            expr: |||
-              go_gc_duration_seconds{job="ws-daemon", quantile="1"} > 60
             |||,
           },
         ],
