@@ -21,9 +21,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"

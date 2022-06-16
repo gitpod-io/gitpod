@@ -20,10 +20,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"

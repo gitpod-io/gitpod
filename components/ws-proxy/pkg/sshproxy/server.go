@@ -17,8 +17,8 @@ import (
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	tracker "github.com/gitpod-io/gitpod/ws-proxy/pkg/analytics"
 	p "github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
+	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -106,6 +106,27 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 
 	server.sshConfig = &ssh.ServerConfig{
 		ServerVersion: "SSH-2.0-GITPOD-GATEWAY",
+		NoClientAuth:  true,
+		NoClientAuthCallback: func(conn ssh.ConnMetadata) (*ssh.Permissions, error) {
+			args := strings.Split(conn.User(), "#")
+			workspaceId := args[0]
+			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
+			if err != nil {
+				return nil, err
+			}
+			defer func() {
+				server.TrackSSHConnection(wsInfo, "auth", err)
+			}()
+			// workspaceId#ownerToken
+			if len(args) != 2 || wsInfo.Auth.OwnerToken != args[1] {
+				return nil, ErrAuthFailed
+			}
+			return &ssh.Permissions{
+				Extensions: map[string]string{
+					"workspaceId": workspaceId,
+				},
+			}, nil
+		},
 		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (perm *ssh.Permissions, err error) {
 			workspaceId, ownerToken := conn.User(), string(password)
 			wsInfo, err := server.GetWorkspaceInfo(workspaceId)

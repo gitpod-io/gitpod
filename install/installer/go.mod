@@ -100,6 +100,7 @@ require (
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000 // indirect
 	github.com/gitpod-io/gitpod/registry-facade v0.0.0-00010101000000-000000000000 // indirect
+	github.com/gitpod-io/golang-crypto v0.0.0-20220616163018-a0e3d8407552 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect

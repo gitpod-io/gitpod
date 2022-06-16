@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"golang.org/x/crypto/ssh"
+	"github.com/gitpod-io/golang-crypto/ssh"
 	"golang.org/x/net/context"
 )
 
