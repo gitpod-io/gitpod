@@ -27,7 +27,7 @@ pod:
       secretName: harvester-vm-ssh-keys
   containers:
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:ljb-upgrade-werft-cli.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-gcloud-auth.6
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     volumeMounts:
