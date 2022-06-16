@@ -148,9 +148,11 @@ RUN sudo chown gitpod: /opt \
     && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-388.0.0-linux-x86_64.tar.gz \
     | tar -xzvC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
-    --additional-components docker-credential-gcr alpha beta \
+    --additional-components gke-gcloud-auth-plugin docker-credential-gcr alpha beta \
     # needed for access to our private registries
     && docker-credential-gcr configure-docker
+
+ENV USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
 # Install tools for gsutil
 RUN sudo install-packages \
