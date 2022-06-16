@@ -6,3 +6,11 @@ variable "kubeconfig" {
 variable "cert_manager_issuer" {
     default     = null
 }
+
+variable "secretAccessKey" {
+    default     = null
+}
+
+variable "issuer_name" {
+    default     = "route53"
+}
