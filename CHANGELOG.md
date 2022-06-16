@@ -1,6 +1,10 @@
 # Change Log
 
 ## June 2022
+- [self-hosted] Add new local preview installation method ([#10532](https://github.com/gitpod-io/gitpod/pull/10532)) - [@Pothulapati](https://github.com/Pothulapati)
+- Added action to delete all inactive workspaces ([#10676](https://github.com/gitpod-io/gitpod/pull/10676)) - [@svenefftinge](https://github.com/svenefftinge)
+- Listen on instance updates of a running prebuild ([#10646](https://github.com/gitpod-io/gitpod/pull/10646)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Resolve prebuild updatables ([#10648](https://github.com/gitpod-io/gitpod/pull/10648)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Revert "[dashboard] Move inactive workspaces out of sight" ([#10663](https://github.com/gitpod-io/gitpod/pull/10663)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Added alias for forward and await in ports CLI namespace ([#10538](https://github.com/gitpod-io/gitpod/pull/10538)) - [@CuriousCorrelation](https://github.com/CuriousCorrelation)
 - Added a new command to gitpod-cli: "gp top" which displays workspace resources (CPU/Memory usage) ([#10570](https://github.com/gitpod-io/gitpod/pull/10570)) - [@andreafalzetti](https://github.com/andreafalzetti)
