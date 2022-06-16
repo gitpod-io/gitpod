@@ -7,7 +7,7 @@ simple as possible.
 ## Installation
 
 ```bash
-docker run --privileged --name gitpod --rm -it -v /tmp/gitpod:/var/gitpod eu.gcr.io/gitpod-core-dev/build/preview-install:tar-preview-install.4
+docker run --privileged --name gitpod --rm -it -v /tmp/gitpod:/var/gitpod eu.gcr.io/gitpod-core-dev/build/preview-install:tar-preview-output.2
 ```
 
 Once the above command starts running and the pods are ready (can be checked by running `docker exec gitpod kubectl get pods`),

@@ -2,8 +2,12 @@
 # Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
+set -e
 
-set -ex
+if [ "$1" != "logging" ]; then
+  $0 logging 2>&1 | /prettylog
+  exit
+fi
 
 # check for minimum requirements
 REQUIRED_MEM_KB=$((6 * 1024 * 1024))
@@ -11,6 +15,8 @@ total_mem_kb=$(awk '/MemTotal:/ {print $2}' /proc/meminfo)
 if [ "${total_mem_kb}" -lt "${REQUIRED_MEM_KB}" ]; then
     echo "Preview installation of Gitpod requires a system with at least 6GB of memory"
     exit 1
+else
+  set -x
 fi
 
 REQUIRED_CORES=4
@@ -111,10 +117,16 @@ done
 ctr images pull "docker.io/gitpod/workspace-full:latest" >/dev/null &
 
 /gitpod-installer render --config config.yaml --output-split-files /var/lib/rancher/k3s/server/manifests/gitpod
+
+# store files in `gitpod.debug` for debugging purposes
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/gitpod.debug; done
+# remove NetowrkPolicy resources as they are not relevant here
 rm /var/lib/rancher/k3s/server/manifests/gitpod/*NetworkPolicy*
+# update PersistentVolumeClaim's to use k3s's `local-path` storage class
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*PersistentVolumeClaim*.yaml; do yq e -i '.spec.storageClassName="local-path"' "$f"; done
+# Set `volumeClassTemplate` so that each replica creates its own PVC
 yq eval-all -i ". as \$item ireduce ({}; . *+ \$item)" /var/lib/rancher/k3s/server/manifests/gitpod/*_StatefulSet_messagebus.yaml /app/manifests/messagebus.yaml
+# update Statefulset's to use k3s's `local-path` storage class
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*StatefulSet*.yaml; do yq e -i '.spec.volumeClaimTemplates[0].spec.storageClassName="local-path"' "$f"; done
 
 # removing init container from ws-daemon (systemd and Ubuntu)
