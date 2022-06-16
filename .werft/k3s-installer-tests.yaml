@@ -1,17 +1,4 @@
 # debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/k3s-installer-tests.yaml -a debug=true`
-args:
-  - name: destroy
-    desc: "Should the setup be destroyed or not"
-    required: false
-    default: true
-  - name: channel
-    desc: "Replicated channel to use"
-    required: false
-    default: ""
-  - name: version
-    desc: "Version of gitpod to install initially"
-    required: false
-    default: ""
 pod:
   serviceAccount: werft
   affinity:
@@ -26,22 +13,24 @@ pod:
   securityContext:
     runAsUser: 0
   volumes:
+  - name: sh-playground-sa-perm
+    secret:
+      secretName: sh-playground-sa-perm
+  - name: sh-playground-dns-perm
+    secret:
+      secretName: sh-playground-dns-perm
+  containers:
+  - name: nightly-test
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:ljb-werft-cli-grpc-changes.2
+    workingDir: /workspace
+    imagePullPolicy: Always
+    volumeMounts:
     - name: sh-playground-sa-perm
       secret:
         secretName: sh-playground-sa-perm
     - name: sh-playground-dns-perm
       secret:
         secretName: sh-playground-dns-perm
-  containers:
-    - name: nightly-test
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
-      workingDir: /workspace
-      imagePullPolicy: Always
-      volumeMounts:
-        - name: sh-playground-sa-perm
-          mountPath: /mnt/secrets/sh-playground-sa-perm
-        - name: sh-playground-dns-perm # this sa is used for the DNS management
-          mountPath: /mnt/secrets/sh-playground-dns-perm
       env:
         - name: WERFT_HOST
           value: "werft.werft.svc.cluster.local:7777"
@@ -81,25 +70,7 @@ pod:
           (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
           printf '{{ toJson . }}' > context.json
 
-          export DESTROY="{{ .Annotations.destroy }}"
-
-          if [[ $DESTROY == "false" ]]; then
-            export STAGE=STANDARD_K3S_PREVIEW
-          else
-            export STAGE=STANDARD_K3S_TEST
-          fi
-
-          export VERSION="{{ .Annotations.version }}"
-          if [[ "$VERSION" == "<no value>" ]]; then
-            VERSION=""
-          fi
-
-          export CHANNEL="{{ .Annotations.channel }}"
-          if [[ "$CHANNEL" == "<no value>" ]]; then
-            CHANNEL=""
-          fi
-
-          npx ts-node .werft/installer-tests.ts ${STAGE} ${VERSION} ${CHANNEL}
+          npx ts-node .werft/installer-tests.ts "STANDARD_K3S_TEST"
 # The bit below makes this a cron job
 plugins:
   cron: "15 3 * * *"

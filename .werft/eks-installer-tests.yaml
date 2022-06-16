@@ -13,60 +13,52 @@ pod:
   securityContext:
     runAsUser: 0
   volumes:
-    - name: sh-playground-sa-perm
-      secret:
-        secretName: sh-playground-sa-perm
-    - name: sh-playground-dns-perm
-      secret:
-        secretName: sh-playground-dns-perm
+  - name: sh-playground-sa-perm
+    secret:
+      secretName: sh-playground-sa-perm
+  - name: sh-playground-dns-perm
+    secret:
+      secretName: sh-playground-dns-perm
   containers:
-    - name: nightly-test
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
-      workingDir: /workspace
-      imagePullPolicy: Always
-      volumeMounts:
-        - name: sh-playground-sa-perm
-          mountPath: /mnt/secrets/sh-playground-sa-perm
-        - name: sh-playground-dns-perm # this sa is used for the DNS management
-          mountPath: /mnt/secrets/sh-playground-dns-perm
-      env:
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: aws-credentials
-              key: aws-access-key
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: aws-credentials
-              key: aws-secret-key
-        - name: AWS_REGION
-          valueFrom:
-            secretKeyRef:
-              name: aws-credentials
-              key: aws-region
-        - name: WERFT_HOST
-          value: "werft.werft.svc.cluster.local:7777"
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
-        - name: WERFT_K8S_NAMESPACE
-          value: "werft"
-        - name: WERFT_K8S_LABEL
-          value: "component=werft"
-        - name: TF_VAR_sa_creds
-          value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
-        - name: TF_VAR_dns_sa_creds
-          value: "/mnt/secrets/sh-playground-dns-perm/sh-dns-sa.json"
-        - name: NODENAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-      command:
-        - bash
-        - -c
-        - |
-          sleep 1
-          set -Eeuo pipefail
+  - name: nightly-test
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:ljb-werft-cli-grpc-changes.2
+    workingDir: /workspace
+    imagePullPolicy: Always
+    volumeMounts:
+    - name: sh-playground-sa-perm # this is used for tf backend bucket
+      mountPath: /mnt/secrets/sh-playground-sa-perm
+    - name: sh-playground-dns-perm # this sa is used for the DNS management
+      mountPath: /mnt/secrets/sh-playground-dns-perm
+    env:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: aws-credentials
+          key: aws-access-key
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: aws-credentials
+          key: aws-secret-key
+    - name: AWS_REGION
+      valueFrom:
+        secretKeyRef:
+          name: aws-credentials
+          key: aws-region
+    - name: GOOGLE_APPLICATION_CREDENTIALS
+      value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
+    - name: TF_VAR_dns_sa_creds
+      value: "/mnt/secrets/sh-playground-dns-perm/sh-dns-sa.json"
+    - name: NODENAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    command:
+      - bash
+      - -c
+      - |
+        sleep 1
+        set -Eeuo pipefail
 
           sudo chown -R gitpod:gitpod /workspace
           sudo apt update && apt install gettext-base
@@ -82,5 +74,5 @@ pod:
           npx ts-node .werft/installer-tests.ts "STANDARD_EKS_TEST"
 
 # The bit below makes this a cron job
-# plugins:
-#   cron: "15 3 * * *"
+plugins:
+  cron: "15 3 * * *"
