@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/bombsimon/logrusr/v2"
+	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
