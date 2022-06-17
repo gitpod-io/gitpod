@@ -4,6 +4,8 @@
 package usage
 
 import (
+	"fmt"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -77,6 +79,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Usage.Version),
 							Args: []string{
 								"run",
+								"--schedule",
+								"$(RECONCILER_SCHEDULE)",
 							},
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
@@ -92,6 +96,15 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
 								common.DatabaseEnv(&ctx.Config),
+								[]corev1.EnvVar{{
+									Name: "RECONCILER_SCHEDULE",
+									ValueFrom: &corev1.EnvVarSource{
+										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+											Key:                  "schedule",
+										},
+									},
+								}},
 							),
 							VolumeMounts: volumeMounts,
 							LivenessProbe: &corev1.Probe{
