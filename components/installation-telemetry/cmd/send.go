@@ -50,15 +50,20 @@ var sendCmd = &cobra.Command{
 			err = client.Close()
 		}()
 
+		properties := analytics.NewProperties().
+			Set("version", versionId).
+			Set("totalUsers", data.TotalUsers).
+			Set("totalWorkspaces", data.TotalWorkspaces).
+			Set("totalInstances", data.TotalInstances)
+
+		if data.InstallationAdmin.Settings.SendCustomerID {
+			properties.Set("customerID", data.CustomerID)
+		}
+
 		telemetry := analytics.Track{
-			UserId: data.InstallationAdmin.ID,
-			Event:  "Installation telemetry",
-			Properties: analytics.NewProperties().
-				Set("version", versionId).
-				Set("totalUsers", data.TotalUsers).
-				Set("totalWorkspaces", data.TotalWorkspaces).
-				Set("totalInstances", data.TotalInstances).
-				Set("licenseType", data.LicenseType),
+			UserId:     data.InstallationAdmin.ID,
+			Event:      "Installation telemetry",
+			Properties: properties,
 		}
 
 		client.Enqueue(telemetry)

@@ -29,6 +29,11 @@ export class InstallationAdminTelemetryDataProvider {
                 licenseType: this.licenseEvaluator.getLicenseData().type,
                 customerID: this.licenseEvaluator.getLicenseData().payload.customerID,
             } as TelemetryData;
+
+            if (data.installationAdmin.settings.sendCustomerID) {
+                data.customerID = this.licenseEvaluator.getLicenseData().payload.customerID;
+            }
+
             return data;
         } finally {
             span.finish();

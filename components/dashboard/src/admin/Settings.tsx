@@ -59,8 +59,27 @@ export default function Settings() {
                     checked={adminSettings?.sendTelemetry ?? false}
                     onChange={(evt) =>
                         actuallySetTelemetryPrefs({
+                            ...adminSettings,
                             sendTelemetry: evt.target.checked,
-                        })
+                        } as InstallationAdminSettings)
+                    }
+                />
+                <CheckBox
+                    title="Include customer ID in telemetry"
+                    desc={
+                        <span>
+                            An optional customer ID can be included with telemetry to provide better customer support.{" "}
+                            <a className="gp-link" href="https://www.gitpod.io/privacy">
+                                Read our Privacy Policy
+                            </a>
+                        </span>
+                    }
+                    checked={adminSettings?.sendCustomerID ?? false}
+                    onChange={(evt) =>
+                        actuallySetTelemetryPrefs({
+                            ...adminSettings,
+                            sendCustomerID: evt.target.checked,
+                        } as InstallationAdminSettings)
                     }
                 />
                 <InfoBox>
