@@ -64,8 +64,9 @@ RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/downl
 RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/download/v0.1.11/dazzle_0.1.11_Linux_x86_64.tar.gz | tar xz
 
 # werft CLI
-ENV WERFT_K8S_NAMESPACE=werft
-ENV WERFT_DIAL_MODE=kubernetes
+ENV WERFT_CREDENTIAL_HELPER=/workspace/gitpod/gitpod-core/dev/preview/werft-credential-helper.sh
+ENV WERFT_HOST=werft-grpc.gitpod-dev.com:443
+ENV WERFT_TLS_MODE=system
 RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/download/v0.3.3/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
 
 # yq - jq for YAML files
