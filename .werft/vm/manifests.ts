@@ -17,6 +17,7 @@ type VirtualMachineManifestArguments = {
     vmName: string;
     namespace: string;
     claimName: string;
+    storageClaimName: string;
     userDataSecretName: string;
 };
 
@@ -24,6 +25,7 @@ export function VirtualMachineManifest({
     vmName,
     namespace,
     claimName,
+    storageClaimName,
     userDataSecretName,
 }: VirtualMachineManifestArguments) {
     return `
@@ -33,7 +35,7 @@ kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-swrlp"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-swrlp-onereplica"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-swrlp"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-swrlp-onereplica"}},{"metadata":{"name":"${storageClaimName}"},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"30Gi"}},"volumeMode":"Block","storageClassName":"longhorn"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
@@ -74,6 +76,9 @@ spec:
               bootOrder: 1
               disk:
                 bus: scsi
+            - name: storage
+              disk:
+                bus: virtio
             - name: cloudinitdisk
               disk:
                 bus: virtio
@@ -89,6 +94,9 @@ spec:
         - name: system
           persistentVolumeClaim:
             claimName: ${claimName}
+        - name: storage
+          persistentVolumeClaim:
+            claimName: ${storageClaimName}
         - name: cloudinitdisk
           cloudInitNoCloud:
             networkDataSecretRef:
