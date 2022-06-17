@@ -6,22 +6,16 @@ components:
       - name: chargebee-config
         mountPath: "/chargebee"
         readOnly: true
-      - name: stripe-secret
-        mountPath: "/stripe-secret"
-        readOnly: true
       - name: stripe-config
-        mountPath: "/stripe-config"
+        mountPath: "/stripe"
         readOnly: true
     volumes:
     - name: chargebee-config
       secret:
         secretName: chargebee-config
-    - name: stripe-secret
+    - name: stripe-config
       secret:
         secretName: stripe-api-keys
-    - name: stripe-config
-      configMap:
-        name: stripe-config
 
   paymentEndpoint:
     disabled: false
