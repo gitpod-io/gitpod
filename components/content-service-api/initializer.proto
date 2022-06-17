@@ -112,6 +112,8 @@ enum GitAuthMethod {
 message SnapshotInitializer {
     // name of the snapshot to restore
     string snapshot = 1;
+    // if snapshot string is volume snapshot and not GCS url
+    bool from_volume_snapshot = 2;
 }
 
 // A prebuild initializer combines snapshots with Git: first we try the snapshot, then apply the Git clone target.

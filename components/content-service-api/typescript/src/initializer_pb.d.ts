@@ -252,6 +252,8 @@ export namespace GitConfig {
 export class SnapshotInitializer extends jspb.Message {
     getSnapshot(): string;
     setSnapshot(value: string): SnapshotInitializer;
+    getFromVolumeSnapshot(): boolean;
+    setFromVolumeSnapshot(value: boolean): SnapshotInitializer;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SnapshotInitializer.AsObject;
@@ -266,6 +268,7 @@ export class SnapshotInitializer extends jspb.Message {
 export namespace SnapshotInitializer {
     export type AsObject = {
         snapshot: string,
+        fromVolumeSnapshot: boolean,
     }
 }
 
