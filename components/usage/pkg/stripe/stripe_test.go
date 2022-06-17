@@ -83,3 +83,50 @@ func TestCustomerQueriesForTeamIds_MultipleQueries(t *testing.T) {
 		})
 	}
 }
+
+func TestWorkspaceSecondsToCreditsCalcuation(t *testing.T) {
+	testCases := []struct {
+		Name            string
+		Seconds         int64
+		ExpectedCredits int64
+	}{
+		{
+			Name:            "0 seconds",
+			Seconds:         0,
+			ExpectedCredits: 0,
+		},
+		{
+			Name:            "1 second",
+			Seconds:         1,
+			ExpectedCredits: 1,
+		},
+		{
+			Name:            "60 seconds",
+			Seconds:         60,
+			ExpectedCredits: 1,
+		},
+		{
+			Name:            "61 seconds",
+			Seconds:         61,
+			ExpectedCredits: 2,
+		},
+		{
+			Name:            "90 seconds",
+			Seconds:         90,
+			ExpectedCredits: 2,
+		},
+		{
+			Name:            "1 hour",
+			Seconds:         3600,
+			ExpectedCredits: 60,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			actualCredits := workspaceSecondsToCredits(tc.Seconds)
+
+			require.Equal(t, tc.ExpectedCredits, actualCredits)
+		})
+	}
+}

@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/customer"
+	"github.com/stripe/stripe-go/v72/usagerecord"
 )
 
 type stripeKeys struct {
@@ -37,19 +38,54 @@ func Authenticate(apiKeyFile string) error {
 	return nil
 }
 
-// FindCustomersForTeamIds queries the stripe API to find all customers with a teamId in `teamIds`.
-func FindCustomersForTeamIds(teamIds []string) {
+// UpdateUsage updates teams' Stripe subscriptions with usage data
+// `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
+func UpdateUsage(usageForTeam map[string]int64) error {
+	teamIds := make([]string, 0, len(usageForTeam))
+	for k := range usageForTeam {
+		teamIds = append(teamIds, k)
+	}
 	queries := queriesForCustomersWithTeamIds(teamIds)
 
 	for _, query := range queries {
 		log.Infof("about to make query %q", query)
-		params := &stripe.CustomerSearchParams{SearchParams: stripe.SearchParams{Query: query}}
+		params := &stripe.CustomerSearchParams{
+			SearchParams: stripe.SearchParams{
+				Query:  query,
+				Expand: []*string{stripe.String("data.subscriptions")},
+			},
+		}
 		iter := customer.Search(params)
 		for iter.Next() {
 			customer := iter.Customer()
 			log.Infof("found customer %q for teamId %q", customer.Name, customer.Metadata["teamId"])
+			subscriptions := customer.Subscriptions.Data
+			if len(subscriptions) != 1 {
+				log.Errorf("customer has an unexpected number of subscriptions (expected 1, got %d)", len(subscriptions))
+				continue
+			}
+			subscription := customer.Subscriptions.Data[0]
+
+			log.Infof("customer has subscription: %q", subscription.ID)
+			if len(subscription.Items.Data) != 1 {
+				log.Errorf("this subscription has an unexpected number of subscriptionItems (expected 1, got %d)", len(subscription.Items.Data))
+				continue
+			}
+
+			creditsUsed := workspaceSecondsToCredits(usageForTeam[customer.Metadata["teamId"]])
+
+			subscriptionItemId := subscription.Items.Data[0].ID
+			log.Infof("registering usage against subscriptionItem %q", subscriptionItemId)
+			_, err := usagerecord.New(&stripe.UsageRecordParams{
+				SubscriptionItem: stripe.String(subscriptionItemId),
+				Quantity:         stripe.Int64(creditsUsed),
+			})
+			if err != nil {
+				log.WithError(err).Errorf("failed to register usage for customer %q", customer.Name)
+			}
 		}
 	}
+	return nil
 }
 
 // queriesForCustomersWithTeamIds constructs Stripe query strings to find the Stripe Customer for each teamId
@@ -72,4 +108,9 @@ func queriesForCustomersWithTeamIds(teamIds []string) []string {
 	}
 
 	return queries
+}
+
+// workspaceSecondsToCredits converts seconds (of workspace usage) into Stripe credits.
+func workspaceSecondsToCredits(seconds int64) int64 {
+	return (seconds + 59) / 60
 }

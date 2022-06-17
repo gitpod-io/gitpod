@@ -132,18 +132,13 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 }
 
 func submitUsageReport(report []TeamUsage) {
-	var teamIdSet = make(map[string]bool)
-
-	// Convert the usage report into a set of teamIds occurring in the report
+	// Convert the usage report to sum all entries for the same team.
+	var summedReport = make(map[string]int64)
 	for _, usageEntry := range report {
-		teamIdSet[usageEntry.TeamID] = true
-	}
-	teamIds := make([]string, 0, len(teamIdSet))
-	for k := range teamIdSet {
-		teamIds = append(teamIds, k)
+		summedReport[usageEntry.TeamID] += usageEntry.WorkspaceSeconds
 	}
 
-	stripe.FindCustomersForTeamIds(teamIds)
+	stripe.UpdateUsage(summedReport)
 }
 
 func generateUsageReport(teams []teamWithWorkspaces, maxStopTime time.Time) ([]TeamUsage, error) {
