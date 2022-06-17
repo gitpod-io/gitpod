@@ -41,29 +41,33 @@ export class ConfigInferrer {
         if (!pckjsonContent) {
             return;
         }
-        let command: "yarn" | "npm" = "npm";
+        let pckjson;
+        try {
+            pckjson = JSON.parse(pckjsonContent);
+        } catch (e) {
+            console.log(e, pckjsonContent);
+        }
+        let command: "yarn" | "npm" | "pnpm" = "npm";
         if (await ctx.exists("yarn.lock")) {
             command = "yarn";
         }
+        if ((await ctx.exists("pnpm-lock.yaml")) || pckjson?.packageManager?.startsWith("pnpm")) {
+            command = "pnpm";
+        }
         this.addCommand(ctx.config, command + " install", "init");
-        try {
-            const pckjson = JSON.parse(pckjsonContent);
-            if (pckjson.scripts) {
-                if (pckjson.scripts.build) {
-                    this.addCommand(ctx.config, command + " run build", "init");
-                } else if (pckjson.scripts.compile) {
-                    this.addCommand(ctx.config, command + " run compile", "init");
-                }
-                if (pckjson.scripts.start) {
-                    this.addCommand(ctx.config, command + " run start", "command");
-                } else if (pckjson.scripts.dev) {
-                    this.addCommand(ctx.config, command + " run dev", "command");
-                } else if (pckjson.scripts.watch) {
-                    this.addCommand(ctx.config, command + " run watch", "command");
-                }
+        if (pckjson.scripts) {
+            if (pckjson.scripts.build) {
+                this.addCommand(ctx.config, command + " run build", "init");
+            } else if (pckjson.scripts.compile) {
+                this.addCommand(ctx.config, command + " run compile", "init");
             }
-        } catch (e) {
-            console.log(e, pckjsonContent);
+            if (pckjson.scripts.start) {
+                this.addCommand(ctx.config, command + " run start", "command");
+            } else if (pckjson.scripts.dev) {
+                this.addCommand(ctx.config, command + " run dev", "command");
+            } else if (pckjson.scripts.watch) {
+                this.addCommand(ctx.config, command + " run watch", "command");
+            }
         }
         this.addExtension(ctx, "dbaeumer.vscode-eslint");
     }
