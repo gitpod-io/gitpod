@@ -1981,7 +1981,8 @@ proto.contentservice.SnapshotInitializer.prototype.toObject = function(opt_inclu
  */
 proto.contentservice.SnapshotInitializer.toObject = function(includeInstance, msg) {
   var f, obj = {
-    snapshot: jspb.Message.getFieldWithDefault(msg, 1, "")
+    snapshot: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    fromVolumeSnapshot: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -2022,6 +2023,10 @@ proto.contentservice.SnapshotInitializer.deserializeBinaryFromReader = function(
       var value = /** @type {string} */ (reader.readString());
       msg.setSnapshot(value);
       break;
+    case 2:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setFromVolumeSnapshot(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2058,6 +2063,13 @@ proto.contentservice.SnapshotInitializer.serializeBinaryToWriter = function(mess
       f
     );
   }
+  f = message.getFromVolumeSnapshot();
+  if (f) {
+    writer.writeBool(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -2076,6 +2088,24 @@ proto.contentservice.SnapshotInitializer.prototype.getSnapshot = function() {
  */
 proto.contentservice.SnapshotInitializer.prototype.setSnapshot = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional bool from_volume_snapshot = 2;
+ * @return {boolean}
+ */
+proto.contentservice.SnapshotInitializer.prototype.getFromVolumeSnapshot = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.contentservice.SnapshotInitializer} returns this
+ */
+proto.contentservice.SnapshotInitializer.prototype.setFromVolumeSnapshot = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
 
