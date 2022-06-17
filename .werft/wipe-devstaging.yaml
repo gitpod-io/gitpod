@@ -14,7 +14,7 @@ pod:
       secretName: gcp-sa-gitpod-dev-deployer
   containers:
   - name: wipe-devstaging
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:ljb-werft-cli-grpc-changes.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:ljb-werft-cli-grpc-changes.2
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     volumeMounts:
