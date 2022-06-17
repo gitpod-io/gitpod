@@ -133,6 +133,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         exec(`kubectl --kubeconfig ${PREVIEW_K3S_KUBECONFIG_PATH} apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
         werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER)
 
+        VM.installRookCeph({ kubeconfig: PREVIEW_K3S_KUBECONFIG_PATH })
         VM.installFluentBit({ namespace: 'default', kubeconfig: PREVIEW_K3S_KUBECONFIG_PATH, slice: vmSlices.EXTERNAL_LOGGING })
         werft.done(vmSlices.EXTERNAL_LOGGING)
 

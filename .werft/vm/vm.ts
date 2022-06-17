@@ -215,6 +215,16 @@ export function stopKubectlPortForwards() {
 }
 
 /**
+ * Install Rook/Ceph storage that supports CSI snapshot
+ */
+export function installRookCeph(options: { kubeconfig: string }) {
+    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/crds.yaml -f .werft/vm/manifests/rook-ceph/common.yaml -f .werft/vm/manifests/rook-ceph/operator.yaml`)
+    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/cluster-test.yaml`)
+    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/storageclass-test.yaml`)
+    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/snapshotclass.yaml`)
+}
+
+/**
  * Install Fluent-Bit sending logs to GCP
  */
 export function installFluentBit(options: { namespace: string, kubeconfig: string, slice: string }) {
