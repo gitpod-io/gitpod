@@ -43,7 +43,8 @@ COPY --from=dl /dl/runc.amd64 /usr/bin/runc
 
 # Add gitpod user for operations (e.g. checkout because of the post-checkout hook!)
 RUN groupadd -r -g 33333 gitpod \
-  && useradd -r -u 33333 -md /home/gitpod -s /bin/bash -g gitpod gitpod
+  && useradd -r -u 33333 -md /home/gitpod -s /bin/bash -g gitpod gitpod \
+  && usermod -a -G gitpod gitpod
 
 COPY components-ws-daemon--app/ws-daemon /app/ws-daemond
 COPY components-ws-daemon--content-initializer/ws-daemon /app/content-initializer
