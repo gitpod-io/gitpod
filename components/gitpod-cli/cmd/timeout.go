@@ -11,7 +11,7 @@ import (
 // timeoutCmd commands collection
 var timeoutCmd = &cobra.Command{
 	Use:   "timeout",
-	Short: "A collection of commands for workspace timeout",
+	Short: "Interact with workspace timeout configuration",
 }
 
 func init() {
