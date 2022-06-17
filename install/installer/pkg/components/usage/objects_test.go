@@ -27,16 +27,14 @@ func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
 	objects, err := Objects(ctx)
 	require.NoError(t, err)
 	require.NotEmpty(t, objects, "must render objects because experimental config is specified")
-	require.Len(t, objects, 4, "should render expected k8s objects")
+	require.Len(t, objects, 5, "should render expected k8s objects")
 }
 
-func renderContextWithUsageEnabled(t *testing.T) *common.RenderContext {
+func renderContextWithUsageConfig(t *testing.T, usage *experimental.UsageConfig) *common.RenderContext {
 	ctx, err := common.NewRenderContext(config.Config{
 		Domain: "test.domain.everything.awesome.is",
 		Experimental: &experimental.Config{
-			WebApp: &experimental.WebAppConfig{
-				Usage: &experimental.UsageConfig{Enabled: true},
-			},
+			WebApp: &experimental.WebAppConfig{Usage: usage},
 		},
 		Database: config.Database{
 			CloudSQL: &config.DatabaseCloudSQL{
@@ -58,4 +56,8 @@ func renderContextWithUsageEnabled(t *testing.T) *common.RenderContext {
 	require.NoError(t, err)
 
 	return ctx
+}
+
+func renderContextWithUsageEnabled(t *testing.T) *common.RenderContext {
+	return renderContextWithUsageConfig(t, &experimental.UsageConfig{Enabled: true})
 }
