@@ -1,6 +1,7 @@
 # Change Log
 
 ## June 2022
+- [dev] Use gke-gcloud-auth-plugin for kubectl ([#10687](https://github.com/gitpod-io/gitpod/pull/10687)) - [@andrew-farries](https://github.com/andrew-farries)
 - [self-hosted] Add new local preview installation method ([#10532](https://github.com/gitpod-io/gitpod/pull/10532)) - [@Pothulapati](https://github.com/Pothulapati)
 - Added action to delete all inactive workspaces ([#10676](https://github.com/gitpod-io/gitpod/pull/10676)) - [@svenefftinge](https://github.com/svenefftinge)
 - Listen on instance updates of a running prebuild ([#10646](https://github.com/gitpod-io/gitpod/pull/10646)) - [@AlexTugarev](https://github.com/AlexTugarev)
