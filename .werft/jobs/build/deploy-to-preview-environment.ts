@@ -105,6 +105,10 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret ${withVM ? 'preview-envs-authproviders-harvester' : 'preview-envs-authproviders'} --namespace=keys -o jsonpath="{.data.authProviders}" > auth-provider-secret.yml`, { silent: true })
 
     if (withVM) {
+        // We set it to false as default and only set it to true once the k3s cluster is ready.
+        // We only set the attribute for jobs where a VM is expected.
+        werft.rootSpan.setAttributes({'preview.k3s_successfully_created': false})
+
         werft.phase(phases.VM, "Ensuring VM is ready for deployment");
 
         werft.log(vmSlices.VM_READINESS, 'Wait for VM readiness')
@@ -122,6 +126,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         werft.log(vmSlices.WAIT_K3S, 'Wait for k3s')
         await waitForApiserver(PREVIEW_K3S_KUBECONFIG_PATH, { slice: vmSlices.WAIT_K3S })
         await waitUntilAllPodsAreReady("kube-system", PREVIEW_K3S_KUBECONFIG_PATH, { slice: vmSlices.WAIT_K3S })
+        werft.rootSpan.setAttributes({'preview.k3s_successfully_created': true})
         werft.done(vmSlices.WAIT_K3S)
 
         werft.log(vmSlices.WAIT_CERTMANAGER, 'Wait for Cert-Manager')
