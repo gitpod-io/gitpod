@@ -14,7 +14,8 @@ import (
 )
 
 type InstallationAdminSettings struct {
-	SendTelemetry bool `json:"sendTelemetry"`
+	SendTelemetry  bool `json:"sendTelemetry"`
+	SendCustomerID bool `json:"sendCustomerID"`
 }
 
 type Data struct {
