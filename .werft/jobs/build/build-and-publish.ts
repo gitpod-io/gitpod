@@ -16,7 +16,6 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     const {
         publishRelease,
         dontTest,
-        withContrib,
         retag,
         version,
         localAppVersion,
@@ -26,6 +25,9 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     } = jobConfig;
 
     const releaseBranch = jobConfig.repository.ref;
+
+    // We set it to false as default and only set it true if the build succeeds.
+    werft.rootSpan.setAttributes({ "preview.gitpod_built_successfully": false });
 
     werft.phase("build", "build running");
     const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
@@ -94,6 +96,8 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     if (jobConfig.publishToKots) {
         publishKots(werft, jobConfig);
     }
+
+    werft.rootSpan.setAttributes({ "preview.gitpod_built_successfully": true });
 }
 
 /**
