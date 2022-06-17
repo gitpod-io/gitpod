@@ -164,7 +164,8 @@ type PublicAPIConfig struct {
 }
 
 type UsageConfig struct {
-	Enabled bool `json:"enabled"`
+	Enabled  bool   `json:"enabled"`
+	Schedule string `json:"schedule"`
 }
 
 type IDEConfig struct {
