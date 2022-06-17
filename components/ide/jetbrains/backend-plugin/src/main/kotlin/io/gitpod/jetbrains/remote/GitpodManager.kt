@@ -66,6 +66,28 @@ class GitpodManager : Disposable {
         lifetime.terminate()
     }
 
+    var status: Status.ResourcesStatusResponse? = null
+    init {
+        val statusJob = GlobalScope.launch {
+            while(isActive) {
+                try {
+                    status = StatusServiceGrpc
+                        .newFutureStub(supervisorChannel)
+                        .resourcesStatus(Status.ResourcesStatuRequest.newBuilder().build())
+                        .asDeferred()
+                        .await()
+                } catch (t: Throwable) {
+                    if (t is CancellationException) {
+                        throw t
+                    }
+                    thisLogger().warn("gitpod: failed to fetch resources status:", t)
+                }
+                delay(5000)
+            }
+        }
+        lifetime.onTerminationOrNow { statusJob.cancel() }
+    }
+
     val registry = CollectorRegistry()
 
     init {
