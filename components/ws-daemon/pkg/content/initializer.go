@@ -180,7 +180,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	spec := specconv.Example()
 
 	// we assemble the root filesystem from the ws-daemon container
-	for _, d := range []string{"app", "bin", "dev", "etc", "lib", "opt", "sbin", "sys", "usr", "var"} {
+	for _, d := range []string{"app", "bin", "dev", "etc", "lib", "opt", "sbin", "sys", "usr", "var", "lib32", "lib64"} {
 		spec.Mounts = append(spec.Mounts, specs.Mount{
 			Destination: "/" + d,
 			Source:      "/" + d,
