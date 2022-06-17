@@ -20,6 +20,7 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return common.CompositeRenderFunc(
 		deployment,
 		rolebinding,
+		configmap,
 		common.DefaultServiceAccount(Component),
 	)(ctx)
 }
