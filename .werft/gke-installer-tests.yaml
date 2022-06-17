@@ -21,7 +21,7 @@ pod:
       secretName: sh-playground-dns-perm
   containers:
   - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-gcloud-auth.6
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:ljb-werft-cli-grpc-changes.0
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
