@@ -84,27 +84,27 @@ spec:
         - name: reg_url
           title: Container registry URL
           type: text
-          when: '{{repl (ConfigOptionEquals "reg_incluster" "0") }}'
+          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
           required: true
           help_text: The container registry URL. This will usually be the fully qualified domain of your registry.
 
         - name: reg_server
           title: Container registry server
           type: text
-          when: '{{repl (ConfigOptionEquals "reg_incluster" "0") }}'
+          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
           help_text: The container registry server. This is used when [generating your credentials](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line). Depending upon your provider, this may or may not be the same as the registry URL. If not specified, the URL will be used.
 
         - name: reg_username
           title: Container registry username
           type: text
-          when: '{{repl (ConfigOptionEquals "reg_incluster" "0") }}'
+          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
           required: true
           help_text: The username for your container registry.
 
         - name: reg_password
           title: Container registry password
           type: password
-          when: '{{repl (ConfigOptionEquals "reg_incluster" "0") }}'
+          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
           required: true
           help_text: The password for your container registry.
 
