@@ -244,7 +244,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				return nil, err
 			}
 		}
-		pvc, err := m.createPVCForWorkspacePod(startContext)
+		pvc, err = m.createPVCForWorkspacePod(startContext)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create pvc for workspace pod: %w", err)
 		}
