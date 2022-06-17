@@ -6,6 +6,7 @@ package azure
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
@@ -21,6 +22,7 @@ var Helm = func(apiPort int32, consolePort int32, commonHelmValues []string) com
 					Values: append(
 						[]string{
 							helm.KeyValue("minio.gateway.enabled", "true"),
+							helm.KeyValue("minio.image.tag", ImageTag),
 							helm.KeyValue("minio.gateway.auth.azure.accessKey", cfg.Values.StorageAccessKey), // Azure value actually taken from secret - used for console/API access
 							helm.KeyValue("minio.gateway.auth.azure.secretKey", cfg.Values.StorageSecretKey), // Ditto
 							helm.KeyValue("minio.gateway.auth.azure.storageAccountNameExistingSecret", cfg.Config.ObjectStorage.Azure.Credentials.Name),
