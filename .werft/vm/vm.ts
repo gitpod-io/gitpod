@@ -55,7 +55,8 @@ export function startVM(options: { name: string }) {
             namespace,
             vmName: options.name,
             claimName: `${options.name}-${Date.now()}`,
-            userDataSecretName
+            storageClaimName: `${options.name}-storage-${Date.now()}`,
+            userDataSecretName,
         }),
         { validate: false }
     )
@@ -96,9 +97,10 @@ export function deleteVM(options: { name: string }) {
             namespace,
             vmName: options.name,
             claimName: `${options.name}-${Date.now()}`,
-            userDataSecretName
-        })
-    )
+            storageClaimName: `${options.name}-storage-${Date.now()}`,
+            userDataSecretName,
+        }),
+    );
 
     kubectlDeleteManifest(
         Manifests.NamespaceManifest({
