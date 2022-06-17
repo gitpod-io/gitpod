@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const InstallationAdminSettingsPrototype = {
     sendTelemetry: true,
+    sendCustomerID: true,
 };
 
 export type InstallationAdminSettings = typeof InstallationAdminSettingsPrototype;
