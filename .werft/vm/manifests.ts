@@ -73,7 +73,7 @@ spec:
             - name: system
               bootOrder: 1
               disk:
-                bus: scsi
+                bus: virtio
             - name: cloudinitdisk
               disk:
                 bus: virtio
