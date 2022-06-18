@@ -382,7 +382,7 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 
 		sa := ""
 		if rs.GCPConfig.CredentialsFile != "" {
-			sa = fmt.Sprintf(`-o "Credentials:gs_service_key_file=%v`, rs.GCPConfig.CredentialsFile)
+			sa = fmt.Sprintf(`-o "Credentials:gs_service_key_file=%v"`, rs.GCPConfig.CredentialsFile)
 		}
 
 		args := fmt.Sprintf(`gsutil -q -m %v\
@@ -394,11 +394,10 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 		log.WithField("flags", args).Debug("gsutil flags")
 
 		cmd := exec.Command("/bin/bash", []string{"-c", args}...)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		err = cmd.Run()
+		var out []byte
+		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.WithError(err).Error("unexpected error updloading file to GCS using gsutil")
+			log.WithError(err).WithField("out", string(out)).Error("unexpected error updloading file to GCS using gsutil")
 			err = xerrors.Errorf("unexpected error updloading backup")
 			return
 		}
