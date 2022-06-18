@@ -217,7 +217,7 @@ export default function TeamBilling() {
                                         </div>
                                         <div className="flex-grow flex flex-col items-stretch justify-end">
                                             <button className="m-0" onClick={() => checkout(tp)}>
-                                                Upgrade to {tp.name}
+                                                Select {tp.name}
                                             </button>
                                         </div>
                                     </div>
@@ -288,6 +288,12 @@ export default function TeamBilling() {
                         )}
                     </>
                 )}
+            </div>
+            <div className="mt-4 text-gray-500">
+                Team Billing automatically adds all members to the plan.{" "}
+                <a href="https://www.gitpod.io/docs/team-billing" rel="noopener" className="gp-link">
+                    Learn more
+                </a>
             </div>
         </PageWithSubMenu>
     );
