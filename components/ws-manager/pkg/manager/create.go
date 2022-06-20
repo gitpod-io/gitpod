@@ -572,15 +572,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			// not needed, since it is using dedicated disk
 			pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
 
-			// add prestop hook to capture git status
-			pod.Spec.Containers[0].Lifecycle = &corev1.Lifecycle{
-				PreStop: &corev1.LifecycleHandler{
-					Exec: &corev1.ExecAction{
-						Command: []string{"/bin/sh", "-c", "/.supervisor/workspacekit lift /.supervisor/prestophook.sh"},
-					},
-				},
-			}
-
 			// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
 			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
 			gitpodGUID := int64(133332)
