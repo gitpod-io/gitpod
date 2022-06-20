@@ -87,7 +87,7 @@ var clustersUpdateMaxScoreCmd = &cobra.Command{
 }
 
 var clustersUpdateAdmissionConstraintCmd = &cobra.Command{
-	Use:   "admission-constraint add|remove has-feature-preview|has-permission=<permission>|has-user-level=<level>|has-more-resources",
+	Use:   "admission-constraint add|remove has-feature-preview|has-permission=<permission>|has-user-level=<level>|has-more-resources|has-class=<class>",
 	Short: "Updates a cluster's admission constraints",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -144,6 +144,19 @@ var clustersUpdateAdmissionConstraintCmd = &cobra.Command{
 					Constraint: &api.AdmissionConstraint{
 						Constraint: &api.AdmissionConstraint_HasMoreResources{
 							HasMoreResources: true,
+						},
+					},
+				},
+			}
+		} else if strings.HasPrefix(args[1], "has-class") {
+			request.Property = &api.UpdateRequest_AdmissionConstraint{
+				AdmissionConstraint: &api.ModifyAdmissionConstraint{
+					Add: add,
+					Constraint: &api.AdmissionConstraint{
+						Constraint: &api.AdmissionConstraint_HasClass_{
+							HasClass: &api.AdmissionConstraint_HasClass{
+								Class: strings.TrimPrefix(args[1], "has-class="),
+							},
 						},
 					},
 				},
