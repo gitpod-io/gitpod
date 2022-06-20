@@ -152,7 +152,7 @@ check-gitpod-installation: delete-cm-setup check-kots-app check-env-sub-domain
 run-tests:
 	./tests.sh ${KUBECONFIG}
 
-kots-upgrade:
+kots-uprgade:
 	@echo "Upgrade gitpod KOTS app to latest"
 	kubectl kots upstream upgrade --kubeconfig=${KUBECONFIG} gitpod -n gitpod --deploy
 
@@ -187,8 +187,9 @@ destroy-aks: select-workspace
 
 get-results:
 	@echo "If you have gotten this far, it means your setup succeeded"
-	@echo "The IP address of you setup is "https://$(TF_VAR_TEST_ID).gitpod-self-hosted.com""
+	@echo "The IP address of you setup is "$(TF_VAR_TEST_ID).gitpod-self-hosted.com""
 	@echo "Following is the KUBECONFIG you can use to connect to the cluster:"
+	@cat tmp_config.yml
 	@cat ${KUBECONFIG}
 
 list-state:
