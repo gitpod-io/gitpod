@@ -5,14 +5,20 @@
 package preview
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"os/exec"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Preview struct {
@@ -88,4 +94,47 @@ func (p *Preview) GetPreviewName() string {
 	}
 
 	return sanitizedBranch
+}
+
+func ListAllPreviews() error {
+	configLoadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	configOverrides := &clientcmd.ConfigOverrides{CurrentContext: "harvester"}
+
+	kconf, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(configLoadingRules, configOverrides).ClientConfig()
+	if err != nil {
+		return err
+	}
+	clientset := dynamic.NewForConfigOrDie(kconf)
+
+	previews, err := getVMs(clientset, context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, preview := range previews {
+		fmt.Printf("%v\n", preview)
+	}
+
+	return nil
+}
+
+func getVMs(clientset dynamic.Interface, ctx context.Context) ([]string, error) {
+	resourceId := schema.GroupVersionResource{
+		Group:    "kubevirt.io",
+		Version:  "v1",
+		Resource: "virtualmachines",
+	}
+
+	virtualMachineClient := clientset.Resource(resourceId).Namespace("")
+	vmObjs, err := virtualMachineClient.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var vms []string
+	for _, item := range vmObjs.Items {
+		vms = append(vms, item.GetName())
+	}
+
+	return vms, nil
 }
