@@ -85,7 +85,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	}
 
 	args := []string{
-		"-iedD", "-f/dev/null",
+		"-ieD", "-f/dev/null",
 		"-oProtocol 2",
 		"-oAllowUsers gitpod",
 		"-oPasswordAuthentication no",
