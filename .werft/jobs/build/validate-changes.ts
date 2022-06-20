@@ -20,7 +20,7 @@ export async function validateChanges(werft: Werft, config: JobConfig) {
 // more for the ".<BUILD NUMBER>" ending. That leaves us 45 characters for the branch name.
 // See Werft source https://github.com/csweichel/werft/blob/057cfae0fd7bb1a7b05f89d1b162348378d74e71/pkg/werft/service.go#L376
 async function branchNameCheck(werft: Werft, config: JobConfig) {
-    if (!config.noPreview) {
+    if (config.withPreview) {
         const maxBranchNameLength = 45;
         werft.log("check-branchname", `Checking if branch name is shorter than ${maxBranchNameLength} characters.`)
 
