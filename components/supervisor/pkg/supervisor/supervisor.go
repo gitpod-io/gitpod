@@ -1235,6 +1235,7 @@ func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup, childP
 			return
 		}
 		configureSSHDefaultDir(cfg)
+		configureSSHMessageOfTheDay()
 		err = ssh.listenAndServe()
 		if err != nil {
 			log.WithError(err).Error("err starting SSH server")
