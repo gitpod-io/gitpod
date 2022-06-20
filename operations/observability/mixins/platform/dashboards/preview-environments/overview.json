@@ -54,7 +54,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1654680320363,
+  "iteration": 1655713296033,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -132,12 +132,33 @@
       "type": "gauge"
     },
     {
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "description": "",
+      "gridPos": {
+        "h": 4,
+        "w": 9,
+        "x": 0,
+        "y": 8
+      },
+      "id": 86,
+      "options": {
+        "content": "We have an SLO for preview starts in Honeycomb. You can see the SLO [here](https://ui.honeycomb.io/gitpod/datasets/werft/slo/zRm48xoKMXf/Preview-Start). Alternatively you can use [this query](https://ui.honeycomb.io/gitpod/datasets/werft/result/a64cNk4sArf) to dig into succesful and failed SLI events. The definition of the SLO can be found [here](https://www.notion.so/gitpod/Preview-Environment-Service-Level-Indicators-SLIs-55b649ad17774f279c142af55ad2fec7#f483f73aa4974ad3b8b6825fa2f251fa).",
+        "mode": "markdown"
+      },
+      "pluginVersion": "8.5.5",
+      "title": "Preview Start SLO",
+      "type": "text"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 12
       },
       "id": 70,
       "panels": [],
@@ -182,7 +203,7 @@
         "h": 5,
         "w": 6,
         "x": 0,
-        "y": 9
+        "y": 13
       },
       "id": 68,
       "options": {
@@ -224,7 +245,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 23
       },
       "id": 65,
       "panels": [
@@ -344,7 +365,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 24
       },
       "id": 52,
       "panels": [
