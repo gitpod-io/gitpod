@@ -61,3 +61,14 @@ func renderContextWithUsageConfig(t *testing.T, usage *experimental.UsageConfig)
 func renderContextWithUsageEnabled(t *testing.T) *common.RenderContext {
 	return renderContextWithUsageConfig(t, &experimental.UsageConfig{Enabled: true})
 }
+
+func renderContextWithStripeSecretSet(t *testing.T) *common.RenderContext {
+	ctx := renderContextWithUsageEnabled(t)
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		cfg.WebApp.Server = &experimental.ServerConfig{StripeSecret: "some-stripe-secret"}
+		return nil
+	})
+
+	return ctx
+}

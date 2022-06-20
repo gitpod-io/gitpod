@@ -4,10 +4,13 @@
 package usage
 
 import (
+	"fmt"
+	"path/filepath"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"testing"
 )
 
 func TestDeployment_ContainsDBEnvVars(t *testing.T) {
@@ -47,4 +50,41 @@ func TestDeployment_ContainsDBEnvVars(t *testing.T) {
 			Key:                  "username",
 		}},
 	})
+}
+
+func TestDeployment_EnablesPaymentWhenAStripeSecretIsPresent(t *testing.T) {
+	ctx := renderContextWithStripeSecretSet(t)
+
+	objs, err := deployment(ctx)
+	require.NoError(t, err)
+
+	dpl, ok := objs[0].(*appsv1.Deployment)
+	require.True(t, ok)
+
+	containers := dpl.Spec.Template.Spec.Containers
+	require.Len(t, containers, 2)
+
+	usageContainer := containers[0]
+	expectedArgument := fmt.Sprintf("--stripe-secret-path=%s", filepath.Join(stripeSecretMountPath, stripeKeyFilename))
+
+	require.Contains(t, usageContainer.Args, expectedArgument)
+}
+
+func TestDeployment_DisablesPaymentWhenAStripeSecretIsNotPresent(t *testing.T) {
+	ctx := renderContextWithUsageEnabled(t)
+
+	objs, err := deployment(ctx)
+	require.NoError(t, err)
+
+	dpl, ok := objs[0].(*appsv1.Deployment)
+	require.True(t, ok)
+
+	containers := dpl.Spec.Template.Spec.Containers
+	require.Len(t, containers, 2)
+
+	usageContainer := containers[0]
+
+	for _, arg := range usageContainer.Args {
+		require.NotContains(t, arg, "--stripe-secret-path")
+	}
 }

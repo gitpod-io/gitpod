@@ -153,8 +153,9 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 			require.NoError(t, conn.Create(scenario.Instances).Error)
 
 			reconciler := &UsageReconciler{
-				nowFunc: scenario.NowFunc,
-				conn:    conn,
+				billingController: &NoOpBillingController{},
+				nowFunc:           scenario.NowFunc,
+				conn:              conn,
 			}
 			status, err := reconciler.ReconcileTimeRange(context.Background(), startOfMay, startOfJune)
 			require.NoError(t, err)
