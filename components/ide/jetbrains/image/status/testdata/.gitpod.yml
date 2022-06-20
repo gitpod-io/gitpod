@@ -1,0 +1,31 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+# see https://github.com/gitpod-io/spring-petclinic/blob/master/.gitpod.yml
+tasks:
+  - init: ./mvnw package -DskipTests
+    command: java -jar target/*.jar
+    name: Run PetClinic app
+
+# exposed ports
+ports:
+  - port: 8080
+    onOpen: open-preview
+
+vscode:
+  extensions:
+    - redhat.java
+    - vscjava.vscode-java-debug
+    - vscjava.vscode-java-test
+    - pivotal.vscode-spring-boot
+
+jetbrains:
+  intellij:
+    plugins:
+      - com.haulmont.jpab
+    prebuilds:
+      version: both
+    vmoptions: "-Xmx3g"
+  goland:
+    vmoptions: "-Xmx4096m -XX:MaxRAMPercentage=75"
