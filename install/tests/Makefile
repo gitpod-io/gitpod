@@ -131,6 +131,26 @@ get-config-azure-registry:
 	envsubst < ./manifests/kots-config-azure-registry.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
 
+get-config-azure-storage:
+	export PASSWORD=$$(terraform output -json storage | yq r - 'password') && \
+	export USERNAME=$$(terraform output -json storage | yq r - 'username') && \
+	envsubst < ./manifests/kots-config-azure-storage.yaml > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
+get-config-azure-db:
+	export DBHOST=$$(terraform output -json database | yq r - 'host') && \
+	export DBPASS=$$(terraform output -json database | yq r - 'password') && \
+	export DBUSER=$$(terraform output -json database | yq r - 'username') && \
+	envsubst < ./manifests/kots-config-azure-db.yaml > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
+get-config-azure-registry:
+	export SERVER=$$(terraform output -json registry | yq r - 'server') && \
+	export PASSWORD=$$(terraform output -json registry | yq r - 'password') && \
+	export USERNAME=$$(terraform output -json registry | yq r - 'username') && \
+	envsubst < ./manifests/kots-config-azure-registry.yaml > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
 storage ?= incluster
 registry ?= incluster
 db ?= incluster
