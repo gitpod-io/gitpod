@@ -152,6 +152,29 @@ resource "google_container_node_pool" "workspaces" {
   }
 }
 
+resource "google_sql_database_instance" "gitpod" {
+  name = "sql-${var.name}"
+  database_version = "MYSQL_5_7"
+  region = "${var.region}"
+  settings {
+      tier = "db-n1-standard-2"
+  }
+  deletion_protection = false
+}
+
+resource "google_sql_database" "database" {
+    name = "gitpod"
+    instance = "${google_sql_database_instance.gitpod.name}"
+    charset = "utf8"
+    collation = "utf8_general_ci"
+}
+
+resource "google_sql_user" "users" {
+    name = "gitpod"
+    instance = "${google_sql_database_instance.gitpod.name}"
+    password = "gitpod"
+}
+
 module "gke_auth" {
   depends_on = [google_container_node_pool.workspaces]
 

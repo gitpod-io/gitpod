@@ -171,6 +171,28 @@ resource "google_dns_record_set" "gitpod-dns-3" {
   rrdatas = [google_compute_instance.k3s_master_instance.network_interface[0].access_config[0].nat_ip]
 }
 
+resource "google_sql_database_instance" "gitpod" {
+  name = "sql-${var.name}"
+  database_version = "MYSQL_5_7"
+  region = "${var.gcp_region}"
+  settings {
+      tier = "db-n1-standard-2"
+  }
+  deletion_protection = false
+}
+
+resource "google_sql_database" "database" {
+    name = "gitpod"
+    instance = "${google_sql_database_instance.gitpod.name}"
+    charset = "utf8"
+    collation = "utf8_general_ci"
+}
+
+resource "google_sql_user" "users" {
+    name = "gitpod"
+    instance = "${google_sql_database_instance.gitpod.name}"
+    password = "gitpod"
+}
 
 data "local_file" "kubeconfig" {
   depends_on = [null_resource.k3sup_install]

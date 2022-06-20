@@ -209,7 +209,7 @@ function callMakeTargets(phase: string, description: string, makeTarget: string)
 function randomize(resource: string, platform: string): string {
     // in the follow-up PR we will add `${platform}-${resource}` as an option here to
     // test against resource dependencies(storage, db, registry) for each cloud platform
-    const options = ["incluster"];
+    const options = [`${platform}-${resource}`, "incluster"];
     return options[Math.floor(Math.random() * options.length)];
 }
 
