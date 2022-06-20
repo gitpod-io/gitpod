@@ -28,7 +28,6 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 
 	startOfMay := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
 	startOfJune := time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
-	instanceStatus := []byte(`{"phase": "stopped", "conditions": {"deployed": false, "pullingImages": false, "serviceExists": false}}`)
 
 	scenarios := []Scenario{
 		(func() Scenario {
@@ -48,33 +47,33 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 			})
 			instances := []db.WorkspaceInstance{
 				// Ran throughout the reconcile period
-				{
+				dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 					ID:           uuid.New(),
 					WorkspaceID:  workspace.ID,
 					CreationTime: db.NewVarcharTime(time.Date(2022, 05, 1, 00, 00, 00, 00, time.UTC)),
+					StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 00, 00, 00, 00, time.UTC)),
 					StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-					Status:       instanceStatus,
-				},
+				}),
 				// Still running
-				{
+				dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 					ID:           uuid.New(),
 					WorkspaceID:  workspace.ID,
 					CreationTime: db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
-					Status:       instanceStatus,
-				},
+					StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+				}),
 				// No creation time, invalid record
-				{
+				dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 					ID:          uuid.New(),
 					WorkspaceID: workspace.ID,
+					StartedTime: db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 					StoppedTime: db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-					Status:      instanceStatus,
-				},
+				}),
 			}
 
 			expectedRuntime := instances[0].WorkspaceRuntimeSeconds(scenarioRunTime) + instances[1].WorkspaceRuntimeSeconds(scenarioRunTime)
 
 			return Scenario{
-				Name:        "oen team with one workspace",
+				Name:        "one team with one workspace",
 				Memberships: []db.TeamMembership{membership},
 				Workspaces:  []db.Workspace{workspace},
 				Instances:   instances,
@@ -101,13 +100,13 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 			workspaceID := "gitpodio-gitpod-gyjr82jkfnd"
 			var instances []db.WorkspaceInstance
 			for i := 0; i < 100; i++ {
-				instances = append(instances, db.WorkspaceInstance{
+				instances = append(instances, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 					ID:           uuid.New(),
 					WorkspaceID:  workspaceID,
 					CreationTime: db.NewVarcharTime(time.Date(2022, 05, 01, 00, 00, 00, 00, time.UTC)),
+					StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 01, 00, 00, 00, 00, time.UTC)),
 					StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 59, 59, 999999, time.UTC)),
-					Status:       instanceStatus,
-				})
+				}))
 			}
 
 			return Scenario{
