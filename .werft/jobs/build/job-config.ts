@@ -12,7 +12,7 @@ export interface JobConfig {
     installEELicense: boolean
     localAppVersion: string
     mainBuild: boolean;
-    noPreview: boolean;
+    withPreview: boolean;
     publishRelease: boolean;
     publishToJBMarketplace: string
     publishToNpm: string
@@ -73,7 +73,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     // ['with-contrib', 'publish-to-npm', 'publish-to-jb-marketplace', 'with-clean-slate-deployment']
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig && !mainBuild;
     const withContrib = "with-contrib" in buildConfig || mainBuild;
-    const noPreview = ("no-preview" in buildConfig && buildConfig["no-preview"] !== "false") || publishRelease;
+    const withPreview = "with-preview" in buildConfig && !mainBuild;
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = "with-integration-tests" in buildConfig && !mainBuild;
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
@@ -120,7 +120,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         installEELicense,
         localAppVersion,
         mainBuild,
-        noPreview,
+        withPreview,
         observability,
         previewEnvironment,
         publishRelease,

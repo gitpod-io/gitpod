@@ -54,9 +54,9 @@ async function run(context: any) {
     await typecheckWerftJobs(werft)
     await buildAndPublish(werft, config)
 
-    if (config.noPreview) {
+    if (!config.withPreview || config.publishRelease) {
         werft.phase("deploy", "not deploying");
-        console.log("no-preview or publish-release is set");
+        console.log("running without preview environment or publish-release is set");
         return
     }
 
