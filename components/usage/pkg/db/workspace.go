@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	"math"
 	"time"
 )
 
@@ -59,15 +60,33 @@ const (
 	WorkspaceType_Regular  WorkspaceType = "regular"
 )
 
+const maxListBatchSize = 65535 // 2^16 - 1
+
 func ListWorkspacesByID(ctx context.Context, conn *gorm.DB, ids []string) ([]Workspace, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
 
 	var workspaces []Workspace
-	tx := conn.WithContext(ctx).Where(ids).Find(&workspaces)
-	if tx.Error != nil {
-		return nil, fmt.Errorf("failed to list workspaces by id: %w", tx.Error)
+
+	items := len(ids)
+	batches := int(math.Ceil(float64(items) / maxListBatchSize))
+	for i := 0; i < batches; i++ {
+		lower := i * maxListBatchSize
+		upper := (i + 1) * maxListBatchSize
+
+		if upper > items {
+			upper = items
+		}
+
+		batchIDs := ids[lower:upper]
+		var results []Workspace
+		tx := conn.WithContext(ctx).Where(batchIDs).Find(&results)
+		if tx.Error != nil {
+			return nil, fmt.Errorf("failed to list workspaces by id: %w", tx.Error)
+		}
+
+		workspaces = append(workspaces, results...)
 	}
 
 	return workspaces, nil

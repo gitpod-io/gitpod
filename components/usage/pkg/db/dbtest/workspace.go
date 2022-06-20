@@ -23,7 +23,7 @@ const (
 func NewWorkspace(t *testing.T, workspace db.Workspace) db.Workspace {
 	t.Helper()
 
-	id := generateWorkspaceID()
+	id := GenerateWorkspaceID()
 	if workspace.ID != "" {
 		id = workspace.ID
 	}
@@ -63,7 +63,7 @@ func NewWorkspace(t *testing.T, workspace db.Workspace) db.Workspace {
 	}
 }
 
-func generateWorkspaceID() string {
+func GenerateWorkspaceID() string {
 	return fmt.Sprintf("gitpodio-gitpod-%s", randSeq(11))
 }
 
