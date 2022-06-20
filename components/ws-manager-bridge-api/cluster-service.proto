@@ -54,12 +54,16 @@ message AdmissionConstraint {
   message HasPermission {
     string permission = 1;
   }
+  message HasClass {
+    string class = 1;
+  }
 
   oneof constraint {
     FeaturePreview has_feature_preview = 1;
     HasPermission has_permission = 2;
     string has_user_level = 3;
     bool has_more_resources = 4;
+    HasClass has_class = 5;
   }
 }
 
