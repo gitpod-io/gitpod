@@ -40,7 +40,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     zones                        = []
 
     enable_auto_scaling  = true
-    min_count            = 2
+    min_count            = 1
     max_count            = 10
     orchestrator_version = data.azurerm_kubernetes_service_versions.k8s.latest_version
     node_labels          = local.nodes.0.labels
@@ -72,7 +72,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "pools" {
   vm_size               = local.machine
 
   enable_auto_scaling  = true
-  min_count            = 2
+  min_count            = 1
   max_count            = 10
   orchestrator_version = data.azurerm_kubernetes_service_versions.k8s.latest_version
   node_labels          = local.nodes[count.index + 1].labels
