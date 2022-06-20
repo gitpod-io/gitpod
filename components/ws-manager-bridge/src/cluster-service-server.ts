@@ -18,6 +18,7 @@ import {
     AdmissionConstraintHasUserLevel,
     AdmissionConstraintHasMoreResources,
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { AdmissionConstraintHasClass } from "@gitpod/gitpod-protocol/src/workspace-cluster";
 import {
     ClusterServiceService,
     ClusterState,
@@ -228,6 +229,10 @@ export class ClusterService implements IClusterServiceServer {
                                         }
                                     case "has-more-resources":
                                         return false;
+                                    case "has-class":
+                                        if (v.class === (c as AdmissionConstraintHasClass).class) {
+                                            return false;
+                                        }
                                 }
                                 return true;
                             });
@@ -343,6 +348,10 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
             case "has-more-resources":
                 constraint.setHasMoreResources(true);
                 break;
+            case "has-class":
+                const cl = new GRPCAdmissionConstraint.HasClass();
+                cl.setClass(c.class);
+                constraint.setHasClass(cl);
             default:
                 return;
         }
@@ -377,6 +386,14 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
     if (c.hasHasMoreResources()) {
         return <AdmissionConstraintHasMoreResources>{ type: "has-more-resources" };
     }
+    if (c.hasHasClass()) {
+        const cl = c.getHasClass()?.getClass();
+        if (!cl) {
+            return;
+        }
+        return <AdmissionConstraintHasClass>{ type: "has-class", class: cl };
+    }
+
     return;
 }
 
