@@ -157,6 +157,8 @@ export interface AdditionalUserData {
     dotfileRepo?: string;
     // Identifies an explicit team or user ID to which all the user's workspace usage should be attributed to (e.g. for billing purposes)
     usageAttributionId?: string;
+    // preferred workspace classes
+    workspaceClasses?: WorkspaceClasses;
     // additional user profile data
     profile?: ProfileDetails;
 }
@@ -185,6 +187,11 @@ export type IDESettings = {
     defaultDesktopIde?: string;
     useLatestVersion?: boolean;
 };
+
+export interface WorkspaceClasses {
+    regular: string;
+    prebuild: string;
+}
 
 export interface UserPlatform {
     uid: string;
