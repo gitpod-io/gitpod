@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -76,6 +77,18 @@ func (p *Preview) InstallContext(watch bool) error {
 
 func installContext(branch string) error {
 	return exec.Command("bash", "/workspace/gitpod/dev/preview/install-k3s-kubeconfig.sh", "-b", branch).Run()
+}
+
+func (p *Preview) SSHPreview() error {
+	sshCommand := exec.Command("bash", "/workspace/gitpod/dev/preview/ssh-vm.sh", "-b", p.Branch)
+
+	// We need to bind standard output files to the command
+	// otherwise 'previewctl' will exit as soon as the script is run.
+	sshCommand.Stderr = os.Stderr
+	sshCommand.Stdin = os.Stdin
+	sshCommand.Stdout = os.Stdout
+
+	return sshCommand.Run()
 }
 
 func (p *Preview) GetPreviewName() string {
