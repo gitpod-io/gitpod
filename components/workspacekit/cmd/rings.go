@@ -561,6 +561,22 @@ var ring1Cmd = &cobra.Command{
 			}
 		}()
 
+		// run prestophook when ring1 exits. This is more reliable way of running this script then
+		// using PreStop Lifecycle Handler of the pod (it would not execute for prebuilds for example)
+		prestophookFunc := func() {
+			if _, err := os.Stat("/.supervisor/prestophook.sh"); os.IsNotExist(err) {
+				return
+			}
+			cmd := exec.Command("/.supervisor/prestophook.sh")
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			err := cmd.Run()
+			if err != nil {
+				log.WithError(err).Error("error when running prestophook.sh")
+			}
+		}
+		defer prestophookFunc()
+
 		err = cmd.Wait()
 		if err != nil {
 			if eerr, ok := err.(*exec.ExitError); ok {
