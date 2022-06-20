@@ -188,9 +188,46 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 	span.SetTag("gcsObj", obj)
 	defer tracing.FinishSpan(span, &err)
 
-	rc, _, err := rs.ObjectAccess(ctx, bkt, obj)
-	if rc == nil {
-		return false, err
+	backupDir, err := os.MkdirTemp("", "backup-")
+	if err != nil {
+		return true, err
+	}
+	defer os.RemoveAll(backupDir)
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		sa := ""
+		if rs.GCPConfig.CredentialsFile != "" {
+			sa = fmt.Sprintf(`-o "Credentials:gs_service_key_file=%v"`, rs.GCPConfig.CredentialsFile)
+		}
+
+		args := fmt.Sprintf(`gsutil -q -m %v\
+		  -o "GSUtil:sliced_object_download_max_components=8" \
+		  -o "GSUtil:parallel_thread_count=1" \
+		  cp gs://%s %s`, sa, filepath.Join(bkt, obj), backupDir)
+
+		log.WithField("flags", args).Debug("gsutil flags")
+
+		cmd := exec.Command("/bin/bash", []string{"-c", args}...)
+		var out []byte
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file to GCS using gsutil")
+			err = xerrors.Errorf("unexpected error updloading backup")
+			return
+		}
+	}()
+
+	wg.Wait()
+
+	rc, err := os.Open(filepath.Join(backupDir, obj))
+	if err != nil {
+		return true, err
 	}
 	defer rc.Close()
 
