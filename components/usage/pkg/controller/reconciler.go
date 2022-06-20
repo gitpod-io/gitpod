@@ -8,15 +8,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Reconciler interface {
@@ -30,12 +30,13 @@ func (f ReconcilerFunc) Reconcile() error {
 }
 
 type UsageReconciler struct {
-	nowFunc func() time.Time
-	conn    *gorm.DB
+	nowFunc           func() time.Time
+	conn              *gorm.DB
+	billingController BillingController
 }
 
-func NewUsageReconciler(conn *gorm.DB) *UsageReconciler {
-	return &UsageReconciler{conn: conn, nowFunc: time.Now}
+func NewUsageReconciler(conn *gorm.DB, billingController BillingController) *UsageReconciler {
+	return &UsageReconciler{conn: conn, billingController: billingController, nowFunc: time.Now}
 }
 
 type UsageReconcileStatus struct {
@@ -126,19 +127,9 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	}
 	status.Report = report
 
-	submitUsageReport(status.Report)
+	u.billingController.Reconcile(status.Report)
 
 	return status, nil
-}
-
-func submitUsageReport(report []TeamUsage) {
-	// Convert the usage report to sum all entries for the same team.
-	var summedReport = make(map[string]int64)
-	for _, usageEntry := range report {
-		summedReport[usageEntry.TeamID] += usageEntry.WorkspaceSeconds
-	}
-
-	stripe.UpdateUsage(summedReport)
 }
 
 func generateUsageReport(teams []teamWithWorkspaces, maxStopTime time.Time) ([]TeamUsage, error) {

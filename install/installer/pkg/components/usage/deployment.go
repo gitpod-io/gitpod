@@ -5,6 +5,7 @@ package usage
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
@@ -21,6 +22,11 @@ import (
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
+
+	args := []string{
+		"run",
+		"--schedule=$(RECONCILER_SCHEDULE)",
+	}
 
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
@@ -43,6 +49,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				MountPath: stripeSecretMountPath,
 				ReadOnly:  true,
 			})
+
+			args = append(args, fmt.Sprintf("--stripe-secret-path=%s", filepath.Join(stripeSecretMountPath, stripeKeyFilename)))
 		}
 		return nil
 	})
@@ -77,13 +85,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						InitContainers:                []corev1.Container{*common.DatabaseWaiterContainer(ctx)},
 						Volumes:                       volumes,
 						Containers: []corev1.Container{{
-							Name:  Component,
-							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Usage.Version),
-							Args: []string{
-								"run",
-								"--schedule",
-								"$(RECONCILER_SCHEDULE)",
-							},
+							Name:            Component,
+							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Usage.Version),
+							Args:            args,
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{

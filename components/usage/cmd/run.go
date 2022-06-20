@@ -44,12 +44,17 @@ func run() *cobra.Command {
 				log.WithError(err).Fatal("Failed to establish database connection.")
 			}
 
-			err = stripe.Authenticate(apiKeyFile)
-			if err != nil {
-				log.WithError(err).Fatal("Failed to initialize stripe client.")
+			var billingController controller.BillingController = &controller.NoOpBillingController{}
+
+			if apiKeyFile != "" {
+				err = stripe.Authenticate(apiKeyFile)
+				if err != nil {
+					log.WithError(err).Fatal("Failed to initialize stripe client.")
+				}
+				billingController = &controller.StripeBillingController{}
 			}
 
-			ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn))
+			ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, billingController))
 			if err != nil {
 				log.WithError(err).Fatal("Failed to initialize usage controller.")
 			}
@@ -74,7 +79,7 @@ func run() *cobra.Command {
 
 	cmd.Flags().BoolVar(&verbose, "verbose", false, "Toggle verbose logging (debug level)")
 	cmd.Flags().DurationVar(&schedule, "schedule", 1*time.Hour, "The schedule on which the reconciler should run")
-	cmd.Flags().StringVar(&apiKeyFile, "api-key-file", "/stripe-secret/apikeys", "Location of the stripe credentials file on disk")
+	cmd.Flags().StringVar(&apiKeyFile, "stripe-secret-path", "", "Location of the Stripe credentials file on disk")
 
 	return cmd
 }

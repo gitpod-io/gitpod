@@ -7,4 +7,5 @@ package usage
 const (
 	Component             = "usage"
 	stripeSecretMountPath = "stripe-secret"
+	stripeKeyFilename     = "apikeys"
 )
