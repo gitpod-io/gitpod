@@ -1,6 +1,8 @@
 variable "kubeconfig" { }
 variable "TEST_ID" { default = "nightly" }
 
+variable "k8s_flavor" { default = "gke" }
+
 # We store the state always in a GCS bucket
 terraform {
   backend "gcs" {
@@ -45,9 +47,9 @@ module "aks" {
 
   domain_name              = "${var.TEST_ID}.gitpod-self-hosted.com"
   enable_airgapped         = false
-  enable_external_database = false
-  enable_external_registry = false
-  enable_external_storage  = false
+  enable_external_database = true
+  enable_external_registry = true
+  enable_external_storage  = true
   dns_enabled              = true
   workspace_name           = var.TEST_ID
 }
@@ -73,6 +75,7 @@ module "azure-externaldns" {
   kubeconfig     = var.kubeconfig
   settings = module.aks.external_dns_settings
   domain_name = "${var.TEST_ID}.gitpod-self-hosted.com"
+  txt_owner_id   = var.TEST_ID
 }
 
 module "azure-issuer" {

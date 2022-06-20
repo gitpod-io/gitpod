@@ -8,13 +8,13 @@ locals {
   })
   dns_enabled = var.domain_name != null
   name_format = join("-", [
-    "gitpod",
+    "gitpod-test",
     "%s", # region
     "%s", # name
     local.workspace_name
   ])
   name_format_global = join("-", [
-    "gitpod",
+    "gitpod-test",
     "%s", # name
     local.workspace_name
   ])
