@@ -4,7 +4,10 @@ import { Werft } from "./util/werft";
 
 const testConfig: string = process.argv.length > 2 ? process.argv[2] : "STANDARD_K3S_TEST";
 // we can provide the version of the gitpod to install (eg: 2022.4.2)
-const version: string = process.argv.length > 3 ? process.argv[3] : "";
+// "-" is the default value which will install the latest version
+const version: string = process.argv.length > 3 ? process.argv[3] : "-";
+
+const channel: string = process.argv.length > 4 ? process.argv[4] : "unstable";
 
 const makefilePath: string = join("install/tests");
 
@@ -15,6 +18,78 @@ interface InfraConfig {
     makeTarget: string;
     description: string;
 }
+
+interface TestConfig {
+    DESCRIPTION: string;
+    PHASES: string[];
+    CLOUD: string;
+}
+
+// Each of the TEST_CONFIGURATIONS define an integration test end-to-end
+// It should be a combination of multiple INFRA_PHASES, order of PHASES slice is important
+const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
+    STANDARD_GKE_TEST: {
+        CLOUD: "gcp",
+        DESCRIPTION: "Deploy Gitpod on GKE, with managed DNS, and run integration tests",
+        PHASES: [
+            "STANDARD_GKE_CLUSTER",
+            "CERT_MANAGER",
+            "GCP_MANAGED_DNS",
+            "GENERATE_KOTS_CONFIG",
+            "INSTALL_GITPOD",
+            "CHECK_INSTALLATION",
+            "RUN_INTEGRATION_TESTS",
+            "RESULTS",
+            "DESTROY",
+        ],
+    },
+    STANDARD_GKE_UPGRADE_TEST: {
+        CLOUD: "gcp",
+        DESCRIPTION: `Deploy Gitpod on GKE, and test upgrade from ${version} to latest version`,
+        PHASES: [
+            "STANDARD_GKE_CLUSTER",
+            "CERT_MANAGER",
+            "GCP_MANAGED_DNS",
+            "GENERATE_KOTS_CONFIG",
+            "INSTALL_GITPOD",
+            "CHECK_INSTALLATION",
+            "KOTS_UPGRADE",
+            "CHECK_INSTALLATION",
+            "DESTROY",
+        ],
+    },
+    STANDARD_K3S_TEST: {
+        CLOUD: "gcp", // the cloud provider is still GCP
+        DESCRIPTION:
+            "Deploy Gitpod on a K3s cluster, created on a GCP instance," +
+            " with managed DNS and run integrations tests",
+        PHASES: [
+            "STANDARD_K3S_CLUSTER_ON_GCP",
+            "CERT_MANAGER",
+            "GENERATE_KOTS_CONFIG",
+            "INSTALL_GITPOD",
+            "CHECK_INSTALLATION",
+            "RUN_INTEGRATION_TESTS",
+            "RESULTS",
+            "DESTROY",
+        ],
+    },
+    STANDARD_K3S_PREVIEW: {
+        CLOUD: "gcp",
+        DESCRIPTION: "Create a SH Gitpod preview environment on a K3s cluster, created on a GCP instance",
+        PHASES: [
+            "STANDARD_K3S_CLUSTER_ON_GCP",
+            "CERT_MANAGER",
+            "GENERATE_KOTS_CONFIG",
+            "INSTALL_GITPOD",
+            "CHECK_INSTALLATION",
+            "RESULTS",
+        ],
+    },
+};
+
+const config: TestConfig = TEST_CONFIGURATIONS[testConfig];
+const cloud: string = config.CLOUD;
 
 // `INFRA_PHASES` describe the phases that can be mixed
 // and matched to form a test configuration
@@ -41,14 +116,22 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         makeTarget: "managed-dns",
         description: "Sets up external-dns & cloudDNS config",
     },
+    GENERATE_KOTS_CONFIG: {
+        phase: "generate-kots-config",
+        makeTarget: `generate-kots-config storage=${randomize("storage", cloud)} registry=${randomize(
+            "registry",
+            cloud,
+        )} db=${randomize("db", cloud)}`,
+        description: `Generate KOTS Config file`,
+    },
     INSTALL_GITPOD_IGNORE_PREFLIGHTS: {
         phase: "install-gitpod-without-preflights",
-        makeTarget: `kots-install channel=unstable version=${version} preflights=false`, // this is a bit of a hack, for now we pass params like this
+        makeTarget: `kots-install channel=${channel} version=${version} preflights=false`, // this is a bit of a hack, for now we pass params like this
         description: "Install gitpod using kots community edition without preflights",
     },
     INSTALL_GITPOD: {
         phase: "install-gitpod",
-        makeTarget: `kots-install channel=unstable version=${version} preflights=true`,
+        makeTarget: `kots-install channel=${channel} version=${version} preflights=true`,
         description: "Install gitpod using kots community edition",
     },
     CHECK_INSTALLATION: {
@@ -56,6 +139,11 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         phase: "check-gitpod-installation",
         makeTarget: "check-gitpod-installation",
         description: "Check gitpod installation",
+    },
+    KOTS_UPGRADE: {
+        phase: "kots-upgrade",
+        makeTarget: "kots-upgrade",
+        description: "Upgrade Gitpod installation to latest version using KOTS CLI",
     },
     RUN_INTEGRATION_TESTS: {
         phase: "run-integration-tests",
@@ -74,56 +162,6 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
 };
 
-interface TestConfig {
-    DESCRIPTION: string;
-    PHASES: string[];
-}
-
-// Each of the TEST_CONFIGURATIONS define an integration test end-to-end
-// It should be a combination of multiple INFRA_PHASES, order of PHASES slice is important
-const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
-    STANDARD_GKE_TEST: {
-        DESCRIPTION: "Deploy Gitpod on GKE, with managed DNS, and run integration tests",
-        PHASES: [
-            "STANDARD_GKE_CLUSTER",
-            "CERT_MANAGER",
-            "GCP_MANAGED_DNS",
-            "INSTALL_GITPOD",
-            "CHECK_INSTALLATION",
-            "RUN_INTEGRATION_TESTS",
-            "RESULTS",
-            "DESTROY",
-        ],
-    },
-    STANDARD_K3S_TEST: {
-        DESCRIPTION:
-            "Deploy Gitpod on a K3s cluster, created on a GCP instance," +
-            " with managed DNS and run integrations tests",
-        PHASES: [
-            "STANDARD_K3S_CLUSTER_ON_GCP",
-            "CERT_MANAGER",
-            "INSTALL_GITPOD_IGNORE_PREFLIGHTS",
-            "CHECK_INSTALLATION",
-            "RUN_INTEGRATION_TESTS",
-            "RESULTS",
-            "DESTROY",
-        ],
-    },
-    STANDARD_K3S_PREVIEW: {
-        DESCRIPTION: "Create a SH Gitpod preview environment on a K3s cluster, created on a GCP instance",
-        PHASES: [
-            "STANDARD_K3S_CLUSTER_ON_GCP",
-            "GCP_MANAGED_DNS",
-            "INSTALL_GITPOD_IGNORE_PREFLIGHTS",
-            "CHECK_INSTALLATION",
-            "RESULTS",
-        ],
-    },
-};
-
-// TODO better way to clean up
-const config: TestConfig = TEST_CONFIGURATIONS[testConfig];
-
 if (config === undefined) {
     console.log(`Unknown configuration specified: "${testConfig}", Exiting...`);
     process.exit(1);
@@ -134,12 +172,6 @@ installerTests(TEST_CONFIGURATIONS[testConfig]).catch((err) => {
     console.error(err);
     process.exit(1);
 });
-
-function getKubeconfig() {
-    const ret = exec(`make -C ${makefilePath} get-kubeconfig`);
-    const filename = ret.stdout.toString().split("\n").slice(1, -1);
-    exec(`echo ${filename}`);
-}
 
 export async function installerTests(config: TestConfig) {
     console.log(config.DESCRIPTION);
@@ -155,9 +187,13 @@ export async function installerTests(config: TestConfig) {
 }
 
 function callMakeTargets(phase: string, description: string, makeTarget: string) {
-    werft.phase(phase, description);
+    werft.phase(phase, `${description}`);
+    werft.log(phase, `calling ${makeTarget}`);
 
-    const response = exec(`make -C ${makefilePath} ${makeTarget}`, { slice: "call-make-target", dontCheckRc: true });
+    const response = exec(`make -C ${makefilePath} ${makeTarget}`, {
+        slice: "call-make-target",
+        dontCheckRc: true,
+    });
 
     if (response.code) {
         console.error(`Error: ${response.stderr}`);
@@ -168,6 +204,13 @@ function callMakeTargets(phase: string, description: string, makeTarget: string)
     }
 
     return response.code;
+}
+
+function randomize(resource: string, platform: string): string {
+    // in the follow-up PR we will add `${platform}-${resource}` as an option here to
+    // test against resource dependencies(storage, db, registry) for each cloud platform
+    const options = ["incluster"];
+    return options[Math.floor(Math.random() * options.length)];
 }
 
 function cleanup() {

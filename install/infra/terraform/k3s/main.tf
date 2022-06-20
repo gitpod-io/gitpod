@@ -27,7 +27,7 @@ provider "google" {
 }
 
 resource "google_service_account" "gcp_instance" {
-  account_id   = "gcp-k3s-compute"
+  account_id   = "sa-${var.name}"
   display_name = "Service Account"
 }
 

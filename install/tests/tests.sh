@@ -17,7 +17,7 @@ for i in $(find ${TEST_DIR} -type d -links 2 ! -empty | sort); do
     echo "running integration for ${TEST_NAME}"
 
     cd "${i}" || echo "Path invalid for ${TEST_NAME}"
-    go test -v ./... "-kubeconfig=$1" -namespace=gitpod 2>&0
+    go test -v ./... "-kubeconfig=$1" -namespace=gitpod -username=gitpod-integration-test 2>&0
     TEST_STATUS=$?
     if [ "$TEST_STATUS" -ne "0" ]; then
         FAILURE_COUNT=$((FAILURE_COUNT+1))
