@@ -60,9 +60,34 @@ KOTS_KONFIG := "./manifests/kots-config.yaml"
 get-base-config:
 	envsubst < ${KOTS_KONFIG} > tmp_config.yml
 
+get-config-incluster:
+	@echo "Nothing to do"
+
+get-config-gcp-storage: config-file = "./manifests/kots-config-gcp-storage.yaml"
+get-config-gcp-storage:
+	export BASE64_GCP_KEY=$$(cat $$TF_VAR_sa_creds | tr -d '\n' | base64 -w 0) && \
+	envsubst '$${BASE64_GCP_KEY}' < ${config-file} > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
+get-config-gcp-registry: config-file = "./manifests/kots-config-gcp-registry.yaml"
+get-config-gcp-registry:
+	export GCP_KEY=$$(cat $$TF_VAR_sa_creds | tr -d '\n' | base64 -w 0) && \
+	envsubst '$${GCP_KEY}' < ${config-file} > tmp_4_config.yml
+	yq m -i tmp_config.yml tmp_4_config.yml
+
+get-config-gcp-db: config-file = "./manifests/kots-config-gcp-db.yaml"
+get-config-gcp-db:
+	export BASE64_GCP_KEY=$$(cat $$TF_VAR_sa_creds | tr -d '\n' | base64 -w 0) && \
+	envsubst '$${BASE64_GCP_KEY}' < ${config-file} > tmp_4_config.yml
+	envsubst '$${TF_VAR_TEST_ID}' < tmp_4_config.yml > tmp_5_config.yml
+	yq m -i tmp_config.yml tmp_5_config.yml
+
+storage ?= incluster
+registry ?= incluster
+db ?= incluster
 .PHONY:
 ## generate-kots-config: Generate the kots config based on test config
-generate-kots-config: get-base-config
+generate-kots-config: get-base-config get-config-${storage} get-config-${registry} get-config-${db}
 
 license_community_beta := "../licenses/Community (Beta).yaml"
 license_community_stable := "../licenses/Community.yaml"

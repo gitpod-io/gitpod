@@ -1,0 +1,22 @@
+apiVersion: kots.io/v1beta1
+kind: ConfigValues
+spec:
+  values:
+      db_incluster:
+        value: "0"
+        data: "db_incluster"
+      db_cloudsql_enabled:
+        value: "1"
+        data: "db_cloudsql_enabled"
+      db_cloudsql_instance:
+        value: sh-automated-tests:europe-west1:sql-${TF_VAR_TEST_ID}
+        data: "db_cloudsql_instance"
+      db_gcp_credentials:
+        value: "${BASE64_GCP_KEY}"
+        data: "db_cloudsql_credentials"
+      db_gcp_username:
+        value: gitpod
+        data: "db_username"
+      db_password:
+        value: gitpod
+        data: "db_password"
