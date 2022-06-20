@@ -15,6 +15,9 @@ import { trackEvent } from "../Analytics";
 import { PaymentContext } from "../payment-context";
 import SelectIDE from "./SelectIDE";
 import { WorkspaceClasses } from "@gitpod/gitpod-protocol";
+import { getExperimentsClient } from "../experiments/client";
+import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
+import { useLocation } from "react-router";
 
 type Theme = "light" | "dark" | "system";
 
@@ -69,6 +72,19 @@ export default function Preferences() {
             });
         }
     };
+
+    const location = useLocation();
+    const { teams } = useContext(TeamsContext);
+    const team = getCurrentTeam(location, teams);
+    const [isShowWorkspaceClasses, setIsShowWorkspaceClasses] = useState<boolean>(false);
+
+    (async () => {
+        const showWorkspaceClasses = await getExperimentsClient().getValueAsync("workspace_classes", false, {
+            teamName: team?.name,
+        });
+        console.log("the team is ", team?.name);
+        setIsShowWorkspaceClasses(showWorkspaceClasses);
+    })();
 
     return (
         <div>
@@ -171,18 +187,12 @@ export default function Preferences() {
                             className="w-96 h-9"
                             placeholder="e.g. XL"
                             onChange={(e) => setWorkspaceClass(e.target.value)}
+                            disabled={isShowWorkspaceClasses}
                         />
-                        <button className="secondary ml-2" onClick={() => actuallySetWorkspaceClass(dotfileRepo)}>
+                        <button className="secondary ml-2" onClick={() => actuallySetWorkspaceClass(workspaceClass)}>
                             Save Changes
                         </button>
                     </span>
-                    <div className="mt-1">
-                        <p className="text-gray-500 dark:text-gray-400">
-                            Add a repository URL that includes dotfiles. Gitpod will
-                            <br />
-                            clone and install your dotfiles for every new workspace.
-                        </p>
-                    </div>
                 </div>
             </PageWithSubMenu>
         </div>
