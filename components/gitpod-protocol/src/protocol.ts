@@ -153,6 +153,9 @@ export interface AdditionalUserData {
 
     // Git clone URL pointing to the user's dotfile repo
     dotfileRepo?: string;
+
+    // preferred workspace classes
+    workspaceClasses?: WorkspaceClasses;
 }
 
 export interface EmailNotificationSettings {
@@ -170,6 +173,11 @@ export type IDESettings = {
     defaultDesktopIde?: string;
     useLatestVersion?: boolean;
 };
+
+export interface WorkspaceClasses {
+    regular: string;
+    prebuild: string;
+}
 
 export interface UserPlatform {
     uid: string;

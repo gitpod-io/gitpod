@@ -10,7 +10,12 @@ import Cookies from "js-cookie";
 import { v4 } from "uuid";
 import { Experiment } from "./experiments";
 
-export type Event = "invite_url_requested" | "organisation_authorised" | "dotfile_repo_changed" | "feedback_submitted";
+export type Event =
+    | "invite_url_requested"
+    | "organisation_authorised"
+    | "dotfile_repo_changed"
+    | "feedback_submitted"
+    | "workspace_class_changed";
 type InternalEvent = Event | "path_changed" | "dashboard_clicked";
 
 export type EventProperties = TrackOrgAuthorised | TrackInviteUrlRequested | TrackDotfileRepo | TrackFeedback;

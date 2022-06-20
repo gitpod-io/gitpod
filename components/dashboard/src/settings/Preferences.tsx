@@ -14,6 +14,7 @@ import getSettingsMenu from "./settings-menu";
 import { trackEvent } from "../Analytics";
 import { PaymentContext } from "../payment-context";
 import SelectIDE from "./SelectIDE";
+import { WorkspaceClasses } from "@gitpod/gitpod-protocol";
 
 type Theme = "light" | "dark" | "system";
 
@@ -45,6 +46,25 @@ export default function Preferences() {
         if (value !== prevDotfileRepo) {
             trackEvent("dotfile_repo_changed", {
                 previous: prevDotfileRepo,
+                current: value,
+            });
+        }
+    };
+
+    const [workspaceClass, setWorkspaceClass] = useState<string>(
+        user?.additionalData?.workspaceClasses?.regular || "default",
+    );
+    const actuallySetWorkspaceClass = async (value: string) => {
+        const additionalData = user?.additionalData || {};
+        const prevWorkspaceClass = additionalData?.workspaceClasses?.regular || "";
+        const workspaceClasses = (additionalData?.workspaceClasses || {}) as WorkspaceClasses;
+        workspaceClasses.regular = value;
+        workspaceClasses.prebuild = value;
+        additionalData.workspaceClasses = workspaceClasses;
+        await getGitpodService().server.updateLoggedInUser({ additionalData });
+        if (value !== prevWorkspaceClass) {
+            trackEvent("workspace_class_changed", {
+                previous: prevWorkspaceClass,
                 current: value,
             });
         }
@@ -115,9 +135,7 @@ export default function Preferences() {
                     </SelectableCardSolid>
                 </div>
 
-                <h3 className="mt-12">
-                    Dotfiles{" "}
-                </h3>
+                <h3 className="mt-12">Dotfiles </h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Customize workspaces using dotfiles.</p>
                 <div className="mt-4 max-w-xl">
                     <h4>Repository URL</h4>
@@ -130,6 +148,31 @@ export default function Preferences() {
                             onChange={(e) => setDotfileRepo(e.target.value)}
                         />
                         <button className="secondary ml-2" onClick={() => actuallySetDotfileRepo(dotfileRepo)}>
+                            Save Changes
+                        </button>
+                    </span>
+                    <div className="mt-1">
+                        <p className="text-gray-500 dark:text-gray-400">
+                            Add a repository URL that includes dotfiles. Gitpod will
+                            <br />
+                            clone and install your dotfiles for every new workspace.
+                        </p>
+                    </div>
+                </div>
+
+                <h3 className="mt-12">Workspace Classes </h3>
+                <p className="text-base text-gray-500 dark:text-gray-400">Set default workspace classes</p>
+                <div className="mt-4 max-w-xl">
+                    <h4>Workspace class</h4>
+                    <span className="flex">
+                        <input
+                            type="text"
+                            value={workspaceClass}
+                            className="w-96 h-9"
+                            placeholder="e.g. XL"
+                            onChange={(e) => setWorkspaceClass(e.target.value)}
+                        />
+                        <button className="secondary ml-2" onClick={() => actuallySetWorkspaceClass(dotfileRepo)}>
                             Save Changes
                         </button>
                     </span>
