@@ -175,6 +175,9 @@ type JetBrainsProduct struct {
 
 	// Enable warming up of JetBrains product in prebuilds
 	Prebuilds *JetBrainsPrebuilds `yaml:"prebuilds,omitempty"`
+
+	// JVM Options for IDE backend server, separated by space
+	VMOptions string `yaml:"vmoptions,omitempty"`
 }
 
 // Enable warming up of JetBrains product in prebuilds

@@ -287,6 +287,10 @@
                                     "description": "Whether only stable, latest or both versions should be warmed up. Default is stable only."
                                 }
                             }
+                        },
+                        "vmoptions": {
+                            "type": "string",
+                            "description": "Configure JVM options, for instance '-Xmx=4096m'."
                         }
                     }
                 },
@@ -317,6 +321,10 @@
                                     "description": "Whether only stable, latest or both versions should be warmed up. Default is stable only."
                                 }
                             }
+                        },
+                        "vmoptions": {
+                            "type": "string",
+                            "description": "Configure JVM options, for instance '-Xmx=4096m'."
                         }
                     }
                 },
@@ -347,6 +355,10 @@
                                     "description": "Whether only stable, latest or both versions should be warmed up. Default is stable only."
                                 }
                             }
+                        },
+                        "vmoptions": {
+                            "type": "string",
+                            "description": "Configure JVM options, for instance '-Xmx=4096m'."
                         }
                     }
                 },
@@ -377,6 +389,10 @@
                                     "description": "Whether only stable, latest or both versions should be warmed up. Default is stable only."
                                 }
                             }
+                        },
+                        "vmoptions": {
+                            "type": "string",
+                            "description": "Configure JVM options, for instance '-Xmx=4096m'."
                         }
                     }
                 }

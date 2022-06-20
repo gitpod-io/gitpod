@@ -640,6 +640,7 @@ export interface JetBrainsConfig {
 }
 export interface JetBrainsProductConfig {
     prebuilds?: JetBrainsPrebuilds;
+    vmoptions?: string;
 }
 export interface JetBrainsPrebuilds {
     version?: "stable" | "latest" | "both";

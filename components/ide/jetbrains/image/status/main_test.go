@@ -11,6 +11,7 @@ import (
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetProductConfig(t *testing.T) {
@@ -24,6 +25,14 @@ func TestGetProductConfig(t *testing.T) {
 	if diff := cmp.Diff(expectation, actual); diff != "" {
 		t.Errorf("unexpected output (-want +got):\n%s", diff)
 	}
+}
+
+func TestParseGitpodConfig(t *testing.T) {
+	gitpodConfig, _ := parseGitpodConfig("testdata")
+	assert.Equal(t, 1, len(gitpodConfig.JetBrains.IntelliJ.Plugins))
+	assert.Equal(t, "both", gitpodConfig.JetBrains.IntelliJ.Prebuilds.Version)
+	assert.Equal(t, "-Xmx3g", gitpodConfig.JetBrains.IntelliJ.VMOptions)
+	assert.Equal(t, "-Xmx4096m -XX:MaxRAMPercentage=75", gitpodConfig.JetBrains.GoLand.VMOptions)
 }
 
 func TestUpdateVMOptions(t *testing.T) {
@@ -49,7 +58,7 @@ func TestUpdateVMOptions(t *testing.T) {
 		lessFunc := func(a, b string) bool { return a < b }
 
 		t.Run(test.Desc, func(t *testing.T) {
-			actual := updateVMOptions(test.Alias, test.Src)
+			actual := updateVMOptions(nil, test.Alias, test.Src)
 			if diff := cmp.Diff(strings.Fields(test.Expectation), strings.Fields(actual), cmpopts.SortSlices(lessFunc)); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
@@ -58,7 +67,7 @@ func TestUpdateVMOptions(t *testing.T) {
 		t.Run("updateVMOptions multiple time should be stable", func(t *testing.T) {
 			actual := test.Src
 			for i := 0; i < 5; i++ {
-				actual = updateVMOptions(test.Alias, actual)
+				actual = updateVMOptions(nil, test.Alias, actual)
 				if diff := cmp.Diff(strings.Fields(test.Expectation), strings.Fields(actual), cmpopts.SortSlices(lessFunc)); diff != "" {
 					t.Errorf("unexpected output (-want +got):\n%s", diff)
 				}
