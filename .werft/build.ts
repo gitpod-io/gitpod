@@ -62,8 +62,8 @@ async function run(context: any) {
 
     if (!config.withPreview || config.publishRelease) {
         werft.phase("deploy", "not deploying");
-        console.log("running without preview environment or publish-release is set");
-        return
+        console.log("no-preview or publish-release is set");
+        return;
     }
 
     try {
