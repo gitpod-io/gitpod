@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -226,5 +227,23 @@ func configureSSHDefaultDir(cfg *Config) {
 	defer file.Close()
 	if _, err := file.WriteString(fmt.Sprintf("\nif [[ -n $SSH_CONNECTION ]]; then cd \"%s\"; fi\n", cfg.RepoRoot)); err != nil {
 		log.WithError(err).Error("write .bashrc failed")
+	}
+}
+
+func configureSSHMessageOfTheDay() {
+	msg := []byte(`Welcome to Gitpod: Always ready to code. Try the following commands to get started:
+
+	gp tasks list         List all your defined tasks in .gitpod.yml
+	gp tasks attach       Attach your terminal to a workspace task
+
+	gp ports list         Lists workspace ports and their states
+	gp stop               Stop current workspace
+	gp help               To learn about the gp CLI commands
+
+For more information, see the Gitpod documentation: https://gitpod.io/docs
+`)
+
+	if err := ioutil.WriteFile("/etc/motd", msg, 0o644); err != nil {
+		log.WithError(err).Error("write /etc/motd failed")
 	}
 }
