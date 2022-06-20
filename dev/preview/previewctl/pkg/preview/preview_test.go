@@ -56,3 +56,7 @@ func TestGetPreviewName(t *testing.T) {
 		}
 	}
 }
+
+func TestListAllPreviews(t *testing.T) {
+	fmt.Println("Test not implemented")
+}
