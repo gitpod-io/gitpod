@@ -70,13 +70,17 @@ func (i *WorkspaceInstance) TableName() string {
 // - instances which only just started in the period specified
 func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstance, error) {
 	var instances []WorkspaceInstance
+	var instancesInBatch []WorkspaceInstance
 	tx := conn.WithContext(ctx).
 		Where(
 			conn.Where("stoppedTime >= ?", TimeToISO8601(from)).Or("stoppedTime = ?", ""),
 		).
 		Where("creationTime < ?", TimeToISO8601(to)).
 		Where("startedTime != ?", "").
-		Find(&instances)
+		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
+			instances = append(instances, instancesInBatch...)
+			return nil
+		})
 	if tx.Error != nil {
 		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
 	}

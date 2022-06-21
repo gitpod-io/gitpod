@@ -191,3 +191,29 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 
 	require.Len(t, retrieved, len(valid))
 }
+
+func TestListWorkspaceInstancesInRange_InBatches(t *testing.T) {
+	conn := db.ConnectForTests(t)
+
+	workspaceID := "gitpodio-gitpod-gyjr82jkfnd"
+	var instances []db.WorkspaceInstance
+	for i := 0; i < 1100; i++ {
+		instances = append(instances, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:           uuid.New(),
+			WorkspaceID:  workspaceID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
+		}))
+
+	}
+
+	tx := conn.CreateInBatches(&instances, 1000)
+	require.NoError(t, tx.Error)
+
+	startOfMay := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
+	startOfJune := time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
+	results, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
+	require.NoError(t, err)
+	require.Len(t, results, len(instances))
+}
