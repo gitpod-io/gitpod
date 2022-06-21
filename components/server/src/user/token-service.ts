@@ -52,9 +52,9 @@ export class TokenService implements TokenProvider {
                 `No token found for user ${identity.authProviderId}/${identity.authId}/${identity.authName}!`,
             );
         }
-        const refreshTime = new Date();
-        refreshTime.setTime(refreshTime.getTime() + 30 * 60 * 1000);
-        if (token.expiryDate && token.expiryDate < refreshTime.toISOString()) {
+        const aboutToExpireTime = new Date();
+        aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
+        if (token.expiryDate && token.expiryDate < aboutToExpireTime.toISOString()) {
             const { authProvider } = this.hostContextProvider.get(host)!;
             if (authProvider.refreshToken) {
                 await authProvider.refreshToken(user);
