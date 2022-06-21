@@ -5834,6 +5834,11 @@ configcat-common@^4.6.1, configcat-common@^4.6.2:
   resolved "https://registry.yarnpkg.com/configcat-common/-/configcat-common-4.6.2.tgz#ef37114cf77c10378e686078bc45903508e0ed49"
   integrity sha512-o7qp5xb3K9w3tL0dK0g2/IwzOym4SOcdl+Hgh7d1125fKamDk8Jg6nBb+jEkA0qs0msYI+kpcL7pEsihYUhEDg==
 
+configcat-common@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/configcat-common/-/configcat-common-6.0.0.tgz#ccdb9bdafcb6a89144cac17faaab60ac960fed2a"
+  integrity sha512-C/lCeTKiFk9kPElRF3f4zIkvVCLKgPJuzrKbIMHCru89mvfH5t4//hZ9TW8wPJOAje6xB6ZALutDiIxggwUvWA==
+
 configcat-js@^5.7.2:
   version "5.7.2"
   resolved "https://registry.yarnpkg.com/configcat-js/-/configcat-js-5.7.2.tgz#2466269f941c8564c0d2670ffbc74dc0657f1450"
@@ -5847,6 +5852,15 @@ configcat-node@^6.7.1:
   integrity sha512-+tdKZkrWo3JdRezU90daly9LmL2efCDTnjHlKMUpwtVjrNjPVXggrydrgB5QUKmJUspWUd9bFSXS3jQgoGpB4g==
   dependencies:
     configcat-common "^4.6.1"
+    got "^9.6.0"
+    tunnel "0.0.6"
+
+configcat-node@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/configcat-node/-/configcat-node-7.0.0.tgz#50dc0f8fc866d7017e93fa3d478b7a3fe08ec815"
+  integrity sha512-zPU+6d/uHP4SxpBgdduI5AiPetAByGnBrF+Chpg+CuC2EmY6N4qKe5f8eWaot3NE+X4m5ylq1OMy6Li9ePIb6w==
+  dependencies:
+    configcat-common "^6.0.0"
     got "^9.6.0"
     tunnel "0.0.6"
 
