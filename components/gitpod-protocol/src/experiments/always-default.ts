@@ -3,7 +3,7 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
-import { Attributes, Client } from "./client";
+import { Attributes, Client } from "./types";
 
 // AlwaysReturningDefaultValueClient is an implemention of an experiments.Client which performs no lookup/network operation
 // and always returns the default value for a given experimentName.

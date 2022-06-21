@@ -161,7 +161,6 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
-import { getExperimentsClient } from "../experiments";
 import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 
 // shortcut
@@ -2140,19 +2139,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } else {
             // Anyone who can read a team's information (i.e. any team member) can create a new project.
             await this.guardTeamOperation(params.teamId, "get");
-        }
-
-        const isFeatureEnabled = await getExperimentsClient().getValueAsync("isMyFirstFeatureEnabled", false, {
-            identifier: user.id,
-            custom: {
-                project_name: params.name,
-            },
-        });
-        if (isFeatureEnabled) {
-            throw new ResponseError(
-                ErrorCodes.NOT_FOUND,
-                `Feature is disabled for this user or project - sample usage of experiements`,
-            );
         }
 
         const project = this.projectsService.createProject(params, user);

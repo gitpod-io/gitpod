@@ -102,7 +102,7 @@ import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/webs
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
-import { getExperimentsClient } from "../../../src/experiments";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -1863,15 +1863,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     protected async ensureIsUsageBasedFeatureFlagEnabled(user: User): Promise<void> {
         const teams = await this.teamDB.findTeamsByUser(user.id);
-        const isUsageBasedBillingEnabled = await getExperimentsClient().getValueAsync(
+        const isUsageBasedBillingEnabled = await getExperimentsClientForBackend().getValueAsync(
             "isUsageBasedBillingEnabled",
             false,
             {
-                identifier: user.id,
-                custom: {
-                    team_ids: teams.map((t) => t.id).join(","),
-                    team_names: teams.map((t) => t.name).join(","),
-                },
+                userId: user.id,
+                teams: teams,
             },
         );
         if (!isUsageBasedBillingEnabled) {
