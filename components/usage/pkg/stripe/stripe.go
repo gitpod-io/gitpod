@@ -7,6 +7,7 @@ package stripe
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -111,6 +112,7 @@ func queriesForCustomersWithTeamIds(teamIds []string) []string {
 }
 
 // workspaceSecondsToCredits converts seconds (of workspace usage) into Stripe credits.
+// (1 credit = 6 minutes, rounded up)
 func workspaceSecondsToCredits(seconds int64) int64 {
-	return (seconds + 59) / 60
+	return int64(math.Ceil(float64(seconds) / (60 * 6)))
 }
