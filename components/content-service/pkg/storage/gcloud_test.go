@@ -31,6 +31,8 @@ import (
 )
 
 func TestObjectAccessToNonExistentObj(t *testing.T) {
+	t.Skip()
+
 	server := *fakestorage.NewServer([]fakestorage.Object{})
 	defer server.Stop()
 
