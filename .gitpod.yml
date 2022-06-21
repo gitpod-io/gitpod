@@ -1,6 +1,11 @@
 image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-gcloud-auth.6
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
+
+additionalRepositories:
+  - url: https://github.com/gitpod-io/website
+    checkoutLocation: website
+
 ports:
   - port: 1337
     onOpen: open-preview
@@ -54,6 +59,13 @@ tasks:
     before: pre-commit install --install-hooks
     init: leeway exec --filter-type go -v -- go mod verify
     openMode: split-right
+  - name: Website
+    before: |
+      cd ../website
+    init: |
+      npm install
+      npm run build
+
 vscode:
   extensions:
     - bradlc.vscode-tailwindcss

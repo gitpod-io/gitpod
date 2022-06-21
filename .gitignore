@@ -56,3 +56,6 @@ components/server/*.log
 
 # Jetbrains workspace files
 .idea/misc.xml
+
+# Website
+website/
