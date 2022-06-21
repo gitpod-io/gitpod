@@ -28,7 +28,23 @@ export class TokenService implements TokenProvider {
         });
     }
 
+    protected getTokenForHostCache = new Map<string, Promise<Token>>();
+
     async getTokenForHost(user: User, host: string): Promise<Token> {
+        // (AT) when it comes to token renewal, the awaited http requests may
+        // cause "parallel" calls to repeat the renewal, which will fail.
+        // Caching for pending operations should solve this issue.
+        const key = `${host}-${user.id}`;
+        let promise = this.getTokenForHostCache.get(key);
+        if (!promise) {
+            promise = this.doGetTokenForHost(user, host);
+            this.getTokenForHostCache.set(key, promise);
+            promise.finally(() => this.getTokenForHostCache.delete(key));
+        }
+        return promise;
+    }
+
+    async doGetTokenForHost(user: User, host: string): Promise<Token> {
         const identity = this.getIdentityForHost(user, host);
         let token = await this.userDB.findTokenForIdentity(identity);
         if (!token) {
