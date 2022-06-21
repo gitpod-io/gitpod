@@ -74,7 +74,7 @@ pod:
         sudo chown -R gitpod:gitpod /workspace
         sudo apt update && apt install gettext-base
 
-        export TF_VAR_TEST_ID=$(echo $RANDOM | md5sum | head -c 5; echo)
+        export TF_VAR_TEST_ID="eks-$(date +%s)-$(echo $RANDOM | md5sum | head -c 5; echo)"
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
