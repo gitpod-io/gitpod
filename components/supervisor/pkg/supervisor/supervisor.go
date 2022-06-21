@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -90,7 +91,8 @@ func AddAPIEndpointOpts(opts ...grpc.ServerOption) {
 }
 
 type runOptions struct {
-	Args []string
+	Args  []string
+	RunGP bool
 }
 
 // RunOption customizes the run behaviour.
@@ -100,6 +102,13 @@ type RunOption func(*runOptions)
 func WithArgs(args []string) RunOption {
 	return func(r *runOptions) {
 		r.Args = args
+	}
+}
+
+// WithRunGP disables some functionality for use with run-gp
+func WithRunGP(enable bool) RunOption {
+	return func(r *runOptions) {
+		r.RunGP = enable
 	}
 }
 
@@ -185,17 +194,21 @@ func Run(options ...RunOption) {
 	}
 
 	tunneledPortsService := ports.NewTunneledPortsService(cfg.DebugEnable)
-	_, err = tunneledPortsService.Tunnel(context.Background(), &ports.TunnelOptions{
-		SkipIfExists: false,
-	}, &ports.PortTunnelDescription{
-		LocalPort:  uint32(cfg.APIEndpointPort),
-		TargetPort: uint32(cfg.APIEndpointPort),
-		Visibility: api.TunnelVisiblity_host,
-	}, &ports.PortTunnelDescription{
-		LocalPort:  uint32(cfg.SSHPort),
-		TargetPort: uint32(cfg.SSHPort),
-		Visibility: api.TunnelVisiblity_host,
-	})
+	_, err = tunneledPortsService.Tunnel(context.Background(),
+		&ports.TunnelOptions{
+			SkipIfExists: false,
+		},
+		&ports.PortTunnelDescription{
+			LocalPort:  uint32(cfg.APIEndpointPort),
+			TargetPort: uint32(cfg.APIEndpointPort),
+			Visibility: api.TunnelVisiblity_host,
+		},
+		&ports.PortTunnelDescription{
+			LocalPort:  uint32(cfg.SSHPort),
+			TargetPort: uint32(cfg.SSHPort),
+			Visibility: api.TunnelVisiblity_host,
+		},
+	)
 	if err != nil {
 		log.WithError(err).Warn("cannot tunnel internal ports")
 	}
@@ -208,25 +221,12 @@ func Run(options ...RunOption) {
 	}
 
 	var (
-		shutdown                           = make(chan ShutdownReason, 1)
-		ideReady                           = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
-		desktopIdeReady     *ideReadyState = nil
-		cstate                             = NewInMemoryContentState(cfg.RepoRoot)
-		gitpodService                      = createGitpodService(cfg, tokenService)
-		gitpodConfigService                = config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
-		portMgmt                           = ports.NewManager(
-			createExposedPortsImpl(cfg, gitpodService),
-			&ports.PollingServedPortsObserver{
-				RefreshInterval: 2 * time.Second,
-			},
-			ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
-			tunneledPortsService,
-			internalPorts...,
-		)
-		termMux             = terminal.NewMux()
-		termMuxSrv          = terminal.NewMuxTerminalService(termMux)
-		taskManager         = newTasksManager(cfg, termMuxSrv, cstate, nil)
-		analytics           = analytics.NewFromEnvironment()
+		ideReady                       = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
+		desktopIdeReady *ideReadyState = nil
+
+		cstate        = NewInMemoryContentState(cfg.RepoRoot)
+		gitpodService = createGitpodService(cfg, tokenService)
+
 		notificationService = NewNotificationService()
 	)
 	if cfg.DesktopIDE != nil {
@@ -237,11 +237,29 @@ func Run(options ...RunOption) {
 	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
+	gitpodConfigService := config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
 	go gitpodConfigService.Watch(ctx)
 
-	defer analytics.Close()
-	go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
+	portMgmt := ports.NewManager(
+		createExposedPortsImpl(cfg, gitpodService),
+		&ports.PollingServedPortsObserver{
+			RefreshInterval: 2 * time.Second,
+		},
+		ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
+		tunneledPortsService,
+		internalPorts...,
+	)
 
+	if opts.RunGP {
+		cstate.MarkContentReady(csapi.WorkspaceInitFromOther)
+	} else {
+		analytics := analytics.NewFromEnvironment()
+		defer analytics.Close()
+		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
+	}
+
+	termMux := terminal.NewMux()
+	termMuxSrv := terminal.NewMuxTerminalService(termMux)
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	if cfg.WorkspaceRoot != "" {
 		termMuxSrv.DefaultWorkdirProvider = func() string {
@@ -260,6 +278,8 @@ func Run(options ...RunOption) {
 		Uid: gitpodUID,
 		Gid: gitpodGID,
 	}
+
+	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil)
 
 	apiServices := []RegisterableService{
 		&statusService{
@@ -292,7 +312,10 @@ func Run(options ...RunOption) {
 		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, childProcEnvvars, &ideWG, desktopIdeReady, DesktopIDE)
 	}
 
-	var wg sync.WaitGroup
+	var (
+		wg       sync.WaitGroup
+		shutdown = make(chan ShutdownReason, 1)
+	)
 	wg.Add(1)
 	go startContentInit(ctx, cfg, &wg, cstate)
 	wg.Add(1)
@@ -308,7 +331,7 @@ func Run(options ...RunOption) {
 	if cfg.isHeadless() {
 		wg.Add(1)
 		go stopWhenTasksAreDone(ctx, &wg, shutdown, tasksSuccessChan)
-	} else {
+	} else if !opts.RunGP {
 		wg.Add(1)
 		go portMgmt.Run(ctx, &wg)
 	}
@@ -324,7 +347,7 @@ func Run(options ...RunOption) {
 		}()
 	}
 
-	if !cfg.isHeadless() {
+	if !cfg.isHeadless() && !opts.RunGP {
 		go func() {
 			for _, repoRoot := range strings.Split(cfg.RepoRoots, ",") {
 				<-cstate.ContentReady()
@@ -1070,20 +1093,23 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		return true
 	}))
 
-	ms := storage.NewDiskMetricStore("", time.Minute*5, prometheus.DefaultGatherer, nil)
-	g := prometheus.Gatherers{
-		prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) { return ms.GetMetricFamilies(), nil }),
-	}
-	r := route.New()
+	metricStore := storage.NewDiskMetricStore("", time.Minute*5, prometheus.DefaultGatherer, nil)
+	metricsGatherer := prometheus.Gatherers{prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) {
+		return metricStore.GetMetricFamilies(), nil
+	})}
 
-	r.Get("/metrics", promhttp.HandlerFor(g, promhttp.HandlerOpts{}).ServeHTTP)
-	r.Put("/metrics/job/:job/*labels", handler.Push(ms, true, true, false, nil))
-	r.Post("/metrics/job/:job/*labels", handler.Push(ms, false, true, false, nil))
-	r.Del("/metrics/job/:job/*labels", handler.Delete(ms, false, nil))
-	r.Put("/metrics/job/:job", handler.Push(ms, true, true, false, nil))
-	r.Post("/metrics/job/:job", handler.Push(ms, false, true, false, nil))
+	metrics := route.New()
+	metrics.Get("/", promhttp.HandlerFor(metricsGatherer, promhttp.HandlerOpts{}).ServeHTTP)
+	metrics.Put("/job/:job/*labels", handler.Push(metricStore, true, true, false, nil))
+	metrics.Post("/job/:job/*labels", handler.Push(metricStore, false, true, false, nil))
+	metrics.Del("/job/:job/*labels", handler.Delete(metricStore, false, nil))
+	metrics.Put("/job/:job", handler.Push(metricStore, true, true, false, nil))
+	metrics.Post("/job/:job", handler.Push(metricStore, false, true, false, nil))
+	routes.Handle("/metrics", metrics)
 
-	routes.Handle("/", r)
+	ideURL, _ := url.Parse(fmt.Sprintf("http://localhost:%d", cfg.IDEPort))
+	routes.Handle("/", httputil.NewSingleHostReverseProxy(ideURL))
+	routes.Handle("/_supervisor/frontend/", http.StripPrefix("/_supervisor/frontend", http.FileServer(http.Dir(cfg.StaticConfig.FrontendLocation))))
 
 	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") ||
