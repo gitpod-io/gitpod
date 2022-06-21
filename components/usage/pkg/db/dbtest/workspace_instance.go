@@ -24,7 +24,7 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 		id = instance.ID
 	}
 
-	workspaceID := generateWorkspaceID()
+	workspaceID := GenerateWorkspaceID()
 	if instance.WorkspaceID != "" {
 		workspaceID = instance.WorkspaceID
 	}
