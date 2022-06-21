@@ -356,7 +356,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (!runningInstance) {
             log.warn({ userId: user.id, workspaceId }, "Can only get keep-alive for running workspaces");
-            return { duration: WORKSPACE_TIMEOUT_DEFAULT_SHORT, canChange };
+            const duration = WORKSPACE_TIMEOUT_DEFAULT_SHORT;
+            return { duration, durationRaw: this.userService.workspaceTimeoutToDuration(duration), canChange };
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
 
@@ -366,7 +367,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
         const desc = await client.describeWorkspace(ctx, req);
         const duration = this.userService.durationToWorkspaceTimeout(desc.getStatus()!.getSpec()!.getTimeout());
-        return { duration, canChange };
+        const durationRaw = this.userService.workspaceTimeoutToDuration(duration);
+
+        return { duration, durationRaw, canChange };
     }
 
     public async isPrebuildDone(ctx: TraceContext, pwsId: string): Promise<boolean> {

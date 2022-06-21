@@ -380,6 +380,7 @@ export interface SetWorkspaceTimeoutResult {
 
 export interface GetWorkspaceTimeoutResult {
     duration: WorkspaceTimeoutDuration;
+    durationRaw: string;
     canChange: boolean;
 }
 
