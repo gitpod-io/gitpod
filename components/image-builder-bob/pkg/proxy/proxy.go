@@ -52,7 +52,7 @@ type Repo struct {
 	Auth func() docker.Authorizer
 }
 
-func rewriteDockerAPIURL(u *url.URL, fromRepo, toRepo, host, tag string) {
+func (proxy *Proxy) rewriteDockerAPIURL(u *url.URL, fromRepo, toRepo, host, tag string) {
 	var (
 		from = "/v2/" + strings.Trim(fromRepo, "/") + "/"
 		to   = "/v2/" + strings.Trim(toRepo, "/") + "/"
@@ -75,13 +75,19 @@ func rewriteDockerAPIURL(u *url.URL, fromRepo, toRepo, host, tag string) {
 			u.Path = strings.Join(segs, "/")
 		}
 	}
-
+	if u.RawQuery != "" {
+		// As per OCI distribution spec this (from=) should be the only possible reference to a cross repo
+		// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#push
+		for k, v := range proxy.Aliases {
+			u.RawQuery = strings.Replace(u.RawQuery, "from="+k, "from="+v.Repo, 1)
+		}
+	}
 	u.Host = host
 }
 
 // rewriteNonDockerAPIURL is used when a url has to be rewritten but the url
 // contains a non docker api path
-func rewriteNonDockerAPIURL(u *url.URL, fromPrefix, toPrefix, host string) {
+func (proxy *Proxy) rewriteNonDockerAPIURL(u *url.URL, fromPrefix, toPrefix, host string) {
 	var (
 		from = "/" + strings.Trim(fromPrefix, "/") + "/"
 		to   = "/" + strings.Trim(toPrefix, "/") + "/"
@@ -113,7 +119,7 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/v2/"+k+"/") {
 			repo = &v
 			alias = k
-			rewriteDockerAPIURL(r.URL, alias, repo.Repo, repo.Host, repo.Tag)
+			proxy.rewriteDockerAPIURL(r.URL, alias, repo.Repo, repo.Host, repo.Tag)
 			break
 		}
 		// Non-Docker api request
@@ -122,7 +128,7 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			// repo as empty
 			repo = &v
 			alias = k
-			rewriteNonDockerAPIURL(r.URL, alias, "", repo.Host)
+			proxy.rewriteNonDockerAPIURL(r.URL, alias, "", repo.Host)
 			break
 		}
 	}
@@ -225,13 +231,13 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 			}
 
 			if strings.HasPrefix(loc, "/v2/") {
-				rewriteDockerAPIURL(lurl, repo.Repo, alias, proxy.Host.Host, "")
+				proxy.rewriteDockerAPIURL(lurl, repo.Repo, alias, proxy.Host.Host, "")
 			} else {
 				// since this is a non docker api location we
 				// do not need to process the path.
 				// All docker api URLs always start with /v2/. See spec
 				// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#endpoints
-				rewriteNonDockerAPIURL(lurl, "", alias, repo.Host)
+				proxy.rewriteNonDockerAPIURL(lurl, "", alias, repo.Host)
 			}
 
 			lurl.Host = proxy.Host.Host
