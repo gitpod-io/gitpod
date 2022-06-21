@@ -12,19 +12,25 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.5.4"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph (old)",
-      "version": ""
+      "version": "8.5.6"
     },
     {
       "type": "datasource",
       "id": "prometheus",
       "name": "Prometheus",
       "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
     }
   ],
   "annotations": {
@@ -54,7 +60,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1655713296033,
+  "iteration": 1655818317025,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -93,9 +99,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 6,
+        "h": 7,
+        "w": 5,
+        "x": 9,
         "y": 0
       },
       "id": 67,
@@ -112,7 +118,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "8.5.4",
+      "pluginVersion": "8.5.6",
       "targets": [
         {
           "datasource": {
@@ -132,33 +138,12 @@
       "type": "gauge"
     },
     {
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "description": "",
-      "gridPos": {
-        "h": 4,
-        "w": 9,
-        "x": 0,
-        "y": 8
-      },
-      "id": 86,
-      "options": {
-        "content": "We have an SLO for preview starts in Honeycomb. You can see the SLO [here](https://ui.honeycomb.io/gitpod/datasets/werft/slo/zRm48xoKMXf/Preview-Start). Alternatively you can use [this query](https://ui.honeycomb.io/gitpod/datasets/werft/result/a64cNk4sArf) to dig into succesful and failed SLI events. The definition of the SLO can be found [here](https://www.notion.so/gitpod/Preview-Environment-Service-Level-Indicators-SLIs-55b649ad17774f279c142af55ad2fec7#f483f73aa4974ad3b8b6825fa2f251fa).",
-        "mode": "markdown"
-      },
-      "pluginVersion": "8.5.5",
-      "title": "Preview Start SLO",
-      "type": "text"
-    },
-    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 7
       },
       "id": 70,
       "panels": [],
@@ -200,10 +185,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 4,
         "w": 6,
         "x": 0,
-        "y": 13
+        "y": 8
       },
       "id": 68,
       "options": {
@@ -218,7 +203,7 @@
         "showThresholdLabels": true,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "8.5.4",
+      "pluginVersion": "8.5.6",
       "repeat": "node",
       "repeatDirection": "h",
       "targets": [
@@ -236,983 +221,224 @@
       "type": "gauge"
     },
     {
-      "collapsed": true,
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 16
       },
-      "id": 65,
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fill": 5,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 20
-          },
-          "hiddenSeries": false,
-          "id": 36,
-          "legend": {
-            "alignAsTable": false,
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "rightSide": false,
-            "show": false,
-            "sort": "avg",
-            "sortDesc": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "8.5.2",
-          "pointradius": 2,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "sum(rate(kubevirt_vmi_phase_transition_time_from_creation_seconds_count{phase=\"Running\", cluster=~\"$cluster\"}[5m]))",
-              "interval": "",
-              "legendFormat": " Starts per second",
-              "queryType": "randomWalk",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeRegions": [
-            {
-              "colorMode": "background6",
-              "fill": true,
-              "fillColor": "rgba(234, 112, 112, 0.12)",
-              "line": false,
-              "lineColor": "rgba(237, 46, 24, 0.60)",
-              "op": "time"
-            }
-          ],
-          "title": "VMI Start Rate",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "mode": "time",
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "ops",
-              "logBase": 1,
-              "show": true
-            },
-            {
-              "format": "s",
-              "logBase": 1,
-              "show": false
-            }
-          ],
-          "yaxis": {
-            "align": false
-          }
-        }
-      ],
-      "title": "Virtual Machines Starts",
+      "id": 95,
+      "panels": [],
+      "title": "Service Level Indicators",
       "type": "row"
     },
     {
-      "collapsed": true,
       "datasource": {
         "type": "datasource",
         "uid": "grafana"
       },
+      "description": "",
       "gridPos": {
-        "h": 1,
-        "w": 24,
+        "h": 9,
+        "w": 2,
         "x": 0,
-        "y": 24
+        "y": 17
       },
-      "id": 52,
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
+      "id": 86,
+      "options": {
+        "content": "We have an SLO for preview starts in Honeycomb. You can see the SLO [here](https://ui.honeycomb.io/gitpod/datasets/werft/slo/zRm48xoKMXf/Preview-Start). Alternatively you can use [this query](https://ui.honeycomb.io/gitpod/datasets/werft/result/a64cNk4sArf) to dig into succesful and failed SLI events. The definition of the SLO can be found [here](https://www.notion.so/gitpod/Preview-Environment-Service-Level-Indicators-SLIs-55b649ad17774f279c142af55ad2fec7#f483f73aa4974ad3b8b6825fa2f251fa).",
+        "mode": "markdown"
+      },
+      "pluginVersion": "8.5.6",
+      "title": "Preview Start SLO",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
           },
-          "description": "How many read requests (LIST,GET,WATCH) per second do the apiservers get by code?",
-          "fill": 9,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 21
-          },
-          "hiddenSeries": false,
-          "id": 6,
-          "legend": {
-            "alignAsTable": true,
-            "avg": false,
-            "current": false,
-            "hideEmpty": false,
-            "hideZero": false,
-            "max": true,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "sort": "max",
-            "sortDesc": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "8.5.2",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [
-            {
-              "alias": "/2../i",
-              "color": "#56A64B"
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            {
-              "alias": "/3../i",
-              "color": "#F2CC0C"
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
             },
-            {
-              "alias": "/4.*kubevirt/i",
-              "color": "#3274D9"
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
             },
-            {
-              "alias": "/5../i",
-              "color": "#E02F44"
-            },
-            {
-              "alias": "/4.*cdi/i",
-              "color": "#8F3BB8"
+            "thresholdsStyle": {
+              "mode": "off"
             }
-          ],
-          "spaceLength": 10,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
               },
-              "exemplar": true,
-              "expr": "sum(rate(apiserver_request_total{group=~\".*kubevirt.*\", verb=~\"LIST|GET\"}[5m])) by (code, group)",
-              "format": "time_series",
-              "instant": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{ code }}  {{group}} ",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeRegions": [],
-          "title": "API Server - Read Requests Rate",
-          "tooltip": {
-            "shared": false,
-            "sort": 0,
-            "value_type": "individual"
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
-          "type": "graph",
-          "xaxis": {
-            "mode": "time",
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "reqps",
-              "logBase": 1,
-              "show": true
-            },
-            {
-              "format": "reqps",
-              "logBase": 1,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false
-          }
+          "unit": "percentunit"
         },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "description": "How many seconds is the 99th percentile for reading (LIST|WATCH|GET) a given resource?",
-          "fill": 5,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 12,
-            "y": 21
-          },
-          "hiddenSeries": false,
-          "id": 8,
-          "legend": {
-            "alignAsTable": true,
-            "avg": false,
-            "current": false,
-            "max": true,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "sort": "max",
-            "sortDesc": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": false
-          },
-          "percentage": false,
-          "pluginVersion": "8.5.2",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": true,
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "exemplar": true,
-              "expr": "histogram_quantile(0.90, sum(rate(apiserver_request_duration_seconds_bucket{group=\"kubevirt.io\", verb=~\"LIST|GET\", scope=\"cluster\"}[5m])) by (le, resource, verb))",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{verb}} {{ resource }}",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeRegions": [],
-          "title": "API Server - Read Requests Duration",
-          "tooltip": {
-            "shared": false,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "mode": "time",
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "s",
-              "logBase": 1,
-              "show": true
-            },
-            {
-              "format": "s",
-              "logBase": 1,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false
-          }
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 11,
+        "x": 2,
+        "y": 17
+      },
+      "id": 104,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
         },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
           "datasource": {
             "type": "prometheus",
             "uid": "$datasource"
           },
-          "description": "How many write requests (POST|PUT|PATCH|DELETE) per second do the apiservers get by code?",
-          "fill": 10,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 30
-          },
-          "hiddenSeries": false,
-          "id": 10,
-          "legend": {
-            "alignAsTable": true,
-            "avg": false,
-            "current": false,
-            "hideEmpty": true,
-            "hideZero": true,
-            "max": true,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "sort": "max",
-            "sortDesc": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": false
-          },
-          "percentage": false,
-          "pluginVersion": "8.5.2",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [
-            {
-              "alias": "/2../i",
-              "color": "#56A64B"
-            },
-            {
-              "alias": "/3../i",
-              "color": "#F2CC0C"
-            },
-            {
-              "alias": "/4../i",
-              "color": "#3274D9"
-            },
-            {
-              "alias": "/5../i",
-              "color": "#E02F44"
-            },
-            {
-              "alias": "/409/i",
-              "color": "#C0D8FF"
-            }
-          ],
-          "spaceLength": 10,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "expr": "sum(irate(rest_client_requests_total{pod=~\"virt-controller.*|virt-handler.*|virt-operator.*|virt-api.*|vm.*|hco.*|kubevirt.*\", container!=\"\", method=~\"POST|PUT|PATCH|DELETE\"}[2m])) by (code, group, container, job, verb, method) > 0",
-              "interval": "",
-              "legendFormat": "{{container}} - {{method}} - {{code}}",
-              "refId": "B"
-            }
-          ],
-          "thresholds": [],
-          "timeRegions": [],
-          "title": "API Server - Write Requests Rate",
-          "tooltip": {
-            "shared": false,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "mode": "time",
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "reqps",
-              "logBase": 1,
-              "show": true
-            },
-            {
-              "format": "reqps",
-              "logBase": 1,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "description": "How many seconds is the 99th percentile for writing (POST|PUT|PATCH|DELETE) a given resource?",
-          "fill": 4,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 30
-          },
-          "hiddenSeries": false,
-          "id": 12,
-          "legend": {
-            "alignAsTable": true,
-            "avg": false,
-            "current": false,
-            "hideEmpty": false,
-            "hideZero": false,
-            "max": true,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "sort": "max",
-            "sortDesc": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "8.5.2",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "exemplar": true,
-              "expr": "histogram_quantile(0.90, sum(rate(apiserver_request_duration_seconds_bucket{group=\"kubevirt.io\", verb=~\"POST|PUT|PATCH|DELETE\"}[5m])) by (le, verb, resource)) > 0",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{ resource }} - {{verb}}",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeRegions": [],
-          "title": "API Server - Write Requests Duration",
-          "tooltip": {
-            "shared": false,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "mode": "time",
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "s",
-              "logBase": 1,
-              "show": true
-            },
-            {
-              "format": "s",
-              "logBase": 1,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "description": "",
-          "fill": 10,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 38
-          },
-          "hiddenSeries": false,
-          "id": 47,
-          "legend": {
-            "alignAsTable": true,
-            "avg": false,
-            "current": false,
-            "hideEmpty": true,
-            "hideZero": true,
-            "max": true,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "sort": "max",
-            "sortDesc": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": false
-          },
-          "percentage": false,
-          "pluginVersion": "8.5.2",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [
-            {
-              "alias": "/2../i",
-              "color": "#56A64B"
-            },
-            {
-              "alias": "/3../i",
-              "color": "#F2CC0C"
-            },
-            {
-              "alias": "/4../i",
-              "color": "#3274D9"
-            },
-            {
-              "alias": "/5../i",
-              "color": "#E02F44"
-            },
-            {
-              "alias": "/409/i",
-              "color": "#C0D8FF"
-            }
-          ],
-          "spaceLength": 10,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "expr": "sum(irate(rest_client_requests_total{ pod=~\"virt-controller.*|virt-handler.*|virt-operator.*|virt-api.*|vm.*|hco.*|kubevirt.*\", container!=\"\", method=~\"GET|LIST\"}[2m])) by (code, container, job, verb, method) > 0",
-              "interval": "",
-              "legendFormat": "{{container}} - {{method}} - {{code}}",
-              "refId": "B"
-            }
-          ],
-          "thresholds": [],
-          "timeRegions": [],
-          "title": "API Client - Read Requests Rate",
-          "tooltip": {
-            "shared": false,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "mode": "time",
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "reqps",
-              "logBase": 1,
-              "show": true
-            },
-            {
-              "format": "reqps",
-              "logBase": 1,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "description": "",
-          "fill": 4,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 38
-          },
-          "hiddenSeries": false,
-          "id": 62,
-          "legend": {
-            "alignAsTable": true,
-            "avg": false,
-            "current": false,
-            "hideEmpty": false,
-            "hideZero": false,
-            "max": true,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "sort": "max",
-            "sortDesc": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "8.5.2",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(rest_client_request_latency_seconds_bucket{verb=~\"GET|LIST\", container!=\"\"}[2m])) by (le, verb, container)) > 0",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{container}} - {{verb}}",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeRegions": [],
-          "title": "API Client - Read Requests Duration",
-          "tooltip": {
-            "shared": false,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "mode": "time",
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "s",
-              "logBase": 1,
-              "show": true
-            },
-            {
-              "format": "s",
-              "logBase": 1,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "description": "How many write requests (POST|PUT|PATCH|DELETE) per second do the apiservers get by code?",
-          "fill": 10,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 46
-          },
-          "hiddenSeries": false,
-          "id": 48,
-          "legend": {
-            "alignAsTable": true,
-            "avg": false,
-            "current": false,
-            "hideEmpty": true,
-            "hideZero": true,
-            "max": true,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "sort": "max",
-            "sortDesc": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": false
-          },
-          "percentage": false,
-          "pluginVersion": "8.5.2",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [
-            {
-              "alias": "/2../i",
-              "color": "#56A64B"
-            },
-            {
-              "alias": "/3../i",
-              "color": "#F2CC0C"
-            },
-            {
-              "alias": "/4../i",
-              "color": "#3274D9"
-            },
-            {
-              "alias": "/5../i",
-              "color": "#E02F44"
-            },
-            {
-              "alias": "/409/i",
-              "color": "#C0D8FF"
-            }
-          ],
-          "spaceLength": 10,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "expr": "sum(irate(rest_client_requests_total{pod=~\"virt-controller.*|virt-handler.*|virt-operator.*|virt-api.*|vm.*|hco.*|kubevirt.*\", container!=\"\", method=~\"POST|PUT|PATCH|DELETE\"}[2m])) by (code, container, job, verb, method) > 0",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "{{container}} - {{method}} - {{code}}",
-              "refId": "B"
-            }
-          ],
-          "thresholds": [],
-          "timeRegions": [],
-          "title": "API Client - Write Requests Rate",
-          "tooltip": {
-            "shared": false,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "mode": "time",
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "reqps",
-              "logBase": 1,
-              "show": true
-            },
-            {
-              "format": "reqps",
-              "logBase": 1,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "description": "",
-          "fill": 4,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 46
-          },
-          "hiddenSeries": false,
-          "id": 63,
-          "legend": {
-            "alignAsTable": true,
-            "avg": false,
-            "current": false,
-            "hideEmpty": false,
-            "hideZero": false,
-            "max": true,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "sort": "max",
-            "sortDesc": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "8.5.2",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "expr": "histogram_quantile(0.99, sum(rate(rest_client_request_latency_seconds_bucket{verb=~\"POST|PUT|PATCH|DELETE\", container!=\"\"}[2m])) by (le, verb, container)) > 0",
-              "interval": "",
-              "legendFormat": "{{container}} - {{verb}}",
-              "refId": "B"
-            }
-          ],
-          "thresholds": [],
-          "timeRegions": [],
-          "title": "API Client - Write Requests Duration",
-          "tooltip": {
-            "shared": false,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "mode": "time",
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "s",
-              "logBase": 1,
-              "show": true
-            },
-            {
-              "format": "s",
-              "logBase": 1,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false
-          }
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum_over_time((probe_success{environment=\"preview-environments\", job=\"probe\"} == 1)[5m]) \r\n/\r\ncount_over_time(up{environment=\"preview-environments\", job=\"probe\"}[5m])",
+          "format": "time_series",
+          "instant": false,
+          "legendFormat": "Probe success rate",
+          "range": true,
+          "refId": "A"
         }
       ],
-      "title": "KubeVirt API Access",
-      "type": "row"
+      "title": "Preview environments should be able to communicate to the internet",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 11,
+        "x": 13,
+        "y": 17
+      },
+      "id": 112,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rest_client_requests_total{code=~\"2..|4..\", host=~\"127.0.0.1.*\", environment=\"preview-environments\"}[5m]))\r\n/ \r\nsum(rate(rest_client_requests_total{host=~\"127.0.0.1.*\", environment=\"preview-environments\"}[5m]))",
+          "legendFormat": "K3s requests success rate",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "K3s running in preview environments should respond successfully to Read/Write requests",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -1292,7 +518,7 @@
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {
