@@ -723,6 +723,10 @@ export class WorkspaceStarter {
         }
 
         const attributedTeamId = await this.userService.getWorkspaceUsageAttributionTeamId(user, workspace.projectId);
+        let workspaceClass =
+            workspace.type == "regular"
+                ? user.additionalData?.workspaceClasses?.regular
+                : user.additionalData?.workspaceClasses?.prebuild;
 
         const now = new Date().toISOString();
         const instance: WorkspaceInstance = {
@@ -738,6 +742,7 @@ export class WorkspaceStarter {
             },
             configuration,
             attributedTeamId,
+            workspaceClass,
         };
         if (WithReferrerContext.is(workspace.context)) {
             this.analytics.track({

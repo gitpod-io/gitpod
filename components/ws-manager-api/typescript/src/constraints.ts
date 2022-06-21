@@ -31,6 +31,10 @@ const workspaceClusterSets: WorkspaceClusterConstraintSet[] = [
         constraint: constraintHasPermissions("new-workspace-cluster")
     },
     {
+        name: "supports workspace class",
+        constraint: constraintHasClass
+    },
+    {
         name: "regional more resources",
         constraint:
             intersect(
@@ -134,6 +138,10 @@ export function constraintInverseMoreResources(all: WorkspaceClusterWoTLS[], use
 
 export function constraintMoreResources(all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance): WorkspaceClusterWoTLS[] {
     return all.filter(cluster => !!cluster.admissionConstraints?.find(constraint => constraint.type === "has-more-resources"));
+}
+
+export function constraintHasClass(all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance): WorkspaceClusterWoTLS[] {
+    return all.filter(cluster => !!cluster.admissionConstraints?.find(constraint => constraint.type === "has-class" && constraint.class === instance.workspaceClass))
 }
 
 
