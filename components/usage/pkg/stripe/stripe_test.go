@@ -106,19 +106,24 @@ func TestWorkspaceSecondsToCreditsCalcuation(t *testing.T) {
 			ExpectedCredits: 1,
 		},
 		{
-			Name:            "61 seconds",
-			Seconds:         61,
-			ExpectedCredits: 2,
-		},
-		{
 			Name:            "90 seconds",
 			Seconds:         90,
+			ExpectedCredits: 1,
+		},
+		{
+			Name:            "6 minutes",
+			Seconds:         360,
+			ExpectedCredits: 1,
+		},
+		{
+			Name:            "6 minutes and 1 second",
+			Seconds:         361,
 			ExpectedCredits: 2,
 		},
 		{
 			Name:            "1 hour",
 			Seconds:         3600,
-			ExpectedCredits: 60,
+			ExpectedCredits: 10,
 		},
 	}
 
