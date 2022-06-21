@@ -1,6 +1,11 @@
 # Change Log
 
 ## June 2022
+- Fix I/O limiting when cgroups v2 is enabled ([#10669](https://github.com/gitpod-io/gitpod/pull/10669)) - [@aledbf](https://github.com/aledbf)
+- Fixed quota size regex allowing false positives ([#10744](https://github.com/gitpod-io/gitpod/pull/10744)) - [@CuriousCorrelation](https://github.com/CuriousCorrelation)
+- [preview-install] Add user-friendly output ([#10695](https://github.com/gitpod-io/gitpod/pull/10695)) - [@Pothulapati](https://github.com/Pothulapati)
+- Update description of `gp timeout` ([#10723](https://github.com/gitpod-io/gitpod/pull/10723)) - [@mustard-mh](https://github.com/mustard-mh)
+- [SSH Gateway] remove priavte key requirement when ownerToken is provide ([#10704](https://github.com/gitpod-io/gitpod/pull/10704)) - [@iQQBot](https://github.com/iQQBot)
 - [dev] Use gke-gcloud-auth-plugin for kubectl ([#10687](https://github.com/gitpod-io/gitpod/pull/10687)) - [@andrew-farries](https://github.com/andrew-farries)
 - [self-hosted] Add new local preview installation method ([#10532](https://github.com/gitpod-io/gitpod/pull/10532)) - [@Pothulapati](https://github.com/Pothulapati)
 - Added action to delete all inactive workspaces ([#10676](https://github.com/gitpod-io/gitpod/pull/10676)) - [@svenefftinge](https://github.com/svenefftinge)
