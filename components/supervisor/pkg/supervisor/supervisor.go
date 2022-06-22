@@ -485,6 +485,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 			"install",
 			"bootstrap.sh",
 			"bootstrap",
+			"Makefile",
 			"script/bootstrap",
 			"setup.sh",
 			"setup",
