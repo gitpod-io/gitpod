@@ -1,6 +1,13 @@
 # Change Log
 
 ## June 2022
+- [installer]: set minio azure image to last supported version ([#10717](https://github.com/gitpod-io/gitpod/pull/10717)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Change the default directory of ssh connections ([#10736](https://github.com/gitpod-io/gitpod/pull/10736)) - [@mustard-mh](https://github.com/mustard-mh)
+- Remove env print after connect via ssh ([#10736](https://github.com/gitpod-io/gitpod/pull/10736)) - [@mustard-mh](https://github.com/mustard-mh)
+- Add graceful welcome message for users after ssh connected ([#10736](https://github.com/gitpod-io/gitpod/pull/10736)) - [@mustard-mh](https://github.com/mustard-mh)
+- [kots]: allow multiple docker pull secrets ([#10685](https://github.com/gitpod-io/gitpod/pull/10685)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- update env to use werft grpc ([#10730](https://github.com/gitpod-io/gitpod/pull/10730)) - [@liam-j-bennett](https://github.com/liam-j-bennett)
+- add /debug/version endpoint to ws-manager-bridge ([#10426](https://github.com/gitpod-io/gitpod/pull/10426)) - [@geropl](https://github.com/geropl)
 - Fix I/O limiting when cgroups v2 is enabled ([#10669](https://github.com/gitpod-io/gitpod/pull/10669)) - [@aledbf](https://github.com/aledbf)
 - Fixed quota size regex allowing false positives ([#10744](https://github.com/gitpod-io/gitpod/pull/10744)) - [@CuriousCorrelation](https://github.com/CuriousCorrelation)
 - [preview-install] Add user-friendly output ([#10695](https://github.com/gitpod-io/gitpod/pull/10695)) - [@Pothulapati](https://github.com/Pothulapati)
