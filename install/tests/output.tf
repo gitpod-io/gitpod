@@ -1,5 +1,5 @@
 locals {
-    modop = var.cloud == "aws" ? module.eks : module.aks
+    modop = var.cluster == "aks" ? module.aks : module.eks
 }
 
 output "storage" {

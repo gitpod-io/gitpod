@@ -175,6 +175,17 @@ resource "google_sql_user" "users" {
     password = "gitpod"
 }
 
+
+resource "google_dns_managed_zone" "gitpod-zone" {
+  count       = var.domain_name == null ? 0 : 1
+  name        = "${var.name}-zone"
+  dns_name    = "${var.domain_name}."
+  description = "Managed DNS zone for cluster ${var.name}"
+  labels = {
+    env = "nightly-tests"
+  }
+}
+
 module "gke_auth" {
   depends_on = [google_container_node_pool.workspaces]
 

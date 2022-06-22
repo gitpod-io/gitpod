@@ -1,7 +1,7 @@
 variable "kubeconfig" { }
 variable "TEST_ID" { default = "nightly" }
 
-variable "cloud" { default = "gcp" }
+variable "cluster" { default = "gke" }
 
 # We store the state always in a GCS bucket
 terraform {
@@ -25,6 +25,7 @@ module "gke" {
   kubeconfig  = var.kubeconfig
   region      = "europe-west1"
   zone        = "europe-west1-d"
+  domain_name = "${var.TEST_ID}.gitpod-self-hosted.com"
 }
 
 module "k3s" {
@@ -54,12 +55,41 @@ module "gcp-issuer" {
   }
 }
 
-module "gcp-externaldns" {
-  # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/external-dns?ref=main"
-  source = "../infra/terraform/tools/cloud-dns-external-dns"
-  kubeconfig     = var.kubeconfig
-  credentials    = var.dns_sa_creds
+data "local_file" gcp_creds {
+  filename = var.sa_creds
 }
+
+module "gcp-externaldns" {
+  source = "../infra/terraform/tools/external-dns"
+  kubeconfig     = var.kubeconfig
+  settings    = [
+    {
+      name = "provider",
+      value = "google"
+    },
+    {
+      name = "google.project",
+      value = var.project
+    },
+    {
+      name = "google.serviceAccountKey",
+      value = base64encode(data.local_file.gcp_creds.content)
+    }
+  ]
+
+  domain_name  = "${var.TEST_ID}.gitpod-self-hosted.com"
+  txt_owner_id = var.TEST_ID
+}
+
+module "gcp-add-ns-records" {
+  source           = "../infra/terraform/tools/cloud-dns-ns"
+  credentials      = var.dns_sa_creds
+  nameservers      = module.gke.domain_nameservers
+  dns_project      = "dns-for-playgrounds"
+  managed_dns_zone = "gitpod-self-hosted-com"
+  domain_name      = "${var.TEST_ID}.gitpod-self-hosted.com"
+}
+
 
 module "aks" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/aks?ref=main" # we can later use tags here
@@ -87,7 +117,7 @@ module "azure-externaldns" {
 module "azure-issuer" {
   source              = "../infra/terraform/tools/issuer"
   kubeconfig          = var.kubeconfig
-  cert_manager_issuer = module.eks.cert_manager_issuer
+  cert_manager_issuer = module.aks.cert_manager_issuer
 }
 
 module "azure-add-ns-records" {
@@ -121,7 +151,6 @@ module "aws-issuer" {
   cert_manager_issuer = module.eks.cert_manager_issuer
   issuer_name         = "route53"
 }
-
 
 module "aws-add-ns-records" {
   # source         = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/cloud-dns-ns?ref=main"

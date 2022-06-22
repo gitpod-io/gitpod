@@ -60,3 +60,13 @@ variable "credentials" {
   description = "Path to the JSON file storing Google service account credentials"
   default     = ""
 }
+
+variable "domain_name" {
+  description = "Domain name to be added to GCP managed DNS"
+  default     = null
+}
+
+variable "dns_credentials" {
+  description = "Credentials of GCP managed DNS"
+  default     = null
+}

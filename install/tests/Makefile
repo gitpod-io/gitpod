@@ -33,7 +33,7 @@ cluster ?= gke
 create-cluster:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
-	terraform apply -target=module.$(cluster) -var kubeconfig=${KUBECONFIG} --auto-approve
+	terraform apply -target=module.$(cluster) -var cluster=$(cluster) -var kubeconfig=${KUBECONFIG} --auto-approve
 
 cluster ?= gke
 .PHONY:
@@ -186,7 +186,7 @@ kots-install: install-kots-cli
                     --config-values tmp_config.yml
 
 delete-cm-setup:
-	sleep 300 && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep 600;
+	sleep 120 && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep 300;
 
 check-kots-app:
 	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { echo "Gitpod is not ready"; exit 1; }
@@ -219,6 +219,7 @@ get-results:
 	@echo "If you have gotten this far, it means your setup succeeded"
 	@echo "The IP address of you setup is "$(TF_VAR_TEST_ID).gitpod-self-hosted.com""
 	@echo "Following is the KUBECONFIG you can use to connect to the cluster:"
+	@cat tmp_config.yml
 	@cat ${KUBECONFIG}
 
 list-state:

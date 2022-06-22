@@ -17,3 +17,7 @@ output "kubeconfig" {
   sensitive = true
   value     = module.gke_auth.kubeconfig_raw
 }
+
+output "domain_nameservers" {
+  value = try(resource.google_dns_managed_zone.gitpod-zone[0].name_servers, [])
+}
