@@ -15,6 +15,7 @@ import (
 
 	linuxproc "github.com/c9s/goprocinfo/linux"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"golang.org/x/sys/unix"
 )
 
 // Top provides workspace resources status information.
@@ -34,6 +35,14 @@ func Top(ctx context.Context) (*api.ResourcesStatusResponse, error) {
 }
 
 func resolveMemoryStatus() (*api.ResourceStatus, error) {
+	var si unix.Sysinfo_t
+	unix.Sysinfo(&si)
+
+	return &api.ResourceStatus{
+		Limit: int64(si.Totalram),
+		Used:  int64(si.Totalram - si.Freeram),
+	}, nil
+
 	content, err := ioutil.ReadFile("/sys/fs/cgroup/memory/memory.limit_in_bytes")
 	if err != nil {
 		return nil, xerrors.Errorf("failed to read memory.limit_in_bytes: %w", err)

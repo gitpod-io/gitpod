@@ -32,6 +32,7 @@ type SyscallHandler interface {
 	Umount(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32)
 	Bind(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32)
 	Chown(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32)
+	SysInfo(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32)
 }
 
 func mapHandler(h SyscallHandler) map[string]syscallHandler {
@@ -41,6 +42,7 @@ func mapHandler(h SyscallHandler) map[string]syscallHandler {
 		"umount2": h.Umount,
 		"bind":    h.Bind,
 		"chown":   h.Chown,
+		"sysinfo": h.SysInfo,
 	}
 }
 
@@ -85,6 +87,7 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 		if err != nil {
 			return 0, xerrors.Errorf("unknown syscall %s: %w", sc, err)
 		}
+
 		err = filter.AddRule(syscallID, libseccomp.ActNotify)
 		if err != nil {
 			return 0, xerrors.Errorf("cannot add rule for %s: %w", sc, err)
@@ -192,6 +195,18 @@ type InWorkspaceHandler struct {
 // BindEvent describes a process binding to a socket
 type BindEvent struct {
 	PID uint32
+}
+
+func (h *InWorkspaceHandler) SysInfo(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
+	log := log.WithFields(map[string]interface{}{
+		"syscall":     "sysinfo",
+		"worksapceId": h.WorkspaceId,
+		"pid":         req.Pid,
+		"id":          req.ID,
+	})
+
+	log.Info("intercepted sysinfo syscall")
+	return 0, 0, libseccomp.NotifRespFlagContinue
 }
 
 // Mount handles mount syscalls
