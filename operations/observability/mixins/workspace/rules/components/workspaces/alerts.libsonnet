@@ -141,8 +141,8 @@
             },
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceTooLongTerminating.md',
-              summary: 'workspace pods are too long in terminating',
-              description: 'workspace pods are too long in terminating',
+              summary: 'workspace pods are terminating for too long',
+              description: 'workspace pods are terminating for too long',
             },
             expr: |||
               sum(time() - kube_pod_deletion_timestamp{namespace="default", pod=~"^ws-.*"}) by (pod) > 24 * 60 * 60
