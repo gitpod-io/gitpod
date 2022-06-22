@@ -200,6 +200,16 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Pod")
 		}
 
+		err = (&manager.VolumeSnapshotReconciler{
+			Monitor: monitor,
+			Client:  mgr.GetClient(),
+			Log:     ctrl.Log.WithName("controllers").WithName("VolumeSnapshot"),
+			Scheme:  mgr.GetScheme(),
+		}).SetupWithManager(mgr)
+		if err != nil {
+			log.WithError(err).Fatal(err, "unable to create controller", "controller", "VolumeSnapshot")
+		}
+
 		if cfg.PProf.Addr != "" {
 			go pprof.Serve(cfg.PProf.Addr)
 		}
