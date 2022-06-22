@@ -79,6 +79,13 @@ jobs:
             Update ${{ inputs.productName }} IDE image to version ${{ steps.latest-release.outputs.version }}.
             ```
 
+            ## Werft options:
+            <!--
+            Optional annotations to add to the werft job.
+            * with-preview - whether to create a preview environment for this PR
+            -->
+            - [x] /werft with-preview
+
             _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-updates-template.yml) template_
           commit-message: "[${{ inputs.productId }}] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
           branch: "jetbrains/${{ inputs.productId }}-${{ steps.latest-release.outputs.version2 }}"
