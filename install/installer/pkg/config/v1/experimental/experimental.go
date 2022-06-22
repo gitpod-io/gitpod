@@ -103,6 +103,7 @@ type WebAppConfig struct {
 	UsePodAntiAffinity     bool                   `json:"usePodAntiAffinity"`
 	DisableMigration       bool                   `json:"disableMigration"`
 	Usage                  *UsageConfig           `json:"usage,omitempty"`
+	ConfigcatKey           string                 `json:"configcatKey"`
 }
 
 type WorkspaceDefaults struct {

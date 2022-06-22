@@ -77,6 +77,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.WebappTracingEnv(ctx),
 		common.AnalyticsEnv(&ctx.Config),
 		common.MessageBusEnv(&ctx.Config),
+		configcatEnv(ctx),
 		[]corev1.EnvVar{
 			{
 				Name:  "CONFIG_PATH",
@@ -397,4 +398,25 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 	}, nil
+}
+
+func configcatEnv(ctx *common.RenderContext) []corev1.EnvVar {
+	var sdkKey string
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.ConfigcatKey != "" {
+			sdkKey = cfg.WebApp.ConfigcatKey
+		}
+		return nil
+	})
+
+	if sdkKey == "" {
+		return nil
+	}
+
+	return []corev1.EnvVar{
+		{
+			Name:  "CONFIGCAT_SDK_KEY",
+			Value: sdkKey,
+		},
+	}
 }
