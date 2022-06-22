@@ -6,6 +6,7 @@ package componentswebapp
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/blobserve"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database"
@@ -22,6 +23,7 @@ import (
 )
 
 var Objects = common.CompositeRenderFunc(
+	blobserve.Objects,
 	contentservice.Objects,
 	dashboard.Objects,
 	database.Objects,

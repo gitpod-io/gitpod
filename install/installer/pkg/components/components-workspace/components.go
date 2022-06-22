@@ -7,7 +7,6 @@ package componentsworkspace
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	agentsmith "github.com/gitpod-io/gitpod/installer/pkg/components/agent-smith"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/blobserve"
 	imagebuildermk3 "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3"
 	registryfacade "github.com/gitpod-io/gitpod/installer/pkg/components/registry-facade"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
@@ -18,7 +17,6 @@ import (
 
 var Objects = common.CompositeRenderFunc(
 	agentsmith.Objects,
-	blobserve.Objects,
 	registryfacade.Objects,
 	workspace.Objects,
 	wsdaemon.Objects,
