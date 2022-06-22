@@ -142,6 +142,93 @@ defined in the spec and so will be deleted shortly after the jobs have run.
 
 # Advanced topics
 
+## Custom Annotations, Environment Variables and Labels
+
+There are times when it is desirable for custom annotations, environment
+variables and labels should be added to an installation.
+
+### Installer Config
+
+This can be added to the root of the `gitpod.config.yaml`. If nothing is passed in,
+no custom parameters are added in.
+
+The structure is based upon the standard Kubernetes resource definition. For annotations
+and labels, these must match the `apiVersion`, the `kind` and the `metadata.name` - a
+wildcard `*` can be used to match all resources. For environment variables, the
+`apiVersion` and `kind` are ignored, as these are only implemented on containers. As
+before, the `*` wildcard can be used on `metadata.name`.
+
+```yaml
+customization:
+  - apiVersion: "*"
+    kind: "*"
+    metadata:
+      name: "*"
+      annotations:
+        appliedToAll: value
+        hello: world
+      labels:
+        appliedToAll: value
+        hello: world
+  - apiVersion: "apps/v1"
+    kind: "Deployment"
+    metadata:
+      name: "ws-manager"
+      annotations:
+        hello: ws-manager
+      labels:
+        hello: ws-manager
+    spec:
+      env:
+        - name: HELLO
+          value: world
+```
+
+This example would generate the following spec (these are simplified for readability reasons):
+
+```yaml
+---
+# apps/v1/DaemonSet ws-daemon
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: gitpod # system-value
+    component: ws-daemon # system-value
+    appliedToAll: value
+    hello: world
+  annotations:
+    appliedToAll: value
+    hello: world
+  name: ws-daemon
+---
+# apps/v1/Deployment ws-manager
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+    appliedToAll: value
+    hello: ws-manager
+  annotations:
+    appliedToAll: value
+    hello: ws-manager
+  name: ws-manager
+spec:
+  template:
+    spec:
+      containers:
+        - env:
+          - name: HELLO
+            value: world
+```
+
+In the event of multiple matches, the final matching customization would be applied. For
+that reason, it is a good idea to structure your customization from least to most specific.
+System-generated values will never be overridden.
+
 ## Post-processing the YAML
 
 > Here be dragons.
