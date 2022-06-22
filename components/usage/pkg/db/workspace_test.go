@@ -87,14 +87,10 @@ func stringToVarchar(t *testing.T, s string) db.VarcharTime {
 }
 
 func TestListWorkspacesByID(t *testing.T) {
-	conn := db.ConnectForTests(t)
-
 	workspaces := []db.Workspace{
-		dbtest.NewWorkspace(t, db.Workspace{ID: "gitpodio-gitpod-aaaaaaaaaaa"}),
-		dbtest.NewWorkspace(t, db.Workspace{ID: "gitpodio-gitpod-bbbbbbbbbbb"}),
+		dbtest.NewWorkspace(t, db.Workspace{}),
+		dbtest.NewWorkspace(t, db.Workspace{}),
 	}
-	tx := conn.Create(workspaces)
-	require.NoError(t, tx.Error)
 
 	for _, scenario := range []struct {
 		Name     string
@@ -133,6 +129,11 @@ func TestListWorkspacesByID(t *testing.T) {
 		},
 	} {
 		t.Run(scenario.Name, func(t *testing.T) {
+			conn := db.ConnectForTests(t)
+
+			tx := conn.Create(workspaces)
+			require.NoError(t, tx.Error)
+
 			results, err := db.ListWorkspacesByID(context.Background(), conn, scenario.QueryIDs)
 			require.NoError(t, err)
 			require.Len(t, results, scenario.Expected)
