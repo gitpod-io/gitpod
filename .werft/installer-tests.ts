@@ -93,7 +93,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
             "STANDARD_AKS_CLUSTER",
             "CERT_MANAGER",
             "AZURE_ISSUER",
-            "AZURE_EXTERNALDNS",
+            "EXTERNALDNS",
             "ADD_NS_RECORD",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
@@ -107,9 +107,11 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         CLOUD: "aws",
         DESCRIPTION: "Create an EKS cluster",
         PHASES: [
-            "STANDARD_EKS_CLUSTER",
+            "STANDARD_GKE_CLUSTER",
             "CERT_MANAGER",
+            "EXTERNALDNS",
             // TODO phases are:
+            // external dns with aws
             // 1) register domains in AWS, associate with route53
             // 2) add the associated ns record to gcp(since we use gitpod-self-hsoted.com domain)
             // 3) create cluster issuer with route53 as solver
@@ -174,10 +176,10 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         makeTarget: "azure-issuer",
         description: "Deploys ClusterIssuer for azure",
     },
-    AZURE_EXTERNALDNS: {
-        phase: "azure-external-dns",
-        makeTarget: "azure-external-dns",
-        description: "Deploys external-dns with azure provider",
+    EXTERNALDNS: {
+        phase: "external-dns",
+        makeTarget: `external-dns provider=${cloud}`,
+        description: `Deploys external-dns with ${cloud} provider`,
     },
     ADD_NS_RECORD: {
         phase: "add-ns-record",

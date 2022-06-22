@@ -68,19 +68,22 @@ module "certmanager" {
   credentials    = var.dns_sa_creds
 }
 
-module "externaldns" {
+module "clouddns-externaldns" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/external-dns?ref=main"
-  source = "../infra/terraform/tools/external-dns"
+  source = "../infra/terraform/tools/cloud-dns-external-dns"
   kubeconfig     = var.kubeconfig
   credentials    = var.dns_sa_creds
 }
 
-module "azure-externaldns" {
-  source = "../infra/terraform/tools/azure-external-dns"
-  kubeconfig     = var.kubeconfig
-  settings = module.aks.external_dns_settings
+variable "cloud" { default = "azure" }
+
+module "externaldns" {
+  source      = "../infra/terraform/tools/external-dns"
+  kubeconfig  = var.kubeconfig
+  settings    = module.aks.external_dns_settings
   domain_name = "${var.TEST_ID}.gitpod-self-hosted.com"
   txt_owner_id   = var.TEST_ID
+  cloud       = var.cloud
 }
 
 module "azure-issuer" {

@@ -1,17 +1,7 @@
-provider "kubernetes" {
-  config_path = var.kubeconfig
-}
-
-data local_file "gcp_credentials" {
-  filename = var.credentials
-}
-
-provider "google" {
-  credentials = var.credentials
-  project = var.gcp_project
-  region  = var.gcp_region
-  zone    = var.gcp_zone
-}
+variable settings {}
+variable domain_name { default = "test"}
+variable kubeconfig { default = "conf"}
+variable provider { default = "azure"}
 
 provider "helm" {
   kubernetes {
@@ -19,56 +9,62 @@ provider "helm" {
   }
 }
 
-#create namespace for external-dns
-resource "kubernetes_namespace" "external_dns" {
-  metadata {
-    name = "external-dns"
-  }
-}
-
-resource "kubernetes_secret" "external_dns" {
-  depends_on = [
-    kubernetes_namespace.external_dns
-  ]
-  metadata {
-    name      = "external-dns"
-    namespace = "external-dns"
-  }
-  data = {
-    "credentials.json" = data.local_file.gcp_credentials.content
-  }
-}
-
-resource "helm_release" "external-dns" {
-  depends_on = [
-    kubernetes_secret.external_dns,
-    kubernetes_namespace.external_dns
-  ]
+# External DNS Deployment using Helm
+resource "helm_release" "external_dns" {
   name             = "external-dns"
+  repository       = "https://charts.bitnami.com"
+  chart            = "external-dns"
   namespace        = "external-dns"
   create_namespace = true
-  chart            = "external-dns"
-  repository       = "https://charts.bitnami.com/bitnami"
-  cleanup_on_fail  = true
-  replace          = true
+
+  set {
+    name  = "domainFilters[0]"
+    value = var.domain_name
+  }
+
   set {
     name  = "provider"
-    value = "google"
+    value = var.provider
   }
-  set {
-    name  = "google.project"
-    value = var.gcp_project
+
+  dynamic "set" {
+    for_each = var.settings
+    content {
+      name = setting.value["name"]
+      value = setting.value["value"]
+    }
   }
-  set {
-    name  = "logFormat"
-    value = "json"
-  }
-  set {
-    name  = "google.serviceAccountSecret"
-    value = "external-dns"
-  }
-  set {
-    name = "txt-owner-id"
-    value = var.txt_owner_id
-  }
+  # set {
+  #   name  = "azure.userAssignedIdentityID"
+  #   value = var.settings["azure.userAssignedIdentityID"]
+  # }
+
+  # set {
+  #   name  = "azure.useManagedIdentityExtension"
+  #   value = var.settings["azure.useManagedIdentityExtension"]
+  # }
+
+  # set {
+  #   name  = "azure.tenantId"
+  #   value = var.settings["azure.tenantId"]
+  # }
+
+  # set {
+  #   name  = "azure.subscriptionId"
+  #   value = var.settings["azure.subscriptionId"]
+  # }
+
+  # set {
+  #   name  = "azure.resourceGroup"
+  #   value = var.settings["azure.resourceGroup"]
+  # }
+
+  # TODO Add tags using dynamic block
+  # https://github.com/hashicorp/terraform/issues/22340
+  #  dynamic "set" {
+  #    for_each = var.tags
+  #    iterator = "tag"
+  #    name     = "podLabels[${index(var.tags, tag.key)}]"
+  #    value    = tag.value
+  #  }
 }
