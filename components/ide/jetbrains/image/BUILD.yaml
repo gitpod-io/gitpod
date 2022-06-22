@@ -18,7 +18,7 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_intellij.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/cli:app
     argdeps:
@@ -40,7 +40,7 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_intellij.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/cli:app
     argdeps:
@@ -62,7 +62,7 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_goland.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/cli:app
     argdeps:
@@ -84,7 +84,7 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_goland.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/cli:app
     argdeps:
@@ -106,7 +106,7 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_pycharm.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/cli:app
     argdeps:
@@ -128,7 +128,7 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_pycharm.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/cli:app
     argdeps:
@@ -150,7 +150,7 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_phpstorm.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/cli:app
     argdeps:
@@ -172,7 +172,7 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_phpstorm.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/cli:app
     argdeps:

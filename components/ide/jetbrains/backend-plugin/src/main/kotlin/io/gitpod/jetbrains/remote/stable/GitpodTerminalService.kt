@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.remote
+package io.gitpod.jetbrains.remote.stable
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
@@ -24,7 +24,7 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalView
 import java.util.concurrent.CompletableFuture
 
-@Suppress("UnstableApiUsage", "EXPERIMENTAL_IS_NOT_ENABLED", "OPT_IN_IS_NOT_ENABLED")
+@Suppress("UnstableApiUsage", "EXPERIMENTAL_IS_NOT_ENABLED")
 @OptIn(DelicateCoroutinesApi::class)
 class GitpodTerminalService(private val project: Project) : Disposable {
     private val lifetime = Lifetime.Eternal.createNested()
