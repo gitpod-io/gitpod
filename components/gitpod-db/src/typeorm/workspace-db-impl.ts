@@ -1048,7 +1048,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             .createQueryBuilder("ws")
             // We need to put the subquery into the join condition (ON) here to be able to reference `ws.id` which is
             // not possible in a subquery on JOIN (e.g. 'LEFT JOIN (SELECT ... WHERE i.workspaceId = ws.id)')
-            .leftJoinAndMapOne(
+            .innerJoinAndMapOne(
                 "ws.instance",
                 DBWorkspaceInstance,
                 "wsi",
