@@ -122,11 +122,6 @@ func TestListWorkspacesByID(t *testing.T) {
 			QueryIDs: []string{workspaces[0].ID, workspaces[1].ID},
 			Expected: 2,
 		},
-		{
-			Name:     "over 2^16 - 1 IDs requires batching",
-			QueryIDs: append([]string{workspaces[0].ID, workspaces[1].ID}, generateWorkspaceIDs(65535)...),
-			Expected: 2,
-		},
 	} {
 		t.Run(scenario.Name, func(t *testing.T) {
 			conn := db.ConnectForTests(t)
@@ -140,13 +135,4 @@ func TestListWorkspacesByID(t *testing.T) {
 		})
 
 	}
-}
-
-func generateWorkspaceIDs(count int) []string {
-	var ids []string
-	for i := 0; i < count; i++ {
-		ids = append(ids, dbtest.GenerateWorkspaceID())
-	}
-
-	return ids
 }
