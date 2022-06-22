@@ -39,7 +39,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
             durationsSec: 60,
         },
         startWorkspace: {
-            points: 1, // 1 workspace start per user per 10s
+            points: 3, // 3 workspace starts per user per 10s
             durationsSec: 10,
         },
         createWorkspace: {
