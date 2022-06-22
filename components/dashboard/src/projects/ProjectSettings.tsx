@@ -6,7 +6,7 @@
 
 import { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
-import { Project, Team } from "@gitpod/gitpod-protocol";
+import { Project, ProjectSettings, Team } from "@gitpod/gitpod-protocol";
 import CheckBox from "../components/CheckBox";
 import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
@@ -14,6 +14,7 @@ import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
 import { getExperimentsClient } from "./../experiments/client";
+import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? "t/" + team.slug : "projects";
@@ -83,17 +84,23 @@ export default function () {
         })();
     }, [project, team, teams]);
 
+    const updateProjectPartial = (settings: DeepPartial<ProjectSettings | undefined>) => {
+        if (!project) {
+            return;
+        }
+
+        return getGitpodService().server.updateProjectPartial({ id: project.id, settings });
+    };
+
     const toggleIncrementalPrebuilds = async () => {
         if (!project) {
             return;
         }
         setIsLoading(true);
         try {
-            await getGitpodService().server.updateProjectPartial({
-                id: project.id,
-                settings: {
-                    useIncrementalPrebuilds: !isIncrementalPrebuildsEnabled,
-                },
+            await updateProjectPartial({
+                useIncrementalPrebuilds: !isIncrementalPrebuildsEnabled,
+                usePersistentVolumeClaim: isPersistentVolumeClaimEnabled,
             });
             setIsIncrementalPrebuildsEnabled(!isIncrementalPrebuildsEnabled);
         } finally {
@@ -107,11 +114,9 @@ export default function () {
         }
         setIsLoading(true);
         try {
-            await getGitpodService().server.updateProjectPartial({
-                id: project.id,
-                settings: {
-                    usePersistentVolumeClaim: !isPersistentVolumeClaimEnabled,
-                },
+            await updateProjectPartial({
+                useIncrementalPrebuilds: isIncrementalPrebuildsEnabled,
+                usePersistentVolumeClaim: !isPersistentVolumeClaimEnabled,
             });
             setIsPersistentVolumeClaimEnabled(!isPersistentVolumeClaimEnabled);
         } finally {
