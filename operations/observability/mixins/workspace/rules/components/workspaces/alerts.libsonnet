@@ -134,6 +134,20 @@
               gitpod_ws_manager_workspace_phase_total{phase="PENDING", type="PREBUILD"} > 20
             |||,
           },
+          {
+            alert: 'GitpodWorkspaceTooLongTerminating',
+            labels: {
+              severity: 'warning',
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceTooLongTerminating.md',
+              summary: 'workspace pods are too long in termintaing',
+              description: 'workspace pods are too long in termintaing',
+            },
+            expr: |||
+              sum(time() - kube_pod_deletion_timestamp{namespace="default", pod=~"^ws-.*"}) by (pod) > 24 * 60 * 60
+            |||,
+          },
         ],
       },
     ],
