@@ -72,8 +72,6 @@ func ConnectForTests(t *testing.T) *gorm.DB {
 	})
 	require.NoError(t, err, "Failed to establish connection to DB. In a workspace, run `leeway build components/usage:init-testdb` once to bootstrap the DB.")
 
-	conn = conn.Debug()
-
 	t.Cleanup(func() {
 		// Delete records for known models from the DB
 		log.Info("Cleaning up DB between connections.")
