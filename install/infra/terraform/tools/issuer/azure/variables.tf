@@ -3,6 +3,10 @@ variable "kubeconfig" {
     default = "./kubeconfig"
 }
 
+variable "issuer_name" {
+    default = "azureDNS"
+}
+
 variable "cert_manager_issuer" {
     default     = null
 }

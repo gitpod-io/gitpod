@@ -1,7 +1,7 @@
 variable "kubeconfig" { }
 variable "TEST_ID" { default = "nightly" }
 
-variable "k8s_flavor" { default = "gke" }
+variable "cloud" { default = "gcp" }
 
 # We store the state always in a GCS bucket
 terraform {
@@ -57,7 +57,8 @@ module "aks" {
 module "eks" {
   source = "../infra/terraform/eks"
   cluster_name = var.TEST_ID
-  kubeconfig   = var.kubeconfig
+  # kubeconfig   = var.kubeconfig
+  domain_name  = "${var.TEST_ID}.gitpod-self-hosted.com"
 }
 
 module "certmanager" {
@@ -68,35 +69,56 @@ module "certmanager" {
   credentials    = var.dns_sa_creds
 }
 
-module "clouddns-externaldns" {
+module "gcp-externaldns" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/external-dns?ref=main"
   source = "../infra/terraform/tools/cloud-dns-external-dns"
   kubeconfig     = var.kubeconfig
   credentials    = var.dns_sa_creds
 }
 
-variable "cloud" { default = "azure" }
-
-module "externaldns" {
-  source      = "../infra/terraform/tools/external-dns"
-  kubeconfig  = var.kubeconfig
-  settings    = module.aks.external_dns_settings
-  domain_name = "${var.TEST_ID}.gitpod-self-hosted.com"
-  txt_owner_id   = var.TEST_ID
-  cloud       = var.cloud
+module "azure-externaldns" {
+  source       = "../infra/terraform/tools/external-dns"
+  kubeconfig   = var.kubeconfig
+  settings     = module.aks.external_dns_settings
+  domain_name  = "${var.TEST_ID}.gitpod-self-hosted.com"
+  txt_owner_id = var.TEST_ID
 }
 
 module "azure-issuer" {
-  source = "../infra/terraform/tools/issuer/azure"
-  kubeconfig  = var.kubeconfig
-  cert_manager_issuer = module.aks.cert_manager_issuer
+  source              = "../infra/terraform/tools/issuer/azure"
+  kubeconfig          = var.kubeconfig
+  cert_manager_issuer = module.eks.cert_manager_issuer
 }
 
-module "add_gcp_nameservers" {
-  # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/cloud-dns-ns?ref=main"
+module "azure-add-ns-records" {
+  # source         = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/cloud-dns-ns?ref=main"
   source           = "../infra/terraform/tools/cloud-dns-ns"
   credentials      = var.dns_sa_creds
   nameservers      = module.aks.domain_nameservers
+  dns_project      = "dns-for-playgrounds"
+  managed_dns_zone = "gitpod-self-hosted-com"
+  domain_name      = "${var.TEST_ID}.gitpod-self-hosted.com"
+}
+
+module "aws-externaldns" {
+  source       = "../infra/terraform/tools/external-dns"
+  kubeconfig   = var.kubeconfig
+  settings     = module.eks.external_dns_settings
+  domain_name  = "${var.TEST_ID}.gitpod-self-hosted.com"
+  txt_owner_id = var.TEST_ID
+}
+
+module "aws-issuer" {
+  source              = "../infra/terraform/tools/issuer/azure"
+  kubeconfig          = var.kubeconfig
+  cert_manager_issuer = module.eks.cert_manager_issuer
+}
+
+module "aws-add-ns-records" {
+  # source         = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/cloud-dns-ns?ref=main"
+  source           = "../infra/terraform/tools/cloud-dns-ns"
+  credentials      = var.dns_sa_creds
+  nameservers      = module.eks.domain_nameservers
   dns_project      = "dns-for-playgrounds"
   managed_dns_zone = "gitpod-self-hosted-com"
   domain_name      = "${var.TEST_ID}.gitpod-self-hosted.com"

@@ -1,7 +1,7 @@
 variable settings {}
 variable domain_name { default = "test"}
 variable kubeconfig { default = "conf"}
-variable provider { default = "azure"}
+variable txt_owner_id { default = "nightly-test"}
 
 provider "helm" {
   kubernetes {
@@ -11,6 +11,7 @@ provider "helm" {
 
 # External DNS Deployment using Helm
 resource "helm_release" "external_dns" {
+  count            = var.settings == null ? 0 : 1
   name             = "external-dns"
   repository       = "https://charts.bitnami.com"
   chart            = "external-dns"
@@ -23,12 +24,13 @@ resource "helm_release" "external_dns" {
   }
 
   set {
-    name  = "provider"
-    value = var.provider
+    name  = "txt-owner-id"
+    value = var.txt_owner_id
   }
 
   dynamic "set" {
     for_each = var.settings
+    iterator = setting
     content {
       name = setting.value["name"]
       value = setting.value["value"]

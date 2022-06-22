@@ -36,14 +36,32 @@ output "external_dns_secrets" {
 }
 
 output "external_dns_settings" {
-  value = {
-    provider                            = "azure"
-    "azure.resourceGroup"               = azurerm_resource_group.gitpod.name
-    "azure.subscriptionId"              = data.azurerm_client_config.current.subscription_id
-    "azure.tenantId"                    = data.azurerm_client_config.current.tenant_id
-    "azure.useManagedIdentityExtension" = true
-    "azure.userAssignedIdentityID"      = azurerm_kubernetes_cluster.k8s.kubelet_identity.0.client_id
-  }
+  value = [
+    {
+      "name": "provider",
+      "value": "azure"
+    },
+    {
+      "name": "azure.resourceGroup",
+      "value": azurerm_resource_group.gitpod.name,
+    },
+    {
+      "name": "azure.subscriptionId",
+      "value": data.azurerm_client_config.current.subscription_id,
+    },
+    {
+      "name": "azure.tenantId",
+      "value": data.azurerm_client_config.current.tenant_id,
+    },
+    {
+      "name": "azure.useManagedIdentityExtension",
+      "value": true
+    },
+    {
+      "name": "azure.userAssignedIdentityID",
+      "value": azurerm_kubernetes_cluster.k8s.kubelet_identity.0.client_id
+    },
+  ]
 }
 
 output "k8s_connection" {

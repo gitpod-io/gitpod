@@ -3,6 +3,7 @@ provider "kubernetes" {
 }
 
 resource "kubernetes_manifest" "clusterissuer_gitpod" {
+  count    = var.cert_manager_issuer == null ? 0 : 1
   manifest = {
     "apiVersion" = "cert-manager.io/v1"
     "kind" = "ClusterIssuer"
@@ -19,7 +20,7 @@ resource "kubernetes_manifest" "clusterissuer_gitpod" {
         "solvers" = [
           {
             "dns01" = {
-              "azureDNS" = var.cert_manager_issuer
+              "${var.issuer_name}" = var.cert_manager_issuer
             }
           }
         ]

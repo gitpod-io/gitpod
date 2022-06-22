@@ -22,19 +22,20 @@ interface InfraConfig {
 interface TestConfig {
     DESCRIPTION: string;
     PHASES: string[];
-    CLOUD: string;
+    CLUSTER: string;
 }
 
 // Each of the TEST_CONFIGURATIONS define an integration test end-to-end
 // It should be a combination of multiple INFRA_PHASES, order of PHASES slice is important
 const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     STANDARD_GKE_TEST: {
-        CLOUD: "gcp",
+        CLUSTER: "gcp",
         DESCRIPTION: "Deploy Gitpod on GKE, with managed DNS, and run integration tests",
         PHASES: [
-            "STANDARD_GKE_CLUSTER",
+            "CREATE_CLUSTER",
             "CERT_MANAGER",
-            "GCP_MANAGED_DNS",
+            "EXTERNALDNS",
+            "CLUSTER_ISSUER",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
@@ -44,12 +45,13 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         ],
     },
     STANDARD_GKE_UPGRADE_TEST: {
-        CLOUD: "gcp",
+        CLUSTER: "gcp",
         DESCRIPTION: `Deploy Gitpod on GKE, and test upgrade from ${version} to latest version`,
         PHASES: [
-            "STANDARD_GKE_CLUSTER",
+            "CREATE_CLUSTER",
             "CERT_MANAGER",
-            "GCP_MANAGED_DNS",
+            "EXTERNALDNS",
+            "CLUSTER_ISSUER",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
@@ -59,13 +61,14 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         ],
     },
     STANDARD_K3S_TEST: {
-        CLOUD: "gcp", // the cloud provider is still GCP
+        CLUSTER: "gcp", // the cloud provider is still GCP
         DESCRIPTION:
             "Deploy Gitpod on a K3s cluster, created on a GCP instance," +
             " with managed DNS and run integrations tests",
         PHASES: [
             "STANDARD_K3S_CLUSTER_ON_GCP",
             "CERT_MANAGER",
+            "CLUSTER_ISSUER",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
@@ -75,11 +78,13 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         ],
     },
     STANDARD_K3S_PREVIEW: {
-        CLOUD: "gcp",
+        CLUSTER: "k3s",
         DESCRIPTION: "Create a SH Gitpod preview environment on a K3s cluster, created on a GCP instance",
         PHASES: [
-            "STANDARD_K3S_CLUSTER_ON_GCP",
+            "CREATE_CLUSTER",
             "CERT_MANAGER",
+            "CLUSTER_ISSUER",
+            "EXTERNALDNS",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
@@ -87,12 +92,12 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         ],
     },
     STANDARD_AKS_TEST: {
-        CLOUD: "azure",
+        CLUSTER: "aks",
         DESCRIPTION: "Deploy Gitpod on AKS, with managed DNS, and run integration tests",
         PHASES: [
-            "STANDARD_AKS_CLUSTER",
+            "CREATE_CLUSTER",
             "CERT_MANAGER",
-            "AZURE_ISSUER",
+            "CLUSTER_ISSUER",
             "EXTERNALDNS",
             "ADD_NS_RECORD",
             "GENERATE_KOTS_CONFIG",
@@ -104,17 +109,14 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         ],
     },
     STANDARD_EKS_TEST: {
-        CLOUD: "aws",
-        DESCRIPTION: "Create an EKS cluster",
+        CLUSTER: "eks",
+        DESCRIPTION: "Creates an EKS cluster, install gitpod and run integration tests",
         PHASES: [
-            "STANDARD_GKE_CLUSTER",
+            "CREATE_CLUSTER",
             "CERT_MANAGER",
             "EXTERNALDNS",
-            // TODO phases are:
-            // external dns with aws
-            // 1) register domains in AWS, associate with route53
-            // 2) add the associated ns record to gcp(since we use gitpod-self-hsoted.com domain)
-            // 3) create cluster issuer with route53 as solver
+            "CLUSTER_ISSUER",
+            "ADD_NS_RECORD",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             // "CHECK_INSTALLATION",
@@ -126,65 +128,45 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
 };
 
 const config: TestConfig = TEST_CONFIGURATIONS[testConfig];
-const cloud: string = config.CLOUD;
+const cluster: string = config.CLUSTER;
 
 // `INFRA_PHASES` describe the phases that can be mixed
 // and matched to form a test configuration
 // Each phase should contain a `makeTarget` which
 // corresponds to a target in the Makefile in ./nightly-tests/Makefile
 const INFRA_PHASES: { [name: string]: InfraConfig } = {
-    STANDARD_GKE_CLUSTER: {
-        phase: "create-std-gke-cluster",
-        makeTarget: "gke-standard-cluster",
-        description: "Creating a GKE cluster with 1 nodepool each for workspace and server",
-    },
-    STANDARD_K3S_CLUSTER_ON_GCP: {
-        phase: "create-std-k3s-cluster",
-        makeTarget: "k3s-standard-cluster",
-        description: "Creating a k3s cluster on GCP with 1 node",
-    },
-    STANDARD_AKS_CLUSTER: {
-        phase: "create-std-aks-cluster",
-        makeTarget: "aks-standard-cluster",
-        description: "Creating an aks cluster(azure)",
-    },
-    STANDARD_EKS_CLUSTER: {
-        phase: "create-std-eks-cluster",
-        makeTarget: "eks-standard-cluster",
-        description: "Creating a EKS cluster with 1 nodepool each for workspace and server",
+    CREATE_CLUSTER: {
+        phase: "create-cluster",
+        makeTarget: "create-cluster",
+        description: `Creating a ${cluster} cluster`,
     },
     CERT_MANAGER: {
         phase: "setup-cert-manager",
         makeTarget: "cert-manager",
         description: "Sets up cert-manager and optional cloud dns secret",
     },
-    GCP_MANAGED_DNS: {
-        phase: "setup-external-dns-with-cloud-dns",
-        makeTarget: "managed-dns",
-        description: "Sets up external-dns & cloudDNS config",
-    },
     GENERATE_KOTS_CONFIG: {
         phase: "generate-kots-config",
-        makeTarget: `generate-kots-config storage=${randomize("storage", cloud)} registry=${randomize(
+        makeTarget: `generate-kots-config storage=${randomize("storage", cluster)} registry=${randomize(
             "registry",
-            cloud,
-        )} db=${randomize("db", cloud)}`,
+            cluster,
+        )} db=${randomize("db", cluster)}`,
         description: `Generate KOTS Config file`,
     },
-    AZURE_ISSUER: {
-        phase: "setup-azure-cluster-issuer",
-        makeTarget: "azure-issuer",
-        description: "Deploys ClusterIssuer for azure",
+    CLUSTER_ISSUER: {
+        phase: "setup-cluster-issuer",
+        makeTarget: "cluster-issuer",
+        description: `Deploys ClusterIssuer for ${cluster}`,
     },
     EXTERNALDNS: {
         phase: "external-dns",
-        makeTarget: `external-dns provider=${cloud}`,
-        description: `Deploys external-dns with ${cloud} provider`,
+        makeTarget: `external-dns`,
+        description: `Deploys external-dns with ${cluster} provider`,
     },
     ADD_NS_RECORD: {
         phase: "add-ns-record",
         makeTarget: "add-ns-record",
-        description: "Adds NS record for subdomain under gitpod-self-hosted.com",
+        description: `Adds NS record for subdomain under gitpod-self-hosted.com for ${cluster}`,
     },
     INSTALL_GITPOD_IGNORE_PREFLIGHTS: {
         phase: "install-gitpod-without-preflights",
@@ -214,7 +196,7 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     DESTROY: {
         phase: "destroy",
-        makeTarget: "cleanup",
+        makeTarget: `cleanup cluster=${cluster}`,
         description: "Destroy the created infrastucture",
     },
     RESULTS: {
