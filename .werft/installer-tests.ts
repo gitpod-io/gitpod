@@ -29,7 +29,7 @@ interface TestConfig {
 // It should be a combination of multiple INFRA_PHASES, order of PHASES slice is important
 const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     STANDARD_GKE_TEST: {
-        CLUSTER: "gcp",
+        CLUSTER: "gke",
         DESCRIPTION: "Deploy Gitpod on GKE, with managed DNS, and run integration tests",
         PHASES: [
             "CREATE_CLUSTER",
@@ -45,7 +45,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         ],
     },
     STANDARD_GKE_UPGRADE_TEST: {
-        CLUSTER: "gcp",
+        CLUSTER: "gke",
         DESCRIPTION: `Deploy Gitpod on GKE, and test upgrade from ${version} to latest version`,
         PHASES: [
             "CREATE_CLUSTER",
@@ -61,14 +61,14 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         ],
     },
     STANDARD_K3S_TEST: {
-        CLUSTER: "gcp", // the cloud provider is still GCP
+        CLUSTER: "k3s", // the cloud provider is still GCP
         DESCRIPTION:
             "Deploy Gitpod on a K3s cluster, created on a GCP instance," +
             " with managed DNS and run integrations tests",
         PHASES: [
-            "STANDARD_K3S_CLUSTER_ON_GCP",
+            "CREATE_CLUSTER",
             "CERT_MANAGER",
-            "CLUSTER_ISSUER",
+            "CLUSTER_ISSUER", // we do not use external-dns in k3s
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
@@ -112,7 +112,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         CLUSTER: "eks",
         DESCRIPTION: "Creates an EKS cluster, install gitpod and run integration tests",
         PHASES: [
-            "CREATE_CLUSTER",
+            "CREATE_GKE_CLUSTER",
             "CERT_MANAGER",
             "EXTERNALDNS",
             "CLUSTER_ISSUER",
@@ -137,8 +137,13 @@ const cluster: string = config.CLUSTER;
 const INFRA_PHASES: { [name: string]: InfraConfig } = {
     CREATE_CLUSTER: {
         phase: "create-cluster",
-        makeTarget: "create-cluster",
+        makeTarget: `create-cluster cluster=${cluster}`,
         description: `Creating a ${cluster} cluster`,
+    },
+    CREATE_GKE_CLUSTER: {
+        phase: "create-cluster",
+        makeTarget: `create-cluster cluster=gke`,
+        description: `Creating a GKE cluster`,
     },
     CERT_MANAGER: {
         phase: "setup-cert-manager",
@@ -147,10 +152,7 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     GENERATE_KOTS_CONFIG: {
         phase: "generate-kots-config",
-        makeTarget: `generate-kots-config storage=${randomize("storage", cluster)} registry=${randomize(
-            "registry",
-            cluster,
-        )} db=${randomize("db", cluster)}`,
+        makeTarget: `generate-kots-config cluster=${cluster} storage=${randomize()} registry=${randomize()} db=${randomize()}`,
         description: `Generate KOTS Config file`,
     },
     CLUSTER_ISSUER: {
@@ -250,10 +252,10 @@ function callMakeTargets(phase: string, description: string, makeTarget: string)
     return response.code;
 }
 
-function randomize(resource: string, platform: string): string {
+function randomize(): string {
     // in the follow-up PR we will add `${platform}-${resource}` as an option here to
     // test against resource dependencies(storage, db, registry) for each cloud platform
-    const options = [`${platform}-${resource}`, "incluster"];
+    const options = ["external", "incluster"];
     return options[Math.floor(Math.random() * options.length)];
 }
 

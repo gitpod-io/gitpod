@@ -5,7 +5,7 @@ PROJECTNAME := "installer-nightly-tests"
 
 TOPDIR=$(shell pwd)
 
-KUBECONFIG := "/workspace/conf"
+KUBECONFIG := "$(TOPDIR)/kubeconfig"
 
 cloud_k3s := "gcp"
 cloud_gke := "gcp"
@@ -29,7 +29,7 @@ help: Makefile
 
 cluster ?= gke
 .PHONY:
-## create-cluster: Creates a cluster
+## create-cluster: Creates a cluster specified by `cluster` argument, eg: `make create-cluster cluster=eks`
 create-cluster:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
@@ -37,52 +37,50 @@ create-cluster:
 
 cluster ?= gke
 .PHONY:
-## cleanup-cluster: Creates a cluster
+## clenup-cluster: Destroys a cluster specified by `cluster` argument, eg: `make cleanup-cluster cluster=eks`
 cleanup-cluster: select-workspace
 	terraform destroy -target=module.$(cluster) -var kubeconfig=${KUBECONFIG} --auto-approve
 
 cluster ?= gke
 .PHONY:
-## add-ns-record: Adds NS record for subdomain under gitpod-selfhosted.com
+## add-ns-record: Adds NS record for subdomain under GCP, retrieving NS records from a cluster module specified by `cluster` argument
 add-ns-record: cloud = $(cloud_$(cluster))
 add-ns-record:
+	echo ${cloud}
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
-	terraform apply -target=module.$(cloud)-add-ns-record  -var kubeconfig=${KUBECONFIG} --auto-approve
+	terraform apply -target=module.$(cloud)-add-ns-records  -var kubeconfig=${KUBECONFIG} --auto-approve
 
 cluster ?= gke
 .PHONY:
-## cleanup-ns-record: Deletes NS record for subdomain under gitpod-selfhosted.com
+## cleanup-ns-record: Deletes NS record for subdomain under GCP, retrieving NS records from a cluster module specified by `cluster` argument
 cleanup-ns-record: cloud = $(cloud_$(cluster))
 cleanup-ns-record: select-workspace
 	terraform destroy -target=module.$(cloud)-add-ns-record  -var kubeconfig=${KUBECONFIG} --auto-approve
 
 cluster ?= gke
 .PHONY:
-## cluster-issuer: Creates a cluster issuer
+## cluster-issuer: Creates a cluster issuer, platform to be specified by argument cluster, eg: make cluster-issuer cluster=gke
 cluster-issuer: cloud = $(cloud_$(cluster))
 cluster-issuer:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.$(cloud)-issuer  -var kubeconfig=${KUBECONFIG} --auto-approve
 
-CLUSTER_ISSUER_CLOUD_DNS := "./manifests/gcp-issuer.yaml"
-
 .PHONY:
-## cert-manager: Installs cert-manager, optionally create secret for cloud-dns access
+## cert-manager: Installs cert-manager in a tf created cluster
 cert-manager:
 	terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve
 
 cluster ?= gke
 .PHONY:
-## external-dns: Installs external-dns
+## external-dns: Installs external-dns based on the currendponding provider of the cluster, to be specified by argument `cluster`
 external-dns: cloud = $(cloud_$(cluster))
 external-dns: check-env-sub-domain
 	terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.$(cloud)-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve
 
-    # kubectl --kubeconfig=${KUBECONFIG} apply -f ${CLUSTER_ISSUER_CLOUD_DNS}
 
 .PHONY:
 ## get-kubeconfig: Returns KUBECONFIG of a just created cluster
@@ -154,12 +152,16 @@ registry-config-azure:
 storage ?= incluster
 registry ?= incluster
 db ?= incluster
+cluster ?= gke
 .PHONY:
-generate-kots-config: storage = $(if $(storage:incluster=),$(cloud_$(storage)),$(storage))
-generate-kots-config: registry = $(if $(registry:incluster=),$(cloud_$(registry)),$(registry))
-generate-kots-config: registry = $(if $(registry:db=),$(cloud_$(db)),$(db))
+generate-kots-config: cloud_storage = $(if $(findstring external,$(storage)),$(cloud_$(cluster)),incluster)
+generate-kots-config: cloud_registry = $(if $(findstring external,$(registry)),$(cloud_$(cluster)),incluster)
+generate-kots-config: cloud_db = $(if $(findstring external,$(db)),$(cloud_$(cluster)),incluster)
 ## generate-kots-config: Generate the kots config based on test config
-generate-kots-config: get-base-config storage-config-${storage} registry-config-${registry} db-config-${db}
+generate-kots-config: get-base-config
+	make storage-config-${cloud_storage}
+	make db-config-${cloud_db}
+	make registry-config-${cloud_registry}
 
 license_community_beta := "../licenses/Community (Beta).yaml"
 license_community_stable := "../licenses/Community.yaml"
@@ -196,7 +198,7 @@ check-gitpod-installation: delete-cm-setup check-kots-app check-env-sub-domain
 run-tests:
 	./tests.sh ${KUBECONFIG}
 
-kots-uprgade:
+kots-upgrade:
 	@echo "Upgrade gitpod KOTS app to latest"
 	kubectl kots upstream upgrade --kubeconfig=${KUBECONFIG} gitpod -n gitpod --deploy
 
@@ -204,13 +206,13 @@ select-workspace:
 	terraform workspace select $(TF_VAR_TEST_ID)
 
 cluster ?= gke
-## cleanup: Clean up the created infrastructure
+## cleanup: Clean up the created infrastructure, specified by argument `cluster`, eg: `make cleanup cluster=gke`
 cleanup: cloud = $(cloud_$(cluster))
 cleanup: select-workspace
 	terraform destroy -target=module.$(cloud)-add-ns-record -var kubeconfig=${KUBECONFIG} --auto-approve
-	ls ${KUBECONFIG} && terraform destroy -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
-	ls ${KUBECONFIG} && terraform destroy -target=module.$(cloud)-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 	ls ${KUBECONFIG} && terraform destroy -target=module.$(cloud)-issuer -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
+	ls ${KUBECONFIG} && terraform destroy -target=module.$(cloud)-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
+	ls ${KUBECONFIG} && terraform destroy -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 	terraform destroy -target=module.$(cluster) -var kubeconfig=${KUBECONFIG} --auto-approve
 
 get-results:

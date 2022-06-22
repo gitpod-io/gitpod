@@ -41,6 +41,26 @@ module "k3s" {
   domain_name      = "${var.TEST_ID}.gitpod-self-hosted.com"
 }
 
+module "gcp-issuer" {
+  source              = "../infra/terraform/tools/issuer"
+  kubeconfig          = var.kubeconfig
+  issuer_name         = "cloudDNS"
+  cert_manager_issuer = {
+    project  = "dns-for-playgrounds"
+    serviceAccountSecretRef = {
+      name = "clouddns-dns01-solver"
+      key = "keys.json"
+    }
+  }
+}
+
+module "gcp-externaldns" {
+  # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/external-dns?ref=main"
+  source = "../infra/terraform/tools/cloud-dns-external-dns"
+  kubeconfig     = var.kubeconfig
+  credentials    = var.dns_sa_creds
+}
+
 module "aks" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/aks?ref=main" # we can later use tags here
   source = "../infra/terraform/aks"
@@ -54,27 +74,6 @@ module "aks" {
   workspace_name           = var.TEST_ID
 }
 
-module "eks" {
-  source = "../infra/terraform/eks"
-  cluster_name = var.TEST_ID
-  # kubeconfig   = var.kubeconfig
-  domain_name  = "${var.TEST_ID}.gitpod-self-hosted.com"
-}
-
-module "certmanager" {
-  # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/cert-manager?ref=main"
-  source = "../infra/terraform/tools/cert-manager"
-
-  kubeconfig     = var.kubeconfig
-  credentials    = var.dns_sa_creds
-}
-
-module "gcp-externaldns" {
-  # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/external-dns?ref=main"
-  source = "../infra/terraform/tools/cloud-dns-external-dns"
-  kubeconfig     = var.kubeconfig
-  credentials    = var.dns_sa_creds
-}
 
 module "azure-externaldns" {
   source       = "../infra/terraform/tools/external-dns"
@@ -84,8 +83,9 @@ module "azure-externaldns" {
   txt_owner_id = var.TEST_ID
 }
 
+
 module "azure-issuer" {
-  source              = "../infra/terraform/tools/issuer/azure"
+  source              = "../infra/terraform/tools/issuer"
   kubeconfig          = var.kubeconfig
   cert_manager_issuer = module.eks.cert_manager_issuer
 }
@@ -100,6 +100,13 @@ module "azure-add-ns-records" {
   domain_name      = "${var.TEST_ID}.gitpod-self-hosted.com"
 }
 
+module "eks" {
+  source = "../infra/terraform/eks"
+  cluster_name = var.TEST_ID
+  # kubeconfig   = var.kubeconfig
+  domain_name  = "${var.TEST_ID}.gitpod-self-hosted.com"
+}
+
 module "aws-externaldns" {
   source       = "../infra/terraform/tools/external-dns"
   kubeconfig   = var.kubeconfig
@@ -109,10 +116,12 @@ module "aws-externaldns" {
 }
 
 module "aws-issuer" {
-  source              = "../infra/terraform/tools/issuer/azure"
+  source              = "../infra/terraform/tools/issuer"
   kubeconfig          = var.kubeconfig
   cert_manager_issuer = module.eks.cert_manager_issuer
+  issuer_name         = "route53"
 }
+
 
 module "aws-add-ns-records" {
   # source         = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/cloud-dns-ns?ref=main"
@@ -122,4 +131,12 @@ module "aws-add-ns-records" {
   dns_project      = "dns-for-playgrounds"
   managed_dns_zone = "gitpod-self-hosted-com"
   domain_name      = "${var.TEST_ID}.gitpod-self-hosted.com"
+}
+
+module "certmanager" {
+  # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/cert-manager?ref=main"
+  source = "../infra/terraform/tools/cert-manager"
+
+  kubeconfig     = var.kubeconfig
+  credentials    = var.dns_sa_creds
 }
