@@ -1,5 +1,5 @@
 packages:
-  - name: plugin
+  - name: plugin-stable
     type: generic
     deps:
       - components/supervisor-api/java:lib
@@ -8,11 +8,32 @@ packages:
       - "**/*.kt"
       - "build.gradle.kts"
       - "gradle.properties"
+      - "gradle-stable.properties"
       - "gradle/wrapper/*"
       - "gradlew"
       - "settings.gradle.kts"
       - "src/main/resources/*"
+      - "src/main/resources-stable/*"
     config:
       commands:
-        - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "runPluginVerifier"]
-        - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "buildPlugin"]
+        - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=stable", "runPluginVerifier"]
+        - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=stable", "buildPlugin"]
+  - name: plugin-latest
+    type: generic
+    deps:
+      - components/supervisor-api/java:lib
+      - components/gitpod-protocol/java:lib
+    srcs:
+      - "**/*.kt"
+      - "build.gradle.kts"
+      - "gradle.properties"
+      - "gradle-latest.properties"
+      - "gradle/wrapper/*"
+      - "gradlew"
+      - "settings.gradle.kts"
+      - "src/main/resources/*"
+      - "src/main/resources-latest/*"
+    config:
+      commands:
+        - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=latest", "runPluginVerifier"]
+        - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=latest", "buildPlugin"]

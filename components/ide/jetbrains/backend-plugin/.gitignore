@@ -3,3 +3,4 @@
 .vscode
 bin
 build
+gradle-local.properties

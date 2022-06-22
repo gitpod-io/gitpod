@@ -10,18 +10,36 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
     // Java support
     id("java")
-    // Kotlin support
-    id("org.jetbrains.kotlin.jvm") version "1.5.10"
+    // Kotlin support - check the latest version at https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
+    id("org.jetbrains.kotlin.jvm") version "1.7.0"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij") version "1.0"
+    id("org.jetbrains.intellij") version "1.6.0"
     // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
     id("io.gitlab.arturbosch.detekt") version "1.17.1"
     // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
     id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
+    // Gradle Properties Plugin - read more: https://github.com/stevesaliman/gradle-properties-plugin
+    id("net.saliman.properties") version "1.5.2"
 }
 
 group = properties("pluginGroup")
 version = properties("version")
+
+val environmentName = properties("environmentName")
+
+project(":") {
+    kotlin {
+        var excludedPackage = "stable"
+        if (environmentName == excludedPackage) excludedPackage = "latest"
+        sourceSets["main"].kotlin.exclude("io/gitpod/jetbrains/remote/${excludedPackage}/**")
+    }
+
+    sourceSets {
+        main {
+            resources.srcDirs("src/main/resources-${environmentName}")
+        }
+    }
+}
 
 // Configure project's dependencies
 repositories {
