@@ -115,7 +115,9 @@ class HarvesterPreviewEnvironment {
             const statusDbContainer = exec(`${kubectclCmd} get pods mysql-0 -n ${this.k3sNamespace} -o jsonpath='{.status.containerStatuses.*.ready}'`, { slice: sliceID, dontCheckRc: true})
 
             if (statusDB.code != 0 || statusDB != "Running" || statusDbContainer == "false") {
-                werft.log(sliceID, `${this.name} (${this.k3sNamespace}) - is-active=true - The database is not reachable, assuming env is not active`)
+                werft.log(sliceID, `${this.name} (${this.k3sNamespace}) - is-active=false - The database is not reachable, assuming env is not active`)
+                VM.stopKubectlPortForwards()
+                exec(`rm ${PREVIEW_K3S_KUBECONFIG_PATH}`, { silent :true, slice: sliceID })
                 return false
             }
 
