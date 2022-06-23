@@ -31,7 +31,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -39,9 +39,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:      Component,
 				Namespace: ctx.Namespace,
 				Labels:    labels,
-				Annotations: map[string]string{
-					common.AnnotationConfigChecksum: configHash,
-				},
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+					return map[string]string{
+						common.AnnotationConfigChecksum: configHash,
+					}
+				}),
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
@@ -49,9 +51,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      Component,
-						Namespace: ctx.Namespace,
-						Labels:    labels,
+						Name:        Component,
+						Namespace:   ctx.Namespace,
+						Labels:      labels,
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 					},
 					Spec: corev1.PodSpec{
 						Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
@@ -85,9 +88,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								SecurityContext: &corev1.SecurityContext{
 									Privileged: pointer.Bool(false),
 								},
-								Env: common.MergeEnv(
+								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 									common.DefaultEnv(&ctx.Config),
-								),
+								)),
 								LivenessProbe: &corev1.Probe{
 									ProbeHandler: corev1.ProbeHandler{
 										HTTPGet: &corev1.HTTPGetAction{

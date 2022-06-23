@@ -6,6 +6,7 @@ package cloudsql
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	appsv1 "k8s.io/api/apps/v1"
@@ -17,15 +18,16 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-cloud-sql-proxy", Component),
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:        fmt.Sprintf("%s-cloud-sql-proxy", Component),
+				Namespace:   ctx.Namespace,
+				Labels:      labels,
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: appsv1.DeploymentSpec{
 				Strategy: appsv1.DeploymentStrategy{
@@ -39,9 +41,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Replicas: common.Replicas(ctx, Component),
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      Component,
-						Namespace: ctx.Namespace,
-						Labels:    labels,
+						Name:        Component,
+						Namespace:   ctx.Namespace,
+						Labels:      labels,
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 					},
 					Spec: corev1.PodSpec{
 						Affinity: &corev1.Affinity{
@@ -84,6 +87,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								MountPath: "/credentials",
 								Name:      "gcloud-sql-token",
 							}},
+							Env: common.CustomizeEnvvar(ctx, Component, []corev1.EnvVar{}),
 						}},
 					},
 				},

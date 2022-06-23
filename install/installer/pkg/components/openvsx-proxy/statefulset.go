@@ -20,7 +20,7 @@ import (
 )
 
 func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaStatefulSet)
 	// todo(sje): add redis
 
 	configHash, err := common.ObjectHash(configmap(ctx))
@@ -32,9 +32,10 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&appsv1.StatefulSet{
 		TypeMeta: common.TypeMetaStatefulSet,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    labels,
+			Name:        Component,
+			Namespace:   ctx.Namespace,
+			Labels:      labels,
+			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 		},
 		Spec: appsv1.StatefulSetSpec{
 			Selector: &metav1.LabelSelector{
@@ -48,9 +49,11 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Name:      Component,
 					Namespace: ctx.Namespace,
 					Labels:    labels,
-					Annotations: map[string]string{
-						common.AnnotationConfigChecksum: configHash,
-					},
+					Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap, func() map[string]string {
+						return map[string]string{
+							common.AnnotationConfigChecksum: configHash,
+						}
+					}),
 				},
 				Spec: v1.PodSpec{
 					Affinity:                      common.NodeAffinity(cluster.AffinityLabelIDE),
@@ -97,9 +100,9 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:      "config",
 							MountPath: "/config",
 						}},
-						Env: common.MergeEnv(
+						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
-						),
+						)),
 					}, {
 						Name:  redisContainerName,
 						Image: ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/redis", "6.2"),

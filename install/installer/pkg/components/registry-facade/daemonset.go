@@ -23,7 +23,7 @@ import (
 )
 
 func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDaemonset)
 
 	var hashObj []runtime.Object
 	if objs, err := configmap(ctx); err != nil {
@@ -187,9 +187,10 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&appsv1.DaemonSet{
 		TypeMeta: common.TypeMetaDaemonset,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    labels,
+			Name:        Component,
+			Namespace:   ctx.Namespace,
+			Labels:      labels,
+			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDaemonset),
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{MatchLabels: labels},
@@ -197,9 +198,11 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:   Component,
 					Labels: labels,
-					Annotations: map[string]string{
-						common.AnnotationConfigChecksum: configHash,
-					},
+					Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDaemonset, func() map[string]string {
+						return map[string]string{
+							common.AnnotationConfigChecksum: configHash,
+						}
+					}),
 				},
 				Spec: corev1.PodSpec{
 					PriorityClassName:             common.SystemNodeCritical,
@@ -230,7 +233,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Privileged: pointer.Bool(false),
 							RunAsUser:  pointer.Int64(1000),
 						},
-						Env: common.MergeEnv(
+						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
 							common.WorkspaceTracingEnv(ctx),
 							[]corev1.EnvVar{
@@ -248,7 +251,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 							envvars,
-						),
+						)),
 						VolumeMounts: append(
 							[]corev1.VolumeMount{
 								{

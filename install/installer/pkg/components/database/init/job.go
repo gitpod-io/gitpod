@@ -25,9 +25,10 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	objectMeta := metav1.ObjectMeta{
-		Name:      fmt.Sprintf("%s-session", Component),
-		Namespace: ctx.Namespace,
-		Labels:    common.DefaultLabels(Component),
+		Name:        fmt.Sprintf("%s-session", Component),
+		Namespace:   ctx.Namespace,
+		Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaBatchJob),
+		Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaBatchJob),
 	}
 
 	return []runtime.Object{&batchv1.Job{

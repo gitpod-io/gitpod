@@ -17,7 +17,7 @@ import (
 )
 
 func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDaemonset)
 
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {
@@ -30,16 +30,19 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name:      Component,
 			Namespace: ctx.Namespace,
 			Labels:    labels,
-			Annotations: map[string]string{
-				common.AnnotationConfigChecksum: configHash,
-			},
+			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDaemonset, func() map[string]string {
+				return map[string]string{
+					common.AnnotationConfigChecksum: configHash,
+				}
+			}),
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{MatchLabels: labels},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:   Component,
-					Labels: labels,
+					Name:        Component,
+					Labels:      labels,
+					Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDaemonset),
 				},
 				Spec: corev1.PodSpec{
 					Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
@@ -64,7 +67,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:      "config",
 							MountPath: "/config",
 						}},
-						Env: common.MergeEnv(
+						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
 							common.WorkspaceTracingEnv(ctx),
 							[]corev1.EnvVar{{
@@ -73,7 +76,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									FieldRef: &corev1.ObjectFieldSelector{FieldPath: "spec.nodeName"},
 								},
 							}},
-						),
+						)),
 						SecurityContext: &corev1.SecurityContext{
 							Privileged: pointer.Bool(true),
 							ProcMount:  func() *corev1.ProcMountType { r := corev1.DefaultProcMount; return &r }(),
