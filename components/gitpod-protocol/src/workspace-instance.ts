@@ -64,11 +64,10 @@ export interface WorkspaceInstance {
     workspaceClass?: string;
 
     /**
-     * Identifies the team to which this instance's runtime should be attributed to
+     * Identifies the team or user to which this instance's runtime should be attributed to
      * (e.g. for usage analytics or billing purposes).
-     * If unset, the usage should be attributed to the workspace's owner (ws.ownerId).
      */
-    attributedTeamId?: string;
+    usageAttributionId?: string;
 }
 
 // WorkspaceInstanceStatus describes the current state of a workspace instance
