@@ -52,11 +52,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			SecurityContext: &corev1.SecurityContext{
 				Privileged: pointer.Bool(false),
 			},
-			Env: common.MergeEnv(
+			Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 				common.DefaultEnv(&ctx.Config),
 				common.WorkspaceTracingEnv(ctx),
 				[]corev1.EnvVar{{Name: "GRPC_GO_RETRY", Value: "on"}},
-			),
+			)),
 			VolumeMounts: []corev1.VolumeMount{
 				{
 					Name:      VolumeConfig,

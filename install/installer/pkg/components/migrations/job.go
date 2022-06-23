@@ -20,9 +20,10 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	objectMeta := metav1.ObjectMeta{
-		Name:      Component,
-		Namespace: ctx.Namespace,
-		Labels:    common.DefaultLabels(Component),
+		Name:        Component,
+		Namespace:   ctx.Namespace,
+		Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaBatchJob),
+		Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaBatchJob),
 	}
 
 	return []runtime.Object{&batchv1.Job{
@@ -43,9 +44,9 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:            Component,
 						Image:           ctx.ImageName(ctx.Config.Repository, "db-migrations", ctx.VersionManifest.Components.DBMigrations.Version),
 						ImagePullPolicy: corev1.PullIfNotPresent,
-						Env: common.MergeEnv(
+						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DatabaseEnv(&ctx.Config),
-						),
+						)),
 						Command: []string{
 							"sh",
 							"-c",

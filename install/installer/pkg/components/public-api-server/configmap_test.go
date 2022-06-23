@@ -5,13 +5,14 @@ package public_api_server
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/public-api/config"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func TestConfigMap(t *testing.T) {
@@ -39,9 +40,10 @@ func TestConfigMap(t *testing.T) {
 	require.Equal(t, &corev1.ConfigMap{
 		TypeMeta: common.TypeMetaConfigmap,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Name:        Component,
+			Namespace:   ctx.Namespace,
+			Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
+			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 		},
 		Data: map[string]string{
 			"config.json": string(expectedJSON),
