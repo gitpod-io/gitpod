@@ -12,7 +12,6 @@ type Configuration struct {
 	WSClusterDBReconcileIntervalSeconds int32              `json:"wsClusterDBReconcileIntervalSeconds"`
 	ControllerIntervalSeconds           int32              `json:"controllerIntervalSeconds"`
 	ControllerMaxDisconnectSeconds      int32              `json:"controllerMaxDisconnectSeconds"`
-	MaxTimeToRunningPhaseSeconds        int32              `json:"maxTimeToRunningPhaseSeconds"`
 	EmulatePreparingIntervalSeconds     int32              `json:"emulatePreparingIntervalSeconds"`
 	Timeouts                            Timeouts           `json:"timeouts"`
 }
@@ -23,11 +22,10 @@ type ClusterService struct {
 }
 
 type Timeouts struct {
-	MetaInstanceCheckIntervalSeconds int32 `json:"metaInstanceCheckIntervalSeconds"`
-	PreparingPhaseSeconds            int32 `json:"preparingPhaseSeconds"`
-	StoppingPhaseSeconds             int32 `json:"stoppingPhaseSeconds"`
-	BuildingPhaseSeconds             int32 `json:"buildingPhaseSeconds"`
-	UnknownPhaseSeconds              int32 `json:"unknownPhaseSeconds"`
+	PreparingPhaseSeconds int32 `json:"preparingPhaseSeconds"`
+	BuildingPhaseSeconds  int32 `json:"buildingPhaseSeconds"`
+	StoppingPhaseSeconds  int32 `json:"stoppingPhaseSeconds"`
+	UnknownPhaseSeconds   int32 `json:"unknownPhaseSeconds"`
 }
 
 // WorkspaceCluster from components/gitpod-protocol/src/workspace-cluster.ts
