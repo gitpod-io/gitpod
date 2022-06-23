@@ -100,10 +100,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		"-oUseDNS no", // Disable DNS lookups.
 		"-oSubsystem sftp internal-sftp",
 		"-oStrictModes no", // don't care for home directory and file permissions
-	}
-
-	if os.Getenv("SUPERVISOR_DEBUG_ENABLE") != "" {
-		args = append(args, "-oLogLevel DEBUG")
+		"-oLogLevel DEBUG", // enabled DEBUG mode by default
 	}
 
 	socketFD, err := conn.(*net.TCPConn).File()
