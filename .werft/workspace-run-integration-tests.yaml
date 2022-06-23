@@ -120,6 +120,7 @@ pod:
       git add README.md
       git commit -m "integration test"
       git push --set-upstream origin "${BRANCH}"
+      werft run github -a with-preview=true
       trap cleanup SIGINT SIGTERM EXIT
 
       BUILD_ID=$(werft job list repo.ref==refs/heads/"${BRANCH}" -o yaml | yq r - "result[0].name")
