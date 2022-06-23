@@ -73,7 +73,7 @@ module "gcp-externaldns" {
     },
     {
       name = "google.serviceAccountKey",
-      value = base64encode(data.local_file.gcp_creds.content)
+      value = file(var.sa_creds)
     }
   ]
 

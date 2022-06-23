@@ -33,6 +33,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         DESCRIPTION: "Deploy Gitpod on GKE, with managed DNS, and run integration tests",
         PHASES: [
             "CREATE_CLUSTER",
+            "ADD_NS_RECORD",
             "CERT_MANAGER",
             "EXTERNALDNS",
             "CLUSTER_ISSUER",
@@ -49,6 +50,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         DESCRIPTION: `Deploy Gitpod on GKE, and test upgrade from ${version} to latest version`,
         PHASES: [
             "CREATE_CLUSTER",
+            "ADD_NS_RECORD",
             "CERT_MANAGER",
             "EXTERNALDNS",
             "CLUSTER_ISSUER",
@@ -101,8 +103,8 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
             "EXTERNALDNS",
             "ADD_NS_RECORD",
             "GENERATE_KOTS_CONFIG",
-            "INSTALL_GITPOD",
             "RESULTS",
+            "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
             "RUN_INTEGRATION_TESTS",
             "DESTROY",
@@ -157,17 +159,17 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     CLUSTER_ISSUER: {
         phase: "setup-cluster-issuer",
-        makeTarget: "cluster-issuer",
+        makeTarget: `cluster-issuer cluster=${cluster}`,
         description: `Deploys ClusterIssuer for ${cluster}`,
     },
     EXTERNALDNS: {
         phase: "external-dns",
-        makeTarget: `external-dns`,
+        makeTarget: `external-dns cluster=${cluster}`,
         description: `Deploys external-dns with ${cluster} provider`,
     },
     ADD_NS_RECORD: {
         phase: "add-ns-record",
-        makeTarget: "add-ns-record",
+        makeTarget: `add-ns-record cluster=${cluster}`,
         description: `Adds NS record for subdomain under gitpod-self-hosted.com for ${cluster}`,
     },
     INSTALL_GITPOD_IGNORE_PREFLIGHTS: {
@@ -255,7 +257,7 @@ function callMakeTargets(phase: string, description: string, makeTarget: string)
 function randomize(): string {
     // in the follow-up PR we will add `${platform}-${resource}` as an option here to
     // test against resource dependencies(storage, db, registry) for each cloud platform
-    const options = ["external", "incluster"];
+    const options = ["external"];
     return options[Math.floor(Math.random() * options.length)];
 }
 
@@ -263,7 +265,10 @@ function cleanup() {
     const phase = "destroy-infrastructure";
     werft.phase(phase, "Destroying all the created resources");
 
-    const response = exec(`make -C ${makefilePath} cleanup`, { slice: "run-terrafrom-destroy", dontCheckRc: true });
+    const response = exec(`make -C ${makefilePath} cleanup cluster=${cluster}`, {
+        slice: "run-terrafrom-destroy",
+        dontCheckRc: true,
+    });
 
     // if the destroy command fail, we check if any resources are pending to be removed
     // if nothing is yet to be cleaned, we return with success
