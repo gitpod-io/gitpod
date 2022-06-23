@@ -11,9 +11,16 @@ type BillingController interface {
 }
 
 type NoOpBillingController struct{}
-type StripeBillingController struct{}
 
 func (b *NoOpBillingController) Reconcile(report []TeamUsage) {}
+
+type StripeBillingController struct {
+	sc *stripe.Client
+}
+
+func NewStripeBillingController(sc *stripe.Client) *StripeBillingController {
+	return &StripeBillingController{sc: sc}
+}
 
 func (b *StripeBillingController) Reconcile(report []TeamUsage) {
 	// Convert the usage report to sum all entries for the same team.
@@ -22,5 +29,5 @@ func (b *StripeBillingController) Reconcile(report []TeamUsage) {
 		summedReport[usageEntry.TeamID] += usageEntry.WorkspaceSeconds
 	}
 
-	stripe.UpdateUsage(summedReport)
+	b.sc.UpdateUsage(summedReport)
 }
