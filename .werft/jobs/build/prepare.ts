@@ -83,7 +83,7 @@ function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
 }
 
 function shouldCreateVM(config: JobConfig) {
-    return config.withVM && (
+    return config.withVM && config.withPreview && (
         !VM.vmExists({ name: config.previewEnvironment.destname }) ||
         config.cleanSlateDeployment
     )
