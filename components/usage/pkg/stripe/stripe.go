@@ -13,9 +13,12 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/customer"
-	"github.com/stripe/stripe-go/v72/usagerecord"
+	"github.com/stripe/stripe-go/v72/client"
 )
+
+type Client struct {
+	sc *client.API
+}
 
 type stripeKeys struct {
 	PublishableKey string `json:"publishableKey"`
@@ -23,25 +26,26 @@ type stripeKeys struct {
 }
 
 // Authenticate authenticates the Stripe client using a provided file containing a Stripe secret key.
-func Authenticate(apiKeyFile string) error {
+func Authenticate(apiKeyFile string) (*Client, error) {
 	bytes, err := os.ReadFile(apiKeyFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var stripeKeys stripeKeys
 	err = json.Unmarshal(bytes, &stripeKeys)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	stripe.Key = stripeKeys.SecretKey
-	return nil
+	sc := &client.API{}
+	sc.Init(stripeKeys.SecretKey, nil)
+	return &Client{sc: sc}, nil
 }
 
 // UpdateUsage updates teams' Stripe subscriptions with usage data
 // `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
-func UpdateUsage(usageForTeam map[string]int64) error {
+func (c *Client) UpdateUsage(usageForTeam map[string]int64) error {
 	teamIds := make([]string, 0, len(usageForTeam))
 	for k := range usageForTeam {
 		teamIds = append(teamIds, k)
@@ -56,7 +60,7 @@ func UpdateUsage(usageForTeam map[string]int64) error {
 				Expand: []*string{stripe.String("data.subscriptions")},
 			},
 		}
-		iter := customer.Search(params)
+		iter := c.sc.Customers.Search(params)
 		for iter.Next() {
 			customer := iter.Customer()
 			log.Infof("found customer %q for teamId %q", customer.Name, customer.Metadata["teamId"])
@@ -77,7 +81,7 @@ func UpdateUsage(usageForTeam map[string]int64) error {
 
 			subscriptionItemId := subscription.Items.Data[0].ID
 			log.Infof("registering usage against subscriptionItem %q", subscriptionItemId)
-			_, err := usagerecord.New(&stripe.UsageRecordParams{
+			_, err := c.sc.UsageRecords.New(&stripe.UsageRecordParams{
 				SubscriptionItem: stripe.String(subscriptionItemId),
 				Quantity:         stripe.Int64(creditsUsed),
 			})
