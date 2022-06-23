@@ -110,6 +110,8 @@ type Config struct {
 
 	DropImageRepo *bool `json:"dropImageRepo,omitempty"`
 
+	Components *Components `json:"components,omitempty"`
+
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
 
@@ -326,3 +328,13 @@ type OAuth struct {
 	ClientSecret string `json:"clientSecret" validate:"required"`
 	CallBackUrl  string `json:"callBackUrl" validate:"required"`
 }
+
+type Components struct {
+	Annotations *CustomOverride `json:"annotations,omitempty"`
+}
+
+type CustomOverride map[string]CustomOverrideKind
+
+type CustomOverrideKind map[string]ComponentKeyValue
+
+type ComponentKeyValue map[string]string
