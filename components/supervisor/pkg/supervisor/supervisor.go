@@ -1295,8 +1295,11 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		log.Info("Detected content.json in /.workspace folder, assuming PVC feature enabled")
 	}
 	f, err := os.Open(fn)
-	if os.IsNotExist(err) {
-		log.WithError(err).Info("no content init descriptor found - not trying to run it")
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.WithError(err).Error("cannot open init descriptor")
+			return
+		}
 
 		// If there is no content descriptor the content must have come from somewhere (i.e. a layer or ws-daemon).
 		// Let's wait for that to happen.
@@ -1325,10 +1328,6 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		}
 
 		err = nil
-		return
-	}
-	if err != nil {
-		log.WithError(err).Error("cannot open init descriptor")
 		return
 	}
 
