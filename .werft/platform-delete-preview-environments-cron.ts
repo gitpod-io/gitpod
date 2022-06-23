@@ -111,12 +111,12 @@ class HarvesterPreviewEnvironment {
             const kubectclCmd = `KUBECONFIG=${PREVIEW_K3S_KUBECONFIG_PATH} kubectl --insecure-skip-tls-verify`
 
             werft.log(sliceID, `${this.name} (${this.k3sNamespace}) - Checking status of the MySQL pod`)
-            const statusDB = exec(`${kubectclCmd} get pods mysql-0 -n ${this.k3sNamespace} -o jsonpath='{.status.phase}'`, { slice: sliceID})
-            const statusDbContainer = exec(`${kubectclCmd} get pods mysql-0 -n ${this.k3sNamespace} -o jsonpath='{.status.containerStatuses.*.ready}'`, { slice: sliceID})
+            const statusDB = exec(`${kubectclCmd} get pods mysql-0 -n ${this.k3sNamespace} -o jsonpath='{.status.phase}'`, { slice: sliceID, dontCheckRc: true})
+            const statusDbContainer = exec(`${kubectclCmd} get pods mysql-0 -n ${this.k3sNamespace} -o jsonpath='{.status.containerStatuses.*.ready}'`, { slice: sliceID, dontCheckRc: true})
 
             if (statusDB.code != 0 || statusDB != "Running" || statusDbContainer == "false") {
-                werft.log(sliceID, `${this.name} (${this.k3sNamespace}) - is-active=true - The database is not reachable, assuming env is active`)
-                return true
+                werft.log(sliceID, `${this.name} (${this.k3sNamespace}) - is-active=true - The database is not reachable, assuming env is not active`)
+                return false
             }
 
             const dbPassword = exec(`${kubectclCmd} get secret db-password -n ${this.k3sNamespace} -o jsonpath='{.data.mysql-root-password}' | base64 -d`, {silent: true}).stdout.trim()
