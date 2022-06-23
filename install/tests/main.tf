@@ -36,9 +36,6 @@ module "k3s" {
   gcp_project      = var.project
   credentials      = var.sa_creds
   kubeconfig       = var.kubeconfig
-  dns_sa_creds     = var.dns_sa_creds
-  dns_project      = "dns-for-playgrounds"
-  managed_dns_zone = "gitpod-self-hosted-com"
   domain_name      = "${var.TEST_ID}.gitpod-self-hosted.com"
 }
 
@@ -47,7 +44,7 @@ module "gcp-issuer" {
   kubeconfig          = var.kubeconfig
   issuer_name         = "cloudDNS"
   cert_manager_issuer = {
-    project  = "dns-for-playgrounds"
+    project  = var.project
     serviceAccountSecretRef = {
       name = "clouddns-dns01-solver"
       key = "keys.json"
@@ -55,30 +52,21 @@ module "gcp-issuer" {
   }
 }
 
-data "local_file" gcp_creds {
-  filename = var.sa_creds
+module "gcp-externaldns" {
+  source = "../infra/terraform/tools/cloud-dns-external-dns"
+  kubeconfig     = var.kubeconfig
+  gcp_project = var.project
+  credentials = var.sa_creds
+  txt_owner_id = var.TEST_ID
 }
 
-module "gcp-externaldns" {
-  source = "../infra/terraform/tools/external-dns"
-  kubeconfig     = var.kubeconfig
-  settings    = [
-    {
-      name = "provider",
-      value = "google"
-    },
-    {
-      name = "google.project",
-      value = var.project
-    },
-    {
-      name = "google.serviceAccountKey",
-      value = file(var.sa_creds)
-    }
-  ]
-
-  domain_name  = "${var.TEST_ID}.gitpod-self-hosted.com"
-  txt_owner_id = var.TEST_ID
+module "k3s-add-ns-records" {
+  source           = "../infra/terraform/tools/cloud-dns-ns"
+  credentials      = var.dns_sa_creds
+  nameservers      = module.k3s.domain_nameservers
+  dns_project      = "dns-for-playgrounds"
+  managed_dns_zone = "gitpod-self-hosted-com"
+  domain_name      = "${var.TEST_ID}.gitpod-self-hosted.com"
 }
 
 module "gcp-add-ns-records" {
@@ -167,5 +155,5 @@ module "certmanager" {
   source = "../infra/terraform/tools/cert-manager"
 
   kubeconfig     = var.kubeconfig
-  credentials    = var.dns_sa_creds
+  credentials    = var.sa_creds
 }

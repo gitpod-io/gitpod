@@ -44,7 +44,7 @@ cleanup-cluster: select-workspace
 cluster ?= gke
 .PHONY:
 ## add-ns-record: Adds NS record for subdomain under GCP, retrieving NS records from a cluster module specified by `cluster` argument
-add-ns-record: cloud = $(cloud_$(cluster))
+add-ns-record: cloud = $(if $(cluster:k3s=),$(cloud_$(cluster),k3s) # we have a custom ns record for k3s since it depends on output
 add-ns-record:
 	echo ${cloud}
 	terraform init --upgrade && \

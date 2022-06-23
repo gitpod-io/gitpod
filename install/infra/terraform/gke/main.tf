@@ -180,6 +180,7 @@ resource "google_dns_managed_zone" "gitpod-zone" {
   count       = var.domain_name == null ? 0 : 1
   name        = "${var.name}-zone"
   dns_name    = "${var.domain_name}."
+  force_destroy = true
   description = "Managed DNS zone for cluster ${var.name}"
   labels = {
     env = "nightly-tests"

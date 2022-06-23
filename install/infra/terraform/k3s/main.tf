@@ -122,13 +122,22 @@ resource "null_resource" "k3sup_install" {
           EOT
   }
 }
+resource "google_dns_managed_zone" "gitpod-zone" {
+  count       = var.domain_name == null ? 0 : 1
+  name        = "${var.name}-zone"
+  dns_name    = "${var.domain_name}."
+  description = "Managed DNS zone for cluster ${var.name}"
+  force_destroy = true
+  labels = {
+    env = "nightly-tests"
+  }
+}
 
 resource "google_dns_record_set" "gitpod-dns" {
-  provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null ) ? 0 : 1
+  count        = (var.domain_name == null) ? 0 : 1
   name         = "${var.domain_name}."
-  managed_zone = var.managed_dns_zone
-  project      = var.dns_project == null ? var.gcp_project : var.dns_project
+  managed_zone = google_dns_managed_zone.gitpod-zone[0].name
+  project      = var.gcp_project
   type         = "A"
   ttl          = 5
 
@@ -136,11 +145,10 @@ resource "google_dns_record_set" "gitpod-dns" {
 }
 
 resource "google_dns_record_set" "gitpod-dns-1" {
-  provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null ) ? 0 : 1
-  name         = "ws.${var.domain_name}."
-  managed_zone = var.managed_dns_zone
-  project      = var.dns_project == null ? var.gcp_project : var.dns_project
+  count        = (var.domain_name == null) ? 0 : 1
+  name         = "${var.domain_name}."
+  managed_zone = google_dns_managed_zone.gitpod-zone[0].name
+  project      = var.gcp_project
   type         = "A"
   ttl          = 5
 
@@ -148,11 +156,10 @@ resource "google_dns_record_set" "gitpod-dns-1" {
 }
 
 resource "google_dns_record_set" "gitpod-dns-2" {
-  provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null ) ? 0 : 1
-  name         = "*.${var.domain_name}."
-  managed_zone = var.managed_dns_zone
-  project      = var.dns_project == null ? var.gcp_project : var.dns_project
+  count        = (var.domain_name == null) ? 0 : 1
+  name         = "${var.domain_name}."
+  managed_zone = google_dns_managed_zone.gitpod-zone[0].name
+  project      = var.gcp_project
   type         = "A"
   ttl          = 5
 
@@ -160,11 +167,10 @@ resource "google_dns_record_set" "gitpod-dns-2" {
 }
 
 resource "google_dns_record_set" "gitpod-dns-3" {
-  provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null ) ? 0 : 1
-  name         = "*.ws.${var.domain_name}."
-  managed_zone = var.managed_dns_zone
-  project      = var.dns_project == null ? var.gcp_project : var.dns_project
+  count        = (var.domain_name == null) ? 0 : 1
+  name         = "${var.domain_name}."
+  managed_zone = google_dns_managed_zone.gitpod-zone[0].name
+  project      = var.gcp_project
   type         = "A"
   ttl          = 5
 
