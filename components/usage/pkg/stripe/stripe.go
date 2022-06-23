@@ -5,10 +5,8 @@
 package stripe
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
-	"os"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -20,27 +18,14 @@ type Client struct {
 	sc *client.API
 }
 
-type stripeKeys struct {
+type ClientConfig struct {
 	PublishableKey string `json:"publishableKey"`
 	SecretKey      string `json:"secretKey"`
 }
 
-// Authenticate authenticates the Stripe client using a provided file containing a Stripe secret key.
-func Authenticate(apiKeyFile string) (*Client, error) {
-	bytes, err := os.ReadFile(apiKeyFile)
-	if err != nil {
-		return nil, err
-	}
-
-	var stripeKeys stripeKeys
-	err = json.Unmarshal(bytes, &stripeKeys)
-	if err != nil {
-		return nil, err
-	}
-
-	sc := &client.API{}
-	sc.Init(stripeKeys.SecretKey, nil)
-	return &Client{sc: sc}, nil
+// New authenticates a Stripe client using the provided config
+func New(config ClientConfig) (*Client, error) {
+	return &Client{sc: client.New(config.SecretKey, nil)}, nil
 }
 
 // UpdateUsage updates teams' Stripe subscriptions with usage data
