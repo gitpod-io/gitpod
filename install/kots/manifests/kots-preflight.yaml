@@ -165,13 +165,10 @@ spec:
         checkName: Memory per node
         outcomes:
           - fail:
-              when: "min(memoryCapacity) < 8G"
-              message: The cluster must have least 8GB of memory
-          - warn:
               when: "min(memoryCapacity) < 16G"
-              message: The cluster must have least 16GB of memory
+              message: Each node must have at least 16GB of memory
           - pass:
-              message: There is at least 16GB of memory in the cluster
+              message: Each node has at least 16GB of memory
     - storageClass:
         checkName: Check for default storage class
         outcomes:
