@@ -47,11 +47,11 @@ func run() *cobra.Command {
 			var billingController controller.BillingController = &controller.NoOpBillingController{}
 
 			if apiKeyFile != "" {
-				err = stripe.Authenticate(apiKeyFile)
+				c, err := stripe.Authenticate(apiKeyFile)
 				if err != nil {
 					log.WithError(err).Fatal("Failed to initialize stripe client.")
 				}
-				billingController = &controller.StripeBillingController{}
+				billingController = controller.NewStripeBillingController(c)
 			}
 
 			ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, billingController))
