@@ -20,7 +20,7 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomOverrideLabel(ctx, Component, common.TypeMetaDeployment)
 
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {
@@ -64,9 +64,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      labels,
+				Annotations: common.CustomOverrideAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
@@ -77,9 +78,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:      Component,
 						Namespace: ctx.Namespace,
 						Labels:    labels,
-						Annotations: map[string]string{
-							common.AnnotationConfigChecksum: configHash,
-						},
+						Annotations: common.CustomOverrideAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+							return map[string]string{
+								common.AnnotationConfigChecksum: configHash,
+							}
+						}),
 					},
 					Spec: corev1.PodSpec{
 						PriorityClassName: common.SystemNodeCritical,
@@ -136,11 +139,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),
 							},
-							Env: common.MergeEnv(
+							Env: common.CustomOverrideEnvvar(ctx, Component, common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
 								common.WorkspaceTracingEnv(ctx),
 								common.AnalyticsEnv(&ctx.Config),
-							),
+							)),
 							ReadinessProbe: &corev1.Probe{
 								InitialDelaySeconds: int32(2),
 								PeriodSeconds:       int32(5),
