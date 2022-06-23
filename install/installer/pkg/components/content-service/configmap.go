@@ -6,6 +6,7 @@ package content_service
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 
 	"github.com/gitpod-io/gitpod/content-service/api/config"
@@ -32,9 +33,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&corev1.ConfigMap{
 		TypeMeta: common.TypeMetaConfigmap,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Name:        Component,
+			Namespace:   ctx.Namespace,
+			Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
+			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 		},
 		Data: map[string]string{
 			"config.json": string(fc),

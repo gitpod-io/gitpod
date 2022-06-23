@@ -20,7 +20,7 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	var hashObj []runtime.Object
 	if objs, err := configmap(ctx); err != nil {
@@ -66,9 +66,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      labels,
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
@@ -79,9 +80,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:      Component,
 						Namespace: ctx.Namespace,
 						Labels:    labels,
-						Annotations: map[string]string{
-							common.AnnotationConfigChecksum: configHash,
-						},
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+							return map[string]string{
+								common.AnnotationConfigChecksum: configHash,
+							}
+						}),
 					},
 					Spec: corev1.PodSpec{
 						Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
@@ -121,7 +124,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Privileged: pointer.Bool(false),
 								RunAsUser:  pointer.Int64(31001),
 							},
-							Env: common.MergeEnv(
+							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
 								common.WorkspaceTracingEnv(ctx),
 								common.AnalyticsEnv(&ctx.Config),
@@ -131,7 +134,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Name:  "WSMAN_BRIDGE_CONFIGPATH",
 									Value: "/config/ws-manager-bridge.json",
 								}},
-							),
+							)),
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 9500,

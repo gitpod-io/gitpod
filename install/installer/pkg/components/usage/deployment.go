@@ -20,7 +20,7 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
@@ -51,9 +51,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      labels,
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
@@ -61,9 +62,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      Component,
-						Namespace: ctx.Namespace,
-						Labels:    labels,
+						Name:        Component,
+						Namespace:   ctx.Namespace,
+						Labels:      labels,
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 					},
 					Spec: corev1.PodSpec{
 						Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
@@ -93,7 +95,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),
 							},
-							Env: common.MergeEnv(
+							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
 								common.DatabaseEnv(&ctx.Config),
 								[]corev1.EnvVar{{
@@ -105,7 +107,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										},
 									},
 								}},
-							),
+							)),
 							VolumeMounts: volumeMounts,
 							LivenessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
