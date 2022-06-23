@@ -107,5 +107,5 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
         default: "",
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
-    attributedTeamId?: string;
+    usageAttributionId?: string;
 }

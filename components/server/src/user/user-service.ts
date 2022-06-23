@@ -207,25 +207,24 @@ export class UserService {
     }
 
     /**
-     * Identifies the team to which a workspace instance's running time should be attributed to
+     * Identifies the team or user to which a workspace instance's running time should be attributed to
      * (e.g. for usage analytics or billing purposes).
-     * If no specific team is identified, the usage will be attributed to the user instead (default).
      *
      * @param user
      * @param projectId
      */
-    async getWorkspaceUsageAttributionTeamId(user: User, projectId?: string): Promise<string | undefined> {
+    async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<string | undefined> {
         if (!projectId) {
             // No project -- attribute to the user.
-            return undefined;
+            return `user:${user.id}`;
         }
         const project = await this.projectDb.findProjectById(projectId);
         if (!project?.teamId) {
             // The project doesn't exist, or it isn't owned by a team -- attribute to the user.
-            return undefined;
+            return `user:${user.id}`;
         }
         // Attribute workspace usage to the team that currently owns this project.
-        return project.teamId;
+        return `team:${project.teamId}`;
     }
 
     /**

@@ -66,7 +66,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
-        attributedTeamId: undefined,
+        usageAttributionId: undefined,
     };
     readonly wsi2: WorkspaceInstance = {
         workspaceId: this.ws.id,
@@ -89,7 +89,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
-        attributedTeamId: undefined,
+        usageAttributionId: undefined,
     };
     readonly ws2: Workspace = {
         id: "2",
@@ -127,7 +127,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
-        attributedTeamId: undefined,
+        usageAttributionId: undefined,
     };
 
     readonly ws3: Workspace = {
@@ -165,7 +165,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
-        attributedTeamId: undefined,
+        usageAttributionId: undefined,
     };
 
     async before() {
