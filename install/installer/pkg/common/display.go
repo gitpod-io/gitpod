@@ -99,9 +99,10 @@ func GenerateInstallationConfigMap(ctx *RenderContext, objects []RuntimeObject) 
 	cfgMap := corev1.ConfigMap{
 		TypeMeta: TypeMetaConfigmap,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      component,
-			Namespace: ctx.Namespace,
-			Labels:    DefaultLabels(component),
+			Name:        component,
+			Namespace:   ctx.Namespace,
+			Labels:      CustomOverrideLabel(ctx, component, TypeMetaConfigmap),
+			Annotations: CustomOverrideAnnotation(ctx, component, TypeMetaConfigmap),
 		},
 	}
 
