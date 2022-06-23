@@ -60,6 +60,112 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
+	podSpec := corev1.PodSpec{
+		PriorityClassName: common.SystemNodeCritical,
+		Affinity:          common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
+		TopologySpreadConstraints: []corev1.TopologySpreadConstraint{
+			corev1.TopologySpreadConstraint{
+				LabelSelector:     &metav1.LabelSelector{MatchLabels: labels},
+				MaxSkew:           1,
+				TopologyKey:       "kubernetes.io/hostname",
+				WhenUnsatisfiable: corev1.DoNotSchedule,
+			},
+		},
+		EnableServiceLinks: pointer.Bool(false),
+		ServiceAccountName: Component,
+		SecurityContext: &corev1.PodSecurityContext{
+			RunAsUser: pointer.Int64(31002),
+		},
+		Volumes: append([]corev1.Volume{{
+			Name: "config",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+				},
+			},
+		}, {
+			Name: "ws-manager-client-tls-certs",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: wsmanager.TLSSecretNameClient,
+				},
+			},
+		}}, volumes...),
+		Containers: []corev1.Container{{
+			Name:            Component,
+			Args:            []string{"run", "/config/config.json"},
+			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSProxy.Version),
+			ImagePullPolicy: corev1.PullIfNotPresent,
+			Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					"cpu":    resource.MustParse("100m"),
+					"memory": resource.MustParse("32Mi"),
+				},
+			}),
+			Ports: []corev1.ContainerPort{{
+				Name:          HTTPProxyPortName,
+				ContainerPort: HTTPProxyPort,
+			}, {
+				Name:          HTTPSProxyPortName,
+				ContainerPort: HTTPSProxyPort,
+			}, {
+				Name:          MetricsPortName,
+				ContainerPort: MetricsPort,
+			}},
+			SecurityContext: &corev1.SecurityContext{
+				Privileged: pointer.Bool(false),
+			},
+			Env: common.MergeEnv(
+				common.DefaultEnv(&ctx.Config),
+				common.WorkspaceTracingEnv(ctx),
+				common.AnalyticsEnv(&ctx.Config),
+			),
+			ReadinessProbe: &corev1.Probe{
+				InitialDelaySeconds: int32(2),
+				PeriodSeconds:       int32(5),
+				FailureThreshold:    int32(10),
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: "/readyz",
+						Port: intstr.IntOrString{IntVal: ReadinessPort},
+					},
+				},
+			},
+			LivenessProbe: &corev1.Probe{
+				InitialDelaySeconds: int32(2),
+				PeriodSeconds:       int32(5),
+				FailureThreshold:    int32(10),
+				SuccessThreshold:    int32(1),
+				TimeoutSeconds:      int32(2),
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: "/healthz",
+						Port: intstr.IntOrString{IntVal: ReadinessPort},
+					},
+				},
+			},
+			VolumeMounts: append([]corev1.VolumeMount{{
+				Name:      "config",
+				MountPath: "/config",
+				ReadOnly:  true,
+			}, {
+				Name:      "ws-manager-client-tls-certs",
+				MountPath: "/ws-manager-client-tls-certs",
+				ReadOnly:  true,
+			}}, volumeMounts...),
+		},
+			*common.KubeRBACProxyContainer(ctx),
+		},
+	}
+
+	if vol, mnt, env, ok := common.CustomCACertVolume(ctx); ok {
+		podSpec.Volumes = append(podSpec.Volumes, *vol)
+		pod := podSpec.Containers[0]
+		pod.VolumeMounts = append(pod.VolumeMounts, *mnt)
+		pod.Env = append(pod.Env, env...)
+		podSpec.Containers[0] = pod
+	}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -81,103 +187,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							common.AnnotationConfigChecksum: configHash,
 						},
 					},
-					Spec: corev1.PodSpec{
-						PriorityClassName: common.SystemNodeCritical,
-						Affinity:          common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
-						TopologySpreadConstraints: []corev1.TopologySpreadConstraint{
-							corev1.TopologySpreadConstraint{
-								LabelSelector:     &metav1.LabelSelector{MatchLabels: labels},
-								MaxSkew:           1,
-								TopologyKey:       "kubernetes.io/hostname",
-								WhenUnsatisfiable: corev1.DoNotSchedule,
-							},
-						},
-						EnableServiceLinks: pointer.Bool(false),
-						ServiceAccountName: Component,
-						SecurityContext: &corev1.PodSecurityContext{
-							RunAsUser: pointer.Int64(31002),
-						},
-						Volumes: append([]corev1.Volume{{
-							Name: "config",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-								},
-							},
-						}, {
-							Name: "ws-manager-client-tls-certs",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: wsmanager.TLSSecretNameClient,
-								},
-							},
-						}}, volumes...),
-						Containers: []corev1.Container{{
-							Name:            Component,
-							Args:            []string{"run", "/config/config.json"},
-							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSProxy.Version),
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									"cpu":    resource.MustParse("100m"),
-									"memory": resource.MustParse("32Mi"),
-								},
-							}),
-							Ports: []corev1.ContainerPort{{
-								Name:          HTTPProxyPortName,
-								ContainerPort: HTTPProxyPort,
-							}, {
-								Name:          HTTPSProxyPortName,
-								ContainerPort: HTTPSProxyPort,
-							}, {
-								Name:          MetricsPortName,
-								ContainerPort: MetricsPort,
-							}},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: pointer.Bool(false),
-							},
-							Env: common.MergeEnv(
-								common.DefaultEnv(&ctx.Config),
-								common.WorkspaceTracingEnv(ctx),
-								common.AnalyticsEnv(&ctx.Config),
-							),
-							ReadinessProbe: &corev1.Probe{
-								InitialDelaySeconds: int32(2),
-								PeriodSeconds:       int32(5),
-								FailureThreshold:    int32(10),
-								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/readyz",
-										Port: intstr.IntOrString{IntVal: ReadinessPort},
-									},
-								},
-							},
-							LivenessProbe: &corev1.Probe{
-								InitialDelaySeconds: int32(2),
-								PeriodSeconds:       int32(5),
-								FailureThreshold:    int32(10),
-								SuccessThreshold:    int32(1),
-								TimeoutSeconds:      int32(2),
-								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/healthz",
-										Port: intstr.IntOrString{IntVal: ReadinessPort},
-									},
-								},
-							},
-							VolumeMounts: append([]corev1.VolumeMount{{
-								Name:      "config",
-								MountPath: "/config",
-								ReadOnly:  true,
-							}, {
-								Name:      "ws-manager-client-tls-certs",
-								MountPath: "/ws-manager-client-tls-certs",
-								ReadOnly:  true,
-							}}, volumeMounts...),
-						},
-							*common.KubeRBACProxyContainer(ctx),
-						},
-					},
+					Spec: podSpec,
 				},
 			},
 		},
