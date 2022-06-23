@@ -1,6 +1,9 @@
 # Change Log
 
 ## June 2022
+- Fix vscode ports tunnel in `Remote Explorer` broken ([#10837](https://github.com/gitpod-io/gitpod/pull/10837)) - [@mustard-mh](https://github.com/mustard-mh)
+- Update IntelliJ IDEA IDE image to version 221.5921.22. ([#10816](https://github.com/gitpod-io/gitpod/pull/10816)) - [@roboquat](https://github.com/roboquat)
+- [installation-telemetry] The gitpod license type has been added to telemetry sent upon installation. ([#10688](https://github.com/gitpod-io/gitpod/pull/10688)) - [@adrienthebo](https://github.com/adrienthebo)
 - [installer]: set minio azure image to last supported version ([#10717](https://github.com/gitpod-io/gitpod/pull/10717)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Change the default directory of ssh connections ([#10736](https://github.com/gitpod-io/gitpod/pull/10736)) - [@mustard-mh](https://github.com/mustard-mh)
 - Remove env print after connect via ssh ([#10736](https://github.com/gitpod-io/gitpod/pull/10736)) - [@mustard-mh](https://github.com/mustard-mh)
