@@ -5,15 +5,17 @@
 package cmd
 
 import (
+	"encoding/json"
+	"net"
+	"os"
+	"time"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/controller"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/spf13/cobra"
-	"net"
-	"os"
-	"time"
 )
 
 func init() {
@@ -47,9 +49,20 @@ func run() *cobra.Command {
 			var billingController controller.BillingController = &controller.NoOpBillingController{}
 
 			if apiKeyFile != "" {
-				c, err := stripe.Authenticate(apiKeyFile)
+				bytes, err := os.ReadFile(apiKeyFile)
 				if err != nil {
-					log.WithError(err).Fatal("Failed to initialize stripe client.")
+					log.WithError(err).Fatal("Failed to read Stripe API keys.")
+				}
+
+				var config stripe.ClientConfig
+				err = json.Unmarshal(bytes, &config)
+				if err != nil {
+					log.WithError(err).Fatal("Failed to unmarshal Stripe API keys.")
+				}
+
+				c, err := stripe.New(config)
+				if err != nil {
+					log.WithError(err).Fatal("Failed to initialize Stripe client.")
 				}
 				billingController = controller.NewStripeBillingController(c)
 			}
