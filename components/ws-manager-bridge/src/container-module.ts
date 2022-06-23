@@ -29,7 +29,6 @@ import {
 import { ClusterService, ClusterServiceServer } from "./cluster-service-server";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { newAnalyticsWriterFromEnv } from "@gitpod/gitpod-protocol/lib/util/analytics";
-import { MetaInstanceController } from "./meta-instance-controller";
 import { IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./preparing-update-emulator";
@@ -43,8 +42,6 @@ export const containerModule = new ContainerModule((bind) => {
     bind(MessageBusIntegration).toSelf().inSingletonScope();
 
     bind(BridgeController).toSelf().inSingletonScope();
-
-    bind(MetaInstanceController).toSelf().inSingletonScope();
 
     bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
     bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();

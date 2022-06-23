@@ -418,7 +418,6 @@ export class WorkspaceManagerBridge implements Disposable {
         clientProvider: ClientProvider,
         controllerIntervalSeconds: number,
         controllerMaxDisconnectSeconds: number,
-        maxTimeToRunningPhaseSeconds = 60 * 60,
     ) {
         let disconnectStarted = Number.MAX_SAFE_INTEGER;
         this.disposables.push(
@@ -435,12 +434,7 @@ export class WorkspaceManagerBridge implements Disposable {
 
                     // Control running workspace instances against ws-manager
                     try {
-                        await this.controlRunningInstances(
-                            ctx,
-                            runningInstances,
-                            clientProvider,
-                            maxTimeToRunningPhaseSeconds,
-                        );
+                        await this.controlRunningInstances(ctx, runningInstances, clientProvider);
 
                         disconnectStarted = Number.MAX_SAFE_INTEGER; // Reset disconnect period
                     } catch (err) {
@@ -452,6 +446,9 @@ export class WorkspaceManagerBridge implements Disposable {
                             disconnectStarted = Date.now();
                         }
                     }
+
+                    // Control workspace instances against timeouts
+                    await this.controlInstancesTimeouts(ctx, runningInstances);
 
                     log.debug("Done controlling instances.", { installation });
                 } catch (err) {
@@ -466,11 +463,14 @@ export class WorkspaceManagerBridge implements Disposable {
         );
     }
 
+    /**
+     * This methods controls all instances that we have currently marked as "running" in the DB.
+     * It checks whether they are still running with their respective ws-manager, and if not, marks them as stopped in the DB.
+     */
     protected async controlRunningInstances(
         parentCtx: TraceContext,
         runningInstances: RunningWorkspaceInfo[],
         clientProvider: ClientProvider,
-        maxTimeToRunningPhaseSeconds: number,
     ) {
         const installation = this.config.installation;
 
@@ -488,12 +488,7 @@ export class WorkspaceManagerBridge implements Disposable {
 
             for (const [instanceId, ri] of runningInstancesIdx.entries()) {
                 const instance = ri.latestInstance;
-                if (
-                    !(
-                        instance.status.phase === "running" ||
-                        durationLongerThanSeconds(Date.parse(instance.creationTime), maxTimeToRunningPhaseSeconds)
-                    )
-                ) {
+                if (instance.status.phase !== "running") {
                     log.debug({ instanceId }, "Skipping instance", {
                         phase: instance.status.phase,
                         creationTime: instance.creationTime,
@@ -514,6 +509,81 @@ export class WorkspaceManagerBridge implements Disposable {
         } catch (err) {
             TraceContext.setError(ctx, err);
             throw err; // required by caller
+        }
+    }
+
+    /**
+     * This methods controls all instances of this installation during periods where ws-manager does not control them, but we have them in our DB.
+     * These currently are:
+     *  - preparing
+     *  - building
+     * It also covers these phases, as fallback, when - for whatever reason - we no longer receive updates from ws-manager.
+     *  - stopping (as fallback, in case ws-manager is stopped to early: configure to be >= then ws-manager timeouts!)
+     *  - unknown (fallback)
+     */
+    protected async controlInstancesTimeouts(parentCtx: TraceContext, runningInstances: RunningWorkspaceInfo[]) {
+        const installation = this.config.installation;
+
+        const span = TraceContext.startSpan("controlDBInstances", parentCtx);
+        const ctx = { span };
+        try {
+            log.debug("Controlling DB instances...", { installation });
+
+            await Promise.all(runningInstances.map((info) => this.controlInstanceTimeouts(ctx, info)));
+
+            log.debug("Done controlling DB instances.", { installation });
+        } catch (err) {
+            log.error("Error while running controlDBInstances", err, {
+                installation: this.cluster.name,
+            });
+            TraceContext.setError(ctx, err);
+        } finally {
+            span.finish();
+        }
+    }
+
+    protected async controlInstanceTimeouts(parentCtx: TraceContext, info: RunningWorkspaceInfo) {
+        const logContext: LogContext = {
+            userId: info.workspace.ownerId,
+            workspaceId: info.workspace.id,
+            instanceId: info.latestInstance.id,
+        };
+        const ctx = TraceContext.childContext("controlDBInstance", parentCtx);
+        try {
+            const now = Date.now();
+            const creationTime = new Date(info.latestInstance.creationTime).getTime();
+            const stoppingTime = new Date(info.latestInstance.stoppingTime ?? now).getTime(); // stoppingTime only set if entered stopping state
+            const timedOutInPreparing = now >= creationTime + this.config.timeouts.preparingPhaseSeconds * 1000;
+            const timedOutInBuilding = now >= creationTime + this.config.timeouts.buildingPhaseSeconds * 1000;
+            const timedOutInStopping = now >= stoppingTime + this.config.timeouts.stoppingPhaseSeconds * 1000;
+            const timedOutInUnknown = now >= creationTime + this.config.timeouts.unknownPhaseSeconds * 1000;
+            const currentPhase = info.latestInstance.status.phase;
+
+            log.debug(logContext, "Controller: Checking for instances in the DB to mark as stopped", {
+                creationTime,
+                stoppingTime,
+                timedOutInPreparing,
+                timedOutInStopping,
+                currentPhase,
+            });
+
+            if (
+                (currentPhase === "preparing" && timedOutInPreparing) ||
+                (currentPhase === "building" && timedOutInBuilding) ||
+                (currentPhase === "stopping" && timedOutInStopping) ||
+                (currentPhase === "unknown" && timedOutInUnknown)
+            ) {
+                log.info(logContext, "Controller: Marking workspace instance as stopped", {
+                    creationTime,
+                    currentPhase,
+                });
+                await this.markWorkspaceInstanceAsStopped(ctx, info, new Date(now));
+            }
+        } catch (err) {
+            log.warn(logContext, "Controller: Error while marking workspace instance as stopped", err);
+            TraceContext.setError(ctx, err);
+        } finally {
+            ctx.span.finish();
         }
     }
 
