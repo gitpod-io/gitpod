@@ -258,10 +258,6 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 				Key:                  "encryptionKeys",
 			}},
 		},
-		corev1.EnvVar{
-			Name:  "DB_DELETED_ENTRIES_GC_ENABLED",
-			Value: "false",
-		},
 	)
 
 	return envvars
