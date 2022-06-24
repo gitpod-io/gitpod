@@ -24,7 +24,7 @@ import {
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TracedWorkspaceDB, TracedUserDB, DBWithTracing } from "@gitpod/gitpod-db/lib/traced-db";
@@ -234,6 +234,11 @@ export class WorkspaceManagerBridge implements Disposable {
             const instanceId = status.id!;
             const workspaceId = status.metadata!.metaId!;
             const userId = status.metadata!.owner!;
+            const logContext: LogContext = {
+                userId,
+                instanceId,
+                workspaceId,
+            };
 
             const instance = await this.workspaceDB.trace({ span }).findInstanceById(instanceId);
             if (instance) {
@@ -265,7 +270,18 @@ export class WorkspaceManagerBridge implements Disposable {
 
             instance.ideUrl = status.spec.url!;
             instance.status.timeout = status.spec.timeout;
-            instance.status.conditions.failed = status.conditions.failed;
+            if (!!instance.status.conditions.failed && !status.conditions.failed) {
+                // We already have a "failed" condition, and received an empty one: This is a bug, "failed" conditions are terminal per definition.
+                // Do not override!
+                log.error(logContext, 'We received an empty "failed" condition overriding an existing one!', {
+                    current: instance.status.conditions.failed,
+                });
+
+                // TODO(gpl) To make ensure we do not break anything big time we keep the unconditional override for now, and observe for some time.
+                instance.status.conditions.failed = status.conditions.failed;
+            } else {
+                instance.status.conditions.failed = status.conditions.failed;
+            }
             instance.status.conditions.pullingImages = toBool(status.conditions.pullingImages!);
             instance.status.conditions.deployed = toBool(status.conditions.deployed);
             instance.status.conditions.timeout = status.conditions.timeout;
@@ -334,7 +350,7 @@ export class WorkspaceManagerBridge implements Disposable {
                             instance.stoppingTime = new Date().toISOString();
                         }
                     } else {
-                        log.warn("Got a stopping event for an already stopped workspace.", instance);
+                        log.warn(logContext, "Got a stopping event for an already stopped workspace.", instance);
                     }
                     break;
                 case WorkspacePhase.STOPPED:
@@ -362,11 +378,9 @@ export class WorkspaceManagerBridge implements Disposable {
                 writeToDB
             ) {
                 if (status.conditions.volumeSnapshot.volumeSnapshotName != instance.id) {
-                    log.error(
-                        "volume snapshot name doesn't match workspace instance id",
-                        status.conditions.volumeSnapshot.volumeSnapshotName,
-                        instance.id,
-                    );
+                    log.error(logContext, "volume snapshot name doesn't match workspace instance id", {
+                        volumeSnapshotName: status.conditions.volumeSnapshot.volumeSnapshotName,
+                    });
                 } else {
                     let existingSnapshot = await this.workspaceDB
                         .trace(ctx)
