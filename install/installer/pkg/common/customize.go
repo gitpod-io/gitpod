@@ -12,6 +12,7 @@ type CustomizationType string
 
 const (
 	CustomizationTypeAnnotation CustomizationType = "annotation"
+	CustomizationTypeLabel      CustomizationType = "label"
 )
 
 func extractCustomizations(ctx *RenderContext, name string, typeMeta metav1.TypeMeta, customizationType CustomizationType) map[string]string {
@@ -29,6 +30,10 @@ func extractCustomizations(ctx *RenderContext, name string, typeMeta metav1.Type
 						if customizationType == CustomizationTypeAnnotation {
 							// Annotations
 							customizations = mergeCustomizations(customizations, customization.Metadata.Annotations)
+						}
+						if customizationType == CustomizationTypeLabel {
+							// Labels
+							customizations = mergeCustomizations(customizations, customization.Metadata.Labels)
 						}
 					}
 				}
@@ -72,6 +77,12 @@ func CustomizeEnvvar(ctx *RenderContext, component string, existingEnvvars []cor
 func CustomizeLabel(ctx *RenderContext, component string, typeMeta metav1.TypeMeta, existingLabels ...func() map[string]string) map[string]string {
 	labels := DefaultLabels(component)
 
+	// Apply the customizations
+	for k, v := range extractCustomizations(ctx, component, typeMeta, CustomizationTypeLabel) {
+		labels[k] = v
+	}
+
+	// Always apply existing labels
 	for _, e := range existingLabels {
 		for k, v := range e() {
 			labels[k] = v
