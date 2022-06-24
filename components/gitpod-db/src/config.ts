@@ -40,12 +40,6 @@ export class Config {
     get dbEncryptionKeys(): string {
         return getEnvVar("DB_ENCRYPTION_KEYS");
     }
-
-    get deletedEntryGCConfig(): DeletedEntryGCConfig {
-        const enabled = getEnvVar("DB_DELETED_ENTRIES_GC_ENABLED", "true") === "true";
-        const intervalMS = parseInt(getEnvVar("DB_DELETED_ENTRIES_GC_INTERVAL", (10 * 60 * 1000).toString()));
-        return { enabled, intervalMS };
-    }
 }
 
 export interface DatabaseConfig {
@@ -54,9 +48,4 @@ export interface DatabaseConfig {
     database?: string;
     username?: string;
     password?: string;
-}
-
-export interface DeletedEntryGCConfig {
-    enabled: boolean;
-    intervalMS: number;
 }
