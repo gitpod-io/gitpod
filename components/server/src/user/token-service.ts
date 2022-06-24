@@ -39,7 +39,7 @@ export class TokenService implements TokenProvider {
         if (!promise) {
             promise = this.doGetTokenForHost(user, host);
             this.getTokenForHostCache.set(key, promise);
-            promise.finally(() => this.getTokenForHostCache.delete(key));
+            promise = promise.finally(() => this.getTokenForHostCache.delete(key));
         }
         return promise;
     }
