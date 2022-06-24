@@ -60,7 +60,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1655818317025,
+  "iteration": 1656107717942,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -337,7 +337,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum_over_time((probe_success{environment=\"preview-environments\", job=\"probe\"} == 1)[5m]) \r\n/\r\ncount_over_time(up{environment=\"preview-environments\", job=\"probe\"}[5m])",
+          "expr": "sum(probe_success{environment=\"preview-environments\", job=\"probe\"} == 1)\r\n/\r\ncount(up{environment=\"preview-environments\", job=\"probe\"})",
           "format": "time_series",
           "instant": false,
           "legendFormat": "Probe success rate",
