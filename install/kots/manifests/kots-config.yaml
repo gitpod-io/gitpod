@@ -379,6 +379,21 @@ spec:
           default: "0"
           help_text: Enables additional customization options. Enable only when you know what you are doing!
 
+        - name: customization_patch
+          title: Gitpod customization patch (YAML file)
+          type: file
+          required: false
+          when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
+          help_text: |
+            A file configured to override annotations, labels and environment variables in components. See our
+            [advanced documentation](https://www.gitpod.io/docs/self-hosted/latest/advanced/customization) for
+            more details and the format.
+
+            Labels are an immutable property in Kubernetes, so you may need to uninstall your Gitpod instance
+            before applying - run `helm uninstall -n {{repl Namespace }} gitpod`.
+
+            **WARNING** this should not be run if using in-cluster database and/or object storage.
+
         - name: config_patch
           title: Gitpod config patch (YAML file)
           type: file
