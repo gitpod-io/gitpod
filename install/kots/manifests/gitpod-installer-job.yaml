@@ -28,7 +28,7 @@ spec:
       containers:
         - name: installer
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-azure-minio-gateway.0"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-kots-customization.1"
           volumeMounts:
             - mountPath: /config-patch
               name: config-patch
@@ -259,6 +259,18 @@ spec:
                   echo "Gitpod: Adding domain \"${domain}\" to blockNewUsers config"
                   yq e -i ".blockNewUsers.passlist += \"${domain}\"" "${CONFIG_FILE}"
                 done
+              fi
+
+              if [ '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}' = "true" ];
+              then
+                if [ '{{repl ConfigOptionNotEquals "customization_patch" "" }}' = "true" ];
+                then
+                  CUSTOMIZATION='{{repl ConfigOptionData "customization_patch" | Base64Encode }}'
+                  echo "Gitpod: Applying customization patch ${CUSTOMIZATION}"
+
+                  # Apply the customization property - if something else is set, this will be ignored
+                  yq e -i ".customization = $(echo "${CUSTOMIZATION}" | base64 -d | yq e -o json '.customization' - | jq -rc) // []" "${CONFIG_FILE}"
+                fi
               fi
 
               echo "Gitpod: Patch Gitpod config"
