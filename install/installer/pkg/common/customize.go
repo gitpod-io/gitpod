@@ -71,7 +71,31 @@ func CustomizeAnnotation(ctx *RenderContext, component string, typeMeta metav1.T
 }
 
 func CustomizeEnvvar(ctx *RenderContext, component string, existingEnvvars []corev1.EnvVar) []corev1.EnvVar {
-	return existingEnvvars
+	// Use a map so we can remove duplicated keys
+	envvars := make(map[string]corev1.EnvVar, 0)
+
+	// Apply the customizations - envvars only need to match name
+	if ctx.Config.Customization != nil {
+		for _, customization := range *ctx.Config.Customization {
+			if customization.Metadata.Name == component || customization.Metadata.Name == "*" {
+				for _, e := range customization.Spec.Env {
+					envvars[e.Name] = e
+				}
+			}
+		}
+	}
+
+	// Always apply existing envvars
+	for _, e := range existingEnvvars {
+		envvars[e.Name] = e
+	}
+
+	// Convert map back slice
+	output := make([]corev1.EnvVar, 0, len(envvars))
+	for _, e := range envvars {
+		output = append(output, e)
+	}
+	return output
 }
 
 func CustomizeLabel(ctx *RenderContext, component string, typeMeta metav1.TypeMeta, existingLabels ...func() map[string]string) map[string]string {
