@@ -14,6 +14,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 )
 
@@ -109,6 +110,8 @@ type Config struct {
 	CustomCACert *ObjectRef `json:"customCACert,omitempty"`
 
 	DropImageRepo *bool `json:"dropImageRepo,omitempty"`
+
+	Customization *[]Customization `json:"customization,omitempty"`
 
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
@@ -325,4 +328,10 @@ type OAuth struct {
 	ClientId     string `json:"clientId" validate:"required"`
 	ClientSecret string `json:"clientSecret" validate:"required"`
 	CallBackUrl  string `json:"callBackUrl" validate:"required"`
+}
+
+// Customization is a stripped-down version of the Kubernetes YAML
+type Customization struct {
+	metav1.TypeMeta `json:",inline"`
+	Metadata        metav1.ObjectMeta `json:"metadata"`
 }
