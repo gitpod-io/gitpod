@@ -334,4 +334,9 @@ type OAuth struct {
 type Customization struct {
 	metav1.TypeMeta `json:",inline"`
 	Metadata        metav1.ObjectMeta `json:"metadata"`
+	Spec            CustomizationSpec `json:"spec,omitempty"`
+}
+
+type CustomizationSpec struct {
+	Env []corev1.EnvVar `json:"env"`
 }
