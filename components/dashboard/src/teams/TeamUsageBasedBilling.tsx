@@ -68,13 +68,20 @@ export default function TeamUsageBasedBilling() {
         (async () => {
             const setupIntentId = params.get("setup_intent")!;
             window.history.replaceState({}, "", window.location.pathname);
-            await getGitpodService().server.subscribeTeamToStripe(team.id, setupIntentId, currency);
             const pendingSubscription = { pendingSince: Date.now() };
             setPendingStripeSubscription(pendingSubscription);
             window.localStorage.setItem(
                 `pendingStripeSubscriptionForTeam${team.id}`,
                 JSON.stringify(pendingSubscription),
             );
+            try {
+                await getGitpodService().server.subscribeTeamToStripe(team.id, setupIntentId, currency);
+            } catch (error) {
+                console.error("Could not subscribe team to Stripe", error);
+                window.localStorage.removeItem(`pendingStripeSubscriptionForTeam${team.id}`);
+                clearTimeout(pollStripeSubscriptionTimeout!);
+                setPendingStripeSubscription(undefined);
+            }
         })();
     }, [location.search, team]);
 
@@ -122,9 +129,6 @@ export default function TeamUsageBasedBilling() {
             }, 5000);
             setPollStripeSubscriptionTimeout(timeout);
         }
-        return function cleanup() {
-            clearTimeout(pollStripeSubscriptionTimeout!);
-        };
     }, [pendingStripeSubscription, pollStripeSubscriptionTimeout, stripeSubscriptionId, team]);
 
     if (!showUsageBasedUI) {
