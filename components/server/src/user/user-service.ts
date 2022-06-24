@@ -210,10 +210,29 @@ export class UserService {
      * Identifies the team or user to which a workspace instance's running time should be attributed to
      * (e.g. for usage analytics or billing purposes).
      *
+     * A. Billing-based attribution: If payments are enabled, we attribute all the user's usage to:
+     *   - An explicitly selected billing account (e.g. a team with usage-based billing enabled)
+     *   - Or, we default to the user for all usage (e.g. free tier or individual billing, regardless of project/team)
+     *
+     * B. Project-based attribution: If payments are not enabled (e.g. Self-Hosted), we attribute:
+     *   - To the owner of the project (user or team), if the workspace is linked to a project
+     *   - To the user, iff the workspace is not linked to a project
+     *
      * @param user
      * @param projectId
      */
     async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<string | undefined> {
+        // A. Billing-based attribution
+        if (this.config.enablePayment) {
+            if (!user.additionalData?.usageAttributionId) {
+                // No explicit user attribution ID yet -- attribute all usage to the user by default (regardless of project/team).
+                return `user:${user.id}`;
+            }
+            // Return the user's explicit attribution ID.
+            return user.additionalData.usageAttributionId;
+        }
+
+        // B. Project-based attribution
         if (!projectId) {
             // No project -- attribute to the user.
             return `user:${user.id}`;
