@@ -53,6 +53,9 @@ type LicensePayload struct {
 
 	// Seats == 0 means there's no seat limit
 	Seats int `json:"seats"`
+
+	// CustomerID is used to identify installations in installation analytics
+	CustomerID string `json:"customerID"`
 }
 
 type licensePayload struct {

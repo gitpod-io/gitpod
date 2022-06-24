@@ -23,6 +23,7 @@ type Data struct {
 	TotalWorkspaces   int64             `json:"totalWorkspaces"`
 	TotalInstances    int64             `json:"totalInstances"`
 	LicenseType       string            `json:"licenseType"`
+	CustomerID        string            `json:"customerID,omitempty"`
 }
 
 type InstallationAdmin struct {

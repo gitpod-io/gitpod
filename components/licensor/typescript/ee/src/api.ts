@@ -29,6 +29,7 @@ export interface LicensePayload {
     level: LicenseLevel
     validUntil: string
     seats: number
+    customerID: string
 }
 
 export enum LicenseSubscriptionLevel {
