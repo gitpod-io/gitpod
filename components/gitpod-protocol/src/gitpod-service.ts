@@ -273,7 +273,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     getStripePublishableKey(): Promise<string>;
     getStripeSetupIntentClientSecret(): Promise<string>;
-    findStripeCustomerIdForTeam(teamId: string): Promise<string | undefined>;
+    findStripeSubscriptionIdForTeam(teamId: string): Promise<string | undefined>;
     subscribeTeamToStripe(teamId: string, setupIntentId: string, currency: Currency): Promise<void>;
     getStripePortalUrlForTeam(teamId: string): Promise<string>;
 

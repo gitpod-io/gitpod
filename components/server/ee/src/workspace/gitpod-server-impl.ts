@@ -1904,18 +1904,22 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async findStripeCustomerIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
-        const user = this.checkAndBlockUser("findStripeCustomerIdForTeam");
+    async findStripeSubscriptionIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
+        const user = this.checkAndBlockUser("findStripeSubscriptionIdForTeam");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         await this.guardTeamOperation(teamId, "update");
         try {
             const customer = await this.stripeService.findCustomerByTeamId(teamId);
-            return customer?.id || undefined;
+            if (!customer?.id) {
+                return undefined;
+            }
+            const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(customer.id);
+            return subscription?.id;
         } catch (error) {
-            log.error(`Failed to get Stripe Customer ID for team '${teamId}'`, error);
+            log.error(`Failed to get Stripe Subscription ID for team '${teamId}'`, error);
             throw new ResponseError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
-                `Failed to get Stripe Customer ID for team '${teamId}'`,
+                `Failed to get Stripe Subscription ID for team '${teamId}'`,
             );
         }
     }
@@ -1931,7 +1935,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardTeamOperation(teamId, "update");
         const team = await this.teamDB.findTeamById(teamId);
         try {
-            const customer = await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
+            let customer = await this.stripeService.findCustomerByTeamId(team!.id);
+            if (!customer) {
+                customer = await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
+            }
             await this.stripeService.createSubscriptionForCustomer(customer.id, currency);
         } catch (error) {
             log.error(`Failed to subscribe team '${teamId}' to Stripe`, error);

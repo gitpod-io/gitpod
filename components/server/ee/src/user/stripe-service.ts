@@ -115,6 +115,16 @@ export class StripeService {
         return session.url;
     }
 
+    async findUncancelledSubscriptionByCustomer(customerId: string): Promise<Stripe.Subscription | undefined> {
+        const result = await this.getStripe().subscriptions.list({
+            customer: customerId,
+        });
+        if (result.data.length > 1) {
+            throw new Error(`Stripe customer '${customerId}') has more than one subscription!`);
+        }
+        return result.data[0];
+    }
+
     async createSubscriptionForCustomer(customerId: string, currency: Currency): Promise<void> {
         const priceId = this.config?.stripeConfig?.usageProductPriceIds[currency];
         if (!priceId) {
