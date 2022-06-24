@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -375,6 +376,152 @@ func TestCustomizeLabel(t *testing.T) {
 
 			if !reflect.DeepEqual(expectation, result) {
 				t.Errorf("expected %v but got %v", expectation, result)
+			}
+		})
+	}
+}
+
+func TestCustomizeEnvvar(t *testing.T) {
+	testCases := []struct {
+		Name            string
+		Customization   []config.Customization
+		Component       string
+		ExistingEnnvars []corev1.EnvVar
+		Expect          []corev1.EnvVar
+	}{
+
+		{
+			Name:          "no customization",
+			Customization: nil,
+			Component:     "component",
+			Expect:        []corev1.EnvVar{},
+		},
+		{
+			Customization: []config.Customization{},
+			Name:          "empty customization",
+			Component:     "component",
+			Expect:        []corev1.EnvVar{},
+		},
+		{
+			Customization: []config.Customization{
+				{
+					TypeMeta: common.TypeMetaDeployment,
+					Metadata: metav1.ObjectMeta{
+						Name: "component2",
+					},
+					Spec: config.CustomizationSpec{
+						Env: []corev1.EnvVar{
+							{
+								Name:  "key1",
+								Value: "value1",
+							},
+						},
+					},
+				},
+			},
+			Name:      "ignore different name envvars",
+			Component: "component",
+			Expect:    []corev1.EnvVar{},
+		},
+		{
+			Customization: []config.Customization{
+				{
+					TypeMeta: common.TypeMetaDeployment,
+					Metadata: metav1.ObjectMeta{
+						Name: "component",
+					},
+					Spec: config.CustomizationSpec{
+						Env: []corev1.EnvVar{
+							{
+								Name:  "key1",
+								Value: "value1",
+							},
+						},
+					},
+				},
+			},
+			Name:      "add in name envvars",
+			Component: "component",
+			Expect: []corev1.EnvVar{
+				{
+					Name:  "key1",
+					Value: "value1",
+				},
+			},
+		},
+		{
+			Customization: []config.Customization{
+				{
+					Metadata: metav1.ObjectMeta{
+						Name: "*",
+					},
+					Spec: config.CustomizationSpec{
+						Env: []corev1.EnvVar{
+							{
+								Name:  "key1",
+								Value: "original",
+							},
+							{
+								Name:  "key2",
+								Value: "original",
+							},
+							{
+								Name:  "key3",
+								Value: "override",
+							},
+						},
+					},
+				},
+				{
+					Metadata: metav1.ObjectMeta{
+						Name: "component",
+					},
+					Spec: config.CustomizationSpec{
+						Env: []corev1.EnvVar{
+							{
+								Name:  "key1",
+								Value: "override",
+							},
+						},
+					},
+				},
+			},
+			ExistingEnnvars: []corev1.EnvVar{
+				{
+					Name:  "key3",
+					Value: "original",
+				},
+			},
+			Name:      "full-house envvars",
+			Component: "component",
+			Expect: []corev1.EnvVar{
+				{
+					Name:  "key1",
+					Value: "override",
+				},
+				{
+					Name:  "key2",
+					Value: "original",
+				},
+				{
+					Name:  "key3",
+					Value: "original",
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.Name, func(t *testing.T) {
+			ctx, err := common.NewRenderContext(config.Config{
+				Customization: &testCase.Customization,
+			}, versions.Manifest{}, "test_namespace")
+			require.NoError(t, err)
+
+			result := common.CustomizeEnvvar(ctx, testCase.Component, testCase.ExistingEnnvars)
+
+			if !reflect.DeepEqual(testCase.Expect, result) {
+				t.Errorf("expected %v but got %v", testCase.Expect, result)
 			}
 		})
 	}
