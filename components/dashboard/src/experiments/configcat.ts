@@ -23,6 +23,7 @@ export function newProductionConfigCatClient(): Client {
     // clientKey is an identifier of our ConfigCat application. It is not a secret.
     const clientKey = "WBLaCPtkjkqKHlHedziE9g/TwAe6YyftEGPnGxVRXd0Ig";
     const client = configcat.createClient(clientKey, {
+        maxInitWaitTimeSeconds: 0,
         logger: configcat.createConsoleLogger(2),
     });
 
@@ -35,6 +36,7 @@ export function newNonProductionConfigCatClient(): Client {
     // clientKey is an identifier of our ConfigCat application. It is not a secret.
     const clientKey = "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw";
     const client = configcat.createClient(clientKey, {
+        maxInitWaitTimeSeconds: 0,
         pollIntervalSeconds: 60 * 3, // 3 minutes
         logger: configcat.createConsoleLogger(3),
     });
