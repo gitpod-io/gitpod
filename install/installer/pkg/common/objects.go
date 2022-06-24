@@ -28,9 +28,10 @@ func DefaultServiceAccount(component string) RenderFunc {
 			&corev1.ServiceAccount{
 				TypeMeta: TypeMetaServiceAccount,
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      component,
-					Namespace: cfg.Namespace,
-					Labels:    DefaultLabels(component),
+					Name:        component,
+					Namespace:   cfg.Namespace,
+					Labels:      CustomizeLabel(cfg, component, TypeMetaConfigmap),
+					Annotations: CustomizeAnnotation(cfg, component, TypeMetaConfigmap),
 				},
 				AutomountServiceAccountToken: pointer.Bool(true),
 				ImagePullSecrets:             pullSecrets,
@@ -80,6 +81,14 @@ func GenerateService(component string, ports []ServicePort, mod ...func(spec *co
 			// Apply any custom modifications to the spec
 			m(service)
 		}
+
+		// Add in the customizations for labels and annotations
+		service.ObjectMeta.Labels = CustomizeLabel(cfg, component, TypeMetaService, func() map[string]string {
+			return service.ObjectMeta.Labels
+		})
+		service.ObjectMeta.Annotations = CustomizeAnnotation(cfg, component, TypeMetaService, func() map[string]string {
+			return service.ObjectMeta.Annotations
+		})
 
 		return []runtime.Object{service}, nil
 	}
