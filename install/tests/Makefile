@@ -110,6 +110,12 @@ get-config-gcp-db:
 	envsubst '$${TF_VAR_TEST_ID}' < tmp_4_config.yml > tmp_5_config.yml
 	yq m -i tmp_config.yml tmp_5_config.yml
 
+get-config-azure-storage:
+
+get-config-azure-db:
+
+get-config-azure-registry:
+
 storage ?= incluster
 registry ?= incluster
 db ?= incluster
