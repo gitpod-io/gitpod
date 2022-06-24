@@ -30,7 +30,7 @@ spec:
       containers:
         - name: installation-status
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-azure-minio-gateway.0"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-kots-customization.1"
           command:
             - /bin/sh
             - -c
