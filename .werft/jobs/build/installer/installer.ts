@@ -71,6 +71,7 @@ export class Installer {
             this.configureSSHGateway(slice)
             this.configurePublicAPIServer(slice)
             this.configureUsage(slice)
+            this.configureConfigCat(slice)
 
             if (this.options.analytics) {
                 this.includeAnalytics(slice)
@@ -195,6 +196,11 @@ EOF`)
 
     private configureUsage(slice: string) {
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.enabled true`, { slice: slice })
+    }
+
+    private configureConfigCat(slice: string) {
+        // This key is not a secret, it is a unique identifier of our ConfigCat application
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.configcatKey "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw"`, { slice: slice })
     }
 
     private includeAnalytics(slice: string): void {
