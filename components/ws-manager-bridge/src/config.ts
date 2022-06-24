@@ -30,7 +30,6 @@ export interface Configuration {
     timeouts: {
         preparingPhaseSeconds: number;
         buildingPhaseSeconds: number;
-        stoppingPhaseSeconds: number;
         unknownPhaseSeconds: number;
     };
 
