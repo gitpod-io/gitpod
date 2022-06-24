@@ -14,6 +14,7 @@ export function getExperimentsClient(): IConfigCatClient {
     if (client === undefined) {
         client = configcat.createClient("WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw", {
             // <-- This is the actual SDK Key for your Test environment
+            maxInitWaitTimeSeconds: 0,
             logger: logger,
         });
     }
