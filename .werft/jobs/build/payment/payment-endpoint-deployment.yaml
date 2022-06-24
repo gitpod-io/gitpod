@@ -61,8 +61,6 @@ spec:
             secretKeyRef:
               key: encryptionKeys
               name: mysql
-        - name: DB_DELETED_ENTRIES_GC_ENABLED
-          value: "false"
         - name: CHARGEBEE_WEBHOOK
           value: '{"id":"whv2_Hr55137RIX0bgV1e96","password":"0\"cR4M,;nV=$m9izAHEah","user":"chargebee"}'
         - name: GITPOD_GITHUB_APP_ENABLED
@@ -146,5 +144,3 @@ spec:
       - name: chargebee-config
         secret:
           secretName: chargebee-config
-
-

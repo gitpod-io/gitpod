@@ -43,12 +43,6 @@ export class GitpodSessionTableDescriptionProvider implements TableDescriptionPr
     }
 }
 
-/**
- * BEWARE
- *
- * When updating this list, make sure you update the deleted-entry-gc.ts in gitpod-db
- * as well, if you're adding a table that needs some of its entries deleted.
- */
 @injectable()
 export class GitpodTableDescriptionProvider implements TableDescriptionProvider {
     readonly name = "gitpod";
@@ -268,12 +262,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             deletionColumn: "deleted",
             timeColumn: "_lastModified",
         },
-        /**
-         * BEWARE
-         *
-         * When updating this list, make sure you update the deleted-entry-gc.ts in gitpod-db
-         * as well, if you're adding a table that needs some of its entries deleted.
-         */
     ];
 
     public getSortedTables(): TableDescription[] {

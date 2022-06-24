@@ -20,7 +20,6 @@ import { encryptionModule } from "@gitpod/gitpod-protocol/lib/encryption/contain
 import { KeyProviderImpl, KeyProviderConfig } from "@gitpod/gitpod-protocol/lib/encryption/key-provider";
 import { DBWithTracing, bindDbWithTracing, TracedWorkspaceDB, TracedUserDB, TracedOneTimeSecretDB } from "./traced-db";
 import { OneTimeSecretDB } from "./one-time-secret-db";
-import { DeletedEntryGC } from "./typeorm/deleted-entry-gc";
 import { TypeORMAppInstallationDBImpl } from "./typeorm/app-installation-db-impl";
 import { AppInstallationDB } from "./app-installation-db";
 import { TheiaPluginDBImpl } from "./typeorm/theia-plugin-db-impl";
@@ -71,7 +70,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(TypeORM).toSelf().inSingletonScope();
     bind(DBWithTracing).toSelf().inSingletonScope();
     bind(TransactionalWorkspaceDbImpl).toSelf().inSingletonScope();
-    bind(DeletedEntryGC).toSelf().inSingletonScope();
 
     bind(TypeORMUserDBImpl).toSelf().inSingletonScope();
     bind(UserDB).toService(TypeORMUserDBImpl);

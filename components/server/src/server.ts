@@ -29,7 +29,7 @@ import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
-import { DeletedEntryGC, PeriodicDbDeleter, TypeORM } from "@gitpod/gitpod-db/lib";
+import { PeriodicDbDeleter, TypeORM } from "@gitpod/gitpod-db/lib";
 import { OneTimeSecretServer } from "./one-time-secret-server";
 import { Disposable, DisposableCollection, GitpodClient, GitpodServer } from "@gitpod/gitpod-protocol";
 import { BearerAuth, isBearerAuthError } from "./auth/bearer-authenticator";
@@ -72,7 +72,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(RabbitMQConsensusLeaderMessenger) protected readonly consensusMessenger: RabbitMQConsensusLeaderMessenger;
     @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
     @inject(WorkspaceGarbageCollector) protected readonly workspaceGC: WorkspaceGarbageCollector;
-    @inject(DeletedEntryGC) protected readonly deletedEntryGC: DeletedEntryGC;
     @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
 
     @inject(PeriodicDbDeleter) protected readonly periodicDbDeleter: PeriodicDbDeleter;
@@ -266,9 +265,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
         // Start workspace garbage collector
         this.workspaceGC.start().catch((err) => log.error("wsgc: error during startup", err));
-
-        // Start deleted entry GC
-        this.deletedEntryGC.start();
 
         // Start one-time secret GC
         this.oneTimeSecretServer.startPruningExpiredSecrets();
