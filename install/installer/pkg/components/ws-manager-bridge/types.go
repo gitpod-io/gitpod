@@ -24,7 +24,6 @@ type ClusterService struct {
 type Timeouts struct {
 	PreparingPhaseSeconds int32 `json:"preparingPhaseSeconds"`
 	BuildingPhaseSeconds  int32 `json:"buildingPhaseSeconds"`
-	StoppingPhaseSeconds  int32 `json:"stoppingPhaseSeconds"`
 	UnknownPhaseSeconds   int32 `json:"unknownPhaseSeconds"`
 }
 

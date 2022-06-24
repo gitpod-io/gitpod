@@ -518,7 +518,6 @@ export class WorkspaceManagerBridge implements Disposable {
      *  - preparing
      *  - building
      * It also covers these phases, as fallback, when - for whatever reason - we no longer receive updates from ws-manager.
-     *  - stopping (as fallback, in case ws-manager is stopped to early: configure to be >= then ws-manager timeouts!)
      *  - unknown (fallback)
      */
     protected async controlInstancesTimeouts(parentCtx: TraceContext, runningInstances: RunningWorkspaceInfo[]) {
@@ -552,25 +551,20 @@ export class WorkspaceManagerBridge implements Disposable {
         try {
             const now = Date.now();
             const creationTime = new Date(info.latestInstance.creationTime).getTime();
-            const stoppingTime = new Date(info.latestInstance.stoppingTime ?? now).getTime(); // stoppingTime only set if entered stopping state
             const timedOutInPreparing = now >= creationTime + this.config.timeouts.preparingPhaseSeconds * 1000;
             const timedOutInBuilding = now >= creationTime + this.config.timeouts.buildingPhaseSeconds * 1000;
-            const timedOutInStopping = now >= stoppingTime + this.config.timeouts.stoppingPhaseSeconds * 1000;
             const timedOutInUnknown = now >= creationTime + this.config.timeouts.unknownPhaseSeconds * 1000;
             const currentPhase = info.latestInstance.status.phase;
 
             log.debug(logContext, "Controller: Checking for instances in the DB to mark as stopped", {
                 creationTime,
-                stoppingTime,
                 timedOutInPreparing,
-                timedOutInStopping,
                 currentPhase,
             });
 
             if (
                 (currentPhase === "preparing" && timedOutInPreparing) ||
                 (currentPhase === "building" && timedOutInBuilding) ||
-                (currentPhase === "stopping" && timedOutInStopping) ||
                 (currentPhase === "unknown" && timedOutInUnknown)
             ) {
                 log.info(logContext, "Controller: Marking workspace instance as stopped", {
