@@ -21,12 +21,16 @@ import (
 	"google.golang.org/grpc/codes"
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
+	covev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -84,10 +88,16 @@ type Monitor struct {
 	OnError func(error)
 
 	notifyPod map[string]chan string
+
+	eventRecorder record.EventRecorder
 }
 
 // CreateMonitor creates a new monitor
 func (m *Manager) CreateMonitor() (*Monitor, error) {
+	broadcaster := record.NewBroadcaster()
+	broadcaster.StartRecordingToSink(&covev1client.EventSinkImpl{Interface: m.RawClient.CoreV1().Events("")})
+	eventRecorder := broadcaster.NewRecorder(runtime.NewScheme(), corev1.EventSource{Component: "ws-manager"})
+
 	monitorInterval := time.Duration(m.Config.HeartbeatInterval)
 	// Monitor interval is half the heartbeat interval to catch timed out workspaces in time.
 	// See https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem why we need this.
@@ -106,6 +116,8 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 		},
 
 		notifyPod: make(map[string]chan string),
+
+		eventRecorder: eventRecorder,
 	}
 	res.eventpool = workpool.NewEventWorkerPool(res.handleEvent)
 	res.act = struct {
@@ -175,12 +187,22 @@ func (m *Monitor) onVolumesnapshotEvent(evt watch.Event) error {
 	podName := *vs.Spec.Source.PersistentVolumeClaimName
 	log = log.WithField("pod", podName)
 
+	// get the pod resource
+	var pod corev1.Pod
+	if err := m.manager.Clientset.Get(context.Background(), types.NamespacedName{Namespace: vs.Namespace, Name: podName}, &pod); err != nil {
+		log.WithError(err).Warnf("the pod %s/%s is missing", podName, vs.Namespace)
+		return nil
+	}
+
 	if vs.Status == nil || vs.Status.ReadyToUse == nil || !*vs.Status.ReadyToUse || vs.Status.BoundVolumeSnapshotContentName == nil {
+		m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is in progress", vs.Name)
 		return nil
 	}
 
 	vsc := *vs.Status.BoundVolumeSnapshotContentName
-	log.Infof("the vsc %s is ready", vsc)
+	log.Infof("the vsc %s is ready to use", vsc)
+	m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is ready to use", vs.Name)
+
 	if m.notifyPod[podName] == nil {
 		m.notifyPod[podName] = make(chan string)
 	}
