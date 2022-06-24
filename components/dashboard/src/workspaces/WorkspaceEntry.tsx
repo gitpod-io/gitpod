@@ -149,7 +149,8 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         }
     };
 
-    const normalizedContextUrl = ContextURL.getNormalizedURL(ws)?.toString() || "undefined";
+    const normalizedContextUrl = ContextURL.getNormalizedURL(ws)?.toString();
+    const normalizedContextUrlDescription = normalizedContextUrl || ws.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
     return (
         <Item className="whitespace-nowrap py-6 px-6">
             <ItemFieldIcon>
@@ -175,7 +176,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                 </div>
                 <a href={normalizedContextUrl}>
                     <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">
-                        {normalizedContextUrl}
+                        {normalizedContextUrlDescription}
                     </div>
                 </a>
             </ItemField>

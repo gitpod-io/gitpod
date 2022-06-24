@@ -38,7 +38,7 @@ export namespace ContextURL {
         try {
             return new URL(normalized);
         } catch (err) {
-            console.error(`unable to parse URL from normalized contextURL: '${normalized}'`, err);
+            console.debug(`unable to parse URL from normalized contextURL: '${normalized}'`);
         }
         return undefined;
     }
