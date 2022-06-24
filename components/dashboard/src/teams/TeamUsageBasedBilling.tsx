@@ -15,18 +15,18 @@ import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
 
-type PendingStripeCustomer = { pendingSince: number };
+type PendingStripeSubscription = { pendingSince: number };
 
 export default function TeamUsageBasedBilling() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const { showUsageBasedUI, currency } = useContext(PaymentContext);
-    const [stripeCustomerId, setStripeCustomerId] = useState<string | undefined>();
+    const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
-    const [pendingStripeCustomer, setPendingStripeCustomer] = useState<PendingStripeCustomer | undefined>();
-    const [pollStripeCustomerTimeout, setPollStripeCustomerTimeout] = useState<NodeJS.Timeout | undefined>();
+    const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>();
+    const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
 
     useEffect(() => {
@@ -34,11 +34,11 @@ export default function TeamUsageBasedBilling() {
             return;
         }
         (async () => {
-            setStripeCustomerId(undefined);
+            setStripeSubscriptionId(undefined);
             setIsLoading(true);
             try {
-                const customerId = await getGitpodService().server.findStripeCustomerIdForTeam(team.id);
-                setStripeCustomerId(customerId);
+                const subscriptionId = await getGitpodService().server.findStripeSubscriptionIdForTeam(team.id);
+                setStripeSubscriptionId(subscriptionId);
             } catch (error) {
                 console.error(error);
             } finally {
@@ -48,14 +48,14 @@ export default function TeamUsageBasedBilling() {
     }, [team]);
 
     useEffect(() => {
-        if (!team || !stripeCustomerId) {
+        if (!team || !stripeSubscriptionId) {
             return;
         }
         (async () => {
             const portalUrl = await getGitpodService().server.getStripePortalUrlForTeam(team.id);
             setStripePortalUrl(portalUrl);
         })();
-    }, [team, stripeCustomerId]);
+    }, [team, stripeSubscriptionId]);
 
     useEffect(() => {
         if (!team) {
@@ -69,60 +69,63 @@ export default function TeamUsageBasedBilling() {
             const setupIntentId = params.get("setup_intent")!;
             window.history.replaceState({}, "", window.location.pathname);
             await getGitpodService().server.subscribeTeamToStripe(team.id, setupIntentId, currency);
-            const pendingCustomer = { pendingSince: Date.now() };
-            setPendingStripeCustomer(pendingCustomer);
-            window.localStorage.setItem(`pendingStripeCustomerForTeam${team.id}`, JSON.stringify(pendingCustomer));
+            const pendingSubscription = { pendingSince: Date.now() };
+            setPendingStripeSubscription(pendingSubscription);
+            window.localStorage.setItem(
+                `pendingStripeSubscriptionForTeam${team.id}`,
+                JSON.stringify(pendingSubscription),
+            );
         })();
     }, [location.search, team]);
 
     useEffect(() => {
-        setPendingStripeCustomer(undefined);
+        setPendingStripeSubscription(undefined);
         if (!team) {
             return;
         }
         try {
-            const pendingStripeCustomer = window.localStorage.getItem(`pendingStripeCustomerForTeam${team.id}`);
-            if (!pendingStripeCustomer) {
+            const pendingStripeSubscription = window.localStorage.getItem(`pendingStripeSubscriptionForTeam${team.id}`);
+            if (!pendingStripeSubscription) {
                 return;
             }
-            const pending = JSON.parse(pendingStripeCustomer);
-            setPendingStripeCustomer(pending);
+            const pending = JSON.parse(pendingStripeSubscription);
+            setPendingStripeSubscription(pending);
         } catch (error) {
-            console.error("Could not load pending stripe customer", team.id, error);
+            console.error("Could not load pending stripe subscription", team.id, error);
         }
     }, [team]);
 
     useEffect(() => {
-        if (!pendingStripeCustomer || !team) {
+        if (!pendingStripeSubscription || !team) {
             return;
         }
-        if (!!stripeCustomerId) {
+        if (!!stripeSubscriptionId) {
             // The upgrade was successful!
-            window.localStorage.removeItem(`pendingStripeCustomerForTeam${team.id}`);
-            clearTimeout(pollStripeCustomerTimeout!);
-            setPendingStripeCustomer(undefined);
+            window.localStorage.removeItem(`pendingStripeSubscriptionForTeam${team.id}`);
+            clearTimeout(pollStripeSubscriptionTimeout!);
+            setPendingStripeSubscription(undefined);
             return;
         }
-        if (pendingStripeCustomer.pendingSince + 1000 * 60 * 5 < Date.now()) {
-            // Pending Stripe customer expires after 5 minutes
-            window.localStorage.removeItem(`pendingStripeCustomerForTeam${team.id}`);
-            clearTimeout(pollStripeCustomerTimeout!);
-            setPendingStripeCustomer(undefined);
+        if (pendingStripeSubscription.pendingSince + 1000 * 60 * 5 < Date.now()) {
+            // Pending Stripe subscription expires after 5 minutes
+            window.localStorage.removeItem(`pendingStripeSubscriptionForTeam${team.id}`);
+            clearTimeout(pollStripeSubscriptionTimeout!);
+            setPendingStripeSubscription(undefined);
             return;
         }
-        if (!pollStripeCustomerTimeout) {
-            // Refresh Stripe customer in 5 seconds in order to poll for upgrade confirmation
+        if (!pollStripeSubscriptionTimeout) {
+            // Refresh Stripe subscription in 5 seconds in order to poll for upgrade confirmation
             const timeout = setTimeout(async () => {
-                const customerId = await getGitpodService().server.findStripeCustomerIdForTeam(team.id);
-                setStripeCustomerId(customerId);
-                setPollStripeCustomerTimeout(undefined);
+                const subscriptionId = await getGitpodService().server.findStripeSubscriptionIdForTeam(team.id);
+                setStripeSubscriptionId(subscriptionId);
+                setPollStripeSubscriptionTimeout(undefined);
             }, 5000);
-            setPollStripeCustomerTimeout(timeout);
+            setPollStripeSubscriptionTimeout(timeout);
         }
         return function cleanup() {
-            clearTimeout(pollStripeCustomerTimeout!);
+            clearTimeout(pollStripeSubscriptionTimeout!);
         };
-    }, [pendingStripeCustomer, pollStripeCustomerTimeout, stripeCustomerId, team]);
+    }, [pendingStripeSubscription, pollStripeSubscriptionTimeout, stripeSubscriptionId, team]);
 
     if (!showUsageBasedUI) {
         return <></>;
@@ -135,12 +138,12 @@ export default function TeamUsageBasedBilling() {
             <div className="max-w-xl">
                 <div className="mt-4 h-32 p-4 flex flex-col rounded-xl bg-gray-100 dark:bg-gray-800">
                     <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
-                    {(isLoading || pendingStripeCustomer) && (
+                    {(isLoading || pendingStripeSubscription) && (
                         <>
                             <Spinner className="m-2 h-5 w-5 animate-spin" />
                         </>
                     )}
-                    {!isLoading && !pendingStripeCustomer && !stripeCustomerId && (
+                    {!isLoading && !pendingStripeSubscription && !stripeSubscriptionId && (
                         <>
                             <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
                                 Inactive
@@ -150,7 +153,7 @@ export default function TeamUsageBasedBilling() {
                             </button>
                         </>
                     )}
-                    {!isLoading && !pendingStripeCustomer && !!stripeCustomerId && (
+                    {!isLoading && !pendingStripeSubscription && !!stripeSubscriptionId && (
                         <>
                             <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
                                 Active
