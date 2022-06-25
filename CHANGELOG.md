@@ -1,6 +1,14 @@
 # Change Log
 
 ## June 2022
+- [self-hosted] Installation telemetry optionally includes the Gitpod customer ID ([#10629](https://github.com/gitpod-io/gitpod/pull/10629)) - [@adrienthebo](https://github.com/adrienthebo)
+- Add command `gp timeout show` to show the timeout of current workspace ([#10782](https://github.com/gitpod-io/gitpod/pull/10782)) - [@andrew-farries](https://github.com/andrew-farries)
+- [experimental] Add volume snapshot events to workspace pod event ([#10889](https://github.com/gitpod-io/gitpod/pull/10889)) - [@jenting](https://github.com/jenting)
+- [installer]: add customization function to ws-manager deployment ([#10907](https://github.com/gitpod-io/gitpod/pull/10907)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [installer]: add customization to components ([#10857](https://github.com/gitpod-io/gitpod/pull/10857)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- fix prebuilds stuck in `queued` indefinitely ([#10727](https://github.com/gitpod-io/gitpod/pull/10727)) - [@geropl](https://github.com/geropl)
+- Fix a SQL query bug on admin panel. ([#10825](https://github.com/gitpod-io/gitpod/pull/10825)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Token renewals should not run concurrently. ([#10794](https://github.com/gitpod-io/gitpod/pull/10794)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [installer] Fix workspace URL loading issue with `self-signed` ([#10850](https://github.com/gitpod-io/gitpod/pull/10850)) - [@Pothulapati](https://github.com/Pothulapati)
 - [kots]: configure a log collector for ephemeral containers ([#10679](https://github.com/gitpod-io/gitpod/pull/10679)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Experimental feature checkboxes on the project settings page now behave correctly ([#10814](https://github.com/gitpod-io/gitpod/pull/10814)) - [@andrew-farries](https://github.com/andrew-farries)
