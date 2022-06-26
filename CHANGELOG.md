@@ -1,6 +1,7 @@
 # Change Log
 
 ## June 2022
+- - Allow customize VMOptions for JetBrains backend server, by setting "vmoptions" in .gitpod.yml ([#10768](https://github.com/gitpod-io/gitpod/pull/10768)) - [@yaohui-wyh](https://github.com/yaohui-wyh)
 - [self-hosted] Installation telemetry optionally includes the Gitpod customer ID ([#10629](https://github.com/gitpod-io/gitpod/pull/10629)) - [@adrienthebo](https://github.com/adrienthebo)
 - Add command `gp timeout show` to show the timeout of current workspace ([#10782](https://github.com/gitpod-io/gitpod/pull/10782)) - [@andrew-farries](https://github.com/andrew-farries)
 - [experimental] Add volume snapshot events to workspace pod event ([#10889](https://github.com/gitpod-io/gitpod/pull/10889)) - [@jenting](https://github.com/jenting)
