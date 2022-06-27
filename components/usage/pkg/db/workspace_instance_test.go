@@ -217,3 +217,25 @@ func TestListWorkspaceInstancesInRange_InBatches(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, results, len(instances))
 }
+
+func TestAttributionID_Values(t *testing.T) {
+	scenarios := []struct {
+		Input          string
+		ExpectedEntity string
+		ExpectedID     string
+	}{
+		{Input: "team:123", ExpectedEntity: db.AttributionEntity_Team, ExpectedID: "123"},
+		{Input: "user:123", ExpectedEntity: db.AttributionEntity_User, ExpectedID: "123"},
+		{Input: "user:123:invalid", ExpectedEntity: "", ExpectedID: ""},
+		{Input: "invalid:123:", ExpectedEntity: "", ExpectedID: ""},
+		{Input: "", ExpectedEntity: "", ExpectedID: ""},
+	}
+
+	for _, s := range scenarios {
+		t.Run(fmt.Sprintf("attribution in: %s, expecting: %s %s", s.Input, s.ExpectedEntity, s.ExpectedID), func(t *testing.T) {
+			entity, id := db.AttributionID(s.Input).Values()
+			require.Equal(t, s.ExpectedEntity, entity)
+			require.Equal(t, s.ExpectedID, id)
+		})
+	}
+}
