@@ -4,15 +4,19 @@
 
 package controller
 
-import "github.com/gitpod-io/gitpod/usage/pkg/stripe"
+import (
+	"context"
+	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
+	"time"
+)
 
 type BillingController interface {
-	Reconcile(report []TeamUsage)
+	Reconcile(ctx context.Context, now time.Time, report UsageReport)
 }
 
 type NoOpBillingController struct{}
 
-func (b *NoOpBillingController) Reconcile(report []TeamUsage) {}
+func (b *NoOpBillingController) Reconcile(_ context.Context, _ time.Time, _ UsageReport) {}
 
 type StripeBillingController struct {
 	sc *stripe.Client
@@ -22,12 +26,7 @@ func NewStripeBillingController(sc *stripe.Client) *StripeBillingController {
 	return &StripeBillingController{sc: sc}
 }
 
-func (b *StripeBillingController) Reconcile(report []TeamUsage) {
-	// Convert the usage report to sum all entries for the same team.
-	var summedReport = make(map[string]int64)
-	for _, usageEntry := range report {
-		summedReport[usageEntry.TeamID] += usageEntry.WorkspaceSeconds
-	}
-
-	b.sc.UpdateUsage(summedReport)
+func (b *StripeBillingController) Reconcile(ctx context.Context, now time.Time, report UsageReport) {
+	runtimeReport := report.RuntimeSummaryForTeams(now)
+	b.sc.UpdateUsage(runtimeReport)
 }

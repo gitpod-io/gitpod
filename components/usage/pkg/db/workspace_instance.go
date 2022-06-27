@@ -46,7 +46,7 @@ type WorkspaceInstance struct {
 
 // WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.
 // If the instance is still running (no stop time set), maxStopTime is used to to compute the duration - this is an upper bound on stop
-func (i *WorkspaceInstance) WorkspaceRuntimeSeconds(maxStopTime time.Time) int64 {
+func (i *WorkspaceInstance) WorkspaceRuntimeSeconds(maxStopTime time.Time) uint64 {
 	start := i.CreationTime.Time()
 	stop := maxStopTime
 
@@ -56,7 +56,7 @@ func (i *WorkspaceInstance) WorkspaceRuntimeSeconds(maxStopTime time.Time) int64
 		}
 	}
 
-	return int64(stop.Sub(start).Round(time.Second).Seconds())
+	return uint64(stop.Sub(start).Round(time.Second).Seconds())
 }
 
 // TableName sets the insert table name for this struct type
@@ -79,6 +79,7 @@ func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to 
 		).
 		Where("creationTime < ?", TimeToISO8601(to)).
 		Where("startedTime != ?", "").
+		Where("usageAttributionId != ?", "").
 		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
 			instances = append(instances, instancesInBatch...)
 			return nil
