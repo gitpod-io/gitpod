@@ -4,10 +4,18 @@ metadata:
   name: stripe-config
   namespace: ${NAMESPACE}
 data:
-  config: >
+  config: |
     {
       "usageProductPriceIds": {
         "EUR": "price_1LD8cQGadRXm50o30QwBU9aY",
         "USD": "price_1LD8cQGadRXm50o3ftnIiUZL"
+      },
+      "teamPriceIds": {
+        "EUR": "price_1LFIvhGadRXm50o3MZHXKowI",
+        "USD": "price_1LFIvhGadRXm50o3Z19aHMfh"
+      },
+      "individualPriceIds": {
+        "EUR": "price_1LFIvhGadRXm50o38QZxADDr",
+        "USD": "price_1LFIvhGadRXm50o3fd2RMWoP"
       }
     }
