@@ -273,6 +273,9 @@ spec:
                 fi
               fi
 
+              echo "Gitpod: Update platform telemetry value"
+              yq eval-all --inplace '.experimental.telemetry.data.platform = "{{repl Distribution }}"' "${CONFIG_FILE}"
+
               echo "Gitpod: Patch Gitpod config"
               base64 -d "${CONFIG_PATCH_FILE}" > /tmp/patch.yaml
               config_patch=$(cat /tmp/patch.yaml)
