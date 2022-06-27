@@ -9,6 +9,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +21,14 @@ func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if ctx.Config.Kind == config.InstallationWorkspace {
 		return []runtime.Object{}, nil
 	}
+
+	platformTelemetryData := "unknown"
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Telemetry != nil && cfg.Telemetry.Data.Platform != "" {
+			platformTelemetryData = cfg.Telemetry.Data.Platform
+		}
+		return nil
+	})
 
 	installationTelemetryComponent := fmt.Sprintf("%s-telemetry", Component)
 
@@ -62,6 +71,10 @@ func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
 											{
 												Name:  "GITPOD_INSTALLATION_VERSION",
 												Value: ctx.VersionManifest.Version,
+											},
+											{
+												Name:  "GITPOD_INSTALLATION_PLATFORM",
+												Value: platformTelemetryData,
 											},
 											{
 												Name:  "SERVER_URL",
