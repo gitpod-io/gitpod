@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"os"
 	"os/exec"
@@ -27,7 +28,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	linuxproc "github.com/c9s/goprocinfo/linux"
 	"github.com/gitpod-io/gitpod/common-go/cgroups"
+	v1 "github.com/gitpod-io/gitpod/common-go/cgroups/v1"
+	v2 "github.com/gitpod-io/gitpod/common-go/cgroups/v2"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
@@ -179,6 +183,9 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 		},
 		"/iws.InWorkspaceService/Teardown": ratelimit{
 			UseOnce: true,
+		},
+		"/iws.InWorkspaceService/WorkspaceInfo": ratelimit{
+			Limiter: rate.NewLimiter(rate.Every(1500*time.Millisecond), 4),
 		},
 	}
 
@@ -993,6 +1000,307 @@ func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
 	}
 
 	return nil
+}
+
+func (wbs *InWorkspaceServiceServer) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
+	log.Info("Received workspace info request")
+	rt := wbs.Uidmapper.Runtime
+	if rt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+	}
+	wscontainerID, err := rt.WaitForContainer(ctx, wbs.Session.InstanceID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("EvacuateCGroup: cannot find workspace container")
+		return nil, status.Errorf(codes.NotFound, "cannot find workspace container")
+	}
+
+	cgroupPath, err := rt.ContainerCGroupPath(ctx, wscontainerID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("EvacuateCGroup: cannot find workspace container CGroup path")
+		return nil, status.Errorf(codes.NotFound, "cannot find workspace container cgroup")
+	}
+
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		// log error and do not expose it to the user
+		log.WithError(err).Error("could not determine cgroup setup")
+		return nil, status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
+	}
+
+	resources, err := getWorkspaceResourceInfo(wbs.CGroupMountPoint, cgroupPath, unified)
+	if err != nil {
+		log.WithError(err).Error("could not get resource information")
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+
+	return &api.WorkspaceInfoResponse{
+		Resources: resources,
+	}, nil
+}
+
+func getWorkspaceResourceInfo(mountPoint, cgroupPath string, unified bool) (*api.Resources, error) {
+	if unified {
+		cpu, err := getCpuResourceInfoV2(mountPoint, cgroupPath)
+		if err != nil {
+			return nil, err
+		}
+
+		memory, err := getMemoryResourceInfoV2(mountPoint, cgroupPath)
+		if err != nil {
+			return nil, err
+		}
+
+		return &api.Resources{
+			Cpu:    cpu,
+			Memory: memory,
+		}, nil
+	} else {
+		cpu, err := getCpuResourceInfoV1(mountPoint, cgroupPath)
+		if err != nil {
+			return nil, err
+		}
+
+		memory, err := getMemoryResourceInfoV1(mountPoint, cgroupPath)
+		if err != nil {
+			return nil, err
+		}
+
+		return &api.Resources{
+			Cpu:    cpu,
+			Memory: memory,
+		}, nil
+	}
+}
+
+func getCpuResourceInfoV2(mountPoint, cgroupPath string) (*api.Cpu, error) {
+	cpu := v2.NewCpuControllerWithMount(mountPoint, cgroupPath)
+
+	t, err := resolveCPUStatV2(cpu)
+	if err != nil {
+		return nil, err
+	}
+
+	time.Sleep(time.Second)
+
+	t2, err := resolveCPUStatV2(cpu)
+	if err != nil {
+		return nil, err
+	}
+
+	cpuUsage := t2.usage - t.usage
+	totalTime := t2.uptime - t.uptime
+	used := cpuUsage / totalTime * 1000
+
+	quota, period, err := cpu.Max()
+	if err != nil {
+		return nil, err
+	}
+
+	// if no cpu limit has been specified, use the number of cores
+	var limit uint64
+	if quota == math.MaxUint64 {
+		cpuInfo, err := linuxproc.ReadCPUInfo("/proc/cpuinfo")
+		if err != nil {
+			return nil, err
+		}
+
+		limit = uint64(cpuInfo.NumCore()) * 1000
+	} else {
+		limit = quota / period * 1000
+	}
+
+	return &api.Cpu{
+		Used:  int64(used),
+		Limit: int64(limit),
+	}, nil
+}
+
+func getMemoryResourceInfoV2(mountPoint, cgroupPath string) (*api.Memory, error) {
+	memory := v2.NewMemoryControllerWithMount(mountPoint, cgroupPath)
+	memoryLimit, err := memory.Max()
+	if err != nil {
+		return nil, xerrors.Errorf("could not retrieve memory max: %w", err)
+	}
+
+	memInfo, err := linuxproc.ReadMemInfo("/proc/meminfo")
+	if err != nil {
+		return nil, xerrors.Errorf("failed to read meminfo: %w", err)
+	}
+
+	// if no memory limit has been specified, use total available memory
+	if memoryLimit == math.MaxUint64 || memoryLimit > memInfo.MemTotal*1024 {
+		// total memory is specifed on kilobytes -> convert to bytes
+		memoryLimit = memInfo.MemTotal * 1024
+	}
+
+	usedMemory, err := memory.Current()
+	if err != nil {
+		return nil, xerrors.Errorf("failed to read current memory usage: %w", err)
+	}
+
+	stats, err := memory.Stat()
+	if err != nil {
+		return nil, xerrors.Errorf("failed to read memory stats: %w", err)
+	}
+
+	if stats.InactiveFileTotal > 0 {
+		if usedMemory < stats.InactiveFileTotal {
+			usedMemory = 0
+		} else {
+			usedMemory -= stats.InactiveFileTotal
+		}
+	}
+
+	return &api.Memory{
+		Limit: int64(memoryLimit),
+		Used:  int64(usedMemory),
+	}, nil
+}
+
+func getMemoryResourceInfoV1(mountPoint, cgroupPath string) (*api.Memory, error) {
+	memory := v1.NewMemoryControllerWithMount(mountPoint, cgroupPath)
+
+	memoryLimit, err := memory.Limit()
+	if err != nil {
+		return nil, err
+	}
+
+	memInfo, err := linuxproc.ReadMemInfo("/proc/meminfo")
+	if err != nil {
+		return nil, xerrors.Errorf("failed to read meminfo: %w", err)
+	}
+
+	// if no memory limit has been specified, use total available memory
+	if memoryLimit == math.MaxUint64 || memoryLimit > memInfo.MemTotal*1024 {
+		// total memory is specifed on kilobytes -> convert to bytes
+		memoryLimit = memInfo.MemTotal * 1024
+	}
+
+	usedMemory, err := memory.Usage()
+	if err != nil {
+		return nil, xerrors.Errorf("failed to read memory limit: %w", err)
+	}
+
+	stats, err := memory.Stat()
+	if err != nil {
+		return nil, xerrors.Errorf("failed to read memory stats: %w", err)
+	}
+
+	if stats.InactiveFileTotal > 0 {
+		if usedMemory < stats.InactiveFileTotal {
+			usedMemory = 0
+		} else {
+			usedMemory -= stats.InactiveFileTotal
+		}
+	}
+
+	return &api.Memory{
+		Limit: int64(memoryLimit),
+		Used:  int64(usedMemory),
+	}, nil
+}
+
+func getCpuResourceInfoV1(mountPoint, cgroupPath string) (*api.Cpu, error) {
+	cpu := v1.NewCpuControllerWithMount(mountPoint, cgroupPath)
+
+	t, err := resolveCPUStatV1(cpu)
+	if err != nil {
+		return nil, err
+	}
+
+	time.Sleep(time.Second)
+
+	t2, err := resolveCPUStatV1(cpu)
+	if err != nil {
+		return nil, err
+	}
+
+	cpuUsage := t2.usage - t.usage
+	totalTime := t2.uptime - t.uptime
+	used := cpuUsage / totalTime * 1000
+
+	quota, err := cpu.Quota()
+	if err != nil {
+		return nil, err
+	}
+
+	// if no cpu limit has been specified, use the number of cores
+	var limit uint64
+	if quota == math.MaxUint64 {
+		content, err := os.ReadFile(filepath.Join(mountPoint, "cpu", cgroupPath, "cpuacct.usage_percpu"))
+		if err != nil {
+			return nil, xerrors.Errorf("failed to read cpuacct.usage_percpu: %w", err)
+		}
+		limit = uint64(len(strings.Split(strings.TrimSpace(string(content)), " "))) * 1000
+	} else {
+		period, err := cpu.Period()
+		if err != nil {
+			return nil, err
+		}
+
+		limit = quota / period * 1000
+	}
+
+	return &api.Cpu{
+		Used:  int64(used),
+		Limit: int64(limit),
+	}, nil
+}
+
+type cpuStat struct {
+	usage  float64
+	uptime float64
+}
+
+func resolveCPUStatV1(cpu *v1.Cpu) (*cpuStat, error) {
+	usage_ns, err := cpu.Usage()
+	if err != nil {
+		return nil, xerrors.Errorf("failed to get cpu usage: %w", err)
+	}
+
+	// convert from nanoseconds to seconds
+	usage := float64(usage_ns) * 1e-9
+	uptime, err := readProcUptime()
+	if err != nil {
+		return nil, err
+	}
+
+	return &cpuStat{
+		usage:  usage,
+		uptime: uptime,
+	}, nil
+}
+
+func resolveCPUStatV2(cpu *v2.Cpu) (*cpuStat, error) {
+	stats, err := cpu.Stat()
+	if err != nil {
+		return nil, xerrors.Errorf("failed to get cpu usage: %w", err)
+	}
+
+	usage := float64(stats.UsageTotal) * 1e-6
+	uptime, err := readProcUptime()
+	if err != nil {
+		return nil, err
+	}
+
+	return &cpuStat{
+		usage:  usage,
+		uptime: uptime,
+	}, nil
+}
+
+func readProcUptime() (float64, error) {
+	content, err := os.ReadFile("/proc/uptime")
+	if err != nil {
+		return 0, xerrors.Errorf("failed to read uptime: %w", err)
+	}
+	values := strings.Split(strings.TrimSpace(string(content)), " ")
+	uptime, err := strconv.ParseFloat(values[0], 64)
+	if err != nil {
+		return 0, xerrors.Errorf("failed to parse uptime: %w", err)
+	}
+
+	return uptime, nil
 }
 
 type ratelimitingInterceptor map[string]ratelimit
