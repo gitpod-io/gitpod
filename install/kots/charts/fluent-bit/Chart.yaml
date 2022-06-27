@@ -3,7 +3,7 @@
 
 apiVersion: v2
 description: Gitpod fluent-bit
-name: fluent-bit
+name: gitpod-fluent-bit
 version: 0.20.2
 dependencies:
   - name: fluent-bit

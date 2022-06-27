@@ -4,10 +4,10 @@
 apiVersion: kots.io/v1beta1
 kind: HelmChart
 metadata:
-  name: fluent-bit
+  name: gitpod-fluent-bit
 spec:
   chart:
-    name: fluent-bit
+    name: gitpod-fluent-bit
     chartVersion: 0.20.2
   helmVersion: v3
   useHelmInstall: true
