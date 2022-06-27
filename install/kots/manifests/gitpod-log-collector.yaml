@@ -10,7 +10,7 @@ spec:
     name: fluent-bit
     chartVersion: 0.20.2
   helmVersion: v3
-  useHelmInstall: true
+  useHelmInstall: false
   weight: 10
   values:
     fluent-bit:
