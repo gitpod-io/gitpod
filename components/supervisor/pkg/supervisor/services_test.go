@@ -18,19 +18,6 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
-func TestResourcesStatus(t *testing.T) {
-	memory, err := resolveMemoryStatus()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(memory)
-	cpu, err := resolveCPUStatus()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(cpu)
-}
-
 func TestInMemoryTokenServiceGetToken(t *testing.T) {
 	type Expectation struct {
 		Resp *api.GetTokenResponse
