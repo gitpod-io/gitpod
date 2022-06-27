@@ -21,6 +21,13 @@ type Config struct {
 	WebApp    *WebAppConfig    `json:"webapp,omitempty"`
 	IDE       *IDEConfig       `json:"ide,omitempty"`
 	Common    *CommonConfig    `json:"common,omitempty"`
+	Telemetry *TelemetryConfig `json:"telemetry,omitempty"`
+}
+
+type TelemetryConfig struct {
+	Data struct {
+		Platform string `json:"platform"`
+	} `json:"data"`
 }
 
 type CommonConfig struct {
