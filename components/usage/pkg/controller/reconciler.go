@@ -45,12 +45,6 @@ type UsageReconcileStatus struct {
 
 	WorkspaceInstances        int
 	InvalidWorkspaceInstances int
-
-	Workspaces int
-
-	Teams int
-
-	Report []TeamUsage
 }
 
 func (u *UsageReconciler) Reconcile() error {
@@ -60,7 +54,7 @@ func (u *UsageReconciler) Reconcile() error {
 	startOfCurrentMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 	startOfNextMonth := startOfCurrentMonth.AddDate(0, 1, 0)
 
-	status, err := u.ReconcileTimeRange(ctx, startOfCurrentMonth, startOfNextMonth)
+	status, report, err := u.ReconcileTimeRange(ctx, startOfCurrentMonth, startOfNextMonth)
 	if err != nil {
 		return err
 	}
@@ -75,7 +69,7 @@ func (u *UsageReconciler) Reconcile() error {
 	defer f.Close()
 
 	enc := json.NewEncoder(f)
-	err = enc.Encode(status.Report)
+	err = enc.Encode(report)
 	if err != nil {
 		return fmt.Errorf("failed to marshal report to JSON: %w", err)
 	}
@@ -89,7 +83,7 @@ func (u *UsageReconciler) Reconcile() error {
 	return nil
 }
 
-func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.Time) (*UsageReconcileStatus, error) {
+func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.Time) (*UsageReconcileStatus, UsageReport, error) {
 	now := u.nowFunc().UTC()
 	log.Infof("Gathering usage data from %s to %s", from, to)
 	status := &UsageReconcileStatus{
@@ -98,7 +92,7 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	}
 	instances, invalidInstances, err := u.loadWorkspaceInstances(ctx, from, to)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load workspace instances: %w", err)
+		return nil, nil, fmt.Errorf("failed to load workspace instances: %w", err)
 	}
 	status.WorkspaceInstances = len(instances)
 	status.InvalidWorkspaceInstances = len(invalidInstances)
@@ -108,129 +102,38 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	}
 	log.WithField("workspace_instances", instances).Debug("Successfully loaded workspace instances.")
 
-	workspaces, err := u.loadWorkspaces(ctx, instances)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load workspaces for workspace instances in time range: %w", err)
-	}
-	status.Workspaces = len(workspaces)
+	instancesByAttributionID := groupInstancesByAttributionID(instances)
 
-	// match workspaces to teams
-	teams, err := u.loadTeamsForWorkspaces(ctx, workspaces)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load teams for workspaces: %w", err)
-	}
-	status.Teams = len(teams)
+	u.billingController.Reconcile(ctx, now, instancesByAttributionID)
 
-	report, err := generateUsageReport(teams, now)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate usage report: %w", err)
-	}
-	status.Report = report
-
-	u.billingController.Reconcile(status.Report)
-
-	return status, nil
+	return status, instancesByAttributionID, nil
 }
 
-func generateUsageReport(teams []teamWithWorkspaces, maxStopTime time.Time) ([]TeamUsage, error) {
-	var report []TeamUsage
-	for _, team := range teams {
-		var teamTotalRuntime int64
-		for _, workspace := range team.Workspaces {
-			for _, instance := range workspace.Instances {
-				teamTotalRuntime += instance.WorkspaceRuntimeSeconds(maxStopTime)
-			}
+type UsageReport map[db.AttributionID][]db.WorkspaceInstance
+
+func (u UsageReport) RuntimeSummaryForTeams(maxStopTime time.Time) map[string]int64 {
+	attributedUsage := map[string]int64{}
+
+	for attribution, instances := range u {
+		entity, id := attribution.Values()
+		if entity != db.AttributionEntity_Team {
+			continue
 		}
 
-		report = append(report, TeamUsage{
-			TeamID:           team.TeamID.String(),
-			WorkspaceSeconds: teamTotalRuntime,
-		})
+		var runtime uint64
+		for _, instance := range instances {
+			runtime += instance.WorkspaceRuntimeSeconds(maxStopTime)
+		}
+
+		attributedUsage[id] = int64(runtime)
 	}
-	return report, nil
+
+	return attributedUsage
 }
 
-type teamWithWorkspaces struct {
-	TeamID     uuid.UUID
-	Workspaces []workspaceWithInstances
-}
-
-func (u *UsageReconciler) loadTeamsForWorkspaces(ctx context.Context, workspaces []workspaceWithInstances) ([]teamWithWorkspaces, error) {
-	// find owner IDs of these workspaces
-	var ownerIDs []uuid.UUID
-	for _, workspace := range workspaces {
-		ownerIDs = append(ownerIDs, workspace.Workspace.OwnerID)
-	}
-
-	// Retrieve memberships. This gives a link between an Owner and a Team they belong to.
-	memberships, err := db.ListTeamMembershipsForUserIDs(ctx, u.conn, ownerIDs)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list team memberships: %w", err)
-	}
-
-	membershipsByUserID := map[uuid.UUID]db.TeamMembership{}
-	for _, membership := range memberships {
-		// User can belong to multiple teams. For now, we're choosing the membership at random.
-		membershipsByUserID[membership.UserID] = membership
-	}
-
-	// Convert workspaces into a lookup so that we can index into them by Owner ID, needed for joining Teams with Workspaces
-	workspacesByOwnerID := map[uuid.UUID][]workspaceWithInstances{}
-	for _, workspace := range workspaces {
-		workspacesByOwnerID[workspace.Workspace.OwnerID] = append(workspacesByOwnerID[workspace.Workspace.OwnerID], workspace)
-	}
-
-	// Finally, join the datasets
-	// Because we iterate over memberships, and not workspaces, we're in effect ignoring Workspaces which are not in a team.
-	// This is intended as we focus on Team usage for now.
-	var teamsWithWorkspaces []teamWithWorkspaces
-	for userID, membership := range membershipsByUserID {
-		teamsWithWorkspaces = append(teamsWithWorkspaces, teamWithWorkspaces{
-			TeamID:     membership.TeamID,
-			Workspaces: workspacesByOwnerID[userID],
-		})
-	}
-
-	return teamsWithWorkspaces, nil
-}
-
-type workspaceWithInstances struct {
-	Workspace db.Workspace
-	Instances []db.WorkspaceInstance
-}
-
-func (u *UsageReconciler) loadWorkspaces(ctx context.Context, instances []db.WorkspaceInstance) ([]workspaceWithInstances, error) {
-	var workspaceIDs []string
-	for _, instance := range instances {
-		workspaceIDs = append(workspaceIDs, instance.WorkspaceID)
-	}
-
-	workspaces, err := db.ListWorkspacesByID(ctx, u.conn, toSet(workspaceIDs))
-	if err != nil {
-		return nil, fmt.Errorf("failed to find workspaces for provided workspace instances: %w", err)
-	}
-
-	workspacesByID := map[string]db.Workspace{}
-	for _, workspace := range workspaces {
-		workspacesByID[workspace.ID] = workspace
-	}
-
-	// We need to also add the instances to corresponding records, a single workspace can have multiple instances
-	instancesByWorkspaceID := map[string][]db.WorkspaceInstance{}
-	for _, instance := range instances {
-		instancesByWorkspaceID[instance.WorkspaceID] = append(instancesByWorkspaceID[instance.WorkspaceID], instance)
-	}
-
-	// Flatten results into a list
-	var workspacesWithInstances []workspaceWithInstances
-	for workspaceID, workspace := range workspacesByID {
-		workspacesWithInstances = append(workspacesWithInstances, workspaceWithInstances{
-			Workspace: workspace,
-			Instances: instancesByWorkspaceID[workspaceID],
-		})
-	}
-
-	return workspacesWithInstances, nil
+type invalidWorkspaceInstance struct {
+	reason              string
+	workspaceInstanceID uuid.UUID
 }
 
 func (u *UsageReconciler) loadWorkspaceInstances(ctx context.Context, from, to time.Time) ([]db.WorkspaceInstance, []invalidWorkspaceInstance, error) {
@@ -244,11 +147,6 @@ func (u *UsageReconciler) loadWorkspaceInstances(ctx context.Context, from, to t
 	valid, invalid := validateInstances(instances)
 	trimmed := trimStartStopTime(valid, from, to)
 	return trimmed, invalid, nil
-}
-
-type invalidWorkspaceInstance struct {
-	reason              string
-	workspaceInstanceID uuid.UUID
 }
 
 func validateInstances(instances []db.WorkspaceInstance) (valid []db.WorkspaceInstance, invalid []invalidWorkspaceInstance) {
@@ -302,20 +200,15 @@ func trimStartStopTime(instances []db.WorkspaceInstance, maximumStart, minimumSt
 	return updated
 }
 
-func toSet(items []string) []string {
-	m := map[string]struct{}{}
-	for _, i := range items {
-		m[i] = struct{}{}
+func groupInstancesByAttributionID(instances []db.WorkspaceInstance) map[db.AttributionID][]db.WorkspaceInstance {
+	result := map[db.AttributionID][]db.WorkspaceInstance{}
+	for _, instance := range instances {
+		if _, ok := result[instance.UsageAttributionID]; !ok {
+			result[instance.UsageAttributionID] = []db.WorkspaceInstance{}
+		}
+
+		result[instance.UsageAttributionID] = append(result[instance.UsageAttributionID], instance)
 	}
 
-	var result []string
-	for s := range m {
-		result = append(result, s)
-	}
 	return result
-}
-
-type TeamUsage struct {
-	TeamID           string `json:"team_id"`
-	WorkspaceSeconds int64  `json:"workspace_seconds"`
 }
