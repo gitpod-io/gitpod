@@ -41,6 +41,12 @@ var Helm = common.CompositeHelmFunc(
 			}
 		}
 
+		// Append the custom parameters
+		registryValues = helm.CustomizeAnnotation(registryValues, "docker-registry.podAnnotations", cfg, Component, common.TypeMetaDeployment)
+		registryValues = helm.CustomizeLabel(registryValues, "docker-registry.podLabels", cfg, Component, common.TypeMetaDeployment)
+		registryValues = helm.CustomizeAnnotation(registryValues, "docker-registry.service.annotations", cfg, Component, common.TypeMetaService)
+		registryValues = helm.CustomizeEnvvar(registryValues, "docker-registry.extraEnvVars", cfg, Component)
+
 		inCluster := pointer.BoolDeref(cfg.Config.ContainerRegistry.InCluster, false)
 		s3Storage := cfg.Config.ContainerRegistry.S3Storage
 		enablePersistence := "true"
