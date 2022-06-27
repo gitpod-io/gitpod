@@ -561,6 +561,20 @@ var ring1Cmd = &cobra.Command{
 			}
 		}()
 
+		socketPath := filepath.Join(ring2Root, ".supervisor")
+		if _, err = os.Stat(socketPath); os.IsNotExist(err) {
+			if err := os.MkdirAll(socketPath, 0644); err != nil {
+				log.Errorf("failed to create dir %v", err)
+			}
+		}
+
+		stopHook, err := startInfoService(socketPath)
+		if err != nil {
+			// workspace info is not critical, so we will not fail workspace start
+			log.Error("failed to start workspace info service")
+		}
+		defer stopHook()
+
 		// run prestophook when ring1 exits. This is more reliable way of running this script then
 		// using PreStop Lifecycle Handler of the pod (it would not execute for prebuilds for example)
 		prestophookFunc := func() {
@@ -981,6 +995,68 @@ func connectToInWorkspaceDaemonService(ctx context.Context) (*inWorkspaceService
 		InWorkspaceServiceClient: daemonapi.NewInWorkspaceServiceClient(conn),
 		conn:                     conn,
 	}, nil
+}
+
+type workspaceInfoService struct {
+	socket net.Listener
+	server *grpc.Server
+	api.UnimplementedWorkspaceInfoServiceServer
+}
+
+func startInfoService(socketDir string) (func(), error) {
+	socketFN := filepath.Join(socketDir, "info.sock")
+	if _, err := os.Stat(socketFN); err == nil {
+		_ = os.Remove(socketFN)
+	}
+
+	sckt, err := net.Listen("unix", socketFN)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create info socket: %w", err)
+	}
+
+	err = os.Chmod(socketFN, 0777)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot chmod info socket: %w", err)
+	}
+
+	infoSvc := workspaceInfoService{
+		socket: sckt,
+	}
+
+	limiter := common_grpc.NewRatelimitingInterceptor(
+		map[string]common_grpc.RateLimit{
+			"iws.WorkspaceInfoService/WorkspaceInfo": {
+				RefillInterval: 1500,
+				BucketSize:     4,
+			},
+		})
+
+	infoSvc.server = grpc.NewServer(grpc.ChainUnaryInterceptor(limiter.UnaryInterceptor()))
+	api.RegisterWorkspaceInfoServiceServer(infoSvc.server, &infoSvc)
+	go func() {
+		err := infoSvc.server.Serve(sckt)
+		if err != nil {
+			log.WithError(err).Error("workspace info server failed")
+		}
+	}()
+
+	return func() {
+		infoSvc.server.Stop()
+		os.Remove(socketFN)
+	}, nil
+}
+
+func (svc *workspaceInfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
+	client, err := connectToInWorkspaceDaemonService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{})
+	if err != nil {
+		log.WithError(err).Error("could not get workspace info")
+	}
+	return resp, nil
 }
 
 func init() {
