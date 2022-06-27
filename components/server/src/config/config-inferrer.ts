@@ -143,7 +143,7 @@ export class ConfigInferrer {
 
     protected async checkGo(ctx: Context) {
         if (await ctx.exists("go.mod")) {
-            this.addCommand(ctx.config, "go get", "init");
+            this.addCommand(ctx.config, "go mod download", "init");
             this.addCommand(ctx.config, "go build ./...", "init");
             this.addCommand(ctx.config, "go test ./...", "init");
             this.addCommand(ctx.config, "go run", "command");

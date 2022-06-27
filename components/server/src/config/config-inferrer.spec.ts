@@ -171,7 +171,7 @@ describe("config inferrer", () => {
                 {
                     tasks: [
                         {
-                            init: "go get && go build ./... && go test ./...",
+                            init: "go mod download && go build ./... && go test ./...",
                             command: "go run",
                         },
                     ],
