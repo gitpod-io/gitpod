@@ -45,6 +45,11 @@ var sendCmd = &cobra.Command{
 			return fmt.Errorf("GITPOD_INSTALLATION_VERSION envvar not set")
 		}
 
+		platform := os.Getenv("GITPOD_INSTALLATION_PLATFORM")
+		if platform == "" {
+			return fmt.Errorf("GITPOD_INSTALLATION_PLATFORM envvar not set")
+		}
+
 		client, err := analytics.NewWithConfig(segmentIOToken, analytics.Config{})
 		defer func() {
 			err = client.Close()
@@ -54,7 +59,8 @@ var sendCmd = &cobra.Command{
 			Set("version", versionId).
 			Set("totalUsers", data.TotalUsers).
 			Set("totalWorkspaces", data.TotalWorkspaces).
-			Set("totalInstances", data.TotalInstances)
+			Set("totalInstances", data.TotalInstances).
+			Set("platform", platform)
 
 		if data.InstallationAdmin.Settings.SendCustomerID {
 			properties.Set("customerID", data.CustomerID)
