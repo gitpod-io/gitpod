@@ -11,9 +11,10 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sigs.k8s.io/yaml"
 	"strings"
 	"syscall"
+
+	"sigs.k8s.io/yaml"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
@@ -22,6 +23,8 @@ import (
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // TemplateConfig
@@ -208,4 +211,57 @@ func ImportTemplate(chart *charts.Chart, templateCfg TemplateConfig, pkgConfig P
 
 		return append(templates, rel.Manifest), nil
 	}
+}
+
+// CustomizeAnnotation check for customized annotations and output in Helm format
+func CustomizeAnnotation(registryValues []string, prefix string, ctx *common.RenderContext, component string, typeMeta metav1.TypeMeta, existingAnnotations ...func() map[string]string) []string {
+	annotations := common.CustomizeAnnotation(ctx, component, common.TypeMetaDeployment, existingAnnotations...)
+	if len(annotations) > 0 {
+		for k, v := range annotations {
+			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, k), v))
+		}
+	}
+
+	return registryValues
+}
+
+// CustomizeLabel check for customized labels and output in Helm format - also removes the default labels, which conflict with Helm
+func CustomizeLabel(registryValues []string, prefix string, ctx *common.RenderContext, component string, typeMeta metav1.TypeMeta, existingLabels ...func() map[string]string) []string {
+	labels := common.CustomizeLabel(ctx, component, common.TypeMetaDeployment, existingLabels...)
+
+	// Remove the default labels
+	for k := range common.DefaultLabels(component) {
+		delete(labels, k)
+	}
+
+	if len(labels) > 0 {
+		for k, v := range labels {
+			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, k), v))
+		}
+	}
+
+	return registryValues
+}
+
+// CustomizeEnvvar check for customized envvars and output in Helm format - assumes name/value only
+func CustomizeEnvvar(registryValues []string, prefix string, ctx *common.RenderContext, component string, existingEnvvars ...[]corev1.EnvVar) []string {
+	// Helm is unlikely to have any existing envvars, so treat them as optional
+	envvars := common.CustomizeEnvvar(ctx, component, func() []corev1.EnvVar {
+		envs := make([]corev1.EnvVar, 0)
+
+		for _, e := range existingEnvvars {
+			envs = append(envs, e...)
+		}
+
+		return envs
+	}())
+
+	if len(envvars) > 0 {
+		for k, v := range envvars {
+			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s[%d].name", prefix, k), v.Name))
+			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s[%d].value", prefix, k), v.Value))
+		}
+	}
+
+	return registryValues
 }
