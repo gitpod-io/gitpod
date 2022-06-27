@@ -1539,7 +1539,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         traceWI(ctx, { instanceId: instance.id });
         const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
-        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace, teamMembers }, "get");
+        await this.guardAccess({ kind: "workspaceLog", subject: workspace, teamMembers }, "get");
 
         // wait for up to 20s for imageBuildLogInfo to appear due to:
         //  - db-sync round-trip times
@@ -1664,7 +1664,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const wsiPromise = this.workspaceDb.trace(ctx).findInstanceById(instanceId);
         const teamMembers = await this.getTeamMembersByProject(ws.projectId);
 
-        await this.guardAccess({ kind: "workspace", subject: ws, teamMembers }, "get");
+        await this.guardAccess({ kind: "workspaceLog", subject: ws, teamMembers }, "get");
 
         const wsi = await wsiPromise;
         if (!wsi) {
