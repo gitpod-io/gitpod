@@ -150,8 +150,7 @@ export default function () {
                 disabled={isLoading}
                 onChange={toggleIncrementalPrebuilds}
             />
-            <br></br>
-            <h3>Persistent Volume Claim</h3>
+            <h3 className="mt-12">Persistent Volume Claim</h3>
             <CheckBox
                 title={
                     <span>
