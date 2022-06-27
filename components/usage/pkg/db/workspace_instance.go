@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	"strings"
 	"time"
 )
 
@@ -23,6 +24,7 @@ type WorkspaceInstance struct {
 	IdeURL             string         `gorm:"column:ideUrl;type:varchar;size:255;" json:"ideUrl"`
 	WorkspaceBaseImage string         `gorm:"column:workspaceBaseImage;type:varchar;size:255;" json:"workspaceBaseImage"`
 	WorkspaceImage     string         `gorm:"column:workspaceImage;type:varchar;size:255;" json:"workspaceImage"`
+	UsageAttributionID AttributionID  `gorm:"column:usageAttributionId;type:varchar;size:60;" json:"usageAttributionId"`
 
 	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	StartedTime  VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
@@ -86,4 +88,34 @@ func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to 
 	}
 
 	return instances, nil
+}
+
+const (
+	AttributionEntity_User = "user"
+	AttributionEntity_Team = "team"
+)
+
+func newAttributionID(entity, identifier string) AttributionID {
+	return AttributionID(fmt.Sprintf("%s:%s", entity, identifier))
+}
+
+func NewUserAttributionID(userID string) AttributionID {
+	return newAttributionID(AttributionEntity_User, userID)
+}
+
+func NewTeamAttributionID(teamID string) AttributionID {
+	return newAttributionID(AttributionEntity_Team, teamID)
+}
+
+// AttributionID consists of an entity, and an identifier in the form:
+// <entity>:<identifier>, e.g. team:a7dcf253-f05e-4dcf-9a47-cf8fccc74717
+type AttributionID string
+
+func (a AttributionID) Values() (entity string, identifier string) {
+	tokens := strings.Split(string(a), ":")
+	if len(tokens) != 2 {
+		return "", ""
+	}
+
+	return tokens[0], tokens[1]
 }

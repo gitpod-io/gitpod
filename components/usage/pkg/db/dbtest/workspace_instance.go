@@ -59,9 +59,15 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 		status = instance.Status
 	}
 
+	attributionID := db.NewUserAttributionID(uuid.New().String())
+	if instance.UsageAttributionID != "" {
+		attributionID = instance.UsageAttributionID
+	}
+
 	return db.WorkspaceInstance{
 		ID:                 id,
 		WorkspaceID:        workspaceID,
+		UsageAttributionID: attributionID,
 		Configuration:      nil,
 		Region:             "",
 		ImageBuildInfo:     sql.NullString{},
