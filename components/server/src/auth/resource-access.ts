@@ -463,16 +463,26 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
     constructor(protected readonly user: User, protected readonly hostContextProvider: HostContextProvider) {}
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
-        if (resource.kind !== "workspaceLog" && resource.kind !== "snapshot") {
-            return false;
-        }
-        // only get operations are supported
+        // Only get operations are supported
         if (operation !== "get") {
             return false;
         }
 
+        // Get Workspace from GuardedResource
+        let workspace: Workspace;
+        switch (resource.kind) {
+            case "workspaceLog":
+                workspace = resource.subject;
+                break;
+            case "snapshot":
+                workspace = resource.workspace;
+                break;
+            default:
+                // We do not handle resource kinds here!
+                return false;
+        }
+
         // Check if user has at least read access to the repository
-        const workspace = resource.kind === "snapshot" ? resource.workspace : resource.subject;
         const repos: Repository[] = [];
         if (CommitContext.is(workspace.context)) {
             repos.push(workspace.context.repository);
