@@ -1,6 +1,11 @@
 # Change Log
 
 ## June 2022
+- [kots]: change to not install via Helm ([#10933](https://github.com/gitpod-io/gitpod/pull/10933)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [kots]: apply customization file to Installer ([#10911](https://github.com/gitpod-io/gitpod/pull/10911)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [installer]: implementation customization functions ([#10906](https://github.com/gitpod-io/gitpod/pull/10906)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- When using the Latest Release of JetBrains IDEs, if the workspace has tasks defined on .gitpod.yml, the IDE will start with one terminal opened for each task, behaving similar to VS Code on Gitpod. ([#10595](https://github.com/gitpod-io/gitpod/pull/10595)) - [@felladrin](https://github.com/felladrin)
+- - Allow customize VMOptions for JetBrains backend server, by setting "vmoptions" in .gitpod.yml ([#10768](https://github.com/gitpod-io/gitpod/pull/10768)) - [@yaohui-wyh](https://github.com/yaohui-wyh)
 - [self-hosted] Installation telemetry optionally includes the Gitpod customer ID ([#10629](https://github.com/gitpod-io/gitpod/pull/10629)) - [@adrienthebo](https://github.com/adrienthebo)
 - Add command `gp timeout show` to show the timeout of current workspace ([#10782](https://github.com/gitpod-io/gitpod/pull/10782)) - [@andrew-farries](https://github.com/andrew-farries)
 - [experimental] Add volume snapshot events to workspace pod event ([#10889](https://github.com/gitpod-io/gitpod/pull/10889)) - [@jenting](https://github.com/jenting)
