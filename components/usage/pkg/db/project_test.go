@@ -7,6 +7,7 @@ package db_test
 import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
@@ -15,7 +16,7 @@ import (
 )
 
 var projectJSON = map[string]interface{}{
-	"id":                "49b5d309-bb95-4a79-846c-e3cf42c0d591",
+	"id":                uuid.New().String(),
 	"cloneUrl":          "https://github.com/gptest1/gptest1-repo1-private.git",
 	"teamId":            "0e433063-1358-4892-9ed2-68e273d17d07",
 	"appInstallationId": "20446411",
@@ -31,7 +32,7 @@ var projectJSON = map[string]interface{}{
 }
 
 func TestProject_ReadExistingRecords(t *testing.T) {
-	conn := db.ConnectForTests(t)
+	conn := dbtest.ConnectForTests(t)
 
 	id := insertRawProject(t, conn, projectJSON)
 
@@ -42,6 +43,7 @@ func TestProject_ReadExistingRecords(t *testing.T) {
 	require.Equal(t, id, project.ID)
 	require.Equal(t, projectJSON["teamId"], project.TeamID.String)
 	require.Equal(t, stringToVarchar(t, "2021-11-01T19:36:07.532Z"), project.CreationTime)
+	require.NoError(t, conn.Where("id = ?", project.ID).Delete(&db.Project{}).Error)
 }
 
 func insertRawProject(t *testing.T, conn *gorm.DB, obj map[string]interface{}) uuid.UUID {

@@ -9,11 +9,9 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	driver_mysql "github.com/go-sql-driver/mysql"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"testing"
 	"time"
 )
 
@@ -57,40 +55,4 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 			})(),
 		}),
 	})
-}
-
-func ConnectForTests(t *testing.T) *gorm.DB {
-	t.Helper()
-
-	// These are static connection details for tests, started by `leeway components/usage:init-testdb`.
-	// We use the same static credentials for CI & local instance of MySQL Server.
-	conn, err := Connect(ConnectionParams{
-		User:     "root",
-		Password: "test",
-		Host:     "localhost:23306",
-		Database: "gitpod",
-	})
-	require.NoError(t, err, "Failed to establish connection to DB. In a workspace, run `leeway build components/usage:init-testdb` once to bootstrap the DB.")
-
-	t.Cleanup(func() {
-		// Delete records for known models from the DB
-		log.Info("Cleaning up DB between connections.")
-		for _, model := range []interface{}{
-			&WorkspaceInstance{},
-			&Workspace{},
-			&Project{},
-			&Team{},
-			&TeamMembership{},
-		} {
-			// See https://gorm.io/docs/delete.html#Block-Global-Delete
-			tx := conn.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(model)
-			require.NoError(t, tx.Error)
-		}
-
-		rawConn, err := conn.DB()
-		require.NoError(t, err)
-		require.NoError(t, rawConn.Close(), "must close database connection")
-	})
-
-	return conn
 }

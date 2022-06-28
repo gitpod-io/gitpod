@@ -7,13 +7,14 @@ package db_test
 import (
 	"context"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestTeamMembership_WriteRead(t *testing.T) {
-	conn := db.ConnectForTests(t)
+	conn := dbtest.ConnectForTests(t)
 
 	membership := &db.TeamMembership{
 		ID:             uuid.New(),
@@ -33,7 +34,7 @@ func TestTeamMembership_WriteRead(t *testing.T) {
 }
 
 func TestListTeamMembershipsForUserIDs(t *testing.T) {
-	conn := db.ConnectForTests(t)
+	conn := dbtest.ConnectForTests(t)
 	userWithTwoTeams := uuid.New()
 	memberships := []db.TeamMembership{
 		{

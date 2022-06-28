@@ -147,10 +147,10 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
-			conn := db.ConnectForTests(t)
+			conn := dbtest.ConnectForTests(t)
 			require.NoError(t, conn.Create(scenario.Memberships).Error)
-			require.NoError(t, conn.Create(scenario.Workspaces).Error)
-			require.NoError(t, conn.Create(scenario.Instances).Error)
+			dbtest.CreateWorkspaces(t, conn, scenario.Workspaces...)
+			dbtest.CreateWorkspaceInstances(t, conn, scenario.Instances...)
 
 			reconciler := &UsageReconciler{
 				billingController: &NoOpBillingController{},
