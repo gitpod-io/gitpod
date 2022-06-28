@@ -79,6 +79,7 @@ type PersistentVolumeClaim struct {
 }
 
 type WorkspaceClass struct {
+	Name      string `json:"name" validate:"required"`
 	Resources struct {
 		Requests corev1.ResourceList `json:"requests" validate:"required"`
 		Limits   corev1.ResourceList `json:"limits,omitempty"`
