@@ -33,7 +33,6 @@ export type InstallerOptions = {
     deploymentNamespace: string
     analytics: Analytics
     withEELicense: boolean
-    withVM: boolean
     workspaceFeatureFlags: string[]
     gitpodDaemonsetPorts: GitpodDaemonsetPorts
     smithToken: string
@@ -239,7 +238,7 @@ EOF`)
     private configureLicense(slice: string): void {
         if (this.options.withEELicense) {
             // Previews in core-dev and harvester use different domain, which requires different licenses.
-            exec(`cp /mnt/secrets/gpsh-${this.options.withVM ? 'harvester' : 'coredev'}/license /tmp/license`, { slice: slice });
+            exec(`cp /mnt/secrets/gpsh-harvester/license /tmp/license`, { slice: slice });
             // post-process.sh looks for /tmp/license, and if it exists, adds it to the configmap
         } else {
             exec(`touch /tmp/license`, { slice: slice });
@@ -279,7 +278,7 @@ EOF`)
 
     private process(slice: string): void {
         const nodepoolIndex = getNodePoolIndex(this.options.deploymentNamespace);
-        const flags = this.options.withVM ? "WITH_VM=true " : ""
+        const flags = "WITH_VM=true "
 
         exec(`${flags}./.werft/jobs/build/installer/post-process.sh ${this.options.gitpodDaemonsetPorts.registryFacade} ${this.options.gitpodDaemonsetPorts.wsDaemon} ${nodepoolIndex} ${this.options.previewName} ${this.options.smithToken}`, { slice: slice });
     }

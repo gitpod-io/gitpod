@@ -26,7 +26,6 @@ export interface JobConfig {
     fromVersion: string;
     withObservability: boolean;
     withPayment: boolean;
-    withVM: boolean;
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
     repository: Repository;
@@ -100,11 +99,9 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     if (repository.branch.startsWith(refsPrefix)) {
         repository.branch = repository.branch.substring(refsPrefix.length);
     }
-    const withoutVM = "without-vm" in buildConfig;
-    const withVM = !withoutVM || mainBuild;
 
-    const previewName = previewNameFromBranchName(repository.branch);
-    const previewEnvironmentNamespace = withVM ? `default` : `staging-${previewName}`;
+    const previewName = previewNameFromBranchName(repository.branch)
+    const previewEnvironmentNamespace = `default`;
     const previewEnvironment = {
         destname: previewName,
         namespace: previewEnvironmentNamespace,
@@ -141,7 +138,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withObservability,
         withPayment,
         withUpgradeTests,
-        withVM,
         workspaceFeatureFlags,
     };
 
