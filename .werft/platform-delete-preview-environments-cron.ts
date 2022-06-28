@@ -154,108 +154,21 @@ class HarvesterPreviewEnvironment {
     }
 }
 
-class CoreDevPreviewEnvironment {
-
-    // The prefix we use for the namespace
-    static readonly namespacePrefix: string = "staging-"
-
-    // The name of the namespace the VM and related resources are in, e.g. preview-my-branch
-    namespace: string
-
-    name: string
-
-    constructor (namespace: string) {
-        this.namespace = namespace
-        this.name = namespace.replace(CoreDevPreviewEnvironment.namespacePrefix, "")
-    }
-
-    async delete(sliceID: string): Promise<void> {
-        await wipePreviewEnvironmentAndNamespace(helmInstallName, this.namespace, CORE_DEV_KUBECONFIG_PATH, { slice: sliceID })
-    }
-
-    async removeDNSRecords(sliceID: string) {
-        werft.log(sliceID, "Deleting core-dev related DNS records for the preview environment")
-        await Promise.all([
-            deleteDNSRecord('A', `*.ws-dev.${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
-            deleteDNSRecord('A', `*.${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
-            deleteDNSRecord('A', `${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
-            deleteDNSRecord('A', `prometheus-${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
-            deleteDNSRecord('TXT', `prometheus-${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
-            deleteDNSRecord('A', `grafana-${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
-            deleteDNSRecord('TXT', `grafana-${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
-            deleteDNSRecord('TXT', `_acme-challenge.${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID),
-            deleteDNSRecord('TXT', `_acme-challenge.ws-dev.${this.name}.staging.gitpod-dev.com`, 'gitpod-dev', 'gitpod-dev-com', sliceID)
-        ])
-    }
-
-    /**
-     * Checks whether a preview environment is active based on the db activity.
-     *
-     * It errs on the side of caution, so in case of connection issues etc. it will consider the
-     * preview environment active.
-     */
-    isActive(): boolean {
-        const sliceID = SLICES.CHECKING_FOR_DB_ACTIVITY
-        try {
-            const statusNS = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} kubectl get ns ${this.namespace} -o jsonpath='{.status.phase}'`, { slice: sliceID })
-
-            if (statusNS != "Active") {
-                werft.log(sliceID, `${this.name} (${this.namespace}) - is-active=true - The namespace is ${statusNS}, assuming env is active`)
-                return true
-            }
-
-            werft.log(sliceID, `${this.name} (${this.namespace}) - Checking status of the MySQL pod`)
-            const statusDB = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} kubectl get pods mysql-0 -n ${this.namespace} -o jsonpath='{.status.phase}'`, { slice: sliceID})
-            const statusDbContainer = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} kubectl get pods mysql-0 -n ${this.namespace} -o jsonpath='{.status.containerStatuses.*.ready}'`, { slice: sliceID})
-
-            if (statusDB.code != 0 || statusDB != "Running" || statusDbContainer == "false") {
-                werft.log(sliceID, `${this.name} (${this.namespace}) - is-active=true - The database is not reachable, assuming env is active`)
-                return true
-            }
-
-            const dbPassword = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} kubectl get secret db-password -n ${this.namespace} -o jsonpath='{.data.mysql-root-password}' | base64 -d`, {silent: true}).stdout.trim()
-
-            const dbConn = `MYSQL_PWD=${dbPassword} mysql --host=db.${this.namespace}.svc.cluster.local --port=3306 --user=root --database=gitpod -s -N`
-
-            return isDbActive(this, dbConn, sliceID)
-        } catch (err) {
-            werft.log(sliceID, `${this.name} (${this.namespace}) - is-active=true - Unable to check DB activity, assuming env is active`)
-            return true
-        }
-    }
-
-
-    /**
-     * Given a branch name it will return the expected namespace of the preview environment
-     */
-    static expectedNamespaceFromBranch(branch: string): string {
-        const previewName = previewNameFromBranchName(branch)
-        return `${CoreDevPreviewEnvironment.namespacePrefix}${previewName}`
-    }
-
-}
-
-type PreviewEnvironment = CoreDevPreviewEnvironment | HarvesterPreviewEnvironment
+type PreviewEnvironment = HarvesterPreviewEnvironment
 
 async function getAllPreviewEnvironments(slice: string): Promise<PreviewEnvironment[]> {
-    const coreDevPreviewEnvironments = listAllPreviewNamespaces(CORE_DEV_KUBECONFIG_PATH, {slice: slice})
-        .map((namespace: string) => new CoreDevPreviewEnvironment(namespace))
-
     const harvesterPreviewEnvironments = exec(`kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} get ns -o=custom-columns=:metadata.name | grep preview-`, { slice, silent: true, async: false })
         .stdout
         .trim()
         .split("\n")
         .map(namespace => new HarvesterPreviewEnvironment(namespace.trim()))
 
-    const all = coreDevPreviewEnvironments.concat(harvesterPreviewEnvironments)
-
     werft.currentPhaseSpan.setAttributes({
-        "preview_environments.counts.core_dev": coreDevPreviewEnvironments.length,
         "preview_environments.counts.harvester": harvesterPreviewEnvironments.length,
     })
 
     // We never want to delete the environment for the main branch.
-    return all.filter((preview: PreviewEnvironment) => preview.name != "main")
+    return harvesterPreviewEnvironments.filter((preview: PreviewEnvironment) => preview.name != "main")
 }
 
 async function deletePreviewEnvironments() {
@@ -347,7 +260,6 @@ async function determineStalePreviewEnvironments(options: {previews: PreviewEnvi
     // testing membership in situations where we don't care if the preview environment is based on
     // core-dev or harvester.
     const previewNamespaceBasedOnBranches = new Set(branches.flatMap(branch => [
-        CoreDevPreviewEnvironment.expectedNamespaceFromBranch(branch),
         HarvesterPreviewEnvironment.expectedNamespaceFromBranch(branch)
     ]));
 
@@ -362,7 +274,6 @@ async function determineStalePreviewEnvironments(options: {previews: PreviewEnvi
             return !hasRecentCommits
         })
         .flatMap((branch: string) => [
-            CoreDevPreviewEnvironment.expectedNamespaceFromBranch(branch),
             HarvesterPreviewEnvironment.expectedNamespaceFromBranch(branch)
         ]))
     werft.done(SLICES.CHECKING_FOR_STALE_BRANCHES)
@@ -401,7 +312,7 @@ async function removePreviewEnvironment(previewEnvironment: PreviewEnvironment) 
         // We're running these promises sequentially to make it easier to read the log output.
         await removeCertificate(previewEnvironment.name, CORE_DEV_KUBECONFIG_PATH, sliceID)
         await previewEnvironment.removeDNSRecords(sliceID)
-        await previewEnvironment.delete(sliceID)
+        await previewEnvironment.delete()
         werft.done(sliceID)
     } catch (e) {
         werft.failSlice(sliceID, e)

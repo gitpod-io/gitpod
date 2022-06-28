@@ -15,7 +15,6 @@ export class IssueCertificateParams {
     bucketPrefixTail: string
     certName: string
     certNamespace: string
-    withVM: boolean
 }
 
 export class InstallCertificateParams {
