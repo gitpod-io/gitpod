@@ -1002,6 +1002,26 @@ func (m *Manager) UpdateSSHKey(ctx context.Context, req *api.UpdateSSHKeyRequest
 	return &api.UpdateSSHKeyResponse{}, err
 }
 
+func (m *Manager) DescribeCluster(ctx context.Context, req *api.DescribeClusterRequest) (*api.DescribeClusterResponse, error) {
+	span, _ := tracing.FromContext(ctx, "DescribeCluster")
+	defer tracing.FinishSpan(span, nil)
+
+	classes := make([]*api.WorkspaceClass, len(m.Config.WorkspaceClasses))
+
+	i := 0
+	for id, class := range m.Config.WorkspaceClasses {
+		classes[i] = &api.WorkspaceClass{
+			Id:          id,
+			DisplayName: class.Name,
+		}
+		i += 1
+	}
+
+	return &api.DescribeClusterResponse{
+		WorkspaceClasses: classes,
+	}, nil
+}
+
 // Subscribe streams all status updates to a client
 func (m *Manager) Subscribe(req *api.SubscribeRequest, srv api.WorkspaceManager_SubscribeServer) (err error) {
 	var sub subscriber = srv
