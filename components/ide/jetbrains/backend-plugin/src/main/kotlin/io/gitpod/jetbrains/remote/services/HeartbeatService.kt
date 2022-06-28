@@ -24,8 +24,8 @@ class HeartbeatService : Disposable {
         val info = manager.pendingInfo.await()
         val intervalInSeconds = 30
         var current = ControllerStatus(
-            connected = false,
-            secondsSinceLastActivity = 0
+                connected = false,
+                secondsSinceLastActivity = 0
         )
         while (isActive) {
             try {
@@ -41,6 +41,11 @@ class HeartbeatService : Disposable {
 
                 if (wasClosed != null) {
                     manager.client.server.sendHeartBeat(SendHeartBeatOptions(info.instanceId, wasClosed)).await()
+                    if (wasClosed) {
+                        manager.trackEvent("ide_close_signal", mapOf(
+                                "clientKind" to "jetbrains"
+                        ))
+                    }
                 }
             } catch (t: Throwable) {
                 thisLogger().error("gitpod: failed to check activity:", t)
