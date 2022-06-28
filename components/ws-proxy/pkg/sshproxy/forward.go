@@ -9,7 +9,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	tracker "github.com/gitpod-io/gitpod/ws-proxy/pkg/analytics"
 	"github.com/gitpod-io/golang-crypto/ssh"
 	"golang.org/x/net/context"
 )
@@ -29,7 +31,7 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 		return
 	}
 	if originChannel.ChannelType() == "session" {
-		originChan = startHeartbeatingChannel(originChan, s.Heartbeater, session.InstanceID)
+		originChan = startHeartbeatingChannel(originChan, s.Heartbeater, session)
 	}
 	defer originChan.Close()
 
@@ -90,7 +92,19 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 	log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debug("session forward stop")
 }
 
-func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, instanceID string) ssh.Channel {
+func TrackIDECloseSignal(session *Session) {
+	propertics := make(map[string]interface{})
+	propertics["workspaceId"] = session.WorkspaceID
+	propertics["instanceId"] = session.InstanceID
+	propertics["clientKind"] = "ssh"
+	tracker.Track(analytics.TrackMessage{
+		Identity:   analytics.Identity{UserID: session.OwnerUserId},
+		Event:      "ide_close_signal",
+		Properties: propertics,
+	})
+}
+
+func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, session *Session) ssh.Channel {
 	ctx, cancel := context.WithCancel(context.Background())
 	res := &heartbeatingChannel{
 		Channel: c,
@@ -108,10 +122,12 @@ func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, instanceID str
 				}
 				res.sawActivity = false
 				res.mux.Unlock()
-				heartbeat.SendHeartbeat(instanceID, false)
+				heartbeat.SendHeartbeat(session.InstanceID, false)
 			case <-ctx.Done():
 				if res.requestedPty {
-					heartbeat.SendHeartbeat(instanceID, true)
+					heartbeat.SendHeartbeat(session.InstanceID, true)
+					TrackIDECloseSignal(session)
+					log.WithField("instanceId", session.InstanceID).Info("send closed heartbeat")
 				}
 				return
 			}
