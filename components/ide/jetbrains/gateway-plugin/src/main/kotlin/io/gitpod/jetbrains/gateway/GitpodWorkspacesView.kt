@@ -180,7 +180,7 @@ class GitpodWorkspacesView(
                 ensureActive()
                 updateLifetime?.terminate()
                 updateLifetime = lifetime.createNested()
-                doUpdate(updateLifetime, workspacesPane);
+                doUpdate(updateLifetime, workspacesPane)
             }
         }
         lifetime.onTerminationOrNow { updateActor.close() }
@@ -239,7 +239,7 @@ class GitpodWorkspacesView(
                                 }
                             } catch (e: Throwable) {
                                 thisLogger().error(
-                                    "${gitpodHost}: ${it.workspace.id}: failed to parse creation time",
+                                    "$gitpodHost: ${it.workspace.id}: failed to parse creation time",
                                     e
                                 )
                                 null
@@ -247,7 +247,7 @@ class GitpodWorkspacesView(
                         }
                     for (info in sortedInfos) {
                         if (info.latestInstance == null) {
-                            continue;
+                            continue
                         }
                         indent {
                             row {
@@ -330,7 +330,7 @@ class GitpodWorkspacesView(
                     try {
                         info = client.syncWorkspace(update.workspaceId)
                     } catch (t: Throwable) {
-                        thisLogger().error("${gitpodHost}: ${update.workspaceId}: failed to sync", t)
+                        thisLogger().error("$gitpodHost: ${update.workspaceId}: failed to sync", t)
                         continue
                     }
                     workspacesMap[update.workspaceId] = info

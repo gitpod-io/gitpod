@@ -42,5 +42,4 @@ class GitpodSettingsConfigurable : BoundConfigurable("Gitpod") {
             return@run null
         }
     }
-
 }
