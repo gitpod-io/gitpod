@@ -67,8 +67,8 @@ export class TokenService implements TokenProvider {
         //
         const aboutToExpireTime = new Date();
         aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
-        console.log(`TokenService.doGetTokenForHost (e: ${token.expiryDate} > a: ${aboutToExpireTime.toISOString()})`);
-        if (token.expiryDate && token.expiryDate > aboutToExpireTime.toISOString()) {
+        console.log(`TokenService.doGetTokenForHost (e: ${token.expiryDate} < a: ${aboutToExpireTime.toISOString()})`);
+        if (token.expiryDate && token.expiryDate < aboutToExpireTime.toISOString()) {
             const { authProvider } = this.hostContextProvider.get(host)!;
             if (authProvider.refreshToken) {
                 await authProvider.refreshToken(user);
