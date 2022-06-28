@@ -1453,18 +1453,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
         const now = new Date();
-        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
-        if (!teamSubscription) {
-            // No team subscription, nothing to do 🌴
-            return;
+        const ts2 = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (ts2) {
+            await this.updateTeamSubscriptionQuantity(ts2);
+            await this.teamSubscription2Service.cancelTeamMemberSubscription(ts2, userId, teamMembershipId, now);
         }
-        await this.updateTeamSubscriptionQuantity(teamSubscription);
-        await this.teamSubscription2Service.cancelTeamMemberSubscription(
-            teamSubscription,
-            userId,
-            teamMembershipId,
-            now,
-        );
+        const user = await this.userDB.findUserById(userId);
+        if (user && user.additionalData?.usageAttributionId === `team:${teamId}`) {
+            // If the user previously attributed all their usage to a given team, but they are now leaving this
+            // team, then the currently selected usage attribution ID is no longer valid. In this case, we must
+            // reset this ID to the default value.
+            user.additionalData.usageAttributionId = undefined;
+            await this.userDB.updateUserPartial(user);
+        }
     }
 
     protected async onTeamDeleted(teamId: string): Promise<void> {
