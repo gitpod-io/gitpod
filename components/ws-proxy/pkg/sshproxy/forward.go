@@ -40,9 +40,10 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 			switch req.Type {
 			case "pty-req", "shell":
 				log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debugf("forwarding %s request", req.Type)
-				if req.WantReply {
-					req.Reply(true, []byte{})
-					req.WantReply = false
+				if channel, ok := originChan.(*heartbeatingChannel); ok && req.Type == "pty-req" {
+					channel.mux.Lock()
+					channel.requestedPty = true
+					channel.mux.Unlock()
 				}
 			}
 			maskedReqs <- req
@@ -101,7 +102,7 @@ func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, instanceID str
 			select {
 			case <-res.t.C:
 				res.mux.Lock()
-				if !res.sawActivity {
+				if !res.sawActivity || !res.requestedPty {
 					res.mux.Unlock()
 					continue
 				}
@@ -109,7 +110,9 @@ func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, instanceID str
 				res.mux.Unlock()
 				heartbeat.SendHeartbeat(instanceID, false)
 			case <-ctx.Done():
-				heartbeat.SendHeartbeat(instanceID, true)
+				if res.requestedPty {
+					heartbeat.SendHeartbeat(instanceID, true)
+				}
 				return
 			}
 		}
@@ -126,6 +129,8 @@ type heartbeatingChannel struct {
 	t           *time.Ticker
 
 	cancel context.CancelFunc
+
+	requestedPty bool
 }
 
 // Read reads up to len(data) bytes from the channel.
