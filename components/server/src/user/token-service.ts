@@ -23,6 +23,7 @@ export class TokenService implements TokenProvider {
 
     @postConstruct()
     init() {
+        console.warn("TokenService init");
         /** no await */ this.tokenGC.start().catch((err) => {
             /** ignore */
         });
@@ -40,6 +41,9 @@ export class TokenService implements TokenProvider {
             promise = this.doGetTokenForHost(user, host);
             this.getTokenForHostCache.set(key, promise);
             promise = promise.finally(() => this.getTokenForHostCache.delete(key));
+            console.log(`TokenService.getTokenForHost ${key} (fresh)`);
+        } else {
+            console.log(`TokenService.getTokenForHost ${key} (from cache)`);
         }
         return promise;
     }
@@ -63,6 +67,7 @@ export class TokenService implements TokenProvider {
         //
         const aboutToExpireTime = new Date();
         aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
+        console.log(`TokenService.doGetTokenForHost (e: ${token.expiryDate} > a: ${aboutToExpireTime.toISOString()})`);
         if (token.expiryDate && token.expiryDate > aboutToExpireTime.toISOString()) {
             const { authProvider } = this.hostContextProvider.get(host)!;
             if (authProvider.refreshToken) {
