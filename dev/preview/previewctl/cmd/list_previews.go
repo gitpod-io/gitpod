@@ -15,15 +15,22 @@ func listPreviewsCmd(logger *logrus.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List all existing Preview Environments.",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if branch != "" {
 				logger.Warn("Branch flag is ignored for 'list' command.")
 			}
 
-			err := preview.ListAllPreviews()
+			p, err := preview.New(branch, logger)
+			if err != nil {
+				return err
+			}
+
+			err = p.ListAllPreviews()
 			if err != nil {
 				logger.WithFields(logrus.Fields{"err": err}).Fatal("Failed to list previews.")
 			}
+
+			return nil
 		},
 	}
 

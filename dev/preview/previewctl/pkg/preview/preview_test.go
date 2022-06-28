@@ -45,11 +45,7 @@ func TestGetPreviewName(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		preview := &preview.Preview{
-			Branch: tc.branch,
-		}
-
-		previewName := preview.GetPreviewName()
+		previewName := preview.GetName(tc.branch)
 
 		if tc.expectedResult != previewName {
 			log.Fatalf("Test '%s' failed. Expected '%s' but got '%s'", tc.testName, tc.expectedResult, previewName)
