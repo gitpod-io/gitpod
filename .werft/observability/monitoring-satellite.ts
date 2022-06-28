@@ -12,7 +12,6 @@ type MonitoringSatelliteInstallerOptions = {
     previewName: string;
     previewDomain: string;
     stackdriverServiceAccount: any;
-    withVM: boolean;
 };
 
 const sliceName = "observability";
@@ -29,7 +28,6 @@ export class MonitoringSatelliteInstaller {
             branch,
             satelliteNamespace,
             stackdriverServiceAccount,
-            withVM,
             previewDomain,
             previewName,
             nodeExporterPort,
@@ -68,7 +66,7 @@ export class MonitoringSatelliteInstaller {
                 domain: '${previewDomain}',
                 nodeExporterPort: ${nodeExporterPort},
             },
-            ${withVM ? "" : "nodeAffinity: { nodeSelector: { 'gitpod.io/workload_services': 'true' }, },"}
+            ${"nodeAffinity: { nodeSelector: { 'gitpod.io/workload_services': 'true' }, },"}
             stackdriver: {
                 defaultProject: '${stackdriverServiceAccount.project_id}',
                 clientEmail: '${stackdriverServiceAccount.client_email}',
@@ -104,9 +102,7 @@ export class MonitoringSatelliteInstaller {
 
         werft.log(sliceName, "rendering YAML files");
         exec(jsonnetRenderCmd, { silent: true });
-        if (withVM) {
-            this.postProcessManifests();
-        }
+        this.postProcessManifests();
 
         this.ensureCorrectInstallationOrder()
         this.deployGitpodServiceMonitors();
@@ -153,14 +149,12 @@ export class MonitoringSatelliteInstaller {
 
         // core-dev is just too unstable for node-exporter
         // we don't guarantee that it will run at all
-        if (this.options.withVM) {
-            checks.push(
-                exec(
-                    `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} daemonset node-exporter`,
-                    { slice: sliceName, async: true },
-                ),
-            );
-        }
+        checks.push(
+            exec(
+                `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} daemonset node-exporter`,
+                { slice: sliceName, async: true },
+            ),
+        );
 
         await Promise.all(checks);
     }
