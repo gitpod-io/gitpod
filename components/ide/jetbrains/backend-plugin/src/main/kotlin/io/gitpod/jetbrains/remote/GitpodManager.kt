@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
@@ -19,6 +20,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import git4idea.config.GitVcsApplicationSettings
 import io.gitpod.gitpodprotocol.api.GitpodClient
 import io.gitpod.gitpodprotocol.api.GitpodServerLauncher
+import io.gitpod.gitpodprotocol.api.entities.RemoteTrackMessage
 import io.gitpod.jetbrains.remote.services.HeartbeatService
 import io.gitpod.jetbrains.remote.utils.Retrier.retry
 import io.gitpod.supervisor.api.*
@@ -325,6 +327,33 @@ class GitpodManager : Disposable {
     init {
         lifetime.onTerminationOrNow {
             serverJob.cancel()
+        }
+    }
+
+    private val versionName = ApplicationInfo.getInstance().versionName
+    private val fullVersion = ApplicationInfo.getInstance().fullVersion
+
+    fun trackEvent(eventName: String, props: Map<String, Any?>) {
+        val timestamp = System.currentTimeMillis()
+        GlobalScope.launch {
+            val info = pendingInfo.await()
+            val event = RemoteTrackMessage().apply {
+                event = eventName
+                properties = mapOf(
+                        "instanceId" to info.instanceId,
+                        "workspaceId" to info.workspaceId,
+                        "appName" to versionName,
+                        "appVersion" to fullVersion,
+                        "timestamp" to timestamp,
+                        "product" to backendKind,
+                        "qualifier" to backendQualifier
+                ).plus(props)
+            }
+            if (devMode) {
+                thisLogger().warn("gitpod: $event")
+            } else {
+                client.server.trackEvent(event)
+            }
         }
     }
 }
