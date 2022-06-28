@@ -23,9 +23,6 @@ pod:
   - name: gcp-sa-release
     secret:
       secretName: gcp-sa-gitpod-release-deployer
-  - name: gpsh-coredev-license
-    secret:
-      secretName: gpsh-coredev-license
   - name: prometheus-remote-write-auth
     secret:
       secretName: prometheus-remote-write-auth
@@ -94,9 +91,6 @@ pod:
       readOnly: true
     - name: gcp-sa-release
       mountPath: /mnt/secrets/gcp-sa-release
-      readOnly: true
-    - name: gpsh-coredev-license
-      mountPath: /mnt/secrets/gpsh-coredev
       readOnly: true
     - name: gpsh-harvester-license
       mountPath: /mnt/secrets/gpsh-harvester
