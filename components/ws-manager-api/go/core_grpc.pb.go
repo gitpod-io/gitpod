@@ -52,6 +52,8 @@ type WorkspaceManagerClient interface {
 	DeleteVolumeSnapshot(ctx context.Context, in *DeleteVolumeSnapshotRequest, opts ...grpc.CallOption) (*DeleteVolumeSnapshotResponse, error)
 	// UpdateSSHKey update ssh keys
 	UpdateSSHKey(ctx context.Context, in *UpdateSSHKeyRequest, opts ...grpc.CallOption) (*UpdateSSHKeyResponse, error)
+	// describeCluster provides information about the cluster
+	DescribeCluster(ctx context.Context, in *DescribeClusterRequest, opts ...grpc.CallOption) (*DescribeClusterResponse, error)
 }
 
 type workspaceManagerClient struct {
@@ -202,6 +204,15 @@ func (c *workspaceManagerClient) UpdateSSHKey(ctx context.Context, in *UpdateSSH
 	return out, nil
 }
 
+func (c *workspaceManagerClient) DescribeCluster(ctx context.Context, in *DescribeClusterRequest, opts ...grpc.CallOption) (*DescribeClusterResponse, error) {
+	out := new(DescribeClusterResponse)
+	err := c.cc.Invoke(ctx, "/wsman.WorkspaceManager/DescribeCluster", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspaceManagerServer is the server API for WorkspaceManager service.
 // All implementations must embed UnimplementedWorkspaceManagerServer
 // for forward compatibility
@@ -232,6 +243,8 @@ type WorkspaceManagerServer interface {
 	DeleteVolumeSnapshot(context.Context, *DeleteVolumeSnapshotRequest) (*DeleteVolumeSnapshotResponse, error)
 	// UpdateSSHKey update ssh keys
 	UpdateSSHKey(context.Context, *UpdateSSHKeyRequest) (*UpdateSSHKeyResponse, error)
+	// describeCluster provides information about the cluster
+	DescribeCluster(context.Context, *DescribeClusterRequest) (*DescribeClusterResponse, error)
 	mustEmbedUnimplementedWorkspaceManagerServer()
 }
 
@@ -277,6 +290,9 @@ func (UnimplementedWorkspaceManagerServer) DeleteVolumeSnapshot(context.Context,
 }
 func (UnimplementedWorkspaceManagerServer) UpdateSSHKey(context.Context, *UpdateSSHKeyRequest) (*UpdateSSHKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSSHKey not implemented")
+}
+func (UnimplementedWorkspaceManagerServer) DescribeCluster(context.Context, *DescribeClusterRequest) (*DescribeClusterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DescribeCluster not implemented")
 }
 func (UnimplementedWorkspaceManagerServer) mustEmbedUnimplementedWorkspaceManagerServer() {}
 
@@ -528,6 +544,24 @@ func _WorkspaceManager_UpdateSSHKey_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceManager_DescribeCluster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DescribeClusterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceManagerServer).DescribeCluster(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsman.WorkspaceManager/DescribeCluster",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceManagerServer).DescribeCluster(ctx, req.(*DescribeClusterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspaceManager_ServiceDesc is the grpc.ServiceDesc for WorkspaceManager service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -582,6 +616,10 @@ var WorkspaceManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateSSHKey",
 			Handler:    _WorkspaceManager_UpdateSSHKey_Handler,
+		},
+		{
+			MethodName: "DescribeCluster",
+			Handler:    _WorkspaceManager_DescribeCluster_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

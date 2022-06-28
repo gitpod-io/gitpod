@@ -1162,6 +1162,68 @@ export namespace SSHPublicKeys {
     }
 }
 
+export class DescribeClusterRequest extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DescribeClusterRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: DescribeClusterRequest): DescribeClusterRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DescribeClusterRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DescribeClusterRequest;
+    static deserializeBinaryFromReader(message: DescribeClusterRequest, reader: jspb.BinaryReader): DescribeClusterRequest;
+}
+
+export namespace DescribeClusterRequest {
+    export type AsObject = {
+    }
+}
+
+export class DescribeClusterResponse extends jspb.Message {
+    clearWorkspaceclassesList(): void;
+    getWorkspaceclassesList(): Array<WorkspaceClass>;
+    setWorkspaceclassesList(value: Array<WorkspaceClass>): DescribeClusterResponse;
+    addWorkspaceclasses(value?: WorkspaceClass, index?: number): WorkspaceClass;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DescribeClusterResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: DescribeClusterResponse): DescribeClusterResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DescribeClusterResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DescribeClusterResponse;
+    static deserializeBinaryFromReader(message: DescribeClusterResponse, reader: jspb.BinaryReader): DescribeClusterResponse;
+}
+
+export namespace DescribeClusterResponse {
+    export type AsObject = {
+        workspaceclassesList: Array<WorkspaceClass.AsObject>,
+    }
+}
+
+export class WorkspaceClass extends jspb.Message {
+    getId(): string;
+    setId(value: string): WorkspaceClass;
+    getDisplayname(): string;
+    setDisplayname(value: string): WorkspaceClass;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WorkspaceClass.AsObject;
+    static toObject(includeInstance: boolean, msg: WorkspaceClass): WorkspaceClass.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WorkspaceClass, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WorkspaceClass;
+    static deserializeBinaryFromReader(message: WorkspaceClass, reader: jspb.BinaryReader): WorkspaceClass;
+}
+
+export namespace WorkspaceClass {
+    export type AsObject = {
+        id: string,
+        displayname: string,
+    }
+}
+
 export enum StopWorkspacePolicy {
     NORMALLY = 0,
     IMMEDIATELY = 1,

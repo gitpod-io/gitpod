@@ -46,6 +46,9 @@ service WorkspaceManager {
 
     // UpdateSSHKey update ssh keys
     rpc UpdateSSHKey(UpdateSSHKeyRequest) returns (UpdateSSHKeyResponse) {}
+
+    // describeCluster provides information about the cluster
+    rpc DescribeCluster(DescribeClusterRequest) returns (DescribeClusterResponse) {}
 }
 
 // MetadataFilter describes conditions for matching a set of workspaces.
@@ -647,4 +650,19 @@ message ExposedPorts {
 message SSHPublicKeys {
     // keys is the set of ssh public key
     repeated string keys = 1;
+}
+
+// DescribeClusterRequest requests information about the cluster
+message DescribeClusterRequest {}
+
+// DescribeClusterResponse is the answer to a DescribeClusterRequest
+message DescribeClusterResponse {
+    // workspace classes that are supported by the cluster
+    repeated WorkspaceClass WorkspaceClasses = 1;
+}
+
+// WorkspaceClass describes a workspace class that is supported by the cluster
+message WorkspaceClass {
+    string Id = 1;
+    string DisplayName = 2;
 }
