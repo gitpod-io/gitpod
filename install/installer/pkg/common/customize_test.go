@@ -5,6 +5,7 @@ package common_test
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -519,6 +520,13 @@ func TestCustomizeEnvvar(t *testing.T) {
 			require.NoError(t, err)
 
 			result := common.CustomizeEnvvar(ctx, testCase.Component, testCase.ExistingEnnvars)
+
+			sort.Slice(result, func(a, b int) bool {
+				return result[a].Name < result[b].Name
+			})
+			sort.Slice(testCase.Expect, func(a, b int) bool {
+				return result[a].Name < result[b].Name
+			})
 
 			if !reflect.DeepEqual(testCase.Expect, result) {
 				t.Errorf("expected %v but got %v", testCase.Expect, result)
