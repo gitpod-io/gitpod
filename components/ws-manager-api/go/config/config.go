@@ -120,6 +120,7 @@ type Configuration struct {
 }
 
 type WorkspaceClass struct {
+	Name      string                            `json:"name"`
 	Container ContainerConfiguration            `json:"container"`
 	Templates WorkspacePodTemplateConfiguration `json:"templates"`
 	PVC       PVCConfiguration                  `json:"pvc"`
