@@ -10,12 +10,6 @@ pod:
             values:
             - "builds"
   volumes:
-  - name: gcp-sa
-    secret:
-      secretName: gcp-sa-gitpod-dev-deployer
-  - name: gcp-sa-release
-    secret:
-      secretName: gcp-sa-gitpod-release-deployer
   - name: harvester-kubeconfig
     secret:
       secretName: harvester-kubeconfig
@@ -31,12 +25,6 @@ pod:
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     volumeMounts:
-    - name: gcp-sa
-      mountPath: /mnt/secrets/gcp-sa
-      readOnly: true
-    - name: gcp-sa-release
-      mountPath: /mnt/secrets/gcp-sa-release
-      readOnly: true
     - name: harvester-kubeconfig
       mountPath: /mnt/secrets/harvester-kubeconfig
     - name: harvester-vm-ssh-keys
