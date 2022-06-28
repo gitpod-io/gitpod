@@ -82,7 +82,7 @@ export class MonitoringSatelliteInstaller {
             remoteWrite: {
                 username: '${process.env.PROM_REMOTE_WRITE_USER}',
                 password: '${process.env.PROM_REMOTE_WRITE_PASSWORD}',
-                urls: ['https://prometheus.gitpod-dev.com/api/v1/write'],
+                urls: ['https://victoriametrics.gitpod.io/api/v1/write'],
                 writeRelabelConfigs: [{
                     sourceLabels: ['__name__', 'job'],
                     separator: ';',
