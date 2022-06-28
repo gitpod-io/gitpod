@@ -125,6 +125,10 @@ export class StripeService {
         return result.data[0];
     }
 
+    async cancelSubscription(subscriptionId: string): Promise<void> {
+        await this.getStripe().subscriptions.del(subscriptionId);
+    }
+
     async createSubscriptionForCustomer(customerId: string, currency: Currency): Promise<void> {
         const priceId = this.config?.stripeConfig?.usageProductPriceIds[currency];
         if (!priceId) {
