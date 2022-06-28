@@ -44,7 +44,7 @@ export class TokenService implements TokenProvider {
         return promise;
     }
 
-    async doGetTokenForHost(user: User, host: string): Promise<Token> {
+    protected async doGetTokenForHost(user: User, host: string): Promise<Token> {
         const identity = this.getIdentityForHost(user, host);
         let token = await this.userDB.findTokenForIdentity(identity);
         if (!token) {
@@ -52,9 +52,18 @@ export class TokenService implements TokenProvider {
                 `No token found for user ${identity.authProviderId}/${identity.authId}/${identity.authName}!`,
             );
         }
+        // timeline for token refresh cycles:
+        //
+        // –––––––––––––––––––––––––––– a ––––––––––––––––––––––––––––––> t
+        // [ e < a ; refresh expected ] ^ [ e > a ; OK ]
+        //
+        // where
+        // a = now + 5min
+        // e = expiryDate from token
+        //
         const aboutToExpireTime = new Date();
         aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
-        if (token.expiryDate && token.expiryDate < aboutToExpireTime.toISOString()) {
+        if (token.expiryDate && token.expiryDate > aboutToExpireTime.toISOString()) {
             const { authProvider } = this.hostContextProvider.get(host)!;
             if (authProvider.refreshToken) {
                 await authProvider.refreshToken(user);
