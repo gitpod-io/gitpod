@@ -99,8 +99,9 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		return src, xerrors.Errorf("git initializer gitClone: %w", err)
 	}
 
+	// this is only needed for prebuilds using PVC, so if it errors out, output only Debug log to prevent log spam
 	if err := ws.AddSafeDirectory(ctx, ws.Location); err != nil {
-		log.WithError(err).Warn("git initializer AddSafeDirectory")
+		log.WithError(err).Debug("git initializer AddSafeDirectory")
 	}
 
 	if ws.Chown {
