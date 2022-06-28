@@ -29,6 +29,7 @@ interface IWorkspaceManagerService extends grpc.ServiceDefinition<grpc.UntypedSe
     controlAdmission: IWorkspaceManagerService_IControlAdmission;
     deleteVolumeSnapshot: IWorkspaceManagerService_IDeleteVolumeSnapshot;
     updateSSHKey: IWorkspaceManagerService_IUpdateSSHKey;
+    describeCluster: IWorkspaceManagerService_IDescribeCluster;
 }
 
 interface IWorkspaceManagerService_IGetWorkspaces extends grpc.MethodDefinition<core_pb.GetWorkspacesRequest, core_pb.GetWorkspacesResponse> {
@@ -148,6 +149,15 @@ interface IWorkspaceManagerService_IUpdateSSHKey extends grpc.MethodDefinition<c
     responseSerialize: grpc.serialize<core_pb.UpdateSSHKeyResponse>;
     responseDeserialize: grpc.deserialize<core_pb.UpdateSSHKeyResponse>;
 }
+interface IWorkspaceManagerService_IDescribeCluster extends grpc.MethodDefinition<core_pb.DescribeClusterRequest, core_pb.DescribeClusterResponse> {
+    path: "/wsman.WorkspaceManager/DescribeCluster";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<core_pb.DescribeClusterRequest>;
+    requestDeserialize: grpc.deserialize<core_pb.DescribeClusterRequest>;
+    responseSerialize: grpc.serialize<core_pb.DescribeClusterResponse>;
+    responseDeserialize: grpc.deserialize<core_pb.DescribeClusterResponse>;
+}
 
 export const WorkspaceManagerService: IWorkspaceManagerService;
 
@@ -165,6 +175,7 @@ export interface IWorkspaceManagerServer extends grpc.UntypedServiceImplementati
     controlAdmission: grpc.handleUnaryCall<core_pb.ControlAdmissionRequest, core_pb.ControlAdmissionResponse>;
     deleteVolumeSnapshot: grpc.handleUnaryCall<core_pb.DeleteVolumeSnapshotRequest, core_pb.DeleteVolumeSnapshotResponse>;
     updateSSHKey: grpc.handleUnaryCall<core_pb.UpdateSSHKeyRequest, core_pb.UpdateSSHKeyResponse>;
+    describeCluster: grpc.handleUnaryCall<core_pb.DescribeClusterRequest, core_pb.DescribeClusterResponse>;
 }
 
 export interface IWorkspaceManagerClient {
@@ -206,6 +217,9 @@ export interface IWorkspaceManagerClient {
     updateSSHKey(request: core_pb.UpdateSSHKeyRequest, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
     updateSSHKey(request: core_pb.UpdateSSHKeyRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
     updateSSHKey(request: core_pb.UpdateSSHKeyRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
+    describeCluster(request: core_pb.DescribeClusterRequest, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
+    describeCluster(request: core_pb.DescribeClusterRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
+    describeCluster(request: core_pb.DescribeClusterRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class WorkspaceManagerClient extends grpc.Client implements IWorkspaceManagerClient {
@@ -248,4 +262,7 @@ export class WorkspaceManagerClient extends grpc.Client implements IWorkspaceMan
     public updateSSHKey(request: core_pb.UpdateSSHKeyRequest, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
     public updateSSHKey(request: core_pb.UpdateSSHKeyRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
     public updateSSHKey(request: core_pb.UpdateSSHKeyRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateSSHKeyResponse) => void): grpc.ClientUnaryCall;
+    public describeCluster(request: core_pb.DescribeClusterRequest, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
+    public describeCluster(request: core_pb.DescribeClusterRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
+    public describeCluster(request: core_pb.DescribeClusterRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
 }

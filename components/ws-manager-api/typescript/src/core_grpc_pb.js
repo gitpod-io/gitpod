@@ -100,6 +100,28 @@ function deserialize_wsman_DeleteVolumeSnapshotResponse(buffer_arg) {
   return core_pb.DeleteVolumeSnapshotResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_wsman_DescribeClusterRequest(arg) {
+  if (!(arg instanceof core_pb.DescribeClusterRequest)) {
+    throw new Error('Expected argument of type wsman.DescribeClusterRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_DescribeClusterRequest(buffer_arg) {
+  return core_pb.DescribeClusterRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsman_DescribeClusterResponse(arg) {
+  if (!(arg instanceof core_pb.DescribeClusterResponse)) {
+    throw new Error('Expected argument of type wsman.DescribeClusterResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_DescribeClusterResponse(buffer_arg) {
+  return core_pb.DescribeClusterResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_wsman_DescribeWorkspaceRequest(arg) {
   if (!(arg instanceof core_pb.DescribeWorkspaceRequest)) {
     throw new Error('Expected argument of type wsman.DescribeWorkspaceRequest');
@@ -455,6 +477,18 @@ updateSSHKey: {
     requestDeserialize: deserialize_wsman_UpdateSSHKeyRequest,
     responseSerialize: serialize_wsman_UpdateSSHKeyResponse,
     responseDeserialize: deserialize_wsman_UpdateSSHKeyResponse,
+  },
+  // describeCluster provides information about the cluster
+describeCluster: {
+    path: '/wsman.WorkspaceManager/DescribeCluster',
+    requestStream: false,
+    responseStream: false,
+    requestType: core_pb.DescribeClusterRequest,
+    responseType: core_pb.DescribeClusterResponse,
+    requestSerialize: serialize_wsman_DescribeClusterRequest,
+    requestDeserialize: deserialize_wsman_DescribeClusterRequest,
+    responseSerialize: serialize_wsman_DescribeClusterResponse,
+    responseDeserialize: deserialize_wsman_DescribeClusterResponse,
   },
 };
 
