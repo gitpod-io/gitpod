@@ -5,6 +5,7 @@
  */
 
 import { DisposableCollection, Disposable } from '@gitpod/gitpod-protocol/lib/util/disposable';
+import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
 
 let lastActivity = 0;
 const updateLastActivitiy = () => {
@@ -16,14 +17,25 @@ export const track = (w: Window) => {
 }
 
 let toCancel: DisposableCollection | undefined;
-export function schedule(instanceId: string): void {
+export function schedule(wsInfo: WorkspaceInfo, sessionId: string): void {
     if (toCancel) {
         return;
     }
     toCancel = new DisposableCollection()
     const sendHeartBeat = async (wasClosed?: true) => {
         try {
-            await window.gitpod.service.server.sendHeartBeat({ instanceId, wasClosed });
+            await window.gitpod.service.server.sendHeartBeat({ instanceId: wsInfo.latestInstance!.id, wasClosed });
+            if (wasClosed){
+                window.gitpod.service.server.trackEvent({
+                    event: 'ide_close_signal',
+                    properties: {
+                        workspaceId: wsInfo.workspace.id,
+                        instanceId: wsInfo.latestInstance!.id,
+                        sessionId,
+                        clientKind: 'supervisor-frontend'
+                    }
+                })
+            }
         } catch (err) {
             console.error('Failed to send hearbeat:', err);
         }
