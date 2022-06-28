@@ -1455,17 +1455,22 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     protected async onTeamDeleted(teamId: string): Promise<void> {
         const now = new Date();
-        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
-        if (!teamSubscription) {
-            // No team subscription, nothing to do 🌴
-            return;
+        const ts2 = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (ts2) {
+            const chargebeeSubscriptionId = ts2.paymentReference;
+            await this.chargebeeService.cancelSubscription(
+                chargebeeSubscriptionId,
+                {},
+                { teamId, chargebeeSubscriptionId },
+            );
         }
-        const chargebeeSubscriptionId = teamSubscription.paymentReference;
-        await this.chargebeeService.cancelSubscription(
-            chargebeeSubscriptionId,
-            {},
-            { teamId, chargebeeSubscriptionId },
-        );
+        const teamCustomer = await this.stripeService.findCustomerByTeamId(teamId);
+        if (teamCustomer) {
+            const subsciption = await this.stripeService.findUncancelledSubscriptionByCustomer(teamCustomer.id);
+            if (subsciption) {
+                await this.stripeService.cancelSubscription(subsciption.id);
+            }
+        }
     }
 
     protected async updateTeamSubscriptionQuantity(teamSubscription: TeamSubscription2): Promise<void> {
