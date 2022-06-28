@@ -15,13 +15,14 @@ func SSHPreviewCmd(logger *logrus.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ssh",
 		Short: "SSH into a preview's Virtual Machine.",
-		Run: func(cmd *cobra.Command, args []string) {
-			p := preview.New(branch, logger)
+		RunE: func(cmd *cobra.Command, args []string) error {
 
-			err := p.SSHPreview()
+			err := preview.SSHPreview(branch)
 			if err != nil {
 				logger.WithFields(logrus.Fields{"err": err}).Fatal("Failed to SSH preview's VM.")
 			}
+
+			return err
 		},
 	}
 
