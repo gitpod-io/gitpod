@@ -66,7 +66,6 @@ export class MonitoringSatelliteInstaller {
                 domain: '${previewDomain}',
                 nodeExporterPort: ${nodeExporterPort},
             },
-            ${"nodeAffinity: { nodeSelector: { 'gitpod.io/workload_services': 'true' }, },"}
             stackdriver: {
                 defaultProject: '${stackdriverServiceAccount.project_id}',
                 clientEmail: '${stackdriverServiceAccount.client_email}',
