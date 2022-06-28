@@ -7,7 +7,6 @@
 import EventEmitter from "events";
 import React, { Suspense, useEffect, useState } from "react";
 import {
-    Workspace,
     WorkspaceInstance,
     DisposableCollection,
     WorkspaceImageBuild,
@@ -19,11 +18,11 @@ import { getGitpodService } from "../service/service";
 const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 
 export interface PrebuildLogsProps {
+    // The workspace ID of the "prebuild" workspace
     workspaceId?: string;
 }
 
 export default function PrebuildLogs(props: PrebuildLogsProps) {
-    const [workspace, setWorkspace] = useState<Workspace | undefined>();
     const [workspaceInstance, setWorkspaceInstance] = useState<WorkspaceInstance | undefined>();
     const [error, setError] = useState<Error | undefined>();
     const [logsEmitter] = useState(new EventEmitter());
@@ -38,7 +37,6 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
             try {
                 const info = await getGitpodService().server.getWorkspace(props.workspaceId);
                 if (info.latestInstance) {
-                    setWorkspace(info.workspace);
                     setWorkspaceInstance(info.latestInstance);
                 }
                 disposables.push(
@@ -59,36 +57,75 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                         },
                     }),
                 );
-                if (info.latestInstance) {
-                    disposables.push(
-                        watchHeadlessLogs(
-                            info.latestInstance.id,
-                            (chunk) => {
-                                logsEmitter.emit("logs", chunk);
-                            },
-                            async () => workspaceInstance?.status.phase === "stopped",
-                        ),
-                    );
-                }
             } catch (err) {
                 console.error(err);
                 setError(err);
             }
         })();
-        return function cleanUp() {
+        return function cleanup() {
             disposables.dispose();
         };
-    }, [props.workspaceId]);
+    }, [logsEmitter, props.workspaceId]);
 
     useEffect(() => {
-        switch (workspaceInstance?.status.phase) {
-            // Building means we're building the Docker image for the workspace so the workspace hasn't started yet.
-            case "building":
-            case "stopped":
-                getGitpodService().server.watchWorkspaceImageBuildLogs(workspace!.id);
-                break;
+        const workspaceId = props.workspaceId;
+        if (!workspaceId || !workspaceInstance?.status.phase) {
+            return;
         }
-    }, [props.workspaceId, workspaceInstance?.status.phase]);
+
+        const disposables = new DisposableCollection();
+        switch (workspaceInstance.status.phase) {
+            // "building" means we're building the Docker image for the prebuild's workspace so the workspace hasn't started yet.
+            case "building":
+                // Try to grab image build logs
+                let abortImageLogs = false;
+                (async () => {
+                    // Linear backoff + abort for re-trying fetching of imagebuild logs
+                    const initialDelaySeconds = 1;
+                    const backoffFactor = 1.2;
+                    const maxBackoffSeconds = 5;
+                    let delayInSeconds = initialDelaySeconds;
+
+                    while (true) {
+                        delayInSeconds = Math.min(delayInSeconds * backoffFactor, maxBackoffSeconds);
+
+                        console.debug("re-trying image build logs");
+                        // eslint-disable-next-line
+                        await new Promise((resolve) => {
+                            setTimeout(resolve, delayInSeconds * 1000);
+                        });
+                        if (abortImageLogs) {
+                            return;
+                        }
+                        try {
+                            await getGitpodService().server.watchWorkspaceImageBuildLogs(workspaceId);
+                        } catch (err) {
+                            console.error("watchWorkspaceImageBuildLogs", err);
+                        }
+                    }
+                })();
+                disposables.push(
+                    Disposable.create(() => {
+                        abortImageLogs = true;
+                    }),
+                );
+                break;
+            // When we're "running" we want to switch to the logs from the actual prebuild workspace, instead
+            case "running":
+                disposables.push(
+                    watchHeadlessLogs(
+                        workspaceInstance.id,
+                        (chunk) => {
+                            logsEmitter.emit("logs", chunk);
+                        },
+                        async () => workspaceInstance?.status.phase === "stopped",
+                    ),
+                );
+        }
+        return function cleanup() {
+            disposables.dispose();
+        };
+    }, [logsEmitter, props.workspaceId, workspaceInstance?.id, workspaceInstance?.status.phase]);
 
     return (
         <Suspense fallback={<div />}>
