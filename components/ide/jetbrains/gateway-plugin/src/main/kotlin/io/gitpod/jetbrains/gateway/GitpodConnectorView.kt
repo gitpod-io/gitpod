@@ -44,5 +44,4 @@ class GitpodConnectorView(
     }.apply {
         this.background = WelcomeScreenUIManager.getMainAssociatedComponentBackground()
     }
-
 }
