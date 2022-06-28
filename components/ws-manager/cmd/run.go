@@ -200,14 +200,18 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Pod")
 		}
 
-		err = (&manager.VolumeSnapshotReconciler{
-			Monitor: monitor,
-			Client:  mgr.GetClient(),
-			Log:     ctrl.Log.WithName("controllers").WithName("VolumeSnapshot"),
-			Scheme:  mgr.GetScheme(),
-		}).SetupWithManager(mgr)
-		if err != nil {
-			log.WithError(err).Fatal(err, "unable to create controller", "controller", "VolumeSnapshot")
+		// enable the volume snapshot controller when the VolumeSnapshot CRD exists
+		_, err = clientset.DiscoveryClient.ServerResourcesForGroupVersion(volumesnapshotv1.SchemeGroupVersion.String())
+		if err == nil {
+			err = (&manager.VolumeSnapshotReconciler{
+				Monitor: monitor,
+				Client:  mgr.GetClient(),
+				Log:     ctrl.Log.WithName("controllers").WithName("VolumeSnapshot"),
+				Scheme:  mgr.GetScheme(),
+			}).SetupWithManager(mgr)
+			if err != nil {
+				log.WithError(err).Fatal(err, "unable to create controller", "controller", "VolumeSnapshot")
+			}
 		}
 
 		if cfg.PProf.Addr != "" {
