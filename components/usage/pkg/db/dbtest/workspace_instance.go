@@ -8,6 +8,8 @@ import (
 	"database/sql"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 	"testing"
 	"time"
 )
@@ -86,4 +88,24 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 		Phase:              sql.NullString{},
 		PhasePersisted:     "",
 	}
+}
+
+func CreateWorkspaceInstances(t *testing.T, conn *gorm.DB, instances ...db.WorkspaceInstance) []db.WorkspaceInstance {
+	t.Helper()
+
+	var records []db.WorkspaceInstance
+	var ids []string
+	for _, instance := range instances {
+		record := NewWorkspaceInstance(t, instance)
+		records = append(records, record)
+		ids = append(ids, record.ID.String())
+	}
+
+	require.NoError(t, conn.CreateInBatches(&records, 1000).Error)
+
+	t.Cleanup(func() {
+		require.NoError(t, conn.Where(ids).Delete(&db.WorkspaceInstance{}).Error)
+	})
+
+	return records
 }
