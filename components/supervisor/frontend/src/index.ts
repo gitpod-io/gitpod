@@ -231,7 +231,7 @@ const toStop = new DisposableCollection();
     heartBeat.track(window);
     const updateHeartBeat = () => {
         if (gitpodServiceClient.info.latestInstance?.status.phase === 'running') {
-            heartBeat.schedule(gitpodServiceClient.info.latestInstance.id);
+            heartBeat.schedule(gitpodServiceClient.info, sessionId);
         } else {
             heartBeat.cancel();
         }
