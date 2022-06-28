@@ -55,7 +55,7 @@ type LicensePayload struct {
 	Seats int `json:"seats"`
 
 	// CustomerID is used to identify installations in installation analytics
-	CustomerID string `json:"customerID"`
+	CustomerID string `json:"customerID,omitempty"`
 }
 
 type licensePayload struct {
