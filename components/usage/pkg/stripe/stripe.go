@@ -5,7 +5,9 @@
 package stripe
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -20,6 +22,21 @@ type Client struct {
 type ClientConfig struct {
 	PublishableKey string `json:"publishableKey"`
 	SecretKey      string `json:"secretKey"`
+}
+
+func ReadConfigFromFile(path string) (ClientConfig, error) {
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return ClientConfig{}, fmt.Errorf("failed to read stripe client config: %w", err)
+	}
+
+	var config ClientConfig
+	err = json.Unmarshal(bytes, &config)
+	if err != nil {
+		return ClientConfig{}, fmt.Errorf("failed to unmarshal Stripe Client config: %w", err)
+	}
+
+	return config, nil
 }
 
 // New authenticates a Stripe client using the provided config
