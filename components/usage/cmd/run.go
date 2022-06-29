@@ -83,6 +83,8 @@ func run() *cobra.Command {
 				log.WithError(err).Fatal("Failed to initialize server.")
 			}
 
+			controller.RegisterMetrics(srv.MetricsRegistry())
+
 			err = srv.ListenAndServe()
 			if err != nil {
 				log.WithError(err).Fatal("Failed to listen and serve.")
