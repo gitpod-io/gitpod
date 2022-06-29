@@ -7,6 +7,7 @@
 import {
     CommitContext,
     GitpodToken,
+    PrebuiltWorkspace,
     Repository,
     Snapshot,
     Team,
@@ -36,7 +37,8 @@ export type GuardedResource =
     | GuardedContentBlob
     | GuardEnvVar
     | GuardedTeam
-    | GuardedWorkspaceLog;
+    | GuardedWorkspaceLog
+    | GuardedPrebuild;
 
 const ALL_GUARDED_RESOURCE_KINDS = new Set<GuardedResourceKind>([
     "workspace",
@@ -116,6 +118,13 @@ export interface GuardedToken {
 export interface GuardedWorkspaceLog {
     kind: "workspaceLog";
     subject: Workspace;
+    teamMembers?: TeamMemberInfo[];
+}
+
+export interface GuardedPrebuild {
+    kind: "prebuild";
+    subject: PrebuiltWorkspace;
+    workspace: Workspace;
     teamMembers?: TeamMemberInfo[];
 }
 
@@ -209,6 +218,12 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
                 }
             case "workspaceLog":
                 return resource.subject.ownerId === this.userId;
+            case "prebuild":
+                // Owners may do everything, team members can "get"
+                return (
+                    resource.workspace.ownerId === this.userId ||
+                    (operation === "get" && !!resource.teamMembers?.some((m) => m.userId === this.userId))
+                );
         }
     }
 }
@@ -477,6 +492,8 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
             case "snapshot":
                 workspace = resource.workspace;
                 break;
+            case "prebuild":
+                workspace = resource.workspace;
             default:
                 // We do not handle resource kinds here!
                 return false;
