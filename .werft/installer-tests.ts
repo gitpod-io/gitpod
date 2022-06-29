@@ -138,17 +138,17 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     CLUSTER_ISSUER: {
         phase: "setup-cluster-issuer",
-        makeTarget: `cluster-issuer cloud=${cloud}`,
-        description: `Deploys ClusterIssuer for ${cloud}`,
+        makeTarget: "cluster-issuer",
+        description: "Deploys ClusterIssuer for ${cloud}",
     },
     EXTERNALDNS: {
         phase: "external-dns",
-        makeTarget: `external-dns cloud=${cloud}`,
+        makeTarget: "external-dns",
         description: `Deploys external-dns with ${cloud} provider`,
     },
     ADD_NS_RECORD: {
         phase: "add-ns-record",
-        makeTarget: `add-ns-record cloud=${cloud}`,
+        makeTarget: "add-ns-record",
         description: "Adds NS record for subdomain under gitpod-self-hosted.com",
     },
     INSTALL_GITPOD_IGNORE_PREFLIGHTS: {
@@ -174,7 +174,7 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     DESTROY: {
         phase: "destroy",
-        makeTarget: `cleanup cloud=${cloud}`,
+        makeTarget: "cleanup",
         description: "Destroy the created infrastucture",
     },
     RESULTS: {
@@ -236,7 +236,7 @@ export async function installerTests(config: TestConfig) {
         // TODO(nvn): send the kubeconfig to cloud storage
         callMakeTargets(resultPhase.phase, resultPhase.description, resultPhase.makeTarget);
 
-        exec(`werft log result -d "Preview URL" url "https://${process.env["TF_VAR_TEST_ID"]}-gitpod-self-hosted.com"`);
+        werft.result("Preview URL", "url", `https://${process.env["TF_VAR_TEST_ID"]}-gitpod-self-hosted.com`)
     } else {
         // if we are not doing preview, we run the tests and delete the infrastructure
         runIntegrationTests()
@@ -249,19 +249,22 @@ function runIntegrationTests() {
     for (let test in TESTS) {
         const testPhase = TESTS[test]
         // we just let tests fail
-        callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
+        const ret = callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
+        if (ret) {
+            werft.result("Test failed", "test name", testPhase.description)
+        }
     }
 }
 
 function callMakeTargets(phase: string, description: string, makeTarget: string) {
     werft.phase(phase, description);
+    werft.log(phase, `Calling ${makeTarget}`);
 
-    const response = exec(`make -C ${makefilePath} ${makeTarget}`, {
+    // exporting cloud env var is important for the make targets
+    const response = exec(`export cloud=${cloud} && make -C ${makefilePath} ${makeTarget}`, {
         slice: phase,
         dontCheckRc: true,
     });
-
-    werft.log(phase, `returned ${response.code}`);
 
     if (response.code) {
         console.error(`Error: ${response.stderr}`);
@@ -269,7 +272,8 @@ function callMakeTargets(phase: string, description: string, makeTarget: string)
         return response.code;
     }
 
-    werft.log(phase, response.stdout.toString());
+    werft.log(phase, `Phase succeeded`);
+
     werft.done(phase);
 
     return response.code;

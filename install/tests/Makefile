@@ -12,6 +12,11 @@ ifndef TF_VAR_TEST_ID
 	$(error TF_VAR_TEST_ID is not defined)
 endif
 
+check-env-cloud:
+ifndef cloud
+	$(error cloud is not defined)
+endif
+
 .PHONY: help
 all: help
 help: Makefile
@@ -44,19 +49,17 @@ aks-standard-cluster:
 	terraform apply -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done creating AKS cluster"
 
-cloud ?= azure
 .PHONY:
 ## add-ns-record: Adds NS record for subdomain under gitpod-selfhosted.com
-add-ns-record:
+add-ns-record: check-env-cloud
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.$(cloud)-add-dns-record  -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done adding NS record"
 
-cloud ?= azure
 .PHONY:
 ## cluster-issuer: Creates a cluster issuer for the correspondign provider
-cluster-issuer:
+cluster-issuer: check-env-cloud
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.$(cloud)-issuer  -var kubeconfig=${KUBECONFIG} --auto-approve
@@ -84,13 +87,12 @@ managed-dns: check-env-sub-domain
 	terraform apply -target=module.clouddns-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done created GCP managed DNS"
 
-cloud ?= "azure"
 .PHONY:
 ## external-dns: Installs external-dns
-external-dns: check-env-sub-domain
+external-dns: check-env-cloud
 	terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.$(cloud)-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve
-	@echo "Done creating externaldns for ${cloud}"
+	@echo "Done creating externaldns for $(cloud)"
 
 .PHONY:
 ## get-kubeconfig: Returns KUBECONFIG of a just created cluster
@@ -209,12 +211,11 @@ check-gitpod-installation: delete-cm-setup check-kots-app check-env-sub-domain
 run-tests:
 	./tests.sh ${KUBECONFIG}
 
-kots-uprgade:
+kots-upgrade:
 	@echo "Upgrade gitpod KOTS app to latest"
 	kubectl kots upstream upgrade --kubeconfig=${KUBECONFIG} gitpod -n gitpod --deploy
 
-cloud ?= gcp
-cleanup: destroy-$(cloud)
+cleanup: check-env-cloud destroy-$(cloud)
 
 select-workspace:
 	terraform workspace select $(TF_VAR_TEST_ID)
@@ -241,7 +242,7 @@ destroy-azure: select-workspace
 
 get-results:
 	@echo "If you have gotten this far, it means your setup succeeded"
-	@echo "The IP address of you setup is "$(TF_VAR_TEST_ID).gitpod-self-hosted.com""
+	@echo "The IP address of you setup is "https://$(TF_VAR_TEST_ID).gitpod-self-hosted.com""
 	@echo "Following is the KUBECONFIG you can use to connect to the cluster:"
 	@cat ${KUBECONFIG}
 
