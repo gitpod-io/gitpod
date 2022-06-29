@@ -6,6 +6,7 @@ package controller
 
 import (
 	"github.com/stretchr/testify/require"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -23,6 +24,23 @@ func TestController(t *testing.T) {
 	require.NoError(t, ctrl.Start())
 	time.Sleep(schedule + 20*time.Millisecond)
 	require.True(t, triggered, "must trigger reconciler function")
+	ctrl.Stop()
+}
+
+func TestController_PreventsConcurrentRunsOfReconcilerFunc(t *testing.T) {
+	schedule := 1 * time.Second
+	count := int32(0)
+
+	ctrl, err := New(schedule, ReconcilerFunc(func() error {
+		atomic.AddInt32(&count, 1)
+		time.Sleep(3 * time.Second)
+		return nil
+	}))
+	require.NoError(t, err)
+
+	require.NoError(t, ctrl.Start())
+	time.Sleep(schedule + 2*time.Second)
+	require.Equal(t, int32(1), count, "must trigger reconciler function exactly once")
 	ctrl.Stop()
 }
 
