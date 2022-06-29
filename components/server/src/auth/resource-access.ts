@@ -217,7 +217,11 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
                         return resource.members.some((m) => m.userId === this.userId && m.role === "owner");
                 }
             case "workspaceLog":
-                return resource.subject.ownerId === this.userId;
+                // Owners may do everything, team members can "get"
+                return (
+                    resource.subject.ownerId === this.userId ||
+                    (operation === "get" && !!resource.teamMembers?.some((m) => m.userId === this.userId))
+                );
             case "prebuild":
                 // Owners may do everything, team members can "get"
                 return (
