@@ -2234,15 +2234,26 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.checkAndBlockUser("getPrebuild");
 
         const pbws = await this.workspaceDb.trace(ctx).findPrebuiltWorkspaceById(prebuildId);
-        const info = (await this.workspaceDb.trace(ctx).findPrebuildInfos([prebuildId]))[0];
-
-        if (info && pbws) {
-            const result: PrebuildWithStatus = { info, status: pbws.state };
-            if (pbws.error) {
-                result.error = pbws.error;
-            }
-            return result;
+        if (!pbws) {
+            return undefined;
         }
+        const [info, workspace] = await Promise.all([
+            this.workspaceDb
+                .trace(ctx)
+                .findPrebuildInfos([prebuildId])
+                .then((infos) => (infos.length > 0 ? infos[0] : undefined)),
+            this.workspaceDb.trace(ctx).findById(pbws.buildWorkspaceId),
+        ]);
+        if (!info || !workspace) {
+            return undefined;
+        }
+
+        await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers: undefined }, "get");
+        const result: PrebuildWithStatus = { info, status: pbws.state };
+        if (pbws.error) {
+            result.error = pbws.error;
+        }
+        return result;
     }
 
     public async findPrebuildByWorkspaceID(
@@ -2251,7 +2262,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<PrebuiltWorkspace | undefined> {
         traceAPIParams(ctx, { workspaceId });
         this.checkAndBlockUser("findPrebuildByWorkspaceID");
-        return this.workspaceDb.trace(ctx).findPrebuildByWorkspaceID(workspaceId);
+
+        const [pbws, workspace] = await Promise.all([
+            this.workspaceDb.trace(ctx).findPrebuildByWorkspaceID(workspaceId),
+            this.workspaceDb.trace(ctx).findById(workspaceId),
+        ]);
+        if (!pbws || !workspace) {
+            return undefined;
+        }
+
+        await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers: undefined }, "get");
+        return pbws;
     }
 
     public async getProjectOverview(ctx: TraceContext, projectId: string): Promise<Project.Overview | undefined> {
