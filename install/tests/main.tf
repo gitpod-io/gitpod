@@ -39,6 +39,20 @@ module "k3s" {
   domain_name      = "${var.TEST_ID}.gitpod-self-hosted.com"
 }
 
+module "gcp-issuer" {
+  source              = "../infra/terraform/tools/issuer"
+  kubeconfig          = var.kubeconfig
+  issuer_name         = "cloudDNS"
+  cert_manager_issuer = {
+    project  = "dns-for-playgrounds"
+    serviceAccountSecretRef = {
+      name = "clouddns-dns01-solver"
+      key = "keys.json"
+    }
+  }
+}
+
+
 module "aks" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/aks?ref=main" # we can later use tags here
   source                   = "../infra/terraform/aks"

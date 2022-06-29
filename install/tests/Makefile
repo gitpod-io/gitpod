@@ -34,6 +34,7 @@ eks-standard-cluster:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.eks -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done creating EKS cluster"
 
 .PHONY:
 ## aks-standard-cluster: Creates an AKS cluster
@@ -41,6 +42,7 @@ aks-standard-cluster:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done creating AKS cluster"
 
 cloud ?= azure
 .PHONY:
@@ -49,6 +51,7 @@ add-ns-record:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.$(cloud)-add-dns-record  -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done adding NS record"
 
 cloud ?= azure
 .PHONY:
@@ -57,6 +60,7 @@ cluster-issuer:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.$(cloud)-issuer  -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done creating cluster issuer"
 
 .PHONY:
 ## k3s-standard-cluster: Creates a K3S cluster on GCP with one master and 1 worker node
@@ -64,21 +68,21 @@ k3s-standard-cluster:
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve
-
-CLUSTER_ISSUER_CLOUD_DNS := "./manifests/gcp-issuer.yaml"
+	@echo "Done creating k3s cluster"
 
 .PHONY:
 ## cert-manager: Installs cert-manager, optionally create secret for cloud-dns access
 cert-manager:
 	terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done installing cert-manager"
 
 .PHONY:
 ## managed-dns: Installs external-dns, and setup up CloudDNS access
 managed-dns: check-env-sub-domain
 	terraform workspace select $(TF_VAR_TEST_ID) && \
-	terraform apply -target=module.clouddns-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve && \
-    kubectl --kubeconfig=${KUBECONFIG} apply -f ${CLUSTER_ISSUER_CLOUD_DNS}
+	terraform apply -target=module.clouddns-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done created GCP managed DNS"
 
 cloud ?= "azure"
 .PHONY:
@@ -86,6 +90,7 @@ cloud ?= "azure"
 external-dns: check-env-sub-domain
 	terraform workspace select $(TF_VAR_TEST_ID) && \
 	terraform apply -target=module.$(cloud)-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done creating externaldns for ${cloud}"
 
 .PHONY:
 ## get-kubeconfig: Returns KUBECONFIG of a just created cluster
