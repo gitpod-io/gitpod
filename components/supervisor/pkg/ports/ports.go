@@ -16,6 +16,7 @@ import (
 	"reflect"
 	"sort"
 	"sync"
+	"syscall"
 	"time"
 
 	"golang.org/x/net/nettest"
@@ -760,8 +761,30 @@ func startLocalhostProxy(port uint32) (io.Closer, error) {
 		originalDirector(req)
 	}
 	proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
-		log.WithError(err).WithField("local-port", port).WithField("url", req.URL.String()).Warn("localhost proxy request failed")
 		rw.WriteHeader(http.StatusBadGateway)
+
+		// avoid common warnings
+
+		if errors.Is(err, context.Canceled) {
+			return
+		}
+
+		if errors.Is(err, io.EOF) {
+			return
+		}
+
+		if errors.Is(err, syscall.ECONNREFUSED) {
+			return
+		}
+
+		var netOpErr *net.OpError
+		if errors.As(err, &netOpErr) {
+			if netOpErr.Op == "read" {
+				return
+			}
+		}
+
+		log.WithError(err).WithField("local-port", port).WithField("url", req.URL.String()).Warn("localhost proxy request failed")
 	}
 
 	proxyAddr := fmt.Sprintf("%v:%d", workspaceIPAdress, port)
