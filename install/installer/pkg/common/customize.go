@@ -71,29 +71,47 @@ func CustomizeAnnotation(ctx *RenderContext, component string, typeMeta metav1.T
 }
 
 func CustomizeEnvvar(ctx *RenderContext, component string, existingEnvvars []corev1.EnvVar) []corev1.EnvVar {
+	// Order is important to support GitOps workflows
+	output := make([]corev1.EnvVar, 0)
+	customizeOrder := make([]string, 0)
+	existing := make(map[string]corev1.EnvVar, 0)
+
 	// Use a map so we can remove duplicated keys
 	envvars := make(map[string]corev1.EnvVar, 0)
+
+	// Get existing as a map so we don't override these
+	for _, e := range existingEnvvars {
+		// Ensure that existing envvars are first
+		customizeOrder = append(customizeOrder, e.Name)
+		existing[e.Name] = e
+		envvars[e.Name] = e
+	}
 
 	// Apply the customizations - envvars only need to match name
 	if ctx.Config.Customization != nil {
 		for _, customization := range *ctx.Config.Customization {
 			if customization.Metadata.Name == component || customization.Metadata.Name == "*" {
 				for _, e := range customization.Spec.Env {
-					envvars[e.Name] = e
+					_, inExisting := existing[e.Name]
+					_, inEnvvars := envvars[e.Name]
+
+					if !inExisting {
+						if !inEnvvars {
+							// Only interested in name
+							customizeOrder = append(customizeOrder, e.Name)
+						}
+						// Set the value if not in existing envvars
+						envvars[e.Name] = e
+					}
+
 				}
 			}
 		}
 	}
 
-	// Always apply existing envvars
-	for _, e := range existingEnvvars {
-		envvars[e.Name] = e
-	}
-
 	// Convert map back slice
-	output := make([]corev1.EnvVar, 0, len(envvars))
-	for _, e := range envvars {
-		output = append(output, e)
+	for _, e := range customizeOrder {
+		output = append(output, envvars[e])
 	}
 	return output
 }
