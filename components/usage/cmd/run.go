@@ -5,16 +5,10 @@
 package cmd
 
 import (
-	"encoding/json"
-	"net"
-	"os"
+	"github.com/gitpod-io/gitpod/usage/pkg/server"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/usage/pkg/controller"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/spf13/cobra"
 )
 
@@ -36,58 +30,12 @@ func run() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Init(ServiceName, Version, true, verbose)
 
-			conn, err := db.Connect(db.ConnectionParams{
-				User:     os.Getenv("DB_USERNAME"),
-				Password: os.Getenv("DB_PASSWORD"),
-				Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
-				Database: "gitpod",
+			err := server.Start(server.Config{
+				ControllerSchedule:    schedule,
+				StripeCredentialsFile: apiKeyFile,
 			})
 			if err != nil {
-				log.WithError(err).Fatal("Failed to establish database connection.")
-			}
-
-			var billingController controller.BillingController = &controller.NoOpBillingController{}
-
-			if apiKeyFile != "" {
-				bytes, err := os.ReadFile(apiKeyFile)
-				if err != nil {
-					log.WithError(err).Fatal("Failed to read Stripe API keys.")
-				}
-
-				var config stripe.ClientConfig
-				err = json.Unmarshal(bytes, &config)
-				if err != nil {
-					log.WithError(err).Fatal("Failed to unmarshal Stripe API keys.")
-				}
-
-				c, err := stripe.New(config)
-				if err != nil {
-					log.WithError(err).Fatal("Failed to initialize Stripe client.")
-				}
-				billingController = controller.NewStripeBillingController(c, controller.DefaultWorkspacePricer)
-			}
-
-			ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, billingController))
-			if err != nil {
-				log.WithError(err).Fatal("Failed to initialize usage controller.")
-			}
-
-			err = ctrl.Start()
-			if err != nil {
-				log.WithError(err).Fatal("Failed to start usage controller.")
-			}
-			defer ctrl.Stop()
-
-			srv, err := baseserver.New("usage")
-			if err != nil {
-				log.WithError(err).Fatal("Failed to initialize server.")
-			}
-
-			controller.RegisterMetrics(srv.MetricsRegistry())
-
-			err = srv.ListenAndServe()
-			if err != nil {
-				log.WithError(err).Fatal("Failed to listen and serve.")
+				log.WithError(err).Fatal("Failed to start usage server.")
 			}
 		},
 	}
