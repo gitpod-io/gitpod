@@ -1960,6 +1960,20 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 customer = await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
             }
             await this.stripeService.createSubscriptionForCustomer(customer.id, currency);
+            // For all team members that didn't explicitly choose yet where their usage should be attributed to,
+            // we simplify the UX by automatically attributing their usage to this recently-upgraded team.
+            // Note: This default choice can be changed at any time by members in their personal billing settings.
+            const members = await this.teamDB.findMembersByTeam(teamId);
+            await Promise.all(
+                members.map(async (m) => {
+                    const u = await this.userDB.findUserById(m.userId);
+                    if (u && !u.additionalData?.usageAttributionId) {
+                        u.additionalData = u.additionalData || {};
+                        u.additionalData.usageAttributionId = `team:${teamId}`;
+                        await this.userDB.updateUserPartial(u);
+                    }
+                }),
+            );
         } catch (error) {
             log.error(`Failed to subscribe team '${teamId}' to Stripe`, error);
             throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, `Failed to subscribe team '${teamId}' to Stripe`);
