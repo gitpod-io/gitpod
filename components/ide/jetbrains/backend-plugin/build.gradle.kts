@@ -111,6 +111,10 @@ tasks {
         useJUnitPlatform()
     }
 
+    runIde {
+        jvmArgs = listOf("-Xmx2096m")
+    }
+
     runPluginVerifier {
         ideVersions.set(properties("pluginVerifierIdeVersions").split(',').map(String::trim).filter(String::isNotEmpty))
     }
