@@ -92,9 +92,6 @@ flags:
   dev-loadgen-app:
     paths:
       - dev/loadgen/
-  dev-poolkeeper-app:
-    paths:
-      - dev/poolkeeper/
   dev-version-manifest-app:
     paths:
       - dev/version-manifest/

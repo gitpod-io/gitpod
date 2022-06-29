@@ -24,7 +24,6 @@
         { "path": "dev/changelog" },
         { "path": "dev/gpctl" },
         { "path": "dev/loadgen" },
-        { "path": "dev/poolkeeper" },
         { "path": "install/installer" }
     ],
     "settings": {

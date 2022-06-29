@@ -3,7 +3,6 @@ packages:
     type: generic
     deps:
       - dev/image:docker
-      - dev/poolkeeper:docker
       - :dev-utils
   - name: all-app
     type: generic
