@@ -106,16 +106,18 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
     }, [props.workspaceId, workspaceInstance?.status.phase]);
 
     return (
-        <>
-            <Suspense fallback={<div />}>
-                <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={error?.message} />
-            </Suspense>
-            <div className="h-20 px-6 border-gray-200 dark:border-gray-600 flex space-x-2">
+        <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col">
+            <div className="h-96 flex">
+                <Suspense fallback={<div />}>
+                    <WorkspaceLogs classes="h-full w-full" logsEmitter={logsEmitter} errorMessage={error?.message} />
+                </Suspense>
+            </div>
+            <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
                 {prebuild && <PrebuildStatus prebuild={prebuild} />}
                 <div className="flex-grow" />
                 {props.children}
             </div>
-        </>
+        </div>
     );
 }
 

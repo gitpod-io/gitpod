@@ -488,11 +488,14 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
 
     return (
         <StartPage title="Prebuild in Progress">
-            <PrebuildLogs workspaceId={props.runningPrebuild.workspaceID} onIgnorePrebuild={props.onIgnorePrebuild}>
-                <button className="secondary" onClick={() => props.onIgnorePrebuild && props.onIgnorePrebuild()}>
-                    Skip Prebuild
-                </button>
-            </PrebuildLogs>
+            {/* TODO(gpl) Copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
+            <div className="mt-6 w-11/12 lg:w-3/5 overflow-hidden">
+                <PrebuildLogs workspaceId={props.runningPrebuild.workspaceID} onIgnorePrebuild={props.onIgnorePrebuild}>
+                    <button className="secondary" onClick={() => props.onIgnorePrebuild && props.onIgnorePrebuild()}>
+                        Skip Prebuild
+                    </button>
+                </PrebuildLogs>
+            </div>
         </StartPage>
     );
 }

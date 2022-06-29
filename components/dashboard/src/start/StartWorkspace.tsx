@@ -443,7 +443,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // or as a headless workspace.
             case "running":
                 if (isPrebuild) {
-                    return <PrebuildLogs workspaceId={this.props.workspaceId} />;
+                    return (
+                        <div className="mt-6 w-11/12 lg:w-3/5 overflow-hidden">
+                            {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
+                            <PrebuildLogs workspaceId={this.props.workspaceId} />
+                        </div>
+                    );
                 }
                 if (!this.state.desktopIde) {
                     phase = StartPhase.Running;
@@ -570,7 +575,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
             case "stopping":
                 if (isPrebuild) {
-                    return <PrebuildLogs workspaceId={this.props.workspaceId} />;
+                    return (
+                        <div className="mt-6 w-11/12 lg:w-3/5 overflow-hidden">
+                            {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
+                            <PrebuildLogs workspaceId={this.props.workspaceId} />
+                        </div>
+                    );
                 }
                 phase = StartPhase.Stopping;
                 statusMessage = (
