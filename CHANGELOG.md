@@ -1,6 +1,15 @@
 # Change Log
 
 ## June 2022
+- Provide endpoint that allows retrieving information about the workspace from within the workspace ([#10836](https://github.com/gitpod-io/gitpod/pull/10836)) - [@Furisto](https://github.com/Furisto)
+- Update docker compose to v2.6.1 ([#10952](https://github.com/gitpod-io/gitpod/pull/10952)) - [@aledbf](https://github.com/aledbf)
+- SSH Gateway will send heartbeat only user explicitly request pty ([#10965](https://github.com/gitpod-io/gitpod/pull/10965)) - [@iQQBot](https://github.com/iQQBot)
+- remove core-dev preview environment options ([#10795](https://github.com/gitpod-io/gitpod/pull/10795)) - [@liam-j-bennett](https://github.com/liam-j-bennett)
+- [experimental] enable the volume snapshot controller when the VolumeSnapshot CRD exists ([#10955](https://github.com/gitpod-io/gitpod/pull/10955)) - [@jenting](https://github.com/jenting)
+- [installer]: allow docker-registry customization ([#10949](https://github.com/gitpod-io/gitpod/pull/10949)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Update GoLand IDE image to version 221.5921.26. ([#10860](https://github.com/gitpod-io/gitpod/pull/10860)) - [@roboquat](https://github.com/roboquat)
+- Update PhpStorm IDE image to version 221.5921.28. ([#10859](https://github.com/gitpod-io/gitpod/pull/10859)) - [@roboquat](https://github.com/roboquat)
+- Update PyCharm IDE image to version 221.5921.27. ([#10858](https://github.com/gitpod-io/gitpod/pull/10858)) - [@roboquat](https://github.com/roboquat)
 - [kots]: change to not install via Helm ([#10933](https://github.com/gitpod-io/gitpod/pull/10933)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [kots]: apply customization file to Installer ([#10911](https://github.com/gitpod-io/gitpod/pull/10911)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [installer]: implementation customization functions ([#10906](https://github.com/gitpod-io/gitpod/pull/10906)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
