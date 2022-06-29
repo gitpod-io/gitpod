@@ -119,7 +119,6 @@ import {
     PortSpec,
     PortVisibility as ProtoPortVisibility,
     StopWorkspacePolicy,
-    StopWorkspaceRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
@@ -721,7 +720,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
             }
         }
-        await this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, policy);
+        await this.workspaceStarter.stopWorkspaceInstance(ctx, instance.id, instance.region, policy);
     }
 
     protected async guardAdminAccess(method: string, params: any, requiredPermission: PermissionName) {
@@ -731,20 +730,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
         log.info({ userId: this.user?.id }, "admin access", { authorised: true, method, params });
-    }
-
-    protected async internalStopWorkspaceInstance(
-        ctx: TraceContext,
-        instanceId: string,
-        instanceRegion: string,
-        policy?: StopWorkspacePolicy,
-    ): Promise<void> {
-        const req = new StopWorkspaceRequest();
-        req.setId(instanceId);
-        req.setPolicy(policy || StopWorkspacePolicy.NORMALLY);
-
-        const client = await this.workspaceManagerClientProvider.get(instanceRegion);
-        await client.stopWorkspace(ctx, req);
     }
 
     public async updateWorkspaceUserPin(

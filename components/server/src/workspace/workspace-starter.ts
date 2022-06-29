@@ -87,6 +87,8 @@ import {
     WorkspaceMetadata,
     WorkspaceType,
     VolumeSnapshotInfo,
+    StopWorkspacePolicy,
+    StopWorkspaceRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
@@ -347,6 +349,20 @@ export class WorkspaceStarter {
         } finally {
             span.finish();
         }
+    }
+
+    public async stopWorkspaceInstance(
+        ctx: TraceContext,
+        instanceId: string,
+        instanceRegion: string,
+        policy?: StopWorkspacePolicy,
+    ): Promise<void> {
+        const req = new StopWorkspaceRequest();
+        req.setId(instanceId);
+        req.setPolicy(policy || StopWorkspacePolicy.NORMALLY);
+
+        const client = await this.clientProvider.get(instanceRegion);
+        await client.stopWorkspace(ctx, req);
     }
 
     protected async checkBlockedRepository(user: User, contextURL: string) {

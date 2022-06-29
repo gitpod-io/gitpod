@@ -155,6 +155,8 @@ export class GitLabApp {
             );
 
             return ws;
+        } catch (e) {
+            log.error("error processing GitLab webhook", e, body);
         } finally {
             span.finish();
         }

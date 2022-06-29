@@ -58,6 +58,22 @@ export class PrebuildManager {
     @inject(Config) protected readonly config: Config;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
 
+    async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
+        const span = TraceContext.startSpan("abortPrebuildsForBranch", ctx);
+        const prebuilds = await this.workspaceDB
+            .trace({ span })
+            .findActivePrebuiltWorkspacesByBranch(project.id, branch);
+        const results: Promise<any>[] = [];
+        for (const prebuild of prebuilds) {
+            for (const instance of prebuild.instances) {
+                results.push(this.workspaceStarter.stopWorkspaceInstance({ span }, instance.id, instance.region));
+            }
+            prebuild.prebuild.state = "aborted";
+            results.push(this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild.prebuild));
+        }
+        await Promise.all(results);
+    }
+
     async startPrebuild(
         ctx: TraceContext,
         { context, project, user, commitInfo }: StartPrebuildParams,
@@ -106,6 +122,13 @@ export class PrebuildManager {
                 // If there is an existing prebuild that isn't failed and it's based on the current config, we return it here instead of triggering a new prebuild.
                 if (isSameConfig) {
                     return { prebuildId: existingPB.id, wsid: existingPB.buildWorkspaceId, done: true };
+                }
+            }
+            if (project && context.ref && !project.settings?.keepOutdatedPrebuildsRunning) {
+                try {
+                    await this.abortPrebuildsForBranch({ span }, project, user, context.ref);
+                } catch (e) {
+                    console.error("Error aborting prebuilds", e);
                 }
             }
 
