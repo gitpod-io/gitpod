@@ -66,10 +66,16 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 		attributionID = instance.UsageAttributionID
 	}
 
+	workspaceClass := db.WorkspaceClass_Default
+	if instance.WorkspaceClass != "" {
+		workspaceClass = instance.WorkspaceClass
+	}
+
 	return db.WorkspaceInstance{
 		ID:                 id,
 		WorkspaceID:        workspaceID,
 		UsageAttributionID: attributionID,
+		WorkspaceClass:     workspaceClass,
 		Configuration:      nil,
 		Region:             "",
 		ImageBuildInfo:     sql.NullString{},
