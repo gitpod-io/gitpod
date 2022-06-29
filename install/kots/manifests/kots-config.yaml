@@ -370,14 +370,14 @@ spec:
             Add the domain only (eg, `gitpod.io`). Separate multiple domains with spaces.
 
     - name: advanced
-      title: Additional Options
-      description: Here are additional options that you should only make use of in coordination with us or when you know what you are doing.
+      title: Advanced Options
+      description: Here are advanced options that you should only make use of in coordination with us or when you know what you are doing.
       items:
         - name: advanced_mode_enabled
-          title: Enable additional options
+          title: Enable advanced options
           type: bool
           default: "0"
-          help_text: Enables additional customization options. Enable only when you know what you are doing!
+          help_text: Enables advanced customization options. Enable only when you know what you are doing!
 
         - name: customization_patch
           title: Gitpod customization patch (YAML file)
