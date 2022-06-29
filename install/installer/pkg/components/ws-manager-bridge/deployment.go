@@ -130,6 +130,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								common.AnalyticsEnv(&ctx.Config),
 								common.MessageBusEnv(&ctx.Config),
 								common.DatabaseEnv(&ctx.Config),
+								common.ConfigcatEnv(ctx),
 								[]corev1.EnvVar{{
 									Name:  "WSMAN_BRIDGE_CONFIGPATH",
 									Value: "/config/ws-manager-bridge.json",

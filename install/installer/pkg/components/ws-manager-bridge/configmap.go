@@ -31,6 +31,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		EmulatePreparingIntervalSeconds: 10,
 		StaticBridges:                   WSManagerList(ctx),
+		ClusterSyncIntervalSeconds:      60,
 	}
 
 	fc, err := common.ToJSONString(wsmbcfg)
