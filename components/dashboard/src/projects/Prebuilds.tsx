@@ -221,7 +221,10 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                         }`}
                                     >
                                         <div>
-                                            <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1">
+                                            <div
+                                                className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1"
+                                                title={getPrebuildStatusDescription(p)}
+                                            >
                                                 <div className="inline-block align-text-bottom mr-2 w-4 h-4">
                                                     {prebuildStatusIcon(p)}
                                                 </div>
@@ -329,38 +332,25 @@ export function prebuildStatusIcon(prebuild?: PrebuildWithStatus) {
     }
 }
 
-function PrebuildStatusDescription(props: { prebuild: PrebuildWithStatus }) {
-    switch (props.prebuild.status) {
+function getPrebuildStatusDescription(prebuild: PrebuildWithStatus): string {
+    switch (prebuild.status) {
         case "queued":
-            return <span>Prebuild is queued and will be processed when there is execution capacity.</span>;
+            return `Prebuild is queued and will be processed when there is execution capacity.`;
         case "building":
-            return <span>Prebuild is currently in progress.</span>;
+            return `Prebuild is currently in progress.`;
         case "aborted":
-            return (
-                <span>
-                    Prebuild has been cancelled. Either a user cancelled it, or the prebuild rate limit has been
-                    exceeded. {props.prebuild.error}
-                </span>
-            );
+            return `Prebuild has been cancelled. Either a newer commit was pushed to the same branch, a user cancelled it manually, or the prebuild rate limit has been exceeded.`;
         case "failed":
-            return <span>Prebuild failed for system reasons. Please contact support. {props.prebuild.error}</span>;
+            return `Prebuild failed for system reasons. Please contact support. ${prebuild.error}`;
         case "timeout":
-            return (
-                <span>
-                    Prebuild timed out. Either the image, or the prebuild tasks took too long. {props.prebuild.error}
-                </span>
-            );
+            return `Prebuild timed out. Either the image, or the prebuild tasks took too long. ${prebuild.error}`;
         case "available":
-            if (props.prebuild?.error) {
-                return (
-                    <span>
-                        The tasks executed in the prebuild returned a non-zero exit code. {props.prebuild.error}
-                    </span>
-                );
+            if (prebuild.error) {
+                return `The tasks executed in the prebuild returned a non-zero exit code. ${prebuild.error}`;
             }
-            return <span>Prebuild completed successfully.</span>;
+            return `Prebuild completed successfully.`;
         default:
-            return <span>Unknown prebuild status.</span>;
+            return `Unknown prebuild status.`;
     }
 }
 
@@ -376,7 +366,7 @@ export function PrebuildStatus(props: { prebuild: PrebuildWithStatus }) {
                 </div>
             </div>
             <div className="flex space-x-1 items-center text-gray-400">
-                <PrebuildStatusDescription prebuild={prebuild} />
+                <span>{getPrebuildStatusDescription(prebuild)}</span>
             </div>
         </div>
     );

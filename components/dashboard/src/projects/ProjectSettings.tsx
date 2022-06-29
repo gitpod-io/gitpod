@@ -14,7 +14,6 @@ import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
 import { getExperimentsClient } from "./../experiments/client";
-import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? "t/" + team.slug : "projects";
@@ -56,19 +55,14 @@ export default function () {
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
 
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [isIncrementalPrebuildsEnabled, setIsIncrementalPrebuildsEnabled] = useState<boolean>(false);
-    const [isPersistentVolumeClaimEnabled, setIsPersistentVolumeClaimEnabled] = useState<boolean>(false);
     const [isShowPersistentVolumeClaim, setIsShowPersistentVolumeClaim] = useState<boolean>(false);
+    const [projectSettings, setProjectSettings] = useState<ProjectSettings>({});
 
     useEffect(() => {
         if (!project) {
             return;
         }
-        setIsLoading(false);
-        setIsIncrementalPrebuildsEnabled(!!project.settings?.useIncrementalPrebuilds);
-        setIsPersistentVolumeClaimEnabled(!!project.settings?.usePersistentVolumeClaim);
-
+        setProjectSettings({ ...project.settings });
         (async () => {
             const showPersistentVolumeClaim = await getExperimentsClient().getValueAsync(
                 "persistent_volume_claim",
@@ -84,49 +78,34 @@ export default function () {
         })();
     }, [project, team, teams]);
 
-    const updateProjectPartial = (settings: DeepPartial<ProjectSettings | undefined>) => {
+    const updateProjectSettings = () => {
         if (!project) {
             return;
         }
-
-        return getGitpodService().server.updateProjectPartial({ id: project.id, settings });
+        setProjectSettings({
+            ...projectSettings,
+        });
+        return getGitpodService().server.updateProjectPartial({ id: project.id, settings: projectSettings });
     };
 
     const toggleIncrementalPrebuilds = async () => {
-        if (!project) {
-            return;
-        }
-        setIsLoading(true);
-        try {
-            await updateProjectPartial({
-                useIncrementalPrebuilds: !isIncrementalPrebuildsEnabled,
-                usePersistentVolumeClaim: isPersistentVolumeClaimEnabled,
-            });
-            setIsIncrementalPrebuildsEnabled(!isIncrementalPrebuildsEnabled);
-        } finally {
-            setIsLoading(false);
-        }
+        projectSettings.useIncrementalPrebuilds = !projectSettings.useIncrementalPrebuilds;
+        updateProjectSettings();
+    };
+
+    const toggleCancelOutdatedPrebuilds = async () => {
+        projectSettings.keepOutdatedPrebuildsRunning = !projectSettings.keepOutdatedPrebuildsRunning;
+        updateProjectSettings();
     };
 
     const togglePersistentVolumeClaim = async () => {
-        if (!project) {
-            return;
-        }
-        setIsLoading(true);
-        try {
-            await updateProjectPartial({
-                useIncrementalPrebuilds: isIncrementalPrebuildsEnabled,
-                usePersistentVolumeClaim: !isPersistentVolumeClaimEnabled,
-            });
-            setIsPersistentVolumeClaimEnabled(!isPersistentVolumeClaimEnabled);
-        } finally {
-            setIsLoading(false);
-        }
+        projectSettings.usePersistentVolumeClaim = !projectSettings.usePersistentVolumeClaim;
+        updateProjectSettings();
     };
 
     return (
         <ProjectSettingsPage project={project}>
-            <h3>Incremental Prebuilds</h3>
+            <h3>Prebuilds</h3>
             <CheckBox
                 title={
                     <span>
@@ -146,9 +125,14 @@ export default function () {
                         </a>
                     </span>
                 }
-                checked={isIncrementalPrebuildsEnabled}
-                disabled={isLoading}
+                checked={!!projectSettings.useIncrementalPrebuilds}
                 onChange={toggleIncrementalPrebuilds}
+            />
+            <CheckBox
+                title={<span>Cancel Prebuilds on Outdated Commits </span>}
+                desc={<span>Cancels all pending and running prebuilds on the branch when a new commit is pushed.</span>}
+                checked={!projectSettings.keepOutdatedPrebuildsRunning}
+                onChange={toggleCancelOutdatedPrebuilds}
             />
             <br></br>
             <h3>Persistent Volume Claim</h3>
@@ -162,8 +146,8 @@ export default function () {
                     </span>
                 }
                 desc={<span>Experimental feature that is still under development.</span>}
-                checked={isPersistentVolumeClaimEnabled}
-                disabled={isLoading || !isShowPersistentVolumeClaim}
+                checked={!!projectSettings.usePersistentVolumeClaim}
+                disabled={!isShowPersistentVolumeClaim}
                 onChange={togglePersistentVolumeClaim}
             />
         </ProjectSettingsPage>
