@@ -4,12 +4,14 @@
 
 package io.gitpod.jetbrains.remote.latest
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
-import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rdserver.portForwarding.PortForwardingDiscovery
+import com.jetbrains.rdserver.portForwarding.PortForwardingManager
+import com.jetbrains.rdserver.portForwarding.remoteDev.PortEventsProcessor
 import com.jetbrains.rdserver.terminal.BackendTerminalManager
 import io.gitpod.jetbrains.remote.GitpodManager
 import io.gitpod.supervisor.api.Status
@@ -25,42 +27,32 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 @Suppress("UnstableApiUsage")
-class GitpodTerminalService(session: ClientProjectSession) : Disposable {
+class GitpodTerminalService(private val session: ClientProjectSession) {
     private companion object {
-        /** Indicates if this service is already running, because we shouldn't run it more than once. */
-        var isRunning = false
+        var hasStarted = false
+        val forwardedPortsList: MutableSet<Int> = mutableSetOf()
     }
 
-    private val lifetime = Lifetime.Eternal.createNested()
     private val terminalView = TerminalView.getInstance(session.project)
     private val backendTerminalManager = BackendTerminalManager.getInstance(session.project)
+    private val portForwardingManager = PortForwardingManager.getInstance(session.project)
     private val terminalServiceFutureStub = TerminalServiceGrpc.newFutureStub(GitpodManager.supervisorChannel)
     private val statusServiceStub = StatusServiceGrpc.newStub(GitpodManager.supervisorChannel)
 
-    override fun dispose() {
-        lifetime.terminate()
-    }
+    init { start() }
 
-    init {
-        run()
-    }
+    private fun start() {
+        if (application.isHeadlessEnvironment || hasStarted) return
 
-    private fun run() {
-        if (application.isHeadlessEnvironment || isRunning) return
+        hasStarted = true
 
-        isRunning = true
-
-        val task = application.executeOnPooledThread {
+        application.executeOnPooledThread {
             val terminals = getSupervisorTerminalsList()
             val tasks = getSupervisorTasksList()
 
             application.invokeLater {
                 createTerminalsAttachedToTasks(terminals, tasks)
             }
-        }
-
-        lifetime.onTerminationOrNow {
-            task.cancel(true)
         }
     }
 
@@ -70,12 +62,11 @@ class GitpodTerminalService(session: ClientProjectSession) : Disposable {
         backendTerminalManager.createNewSharedTerminal(UUID.randomUUID().toString(), title)
 
         for (widget in terminalView.widgets) {
-            if (!registeredTerminals.contains(widget)) {
-                widget.terminalTitle.change {
-                    applicationTitle = title
-                }
-                (widget as ShellTerminalWidget).executeCommand(command)
-            }
+            if (registeredTerminals.contains(widget)) continue
+
+            widget.terminalTitle.change { applicationTitle = title }
+
+            (widget as ShellTerminalWidget).executeCommand(command)
         }
     }
 
@@ -94,11 +85,10 @@ class GitpodTerminalService(session: ClientProjectSession) : Disposable {
 
         for (task in tasks) {
             val terminalAlias = task.terminal
-            val terminal = aliasToTerminalMap[terminalAlias]
+            val terminal = aliasToTerminalMap[terminalAlias] ?: continue
 
-            if (terminal != null) {
-                createAttachedSharedTerminal(terminal)
-            }
+            createAttachedSharedTerminal(terminal)
+            autoForwardAllPortsFromTerminal(terminal)
         }
     }
 
@@ -112,22 +102,17 @@ class GitpodTerminalService(session: ClientProjectSession) : Disposable {
 
             val taskStatusResponseObserver = object :
                 ClientResponseObserver<Status.TasksStatusRequest, Status.TasksStatusResponse> {
-                override fun beforeStart(request: ClientCallStreamObserver<Status.TasksStatusRequest>) {
-                    lifetime.onTerminationOrNow {
-                        request.cancel(null, null)
-                    }
-                }
+                override fun beforeStart(request: ClientCallStreamObserver<Status.TasksStatusRequest>) = Unit
 
                 override fun onNext(response: Status.TasksStatusResponse) {
                     for (task in response.tasksList) {
-                        if (task.state === Status.TaskState.opening) {
-                            return
-                        }
+                        if (task.state === Status.TaskState.opening) return
                     }
+
                     completableFuture.complete(response.tasksList)
                 }
 
-                override fun onCompleted() {}
+                override fun onCompleted() = Unit
 
                 override fun onError(throwable: Throwable) {
                     completableFuture.completeExceptionally(throwable)
@@ -143,7 +128,7 @@ class GitpodTerminalService(session: ClientProjectSession) : Disposable {
             }
 
             thisLogger().error(
-                "Got an error while trying to get tasks list from Supervisor. Trying again in on second.",
+                "gitpod: Got an error while trying to get tasks list from Supervisor. Trying again in on second.",
                 throwable
             )
         }
@@ -164,10 +149,6 @@ class GitpodTerminalService(session: ClientProjectSession) : Disposable {
 
             val listTerminalsResponseFuture = terminalServiceFutureStub.list(listTerminalsRequest)
 
-            lifetime.onTerminationOrNow {
-                listTerminalsResponseFuture.cancel(true)
-            }
-
             val listTerminalsResponse = listTerminalsResponseFuture.get()
 
             terminalsList = listTerminalsResponse.terminalsList
@@ -177,7 +158,7 @@ class GitpodTerminalService(session: ClientProjectSession) : Disposable {
             }
 
             thisLogger().error(
-                "Got an error while trying to get terminals list from Supervisor. Trying again in on second.",
+                "gitpod: Got an error while trying to get terminals list from Supervisor. Trying again in on second.",
                 throwable
             )
         }
@@ -195,5 +176,41 @@ class GitpodTerminalService(session: ClientProjectSession) : Disposable {
             supervisorTerminal.title,
             "gp tasks attach ${supervisorTerminal.alias}"
         )
+    }
+
+    private fun autoForwardAllPortsFromTerminal(supervisorTerminal: TerminalOuterClass.Terminal) {
+        val projectLifetime = session.project.createLifetime()
+
+        val discoveryCallback = object : PortForwardingDiscovery {
+            /**
+             * @return Whether port should be forwarded or not.
+             * We shouldn't try to forward ports that are already forwarded.
+             */
+            override fun onPortDiscovered(hostPort: Int): Boolean = !forwardedPortsList.contains(hostPort)
+
+            override fun getEventsProcessor(hostPort: Int) = object : PortEventsProcessor {
+                override fun onPortForwarded(hostPort: Int, clientPort: Int) {
+                    forwardedPortsList.add(hostPort)
+                    thisLogger().info("gitpod: Forwarded port $hostPort from Supervisor's Terminal " +
+                            "${supervisorTerminal.pid} to client's port $clientPort.")
+
+                    projectLifetime.onTerminationOrNow {
+                        if (forwardedPortsList.contains(hostPort)) {
+                            forwardedPortsList.remove(hostPort)
+                            portForwardingManager.removePort(hostPort)
+                            thisLogger().info("gitpod: Removing forwarded port $hostPort from Supervisor's Terminal " +
+                                    "${supervisorTerminal.pid}")
+                        }
+                    }
+                }
+
+                override fun onPortForwardingFailed(hostPort: Int, reason: String) {
+                    thisLogger().error("gitpod: Failed to forward port $hostPort from Supervisor's Terminal " +
+                            "${supervisorTerminal.pid}: $reason")
+                }
+            }
+        }
+
+        portForwardingManager.forwardPortsOfPid(projectLifetime, supervisorTerminal.pid, discoveryCallback, true)
     }
 }
