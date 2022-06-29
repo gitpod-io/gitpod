@@ -357,6 +357,10 @@ func Run(options ...RunOption) {
 					log.Debugf("unshallow of local repository took %v", time.Since(start))
 				}()
 
+				if !isShallowRepository(repoRoot, childProcEnvvars) {
+					return
+				}
+
 				cmd := runAsGitpodUser(exec.Command("git", "fetch", "--unshallow", "--tags"))
 				cmd.Env = childProcEnvvars
 				cmd.Dir = repoRoot
@@ -390,6 +394,25 @@ func Run(options ...RunOption) {
 	terminateChildProcesses()
 
 	wg.Wait()
+}
+
+func isShallowRepository(rootDir string, env []string) bool {
+	cmd := runAsGitpodUser(exec.Command("git", "rev-parse", "--is-shallow-repository"))
+	cmd.Env = env
+	cmd.Dir = rootDir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.WithError(err).Error("unexpected error checking if git repository is shallow")
+		return true
+	}
+
+	isShallow, err := strconv.ParseBool(strings.TrimSpace(string(out)))
+	if err != nil {
+		log.WithError(err).WithField("input", string(out)).Error("unexpected error parsing bool")
+		return true
+	}
+
+	return isShallow
 }
 
 func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTokenService, childProcEnvvars []string) {
