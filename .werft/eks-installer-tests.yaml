@@ -25,7 +25,7 @@ pod:
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
-    - name: sh-playground-sa-perm
+    - name: sh-playground-sa-perm # this is used for tf backend bucket
       mountPath: /mnt/secrets/sh-playground-sa-perm
     - name: sh-playground-dns-perm # this sa is used for the DNS management
       mountPath: /mnt/secrets/sh-playground-dns-perm
@@ -45,15 +45,7 @@ pod:
         secretKeyRef:
           name: aws-credentials
           key: aws-region
-    - name: WERFT_HOST
-      value: "werft.werft.svc.cluster.local:7777"
     - name: GOOGLE_APPLICATION_CREDENTIALS
-      value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
-    - name: WERFT_K8S_NAMESPACE
-      value: "werft"
-    - name: WERFT_K8S_LABEL
-      value: "component=werft"
-    - name: TF_VAR_sa_creds
       value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
     - name: TF_VAR_dns_sa_creds
       value: "/mnt/secrets/sh-playground-dns-perm/sh-dns-sa.json"
@@ -81,5 +73,5 @@ pod:
 
         npx ts-node .werft/installer-tests.ts "STANDARD_EKS_TEST"
 # The bit below makes this a cron job
-# plugins:
-#   cron: "15 3 * * *"
+plugins:
+  cron: "15 3 * * *"
