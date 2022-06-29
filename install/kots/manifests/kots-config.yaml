@@ -400,3 +400,24 @@ spec:
           required: false
           when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
           help_text: A file with Gitpod config that will be used to patch the generated Gitpod config. Usually provided by Gitpod as a way to tailor your installation.
+
+    - name: components
+      title: Components
+      description: Customize your component configuration
+      when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
+      items:
+        - name: component_proxy_service_serviceType
+          title: Proxy service type
+          default: ""
+          help_text: |
+            Select the [Service Type](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types)
+            for the Proxy service. If using anything other than "Load Balancer", you are responsible for configuring your network to route
+            traffic through to the `proxy` service.
+          type: select_one
+          items:
+            - name: ""
+              title: Load balancer
+            - name: ClusterIP
+              title: Cluster IP
+            - name: NodePort
+              title: Node port
