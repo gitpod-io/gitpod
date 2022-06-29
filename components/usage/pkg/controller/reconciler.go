@@ -47,9 +47,14 @@ type UsageReconcileStatus struct {
 	InvalidWorkspaceInstances int
 }
 
-func (u *UsageReconciler) Reconcile() error {
+func (u *UsageReconciler) Reconcile() (err error) {
 	ctx := context.Background()
 	now := time.Now().UTC()
+
+	reportUsageReconcileStarted()
+	defer func() {
+		reportUsageReconcileFinished(time.Since(now), err)
+	}()
 
 	startOfCurrentMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 	startOfNextMonth := startOfCurrentMonth.AddDate(0, 1, 0)
