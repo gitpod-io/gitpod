@@ -14,6 +14,7 @@ type Configuration struct {
 	ControllerMaxDisconnectSeconds      int32              `json:"controllerMaxDisconnectSeconds"`
 	EmulatePreparingIntervalSeconds     int32              `json:"emulatePreparingIntervalSeconds"`
 	Timeouts                            Timeouts           `json:"timeouts"`
+	ClusterSyncIntervalSeconds          int32              `json:"clusterSyncIntervalSeconds"`
 }
 
 type ClusterService struct {

@@ -18,7 +18,6 @@ import {
     AdmissionConstraintHasUserLevel,
     AdmissionConstraintHasMoreResources,
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
-import { AdmissionConstraintHasClass } from "@gitpod/gitpod-protocol/src/workspace-cluster";
 import {
     ClusterServiceService,
     ClusterState,
@@ -35,17 +34,19 @@ import {
     UpdateResponse,
     AdmissionConstraint as GRPCAdmissionConstraint,
 } from "@gitpod/ws-manager-bridge-api/lib";
-import { DescribeClusterRequest, DescribeClusterResponse, WorkspaceClass } from "@gitpod/ws-manager/lib";
+import { GetWorkspacesRequest } from "@gitpod/ws-manager/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
     WorkspaceManagerClientProviderCompositeSource,
     WorkspaceManagerClientProviderSource,
 } from "@gitpod/ws-manager/lib/client-provider-source";
 import * as grpc from "@grpc/grpc-js";
-import { ServiceError as grpcServiceError } from "@grpc/grpc-js";
 import { inject, injectable } from "inversify";
 import { BridgeController } from "./bridge-controller";
+import { getSupportedWorkspaceClasses } from "./cluster-sync-service";
 import { Configuration } from "./config";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { GRPCError } from "./rpc";
 
 export interface ClusterServiceServerOptions {
     port: number;
@@ -149,8 +150,32 @@ export class ClusterService implements IClusterServiceServer {
                     tls,
                 };
 
-                let classConstraints = await this.getSupportedWorkspaceClasses(newCluster);
-                newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
+                const enabled = await getExperimentsClientForBackend().getValueAsync(
+                    "workspace_classes_backend",
+                    false,
+                    {},
+                );
+                if (enabled) {
+                    let classConstraints = await getSupportedWorkspaceClasses(this.clientProvider, newCluster, false);
+                    newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
+                } else {
+                    // try to connect to validate the config. Throws an exception if it fails.
+                    await new Promise<void>((resolve, reject) => {
+                        const c = this.clientProvider.createClient(newCluster);
+                        c.getWorkspaces(new GetWorkspacesRequest(), (err: any) => {
+                            if (err) {
+                                reject(
+                                    new GRPCError(
+                                        grpc.status.FAILED_PRECONDITION,
+                                        `cannot reach ${req.url}: ${err.message}`,
+                                    ),
+                                );
+                            } else {
+                                resolve();
+                            }
+                        });
+                    });
+                }
 
                 await this.clusterDB.save(newCluster);
                 log.info({}, "cluster registered", { cluster: req.name });
@@ -302,24 +327,6 @@ export class ClusterService implements IClusterServiceServer {
             .runReconcileNow()
             .catch((err) => log.error("error during forced reconcile", err, payload));
     }
-
-    public async getSupportedWorkspaceClasses(cluster: WorkspaceCluster) {
-        let constraints = await new Promise<AdmissionConstraintHasClass[]>((resolve, reject) => {
-            const c = this.clientProvider.createClient(cluster);
-            c.describeCluster(new DescribeClusterRequest(), (err: any, resp: DescribeClusterResponse) => {
-                if (err) {
-                    reject(
-                        new GRPCError(grpc.status.FAILED_PRECONDITION, `cannot reach ${cluster.url}: ${err.message}`),
-                    );
-                } else {
-                    let classes = resp.getWorkspaceclassesList().map((cl) => mapWorkspaceClass(cl));
-                    resolve(classes);
-                }
-            });
-        });
-
-        return constraints;
-    }
 }
 
 function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
@@ -382,10 +389,6 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
         return <AdmissionConstraintHasMoreResources>{ type: "has-more-resources" };
     }
     return;
-}
-
-function mapWorkspaceClass(c: WorkspaceClass): AdmissionConstraintHasClass {
-    return <AdmissionConstraintHasClass>{ type: "has-class", id: c.getId(), displayName: c.getDisplayname() };
 }
 
 function mapPreferabilityToScore(p: Preferability): number | undefined {
@@ -478,29 +481,5 @@ export class ClusterServiceServer {
             });
             this.server = undefined;
         }
-    }
-}
-
-class GRPCError extends Error implements Partial<grpcServiceError> {
-    public name = "ServiceError";
-
-    details: string;
-
-    constructor(public readonly status: grpc.status, err: any) {
-        super(GRPCError.errToMessage(err));
-
-        this.details = this.message;
-    }
-
-    static errToMessage(err: any): string | undefined {
-        if (typeof err === "string") {
-            return err;
-        } else if (typeof err === "object") {
-            return err.message;
-        }
-    }
-
-    static isGRPCError(obj: any): obj is GRPCError {
-        return obj !== undefined && typeof obj === "object" && "status" in obj;
     }
 }

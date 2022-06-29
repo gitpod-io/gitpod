@@ -35,6 +35,9 @@ import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./prepa
 import { PrebuildStateMapper } from "./prebuild-state-mapper";
 import { PrebuildUpdater, PrebuildUpdaterNoOp } from "./prebuild-updater";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
+import { Client } from "@gitpod/gitpod-protocol/lib/experiments/types";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ClusterSyncService } from "./cluster-sync-service";
 
 export const containerModule = new ContainerModule((bind) => {
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
@@ -57,6 +60,7 @@ export const containerModule = new ContainerModule((bind) => {
 
     bind(ClusterServiceServer).toSelf().inSingletonScope();
     bind(ClusterService).toSelf().inRequestScope();
+    bind(ClusterSyncService).toSelf().inSingletonScope();
 
     bind(TracingManager).toSelf().inSingletonScope();
 
@@ -85,4 +89,6 @@ export const containerModule = new ContainerModule((bind) => {
     bind(PrebuildUpdater).to(PrebuildUpdaterNoOp).inSingletonScope();
 
     bind(DebugApp).toSelf().inSingletonScope();
+
+    bind(Client).toDynamicValue(getExperimentsClientForBackend).inSingletonScope();
 });

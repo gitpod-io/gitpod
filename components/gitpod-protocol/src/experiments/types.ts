@@ -6,6 +6,8 @@
 
 import { Team } from "../teams-projects-protocol";
 
+export const Client = Symbol("Client");
+
 // Attributes define attributes which can be used to segment audiences.
 // Set the attributes which you want to use to group audiences into.
 export interface Attributes {

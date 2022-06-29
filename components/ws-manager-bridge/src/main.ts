@@ -14,6 +14,7 @@ import { TypeORM } from "@gitpod/gitpod-db/lib/typeorm/typeorm";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ClusterServiceServer } from "./cluster-service-server";
 import { BridgeController } from "./bridge-controller";
+import { ClusterSyncService } from "./cluster-sync-service";
 
 log.enableJSONLogging("ws-manager-bridge", undefined, LogrusLogLevel.getFromEnv());
 
@@ -47,6 +48,9 @@ export const start = async (container: Container) => {
 
         const clusterServiceServer = container.get<ClusterServiceServer>(ClusterServiceServer);
         await clusterServiceServer.start();
+
+        const clusterSyncService = container.get<ClusterSyncService>(ClusterSyncService);
+        clusterSyncService.start();
 
         process.on("SIGTERM", async () => {
             log.info("SIGTERM received, stopping");
