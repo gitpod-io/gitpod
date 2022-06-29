@@ -155,42 +155,40 @@ export default function () {
         <>
             <Header title={renderTitle()} subtitle={renderSubtitle()} />
             <div className="app-container mt-8">
-                <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col">
-                    <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId}>
-                        {["aborted", "timeout", "failed"].includes(prebuild?.status || "") || !!prebuild?.error ? (
-                            <button
-                                className="flex items-center space-x-2"
-                                disabled={isRerunningPrebuild}
-                                onClick={rerunPrebuild}
-                            >
-                                {isRerunningPrebuild && (
-                                    <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
-                                )}
-                                <span>Rerun Prebuild ({prebuild?.info.branch})</span>
-                            </button>
-                        ) : ["building", "queued"].includes(prebuild?.status || "") ? (
-                            <button
-                                className="danger flex items-center space-x-2"
-                                disabled={isCancellingPrebuild}
-                                onClick={cancelPrebuild}
-                            >
-                                {isCancellingPrebuild && (
-                                    <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
-                                )}
-                                <span>Cancel Prebuild</span>
-                            </button>
-                        ) : prebuild?.status === "available" ? (
-                            <a
-                                className="my-auto"
-                                href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}
-                            >
-                                <button>New Workspace ({prebuild?.info.branch})</button>
-                            </a>
-                        ) : (
-                            <button disabled={true}>New Workspace ({prebuild?.info.branch})</button>
-                        )}
-                    </PrebuildLogs>
-                </div>
+                <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId}>
+                    {["aborted", "timeout", "failed"].includes(prebuild?.status || "") || !!prebuild?.error ? (
+                        <button
+                            className="flex items-center space-x-2"
+                            disabled={isRerunningPrebuild}
+                            onClick={rerunPrebuild}
+                        >
+                            {isRerunningPrebuild && (
+                                <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
+                            )}
+                            <span>Rerun Prebuild ({prebuild?.info.branch})</span>
+                        </button>
+                    ) : ["building", "queued"].includes(prebuild?.status || "") ? (
+                        <button
+                            className="danger flex items-center space-x-2"
+                            disabled={isCancellingPrebuild}
+                            onClick={cancelPrebuild}
+                        >
+                            {isCancellingPrebuild && (
+                                <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
+                            )}
+                            <span>Cancel Prebuild</span>
+                        </button>
+                    ) : prebuild?.status === "available" ? (
+                        <a
+                            className="my-auto"
+                            href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}
+                        >
+                            <button>New Workspace ({prebuild?.info.branch})</button>
+                        </a>
+                    ) : (
+                        <button disabled={true}>New Workspace ({prebuild?.info.branch})</button>
+                    )}
+                </PrebuildLogs>
             </div>
         </>
     );
