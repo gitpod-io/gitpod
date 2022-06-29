@@ -35,4 +35,7 @@ export interface Configuration {
 
     // emulatePreparingIntervalSeconds configures how often we check for Workspaces in phase "preparing" for clusters we do not govern
     emulatePreparingIntervalSeconds: number;
+
+    // clusterSyncIntervalSeconds configures how often we sync workspace cluster information
+    clusterSyncIntervalSeconds: number;
 }
