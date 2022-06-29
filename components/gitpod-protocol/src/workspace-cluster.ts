@@ -57,11 +57,13 @@ export type AdmissionConstraint =
     | AdmissionConstraintFeaturePreview
     | AdmissionConstraintHasPermission
     | AdmissionConstraintHasUserLevel
-    | AdmissionConstraintHasMoreResources;
+    | AdmissionConstraintHasMoreResources
+    | AdmissionConstraintHasClass;
 export type AdmissionConstraintFeaturePreview = { type: "has-feature-preview" };
 export type AdmissionConstraintHasPermission = { type: "has-permission"; permission: PermissionName };
 export type AdmissionConstraintHasUserLevel = { type: "has-user-level"; level: string };
 export type AdmissionConstraintHasMoreResources = { type: "has-more-resources" };
+export type AdmissionConstraintHasClass = { type: "has-class"; id: string; displayName: string };
 
 export namespace AdmissionConstraint {
     export function is(o: any): o is AdmissionConstraint {
