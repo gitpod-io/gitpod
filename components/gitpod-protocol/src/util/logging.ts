@@ -6,6 +6,7 @@
 
 const inspect: (object: any) => string = require("util").inspect; // undefined in frontend
 
+let plainLogging: boolean = false; // set to true during development to get non JSON output
 let jsonLogging: boolean = false;
 let component: string | undefined;
 let version: string | undefined;
@@ -309,7 +310,7 @@ function makeLogItem(
     }
 
     const payload: any = payloadArgs.length == 0 ? undefined : payloadArgs.length == 1 ? payloadArgs[0] : payloadArgs;
-    const logItem: any = {
+    const logItem = {
         // undefined fields get eliminated in JSON.stringify()
         ...reportedErrorEvent,
         component,
@@ -321,11 +322,19 @@ function makeLogItem(
         payload,
         loggedViaConsole: calledViaConsole ? true : undefined,
     };
+    if (plainLogging) {
+        return `[${logItem.severity}] [${logItem.component}] ${logItem.message}
+            ${JSON.stringify(payload || "", undefined, "              ")}
+            ${error || ""}
+        `.trim();
+    }
     let result: string = stringifyLogItem(logItem);
 
     if (result.length > maxAllowedLogItemLength && payload !== undefined) {
         delete logItem.payload;
-        logItem.payloadStub = `Payload stripped as log item was longer than ${maxAllowedLogItemLength} characters`;
+        (<any>(
+            logItem
+        )).payloadStub = `Payload stripped as log item was longer than ${maxAllowedLogItemLength} characters`;
 
         result = stringifyLogItem(logItem);
 

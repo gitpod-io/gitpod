@@ -591,7 +591,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         (await Promise.all(workspaces.map((workspace) => workspaceDb.findRunningInstance(workspace.id))))
             .filter(isDefined)
             .forEach((instance) =>
-                this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, StopWorkspacePolicy.IMMEDIATELY),
+                this.workspaceStarter.stopWorkspaceInstance(
+                    ctx,
+                    instance.id,
+                    instance.region,
+                    StopWorkspacePolicy.IMMEDIATELY,
+                ),
             );
 
         // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
