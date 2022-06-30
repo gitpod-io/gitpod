@@ -116,10 +116,6 @@ export class TypeORMUserDBImpl implements UserDB {
                     allowsDevXMail: true,
                     allowsOnboardingMail: true,
                 },
-                workspaceClasses: {
-                    regular: "default",
-                    prebuild: "default",
-                },
             },
         };
         await this.storeUser(user);

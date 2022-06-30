@@ -18,7 +18,6 @@ import { getExperimentsClient } from "../experiments/client";
 import SelectWorkspaceClass from "./selectClass";
 
 type Theme = "light" | "dark" | "system";
-// type WorkspaceClass = "standard" | "XL";
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
@@ -56,7 +55,6 @@ export default function Preferences() {
     const [isShowWorkspaceClasses, setIsShowWorkspaceClasses] = useState<boolean>(false);
     (async () => {
         const showWorkspaceClasses = await getExperimentsClient().getValueAsync("workspace_classes", false, {});
-        console.log("is enabled", showWorkspaceClasses);
         setIsShowWorkspaceClasses(showWorkspaceClasses);
     })();
 
