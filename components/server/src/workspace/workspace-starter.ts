@@ -1045,7 +1045,12 @@ export class WorkspaceStarter {
                         .catch((err) => log.error("error writing image build log info to the DB", err));
                 })
                 .catch((err) =>
-                    log.warn("image build: never received log info", err, {
+                    // TODO (gpl) This error happens quite often, but looks like it's mostly triggered by user errors:
+                    // The image build fails (e.g. bc the base image cannot be pulled) so fast that we never received the log meta info.
+                    // We switch this to "debug" for now. Going forward, we should:
+                    //  1. turn this into a metric to feat the "image build reliability" SLI
+                    //  2. fix the image-builder implementation
+                    log.debug("image build: never received log info", err, {
                         instanceId: instance.id,
                         workspaceId: instance.workspaceId,
                     }),
