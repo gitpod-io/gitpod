@@ -4,13 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import EventEmitter from "events";
 import React, { useEffect, useContext, useState } from "react";
 import {
     CreateWorkspaceMode,
     WorkspaceCreationResult,
     RunningWorkspacePrebuildStarting,
     ContextURL,
+    DisposableCollection,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
@@ -21,7 +21,7 @@ import StartWorkspace, { parseProps } from "./StartWorkspace";
 import { openAuthorizeWindow } from "../provider-utils";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
-import PrebuildLogs, { watchHeadlessLogs } from "../components/PrebuildLogs";
+import PrebuildLogs from "../components/PrebuildLogs";
 import CodeText from "../components/CodeText";
 import FeedbackComponent from "../feedback-form/FeedbackComponent";
 import { isGitpodIo } from "../utils";
@@ -459,19 +459,15 @@ interface RunningPrebuildViewProps {
 }
 
 function RunningPrebuildView(props: RunningPrebuildViewProps) {
-    const [logsEmitter] = useState(new EventEmitter());
+    const workspaceId = props.runningPrebuild.workspaceID;
 
     useEffect(() => {
-        const disposables = watchHeadlessLogs(
-            props.runningPrebuild.instanceID,
-            (chunk) => logsEmitter.emit("logs", chunk),
-            async () => false,
-        );
+        const disposables = new DisposableCollection();
 
         disposables.push(
             getGitpodService().registerClient({
                 onInstanceUpdate: (update) => {
-                    if (update.workspaceId !== props.runningPrebuild.workspaceID) {
+                    if (update.workspaceId !== workspaceId) {
                         return;
                     }
                     if (update.status.phase === "stopped") {
@@ -484,13 +480,14 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
         return function cleanup() {
             disposables.dispose();
         };
-    }, []);
+        // eslint-disable-next-line
+    }, [workspaceId]);
 
     return (
         <StartPage title="Prebuild in Progress">
             {/* TODO(gpl) Copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
             <div className="mt-6 w-11/12 lg:w-3/5 overflow-hidden">
-                <PrebuildLogs workspaceId={props.runningPrebuild.workspaceID} onIgnorePrebuild={props.onIgnorePrebuild}>
+                <PrebuildLogs workspaceId={workspaceId} onIgnorePrebuild={props.onIgnorePrebuild}>
                     <button className="secondary" onClick={() => props.onIgnorePrebuild && props.onIgnorePrebuild()}>
                         Skip Prebuild
                     </button>
