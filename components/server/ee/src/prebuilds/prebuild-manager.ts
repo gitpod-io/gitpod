@@ -69,6 +69,7 @@ export class PrebuildManager {
                 results.push(this.workspaceStarter.stopWorkspaceInstance({ span }, instance.id, instance.region));
             }
             prebuild.prebuild.state = "aborted";
+            prebuild.prebuild.error = "A newer commit was pushed to the same branch.";
             results.push(this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild.prebuild));
         }
         await Promise.all(results);
