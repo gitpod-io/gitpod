@@ -16,6 +16,10 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const (
+	highestPriority = -19
+)
+
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "init the supervisor",
@@ -64,6 +68,11 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Error("supervisor run start error")
 			return
+		}
+
+		err = syscall.Setpriority(syscall.PRIO_PROCESS, runCommand.Process.Pid, highestPriority)
+		if err != nil {
+			log.WithError(err).Error("cannot change supervisor priority")
 		}
 
 		supervisorDone := make(chan struct{})

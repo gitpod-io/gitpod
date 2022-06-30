@@ -856,6 +856,7 @@ var ring2Cmd = &cobra.Command{
 			log.WithError(err).WithField("cmd", ring2Opts.SupervisorPath).Error("cannot exec")
 			return
 		}
+
 		exitCode = 0 // once we get here everythings good
 	},
 }
