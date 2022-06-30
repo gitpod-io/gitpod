@@ -81,10 +81,10 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 		service.Spec.Type = serviceType
 		if serviceType == corev1.ServiceTypeLoadBalancer {
 			service.Spec.LoadBalancerIP = loadBalancerIP
-		}
 
-		service.Annotations["external-dns.alpha.kubernetes.io/hostname"] = fmt.Sprintf("%s,*.%s,*.ws.%s", ctx.Config.Domain, ctx.Config.Domain, ctx.Config.Domain)
-		service.Annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {}}}`
+			service.Annotations["external-dns.alpha.kubernetes.io/hostname"] = fmt.Sprintf("%s,*.%s,*.ws.%s", ctx.Config.Domain, ctx.Config.Domain, ctx.Config.Domain)
+			service.Annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {}}}`
+		}
 
 		for k, v := range annotations {
 			service.Annotations[k] = v
