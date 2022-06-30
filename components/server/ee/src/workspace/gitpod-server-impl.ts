@@ -1924,21 +1924,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async findStripeSubscriptionIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
+    async findStripeSubscriptionIdForTeam(ctx: TraceContext, teamId: string): Promise<string> {
         const user = this.checkAndBlockUser("findStripeSubscriptionIdForTeam");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         await this.guardTeamOperation(teamId, "get");
         try {
             const customer = await this.stripeService.findCustomerByTeamId(teamId);
             if (!customer?.id) {
-                return undefined;
+                throw new ResponseError(ErrorCodes.NOT_FOUND, "Not found");
             }
             const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(customer.id);
             return subscription?.id;
         } catch (error) {
             log.error(`Failed to get Stripe Subscription ID for team '${teamId}'`, error);
             throw new ResponseError(
-                ErrorCodes.INTERNAL_SERVER_ERROR,
+                ErrorCodes.NOT_FOUND,
                 `Failed to get Stripe Subscription ID for team '${teamId}'`,
             );
         }
