@@ -21,6 +21,22 @@ spec:
           - '{{repl ConfigOption "db_cloudsql_instance" }}' # CloudSQL instances
           - '{{repl ConfigOption "db_gcp_credentials" }}' # CloudSQL credentials file
     - run:
+        collectorName: registry
+        image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/registry:sje-kots-registry-check.16
+        name: registry
+        args:
+          - '{{repl ConfigOption "reg_incluster" }}' # REG_IN_CLUSTER_ENABLED
+          - '{{repl ConfigOption "reg_username" }}' # REG_USERNAME
+          - '{{repl ConfigOption "reg_password" }}' # REG_PASSWORD
+          - '{{repl ConfigOption "reg_url" }}' # REG_URL
+          - '{{repl ConfigOption "reg_server" }}' # REG_SERVER
+          - '{{repl ConfigOptionEquals "reg_incluster_storage" "s3" }}' # REG_IN_CLUSTER_S3_ENABLED
+          - '{{repl ConfigOption "reg_incluster_storage_s3_region" }}' # REG_STORE_LOCATION
+          - '{{repl ConfigOption "reg_incluster_storage_s3_endpoint" }}' # REG_S3_ENDPOINT
+          - '{{repl ConfigOption "reg_incluster_storage_s3_accesskey" }}' # REG_S3_ACCESS_KEY_ID
+          - '{{repl ConfigOption "reg_incluster_storage_s3_secretkey" }}' # REG_S3_SECRET_ACCESS_KEY
+          - '{{repl ConfigOption "reg_incluster_storage_s3_bucketname" }}' # REG_S3_BUCKET_NAME
+    - run:
         collectorName: storage
         image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/storage:sje-kots-storage-check.9
         name: storage
