@@ -1605,7 +1605,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 aborted,
             );
         } catch (err) {
-            log.error(logCtx, "cannot watch imagebuild logs for workspaceId", err);
+            // This error is most likely a temporary one (too early). We defer to the client whether they want to keep on trying or not.
+            log.debug(logCtx, "cannot watch imagebuild logs for workspaceId", err);
             throw new ResponseError(
                 ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
                 "cannot watch imagebuild logs for workspaceId",
