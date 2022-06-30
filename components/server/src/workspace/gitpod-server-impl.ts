@@ -161,6 +161,7 @@ import { InstallationAdminTelemetryDataProvider } from "../installation-admin/te
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -1547,10 +1548,25 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const logInfo = instance.imageBuildInfo?.log;
         if (!logInfo) {
+            const isOldImageBuildLogsMechanismDeprecated = await getExperimentsClientForBackend().getValueAsync(
+                "deprecateOldImageLogsMechanism",
+                false,
+                {
+                    userId: user.id,
+                    projectId: workspace.projectId,
+                },
+            );
+            if (isOldImageBuildLogsMechanismDeprecated) {
+                log.error(logCtx, "cannot watch imagebuild logs for workspaceId: no image build info available");
+                throw new ResponseError(
+                    ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
+                    "cannot watch imagebuild logs for workspaceId",
+                );
+            }
+
             // during roll-out this is our fall-back case.
             // Afterwards we might want to do some spinning-lock and re-check for a certain period (30s?) to give db-sync
             // a change to move the imageBuildLogInfo across the globe.
-
             log.warn(logCtx, "imageBuild logs: fallback!");
             ctx.span?.setTag("workspace.imageBuild.logs.fallback", true);
             await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, workspace);
