@@ -65,3 +65,78 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 		InvalidWorkspaceInstances: 1,
 	}, status)
 }
+
+func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
+	maxStopTime := time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)
+
+	teamID := uuid.New().String()
+	teamAttributionID := db.NewTeamAttributionID(teamID)
+
+	scenarios := []struct {
+		Name     string
+		Report   UsageReport
+		Expected map[string]int64
+	}{
+		{
+			Name:     "no instances in report, no summary",
+			Report:   map[db.AttributionID][]db.WorkspaceInstance{},
+			Expected: map[string]int64{},
+		},
+		{
+			Name: "skips user attributions",
+			Report: map[db.AttributionID][]db.WorkspaceInstance{
+				db.NewUserAttributionID(uuid.New().String()): {
+					dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{}),
+				},
+			},
+			Expected: map[string]int64{},
+		},
+		{
+			Name: "two workspace instances",
+			Report: map[db.AttributionID][]db.WorkspaceInstance{
+				teamAttributionID: {
+					dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+						// has 1 day and 23 hours of usage
+						WorkspaceClass: defaultWorkspaceClass,
+						CreationTime:   db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+						StoppedTime:    db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+					}),
+					dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+						// has 1 hour of usage
+						WorkspaceClass: defaultWorkspaceClass,
+						CreationTime:   db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+						StoppedTime:    db.NewVarcharTime(time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			Expected: map[string]int64{
+				// total of 2 days runtime, at 10 credits per hour, that's 480 credits
+				teamID: 480,
+			},
+		},
+		{
+			Name: "unknown workspace class uses default",
+			Report: map[db.AttributionID][]db.WorkspaceInstance{
+				teamAttributionID: {
+					dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+						// has 1 hour of usage
+						WorkspaceClass: "yolo-workspace-class",
+						CreationTime:   db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+						StoppedTime:    db.NewVarcharTime(time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			Expected: map[string]int64{
+				// total of 1 hour usage, at default cost of 10 credits per hour
+				teamID: 10,
+			},
+		},
+	}
+
+	for _, s := range scenarios {
+		t.Run(s.Name, func(t *testing.T) {
+			actual := s.Report.CreditSummaryForTeams(DefaultWorkspacePricer, maxStopTime)
+			require.Equal(t, s.Expected, actual)
+		})
+	}
+}
