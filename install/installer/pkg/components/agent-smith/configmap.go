@@ -5,10 +5,8 @@
 package agentsmith
 
 import (
-	"encoding/base64"
 	"fmt"
 
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
@@ -21,23 +19,19 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	ascfg := config.ServiceConfig{
 		PProfAddr:      fmt.Sprintf("localhost:%d", PProfPort),
 		PrometheusAddr: fmt.Sprintf("localhost:%d", PrometheusPort),
+		Namespace:      ctx.Namespace,
 		Config: config.Config{
-			Blocklists: &config.Blocklists{
-				Very: &config.PerLevelBlocklist{
-					Signatures: []*classifier.Signature{{
-						Name:    "testtarget",
-						Domain:  classifier.DomainProcess,
-						Kind:    classifier.ObjectELFSymbols,
-						Pattern: []byte(base64.StdEncoding.EncodeToString([]byte("agentSmithTestTarget"))),
-						Regexp:  false,
-					}},
-				},
-			},
-			Kubernetes: config.Kubernetes{Enabled: true},
+			Kubernetes:          config.Kubernetes{Enabled: true},
+			KubernetesNamespace: ctx.Namespace,
 			GitpodAPI: config.GitpodAPI{
 				HostURL: fmt.Sprintf("https://%s", ctx.Config.Domain),
 			},
 		},
+	}
+
+	if ctx.Config.Experimental.AgentSmith != nil {
+		ascfg.Config = *ctx.Config.Experimental.AgentSmith
+		ascfg.Config.KubernetesNamespace = ctx.Namespace
 	}
 
 	fc, err := common.ToJSONString(ascfg)
