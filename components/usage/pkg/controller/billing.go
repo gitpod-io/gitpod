@@ -39,12 +39,16 @@ func (b *StripeBillingController) Reconcile(ctx context.Context, now time.Time, 
 
 const (
 	defaultWorkspaceClass = "default"
+	gitpodInternalXL      = "gitpodio-internal-xl"
 )
 
 var (
 	DefaultWorkspacePricer, _ = NewWorkspacePricer(map[string]float64{
-		// 1 credit = 6 minutes
-		"default": float64(1) / float64(6),
+		// SaaS, 10 credits per hour, 1 credit = 6 minutes
+		defaultWorkspaceClass: float64(1) / float64(6),
+
+		// SaaS, 20 credits per hour, 1 credit = 3 minutes
+		gitpodInternalXL: float64(1) / float64(3),
 	})
 )
 

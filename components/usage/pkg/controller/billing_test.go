@@ -60,3 +60,65 @@ func TestWorkspacePricer_Default(t *testing.T) {
 		})
 	}
 }
+
+func TestWorkspacePricer_InternalGitpodIO_XL(t *testing.T) {
+	testCases := []struct {
+		Name            string
+		Seconds         int64
+		ExpectedCredits int64
+	}{
+		{
+			Name:            "0 seconds",
+			Seconds:         0,
+			ExpectedCredits: 0,
+		},
+		{
+			Name:            "1 second",
+			Seconds:         1,
+			ExpectedCredits: 1,
+		},
+		{
+			Name:            "60 seconds",
+			Seconds:         60,
+			ExpectedCredits: 1,
+		},
+		{
+			Name:            "90 seconds",
+			Seconds:         90,
+			ExpectedCredits: 1,
+		},
+		{
+			Name:            "3 minutes",
+			Seconds:         180,
+			ExpectedCredits: 1,
+		},
+		{
+			Name:            "3 minutes 1 second",
+			Seconds:         181,
+			ExpectedCredits: 2,
+		},
+		{
+			Name:            "6 minutes",
+			Seconds:         360,
+			ExpectedCredits: 2,
+		},
+		{
+			Name:            "6 minutes and 1 second",
+			Seconds:         361,
+			ExpectedCredits: 3,
+		},
+		{
+			Name:            "1 hour",
+			Seconds:         3600,
+			ExpectedCredits: 20,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			actualCredits := DefaultWorkspacePricer.Credits(gitpodInternalXL, tc.Seconds)
+
+			require.Equal(t, tc.ExpectedCredits, actualCredits)
+		})
+	}
+}
