@@ -27,8 +27,6 @@ export class DBBlockedRepository implements BlockedRepository {
     @DeleteDateColumn()
     deletedAt: string;
 
-    // TODO: not sure if we need this?
-    // TODO: should have a default value of false?
     // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
     @Column()
     deleted: boolean;
