@@ -5,7 +5,7 @@
  */
 
 import { BlockedRepository } from "@gitpod/gitpod-protocol/src/blocked-repositories-protocol";
-import { Entity, Column, CreateDateColumn, DeleteDateColumn, UpdateDateColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class DBBlockedRepository implements BlockedRepository {
@@ -23,9 +23,6 @@ export class DBBlockedRepository implements BlockedRepository {
 
     @UpdateDateColumn()
     updatedAt: string;
-
-    @DeleteDateColumn()
-    deletedAt: string;
 
     // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
     @Column()

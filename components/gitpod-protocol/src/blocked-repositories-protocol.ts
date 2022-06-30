@@ -10,5 +10,4 @@ export interface BlockedRepository {
     blockUser: boolean;
     createdAt: string;
     updatedAt: string;
-    deletedAt: string;
 }
