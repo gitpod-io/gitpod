@@ -48,6 +48,12 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
     readonly name = "gitpod";
     protected readonly tables: TableDescription[] = [
         {
+            name: "d_b_blocked_repository",
+            primaryKeys: ["id"],
+            timeColumn: "updatedAt",
+            deletionColumn: "deleted",
+        },
+        {
             name: "d_b_account_entry",
             primaryKeys: ["uid"],
             timeColumn: "_lastModified",
