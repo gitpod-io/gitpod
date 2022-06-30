@@ -4,8 +4,6 @@
 package usage
 
 import (
-	"fmt"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -61,13 +59,26 @@ func TestDeployment_EnablesPaymentWhenAStripeSecretIsPresent(t *testing.T) {
 	dpl, ok := objs[0].(*appsv1.Deployment)
 	require.True(t, ok)
 
+	spec := dpl.Spec
+	require.Contains(t, spec.Template.Spec.Volumes, corev1.Volume{
+		Name: "stripe-secret",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "some-stripe-secret",
+			},
+		},
+	})
+
 	containers := dpl.Spec.Template.Spec.Containers
 	require.Len(t, containers, 2)
 
 	usageContainer := containers[0]
-	expectedArgument := fmt.Sprintf("--stripe-secret-path=%s", filepath.Join(stripeSecretMountPath, stripeKeyFilename))
 
-	require.Contains(t, usageContainer.Args, expectedArgument)
+	require.Contains(t, usageContainer.VolumeMounts, corev1.VolumeMount{
+		Name:      "stripe-secret",
+		MountPath: stripeSecretMountPath,
+		ReadOnly:  true,
+	})
 }
 
 func TestDeployment_DisablesPaymentWhenAStripeSecretIsNotPresent(t *testing.T) {

@@ -8,4 +8,5 @@ const (
 	Component             = "usage"
 	stripeSecretMountPath = "stripe-secret"
 	stripeKeyFilename     = "apikeys"
+	configJSONFilename    = "config.json"
 )

@@ -20,5 +20,5 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
 	cfgmap, ok := objs[0].(*corev1.ConfigMap)
 	require.True(t, ok)
 
-	require.Equal(t, cfgmap.Data["schedule"], "2m")
+	require.JSONEq(t, cfgmap.Data[configJSONFilename], `{"controllerSchedule": "2m", "stripeCredentialsFile": "stripe-secret/apikeys"}`)
 }
