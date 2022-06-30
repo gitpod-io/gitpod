@@ -11,17 +11,19 @@
 package experimental
 
 import (
+	agentSmith "github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // Config contains all experimental configuration.
 type Config struct {
-	Workspace *WorkspaceConfig `json:"workspace,omitempty"`
-	WebApp    *WebAppConfig    `json:"webapp,omitempty"`
-	IDE       *IDEConfig       `json:"ide,omitempty"`
-	Common    *CommonConfig    `json:"common,omitempty"`
-	Telemetry *TelemetryConfig `json:"telemetry,omitempty"`
+	Workspace  *WorkspaceConfig   `json:"workspace,omitempty"`
+	WebApp     *WebAppConfig      `json:"webapp,omitempty"`
+	IDE        *IDEConfig         `json:"ide,omitempty"`
+	Common     *CommonConfig      `json:"common,omitempty"`
+	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`
+	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"`
 }
 
 type TelemetryConfig struct {
