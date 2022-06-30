@@ -6,7 +6,6 @@ package stripe
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -30,9 +29,9 @@ func New(config ClientConfig) (*Client, error) {
 
 // UpdateUsage updates teams' Stripe subscriptions with usage data
 // `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
-func (c *Client) UpdateUsage(usageForTeam map[string]int64) error {
-	teamIds := make([]string, 0, len(usageForTeam))
-	for k := range usageForTeam {
+func (c *Client) UpdateUsage(creditsPerTeam map[string]int64) error {
+	teamIds := make([]string, 0, len(creditsPerTeam))
+	for k := range creditsPerTeam {
 		teamIds = append(teamIds, k)
 	}
 	queries := queriesForCustomersWithTeamIds(teamIds)
@@ -62,7 +61,7 @@ func (c *Client) UpdateUsage(usageForTeam map[string]int64) error {
 				continue
 			}
 
-			creditsUsed := workspaceSecondsToCredits(usageForTeam[customer.Metadata["teamId"]])
+			creditsUsed := creditsPerTeam[customer.Metadata["teamId"]]
 
 			subscriptionItemId := subscription.Items.Data[0].ID
 			log.Infof("registering usage against subscriptionItem %q", subscriptionItemId)
@@ -98,10 +97,4 @@ func queriesForCustomersWithTeamIds(teamIds []string) []string {
 	}
 
 	return queries
-}
-
-// workspaceSecondsToCredits converts seconds (of workspace usage) into Stripe credits.
-// (1 credit = 6 minutes, rounded up)
-func workspaceSecondsToCredits(seconds int64) int64 {
-	return int64(math.Ceil(float64(seconds) / (60 * 6)))
 }

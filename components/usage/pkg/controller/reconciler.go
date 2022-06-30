@@ -116,8 +116,8 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 
 type UsageReport map[db.AttributionID][]db.WorkspaceInstance
 
-func (u UsageReport) RuntimeSummaryForTeams(maxStopTime time.Time) map[string]int64 {
-	attributedUsage := map[string]int64{}
+func (u UsageReport) CreditSummaryForTeams(pricer *WorkspacePricer, maxStopTime time.Time) map[string]int64 {
+	creditsPerTeamID := map[string]int64{}
 
 	for attribution, instances := range u {
 		entity, id := attribution.Values()
@@ -125,15 +125,17 @@ func (u UsageReport) RuntimeSummaryForTeams(maxStopTime time.Time) map[string]in
 			continue
 		}
 
-		var runtime uint64
+		var credits int64
 		for _, instance := range instances {
-			runtime += instance.WorkspaceRuntimeSeconds(maxStopTime)
+			runtime := instance.WorkspaceRuntimeSeconds(maxStopTime)
+			class := "default"
+			credits += pricer.Credits(class, runtime)
 		}
 
-		attributedUsage[id] = int64(runtime)
+		creditsPerTeamID[id] = credits
 	}
 
-	return attributedUsage
+	return creditsPerTeamID
 }
 
 type invalidWorkspaceInstance struct {
