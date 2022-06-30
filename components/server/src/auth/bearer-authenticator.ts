@@ -53,7 +53,7 @@ export class BearerAuth {
                     // came to the assumption that a workspace pod might start talking to a server pod
                     // from the other cluster, which is not db-sync'd yet.
                     // Logging this should allow us to test this assumption.
-                    log.warn("Bearer auth error.", e, { clientRegion: req.get("x-glb-client-region") });
+                    log.info("Bearer auth error.", e, { clientRegion: req.get("x-glb-client-region") });
                     res.status(401).send(e.message);
                     return;
                 }
