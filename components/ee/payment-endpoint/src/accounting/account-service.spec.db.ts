@@ -78,10 +78,6 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
                     allowsChangelogMail: true,
                     allowsDevXMail: true
                 },
-                workspaceClasses: {
-                    regular: "default",
-                    prebuild: "default,"
-                },
             }
         });
         await this.workspaceDb.store({
