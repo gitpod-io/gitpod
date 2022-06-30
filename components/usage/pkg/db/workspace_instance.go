@@ -47,7 +47,7 @@ type WorkspaceInstance struct {
 
 // WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.
 // If the instance is still running (no stop time set), maxStopTime is used to to compute the duration - this is an upper bound on stop
-func (i *WorkspaceInstance) WorkspaceRuntimeSeconds(maxStopTime time.Time) uint64 {
+func (i *WorkspaceInstance) WorkspaceRuntimeSeconds(maxStopTime time.Time) int64 {
 	start := i.CreationTime.Time()
 	stop := maxStopTime
 
@@ -57,7 +57,7 @@ func (i *WorkspaceInstance) WorkspaceRuntimeSeconds(maxStopTime time.Time) uint6
 		}
 	}
 
-	return uint64(stop.Sub(start).Round(time.Second).Seconds())
+	return int64(stop.Sub(start).Round(time.Second).Seconds())
 }
 
 // TableName sets the insert table name for this struct type
