@@ -24,6 +24,7 @@ import {
     UserDB,
     WorkspaceDB,
 } from "@gitpod/gitpod-db/lib";
+import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
     CommitContext,
     Disposable,
@@ -202,6 +203,7 @@ export class WorkspaceStarter {
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(ContextParser) protected contextParser: ContextParser;
+    @inject(BlockedRepositoryDB) protected readonly blockedRepositoryDB: BlockedRepositoryDB;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -224,6 +226,7 @@ export class WorkspaceStarter {
         options = options || {};
         try {
             await this.checkBlockedRepository(user, workspace.contextURL);
+            await this.checkBlockedRepositoryInDB(user, workspace.contextURL);
 
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
@@ -371,6 +374,21 @@ export class WorkspaceStarter {
             return;
         }
         if (hit.blockUser) {
+            try {
+                await this.userService.blockUser(user.id, true);
+                log.info({ userId: user.id }, "Blocked user.", { contextURL });
+            } catch (error) {
+                log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });
+            }
+        }
+        throw new Error(`${contextURL} is blocklisted on Gitpod.`);
+    }
+
+    protected async checkBlockedRepositoryInDB(user: User, contextURL: string) {
+        const blockedRepository = await this.blockedRepositoryDB.isRepositoryBlocked(contextURL);
+        if (!blockedRepository) return;
+
+        if (blockedRepository.blockUser) {
             try {
                 await this.userService.blockUser(user.id, true);
                 log.info({ userId: user.id }, "Blocked user.", { contextURL });
