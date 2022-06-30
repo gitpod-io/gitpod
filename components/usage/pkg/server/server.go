@@ -18,7 +18,7 @@ import (
 
 type Config struct {
 	// ControllerSchedule determines how frequently to run the Usage/Billing controller
-	ControllerSchedule time.Duration `json:"controllerSchedule,omitempty"`
+	ControllerSchedule string `json:"controllerSchedule,omitempty"`
 
 	StripeCredentialsFile string `json:"stripeCredentialsFile,omitempty"`
 
@@ -53,7 +53,12 @@ func Start(cfg Config) error {
 		billingController = controller.NewStripeBillingController(c, controller.DefaultWorkspacePricer)
 	}
 
-	ctrl, err := controller.New(cfg.ControllerSchedule, controller.NewUsageReconciler(conn, billingController))
+	schedule, err := time.ParseDuration(cfg.ControllerSchedule)
+	if err != nil {
+		return fmt.Errorf("failed to parse schedule duration: %w", err)
+	}
+
+	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, billingController))
 	if err != nil {
 		return fmt.Errorf("failed to initialize usage controller: %w", err)
 	}
