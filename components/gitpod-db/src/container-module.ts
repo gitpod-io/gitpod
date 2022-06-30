@@ -63,6 +63,8 @@ import { TypeORMInstallationAdminImpl } from "./typeorm/installation-admin-db-im
 import { InstallationAdminDB } from "./installation-admin-db";
 import { TeamSubscription2DB } from "./team-subscription-2-db";
 import { TeamSubscription2DBImpl } from "./typeorm/team-subscription-2-db-impl";
+import { TypeORMBlockedRepositoryDBImpl } from "./typeorm/blocked-repository-db-impl";
+import { BlockedRepositoryDB } from "./blocked-repository-db";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -70,6 +72,9 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(TypeORM).toSelf().inSingletonScope();
     bind(DBWithTracing).toSelf().inSingletonScope();
     bind(TransactionalWorkspaceDbImpl).toSelf().inSingletonScope();
+
+    bind(TypeORMBlockedRepositoryDBImpl).toSelf().inSingletonScope();
+    bind(BlockedRepositoryDB).toService(TypeORMBlockedRepositoryDBImpl);
 
     bind(TypeORMUserDBImpl).toSelf().inSingletonScope();
     bind(UserDB).toService(TypeORMUserDBImpl);
