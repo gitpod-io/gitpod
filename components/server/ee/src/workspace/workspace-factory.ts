@@ -31,6 +31,8 @@ import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { UserCounter } from "../user/user-counter";
 import { increasePrebuildsStartedCounter } from "../../../src/prometheus-metrics";
+import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
@@ -112,6 +114,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                     .trace({ span })
                     .findPrebuildsWithWorkpace(commitContext.repository.cloneUrl);
 
+                const loggedContext = filterForLogging(context);
                 for (const recentPrebuild of recentPrebuilds) {
                     if (
                         !(await this.isGoodBaseforIncrementalPrebuild(
@@ -122,16 +125,16 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                             recentPrebuild.workspace,
                         ))
                     ) {
-                        log.info("Not using incremental prebuild base", {
+                        log.info({ userId: user.id }, "Not using incremental prebuild base", {
                             candidatePrebuildId: recentPrebuild.prebuild.id,
-                            context,
+                            context: loggedContext,
                         });
                         continue;
                     }
 
-                    log.info("Using incremental prebuild base", {
+                    log.info({ userId: user.id }, "Using incremental prebuild base", {
                         basePrebuildId: recentPrebuild.prebuild.id,
-                        context,
+                        context: loggedContext,
                     });
 
                     const incrementalPrebuildContext: PrebuiltWorkspaceContext = {
@@ -345,4 +348,20 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             span.finish();
         }
     }
+}
+
+function filterForLogging(context: StartPrebuildContext) {
+    return <DeepPartial<StartPrebuildContext>>{
+        actual: context.actual,
+        branch: context.branch,
+        normalizedContextURL: context.normalizedContextURL,
+        ref: context.ref,
+        title: context.title,
+        forceCreateNewWorkspace: context.forceCreateNewWorkspace,
+        forceImageBuild: context.forceImageBuild,
+        project: context.project,
+        // placeholders for the actual history
+        commitHistoryLength: context.commitHistory?.length || 0,
+        additionalRepositoryCommitHistoriesLength: context.additionalRepositoryCommitHistories?.length || 0,
+    };
 }
