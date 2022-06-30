@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-// TODO: Maybe this should be in protocol.ts?
 export interface BlockedRepository {
     id: number;
     urlRegexp: string;
