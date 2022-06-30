@@ -130,7 +130,7 @@ export default function () {
             />
             <CheckBox
                 title={<span>Cancel Prebuilds on Outdated Commits </span>}
-                desc={<span>Cancels all pending and running prebuilds on the branch when a new commit is pushed.</span>}
+                desc={<span>Cancel pending or running prebuilds on the same branch when new commits are pushed.</span>}
                 checked={!projectSettings.keepOutdatedPrebuildsRunning}
                 onChange={toggleCancelOutdatedPrebuilds}
             />
