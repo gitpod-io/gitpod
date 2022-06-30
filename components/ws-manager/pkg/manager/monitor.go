@@ -1247,15 +1247,15 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		GitStatus:      gitStatus,
 	}
 	if backupError != nil {
-		c, cErr := m.manager.metrics.totalBackupFailureCounterVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
-		if cErr != nil {
-			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace backup failure metric")
-		} else {
-			c.Inc()
-		}
-
 		if dataloss {
 			disposalStatus.BackupFailure = backupError.Error()
+
+			c, cErr := m.manager.metrics.totalBackupFailureCounterVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
+			if cErr != nil {
+				log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace backup failure metric")
+			} else {
+				c.Inc()
+			}
 		} else {
 			// internal errors make no difference to the user experience. The backup still worked, we just messed up some
 			// state management or cleanup. No need to worry the user.
