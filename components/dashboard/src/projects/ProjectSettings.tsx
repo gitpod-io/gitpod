@@ -135,7 +135,7 @@ export default function () {
                 onChange={toggleCancelOutdatedPrebuilds}
             />
             <br></br>
-            <h3>Persistent Volume Claim</h3>
+            <h3 className="mt-12">Workspace Persistence</h3>
             <CheckBox
                 title={
                     <span>
