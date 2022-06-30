@@ -14,4 +14,4 @@ packages:
     config:
       dockerfile: leeway.Dockerfile
       image:
-        - ${imageRepoBase}/preview-install:${version}
+        - ${imageRepoBase}/local-preview:${version}
