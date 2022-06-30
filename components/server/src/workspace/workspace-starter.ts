@@ -385,7 +385,7 @@ export class WorkspaceStarter {
     }
 
     protected async checkBlockedRepositoryInDB(user: User, contextURL: string) {
-        const blockedRepository = await this.blockedRepositoryDB.isRepositoryBlocked(contextURL);
+        const blockedRepository = await this.blockedRepositoryDB.findBlockedRepositoryByURL(contextURL);
         if (!blockedRepository) return;
 
         if (blockedRepository.blockUser) {
