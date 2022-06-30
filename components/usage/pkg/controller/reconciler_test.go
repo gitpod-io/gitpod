@@ -46,8 +46,6 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 		}),
 	}
 
-	expectedRuntime := instances[0].WorkspaceRuntimeSeconds(scenarioRunTime) + instances[1].WorkspaceRuntimeSeconds(scenarioRunTime)
-
 	conn := dbtest.ConnectForTests(t)
 	dbtest.CreateWorkspaceInstances(t, conn, instances...)
 
@@ -66,7 +64,4 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 		WorkspaceInstances:        2,
 		InvalidWorkspaceInstances: 1,
 	}, status)
-	require.Equal(t, map[string]int64{
-		teamID.String(): int64(expectedRuntime),
-	}, report.RuntimeSummaryForTeams(scenarioRunTime))
 }

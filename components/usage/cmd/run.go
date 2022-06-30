@@ -64,7 +64,7 @@ func run() *cobra.Command {
 				if err != nil {
 					log.WithError(err).Fatal("Failed to initialize Stripe client.")
 				}
-				billingController = controller.NewStripeBillingController(c)
+				billingController = controller.NewStripeBillingController(c, controller.DefaultWorkspacePricer)
 			}
 
 			ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, billingController))
