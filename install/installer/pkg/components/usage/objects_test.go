@@ -34,7 +34,10 @@ func renderContextWithUsageConfig(t *testing.T, usage *experimental.UsageConfig)
 	ctx, err := common.NewRenderContext(config.Config{
 		Domain: "test.domain.everything.awesome.is",
 		Experimental: &experimental.Config{
-			WebApp: &experimental.WebAppConfig{Usage: usage},
+			WebApp: &experimental.WebAppConfig{
+				Usage:  usage,
+				Server: &experimental.ServerConfig{StripeSecret: "stripe-secret-name"},
+			},
 		},
 		Database: config.Database{
 			CloudSQL: &config.DatabaseCloudSQL{

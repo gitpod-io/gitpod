@@ -15,6 +15,18 @@ packages:
       packaging: app
       buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/usage/cmd.Version=commit-${__git_commit}'"]
 
+  - name: lib
+    type: go
+    deps:
+      - components/common-go:lib
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    config:
+      packaging: library
+      dontTest: true
+
   - name: init-testdb
     type: generic
     deps:

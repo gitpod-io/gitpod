@@ -5,8 +5,6 @@ package usage
 
 import (
 	"fmt"
-	"path/filepath"
-
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -20,38 +18,47 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+const (
+	usageConfigmapVolume = "config"
+	usageConfigMountPath = "/config.json"
+)
+
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	args := []string{
 		"run",
-		"--schedule=$(RECONCILER_SCHEDULE)",
+		fmt.Sprintf("--config=%s", usageConfigMountPath),
 	}
 
-	var volumes []corev1.Volume
-	var volumeMounts []corev1.VolumeMount
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.StripeSecret != "" {
-			stripeSecret := cfg.WebApp.Server.StripeSecret
-
-			volumes = append(volumes,
-				corev1.Volume{
-					Name: "stripe-secret",
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: stripeSecret,
-						},
+	volumes := []corev1.Volume{
+		{
+			Name: usageConfigmapVolume,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: Component,
 					},
-				})
-
-			volumeMounts = append(volumeMounts, corev1.VolumeMount{
-				Name:      "stripe-secret",
-				MountPath: stripeSecretMountPath,
-				ReadOnly:  true,
-			})
-
-			args = append(args, fmt.Sprintf("--stripe-secret-path=%s", filepath.Join(stripeSecretMountPath, stripeKeyFilename)))
+				},
+			},
+		},
+	}
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      usageConfigmapVolume,
+			ReadOnly:  true,
+			MountPath: usageConfigMountPath,
+			SubPath:   configJSONFilename,
+		},
+	}
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		volume, mount, _, ok := getStripeConfig(cfg)
+		if !ok {
+			return nil
 		}
+
+		volumes = append(volumes, volume)
+		volumeMounts = append(volumeMounts, mount)
 		return nil
 	})
 
@@ -102,15 +109,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
 								common.DatabaseEnv(&ctx.Config),
-								[]corev1.EnvVar{{
-									Name: "RECONCILER_SCHEDULE",
-									ValueFrom: &corev1.EnvVarSource{
-										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
-											Key:                  "schedule",
-										},
-									},
-								}},
 							)),
 							VolumeMounts: volumeMounts,
 							LivenessProbe: &corev1.Probe{
