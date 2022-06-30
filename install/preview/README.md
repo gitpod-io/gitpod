@@ -1,4 +1,4 @@
-# Gitpod Preview Installation
+# Gitpod Local Preview
 
 This repo helps users to try out and preview self-hosted Gitpod **locally** without all the things
 needed for a production instance. The aim is to provide an installation mechanism as minimal and
@@ -7,7 +7,7 @@ simple as possible.
 ## Installation
 
 ```bash
-docker run --privileged --name gitpod --rm -it -v /tmp/gitpod:/var/gitpod eu.gcr.io/gitpod-core-dev/build/preview-install:tar-preview-output.2
+docker run --privileged --name gitpod --rm -it -v /tmp/gitpod:/var/gitpod eu.gcr.io/gitpod-core-dev/build/preview-install
 ```
 
 Once the above command starts running and the pods are ready (can be checked by running `docker exec gitpod kubectl get pods`),
