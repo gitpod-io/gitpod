@@ -19,6 +19,7 @@ import (
 	tracelog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
@@ -1001,7 +1002,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
 		if err != nil {
 			m.finalizerMapLock.Unlock()
-			return true, nil, err
+			return true, nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 		}
 
 		ctx, cancelReq := context.WithTimeout(ctx, time.Duration(m.manager.Config.Timeouts.ContentFinalization))
@@ -1184,9 +1185,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 
 	var (
-		dataloss    bool
 		backupError error
 		gitStatus   *csapi.GitStatus
+		st          *status.Status
+		isGRPCError bool
 	)
 	t := time.Now()
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
@@ -1196,17 +1198,14 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			// someone else is managing finalization process ... we don't have to bother
 			return
 		}
-
-		// by default we assume the worst case scenario. If things aren't just as bad, we'll tune it down below.
-		dataloss = true
-		backupError = handleGRPCError(ctx, err)
 		gitStatus = gs
+		backupError = err
 
 		// At this point one of three things may have happened:
 		//   1. the context deadline was exceeded, e.g. due to misconfiguration (not enough time to upload) or network issues. We'll try again.
-		//   2. the service was unavailable, in which case we'll try again.
+		//   2. the service was unavailable or canceled, in which case we'll try again.
 		//   3. none of the above, in which case we'll give up
-		st, isGRPCError := grpc_status.FromError(err)
+		st, isGRPCError = grpc_status.FromError(err)
 		if !isGRPCError {
 			break
 		}
@@ -1218,19 +1217,22 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			time.Sleep(wsdaemonRetryInterval)
 			continue
 		}
+	}
 
-		// service was available, we've tried to do the work and failed. Tell the world about it.
-		if (doBackup || doSnapshot) && isGRPCError {
-			switch st.Code() {
-			case codes.DataLoss:
-				// ws-daemon told us that it's lost data
-				dataloss = true
-			case codes.FailedPrecondition:
-				// the workspace content was not in the state we thought it was
-				dataloss = true
-			}
+	// we've tried to do the work and failed. Tell the world about it.
+	var dataloss bool
+	if (doBackup || doSnapshot) && isGRPCError {
+		switch st.Code() {
+		case codes.Unavailable:
+			// ws-daemon is unavailable
+			dataloss = true
+		case codes.DataLoss:
+			// ws-daemon told us that it's lost data
+			dataloss = true
+		case codes.FailedPrecondition:
+			// the workspace content was not in the state we thought it was
+			dataloss = true
 		}
-		break
 	}
 
 	hist, err := m.manager.metrics.finalizeTimeHistVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
