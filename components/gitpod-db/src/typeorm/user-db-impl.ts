@@ -334,7 +334,9 @@ export class TypeORMUserDBImpl implements UserDB {
     public async findTokenForIdentity(identity: Identity): Promise<Token | undefined> {
         const tokenEntries = await this.findTokensForIdentity(identity);
         if (tokenEntries.length > 1) {
-            log.warn(`Found more than one active token for ${identity.authProviderId}.`, { identity });
+            // TODO(gpl) This line is very noisy thus we don't want it to be a warning. Still we need to keep track,
+            // so needs to be an info.
+            log.info(`Found more than one active token for ${identity.authProviderId}.`, { identity });
         }
         if (tokenEntries.length === 0) {
             return undefined;
