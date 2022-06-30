@@ -187,11 +187,50 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
 
 
 const TESTS: { [name: string]: InfraConfig } = {
-    // TODO(nvn): make this more atomic
-    INTEGRATION_TESTS: {
-        phase: "run-tests",
-        makeTarget: "run-tests",
-        description: "Run the integration tests",
+    WORKSPACE_TEST: {
+        phase: "run-workspace-tests",
+        makeTarget: "run-workspace-tests",
+        description: "Run the test for workspaces",
+    },
+    VSCODE_IDE_TEST: {
+        phase: "run-vscode-ide-tests",
+        makeTarget: "run-vscode-ide-tests",
+        description: "Run the test for vscode IDE",
+    },
+    JB_IDE_TEST: {
+        phase: "run-jb-ide-tests",
+        makeTarget: "run-jb-ide-tests",
+        description: "Run the test for jetbrains IDE",
+    },
+    CONTENTSERVICE_TEST: {
+        phase: "run-cs-component-tests",
+        makeTarget: "run-cs-component-tests",
+        description: "Run the test for content-service component",
+    },
+    DB_TEST: {
+        phase: "run-db-component-tests",
+        makeTarget: "run-db-component-tests",
+        description: "Run the test for database component",
+    },
+    IMAGEBUILDER_TEST: {
+        phase: "run-ib-component-tests",
+        makeTarget: "run-ib-component-tests",
+        description: "Run the test for image-builder component",
+    },
+    SERVER_TEST: {
+        phase: "run-server-component-tests",
+        makeTarget: "run-server-component-tests",
+        description: "Run the test for server component",
+    },
+    WS_DAEMON_TEST: {
+        phase: "run-wsd-component-tests",
+        makeTarget: "run-wsd-component-tests",
+        description: "Run the test for ws-daemon component",
+    },
+    WS_MNGR_TEST: {
+        phase: "run-wsm-component-tests",
+        makeTarget: "run-wsm-component-tests",
+        description: "Run the test for ws-manager component",
     },
 }
 
@@ -309,20 +348,15 @@ function randomize(resource: string, platform: string): string {
 }
 
 function cleanup() {
-    const phase = "destroy-infrastructure";
+    const phase = INFRA_PHASES["DESTROY"]
     werft.phase(phase, "Destroying all the created resources");
 
-    const response = exec(`export cloud=${cloud} make -C ${makefilePath} cleanup`, {
-        slice: phase,
-        dontCheckRc: true,
-    });
+    const ret = callMakeTargets(phase.phase, phase.description, phase.makeTarget)
 
     // if the destroy command fail, we check if any resources are pending to be removed
     // if nothing is yet to be cleaned, we return with success
     // else we list the rest of the resources to be cleaned up
-    if (response.code) {
-        console.error(`Error: ${response.stderr}`);
-
+    if (ret) {
         const existingState = exec(`make -C ${makefilePath} list-state`, { slice: "get-uncleaned-resources" });
         if (existingState.code) {
             console.error(`Error: Failed to check for the left over resources`);
@@ -332,7 +366,7 @@ function cleanup() {
 
         if (itemsTobeCleaned.length == 0) {
             console.log("Eventhough it was not a clean run, all resources has been cleaned. Nothing to do");
-            werft.done(phase);
+            werft.done(phase.phase);
             return;
         }
 
@@ -340,8 +374,8 @@ function cleanup() {
 
         werft.fail(phase, "Destroying of resources failed");
     } else {
-        werft.done(phase);
+        werft.done(phase.phase);
     }
 
-    return response.code;
+    return ret;
 }

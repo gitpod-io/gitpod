@@ -35,7 +35,7 @@ module "k3s" {
   kubeconfig       = var.kubeconfig
   dns_sa_creds     = var.dns_sa_creds
   dns_project      = "dns-for-playgrounds"
-  managed_dns_zone = "gitpod-self-hosted-com"
+  managed_dns_zone = "tests-gitpod-self-hosted-com"
   domain_name      = "${var.TEST_ID}.tests.gitpod-self-hosted.com"
 }
 
@@ -128,7 +128,7 @@ module "azure-add-dns-record" {
   credentials      = var.dns_sa_creds
   nameservers      = module.aks.domain_nameservers
   dns_project      = "dns-for-playgrounds"
-  managed_dns_zone = "gitpod-self-hosted-com"
+  managed_dns_zone = "tests-gitpod-self-hosted-com"
   domain_name      = "${var.TEST_ID}.tests.gitpod-self-hosted.com"
 }
 
