@@ -1,6 +1,9 @@
 # Change Log
 
 ## June 2022
+- Prebuild status is shown under the logs when starting a workspace. ([#10696](https://github.com/gitpod-io/gitpod/pull/10696)) - [@geropl](https://github.com/geropl), [@laushinka](https://github.com/laushinka)
+- [installer]: order the custom envvars ([#11001](https://github.com/gitpod-io/gitpod/pull/11001)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Respect user settings (proxies, certificates) of JetBrains Gateway while connecting to Gitpod API. ([#10974](https://github.com/gitpod-io/gitpod/pull/10974)) - [@akosyakov](https://github.com/akosyakov)
 - Provide endpoint that allows retrieving information about the workspace from within the workspace ([#10836](https://github.com/gitpod-io/gitpod/pull/10836)) - [@Furisto](https://github.com/Furisto)
 - Update docker compose to v2.6.1 ([#10952](https://github.com/gitpod-io/gitpod/pull/10952)) - [@aledbf](https://github.com/aledbf)
 - SSH Gateway will send heartbeat only user explicitly request pty ([#10965](https://github.com/gitpod-io/gitpod/pull/10965)) - [@iQQBot](https://github.com/iQQBot)
