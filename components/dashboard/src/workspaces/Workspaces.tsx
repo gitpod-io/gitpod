@@ -162,8 +162,8 @@ export default function () {
                                                 </span>
                                             </div>
                                             <div className="text-sm flex-auto">
-                                                Workspaces that were stopped more than 24 hours ago. Note that these
-                                                will be automatically deleted after 14 days.{" "}
+                                                Workspaces that have been stopped for more than 24 hours. Inactive 
+                                                workspaces are automatically deleted after 14 days.{" "}
                                                 <a
                                                     className="gp-link"
                                                     href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection"
