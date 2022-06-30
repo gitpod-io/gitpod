@@ -35,7 +35,7 @@ class BlockedRepositoryDBSpec {
             deleted: false,
         });
 
-        const blockedRepository = await this.blockedRepositoryDb.isRepositoryBlocked("github.com/bob/some-repo");
+        const blockedRepository = await this.blockedRepositoryDb.findBlockedRepositoryByURL("github.com/bob/some-repo");
 
         expect(blockedRepository).not.undefined;
         expect(blockedRepository?.urlRegexp).to.eq("github.com/bob/.*");
@@ -52,7 +52,9 @@ class BlockedRepositoryDBSpec {
             deleted: false,
         });
 
-        const blockedRepository = await this.blockedRepositoryDb.isRepositoryBlocked("github.com/alice/some-repo");
+        const blockedRepository = await this.blockedRepositoryDb.findBlockedRepositoryByURL(
+            "github.com/alice/some-repo",
+        );
 
         expect(blockedRepository).undefined;
     }

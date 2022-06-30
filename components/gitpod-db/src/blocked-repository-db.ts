@@ -9,5 +9,5 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/src/blocked-repositor
 export const BlockedRepositoryDB = Symbol("BlockedRepositoryDB");
 
 export interface BlockedRepositoryDB {
-    isRepositoryBlocked(contextURL: string): Promise<BlockedRepository | undefined>;
+    findBlockedRepositoryByURL(contextURL: string): Promise<BlockedRepository | undefined>;
 }
