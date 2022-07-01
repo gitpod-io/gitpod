@@ -523,7 +523,7 @@ var ring1Cmd = &cobra.Command{
 				WorkspaceId: wsid,
 			}
 
-			stp, errchan := seccomp.Handle(scmpfd, handler)
+			stp, errchan := seccomp.Handle(scmpfd, handler, wsid)
 			defer close(stp)
 			go func() {
 				t := time.NewTicker(10 * time.Millisecond)
