@@ -19,6 +19,7 @@
         <plugin id="Git4Idea"/>
         <plugin id="org.jetbrains.plugins.terminal"/>
         <plugin id="com.jetbrains.codeWithMe"/>
+        <plugin id="org.jetbrains.plugins.yaml"/>
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -30,6 +31,12 @@
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodClientProjectSessionTracker" client="guest" preload="true"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodProjectManager" preload="true"/>
         <gateway.customization.name implementation="io.gitpod.jetbrains.remote.GitpodGatewayClientCustomizationProvider"/>
+        <localInspection language="yaml" bundle="messages.GitpodBundle"
+                         groupKey="inspections.group.name"
+                         key="inspections.gitpod.schema.validation.name"
+                         level="WARNING" enabledByDefault="true"
+                         implementationClass="io.gitpod.jetbrains.remote.inspections.GitpodConfigInspection"
+        />
     </extensions>
 
 </idea-plugin>
