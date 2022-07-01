@@ -96,9 +96,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         log.setVersion(this.config.version);
         log.info("server initializing...");
 
-        // print config
-        log.info("config", { config: JSON.stringify(this.config, undefined, 2) });
-
         // Set version info metric
         setGitpodVersion(this.config.version);
 
