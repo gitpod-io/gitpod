@@ -21,6 +21,8 @@ export interface AdminServer {
     adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User>;
     adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User>;
 
+    adminCreateBlockedRepository(urlRegexp: string, blockUser: boolean): Promise<BlockedRepository>;
+    adminDeleteBlockedRepository(id: number): Promise<boolean>;
     adminGetBlockedRepositories(
         req: AdminGetListRequest<BlockedRepository>,
     ): Promise<AdminGetListResult<BlockedRepository>>;
