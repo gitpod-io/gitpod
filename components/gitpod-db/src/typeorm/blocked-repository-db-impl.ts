@@ -23,6 +23,37 @@ export class TypeORMBlockedRepositoryDBImpl implements BlockedRepositoryDB {
         return (await this.getEntityManager()).getRepository<DBBlockedRepository>(DBBlockedRepository);
     }
 
+    public async findAllBlockedRepositories(
+        offset: number,
+        limit: number,
+        orderBy: keyof BlockedRepository,
+        orderDir: "DESC" | "ASC",
+        searchTerm?: string,
+        minCreationDate?: Date,
+        maxCreationDate?: Date,
+    ): Promise<{ total: number; rows: BlockedRepository[] }> {
+        const blockedRepositoryRepo = await this.getBlockedRepositoryRepo();
+
+        const qBuilder = blockedRepositoryRepo.createQueryBuilder("br");
+        if (searchTerm) {
+            qBuilder.andWhere(`br.urlRegexp LIKE :searchTerm`, { searchTerm: "%" + searchTerm + "%" });
+        }
+        if (minCreationDate) {
+            qBuilder.andWhere("br.createdAt >= :minCreationDate", {
+                minCreationDate: minCreationDate.toISOString(),
+            });
+        }
+        if (maxCreationDate) {
+            qBuilder.andWhere("br.createdAt < :maxCreationDate", {
+                maxCreationDate: maxCreationDate.toISOString(),
+            });
+        }
+        qBuilder.orderBy("br." + orderBy, orderDir);
+        qBuilder.skip(offset).take(limit).select();
+        const [rows, total] = await qBuilder.getManyAndCount();
+        return { total, rows };
+    }
+
     public async findBlockedRepositoryByURL(contextURL: string): Promise<BlockedRepository | undefined> {
         const blockedRepositoryRepo = await this.getBlockedRepositoryRepo();
 
