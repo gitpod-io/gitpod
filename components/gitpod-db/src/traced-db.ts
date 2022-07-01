@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext, TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { interfaces } from "inversify";
 import * as opentracing from "opentracing";
@@ -25,18 +26,23 @@ export class DBWithTracing<T> {
                 return async (...args: any[]) => {
                     // do not try and trace calls with an empty trace context - the callers intention most likely was to omit the trace
                     // so as to not spam the trace logs
-                    if (!ctx.span) {
-                        return await f.bind(_target)(...args);
-                    }
-
-                    const span = this.tracer.startSpan(name, { childOf: ctx.span });
+                    const before = Date.now();
                     try {
-                        return await f.bind(_target)(...args);
-                    } catch (e) {
-                        TraceContext.setError({ span }, e);
-                        throw e;
+                        if (!ctx.span) {
+                            return await f.bind(_target)(...args);
+                        }
+
+                        const span = this.tracer.startSpan(name, { childOf: ctx.span });
+                        try {
+                            return await f.bind(_target)(...args);
+                        } catch (e) {
+                            TraceContext.setError({ span }, e);
+                            throw e;
+                        } finally {
+                            span.finish();
+                        }
                     } finally {
-                        span.finish();
+                        log.info("db op", { time: Date.now() - before, operation: name, args });
                     }
                 };
             },
