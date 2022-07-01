@@ -137,6 +137,18 @@ mv -f /app/manifests/coredns.yaml /var/lib/rancher/k3s/server/manifests/custom-c
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/manifests/gitpod.yaml; done
 rm -rf /var/lib/rancher/k3s/server/manifests/gitpod
 
+# waits for gitpod pods to be ready, and manually runs the `gitpod-telemetry` cronjob
+run_telemetry(){
+  # wait for the k3s cluster to be ready and Gitpod workloads are added
+  sleep 100
+  # indefinitely wait for Gitpod pods to be ready
+  kubectl wait --timeout=-1s --for=condition=ready pod -l app=gitpod,component!=migrations
+  # manually tun the cronjob
+  kubectl create job gitpod-telemetry-init --from=cronjob/gitpod-telemetry
+}
+
+run_telemetry 2>&1 &
+
 /bin/k3s server --disable traefik \
   --node-label gitpod.io/workload_meta=true \
   --node-label gitpod.io/workload_ide=true \
