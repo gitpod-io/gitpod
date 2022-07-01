@@ -13,7 +13,7 @@ import org.jetbrains.yaml.psi.YAMLKeyValue
 
 class ReplaceVMOptionsQuickFix(private val xmxValueMiB: Long) : LocalQuickFix {
 
-    override fun getName() = "Set Xmx to $xmxValueMiB MiB"
+    override fun getName() = "Set Xmx to ${xmxValueMiB}m"
 
     override fun getFamilyName() = name
 

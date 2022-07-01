@@ -16,6 +16,8 @@ class ApplyVMOptionsQuickFix(private val quickFixName: String, private val xmxVa
     override fun getFamilyName() = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        VMOptions.setOption(VMOptions.MemoryKind.HEAP, xmxValueMiB.toInt())
+        if (VMOptions.canWriteOptions()) {
+            VMOptions.setOption(VMOptions.MemoryKind.HEAP, xmxValueMiB.toInt())
+        }
     }
 }

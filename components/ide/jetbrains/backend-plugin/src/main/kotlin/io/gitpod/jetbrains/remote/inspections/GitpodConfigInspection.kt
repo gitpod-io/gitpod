@@ -11,7 +11,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import io.gitpod.jetbrains.remote.quickfixes.AddVMOptionsQuickFix
-import io.gitpod.jetbrains.remote.quickfixes.ApplyVMOptionsQuickFix
 import io.gitpod.jetbrains.remote.quickfixes.ReplaceVMOptionsQuickFix
 import io.gitpod.jetbrains.remote.utils.GitpodConfig.YamlKey
 import io.gitpod.jetbrains.remote.utils.GitpodConfig.defaultXmxMiB
@@ -33,32 +32,19 @@ class GitpodConfigInspection : LocalInspectionTool() {
                 val productName = getJetBrainsProductName(productCode) ?: return
                 val keyValue = YAMLUtil.getQualifiedKeyInFile(file, YamlKey.jetbrains, productName, YamlKey.vmOptions)
                 if (keyValue == null) {
-                    holder.registerProblem(
-                        file,
-                        "IDE's max heap size (-Xmx) is ${runtimeXmxMiB}m, but not configured in $gitpodYamlFile",
-                        AddVMOptionsQuickFix(productName, runtimeXmxMiB)
-                    )
+                    val description = "IDE's max heap size (-Xmx) is ${runtimeXmxMiB}m, but not configured in $gitpodYamlFile"
+                    val quickFix = AddVMOptionsQuickFix(productName, runtimeXmxMiB)
+                    holder.registerProblem(file, description, quickFix)
                     return
                 }
                 val configuredXmxMiB = getUserConfiguredXmxValue(keyValue)
+                val quickFix = ReplaceVMOptionsQuickFix(runtimeXmxMiB)
                 if (configuredXmxMiB == null && runtimeXmxMiB != defaultXmxMiB) {
                     val description = "IDE's max heap size (-Xmx) is ${runtimeXmxMiB}m, but not configured in $gitpodYamlFile"
-                    val fix = if (VMOptions.canWriteOptions()) {
-                        ApplyVMOptionsQuickFix("Apply default -Xmx${defaultXmxMiB}m", defaultXmxMiB)
-                    } else {
-                        ReplaceVMOptionsQuickFix(runtimeXmxMiB)
-                    }
-                    holder.registerProblem(file, description, fix)
-                    return
-                }
-                if (configuredXmxMiB != null && configuredXmxMiB != runtimeXmxMiB) {
+                    holder.registerProblem(keyValue, description, quickFix)
+                } else if (configuredXmxMiB != null && runtimeXmxMiB != configuredXmxMiB) {
                     val description = "IDE's max heap size (-Xmx) is ${runtimeXmxMiB}m, but -Xmx${configuredXmxMiB}m configured in $gitpodYamlFile"
-                    val fix = if (VMOptions.canWriteOptions()) {
-                        ApplyVMOptionsQuickFix("Apply -Xmx${configuredXmxMiB}m configured in $gitpodYamlFile", runtimeXmxMiB)
-                    } else {
-                        ReplaceVMOptionsQuickFix(runtimeXmxMiB)
-                    }
-                    holder.registerProblem(file, description, fix)
+                    holder.registerProblem(keyValue, description, quickFix)
                 }
             }
         }
