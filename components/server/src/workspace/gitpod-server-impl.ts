@@ -2250,7 +2250,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return undefined;
         }
 
-        await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers: undefined }, "get");
+        // TODO(gpl) Ideally, we should not need to query the project-team hierarchy here, but decide on a per-prebuild basis.
+        // For that we need to fix Prebuild-access semantics, which is out-of-scope for now.
+        const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
+        await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
         const result: PrebuildWithStatus = { info, status: pbws.state };
         if (pbws.error) {
             result.error = pbws.error;
@@ -2273,7 +2276,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return undefined;
         }
 
-        await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers: undefined }, "get");
+        // TODO(gpl) Ideally, we should not need to query the project-team hierarchy here, but decide on a per-prebuild basis.
+        // For that we need to fix Prebuild-access semantics, which is out-of-scope for now.
+        const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
+        await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
         return pbws;
     }
 
