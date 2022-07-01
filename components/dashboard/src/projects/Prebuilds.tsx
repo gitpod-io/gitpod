@@ -366,7 +366,7 @@ export function PrebuildStatus(props: { prebuild: PrebuildWithStatus }) {
                 </div>
             </div>
             <div className="flex space-x-1 items-center text-gray-400">
-                <span>{getPrebuildStatusDescription(prebuild)}</span>
+                <span className="text-left">{getPrebuildStatusDescription(prebuild)}</span>
             </div>
         </div>
     );
