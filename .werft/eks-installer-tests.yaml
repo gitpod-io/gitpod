@@ -19,9 +19,6 @@ pod:
   - name: sh-playground-dns-perm
     secret:
       secretName: sh-playground-dns-perm
-  - name: sh-aks-perm
-    secret:
-      secretName: aks-credentials
   containers:
   - name: nightly-test
     image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0

@@ -203,8 +203,8 @@ check-kots-app:
 	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { echo "Gitpod is not ready"; exit 1; }
 
 check-gitpod-installation: delete-cm-setup check-kots-app check-env-sub-domain
-	@echo "Curling http://${TF_VAR_TEST_ID}.gitpod-self-hosted.com/api/version"
-	curl -i -X GET http://${TF_VAR_TEST_ID}.gitpod-self-hosted.com/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
+	@echo "Curling http://${TF_VAR_TEST_ID}.tests.gitpod-self-hosted.com/api/version"
+	curl -i -X GET http://${TF_VAR_TEST_ID}.tests.gitpod-self-hosted.com/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
 
 run-tests:
 	./tests.sh ${KUBECONFIG}
@@ -241,7 +241,7 @@ destroy-azure: select-workspace
 
 get-results:
 	@echo "If you have gotten this far, it means your setup succeeded"
-	@echo "The IP address of you setup is "$(TF_VAR_TEST_ID).gitpod-self-hosted.com""
+	@echo "The IP address of you setup is "$(TF_VAR_TEST_ID).tests.gitpod-self-hosted.com""
 	@echo "Following is the KUBECONFIG you can use to connect to the cluster:"
 	@cat ${KUBECONFIG}
 

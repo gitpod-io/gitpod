@@ -54,7 +54,7 @@ resource "aws_route53_record" "cert_validation_3" {
   type = tolist(aws_acm_certificate.gitpod.domain_validation_options)[3].resource_record_type
   zone_id = "${resource.aws_route53_zone.gitpod.zone_id}"
   records = [tolist(aws_acm_certificate.gitpod.domain_validation_options)[3].resource_record_value]
-  ttl = 6
+  ttl = 60
 }
 
 resource "aws_iam_policy" "gitpod" {

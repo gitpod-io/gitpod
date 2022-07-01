@@ -12,5 +12,5 @@ spec:
         value: ${DBUSER}
         data: "db_username"
       db_password:
-        value: ${DBPASS}
+        value: "${DBPASS}"
         data: "db_password"

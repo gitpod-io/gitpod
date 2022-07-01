@@ -1,3 +1,9 @@
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
 resource "aws_db_subnet_group" "gitpod_subnets" {
   name       = "db-sg-${var.cluster_name}"
   subnet_ids = [module.vpc.public_subnets[2], module.vpc.public_subnets[3]]
@@ -32,7 +38,7 @@ resource "aws_db_instance" "gitpod" {
   identifier           = "db-${var.cluster_name}"
   name                 = "gitpod"
   username             = "gitpod"
-  password             = "gitpod-qwat"
+  password             = random_password.password.result
   parameter_group_name = "default.mysql5.7"
   db_subnet_group_name = aws_db_subnet_group.gitpod_subnets.name
   skip_final_snapshot  = true
