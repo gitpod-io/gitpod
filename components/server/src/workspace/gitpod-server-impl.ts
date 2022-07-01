@@ -24,6 +24,7 @@ import {
     InstallationAdminDB,
     ProjectDB,
 } from "@gitpod/gitpod-db/lib";
+import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
     AuthProviderEntry,
     AuthProviderInfo,
@@ -79,6 +80,7 @@ import {
     UserSSHPublicKeyValue,
 } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
     AdminBlockUserRequest,
     AdminGetListRequest,
@@ -199,6 +201,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(ImageBuilderClientProvider) protected imageBuilderClientProvider: ImageBuilderClientProvider;
 
     @inject(UserDB) protected readonly userDB: UserDB;
+    @inject(BlockedRepositoryDB) protected readonly blockedRepostoryDB: BlockedRepositoryDB;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(UserService) protected readonly userService: UserService;
     @inject(UserMessageViewsDB) protected readonly userMessageViewsDB: UserMessageViewsDB;
@@ -2628,6 +2631,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    adminGetBlockedRepositories(
+        ctx: TraceContext,
+        req: AdminGetListRequest<BlockedRepository>,
+    ): Promise<AdminGetListResult<BlockedRepository>> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    adminCreateBlockedRepository(ctx: TraceContext, urlRegexp: string, blockUser: boolean): Promise<BlockedRepository> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<boolean> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 

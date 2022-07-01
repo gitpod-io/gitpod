@@ -9,5 +9,19 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/src/blocked-repositor
 export const BlockedRepositoryDB = Symbol("BlockedRepositoryDB");
 
 export interface BlockedRepositoryDB {
+    findAllBlockedRepositories(
+        offset: number,
+        limit: number,
+        orderBy: keyof BlockedRepository,
+        orderDir: "DESC" | "ASC",
+        searchTerm?: string,
+        minCreationDate?: Date,
+        maxCreationDate?: Date,
+    ): Promise<{ total: number; rows: BlockedRepository[] }>;
+
     findBlockedRepositoryByURL(contextURL: string): Promise<BlockedRepository | undefined>;
+
+    createBlockedRepository(urlRegexp: string, blockUser: boolean): Promise<BlockedRepository>;
+
+    deleteBlockedRepository(id: number): Promise<boolean>;
 }
