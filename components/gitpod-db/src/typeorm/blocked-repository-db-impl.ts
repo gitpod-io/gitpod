@@ -23,6 +23,12 @@ export class TypeORMBlockedRepositoryDBImpl implements BlockedRepositoryDB {
         return (await this.getEntityManager()).getRepository<DBBlockedRepository>(DBBlockedRepository);
     }
 
+    public async createBlockedRepository(urlRegexp: string, blockUser: boolean): Promise<BlockedRepository> {
+        const blockedRepositoryRepo = await this.getBlockedRepositoryRepo();
+
+        return await blockedRepositoryRepo.save({ urlRegexp: urlRegexp, blockUser: blockUser, deleted: false });
+    }
+
     public async findAllBlockedRepositories(
         offset: number,
         limit: number,

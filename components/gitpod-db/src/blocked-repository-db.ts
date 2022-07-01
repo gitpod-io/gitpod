@@ -20,4 +20,6 @@ export interface BlockedRepositoryDB {
     ): Promise<{ total: number; rows: BlockedRepository[] }>;
 
     findBlockedRepositoryByURL(contextURL: string): Promise<BlockedRepository | undefined>;
+
+    createBlockedRepository(urlRegexp: string, blockUser: boolean): Promise<BlockedRepository>;
 }
