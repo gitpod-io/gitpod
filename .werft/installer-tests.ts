@@ -349,7 +349,7 @@ function randomize(resource: string, platform: string): string {
 
 function cleanup() {
     const phase = INFRA_PHASES["DESTROY"]
-    werft.phase(phase, "Destroying all the created resources");
+    werft.phase(phase.phase, "Destroying all the created resources");
 
     const ret = callMakeTargets(phase.phase, phase.description, phase.makeTarget)
 
@@ -372,7 +372,7 @@ function cleanup() {
 
         console.log(`Cleanup the following resources manually: ${itemsTobeCleaned}`);
 
-        werft.fail(phase, "Destroying of resources failed");
+        werft.fail(phase.phase, "Destroying of resources failed");
     } else {
         werft.done(phase.phase);
     }
