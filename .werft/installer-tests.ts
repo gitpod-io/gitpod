@@ -185,7 +185,7 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     ADD_NS_RECORD: {
         phase: "add-ns-record",
         makeTarget: `add-ns-record cloud=${cloud}`,
-        description: "Adds NS record for subdomain under gitpod-self-hosted.com",
+        description: "Adds NS record for subdomain under tests.gitpod-self-hosted.com",
     },
     INSTALL_GITPOD_IGNORE_PREFLIGHTS: {
         phase: "install-gitpod-without-preflights",
@@ -282,7 +282,7 @@ function cleanup() {
     werft.phase(phase, "Destroying all the created resources");
 
     const response = exec(`make -C ${makefilePath} cleanup cloud=${cloud}`, {
-        slice: "run-terrafrom-destroy",
+        slice: "run-terraform-destroy",
         dontCheckRc: true,
     });
 
