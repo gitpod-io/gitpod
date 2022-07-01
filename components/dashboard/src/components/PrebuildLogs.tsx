@@ -68,6 +68,16 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                         onPrebuildUpdate(update: PrebuildWithStatus) {
                             if (update.info && update.info.buildWorkspaceId === props.workspaceId) {
                                 setPrebuild(update);
+
+                                // In case the Prebuild got "aborted" or "time(d)out" we want to user to proceed anyway
+                                if (
+                                    props.onIgnorePrebuild &&
+                                    (update.status === "aborted" || update.status === "timeout")
+                                ) {
+                                    props.onIgnorePrebuild();
+                                }
+                                // TODO(gpl) We likely want to move the "happy path" logic (for status "available")
+                                // here as well at some point. For that to work we need a "registerPrebuildUpdate(prebuildId)" API
                             }
                         },
                     }),
