@@ -5,6 +5,7 @@
  */
 
 import { User, Workspace, NamedWorkspaceFeatureFlag } from "./protocol";
+import { BlockedRepository } from "./blocked-repositories-protocol";
 import { FindPrebuildsParams } from "./gitpod-service";
 import { Project, Team, PrebuildWithStatus, TeamMemberInfo, TeamMemberRole } from "./teams-projects-protocol";
 import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance";
@@ -19,6 +20,10 @@ export interface AdminServer {
     adminDeleteUser(id: string): Promise<void>;
     adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User>;
     adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User>;
+
+    adminGetBlockedRepositories(
+        req: AdminGetListRequest<BlockedRepository>,
+    ): Promise<AdminGetListResult<BlockedRepository>>;
 
     adminGetTeamMembers(teamId: string): Promise<TeamMemberInfo[]>;
     adminGetTeams(req: AdminGetListRequest<Team>): Promise<AdminGetListResult<Team>>;
