@@ -59,6 +59,50 @@ class BlockedRepositoryDBSpec {
         expect(blockedRepository).undefined;
     }
 
+    @test(timeout(10000))
+    public async canFindAllRepositoriesWithoutSearchTerm() {
+        const typeorm = testContainer.get<TypeORM>(TypeORM);
+        const manager = await typeorm.getConnection();
+        manager.getRepository(DBBlockedRepository).insert([
+            {
+                urlRegexp: "github.com/bob/.*",
+                blockUser: true,
+                deleted: false,
+            },
+            {
+                urlRegexp: "github.com/alice/.*",
+                blockUser: true,
+                deleted: false,
+            },
+        ]);
+
+        const blockedRepositories = await this.blockedRepositoryDb.findAllBlockedRepositories(0, 1, "id", "ASC");
+
+        expect(blockedRepositories.total).eq(2);
+    }
+
+    @test(timeout(10000))
+    public async canFindAllRepositoriesWithSearchTerm() {
+        const typeorm = testContainer.get<TypeORM>(TypeORM);
+        const manager = await typeorm.getConnection();
+        manager.getRepository(DBBlockedRepository).insert([
+            {
+                urlRegexp: "github.com/bob/.*",
+                blockUser: true,
+                deleted: false,
+            },
+            {
+                urlRegexp: "github.com/alice/.*",
+                blockUser: true,
+                deleted: false,
+            },
+        ]);
+
+        const blockedRepositories = await this.blockedRepositoryDb.findAllBlockedRepositories(0, 1, "id", "ASC", "bob");
+
+        expect(blockedRepositories.total).eq(1);
+    }
+
     async wipeRepo() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
         const manager = await typeorm.getConnection();
