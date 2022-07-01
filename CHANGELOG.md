@@ -1,6 +1,11 @@
 # Change Log
 
 ## June 2022
+- Ports opened by tasks defined in .gitpod.yml are now automatically forwarded in JetBrains IDEs. ([#10986](https://github.com/gitpod-io/gitpod/pull/10986)) - [@felladrin](https://github.com/felladrin)
+- toned down `server` logs ([#11044](https://github.com/gitpod-io/gitpod/pull/11044)) - [@geropl](https://github.com/geropl)
+- fix prebuilds stuck in `queued` indefinitely ([#10882](https://github.com/gitpod-io/gitpod/pull/10882)) - [@geropl](https://github.com/geropl)
+- [preview] rename `preview-install` to `local-preview` ([#11037](https://github.com/gitpod-io/gitpod/pull/11037)) - [@Pothulapati](https://github.com/Pothulapati)
+- Outdated prebuilds (i.e. new commits are pushed on a branch) are automatically canceled. This behavior can be disabled in the project's settings. ([#10962](https://github.com/gitpod-io/gitpod/pull/10962)) - [@svenefftinge](https://github.com/svenefftinge)
 - Prebuild status is shown under the logs when starting a workspace. ([#10696](https://github.com/gitpod-io/gitpod/pull/10696)) - [@geropl](https://github.com/geropl), [@laushinka](https://github.com/laushinka)
 - [installer]: order the custom envvars ([#11001](https://github.com/gitpod-io/gitpod/pull/11001)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Respect user settings (proxies, certificates) of JetBrains Gateway while connecting to Gitpod API. ([#10974](https://github.com/gitpod-io/gitpod/pull/10974)) - [@akosyakov](https://github.com/akosyakov)
