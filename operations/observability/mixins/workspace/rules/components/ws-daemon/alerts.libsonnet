@@ -31,7 +31,7 @@
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonCrashLooping.md',
               summary: 'Increase the number of backup failure because of ws-daemon is crashlooping.',
-              description: 'Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 10 minutes.',
+              description: 'Ws-daemon is restarting {{ printf "%.2f" $value }} times / 10 minutes.',
             },
             expr: |||
               sum(increase(kube_pod_container_status_restarts_total{container="ws-daemon"}[10m])) > 0 AND sum(increase(gitpod_ws_manager_workspace_backups_failure_total{type="REGULAR"}[10m])) > 0
