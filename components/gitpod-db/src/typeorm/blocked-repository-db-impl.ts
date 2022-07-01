@@ -34,7 +34,7 @@ export class TypeORMBlockedRepositoryDBImpl implements BlockedRepositoryDB {
     ): Promise<{ total: number; rows: BlockedRepository[] }> {
         const blockedRepositoryRepo = await this.getBlockedRepositoryRepo();
 
-        const qBuilder = blockedRepositoryRepo.createQueryBuilder("br");
+        const qBuilder = blockedRepositoryRepo.createQueryBuilder("br").where(`br.deleted = 0`);
         if (searchTerm) {
             qBuilder.andWhere(`br.urlRegexp LIKE :searchTerm`, { searchTerm: "%" + searchTerm + "%" });
         }
