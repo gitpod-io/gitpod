@@ -863,7 +863,14 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 	err = cmd.Run()
 	log.FromBuffer(&cmdOut, log.WithFields(log.OWI("", "", instanceID)))
 	if err != nil {
-		out, err := cmd.CombinedOutput()
+		out, oErr := cmd.CombinedOutput()
+		if oErr != nil {
+			return xerrors.Errorf("run nsinsider (%v) \n%v\n output error: %v",
+				cmd.Args,
+				err,
+				oErr,
+			)
+		}
 		return xerrors.Errorf("run nsinsider (%v) failed: %q\n%v",
 			cmd.Args,
 			string(out),
