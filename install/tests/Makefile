@@ -243,7 +243,7 @@ kots-upgrade:
 	@echo "Upgrade gitpod KOTS app to latest"
 	kubectl kots upstream upgrade --kubeconfig=${KUBECONFIG} gitpod -n gitpod --deploy
 
-cleanup: check-env-cloud destroy-$(cloud)
+cleanup: check-env-cloud destroy-gitpod destroy-$(cloud)
 
 select-workspace:
 	terraform workspace select $(TF_VAR_TEST_ID)
@@ -253,6 +253,15 @@ destroy-gcp: select-workspace
 	ls ${KUBECONFIG} && terraform destroy -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 	terraform destroy -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve
 	terraform destroy -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
+
+# Delete the Gitpod namespace and all associated resources.
+#
+# The sleep following deletion adds a bit of padding so that external resources (such
+# as AWS ELBs generated from LoadBalancer type services) can terminate.
+destroy-gitpod:
+	[[ -f ${KUBECONFIG} ]] \
+		&& kubectl --kubeconfig=${KUBECONFIG} delete namespace/gitpod --now --timeout 60s \
+		|| true
 
 destroy-aws: select-workspace
 	terraform destroy -target=module.aws-add-dns-record -var kubeconfig=${KUBECONFIG} --auto-approve
