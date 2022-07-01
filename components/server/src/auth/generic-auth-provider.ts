@@ -73,7 +73,7 @@ export class GenericAuthProvider implements AuthProvider {
     @postConstruct()
     init() {
         this.initAuthUserSetup();
-        log.info(`(${this.strategyName}) Initialized.`, { defaultStrategyOptions: this.defaultStrategyOptions });
+        log.info(`(${this.strategyName}) Initialized.`, { sanitizedStrategyOptions: this.sanitizedStrategyOptions });
     }
 
     get info(): AuthProviderInfo {
@@ -754,6 +754,11 @@ export class GenericAuthProvider implements AuthProvider {
             return true;
         }
         return false;
+    }
+
+    protected get sanitizedStrategyOptions(): Omit<StrategyOptionsWithRequest, "clientSecret"> {
+        const { clientSecret, ...sanitizedOptions } = this.defaultStrategyOptions;
+        return sanitizedOptions;
     }
 
     protected get defaultStrategyOptions(): StrategyOptionsWithRequest {
