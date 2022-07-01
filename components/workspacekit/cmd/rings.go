@@ -526,7 +526,7 @@ var ring1Cmd = &cobra.Command{
 			stp, errchan := seccomp.Handle(scmpfd, handler, wsid)
 			defer close(stp)
 			go func() {
-				t := time.NewTicker(10 * time.Millisecond)
+				t := time.NewTicker(100 * time.Microsecond)
 				defer t.Stop()
 				for {
 					// We use the ticker to rate-limit the errors from the syscall handler.
