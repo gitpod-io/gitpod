@@ -1,7 +1,6 @@
 variable "cluster_name" {
   type        = string
   description = "EKS cluster name."
-  default = "nan-eks-3"
 }
 variable "kubeconfig" {
   type        = string

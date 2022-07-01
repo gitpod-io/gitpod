@@ -6,7 +6,7 @@ output "external_dns_settings" {
     },
     {
         "name" = "aws.region",
-        "value" = "eu-west-1"
+        "value" = var.region
     },
     {
         "name" = "aws.credentials.secretKey",
@@ -26,7 +26,7 @@ output "secretAccessKey" {
 
 output "cert_manager_issuer" {
   value = try({
-        region = "eu-west-1"
+        region = var.region
         secretAccessKeySecretRef = {
             name = "route53-credentials"
             key = "secret-access-key"
@@ -45,7 +45,7 @@ output "database" {
   sensitive = true
   value = try({
     host     = "${aws_db_instance.gitpod.address}"
-    password = "gitpod-qwat" # FIXME hardcoded at this point
+    password = random_password.password.result
     port     = 3306
     username = "${aws_db_instance.gitpod.username}"
   }, {})
