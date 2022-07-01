@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/moby/sys/mountinfo"
@@ -117,6 +118,11 @@ func Handle(fd libseccomp.ScmpFd, handler SyscallHandler, wsid string) (stop cha
 		for {
 			req, err := libseccomp.NotifReceive(fd)
 			if err != nil {
+				if err == syscall.ENOENT {
+					log.WithError(err).Warn("failed to get notification beucase it has already been not valid anymore(the kernel sets that)")
+					continue
+				}
+
 				log.WithError(err).Error("failed to get notification")
 				ec <- err
 				if err == unix.ECANCELED {
