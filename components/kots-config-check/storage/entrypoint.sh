@@ -169,4 +169,5 @@ if [ "${connection}" = "true" ]; then
   echo "connection: ok"
 else
   echo "connection: error"
+  exit 1
 fi
