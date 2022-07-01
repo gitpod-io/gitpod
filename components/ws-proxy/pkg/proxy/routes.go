@@ -221,7 +221,7 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 				return image
 			},
 		}
-	}))
+	}, withUseTargetHost()))
 }
 
 func resolveSupervisorURL(cfg *Config, info *WorkspaceInfo, req *http.Request) (*url.URL, error) {
@@ -319,7 +319,7 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 				return image
 			},
 		}
-	}, withHTTPErrorHandler(workspaceIDEPass)))
+	}, withHTTPErrorHandler(workspaceIDEPass), withUseTargetHost()))
 }
 
 const imagePathSeparator = "/__files__"
