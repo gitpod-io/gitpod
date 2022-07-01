@@ -66,6 +66,7 @@ import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { LicenseDB } from "@gitpod/gitpod-db/lib";
 import { ResourceAccessGuard } from "../../../src/auth/resource-access";
 import { AccountStatement, CreditAlert, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
@@ -545,6 +546,29 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 req.searchTerm,
             );
             res.rows = res.rows.map(this.censorUser);
+            return res;
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
+    async adminGetBlockedRepositories(
+        ctx: TraceContext,
+        req: AdminGetListRequest<BlockedRepository>,
+    ): Promise<AdminGetListResult<BlockedRepository>> {
+        traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
+        await this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminGetBlockedRepositories", { req }, Permission.ADMIN_USERS);
+
+        try {
+            const res = await this.blockedRepostoryDB.findAllBlockedRepositories(
+                req.offset,
+                req.limit,
+                req.orderBy,
+                req.orderDir === "asc" ? "ASC" : "DESC",
+                req.searchTerm,
+            );
             return res;
         } catch (e) {
             throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());

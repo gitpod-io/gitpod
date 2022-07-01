@@ -24,6 +24,7 @@ import {
     InstallationAdminDB,
     ProjectDB,
 } from "@gitpod/gitpod-db/lib";
+import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
     AuthProviderEntry,
     AuthProviderInfo,
@@ -197,6 +198,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(ImageBuilderClientProvider) protected imageBuilderClientProvider: ImageBuilderClientProvider;
 
     @inject(UserDB) protected readonly userDB: UserDB;
+    @inject(BlockedRepositoryDB) protected readonly blockedRepostoryDB: BlockedRepositoryDB;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(UserService) protected readonly userService: UserService;
     @inject(UserMessageViewsDB) protected readonly userMessageViewsDB: UserMessageViewsDB;
