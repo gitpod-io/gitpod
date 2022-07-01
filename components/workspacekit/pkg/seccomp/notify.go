@@ -106,7 +106,9 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 
 // Handle actually listens on the seccomp notif FD and handles incoming requests.
 // This function returns when the notif FD is closed.
-func Handle(fd libseccomp.ScmpFd, handler SyscallHandler) (stop chan<- struct{}, errchan <-chan error) {
+func Handle(fd libseccomp.ScmpFd, handler SyscallHandler, wsid string) (stop chan<- struct{}, errchan <-chan error) {
+	log := log.WithField("workspaceId", wsid)
+
 	ec := make(chan error)
 	stp := make(chan struct{})
 
