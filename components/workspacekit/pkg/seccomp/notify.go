@@ -116,6 +116,15 @@ func Handle(fd libseccomp.ScmpFd, handler SyscallHandler, wsid string) (stop cha
 	go func() {
 		for {
 			req, err := libseccomp.NotifReceive(fd)
+			if err != nil {
+				log.WithError(err).Error("failed to get notification")
+				ec <- err
+				if err == unix.ECANCELED {
+					return
+				}
+
+				continue
+			}
 			select {
 			case <-stp:
 				// if we're asked stop we might still have to answer a syscall.
@@ -129,14 +138,6 @@ func Handle(fd libseccomp.ScmpFd, handler SyscallHandler, wsid string) (stop cha
 					})
 				}
 			default:
-			}
-			if err != nil {
-				ec <- xerrors.Errorf("failed to get notification: %w", err)
-				if err == unix.ECANCELED {
-					return
-				}
-
-				continue
 			}
 
 			go func() {
@@ -155,7 +156,8 @@ func Handle(fd libseccomp.ScmpFd, handler SyscallHandler, wsid string) (stop cha
 					Flags: flags,
 				})
 				if ierr != nil {
-					ec <- xerrors.Errorf("notifRespond failed: %w", ierr)
+					log.WithError(ierr).Error("failed to return notification response")
+					ec <- ierr
 				}
 			}()
 		}
