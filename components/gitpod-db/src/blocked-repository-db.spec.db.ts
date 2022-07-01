@@ -26,6 +26,16 @@ class BlockedRepositoryDBSpec {
     }
 
     @test(timeout(10000))
+    public async canCreateABlockedRepository() {
+        const blockedRepository = await this.blockedRepositoryDb.createBlockedRepository(
+            "github.com/bob/some-repo",
+            true,
+        );
+        expect(blockedRepository.urlRegexp).eq("github.com/bob/some-repo");
+        expect(blockedRepository.blockUser).eq(true);
+    }
+
+    @test(timeout(10000))
     public async checkRepositoryIsBlocked() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
         const manager = await typeorm.getConnection();
