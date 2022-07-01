@@ -159,6 +159,8 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         adminUpdateSettings: { group: "default", points: 1 },
         adminGetTelemetryData: { group: "default", points: 1 },
         adminGetBlockedRepositories: { group: "default", points: 1 },
+        adminCreateBlockedRepository: { group: "default", points: 1 },
+        adminDeleteBlockedRepository: { group: "default", points: 1 },
 
         validateLicense: { group: "default", points: 1 },
         getLicenseInfo: { group: "default", points: 1 },
