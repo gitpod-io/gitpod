@@ -79,7 +79,9 @@ export default function Alert(props: AlertProps) {
             {showIcon && <span className={`mt-1 mr-4 h-4 w-4 ${info.iconColor}`}>{props.icon ?? info.icon}</span>}
             <span className="flex-1 text-left">{props.children}</span>
             {props.closable && (
-                <XSvg onClick={() => setVisible(false)} className="mt-1 ml-4 w-3 h-3 cursor-pointer"></XSvg>
+                <span className={`mt-1 ml-4 h-4 w-4`}>
+                    <XSvg onClick={() => setVisible(false)} className="w-3 h-4 cursor-pointer"></XSvg>
+                </span>
             )}
         </div>
     );

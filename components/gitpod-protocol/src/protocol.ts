@@ -70,11 +70,14 @@ export namespace User {
     }
 
     /**
-     * Tries to return the primaryEmail of the first identity this user signed up with.
+     * Returns the stored email or if it doesn't exist returns the primaryEmail of the first identity this user signed up with.
      * @param user
      * @returns A primaryEmail, or undefined if there is none.
      */
     export function getPrimaryEmail(user: User): string | undefined {
+        if (user.additionalData?.emailAddress) {
+            return user.additionalData?.emailAddress;
+        }
         const identities = user.identities.filter((i) => !!i.primaryEmail);
         if (identities.length <= 0) {
             return undefined;
@@ -154,6 +157,12 @@ export interface AdditionalUserData {
     dotfileRepo?: string;
     // Identifies an explicit team or user ID to which all the user's workspace usage should be attributed to (e.g. for billing purposes)
     usageAttributionId?: string;
+    // when was the last time the user updated their profile information or has been nudged to do so.
+    lastUpdatedDetailsNudge?: string;
+    // the user's company name
+    companyName?: string;
+    // the user's email
+    emailAddress?: string;
 }
 
 export interface EmailNotificationSettings {
