@@ -27,6 +27,7 @@ type proxyPassConfig struct {
 	ResponseHandler []responseHandler
 	ErrorHandler    errorHandler
 	Transport       http.RoundTripper
+	UseTargetHost   bool
 }
 
 func (ppc *proxyPassConfig) appendResponseHandler(handler responseHandler) {
@@ -77,12 +78,14 @@ func joinURLPath(a, b *url.URL) (path, rawpath string) {
 	return a.Path + b.Path, apath + bpath
 }
 
-func NewSingleHostReverseProxy(target *url.URL) *httputil.ReverseProxy {
+func NewSingleHostReverseProxy(target *url.URL, useTargetHost bool) *httputil.ReverseProxy {
 	targetQuery := target.RawQuery
 	director := func(req *http.Request) {
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
-		req.Host = target.Host
+		if useTargetHost {
+			req.Host = target.Host
+		}
 		req.URL.Path, req.URL.RawPath = joinURLPath(target, req.URL)
 		if targetQuery == "" || req.URL.RawQuery == "" {
 			req.URL.RawQuery = targetQuery + req.URL.RawQuery
@@ -130,7 +133,7 @@ func proxyPass(config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider, r
 
 		// TODO(cw): we should cache the proxy for some time for each target URL
 
-		proxy := NewSingleHostReverseProxy(targetURL)
+		proxy := NewSingleHostReverseProxy(targetURL, h.UseTargetHost)
 		proxy.Transport = h.Transport
 		proxy.ModifyResponse = func(resp *http.Response) error {
 			url := resp.Request.URL
@@ -245,6 +248,12 @@ func withXFrameOptionsFilter() proxyPassOpt {
 			resp.Header.Del("X-Frame-Options")
 			return nil
 		})
+	}
+}
+
+func withUseTargetHost() proxyPassOpt {
+	return func(cfg *proxyPassConfig) {
+		cfg.UseTargetHost = true
 	}
 }
 
