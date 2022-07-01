@@ -26,14 +26,38 @@ class BlockedRepositoryDBSpec {
     }
 
     @test(timeout(10000))
+    public async canCreateABlockedRepository() {
+        const blockedRepository = await this.blockedRepositoryDb.createBlockedRepository(
+            "github.com/bob/some-repo",
+            true,
+        );
+        expect(blockedRepository.urlRegexp).eq("github.com/bob/some-repo");
+        expect(blockedRepository.blockUser).eq(true);
+    }
+
+    @test(timeout(10000))
+    public async canDeleteABlockedRepository() {
+        const blockedRepository = await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/*/", true);
+
+        const result = await this.blockedRepositoryDb.deleteBlockedRepository(blockedRepository.id);
+
+        expect(result).eq(true);
+        expect(await this.blockedRepositoryDb.findBlockedRepositoryByURL("github.com/bob/some-repo")).undefined;
+    }
+
+    @test(timeout(10000))
+    public async canNotDeleteABlockedRepositoryWithAnIdThatDoesNotExist() {
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/*/", true);
+
+        const result = await this.blockedRepositoryDb.deleteBlockedRepository(9999);
+
+        expect(result).eq(false);
+        expect(await this.blockedRepositoryDb.findBlockedRepositoryByURL("github.com/bob/some-repo")).not.undefined;
+    }
+
+    @test(timeout(10000))
     public async checkRepositoryIsBlocked() {
-        const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const manager = await typeorm.getConnection();
-        manager.getRepository(DBBlockedRepository).insert({
-            urlRegexp: "github.com/bob/.*",
-            blockUser: true,
-            deleted: false,
-        });
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true);
 
         const blockedRepository = await this.blockedRepositoryDb.findBlockedRepositoryByURL("github.com/bob/some-repo");
 
@@ -44,19 +68,33 @@ class BlockedRepositoryDBSpec {
 
     @test(timeout(10000))
     public async checkRepositoryIsNotBlocked() {
-        const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const manager = await typeorm.getConnection();
-        manager.getRepository(DBBlockedRepository).insert({
-            urlRegexp: "github.com/bob/.*",
-            blockUser: true,
-            deleted: false,
-        });
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true);
 
         const blockedRepository = await this.blockedRepositoryDb.findBlockedRepositoryByURL(
             "github.com/alice/some-repo",
         );
 
         expect(blockedRepository).undefined;
+    }
+
+    @test(timeout(10000))
+    public async canFindAllRepositoriesWithoutSearchTerm() {
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true);
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/alice/.*", true);
+
+        const blockedRepositories = await this.blockedRepositoryDb.findAllBlockedRepositories(0, 1, "id", "ASC");
+
+        expect(blockedRepositories.total).eq(2);
+    }
+
+    @test(timeout(10000))
+    public async canFindAllRepositoriesWithSearchTerm() {
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true);
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/alice/.*", true);
+
+        const blockedRepositories = await this.blockedRepositoryDb.findAllBlockedRepositories(0, 1, "id", "ASC", "bob");
+
+        expect(blockedRepositories.total).eq(1);
     }
 
     async wipeRepo() {
