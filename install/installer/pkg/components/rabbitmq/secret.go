@@ -6,6 +6,7 @@ package rabbitmq
 
 import (
 	_ "embed"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,10 +23,7 @@ var clientCert []byte
 var clientPem []byte
 
 func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
-	cookieString, err := common.RandomString(20)
-	if err != nil {
-		return nil, err
-	}
+	cookieString := "ZX3m37WDZvdH8zy03ZVZ"
 
 	return []runtime.Object{&corev1.Secret{
 		TypeMeta: common.TypeMetaSecret,

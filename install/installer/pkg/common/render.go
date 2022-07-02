@@ -158,10 +158,7 @@ func (r *RenderContext) generateValues() error {
 		return nil
 	})
 	if messageBusPassword == "" {
-		messageBusPassword, err = RandomString(20)
-		if err != nil {
-			return err
-		}
+		messageBusPassword = "uq4KxOLtrA-QsDTfuwQ-"
 	}
 	r.Values.MessageBusPassword = messageBusPassword
 
