@@ -27,3 +27,19 @@ spec:
   additionalImages:
     - cr.fluentbit.io/fluent/fluent-bit:1.9.4 # Defined by Fluent Bit Helm chart
     - busybox:1 # Used to pull log files to pull from Fluent Bit, which doesn't container tar binary
+  graphs:
+    # Default Gitpod graphs
+    # @link https://www.gitpod.io/docs/self-hosted/latest/monitoring
+    - title: Running Workspaces
+      queries:
+        - query: 'sum(gitpod_ws_manager_workspace_phase_total{phase="RUNNING"}) by (type)'
+          legend: "Type: {{ type }}"
+        - query: 'sum(gitpod_ws_manager_workspace_activity_total{active="false"})'
+          legend: "Pending workspaces"
+    - title: Workspace Failures per second
+      query: 'sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed"}[5m])) by (cluster, type) or vector(0)'
+      legend: "{{ type }}"
+    - title: Regular Workspace Startup Time
+      yAxisFormat: s
+      query: 'sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type="REGULAR"}[5m])) by (le)'
+      legend: "{{ le }}"
