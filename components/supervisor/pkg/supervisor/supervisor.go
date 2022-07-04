@@ -1482,7 +1482,7 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 			if !ok {
 				return errors.New("cannot find pty")
 			}
-			ptyCtx, cancel := context.WithCancel(context.Background())
+			ptyCtx, cancel := context.WithCancel(ctx)
 			go func(ptyCtx context.Context) {
 				select {
 				case <-ctx.Done():
