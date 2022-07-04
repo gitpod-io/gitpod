@@ -794,6 +794,19 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			return xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
 
+		var secret corev1.Secret
+		err = m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &secret)
+		if k8serr.IsNotFound(err) {
+			// this is ok - do nothing
+		} else if err != nil {
+			return xerrors.Errorf("cannot get workspace secret: %w", err)
+		} else {
+			err = csapi.InjectSecretsToInitializer(&initializer, secret.Data)
+			if err != nil {
+				return xerrors.Errorf("cannot inject initializer secrets: %w", err)
+			}
+		}
+
 		if fullWorkspaceBackup {
 			_, mf, err := m.manager.Content.GetContentLayer(ctx, workspaceMeta.Owner, workspaceMeta.MetaId, &initializer)
 			if err != nil {
