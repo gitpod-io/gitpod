@@ -73,6 +73,13 @@ func (v version) Defaults(in interface{}) error {
 	return nil
 }
 
+func (v version) CheckDeprecated(rawCfg interface{}) (map[string]interface{}, []string) {
+	warnings := make(map[string]interface{}, 0)
+	conflicts := make([]string, 0)
+
+	return warnings, conflicts
+}
+
 // Config defines the v1 version structure of the gitpod config file
 type Config struct {
 	// Installation type to run - for most users, this will be Full

@@ -47,6 +47,10 @@ type ConfigVersion interface {
 
 	// ClusterValidation introduces configuration specific cluster validation checks
 	ClusterValidation(cfg interface{}) cluster.ValidationChecks
+
+	// CheckDeprecated checks for deprecated config params.
+	// Returns key/value pair of deprecated params/values and any error messages (used for conflicting params)
+	CheckDeprecated(cfg interface{}) (map[string]interface{}, []string)
 }
 
 // AddVersion adds a new version.
