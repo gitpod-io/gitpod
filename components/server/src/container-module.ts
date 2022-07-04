@@ -99,6 +99,7 @@ import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser
 import { InstallationAdminTelemetryDataProvider } from "./installation-admin/telemetry-data-provider";
 import { IDEService } from "./ide-service";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
+import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -162,6 +163,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         return { address: config.imageBuilderAddr };
     });
     bind(CachingImageBuilderClientProvider).toSelf().inSingletonScope();
+    bind(WorkspaceClusterImagebuilderClientProvider).toSelf().inSingletonScope(); // during the transition period, we have two kinds of image builder client providers
     bind(ImageBuilderClientProvider).toService(CachingImageBuilderClientProvider);
     bind(ImageBuilderClientCallMetrics).toService(IClientCallMetrics);
 

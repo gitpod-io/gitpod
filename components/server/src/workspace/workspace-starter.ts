@@ -114,6 +114,8 @@ import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
 import { IDEService } from "../ide-service";
+import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -197,6 +199,8 @@ export class WorkspaceStarter {
     @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(ImageBuilderClientProvider) protected readonly imagebuilderClientProvider: ImageBuilderClientProvider;
+    @inject(WorkspaceClusterImagebuilderClientProvider)
+    protected readonly wsClusterImageBuilderClientProvider: ImageBuilderClientProvider;
     @inject(ImageSourceProvider) protected readonly imageSourceProvider: ImageSourceProvider;
     @inject(UserService) protected readonly userService: UserService;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
@@ -256,7 +260,7 @@ export class WorkspaceStarter {
                 auth.setTotal(allowAll);
                 req.setAuth(auth);
 
-                const client = this.imagebuilderClientProvider.getDefault();
+                const client = await this.getImageBuilderClient(user, workspace, undefined);
                 const res = await client.resolveBaseImage({ span }, req);
                 workspace.imageSource = <WorkspaceImageSourceReference>{
                     baseImageResolved: res.getRef(),
@@ -974,7 +978,7 @@ export class WorkspaceStarter {
     ): Promise<boolean> {
         const span = TraceContext.startSpan("needsImageBuild", ctx);
         try {
-            const client = this.imagebuilderClientProvider.getDefault();
+            const client = await this.getImageBuilderClient(user, workspace, instance);
             const { src, auth, disposable } = await this.prepareBuildRequest(
                 { span },
                 workspace,
@@ -1014,7 +1018,7 @@ export class WorkspaceStarter {
 
         try {
             // Start build...
-            const client = this.imagebuilderClientProvider.getDefault();
+            const client = await this.getImageBuilderClient(user, workspace, instance);
             const { src, auth, disposable } = await this.prepareBuildRequest(
                 { span },
                 workspace,
@@ -1711,5 +1715,28 @@ export class WorkspaceStarter {
             .filter((f) => !!f) as WorkspaceFeatureFlag[];
 
         return result;
+    }
+
+    /**
+     * This method is temporary until we moved image-builder into workspace clusters
+     * @param user
+     * @param workspace
+     * @param instance
+     * @returns
+     */
+    protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
+        const isMovedImageBuilder = await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", false, {
+            userId: user.id,
+            projectId: workspace.projectId,
+        });
+        if (isMovedImageBuilder) {
+            log.info(
+                { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
+                "Used image-builder in workspace cluster",
+            );
+            return this.wsClusterImageBuilderClientProvider.getClient(user, workspace, instance);
+        } else {
+            return this.imagebuilderClientProvider.getClient(user, workspace, instance);
+        }
     }
 }
