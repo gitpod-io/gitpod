@@ -1,6 +1,13 @@
 # Change Log
 
-## June 2022
+## July 2022
+- fix the start-workspace flow for when a prebuild got auto-cancelled ([#11083](https://github.com/gitpod-io/gitpod/pull/11083)) - [@geropl](https://github.com/geropl)
+- fix prebuild permissions ([#11074](https://github.com/gitpod-io/gitpod/pull/11074)) - [@geropl](https://github.com/geropl)
+- [ws-proxy] not use target host when serve workspace port route ([#11072](https://github.com/gitpod-io/gitpod/pull/11072)) - [@iQQBot](https://github.com/iQQBot)
+- [telemetry] Add new telemetry.data config option for telemetry ([#10925](https://github.com/gitpod-io/gitpod/pull/10925)) - [@Pothulapati](https://github.com/Pothulapati)
+- Improve reliability of log streaming for image builds and prebuilds ([#11026](https://github.com/gitpod-io/gitpod/pull/11026)) - [@geropl](https://github.com/geropl)
+
+##  June 2022
 - Ports opened by tasks defined in .gitpod.yml are now automatically forwarded in JetBrains IDEs. ([#10986](https://github.com/gitpod-io/gitpod/pull/10986)) - [@felladrin](https://github.com/felladrin)
 - toned down `server` logs ([#11044](https://github.com/gitpod-io/gitpod/pull/11044)) - [@geropl](https://github.com/geropl)
 - fix prebuilds stuck in `queued` indefinitely ([#10882](https://github.com/gitpod-io/gitpod/pull/10882)) - [@geropl](https://github.com/geropl)
