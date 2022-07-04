@@ -77,7 +77,7 @@ export async function installCertificate(werft, params: InstallCertificateParams
 function waitForCertificateReadiness(werft: Werft, certName: string, slice: string) {
     const timeout = "600s"
     werft.log(slice, "Waiting for certificate readiness")
-    const rc = exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`).code
+    const rc = exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`, {dontCheckRc: true}).code
 
     if (rc != 0) {
         werft.log(slice, "The certificate never became Ready. We are deleting the certificate so that the next job can create a new one")
