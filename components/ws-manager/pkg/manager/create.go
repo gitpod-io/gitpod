@@ -29,7 +29,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	content "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -737,7 +737,7 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 		return filepath.Join("/workspace", strings.TrimPrefix(segment, "/workspace"))
 	}
 
-	allRepoRoots := content.GetCheckoutLocationsFromInitializer(spec.Initializer)
+	allRepoRoots := csapi.GetCheckoutLocationsFromInitializer(spec.Initializer)
 	if len(allRepoRoots) == 0 {
 		allRepoRoots = []string{""} // for backward compatibility, we are adding a single empty location (translates to /workspace/)
 	}
@@ -973,6 +973,9 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 
 		name := fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name)))
 		secrets[name] = env.Value
+	}
+	for k, v := range csapi.ExtractSecretsFromInitializer(req.Spec.Initializer) {
+		secrets[k] = v
 	}
 
 	return &startWorkspaceContext{
