@@ -552,29 +552,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminGetBlockedRepositories(
-        ctx: TraceContext,
-        req: AdminGetListRequest<BlockedRepository>,
-    ): Promise<AdminGetListResult<BlockedRepository>> {
-        traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
-
-        await this.guardAdminAccess("adminGetBlockedRepositories", { req }, Permission.ADMIN_USERS);
-
-        try {
-            const res = await this.blockedRepostoryDB.findAllBlockedRepositories(
-                req.offset,
-                req.limit,
-                req.orderBy,
-                req.orderDir === "asc" ? "ASC" : "DESC",
-                req.searchTerm,
-            );
-            return res;
-        } catch (e) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
-        }
-    }
-
     async adminGetUser(ctx: TraceContext, userId: string): Promise<User> {
         traceAPIParams(ctx, { userId });
 
@@ -637,6 +614,29 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         try {
             await this.userDeletionService.deleteUser(userId);
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
+    async adminGetBlockedRepositories(
+        ctx: TraceContext,
+        req: AdminGetListRequest<BlockedRepository>,
+    ): Promise<AdminGetListResult<BlockedRepository>> {
+        traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
+        await this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminGetBlockedRepositories", { req }, Permission.ADMIN_USERS);
+
+        try {
+            const res = await this.blockedRepostoryDB.findAllBlockedRepositories(
+                req.offset,
+                req.limit,
+                req.orderBy,
+                req.orderDir === "asc" ? "ASC" : "DESC",
+                req.searchTerm,
+            );
+            return res;
         } catch (e) {
             throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
