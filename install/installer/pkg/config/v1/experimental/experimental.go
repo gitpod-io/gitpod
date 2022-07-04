@@ -11,6 +11,8 @@
 package experimental
 
 import (
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -56,6 +58,13 @@ type WorkspaceConfig struct {
 		WriteIOPS        int64             `json:"writeIOPS"`
 		ReadIOPS         int64             `json:"readIOPS"`
 	} `json:"ioLimits"`
+	NetLimits struct {
+		Enabled       bool              `json:"enabled"`
+		EgressLimit   resource.Quantity `json:"egressLimit"`
+		EgressWindow  time.Duration     `json:"egressWindow"`
+		BandwidthLow  resource.Quantity `json:"bandWidthLow"`
+		BandwidthHigh resource.Quantity `json:"bandWidthHigh"`
+	} `json:"netLimits"`
 
 	RegistryFacade struct {
 		IPFSCache struct {

@@ -22,6 +22,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,6 +46,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ControlPeriod:  util.Duration(15 * time.Second),
 	}
 	var ioLimitConfig daemon.IOLimitConfig
+	var netLimitConfig netlimit.NetworkLimitConfig
+
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil
@@ -59,6 +62,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ioLimitConfig.ReadBWPerSecond = ucfg.Workspace.IOLimits.ReadBWPerSecond
 		ioLimitConfig.WriteIOPS = ucfg.Workspace.IOLimits.WriteIOPS
 		ioLimitConfig.ReadIOPS = ucfg.Workspace.IOLimits.ReadIOPS
+
+		netLimitConfig.Enabled = ucfg.Workspace.NetLimits.Enabled
+		netLimitConfig.EgressLimit = ucfg.Workspace.NetLimits.EgressLimit
+		netLimitConfig.EgressWindow = ucfg.Workspace.NetLimits.EgressWindow
+		netLimitConfig.BandwidthLow = ucfg.Workspace.NetLimits.BandwidthLow
+		netLimitConfig.BandwidthHigh = ucfg.Workspace.NetLimits.BandwidthHigh
 
 		return nil
 	})
@@ -109,6 +118,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			CPULimit: cpuLimitConfig,
 			IOLimit:  ioLimitConfig,
+			NetLimit: netLimitConfig,
 			Hosts: hosts.Config{
 				Enabled:       true,
 				NodeHostsFile: "/mnt/hosts",
