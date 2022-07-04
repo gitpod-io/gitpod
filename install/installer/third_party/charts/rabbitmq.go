@@ -15,7 +15,7 @@ var rabbitMQ embed.FS
 
 func RabbitMQ() *Chart {
 	return &Chart{
-		Name:     "RabbitMQ",
+		Name:     "rabbitmq",
 		Location: "rabbitmq/",
 		Content:  &rabbitMQ,
 	}
