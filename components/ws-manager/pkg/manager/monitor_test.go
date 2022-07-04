@@ -137,4 +137,14 @@ func (r *actRecorder) modifyFinalizer(ctx context.Context, workspaceID string, f
 	return nil
 }
 
+func (r *actRecorder) deleteWorkspaceSecrets(ctx context.Context, podName string) error {
+	r.Records = append(r.Records, actRecord{
+		Func: "deleteWorkspaceSecrets",
+		Params: map[string]interface{}{
+			"podName": podName,
+		},
+	})
+	return nil
+}
+
 var _ actingManager = &actRecorder{}

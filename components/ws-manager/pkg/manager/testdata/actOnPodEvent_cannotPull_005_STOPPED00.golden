@@ -7,6 +7,12 @@
             }
         },
         {
+            "Func": "deleteWorkspaceSecrets",
+            "Params": {
+                "podName": "ws-5031df46-db5e-43ae-91bd-1448305c001d"
+            }
+        },
+        {
             "Func": "modifyFinalizer",
             "Params": {
                 "add": false,
