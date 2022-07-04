@@ -227,6 +227,7 @@ export const WorkspaceFeatureFlags = {
     full_workspace_backup: undefined,
     fixed_resources: undefined,
     persistent_volume_claim: undefined,
+    protected_secrets: undefined,
 };
 export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
 
