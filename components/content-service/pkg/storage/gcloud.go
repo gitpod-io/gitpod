@@ -218,7 +218,7 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 		out, err = cmd.CombinedOutput()
 		if err != nil {
 			log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file to GCS using gsutil")
-			err = xerrors.Errorf("unexpected error updloading backup")
+			err = xerrors.Errorf("unexpected error downloading backup")
 			return
 		}
 	}()
@@ -434,8 +434,8 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 		var out []byte
 		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.WithError(err).WithField("out", string(out)).Error("unexpected error updloading file to GCS using gsutil")
-			err = xerrors.Errorf("unexpected error updloading backup")
+			log.WithError(err).WithField("out", string(out)).Error("unexpected error uploading file to GCS using gsutil")
+			err = xerrors.Errorf("unexpected error uploading backup")
 			return
 		}
 	}()
