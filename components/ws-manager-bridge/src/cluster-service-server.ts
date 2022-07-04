@@ -34,7 +34,7 @@ import {
     UpdateResponse,
     AdmissionConstraint as GRPCAdmissionConstraint,
 } from "@gitpod/ws-manager-bridge-api/lib";
-import { GetWorkspacesRequest } from "@gitpod/ws-manager/lib";
+import { GetWorkspacesRequest, WorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
     WorkspaceManagerClientProviderCompositeSource,
@@ -161,7 +161,7 @@ export class ClusterService implements IClusterServiceServer {
                 } else {
                     // try to connect to validate the config. Throws an exception if it fails.
                     await new Promise<void>((resolve, reject) => {
-                        const c = this.clientProvider.createClient(newCluster);
+                        const c = this.clientProvider.createConnection(WorkspaceManagerClient, newCluster);
                         c.getWorkspaces(new GetWorkspacesRequest(), (err: any) => {
                             if (err) {
                                 reject(

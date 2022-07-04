@@ -10,7 +10,12 @@ import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-pr
 import { inject, injectable } from "inversify";
 import { Configuration } from "./config";
 import { Client } from "@gitpod/gitpod-protocol/lib/experiments/types";
-import { DescribeClusterRequest, DescribeClusterResponse, WorkspaceClass } from "@gitpod/ws-manager/lib";
+import {
+    DescribeClusterRequest,
+    DescribeClusterResponse,
+    WorkspaceClass,
+    WorkspaceManagerClient,
+} from "@gitpod/ws-manager/lib";
 import { AdmissionConstraintHasClass } from "@gitpod/gitpod-protocol/src/workspace-cluster";
 import { GRPCError } from "./rpc";
 import * as grpc from "@grpc/grpc-js";
@@ -75,7 +80,7 @@ export async function getSupportedWorkspaceClasses(
             ? await (
                   await clientProvider.get(cluster.name, grpcOptions)
               ).client
-            : clientProvider.createClient(cluster, grpcOptions);
+            : clientProvider.createConnection(WorkspaceManagerClient, cluster, grpcOptions);
 
         client.describeCluster(new DescribeClusterRequest(), (err: any, resp: DescribeClusterResponse) => {
             if (err) {

@@ -168,6 +168,7 @@ import { Feature } from "@gitpod/licensor/lib/api";
 import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { BillableSession } from "@gitpod/gitpod-protocol/lib/usage";
+import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -199,7 +200,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(WorkspaceManagerClientProvider)
     protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
-    @inject(ImageBuilderClientProvider) protected imageBuilderClientProvider: ImageBuilderClientProvider;
+    @inject(ImageBuilderClientProvider) protected imagebuilderClientProvider: ImageBuilderClientProvider;
+    @inject(WorkspaceClusterImagebuilderClientProvider)
+    protected readonly wsClusterImageBuilderClientProvider: ImageBuilderClientProvider;
 
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(BlockedRepositoryDB) protected readonly blockedRepostoryDB: BlockedRepositoryDB;
@@ -1594,7 +1597,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // a change to move the imageBuildLogInfo across the globe.
             log.warn(logCtx, "imageBuild logs: fallback!");
             ctx.span?.setTag("workspace.imageBuild.logs.fallback", true);
-            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, workspace);
+            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, user, workspace);
             return;
         }
 
@@ -1644,6 +1647,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async deprecatedDoWatchWorkspaceImageBuildLogs(
         ctx: TraceContext,
         logCtx: LogContext,
+        user: User,
         workspace: Workspace,
     ) {
         if (!workspace.imageNameResolved) {
@@ -1652,7 +1656,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         try {
-            const imgbuilder = this.imageBuilderClientProvider.getDefault();
+            const imgbuilder = await this.getImageBuilderClient(user, workspace, undefined);
             const req = new LogsRequest();
             req.setCensored(true);
             req.setBuildRef(workspace.imageNameResolved);
@@ -3190,4 +3194,27 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     //
     //#endregion
+
+    /**
+     * This method is temporary until we moved image-builder into workspace clusters
+     * @param user
+     * @param workspace
+     * @param instance
+     * @returns
+     */
+    protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
+        const isMovedImageBuilder = await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", false, {
+            userId: user.id,
+            projectId: workspace.projectId,
+        });
+        if (isMovedImageBuilder) {
+            log.info(
+                { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
+                "Used image-builder in workspace cluster",
+            );
+            return this.wsClusterImageBuilderClientProvider.getClient(user, workspace, instance);
+        } else {
+            return this.imagebuilderClientProvider.getClient(user, workspace, instance);
+        }
+    }
 }
