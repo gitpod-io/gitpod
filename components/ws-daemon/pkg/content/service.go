@@ -316,7 +316,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 
 func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.WorkspaceFactory {
 	var checkoutLocation string
-	allLocations := wsinit.GetCheckoutLocationsFromInitializer(req.Initializer)
+	allLocations := csapi.GetCheckoutLocationsFromInitializer(req.Initializer)
 	if len(allLocations) > 0 {
 		checkoutLocation = allLocations[0]
 	}
