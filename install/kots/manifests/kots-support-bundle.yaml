@@ -35,6 +35,31 @@ spec:
           - '{{repl ConfigOption "store_s3_access_key_id" }}' # S3_ACCESS_KEY_ID
           - '{{repl ConfigOption "store_s3_secret_access_key" }}' # S3_SECRET_ACCESS_KEY
           - '{{repl ConfigOption "store_s3_bucket" }}' # S3_BUCKET_NAME
+    - run:
+        collectorName: ping-registry
+        image: alpine/curl
+        name: ping-registry
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - |
+            CONNECTION="error"
+
+            if [ '{{repl HasLocalRegistry }}' = "true" ];
+            then
+              # Don't test for airgapped
+              CONNECTION="ok"
+            else
+              URL="https://eu.gcr.io/v2/"
+              echo "ping ${URL}"
+              if curl --silent --max-time 5 "${URL}" > /dev/null;
+              then
+                CONNECTION="ok"
+              fi
+            fi
+
+            echo "connection: ${CONNECTION}"
     - clusterInfo: {}
     - clusterResources: {}
     - logs:
