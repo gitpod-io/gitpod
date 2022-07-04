@@ -642,6 +642,36 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    async adminCreateBlockedRepository(
+        ctx: TraceContext,
+        urlRegexp: string,
+        blockUser: boolean,
+    ): Promise<BlockedRepository> {
+        traceAPIParams(ctx, { urlRegexp, blockUser });
+        await this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminCreateBlockedRepository", { urlRegexp, blockUser }, Permission.ADMIN_USERS);
+
+        try {
+            return await this.blockedRepostoryDB.createBlockedRepository(urlRegexp, blockUser);
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
+    async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<boolean> {
+        traceAPIParams(ctx, { id });
+        await this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
+
+        try {
+            return await this.blockedRepostoryDB.deleteBlockedRepository(id);
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
     async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
         traceAPIParams(ctx, { req });
 
