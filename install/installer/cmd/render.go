@@ -149,6 +149,11 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 			fmt.Fprintln(os.Stderr, "configuration is invalid")
 			os.Exit(1)
 		}
+
+		// Warnings are printed to stderr
+		for _, r := range res.Warnings {
+			fmt.Fprintf(os.Stderr, "%s\n", r)
+		}
 	}
 
 	ctx, err := common.NewRenderContext(*cfg, *versionMF, renderOpts.Namespace)
