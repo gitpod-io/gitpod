@@ -1443,6 +1443,10 @@ func processesWithParent(ppid int) (map[int]int, error) {
 	return children, nil
 }
 
+var (
+	errSignalKilled = errors.New("signal: killed")
+)
+
 func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *terminal.Mux) {
 	defer wg.Done()
 
@@ -1490,7 +1494,15 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 			cancel()
 			return err
 		})
-		if err != nil && !errors.Is(err, context.Canceled) && err.Error() != "signal: killed" {
+		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return
+			}
+
+			if errSignalKilled.Error() == err.Error() {
+				return
+			}
+
 			log.WithError(err).Error("cannot provide Docker activation socket")
 		}
 	}
