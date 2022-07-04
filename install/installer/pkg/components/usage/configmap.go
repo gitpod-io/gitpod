@@ -29,11 +29,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
-	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg != nil && ucfg.WebApp != nil && ucfg.WebApp.Usage != nil && ucfg.WebApp.Usage.Schedule != "" {
-			cfg.ControllerSchedule = ucfg.WebApp.Usage.Schedule
+	expConfig := getExperimentalConfig(ctx)
+	if expConfig != nil {
+		if expConfig.Schedule != "" {
+			cfg.ControllerSchedule = expConfig.Schedule
 		}
 
+		cfg.CreditsPerMinuteByWorkspaceClass = expConfig.CreditsPerMinuteByWorkspaceClass
+	}
+
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		_, _, path, ok := getStripeConfig(ucfg)
 		if !ok {
 			return nil

@@ -1,5 +1,9 @@
 {
   "controllerSchedule": "1h",
+  "creditsPerMinuteByWorkspaceClass": {
+    "default": 0.1666666667,
+    "gitpodio-internal-xl": 0.3333333333
+  },
   "server": {
     "services": {
       "grpc": {
