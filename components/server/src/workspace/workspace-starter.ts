@@ -897,7 +897,7 @@ export class WorkspaceStarter {
                     // TODO(se): we cannot change this initializer structure now because it is part of how baserefs are computed in image-builder.
                     // Image builds should however just use the initialization if the workspace they are running for (i.e. the one from above).
                     checkoutLocation = ".";
-                    const { initializer, disposable } = await this.createCommitInitializer(
+                    const { initializer } = await this.createCommitInitializer(
                         { span },
                         workspace,
                         {
@@ -908,7 +908,6 @@ export class WorkspaceStarter {
                         },
                         user,
                     );
-                    disp.push(disposable);
                     let git: GitInitializer;
                     if (initializer instanceof CompositeInitializer) {
                         // we use the first git initializer for image builds only
@@ -1189,23 +1188,7 @@ export class WorkspaceStarter {
             allEnvVars = allEnvVars.concat(context.envvars);
         }
 
-        // we copy the envvars to a stable format so that things don't break when someone changes the
-        // EnvVarWithValue shape. The JSON.stringify(envvars) will be consumed by supervisor and we
-        // need to make sure we're speaking the same language.
-        const stableEnvvars = allEnvVars.map((e) => {
-            return { name: e.name, value: e.value };
-        });
-
-        // we ship the user-specific env vars as OTS because they might contain secrets
-        const envvarOTSExpirationTime = new Date();
-        envvarOTSExpirationTime.setMinutes(envvarOTSExpirationTime.getMinutes() + 30);
-        const envvarOTS = await this.otsServer.serve(traceCtx, JSON.stringify(stableEnvvars), envvarOTSExpirationTime);
-
         const envvars: EnvironmentVariable[] = [];
-        const ev = new EnvironmentVariable();
-        ev.setName("SUPERVISOR_ENVVAR_OTS");
-        ev.setValue(envvarOTS.token);
-        envvars.push(ev);
 
         // TODO(cw): for the time being we're still pushing the env vars as we did before.
         //           Once everything is running with the latest supervisor, we can stop doing that.
@@ -1272,19 +1255,15 @@ export class WorkspaceStarter {
             };
             await this.userDB.trace(traceCtx).storeGitpodToken(dbToken);
 
-            const otsExpirationTime = new Date();
-            otsExpirationTime.setMinutes(otsExpirationTime.getMinutes() + 30);
             const tokenExpirationTime = new Date();
             tokenExpirationTime.setMinutes(tokenExpirationTime.getMinutes() + 24 * 60);
-            const ots = await this.otsServer.serve(traceCtx, token, otsExpirationTime);
 
             const ev = new EnvironmentVariable();
             ev.setName("THEIA_SUPERVISOR_TOKENS");
             ev.setValue(
                 JSON.stringify([
                     {
-                        tokenOTS: ots.token,
-                        token: "ots",
+                        token: token,
                         kind: "gitpod",
                         host: this.config.hostUrl.url.host,
                         scope: scopes,
@@ -1560,8 +1539,7 @@ export class WorkspaceStarter {
         } else if (WorkspaceProbeContext.is(context)) {
             // workspace probes have no workspace initializer as they need no content
         } else if (CommitContext.is(context)) {
-            const { initializer, disposable } = await this.createCommitInitializer(traceCtx, workspace, context, user);
-            disp.push(disposable);
+            const { initializer } = await this.createCommitInitializer(traceCtx, workspace, context, user);
             if (initializer instanceof CompositeInitializer) {
                 result.setComposite(initializer);
             } else {
@@ -1613,7 +1591,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         context: CommitContext,
         user: User,
-    ): Promise<{ initializer: GitInitializer | CompositeInitializer; disposable: Disposable }> {
+    ): Promise<{ initializer: GitInitializer | CompositeInitializer }> {
         const span = TraceContext.startSpan("createInitializerForCommit", ctx);
         try {
             const mainGit = this.createGitInitializer({ span }, workspace, context, user);
@@ -1626,16 +1604,13 @@ export class WorkspaceStarter {
             }
             const inits = await Promise.all(subRepoInitializers);
             const compositeInit = new CompositeInitializer();
-            const compositeDisposable = new DisposableCollection();
             for (const r of inits) {
                 const wsinit = new WorkspaceInitializer();
                 wsinit.setGit(r.initializer);
                 compositeInit.addInitializer(wsinit);
-                compositeDisposable.push(r.disposable);
             }
             return {
                 initializer: compositeInit,
-                disposable: compositeDisposable,
             };
         } catch (e) {
             TraceContext.setError({ span }, e);
@@ -1650,7 +1625,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         context: GitCheckoutInfo,
         user: User,
-    ): Promise<{ initializer: GitInitializer; disposable: Disposable }> {
+    ): Promise<{ initializer: GitInitializer }> {
         const host = context.repository.host;
         const hostContext = this.hostContextProvider.get(host);
         if (!hostContext) {
@@ -1662,25 +1637,6 @@ export class WorkspaceStarter {
             throw new Error("User is unauthorized!");
         }
 
-        const tokenExpirationTime = new Date();
-        tokenExpirationTime.setMinutes(tokenExpirationTime.getMinutes() + 30);
-        let tokenOTS: string | undefined;
-        let disposable: Disposable | undefined;
-        try {
-            const token = await this.tokenProvider.getTokenForHost(user, host);
-            const username = token.username || "oauth2";
-            const res = await this.otsServer.serve(traceCtx, `${username}:${token.value}`, tokenExpirationTime);
-            tokenOTS = res.token;
-            disposable = res.disposable;
-        } catch (error) {
-            // no token
-            log.error(
-                { workspaceId: workspace.id, userId: workspace.ownerId },
-                "cannot authenticate user for Git initializer",
-                error,
-            );
-            throw new Error("User is unauthorized!");
-        }
         const cloneUrl = context.repository.cloneUrl;
 
         var cloneTarget: string | undefined;
@@ -1701,9 +1657,13 @@ export class WorkspaceStarter {
             targetMode = CloneTargetMode.REMOTE_HEAD;
         }
 
+        const gitToken = await this.tokenProvider.getTokenForHost(user, host);
+        const username = gitToken.username || "oauth2";
+
         const gitConfig = new GitConfig();
-        gitConfig.setAuthentication(GitAuthMethod.BASIC_AUTH_OTS);
-        gitConfig.setAuthOts(tokenOTS);
+        gitConfig.setAuthentication(GitAuthMethod.BASIC_AUTH);
+        gitConfig.setAuthUser(username);
+        gitConfig.setAuthPassword(gitToken.value);
 
         if (this.config.insecureNoDomain) {
             const token = await this.tokenProvider.getTokenForHost(user, host);
@@ -1733,7 +1693,6 @@ export class WorkspaceStarter {
 
         return {
             initializer: result,
-            disposable,
         };
     }
 
