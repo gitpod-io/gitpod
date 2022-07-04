@@ -82,6 +82,7 @@ type startWorkspaceContext struct {
 	Headless       bool                           `json:"headless"`
 	Class          *config.WorkspaceClass         `json:"class"`
 	VolumeSnapshot *workspaceVolumeSnapshotStatus `json:"volumeSnapshot"`
+	Secrets        map[string]string              `json:"secrets"`
 }
 
 func (swctx *startWorkspaceContext) ContainerConfiguration() config.ContainerConfiguration {
@@ -255,6 +256,28 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		// we only calculate the time that PVC restoring from VolumeSnapshot
 		if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
 			startTime = time.Now()
+		}
+	}
+
+	var createSecret bool
+	for _, feature := range startContext.Request.Spec.FeatureFlags {
+		if feature == api.WorkspaceFeatureFlag_PROTECTED_SECRETS {
+			createSecret = true
+			break
+		}
+	}
+	if createSecret {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      podName(startContext.Request),
+				Namespace: m.Config.Namespace,
+				Labels:    startContext.Labels,
+			},
+			StringData: startContext.Secrets,
+		}
+		err = m.Clientset.Create(ctx, secret)
+		if err != nil && !k8serr.IsAlreadyExists(err) {
+			return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
 		}
 	}
 
@@ -705,6 +728,23 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 		return xerrors.Errorf("stopWorkspace: %w", podErr)
 	}
 
+	return nil
+}
+
+func (m *Manager) deleteWorkspaceSecrets(ctx context.Context, podName string) error {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: m.Config.Namespace,
+		},
+	}
+	err := m.Clientset.Delete(ctx, secret)
+	if k8serr.IsNotFound(err) {
+		err = nil
+	}
+	if err != nil {
+		return xerrors.Errorf("cannot delete workspace secrets: %w", err)
+	}
 	return nil
 }
 

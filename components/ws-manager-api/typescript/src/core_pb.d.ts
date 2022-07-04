@@ -1261,6 +1261,7 @@ export enum WorkspaceFeatureFlag {
     FULL_WORKSPACE_BACKUP = 4,
     FIXED_RESOURCES = 5,
     PERSISTENT_VOLUME_CLAIM = 7,
+    PROTECTED_SECRETS = 8,
 }
 
 export enum WorkspaceType {

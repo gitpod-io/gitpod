@@ -20,6 +20,12 @@
                 ],
                 "workspaceID": "foobas"
             }
+        },
+        {
+            "Func": "deleteWorkspaceSecrets",
+            "Params": {
+                "podName": "ws-foobas"
+            }
         }
     ]
 }

@@ -7,6 +7,7 @@ package manager
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -83,6 +84,21 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 	return pod, nil
+}
+
+func podName(req *api.StartWorkspaceRequest) string {
+	var prefix string
+	switch req.Type {
+	case api.WorkspaceType_PREBUILD:
+		prefix = "prebuild"
+	case api.WorkspaceType_PROBE:
+		prefix = "probe"
+	case api.WorkspaceType_IMAGEBUILD:
+		prefix = "imagebuild"
+	default:
+		prefix = "ws"
+	}
+	return fmt.Sprintf("%s-%s", prefix, req.Id)
 }
 
 // combineDefiniteWorkspacePodWithTemplate merges a definite workspace pod with a user-provided template.
@@ -330,28 +346,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 	admissionLevel = strings.ToLower(admissionLevel)
 
-	var prefix string
-	switch req.Type {
-	case api.WorkspaceType_PREBUILD:
-		prefix = "prebuild"
-	case api.WorkspaceType_PROBE:
-		prefix = "probe"
-	case api.WorkspaceType_IMAGEBUILD:
-		prefix = "imagebuild"
-		// mount self-signed gitpod CA certificate to ensure
-		// we can push images to the in-cluster registry
-		workspaceContainer.VolumeMounts = append(workspaceContainer.VolumeMounts,
-			corev1.VolumeMount{
-				Name:      "gitpod-ca-certificate",
-				MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
-				SubPath:   "ca.crt",
-				ReadOnly:  true,
-			},
-		)
-	default:
-		prefix = "ws"
-	}
-
 	annotations := map[string]string{
 		workspaceIDAnnotation:                   req.Id,
 		servicePrefixAnnotation:                 getServicePrefix(req),
@@ -452,6 +446,19 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		})
 	}
 
+	if req.Type == api.WorkspaceType_IMAGEBUILD {
+		// mount self-signed gitpod CA certificate to ensure
+		// we can push images to the in-cluster registry
+		workspaceContainer.VolumeMounts = append(workspaceContainer.VolumeMounts,
+			corev1.VolumeMount{
+				Name:      "gitpod-ca-certificate",
+				MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
+				SubPath:   "ca.crt",
+				ReadOnly:  true,
+			},
+		)
+	}
+
 	workloadType := "regular"
 	if startContext.Headless {
 		workloadType = "headless"
@@ -482,10 +489,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
-	PodSecContext := corev1.PodSecurityContext{}
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        fmt.Sprintf("%s-%s", prefix, req.Id),
+			Name:        podName(req),
 			Namespace:   m.Config.Namespace,
 			Labels:      labels,
 			Annotations: annotations,
@@ -498,7 +504,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
 			Affinity:                     affinity,
-			SecurityContext:              &PodSecContext,
+			SecurityContext:              &corev1.PodSecurityContext{},
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
@@ -576,6 +582,28 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
 			gitpodGUID := int64(133332)
 			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
+
+		case api.WorkspaceFeatureFlag_PROTECTED_SECRETS:
+			for _, c := range pod.Spec.Containers {
+				if c.Name != "workspace" {
+					continue
+				}
+
+				for i, env := range c.Env {
+					if !isProtectedEnvVar(env.Name) {
+						continue
+					}
+
+					env.Value = ""
+					env.ValueFrom = &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{Name: pod.Name},
+							Key:                  fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name))),
+						},
+					}
+					c.Env[i] = env
+				}
+			}
 
 		default:
 			return nil, xerrors.Errorf("unknown feature flag: %v", feature)
@@ -760,8 +788,11 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 				}
 			}
 
-			env := corev1.EnvVar{Name: e.Name, Value: e.Value}
-			if len(e.Value) == 0 && e.Secret != nil {
+			env := corev1.EnvVar{
+				Name:  e.Name,
+				Value: e.Value,
+			}
+			if e.Value == "" && e.Secret != nil {
 				env.ValueFrom = &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{Name: e.Secret.SecretName},
@@ -769,7 +800,6 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 					},
 				}
 			}
-
 			result = append(result, env)
 		}
 	}
@@ -799,6 +829,22 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	}
 
 	return cleanResult, nil
+}
+
+func isGitpodInternalEnvVar(name string) bool {
+	return strings.HasPrefix(name, "GITPOD_") ||
+		strings.HasPrefix(name, "SUPERVISOR_") ||
+		strings.HasPrefix(name, "BOB_") ||
+		strings.HasPrefix(name, "THEIA_")
+}
+
+func isProtectedEnvVar(name string) bool {
+	switch name {
+	case "THEIA_SUPERVISOR_TOKENS":
+		return true
+	default:
+		return !isGitpodInternalEnvVar(name)
+	}
 }
 
 func (m *Manager) createWorkspaceVolumes(startContext *startWorkspaceContext) (workspace corev1.Volume, err error) {
@@ -916,6 +962,19 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		}
 	}
 
+	secrets := make(map[string]string)
+	for _, env := range req.Spec.Envvars {
+		if env.Secret != nil {
+			continue
+		}
+		if !isProtectedEnvVar(env.Name) {
+			continue
+		}
+
+		name := fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name)))
+		secrets[name] = env.Value
+	}
+
 	return &startWorkspaceContext{
 		Labels:         labels,
 		CLIAPIKey:      cliAPIKey,
@@ -927,6 +986,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		Headless:       headless,
 		Class:          class,
 		VolumeSnapshot: volumeSnapshot,
+		Secrets:        secrets,
 	}, nil
 }
 
