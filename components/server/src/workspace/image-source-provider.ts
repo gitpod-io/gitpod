@@ -5,7 +5,6 @@
  */
 
 import { injectable, inject } from "inversify";
-import { ImageBuilderClientProvider } from "@gitpod/image-builder/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import {
@@ -23,7 +22,6 @@ import { createHash } from "crypto";
 
 @injectable()
 export class ImageSourceProvider {
-    @inject(ImageBuilderClientProvider) protected readonly imagebuilderClientProvider: ImageBuilderClientProvider;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
 
     public async getImageSource(
