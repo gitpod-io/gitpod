@@ -27,6 +27,12 @@
                 ],
                 "workspaceID": "18f99de5-090f-4318-9759-05f5ef0277f7"
             }
+        },
+        {
+            "Func": "deleteWorkspaceSecrets",
+            "Params": {
+                "podName": "ws-18f99de5-090f-4318-9759-05f5ef0277f7"
+            }
         }
     ]
 }

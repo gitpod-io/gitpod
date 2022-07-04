@@ -304,6 +304,12 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		//         login in any other phase, too.
 		m.clearInitializerFromMap(pod.Name)
 
+		// if the secret is already gone, this won't error
+		err := m.deleteWorkspaceSecrets(ctx, pod.Name)
+		if err != nil {
+			return err
+		}
+
 		// Special case: workspaces timing out during backup. Normally a timed out workspace would just be stopped
 		//               regularly. When a workspace times out during backup though, stopping it won't do any good.
 		//               The workspace is already shutting down, it just fails to do so properly. Instead, we need
@@ -416,6 +422,12 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		if err != nil {
 			log.WithError(err).Warn("was unable to add host IP annotation from/to workspace")
 		}
+
+		// workspace is running - we don't need the secret anymore
+		err = m.deleteWorkspaceSecrets(ctx, pod.Name)
+		if err != nil {
+			log.WithError(err).Warn("was unable to remove workspace secret")
+		}
 	}
 
 	if status.Phase == api.WorkspacePhase_STOPPING {
@@ -477,6 +489,7 @@ type actingManager interface {
 	waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (err error)
 	stopWorkspace(ctx context.Context, workspaceID string, gracePeriod time.Duration) (err error)
 	markWorkspace(ctx context.Context, workspaceID string, annotations ...*annotation) error
+	deleteWorkspaceSecrets(ctx context.Context, podName string) error
 
 	clearInitializerFromMap(podName string)
 	initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error)
@@ -529,8 +542,7 @@ func (m *Monitor) writeEventTraceLog(status *api.WorkspaceStatus, wso *workspace
 					c.Env[i].Value = "[redacted]"
 					continue
 				}
-				isGitpodVar := strings.HasPrefix(env.Name, "GITPOD_") || strings.HasPrefix(env.Name, "SUPERVISOR_") || strings.HasPrefix(env.Name, "BOB_") || strings.HasPrefix(env.Name, "THEIA_")
-				if isGitpodVar {
+				if isGitpodInternalEnvVar(env.Name) {
 					continue
 				}
 
