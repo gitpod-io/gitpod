@@ -721,6 +721,10 @@ const (
 	statusShouldShutdown
 )
 
+var (
+	errSignalTerminated = errors.New("signal: terminated")
+)
+
 func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, ideReady *ideReadyState, ide IDEKind) {
 	defer wg.Done()
 	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
@@ -810,7 +814,9 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 
 		err = cmd.Wait()
 		if err != nil {
-			log.WithField("ide", ide.String()).WithError(err).Warn("IDE was stopped")
+			if errSignalTerminated.Error() != err.Error() {
+				log.WithField("ide", ide.String()).WithError(err).Warn("IDE was stopped")
+			}
 
 			ideWasReady, _ := ideReady.Get()
 			if !ideWasReady {
