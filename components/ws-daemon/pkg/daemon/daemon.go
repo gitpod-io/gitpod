@@ -27,6 +27,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
 )
 
 // NewDaemon produces a new daemon
@@ -86,13 +87,22 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil
 	}))
 
-	listener := []dispatch.Listener{
+	listeners := []dispatch.Listener{
 		cpulimit.NewDispatchListener(&config.CPULimit, reg),
 		markUnmountFallback,
 		cgroupPlugins,
 	}
 
-	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
+	if config.NetLimit.Enabled {
+		netListener, err := netlimit.NewDispatchListener(&config.NetLimit, clientset, config.Runtime.KubernetesNamespace)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create netlimit listener: %w", err)
+		}
+
+		listeners = append(listeners, netListener)
+	}
+
+	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listeners...)
 	if err != nil {
 		return nil, err
 	}
