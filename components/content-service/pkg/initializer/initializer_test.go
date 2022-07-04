@@ -7,12 +7,14 @@ package initializer_test
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
+	"github.com/google/go-cmp/cmp"
 )
 
 type InitializerFunc func(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error)
@@ -31,7 +33,6 @@ func (f *RecordingInitializer) Run(ctx context.Context, mappings []archive.IDMap
 }
 
 func TestGetCheckoutLocationsFromInitializer(t *testing.T) {
-
 	var init []*csapi.WorkspaceInitializer
 	init = append(init, &csapi.WorkspaceInitializer{
 		Spec: &csapi.WorkspaceInitializer_Git{
@@ -93,6 +94,31 @@ func TestGetCheckoutLocationsFromInitializer(t *testing.T) {
 			},
 			Expectation: "/foo,/bar",
 		},
+		{
+			Name: "backup initializer",
+			Initializer: &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Backup{
+					Backup: &csapi.FromBackupInitializer{
+						CheckoutLocation: "/foobar",
+					},
+				},
+			},
+			Expectation: "/foobar",
+		},
+		{
+			Name: "prebuild initializer",
+			Initializer: &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Prebuild{
+					Prebuild: &csapi.PrebuildInitializer{
+						Git: []*csapi.GitInitializer{
+							{CheckoutLocation: "/foo"},
+							{CheckoutLocation: "/bar"},
+						},
+					},
+				},
+			},
+			Expectation: "/foo,/bar",
+		},
 	}
 
 	for _, test := range tests {
@@ -103,7 +129,104 @@ func TestGetCheckoutLocationsFromInitializer(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestExtractInjectSecretsFromInitializer(t *testing.T) {
+	tests := []struct {
+		Name        string
+		Input       *csapi.WorkspaceInitializer
+		Expectation map[string]string
+	}{
+		{
+			Name: "git initializer",
+			Input: &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Git{
+					Git: &csapi.GitInitializer{
+						Config: &csapi.GitConfig{
+							AuthPassword: "foobar",
+						},
+					},
+				},
+			},
+			Expectation: map[string]string{
+				"initializer/git": "foobar",
+			},
+		},
+		{
+			Name: "no secret git initializer",
+			Input: &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Git{
+					Git: &csapi.GitInitializer{
+						Config: &csapi.GitConfig{},
+					},
+				},
+			},
+			Expectation: map[string]string{},
+		},
+		{
+			Name: "prebuild initializer",
+			Input: &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Prebuild{
+					Prebuild: &csapi.PrebuildInitializer{
+						Git: []*csapi.GitInitializer{
+							{
+								Config: &csapi.GitConfig{
+									AuthPassword: "foobar",
+								},
+							},
+							{
+								Config: &csapi.GitConfig{
+									AuthPassword: "some value",
+								},
+							},
+						},
+					},
+				},
+			},
+			Expectation: map[string]string{
+				"initializer/prebuild/0/git": "foobar",
+				"initializer/prebuild/1/git": "some value",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			act := initializer.ExtractSecretsFromInitializer(test.Input)
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("unexpected ExtractSecretsFromInitializer (-want +got):\n%s", diff)
+			}
+
+			_ = initializer.WalkInitializer(nil, test.Input, func(path []string, init *csapi.WorkspaceInitializer) error {
+				git, ok := init.Spec.(*csapi.WorkspaceInitializer_Git)
+				if !ok {
+					return nil
+				}
+				if pwd := git.Git.Config.AuthPassword; pwd != "" && !strings.HasPrefix(pwd, "extracted-secret/") {
+					t.Errorf("expected authPassword to be extracted, but got %s at %s", pwd, filepath.Join(path...))
+				}
+
+				return nil
+			})
+
+			err := initializer.InjectSecretsToInitializer(test.Input, act)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_ = initializer.WalkInitializer(nil, test.Input, func(path []string, init *csapi.WorkspaceInitializer) error {
+				git, ok := init.Spec.(*csapi.WorkspaceInitializer_Git)
+				if !ok {
+					return nil
+				}
+				if pwd := git.Git.Config.AuthPassword; pwd != "" && strings.HasPrefix(pwd, "extracted-secret/") {
+					t.Errorf("expected authPassword to be injected, but got %s at %s", pwd, filepath.Join(path...))
+				}
+
+				return nil
+			})
+		})
+	}
 }
 
 func TestCompositeInitializer(t *testing.T) {
