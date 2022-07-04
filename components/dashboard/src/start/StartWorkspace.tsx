@@ -444,10 +444,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             case "running":
                 if (isPrebuild) {
                     return (
-                        <div className="mt-6 w-11/12 lg:w-3/5 overflow-hidden">
-                            {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
-                            <PrebuildLogs workspaceId={this.props.workspaceId} />
-                        </div>
+                        <StartPage title="Prebuild in Progress">
+                            <div className="mt-6 w-11/12 lg:w-3/5 overflow-hidden">
+                                {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
+                                <PrebuildLogs workspaceId={this.props.workspaceId} />
+                            </div>
+                        </StartPage>
                     );
                 }
                 if (!this.state.desktopIde) {
@@ -576,10 +578,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             case "stopping":
                 if (isPrebuild) {
                     return (
-                        <div className="mt-6 w-11/12 lg:w-3/5 overflow-hidden">
-                            {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
-                            <PrebuildLogs workspaceId={this.props.workspaceId} />
-                        </div>
+                        <StartPage title="Prebuild in Progress">
+                            <div className="mt-6 w-11/12 lg:w-3/5 overflow-hidden">
+                                {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
+                                <PrebuildLogs workspaceId={this.props.workspaceId} />
+                            </div>
+                        </StartPage>
                     );
                 }
                 phase = StartPhase.Stopping;
