@@ -23,6 +23,8 @@ type Config struct {
 	// ControllerSchedule determines how frequently to run the Usage/Billing controller
 	ControllerSchedule string `json:"controllerSchedule,omitempty"`
 
+	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass,omitempty"`
+
 	StripeCredentialsFile string `json:"stripeCredentialsFile,omitempty"`
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
@@ -53,7 +55,13 @@ func Start(cfg Config) error {
 		if err != nil {
 			return fmt.Errorf("failed to initialize stripe client: %w", err)
 		}
-		billingController = controller.NewStripeBillingController(c, controller.DefaultWorkspacePricer)
+
+		pricer, err := controller.NewWorkspacePricer(cfg.CreditsPerMinuteByWorkspaceClass)
+		if err != nil {
+			return fmt.Errorf("failed to create workspace pricer: %w", err)
+		}
+
+		billingController = controller.NewStripeBillingController(c, pricer)
 	}
 
 	schedule, err := time.ParseDuration(cfg.ControllerSchedule)
