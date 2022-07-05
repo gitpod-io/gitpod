@@ -138,19 +138,23 @@ rm -rf /var/lib/rancher/k3s/server/manifests/gitpod
 
 # waits for gitpod pods to be ready, and manually runs the `gitpod-telemetry` cronjob
 run_telemetry(){
-  # wait for the k3s cluster to be ready and Gitpod workloads are added
-  sleep 100
+  sleep "$1"
+  echo "HI"
   # indefinitely wait for Gitpod pods to be ready
   kubectl wait --timeout=-1s --for=condition=ready pod -l app=gitpod,component!=migrations
   # manually tun the cronjob
-  kubectl create job gitpod-telemetry-init --from=cronjob/gitpod-telemetry
+  kubectl create job "$2" --from=cronjob/gitpod-telemetry
 }
 
-run_telemetry 2>&1 &
+# wait for the k3s cluster to be ready and Gitpod workloads are added
+run_telemetry 100 gitpod-telemetry-init 2>&1 &
+
+# run telemetry on exit
+trap 'run_telemetry 0 gitpod-telemetry-exit 2>&1' EXIT INT HUP
 
 /bin/k3s server --disable traefik \
   --node-label gitpod.io/workload_meta=true \
   --node-label gitpod.io/workload_ide=true \
   --node-label gitpod.io/workload_workspace_services=true \
   --node-label gitpod.io/workload_workspace_regular=true \
-  --node-label gitpod.io/workload_workspace_headless=true
+  --node-label gitpod.io/workload_workspace_headless=true  2>&1 &
