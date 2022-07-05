@@ -101,6 +101,25 @@ const toStop = new DisposableCollection();
     window.addEventListener('message', hideDesktopIdeEventListener, false);
     toStop.push({ dispose: () => window.removeEventListener('message', hideDesktopIdeEventListener) });
 
+    //#region gitpod browser telemetry
+    window.addEventListener("message", async (event) => {
+        const type = event.data.type;
+        if (type === "vscode_telemetry") {
+            const { event: eventName, properties } = event.data;
+            window.gitpod.service.server.trackEvent({
+                event: eventName,
+                properties: {
+                    sessionId,
+                    instanceId: gitpodServiceClient.info.latestInstance?.id,
+                    workspaceId: gitpodServiceClient.info.workspace.id,
+                    type: gitpodServiceClient.info.workspace.type,
+                    ...properties,
+                },
+            });
+        }
+    })
+    //#endregion
+
     type DesktopIDEStatus = { link: string, label: string, clientID?: string, kind?: String }
     let isDesktopIde: undefined | boolean = undefined;
     let ideStatus: undefined | { desktop: DesktopIDEStatus } = undefined;
