@@ -107,7 +107,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Templates: tplsCfg,
 				PVC:       config.PVCConfiguration(c.PVC),
 			}
-			tpls = append(tpls, ctpls...)
+			for tmpl_n, tmpl_v := range ctpls {
+				if _, ok := tpls[tmpl_n]; ok {
+					return fmt.Errorf("duplicate workspace template %q in workspace class %q", tmpl_n, k)
+				}
+				tpls[tmpl_n] = tmpl_v
+			}
 		}
 		return nil
 	})
@@ -218,12 +223,20 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				"config.json": string(fc),
 			},
 		},
+		&corev1.ConfigMap{
+			TypeMeta: common.TypeMetaConfigmap,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      WorkspaceTemplateConfigMap,
+				Namespace: ctx.Namespace,
+				Labels:    common.DefaultLabels(Component),
+			},
+			Data: tpls,
+		},
 	}
-	res = append(res, tpls...)
 	return res, nil
 }
 
-func buildWorkspaceTemplates(ctx *common.RenderContext, cfgTpls *configv1.WorkspaceTemplates, className string) (config.WorkspacePodTemplateConfiguration, []runtime.Object, error) {
+func buildWorkspaceTemplates(ctx *common.RenderContext, cfgTpls *configv1.WorkspaceTemplates, className string) (config.WorkspacePodTemplateConfiguration, map[string]string, error) {
 	var (
 		cfg  config.WorkspacePodTemplateConfiguration
 		tpls = make(map[string]string)
@@ -250,20 +263,13 @@ func buildWorkspaceTemplates(ctx *common.RenderContext, cfgTpls *configv1.Worksp
 		if err != nil {
 			return cfg, nil, fmt.Errorf("unable to marshal %s workspace template: %w", op.Name, err)
 		}
-		fn := filepath.Join(className, op.Name+".yaml")
+		fn := op.Name + ".yaml"
+		if className != "" {
+			fn = className + "-" + fn
+		}
 		*op.Path = filepath.Join(WorkspaceTemplatePath, fn)
 		tpls[fn] = string(fc)
 	}
 
-	return cfg, []runtime.Object{
-		&corev1.ConfigMap{
-			TypeMeta: common.TypeMetaConfigmap,
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      WorkspaceTemplateConfigMap,
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
-			},
-			Data: tpls,
-		},
-	}, nil
+	return cfg, tpls, nil
 }
