@@ -81,6 +81,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
                     primaryEmail: primaryEmail,
                     name: user.display_name,
                     avatarUrl: user.links!.avatar!.href,
+                    company: user.website,
                 },
                 currentScopes,
             };
