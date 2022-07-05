@@ -106,7 +106,7 @@ func (tt *testTarget) Close() {
 }
 
 // startTestTarget starts a new HTTP server that serves as some test target during the unit tests.
-func startTestTarget(t *testing.T, host, name string) *testTarget {
+func startTestTarget(t *testing.T, host, name string, checkedHost bool) *testTarget {
 	t.Helper()
 
 	l, err := net.Listen("tcp", host)
@@ -134,6 +134,10 @@ func startTestTarget(t *testing.T, host, name string) *testTarget {
 			w.WriteHeader(http.StatusOK)
 			format := "%s hit: %s\n"
 			args := []interface{}{name, r.URL.String()}
+			if checkedHost {
+				format += "host: %s\n"
+				args = append(args, r.Host)
+			}
 			readonly := r.Header.Get("X-BlobServe-ReadOnly")
 			if readonly != "" {
 				format += "readOnly: %s\n"
@@ -257,11 +261,11 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Content-Length": {"220"},
+					"Content-Length": {"242"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 					"Vary":           {"Accept-Encoding"},
 				},
-				Body: "blobserve hit: /gitpod-io/ide:latest/\ninlineVars: {\"ide\":\"https://ide.test-domain.com/blobserve/gitpod-io/ide:latest/__files__\",\"supervisor\":\"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__\"}\n",
+				Body: "blobserve hit: /gitpod-io/ide:latest/\nhost: localhost:20003\ninlineVars: {\"ide\":\"https://ide.test-domain.com/blobserve/gitpod-io/ide:latest/__files__\",\"supervisor\":\"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__\"}\n",
 			},
 		},
 		{
@@ -274,11 +278,11 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Content-Length": {"220"},
+					"Content-Length": {"242"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 					"Vary":           {"Accept-Encoding"},
 				},
-				Body: "blobserve hit: /gitpod-io/ide:latest/\ninlineVars: {\"ide\":\"https://ide.test-domain.com/blobserve/gitpod-io/ide:latest/__files__\",\"supervisor\":\"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__\"}\n",
+				Body: "blobserve hit: /gitpod-io/ide:latest/\nhost: localhost:20003\ninlineVars: {\"ide\":\"https://ide.test-domain.com/blobserve/gitpod-io/ide:latest/__files__\",\"supervisor\":\"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__\"}\n",
 			},
 		},
 		{
@@ -450,11 +454,11 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Content-Length": {"60"},
+					"Content-Length": {"82"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 					"Vary":           {"Accept-Encoding"},
 				},
-				Body: "blobserve hit: /gitpod-io/supervisor:latest/worker-proxy.js\n",
+				Body: "blobserve hit: /gitpod-io/supervisor:latest/worker-proxy.js\nhost: localhost:20003\n",
 			},
 		},
 		{
@@ -505,10 +509,16 @@ func TestRoutes(t *testing.T) {
 				addHostHeader,
 				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
-			Targets: &Targets{Port: &Target{Status: http.StatusNotFound}},
+			Targets: &Targets{Port: &Target{
+				Handler: func(w http.ResponseWriter, r *http.Request, requestCount uint8) {
+					w.WriteHeader(http.StatusNotFound)
+					fmt.Fprintf(w, "host: %s\n", r.Host)
+				},
+			}},
 			Expectation: Expectation{
-				Header: http.Header{"Content-Length": {"0"}},
+				Header: http.Header{"Content-Length": {"52"}, "Content-Type": {"text/plain; charset=utf-8"}},
 				Status: http.StatusNotFound,
+				Body:   "host: 28080-amaranth-smelt-9ba20cc1.test-domain.com\n",
 			},
 		},
 		{
@@ -535,14 +545,15 @@ func TestRoutes(t *testing.T) {
 			Targets: &Targets{
 				Port: &Target{
 					Handler: func(w http.ResponseWriter, r *http.Request, requestCount uint8) {
+						fmt.Fprintf(w, "host: %s\n", r.Host)
 						fmt.Fprintf(w, "%+q\n", r.Header["Cookie"])
 					},
 				},
 			},
 			Expectation: Expectation{
 				Status: http.StatusOK,
-				Header: http.Header{"Content-Length": {"30"}, "Content-Type": {"text/plain; charset=utf-8"}},
-				Body:   "[\"foobar=baz;another=cookie\"]\n",
+				Header: http.Header{"Content-Length": {"82"}, "Content-Type": {"text/plain; charset=utf-8"}},
+				Body:   "host: 28080-amaranth-smelt-9ba20cc1.test-domain.com\n[\"foobar=baz;another=cookie\"]\n",
 			},
 		},
 		{
@@ -555,29 +566,18 @@ func TestRoutes(t *testing.T) {
 				Port: &Target{
 					Handler: func(w http.ResponseWriter, r *http.Request, requestCount uint8) {
 						w.Header().Add("X-Frame-Options", "sameorigin")
+						fmt.Fprintf(w, "host: %s\n", r.Host)
 						w.WriteHeader(http.StatusOK)
 					},
 				},
 			},
 			Expectation: Expectation{
-				Header: http.Header{"Content-Length": {"0"}},
-				Status: http.StatusOK,
-			},
-		},
-		{
-			Desc: "blobserve route GET",
-			Request: modifyRequest(httptest.NewRequest("GET", "https://blobserve.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/main.js", nil),
-				addHostHeader,
-			),
-			Expectation: Expectation{
 				Header: http.Header{
-					"Cache-Control":  {"public, max-age=31536000"},
-					"Content-Length": {"77"},
+					"Content-Length": {"52"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
-					"Vary":           {"Accept-Encoding"},
 				},
 				Status: http.StatusOK,
-				Body:   "blobserve hit: /blobserve/gitpod-io/supervisor:latest/main.js\nreadOnly: true\n",
+				Body:   "host: 28080-amaranth-smelt-9ba20cc1.test-domain.com\n",
 			},
 		},
 	}
@@ -593,7 +593,7 @@ func TestRoutes(t *testing.T) {
 		Workspace:  &Target{Status: http.StatusOK},
 	}
 	targets := make(map[string]*testTarget)
-	controlTarget := func(target *Target, name, host string) {
+	controlTarget := func(target *Target, name, host string, checkedHost bool) {
 		_, runs := targets[name]
 		if runs && target == nil {
 			targets[name].Close()
@@ -602,7 +602,7 @@ func TestRoutes(t *testing.T) {
 		}
 
 		if !runs && target != nil {
-			targets[name] = startTestTarget(t, host, name)
+			targets[name] = startTestTarget(t, host, name, checkedHost)
 			runs = true
 		}
 
@@ -623,11 +623,11 @@ func TestRoutes(t *testing.T) {
 		}
 
 		t.Run(test.Desc, func(t *testing.T) {
-			controlTarget(test.Targets.IDE, "IDE", ideServerHost)
-			controlTarget(test.Targets.Blobserve, "blobserve", blobServeHost)
-			controlTarget(test.Targets.Port, "port", portServeHost)
-			controlTarget(test.Targets.Workspace, "workspace", workspaceHost)
-			controlTarget(test.Targets.Supervisor, "supervisor", fmt.Sprintf("localhost:%d", supervisorPort))
+			controlTarget(test.Targets.IDE, "IDE", ideServerHost, false)
+			controlTarget(test.Targets.Blobserve, "blobserve", blobServeHost, true)
+			controlTarget(test.Targets.Port, "port", portServeHost, true)
+			controlTarget(test.Targets.Workspace, "workspace", workspaceHost, false)
+			controlTarget(test.Targets.Supervisor, "supervisor", fmt.Sprintf("localhost:%d", supervisorPort), false)
 
 			cfg := config
 			if test.Config != nil {
