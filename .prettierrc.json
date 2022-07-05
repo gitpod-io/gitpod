@@ -2,5 +2,13 @@
     "printWidth": 120,
     "tabWidth": 4,
     "endOfLine": "auto",
-    "trailingComma": "all"
+    "trailingComma": "all",
+    "overrides": [
+        {
+          "files": [".werft/**/*.yaml"],
+          "options": {
+            "tabWidth": 2
+          }
+        }
+      ]
 }
