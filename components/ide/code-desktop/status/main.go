@@ -63,10 +63,15 @@ func main() {
 		}
 		queryString := string(b)
 
+		workspaceLocation := wsInfo.GetWorkspaceLocationFile()
+		if workspaceLocation == "" {
+			workspaceLocation = wsInfo.GetWorkspaceLocationFolder()
+		}
+
 		link := url.URL{
 			Scheme:   schema,
 			Host:     "gitpod.gitpod-desktop",
-			Path:     wsInfo.CheckoutLocation,
+			Path:     workspaceLocation,
 			RawQuery: url.QueryEscape(queryString),
 		}
 
