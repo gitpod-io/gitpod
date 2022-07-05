@@ -10,7 +10,7 @@ export async function typecheckWerftJobs(werft: Werft) {
     const slice = "tsc --noEmit";
     try {
         exec("cd .werft && tsc --noEmit", { slice });
-        werft.log(slice, 'No compilation errors.')
+        werft.log(slice, "No compilation errors.");
     } catch (e) {
         werft.fail(slice, e);
     }

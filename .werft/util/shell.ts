@@ -1,7 +1,7 @@
-import * as shell from 'shelljs';
-import * as fs from 'fs';
-import { ChildProcess } from 'child_process';
-import { getGlobalWerftInstance } from './werft';
+import * as shell from "shelljs";
+import * as fs from "fs";
+import { ChildProcess } from "child_process";
+import { getGlobalWerftInstance } from "./werft";
 
 export type ExecOptions = shell.ExecOptions & {
     slice?: string;
@@ -19,7 +19,7 @@ export function exec(command: string, options: ExecOptions & { async?: false }):
 export function exec(command: string, options: ExecOptions & { async: true }): Promise<ExecResult>;
 export function exec(command: string, options: ExecOptions): shell.ShellString | ChildProcess;
 export function exec(cmd: string, options?: ExecOptions): ChildProcess | shell.ShellString | Promise<ExecResult> {
-    const werft = getGlobalWerftInstance()
+    const werft = getGlobalWerftInstance();
 
     if (options && options.slice) {
         options.silent = true;
@@ -27,10 +27,10 @@ export function exec(cmd: string, options?: ExecOptions): ChildProcess | shell.S
 
     const handleResult = (result, options) => {
         let output = [];
-        if(result.stdout) {
+        if (result.stdout) {
             output.push("STDOUT: " + result.stdout);
         }
-        if(result.stderr) {
+        if (result.stderr) {
             output.push("STDERR: " + result.stderr);
         }
         if (options && options.slice) {
@@ -38,7 +38,7 @@ export function exec(cmd: string, options?: ExecOptions): ChildProcess | shell.S
             output = []; // don't show the same output as part of the exception again.
         }
         if ((!options || !options.dontCheckRc) && result.code !== 0) {
-            output.unshift(`${cmd} exit with non-zero status code.`)
+            output.unshift(`${cmd} exit with non-zero status code.`);
             throw new Error(output.join("\n"));
         }
     };
@@ -51,7 +51,7 @@ export function exec(cmd: string, options?: ExecOptions): ChildProcess | shell.S
                     handleResult(result, options);
                     resolve(result);
                 } catch (err) {
-                    reject(err)
+                    reject(err);
                 }
             });
         });
@@ -64,16 +64,19 @@ export function exec(cmd: string, options?: ExecOptions): ChildProcess | shell.S
 
 // gitTag tags the current state and pushes that tag to the repo origin
 export const gitTag = (tag) => {
-    shell.mkdir("/root/.ssh")
-    fs.writeFileSync("/root/.ssh/config", `Host github.com
+    shell.mkdir("/root/.ssh");
+    fs.writeFileSync(
+        "/root/.ssh/config",
+        `Host github.com
     UserKnownHostsFile=/dev/null
     StrictHostKeyChecking no
     IdentitiesOnly yes
-    IdentityFile /mnt/secrets/github-ssh-key/github-ssh-key.pem`)
-    shell.chmod(600, '/root/.ssh/*')
-    shell.chmod(700, '/root/.ssh')
+    IdentityFile /mnt/secrets/github-ssh-key/github-ssh-key.pem`,
+    );
+    shell.chmod(600, "/root/.ssh/*");
+    shell.chmod(700, "/root/.ssh");
 
-    exec("git config --global url.ssh://git@github.com/.insteadOf https://github.com/")
-    exec(`git tag -f ${tag}`)
-    exec(`git push -f origin ${tag}`)
-}
+    exec("git config --global url.ssh://git@github.com/.insteadOf https://github.com/");
+    exec(`git tag -f ${tag}`);
+    exec(`git push -f origin ${tag}`);
+};
