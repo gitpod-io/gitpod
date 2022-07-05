@@ -1,54 +1,57 @@
-import * as fs from 'fs';
+import * as fs from "fs";
 import { exec } from "../../../util/shell";
 import { Werft } from "../../../util/werft";
 import { getNodePoolIndex } from "../deploy-to-preview-environment";
 import { renderPayment } from "../payment/render";
 import { CORE_DEV_KUBECONFIG_PATH } from "../const";
 
-const BLOCK_NEW_USER_CONFIG_PATH = './blockNewUsers';
-const WORKSPACE_SIZE_CONFIG_PATH = './workspaceSizing';
+const BLOCK_NEW_USER_CONFIG_PATH = "./blockNewUsers";
+const WORKSPACE_SIZE_CONFIG_PATH = "./workspaceSizing";
 const PROJECT_NAME = "gitpod-core-dev";
 const CONTAINER_REGISTRY_URL = `eu.gcr.io/${PROJECT_NAME}/build/`;
 const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
 
 export type Analytics = {
-    type: string,
-    token: string
-}
+    type: string;
+    token: string;
+};
 
 export type GitpodDaemonsetPorts = {
-    registryFacade: number,
-    wsDaemon: number,
-}
+    registryFacade: number;
+    wsDaemon: number;
+};
 
 export type InstallerOptions = {
-    werft: Werft
-    installerConfigPath: string
-    kubeconfigPath: string
-    version: string
-    proxySecretName: string
-    domain: string
-    previewName: string
-    imagePullSecretName: string
-    deploymentNamespace: string
-    analytics: Analytics
-    withEELicense: boolean
-    workspaceFeatureFlags: string[]
-    gitpodDaemonsetPorts: GitpodDaemonsetPorts
-    smithToken: string
-    withPayment: boolean
-}
+    werft: Werft;
+    installerConfigPath: string;
+    kubeconfigPath: string;
+    version: string;
+    proxySecretName: string;
+    domain: string;
+    previewName: string;
+    imagePullSecretName: string;
+    deploymentNamespace: string;
+    analytics: Analytics;
+    withEELicense: boolean;
+    workspaceFeatureFlags: string[];
+    gitpodDaemonsetPorts: GitpodDaemonsetPorts;
+    smithToken: string;
+    withPayment: boolean;
+};
 
 export class Installer {
-    options: InstallerOptions
+    options: InstallerOptions;
 
     constructor(options: InstallerOptions) {
-        this.options = options
+        this.options = options;
     }
 
     init(slice: string): void {
         this.options.werft.log(slice, "Downloading installer and initializing config file");
-        exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${this.options.version} -c "cat /app/installer" > /tmp/installer`, { slice: slice });
+        exec(
+            `docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${this.options.version} -c "cat /app/installer" > /tmp/installer`,
+            { slice: slice },
+        );
         exec(`chmod +x /tmp/installer`, { slice: slice });
         exec(`/tmp/installer init > ${this.options.installerConfigPath}`, { slice: slice });
         this.options.werft.done(slice);
@@ -57,45 +60,59 @@ export class Installer {
     addPreviewConfiguration(slice: string): void {
         this.options.werft.log(slice, "Adding extra configuration");
         try {
-            this.getDevCustomValues(slice)
-            this.configureMetadata(slice)
-            this.configureContainerRegistry(slice)
-            this.configureDomain(slice)
-            this.configureWorkspaces(slice)
-            this.configureObjectStorage(slice)
-            this.configureIDE(slice)
-            this.configureObservability(slice)
-            this.configureAuthProviders(slice)
-            this.configureStripeAPIKeys(slice)
-            this.configureSSHGateway(slice)
-            this.configurePublicAPIServer(slice)
-            this.configureUsage(slice)
-            this.configureConfigCat(slice)
+            this.getDevCustomValues(slice);
+            this.configureMetadata(slice);
+            this.configureContainerRegistry(slice);
+            this.configureDomain(slice);
+            this.configureWorkspaces(slice);
+            this.configureObjectStorage(slice);
+            this.configureIDE(slice);
+            this.configureObservability(slice);
+            this.configureAuthProviders(slice);
+            this.configureStripeAPIKeys(slice);
+            this.configureSSHGateway(slice);
+            this.configurePublicAPIServer(slice);
+            this.configureUsage(slice);
+            this.configureConfigCat(slice);
 
             if (this.options.analytics) {
-                this.includeAnalytics(slice)
+                this.includeAnalytics(slice);
             } else {
-                this.dontIncludeAnalytics(slice)
+                this.dontIncludeAnalytics(slice);
             }
 
             if (this.options.withPayment) {
                 // let installer know that there is a chargbee config
-                exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.server.chargebeeSecret chargebee-config`, { slice: slice });
+                exec(
+                    `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.chargebeeSecret chargebee-config`,
+                    { slice: slice },
+                );
 
                 // let installer know that there is a stripe config
-                exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeSecret stripe-api-keys`, { slice: slice });
-                exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeConfig stripe-config`, { slice: slice });
+                exec(
+                    `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeSecret stripe-api-keys`,
+                    { slice: slice },
+                );
+                exec(
+                    `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeConfig stripe-config`,
+                    { slice: slice },
+                );
             }
-
         } catch (err) {
-            throw new Error(err)
+            throw new Error(err);
         }
-        this.options.werft.done(slice)
+        this.options.werft.done(slice);
     }
 
     private getDevCustomValues(slice: string): void {
-        exec(`yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.blockNewUsers | yq prefix - 'blockNewUsers' > ${BLOCK_NEW_USER_CONFIG_PATH}`, { slice: slice });
-        exec(`yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing.dynamic.cpu.buckets | yq prefix - 'workspace.resources.dynamicLimits.cpu' > ${WORKSPACE_SIZE_CONFIG_PATH}`, { slice: slice });
+        exec(
+            `yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.blockNewUsers | yq prefix - 'blockNewUsers' > ${BLOCK_NEW_USER_CONFIG_PATH}`,
+            { slice: slice },
+        );
+        exec(
+            `yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing.dynamic.cpu.buckets | yq prefix - 'workspace.resources.dynamicLimits.cpu' > ${WORKSPACE_SIZE_CONFIG_PATH}`,
+            { slice: slice },
+        );
 
         exec(`yq m -i --overwrite ${this.options.installerConfigPath} ${BLOCK_NEW_USER_CONFIG_PATH}`, { slice: slice });
         exec(`yq m -i ${this.options.installerConfigPath} ${WORKSPACE_SIZE_CONFIG_PATH}`, { slice: slice });
@@ -105,16 +122,25 @@ export class Installer {
         exec(`cat <<EOF > shortname.yaml
 metadata:
   shortname: ""
-EOF`)
+EOF`);
         exec(`yq m -ix ${this.options.installerConfigPath} shortname.yaml`, { slice: slice });
     }
 
     private configureContainerRegistry(slice: string): void {
-        exec(`yq w -i ${this.options.installerConfigPath} certificate.name ${this.options.proxySecretName}`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} certificate.name ${this.options.proxySecretName}`, {
+            slice: slice,
+        });
         exec(`yq w -i ${this.options.installerConfigPath} containerRegistry.inCluster false`, { slice: slice });
-        exec(`yq w -i ${this.options.installerConfigPath} containerRegistry.external.url ${CONTAINER_REGISTRY_URL}`, { slice: slice });
-        exec(`yq w -i ${this.options.installerConfigPath} containerRegistry.external.certificate.kind secret`, { slice: slice });
-        exec(`yq w -i ${this.options.installerConfigPath} containerRegistry.external.certificate.name ${this.options.imagePullSecretName}`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} containerRegistry.external.url ${CONTAINER_REGISTRY_URL}`, {
+            slice: slice,
+        });
+        exec(`yq w -i ${this.options.installerConfigPath} containerRegistry.external.certificate.kind secret`, {
+            slice: slice,
+        });
+        exec(
+            `yq w -i ${this.options.installerConfigPath} containerRegistry.external.certificate.name ${this.options.imagePullSecretName}`,
+            { slice: slice },
+        );
     }
 
     private configureDomain(slice: string) {
@@ -122,13 +148,20 @@ EOF`)
     }
 
     private configureWorkspaces(slice: string) {
-        exec(`yq w -i ${this.options.installerConfigPath} workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, { slice: slice });
+        exec(
+            `yq w -i ${this.options.installerConfigPath} workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`,
+            { slice: slice },
+        );
         exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.cpu "100m"`, { slice: slice });
-        exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.memory "256Mi"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.memory "256Mi"`, {
+            slice: slice,
+        });
     }
 
     private configureObjectStorage(slice: string) {
-        exec(`yq w -i ${this.options.installerConfigPath} objectStorage.resources.requests.memory "256Mi"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} objectStorage.resources.requests.memory "256Mi"`, {
+            slice: slice,
+        });
     }
 
     private configureIDE(slice: string) {
@@ -136,8 +169,12 @@ EOF`)
     }
 
     private configureObservability(slice: string) {
-        const tracingEndpoint = exec(`yq r ./.werft/jobs/build/helm/values.tracing.yaml tracing.endpoint`, { slice: slice }).stdout.trim();
-        exec(`yq w -i ${this.options.installerConfigPath} observability.tracing.endpoint ${tracingEndpoint}`, { slice: slice });
+        const tracingEndpoint = exec(`yq r ./.werft/jobs/build/helm/values.tracing.yaml tracing.endpoint`, {
+            slice: slice,
+        }).stdout.trim();
+        exec(`yq w -i ${this.options.installerConfigPath} observability.tracing.endpoint ${tracingEndpoint}`, {
+            slice: slice,
+        });
     }
 
     // auth-provider-secret.yml is a file generated by this job by reading a secret from core-dev cluster
@@ -145,7 +182,8 @@ EOF`)
     // 'preview-envs-authproviders-harvester' for previews running in Harvester VMs.
     // To understand how it is generated, search for 'auth-provider-secret.yml' in the code.
     private configureAuthProviders(slice: string) {
-        exec(`for row in $(cat auth-provider-secret.yml \
+        exec(
+            `for row in $(cat auth-provider-secret.yml \
         | base64 -d -w 0 \
         | yq r - authProviders -j \
         | jq -r 'to_entries | .[] | @base64'); do
@@ -162,7 +200,9 @@ EOF`)
                 --from-literal=provider="$data" \
                 --dry-run=client -o yaml | \
                 kubectl --kubeconfig "${this.options.kubeconfigPath}" replace --force -f -
-        done`, { slice: slice })
+        done`,
+            { slice: slice },
+        );
     }
 
     private configureStripeAPIKeys(slice: string) {
@@ -179,32 +219,42 @@ EOF`)
     }
 
     private configureSSHGateway(slice: string) {
-        exec(`cat /workspace/host-key.yaml \
+        exec(
+            `cat /workspace/host-key.yaml \
                 | yq w - metadata.namespace ${this.options.deploymentNamespace} \
                 | yq d - metadata.uid \
                 | yq d - metadata.resourceVersion \
                 | yq d - metadata.creationTimestamp \
-                | kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f -`, { slice: slice })
-        exec(`yq w -i ${this.options.installerConfigPath} sshGatewayHostKey.kind "secret"`)
-        exec(`yq w -i ${this.options.installerConfigPath} sshGatewayHostKey.name "host-key"`)
+                | kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f -`,
+            { slice: slice },
+        );
+        exec(`yq w -i ${this.options.installerConfigPath} sshGatewayHostKey.kind "secret"`);
+        exec(`yq w -i ${this.options.installerConfigPath} sshGatewayHostKey.name "host-key"`);
     }
 
     private configurePublicAPIServer(slice: string) {
-        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.publicApi.enabled true`, { slice: slice })
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.publicApi.enabled true`, {
+            slice: slice,
+        });
     }
 
     private configureUsage(slice: string) {
-        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.enabled true`, { slice: slice })
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.enabled true`, { slice: slice });
     }
 
     private configureConfigCat(slice: string) {
         // This key is not a secret, it is a unique identifier of our ConfigCat application
-        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.configcatKey "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw"`, { slice: slice })
+        exec(
+            `yq w -i ${this.options.installerConfigPath} experimental.webapp.configcatKey "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw"`,
+            { slice: slice },
+        );
     }
 
     private includeAnalytics(slice: string): void {
         exec(`yq w -i ${this.options.installerConfigPath} analytics.writer segment`, { slice: slice });
-        exec(`yq w -i ${this.options.installerConfigPath} analytics.segmentKey ${this.options.analytics.token}`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} analytics.segmentKey ${this.options.analytics.token}`, {
+            slice: slice,
+        });
     }
 
     private dontIncludeAnalytics(slice: string): void {
@@ -214,25 +264,31 @@ EOF`)
     validateConfiguration(slice: string): void {
         this.options.werft.log(slice, "Validating configuration");
         exec(`/tmp/installer validate config -c ${this.options.installerConfigPath}`, { slice: slice });
-        exec(`/tmp/installer validate cluster --kubeconfig ${this.options.kubeconfigPath} -c ${this.options.installerConfigPath} || true`, { slice: slice });
-        this.options.werft.done(slice)
+        exec(
+            `/tmp/installer validate cluster --kubeconfig ${this.options.kubeconfigPath} -c ${this.options.installerConfigPath} || true`,
+            { slice: slice },
+        );
+        this.options.werft.done(slice);
     }
 
     render(slice: string): void {
         this.options.werft.log(slice, "Rendering YAML manifests");
-        exec(`/tmp/installer render --use-experimental-config --namespace ${this.options.deploymentNamespace} --config ${this.options.installerConfigPath} > k8s.yaml`, { slice: slice });
-        this.options.werft.done(slice)
+        exec(
+            `/tmp/installer render --use-experimental-config --namespace ${this.options.deploymentNamespace} --config ${this.options.installerConfigPath} > k8s.yaml`,
+            { slice: slice },
+        );
+        this.options.werft.done(slice);
     }
 
     postProcessing(slice: string): void {
         this.options.werft.log(slice, "Post processing YAML manifests");
 
-        this.configureLicense(slice)
-        this.configureWorkspaceFeatureFlags(slice)
-        this.configurePayment(slice)
-        this.process(slice)
+        this.configureLicense(slice);
+        this.configureWorkspaceFeatureFlags(slice);
+        this.configurePayment(slice);
+        this.process(slice);
 
-        this.options.werft.done(slice)
+        this.options.werft.done(slice);
     }
 
     private configureLicense(slice: string): void {
@@ -245,13 +301,12 @@ EOF`)
         }
     }
 
-
     private configureWorkspaceFeatureFlags(slice: string): void {
         exec(`touch /tmp/defaultFeatureFlags`, { slice: slice });
         if (this.options.workspaceFeatureFlags && this.options.workspaceFeatureFlags.length > 0) {
-            this.options.workspaceFeatureFlags.forEach(featureFlag => {
+            this.options.workspaceFeatureFlags.forEach((featureFlag) => {
                 exec(`echo \'"${featureFlag}"\' >> /tmp/defaultFeatureFlags`, { slice: slice });
-            })
+            });
             // post-process.sh looks for /tmp/defaultFeatureFlags
             // each "flag" string gets added to the configmap
             // also watches aout for /tmp/payment
@@ -262,15 +317,25 @@ EOF`)
         // 1. Read versions from docker image
         this.options.werft.log(slice, "configuring withPayment...");
         try {
-            exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${this.options.version} cat /versions.yaml > versions.yaml`);
+            exec(
+                `docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${this.options.version} cat /versions.yaml > versions.yaml`,
+            );
         } catch (err) {
             this.options.werft.fail(slice, err);
         }
-        const serviceWaiterVersion = exec("yq r ./versions.yaml 'components.serviceWaiter.version'").stdout.toString().trim();
-        const paymentEndpointVersion = exec("yq r ./versions.yaml 'components.paymentEndpoint.version'").stdout.toString().trim();
+        const serviceWaiterVersion = exec("yq r ./versions.yaml 'components.serviceWaiter.version'")
+            .stdout.toString()
+            .trim();
+        const paymentEndpointVersion = exec("yq r ./versions.yaml 'components.paymentEndpoint.version'")
+            .stdout.toString()
+            .trim();
 
         // 2. render chargebee-config and payment-endpoint
-        const paymentYamls = renderPayment(this.options.deploymentNamespace, paymentEndpointVersion, serviceWaiterVersion);
+        const paymentYamls = renderPayment(
+            this.options.deploymentNamespace,
+            paymentEndpointVersion,
+            serviceWaiterVersion,
+        );
         fs.writeFileSync("/tmp/payment", paymentYamls);
 
         this.options.werft.log(slice, "done configuring withPayment.");
@@ -278,19 +343,26 @@ EOF`)
 
     private process(slice: string): void {
         const nodepoolIndex = getNodePoolIndex(this.options.deploymentNamespace);
-        const flags = "WITH_VM=true "
+        const flags = "WITH_VM=true ";
 
-        exec(`${flags}./.werft/jobs/build/installer/post-process.sh ${this.options.gitpodDaemonsetPorts.registryFacade} ${this.options.gitpodDaemonsetPorts.wsDaemon} ${nodepoolIndex} ${this.options.previewName} ${this.options.smithToken}`, { slice: slice });
+        exec(
+            `${flags}./.werft/jobs/build/installer/post-process.sh ${this.options.gitpodDaemonsetPorts.registryFacade} ${this.options.gitpodDaemonsetPorts.wsDaemon} ${nodepoolIndex} ${this.options.previewName} ${this.options.smithToken}`,
+            { slice: slice },
+        );
     }
 
     install(slice: string): void {
         this.options.werft.log(slice, "Installing Gitpod");
-        exec(`kubectl --kubeconfig ${this.options.kubeconfigPath} delete -n ${this.options.deploymentNamespace} job migrations || true`, { silent: true });
+        exec(
+            `kubectl --kubeconfig ${this.options.kubeconfigPath} delete -n ${this.options.deploymentNamespace} job migrations || true`,
+            { silent: true },
+        );
         // errors could result in outputing a secret to the werft log when kubernetes patches existing objects...
         exec(`kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f k8s.yaml`, { silent: true });
 
-        exec(`werft log result -d "dev installation" -c github-check-preview-env url https://${this.options.domain}/workspaces`);
-        this.options.werft.done(slice)
+        exec(
+            `werft log result -d "dev installation" -c github-check-preview-env url https://${this.options.domain}/workspaces`,
+        );
+        this.options.werft.done(slice);
     }
-
 }
