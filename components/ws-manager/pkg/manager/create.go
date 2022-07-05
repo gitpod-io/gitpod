@@ -42,6 +42,13 @@ var (
 	boolTrue  = true
 )
 
+const (
+	// maxSecretsLength is the maximum number of bytes a workspace secret may contain. This size is exhausted by
+	// environment variables provided as part of the start workspace request.
+	// The value of 768kb is a somewhat arbitrary choice, but steers way clear of the 1MiB Kubernetes imposes.
+	maxSecretsLength = 768 * 1024 * 1024
+)
+
 // createWorkspacePod creates the actual workspace pod based on the definite workspace pod and appropriate
 // templates. The result of this function is not expected to be modified prior to being passed to Kubernetes.
 func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*corev1.Pod, error) {
@@ -962,7 +969,10 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		}
 	}
 
-	secrets := make(map[string]string)
+	var (
+		secrets    = make(map[string]string)
+		secretsLen int
+	)
 	for _, env := range req.Spec.Envvars {
 		if env.Secret != nil {
 			continue
@@ -973,9 +983,14 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 
 		name := fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name)))
 		secrets[name] = env.Value
+		secretsLen += len(env.Value)
 	}
 	for k, v := range csapi.ExtractSecretsFromInitializer(req.Spec.Initializer) {
 		secrets[k] = v
+		secretsLen += len(v)
+	}
+	if secretsLen > maxSecretsLength {
+		return nil, xerrors.Errorf("secrets exceed maximum permitted length (%d > %d bytes): please reduce the numer or length of environment variables", secretsLen, maxSecretsLength)
 	}
 
 	return &startWorkspaceContext{

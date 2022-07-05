@@ -86,6 +86,10 @@ func InjectSecretsToInitializer(init *WorkspaceInitializer, secrets map[string][
 
 // WalkInitializer walks the initializer structure
 func WalkInitializer(path []string, init *WorkspaceInitializer, visitor func(path []string, init *WorkspaceInitializer) error) error {
+	if init == nil {
+		return nil
+	}
+
 	switch spec := init.Spec.(type) {
 	case *WorkspaceInitializer_Backup:
 		return visitor(append(path, "backup"), init)
