@@ -7,8 +7,11 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"google.golang.org/grpc/credentials/insecure"
+	"os"
+	"syscall"
 	"time"
+
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
@@ -82,6 +85,11 @@ var runCmd = &cobra.Command{
 		})
 		if err != nil {
 			log.WithError(err).Fatal("Cannot start watch of configuration file.")
+		}
+
+		err = syscall.Setpriority(syscall.PRIO_PROCESS, os.Getpid(), -19)
+		if err != nil {
+			log.WithError(err).Error("cannot change ws-daemon priority")
 		}
 
 		err = srv.ListenAndServe()
