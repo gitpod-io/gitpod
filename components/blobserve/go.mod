@@ -4,8 +4,8 @@ go 1.18
 
 require (
 	github.com/containerd/containerd v1.6.6
-	github.com/docker/cli v20.10.17+incompatible
-	github.com/docker/distribution v2.8.1+incompatible
+	github.com/docker/cli v20.10.7+incompatible
+	github.com/docker/distribution v2.8.0+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/registry-facade v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.7
