@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
 )
 
@@ -28,21 +27,25 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 	}
 	tests := []struct {
 		Name              string
+		ClassName         string
 		Config            *configv1.WorkspaceTemplates
 		ContainerRegistry *configv1.ContainerRegistry
 		Expectation       Expectation
 	}{
 		{
 			Name:        "no templates",
+			ClassName:   "",
 			Expectation: Expectation{},
 		},
 		{
 			Name:        "empty templates",
+			ClassName:   "",
 			Config:      &configv1.WorkspaceTemplates{},
 			Expectation: Expectation{},
 		},
 		{
-			Name: "default tpl",
+			Name:      "default tpl",
+			ClassName: "",
 			Config: &configv1.WorkspaceTemplates{
 				Default: &corev1.Pod{},
 			},
@@ -52,7 +55,8 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 			},
 		},
 		{
-			Name: "regular tpl",
+			Name:      "regular tpl",
+			ClassName: "",
 			Config: &configv1.WorkspaceTemplates{
 				Regular: &corev1.Pod{},
 			},
@@ -66,7 +70,8 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 			},
 		},
 		{
-			Name: "prebuild tpl",
+			Name:      "prebuild tpl",
+			ClassName: "",
 			Config: &configv1.WorkspaceTemplates{
 				Prebuild: &corev1.Pod{},
 			},
@@ -80,7 +85,8 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 			},
 		},
 		{
-			Name: "imgbuild tpl",
+			Name:      "imgbuild tpl",
+			ClassName: "",
 			Config: &configv1.WorkspaceTemplates{
 				ImageBuild: &corev1.Pod{},
 			},
@@ -93,13 +99,28 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name:      "regular class tpl",
+			ClassName: "awesome-class",
+			Config: &configv1.WorkspaceTemplates{
+				Regular: &corev1.Pod{},
+			},
+			Expectation: Expectation{
+				TplConfig: wsmancfg.WorkspacePodTemplateConfiguration{
+					RegularPath: "/workspace-templates/awesome-class-regular.yaml",
+				},
+				Data: map[string]bool{
+					"awesome-class-regular.yaml": true,
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			var (
 				act  Expectation
-				objs []runtime.Object
+				tpls map[string]string
 				err  error
 			)
 
@@ -107,25 +128,16 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 				test.ContainerRegistry = &configv1.ContainerRegistry{InCluster: pointer.Bool(true)}
 			}
 
-			act.TplConfig, objs, err = buildWorkspaceTemplates(&common.RenderContext{Config: configv1.Config{
+			act.TplConfig, tpls, err = buildWorkspaceTemplates(&common.RenderContext{Config: configv1.Config{
 				ContainerRegistry: *test.ContainerRegistry,
-			}}, test.Config, "")
+			}}, test.Config, test.ClassName)
 			if err != nil {
 				t.Error(err)
 			}
-			if len(objs) < 1 {
-				t.Fatalf("received zero runtime objects")
-				return
-			}
 
-			cfgmap, ok := objs[0].(*corev1.ConfigMap)
-			if !ok {
-				t.Fatalf("buildWorkspaceTemplates did not return a configMap")
-				return
-			}
-			if len(cfgmap.Data) > 0 {
+			if len(tpls) > 0 {
 				dt := make(map[string]bool)
-				for k := range cfgmap.Data {
+				for k := range tpls {
 					dt[k] = true
 				}
 				act.Data = dt
