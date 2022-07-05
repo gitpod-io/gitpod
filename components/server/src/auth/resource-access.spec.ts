@@ -18,17 +18,21 @@ import {
     GuardedWorkspace,
     CompositeResourceAccessGuard,
     OwnerResourceGuard,
-    ResourceAccessGuard,
     GuardedResourceKind,
+    RepositoryResourceGuard,
+    SharedWorkspaceAccessGuard,
 } from "./resource-access";
-import { User, UserEnvVar, Workspace, WorkspaceType } from "@gitpod/gitpod-protocol/lib/protocol";
+import { PrebuiltWorkspace, User, UserEnvVar, Workspace, WorkspaceType } from "@gitpod/gitpod-protocol/lib/protocol";
 import { TeamMemberInfo, TeamMemberRole, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { HostContextProvider } from "./host-context-provider";
 
-class MockedRepositoryResourceGuard implements ResourceAccessGuard {
-    constructor(protected response: boolean) {}
+class MockedRepositoryResourceGuard extends RepositoryResourceGuard {
+    constructor(protected repositoryAccess: boolean) {
+        super({} as User, {} as HostContextProvider);
+    }
 
-    async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
-        return this.response;
+    protected async hasAccessToRepos(workspace: Workspace): Promise<boolean> {
+        return this.repositoryAccess;
     }
 }
 
@@ -588,6 +592,17 @@ class TestResourceAccess {
                 workspaceImage: "gitpod/workspace-full:latest",
             };
         };
+        const createPrebuild = (): PrebuiltWorkspace => {
+            return {
+                id: "pws-123",
+                buildWorkspaceId: workspaceId,
+                cloneURL: "https://github.com/gitpod-io/gitpod",
+                commit: "sha123123213",
+                creationTime: new Date(2000, 1, 2).toISOString(),
+                state: "available",
+                statusVersion: 1,
+            };
+        };
 
         const tests: {
             name: string;
@@ -911,6 +926,7 @@ class TestResourceAccess {
             const resourceGuard = new CompositeResourceAccessGuard([
                 new OwnerResourceGuard(user.id),
                 new TeamMemberResourceGuard(user.id),
+                new SharedWorkspaceAccessGuard(),
                 new MockedRepositoryResourceGuard(!!t.repositoryAccess),
             ]);
             const teamMembers: TeamMemberInfo[] = [];
@@ -922,7 +938,7 @@ class TestResourceAccess {
                 });
             }
 
-            const kind: GuardedResourceKind = "workspaceInstance";
+            const kind: GuardedResourceKind = t.resourceKind;
             let resource: GuardedResource | undefined = undefined;
             if (kind === "workspaceInstance") {
                 const instance = createInstance();
@@ -931,6 +947,12 @@ class TestResourceAccess {
                 resource = { kind, subject: workspace, teamMembers };
             } else if (kind === "workspace") {
                 resource = { kind, subject: workspace, teamMembers };
+            } else if (kind === "prebuild") {
+                if (workspace.type !== "prebuild") {
+                    throw new Error("invalid test data: PWS requires workspace to be of type prebuild!");
+                }
+                const prebuild = createPrebuild();
+                resource = { kind, subject: prebuild, workspace, teamMembers };
             }
             if (!resource) {
                 throw new Error("unhandled GuardedResourceKind" + kind);
