@@ -7,8 +7,8 @@ metadata:
     app: gitpod
     component: payment-endpoint
 subjects:
-- kind: ServiceAccount
-  name: payment-endpoint
+  - kind: ServiceAccount
+    name: payment-endpoint
 roleRef:
   kind: ClusterRole
   name: ${NAMESPACE}-ns-psp:unprivileged
