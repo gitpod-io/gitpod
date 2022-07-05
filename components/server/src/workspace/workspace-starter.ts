@@ -19,6 +19,7 @@ import {
     DBUser,
     DBWithTracing,
     ProjectDB,
+    TeamDB,
     TracedUserDB,
     TracedWorkspaceDB,
     UserDB,
@@ -208,6 +209,7 @@ export class WorkspaceStarter {
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(ContextParser) protected contextParser: ContextParser;
     @inject(BlockedRepositoryDB) protected readonly blockedRepositoryDB: BlockedRepositoryDB;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -1725,15 +1727,22 @@ export class WorkspaceStarter {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
+        const teams = await this.teamDB.findTeamsByUser(user.id);
         const isMovedImageBuilder = await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", false, {
-            userId: user.id,
+            user,
             projectId: workspace.projectId,
+            teams,
         });
+        log.info(
+            { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
+            "image-builder in workspace cluster?",
+            {
+                userId: user.id,
+                projectId: workspace.projectId,
+                isMovedImageBuilder,
+            },
+        );
         if (isMovedImageBuilder) {
-            log.info(
-                { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
-                "Used image-builder in workspace cluster",
-            );
             return this.wsClusterImageBuilderClientProvider.getClient(user, workspace, instance);
         } else {
             return this.imagebuilderClientProvider.getClient(user, workspace, instance);
