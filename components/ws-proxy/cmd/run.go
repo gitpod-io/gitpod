@@ -110,9 +110,10 @@ var runCmd = &cobra.Command{
 				dialOption = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
 			}
 
-			dialctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			conn, err := grpc.DialContext(dialctx, wsm.Addr, dialOption, grpc.WithBlock())
-			cancel()
+			grpcOpts := common_grpc.DefaultClientOptions()
+			grpcOpts = append(grpcOpts, dialOption)
+
+			conn, err := grpc.Dial(wsm.Addr, grpcOpts...)
 			if err != nil {
 				log.WithError(err).Fatal("cannot connect to ws-manager")
 			}
