@@ -489,7 +489,14 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
                 if (workspace.type !== "prebuild") {
                     return false;
                 }
-                // We're only allowed to access prebuild workspaces with the repository guard
+                // We're only allowed to access prebuild workspaces with this repository guard
+                break;
+            case "workspaceInstance":
+                workspace = resource.workspace;
+                if (workspace.type !== "prebuild") {
+                    return false;
+                }
+                // We're only allowed to access prebuild workspace instances with thi repository guard
                 break;
             case "workspaceLog":
                 workspace = resource.subject;
