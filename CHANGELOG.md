@@ -1,6 +1,8 @@
 # Change Log
 
 ## July 2022
+- Improve system call handling ([#11082](https://github.com/gitpod-io/gitpod/pull/11082)) - [@utam0k](https://github.com/utam0k)
+- Requests on ws-proxy now contain also the `X-Forwarded-Port` header. ([#11110](https://github.com/gitpod-io/gitpod/pull/11110)) - [@felladrin](https://github.com/felladrin)
 - fix the start-workspace flow for when a prebuild got auto-cancelled ([#11083](https://github.com/gitpod-io/gitpod/pull/11083)) - [@geropl](https://github.com/geropl)
 - fix prebuild permissions ([#11074](https://github.com/gitpod-io/gitpod/pull/11074)) - [@geropl](https://github.com/geropl)
 - [ws-proxy] not use target host when serve workspace port route ([#11072](https://github.com/gitpod-io/gitpod/pull/11072)) - [@iQQBot](https://github.com/iQQBot)
