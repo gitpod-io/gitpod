@@ -133,6 +133,8 @@ func runWithinNetns() (err error) {
 	// configure docker0 MTU (used as control plane, not related to containers)
 	args = append(args, fmt.Sprintf("--network-control-plane-mtu=%v", netIface.Attrs().MTU))
 
+	args = append(args, "--default-cgroupns-mode=private")
+
 	if listenFDs > 0 {
 		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
 		args = append(args, "-H", "fd://")
