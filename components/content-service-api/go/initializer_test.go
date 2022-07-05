@@ -100,6 +100,9 @@ func TestGetCheckoutLocationsFromInitializer(t *testing.T) {
 			},
 			Expectation: "/foo,/bar",
 		},
+		{
+			Name: "nil initializer",
+		},
 	}
 
 	for _, test := range tests {
