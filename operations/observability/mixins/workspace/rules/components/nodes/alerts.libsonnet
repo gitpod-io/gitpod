@@ -34,6 +34,20 @@
             },
             expr: '((sum(cluster_autoscaler_nodes_count) by (cluster)) - (sum(cluster_autoscaler_nodes_count offset 10m) by (cluster))) > 15',
           },
+          {
+            alert: 'AutoscaleFailure',
+            labels: {
+              severity: 'critical',
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/AutoscaleFailure.md',
+              summary: "Automatic scale-up failed for some reason.",
+              description: 'Automatic scale-up failed for some reason.',
+            },
+            expr: |||
+              increase(cluster_autoscaler_failed_scale_ups_total[1m]) != 0
+            |||,
+          },
         ],
       },
     ],
