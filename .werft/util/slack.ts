@@ -51,14 +51,14 @@ export function reportBuildFailureInSlack(context, err: Error): Promise<void> {
     });
 }
 
-export function reportCertificateError(options: { certificateName: string; certifiateYAML: string }): Promise<void> {
+export function reportCertificateError(options: { certificateName: string; certifiateYAML: string, certificateDebug: string }): Promise<void> {
     const data = JSON.stringify({
         blocks: [
             {
                 type: "section",
                 text: {
                     type: "mrkdwn",
-                    text: `A build failed because the certificate ${options.certificateName} never reached the Ready state. @team-platform please investigate using our [Debugging certificate issues guide](https://www.notion.so/gitpod/Debugging-certificate-issues-9453d1c8ac914ce7962557b67f7b49b3) :hug:`,
+                    text: `A build failed because the certificate ${options.certificateName} never reached the Ready state. @ask-platform please investigate using our [Debugging certificate issues guide](https://www.notion.so/gitpod/Debugging-certificate-issues-9453d1c8ac914ce7962557b67f7b49b3) :hug:`,
                 },
             },
             {
@@ -66,6 +66,13 @@ export function reportCertificateError(options: { certificateName: string; certi
                 text: {
                     type: "mrkdwn",
                     text: "```\n" + options.certifiateYAML + "\n```",
+                },
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "```\n" + options.certificateDebug + "\n```",
                 },
             },
         ],
