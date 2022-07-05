@@ -69,6 +69,12 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		&cgroup.FuseDeviceEnablerV2{},
 		cgroupV1IOLimiter,
 		cgroupV2IOLimiter,
+		&cgroup.ProcessPriorityV2{
+			ProcessPriorities: map[cgroup.ProcessType]int{
+				cgroup.ProcessSupervisor: -10,
+				cgroup.ProcessIDE:        -5,
+			},
+		},
 	)
 	if err != nil {
 		return nil, err
