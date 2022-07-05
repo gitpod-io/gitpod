@@ -1,110 +1,111 @@
 # debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/run-sh-upgrade-tests-gke.yaml -a debug=true`
 args:
-- name: fromVersion
-  desc: "The version from which you want to test upgrading to the latest"
-  required: true
-- name: channel
-  desc: "Replicated channel to use"
-  required: false
+  - name: fromVersion
+    desc: "The version from which you want to test upgrading to the latest"
+    required: true
+  - name: channel
+    desc: "Replicated channel to use"
+    required: false
 pod:
   serviceAccount: werft
   nodeSelector:
     dev/workload: builds
   imagePullSecrets:
-  - name: eu-gcr-io-pull-secret
+    - name: eu-gcr-io-pull-secret
   volumes:
-  - name: gcp-sa
-    secret:
-      secretName: gcp-sa-gitpod-dev-deployer
-  - name: config
-    emptyDir: {}
-  - name: sh-playground-sa-perm
-    secret:
-      secretName: sh-playground-sa-perm
-  - name: sh-playground-dns-perm
-    secret:
-      secretName: sh-playground-dns-perm
-  initContainers:
-  - name: gcloud
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-gh-cli-to-dev-image.0
-    workingDir: /workspace
-    imagePullPolicy: IfNotPresent
-    volumeMounts:
     - name: gcp-sa
-      mountPath: /mnt/secrets/gcp-sa
-      readOnly: true
+      secret:
+        secretName: gcp-sa-gitpod-dev-deployer
     - name: config
-      mountPath: /config
-      readOnly: false
-    command:
-    - bash
-    - -c
-    - |
+      emptyDir: {}
+    - name: sh-playground-sa-perm
+      secret:
+        secretName: sh-playground-sa-perm
+    - name: sh-playground-dns-perm
+      secret:
+        secretName: sh-playground-dns-perm
+  initContainers:
+    - name: gcloud
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-gh-cli-to-dev-image.0
+      workingDir: /workspace
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - name: gcp-sa
+          mountPath: /mnt/secrets/gcp-sa
+          readOnly: true
+        - name: config
+          mountPath: /config
+          readOnly: false
+      command:
+        - bash
+        - -c
+        - |
 
-      echo "[prep] preparing config."
+          echo "[prep] preparing config."
 
-      gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
-      cp -R /home/gitpod/.config/gcloud /config/gcloud
-      cp /home/gitpod/.kube/config /config/kubeconfig
+          gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
+          cp -R /home/gitpod/.config/gcloud /config/gcloud
+          cp /home/gitpod/.kube/config /config/kubeconfig
 
-      echo "[prep] copied config..."
+          echo "[prep] copied config..."
 
   securityContext:
     runAsUser: 0
   containers:
-  - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-gh-cli-to-dev-image.0
-    workingDir: /workspace
-    imagePullPolicy: Always
-    volumeMounts:
-    - name: sh-playground-sa-perm
-      mountPath: /mnt/secrets/sh-playground-sa-perm
-    - name: sh-playground-dns-perm # this sa is used for the DNS management
-      mountPath: /mnt/secrets/sh-playground-dns-perm
-    env:
-    - name: config
-      mountPath: /config
-      readOnly: false
-    - name: WERFT_HOST
-      value: "werft.werft.svc.cluster.local:7777"
-    - name: GOOGLE_APPLICATION_CREDENTIALS
-      value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
-    - name: TF_VAR_sa_creds
-      value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
-    - name: TF_VAR_dns_sa_creds
-      value: "/mnt/secrets/sh-playground-dns-perm/sh-dns-sa.json"
-    - name: WERFT_K8S_NAMESPACE
-      value: "werft"
-    - name: WERFT_K8S_LABEL
-      value: "component=werft"
-    - name: NODENAME
-      valueFrom:
-        fieldRef:
-          fieldPath: spec.nodeName
-    command:
-      - bash
-      - -c
-      - |
-        sleep 1
-        set -Eeuo pipefail
+    - name: nightly-test
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-gh-cli-to-dev-image.0
+      workingDir: /workspace
+      imagePullPolicy: Always
+      volumeMounts:
+        - name: sh-playground-sa-perm
+          mountPath: /mnt/secrets/sh-playground-sa-perm
+        - name: sh-playground-dns-perm # this sa is used for the DNS management
+          mountPath: /mnt/secrets/sh-playground-dns-perm
+      env:
+        - name: config
+          mountPath: /config
+          readOnly: false
+        - name: WERFT_HOST
+          value: "werft.werft.svc.cluster.local:7777"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
+        - name: TF_VAR_sa_creds
+          value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
+        - name: TF_VAR_dns_sa_creds
+          value: "/mnt/secrets/sh-playground-dns-perm/sh-dns-sa.json"
+        - name: WERFT_K8S_NAMESPACE
+          value: "werft"
+        - name: WERFT_K8S_LABEL
+          value: "component=werft"
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+      command:
+        - bash
+        - -c
+        - |
+          sleep 1
+          set -Eeuo pipefail
 
-        sudo chown -R gitpod:gitpod /workspace
-        sudo apt update && apt install gettext-base
-        export WERFT_CREDENTIAL_HELPER=/workspace/dev/preview/werft-credential-helper.sh
+          sudo chown -R gitpod:gitpod /workspace
+          sudo apt update && apt install gettext-base
+          export WERFT_CREDENTIAL_HELPER=/workspace/dev/preview/werft-credential-helper.sh
 
-        export TF_VAR_TEST_ID=$(echo $RANDOM | md5sum | head -c 5; echo)
+          export TF_VAR_TEST_ID=$(echo $RANDOM | md5sum | head -c 5; echo)
 
-        (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
-        printf '{{ toJson . }}' > context.json
+          (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
+          printf '{{ toJson . }}' > context.json
 
-        FROM_VERSION="{{ .Annotations.fromVersion }}"
+          FROM_VERSION="{{ .Annotations.fromVersion }}"
 
-        export CHANNEL="{{ .Annotations.channel }}"
-        if [[ "$CHANNEL" == "<no value>" ]]; then
-          CHANNEL="beta"
-        fi
+          export CHANNEL="{{ .Annotations.channel }}"
+          if [[ "$CHANNEL" == "<no value>" ]]; then
+            CHANNEL="beta"
+          fi
 
-        npx ts-node .werft/installer-tests.ts "STANDARD_GKE_UPGRADE_TEST" ${FROM_VERSION} ${CHANNEL}
+          npx ts-node .werft/installer-tests.ts "STANDARD_GKE_UPGRADE_TEST" ${FROM_VERSION} ${CHANNEL}
+
 # The bit below makes this a cron job
 # plugins:
 #   cron: "15 4 * * *"
