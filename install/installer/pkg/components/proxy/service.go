@@ -22,7 +22,6 @@ var allowedServiceTypes = map[corev1.ServiceType]struct{}{
 }
 
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
-	serviceType := corev1.ServiceTypeLoadBalancer
 
 	loadBalancerIP := ""
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
@@ -30,16 +29,20 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 			if cfg.WebApp.ProxyConfig.StaticIP != "" {
 				loadBalancerIP = cfg.WebApp.ProxyConfig.StaticIP
 			}
-			st := cfg.WebApp.ProxyConfig.ServiceType
-			if st != nil {
-				_, allowed := allowedServiceTypes[corev1.ServiceType(*st)]
-				if allowed {
-					serviceType = *st
-				}
-			}
 		}
 		return nil
 	})
+
+	serviceType := corev1.ServiceTypeLoadBalancer
+	if ctx.Config.Components != nil && ctx.Config.Components.Proxy != nil && ctx.Config.Components.Proxy.Service != nil {
+		st := ctx.Config.Components.Proxy.Service.ServiceType
+		if st != nil {
+			_, allowed := allowedServiceTypes[corev1.ServiceType(*st)]
+			if allowed {
+				serviceType = *st
+			}
+		}
+	}
 
 	var annotations map[string]string
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
