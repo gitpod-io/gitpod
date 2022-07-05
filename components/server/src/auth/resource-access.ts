@@ -484,6 +484,13 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
         // Get Workspace from GuardedResource
         let workspace: Workspace;
         switch (resource.kind) {
+            case "workspace":
+                workspace = resource.subject;
+                if (workspace.type !== "prebuild") {
+                    return false;
+                }
+                // We're only allowed to access prebuild workspaces with the repository guard
+                break;
             case "workspaceLog":
                 workspace = resource.subject;
                 break;
