@@ -163,6 +163,8 @@ export class TeamMemberResourceGuard implements ResourceAccessGuard {
                 return await this.hasAccessToWorkspace(resource.workspace, resource.teamMembers);
             case "workspaceLog":
                 return await this.hasAccessToWorkspace(resource.subject, resource.teamMembers);
+            case "prebuild":
+                return !!resource.teamMembers?.some((m) => m.userId === this.userId);
         }
         return false;
     }
@@ -217,17 +219,9 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
                         return resource.members.some((m) => m.userId === this.userId && m.role === "owner");
                 }
             case "workspaceLog":
-                // Owners may do everything, team members can "get"
-                return (
-                    resource.subject.ownerId === this.userId ||
-                    (operation === "get" && !!resource.teamMembers?.some((m) => m.userId === this.userId))
-                );
+                return resource.subject.ownerId === this.userId;
             case "prebuild":
-                // Owners may do everything, team members can "get"
-                return (
-                    resource.workspace.ownerId === this.userId ||
-                    (operation === "get" && !!resource.teamMembers?.some((m) => m.userId === this.userId))
-                );
+                return resource.workspace.ownerId === this.userId;
         }
     }
 }
@@ -498,12 +492,17 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
                 break;
             case "prebuild":
                 workspace = resource.workspace;
+                break;
             default:
                 // We do not handle resource kinds here!
                 return false;
         }
 
         // Check if user has at least read access to the repository
+        return this.hasAccessToRepos(workspace);
+    }
+
+    protected async hasAccessToRepos(workspace: Workspace): Promise<boolean> {
         const repos: Repository[] = [];
         if (CommitContext.is(workspace.context)) {
             repos.push(workspace.context.repository);
