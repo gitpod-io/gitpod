@@ -885,6 +885,43 @@ class TestResourceAccess {
                 teamRole: "owner",
                 expectation: true,
             },
+            // prebuild instance with repo access
+            {
+                name: "prebuild workspaceInstance get owner",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: true,
+                teamRole: undefined,
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceInstance get other",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: undefined,
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceInstance get team member",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "member",
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceInstance get team owner (same as member)",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "owner",
+                repositoryAccess: true,
+                expectation: true,
+            },
             // prebuild
             {
                 name: "prebuild get owner",
