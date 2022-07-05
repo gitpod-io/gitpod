@@ -15,7 +15,7 @@ var minio embed.FS
 
 func Minio() *Chart {
 	return &Chart{
-		Name:     "Minio",
+		Name:     "minio",
 		Location: "minio/",
 		Content:  &minio,
 	}
