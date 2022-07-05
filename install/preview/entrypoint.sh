@@ -4,10 +4,6 @@
 
 set -e
 
-if [ "$1" != "logging" ]; then
-  $0 logging 2>&1 | /prettylog
-  exit
-fi
 
 # check for minimum requirements
 REQUIRED_MEM_KB=$((6 * 1024 * 1024))
@@ -149,6 +145,8 @@ run_telemetry(){
 # wait for the k3s cluster to be ready and Gitpod workloads are added
 run_telemetry 100 gitpod-telemetry-init 2>&1 &
 
+unset term_child_pid
+unset term_kill_needed
 # run telemetry on exit
 trap 'run_telemetry 0 gitpod-telemetry-exit 2>&1' EXIT INT HUP
 
@@ -157,4 +155,4 @@ trap 'run_telemetry 0 gitpod-telemetry-exit 2>&1' EXIT INT HUP
   --node-label gitpod.io/workload_ide=true \
   --node-label gitpod.io/workload_workspace_services=true \
   --node-label gitpod.io/workload_workspace_regular=true \
-  --node-label gitpod.io/workload_workspace_headless=true  2>&1 &
+  --node-label gitpod.io/workload_workspace_headless=true
