@@ -11,17 +11,31 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import getSettingsMenu from "./settings-menu";
 import ConfirmationModal from "../components/ConfirmationModal";
-import CodeText from "../components/CodeText";
 import { PaymentContext } from "../payment-context";
+import ProfileInformation, { ProfileState } from "./ProfileInformation";
 
 export default function Account() {
-    const { user } = useContext(UserContext);
+    const { user, setUser } = useContext(UserContext);
     const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
-
     const [modal, setModal] = useState(false);
+    const primaryEmail = User.getPrimaryEmail(user!) || "";
     const [typedEmail, setTypedEmail] = useState("");
+    const original = ProfileState.getProfileState(user!);
+    const [profileState, setProfileState] = useState(original);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [updated, setUpdated] = useState(false);
 
-    const primaryEmail = User.getPrimaryEmail(user!) || "---";
+    const saveProfileState = () => {
+        const error = ProfileState.validate(profileState);
+        setErrorMessage(error);
+        if (error) {
+            return;
+        }
+        const updatedUser = ProfileState.setProfileState(user!, profileState);
+        setUser(updatedUser);
+        getGitpodService().server.updateLoggedInUser(updatedUser);
+        setUpdated(true);
+    };
 
     const deleteAccount = async () => {
         await getGitpodService().server.deleteAccount();
@@ -61,30 +75,28 @@ export default function Account() {
                 subtitle="Manage account and Git configuration."
             >
                 <h3>Profile</h3>
-                <p className="text-base text-gray-500 pb-4 max-w-2xl">
-                    The following information will be used to set up Git configuration. You can override Git author name
-                    and email per project by using the default environment variables{" "}
-                    <CodeText>GIT_AUTHOR_NAME</CodeText>, <CodeText>GIT_COMMITTER_NAME</CodeText>,{" "}
-                    <CodeText>GIT_AUTHOR_EMAIL</CodeText> and <CodeText>GIT_COMMITTER_EMAIL</CodeText>.
-                </p>
-                <div className="flex flex-col lg:flex-row">
-                    <div>
-                        <div className="mt-4">
-                            <h4>Name</h4>
-                            <input type="text" disabled={true} value={user?.fullName || user?.name} />
+                <form
+                    onSubmit={(e) => {
+                        saveProfileState();
+                        e.preventDefault();
+                    }}
+                >
+                    <ProfileInformation
+                        profileState={profileState}
+                        setProfileState={(state) => {
+                            setProfileState(state);
+                            setUpdated(false);
+                        }}
+                        errorMessage={errorMessage}
+                        updated={updated}
+                    >
+                        <div className="flex flex-row mt-8">
+                            <button className="primary" onClick={saveProfileState}>
+                                Update Profile
+                            </button>
                         </div>
-                        <div className="mt-4">
-                            <h4>Email</h4>
-                            <input type="text" disabled={true} value={primaryEmail} />
-                        </div>
-                    </div>
-                    <div className="lg:pl-14">
-                        <div className="mt-4">
-                            <h4>Avatar</h4>
-                            <img className="rounded-full w-24 h-24" src={user!.avatarUrl} alt={user!.name} />
-                        </div>
-                    </div>
-                </div>
+                    </ProfileInformation>
+                </form>
                 <h3 className="mt-12">Delete Account</h3>
                 <p className="text-base text-gray-500 pb-4">
                     This action will remove all the data associated with your account in Gitpod.
