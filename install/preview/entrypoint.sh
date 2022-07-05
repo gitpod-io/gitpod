@@ -140,17 +140,17 @@ run_telemetry(){
   kubectl wait --timeout=-1s --for=condition=ready pod -l app=gitpod,component!=migrations
   # manually tun the cronjob
   kubectl create job "$2" --from=cronjob/gitpod-telemetry
+
+  sleep 100
 }
 
 # wait for the k3s cluster to be ready and Gitpod workloads are added
 run_telemetry 100 gitpod-telemetry-init 2>&1 &
 
-unset term_child_pid
-unset term_kill_needed
 # run telemetry on exit
 trap 'run_telemetry 0 gitpod-telemetry-exit 2>&1' EXIT INT HUP
 
-/bin/k3s server --disable traefik \
+exec /bin/k3s server --disable traefik \
   --node-label gitpod.io/workload_meta=true \
   --node-label gitpod.io/workload_ide=true \
   --node-label gitpod.io/workload_workspace_services=true \
