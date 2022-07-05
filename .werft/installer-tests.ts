@@ -267,7 +267,6 @@ function callMakeTargets(phase: string, description: string, makeTarget: string)
     werft.done(phase);
 
     return response.code;
-
 }
 
 function randomize(resource: string, platform: string): string {

@@ -97,15 +97,15 @@ export class MonitoringSatelliteInstaller {
             },
         }" \
         monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
-        find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
+        find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`;
 
         werft.log(sliceName, "rendering YAML files");
         exec(jsonnetRenderCmd, { silent: true });
         this.postProcessManifests();
 
-        this.ensureCorrectInstallationOrder()
+        this.ensureCorrectInstallationOrder();
         this.deployGitpodServiceMonitors();
-        await this.waitForReadiness()
+        await this.waitForReadiness();
     }
 
     private ensureCorrectInstallationOrder() {

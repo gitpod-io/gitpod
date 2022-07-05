@@ -100,7 +100,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         repository.branch = repository.branch.substring(refsPrefix.length);
     }
 
-    const previewName = previewNameFromBranchName(repository.branch)
+    const previewName = previewNameFromBranchName(repository.branch);
     const previewEnvironmentNamespace = `default`;
     const previewEnvironment = {
         destname: previewName,

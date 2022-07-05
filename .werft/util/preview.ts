@@ -21,12 +21,15 @@ export function previewNameFromBranchName(branchName: string): string {
     // environment.
     //
     // see https://github.com/gitpod-io/ops/issues/1252 for details.
-    const sanitizedBranchName = branchName.replace(/^refs\/heads\//, "").toLocaleLowerCase().replace(/[^-a-z0-9]/g, "-")
+    const sanitizedBranchName = branchName
+        .replace(/^refs\/heads\//, "")
+        .toLocaleLowerCase()
+        .replace(/[^-a-z0-9]/g, "-");
 
     if (sanitizedBranchName.length <= 20) {
-        return sanitizedBranchName
+        return sanitizedBranchName;
     }
 
-    const hashed = createHash('sha256').update(sanitizedBranchName).digest('hex')
-    return `${sanitizedBranchName.substring(0, 10)}${hashed.substring(0,10)}`
+    const hashed = createHash("sha256").update(sanitizedBranchName).digest("hex");
+    return `${sanitizedBranchName.substring(0, 10)}${hashed.substring(0, 10)}`;
 }
