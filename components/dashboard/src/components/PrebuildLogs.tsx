@@ -32,60 +32,75 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
     const [logsEmitter] = useState(new EventEmitter());
     const [prebuild, setPrebuild] = useState<PrebuildWithStatus | undefined>();
 
+    function handlePrebuildUpdate(prebuild: PrebuildWithStatus) {
+        if (prebuild.info.buildWorkspaceId === props.workspaceId) {
+            setPrebuild(prebuild);
+
+            // In case the Prebuild got "aborted" or "time(d)out" we want to user to proceed anyway
+            if (props.onIgnorePrebuild && (prebuild.status === "aborted" || prebuild.status === "timeout")) {
+                props.onIgnorePrebuild();
+            }
+            // TODO(gpl) We likely want to move the "happy path" logic (for status "available")
+            // here as well at some point. For that to work we need a "registerPrebuildUpdate(prebuildId)" API
+        }
+    }
+
     useEffect(() => {
         const disposables = new DisposableCollection();
-        setWorkspaceInstance(undefined);
         (async () => {
             if (!props.workspaceId) {
                 return;
             }
+            setWorkspaceInstance(undefined);
+            setPrebuild(undefined);
+
+            // Try get hold of a recent WorkspaceInfo
             try {
                 const info = await getGitpodService().server.getWorkspace(props.workspaceId);
-                const pbws = await getGitpodService().server.findPrebuildByWorkspaceID(props.workspaceId);
-                if (info.latestInstance) {
-                    setWorkspaceInstance(info.latestInstance);
-                }
-                if (pbws) {
-                    const foundPrebuild = await getGitpodService().server.getPrebuild(pbws.id);
-                    setPrebuild(foundPrebuild);
-                }
-                disposables.push(
-                    getGitpodService().registerClient({
-                        onInstanceUpdate: (instance) => {
-                            if (props.workspaceId === instance.workspaceId) {
-                                setWorkspaceInstance(instance);
-                            }
-                        },
-                        onWorkspaceImageBuildLogs: (
-                            info: WorkspaceImageBuild.StateInfo,
-                            content?: WorkspaceImageBuild.LogContent,
-                        ) => {
-                            if (!content) {
-                                return;
-                            }
-                            logsEmitter.emit("logs", content.text);
-                        },
-                        onPrebuildUpdate(update: PrebuildWithStatus) {
-                            if (update.info && update.info.buildWorkspaceId === props.workspaceId) {
-                                setPrebuild(update);
-
-                                // In case the Prebuild got "aborted" or "time(d)out" we want to user to proceed anyway
-                                if (
-                                    props.onIgnorePrebuild &&
-                                    (update.status === "aborted" || update.status === "timeout")
-                                ) {
-                                    props.onIgnorePrebuild();
-                                }
-                                // TODO(gpl) We likely want to move the "happy path" logic (for status "available")
-                                // here as well at some point. For that to work we need a "registerPrebuildUpdate(prebuildId)" API
-                            }
-                        },
-                    }),
-                );
+                setWorkspaceInstance(info?.latestInstance);
             } catch (err) {
                 console.error(err);
                 setError(err);
             }
+
+            // Try get hold of a recent Prebuild
+            try {
+                const pbws = await getGitpodService().server.findPrebuildByWorkspaceID(props.workspaceId);
+                if (pbws) {
+                    const foundPrebuild = await getGitpodService().server.getPrebuild(pbws.id);
+                    if (foundPrebuild) {
+                        handlePrebuildUpdate(foundPrebuild);
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                setError(err);
+            }
+
+            // Register for future updates
+            disposables.push(
+                getGitpodService().registerClient({
+                    onInstanceUpdate: (instance) => {
+                        if (props.workspaceId === instance.workspaceId) {
+                            setWorkspaceInstance(instance);
+                        }
+                    },
+                    onWorkspaceImageBuildLogs: (
+                        info: WorkspaceImageBuild.StateInfo,
+                        content?: WorkspaceImageBuild.LogContent,
+                    ) => {
+                        if (!content) {
+                            return;
+                        }
+                        logsEmitter.emit("logs", content.text);
+                    },
+                    onPrebuildUpdate(update: PrebuildWithStatus) {
+                        if (update.info) {
+                            handlePrebuildUpdate(update);
+                        }
+                    },
+                }),
+            );
         })();
         return function cleanup() {
             disposables.dispose();
