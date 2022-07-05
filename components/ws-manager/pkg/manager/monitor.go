@@ -847,25 +847,11 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 
 	_, isBackup := initializer.Spec.(*csapi.WorkspaceInitializer_Backup)
 
-	if err != nil {
-		if isBackup {
-			c, cErr := m.manager.metrics.totalRestoreFailureCounterVec.GetMetricWithLabelValues(wsType, wsClass)
-			if cErr != nil {
-				log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore failure counter")
-			} else {
-				c.Inc()
-			}
-		}
-
-		return xerrors.Errorf("cannot initialize workspace: %w", err)
-	}
-
 	if isBackup {
-		c, cErr := m.manager.metrics.totalRestoreSuccessCounterVec.GetMetricWithLabelValues(wsType, wsClass)
-		if cErr != nil {
-			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore success counter")
-		} else {
-			c.Inc()
+		m.manager.metrics.totalRestoreCounterVec.WithLabelValues(wsType, wsClass).Inc()
+		if err != nil {
+			m.manager.metrics.totalRestoreFailureCounterVec.WithLabelValues(wsType, wsClass).Inc()
+			return xerrors.Errorf("cannot initialize workspace: %w", err)
 		}
 	}
 	return nil
@@ -1244,13 +1230,13 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		BackupComplete: true,
 		GitStatus:      gitStatus,
 	}
+
+	if doBackup || doSnapshot {
+		m.manager.metrics.totalBackupCounterVec.WithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel]).Inc()
+	}
+
 	if backupError != nil {
-		c, cErr := m.manager.metrics.totalBackupFailureCounterVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
-		if cErr != nil {
-			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace backup failure metric")
-		} else {
-			c.Inc()
-		}
+		m.manager.metrics.totalBackupFailureCounterVec.WithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel]).Inc()
 
 		if dataloss {
 			disposalStatus.BackupFailure = backupError.Error()
@@ -1259,13 +1245,6 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			// state management or cleanup. No need to worry the user.
 			log.WithError(backupError).WithFields(wso.GetOWI()).Warn("internal error while disposing workspace content")
 			tracing.LogError(span, backupError)
-		}
-	} else {
-		c, cErr := m.manager.metrics.totalBackupSuccessCounterVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
-		if cErr != nil {
-			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace backup success counter")
-		} else {
-			c.Inc()
 		}
 	}
 }
