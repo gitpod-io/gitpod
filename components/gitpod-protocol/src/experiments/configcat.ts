@@ -9,6 +9,7 @@ import { User as ConfigCatUser } from "configcat-common/lib/RolloutEvaluator";
 import { IConfigCatClient } from "configcat-common/lib/ConfigCatClient";
 import { User } from "../protocol";
 
+export const USER_ID_ATTRIBUTE = "user_id";
 export const PROJECT_ID_ATTRIBUTE = "project_id";
 export const TEAM_ID_ATTRIBUTE = "team_id";
 export const TEAM_IDS_ATTRIBUTE = "team_ids";
@@ -36,6 +37,9 @@ export function attributesToUser(attributes: Attributes): ConfigCatUser {
     const email = User.is(attributes.user) ? User.getPrimaryEmail(attributes.user) : attributes.user?.email || "";
 
     const custom: { [key: string]: string } = {};
+    if (userId) {
+        custom[USER_ID_ATTRIBUTE] = userId;
+    }
     if (attributes.projectId) {
         custom[PROJECT_ID_ATTRIBUTE] = attributes.projectId;
     }
