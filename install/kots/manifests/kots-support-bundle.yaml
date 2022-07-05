@@ -76,6 +76,27 @@ spec:
             fi
 
             echo "connection: ${CONNECTION}"
+    - run:
+        collectorName: gitpod-config
+        image: eu.gcr.io/gitpod-core-dev/build/installer:sje-installer-clusterip.8
+        name: gitpod-config
+        serviceAccountName: installer
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - |
+            set -e
+
+            kubectl get configmaps -n gitpod gitpod-kots-config -o jsonpath='{.data.config\.yaml}' > /tmp/config
+
+            if [ '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}' = "true" ];
+            then
+              kubectl get configmaps -n gitpod gitpod-kots-config -o jsonpath='{.data.gitpod-config-patch\.yaml}' | base64 -d > /tmp/patch.yaml
+              yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' /tmp/config /tmp/patch.yaml
+            fi
+
+            /app/installer validate config --config /tmp/config
     - clusterInfo: {}
     - clusterResources: {}
     - logs:
