@@ -2,30 +2,28 @@ affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
-      - matchExpressions:
-        - key: workload/meta
-          operator: Exists
+        - matchExpressions:
+            - key: workload/meta
+              operator: Exists
 
 components:
-
   wsDaemon:
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
-          - matchExpressions:
-            - key: gitpod.io/workspace_4
-              operator: Exists
+            - matchExpressions:
+                - key: gitpod.io/workspace_4
+                  operator: Exists
 
   registryFacade:
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
-          - matchExpressions:
-            - key: gitpod.io/workspace_4
-              operator: Exists
-
+            - matchExpressions:
+                - key: gitpod.io/workspace_4
+                  operator: Exists
 
   workspace:
     affinity:
@@ -38,9 +36,9 @@ rabbitmq:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
-        - matchExpressions:
-          - key: workload/meta
-            operator: Exists
+          - matchExpressions:
+              - key: workload/meta
+                operator: Exists
 
 mysql:
   primary:
@@ -48,15 +46,15 @@ mysql:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
-          - matchExpressions:
-            - key: workload/meta
-              operator: Exists
+            - matchExpressions:
+                - key: workload/meta
+                  operator: Exists
 
 minio:
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
-        - matchExpressions:
-          - key: workload/meta
-            operator: Exists
+          - matchExpressions:
+              - key: workload/meta
+                operator: Exists

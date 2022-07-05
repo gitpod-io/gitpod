@@ -8,10 +8,10 @@ metadata:
   namespace: ${NAMESPACE}
 spec:
   ports:
-  - name: http
-    port: 3002
-    protocol: TCP
-    targetPort: 3002
+    - name: http
+      port: 3002
+      protocol: TCP
+      targetPort: 3002
   selector:
     app: gitpod
     component: payment-endpoint
