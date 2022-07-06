@@ -5,7 +5,8 @@
  */
 
 import { BlockedRepository } from "@gitpod/gitpod-protocol/src/blocked-repositories-protocol";
-import { Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
+import { Transformer } from "../transformer";
 
 @Entity()
 export class DBBlockedRepository implements BlockedRepository {
@@ -18,10 +19,20 @@ export class DBBlockedRepository implements BlockedRepository {
     @Column()
     blockUser: boolean;
 
-    @CreateDateColumn()
+    @Column({
+        type: "timestamp",
+        precision: 6,
+        default: () => "CURRENT_TIMESTAMP(6)",
+        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
+    })
     createdAt: string;
 
-    @UpdateDateColumn()
+    @Column({
+        type: "timestamp",
+        precision: 6,
+        default: () => "CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)",
+        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
+    })
     updatedAt: string;
 
     // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
