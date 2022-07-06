@@ -343,7 +343,6 @@ func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvi
 		image, path := segments[0], segments[1]
 
 		req.URL.Path = path
-		req.Header.Add("X-BlobServe-ReadOnly", "true")
 
 		var dst url.URL
 		dst.Scheme = cfg.BlobServer.Scheme
