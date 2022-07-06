@@ -45,6 +45,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ControlPeriod:  util.Duration(15 * time.Second),
 	}
 	var ioLimitConfig daemon.IOLimitConfig
+	runtimeMapping := make(map[string]string)
+	// default runtime mapping
+	runtimeMapping[ctx.Config.Workspace.Runtime.ContainerDRuntimeDir] = "/mnt/node0"
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil
@@ -60,6 +63,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ioLimitConfig.WriteIOPS = ucfg.Workspace.IOLimits.WriteIOPS
 		ioLimitConfig.ReadIOPS = ucfg.Workspace.IOLimits.ReadIOPS
 
+		if len(ucfg.Workspace.WSDaemon.Runtime.NodeToContainerMapping) > 0 {
+			// reset map
+			runtimeMapping = make(map[string]string)
+			for _, value := range ucfg.Workspace.WSDaemon.Runtime.NodeToContainerMapping {
+				runtimeMapping[value.Path] = value.Value
+			}
+		}
+
 		return nil
 	})
 
@@ -69,9 +80,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				KubernetesNamespace: ctx.Namespace,
 				Container: &container.Config{
 					Runtime: container.RuntimeContainerd,
-					Mapping: map[string]string{
-						ctx.Config.Workspace.Runtime.ContainerDRuntimeDir: "/mnt/node0",
-					},
+					Mapping: runtimeMapping,
 					Mounts: container.NodeMountsLookupConfig{
 						ProcLoc: "/mnt/mounts",
 					},

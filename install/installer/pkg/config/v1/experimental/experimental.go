@@ -42,6 +42,11 @@ type PodConfig struct {
 	Resources map[string]*corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
+type NodeToContainerMappingValues struct {
+	Path  string `json:"path"`
+	Value string `json:"value"`
+}
+
 type WorkspaceConfig struct {
 	Tracing *Tracing `json:"tracing,omitempty"`
 	Stage   string   `json:"stage"`
@@ -72,6 +77,12 @@ type WorkspaceConfig struct {
 			PasswordSecret string   `json:"passwordSecret"`
 		} `json:"redisCache"`
 	} `json:"registryFacade"`
+
+	WSDaemon struct {
+		Runtime struct {
+			NodeToContainerMapping []NodeToContainerMappingValues `json:"nodeToContainerMapping"`
+		} `json:"runtime"`
+	} `json:"wsDaemon"`
 
 	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
 }
