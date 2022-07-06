@@ -15,5 +15,5 @@ spec:
         value: "_json_key"
         data: "reg_username"
       reg_password:
-        value: "${GCP_KEY}"
+        value: ${GCP_KEY}
         data: "reg_password"
