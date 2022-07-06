@@ -100,6 +100,7 @@ export class UserDeletionService {
                 bitbucket_slug: "deleted-user",
                 email: "deleted-user",
                 full_name: "deleted-user",
+                name: "deleted-user",
             },
         });
     }
