@@ -72,7 +72,12 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		&cgroup.ProcessPriorityV2{
 			ProcessPriorities: map[cgroup.ProcessType]int{
 				cgroup.ProcessSupervisor: -10,
-				cgroup.ProcessIDE:        -5,
+
+				cgroup.ProcessIDE:          -10,
+				cgroup.ProcessWebIDEHelper: -5,
+
+				cgroup.ProcessCodeServer:       -10,
+				cgroup.ProcessCodeServerHelper: -5,
 			},
 		},
 	)

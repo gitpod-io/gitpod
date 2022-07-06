@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -30,6 +30,12 @@ const (
 	ProcessSupervisor ProcessType = "supervisor"
 	// ProcessIDE refers to node.js IDE process
 	ProcessIDE ProcessType = "ide"
+	// ProcessWebIDEHelper refers to VS Code Browser process
+	ProcessWebIDEHelper ProcessType = "ide-helper"
+	// ProcessCodeServer refers to VS Code Desktop IDE process
+	ProcessCodeServer ProcessType = "vscode-server"
+	// ProcessCodeServerHelper refers to VS Code Desktop child process
+	ProcessCodeServerHelper ProcessType = "vscode-server-helper"
 	// ProcessDefault referes to any process that is not one of the above
 	ProcessDefault ProcessType = "default"
 )
@@ -100,23 +106,34 @@ func (c *ProcessPriorityV2) Apply(ctx context.Context, basePath, cgroupPath stri
 	return nil
 }
 
+var (
+	vsCodeNodeRegex = regexp.MustCompile("/home/gitpod/.vscode-server/bin/.*/node")
+)
+
 func determineProcessType(p *process.Process) ProcessType {
 	cmd := extractCommand(p)
 	if len(cmd) == 0 {
 		return ProcessDefault
 	}
 
-	parent, err := p.Parent()
-	if err != nil {
-		return ProcessDefault
-	}
-
-	if strings.HasSuffix(cmd[0], "supervisor") && reflect.DeepEqual(extractCommand(parent), []string{"supervisor", "init"}) {
+	if strings.HasSuffix(cmd[0], "supervisor") {
 		return ProcessSupervisor
 	}
 
-	if strings.HasSuffix(cmd[0], "gitpod-code") && reflect.DeepEqual(extractCommand(parent), []string{"supervisor", "run"}) {
+	if strings.HasSuffix(cmd[0], "/bin/code-server") {
+		return ProcessCodeServer
+	}
+
+	if vsCodeNodeRegex.MatchString(cmd[0]) {
+		return ProcessCodeServerHelper
+	}
+
+	if strings.HasSuffix(cmd[0], "/ide/bin/gitpod-code") {
 		return ProcessIDE
+	}
+
+	if strings.HasSuffix(cmd[0], "/ide/node") {
+		return ProcessWebIDEHelper
 	}
 
 	return ProcessDefault
