@@ -15,48 +15,6 @@ import { UserContext } from "../user-context";
 import { isGitpodIo } from "../utils";
 
 export namespace ProfileState {
-    export interface ProfileState {
-        name: string;
-        email: string;
-        company?: string;
-        avatarURL?: string;
-    }
-
-    export function getProfileState(user: User): ProfileState {
-        return {
-            name: User.getName(user!) || "",
-            email: User.getPrimaryEmail(user!) || "",
-            company: user?.additionalData?.profile?.companyName,
-            avatarURL: user?.avatarUrl,
-        };
-    }
-
-    export function setProfileState(user: User, profileState: ProfileState): User {
-        user.fullName = profileState.name;
-        user.avatarUrl = profileState.avatarURL;
-
-        if (!user.additionalData) {
-            user.additionalData = {};
-        }
-        if (!user.additionalData.profile) {
-            user.additionalData.profile = {};
-        }
-        user.additionalData.profile.emailAddress = profileState.email;
-        user.additionalData.profile.companyName = profileState.company;
-        user.additionalData.profile.lastUpdatedDetailsNudge = new Date().toISOString();
-
-        return user;
-    }
-
-    export function hasChanges(before: ProfileState, after: ProfileState) {
-        return (
-            before.name !== after.name ||
-            before.email !== after.email ||
-            before.company !== after.company ||
-            before.avatarURL !== after.avatarURL
-        );
-    }
-
     function shouldNudgeForUpdate(user: User): boolean {
         if (!isGitpodIo()) {
             return false;
@@ -79,7 +37,7 @@ export namespace ProfileState {
      * @param state
      * @returns error message or empty string when valid
      */
-    export function validate(state: ProfileState): string {
+    export function validate(state: User.Profile): string {
         if (state.name.trim() === "") {
             return "Name must not be empty.";
         }
@@ -98,7 +56,7 @@ export namespace ProfileState {
 
     export function NudgeForProfileUpdateModal() {
         const { user, setUser } = useContext(UserContext);
-        const original = ProfileState.getProfileState(user!);
+        const original = User.getProfile(user!);
         const [profileState, setProfileState] = useState(original);
         const [errorMessage, setErrorMessage] = useState("");
         const [visible, setVisible] = useState(shouldNudgeForUpdate(user!));
@@ -109,7 +67,7 @@ export namespace ProfileState {
             if (error) {
                 return;
             }
-            const updatedUser = ProfileState.setProfileState(user!, profileState);
+            const updatedUser = User.setProfile(user!, profileState);
             setUser(updatedUser);
             getGitpodService().server.updateLoggedInUser(updatedUser);
             setVisible(shouldNudgeForUpdate(updatedUser!));
@@ -150,8 +108,8 @@ export namespace ProfileState {
 }
 
 export default function ProfileInformation(props: {
-    profileState: ProfileState.ProfileState;
-    setProfileState: (newState: ProfileState.ProfileState) => void;
+    profileState: User.Profile;
+    setProfileState: (newState: User.Profile) => void;
     errorMessage: string;
     updated: boolean;
     children?: React.ReactChild[] | React.ReactChild;
