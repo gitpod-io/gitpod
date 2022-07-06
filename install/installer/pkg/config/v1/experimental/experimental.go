@@ -12,6 +12,7 @@ package experimental
 
 import (
 	agentSmith "github.com/gitpod-io/gitpod/agent-smith/pkg/config"
+	"github.com/gitpod-io/gitpod/common-go/grpc"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -48,8 +49,13 @@ type NodeToContainerMappingValues struct {
 }
 
 type WorkspaceConfig struct {
-	Tracing *Tracing `json:"tracing,omitempty"`
-	Stage   string   `json:"stage"`
+	Tracing                  *Tracing `json:"tracing,omitempty"`
+	Stage                    string   `json:"stage,omitempty"`
+	SchedulerName            string   `json:"schedulerName,omitempty"`
+	HostURL                  string   `json:"hostURL,omitempty"`
+	WorkspaceClusterHost     string   `json:"workspaceClusterHost,omitempty"`
+	WorkspaceURLTemplate     string   `json:"workspaceURLTemplate,omitempty"`
+	WorkspacePortURLTemplate string   `json:"workspacePortURLTemplate,omitempty"`
 
 	CPULimits struct {
 		Enabled          bool              `json:"enabled"`
@@ -63,6 +69,8 @@ type WorkspaceConfig struct {
 		WriteIOPS        int64             `json:"writeIOPS"`
 		ReadIOPS         int64             `json:"readIOPS"`
 	} `json:"ioLimits"`
+
+	WSManagerRateLimits map[string]grpc.RateLimit `json:"wsManagerRateLimits,omitempty"`
 
 	RegistryFacade struct {
 		IPFSCache struct {
