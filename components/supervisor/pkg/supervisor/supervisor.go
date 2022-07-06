@@ -306,10 +306,10 @@ func Run(options ...RunOption) {
 
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
-	go startAndWatchIDE(ctx, cfg, &cfg.IDE, childProcEnvvars, &ideWG, ideReady, WebIDE)
+	go startAndWatchIDE(ctx, cfg, &cfg.IDE, childProcEnvvars, &ideWG, cstate, ideReady, WebIDE)
 	if cfg.DesktopIDE != nil {
 		ideWG.Add(1)
-		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, childProcEnvvars, &ideWG, desktopIdeReady, DesktopIDE)
+		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, childProcEnvvars, &ideWG, cstate, desktopIdeReady, DesktopIDE)
 	}
 
 	var (
@@ -725,7 +725,7 @@ var (
 	errSignalTerminated = errors.New("signal: terminated")
 )
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, ideReady *ideReadyState, ide IDEKind) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind) {
 	defer wg.Done()
 	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
 
@@ -733,6 +733,9 @@ func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, ch
 		ideReady.Set(true, nil)
 		return
 	}
+
+	// Wait until content ready to launch IDE
+	<-cstate.ContentReady()
 
 	ideStatus := statusNeverRan
 

@@ -68,13 +68,11 @@ func main() {
 		return
 	}
 
-	// wait until content ready
-	contentStatus, wsInfo, err := resolveWorkspaceInfo(context.Background())
-	if err != nil || wsInfo == nil || contentStatus == nil || !contentStatus.Available {
-		log.WithError(err).WithField("wsInfo", wsInfo).WithField("cstate", contentStatus).Error("resolve workspace info failed")
+	wsInfo, err := resolveWorkspaceInfo(context.Background())
+	if err != nil || wsInfo == nil {
+		log.WithError(err).WithField("wsInfo", wsInfo).Error("resolve workspace info failed")
 		return
 	}
-	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("content available")
 
 	repoRoot := wsInfo.GetCheckoutLocation()
 	gitpodConfig, err := parseGitpodConfig(repoRoot)
@@ -218,8 +216,8 @@ func terminateIDE(backendPort string) error {
 	return nil
 }
 
-func resolveWorkspaceInfo(ctx context.Context) (*supervisor.ContentStatusResponse, *supervisor.WorkspaceInfoResponse, error) {
-	resolve := func(ctx context.Context) (contentStatus *supervisor.ContentStatusResponse, wsInfo *supervisor.WorkspaceInfoResponse, err error) {
+func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
+	resolve := func(ctx context.Context) (wsInfo *supervisor.WorkspaceInfoResponse, err error) {
 		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
 		if supervisorAddr == "" {
 			supervisorAddr = "localhost:22999"
@@ -234,22 +232,18 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.ContentStatusRespons
 			err = errors.New("get workspace info failed: " + err.Error())
 			return
 		}
-		contentStatus, err = supervisor.NewStatusServiceClient(supervisorConn).ContentStatus(ctx, &supervisor.ContentStatusRequest{Wait: true})
-		if err != nil {
-			err = errors.New("get content available failed: " + err.Error())
-		}
 		return
 	}
 	// try resolve workspace info 10 times
 	for attempt := 0; attempt < 10; attempt++ {
-		if contentStatus, wsInfo, err := resolve(ctx); err != nil {
+		if wsInfo, err := resolve(ctx); err != nil {
 			log.WithError(err).Error("resolve workspace info failed")
 			time.Sleep(1 * time.Second)
 		} else {
-			return contentStatus, wsInfo, err
+			return wsInfo, err
 		}
 	}
-	return nil, nil, errors.New("failed with attempt 10 times")
+	return nil, errors.New("failed with attempt 10 times")
 }
 
 func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string) {
