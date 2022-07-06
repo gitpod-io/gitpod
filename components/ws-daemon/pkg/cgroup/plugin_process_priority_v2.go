@@ -132,6 +132,10 @@ func extractCommand(p *process.Process) []string {
 		return []string{}
 	}
 
+	if len(cmdLine) == 0 {
+		return []string{}
+	}
+
 	cmd := cmdLine[0]
 	if cmd == "/bin/bash" || cmd == "sh" {
 		return cmdLine[1:]
