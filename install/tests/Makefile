@@ -110,7 +110,7 @@ storage-config-gcp:
 	yq m -i tmp_config.yml tmp_2_config.yml
 
 registry-config-gcp:
-	export GCP_KEY=$$(cat $$TF_VAR_sa_creds | tr -d '\n') && \
+	export GCP_KEY=$$(cat $$TF_VAR_sa_creds | tr -d '\n' | jq -Rsa .) && \
 	envsubst < ./manifests/kots-config-gcp-registry.yaml > tmp_4_config.yml
 	yq m -i tmp_config.yml tmp_4_config.yml
 
@@ -207,8 +207,12 @@ kots-install: install-kots-cli
                     --no-port-forward \
                     --config-values tmp_config.yml
 
+time_to_sleep_azure := 600 # azure seem to take more time to fullfil DNS propogation
+time_to_sleep := 300
+
+delete-cm-setup: sleeptime=$(if $(time_to_sleep_$(cloud)),$(time_to_sleep_$(cloud)),${time_to_sleep})
 delete-cm-setup:
-	sleep 180 && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep 300;
+	sleep 180 && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep ${sleeptime};
 
 check-kots-app:
 	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { echo "Gitpod is not ready"; exit 1; }
@@ -261,7 +265,7 @@ destroy-azure: select-workspace
 	terraform destroy -target=module.azure-add-dns-record -var kubeconfig=${KUBECONFIG} --auto-approve
 	ls ${KUBECONFIG} && terraform destroy -target=module.azure-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 	ls ${KUBECONFIG} && terraform destroy -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
-	[ -z "$$ARM_SUBSCRIPTION_ID" ] || terraform destroy -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
+	terraform destroy -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
 
 get-results:
 	@echo "If you have gotten this far, it means your setup succeeded"
