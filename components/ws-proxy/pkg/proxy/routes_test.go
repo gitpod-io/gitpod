@@ -138,11 +138,6 @@ func startTestTarget(t *testing.T, host, name string, checkedHost bool) *testTar
 				format += "host: %s\n"
 				args = append(args, r.Host)
 			}
-			readonly := r.Header.Get("X-BlobServe-ReadOnly")
-			if readonly != "" {
-				format += "readOnly: %s\n"
-				args = append(args, readonly)
-			}
 			inlineVars := r.Header.Get("X-BlobServe-InlineVars")
 			if inlineVars != "" {
 				format += "inlineVars: %s\n"
