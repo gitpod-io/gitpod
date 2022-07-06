@@ -139,6 +139,50 @@ export namespace User {
         }
         user.additionalData.ideSettings = newIDESettings;
     }
+
+    export function getProfile(user: User): Profile {
+        return {
+            name: User.getName(user!) || "",
+            email: User.getPrimaryEmail(user!) || "",
+            company: user?.additionalData?.profile?.companyName,
+            avatarURL: user?.avatarUrl,
+        };
+    }
+
+    export function setProfile(user: User, profile: Profile): User {
+        user.fullName = profile.name;
+        user.avatarUrl = profile.avatarURL;
+
+        if (!user.additionalData) {
+            user.additionalData = {};
+        }
+        if (!user.additionalData.profile) {
+            user.additionalData.profile = {};
+        }
+        user.additionalData.profile.emailAddress = profile.email;
+        user.additionalData.profile.companyName = profile.company;
+        user.additionalData.profile.lastUpdatedDetailsNudge = new Date().toISOString();
+
+        return user;
+    }
+
+    // The actual Profile of a User
+    export interface Profile {
+        name: string;
+        email: string;
+        company?: string;
+        avatarURL?: string;
+    }
+    export namespace Profile {
+        export function hasChanges(before: Profile, after: Profile) {
+            return (
+                before.name !== after.name ||
+                before.email !== after.email ||
+                before.company !== after.company ||
+                before.avatarURL !== after.avatarURL
+            );
+        }
+    }
 }
 
 export interface AdditionalUserData {
@@ -163,6 +207,7 @@ export interface AdditionalUserData {
     profile?: ProfileDetails;
 }
 
+// The format in which we store User Profiles in
 export interface ProfileDetails {
     // when was the last time the user updated their profile information or has been nudged to do so.
     lastUpdatedDetailsNudge?: string;
