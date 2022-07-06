@@ -350,7 +350,7 @@ func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvi
 		dst.Path = cfg.BlobServer.PathPrefix + "/" + strings.TrimPrefix(image, "/")
 		return &dst, nil
 	}
-	r.NewRoute().Handler(proxyPass(config, infoProvider, targetResolver, withLongTermCaching()))
+	r.NewRoute().Handler(proxyPass(config, infoProvider, targetResolver, withLongTermCaching(), withUseTargetHost()))
 }
 
 // installWorkspacePortRoutes configures routing for exposed ports.
