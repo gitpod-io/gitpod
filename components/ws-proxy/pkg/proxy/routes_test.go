@@ -335,6 +335,24 @@ func TestRoutes(t *testing.T) {
 			},
 		},
 		{
+			Desc:   "blobserve foreign resource",
+			Config: &config,
+			Request: modifyRequest(httptest.NewRequest("GET", "https://v--sr1o1nu24nqdf809l0u27jk5t7"+wsHostSuffix+"/image/__files__/test.html", nil),
+				addHostHeader,
+				addHeader("Sec-Fetch-Mode", "navigate"),
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Cache-Control":  {"public, max-age=31536000"},
+					"Content-Length": {"54"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
+				},
+				Body: "blobserve hit: /image/test.html\nhost: localhost:20003\n",
+			},
+		},
+		{
 			Desc:   "CORS preflight",
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"somewhere/in/the/ide", nil),
