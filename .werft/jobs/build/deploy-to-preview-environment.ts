@@ -122,9 +122,15 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         { silent: true },
     );
 
-    // We set it to false as default and only set it to true once the k3s cluster is ready.
+    // We set all attributes to false as default and only set it to true once the each process is complete.
     // We only set the attribute for jobs where a VM is expected.
     werft.rootSpan.setAttributes({ "preview.k3s_successfully_created": false });
+    werft.rootSpan.setAttributes({ "preview.certmanager_installed_successfully": false });
+    werft.rootSpan.setAttributes({ "preview.issuer_installed_successfully": false });
+    werft.rootSpan.setAttributes({ "preview.rook_installed_successfully": false });
+    werft.rootSpan.setAttributes({ "preview.fluentbit_installed_successfully": false });
+    werft.rootSpan.setAttributes({ "preview.certificates_installed_successfully": false });
+    werft.rootSpan.setAttributes({ "preview.monitoring_installed_successfully": false });
 
     werft.phase(phases.VM, "Ensuring VM is ready for deployment");
 
@@ -148,6 +154,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
 
     werft.log(vmSlices.WAIT_CERTMANAGER, "Wait for Cert-Manager");
     await waitUntilAllPodsAreReady("cert-manager", PREVIEW_K3S_KUBECONFIG_PATH, { slice: vmSlices.WAIT_CERTMANAGER });
+    werft.rootSpan.setAttributes({ "preview.certmanager_installed_successfully": true });
     werft.done(vmSlices.WAIT_CERTMANAGER);
 
     exec(
@@ -162,14 +169,17 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         `kubectl --kubeconfig ${PREVIEW_K3S_KUBECONFIG_PATH} apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`,
         { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true },
     );
+    werft.rootSpan.setAttributes({ "preview.issuer_installed_successfully": true });
     werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER);
 
     VM.installRookCeph({ kubeconfig: PREVIEW_K3S_KUBECONFIG_PATH });
+    werft.rootSpan.setAttributes({ "preview.rook_installed_successfully": true });
     VM.installFluentBit({
         namespace: "default",
         kubeconfig: PREVIEW_K3S_KUBECONFIG_PATH,
         slice: vmSlices.EXTERNAL_LOGGING,
     });
+    werft.rootSpan.setAttributes({ "preview.fluentbit_installed_successfully": true });
     werft.done(vmSlices.EXTERNAL_LOGGING);
 
     try {
@@ -181,6 +191,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             PREVIEW_K3S_KUBECONFIG_PATH,
             vmSlices.COPY_CERT_MANAGER_RESOURCES,
         );
+        werft.rootSpan.setAttributes({ "preview.certificates_installed_successfully": true });
         werft.done(vmSlices.COPY_CERT_MANAGER_RESOURCES);
     } catch (err) {
         werft.fail(vmSlices.COPY_CERT_MANAGER_RESOURCES, err);
@@ -211,6 +222,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     monitoringSatelliteInstaller
         .install()
         .then(() => {
+            werft.rootSpan.setAttributes({ "preview.monitoring_installed_successfully": true });
             werft.log(sliceID, "Succeeded installing monitoring satellite");
         })
         .catch((err) => {
