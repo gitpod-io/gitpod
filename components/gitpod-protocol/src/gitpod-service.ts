@@ -60,6 +60,7 @@ import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./
 import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
 import { Currency } from "./plans";
+import { BillableSession } from "./usage";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -287,6 +288,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     findStripeSubscriptionIdForTeam(teamId: string): Promise<string | undefined>;
     subscribeTeamToStripe(teamId: string, setupIntentId: string, currency: Currency): Promise<void>;
     getStripePortalUrlForTeam(teamId: string): Promise<string>;
+
+    getBilledUsage(attributionId: string): Promise<BillableSession[]>;
 
     /**
      * Analytics

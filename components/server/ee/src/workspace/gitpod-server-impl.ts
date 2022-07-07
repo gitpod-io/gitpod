@@ -70,6 +70,7 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
+import { BillableSession, billableSessionDummyData } from "@gitpod/gitpod-protocol/lib/usage";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -2054,6 +2055,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 `Failed to get Stripe portal URL for team '${teamId}'`,
             );
         }
+    }
+
+    async getBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
+        return billableSessionDummyData;
     }
 
     // (SaaS) – admin
