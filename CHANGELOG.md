@@ -1,6 +1,18 @@
 # Change Log
 
 ## July 2022
+- Fixed Tab menu being visible for urls with trailing '/' ([#10698](https://github.com/gitpod-io/gitpod/pull/10698)) - [@CuriousCorrelation](https://github.com/CuriousCorrelation)
+- [installer]: promote proxy service type from experimental ([#11006](https://github.com/gitpod-io/gitpod/pull/11006)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- always show buttons in the prebuild logs view ([#11150](https://github.com/gitpod-io/gitpod/pull/11150)) - [@geropl](https://github.com/geropl)
+- [kots]: add registry to preflight and support checks ([#11056](https://github.com/gitpod-io/gitpod/pull/11056)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Improve transfers for S3 when backed by GCS ([#10626](https://github.com/gitpod-io/gitpod/pull/10626)) - [@aledbf](https://github.com/aledbf), [@csweichel](https://github.com/csweichel)
+- [kots]: add firewall check for the pull registry ([#11111](https://github.com/gitpod-io/gitpod/pull/11111)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [installer]: set a stable password for messagebus ([#11096](https://github.com/gitpod-io/gitpod/pull/11096)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- align access level of Workspaces of type "prebuild" with Prebuilds ([#11138](https://github.com/gitpod-io/gitpod/pull/11138)) - [@geropl](https://github.com/geropl)
+- [preview] run the telemetry job right after a Gitpod install is ready ([#11077](https://github.com/gitpod-io/gitpod/pull/11077)) - [@Pothulapati](https://github.com/Pothulapati)
+- You can now update your profile information (name, email, company) ([#11023](https://github.com/gitpod-io/gitpod/pull/11023)) - [@svenefftinge](https://github.com/svenefftinge)
+- Allow users to add and remove SSH public keys in settings ([#10573](https://github.com/gitpod-io/gitpod/pull/10573)) - [@mustard-mh](https://github.com/mustard-mh)
+- Change UX of SSH copy-paste to support ssh key connection ([#10573](https://github.com/gitpod-io/gitpod/pull/10573)) - [@mustard-mh](https://github.com/mustard-mh)
 - Improve system call handling ([#11082](https://github.com/gitpod-io/gitpod/pull/11082)) - [@utam0k](https://github.com/utam0k)
 - Requests on ws-proxy now contain also the `X-Forwarded-Port` header. ([#11110](https://github.com/gitpod-io/gitpod/pull/11110)) - [@felladrin](https://github.com/felladrin)
 - fix the start-workspace flow for when a prebuild got auto-cancelled ([#11083](https://github.com/gitpod-io/gitpod/pull/11083)) - [@geropl](https://github.com/geropl)
