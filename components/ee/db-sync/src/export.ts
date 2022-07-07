@@ -72,7 +72,8 @@ export class TableUpdate {
         if (timeConditions.length > 0) {
             condition = `WHERE ${timeConditions.join(" AND ")}`;
         }
-        const dataQuery = `SELECT ${this.columns.join(", ")} FROM ${this.table.name} ${condition}`;
+
+        const dataQuery = `SELECT ${this.columns.map(escapeWithBackticks).join(", ")} FROM \`${this.table.name}\` ${condition}`;
         const deletionsAndUpdates = await new Promise<string[][]>((resolve, reject) => {
             const updates: string[] = [];
             const deletions: string[] = [];
@@ -180,4 +181,8 @@ export class TableUpdateProvider {
         return { deletions, updates };
     }
 
+}
+
+function escapeWithBackticks(val: string): string {
+    return "`" + val + "`"
 }
