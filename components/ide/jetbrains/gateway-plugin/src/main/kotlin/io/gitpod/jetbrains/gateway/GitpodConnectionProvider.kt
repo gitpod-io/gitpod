@@ -26,10 +26,9 @@ import com.intellij.util.io.DigestUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.gateway.api.ConnectionRequestor
-import com.jetbrains.gateway.api.GatewayConnectionHandle
-import com.jetbrains.gateway.api.GatewayConnectionProvider
+import com.jetbrains.gateway.api.*
 import com.jetbrains.gateway.ssh.ClientOverSshTunnelConnector
+import com.jetbrains.gateway.ssh.SshHostTunnelConnector
 import com.jetbrains.gateway.thinClientLink.ThinClientHandle
 import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -48,6 +47,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.coroutines.coroutineContext
 
+@Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 class GitpodConnectionProvider : GatewayConnectionProvider {
 
     private val gitpod = service<GitpodConnectionService>()
@@ -62,7 +62,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
     override suspend fun connect(
         parameters: Map<String, String>,
         requestor: ConnectionRequestor
-    ): GatewayConnectionHandle? {
+    ): GatewayConnectionHandle {
         if (parameters["gitpodHost"] == null) {
             throw IllegalArgumentException("bad gitpodHost parameter")
         }
@@ -215,9 +215,9 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         if (thinClientJob == null && update.status.phase == "running") {
                             thinClientJob = launch {
                                 try {
-                                    val ideUrl = URL(update.ideUrl);
+                                    val updatedIdeUrl = URL(update.ideUrl);
                                     val sshHostUrl = URL(update.ideUrl.replace(update.workspaceId, "${update.workspaceId}.ssh"));
-                                    val hostKeys = resolveHostKeys(ideUrl, connectParams)
+                                    val hostKeys = resolveHostKeys(updatedIdeUrl, connectParams)
                                     if (hostKeys.isNullOrEmpty()) {
                                         setErrorMessage("${connectParams.gitpodHost} installation does not allow SSH access, public keys cannot be found")
                                         return@launch
@@ -225,26 +225,30 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                     val ownerToken = client.server.getOwnerToken(update.workspaceId).await()
                                     val credentials =
                                         resolveCredentials(sshHostUrl, update.workspaceId, ownerToken, hostKeys)
-                                    val joinLink = resolveJoinLink(ideUrl, ownerToken, connectParams)
+                                    val joinLink = resolveJoinLink(updatedIdeUrl, ownerToken, connectParams)
+                                    if (joinLink.isNullOrEmpty()) {
+                                        setErrorMessage("failed to fetch JetBrains Gateway Join Link.")
+                                        return@launch
+                                    }
                                     val connector = ClientOverSshTunnelConnector(
                                         connectionLifetime,
-                                        credentials,
+                                        SshHostTunnelConnector(credentials),
                                         URI(joinLink)
                                     )
-                                    val client = connector.connect()
-                                    client.clientClosed.advise(connectionLifetime) {
+                                    val clientHandle = connector.connect()
+                                    clientHandle.clientClosed.advise(connectionLifetime) {
                                         application.invokeLater {
                                             connectionLifetime.terminate()
                                         }
                                     }
-                                    client.onClientPresenceChanged.advise(connectionLifetime) {
+                                    clientHandle.onClientPresenceChanged.advise(connectionLifetime) {
                                         application.invokeLater {
-                                            if (client.clientPresent) {
+                                            if (clientHandle.clientPresent) {
                                                 statusMessage.text = ""
                                             }
                                         }
                                     }
-                                    thinClient = client
+                                    thinClient = clientHandle
                                 } catch (t: Throwable) {
                                     if (t is CancellationException) {
                                         throw t
@@ -356,9 +360,9 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                     DigestUtil.sha256(),
                     DigestUtil.sha1()
                 )) {
-                    val digest =
+                    val bytes =
                         digest.digest(Base64.getDecoder().decode(hostKey))
-                    val hostKeyFingerprint = ByteUtils.toHexString(digest, "", ":")
+                    val hostKeyFingerprint = ByteUtils.toHexString(bytes, "", ":")
                     if (hostKeyFingerprint == fingerprint) {
                         matchedFingerprint = true
                         break
@@ -429,9 +433,9 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         private val component: JComponent,
         private val params: ConnectParams
     ) : GatewayConnectionHandle(lifetime) {
-
-        override fun createComponent(): JComponent {
-            return component
+        override fun customComponentProvider() = object : CustomConnectionFrameComponentProvider {
+            override val closeConfirmationText = "Disconnect from ${getTitle()}?"
+            override fun createComponent(context: CustomConnectionFrameContext) = component
         }
 
         override fun getTitle(): String {
