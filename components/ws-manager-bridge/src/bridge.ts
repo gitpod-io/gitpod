@@ -227,6 +227,7 @@ export class WorkspaceManagerBridge implements Disposable {
         const span = TraceContext.startSpan("handleStatusUpdate", ctx);
         span.setTag("status", JSON.stringify(filterStatus(status)));
         span.setTag("writeToDB", writeToDB);
+        span.setTag("statusVersion", status.statusVersion);
         try {
             // Beware of the ID mapping here: What's a workspace to the ws-manager is a workspace instance to the rest of the system.
             //                                The workspace ID of ws-manager is the workspace instance ID in the database.
@@ -252,6 +253,14 @@ export class WorkspaceManagerBridge implements Disposable {
                 return;
             }
 
+            const currentStatusVersion = instance.status.version || 0;
+            if (currentStatusVersion > 0 && currentStatusVersion >= status.statusVersion) {
+                // We've gotten an event which is older than one we've already processed. We shouldn't process the stale one.
+                span.setTag("statusUpdate.staleEvent", true);
+                this.prometheusExporter.recordStaleStatusUpdate();
+                log.debug(ctx, "Stale status update received, skipping.");
+            }
+
             if (!!status.spec.exposedPortsList) {
                 instance.status.exposedPorts = status.spec.exposedPortsList.map((p) => {
                     return <WorkspaceInstancePort>{
@@ -269,6 +278,7 @@ export class WorkspaceManagerBridge implements Disposable {
             }
 
             instance.ideUrl = status.spec.url!;
+            instance.status.version = status.statusVersion;
             instance.status.timeout = status.spec.timeout;
             if (!!instance.status.conditions.failed && !status.conditions.failed) {
                 // We already have a "failed" condition, and received an empty one: This is a bug, "failed" conditions are terminal per definition.
