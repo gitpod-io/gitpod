@@ -128,6 +128,8 @@ for f in /var/lib/rancher/k3s/server/manifests/gitpod/*StatefulSet*.yaml; do yq 
 # removing init container from ws-daemon (systemd and Ubuntu)
 yq eval-all -i 'del(.spec.template.spec.initContainers[0])' /var/lib/rancher/k3s/server/manifests/gitpod/*_DaemonSet_ws-daemon.yaml
 
+mv -f /app/manifests/coredns.yaml /var/lib/rancher/k3s/server/manifests/custom-coredns.yaml
+
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/manifests/gitpod.yaml; done
 rm -rf /var/lib/rancher/k3s/server/manifests/gitpod
 
@@ -135,8 +137,6 @@ rm -rf /var/lib/rancher/k3s/server/manifests/gitpod
 run_telemetry(){
   # wait for the k3s cluster to be ready and Gitpod workloads are added
   sleep 100
-  # update `coredns`
-  mv -f /app/manifests/coredns.yaml /var/lib/rancher/k3s/server/manifests/coredns.yaml
   # indefinitely wait for Gitpod pods to be ready
   kubectl wait --timeout=-1s --for=condition=ready pod -l app=gitpod,component!=migrations
   # manually tun the cronjob
@@ -145,7 +145,7 @@ run_telemetry(){
 
 run_telemetry 2>&1 &
 
-/bin/k3s server --disable traefik \
+/bin/k3s server --disable traefik --disable coredns \
   --node-label gitpod.io/workload_meta=true \
   --node-label gitpod.io/workload_ide=true \
   --node-label gitpod.io/workload_workspace_services=true \
