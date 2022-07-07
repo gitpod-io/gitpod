@@ -301,11 +301,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			safePod, _ := log.RedactJSON(m)
 
 			if k8serr.IsAlreadyExists(err) {
-				clog.WithError(err).WithField("req", req).WithField("pod", safePod).Warn("was unable to start workspace which already exists")
+				clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace which already exists")
 				return false, status.Error(codes.AlreadyExists, "workspace instance already exists")
 			}
 
-			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to start workspace")
+			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace")
 			return false, err
 		}
 
@@ -331,7 +331,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		if err != nil {
 			jsonPod, _ := json.Marshal(pod)
 			safePod, _ := log.RedactJSON(jsonPod)
-			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Error("was unable to reach ready state")
+			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to reach ready state")
 			retryErr = err
 
 			var tempPod corev1.Pod
@@ -348,7 +348,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 						// pod doesn't exist, so we are safe to proceed with retry
 						return false, nil
 					}
-					clog.WithError(getErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to get pod")
+					clog.WithError(getErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to get pod")
 					// pod get call failed so we error out
 					return false, retryErr
 				}
@@ -360,7 +360,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 						// pod doesn't exist, so we are safe to proceed with retry
 						return false, nil
 					}
-					clog.WithError(updateErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to remove finalizer")
+					clog.WithError(updateErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to remove finalizer")
 					continue
 				}
 				finalizerRemoved = true
@@ -372,7 +372,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 
 			deleteErr := m.Clientset.Delete(rmCtx, &tempPod)
 			if deleteErr != nil && !k8serr.IsNotFound(deleteErr) {
-				clog.WithError(deleteErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to delete pod")
+				clog.WithError(deleteErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to delete pod")
 				// failed to delete pod, so not going to be able to create a new pod, so bail out
 				return false, retryErr
 			}
@@ -388,6 +388,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 
 	if err != nil {
+		clog.WithError(err).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to start workspace after backoff")
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 
