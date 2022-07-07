@@ -85,6 +85,14 @@ type WorkspaceConfig struct {
 	} `json:"wsDaemon"`
 
 	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
+
+	WSProxy struct {
+		IngressHeader                              string `json:"ingressHeader"`
+		BlobServeHost                              string `json:"blobServeHost"`
+		GitpodInstallationHostName                 string `json:"gitpodInstallationHostName"`
+		GitpodInstallationWorkspaceHostSuffix      string `json:"gitpodInstallationWorkspaceHostSuffix"`
+		GitpodInstallationWorkspaceHostSuffixRegex string `json:"gitpodInstallationWorkspaceHostSuffixRegex"`
+	} `json:"wsProxy"`
 }
 
 type PersistentVolumeClaim struct {
