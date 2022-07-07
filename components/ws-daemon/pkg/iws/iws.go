@@ -1010,7 +1010,7 @@ func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
 }
 
 func (wbs *InWorkspaceServiceServer) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
-	log.Info("Received workspace info request")
+	log.Debug("Received workspace info request")
 	rt := wbs.Uidmapper.Runtime
 	if rt == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
