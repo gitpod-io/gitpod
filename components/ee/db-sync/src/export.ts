@@ -139,7 +139,7 @@ export class TableUpdate {
         const updates = this.updateColumns.map((c, i) => `${c}=${updateValues[i]}`).join(", ")
         const updateConditions = this.getUpdateConditions(row);
 
-        let result = [`INSERT${forceInsert ? '' : ' IGNORE'} INTO ${this.table.name} (${(this.table.primaryKeys.concat(this.updateColumns)).join(", ")}) VALUES (${(pkValues.concat(updateValues)).join(", ")});`];
+        let result = [`INSERT${forceInsert ? '' : ' IGNORE'} INTO ${this.table.name} (${(this.table.primaryKeys.concat(this.updateColumns)).map(escapeWithBackticks).join(", ")}) VALUES (${(pkValues.concat(updateValues)).join(", ")});`];
         if(!forceInsert) {
             result.push(`UPDATE ${this.table.name} SET ${updates} WHERE ${updateConditions};`);
         }
