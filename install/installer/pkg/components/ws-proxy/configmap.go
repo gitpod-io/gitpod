@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -21,13 +22,39 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	// todo(sje): wsManagerProxy seems to be unused
+	header := HostHeader
+	blobServeHost := fmt.Sprintf("ide.%s", ctx.Config.Domain)
+	gitpodInstallationHostName := ctx.Config.Domain
+	gitpodInstallationWorkspaceHostSuffix := fmt.Sprintf(".ws.%s", ctx.Config.Domain)
+	gitpodInstallationWorkspaceHostSuffixRegex := fmt.Sprintf("\\.ws[^\\.]*\\.%s", ctx.Config.Domain)
+	ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace == nil {
+			return nil
+		}
+		if ucfg.Workspace.WSProxy.IngressHeader != "" {
+			header = ucfg.Workspace.WSProxy.IngressHeader
+		}
+		if ucfg.Workspace.WSProxy.BlobServeHost != "" {
+			blobServeHost = ucfg.Workspace.WSProxy.BlobServeHost
+		}
+		if ucfg.Workspace.WSProxy.GitpodInstallationHostName != "" {
+			gitpodInstallationHostName = ucfg.Workspace.WSProxy.GitpodInstallationHostName
+		}
+		if ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffix != "" {
+			gitpodInstallationWorkspaceHostSuffix = ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffix
+		}
+		if ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffixRegex != "" {
+			gitpodInstallationWorkspaceHostSuffixRegex = ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffixRegex
+		}
+		return nil
+	})
+
 	wspcfg := config.Config{
 		Namespace: ctx.Namespace,
 		Ingress: proxy.HostBasedIngressConfig{
 			HTTPAddress:  fmt.Sprintf(":%d", HTTPProxyPort),
 			HTTPSAddress: fmt.Sprintf(":%d", HTTPSProxyPort),
-			Header:       HostHeader,
+			Header:       header,
 		},
 		Proxy: proxy.Config{
 			HTTPS: struct {
@@ -45,14 +72,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			BlobServer: &proxy.BlobServerConfig{
 				Scheme:     "https",
-				Host:       fmt.Sprintf("ide.%s", ctx.Config.Domain),
+				Host:       blobServeHost,
 				PathPrefix: "/blobserve",
 			},
 			GitpodInstallation: &proxy.GitpodInstallation{
 				Scheme:                   "https",
-				HostName:                 ctx.Config.Domain,
-				WorkspaceHostSuffix:      fmt.Sprintf(".ws.%s", ctx.Config.Domain),
-				WorkspaceHostSuffixRegex: fmt.Sprintf("\\.ws[^\\.]*\\.%s", ctx.Config.Domain),
+				HostName:                 gitpodInstallationHostName,
+				WorkspaceHostSuffix:      gitpodInstallationWorkspaceHostSuffix,
+				WorkspaceHostSuffixRegex: gitpodInstallationWorkspaceHostSuffixRegex,
 			},
 			WorkspacePodConfig: &proxy.WorkspacePodConfig{
 				TheiaPort:       workspace.ContainerPort,
