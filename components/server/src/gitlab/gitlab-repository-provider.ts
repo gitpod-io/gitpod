@@ -110,6 +110,7 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
             }
             return true;
         } catch (err) {
+            log.warn({ userId: user.id }, "hasReadAccess error", err, { owner, repo });
             return false;
         }
     }
