@@ -780,6 +780,7 @@ export class WorkspaceStarter {
             region: this.config.installationShortname, // Shortname set to bridge can cleanup workspaces stuck preparing
             workspaceImage: "", // Initially empty, filled during starting process
             status: {
+                version: 0,
                 conditions: {},
                 phase: "preparing",
             },

@@ -218,6 +218,7 @@ namespace TestData {
         deployedTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "preparing",
             conditions: {},
         },
