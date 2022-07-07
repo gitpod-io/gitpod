@@ -39,9 +39,10 @@ class HeartbeatService : Disposable {
                     else -> null
                 }
 
-                thisLogger().error("sent heartbeat ${info.instanceId} # $wasClosed # ${current.secondsSinceLastActivity} # $maxIntervalInSeconds", "==============hwen")
+                thisLogger().error("sending heartbeat ${info.instanceId} # $wasClosed # ${current.secondsSinceLastActivity} # $maxIntervalInSeconds", "==============hwen")
                 if (wasClosed != null) {
                     manager.client.server.sendHeartBeat(SendHeartBeatOptions(info.instanceId, wasClosed)).await()
+                    thisLogger().error("sent heartbeat ${previous.connected} ${current.connected}", "==============hwen")
                     if (wasClosed) {
                         manager.trackEvent("ide_close_signal", mapOf(
                                 "clientKind" to "jetbrains"
@@ -49,7 +50,7 @@ class HeartbeatService : Disposable {
                     }
                 }
             } catch (t: Throwable) {
-                thisLogger().error("gitpod: failed to check activity:", t)
+                thisLogger().error("gitpod: failed to check activity: ==============hwen", t)
             }
             delay(intervalInSeconds * 1000L)
         }
