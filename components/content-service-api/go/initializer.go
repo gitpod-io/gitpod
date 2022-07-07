@@ -33,9 +33,20 @@ func GetCheckoutLocationsFromInitializer(init *WorkspaceInitializer) []string {
 
 const extractedSecretPrefix = "extracted-secret/"
 
-// ExtractSecretsFromInitializer removes secrets to the initializer.
+// GatherSecretsFromInitializer collects all from an initializer. This function does not
+// alter the initializer in any way.
+func GatherSecretsFromInitializer(init *WorkspaceInitializer) map[string]string {
+	return extractSecretsFromInitializer(init, false)
+}
+
+// ExtractAndReplaceSecretsFromInitializer removes secrets to the initializer.
+// This function alters the initializer, which only becomes useful calling InjectSecretsToInitializer.
 // This is the counterpart of InjectSecretsToInitializer.
-func ExtractSecretsFromInitializer(init *WorkspaceInitializer) map[string]string {
+func ExtractAndReplaceSecretsFromInitializer(init *WorkspaceInitializer) map[string]string {
+	return extractSecretsFromInitializer(init, true)
+}
+
+func extractSecretsFromInitializer(init *WorkspaceInitializer, replaceValue bool) map[string]string {
 	res := make(map[string]string)
 
 	_ = WalkInitializer([]string{"initializer"}, init, func(path []string, init *WorkspaceInitializer) error {
@@ -51,7 +62,10 @@ func ExtractSecretsFromInitializer(init *WorkspaceInitializer) map[string]string
 
 		name := strings.Join(path, ".")
 		res[name] = pwd
-		git.Git.Config.AuthPassword = extractedSecretPrefix + name
+
+		if replaceValue {
+			git.Git.Config.AuthPassword = extractedSecretPrefix + name
+		}
 
 		return nil
 	})

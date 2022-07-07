@@ -11,6 +11,8 @@ import (
 
 	"github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestGetCheckoutLocationsFromInitializer(t *testing.T) {
@@ -176,7 +178,24 @@ func TestExtractInjectSecretsFromInitializer(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			act := api.ExtractSecretsFromInitializer(test.Input)
+			original := proto.Clone(test.Input)
+			act := api.GatherSecretsFromInitializer(test.Input)
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("unexpected GatherSecretsFromInitializer (-want +got):\n%s", diff)
+			}
+
+			ignoreUnexported := []interface{}{
+				api.WorkspaceInitializer{},
+				api.WorkspaceInitializer_Git{},
+				api.GitInitializer{},
+				api.GitConfig{},
+				api.PrebuildInitializer{},
+			}
+			if diff := cmp.Diff(original, test.Input, cmpopts.IgnoreUnexported(ignoreUnexported...)); diff != "" {
+				t.Errorf("unexpected alteration from GatherSecretsFromInitializer (-want +got):\n%s", diff)
+			}
+
+			act = api.ExtractAndReplaceSecretsFromInitializer(test.Input)
 			if diff := cmp.Diff(test.Expectation, act); diff != "" {
 				t.Errorf("unexpected ExtractSecretsFromInitializer (-want +got):\n%s", diff)
 			}
