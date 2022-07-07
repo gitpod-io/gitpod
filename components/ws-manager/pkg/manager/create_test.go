@@ -17,66 +17,14 @@ import (
 	"sigs.k8s.io/yaml"
 
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
-	"github.com/google/go-cmp/cmp"
 )
 
 var (
 	team    = "awesome"
 	project = "gitpod"
 )
-
-func TestNewStartWorkspaceContext(t *testing.T) {
-	type Expectation struct {
-		Context *startWorkspaceContext
-		Error   string
-	}
-	tests := []struct {
-		Name        string
-		Req         *api.StartWorkspaceRequest
-		Expectation Expectation
-	}{
-		{
-			Name: "oversized secrets",
-			Req: &api.StartWorkspaceRequest{
-				Metadata: &api.WorkspaceMetadata{Owner: "foo"},
-				Spec: &api.StartWorkspaceSpec{
-					Initializer: &csapi.WorkspaceInitializer{
-						Spec: &csapi.WorkspaceInitializer_Empty{},
-					},
-					Envvars: []*api.EnvironmentVariable{
-						{Name: "too_large", Value: string(func() []byte { return make([]byte, 2*maxSecretsLength) }())},
-					},
-				},
-			},
-			Expectation: Expectation{
-				Error: "secrets exceed maximum permitted length (1610612736 > 805306368 bytes): please reduce the numer or length of environment variables",
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.Name, func(t *testing.T) {
-			mgmtCfg := forTestingOnlyManagerConfig()
-			manager := &Manager{Config: mgmtCfg}
-
-			sctx, err := manager.newStartWorkspaceContext(context.Background(), test.Req)
-
-			act := Expectation{
-				Context: sctx,
-			}
-			if err != nil {
-				act.Error = err.Error()
-			}
-
-			if diff := cmp.Diff(test.Expectation, act); diff != "" {
-				t.Errorf("unexpected newStartWorkspaceContext (-want +got):\n%s", diff)
-			}
-		})
-	}
-}
 
 func TestCreateDefiniteWorkspacePod(t *testing.T) {
 	type WorkspaceClass struct {

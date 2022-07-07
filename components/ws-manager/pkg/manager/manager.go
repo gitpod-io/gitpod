@@ -6,6 +6,7 @@ package manager
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -39,6 +40,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
@@ -82,7 +84,6 @@ type startWorkspaceContext struct {
 	Headless       bool                           `json:"headless"`
 	Class          *config.WorkspaceClass         `json:"class"`
 	VolumeSnapshot *workspaceVolumeSnapshotStatus `json:"volumeSnapshot"`
-	Secrets        map[string]string              `json:"secrets"`
 }
 
 func (swctx *startWorkspaceContext) ContainerConfiguration() config.ContainerConfiguration {
@@ -267,13 +268,21 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 	}
 	if createSecret {
+		secrets, _ := buildWorkspaceSecrets(startContext.Request.Spec)
+
+		// This call actually modifies the initializer and removes the secrets.
+		// Prior to the `InitWorkspace` call, we inject the secrets back into the initializer.
+		// We do this so that no Git token is stored as annotation on the pod, but solely
+		// remains within the Kubernetes secret.
+		_ = csapi.ExtractAndReplaceSecretsFromInitializer(startContext.Request.Spec.Initializer)
+
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      podName(startContext.Request),
 				Namespace: m.Config.Namespace,
 				Labels:    startContext.Labels,
 			},
-			StringData: startContext.Secrets,
+			StringData: secrets,
 		}
 		err = m.Clientset.Create(ctx, secret)
 		if err != nil && !k8serr.IsAlreadyExists(err) {
@@ -409,6 +418,27 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	m.metrics.OnWorkspaceStarted(req.Type, req.Spec.Class)
 
 	return okResponse, nil
+}
+
+func buildWorkspaceSecrets(spec *api.StartWorkspaceSpec) (secrets map[string]string, secretsLen int) {
+	secrets = make(map[string]string)
+	for _, env := range spec.Envvars {
+		if env.Secret != nil {
+			continue
+		}
+		if !isProtectedEnvVar(env.Name) {
+			continue
+		}
+
+		name := fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name)))
+		secrets[name] = env.Value
+		secretsLen += len(env.Value)
+	}
+	for k, v := range csapi.GatherSecretsFromInitializer(spec.Initializer) {
+		secrets[k] = v
+		secretsLen += len(v)
+	}
+	return secrets, secretsLen
 }
 
 func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, id, handle string) (err error) {
@@ -584,6 +614,10 @@ func validateStartWorkspaceRequest(req *api.StartWorkspaceRequest) error {
 	)
 	if err != nil {
 		return xerrors.Errorf("invalid request: %w", err)
+	}
+
+	if _, secretsLen := buildWorkspaceSecrets(req.Spec); secretsLen > maxSecretsLength {
+		return xerrors.Errorf("secrets exceed maximum permitted length (%d > %d bytes): please reduce the numer or length of environment variables", secretsLen, maxSecretsLength)
 	}
 
 	rules := make([]*validation.FieldRules, 0)
