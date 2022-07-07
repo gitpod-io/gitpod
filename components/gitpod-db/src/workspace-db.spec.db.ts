@@ -58,6 +58,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "preparing",
             conditions: {},
         },
@@ -81,6 +82,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "running",
             conditions: {},
         },
@@ -119,6 +121,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "preparing",
             conditions: {},
         },
@@ -157,6 +160,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "preparing",
             conditions: {},
         },

@@ -72,6 +72,11 @@ export interface WorkspaceInstance {
 
 // WorkspaceInstanceStatus describes the current state of a workspace instance
 export interface WorkspaceInstanceStatus {
+    // version is the current version of the workspace instance status
+    // Note: consider this value opague. The only guarantee given is that it imposes
+    //       a partial order on status updates, i.e. a.version > b.version -> a newer than b.
+    version?: number;
+
     // phase describes a high-level state of the workspace instance
     phase: WorkspaceInstancePhase;
 

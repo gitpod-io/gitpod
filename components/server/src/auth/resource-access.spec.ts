@@ -585,6 +585,7 @@ class TestResourceAccess {
                 creationTime: new Date(2000, 1, 2).toISOString(),
                 region: "local",
                 status: {
+                    version: 1,
                     conditions: {},
                     phase: "running",
                 },
