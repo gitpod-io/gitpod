@@ -425,7 +425,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardAccess({ kind: "user", subject: user }, "update");
 
         //hang on to user profile before it's overwritten for analytics below
-        const oldProfile = { name: user.fullName, ...user.additionalData?.profile };
+        const oldProfile = User.getProfile(user);
 
         const allowedFields: (keyof User)[] = ["avatarUrl", "fullName", "additionalData"];
         for (const p of allowedFields) {
@@ -437,24 +437,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.userDB.updateUserPartial(user);
 
         //track event and user profile if profile of partialUser changed
-        const newProfile = { name: partialUser.fullName, ...partialUser.additionalData?.profile };
-        if (newProfile) {
-            if (
-                !oldProfile ||
-                newProfile.emailAddress != oldProfile.emailAddress ||
-                newProfile.companyName != oldProfile.companyName ||
-                newProfile.name != oldProfile.name
-            ) {
-                this.analytics.track({
-                    userId: user.id,
-                    event: "profile_changed",
-                    properties: { new: newProfile, old: oldProfile },
-                });
-                this.analytics.identify({
-                    userId: user.id,
-                    traits: { email: newProfile.emailAddress, company: newProfile.companyName, name: newProfile.name },
-                });
-            }
+        const newProfile = User.getProfile(user);
+        if (User.Profile.hasChanges(oldProfile, newProfile)) {
+            this.analytics.track({
+                userId: user.id,
+                event: "profile_changed",
+                properties: { new: newProfile, old: oldProfile },
+            });
+            this.analytics.identify({
+                userId: user.id,
+                traits: { email: newProfile.email, company: newProfile.company, name: newProfile.name },
+            });
         }
 
         return user;
