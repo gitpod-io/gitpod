@@ -128,6 +128,7 @@ for f in /var/lib/rancher/k3s/server/manifests/gitpod/*StatefulSet*.yaml; do yq 
 # removing init container from ws-daemon (systemd and Ubuntu)
 yq eval-all -i 'del(.spec.template.spec.initContainers[0])' /var/lib/rancher/k3s/server/manifests/gitpod/*_DaemonSet_ws-daemon.yaml
 
+touch /var/lib/rancher/k3s/server/manifests/coredns.yaml.skip
 mv -f /app/manifests/coredns.yaml /var/lib/rancher/k3s/server/manifests/custom-coredns.yaml
 
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/manifests/gitpod.yaml; done
@@ -145,7 +146,7 @@ run_telemetry(){
 
 run_telemetry 2>&1 &
 
-/bin/k3s server --disable traefik --disable coredns \
+/bin/k3s server --disable traefik \
   --node-label gitpod.io/workload_meta=true \
   --node-label gitpod.io/workload_ide=true \
   --node-label gitpod.io/workload_workspace_services=true \
