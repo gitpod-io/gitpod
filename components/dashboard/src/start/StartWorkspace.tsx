@@ -445,7 +445,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 if (isPrebuild) {
                     return (
                         <StartPage title="Prebuild in Progress">
-                            <div className="mt-6 w-11/12 lg:w-3/5 overflow-hidden">
+                            <div className="mt-6 w-11/12 lg:w-3/5">
                                 {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
                                 <PrebuildLogs workspaceId={this.props.workspaceId} />
                             </div>
@@ -579,7 +579,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 if (isPrebuild) {
                     return (
                         <StartPage title="Prebuild in Progress">
-                            <div className="mt-6 w-11/12 lg:w-3/5 overflow-hidden">
+                            <div className="mt-6 w-11/12 lg:w-3/5">
                                 {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
                                 <PrebuildLogs workspaceId={this.props.workspaceId} />
                             </div>
