@@ -1,3 +1,3 @@
 {
-    "error": "invalid request: workspace_image: cannot be blank; workspace_location: cannot be blank."
+    "error": "invalid request: type: value 200 is out of range."
 }
