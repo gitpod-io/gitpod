@@ -74,7 +74,8 @@ export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
             .createQueryBuilder("ts")
             .where("ts.userId = :userId", { userId: userId })
             .andWhere("ts.startDate <= :date", { date: date })
-            .andWhere('ts.endDate = "" OR ts.endDate > :date', { date: date });
+            .andWhere('ts.endDate = "" OR ts.endDate > :date', { date: date })
+            .andWhere("ts.deleted = FALSE");
         return query.getMany();
     }
 
