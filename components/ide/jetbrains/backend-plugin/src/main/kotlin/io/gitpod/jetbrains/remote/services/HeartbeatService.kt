@@ -39,6 +39,7 @@ class HeartbeatService : Disposable {
                     else -> null
                 }
 
+                thisLogger().error("sent heartbeat ${info.instanceId} # $wasClosed # ${current.secondsSinceLastActivity} # $maxIntervalInSeconds", "==============hwen")
                 if (wasClosed != null) {
                     manager.client.server.sendHeartBeat(SendHeartBeatOptions(info.instanceId, wasClosed)).await()
                     if (wasClosed) {
