@@ -167,6 +167,7 @@ import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { BillableSession } from "@gitpod/gitpod-protocol/lib/usage";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -3182,6 +3183,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getStripePortalUrlForTeam(ctx: TraceContext, teamId: string): Promise<string> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+
+    async getBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+
     //
     //#endregion
 }

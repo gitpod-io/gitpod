@@ -64,6 +64,7 @@ export default function Menu() {
                 "members",
                 "settings",
                 "billing",
+                "usage",
                 // admin sub-pages
                 "users",
                 "workspaces",
@@ -220,7 +221,7 @@ export default function Menu() {
                 teamSettingsList.push({
                     title: "Settings",
                     link: `/t/${team.slug}/settings`,
-                    alternatives: getTeamSettingsMenu({ team, showPaymentUI }).flatMap((e) => e.link),
+                    alternatives: getTeamSettingsMenu({ team, showPaymentUI, showUsageBasedUI }).flatMap((e) => e.link),
                 });
             }
 
