@@ -842,33 +842,41 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async sendHeartBeat(ctx: TraceContext, options: GitpodServer.SendHeartBeatOptions): Promise<void> {
+        console.log("=====================hwen.1");
         traceAPIParams(ctx, { options });
         const { instanceId } = options;
         traceWI(ctx, { instanceId });
 
         const user = this.checkAndBlockUser("sendHeartBeat", undefined, { instanceId });
+        console.log(user.name, "=====================hwen.2");
 
         try {
             const wsi = await this.workspaceDb.trace(ctx).findInstanceById(instanceId);
             if (!wsi) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, "workspace does not exist");
             }
+            console.log("=====================hwen.3");
 
             const ws = await this.workspaceDb.trace(ctx).findById(wsi.workspaceId);
             if (!ws) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, "workspace does not exist");
             }
+            console.log("=====================hwen.4");
             await this.guardAccess({ kind: "workspaceInstance", subject: wsi, workspace: ws }, "update");
 
             const wasClosed = !!(options && options.wasClosed);
+            console.log(wasClosed, "=====================hwen.5");
             await this.workspaceDb.trace(ctx).updateLastHeartbeat(instanceId, user.id, new Date(), wasClosed);
 
             const req = new MarkActiveRequest();
             req.setId(instanceId);
             req.setClosed(wasClosed);
 
+            console.log(instanceId, "=====================hwen.6");
             const client = await this.workspaceManagerClientProvider.get(wsi.region);
+            console.log("=====================hwen.7");
             await client.markActive(ctx, req);
+            console.log("=====================hwen.8");
 
             if (options && options.roundTripTime && Number.isFinite(options.roundTripTime)) {
                 this.clientDataPrometheusAdapter.storeWorkspaceRoundTripTimeSample(
@@ -877,7 +885,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     options.roundTripTime,
                 );
             }
+            console.log("=====================hwen.9");
         } catch (e) {
+            console.log(e.message, "=====================hwen.10");
             if (e.message && typeof e.message === "string" && (e.message as String).endsWith("does not exist")) {
                 // This is an old tab with open workspace: drop silently
                 return;
