@@ -34,7 +34,7 @@ tasks:
   - name: Install Preview Environment kube-context
     command: |
       (cd dev/preview/previewctl && go install .)
-      previewctl install-context
+      previewctl install-context --watch
       exit
   - name: Add Harvester kubeconfig
     command: |
