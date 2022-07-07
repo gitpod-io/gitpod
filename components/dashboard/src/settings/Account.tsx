@@ -20,7 +20,7 @@ export default function Account() {
     const [modal, setModal] = useState(false);
     const primaryEmail = User.getPrimaryEmail(user!) || "";
     const [typedEmail, setTypedEmail] = useState("");
-    const original = ProfileState.getProfileState(user!);
+    const original = User.getProfile(user!);
     const [profileState, setProfileState] = useState(original);
     const [errorMessage, setErrorMessage] = useState("");
     const [updated, setUpdated] = useState(false);
@@ -31,7 +31,7 @@ export default function Account() {
         if (error) {
             return;
         }
-        const updatedUser = ProfileState.setProfileState(user!, profileState);
+        const updatedUser = User.setProfile(user!, profileState);
         setUser(updatedUser);
         getGitpodService().server.updateLoggedInUser(updatedUser);
         setUpdated(true);
