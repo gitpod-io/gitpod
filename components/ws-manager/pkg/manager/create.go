@@ -969,30 +969,6 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		}
 	}
 
-	var (
-		secrets    = make(map[string]string)
-		secretsLen int
-	)
-	for _, env := range req.Spec.Envvars {
-		if env.Secret != nil {
-			continue
-		}
-		if !isProtectedEnvVar(env.Name) {
-			continue
-		}
-
-		name := fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name)))
-		secrets[name] = env.Value
-		secretsLen += len(env.Value)
-	}
-	for k, v := range csapi.ExtractSecretsFromInitializer(req.Spec.Initializer) {
-		secrets[k] = v
-		secretsLen += len(v)
-	}
-	if secretsLen > maxSecretsLength {
-		return nil, xerrors.Errorf("secrets exceed maximum permitted length (%d > %d bytes): please reduce the numer or length of environment variables", secretsLen, maxSecretsLength)
-	}
-
 	return &startWorkspaceContext{
 		Labels:         labels,
 		CLIAPIKey:      cliAPIKey,
@@ -1004,7 +980,6 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		Headless:       headless,
 		Class:          class,
 		VolumeSnapshot: volumeSnapshot,
-		Secrets:        secrets,
 	}, nil
 }
 
