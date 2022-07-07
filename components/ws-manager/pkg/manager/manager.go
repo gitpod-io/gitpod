@@ -331,7 +331,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		if err != nil {
 			jsonPod, _ := json.Marshal(pod)
 			safePod, _ := log.RedactJSON(jsonPod)
-			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to reach ready state")
+			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Error("was unable to reach ready state")
 			retryErr = err
 
 			var tempPod corev1.Pod
