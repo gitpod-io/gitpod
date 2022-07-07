@@ -135,21 +135,8 @@ rm -rf /var/lib/rancher/k3s/server/manifests/gitpod
 run_telemetry(){
   # wait for the k3s cluster to be ready and Gitpod workloads are added
   sleep 100
-  # patch coredns configmap
-  kubectl patch configmap/coredns \
-  -n kube-system \
-  --type merge \
-  -p '{"data":{"Corefile": ".:53 {\n    errors\n    health\n    ready\n    file /etc/coredns/gitpod.db 127-0-0-1.nip.io\n    kubernetes cluster.local in-addr.arpa ip6.arpa {\n      pods insecure\n      fallthrough in-addr.arpa ip6.arpa\n    }\n    hosts /etc/coredns/NodeHosts {\n      ttl 60\n      reload 15s\n      fallthrough\n    }\n    prometheus :9153\n    forward . /etc/resolv.conf\n    cache 30\n    loop\n    reload\n    loadbalance\n}\n"}}'
-
-  PROXY_IP=$(kubectl get service/proxy -o jsonpath='{.spec.clusterIP}')
-  kubectl patch configmap/coredns \
-  -n kube-system \
-  --type merge \
-  -p "{\"data\":{\"gitpod.db\":\"; 127-0-0-1.nip.io test file\n127-0-0-1.nip.io.       IN      SOA    sns.dns.icann.org. noc.dns.icann.org. 2015082541 7200 3600 1209600 3600\n127-0-0-1.nip.io.       IN      A  $PROXY_IP\n*.127-0-0-1.nip.io.     IN      A $PROXY_IP\n*.ws.127-0-0-1.nip.io.  IN      A  $PROXY_IP\"}}"
-
-  # patch coredns to use it
-  kubectl patch deployment/coredns -n kube-system --type merge -p '{"spec":{"template":{"spec":{"volumes":[{"name":"config-volume", "configMap":{"name":"coredns","items":[{"key": "gitpod.db","path":"gitpod.db"}, {"key": "Corefile","path":"Corefile"}, {"key": "NodeHosts","path":"NodeHosts"}]}}]}}}}'
-
+  # update `coredns`
+  mv -f /app/manifests/coredns.yaml /var/lib/rancher/k3s/server/manifests/coredns.yaml
   # indefinitely wait for Gitpod pods to be ready
   kubectl wait --timeout=-1s --for=condition=ready pod -l app=gitpod,component!=migrations
   # manually tun the cronjob
