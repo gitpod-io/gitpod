@@ -144,6 +144,11 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                             {workspace.stoppedTime ? moment(workspace.stoppedTime).fromNow() : "---"}
                         </Property>
                     </div>
+                    <div className="flex w-full mt-12">
+                        <Property name="Node">
+                            <div className="overflow-scroll">{workspace.status.nodeName ?? "not assigned"}</div>
+                        </Property>
+                    </div>
                     <div className="flex w-full mt-6">{[0, 1, 2].map(adminLink)}</div>
                     <div className="flex w-full mt-6">{[3, 4, 5].map(adminLink)}</div>
                 </div>
