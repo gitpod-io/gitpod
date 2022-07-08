@@ -140,6 +140,8 @@ replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.11.2
 
 replace github.com/gitpod-io/gitpod/common-go => ../components/common-go // leeway
 
+replace github.com/gitpod-io/gitpod/common-go/nsenter => ../components/common-go/nsenter // leeway
+
 replace github.com/gitpod-io/gitpod/content-service => ../components/content-service // leeway
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../components/content-service-api/go // leeway

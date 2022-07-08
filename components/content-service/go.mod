@@ -104,6 +104,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
+replace github.com/gitpod-io/gitpod/common-go/nsenter => ../common-go/nsenter // leeway
+
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway

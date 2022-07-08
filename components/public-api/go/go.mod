@@ -38,6 +38,8 @@ require (
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
 
+replace github.com/gitpod-io/gitpod/common-go/nsenter => ../../common-go/nsenter // leeway
+
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
 
 replace k8s.io/api => k8s.io/api v0.23.5 // leeway indirect from components/common-go:lib
