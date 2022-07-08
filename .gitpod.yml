@@ -30,6 +30,9 @@ ports:
     onOpen: ignore
   # Dev Theia
   - port: 13444
+  # Used when using port-forwarding to SSH to preview environment VMs
+  - port: 8022
+    onOpen: ignore
 tasks:
   - name: Install Preview Environment kube-context
     command: |
