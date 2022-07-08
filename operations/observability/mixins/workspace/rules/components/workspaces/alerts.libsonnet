@@ -77,14 +77,14 @@
             labels: {
               severity: 'critical',
             },
-            'for': '15m',
+            'for': '10m',
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceTooManyRegularNotActive.md',
               summary: 'too many running but inactive workspaces',
               description: 'too many running but inactive workspaces',
             },
             expr: |||
-              gitpod_workspace_regular_not_active_percentage > 0.15 AND sum(gitpod_ws_manager_workspace_activity_total) > 100
+              gitpod_workspace_regular_not_active_percentage > 0.10
             |||,
           },
           {
