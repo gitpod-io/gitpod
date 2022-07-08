@@ -40,4 +40,5 @@ class GitpodRecentConnections : GatewayRecentConnections {
             this.view.refresh()
         }
     }
+
 }

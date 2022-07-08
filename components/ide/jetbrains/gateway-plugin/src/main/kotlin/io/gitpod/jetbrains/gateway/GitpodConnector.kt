@@ -54,4 +54,5 @@ class GitpodConnector : GatewayConnector {
     }
 
     override fun initProcedure() {}
+
 }
