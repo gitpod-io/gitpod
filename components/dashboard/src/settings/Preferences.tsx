@@ -54,7 +54,12 @@ export default function Preferences() {
 
     const [isShowWorkspaceClasses, setIsShowWorkspaceClasses] = useState<boolean>(false);
     (async () => {
-        const showWorkspaceClasses = await getExperimentsClient().getValueAsync("workspace_classes", false, {});
+        if (!user) {
+            return;
+        }
+        const showWorkspaceClasses = await getExperimentsClient().getValueAsync("workspace_classes", false, {
+            user,
+        });
         setIsShowWorkspaceClasses(showWorkspaceClasses);
     })();
 

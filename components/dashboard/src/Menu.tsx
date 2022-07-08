@@ -170,7 +170,7 @@ export default function Menu() {
                 "isUsageBasedBillingEnabled",
                 false,
                 {
-                    userId: user?.id,
+                    user,
                     projectId: project?.id,
                     teamId: team?.id,
                     teamName: team?.name,

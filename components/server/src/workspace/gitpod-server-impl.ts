@@ -1576,7 +1576,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 "deprecateOldImageLogsMechanism",
                 false,
                 {
-                    userId: user.id,
+                    user,
                     projectId: workspace.projectId,
                 },
             );

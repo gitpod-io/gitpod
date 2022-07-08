@@ -5,8 +5,9 @@
  */
 
 import { Attributes, Client } from "./types";
-import { User } from "configcat-common/lib/RolloutEvaluator";
+import { User as ConfigCatUser } from "configcat-common/lib/RolloutEvaluator";
 import { IConfigCatClient } from "configcat-common/lib/ConfigCatClient";
+import { User } from "../protocol";
 
 export const PROJECT_ID_ATTRIBUTE = "project_id";
 export const TEAM_ID_ATTRIBUTE = "team_id";
@@ -30,9 +31,9 @@ export class ConfigCatClient implements Client {
     }
 }
 
-export function attributesToUser(attributes: Attributes): User {
-    const userId = attributes.userId || "";
-    const email = attributes.email || "";
+export function attributesToUser(attributes: Attributes): ConfigCatUser {
+    const userId = attributes.user?.id || "";
+    const email = User.is(attributes.user) ? User.getPrimaryEmail(attributes.user) : attributes.user?.email || "";
 
     const custom: { [key: string]: string } = {};
     if (attributes.projectId) {
@@ -49,5 +50,5 @@ export function attributesToUser(attributes: Attributes): User {
         custom[TEAM_IDS_ATTRIBUTE] = attributes.teams.map((t) => t.id).join(",");
     }
 
-    return new User(userId, email, "", custom);
+    return new ConfigCatUser(userId, email, "", custom);
 }

@@ -14,6 +14,7 @@ import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
 import { getExperimentsClient } from "./../experiments/client";
+import { UserContext } from "../user-context";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? "t/" + team.slug : "projects";
@@ -50,6 +51,7 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
 }
 
 export default function () {
+    const { user } = useContext(UserContext);
     const { project } = useContext(ProjectContext);
     const location = useLocation();
     const { teams } = useContext(TeamsContext);
@@ -64,10 +66,14 @@ export default function () {
         }
         setProjectSettings({ ...project.settings });
         (async () => {
+            if (!user) {
+                return;
+            }
             const showPersistentVolumeClaim = await getExperimentsClient().getValueAsync(
                 "persistent_volume_claim",
                 false,
                 {
+                    user,
                     projectId: project?.id,
                     teamId: team?.id,
                     teamName: team?.name,
