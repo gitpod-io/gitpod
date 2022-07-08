@@ -70,6 +70,7 @@ function createVSCodeClient(protocol: "vscode" | "vscode-insiders"): OAuthClient
             { name: "function:getOwnerToken" },
             { name: "function:getWorkspace" },
             { name: "function:getWorkspaces" },
+            { name: "function:getSSHPublicKeys" },
             { name: "resource:default" },
         ],
     };
