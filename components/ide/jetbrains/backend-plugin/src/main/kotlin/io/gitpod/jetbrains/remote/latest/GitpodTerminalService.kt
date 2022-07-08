@@ -204,6 +204,11 @@ class GitpodTerminalService(private val session: ClientProjectSession) {
                     }
                 }
 
+                override fun onPortForwardingEnded(hostPort: Int) {
+                    thisLogger().info("gitpod: Port $hostPort from Supervisor's Terminal " +
+                            "${supervisorTerminal.pid} is not being forwarded anymore.")
+                }
+
                 override fun onPortForwardingFailed(hostPort: Int, reason: String) {
                     thisLogger().error("gitpod: Failed to forward port $hostPort from Supervisor's Terminal " +
                             "${supervisorTerminal.pid}: $reason")
