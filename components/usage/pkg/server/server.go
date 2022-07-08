@@ -6,14 +6,17 @@ package server
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/common-go/baseserver"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/usage/pkg/controller"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"net"
 	"os"
 	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
+	"github.com/gitpod-io/gitpod/usage/pkg/apiv1"
+	"github.com/gitpod-io/gitpod/usage/pkg/controller"
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 )
 
 type Config struct {
@@ -77,6 +80,10 @@ func Start(cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize usage server: %w", err)
 	}
+	err = registerGRPCServices(srv)
+	if err != nil {
+		return fmt.Errorf("failed to register gRPC services: %w", err)
+	}
 
 	err = controller.RegisterMetrics(srv.MetricsRegistry())
 	if err != nil {
@@ -88,5 +95,10 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to listen and serve: %w", err)
 	}
 
+	return nil
+}
+
+func registerGRPCServices(srv *baseserver.Server) error {
+	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService())
 	return nil
 }

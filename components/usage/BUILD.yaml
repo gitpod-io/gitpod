@@ -7,6 +7,7 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
+      - components/usage-api/go:lib
       - :init-testdb
     env:
       - CGO_ENABLED=0
@@ -19,6 +20,7 @@ packages:
     type: go
     deps:
       - components/common-go:lib
+      - components/usage-api/go:lib
     srcs:
       - "**/*.go"
       - "go.mod"
