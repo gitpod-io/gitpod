@@ -6,7 +6,7 @@ packages:
   - name: app
     type: go
     deps:
-      - components/common-go:lib
+      - components/common-go/log:lib
     argdeps:
       - SEGMENT_IO_TOKEN
     srcs:

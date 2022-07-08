@@ -2,7 +2,7 @@ packages:
   - name: lib
     type: go
     deps:
-      - components/common-go:lib
+      - components/common-go/grpc:lib
       - components/content-service-api/go:lib
     srcs:
       - "**/*.go"

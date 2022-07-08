@@ -7,7 +7,9 @@ packages:
       - "go.mod"
       - "go.sum"
     deps:
-      - components/common-go:lib
+      - components/common-go/kubernetes:lib
+      - components/common-go/log:lib
+      - components/common-go/pprof:lib
       - components/gitpod-protocol/go:lib
     env:
       - CGO_ENABLED=0
@@ -23,7 +25,9 @@ packages:
       - "go.mod"
       - "go.sum"
     deps:
-      - components/common-go:lib
+      - components/common-go/kubernetes:lib
+      - components/common-go/log:lib
+      - components/common-go/pprof:lib
       - components/gitpod-protocol/go:lib
     env:
       - CGO_ENABLED=0

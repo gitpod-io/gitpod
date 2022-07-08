@@ -2,7 +2,8 @@ packages:
     - name: copy-mounts
       type: go
       deps:
-        - components/common-go:lib
+        - components/common-go/log:lib
+        - components/common-go/kubernetes:lib
       srcs:
         - go.mod
         - go.sum

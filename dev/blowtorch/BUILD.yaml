@@ -5,6 +5,8 @@ packages:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
+    deps:
+      - components/common-go/kubernetes:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux

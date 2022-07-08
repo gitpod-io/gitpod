@@ -6,7 +6,10 @@ packages:
       - "go.mod"
       - "go.sum"
     deps:
-      - components/common-go:lib
+      - components/common-go/grpc:lib
+      - components/common-go/kubernetes:lib
+      - components/common-go/log:lib
+      - components/common-go/namegen:lib
       - components/content-service-api/go:lib
       - components/image-builder-api/go:lib
       - components/registry-facade-api/go:lib

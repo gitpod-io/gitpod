@@ -6,7 +6,10 @@ packages:
       - "go.mod"
       - "go.sum"
     deps:
-      - components/common-go:lib
+      - components/common-go/analytics:lib
+      - components/common-go/grpc:lib
+      - components/common-go/log:lib
+      - components/common-go/pprof:lib
       - components/content-service-api/go:lib
       - components/content-service:lib
       - components/gitpod-protocol/go:lib

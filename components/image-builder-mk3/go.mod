@@ -10,7 +10,6 @@ require (
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
@@ -31,9 +30,17 @@ require (
 )
 
 require (
+	github.com/gitpod-io/gitpod/common-go/grpc v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/common-go/log v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/common-go/pprof v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/common-go/tracing v0.0.0-00010101000000-000000000000
+)
+
+require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
+	github.com/gitpod-io/gitpod/common-go/util v0.0.0-00010101000000-000000000000 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
@@ -63,7 +70,19 @@ require (
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
 )
 
-replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
+replace github.com/gitpod-io/gitpod/common-go/baseserver => ../common-go/baseserver // leeway
+
+replace github.com/gitpod-io/gitpod/common-go/grpc => ../common-go/grpc // leeway
+
+replace github.com/gitpod-io/gitpod/common-go/log => ../common-go/log // leeway
+
+replace github.com/gitpod-io/gitpod/common-go/pprof => ../common-go/pprof // leeway
+
+replace github.com/gitpod-io/gitpod/common-go/process => ../common-go/process // leeway
+
+replace github.com/gitpod-io/gitpod/common-go/tracing => ../common-go/tracing // leeway
+
+replace github.com/gitpod-io/gitpod/common-go/util => ../common-go/util // leeway
 
 replace github.com/gitpod-io/gitpod/content-service => ../content-service // leeway
 
@@ -76,53 +95,3 @@ replace github.com/gitpod-io/gitpod/registry-facade/api => ../registry-facade-ap
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-manager/api => ../ws-manager-api/go // leeway
-
-replace k8s.io/api => k8s.io/api v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/apiserver => k8s.io/apiserver v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/client-go => k8s.io/client-go v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/cloud-provider => k8s.io/cloud-provider v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/code-generator => k8s.io/code-generator v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/component-base => k8s.io/component-base v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/cri-api => k8s.io/cri-api v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kube-proxy => k8s.io/kube-proxy v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kubelet => k8s.io/kubelet v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/metrics => k8s.io/metrics v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/component-helpers => k8s.io/component-helpers v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/controller-manager => k8s.io/controller-manager v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kubectl => k8s.io/kubectl v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/mount-utils => k8s.io/mount-utils v0.23.5 // leeway indirect from components/common-go:lib
-
-replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.5 // leeway indirect from components/common-go:lib

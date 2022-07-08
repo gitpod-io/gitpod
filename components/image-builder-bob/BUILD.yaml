@@ -11,7 +11,7 @@ packages:
   - CGO_ENABLED=0
   - GOOS=linux
   deps:
-  - components/common-go:lib
+  - components/common-go/log:lib
   prep:
   - ["go", "mod", "tidy"]
   config:
@@ -26,7 +26,7 @@ packages:
   - CGO_ENABLED=0
   - GOOS=linux
   deps:
-  - components/common-go:lib
+  - components/common-go/log:lib
   prep:
     - ["mv", "cmd/runc-facade/main.go", "main.go"]
     - ["go", "mod", "tidy"]

@@ -7,7 +7,11 @@ packages:
       - "go.sum"
       - "pkg/**/*.json"
     deps:
-      - components/common-go:lib
+      - components/common-go/kubernetes:lib
+      - components/common-go/log:lib
+      - components/common-go/pprof:lib
+      - components/common-go/tracing:lib
+      - components/common-go/util:lib
       - components/registry-facade-api/go:lib
       - components/registry-facade:lib
     env:
@@ -39,7 +43,11 @@ packages:
       - "go.mod"
       - "go.sum"
     deps:
-      - components/common-go:lib
+      - components/common-go/kubernetes:lib
+      - components/common-go/log:lib
+      - components/common-go/pprof:lib
+      - components/common-go/tracing:lib
+      - components/common-go/util:lib
       - components/registry-facade-api/go:lib
       - components/registry-facade:lib
     env:

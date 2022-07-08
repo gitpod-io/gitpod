@@ -6,7 +6,10 @@ packages:
   - name: lib
     type: go
     deps:
-      - components/common-go:lib
+      - components/common-go/baseserver:lib
+      - components/common-go/log:lib
+      - components/common-go/process:lib
+      - components/common-go/tracing:lib
       - components/content-service-api/go:lib
     srcs:
       - "**"
@@ -16,7 +19,10 @@ packages:
   - name: app
     type: go
     deps:
-      - components/common-go:lib
+      - components/common-go/baseserver:lib
+      - components/common-go/log:lib
+      - components/common-go/process:lib
+      - components/common-go/tracing:lib
       - components/content-service-api/go:lib
     srcs:
       - "**/*.go"

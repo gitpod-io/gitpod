@@ -6,7 +6,8 @@ packages:
       - "go.mod"
       - "go.sum"
     deps:
-      - components/common-go:lib
+      - components/common-go/baseserver:lib
+      - components/common-go/log:lib
       - components/public-api/go:lib
       - components/gitpod-protocol/go:lib
     env:

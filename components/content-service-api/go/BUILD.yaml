@@ -2,7 +2,7 @@ packages:
   - name: lib
     type: go
     deps:
-      - components/common-go:lib
+      - components/common-go/baseserver:lib
     srcs:
       - "**/*.go"
       - "go.mod"

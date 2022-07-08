@@ -8,7 +8,13 @@ packages:
       - "pkg/**/*.json"
       - "pkg/**/*.golden"
     deps:
-      - components/common-go:lib
+      - components/common-go/grpc:lib
+      - components/common-go/kubernetes:lib
+      - components/common-go/log:lib
+      - components/common-go/pprof:lib
+      - components/common-go/testing:lib
+      - components/common-go/tracing:lib
+      - components/common-go/watch:lib
       - components/registry-facade-api/go:lib
     env:
       - CGO_ENABLED=0
@@ -25,7 +31,13 @@ packages:
       - "pkg/**/*.json"
       - "pkg/**/*.golden"
     deps:
-      - components/common-go:lib
+      - components/common-go/grpc:lib
+      - components/common-go/kubernetes:lib
+      - components/common-go/log:lib
+      - components/common-go/pprof:lib
+      - components/common-go/testing:lib
+      - components/common-go/tracing:lib
+      - components/common-go/watch:lib
       - components/registry-facade-api/go:lib
     env:
       - CGO_ENABLED=0

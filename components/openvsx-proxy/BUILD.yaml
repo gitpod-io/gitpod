@@ -6,7 +6,8 @@ packages:
   - name: app
     type: go
     deps:
-      - components/common-go:lib
+      - components/common-go/log:lib
+      - components/common-go/util:lib
     srcs:
       - "**/*.go"
       - "go.mod"
@@ -20,7 +21,8 @@ packages:
   - name: lib
     type: go
     deps:
-      - components/common-go:lib
+      - components/common-go/log:lib
+      - components/common-go/util:lib
     srcs:
       - "**/*.go"
       - "go.mod"

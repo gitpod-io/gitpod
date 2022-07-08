@@ -6,7 +6,9 @@ packages:
       - "go.mod"
       - "go.sum"
     deps:
-      - components/common-go:lib
+      - components/common-go/baseserver:lib
+      - components/common-go/log:lib
+      - components/common-go/namegen:lib
       - :init-testdb
     env:
       - CGO_ENABLED=0
@@ -18,7 +20,9 @@ packages:
   - name: lib
     type: go
     deps:
-      - components/common-go:lib
+      - components/common-go/baseserver:lib
+      - components/common-go/log:lib
+      - components/common-go/namegen:lib
     srcs:
       - "**/*.go"
       - "go.mod"

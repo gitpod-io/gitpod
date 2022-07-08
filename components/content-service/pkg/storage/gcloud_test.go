@@ -23,7 +23,6 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"google.golang.org/api/option"
-	"k8s.io/apimachinery/pkg/api/resource"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/api/config"
@@ -83,9 +82,9 @@ func TestObjectUpload(t *testing.T) {
 		InstanceID  string
 		Payload     func() (string, error)
 	}{
-		{"valid 1M backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload("1Mi")},
-		{"valid 100M backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload("100Mi")},
-		{"valid 1GB backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload("1Gi")},
+		{"valid 1M backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload(1 * 1024 * 1024)},
+		{"valid 100M backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload(100 * 1024 * 1024)},
+		{"valid 1GB backup", DefaultBackup, config.StageDevStaging, "fake-owner", "fake-workspace", "fake-instance", fakeTarPayload(1 * 1024 * 1024 * 1024)},
 	}
 
 	for _, test := range tests {
@@ -202,7 +201,7 @@ func TestObjectUpload(t *testing.T) {
 }
 
 //lint:ignore U1000 Ignore unused function temporarily to skip tests
-func fakeTarPayload(size string) func() (string, error) {
+func fakeTarPayload(size int64) func() (string, error) {
 	return func() (string, error) {
 		payload, err := ioutil.TempFile("", "test-payload-")
 		if err != nil {
@@ -211,12 +210,7 @@ func fakeTarPayload(size string) func() (string, error) {
 
 		defer os.Remove(payload.Name())
 
-		q, err := resource.ParseQuantity(size)
-		if err != nil {
-			return "", err
-		}
-
-		_, err = io.CopyN(payload, rand.Reader, q.Value())
+		_, err = io.CopyN(payload, rand.Reader, size)
 		if err != nil {
 			return "", err
 		}
