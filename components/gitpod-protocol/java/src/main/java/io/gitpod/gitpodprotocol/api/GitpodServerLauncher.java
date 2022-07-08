@@ -71,6 +71,37 @@ public class GitpodServerLauncher {
     ) throws Exception {
         String gitpodHost = URI.create(apiUrl).getHost();
         HttpClient httpClient;
+        if (sslContext == null && proxies.size() == 0) {
+            GitpodServerConnectionImpl connection = new GitpodServerConnectionImpl(gitpodHost);
+            connection.setSession(ContainerProvider.getWebSocketContainer().connectToServer(new Endpoint() {
+                @Override
+                public void onOpen(Session session, EndpointConfig config) {
+                    session.addMessageHandler(new WebSocketMessageHandler(messageReader, jsonHandler, remoteEndpoint));
+                    messageWriter.setSession(session);
+                    client.notifyConnect();
+                }
+
+                @Override
+                public void onClose(Session session, CloseReason closeReason) {
+                    connection.complete(closeReason);
+                }
+
+                @Override
+                public void onError(Session session, Throwable thr) {
+                    GitpodServerConnectionImpl.LOG.log(Level.WARNING, gitpodHost + ": connection error:", thr);
+                    connection.completeExceptionally(thr);
+                }
+            }, ClientEndpointConfig.Builder.create().configurator(new ClientEndpointConfig.Configurator() {
+                @Override
+                public void beforeRequest(final Map<String, List<String>> headers) {
+                    headers.put("Origin", Arrays.asList(origin));
+                    headers.put("Authorization", Arrays.asList("Bearer " + token));
+                    headers.put("User-Agent", Arrays.asList(userAgent));
+                    headers.put("X-Client-Version", Arrays.asList(clientVersion));
+                }
+            }).build(), URI.create(apiUrl)));
+            return connection;
+        }
         if (sslContext == null) {
             httpClient = new HttpClient();
         } else {
