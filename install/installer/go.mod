@@ -101,6 +101,7 @@ require (
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000 // indirect
 	github.com/gitpod-io/gitpod/registry-facade v0.0.0-00010101000000-000000000000 // indirect
+	github.com/gitpod-io/gitpod/usage-api v0.0.0-00010101000000-000000000000 // indirect
 	github.com/gitpod-io/golang-crypto v0.0.0-20220616163018-a0e3d8407552 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
@@ -272,7 +273,7 @@ require (
 	google.golang.org/api v0.77.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220414192740-2d67ff6cf2b4 // indirect
-	google.golang.org/grpc v1.45.0 // indirect
+	google.golang.org/grpc v1.47.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -325,6 +326,8 @@ replace github.com/gitpod-io/gitpod/registry-facade/api => ../../components/regi
 replace github.com/gitpod-io/gitpod/supervisor/api => ../../components/supervisor-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/usage => ../../components/usage // leeway
+
+replace github.com/gitpod-io/gitpod/usage-api => ../../components/usage-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-daemon => ../../components/ws-daemon // leeway
 

@@ -22,7 +22,7 @@ func Start(logger *logrus.Entry, cfg *config.Configuration) error {
 
 	gitpodAPI, err := url.Parse(cfg.GitpodServiceURL)
 	if err != nil {
-		return fmt.Errorf("failed to parse Gitpod API U: %w", err)
+		return fmt.Errorf("failed to parse Gitpod API URL: %w", err)
 	}
 
 	registry := prometheus.NewRegistry()

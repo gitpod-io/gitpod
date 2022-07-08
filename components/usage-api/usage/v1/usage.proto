@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package usage.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
+
+import "usage/v1/pagination.proto";
+
+service UsageService {
+    // GetUsage retrieves all usage for a team.
+    rpc GetUsage(GetUsageRequest) returns (GetUsageResponse) {}
+}
+
+message GetUsageRequest {
+    Pagination pagination = 1;
+}
+message GetUsageResponse {
+    string next_page_token = 1;
+}

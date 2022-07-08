@@ -29,6 +29,7 @@ packages:
       - components/ws-manager-api/go:lib
       - components/ws-proxy:lib
       - components/usage:lib
+      - components/usage-api/go:lib
     env:
       - CGO_ENABLED=0
     prep:
