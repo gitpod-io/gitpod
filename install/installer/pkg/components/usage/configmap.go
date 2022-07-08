@@ -5,8 +5,10 @@ package usage
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/usage/pkg/server"
 	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/usage/pkg/server"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -18,6 +20,13 @@ import (
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := server.Config{
 		ControllerSchedule: time.Hour.String(),
+		Server: &baseserver.Configuration{
+			Services: baseserver.ServicesConfiguration{
+				GRPC: &baseserver.ServerConfiguration{
+					Address: fmt.Sprintf(":%d", gRPCContainerPort),
+				},
+			},
+		},
 	}
 
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {

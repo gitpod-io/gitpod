@@ -6,6 +6,7 @@ package usage
 
 const (
 	Component             = "usage"
+	gRPCContainerPort     = 9001
 	stripeSecretMountPath = "stripe-secret"
 	stripeKeyFilename     = "apikeys"
 	configJSONFilename    = "config.json"
