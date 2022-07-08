@@ -1946,7 +1946,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             "isUsageBasedBillingEnabled",
             false,
             {
-                userId: user.id,
+                user,
                 teams: teams,
             },
         );
