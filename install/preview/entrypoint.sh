@@ -4,11 +4,6 @@
 
 set -e
 
-if [ "$1" != "logging" ]; then
-  $0 logging 2>&1 | /prettylog
-  exit
-fi
-
 # check for minimum requirements
 REQUIRED_MEM_KB=$((6 * 1024 * 1024))
 total_mem_kb=$(awk '/MemTotal:/ {print $2}' /proc/meminfo)
@@ -136,8 +131,16 @@ yq eval-all -i 'del(.spec.template.spec.initContainers[0])' /var/lib/rancher/k3s
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/manifests/gitpod.yaml; done
 rm -rf /var/lib/rancher/k3s/server/manifests/gitpod
 
-# waits for gitpod pods to be ready, and manually runs the `gitpod-telemetry` cronjob
-run_telemetry(){
+/bin/k3s server --disable traefik \
+  --node-label gitpod.io/workload_meta=true \
+  --node-label gitpod.io/workload_ide=true \
+  --node-label gitpod.io/workload_workspace_services=true \
+  --node-label gitpod.io/workload_workspace_regular=true \
+  --node-label gitpod.io/workload_workspace_headless=true 2>&1 &
+
+pid=$!
+
+run_init_telemetry(){
   # wait for the k3s cluster to be ready and Gitpod workloads are added
   sleep 100
   # indefinitely wait for Gitpod pods to be ready
@@ -146,11 +149,19 @@ run_telemetry(){
   kubectl create job gitpod-telemetry-init --from=cronjob/gitpod-telemetry
 }
 
-run_telemetry 2>&1 &
+run_exit_telemetry(){
 
-/bin/k3s server --disable traefik \
-  --node-label gitpod.io/workload_meta=true \
-  --node-label gitpod.io/workload_ide=true \
-  --node-label gitpod.io/workload_workspace_services=true \
-  --node-label gitpod.io/workload_workspace_regular=true \
-  --node-label gitpod.io/workload_workspace_headless=true
+  sleep 100
+  # wait for Gitpod pods to be ready
+  kubectl wait --timeout=-1s --for=condition=ready pod -l app=gitpod,component!=migrations
+  # manually tun the cronjob
+  kubectl create job gitpod-telemetry-exit --from=cronjob/gitpod-telemetry
+  # wait for the job to finish
+  sleep 30
+}
+
+trap 'run_exit_telemetry 2>&1' EXIT INT HUP
+
+run_init_telemetry 2>&1 &
+
+wait $pid
