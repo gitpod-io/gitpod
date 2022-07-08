@@ -3,8 +3,8 @@ packages:
     type: go
     deps:
       - components/common-go/grpc:lib
-      - components/common-go/util:lib
       - components/common-go/kubernetes:lib
+      - components/common-go/util:lib
       - components/content-service-api/go:lib
     srcs:
       - "**/*.go"

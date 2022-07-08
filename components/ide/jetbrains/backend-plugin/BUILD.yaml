@@ -2,8 +2,8 @@ packages:
   - name: plugin-stable
     type: generic
     deps:
-      - components/supervisor-api/java:lib
       - components/gitpod-protocol/java:lib
+      - components/supervisor-api/java:lib
     srcs:
       - "**/*.kt"
       - "build.gradle.kts"

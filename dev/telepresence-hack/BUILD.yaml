@@ -1,16 +1,16 @@
 packages:
-    - name: copy-mounts
-      type: go
-      deps:
-        - components/common-go/log:lib
-        - components/common-go/kubernetes:lib
-      srcs:
-        - go.mod
-        - go.sum
-        - "copy-mounts/*.go"
-      env:
-        - CGO_ENABLED=0
-      prep:
-        - ["sh", "-c", "mv copy-mounts/* ."]
-      config:
-        packaging: app
+  - name: copy-mounts
+    type: go
+    deps:
+      - components/common-go/kubernetes:lib
+      - components/common-go/log:lib
+    srcs:
+      - go.mod
+      - go.sum
+      - "copy-mounts/*.go"
+    env:
+      - CGO_ENABLED=0
+    prep:
+      - ["sh", "-c", "mv copy-mounts/* ."]
+    config:
+      packaging: app

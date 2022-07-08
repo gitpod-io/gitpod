@@ -26,6 +26,7 @@
     "@gitpod/gitpod-db": "0.1.5",
     "@gitpod/gitpod-messagebus": "0.1.5",
     "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/content-service": "0.1.5",
     "@gitpod/ws-daemon": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",
     "@gitpod/ws-manager-bridge-api": "0.1.5",

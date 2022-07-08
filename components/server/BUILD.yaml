@@ -9,14 +9,14 @@ packages:
       - mocha.opts
     deps:
       - components/content-service-api/typescript:lib
+      - components/ee/payment-endpoint:lib
       - components/gitpod-db:lib
       - components/gitpod-messagebus:lib
-      - components/ee/payment-endpoint:lib
       - components/gitpod-protocol:lib
       - components/image-builder-api/typescript:lib
       - components/licensor/typescript:lib
-      - components/ws-manager-api/typescript:lib
       - components/supervisor-api/typescript-grpcweb:lib
+      - components/ws-manager-api/typescript:lib
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock

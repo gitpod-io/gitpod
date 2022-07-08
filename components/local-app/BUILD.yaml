@@ -4,10 +4,10 @@ packages:
     config:
       commands: [["echo"]]
     deps:
-      - :app-linux-amd64
-      - :app-linux-arm64
       - :app-darwin-amd64
       - :app-darwin-arm64
+      - :app-linux-amd64
+      - :app-linux-arm64
       - :app-windows-386
       - :app-windows-amd64
       - :app-windows-arm64

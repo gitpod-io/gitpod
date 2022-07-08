@@ -11,11 +11,11 @@ packages:
       - :all-docker
       - :docker-versions
       - :publish-api
+      - components/gitpod-protocol:all
       - dev:all-app
       - install/installer:docker
-      - install/preview:docker
       - install/kots:lint
-      - components/gitpod-protocol:all
+      - install/preview:docker
       - operations/observability/mixins:lint
   - name: docker-versions
     type: docker
@@ -169,7 +169,6 @@ scripts:
         ./build.sh
         popd > /dev/null
       done
-
   - name: update-go-modules
     srcs:
       - components/**/*
@@ -186,7 +185,6 @@ scripts:
         go mod tidy -compat=1.18
         popd > /dev/null
       done
-
   - name: unblock-user
     deps:
       - components/service-waiter:app
@@ -218,7 +216,6 @@ scripts:
         mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
       fi
       kill $PID || true
-
   - name: make-user-admin
     deps:
       - components/service-waiter:app
@@ -250,7 +247,6 @@ scripts:
         mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
       fi
       kill $PID || true
-
   - name: add-smith-token
     deps:
       - components/service-waiter:app

@@ -1,8 +1,8 @@
 packages:
-    - name: init-scripts
-      type: generic
-      srcs:
-        - "*.sql"
-      config:
-        commands:
-            - ["echo"]
+  - name: init-scripts
+    type: generic
+    srcs:
+      - "*.sql"
+    config:
+      commands:
+        - ["echo"]

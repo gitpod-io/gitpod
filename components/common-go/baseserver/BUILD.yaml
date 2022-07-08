@@ -8,8 +8,8 @@ packages:
     srcs:
       - "**"
     deps:
-      - components/common-go/log:lib
       - components/common-go/grpc:lib
+      - components/common-go/log:lib
       - components/common-go/pprof:lib
       - components/common-go/util:lib
     config:

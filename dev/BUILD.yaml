@@ -2,8 +2,8 @@ packages:
   - name: all
     type: generic
     deps:
-      - dev/image:docker
       - :dev-utils
+      - dev/image:docker
   - name: all-app
     type: generic
     deps:

@@ -3,12 +3,12 @@
 # See License-AGPL.txt in the project root for license information.
 
 packages:
-    - name: lint
-      type: generic
-      srcs:
-        - "**/*"
-      config:
-        commands:
-          - ["make", "promtool-lint"]
-          - ["make", "lint"]
-          - ["make", "unit-tests"]
+  - name: lint
+    type: generic
+    srcs:
+      - "**/*"
+    config:
+      commands:
+        - ["make", "promtool-lint"]
+        - ["make", "lint"]
+        - ["make", "unit-tests"]

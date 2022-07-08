@@ -17,14 +17,7 @@ packages:
       - CGO_ENABLED=0
     config:
       packaging: app
-      buildCommand:
-        [
-          "go",
-          "build",
-          "-trimpath",
-          "-ldflags",
-          "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/installation-telemetry/cmd.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/gitpod/installation-telemetry/cmd.segmentIOToken=${SEGMENT_IO_TOKEN}'",
-        ]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/installation-telemetry/cmd.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/gitpod/installation-telemetry/cmd.segmentIOToken=${SEGMENT_IO_TOKEN}'"]
   - name: docker
     type: docker
     deps:

@@ -4,14 +4,14 @@ packages:
     argdeps:
       - version
     deps:
-      - :intellij
-      - :intellij-latest
       - :goland
       - :goland-latest
-      - :pycharm
-      - :pycharm-latest
+      - :intellij
+      - :intellij-latest
       - :phpstorm
       - :phpstorm-latest
+      - :pycharm
+      - :pycharm-latest
   - name: intellij
     type: docker
     srcs:

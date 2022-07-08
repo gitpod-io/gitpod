@@ -8,8 +8,8 @@ packages:
     deps:
       - components/common-go/baseserver:lib
       - components/common-go/log:lib
-      - components/public-api/go:lib
       - components/gitpod-protocol/go:lib
+      - components/public-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux

@@ -17,4 +17,4 @@ packages:
       - jbMarketplacePublishTrigger
     config:
       commands:
-        - [ "./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "buildFromLeeway" ]
+        - ["./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "buildFromLeeway"]
