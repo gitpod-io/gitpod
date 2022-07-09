@@ -128,7 +128,7 @@ RUN install-packages netcat
 USER gitpod
 
 # Fix node version we develop against
-ARG GITPOD_NODE_VERSION=16.15.0
+ARG GITPOD_NODE_VERSION=16.16.0
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
     && npm install -g typescript yarn"
