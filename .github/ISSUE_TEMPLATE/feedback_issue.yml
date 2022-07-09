@@ -10,6 +10,6 @@ body:
   id: objective
   attributes:
     label: Objective
-    description: Include the objective of this issue and any relevant features 
+    description: Include the objective of this issue and any relevant features
   validations:
     required: true

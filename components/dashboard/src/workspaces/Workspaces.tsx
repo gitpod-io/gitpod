@@ -168,7 +168,7 @@ export default function () {
                                                 </span>
                                             </div>
                                             <div className="text-sm flex-auto">
-                                                Workspaces that have been stopped for more than 24 hours. Inactive 
+                                                Workspaces that have been stopped for more than 24 hours. Inactive
                                                 workspaces are automatically deleted after 14 days.{" "}
                                                 <a
                                                     className="gp-link"
