@@ -20,6 +20,7 @@ import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
 import { Config } from "../config";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 
 @injectable()
 export class ProjectsService {
@@ -29,6 +30,7 @@ export class ProjectsService {
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
+    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
 
     async getProject(projectId: string): Promise<Project | undefined> {
         return this.projectDB.findProjectById(projectId);
@@ -136,6 +138,19 @@ export class ProjectsService {
         });
         await this.projectDB.storeProject(project);
         await this.onDidCreateProject(project, installer);
+
+        this.analytics.track({
+            userId: installer.id,
+            event: "project_created",
+            properties: {
+                project_id: project.id,
+                name: name,
+                clone_url: cloneUrl,
+                owner_type: teamId ? "team" : "user",
+                owner_id: teamId ? teamId : userId,
+                app_installation_id: appInstallationId,
+            },
+        });
         return project;
     }
 

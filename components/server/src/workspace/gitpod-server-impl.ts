@@ -2222,21 +2222,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             await this.guardTeamOperation(params.teamId, "get");
         }
 
-        const project = this.projectsService.createProject(params, user);
-        this.analytics.track({
-            userId: user.id,
-            event: "project_created",
-            properties: {
-                name: params.name,
-                clone_url: params.cloneUrl,
-                account: params.account,
-                provider: params.provider,
-                owner_type: !!params.teamId ? "team" : "user",
-                owner_id: !!params.teamId ? params.teamId : params.userId,
-                app_installation_id: params.appInstallationId,
-            },
-        });
-        return project;
+        return this.projectsService.createProject(params, user);
     }
 
     public async deleteProject(ctx: TraceContext, projectId: string): Promise<void> {
