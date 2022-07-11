@@ -1,6 +1,10 @@
 # Change Log
 
 ## July 2022
+- Requests on ws-proxy won't contain the port anymore on the "X-Forwarded-Host" header. It will contain only the host. If you need the port, you can get it from the "X-Forwarded-Port" header. ([#11253](https://github.com/gitpod-io/gitpod/pull/11253)) - [@felladrin](https://github.com/felladrin)
+- Fixed an issue that was causing the workspace to frequently timeout when using a JetBrains IDE. ([#11232](https://github.com/gitpod-io/gitpod/pull/11232)) - [@mustard-mh](https://github.com/mustard-mh)
+- Make prebuild logs responsive for small viewports ([#11192](https://github.com/gitpod-io/gitpod/pull/11192)) - [@laushinka](https://github.com/laushinka)
+- two fixes the old Team Subscription UI ([#11205](https://github.com/gitpod-io/gitpod/pull/11205)) - [@geropl](https://github.com/geropl)
 - Fixed Tab menu being visible for urls with trailing '/' ([#10698](https://github.com/gitpod-io/gitpod/pull/10698)) - [@CuriousCorrelation](https://github.com/CuriousCorrelation)
 - [installer]: promote proxy service type from experimental ([#11006](https://github.com/gitpod-io/gitpod/pull/11006)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - always show buttons in the prebuild logs view ([#11150](https://github.com/gitpod-io/gitpod/pull/11150)) - [@geropl](https://github.com/geropl)
