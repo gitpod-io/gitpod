@@ -27,6 +27,7 @@ var (
 		Subsystem: subsystem,
 		Name:      "reconcile_completed_duration_seconds",
 		Help:      "Histogram of reconcile duration",
+		Buckets:   prometheus.LinearBuckets(30, 30, 10), // every 30 secs, starting at 30secs
 	}, []string{"outcome"})
 )
 
