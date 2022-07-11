@@ -73,7 +73,7 @@ func (p *Preview) InstallContext(wait bool, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	p.logger.WithFields(logrus.Fields{"branch": p.branch, "timeout": timeout}).Infof("Installing context")
+	p.logger.WithFields(logrus.Fields{"timeout": timeout}).Infof("Installing context")
 
 	// we use this channel to signal when we've found an event in wait functions, so we know when we're done
 	doneCh := make(chan struct{})
