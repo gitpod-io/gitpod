@@ -26,8 +26,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsageServiceClient interface {
-	// GetUsage retrieves all usage for a team.
-	GetUsage(ctx context.Context, in *GetUsageRequest, opts ...grpc.CallOption) (*GetUsageResponse, error)
+	// GetBilleadUsage retrieves all usage for a team.
+	GetBilledUsage(ctx context.Context, in *GetBilledUsageRequest, opts ...grpc.CallOption) (*GetBilledUsageResponse, error)
 }
 
 type usageServiceClient struct {
@@ -38,9 +38,9 @@ func NewUsageServiceClient(cc grpc.ClientConnInterface) UsageServiceClient {
 	return &usageServiceClient{cc}
 }
 
-func (c *usageServiceClient) GetUsage(ctx context.Context, in *GetUsageRequest, opts ...grpc.CallOption) (*GetUsageResponse, error) {
-	out := new(GetUsageResponse)
-	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/GetUsage", in, out, opts...)
+func (c *usageServiceClient) GetBilledUsage(ctx context.Context, in *GetBilledUsageRequest, opts ...grpc.CallOption) (*GetBilledUsageResponse, error) {
+	out := new(GetBilledUsageResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/GetBilledUsage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +51,8 @@ func (c *usageServiceClient) GetUsage(ctx context.Context, in *GetUsageRequest, 
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
 type UsageServiceServer interface {
-	// GetUsage retrieves all usage for a team.
-	GetUsage(context.Context, *GetUsageRequest) (*GetUsageResponse, error)
+	// GetBilleadUsage retrieves all usage for a team.
+	GetBilledUsage(context.Context, *GetBilledUsageRequest) (*GetBilledUsageResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
 }
 
@@ -60,8 +60,8 @@ type UsageServiceServer interface {
 type UnimplementedUsageServiceServer struct {
 }
 
-func (UnimplementedUsageServiceServer) GetUsage(context.Context, *GetUsageRequest) (*GetUsageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUsage not implemented")
+func (UnimplementedUsageServiceServer) GetBilledUsage(context.Context, *GetBilledUsageRequest) (*GetBilledUsageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBilledUsage not implemented")
 }
 func (UnimplementedUsageServiceServer) mustEmbedUnimplementedUsageServiceServer() {}
 
@@ -76,20 +76,20 @@ func RegisterUsageServiceServer(s grpc.ServiceRegistrar, srv UsageServiceServer)
 	s.RegisterService(&UsageService_ServiceDesc, srv)
 }
 
-func _UsageService_GetUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUsageRequest)
+func _UsageService_GetBilledUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBilledUsageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsageServiceServer).GetUsage(ctx, in)
+		return srv.(UsageServiceServer).GetBilledUsage(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/usage.v1.UsageService/GetUsage",
+		FullMethod: "/usage.v1.UsageService/GetBilledUsage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsageServiceServer).GetUsage(ctx, req.(*GetUsageRequest))
+		return srv.(UsageServiceServer).GetBilledUsage(ctx, req.(*GetBilledUsageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -102,8 +102,8 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*UsageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetUsage",
-			Handler:    _UsageService_GetUsage_Handler,
+			MethodName: "GetBilledUsage",
+			Handler:    _UsageService_GetBilledUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
