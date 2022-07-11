@@ -110,18 +110,19 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 		NoClientAuth:  true,
 		NoClientAuthCallback: func(conn ssh.ConnMetadata) (*ssh.Permissions, error) {
 			args := strings.Split(conn.User(), "#")
+			// NoClientAuthCallback only support workspaceId#ownerToken
+			if len(args) != 2 {
+				return nil, ssh.ErrNoAuth
+			}
 			workspaceId := args[0]
 			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
 			if err != nil {
 				return nil, err
 			}
-			defer func() {
-				server.TrackSSHConnection(wsInfo, "auth", err)
-			}()
-			// workspaceId#ownerToken
-			if len(args) != 2 || wsInfo.Auth.OwnerToken != args[1] {
-				return nil, ErrAuthFailed
+			if wsInfo.Auth.OwnerToken != args[1] {
+				return nil, ssh.ErrNoAuth
 			}
+			server.TrackSSHConnection(wsInfo, "auth", nil)
 			return &ssh.Permissions{
 				Extensions: map[string]string{
 					"workspaceId": workspaceId,
