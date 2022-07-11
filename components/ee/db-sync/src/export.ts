@@ -136,7 +136,7 @@ export class TableUpdate {
 
         const pkValues = this.table.primaryKeys.map(c => escape(row[c], true));
         const updateValues = this.updateColumns.map(c => escape(row[c], true));
-        const updates = this.updateColumns.map((c, i) => `${c}=${updateValues[i]}`).join(", ")
+        const updates = this.updateColumns.map((c, i) => `${escapeWithBackticks(c)}=${updateValues[i]}`).join(", ")
         const updateConditions = this.getUpdateConditions(row);
 
         let result = [`INSERT${forceInsert ? '' : ' IGNORE'} INTO ${this.table.name} (${(this.table.primaryKeys.concat(this.updateColumns)).map(escapeWithBackticks).join(", ")}) VALUES (${(pkValues.concat(updateValues)).join(", ")});`];
@@ -147,7 +147,7 @@ export class TableUpdate {
     }
 
     protected getUpdateConditions(row: any): string {
-        return this.table.primaryKeys.map(pk => `${pk}=${escape(row[pk])}`).concat([`${this.table.timeColumn}<=${escape(row[this.table.timeColumn])}`]).join(" AND ");
+        return this.table.primaryKeys.map(pk => `${escapeWithBackticks(pk)}=${escape(row[pk])}`).concat([`${this.table.timeColumn}<=${escape(row[this.table.timeColumn])}`]).join(" AND ");
     }
 
 }
