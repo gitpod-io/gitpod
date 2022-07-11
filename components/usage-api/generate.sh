@@ -22,6 +22,6 @@ go_protoc "$COMPONENTS_DIR" "usage/v1"
 mkdir -p go/v1
 mv go/usage/v1/*.pb.go go/v1
 rm -rf go/usage
-# typescript_protoc "$COMPONENTS_DIR" "usage/v1"
+typescript_protoc "$COMPONENTS_DIR" "usage/v1"
 
 update_license

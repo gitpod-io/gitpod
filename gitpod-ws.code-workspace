@@ -15,6 +15,7 @@
         { "path": "components/registry-facade" },
         { "path": "components/service-waiter" },
         { "path": "components/supervisor" },
+        { "path": "components/usage" },
         { "path": "components/workspacekit" },
         { "path": "components/ws-daemon" },
         { "path": "components/ws-manager" },
