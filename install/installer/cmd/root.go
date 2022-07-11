@@ -5,10 +5,14 @@
 package cmd
 
 import (
+	cryptoRand "crypto/rand"
+	"math/rand"
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/spf13/cobra"
 )
 
@@ -25,11 +29,27 @@ func Execute() {
 var rootOpts struct {
 	VersionMF         string
 	StrictConfigParse bool
+	SeedValue         int64
 }
 
 func init() {
+	cobra.OnInitialize(setSeed)
 	rootCmd.PersistentFlags().StringVar(&rootOpts.VersionMF, "debug-version-file", "", "path to a version manifest - not intended for production use")
+	rootCmd.PersistentFlags().Int64Var(&rootOpts.SeedValue, "seed", 0, "specify the seed value for randomization - if 0 it is kept as the default")
 	rootCmd.PersistentFlags().BoolVar(&rootOpts.StrictConfigParse, "strict-parse", true, "toggle strict configuration parsing")
+}
+
+func setSeed() {
+	if rootOpts.SeedValue != 0 {
+		rand.Seed(rootOpts.SeedValue)
+
+		// crypto/rand is used by the bcrypt package to generate its random values
+		str, err := common.RandomString(64)
+		if err != nil {
+			panic(err)
+		}
+		cryptoRand.Reader = strings.NewReader(str)
+	}
 }
 
 type kubeConfig struct {
