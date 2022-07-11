@@ -109,7 +109,10 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 
 	instancesByAttributionID := groupInstancesByAttributionID(instances)
 
-	u.billingController.Reconcile(ctx, now, instancesByAttributionID)
+	err = u.billingController.Reconcile(ctx, now, instancesByAttributionID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to reconcile billing: %w", err)
+	}
 
 	return status, instancesByAttributionID, nil
 }

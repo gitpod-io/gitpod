@@ -13,12 +13,14 @@ import (
 )
 
 type BillingController interface {
-	Reconcile(ctx context.Context, now time.Time, report UsageReport)
+	Reconcile(ctx context.Context, now time.Time, report UsageReport) error
 }
 
 type NoOpBillingController struct{}
 
-func (b *NoOpBillingController) Reconcile(_ context.Context, _ time.Time, _ UsageReport) {}
+func (b *NoOpBillingController) Reconcile(_ context.Context, _ time.Time, _ UsageReport) error {
+	return nil
+}
 
 type StripeBillingController struct {
 	pricer *WorkspacePricer
@@ -32,9 +34,14 @@ func NewStripeBillingController(sc *stripe.Client, pricer *WorkspacePricer) *Str
 	}
 }
 
-func (b *StripeBillingController) Reconcile(ctx context.Context, now time.Time, report UsageReport) {
+func (b *StripeBillingController) Reconcile(_ context.Context, now time.Time, report UsageReport) error {
 	runtimeReport := report.CreditSummaryForTeams(b.pricer, now)
-	b.sc.UpdateUsage(runtimeReport)
+
+	err := b.sc.UpdateUsage(runtimeReport)
+	if err != nil {
+		return fmt.Errorf("failed to update usage: %w", err)
+	}
+	return nil
 }
 
 const (
