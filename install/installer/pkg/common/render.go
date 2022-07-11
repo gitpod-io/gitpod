@@ -61,11 +61,12 @@ func CompositeHelmFunc(f ...HelmFunc) HelmFunc {
 }
 
 type GeneratedValues struct {
-	StorageAccessKey         string
-	StorageSecretKey         string
-	InternalRegistryUsername string
-	InternalRegistryPassword string
-	MessageBusPassword       string
+	StorageAccessKey             string
+	StorageSecretKey             string
+	InternalRegistryUsername     string
+	InternalRegistryPassword     string
+	InternalRegistrySharedSecret string
+	MessageBusPassword           string
 }
 
 type RenderContext struct {
@@ -149,6 +150,12 @@ func (r *RenderContext) generateValues() error {
 		return err
 	}
 	r.Values.InternalRegistryPassword = internalRegistryPassword
+
+	internalRegistrySharedSecret, err := RandomString(20)
+	if err != nil {
+		return err
+	}
+	r.Values.InternalRegistrySharedSecret = internalRegistrySharedSecret
 
 	messageBusPassword := ""
 	_ = r.WithExperimental(func(cfg *experimental.Config) error {

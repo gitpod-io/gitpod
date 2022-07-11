@@ -61,6 +61,7 @@ var Helm = common.CompositeHelmFunc(
 				helm.KeyValue("docker-registry.s3.secure", "true"),
 				helm.KeyValue("docker-registry.storage", "s3"),
 				helm.KeyValue("docker-registry.secrets.s3.secretRef", s3Storage.Certificate.Name),
+				helm.KeyValue("docker-registry.secrets.haSharedSecret", cfg.Values.InternalRegistrySharedSecret),
 			)
 		}
 
