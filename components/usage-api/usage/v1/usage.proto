@@ -4,16 +4,35 @@ package usage.v1;
 
 option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
 
-import "usage/v1/pagination.proto";
+import "google/protobuf/timestamp.proto";
 
 service UsageService {
-    // GetUsage retrieves all usage for a team.
-    rpc GetUsage(GetUsageRequest) returns (GetUsageResponse) {}
+    // GetBilledUsage retrieves all usage for the specified attributionId
+    rpc GetBilledUsage(GetBilledUsageRequest) returns (GetBilledUsageResponse) {}
 }
 
-message GetUsageRequest {
-    Pagination pagination = 1;
+message GetBilledUsageRequest {
+    string attribution_id = 1;
 }
-message GetUsageResponse {
-    string next_page_token = 1;
+
+message GetBilledUsageResponse {
+    repeated BilledSession sessions = 1;
+}
+
+message BilledSession {
+    string attribution_id = 1;
+
+    string user_id = 2;
+    string team_id = 3;
+
+    string workspace_id = 4;
+    string workspace_type = 5;
+    string project_id = 6;
+
+    string instance_id = 7;
+    string workspace_class = 8;
+    google.protobuf.Timestamp start_time = 9;
+    google.protobuf.Timestamp end_time = 10;
+
+    int64 credits = 11;
 }
