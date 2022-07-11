@@ -20,12 +20,18 @@ import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 export const Config = Symbol("Config");
 export type Config = Omit<
     ConfigSerialized,
-    "blockedRepositories" | "hostUrl" | "chargebeeProviderOptionsFile" | "stripeSettingsFile" | "licenseFile"
+    | "blockedRepositories"
+    | "hostUrl"
+    | "chargebeeProviderOptionsFile"
+    | "stripeSecretsFile"
+    | "stripeConfigFile"
+    | "licenseFile"
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
-    stripeSettings?: { publishableKey: string; secretKey: string };
+    stripeSecrets?: { publishableKey: string; secretKey: string };
+    stripeConfig?: { usageProductPriceIds: { EUR: string; USD: string } };
     builtinAuthProvidersConfigured: boolean;
     blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[];
     inactivityPeriodForRepos?: number;
@@ -151,7 +157,8 @@ export interface ConfigSerialized {
      * Payment related options
      */
     chargebeeProviderOptionsFile?: string;
-    stripeSettingsFile?: string;
+    stripeSecretsFile?: string;
+    stripeConfigFile?: string;
     enablePayment?: boolean;
 
     /**
@@ -215,12 +222,22 @@ export namespace ConfigFile {
         const chargebeeProviderOptions = readOptionsFromFile(
             filePathTelepresenceAware(config.chargebeeProviderOptionsFile || ""),
         );
-        let stripeSettings: { publishableKey: string; secretKey: string } | undefined;
-        if (config.enablePayment && config.stripeSettingsFile) {
+        let stripeSecrets: { publishableKey: string; secretKey: string } | undefined;
+        if (config.enablePayment && config.stripeSecretsFile) {
             try {
-                stripeSettings = JSON.parse(fs.readFileSync(filePathTelepresenceAware(config.stripeSettingsFile), "utf-8"));
+                stripeSecrets = JSON.parse(
+                    fs.readFileSync(filePathTelepresenceAware(config.stripeSecretsFile), "utf-8"),
+                );
             } catch (error) {
-                console.error("Could not load Stripe settings", error);
+                log.error("Could not load Stripe secrets", error);
+            }
+        }
+        let stripeConfig: { usageProductPriceIds: { EUR: string; USD: string } } | undefined;
+        if (config.enablePayment && config.stripeConfigFile) {
+            try {
+                stripeConfig = JSON.parse(fs.readFileSync(filePathTelepresenceAware(config.stripeConfigFile), "utf-8"));
+            } catch (error) {
+                log.error("Could not load Stripe config", error);
             }
         }
         let license = config.license;
@@ -249,7 +266,8 @@ export namespace ConfigFile {
             authProviderConfigs,
             builtinAuthProvidersConfigured,
             chargebeeProviderOptions,
-            stripeSettings,
+            stripeSecrets,
+            stripeConfig,
             license,
             workspaceGarbageCollection: {
                 ...config.workspaceGarbageCollection,

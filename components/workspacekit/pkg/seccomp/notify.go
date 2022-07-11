@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/moby/sys/mountinfo"
@@ -106,7 +107,9 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 
 // Handle actually listens on the seccomp notif FD and handles incoming requests.
 // This function returns when the notif FD is closed.
-func Handle(fd libseccomp.ScmpFd, handler SyscallHandler) (stop chan<- struct{}, errchan <-chan error) {
+func Handle(fd libseccomp.ScmpFd, handler SyscallHandler, wsid string) (stop chan<- struct{}, errchan <-chan error) {
+	log := log.WithField("workspaceId", wsid)
+
 	ec := make(chan error)
 	stp := make(chan struct{})
 
@@ -114,6 +117,20 @@ func Handle(fd libseccomp.ScmpFd, handler SyscallHandler) (stop chan<- struct{},
 	go func() {
 		for {
 			req, err := libseccomp.NotifReceive(fd)
+			if err != nil {
+				if err == syscall.ENOENT {
+					log.WithError(err).Warn("failed to get notification beucase it has already been not valid anymore(the kernel sets that)")
+					continue
+				}
+
+				log.WithError(err).Error("failed to get notification")
+				ec <- err
+				if err == unix.ECANCELED {
+					return
+				}
+
+				continue
+			}
 			select {
 			case <-stp:
 				// if we're asked stop we might still have to answer a syscall.
@@ -128,32 +145,27 @@ func Handle(fd libseccomp.ScmpFd, handler SyscallHandler) (stop chan<- struct{},
 				}
 			default:
 			}
-			if err != nil {
-				ec <- err
-				if err == unix.ECANCELED {
-					return
+
+			go func() {
+				syscallName, _ := req.Data.Syscall.GetName()
+
+				handler, ok := handledSyscalls[syscallName]
+				if !ok {
+					handler = handleUnknownSyscall
 				}
+				val, errno, flags := handler(req)
 
-				continue
-			}
-
-			syscallName, _ := req.Data.Syscall.GetName()
-
-			handler, ok := handledSyscalls[syscallName]
-			if !ok {
-				handler = handleUnknownSyscall
-			}
-			val, errno, flags := handler(req)
-
-			err = libseccomp.NotifRespond(fd, &libseccomp.ScmpNotifResp{
-				ID:    req.ID,
-				Error: errno,
-				Val:   val,
-				Flags: flags,
-			})
-			if err != nil {
-				ec <- err
-			}
+				ierr := libseccomp.NotifRespond(fd, &libseccomp.ScmpNotifResp{
+					ID:    req.ID,
+					Error: errno,
+					Val:   val,
+					Flags: flags,
+				})
+				if ierr != nil {
+					log.WithError(ierr).Error("failed to return notification response")
+					ec <- ierr
+				}
+			}()
 		}
 	}()
 
@@ -197,10 +209,10 @@ type BindEvent struct {
 // Mount handles mount syscalls
 func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	log := log.WithFields(map[string]interface{}{
-		"syscall":     "mount",
-		"worksapceId": h.WorkspaceId,
-		"pid":         req.Pid,
-		"id":          req.ID,
+		"syscall":          "mount",
+		log.WorkspaceField: h.WorkspaceId,
+		"pid":              req.Pid,
+		"id":               req.ID,
 	})
 
 	memFile, err := readarg.OpenMem(req.Pid)
@@ -303,10 +315,10 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 func (h *InWorkspaceHandler) Umount(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	nme, _ := req.Data.Syscall.GetName()
 	log := log.WithFields(map[string]interface{}{
-		"syscall":     nme,
-		"workspaceId": h.WorkspaceId,
-		"pid":         req.Pid,
-		"id":          req.ID,
+		"syscall":          nme,
+		log.WorkspaceField: h.WorkspaceId,
+		"pid":              req.Pid,
+		"id":               req.ID,
 	})
 
 	memFile, err := readarg.OpenMem(req.Pid)
@@ -383,10 +395,10 @@ func (h *InWorkspaceHandler) Umount(req *libseccomp.ScmpNotifReq) (val uint64, e
 
 func (h *InWorkspaceHandler) Bind(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	log := log.WithFields(map[string]interface{}{
-		"syscall":     "bind",
-		"workspaceId": h.WorkspaceId,
-		"pid":         req.Pid,
-		"id":          req.ID,
+		"syscall":          "bind",
+		log.WorkspaceField: h.WorkspaceId,
+		"pid":              req.Pid,
+		"id":               req.ID,
 	})
 	// We want the syscall to succeed, no matter what we do in this handler.
 	// The Kernel will execute the syscall for us.
@@ -429,10 +441,10 @@ func (h *InWorkspaceHandler) Bind(req *libseccomp.ScmpNotifReq) (val uint64, err
 
 func (h *InWorkspaceHandler) Chown(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	log := log.WithFields(map[string]interface{}{
-		"syscall":     "chown",
-		"workspaceId": h.WorkspaceId,
-		"pid":         req.Pid,
-		"id":          req.ID,
+		"syscall":          "chown",
+		log.WorkspaceField: h.WorkspaceId,
+		"pid":              req.Pid,
+		"id":               req.ID,
 	})
 
 	memFile, err := readarg.OpenMem(req.Pid)

@@ -1,9 +1,10 @@
 CHANNEL_STABLE = Stable
 CHANNEL_BETA = Beta
 CHANNEL_UNSTABLE = Unstable
+CHARTS_DIR = charts
 YAML_DIR = manifests
 
-all: logo lint create_dev_release
+all: logo helm lint create_dev_release
 
 create_dev_release:
 	@if [ "${REPLICATED_DEV_CHANNEL}" = "" ]; then \
@@ -23,6 +24,12 @@ create_unstable_release:
 	replicated release create --lint --ensure-channel --yaml-dir ${YAML_DIR} --promote ${CHANNEL_UNSTABLE}
 .PHONY: create_unstable_release
 
+helm:
+	@echo "Installing Helm dependencies"
+	@rm -f ${YAML_DIR}/*.tgz
+	@for f in $(shell ls -d ${CHARTS_DIR}/*/); do cd $${f} && helm dep up && helm package . --destination ../../${YAML_DIR} && cd -; done
+.PHONY: helm
+
 logo:
 	@echo "Generating Base64 logo and saving to manifests/kots-app.yaml"
 
@@ -32,4 +39,3 @@ logo:
 lint:
 	replicated release lint --yaml-dir ${YAML_DIR}
 .PHONY: lint
-

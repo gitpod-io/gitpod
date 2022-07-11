@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -85,7 +86,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	}
 
 	args := []string{
-		"-iedD", "-f/dev/null",
+		"-ieD", "-f/dev/null",
 		"-oProtocol 2",
 		"-oAllowUsers gitpod",
 		"-oPasswordAuthentication no",
@@ -99,10 +100,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		"-oUseDNS no", // Disable DNS lookups.
 		"-oSubsystem sftp internal-sftp",
 		"-oStrictModes no", // don't care for home directory and file permissions
-	}
-
-	if os.Getenv("SUPERVISOR_DEBUG_ENABLE") != "" {
-		args = append(args, "-oLogLevel DEBUG")
+		"-oLogLevel DEBUG", // enabled DEBUG mode by default
 	}
 
 	socketFD, err := conn.(*net.TCPConn).File()
@@ -212,4 +210,37 @@ func writeSSHEnv(cfg *Config, envvars []string) error {
 	_ = exec.Command("chown", "-R", fmt.Sprintf("%d:%d", gitpodUID, gitpodGID), d).Run()
 
 	return nil
+}
+
+func configureSSHDefaultDir(cfg *Config) {
+	if cfg.RepoRoot == "" {
+		log.Error("cannot configure ssh default dir with empty repo root")
+		return
+	}
+	file, err := os.OpenFile("/home/gitpod/.bashrc", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0o644)
+	if err != nil {
+		log.WithError(err).Error("cannot write .bashrc")
+	}
+	defer file.Close()
+	if _, err := file.WriteString(fmt.Sprintf("\nif [[ -n $SSH_CONNECTION ]]; then cd \"%s\"; fi\n", cfg.RepoRoot)); err != nil {
+		log.WithError(err).Error("write .bashrc failed")
+	}
+}
+
+func configureSSHMessageOfTheDay() {
+	msg := []byte(`Welcome to Gitpod: Always ready to code. Try the following commands to get started:
+
+	gp tasks list         List all your defined tasks in .gitpod.yml
+	gp tasks attach       Attach your terminal to a workspace task
+
+	gp ports list         Lists workspace ports and their states
+	gp stop               Stop current workspace
+	gp help               To learn about the gp CLI commands
+
+For more information, see the Gitpod documentation: https://gitpod.io/docs
+`)
+
+	if err := ioutil.WriteFile("/etc/motd", msg, 0o644); err != nil {
+		log.WithError(err).Error("write /etc/motd failed")
+	}
 }

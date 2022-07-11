@@ -185,11 +185,10 @@ function AllTeams() {
         return types;
     };
 
-    const getSlotsForSub = (sub: TeamSubscription) => {
+    const getSlotsForSub = (ts: TeamSubscription) => {
         const result: Slot[] = [];
-        const plan = getPlan(sub);
         slots.forEach((s) => {
-            if (s.teamSubscription.planId === plan.chargebeeId) {
+            if (s.teamSubscription.id === ts.id) {
                 result.push(s);
             }
         });

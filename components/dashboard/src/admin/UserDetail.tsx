@@ -190,7 +190,9 @@ export default function UserDetail(p: { user: User }) {
                             >
                                 {accountStatement?.subscriptions
                                     ? accountStatement.subscriptions
-                                          .filter((s) => Subscription.isActive(s, new Date().toISOString()))
+                                          .filter(
+                                              (s) => !s.deleted && Subscription.isActive(s, new Date().toISOString()),
+                                          )
                                           .map((s) => Plans.getById(s.planId)?.name)
                                           .join(", ")
                                     : "---"}

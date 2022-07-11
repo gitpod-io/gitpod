@@ -57,3 +57,21 @@ export function isGitpodIo() {
         window.location.hostname.endsWith("gitpod-io-dev.com")
     );
 }
+
+function trimResource(resource: string): string {
+    return resource.split('/').filter(Boolean).join('/');
+}
+
+// Returns 'true' if a 'pathname' is a part of 'resources' provided.
+// `inResource("/app/testing/", ["new", "app", "teams"])` will return true
+// because '/app/testing' is a part of root 'app'
+//
+// 'pathname' arg can be provided via `location.pathname`.
+export function inResource(pathname: string, resources: string[]): boolean {
+    // Removes leading and trailing '/'
+    const trimmedResource = trimResource(pathname)
+
+    // Checks if a path is part of a resource.
+    // E.g. "api/userspace/resource" path is a part of resource "api/userspace"
+    return resources.map(res => trimmedResource.startsWith(trimResource(res))).some(Boolean)
+}

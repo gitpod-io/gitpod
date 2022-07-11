@@ -20,10 +20,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -221,7 +221,7 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 				return image
 			},
 		}
-	}))
+	}, withUseTargetHost()))
 }
 
 func resolveSupervisorURL(cfg *Config, info *WorkspaceInfo, req *http.Request) (*url.URL, error) {
@@ -319,7 +319,7 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 				return image
 			},
 		}
-	}, withHTTPErrorHandler(workspaceIDEPass)))
+	}, withHTTPErrorHandler(workspaceIDEPass), withUseTargetHost()))
 }
 
 const imagePathSeparator = "/__files__"
@@ -343,7 +343,6 @@ func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvi
 		image, path := segments[0], segments[1]
 
 		req.URL.Path = path
-		req.Header.Add("X-BlobServe-ReadOnly", "true")
 
 		var dst url.URL
 		dst.Scheme = cfg.BlobServer.Scheme
@@ -351,7 +350,7 @@ func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvi
 		dst.Path = cfg.BlobServer.PathPrefix + "/" + strings.TrimPrefix(image, "/")
 		return &dst, nil
 	}
-	r.NewRoute().Handler(proxyPass(config, infoProvider, targetResolver, withLongTermCaching()))
+	r.NewRoute().Handler(proxyPass(config, infoProvider, targetResolver, withLongTermCaching(), withUseTargetHost()))
 }
 
 // installWorkspacePortRoutes configures routing for exposed ports.
@@ -378,7 +377,8 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoP
 				}
 			}
 			r.Header.Add("X-Forwarded-Proto", "https")
-			r.Header.Add("X-Forwarded-Host", r.Host+":443")
+			r.Header.Add("X-Forwarded-Host", r.Host)
+			r.Header.Add("X-Forwarded-Port", "443")
 			proxyPass(
 				config,
 				infoProvider,

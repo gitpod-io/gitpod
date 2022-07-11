@@ -28,7 +28,23 @@ export class TokenService implements TokenProvider {
         });
     }
 
+    protected getTokenForHostCache = new Map<string, Promise<Token>>();
+
     async getTokenForHost(user: User, host: string): Promise<Token> {
+        // (AT) when it comes to token renewal, the awaited http requests may
+        // cause "parallel" calls to repeat the renewal, which will fail.
+        // Caching for pending operations should solve this issue.
+        const key = `${host}-${user.id}`;
+        let promise = this.getTokenForHostCache.get(key);
+        if (!promise) {
+            promise = this.doGetTokenForHost(user, host);
+            this.getTokenForHostCache.set(key, promise);
+            promise = promise.finally(() => this.getTokenForHostCache.delete(key));
+        }
+        return promise;
+    }
+
+    async doGetTokenForHost(user: User, host: string): Promise<Token> {
         const identity = this.getIdentityForHost(user, host);
         let token = await this.userDB.findTokenForIdentity(identity);
         if (!token) {
@@ -36,9 +52,9 @@ export class TokenService implements TokenProvider {
                 `No token found for user ${identity.authProviderId}/${identity.authId}/${identity.authName}!`,
             );
         }
-        const refreshTime = new Date();
-        refreshTime.setTime(refreshTime.getTime() + 30 * 60 * 1000);
-        if (token.expiryDate && token.expiryDate < refreshTime.toISOString()) {
+        const aboutToExpireTime = new Date();
+        aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
+        if (token.expiryDate && token.expiryDate < aboutToExpireTime.toISOString()) {
             const { authProvider } = this.hostContextProvider.get(host)!;
             if (authProvider.refreshToken) {
                 await authProvider.refreshToken(user);

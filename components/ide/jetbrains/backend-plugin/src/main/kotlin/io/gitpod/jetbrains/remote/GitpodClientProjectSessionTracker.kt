@@ -10,7 +10,6 @@ import com.intellij.idea.StartupUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -20,7 +19,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
 import com.jetbrains.rd.util.lifetime.Lifetime
-import io.gitpod.gitpodprotocol.api.entities.RemoteTrackMessage
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstancePort
 import io.gitpod.supervisor.api.Info
 import io.gitpod.supervisor.api.Status
@@ -42,8 +40,6 @@ class GitpodClientProjectSessionTracker(
     private val manager = service<GitpodManager>()
 
     private lateinit var info: Info.WorkspaceInfoResponse
-    private val versionName = ApplicationInfo.getInstance().versionName
-    private val fullVersion = ApplicationInfo.getInstance().fullVersion
     private val lifetime = Lifetime.Eternal.createNested()
 
     override fun dispose() {
@@ -58,7 +54,7 @@ class GitpodClientProjectSessionTracker(
         }
     }
 
-    private fun isExposedServedPort(port: Status.PortsStatus?) : Boolean {
+    private fun isExposedServedPort(port: Status.PortsStatus?): Boolean {
         if (port === null) {
             return false
         }
@@ -186,6 +182,7 @@ class GitpodClientProjectSessionTracker(
             delay(1000L)
         }
     }
+
     init {
         lifetime.onTerminationOrNow {
             portsObserveJob.cancel()
@@ -216,22 +213,9 @@ class GitpodClientProjectSessionTracker(
         })
     }
 
-    fun trackEvent(eventName: String, props: Map<String, Any?>) {
-        val event = RemoteTrackMessage().apply {
-            event = eventName
-            properties = mapOf(
-                    "sessionId" to session.clientId.value,
-                    "instanceId" to info.instanceId,
-                    "workspaceId" to info.workspaceId,
-                    "appName" to versionName,
-                    "appVersion" to fullVersion,
-                    "timestamp" to System.currentTimeMillis()
-            ).plus(props)
-        }
-        if (manager.devMode) {
-            thisLogger().warn("gitpod: $event")
-        } else {
-            manager.client.server.trackEvent(event)
-        }
+    private fun trackEvent(eventName: String, props: Map<String, Any?>) {
+        manager.trackEvent(eventName, mapOf(
+                "sessionId" to session.clientId.value
+        ).plus(props))
     }
 }

@@ -10,9 +10,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/gorilla/mux"
 	"github.com/klauspost/cpuid/v2"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )

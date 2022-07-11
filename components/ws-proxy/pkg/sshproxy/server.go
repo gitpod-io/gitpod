@@ -6,6 +6,7 @@ package sshproxy
 
 import (
 	"context"
+	"crypto/subtle"
 	"net"
 	"regexp"
 	"strings"
@@ -16,10 +17,11 @@ import (
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	tracker "github.com/gitpod-io/gitpod/ws-proxy/pkg/analytics"
 	p "github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
+	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
@@ -72,6 +74,7 @@ type Session struct {
 
 	WorkspaceID string
 	InstanceID  string
+	OwnerUserId string
 
 	PublicKey           ssh.PublicKey
 	WorkspacePrivateKey ssh.Signer
@@ -104,26 +107,20 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 
 	server.sshConfig = &ssh.ServerConfig{
 		ServerVersion: "SSH-2.0-GITPOD-GATEWAY",
-		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (perm *ssh.Permissions, err error) {
-			workspaceId, ownerToken := conn.User(), string(password)
-			wsInfo, err := server.Authenticator(workspaceId, ownerToken)
+		NoClientAuth:  true,
+		NoClientAuthCallback: func(conn ssh.ConnMetadata) (*ssh.Permissions, error) {
+			args := strings.Split(conn.User(), "#")
+			workspaceId := args[0]
+			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
+			if err != nil {
+				return nil, err
+			}
 			defer func() {
 				server.TrackSSHConnection(wsInfo, "auth", err)
 			}()
-			if err != nil {
-				if err == ErrAuthFailed {
-					return
-				}
-				args := strings.Split(conn.User(), "#")
-				if len(args) != 2 {
-					return
-				}
-				workspaceId, ownerToken = args[0], args[1]
-				wsInfo, err = server.Authenticator(workspaceId, ownerToken)
-				if err == nil {
-					err = ErrMissPrivateKey
-				}
-				return
+			// workspaceId#ownerToken
+			if len(args) != 2 || wsInfo.Auth.OwnerToken != args[1] {
+				return nil, ErrAuthFailed
 			}
 			return &ssh.Permissions{
 				Extensions: map[string]string{
@@ -131,19 +128,59 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 				},
 			}, nil
 		},
-		PublicKeyCallback: func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
-			args := strings.Split(conn.User(), "#")
-			// workspaceId#ownerToken
-			if len(args) != 2 {
-				return nil, ErrUsernameFormat
-			}
-			workspaceId, ownerToken := args[0], args[1]
-			wsInfo, err := server.Authenticator(workspaceId, ownerToken)
+		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (perm *ssh.Permissions, err error) {
+			workspaceId, ownerToken := conn.User(), string(password)
+			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
 			defer func() {
 				server.TrackSSHConnection(wsInfo, "auth", err)
 			}()
 			if err != nil {
+				args := strings.Split(conn.User(), "#")
+				if len(args) != 2 {
+					return
+				}
+				workspaceId, ownerToken = args[0], args[1]
+				wsInfo, err = server.GetWorkspaceInfo(workspaceId)
+				if err != nil {
+					return nil, ErrWorkspaceNotFound
+				}
+				if wsInfo.Auth.OwnerToken == ownerToken {
+					return nil, ErrMissPrivateKey
+				}
+				return nil, ErrAuthFailed
+			}
+			if wsInfo.Auth.OwnerToken != ownerToken {
+				return nil, ErrAuthFailed
+			}
+			return &ssh.Permissions{
+				Extensions: map[string]string{
+					"workspaceId": workspaceId,
+				},
+			}, nil
+		},
+		PublicKeyCallback: func(conn ssh.ConnMetadata, pk ssh.PublicKey) (perm *ssh.Permissions, err error) {
+			args := strings.Split(conn.User(), "#")
+			workspaceId := args[0]
+			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
+			if err != nil {
 				return nil, err
+			}
+			defer func() {
+				server.TrackSSHConnection(wsInfo, "auth", err)
+			}()
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+			ok, _ := server.VerifyPublicKey(ctx, wsInfo, pk)
+			if ok {
+				return &ssh.Permissions{
+					Extensions: map[string]string{
+						"workspaceId": workspaceId,
+					},
+				}, nil
+			}
+			// workspaceId#ownerToken
+			if len(args) != 2 || wsInfo.Auth.OwnerToken != args[1] {
+				return nil, ErrAuthFailed
 			}
 			return &ssh.Permissions{
 				Extensions: map[string]string{
@@ -215,6 +252,7 @@ func (s *Server) HandleConn(c net.Conn) {
 		Conn:                clientConn,
 		WorkspaceID:         workspaceId,
 		InstanceID:          wsInfo.InstanceID,
+		OwnerUserId:         wsInfo.OwnerUserId,
 		WorkspacePrivateKey: key,
 	}
 	remoteAddr := wsInfo.IPAddress + ":23001"
@@ -291,16 +329,13 @@ func (s *Server) HandleConn(c net.Conn) {
 	cancel()
 }
 
-func (s *Server) Authenticator(workspaceId, ownerToken string) (*p.WorkspaceInfo, error) {
+func (s *Server) GetWorkspaceInfo(workspaceId string) (*p.WorkspaceInfo, error) {
 	wsInfo := s.workspaceInfoProvider.WorkspaceInfo(workspaceId)
 	if wsInfo == nil {
 		if matched, _ := regexp.Match(workspaceIDRegex, []byte(workspaceId)); matched {
 			return nil, ErrWorkspaceNotFound
 		}
 		return nil, ErrWorkspaceIDInvalid
-	}
-	if wsInfo.Auth.OwnerToken != ownerToken {
-		return wsInfo, ErrAuthFailed
 	}
 	return wsInfo, nil
 }
@@ -328,8 +363,23 @@ func (s *Server) TrackSSHConnection(wsInfo *p.WorkspaceInfo, phase string, err e
 	})
 }
 
+func (s *Server) VerifyPublicKey(ctx context.Context, wsInfo *p.WorkspaceInfo, pk ssh.PublicKey) (bool, error) {
+	for _, keyStr := range wsInfo.SSHPublicKeys {
+		key, _, _, _, err := ssh.ParseAuthorizedKey([]byte(keyStr))
+		if err != nil {
+			continue
+		}
+		keyData := key.Marshal()
+		pkd := pk.Marshal()
+		if len(keyData) == len(pkd) && subtle.ConstantTimeCompare(keyData, pkd) == 1 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func (s *Server) GetWorkspaceSSHKey(ctx context.Context, workspaceIP string) (ssh.Signer, error) {
-	supervisorConn, err := grpc.Dial(workspaceIP+":22999", grpc.WithInsecure())
+	supervisorConn, err := grpc.Dial(workspaceIP+":22999", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}

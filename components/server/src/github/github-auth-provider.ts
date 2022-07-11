@@ -90,7 +90,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
         try {
             const [
                 {
-                    data: { id, login, avatar_url, name },
+                    data: { id, login, avatar_url, name, company },
                     headers,
                 },
                 userEmails,
@@ -123,6 +123,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                     avatarUrl: avatar_url,
                     name,
                     primaryEmail: filterPrimaryEmail(userEmails),
+                    company,
                 },
                 currentScopes,
             };

@@ -39,7 +39,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
             durationsSec: 60,
         },
         startWorkspace: {
-            points: 1, // 1 workspace start per user per 10s
+            points: 3, // 3 workspace starts per user per 10s
             durationsSec: 10,
         },
         createWorkspace: {
@@ -92,6 +92,10 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         getAllEnvVars: { group: "default", points: 1 },
         setEnvVar: { group: "default", points: 1 },
         deleteEnvVar: { group: "default", points: 1 },
+        hasSSHPublicKey: { group: "default", points: 1 },
+        getSSHPublicKeys: { group: "default", points: 1 },
+        addSSHPublicKey: { group: "default", points: 1 },
+        deleteSSHPublicKey: { group: "default", points: 1 },
         setProjectEnvironmentVariable: { group: "default", points: 1 },
         getProjectEnvironmentVariables: { group: "default", points: 1 },
         deleteProjectEnvironmentVariable: { group: "default", points: 1 },
@@ -110,6 +114,8 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         getUserProjects: { group: "default", points: 1 },
         deleteProject: { group: "default", points: 1 },
         findPrebuilds: { group: "default", points: 1 },
+        getPrebuild: { group: "default", points: 1 },
+        findPrebuildByWorkspaceID: { group: "default", points: 1 },
         getProjectOverview: { group: "default", points: 1 },
         triggerPrebuild: { group: "default", points: 1 },
         cancelPrebuild: { group: "default", points: 1 },
@@ -156,6 +162,9 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         adminGetSettings: { group: "default", points: 1 },
         adminUpdateSettings: { group: "default", points: 1 },
         adminGetTelemetryData: { group: "default", points: 1 },
+        adminGetBlockedRepositories: { group: "default", points: 1 },
+        adminCreateBlockedRepository: { group: "default", points: 1 },
+        adminDeleteBlockedRepository: { group: "default", points: 1 },
 
         validateLicense: { group: "default", points: 1 },
         getLicenseInfo: { group: "default", points: 1 },
@@ -198,9 +207,10 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         tsReassignSlot: { group: "default", points: 1 },
         getStripePublishableKey: { group: "default", points: 1 },
         getStripeSetupIntentClientSecret: { group: "default", points: 1 },
-        findStripeCustomerIdForTeam: { group: "default", points: 1 },
+        findStripeSubscriptionIdForTeam: { group: "default", points: 1 },
         subscribeTeamToStripe: { group: "default", points: 1 },
         getStripePortalUrlForTeam: { group: "default", points: 1 },
+        getBilledUsage: { group: "default", points: 1 },
         trackEvent: { group: "default", points: 1 },
         trackLocation: { group: "default", points: 1 },
         identifyUser: { group: "default", points: 1 },

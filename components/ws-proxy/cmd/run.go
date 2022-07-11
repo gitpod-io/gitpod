@@ -13,10 +13,11 @@ import (
 	"time"
 
 	"github.com/bombsimon/logrusr/v2"
+	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -94,7 +95,7 @@ var runCmd = &cobra.Command{
 
 		var heartbeat sshproxy.Heartbeat
 		if wsm := cfg.WorkspaceManager; wsm != nil {
-			var dialOption grpc.DialOption = grpc.WithInsecure()
+			var dialOption grpc.DialOption = grpc.WithTransportCredentials(insecure.NewCredentials())
 			if wsm.TLS.CA != "" && wsm.TLS.Cert != "" && wsm.TLS.Key != "" {
 				tlsConfig, err := common_grpc.ClientAuthTLSConfig(
 					wsm.TLS.CA, wsm.TLS.Cert, wsm.TLS.Key,
@@ -109,9 +110,10 @@ var runCmd = &cobra.Command{
 				dialOption = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
 			}
 
-			dialctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			conn, err := grpc.DialContext(dialctx, wsm.Addr, dialOption, grpc.WithBlock())
-			cancel()
+			grpcOpts := common_grpc.DefaultClientOptions()
+			grpcOpts = append(grpcOpts, dialOption)
+
+			conn, err := grpc.Dial(wsm.Addr, grpcOpts...)
 			if err != nil {
 				log.WithError(err).Fatal("cannot connect to ws-manager")
 			}

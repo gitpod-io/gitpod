@@ -15,7 +15,6 @@ export * from "./typeorm/transformer";
 export * from "./typeorm/typeorm";
 export * from "./typeorm/user-db-impl";
 export * from "./typeorm/code-sync-resource-db";
-export * from "./typeorm/deleted-entry-gc";
 export * from "./periodic-deleter";
 export * from "./user-db";
 export * from "./workspace-db";

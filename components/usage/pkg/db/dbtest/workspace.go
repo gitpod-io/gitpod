@@ -5,10 +5,11 @@
 package dbtest
 
 import (
-	"fmt"
+	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
-	"math/rand"
+	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 	"testing"
 )
 
@@ -23,7 +24,7 @@ const (
 func NewWorkspace(t *testing.T, workspace db.Workspace) db.Workspace {
 	t.Helper()
 
-	id := generateWorkspaceID()
+	id := GenerateWorkspaceID()
 	if workspace.ID != "" {
 		id = workspace.ID
 	}
@@ -63,16 +64,27 @@ func NewWorkspace(t *testing.T, workspace db.Workspace) db.Workspace {
 	}
 }
 
-func generateWorkspaceID() string {
-	return fmt.Sprintf("gitpodio-gitpod-%s", randSeq(11))
+func GenerateWorkspaceID() string {
+	id, _ := namegen.GenerateWorkspaceID()
+	return id
 }
 
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+func CreateWorkspaces(t *testing.T, conn *gorm.DB, workspaces ...db.Workspace) []db.Workspace {
+	t.Helper()
 
-func randSeq(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
+	var records []db.Workspace
+	var ids []string
+	for _, w := range workspaces {
+		record := NewWorkspace(t, w)
+		records = append(records, record)
+		ids = append(ids, record.ID)
 	}
-	return string(b)
+
+	require.NoError(t, conn.CreateInBatches(&records, 1000).Error)
+
+	t.Cleanup(func() {
+		require.NoError(t, conn.Where(ids).Delete(&db.Workspace{}).Error)
+	})
+
+	return records
 }

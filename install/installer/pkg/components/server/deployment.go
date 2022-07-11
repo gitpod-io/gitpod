@@ -26,7 +26,7 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	var hashObj []runtime.Object
 	if objs, err := configmap(ctx); err != nil {
@@ -77,6 +77,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.WebappTracingEnv(ctx),
 		common.AnalyticsEnv(&ctx.Config),
 		common.MessageBusEnv(&ctx.Config),
+		common.ConfigcatEnv(ctx),
 		[]corev1.EnvVar{
 			{
 				Name:  "CONFIG_PATH",
@@ -194,7 +195,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 			volumes = append(volumes,
 				corev1.Volume{
-					Name: "stripe-config",
+					Name: "stripe-secret",
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
 							SecretName: stripeSecret,
@@ -203,8 +204,31 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				})
 
 			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      "stripe-secret",
+				MountPath: stripeSecretMountPath,
+				ReadOnly:  true,
+			})
+		}
+		return nil
+	})
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.StripeConfig != "" {
+			stripeConfig := cfg.WebApp.Server.StripeConfig
+
+			volumes = append(volumes,
+				corev1.Volume{
+					Name: "stripe-config",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{Name: stripeConfig},
+						},
+					},
+				})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
 				Name:      "stripe-config",
-				MountPath: stripeMountPath,
+				MountPath: stripeConfigMountPath,
 				ReadOnly:  true,
 			})
 		}
@@ -258,9 +282,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      labels,
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
@@ -271,9 +296,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:      Component,
 						Namespace: ctx.Namespace,
 						Labels:    labels,
-						Annotations: map[string]string{
-							common.AnnotationConfigChecksum: configHash,
-						},
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+							return map[string]string{
+								common.AnnotationConfigChecksum: configHash,
+							}
+						}),
 					},
 					Spec: corev1.PodSpec{
 						Affinity: &corev1.Affinity{
@@ -346,7 +373,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
-							Env: env,
+							Env: common.CustomizeEnvvar(ctx, Component, env),
 							// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
 							VolumeMounts: append(
 								[]corev1.VolumeMount{

@@ -48,7 +48,6 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.coroutines.coroutineContext
 
-
 class GitpodConnectionProvider : GatewayConnectionProvider {
 
     private val gitpod = service<GitpodConnectionService>()
@@ -65,10 +64,10 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         requestor: ConnectionRequestor
     ): GatewayConnectionHandle? {
         if (parameters["gitpodHost"] == null) {
-            throw IllegalArgumentException("bad gitpodHost parameter");
+            throw IllegalArgumentException("bad gitpodHost parameter")
         }
         if (parameters["workspaceId"] == null) {
-            throw IllegalArgumentException("bad workspaceId parameter");
+            throw IllegalArgumentException("bad workspaceId parameter")
         }
         val connectParams = ConnectParams(
             parameters["gitpodHost"]!!,
@@ -93,7 +92,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             background = phaseMessage.background
             columns = 30
         }
-        var ideUrl = "";
+        var ideUrl = ""
         val connectionPanel = panel {
             indent {
                 row {
@@ -124,10 +123,9 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                 }
                             }
                             row {
-                                browserLink(
-                                    workspace.context.normalizedContextURL,
-                                    workspace.context.normalizedContextURL
-                                )
+                                workspace.context.normalizedContextURL.ifPresent {
+                                    browserLink(it, it)
+                                }
                             }
                         }.horizontalAlign(HorizontalAlign.CENTER)
                         row {
@@ -147,18 +145,18 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         }
 
         GlobalScope.launch {
-            var thinClient: ThinClientHandle? = null;
-            var thinClientJob: Job? = null;
+            var thinClient: ThinClientHandle? = null
+            var thinClientJob: Job? = null
 
-            var lastUpdate: WorkspaceInstance? = null;
+            var lastUpdate: WorkspaceInstance? = null
             try {
                 for (update in updates) {
                     try {
                         if (WorkspaceInstance.isUpToDate(lastUpdate, update)) {
-                            continue;
+                            continue
                         }
                         ideUrl = update.ideUrl
-                        lastUpdate = update;
+                        lastUpdate = update
                         if (!update.status.conditions.failed.isNullOrBlank()) {
                             setErrorMessage(update.status.conditions.failed)
                         }
@@ -276,7 +274,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             }
         }
 
-        return GitpodConnectionHandle(connectionLifetime, connectionPanel, connectParams);
+        return GitpodConnectionHandle(connectionLifetime, connectionPanel, connectParams)
     }
 
     private suspend fun resolveJoinLink(
@@ -366,7 +364,6 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         break
                     }
                 }
-
             }
             matchedFingerprint
         }
@@ -379,7 +376,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         ownerToken: String?,
     ): String? {
         val maxRequestTimeout = 30 * 1000L
-        val timeoutDelayGrowFactor = 1.5;
+        val timeoutDelayGrowFactor = 1.5
         var requestTimeout = 2 * 1000L
         while (true) {
             coroutineContext.job.ensureActive()
@@ -398,16 +395,16 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                     return response.body()
                 }
                 if (response.statusCode() < 500) {
-                    thisLogger().error("${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '${endpointUrl}': ${response.statusCode()}")
+                    thisLogger().error("${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '$endpointUrl': ${response.statusCode()}")
                     return null
                 }
-                thisLogger().warn("${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '${endpointUrl}', trying again...: ${response.statusCode()}")
+                thisLogger().warn("${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '$endpointUrl', trying again...: ${response.statusCode()}")
             } catch (t: Throwable) {
                 if (t is CancellationException) {
                     throw t
                 }
                 thisLogger().warn(
-                    "${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '${endpointUrl}', trying again...:",
+                    "${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '$endpointUrl', trying again...:",
                     t
                 )
             }
@@ -447,5 +444,4 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
     }
 
     private data class SSHHostKey(val type: String, val hostKey: String)
-
 }

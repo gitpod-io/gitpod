@@ -23,7 +23,8 @@ import (
 
 func TestValidateStartWorkspaceRequest(t *testing.T) {
 	type fixture struct {
-		Req *api.StartWorkspaceRequest `json:"request"`
+		Req      *api.StartWorkspaceRequest `json:"request"`
+		BloatEnv bool                       `json:"bloatEnv"`
 	}
 	type gold struct {
 		Error string `json:"error,omitempty"`
@@ -39,6 +40,13 @@ func TestValidateStartWorkspaceRequest(t *testing.T) {
 			if fixture.Req == nil {
 				t.Errorf("request is nil")
 				return nil
+			}
+
+			if fixture.BloatEnv {
+				fixture.Req.Spec.Envvars = append(fixture.Req.Spec.Envvars, &api.EnvironmentVariable{
+					Name:  "BLOAT",
+					Value: string(make([]byte, 2*maxSecretsLength)),
+				})
 			}
 
 			err := validateStartWorkspaceRequest(fixture.Req)

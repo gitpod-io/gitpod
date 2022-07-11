@@ -265,9 +265,10 @@ func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitialize
 
 func newSnapshotInitializer(loc string, rs storage.DirectDownloader, req *csapi.SnapshotInitializer) (*SnapshotInitializer, error) {
 	return &SnapshotInitializer{
-		Location: loc,
-		Snapshot: req.Snapshot,
-		Storage:  rs,
+		Location:           loc,
+		Snapshot:           req.Snapshot,
+		Storage:            rs,
+		FromVolumeSnapshot: req.FromVolumeSnapshot,
 	}, nil
 }
 
@@ -521,27 +522,5 @@ func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.W
 		return xerrors.Errorf("cannot rename workspace ready file: %w", err)
 	}
 
-	return nil
-}
-
-func GetCheckoutLocationsFromInitializer(init *csapi.WorkspaceInitializer) []string {
-	switch {
-	case init.GetGit() != nil:
-		return []string{init.GetGit().CheckoutLocation}
-	case init.GetPrebuild() != nil && len(init.GetPrebuild().Git) > 0:
-		var result = make([]string, len(init.GetPrebuild().Git))
-		for i, c := range init.GetPrebuild().Git {
-			result[i] = c.CheckoutLocation
-		}
-		return result
-	case init.GetBackup() != nil:
-		return []string{init.GetBackup().CheckoutLocation}
-	case init.GetComposite() != nil:
-		var result []string
-		for _, c := range init.GetComposite().Initializer {
-			result = append(result, GetCheckoutLocationsFromInitializer(c)...)
-		}
-		return result
-	}
 	return nil
 }

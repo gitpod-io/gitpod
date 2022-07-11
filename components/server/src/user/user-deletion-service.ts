@@ -92,6 +92,17 @@ export class UserDeletionService {
                 deleted_at: new Date().toISOString(),
             },
         });
+        this.analytics.identify({
+            userId: user.id,
+            traits: {
+                github_slug: "deleted-user",
+                gitlab_slug: "deleted-user",
+                bitbucket_slug: "deleted-user",
+                email: "deleted-user",
+                full_name: "deleted-user",
+                name: "deleted-user",
+            },
+        });
     }
 
     protected async stopWorkspaces(user: User) {

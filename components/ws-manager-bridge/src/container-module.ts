@@ -29,12 +29,15 @@ import {
 import { ClusterService, ClusterServiceServer } from "./cluster-service-server";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { newAnalyticsWriterFromEnv } from "@gitpod/gitpod-protocol/lib/util/analytics";
-import { MetaInstanceController } from "./meta-instance-controller";
 import { IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./preparing-update-emulator";
 import { PrebuildStateMapper } from "./prebuild-state-mapper";
 import { PrebuildUpdater, PrebuildUpdaterNoOp } from "./prebuild-updater";
+import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
+import { Client } from "@gitpod/gitpod-protocol/lib/experiments/types";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ClusterSyncService } from "./cluster-sync-service";
 
 export const containerModule = new ContainerModule((bind) => {
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
@@ -42,8 +45,6 @@ export const containerModule = new ContainerModule((bind) => {
     bind(MessageBusIntegration).toSelf().inSingletonScope();
 
     bind(BridgeController).toSelf().inSingletonScope();
-
-    bind(MetaInstanceController).toSelf().inSingletonScope();
 
     bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
     bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();
@@ -59,6 +60,7 @@ export const containerModule = new ContainerModule((bind) => {
 
     bind(ClusterServiceServer).toSelf().inSingletonScope();
     bind(ClusterService).toSelf().inRequestScope();
+    bind(ClusterSyncService).toSelf().inSingletonScope();
 
     bind(TracingManager).toSelf().inSingletonScope();
 
@@ -85,4 +87,8 @@ export const containerModule = new ContainerModule((bind) => {
 
     bind(PrebuildStateMapper).toSelf().inSingletonScope();
     bind(PrebuildUpdater).to(PrebuildUpdaterNoOp).inSingletonScope();
+
+    bind(DebugApp).toSelf().inSingletonScope();
+
+    bind(Client).toDynamicValue(getExperimentsClientForBackend).inSingletonScope();
 });

@@ -29,7 +29,7 @@ import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
-import { DeletedEntryGC, PeriodicDbDeleter, TypeORM } from "@gitpod/gitpod-db/lib";
+import { PeriodicDbDeleter, TypeORM } from "@gitpod/gitpod-db/lib";
 import { OneTimeSecretServer } from "./one-time-secret-server";
 import { Disposable, DisposableCollection, GitpodClient, GitpodServer } from "@gitpod/gitpod-protocol";
 import { BearerAuth, isBearerAuthError } from "./auth/bearer-authenticator";
@@ -44,7 +44,7 @@ import {
 } from "./workspace/headless-log-controller";
 import { NewsletterSubscriptionController } from "./user/newsletter-subscription-controller";
 import { Config } from "./config";
-import { DebugApp } from "./debug-app";
+import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
@@ -72,7 +72,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(RabbitMQConsensusLeaderMessenger) protected readonly consensusMessenger: RabbitMQConsensusLeaderMessenger;
     @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
     @inject(WorkspaceGarbageCollector) protected readonly workspaceGC: WorkspaceGarbageCollector;
-    @inject(DeletedEntryGC) protected readonly deletedEntryGC: DeletedEntryGC;
     @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
 
     @inject(PeriodicDbDeleter) protected readonly periodicDbDeleter: PeriodicDbDeleter;
@@ -96,9 +95,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     public async init(app: express.Application) {
         log.setVersion(this.config.version);
         log.info("server initializing...");
-
-        // print config
-        log.info("config", { config: JSON.stringify(this.config, undefined, 2) });
 
         // Set version info metric
         setGitpodVersion(this.config.version);
@@ -267,9 +263,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Start workspace garbage collector
         this.workspaceGC.start().catch((err) => log.error("wsgc: error during startup", err));
 
-        // Start deleted entry GC
-        this.deletedEntryGC.start();
-
         // Start one-time secret GC
         this.oneTimeSecretServer.startPruningExpiredSecrets();
 
@@ -334,7 +327,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
-        this.debugApp.start(6060);
+        this.debugApp.start();
     }
 
     public async stop() {

@@ -1,0 +1,26 @@
+{
+    "reason": {
+        "metadata": {
+            "name": "ws-test",
+            "namespace": "default",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "accessModes": [
+                "ReadWriteOnce"
+            ],
+            "resources": {
+                "requests": {
+                    "storage": "30Gi"
+                }
+            },
+            "storageClassName": "test-storage",
+            "dataSource": {
+                "apiGroup": "snapshot.storage.k8s.io",
+                "kind": "VolumeSnapshot",
+                "name": "custom-snapshot-name"
+            }
+        },
+        "status": {}
+    }
+}

@@ -11,16 +11,25 @@
 package experimental
 
 import (
+	agentSmith "github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // Config contains all experimental configuration.
 type Config struct {
-	Workspace *WorkspaceConfig `json:"workspace,omitempty"`
-	WebApp    *WebAppConfig    `json:"webapp,omitempty"`
-	IDE       *IDEConfig       `json:"ide,omitempty"`
-	Common    *CommonConfig    `json:"common,omitempty"`
+	Workspace  *WorkspaceConfig   `json:"workspace,omitempty"`
+	WebApp     *WebAppConfig      `json:"webapp,omitempty"`
+	IDE        *IDEConfig         `json:"ide,omitempty"`
+	Common     *CommonConfig      `json:"common,omitempty"`
+	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`
+	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"`
+}
+
+type TelemetryConfig struct {
+	Data struct {
+		Platform string `json:"platform"`
+	} `json:"data"`
 }
 
 type CommonConfig struct {
@@ -31,6 +40,11 @@ type CommonConfig struct {
 type PodConfig struct {
 	Replicas  *int32                                  `json:"replicas,omitempty"`
 	Resources map[string]*corev1.ResourceRequirements `json:"resources,omitempty"`
+}
+
+type NodeToContainerMappingValues struct {
+	Path  string `json:"path"`
+	Value string `json:"value"`
 }
 
 type WorkspaceConfig struct {
@@ -64,6 +78,12 @@ type WorkspaceConfig struct {
 		} `json:"redisCache"`
 	} `json:"registryFacade"`
 
+	WSDaemon struct {
+		Runtime struct {
+			NodeToContainerMapping []NodeToContainerMappingValues `json:"nodeToContainerMapping"`
+		} `json:"runtime"`
+	} `json:"wsDaemon"`
+
 	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
 }
 
@@ -79,6 +99,7 @@ type PersistentVolumeClaim struct {
 }
 
 type WorkspaceClass struct {
+	Name      string `json:"name" validate:"required"`
 	Resources struct {
 		Requests corev1.ResourceList `json:"requests" validate:"required"`
 		Limits   corev1.ResourceList `json:"limits,omitempty"`
@@ -103,6 +124,7 @@ type WebAppConfig struct {
 	UsePodAntiAffinity     bool                   `json:"usePodAntiAffinity"`
 	DisableMigration       bool                   `json:"disableMigration"`
 	Usage                  *UsageConfig           `json:"usage,omitempty"`
+	ConfigcatKey           string                 `json:"configcatKey"`
 }
 
 type WorkspaceDefaults struct {
@@ -140,6 +162,7 @@ type ServerConfig struct {
 	GithubApp                         *GithubApp          `json:"githubApp"`
 	ChargebeeSecret                   string              `json:"chargebeeSecret"`
 	StripeSecret                      string              `json:"stripeSecret"`
+	StripeConfig                      string              `json:"stripeConfig"`
 	DisableDynamicAuthProviderLogin   bool                `json:"disableDynamicAuthProviderLogin"`
 	EnableLocalApp                    *bool               `json:"enableLocalApp"`
 	RunDbDeleter                      *bool               `json:"runDbDeleter"`
@@ -156,6 +179,9 @@ type BlockedRepository struct {
 type ProxyConfig struct {
 	StaticIP           string            `json:"staticIP"`
 	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
+
+	// @deprecated use components.proxy.service.serviceType instead
+	ServiceType *corev1.ServiceType `json:"serviceType,omitempty" validate:"omitempty,service_config_type"`
 }
 
 type PublicAPIConfig struct {
@@ -163,7 +189,8 @@ type PublicAPIConfig struct {
 }
 
 type UsageConfig struct {
-	Enabled bool `json:"enabled"`
+	Enabled  bool   `json:"enabled"`
+	Schedule string `json:"schedule"`
 }
 
 type IDEConfig struct {

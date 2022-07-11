@@ -96,7 +96,12 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	b := backoff.NewExponentialBackOff()
 	b.MaxElapsedTime = 5 * time.Minute
 	if err = backoff.RetryNotify(gitClone, b, onGitCloneFailure); err != nil {
-		return src, xerrors.Errorf("git initializer: %w", err)
+		return src, xerrors.Errorf("git initializer gitClone: %w", err)
+	}
+
+	// this is only needed for prebuilds using PVC, so if it errors out, output only Debug log to prevent log spam
+	if err := ws.AddSafeDirectory(ctx, ws.Location); err != nil {
+		log.WithError(err).Debug("git initializer AddSafeDirectory")
 	}
 
 	if ws.Chown {
@@ -115,10 +120,10 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		}
 	}
 	if err := ws.realizeCloneTarget(ctx); err != nil {
-		return src, xerrors.Errorf("git initializer: %w", err)
+		return src, xerrors.Errorf("git initializer clone: %w", err)
 	}
 	if err := ws.UpdateRemote(ctx); err != nil {
-		return src, xerrors.Errorf("git initializer: %w", err)
+		return src, xerrors.Errorf("git initializer updateRemote: %w", err)
 	}
 	if err := ws.UpdateSubmodules(ctx); err != nil {
 		log.WithError(err).Warn("error while updating submodules - continuing")

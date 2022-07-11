@@ -30,6 +30,22 @@ spec:
         args:
           - semver --coerce --range '>=5.4.0' $(uname -r) || echo invalid
     - run:
+        collectorName: registry
+        image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/registry:sje-kots-registry-check.16
+        name: registry
+        args:
+          - '{{repl ConfigOption "reg_incluster" }}' # REG_IN_CLUSTER_ENABLED
+          - '{{repl ConfigOption "reg_username" }}' # REG_USERNAME
+          - '{{repl ConfigOption "reg_password" }}' # REG_PASSWORD
+          - '{{repl ConfigOption "reg_url" }}' # REG_URL
+          - '{{repl ConfigOption "reg_server" }}' # REG_SERVER
+          - '{{repl ConfigOptionEquals "reg_incluster_storage" "s3" }}' # REG_IN_CLUSTER_S3_ENABLED
+          - '{{repl ConfigOption "reg_incluster_storage_s3_region" }}' # REG_STORE_LOCATION
+          - '{{repl ConfigOption "reg_incluster_storage_s3_endpoint" }}' # REG_S3_ENDPOINT
+          - '{{repl ConfigOption "reg_incluster_storage_s3_accesskey" }}' # REG_S3_ACCESS_KEY_ID
+          - '{{repl ConfigOption "reg_incluster_storage_s3_secretkey" }}' # REG_S3_SECRET_ACCESS_KEY
+          - '{{repl ConfigOption "reg_incluster_storage_s3_bucketname" }}' # REG_S3_BUCKET_NAME
+    - run:
         collectorName: storage
         image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/storage:sje-kots-storage-check.9
         name: storage
@@ -44,6 +60,32 @@ spec:
           - '{{repl ConfigOption "store_s3_access_key_id" }}' # S3_ACCESS_KEY_ID
           - '{{repl ConfigOption "store_s3_secret_access_key" }}' # S3_SECRET_ACCESS_KEY
           - '{{repl ConfigOption "store_s3_bucket" }}' # S3_BUCKET_NAME
+    - run:
+        # Check that the pull registry is accessible from the cluster
+        collectorName: ping-registry
+        image: alpine/curl
+        name: ping-registry
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - |
+            CONNECTION="error"
+
+            if [ '{{repl HasLocalRegistry }}' = "true" ];
+            then
+              # Don't test for airgapped
+              CONNECTION="ok"
+            else
+              URL="https://eu.gcr.io/v2/"
+              echo "ping ${URL}"
+              if curl --silent --max-time 5 "${URL}" > /dev/null;
+              then
+                CONNECTION="ok"
+              fi
+            fi
+
+            echo "connection: ${CONNECTION}"
   analyzers:
     - clusterVersion:
         outcomes:
@@ -165,13 +207,10 @@ spec:
         checkName: Memory per node
         outcomes:
           - fail:
-              when: "min(memoryCapacity) < 8G"
-              message: The cluster must have least 8GB of memory
-          - warn:
               when: "min(memoryCapacity) < 16G"
-              message: The cluster must have least 16GB of memory
+              message: Each node must have at least 16GB of memory
           - pass:
-              message: There is at least 16GB of memory in the cluster
+              message: Each node has at least 16GB of memory
     - storageClass:
         checkName: Check for default storage class
         outcomes:
@@ -179,6 +218,26 @@ spec:
               message: No default storage class found
           - pass:
               message: Default storage class found
+    - textAnalyze:
+        checkName: Container registry connection is valid
+        fileName: registry/registry.log
+        regexGroups: 'registry: (?P<Registry>\w+)'
+        outcomes:
+          - pass:
+              when: "Registry == ok"
+              message: Container registry connection is valid
+          - fail:
+              message: Container registry connection is invalid. Please check your settings and that the resource is accessible from your cluster
+    - textAnalyze:
+        checkName: Container registry S3 connection is valid
+        fileName: registry/registry.log
+        regexGroups: 's3: (?P<S3>\w+)'
+        outcomes:
+          - pass:
+              when: "S3 == ok"
+              message: Container registry S3 connection is valid
+          - fail:
+              message: Container registry S3 connection is invalid. Please check your settings and that the resource is accessible from your cluster
     - textAnalyze:
         checkName: Database connection is valid
         fileName: database/database.log
@@ -209,3 +268,13 @@ spec:
               message: Object storage connection is valid
           - fail:
               message: Object storage connection is invalid. Please check your settings and that the resource is accessible from your cluster
+    - textAnalyze:
+        checkName: Pull registry is accessible from cluster
+        fileName: ping-registry/ping-registry.log
+        regexGroups: 'connection: (?P<Connection>\w+)'
+        outcomes:
+          - pass:
+              when: "Connection == ok"
+              message: Registry is accessible
+          - fail:
+              message: Registry is inaccessible. Please check your network and firewall settings

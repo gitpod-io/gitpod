@@ -14,6 +14,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 )
 
@@ -72,6 +73,34 @@ func (v version) Defaults(in interface{}) error {
 	return nil
 }
 
+func (v version) CheckDeprecated(rawCfg interface{}) (map[string]interface{}, []string) {
+	warnings := make(map[string]interface{}, 0)
+	conflicts := make([]string, 0)
+	cfg := rawCfg.(*Config)
+
+	if cfg.Experimental != nil && cfg.Experimental.WebApp != nil && cfg.Experimental.WebApp.ProxyConfig != nil && cfg.Experimental.WebApp.ProxyConfig.ServiceType != nil {
+		warnings["experimental.webapp.proxy.serviceType"] = *cfg.Experimental.WebApp.ProxyConfig.ServiceType
+
+		if cfg.Components != nil && cfg.Components.Proxy != nil && cfg.Components.Proxy.Service != nil && cfg.Components.Proxy.Service.ServiceType != nil {
+			conflicts = append(conflicts, "Cannot set proxy service type in both components and experimental")
+		} else {
+			// Promote the experimental value to the components
+			if cfg.Components == nil {
+				cfg.Components = &Components{}
+			}
+			if cfg.Components.Proxy == nil {
+				cfg.Components.Proxy = &ProxyComponent{}
+			}
+			if cfg.Components.Proxy.Service == nil {
+				cfg.Components.Proxy.Service = &ComponentTypeService{}
+			}
+			cfg.Components.Proxy.Service.ServiceType = cfg.Experimental.WebApp.ProxyConfig.ServiceType
+		}
+	}
+
+	return warnings, conflicts
+}
+
 // Config defines the v1 version structure of the gitpod config file
 type Config struct {
 	// Installation type to run - for most users, this will be Full
@@ -109,6 +138,10 @@ type Config struct {
 	CustomCACert *ObjectRef `json:"customCACert,omitempty"`
 
 	DropImageRepo *bool `json:"dropImageRepo,omitempty"`
+
+	Customization *[]Customization `json:"customization,omitempty"`
+
+	Components *Components `json:"components,omitempty"`
 
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
@@ -214,6 +247,8 @@ type ContainerRegistryExternal struct {
 
 type S3Storage struct {
 	Bucket      string    `json:"bucket" validate:"required"`
+	Region      string    `json:"region" validate:"required"`
+	Endpoint    string    `json:"endpoint" validate:"required"`
 	Certificate ObjectRef `json:"certificate" validate:"required"`
 }
 
@@ -323,4 +358,27 @@ type OAuth struct {
 	ClientId     string `json:"clientId" validate:"required"`
 	ClientSecret string `json:"clientSecret" validate:"required"`
 	CallBackUrl  string `json:"callBackUrl" validate:"required"`
+}
+
+// Customization is a stripped-down version of the Kubernetes YAML
+type Customization struct {
+	metav1.TypeMeta `json:",inline"`
+	Metadata        metav1.ObjectMeta `json:"metadata"`
+	Spec            CustomizationSpec `json:"spec,omitempty"`
+}
+
+type CustomizationSpec struct {
+	Env []corev1.EnvVar `json:"env"`
+}
+
+type Components struct {
+	Proxy *ProxyComponent `json:"proxy,omitempty"`
+}
+
+type ProxyComponent struct {
+	Service *ComponentTypeService `json:"service,omitempty"`
+}
+
+type ComponentTypeService struct {
+	ServiceType *corev1.ServiceType `json:"serviceType,omitempty" validate:"omitempty,service_config_type"`
 }

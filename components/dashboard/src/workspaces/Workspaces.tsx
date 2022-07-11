@@ -20,6 +20,7 @@ import { StartWorkspaceModalContext, StartWorkspaceModalKeyBinding } from "./sta
 import SelectIDEModal from "../settings/SelectIDEModal";
 import Arrow from "../components/Arrow";
 import ConfirmationModal from "../components/ConfirmationModal";
+import { ProfileState } from "../settings/ProfileInformation";
 
 export interface WorkspacesProps {}
 
@@ -68,7 +69,12 @@ export default function () {
                 }}
             ></ConfirmationModal>
 
-            {isOnboardingUser && <SelectIDEModal location={"workspace_list"} />}
+            {isOnboardingUser ? (
+                <SelectIDEModal location={"workspace_list"} />
+            ) : (
+                // modal hides itself
+                <ProfileState.NudgeForProfileUpdateModal />
+            )}
 
             {workspaceModel?.initialized &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ? (
@@ -162,8 +168,8 @@ export default function () {
                                                 </span>
                                             </div>
                                             <div className="text-sm flex-auto">
-                                                Unpinned workspaces that have been inactive for more than 14 days will
-                                                be automatically deleted.{" "}
+                                                Workspaces that have been stopped for more than 24 hours. Inactive 
+                                                workspaces are automatically deleted after 14 days.{" "}
                                                 <a
                                                     className="gp-link"
                                                     href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection"

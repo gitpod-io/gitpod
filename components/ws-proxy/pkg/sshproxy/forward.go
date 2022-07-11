@@ -9,8 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"golang.org/x/crypto/ssh"
+	tracker "github.com/gitpod-io/gitpod/ws-proxy/pkg/analytics"
+	"github.com/gitpod-io/golang-crypto/ssh"
 	"golang.org/x/net/context"
 )
 
@@ -29,7 +31,7 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 		return
 	}
 	if originChannel.ChannelType() == "session" {
-		originChan = startHeartbeatingChannel(originChan, s.Heartbeater, session.InstanceID)
+		originChan = startHeartbeatingChannel(originChan, s.Heartbeater, session)
 	}
 	defer originChan.Close()
 
@@ -40,9 +42,10 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 			switch req.Type {
 			case "pty-req", "shell":
 				log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debugf("forwarding %s request", req.Type)
-				if req.WantReply {
-					req.Reply(true, []byte{})
-					req.WantReply = false
+				if channel, ok := originChan.(*heartbeatingChannel); ok && req.Type == "pty-req" {
+					channel.mux.Lock()
+					channel.requestedPty = true
+					channel.mux.Unlock()
 				}
 			}
 			maskedReqs <- req
@@ -89,7 +92,19 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 	log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debug("session forward stop")
 }
 
-func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, instanceID string) ssh.Channel {
+func TrackIDECloseSignal(session *Session) {
+	propertics := make(map[string]interface{})
+	propertics["workspaceId"] = session.WorkspaceID
+	propertics["instanceId"] = session.InstanceID
+	propertics["clientKind"] = "ssh"
+	tracker.Track(analytics.TrackMessage{
+		Identity:   analytics.Identity{UserID: session.OwnerUserId},
+		Event:      "ide_close_signal",
+		Properties: propertics,
+	})
+}
+
+func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, session *Session) ssh.Channel {
 	ctx, cancel := context.WithCancel(context.Background())
 	res := &heartbeatingChannel{
 		Channel: c,
@@ -101,15 +116,19 @@ func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, instanceID str
 			select {
 			case <-res.t.C:
 				res.mux.Lock()
-				if !res.sawActivity {
+				if !res.sawActivity || !res.requestedPty {
 					res.mux.Unlock()
 					continue
 				}
 				res.sawActivity = false
 				res.mux.Unlock()
-				heartbeat.SendHeartbeat(instanceID, false)
+				heartbeat.SendHeartbeat(session.InstanceID, false)
 			case <-ctx.Done():
-				heartbeat.SendHeartbeat(instanceID, true)
+				if res.requestedPty {
+					heartbeat.SendHeartbeat(session.InstanceID, true)
+					TrackIDECloseSignal(session)
+					log.WithField("instanceId", session.InstanceID).Info("send closed heartbeat")
+				}
 				return
 			}
 		}
@@ -126,6 +145,8 @@ type heartbeatingChannel struct {
 	t           *time.Ticker
 
 	cancel context.CancelFunc
+
+	requestedPty bool
 }
 
 // Read reads up to len(data) bytes from the channel.

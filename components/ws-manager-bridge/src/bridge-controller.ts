@@ -64,7 +64,7 @@ export class BridgeController {
     protected async reconcile() {
         return this.reconcileQueue.enqueue(async () => {
             const allClusters = await this.getAllWorkspaceClusters();
-            log.info("reconciling clusters...", { allClusters: Array.from(allClusters.values()) });
+            log.info("reconciling clusters...", { allClusters: Array.from(allClusters.keys()) });
             const toDelete: string[] = [];
             try {
                 for (const [name, bridge] of this.bridges) {

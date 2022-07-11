@@ -10,6 +10,7 @@
     // 'my-new-dashboard.json': (import 'dashboards/components/new-component.json'),
     'gitpod-component-openvsx-proxy.json': (import 'dashboards/components/openvsx-proxy.json'),
     'gitpod-component-ssh-gateway.json': (import 'dashboards/components/ssh-gateway.json'),
+    'gitpod-component-jb.json': (import 'dashboards/components/jb.json'),
 
   },
 }

@@ -11,6 +11,7 @@ import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { RepoURL } from "../repohost/repo-url";
 import { Branch, CommitInfo } from "@gitpod/gitpod-protocol/src/protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class GithubRepositoryProvider implements RepositoryProvider {
@@ -211,6 +212,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
             );
             return result.data.repository !== null;
         } catch (err) {
+            log.warn({ userId: user.id }, "hasReadAccess error", err, { owner, repo });
             return false;
         }
     }

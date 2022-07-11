@@ -10,6 +10,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
@@ -18,9 +19,10 @@ import (
 
 // SnapshotInitializer downloads a snapshot from a remote storage
 type SnapshotInitializer struct {
-	Location string
-	Snapshot string
-	Storage  storage.DirectDownloader
+	Location           string
+	Snapshot           string
+	Storage            storage.DirectDownloader
+	FromVolumeSnapshot bool
 }
 
 // Run downloads a snapshot from a remote storage
@@ -31,6 +33,11 @@ func (s *SnapshotInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 	defer tracing.FinishSpan(span, &err)
 
 	src = csapi.WorkspaceInitFromBackup
+
+	if s.FromVolumeSnapshot {
+		log.Info("SnapshotInitializer detected volume snapshot, skipping")
+		return src, nil
+	}
 
 	ok, err := s.Storage.DownloadSnapshot(ctx, s.Location, s.Snapshot, mappings)
 	if err != nil {

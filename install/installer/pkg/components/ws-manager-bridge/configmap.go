@@ -25,14 +25,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Host: "localhost",
 		},
 		Timeouts: Timeouts{
-			MetaInstanceCheckIntervalSeconds: 60,
-			PreparingPhaseSeconds:            3600,
-			BuildingPhaseSeconds:             3600,
-			StoppingPhaseSeconds:             3600,
-			UnknownPhaseSeconds:              600,
+			PreparingPhaseSeconds: 3600,
+			BuildingPhaseSeconds:  3600,
+			UnknownPhaseSeconds:   600,
 		},
 		EmulatePreparingIntervalSeconds: 10,
 		StaticBridges:                   WSManagerList(ctx),
+		ClusterSyncIntervalSeconds:      60,
 	}
 
 	fc, err := common.ToJSONString(wsmbcfg)
@@ -44,9 +43,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-config", Component),
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Name:        fmt.Sprintf("%s-config", Component),
+				Namespace:   ctx.Namespace,
+				Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 			},
 			Data: map[string]string{
 				"ws-manager-bridge.json": string(fc),

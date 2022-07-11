@@ -6,11 +6,13 @@ package proxy
 
 import (
 	"context"
+	"encoding/base64"
 	"net/url"
 	"strings"
 	"time"
 
 	"golang.org/x/xerrors"
+	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,7 +64,8 @@ type WorkspaceInfo struct {
 	Auth      *wsapi.WorkspaceAuthentication
 	StartedAt time.Time
 
-	OwnerUserId string
+	OwnerUserId   string
+	SSHPublicKeys []string
 }
 
 // RemoteWorkspaceInfoProvider provides (cached) infos about running workspaces that it queries from ws-manager.
@@ -162,6 +165,7 @@ func mapPodToWorkspaceInfo(pod *corev1.Pod) *WorkspaceInfo {
 		Auth:            &wsapi.WorkspaceAuthentication{Admission: admission, OwnerToken: ownerToken},
 		StartedAt:       pod.CreationTimestamp.Time,
 		OwnerUserId:     pod.Labels[kubernetes.OwnerLabel],
+		SSHPublicKeys:   extractUserSSHPublicKeys(pod),
 	}
 }
 
@@ -217,4 +221,20 @@ func extractExposedPorts(pod *corev1.Pod) *api.ExposedPorts {
 	}
 
 	return &api.ExposedPorts{}
+}
+
+func extractUserSSHPublicKeys(pod *corev1.Pod) []string {
+	if data, ok := pod.Annotations[kubernetes.WorkspaceSSHPublicKeys]; ok && len(data) != 0 {
+		specPB, err := base64.StdEncoding.DecodeString(data)
+		if err != nil {
+			return nil
+		}
+		var spec api.SSHPublicKeys
+		err = proto.Unmarshal(specPB, &spec)
+		if err != nil {
+			return nil
+		}
+		return spec.Keys
+	}
+	return nil
 }

@@ -4,34 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Team } from "@gitpod/gitpod-protocol";
-import { newNonProductionConfigCatClient, newProductionConfigCatClient } from "./configcat";
-import { newAlwaysReturningDefaultValueClient } from "./always-default";
-
-// Attributes define attributes which can be used to segment audiences.
-// Set the attributes which you want to use to group audiences into.
-export interface Attributes {
-    userId?: string;
-    email?: string;
-
-    // Currently selected Gitpod Project ID
-    projectId?: string;
-
-    // Currently selected Gitpod Team ID
-    teamId?: string;
-    // Currently selected Gitpod Team Name
-    teamName?: string;
-
-    // All the Gitpod Teams that the user is a member (or owner) of
-    teams?: Array<Team>;
-}
-
-export interface Client {
-    getValueAsync<T>(experimentName: string, defaultValue: T, attributes: Attributes): Promise<T>;
-
-    // dispose will dispose of the client, no longer retrieving flags
-    dispose(): void;
-}
+import { newAlwaysReturningDefaultValueClient } from "@gitpod/gitpod-protocol/lib/experiments/always-default";
+import * as configcat from "configcat-js";
+import { ConfigCatClient } from "@gitpod/gitpod-protocol/lib/experiments/configcat";
+import { Client } from "@gitpod/gitpod-protocol/lib/experiments/types";
+import { LogLevel } from "configcat-common";
 
 let client: Client | undefined;
 
@@ -54,8 +31,27 @@ export function getExperimentsClient(): Client {
     return client;
 }
 
-export const PROJECT_ID_ATTRIBUTE = "project_id";
-export const TEAM_ID_ATTRIBUTE = "team_id";
-export const TEAM_IDS_ATTRIBUTE = "team_ids";
-export const TEAM_NAME_ATTRIBUTE = "team_name";
-export const TEAM_NAMES_ATTRIBUTE = "team_names";
+// newProductionConfigCatClient constructs a new ConfigCat client with production configuration.
+function newProductionConfigCatClient(): Client {
+    // clientKey is an identifier of our ConfigCat application. It is not a secret.
+    const clientKey = "WBLaCPtkjkqKHlHedziE9g/TwAe6YyftEGPnGxVRXd0Ig";
+    const client = configcat.createClient(clientKey, {
+        logger: configcat.createConsoleLogger(LogLevel.Error),
+        maxInitWaitTimeSeconds: 0,
+    });
+
+    return new ConfigCatClient(client);
+}
+
+// newNonProductionConfigCatClient constructs a new ConfigCat client with non-production configuration.
+function newNonProductionConfigCatClient(): Client {
+    // clientKey is an identifier of our ConfigCat application. It is not a secret.
+    const clientKey = "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw";
+    const client = configcat.createClient(clientKey, {
+        pollIntervalSeconds: 60 * 3, // 3 minutes
+        logger: configcat.createConsoleLogger(LogLevel.Info),
+        maxInitWaitTimeSeconds: 0,
+    });
+
+    return new ConfigCatClient(client);
+}

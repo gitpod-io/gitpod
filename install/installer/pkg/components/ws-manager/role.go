@@ -28,6 +28,7 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 					APIGroups: []string{"snapshot.storage.k8s.io"},
 					Resources: []string{
 						"volumesnapshotcontents",
+						"volumesnapshotclasses",
 					},
 					Verbs: []string{
 						"get",
@@ -70,6 +71,19 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"watch",
 						"delete",
 						"deletecollection",
+					},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{
+						"secrets",
+					},
+					Verbs: []string{
+						"get",
+						"create",
+						"delete",
+						"watch",
+						"list",
 					},
 				},
 				{

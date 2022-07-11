@@ -12,6 +12,7 @@ import (
 	"time"
 
 	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -76,9 +77,14 @@ var listPortsCmd = &cobra.Command{
 				}
 			}
 
+			colors := []tablewriter.Colors{}
+			if !noColor && utils.ColorsEnabled() {
+				colors = []tablewriter.Colors{{}, {statusColor}, {}, {}}
+			}
+
 			table.Rich(
 				[]string{fmt.Sprint(port.LocalPort), status, port.Exposed.Url, nameAndDescription},
-				[]tablewriter.Colors{{}, {statusColor}, {}, {}},
+				colors,
 			)
 		}
 
@@ -87,5 +93,6 @@ var listPortsCmd = &cobra.Command{
 }
 
 func init() {
+	listPortsCmd.Flags().BoolVarP(&noColor, "no-color", "", false, "Disable output colorization")
 	portsCmd.AddCommand(listPortsCmd)
 }

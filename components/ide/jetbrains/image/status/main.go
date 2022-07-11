@@ -68,17 +68,20 @@ func main() {
 		return
 	}
 
-	// wait until content ready
-	contentStatus, wsInfo, err := resolveWorkspaceInfo(context.Background())
-	if err != nil || wsInfo == nil || contentStatus == nil || !contentStatus.Available {
-		log.WithError(err).WithField("wsInfo", wsInfo).WithField("cstate", contentStatus).Error("resolve workspace info failed")
+	wsInfo, err := resolveWorkspaceInfo(context.Background())
+	if err != nil || wsInfo == nil {
+		log.WithError(err).WithField("wsInfo", wsInfo).Error("resolve workspace info failed")
 		return
 	}
-	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("content available")
 
+	repoRoot := wsInfo.GetCheckoutLocation()
+	gitpodConfig, err := parseGitpodConfig(repoRoot)
+	if err != nil {
+		log.WithError(err).Error("failed to parse .gitpod.yml")
+	}
 	version_2022_1, _ := version.NewVersion("2022.1")
 	if version_2022_1.LessThanOrEqual(backendVersion) {
-		err = installPlugins(wsInfo, alias)
+		err = installPlugins(repoRoot, gitpodConfig, alias)
 		installPluginsCost := time.Now().Local().Sub(startTime).Milliseconds()
 		if err != nil {
 			log.WithError(err).WithField("cost", installPluginsCost).Error("installing repo plugins: done")
@@ -87,9 +90,9 @@ func main() {
 		}
 	}
 
-	err = configureXmx(alias)
+	err = configureVMOptions(gitpodConfig, alias)
 	if err != nil {
-		log.WithError(err).Error("failed to configure backend Xmx")
+		log.WithError(err).Error("failed to configure vmoptions")
 	}
 	go run(wsInfo, alias)
 
@@ -213,8 +216,8 @@ func terminateIDE(backendPort string) error {
 	return nil
 }
 
-func resolveWorkspaceInfo(ctx context.Context) (*supervisor.ContentStatusResponse, *supervisor.WorkspaceInfoResponse, error) {
-	resolve := func(ctx context.Context) (contentStatus *supervisor.ContentStatusResponse, wsInfo *supervisor.WorkspaceInfoResponse, err error) {
+func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
+	resolve := func(ctx context.Context) (wsInfo *supervisor.WorkspaceInfoResponse, err error) {
 		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
 		if supervisorAddr == "" {
 			supervisorAddr = "localhost:22999"
@@ -229,22 +232,18 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.ContentStatusRespons
 			err = errors.New("get workspace info failed: " + err.Error())
 			return
 		}
-		contentStatus, err = supervisor.NewStatusServiceClient(supervisorConn).ContentStatus(ctx, &supervisor.ContentStatusRequest{Wait: true})
-		if err != nil {
-			err = errors.New("get content available failed: " + err.Error())
-		}
 		return
 	}
 	// try resolve workspace info 10 times
 	for attempt := 0; attempt < 10; attempt++ {
-		if contentStatus, wsInfo, err := resolve(ctx); err != nil {
+		if wsInfo, err := resolve(ctx); err != nil {
 			log.WithError(err).Error("resolve workspace info failed")
 			time.Sleep(1 * time.Second)
 		} else {
-			return contentStatus, wsInfo, err
+			return wsInfo, err
 		}
 	}
-	return nil, nil, errors.New("failed with attempt 10 times")
+	return nil, errors.New("failed with attempt 10 times")
 }
 
 func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string) {
@@ -307,19 +306,77 @@ func handleSignal(projectPath string) {
 	log.Info("asked IDE to terminate")
 }
 
-func configureXmx(alias string) error {
-	xmx := os.Getenv(strings.ToUpper(alias) + "_XMX")
-	if xmx == "" {
-		return nil
+func configureVMOptions(config *gitpod.GitpodConfig, alias string) error {
+	idePrefix := alias
+	if alias == "intellij" {
+		idePrefix = "idea"
 	}
-	launcherPath := "/ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh"
-	content, err := ioutil.ReadFile(launcherPath)
+	// [idea64|goland64|pycharm64|phpstorm64].vmoptions
+	path := fmt.Sprintf("/ide-desktop/backend/bin/%s64.vmoptions", idePrefix)
+	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
-	// by default remote dev already set -Xmx2048m, see /ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh
-	newContent := strings.Replace(string(content), "-Xmx2048m", "-Xmx"+xmx, 1)
-	return ioutil.WriteFile(launcherPath, []byte(newContent), 0)
+	newContent := updateVMOptions(config, alias, string(content))
+	return ioutil.WriteFile(path, []byte(newContent), 0)
+}
+
+// deduplicateVMOption append new VMOptions onto old VMOptions and remove any duplicated leftmost options
+func deduplicateVMOption(oldLines []string, newLines []string, predicate func(l, r string) bool) []string {
+	var result []string
+	var merged = append(oldLines, newLines...)
+	for i, left := range merged {
+		for _, right := range merged[i+1:] {
+			if predicate(left, right) {
+				left = ""
+				break
+			}
+		}
+		if left != "" {
+			result = append(result, left)
+		}
+	}
+	return result
+}
+
+func updateVMOptions(config *gitpod.GitpodConfig, alias string, content string) string {
+	// inspired by how intellij platform merge the VMOptions
+	// https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/src/com/intellij/openapi/application/ConfigImportHelper.java#L1115
+	filterFunc := func(l, r string) bool {
+		isEqual := l == r
+		isXmx := strings.HasPrefix(l, "-Xmx") && strings.HasPrefix(r, "-Xmx")
+		isXms := strings.HasPrefix(l, "-Xms") && strings.HasPrefix(r, "-Xms")
+		isXss := strings.HasPrefix(l, "-Xss") && strings.HasPrefix(r, "-Xss")
+		isXXOptions := strings.HasPrefix(l, "-XX:") && strings.HasPrefix(r, "-XX:") &&
+			strings.Split(l, "=")[0] == strings.Split(r, "=")[0]
+		return isEqual || isXmx || isXms || isXss || isXXOptions
+	}
+	// original vmoptions (inherited from $JETBRAINS_IDE_HOME/bin/idea64.vmoptions)
+	ideaVMOptionsLines := strings.Fields(content)
+	// Gitpod's default customization
+	gitpodVMOptions := []string{"-Dgtw.disable.exit.dialog=true"}
+	vmoptions := deduplicateVMOption(ideaVMOptionsLines, gitpodVMOptions, filterFunc)
+
+	// user-defined vmoptions (EnvVar)
+	userVMOptionsVar := os.Getenv(strings.ToUpper(alias) + "_VMOPTIONS")
+	userVMOptions := strings.Fields(userVMOptionsVar)
+	if len(userVMOptions) > 0 {
+		vmoptions = deduplicateVMOption(vmoptions, userVMOptions, filterFunc)
+	}
+
+	// project-defined vmoptions (.gitpod.yml)
+	if config != nil {
+		productConfig := getProductConfig(config, alias)
+		if productConfig != nil {
+			projectVMOptions := strings.Fields(productConfig.VMOptions)
+			if len(projectVMOptions) > 0 {
+				vmoptions = deduplicateVMOption(vmoptions, projectVMOptions, filterFunc)
+			}
+		}
+	}
+
+	// vmoptions file should end with a newline
+	return strings.Join(vmoptions, "\n") + "\n"
 }
 
 /**
@@ -364,8 +421,8 @@ func resolveBackendVersion() (*version.Version, error) {
 	return version.NewVersion(info.Version)
 }
 
-func installPlugins(wsInfo *supervisor.WorkspaceInfoResponse, alias string) error {
-	plugins, err := getPlugins(wsInfo.GetCheckoutLocation(), alias)
+func installPlugins(repoRoot string, config *gitpod.GitpodConfig, alias string) error {
+	plugins, err := getPlugins(config, alias)
 	if err != nil {
 		return err
 	}
@@ -387,7 +444,7 @@ func installPlugins(wsInfo *supervisor.WorkspaceInfoResponse, alias string) erro
 
 	var args []string
 	args = append(args, "installPlugins")
-	args = append(args, wsInfo.GetCheckoutLocation())
+	args = append(args, repoRoot)
 	args = append(args, plugins...)
 	cmd := remoteDevServerCmd(args)
 	cmd.Stdout = io.MultiWriter(w, os.Stdout)
@@ -412,7 +469,7 @@ func installPlugins(wsInfo *supervisor.WorkspaceInfoResponse, alias string) erro
 	return nil
 }
 
-func getPlugins(repoRoot string, alias string) ([]string, error) {
+func parseGitpodConfig(repoRoot string) (*gitpod.GitpodConfig, error) {
 	if repoRoot == "" {
 		return nil, errors.New("repoRoot is empty")
 	}
@@ -428,11 +485,14 @@ func getPlugins(repoRoot string, alias string) ([]string, error) {
 	if err = yaml.Unmarshal(data, &config); err != nil {
 		return nil, errors.New("unmarshal .gitpod.yml file failed" + err.Error())
 	}
+	return config, nil
+}
 
+func getPlugins(config *gitpod.GitpodConfig, alias string) ([]string, error) {
+	var plugins []string
 	if config == nil || config.JetBrains == nil {
 		return nil, nil
 	}
-	var plugins []string
 	if config.JetBrains.Plugins != nil {
 		plugins = append(plugins, config.JetBrains.Plugins...)
 	}

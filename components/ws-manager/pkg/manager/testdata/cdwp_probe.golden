@@ -13,6 +13,8 @@
                 "headless": "true",
                 "metaID": "foobar",
                 "owner": "tester",
+                "project": "",
+                "team": "",
                 "workspaceID": "foobar",
                 "workspaceType": "probe"
             },
@@ -27,7 +29,6 @@
                 "gitpod/never-ready": "true",
                 "gitpod/ownerToken": "%7J'[Of/8NDiWE+9F,I6^Jcj_1\u0026}-F8p",
                 "gitpod/servicePrefix": "foobarservice",
-                "gitpod/traceid": "",
                 "gitpod/url": "foobar-foobarservice-gitpod.io",
                 "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace-default"
             },

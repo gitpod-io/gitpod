@@ -494,6 +494,52 @@ export namespace ControlAdmissionResponse {
     }
 }
 
+export class DeleteVolumeSnapshotRequest extends jspb.Message {
+    getId(): string;
+    setId(value: string): DeleteVolumeSnapshotRequest;
+    getVolumeHandle(): string;
+    setVolumeHandle(value: string): DeleteVolumeSnapshotRequest;
+    getSoftDelete(): boolean;
+    setSoftDelete(value: boolean): DeleteVolumeSnapshotRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DeleteVolumeSnapshotRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: DeleteVolumeSnapshotRequest): DeleteVolumeSnapshotRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DeleteVolumeSnapshotRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DeleteVolumeSnapshotRequest;
+    static deserializeBinaryFromReader(message: DeleteVolumeSnapshotRequest, reader: jspb.BinaryReader): DeleteVolumeSnapshotRequest;
+}
+
+export namespace DeleteVolumeSnapshotRequest {
+    export type AsObject = {
+        id: string,
+        volumeHandle: string,
+        softDelete: boolean,
+    }
+}
+
+export class DeleteVolumeSnapshotResponse extends jspb.Message {
+    getWasDeleted(): boolean;
+    setWasDeleted(value: boolean): DeleteVolumeSnapshotResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DeleteVolumeSnapshotResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: DeleteVolumeSnapshotResponse): DeleteVolumeSnapshotResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DeleteVolumeSnapshotResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DeleteVolumeSnapshotResponse;
+    static deserializeBinaryFromReader(message: DeleteVolumeSnapshotResponse, reader: jspb.BinaryReader): DeleteVolumeSnapshotResponse;
+}
+
+export namespace DeleteVolumeSnapshotResponse {
+    export type AsObject = {
+        wasDeleted: boolean,
+    }
+}
+
 export class BackupWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): BackupWorkspaceRequest;
@@ -531,6 +577,48 @@ export class BackupWorkspaceResponse extends jspb.Message {
 export namespace BackupWorkspaceResponse {
     export type AsObject = {
         url: string,
+    }
+}
+
+export class UpdateSSHKeyRequest extends jspb.Message {
+    getId(): string;
+    setId(value: string): UpdateSSHKeyRequest;
+    clearKeysList(): void;
+    getKeysList(): Array<string>;
+    setKeysList(value: Array<string>): UpdateSSHKeyRequest;
+    addKeys(value: string, index?: number): string;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UpdateSSHKeyRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: UpdateSSHKeyRequest): UpdateSSHKeyRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UpdateSSHKeyRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UpdateSSHKeyRequest;
+    static deserializeBinaryFromReader(message: UpdateSSHKeyRequest, reader: jspb.BinaryReader): UpdateSSHKeyRequest;
+}
+
+export namespace UpdateSSHKeyRequest {
+    export type AsObject = {
+        id: string,
+        keysList: Array<string>,
+    }
+}
+
+export class UpdateSSHKeyResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UpdateSSHKeyResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: UpdateSSHKeyResponse): UpdateSSHKeyResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UpdateSSHKeyResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UpdateSSHKeyResponse;
+    static deserializeBinaryFromReader(message: UpdateSSHKeyResponse, reader: jspb.BinaryReader): UpdateSSHKeyResponse;
+}
+
+export namespace UpdateSSHKeyResponse {
+    export type AsObject = {
     }
 }
 
@@ -793,6 +881,16 @@ export class WorkspaceMetadata extends jspb.Message {
     getAnnotationsMap(): jspb.Map<string, string>;
     clearAnnotationsMap(): void;
 
+    hasTeam(): boolean;
+    clearTeam(): void;
+    getTeam(): string | undefined;
+    setTeam(value: string): WorkspaceMetadata;
+
+    hasProject(): boolean;
+    clearProject(): void;
+    getProject(): string | undefined;
+    setProject(value: string): WorkspaceMetadata;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceMetadata.AsObject;
     static toObject(includeInstance: boolean, msg: WorkspaceMetadata): WorkspaceMetadata.AsObject;
@@ -810,6 +908,8 @@ export namespace WorkspaceMetadata {
         startedAt?: google_protobuf_timestamp_pb.Timestamp.AsObject,
 
         annotationsMap: Array<[string, string]>,
+        team?: string,
+        project?: string,
     }
 }
 
@@ -907,6 +1007,10 @@ export class StartWorkspaceSpec extends jspb.Message {
     clearVolumeSnapshot(): void;
     getVolumeSnapshot(): VolumeSnapshotInfo | undefined;
     setVolumeSnapshot(value?: VolumeSnapshotInfo): StartWorkspaceSpec;
+    clearSshPublicKeysList(): void;
+    getSshPublicKeysList(): Array<string>;
+    setSshPublicKeysList(value: Array<string>): StartWorkspaceSpec;
+    addSshPublicKeys(value: string, index?: number): string;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -933,6 +1037,7 @@ export namespace StartWorkspaceSpec {
         ideImage?: IDEImage.AsObject,
         pb_class: string,
         volumeSnapshot?: VolumeSnapshotInfo.AsObject,
+        sshPublicKeysList: Array<string>,
     }
 }
 
@@ -1035,6 +1140,90 @@ export namespace ExposedPorts {
     }
 }
 
+export class SSHPublicKeys extends jspb.Message {
+    clearKeysList(): void;
+    getKeysList(): Array<string>;
+    setKeysList(value: Array<string>): SSHPublicKeys;
+    addKeys(value: string, index?: number): string;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): SSHPublicKeys.AsObject;
+    static toObject(includeInstance: boolean, msg: SSHPublicKeys): SSHPublicKeys.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: SSHPublicKeys, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): SSHPublicKeys;
+    static deserializeBinaryFromReader(message: SSHPublicKeys, reader: jspb.BinaryReader): SSHPublicKeys;
+}
+
+export namespace SSHPublicKeys {
+    export type AsObject = {
+        keysList: Array<string>,
+    }
+}
+
+export class DescribeClusterRequest extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DescribeClusterRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: DescribeClusterRequest): DescribeClusterRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DescribeClusterRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DescribeClusterRequest;
+    static deserializeBinaryFromReader(message: DescribeClusterRequest, reader: jspb.BinaryReader): DescribeClusterRequest;
+}
+
+export namespace DescribeClusterRequest {
+    export type AsObject = {
+    }
+}
+
+export class DescribeClusterResponse extends jspb.Message {
+    clearWorkspaceclassesList(): void;
+    getWorkspaceclassesList(): Array<WorkspaceClass>;
+    setWorkspaceclassesList(value: Array<WorkspaceClass>): DescribeClusterResponse;
+    addWorkspaceclasses(value?: WorkspaceClass, index?: number): WorkspaceClass;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DescribeClusterResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: DescribeClusterResponse): DescribeClusterResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DescribeClusterResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DescribeClusterResponse;
+    static deserializeBinaryFromReader(message: DescribeClusterResponse, reader: jspb.BinaryReader): DescribeClusterResponse;
+}
+
+export namespace DescribeClusterResponse {
+    export type AsObject = {
+        workspaceclassesList: Array<WorkspaceClass.AsObject>,
+    }
+}
+
+export class WorkspaceClass extends jspb.Message {
+    getId(): string;
+    setId(value: string): WorkspaceClass;
+    getDisplayname(): string;
+    setDisplayname(value: string): WorkspaceClass;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WorkspaceClass.AsObject;
+    static toObject(includeInstance: boolean, msg: WorkspaceClass): WorkspaceClass.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WorkspaceClass, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WorkspaceClass;
+    static deserializeBinaryFromReader(message: WorkspaceClass, reader: jspb.BinaryReader): WorkspaceClass;
+}
+
+export namespace WorkspaceClass {
+    export type AsObject = {
+        id: string,
+        displayname: string,
+    }
+}
+
 export enum StopWorkspacePolicy {
     NORMALLY = 0,
     IMMEDIATELY = 1,
@@ -1072,6 +1261,7 @@ export enum WorkspaceFeatureFlag {
     FULL_WORKSPACE_BACKUP = 4,
     FIXED_RESOURCES = 5,
     PERSISTENT_VOLUME_CLAIM = 7,
+    PROTECTED_SECRETS = 8,
 }
 
 export enum WorkspaceType {

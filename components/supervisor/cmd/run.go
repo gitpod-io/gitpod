@@ -12,6 +12,10 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 )
 
+var runOpts struct {
+	RunGP bool
+}
+
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "starts the supervisor",
@@ -20,10 +24,11 @@ var runCmd = &cobra.Command{
 		log.Init(ServiceName, Version, true, false)
 		common_grpc.SetupLogging()
 		supervisor.Version = Version
-		supervisor.Run()
+		supervisor.Run(supervisor.WithRunGP(runOpts.RunGP))
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+	runCmd.Flags().BoolVar(&runOpts.RunGP, "rungp", false, "run supervisor in a run-gp context")
 }

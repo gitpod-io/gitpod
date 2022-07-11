@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const InstallationAdminSettingsPrototype = {
     sendTelemetry: true,
+    sendCustomerID: true,
 };
 
 export type InstallationAdminSettings = typeof InstallationAdminSettingsPrototype;
@@ -28,6 +29,8 @@ export interface TelemetryData {
     totalUsers: number;
     totalWorkspaces: number;
     totalInstances: number;
+    licenseType: string;
+    customerID?: string;
 }
 
 export namespace InstallationAdmin {

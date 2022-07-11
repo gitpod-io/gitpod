@@ -21,13 +21,16 @@ import (
 	"google.golang.org/grpc/codes"
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
+	covev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -83,10 +86,18 @@ type Monitor struct {
 	act actingManager
 
 	OnError func(error)
+
+	notifyPod map[string]chan string
+
+	eventRecorder record.EventRecorder
 }
 
 // CreateMonitor creates a new monitor
 func (m *Manager) CreateMonitor() (*Monitor, error) {
+	broadcaster := record.NewBroadcaster()
+	broadcaster.StartRecordingToSink(&covev1client.EventSinkImpl{Interface: m.RawClient.CoreV1().Events("")})
+	eventRecorder := broadcaster.NewRecorder(runtime.NewScheme(), corev1.EventSource{Component: "ws-manager"})
+
 	monitorInterval := time.Duration(m.Config.HeartbeatInterval)
 	// Monitor interval is half the heartbeat interval to catch timed out workspaces in time.
 	// See https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem why we need this.
@@ -103,6 +114,10 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 		OnError: func(err error) {
 			log.WithError(err).Error("workspace monitor error")
 		},
+
+		notifyPod: make(map[string]chan string),
+
+		eventRecorder: eventRecorder,
 	}
 	res.eventpool = workpool.NewEventWorkerPool(res.handleEvent)
 	res.act = struct {
@@ -145,11 +160,55 @@ func (m *Monitor) handleEvent(evt watch.Event) {
 	switch evt.Object.(type) {
 	case *corev1.Pod:
 		err = m.onPodEvent(evt)
+	case *volumesnapshotv1.VolumeSnapshot:
+		err = m.onVolumesnapshotEvent(evt)
 	}
 
 	if err != nil {
 		m.OnError(err)
 	}
+}
+
+func (m *Monitor) onVolumesnapshotEvent(evt watch.Event) error {
+	vs, ok := evt.Object.(*volumesnapshotv1.VolumeSnapshot)
+	if !ok {
+		return xerrors.Errorf("received non-volume-snapshot event")
+	}
+
+	log := log.WithField("volumesnapshot", vs.Name)
+
+	if vs.Spec.Source.PersistentVolumeClaimName == nil {
+		// there is no pvc name within the VolumeSnapshot object
+		log.Warn("the spec.source.persistentVolumeClaimName is empty")
+		return nil
+	}
+
+	// the pod name is 1:1 mapping to pvc name
+	podName := *vs.Spec.Source.PersistentVolumeClaimName
+	log = log.WithField("pod", podName)
+
+	// get the pod resource
+	var pod corev1.Pod
+	if err := m.manager.Clientset.Get(context.Background(), types.NamespacedName{Namespace: vs.Namespace, Name: podName}, &pod); err != nil {
+		log.WithError(err).Warnf("the pod %s/%s is missing", podName, vs.Namespace)
+		return nil
+	}
+
+	if vs.Status == nil || vs.Status.ReadyToUse == nil || !*vs.Status.ReadyToUse || vs.Status.BoundVolumeSnapshotContentName == nil {
+		m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is in progress", vs.Name)
+		return nil
+	}
+
+	vsc := *vs.Status.BoundVolumeSnapshotContentName
+	log.Infof("the vsc %s is ready to use", vsc)
+	m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is ready to use", vs.Name)
+
+	if m.notifyPod[podName] == nil {
+		m.notifyPod[podName] = make(chan string)
+	}
+	m.notifyPod[podName] <- vsc
+
+	return nil
 }
 
 // onPodEvent interpretes Kubernetes events, translates and broadcasts them, and acts based on them
@@ -204,7 +263,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	// subsequent handling of the matter or not. However, we want to respond quickly to events,
 	// thus we start OnChange as a goroutine.
 	// BEWARE beyond this point one must not modify status anymore - we've already sent it out BEWARE
-	span := m.traceWorkspace("handle-"+status.Phase.String(), wso)
+	span := m.traceWorkspaceState(status.Phase.String(), wso)
 	ctx = opentracing.ContextWithSpan(context.Background(), span)
 	onChangeDone := make(chan bool)
 	go func() {
@@ -244,6 +303,12 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		// Beware: do not else-if this condition with the other phases as we don't want the stop
 		//         login in any other phase, too.
 		m.clearInitializerFromMap(pod.Name)
+
+		// if the secret is already gone, this won't error
+		err := m.deleteWorkspaceSecrets(ctx, pod.Name)
+		if err != nil {
+			return err
+		}
 
 		// Special case: workspaces timing out during backup. Normally a timed out workspace would just be stopped
 		//               regularly. When a workspace times out during backup though, stopping it won't do any good.
@@ -351,14 +416,17 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 			return xerrors.Errorf("cannot add gitpod finalizer: %w", err)
 		}
 
-		// once a regular workspace is up and running, we'll remove the traceID information so that the parent span
-		// ends once the workspace has started.
-		//
-		// Also, in case the pod gets evicted we would not know the hostIP that pod ran on anymore.
+		// In case the pod gets evicted we would not know the hostIP that pod ran on anymore.
 		// In preparation for those cases, we'll add it as an annotation.
-		err := m.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation), addMark(nodeNameAnnotation, wso.NodeName()))
+		err := m.markWorkspace(ctx, workspaceID, addMark(nodeNameAnnotation, wso.NodeName()))
 		if err != nil {
-			log.WithError(err).Warn("was unable to remove traceID and/or add host IP annotation from/to workspace")
+			log.WithError(err).Warn("was unable to add host IP annotation from/to workspace")
+		}
+
+		// workspace is running - we don't need the secret anymore
+		err = m.deleteWorkspaceSecrets(ctx, pod.Name)
+		if err != nil {
+			log.WithError(err).Warn("was unable to remove workspace secret")
 		}
 	}
 
@@ -421,6 +489,7 @@ type actingManager interface {
 	waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (err error)
 	stopWorkspace(ctx context.Context, workspaceID string, gracePeriod time.Duration) (err error)
 	markWorkspace(ctx context.Context, workspaceID string, annotations ...*annotation) error
+	deleteWorkspaceSecrets(ctx context.Context, podName string) error
 
 	clearInitializerFromMap(podName string)
 	initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error)
@@ -473,8 +542,7 @@ func (m *Monitor) writeEventTraceLog(status *api.WorkspaceStatus, wso *workspace
 					c.Env[i].Value = "[redacted]"
 					continue
 				}
-				isGitpodVar := strings.HasPrefix(env.Name, "GITPOD_") || strings.HasPrefix(env.Name, "SUPERVISOR_") || strings.HasPrefix(env.Name, "BOB_") || strings.HasPrefix(env.Name, "THEIA_")
-				if isGitpodVar {
+				if isGitpodInternalEnvVar(env.Name) {
 					continue
 				}
 
@@ -512,25 +580,14 @@ func (m *Monitor) writeEventTraceLog(status *api.WorkspaceStatus, wso *workspace
 	json.NewEncoder(out).Encode(entry)
 }
 
-// traceWorkspace updates the workspace span if the workspace has OpenTracing information associated with it.
-// The resulting context may be associated with trace information that can be used to trace the effects of this status
-// update throughout the rest of the system.
-func (m *Monitor) traceWorkspace(occasion string, wso *workspaceObjects) opentracing.Span {
-	var traceID string
-	if traceID == "" && wso.Pod != nil {
-		traceID = wso.Pod.Annotations[wsk8s.TraceIDAnnotation]
-	}
-	spanCtx := tracing.FromTraceID(traceID)
-	if spanCtx == nil {
-		// no trace information available
-		return opentracing.NoopTracer{}.StartSpan("noop")
-	}
-
-	span := opentracing.StartSpan(fmt.Sprintf("/workspace/%s", occasion), opentracing.FollowsFrom(spanCtx))
+// traceWorkspaceState creates a new span that records the phase of workspace
+func (m *Monitor) traceWorkspaceState(state string, wso *workspaceObjects) opentracing.Span {
+	span := opentracing.StartSpan(fmt.Sprintf("/workspace/%s", state))
 	if wso.Pod != nil {
 		tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&wso.Pod.ObjectMeta))
+		span.LogKV("timeToState", time.Since(wso.Pod.CreationTimestamp.Time))
 	}
-	span.LogKV("occasion", occasion)
+	span.LogKV("wsState", state)
 
 	// OpenTracing does not support creating a span from a SpanContext https://github.com/opentracing/specification/issues/81.
 	// Until that changes we just finish the span immediately after calling on-change.
@@ -737,6 +794,19 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			return xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
 
+		var secret corev1.Secret
+		err = m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &secret)
+		if k8serr.IsNotFound(err) {
+			// this is ok - do nothing
+		} else if err != nil {
+			return xerrors.Errorf("cannot get workspace secret: %w", err)
+		} else {
+			err = csapi.InjectSecretsToInitializer(&initializer, secret.Data)
+			if err != nil {
+				return xerrors.Errorf("cannot inject initializer secrets: %w", err)
+			}
+		}
+
 		if fullWorkspaceBackup {
 			_, mf, err := m.manager.Content.GetContentLayer(ctx, workspaceMeta.Owner, workspaceMeta.MetaId, &initializer)
 			if err != nil {
@@ -800,22 +870,14 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		hist.Observe(time.Since(t).Seconds())
 	}
 
-	if err != nil {
-		c, cErr := m.manager.metrics.totalRestoreFailureCounterVec.GetMetricWithLabelValues(wsType, wsClass)
-		if cErr != nil {
-			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore failure counter")
-		} else {
-			c.Inc()
+	_, isBackup := initializer.Spec.(*csapi.WorkspaceInitializer_Backup)
+
+	if isBackup {
+		m.manager.metrics.totalRestoreCounterVec.WithLabelValues(wsType, wsClass).Inc()
+		if err != nil {
+			m.manager.metrics.totalRestoreFailureCounterVec.WithLabelValues(wsType, wsClass).Inc()
+			return xerrors.Errorf("cannot initialize workspace: %w", err)
 		}
-
-		return xerrors.Errorf("cannot initialize workspace: %w", err)
-	}
-
-	c, cErr := m.manager.metrics.totalRestoreSuccessCounterVec.GetMetricWithLabelValues(wsType, wsClass)
-	if cErr != nil {
-		log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace restore success counter")
-	} else {
-		c.Inc()
 	}
 	return nil
 }
@@ -995,48 +1057,32 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				volumeSnapshotTime = time.Now()
 			}
 			if createdVolumeSnapshot {
-				backoff := wait.Backoff{
-					Steps:    30,
-					Duration: 100 * time.Millisecond,
-					Factor:   1.5,
-					Jitter:   0.1,
-					Cap:      10 * time.Minute,
+				if m.notifyPod[wso.Pod.Name] == nil {
+					m.notifyPod[wso.Pod.Name] = make(chan string)
 				}
-				log = log.WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName)
-				err = wait.ExponentialBackoff(backoff, func() (bool, error) {
-					var volumeSnapshot volumesnapshotv1.VolumeSnapshot
-					err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: m.manager.Config.Namespace, Name: pvcVolumeSnapshotName}, &volumeSnapshot)
-					if err != nil {
-						if k8serr.IsNotFound(err) {
-							// volumesnapshot doesn't exist yet, retry again
-							return false, nil
-						}
-						log.WithError(err).Error("was unable to get volume snapshot")
-						return false, err
+
+				select {
+				case pvcVolumeSnapshotContentName = <-m.notifyPod[wso.Pod.Name]:
+					readyVolumeSnapshot = true
+				case <-ctx.Done():
+					// There might be a chance that the VolumeSnapshot is ready but somehow
+					// we did not receive the notification.
+					// For example, the ws-manager restarts before the VolumeSnapshot becomes ready.
+					// Let's give it the last chance to check the VolumeSnapshot is ready.
+					var vs volumesnapshotv1.VolumeSnapshot
+					err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: m.manager.Config.Namespace, Name: pvcVolumeSnapshotName}, &vs)
+					if err == nil && vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
+						pvcVolumeSnapshotContentName = *vs.Status.BoundVolumeSnapshotContentName
+						readyVolumeSnapshot = true
+						break
 					}
-					if volumeSnapshot.Status != nil {
-						if volumeSnapshot.Status.ReadyToUse != nil && *(volumeSnapshot.Status.ReadyToUse) && volumeSnapshot.Status.BoundVolumeSnapshotContentName != nil {
-							pvcVolumeSnapshotContentName = *volumeSnapshot.Status.BoundVolumeSnapshotContentName
-							return true, nil
-						}
-						if volumeSnapshot.Status.Error != nil {
-							if volumeSnapshot.Status.Error.Message != nil {
-								err = xerrors.Errorf("error during volume snapshot creation: %s", *volumeSnapshot.Status.Error.Message)
-								log.WithError(err).Error("unable to create volume snapshot")
-								return false, err
-							}
-							log.Error("unknown error during volume snapshot creation")
-							return false, xerrors.Errorf("unknown error during volume snapshot creation")
-						}
-					}
-					return false, nil
-				})
-				if err != nil {
-					log.WithError(err).Errorf("failed while waiting for volume snapshot to get ready")
+
+					err = xerrors.Errorf("%s timed out while waiting for volume snapshot to get ready", m.manager.Config.Timeouts.ContentFinalization.String())
+					log.Error(err.Error())
 					return true, nil, err
 				}
-				readyVolumeSnapshot = true
-				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType)
+
+				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
 				if err != nil {
 					log.WithError(err).WithField("type", wsType).Warn("cannot get volume snapshot time histogram metric")
 				} else {
@@ -1068,7 +1114,24 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				err = m.manager.markWorkspace(context.Background(), workspaceID, addMark(pvcWorkspaceVolumeSnapshotAnnotation, string(b)))
 				if err != nil {
 					log.WithError(err).Error("cannot mark workspace with volume snapshot name - snapshot will be orphaned and backup lost")
+					errMark := m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, xerrors.Errorf("cannot add mark to save snapshot info: %v", err).Error()))
+					if errMark != nil {
+						log.WithError(errMark).Warn("was unable to mark workspace as failed")
+					}
 					return true, nil, err
+				}
+
+				if tpe == api.WorkspaceType_PREBUILD {
+					err = m.manager.markWorkspace(context.Background(), workspaceID, addMark(workspaceSnapshotAnnotation, pvcVolumeSnapshotName))
+					if err != nil {
+						tracing.LogError(span, err)
+						log.WithError(err).Warn("cannot mark headless workspace with snapshot - that's one prebuild lost")
+						errMark := m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, xerrors.Errorf("cannot add mark for prebuild snapshot info: %v", err).Error()))
+						if errMark != nil {
+							log.WithError(errMark).Warn("was unable to mark workspace as failed")
+						}
+						return true, nil, err
+					}
 				}
 
 				markVolumeSnapshotAnnotation = true
@@ -1192,13 +1255,13 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		BackupComplete: true,
 		GitStatus:      gitStatus,
 	}
+
+	if doBackup || doSnapshot {
+		m.manager.metrics.totalBackupCounterVec.WithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel]).Inc()
+	}
+
 	if backupError != nil {
-		c, cErr := m.manager.metrics.totalBackupFailureCounterVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
-		if cErr != nil {
-			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace backup failure metric")
-		} else {
-			c.Inc()
-		}
+		m.manager.metrics.totalBackupFailureCounterVec.WithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel]).Inc()
 
 		if dataloss {
 			disposalStatus.BackupFailure = backupError.Error()
@@ -1207,13 +1270,6 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			// state management or cleanup. No need to worry the user.
 			log.WithError(backupError).WithFields(wso.GetOWI()).Warn("internal error while disposing workspace content")
 			tracing.LogError(span, backupError)
-		}
-	} else {
-		c, cErr := m.manager.metrics.totalBackupSuccessCounterVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
-		if cErr != nil {
-			log.WithError(cErr).WithField("type", wsType).Warn("cannot get counter for workspace backup success counter")
-		} else {
-			c.Inc()
 		}
 	}
 }

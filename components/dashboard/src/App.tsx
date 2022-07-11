@@ -12,15 +12,13 @@ import { Login } from "./Login";
 import { UserContext } from "./user-context";
 import { TeamsContext } from "./teams/teams-context";
 import { ThemeContext } from "./theme-context";
-import { AdminContext } from "./admin-context";
-import { LicenseContext } from "./license-context";
 import { getGitpodService } from "./service/service";
 import { shouldSeeWhatsNew, WhatsNew } from "./whatsnew/WhatsNew";
 import gitpodIcon from "./icons/gitpod.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useHistory } from "react-router-dom";
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from "./Analytics";
-import { ContextURL, LicenseInfo, User } from "@gitpod/gitpod-protocol";
+import { ContextURL, User } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Experiment } from "./experiments";
 import { workspacesPathMain } from "./workspaces/workspaces.routes";
@@ -36,6 +34,7 @@ import {
     settingsPathTeamsJoin,
     settingsPathTeamsNew,
     settingsPathVariables,
+    settingsPathSSHKeys,
 } from "./settings/settings.routes";
 import {
     projectsPathInstallGitHubApp,
@@ -58,6 +57,7 @@ const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/
 const Plans = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Plans"));
 const Teams = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Teams"));
 const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/EnvironmentVariables"));
+const SSHKeys = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/SSHKeys"));
 const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Integrations"));
 const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Preferences"));
 const Open = React.lazy(() => import(/* webpackPrefetch: true */ "./start/Open"));
@@ -68,6 +68,7 @@ const JoinTeam = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/Jo
 const Members = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/Members"));
 const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/TeamSettings"));
 const TeamBilling = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/TeamBilling"));
+const TeamUsage = React.lazy(() => import(/* webpackPrefetch: true */ "./teams/TeamUsage"));
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/NewProject"));
 const ConfigureProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ConfigureProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Projects"));
@@ -147,9 +148,7 @@ export function getURLHash() {
 function App() {
     const { user, setUser } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
-    const { setAdminSettings } = useContext(AdminContext);
     const { setIsDark } = useContext(ThemeContext);
-    const { setLicense } = useContext(LicenseContext);
 
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
@@ -183,14 +182,6 @@ function App() {
                     }
                 }
                 setTeams(teams);
-
-                if (user?.rolesOrPermissions?.includes("admin")) {
-                    const adminSettings = await getGitpodService().server.adminGetSettings();
-                    setAdminSettings(adminSettings);
-
-                    var license: LicenseInfo = await getGitpodService().server.adminGetLicense();
-                    setLicense(license);
-                }
             } catch (error) {
                 console.error(error);
                 if (error && "code" in error) {
@@ -364,6 +355,7 @@ function App() {
                     <Route path={settingsPathBilling} exact component={Billing} />
                     <Route path={settingsPathPlans} exact component={Plans} />
                     <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
+                    <Route path={settingsPathSSHKeys} exact component={SSHKeys} />
                     <Route path={settingsPathPreferences} exact component={Preferences} />
                     <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
                     <Route path="/from-referrer" exact component={FromReferrer} />
@@ -448,6 +440,9 @@ function App() {
                                     }
                                     if (maybeProject === "billing") {
                                         return <TeamBilling />;
+                                    }
+                                    if (maybeProject === "usage") {
+                                        return <TeamUsage />;
                                     }
                                     if (resourceOrPrebuild === "prebuilds") {
                                         return <Prebuilds />;

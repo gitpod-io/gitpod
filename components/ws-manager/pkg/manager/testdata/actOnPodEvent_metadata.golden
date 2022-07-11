@@ -13,17 +13,18 @@
             "Params": {
                 "annotations": [
                     {
-                        "Name": "gitpod/traceid",
-                        "Value": "",
-                        "Delete": true
-                    },
-                    {
                         "Name": "gitpod.io/nodeName",
                         "Value": "minikube",
                         "Delete": false
                     }
                 ],
                 "workspaceID": "foobas"
+            }
+        },
+        {
+            "Func": "deleteWorkspaceSecrets",
+            "Params": {
+                "podName": "ws-foobas"
             }
         }
     ]

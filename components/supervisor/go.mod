@@ -37,11 +37,19 @@ require (
 )
 
 require (
+	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.32.1
 	github.com/prometheus/pushgateway v1.4.2
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5
+)
+
+require (
+	github.com/fatih/camelcase v1.0.0 // indirect
+	github.com/fatih/gomodifytags v1.14.0 // indirect
+	github.com/fatih/structtag v1.2.0 // indirect
+	golang.org/x/tools v0.1.5 // indirect
 )
 
 require (

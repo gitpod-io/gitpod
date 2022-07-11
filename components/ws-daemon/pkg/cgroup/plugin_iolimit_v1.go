@@ -18,20 +18,20 @@ import (
 	"golang.org/x/xerrors"
 )
 
+type ioLimitOptions struct {
+	WriteBytesPerSecond int64
+	ReadBytesPerSecond  int64
+	WriteIOPS           int64
+	ReadIOPS            int64
+}
+
 type IOLimiterV1 struct {
-	limits limits
+	limits ioLimitOptions
 
 	cond  *sync.Cond
 	cache *lru.Cache
 
 	devices []string
-}
-
-type limits struct {
-	WriteBytesPerSecond int64
-	ReadBytesPerSecond  int64
-	WriteIOPS           int64
-	ReadIOPS            int64
 }
 
 func NewIOLimiterV1(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) (*IOLimiterV1, error) {
@@ -63,8 +63,8 @@ const (
 // TODO: enable custom configuration
 var blockDevices = []string{"sd*", "md*", "nvme0n*"}
 
-func buildLimits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) limits {
-	return limits{
+func buildLimits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) ioLimitOptions {
+	return ioLimitOptions{
 		WriteBytesPerSecond: writeBytesPerSecond,
 		ReadBytesPerSecond:  readBytesPerSecond,
 		WriteIOPS:           writeIOPs,
@@ -76,6 +76,7 @@ func (c *IOLimiterV1) Update(writeBytesPerSecond, readBytesPerSecond, writeIOPs,
 	c.cond.L.Lock()
 	defer c.cond.L.Unlock()
 
+	log.WithField("limits", c.limits).Info("updating I/O cgroups v1 limits")
 	c.limits = buildLimits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs)
 
 	c.cond.Broadcast()
@@ -84,7 +85,7 @@ func (c *IOLimiterV1) Update(writeBytesPerSecond, readBytesPerSecond, writeIOPs,
 func (c *IOLimiterV1) Apply(ctx context.Context, basePath, cgroupPath string) error {
 	baseCgroupPath := filepath.Join(basePath, "blkio", cgroupPath)
 
-	writeLimits := func(l limits, fromCache bool) error {
+	writeLimits := func(l ioLimitOptions, fromCache bool) error {
 		err := writeLimit(filepath.Join(baseCgroupPath, fnBlkioThrottleWriteBps), c.produceLimits(fnBlkioThrottleWriteBps, l.WriteBytesPerSecond, fromCache))
 		if err != nil {
 			return xerrors.Errorf("cannot write %s: %w", fnBlkioThrottleWriteBps, err)
@@ -140,7 +141,7 @@ func (c *IOLimiterV1) Apply(ctx context.Context, basePath, cgroupPath string) er
 				// Prior to shutting down though, we need to reset the IO limits to ensure we don't have
 				// processes stuck in the uninterruptable "D" (disk sleep) state. This would prevent the
 				// workspace pod from shutting down.
-				err = writeLimits(limits{}, false)
+				err = writeLimits(ioLimitOptions{}, false)
 				if err != nil {
 					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot reset IO limits")
 				}

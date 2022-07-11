@@ -9,9 +9,9 @@ type MonitoringSatelliteInstallerOptions = {
     clusterName: string;
     nodeExporterPort: number;
     branch: string;
+    previewName: string;
     previewDomain: string;
     stackdriverServiceAccount: any;
-    withVM: boolean;
 };
 
 const sliceName = "observability";
@@ -28,8 +28,8 @@ export class MonitoringSatelliteInstaller {
             branch,
             satelliteNamespace,
             stackdriverServiceAccount,
-            withVM,
             previewDomain,
+            previewName,
             nodeExporterPort,
         } = this.options;
 
@@ -57,7 +57,7 @@ export class MonitoringSatelliteInstaller {
         let jsonnetRenderCmd = `cd observability && jsonnet -c -J vendor -m monitoring-satellite/manifests \
         --ext-code config="{
             namespace: '${satelliteNamespace}',
-            clusterName: '${satelliteNamespace}',
+            clusterName: '${previewName}',
             tracing: {
                 honeycombAPIKey: '${process.env.HONEYCOMB_API_KEY}',
                 honeycombDataset: 'preview-environments',
@@ -66,32 +66,46 @@ export class MonitoringSatelliteInstaller {
                 domain: '${previewDomain}',
                 nodeExporterPort: ${nodeExporterPort},
             },
-            ${withVM ? "" : "nodeAffinity: { nodeSelector: { 'gitpod.io/workload_services': 'true' }, },"}
             stackdriver: {
                 defaultProject: '${stackdriverServiceAccount.project_id}',
                 clientEmail: '${stackdriverServiceAccount.client_email}',
                 privateKey: '${stackdriverServiceAccount.private_key}',
             },
             prometheus: {
+                externalLabels: {
+                    environment: 'preview-environments',
+                },
                 resources: {
                     requests: { memory: '200Mi', cpu: '50m' },
                 },
             },
+            remoteWrite: {
+                username: '${process.env.PROM_REMOTE_WRITE_USER}',
+                password: '${process.env.PROM_REMOTE_WRITE_PASSWORD}',
+                urls: ['https://victoriametrics.gitpod.io/api/v1/write'],
+                writeRelabelConfigs: [{
+                    sourceLabels: ['__name__', 'job'],
+                    separator: ';',
+                    regex: 'probe_.*|rest_client_requests_total.*|up;probe',
+                    action: 'keep',
+                }],
+            },
             kubescape: {},
             pyrra: {},
+            probe: {
+                targets: ['http://google.com'],
+            },
         }" \
         monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
-        find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
+        find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`;
 
         werft.log(sliceName, "rendering YAML files");
         exec(jsonnetRenderCmd, { silent: true });
-        if (withVM) {
-            this.postProcessManifests();
-        }
+        this.postProcessManifests();
 
-        this.ensureCorrectInstallationOrder()
+        this.ensureCorrectInstallationOrder();
         this.deployGitpodServiceMonitors();
-        await this.waitForReadiness()
+        await this.waitForReadiness();
     }
 
     private ensureCorrectInstallationOrder() {
@@ -134,14 +148,12 @@ export class MonitoringSatelliteInstaller {
 
         // core-dev is just too unstable for node-exporter
         // we don't guarantee that it will run at all
-        if (this.options.withVM) {
-            checks.push(
-                exec(
-                    `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} daemonset node-exporter`,
-                    { slice: sliceName, async: true },
-                ),
-            );
-        }
+        checks.push(
+            exec(
+                `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} daemonset node-exporter`,
+                { slice: sliceName, async: true },
+            ),
+        );
 
         await Promise.all(checks);
     }

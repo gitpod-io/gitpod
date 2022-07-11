@@ -31,14 +31,17 @@ const (
 	// MetaIDLabel is the label of the workspace meta ID (just workspace ID outside of wsman)
 	MetaIDLabel = "metaID"
 
+	// ProjectLabel is the label for the workspace's project
+	ProjectLabel = "project"
+
+	// TeamLabel is the label for the workspace's team
+	TeamLabel = "team"
+
 	// TypeLabel marks the workspace type
 	TypeLabel = "workspaceType"
 
 	// ServiceTypeLabel help differentiate between port service and IDE service
 	ServiceTypeLabel = "serviceType"
-
-	// TraceIDAnnotation adds a Jaeger/OpenTracing header to the pod so that we can trace it's behaviour
-	TraceIDAnnotation = "gitpod/traceid"
 
 	// CPULimitAnnotation enforces a strict CPU limit on a workspace by virtue of ws-daemon
 	CPULimitAnnotation = "gitpod.io/cpuLimit"
@@ -62,6 +65,9 @@ const (
 
 	// WorkspaceExposedPorts contains the exposed ports in the workspace
 	WorkspaceExposedPorts = "gitpod/exposedPorts"
+
+	// WorkspaceSSHPublicKeys contains all authorized ssh public keys that can be connected to the workspace
+	WorkspaceSSHPublicKeys = "gitpod.io/sshPublicKeys"
 )
 
 // WorkspaceSupervisorEndpoint produces the supervisor endpoint of a workspace.
@@ -74,7 +80,9 @@ func GetOWIFromObject(pod *metav1.ObjectMeta) logrus.Fields {
 	owner := pod.Labels[OwnerLabel]
 	workspace := pod.Labels[MetaIDLabel]
 	instance := pod.Labels[WorkspaceIDLabel]
-	return log.OWI(owner, workspace, instance)
+	project := pod.Labels[ProjectLabel]
+	team := pod.Labels[TeamLabel]
+	return log.LogContext(owner, workspace, instance, project, team)
 }
 
 // UnlimitedRateLimiter implements an empty, unlimited flowcontrol.RateLimiter

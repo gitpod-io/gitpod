@@ -24,6 +24,7 @@ import {
     UserDB,
     WorkspaceDB,
 } from "@gitpod/gitpod-db/lib";
+import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
     CommitContext,
     Disposable,
@@ -87,6 +88,8 @@ import {
     WorkspaceMetadata,
     WorkspaceType,
     VolumeSnapshotInfo,
+    StopWorkspacePolicy,
+    StopWorkspaceRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
@@ -116,6 +119,7 @@ export interface StartWorkspaceOptions {
     rethrow?: boolean;
     forceDefaultImage?: boolean;
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
+    forcePVC?: boolean;
 }
 
 const MAX_INSTANCE_START_RETRIES = 2;
@@ -199,6 +203,7 @@ export class WorkspaceStarter {
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(ContextParser) protected contextParser: ContextParser;
+    @inject(BlockedRepositoryDB) protected readonly blockedRepositoryDB: BlockedRepositoryDB;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -221,6 +226,7 @@ export class WorkspaceStarter {
         options = options || {};
         try {
             await this.checkBlockedRepository(user, workspace.contextURL);
+            await this.checkBlockedRepositoryInDB(user, workspace.contextURL);
 
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
@@ -275,7 +281,14 @@ export class WorkspaceStarter {
             let instance = await this.workspaceDb
                 .trace({ span })
                 .storeInstance(
-                    await this.newInstance(ctx, workspace, user, options.excludeFeatureFlags || [], ideConfig),
+                    await this.newInstance(
+                        ctx,
+                        workspace,
+                        user,
+                        options.excludeFeatureFlags || [],
+                        ideConfig,
+                        options.forcePVC || false,
+                    ),
                 );
             span.log({ newInstance: instance.id });
 
@@ -341,12 +354,41 @@ export class WorkspaceStarter {
         }
     }
 
+    public async stopWorkspaceInstance(
+        ctx: TraceContext,
+        instanceId: string,
+        instanceRegion: string,
+        policy?: StopWorkspacePolicy,
+    ): Promise<void> {
+        const req = new StopWorkspaceRequest();
+        req.setId(instanceId);
+        req.setPolicy(policy || StopWorkspacePolicy.NORMALLY);
+
+        const client = await this.clientProvider.get(instanceRegion);
+        await client.stopWorkspace(ctx, req);
+    }
+
     protected async checkBlockedRepository(user: User, contextURL: string) {
         const hit = this.config.blockedRepositories.find((r) => !!contextURL && r.urlRegExp.test(contextURL));
         if (!hit) {
             return;
         }
         if (hit.blockUser) {
+            try {
+                await this.userService.blockUser(user.id, true);
+                log.info({ userId: user.id }, "Blocked user.", { contextURL });
+            } catch (error) {
+                log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });
+            }
+        }
+        throw new Error(`${contextURL} is blocklisted on Gitpod.`);
+    }
+
+    protected async checkBlockedRepositoryInDB(user: User, contextURL: string) {
+        const blockedRepository = await this.blockedRepositoryDB.findBlockedRepositoryByURL(contextURL);
+        if (!blockedRepository) return;
+
+        if (blockedRepository.blockUser) {
             try {
                 await this.userService.blockUser(user.id, true);
                 log.info({ userId: user.id }, "Blocked user.", { contextURL });
@@ -405,9 +447,7 @@ export class WorkspaceStarter {
             );
 
             // create start workspace request
-            const metadata = new WorkspaceMetadata();
-            metadata.setOwner(workspace.ownerId);
-            metadata.setMetaId(workspace.id);
+            const metadata = await this.createMetadata(workspace);
             const startRequest = new StartWorkspaceRequest();
             startRequest.setId(instance.id);
             startRequest.setMetadata(metadata);
@@ -482,6 +522,21 @@ export class WorkspaceStarter {
         } finally {
             span.finish();
         }
+    }
+
+    protected async createMetadata(workspace: Workspace): Promise<WorkspaceMetadata> {
+        let metadata = new WorkspaceMetadata();
+        metadata.setOwner(workspace.ownerId);
+        metadata.setMetaId(workspace.id);
+        if (workspace.projectId) {
+            metadata.setProject(workspace.projectId);
+            let project = await this.projectDB.findProjectById(workspace.projectId);
+            if (project && project.teamId) {
+                metadata.setTeam(project.teamId);
+            }
+        }
+
+        return metadata;
     }
 
     protected async tryStartOnCluster(
@@ -627,15 +682,16 @@ export class WorkspaceStarter {
         user: User,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
+        forcePVC: boolean,
     ): Promise<WorkspaceInstance> {
         //#endregion IDE resolution TODO(ak) move to IDE service
         // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
         delete ideConfig.ideOptions.options["code-latest"];
         delete ideConfig.ideOptions.options["code-desktop-insiders"];
 
-        const migratted = migrationIDESettings(user);
-        if (user.additionalData?.ideSettings && migratted) {
-            user.additionalData.ideSettings = migratted;
+        const migrated = migrationIDESettings(user);
+        if (user.additionalData?.ideSettings && migrated) {
+            user.additionalData.ideSettings = migrated;
         }
 
         const ideChoice = user.additionalData?.ideSettings?.defaultIde;
@@ -703,11 +759,17 @@ export class WorkspaceStarter {
 
         featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
 
+        if (forcePVC === true) {
+            featureFlags = featureFlags.concat(["persistent_volume_claim"]);
+        }
+
         if (!!featureFlags) {
             // only set feature flags if there actually are any. Otherwise we waste the
             // few bytes of JSON in the database for no good reason.
             configuration.featureFlags = featureFlags;
         }
+
+        const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
 
         const now = new Date().toISOString();
         const instance: WorkspaceInstance = {
@@ -718,10 +780,12 @@ export class WorkspaceStarter {
             region: this.config.installationShortname, // Shortname set to bridge can cleanup workspaces stuck preparing
             workspaceImage: "", // Initially empty, filled during starting process
             status: {
+                version: 0,
                 conditions: {},
                 phase: "preparing",
             },
             configuration,
+            usageAttributionId,
         };
         if (WithReferrerContext.is(workspace.context)) {
             this.analytics.track({
@@ -834,7 +898,7 @@ export class WorkspaceStarter {
                     // TODO(se): we cannot change this initializer structure now because it is part of how baserefs are computed in image-builder.
                     // Image builds should however just use the initialization if the workspace they are running for (i.e. the one from above).
                     checkoutLocation = ".";
-                    const { initializer, disposable } = await this.createCommitInitializer(
+                    const { initializer } = await this.createCommitInitializer(
                         { span },
                         workspace,
                         {
@@ -845,7 +909,6 @@ export class WorkspaceStarter {
                         },
                         user,
                     );
-                    disp.push(disposable);
                     let git: GitInitializer;
                     if (initializer instanceof CompositeInitializer) {
                         // we use the first git initializer for image builds only
@@ -982,7 +1045,12 @@ export class WorkspaceStarter {
                         .catch((err) => log.error("error writing image build log info to the DB", err));
                 })
                 .catch((err) =>
-                    log.warn("image build: never received log info", err, {
+                    // TODO (gpl) This error happens quite often, but looks like it's mostly triggered by user errors:
+                    // The image build fails (e.g. bc the base image cannot be pulled) so fast that we never received the log meta info.
+                    // We switch this to "debug" for now. Going forward, we should:
+                    //  1. turn this into a metric to feat the "image build reliability" SLI
+                    //  2. fix the image-builder implementation
+                    log.debug("image build: never received log info", err, {
                         instanceId: instance.id,
                         workspaceId: instance.workspaceId,
                     }),
@@ -1121,23 +1189,7 @@ export class WorkspaceStarter {
             allEnvVars = allEnvVars.concat(context.envvars);
         }
 
-        // we copy the envvars to a stable format so that things don't break when someone changes the
-        // EnvVarWithValue shape. The JSON.stringify(envvars) will be consumed by supervisor and we
-        // need to make sure we're speaking the same language.
-        const stableEnvvars = allEnvVars.map((e) => {
-            return { name: e.name, value: e.value };
-        });
-
-        // we ship the user-specific env vars as OTS because they might contain secrets
-        const envvarOTSExpirationTime = new Date();
-        envvarOTSExpirationTime.setMinutes(envvarOTSExpirationTime.getMinutes() + 30);
-        const envvarOTS = await this.otsServer.serve(traceCtx, JSON.stringify(stableEnvvars), envvarOTSExpirationTime);
-
         const envvars: EnvironmentVariable[] = [];
-        const ev = new EnvironmentVariable();
-        ev.setName("SUPERVISOR_ENVVAR_OTS");
-        ev.setValue(envvarOTS.token);
-        envvars.push(ev);
 
         // TODO(cw): for the time being we're still pushing the env vars as we did before.
         //           Once everything is running with the latest supervisor, we can stop doing that.
@@ -1204,19 +1256,15 @@ export class WorkspaceStarter {
             };
             await this.userDB.trace(traceCtx).storeGitpodToken(dbToken);
 
-            const otsExpirationTime = new Date();
-            otsExpirationTime.setMinutes(otsExpirationTime.getMinutes() + 30);
             const tokenExpirationTime = new Date();
             tokenExpirationTime.setMinutes(tokenExpirationTime.getMinutes() + 24 * 60);
-            const ots = await this.otsServer.serve(traceCtx, token, otsExpirationTime);
 
             const ev = new EnvironmentVariable();
             ev.setName("THEIA_SUPERVISOR_TOKENS");
             ev.setValue(
                 JSON.stringify([
                     {
-                        tokenOTS: ots.token,
-                        token: "ots",
+                        token: token,
                         kind: "gitpod",
                         host: this.config.hostUrl.url.host,
                         scope: scopes,
@@ -1267,10 +1315,13 @@ export class WorkspaceStarter {
             }
         }
 
+        let volumeSnapshotId = lastValidWorkspaceInstanceId;
+        // if this is snapshot or prebuild context, then try to find volume snapshot id in it
+        if (SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) {
+            volumeSnapshotId = workspace.context.snapshotBucketId;
+        }
         let volumeSnapshotInfo = new VolumeSnapshotInfo();
-        const volumeSnapshots = await this.workspaceDb
-            .trace(traceCtx)
-            .findVolumeSnapshotById(lastValidWorkspaceInstanceId);
+        const volumeSnapshots = await this.workspaceDb.trace(traceCtx).findVolumeSnapshotById(volumeSnapshotId);
         if (volumeSnapshots !== undefined) {
             volumeSnapshotInfo.setVolumeSnapshotName(volumeSnapshots.id);
             volumeSnapshotInfo.setVolumeSnapshotHandle(volumeSnapshots.volumeHandle);
@@ -1286,7 +1337,10 @@ export class WorkspaceStarter {
         );
         const userTimeoutPromise = this.userService.getDefaultWorkspaceTimeout(user);
 
-        const featureFlags = instance.configuration!.featureFlags || [];
+        let featureFlags = instance.configuration!.featureFlags || [];
+        if (volumeSnapshots !== undefined) {
+            featureFlags = featureFlags.concat(["persistent_volume_claim"]);
+        }
 
         let ideImage: string;
         if (!!instance.configuration?.ideImage) {
@@ -1321,6 +1375,8 @@ export class WorkspaceStarter {
         }
         spec.setAdmission(admissionLevel);
         spec.setVolumeSnapshot(volumeSnapshotInfo);
+        const sshKeys = await this.userDB.trace(traceCtx).getSSHPublicKeys(user.id);
+        spec.setSshPublicKeysList(sshKeys.map((e) => e.key));
         return spec;
     }
 
@@ -1354,6 +1410,10 @@ export class WorkspaceStarter {
             "function:getEnvVars",
             "function:setEnvVar",
             "function:deleteEnvVar",
+            "function:hasSSHPublicKey",
+            "function:getSSHPublicKeys",
+            "function:addSSHPublicKey",
+            "function:deleteSSHPublicKey",
             "function:trackEvent",
 
             "resource:" +
@@ -1454,6 +1514,7 @@ export class WorkspaceStarter {
         } else if (SnapshotContext.is(context)) {
             const snapshot = new SnapshotInitializer();
             snapshot.setSnapshot(context.snapshotBucketId);
+            snapshot.setFromVolumeSnapshot(hasVolumeSnapshot);
             result.setSnapshot(snapshot);
         } else if (WithPrebuild.is(context)) {
             if (!CommitContext.is(context)) {
@@ -1462,6 +1523,7 @@ export class WorkspaceStarter {
 
             const snapshot = new SnapshotInitializer();
             snapshot.setSnapshot(context.snapshotBucketId);
+            snapshot.setFromVolumeSnapshot(hasVolumeSnapshot);
             const { initializer } = await this.createCommitInitializer(traceCtx, workspace, context, user);
             const init = new PrebuildInitializer();
             init.setPrebuild(snapshot);
@@ -1478,8 +1540,7 @@ export class WorkspaceStarter {
         } else if (WorkspaceProbeContext.is(context)) {
             // workspace probes have no workspace initializer as they need no content
         } else if (CommitContext.is(context)) {
-            const { initializer, disposable } = await this.createCommitInitializer(traceCtx, workspace, context, user);
-            disp.push(disposable);
+            const { initializer } = await this.createCommitInitializer(traceCtx, workspace, context, user);
             if (initializer instanceof CompositeInitializer) {
                 result.setComposite(initializer);
             } else {
@@ -1531,7 +1592,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         context: CommitContext,
         user: User,
-    ): Promise<{ initializer: GitInitializer | CompositeInitializer; disposable: Disposable }> {
+    ): Promise<{ initializer: GitInitializer | CompositeInitializer }> {
         const span = TraceContext.startSpan("createInitializerForCommit", ctx);
         try {
             const mainGit = this.createGitInitializer({ span }, workspace, context, user);
@@ -1544,16 +1605,13 @@ export class WorkspaceStarter {
             }
             const inits = await Promise.all(subRepoInitializers);
             const compositeInit = new CompositeInitializer();
-            const compositeDisposable = new DisposableCollection();
             for (const r of inits) {
                 const wsinit = new WorkspaceInitializer();
                 wsinit.setGit(r.initializer);
                 compositeInit.addInitializer(wsinit);
-                compositeDisposable.push(r.disposable);
             }
             return {
                 initializer: compositeInit,
-                disposable: compositeDisposable,
             };
         } catch (e) {
             TraceContext.setError({ span }, e);
@@ -1568,7 +1626,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         context: GitCheckoutInfo,
         user: User,
-    ): Promise<{ initializer: GitInitializer; disposable: Disposable }> {
+    ): Promise<{ initializer: GitInitializer }> {
         const host = context.repository.host;
         const hostContext = this.hostContextProvider.get(host);
         if (!hostContext) {
@@ -1580,25 +1638,6 @@ export class WorkspaceStarter {
             throw new Error("User is unauthorized!");
         }
 
-        const tokenExpirationTime = new Date();
-        tokenExpirationTime.setMinutes(tokenExpirationTime.getMinutes() + 30);
-        let tokenOTS: string | undefined;
-        let disposable: Disposable | undefined;
-        try {
-            const token = await this.tokenProvider.getTokenForHost(user, host);
-            const username = token.username || "oauth2";
-            const res = await this.otsServer.serve(traceCtx, `${username}:${token.value}`, tokenExpirationTime);
-            tokenOTS = res.token;
-            disposable = res.disposable;
-        } catch (error) {
-            // no token
-            log.error(
-                { workspaceId: workspace.id, userId: workspace.ownerId },
-                "cannot authenticate user for Git initializer",
-                error,
-            );
-            throw new Error("User is unauthorized!");
-        }
         const cloneUrl = context.repository.cloneUrl;
 
         var cloneTarget: string | undefined;
@@ -1619,9 +1658,13 @@ export class WorkspaceStarter {
             targetMode = CloneTargetMode.REMOTE_HEAD;
         }
 
+        const gitToken = await this.tokenProvider.getTokenForHost(user, host);
+        const username = gitToken.username || "oauth2";
+
         const gitConfig = new GitConfig();
-        gitConfig.setAuthentication(GitAuthMethod.BASIC_AUTH_OTS);
-        gitConfig.setAuthOts(tokenOTS);
+        gitConfig.setAuthentication(GitAuthMethod.BASIC_AUTH);
+        gitConfig.setAuthUser(username);
+        gitConfig.setAuthPassword(gitToken.value);
 
         if (this.config.insecureNoDomain) {
             const token = await this.tokenProvider.getTokenForHost(user, host);
@@ -1651,7 +1694,6 @@ export class WorkspaceStarter {
 
         return {
             initializer: result,
-            disposable,
         };
     }
 

@@ -258,13 +258,30 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 				Key:                  "encryptionKeys",
 			}},
 		},
-		corev1.EnvVar{
-			Name:  "DB_DELETED_ENTRIES_GC_ENABLED",
-			Value: "false",
-		},
 	)
 
 	return envvars
+}
+
+func ConfigcatEnv(ctx *RenderContext) []corev1.EnvVar {
+	var sdkKey string
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.ConfigcatKey != "" {
+			sdkKey = cfg.WebApp.ConfigcatKey
+		}
+		return nil
+	})
+
+	if sdkKey == "" {
+		return nil
+	}
+
+	return []corev1.EnvVar{
+		{
+			Name:  "CONFIGCAT_SDK_KEY",
+			Value: sdkKey,
+		},
+	}
 }
 
 func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {

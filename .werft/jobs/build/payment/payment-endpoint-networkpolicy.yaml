@@ -12,14 +12,14 @@ spec:
       app: gitpod
       component: payment-endpoint
   policyTypes:
-  - Ingress
+    - Ingress
   ingress:
-  - ports:
-    - protocol: TCP
-      port: 3002
-    from:
-    # Allow ingress on port 3002 from component:
-    - podSelector:
-        matchLabels:
-          app: gitpod
-          component: proxy
+    - ports:
+        - protocol: TCP
+          port: 3002
+      from:
+        # Allow ingress on port 3002 from component:
+        - podSelector:
+            matchLabels:
+              app: gitpod
+              component: proxy

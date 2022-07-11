@@ -316,7 +316,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 
 func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.WorkspaceFactory {
 	var checkoutLocation string
-	allLocations := wsinit.GetCheckoutLocationsFromInitializer(req.Initializer)
+	allLocations := csapi.GetCheckoutLocationsFromInitializer(req.Initializer)
 	if len(allLocations) > 0 {
 		checkoutLocation = allLocations[0]
 	}
@@ -658,8 +658,12 @@ func (s *WorkspaceService) uploadWorkspaceLogs(ctx context.Context, sess *sessio
 		return xerrors.Errorf("no remote storage configured")
 	}
 
+	logLocation := sess.Location
+	if sess.PersistentVolumeClaim {
+		logLocation = filepath.Join(sess.ServiceLocDaemon, "prestophookdata")
+	}
 	// currently we're only uploading prebuild log files
-	logFiles, err := logs.ListPrebuildLogFiles(ctx, sess.Location)
+	logFiles, err := logs.ListPrebuildLogFiles(ctx, logLocation)
 	if err != nil {
 		return err
 	}

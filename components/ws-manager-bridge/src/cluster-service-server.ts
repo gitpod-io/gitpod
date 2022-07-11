@@ -41,10 +41,12 @@ import {
     WorkspaceManagerClientProviderSource,
 } from "@gitpod/ws-manager/lib/client-provider-source";
 import * as grpc from "@grpc/grpc-js";
-import { ServiceError as grpcServiceError } from "@grpc/grpc-js";
 import { inject, injectable } from "inversify";
 import { BridgeController } from "./bridge-controller";
+import { getSupportedWorkspaceClasses } from "./cluster-sync-service";
 import { Configuration } from "./config";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { GRPCError } from "./rpc";
 
 export interface ClusterServiceServerOptions {
     port: number;
@@ -146,25 +148,34 @@ export class ClusterService implements IClusterServiceServer {
                     maxScore: 100,
                     govern,
                     tls,
-                    admissionConstraints,
                 };
 
-                // try to connect to validate the config. Throws an exception if it fails.
-                await new Promise<void>((resolve, reject) => {
-                    const c = this.clientProvider.createClient(newCluster);
-                    c.getWorkspaces(new GetWorkspacesRequest(), (err: any) => {
-                        if (err) {
-                            reject(
-                                new GRPCError(
-                                    grpc.status.FAILED_PRECONDITION,
-                                    `cannot reach ${req.url}: ${err.message}`,
-                                ),
-                            );
-                        } else {
-                            resolve();
-                        }
+                const enabled = await getExperimentsClientForBackend().getValueAsync(
+                    "workspace_classes_backend",
+                    false,
+                    {},
+                );
+                if (enabled) {
+                    let classConstraints = await getSupportedWorkspaceClasses(this.clientProvider, newCluster, false);
+                    newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
+                } else {
+                    // try to connect to validate the config. Throws an exception if it fails.
+                    await new Promise<void>((resolve, reject) => {
+                        const c = this.clientProvider.createClient(newCluster);
+                        c.getWorkspaces(new GetWorkspacesRequest(), (err: any) => {
+                            if (err) {
+                                reject(
+                                    new GRPCError(
+                                        grpc.status.FAILED_PRECONDITION,
+                                        `cannot reach ${req.url}: ${err.message}`,
+                                    ),
+                                );
+                            } else {
+                                resolve();
+                            }
+                        });
                     });
-                });
+                }
 
                 await this.clusterDB.save(newCluster);
                 log.info({}, "cluster registered", { cluster: req.name });
@@ -470,29 +481,5 @@ export class ClusterServiceServer {
             });
             this.server = undefined;
         }
-    }
-}
-
-class GRPCError extends Error implements Partial<grpcServiceError> {
-    public name = "ServiceError";
-
-    details: string;
-
-    constructor(public readonly status: grpc.status, err: any) {
-        super(GRPCError.errToMessage(err));
-
-        this.details = this.message;
-    }
-
-    static errToMessage(err: any): string | undefined {
-        if (typeof err === "string") {
-            return err;
-        } else if (typeof err === "object") {
-            return err.message;
-        }
-    }
-
-    static isGRPCError(obj: any): obj is GRPCError {
-        return obj !== undefined && typeof obj === "object" && "status" in obj;
     }
 }

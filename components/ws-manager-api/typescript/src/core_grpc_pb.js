@@ -78,6 +78,50 @@ function deserialize_wsman_ControlPortResponse(buffer_arg) {
   return core_pb.ControlPortResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_wsman_DeleteVolumeSnapshotRequest(arg) {
+  if (!(arg instanceof core_pb.DeleteVolumeSnapshotRequest)) {
+    throw new Error('Expected argument of type wsman.DeleteVolumeSnapshotRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_DeleteVolumeSnapshotRequest(buffer_arg) {
+  return core_pb.DeleteVolumeSnapshotRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsman_DeleteVolumeSnapshotResponse(arg) {
+  if (!(arg instanceof core_pb.DeleteVolumeSnapshotResponse)) {
+    throw new Error('Expected argument of type wsman.DeleteVolumeSnapshotResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_DeleteVolumeSnapshotResponse(buffer_arg) {
+  return core_pb.DeleteVolumeSnapshotResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsman_DescribeClusterRequest(arg) {
+  if (!(arg instanceof core_pb.DescribeClusterRequest)) {
+    throw new Error('Expected argument of type wsman.DescribeClusterRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_DescribeClusterRequest(buffer_arg) {
+  return core_pb.DescribeClusterRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsman_DescribeClusterResponse(arg) {
+  if (!(arg instanceof core_pb.DescribeClusterResponse)) {
+    throw new Error('Expected argument of type wsman.DescribeClusterResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_DescribeClusterResponse(buffer_arg) {
+  return core_pb.DescribeClusterResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_wsman_DescribeWorkspaceRequest(arg) {
   if (!(arg instanceof core_pb.DescribeWorkspaceRequest)) {
     throw new Error('Expected argument of type wsman.DescribeWorkspaceRequest');
@@ -254,6 +298,28 @@ function deserialize_wsman_TakeSnapshotResponse(buffer_arg) {
   return core_pb.TakeSnapshotResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_wsman_UpdateSSHKeyRequest(arg) {
+  if (!(arg instanceof core_pb.UpdateSSHKeyRequest)) {
+    throw new Error('Expected argument of type wsman.UpdateSSHKeyRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_UpdateSSHKeyRequest(buffer_arg) {
+  return core_pb.UpdateSSHKeyRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsman_UpdateSSHKeyResponse(arg) {
+  if (!(arg instanceof core_pb.UpdateSSHKeyResponse)) {
+    throw new Error('Expected argument of type wsman.UpdateSSHKeyResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_UpdateSSHKeyResponse(buffer_arg) {
+  return core_pb.UpdateSSHKeyResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 
 var WorkspaceManagerService = exports.WorkspaceManagerService = {
   // getWorkspaces produces a list of running workspaces and their status
@@ -387,6 +453,42 @@ controlAdmission: {
     requestDeserialize: deserialize_wsman_ControlAdmissionRequest,
     responseSerialize: serialize_wsman_ControlAdmissionResponse,
     responseDeserialize: deserialize_wsman_ControlAdmissionResponse,
+  },
+  // deleteVolumeSnapshot asks ws-manager to delete specific volume snapshot and delete source from cloud provider as well
+deleteVolumeSnapshot: {
+    path: '/wsman.WorkspaceManager/DeleteVolumeSnapshot',
+    requestStream: false,
+    responseStream: false,
+    requestType: core_pb.DeleteVolumeSnapshotRequest,
+    responseType: core_pb.DeleteVolumeSnapshotResponse,
+    requestSerialize: serialize_wsman_DeleteVolumeSnapshotRequest,
+    requestDeserialize: deserialize_wsman_DeleteVolumeSnapshotRequest,
+    responseSerialize: serialize_wsman_DeleteVolumeSnapshotResponse,
+    responseDeserialize: deserialize_wsman_DeleteVolumeSnapshotResponse,
+  },
+  // UpdateSSHKey update ssh keys
+updateSSHKey: {
+    path: '/wsman.WorkspaceManager/UpdateSSHKey',
+    requestStream: false,
+    responseStream: false,
+    requestType: core_pb.UpdateSSHKeyRequest,
+    responseType: core_pb.UpdateSSHKeyResponse,
+    requestSerialize: serialize_wsman_UpdateSSHKeyRequest,
+    requestDeserialize: deserialize_wsman_UpdateSSHKeyRequest,
+    responseSerialize: serialize_wsman_UpdateSSHKeyResponse,
+    responseDeserialize: deserialize_wsman_UpdateSSHKeyResponse,
+  },
+  // describeCluster provides information about the cluster
+describeCluster: {
+    path: '/wsman.WorkspaceManager/DescribeCluster',
+    requestStream: false,
+    responseStream: false,
+    requestType: core_pb.DescribeClusterRequest,
+    responseType: core_pb.DescribeClusterResponse,
+    requestSerialize: serialize_wsman_DescribeClusterRequest,
+    requestDeserialize: deserialize_wsman_DescribeClusterRequest,
+    responseSerialize: serialize_wsman_DescribeClusterResponse,
+    responseDeserialize: deserialize_wsman_DescribeClusterResponse,
   },
 };
 

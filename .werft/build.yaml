@@ -23,9 +23,9 @@ pod:
   - name: gcp-sa-release
     secret:
       secretName: gcp-sa-gitpod-release-deployer
-  - name: gpsh-coredev-license
+  - name: prometheus-remote-write-auth
     secret:
-      secretName: gpsh-coredev-license
+      secretName: prometheus-remote-write-auth
   - name: gpsh-harvester-license
     secret:
       secretName: gpsh-harvester-license
@@ -71,7 +71,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:ljb-upgrade-werft-cli.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:ljb-werft-cli-grpc-changes.2
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     resources:
@@ -91,9 +91,6 @@ pod:
       readOnly: true
     - name: gcp-sa-release
       mountPath: /mnt/secrets/gcp-sa-release
-      readOnly: true
-    - name: gpsh-coredev-license
-      mountPath: /mnt/secrets/gpsh-coredev
       readOnly: true
     - name: gpsh-harvester-license
       mountPath: /mnt/secrets/gpsh-harvester
@@ -145,6 +142,16 @@ pod:
         secretKeyRef:
           name: npm-auth-token
           key: npm-auth-token.json
+    - name: PROM_REMOTE_WRITE_USER
+      valueFrom:
+        secretKeyRef:
+          name: prometheus-remote-write-auth
+          key: user
+    - name: PROM_REMOTE_WRITE_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: prometheus-remote-write-auth
+          key: password
     - name: JB_MARKETPLACE_PUBLISH_TOKEN
       valueFrom:
         secretKeyRef:

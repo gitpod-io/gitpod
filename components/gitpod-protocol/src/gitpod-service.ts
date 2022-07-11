@@ -24,6 +24,9 @@ import {
     GuessGitTokenScopesParams,
     GuessedGitTokenScopes,
     ProjectEnvVar,
+    PrebuiltWorkspace,
+    UserSSHPublicKeyValue,
+    SSHPublicKeyValue,
 } from "./protocol";
 import {
     Team,
@@ -56,6 +59,8 @@ import {
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
+import { Currency } from "./plans";
+import { BillableSession } from "./usage";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -147,6 +152,12 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     setEnvVar(variable: UserEnvVarValue): Promise<void>;
     deleteEnvVar(variable: UserEnvVarValue): Promise<void>;
 
+    // User SSH Keys
+    hasSSHPublicKey(): Promise<boolean>;
+    getSSHPublicKeys(): Promise<UserSSHPublicKeyValue[]>;
+    addSSHPublicKey(value: SSHPublicKeyValue): Promise<UserSSHPublicKeyValue>;
+    deleteSSHPublicKey(id: string): Promise<void>;
+
     // Teams
     getTeams(): Promise<Team[]>;
     getTeamMembers(teamId: string): Promise<TeamMemberInfo[]>;
@@ -171,6 +182,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getUserProjects(): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
+    findPrebuildByWorkspaceID(workspaceId: string): Promise<PrebuiltWorkspace | undefined>;
+    getPrebuild(prebuildId: string): Promise<PrebuildWithStatus | undefined>;
     triggerPrebuild(projectId: string, branchName: string | null): Promise<StartPrebuildResult>;
     cancelPrebuild(projectId: string, prebuildId: string): Promise<void>;
     fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
@@ -272,9 +285,11 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     getStripePublishableKey(): Promise<string>;
     getStripeSetupIntentClientSecret(): Promise<string>;
-    findStripeCustomerIdForTeam(teamId: string): Promise<string | undefined>;
-    subscribeTeamToStripe(teamId: string, setupIntentId: string): Promise<void>;
+    findStripeSubscriptionIdForTeam(teamId: string): Promise<string | undefined>;
+    subscribeTeamToStripe(teamId: string, setupIntentId: string, currency: Currency): Promise<void>;
     getStripePortalUrlForTeam(teamId: string): Promise<string>;
+
+    getBilledUsage(attributionId: string): Promise<BillableSession[]>;
 
     /**
      * Analytics
@@ -379,6 +394,7 @@ export interface SetWorkspaceTimeoutResult {
 
 export interface GetWorkspaceTimeoutResult {
     duration: WorkspaceTimeoutDuration;
+    durationRaw: string;
     canChange: boolean;
 }
 

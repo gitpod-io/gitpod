@@ -22,7 +22,7 @@ class GitpodSettingsState : PersistentStateComponent<GitpodSettingsState> {
     var gitpodHost: String = "gitpod.io"
         set(value) {
             if (value.isNullOrBlank()) {
-                return;
+                return
             }
             val gitpodHost = try {
                 URL(value.trim()).host
@@ -47,7 +47,7 @@ class GitpodSettingsState : PersistentStateComponent<GitpodSettingsState> {
                 listener()
             }
         }
-        dispatcher.addListener(internalListener);
+        dispatcher.addListener(internalListener)
         return Disposable { dispatcher.removeListener(internalListener) }
     }
 
@@ -58,5 +58,4 @@ class GitpodSettingsState : PersistentStateComponent<GitpodSettingsState> {
     override fun loadState(state: GitpodSettingsState) {
         XmlSerializerUtil.copyBean(state, this)
     }
-
 }

@@ -17,6 +17,7 @@ import { DBWorkspace } from "./typeorm/entity/db-workspace";
 import { DBPrebuiltWorkspace } from "./typeorm/entity/db-prebuilt-workspace";
 import { DBWorkspaceInstance } from "./typeorm/entity/db-workspace-instance";
 import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { DBVolumeSnapshot } from "./typeorm/entity/db-volume-snapshot";
 
 @suite
 class WorkspaceDBSpec {
@@ -57,6 +58,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "preparing",
             conditions: {},
         },
@@ -65,6 +67,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
+        usageAttributionId: undefined,
     };
     readonly wsi2: WorkspaceInstance = {
         workspaceId: this.ws.id,
@@ -79,6 +82,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "running",
             conditions: {},
         },
@@ -87,6 +91,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
+        usageAttributionId: undefined,
     };
     readonly ws2: Workspace = {
         id: "2",
@@ -116,6 +121,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "preparing",
             conditions: {},
         },
@@ -124,6 +130,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
+        usageAttributionId: undefined,
     };
 
     readonly ws3: Workspace = {
@@ -153,6 +160,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "preparing",
             conditions: {},
         },
@@ -161,6 +169,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
+        usageAttributionId: undefined,
     };
 
     async before() {
@@ -176,6 +185,7 @@ class WorkspaceDBSpec {
         await mnr.getRepository(DBWorkspace).delete({});
         await mnr.getRepository(DBWorkspaceInstance).delete({});
         await mnr.getRepository(DBPrebuiltWorkspace).delete({});
+        await mnr.getRepository(DBVolumeSnapshot).delete({});
     }
 
     @test(timeout(10000))
@@ -589,6 +599,51 @@ class WorkspaceDBSpec {
         expect(activeCount).to.eq(1, "there should be exactly one regular workspace");
     }
 
+    @test(timeout(10000))
+    public async testGetUnresolvedUpdatables() {
+        {
+            // setup ws, wsi, pws, and updatables
+            const timeWithOffset = (offsetInHours: number) => {
+                const date = new Date();
+                date.setHours(date.getHours() - offsetInHours);
+                return date;
+            };
+
+            for (let i = 1; i <= 10; i++) {
+                const ws = await this.db.store({
+                    ...this.ws,
+                    id: `ws-${i}`,
+                    creationTime: timeWithOffset(i).toISOString(),
+                });
+                const pws = await this.db.storePrebuiltWorkspace({
+                    buildWorkspaceId: ws.id,
+                    cloneURL: ws.cloneUrl!,
+                    commit: "abc",
+                    creationTime: ws.creationTime,
+                    id: ws.id + "-pws",
+                    state: "queued",
+                    statusVersion: 123,
+                });
+                await this.db.storeInstance({
+                    ...this.wsi1,
+                    workspaceId: ws.id,
+                    id: ws.id + "-wsi",
+                });
+                await this.db.attachUpdatableToPrebuild("pwsid-which-is-ignored-anyways", {
+                    id: `pwu-${i}`,
+                    installationId: "foobar",
+                    isResolved: false,
+                    owner: "owner",
+                    repo: "repo",
+                    prebuiltWorkspaceId: pws.id,
+                });
+            }
+        }
+
+        expect((await this.db.getUnresolvedUpdatables()).length).to.eq(10, "there should be 10 updatables in total");
+        expect((await this.db.getUnresolvedUpdatables(5)).length).to.eq(5, "there should be 5 updatables");
+    }
+
     private async storePrebuiltWorkspace(pws: PrebuiltWorkspace) {
         // store the creationTime directly, before it is modified by the store function in the ORM layer
         const creationTime = pws.creationTime;
@@ -606,6 +661,70 @@ class WorkspaceDBSpec {
                 pws.id,
             ]);
         }
+    }
+    @test(timeout(10000))
+    public async testFindVolumeSnapshotWorkspacesForGC() {
+        await this.threeVolumeSnapshotsForTwoWorkspaces();
+
+        const wsIds = await this.db.findVolumeSnapshotWorkspacesForGC(10);
+        expect(wsIds).to.deep.equal(["ws-123"]);
+    }
+
+    @test(timeout(10000))
+    public async findVolumeSnapshotForGCByWorkspaceId() {
+        await this.threeVolumeSnapshotsForTwoWorkspaces();
+
+        const vss = (await this.db.findVolumeSnapshotForGCByWorkspaceId("ws-123", 10)).map((vs) => ({
+            ...vs,
+            creationTime: "", // this is updated by the DB, so we need to blank for the sake of this test
+        }));
+        expect(vss).to.deep.equal([
+            {
+                creationTime: "",
+                id: "456",
+                volumeHandle: "some-handle2",
+                workspaceId: "ws-123",
+            },
+            {
+                creationTime: "",
+                id: "123",
+                volumeHandle: "some-handle",
+                workspaceId: "ws-123",
+            },
+        ]);
+    }
+
+    protected async threeVolumeSnapshotsForTwoWorkspaces() {
+        const connection = await this.typeorm.getConnection();
+        const repo = connection.getRepository(DBVolumeSnapshot);
+
+        const now = new Date(2018, 2, 16, 10, 0, 0).toISOString();
+        const id = "123";
+        const workspaceId = "ws-123";
+        await repo.save({
+            id,
+            creationTime: now,
+            volumeHandle: "some-handle",
+            workspaceId,
+        });
+        const beforeNow = new Date(2018, 2, 16, 11, 5, 10).toISOString();
+        const id2 = "456";
+        await repo.save({
+            id: id2,
+            creationTime: beforeNow,
+            volumeHandle: "some-handle2",
+            workspaceId,
+        });
+
+        const someOtherTime = new Date(2018, 2, 10, 6, 5).toISOString();
+        const id3 = "789";
+        const workspaceId2 = "ws-789";
+        await repo.save({
+            id: id3,
+            creationTime: someOtherTime,
+            volumeHandle: "some-handle3",
+            workspaceId: workspaceId2,
+        });
     }
 }
 module.exports = new WorkspaceDBSpec();

@@ -12,9 +12,13 @@ import { Transformer } from "../transformer";
 
 @Entity()
 @Index("ind_dbsync", ["creationTime"]) // DBSync
+@Index("ind_workspaceId_creationTime", ["workspaceId", "creationTime"]) // findVolumeSnapshotForGCByWorkspaceId
 export class DBVolumeSnapshot implements VolumeSnapshot {
     @PrimaryColumn(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
     id: string;
+
+    @Column(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
+    workspaceId: string;
 
     @Column({
         type: "timestamp",

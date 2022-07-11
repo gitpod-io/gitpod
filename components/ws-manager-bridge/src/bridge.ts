@@ -21,11 +21,10 @@ import {
     GetWorkspacesRequest,
     WorkspaceConditionBool,
     PortVisibility as WsManPortVisibility,
-    PromisifiedWorkspaceManagerClient,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TracedWorkspaceDB, TracedUserDB, DBWithTracing } from "@gitpod/gitpod-db/lib/traced-db";
@@ -99,12 +98,14 @@ export class WorkspaceManagerBridge implements Disposable {
             startStatusUpdateHandler(true);
 
             // the actual "governing" part
-            const controllerInterval = this.config.controllerIntervalSeconds;
-            if (controllerInterval <= 0) {
-                throw new Error("controllerInterval <= 0!");
+            const controllerIntervalSeconds = this.config.controllerIntervalSeconds;
+            if (controllerIntervalSeconds <= 0) {
+                throw new Error("controllerIntervalSeconds <= 0!");
             }
+
             log.debug(`Starting controller: ${cluster.name}`, logPayload);
-            this.startController(clientProvider, controllerInterval, this.config.controllerMaxDisconnectSeconds);
+            // Control all workspace instances, either against ws-manager or configured timeouts
+            this.startController(clientProvider, controllerIntervalSeconds, this.config.controllerMaxDisconnectSeconds);
         } else {
             // _DO NOT_ update the DB (another bridge is responsible for that)
             // Still, listen to all updates, generate/derive new state and distribute it locally!
@@ -226,6 +227,7 @@ export class WorkspaceManagerBridge implements Disposable {
         const span = TraceContext.startSpan("handleStatusUpdate", ctx);
         span.setTag("status", JSON.stringify(filterStatus(status)));
         span.setTag("writeToDB", writeToDB);
+        span.setTag("statusVersion", status.statusVersion);
         try {
             // Beware of the ID mapping here: What's a workspace to the ws-manager is a workspace instance to the rest of the system.
             //                                The workspace ID of ws-manager is the workspace instance ID in the database.
@@ -233,6 +235,11 @@ export class WorkspaceManagerBridge implements Disposable {
             const instanceId = status.id!;
             const workspaceId = status.metadata!.metaId!;
             const userId = status.metadata!.owner!;
+            const logContext: LogContext = {
+                userId,
+                instanceId,
+                workspaceId,
+            };
 
             const instance = await this.workspaceDB.trace({ span }).findInstanceById(instanceId);
             if (instance) {
@@ -244,6 +251,14 @@ export class WorkspaceManagerBridge implements Disposable {
                 // by another instance of ws-manager-bridge that is in the region where the WorkspaceInstance record was created.
                 this.prometheusExporter.statusUpdateReceived(this.cluster.name, false);
                 return;
+            }
+
+            const currentStatusVersion = instance.status.version || 0;
+            if (currentStatusVersion > 0 && currentStatusVersion >= status.statusVersion) {
+                // We've gotten an event which is older than one we've already processed. We shouldn't process the stale one.
+                span.setTag("statusUpdate.staleEvent", true);
+                this.prometheusExporter.recordStaleStatusUpdate();
+                log.debug(ctx, "Stale status update received, skipping.");
             }
 
             if (!!status.spec.exposedPortsList) {
@@ -263,8 +278,20 @@ export class WorkspaceManagerBridge implements Disposable {
             }
 
             instance.ideUrl = status.spec.url!;
+            instance.status.version = status.statusVersion;
             instance.status.timeout = status.spec.timeout;
-            instance.status.conditions.failed = status.conditions.failed;
+            if (!!instance.status.conditions.failed && !status.conditions.failed) {
+                // We already have a "failed" condition, and received an empty one: This is a bug, "failed" conditions are terminal per definition.
+                // Do not override!
+                log.error(logContext, 'We received an empty "failed" condition overriding an existing one!', {
+                    current: instance.status.conditions.failed,
+                });
+
+                // TODO(gpl) To make ensure we do not break anything big time we keep the unconditional override for now, and observe for some time.
+                instance.status.conditions.failed = status.conditions.failed;
+            } else {
+                instance.status.conditions.failed = status.conditions.failed;
+            }
             instance.status.conditions.pullingImages = toBool(status.conditions.pullingImages!);
             instance.status.conditions.deployed = toBool(status.conditions.deployed);
             instance.status.conditions.timeout = status.conditions.timeout;
@@ -333,7 +360,7 @@ export class WorkspaceManagerBridge implements Disposable {
                             instance.stoppingTime = new Date().toISOString();
                         }
                     } else {
-                        log.warn("Got a stopping event for an already stopped workspace.", instance);
+                        log.warn(logContext, "Got a stopping event for an already stopped workspace.", instance);
                     }
                     break;
                 case WorkspacePhase.STOPPED:
@@ -361,21 +388,21 @@ export class WorkspaceManagerBridge implements Disposable {
                 writeToDB
             ) {
                 if (status.conditions.volumeSnapshot.volumeSnapshotName != instance.id) {
-                    log.error(
-                        "volume snapshot name doesn't match workspace instance id",
-                        status.conditions.volumeSnapshot.volumeSnapshotName,
-                        instance.id,
-                    );
-                }
-                let existingSnapshot = await this.workspaceDB
-                    .trace(ctx)
-                    .findVolumeSnapshotById(status.conditions.volumeSnapshot.volumeSnapshotName);
-                if (existingSnapshot === undefined) {
-                    await this.workspaceDB.trace(ctx).storeVolumeSnapshot({
-                        id: status.conditions.volumeSnapshot.volumeSnapshotName,
-                        creationTime: new Date().toISOString(),
-                        volumeHandle: status.conditions.volumeSnapshot.volumeSnapshotHandle,
+                    log.error(logContext, "volume snapshot name doesn't match workspace instance id", {
+                        volumeSnapshotName: status.conditions.volumeSnapshot.volumeSnapshotName,
                     });
+                } else {
+                    let existingSnapshot = await this.workspaceDB
+                        .trace(ctx)
+                        .findVolumeSnapshotById(status.conditions.volumeSnapshot.volumeSnapshotName);
+                    if (existingSnapshot === undefined) {
+                        await this.workspaceDB.trace(ctx).storeVolumeSnapshot({
+                            id: status.conditions.volumeSnapshot.volumeSnapshotName,
+                            workspaceId: workspaceId,
+                            creationTime: new Date().toISOString(),
+                            volumeHandle: status.conditions.volumeSnapshot.volumeSnapshotHandle,
+                        });
+                    }
                 }
             }
 
@@ -401,74 +428,178 @@ export class WorkspaceManagerBridge implements Disposable {
         clientProvider: ClientProvider,
         controllerIntervalSeconds: number,
         controllerMaxDisconnectSeconds: number,
-        maxTimeToRunningPhaseSeconds = 60 * 60,
     ) {
         let disconnectStarted = Number.MAX_SAFE_INTEGER;
         this.disposables.push(
             repeat(async () => {
+                const span = TraceContext.startSpan("controlInstances");
+                const ctx = { span };
                 try {
-                    const client = await clientProvider();
-                    await this.controlInstallationInstances(client, maxTimeToRunningPhaseSeconds);
+                    const installation = this.cluster.name;
+                    log.debug("Controlling instances...", { installation });
 
-                    disconnectStarted = Number.MAX_SAFE_INTEGER; // Reset disconnect period
-                } catch (e) {
-                    if (durationLongerThanSeconds(disconnectStarted, controllerMaxDisconnectSeconds)) {
-                        log.warn("Error while controlling installation's workspaces", e, {
-                            installation: this.cluster.name,
-                        });
-                    } else if (disconnectStarted > Date.now()) {
-                        disconnectStarted = Date.now();
+                    const runningInstances = await this.workspaceDB
+                        .trace(ctx)
+                        .findRunningInstancesWithWorkspaces(installation, undefined, true);
+
+                    // Control running workspace instances against ws-manager
+                    try {
+                        await this.controlRunningInstances(ctx, runningInstances, clientProvider);
+
+                        disconnectStarted = Number.MAX_SAFE_INTEGER; // Reset disconnect period
+                    } catch (err) {
+                        if (durationLongerThanSeconds(disconnectStarted, controllerMaxDisconnectSeconds)) {
+                            log.warn("Error while controlling installation's workspaces", err, {
+                                installation: this.cluster.name,
+                            });
+                        } else if (disconnectStarted > Date.now()) {
+                            disconnectStarted = Date.now();
+                        }
                     }
+
+                    // Control workspace instances against timeouts
+                    await this.controlInstancesTimeouts(ctx, runningInstances);
+
+                    log.debug("Done controlling instances.", { installation });
+                } catch (err) {
+                    TraceContext.setError(ctx, err);
+                    log.error("Error while controlling installation's workspaces", err, {
+                        installation: this.cluster.name,
+                    });
+                } finally {
+                    span.finish();
                 }
             }, controllerIntervalSeconds * 1000),
         );
     }
 
-    protected async controlInstallationInstances(
-        client: PromisifiedWorkspaceManagerClient,
-        maxTimeToRunningPhaseSeconds: number,
+    /**
+     * This methods controls all instances that we have currently marked as "running" in the DB.
+     * It checks whether they are still running with their respective ws-manager, and if not, marks them as stopped in the DB.
+     */
+    protected async controlRunningInstances(
+        parentCtx: TraceContext,
+        runningInstances: RunningWorkspaceInfo[],
+        clientProvider: ClientProvider,
     ) {
-        const installation = this.cluster.name;
-        log.debug("controlling instances", { installation });
-        let ctx: TraceContext = {};
+        const installation = this.config.installation;
 
-        const runningInstances = await this.workspaceDB.trace(ctx).findRunningInstancesWithWorkspaces(installation);
-        const runningInstancesIdx = new Map<string, RunningWorkspaceInfo>();
-        runningInstances.forEach((i) => runningInstancesIdx.set(i.latestInstance.id, i));
+        const span = TraceContext.startSpan("controlRunningInstances", parentCtx);
+        const ctx = { span };
+        try {
+            log.debug("Controlling running instances...", { installation });
 
-        const actuallyRunningInstances = await client.getWorkspaces(ctx, new GetWorkspacesRequest());
-        actuallyRunningInstances.getStatusList().forEach((s) => runningInstancesIdx.delete(s.getId()));
+            const runningInstancesIdx = new Map<string, RunningWorkspaceInfo>();
+            runningInstances.forEach((i) => runningInstancesIdx.set(i.latestInstance.id, i));
 
-        const promises: Promise<any>[] = [];
-        for (const [instanceId, ri] of runningInstancesIdx.entries()) {
-            const instance = ri.latestInstance;
-            if (
-                !(
-                    instance.status.phase === "running" ||
-                    durationLongerThanSeconds(Date.parse(instance.creationTime), maxTimeToRunningPhaseSeconds)
-                )
-            ) {
-                log.debug({ instanceId }, "Skipping instance", {
-                    phase: instance.status.phase,
-                    creationTime: instance.creationTime,
-                    region: instance.region,
-                });
-                continue;
+            const client = await clientProvider();
+            const actuallyRunningInstances = await client.getWorkspaces(ctx, new GetWorkspacesRequest());
+            actuallyRunningInstances.getStatusList().forEach((s) => runningInstancesIdx.delete(s.getId()));
+
+            for (const [instanceId, ri] of runningInstancesIdx.entries()) {
+                const instance = ri.latestInstance;
+                if (instance.status.phase !== "running") {
+                    log.debug({ instanceId }, "Skipping instance", {
+                        phase: instance.status.phase,
+                        creationTime: instance.creationTime,
+                        region: instance.region,
+                    });
+                    continue;
+                }
+
+                log.info(
+                    { instanceId, workspaceId: instance.workspaceId },
+                    "Database says the instance is running, but wsman does not know about it. Marking as stopped in database.",
+                    { installation },
+                );
+                await this.markWorkspaceInstanceAsStopped(ctx, ri, new Date());
             }
 
-            log.info(
-                { instanceId, workspaceId: instance.workspaceId },
-                "Database says the instance is starting for too long or running, but wsman does not know about it. Marking as stopped in database.",
-                { installation },
-            );
-            instance.status.phase = "stopped";
-            instance.stoppingTime = new Date().toISOString();
-            instance.stoppedTime = new Date().toISOString();
-            promises.push(this.workspaceDB.trace({}).storeInstance(instance));
-            promises.push(this.onInstanceStopped({}, ri.workspace.ownerId, instance));
-            promises.push(this.prebuildUpdater.stopPrebuildInstance(ctx, instance));
+            log.debug("Done controlling running instances.", { installation });
+        } catch (err) {
+            TraceContext.setError(ctx, err);
+            throw err; // required by caller
         }
-        await Promise.all(promises);
+    }
+
+    /**
+     * This methods controls all instances of this installation during periods where ws-manager does not control them, but we have them in our DB.
+     * These currently are:
+     *  - preparing
+     *  - building
+     * It also covers these phases, as fallback, when - for whatever reason - we no longer receive updates from ws-manager.
+     *  - unknown (fallback)
+     */
+    protected async controlInstancesTimeouts(parentCtx: TraceContext, runningInstances: RunningWorkspaceInfo[]) {
+        const installation = this.config.installation;
+
+        const span = TraceContext.startSpan("controlDBInstances", parentCtx);
+        const ctx = { span };
+        try {
+            log.debug("Controlling DB instances...", { installation });
+
+            await Promise.all(runningInstances.map((info) => this.controlInstanceTimeouts(ctx, info)));
+
+            log.debug("Done controlling DB instances.", { installation });
+        } catch (err) {
+            log.error("Error while running controlDBInstances", err, {
+                installation: this.cluster.name,
+            });
+            TraceContext.setError(ctx, err);
+        } finally {
+            span.finish();
+        }
+    }
+
+    protected async controlInstanceTimeouts(parentCtx: TraceContext, info: RunningWorkspaceInfo) {
+        const logContext: LogContext = {
+            userId: info.workspace.ownerId,
+            workspaceId: info.workspace.id,
+            instanceId: info.latestInstance.id,
+        };
+        const ctx = TraceContext.childContext("controlDBInstance", parentCtx);
+        try {
+            const now = Date.now();
+            const creationTime = new Date(info.latestInstance.creationTime).getTime();
+            const timedOutInPreparing = now >= creationTime + this.config.timeouts.preparingPhaseSeconds * 1000;
+            const timedOutInBuilding = now >= creationTime + this.config.timeouts.buildingPhaseSeconds * 1000;
+            const timedOutInUnknown = now >= creationTime + this.config.timeouts.unknownPhaseSeconds * 1000;
+            const currentPhase = info.latestInstance.status.phase;
+
+            log.debug(logContext, "Controller: Checking for instances in the DB to mark as stopped", {
+                creationTime,
+                timedOutInPreparing,
+                currentPhase,
+            });
+
+            if (
+                (currentPhase === "preparing" && timedOutInPreparing) ||
+                (currentPhase === "building" && timedOutInBuilding) ||
+                (currentPhase === "unknown" && timedOutInUnknown)
+            ) {
+                log.info(logContext, "Controller: Marking workspace instance as stopped", {
+                    creationTime,
+                    currentPhase,
+                });
+                await this.markWorkspaceInstanceAsStopped(ctx, info, new Date(now));
+            }
+        } catch (err) {
+            log.warn(logContext, "Controller: Error while marking workspace instance as stopped", err);
+            TraceContext.setError(ctx, err);
+        } finally {
+            ctx.span.finish();
+        }
+    }
+
+    protected async markWorkspaceInstanceAsStopped(ctx: TraceContext, info: RunningWorkspaceInfo, now: Date) {
+        const nowISO = now.toISOString();
+        info.latestInstance.stoppingTime = nowISO;
+        info.latestInstance.stoppedTime = nowISO;
+        info.latestInstance.status.phase = "stopped";
+        await this.workspaceDB.trace(ctx).storeInstance(info.latestInstance);
+
+        await this.messagebus.notifyOnInstanceUpdate(ctx, info.workspace.ownerId, info.latestInstance);
+        await this.prebuildUpdater.stopPrebuildInstance(ctx, info.latestInstance);
     }
 
     protected async onInstanceStopped(

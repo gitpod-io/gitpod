@@ -5,111 +5,83 @@
 package cgroups
 
 import (
+	"math"
 	"os"
-	"path/filepath"
+	"strconv"
 	"strings"
+
+	"github.com/containerd/cgroups"
+	v2 "github.com/containerd/cgroups/v2"
 )
 
-const DefaultCGroupMount = "/sys/fs/cgroup"
-
-type CgroupSetup int
-
-const (
-	Unknown CgroupSetup = iota
-	Legacy
-	Unified
-)
-
-func (s CgroupSetup) String() string {
-	return [...]string{"Legacy", "Unified"}[s]
-}
-
-func GetCgroupSetup() (CgroupSetup, error) {
-	controllers := filepath.Join(DefaultCGroupMount, "cgroup.controllers")
-	_, err := os.Stat(controllers)
-
-	if os.IsNotExist(err) {
-		return Legacy, nil
-	}
-
-	if err == nil {
-		return Unified, nil
-	}
-
-	return Unknown, err
-}
+const DefaultMountPoint = "/sys/fs/cgroup"
 
 func IsUnifiedCgroupSetup() (bool, error) {
-	setup, err := GetCgroupSetup()
-	if err != nil {
-		return false, err
-	}
-
-	return setup == Unified, nil
-}
-
-func IsLegacyCgroupSetup() (bool, error) {
-	setup, err := GetCgroupSetup()
-	if err != nil {
-		return false, err
-	}
-
-	return setup == Legacy, nil
+	return cgroups.Mode() == cgroups.Unified, nil
 }
 
 func EnsureCpuControllerEnabled(basePath, cgroupPath string) error {
-	targetPath := filepath.Join(basePath, cgroupPath)
-	if enabled, err := isCpuControllerEnabled(targetPath); err != nil || enabled {
-		return err
-	}
-
-	err := writeCpuController(basePath)
+	c, err := v2.NewManager(basePath, cgroupPath, &v2.Resources{})
 	if err != nil {
 		return err
 	}
 
-	levelPath := basePath
-	cgroupPath = strings.TrimPrefix(cgroupPath, "/")
-	levels := strings.Split(cgroupPath, string(os.PathSeparator))
-	for _, l := range levels[:len(levels)-1] {
-		levelPath = filepath.Join(levelPath, l)
-		err = writeCpuController(levelPath)
+	err = c.ToggleControllers([]string{"cpu"}, v2.Enable)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type CpuStats struct {
+	UsageTotal  uint64
+	UsageUser   uint64
+	UsageSystem uint64
+}
+
+type MemoryStats struct {
+	InactiveFileTotal uint64
+}
+
+func ReadSingleValue(path string) (uint64, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+
+	value := strings.TrimSpace(string(content))
+	if value == "max" || value == "-1" {
+		return math.MaxUint64, nil
+	}
+
+	max, err := strconv.ParseUint(value, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return max, nil
+}
+
+func ReadFlatKeyedFile(path string) (map[string]uint64, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	entries := strings.Split(strings.TrimSpace(string(content)), "\n")
+	kv := make(map[string]uint64, len(entries))
+	for _, entry := range entries {
+		tokens := strings.Split(entry, " ")
+		if len(tokens) < 2 {
+			continue
+		}
+		v, err := strconv.ParseUint(tokens[1], 10, 64)
 		if err != nil {
-			return err
+			continue
 		}
+		kv[tokens[0]] = v
 	}
 
-	return nil
-}
-
-func isCpuControllerEnabled(path string) (bool, error) {
-	controllerFile := filepath.Join(path, "cgroup.controllers")
-	controllers, err := os.ReadFile(controllerFile)
-	if err != nil {
-		return false, err
-	}
-
-	for _, ctrl := range strings.Fields(string(controllers)) {
-		if ctrl == "cpu" {
-			// controller is already activated
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func writeCpuController(path string) error {
-	f, err := os.OpenFile(filepath.Join(path, "cgroup.subtree_control"), os.O_WRONLY, 0)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = f.Write([]byte("+cpu"))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return kv, nil
 }

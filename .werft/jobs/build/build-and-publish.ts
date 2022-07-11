@@ -16,7 +16,6 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     const {
         publishRelease,
         dontTest,
-        withContrib,
         retag,
         version,
         localAppVersion,
@@ -26,6 +25,9 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     } = jobConfig;
 
     const releaseBranch = jobConfig.repository.ref;
+
+    // We set it to false as default and only set it true if the build succeeds.
+    werft.rootSpan.setAttributes({ "preview.gitpod_built_successfully": false });
 
     werft.phase("build", "build running");
     const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
@@ -94,6 +96,8 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     if (jobConfig.publishToKots) {
         publishKots(werft, jobConfig);
     }
+
+    werft.rootSpan.setAttributes({ "preview.gitpod_built_successfully": true });
 }
 
 /**
@@ -150,8 +154,8 @@ function publishKots(werft: Werft, jobConfig: JobConfig) {
         { slice: phases.PUBLISH_KOTS },
     );
 
-    // Generate the logo
-    exec(`make logo -C ${REPLICATED_DIR}`, { slice: phases.PUBLISH_KOTS });
+    // Generate the logo and pull any Helm charts
+    exec(`make logo helm -C ${REPLICATED_DIR}`, { slice: phases.PUBLISH_KOTS });
 
     // Update the additionalImages in the kots-app.yaml
     exec(`/tmp/installer mirror kots --file ${REPLICATED_YAML_DIR}/kots-app.yaml`, { slice: phases.PUBLISH_KOTS });

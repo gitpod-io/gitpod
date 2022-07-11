@@ -7,6 +7,7 @@ package manager
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -17,7 +18,6 @@ import (
 	"time"
 
 	"github.com/imdario/mergo"
-	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,7 +29,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	content "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -40,6 +40,13 @@ import (
 var (
 	boolFalse = false
 	boolTrue  = true
+)
+
+const (
+	// maxSecretsLength is the maximum number of bytes a workspace secret may contain. This size is exhausted by
+	// environment variables provided as part of the start workspace request.
+	// The value of 768kb is a somewhat arbitrary choice, but steers way clear of the 1MiB Kubernetes imposes.
+	maxSecretsLength = 768 * 1024 * 1024
 )
 
 // createWorkspacePod creates the actual workspace pod based on the definite workspace pod and appropriate
@@ -84,6 +91,21 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 	return pod, nil
+}
+
+func podName(req *api.StartWorkspaceRequest) string {
+	var prefix string
+	switch req.Type {
+	case api.WorkspaceType_PREBUILD:
+		prefix = "prebuild"
+	case api.WorkspaceType_PROBE:
+		prefix = "probe"
+	case api.WorkspaceType_IMAGEBUILD:
+		prefix = "imagebuild"
+	default:
+		prefix = "ws"
+	}
+	return fmt.Sprintf("%s-%s", prefix, req.Id)
 }
 
 // combineDefiniteWorkspacePodWithTemplate merges a definite workspace pod with a user-provided template.
@@ -331,28 +353,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 	admissionLevel = strings.ToLower(admissionLevel)
 
-	var prefix string
-	switch req.Type {
-	case api.WorkspaceType_PREBUILD:
-		prefix = "prebuild"
-	case api.WorkspaceType_PROBE:
-		prefix = "probe"
-	case api.WorkspaceType_IMAGEBUILD:
-		prefix = "imagebuild"
-		// mount self-signed gitpod CA certificate to ensure
-		// we can push images to the in-cluster registry
-		workspaceContainer.VolumeMounts = append(workspaceContainer.VolumeMounts,
-			corev1.VolumeMount{
-				Name:      "gitpod-ca-certificate",
-				MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
-				SubPath:   "ca.crt",
-				ReadOnly:  true,
-			},
-		)
-	default:
-		prefix = "ws"
-	}
-
 	annotations := map[string]string{
 		workspaceIDAnnotation:                   req.Id,
 		servicePrefixAnnotation:                 getServicePrefix(req),
@@ -362,7 +362,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		kubernetes.WorkspaceAdmissionAnnotation: admissionLevel,
 		kubernetes.WorkspaceImageSpecAnnotation: imageSpec,
 		kubernetes.OwnerTokenAnnotation:         startContext.OwnerToken,
-		wsk8s.TraceIDAnnotation:                 startContext.TraceID,
 		attemptingToCreatePodAnnotation:         "true",
 		// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 		"container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
@@ -382,6 +381,17 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 	for k, v := range req.Metadata.Annotations {
 		annotations[workspaceAnnotationPrefix+k] = v
+	}
+	if len(startContext.Request.Spec.SshPublicKeys) != 0 {
+		spec := &api.SSHPublicKeys{
+			Keys: startContext.Request.Spec.SshPublicKeys,
+		}
+		sshSpec, err := proto.Marshal(spec)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create remarshal of ssh key spec: %w", err)
+		}
+		sshSpecString := base64.StdEncoding.EncodeToString(sshSpec)
+		annotations[kubernetes.WorkspaceSSHPublicKeys] = sshSpecString
 	}
 
 	// By default we embue our workspace pods with some tolerance towards pressure taints,
@@ -443,6 +453,19 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		})
 	}
 
+	if req.Type == api.WorkspaceType_IMAGEBUILD {
+		// mount self-signed gitpod CA certificate to ensure
+		// we can push images to the in-cluster registry
+		workspaceContainer.VolumeMounts = append(workspaceContainer.VolumeMounts,
+			corev1.VolumeMount{
+				Name:      "gitpod-ca-certificate",
+				MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
+				SubPath:   "ca.crt",
+				ReadOnly:  true,
+			},
+		)
+	}
+
 	workloadType := "regular"
 	if startContext.Headless {
 		workloadType = "headless"
@@ -473,14 +496,13 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
-	PodSecContext := corev1.PodSecurityContext{}
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        fmt.Sprintf("%s-%s", prefix, req.Id),
+			Name:        podName(req),
 			Namespace:   m.Config.Namespace,
 			Labels:      labels,
 			Annotations: annotations,
-			Finalizers:  []string{"gitpod.io/finalizer"},
+			Finalizers:  []string{gitpodFinalizerName},
 		},
 		Spec: corev1.PodSpec{
 			Hostname:                     req.Metadata.MetaId,
@@ -489,7 +511,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
 			Affinity:                     affinity,
-			SecurityContext:              &PodSecContext,
+			SecurityContext:              &corev1.PodSecurityContext{},
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
@@ -563,19 +585,32 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			// not needed, since it is using dedicated disk
 			pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
 
-			// add prestop hook to capture git status
-			pod.Spec.Containers[0].Lifecycle = &corev1.Lifecycle{
-				PreStop: &corev1.LifecycleHandler{
-					Exec: &corev1.ExecAction{
-						Command: []string{"/bin/sh", "-c", "/.supervisor/workspacekit lift /.supervisor/prestophook.sh"},
-					},
-				},
-			}
-
 			// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
 			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
 			gitpodGUID := int64(133332)
 			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
+
+		case api.WorkspaceFeatureFlag_PROTECTED_SECRETS:
+			for _, c := range pod.Spec.Containers {
+				if c.Name != "workspace" {
+					continue
+				}
+
+				for i, env := range c.Env {
+					if !isProtectedEnvVar(env.Name) {
+						continue
+					}
+
+					env.Value = ""
+					env.ValueFrom = &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{Name: pod.Name},
+							Key:                  fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name))),
+						},
+					}
+					c.Env[i] = env
+				}
+			}
 
 		default:
 			return nil, xerrors.Errorf("unknown feature flag: %v", feature)
@@ -709,7 +744,7 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 		return filepath.Join("/workspace", strings.TrimPrefix(segment, "/workspace"))
 	}
 
-	allRepoRoots := content.GetCheckoutLocationsFromInitializer(spec.Initializer)
+	allRepoRoots := csapi.GetCheckoutLocationsFromInitializer(spec.Initializer)
 	if len(allRepoRoots) == 0 {
 		allRepoRoots = []string{""} // for backward compatibility, we are adding a single empty location (translates to /workspace/)
 	}
@@ -760,8 +795,11 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 				}
 			}
 
-			env := corev1.EnvVar{Name: e.Name, Value: e.Value}
-			if len(e.Value) == 0 && e.Secret != nil {
+			env := corev1.EnvVar{
+				Name:  e.Name,
+				Value: e.Value,
+			}
+			if e.Value == "" && e.Secret != nil {
 				env.ValueFrom = &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{Name: e.Secret.SecretName},
@@ -769,7 +807,6 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 					},
 				}
 			}
-
 			result = append(result, env)
 		}
 	}
@@ -799,6 +836,22 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	}
 
 	return cleanResult, nil
+}
+
+func isGitpodInternalEnvVar(name string) bool {
+	return strings.HasPrefix(name, "GITPOD_") ||
+		strings.HasPrefix(name, "SUPERVISOR_") ||
+		strings.HasPrefix(name, "BOB_") ||
+		strings.HasPrefix(name, "THEIA_")
+}
+
+func isProtectedEnvVar(name string) bool {
+	switch name {
+	case "THEIA_SUPERVISOR_TOKENS":
+		return true
+	default:
+		return !isGitpodInternalEnvVar(name)
+	}
 }
 
 func (m *Manager) createWorkspaceVolumes(startContext *startWorkspaceContext) (workspace corev1.Volume, err error) {
@@ -856,8 +909,7 @@ func (m *Manager) createDefaultSecurityContext() (*corev1.SecurityContext, error
 }
 
 func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWorkspaceRequest) (res *startWorkspaceContext, err error) {
-	// we deliberately do not shadow ctx here as we need the original context later to extract the TraceID
-	span, ctx := tracing.FromContext(ctx, "newStartWorkspaceContext")
+	span, _ := tracing.FromContext(ctx, "newStartWorkspaceContext")
 	defer tracing.FinishSpan(span, &err)
 
 	workspaceType := strings.ToLower(api.WorkspaceType_name[int32(req.Type)])
@@ -881,10 +933,6 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		return nil, xerrors.Errorf("cannot create owner token: %w", err)
 	}
 
-	workspaceSpan := opentracing.StartSpan("workspace", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))
-	traceID := tracing.GetTraceID(workspaceSpan)
-	defer tracing.FinishSpan(workspaceSpan, &err)
-
 	clsName := req.Spec.Class
 	if _, ok := m.Config.WorkspaceClasses[req.Spec.Class]; clsName == "" || !ok {
 		// For the time being, if the requested workspace class is unknown, or if
@@ -905,6 +953,8 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		wsk8s.WorkspaceIDLabel: req.Id,
 		wsk8s.OwnerLabel:       req.Metadata.Owner,
 		wsk8s.MetaIDLabel:      req.Metadata.MetaId,
+		wsk8s.ProjectLabel:     req.Metadata.GetProject(),
+		wsk8s.TeamLabel:        req.Metadata.GetTeam(),
 		wsk8s.TypeLabel:        workspaceType,
 		headlessLabel:          fmt.Sprintf("%v", headless),
 		markerLabel:            "true",
@@ -927,7 +977,6 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		IDEPort:        23000,
 		SupervisorPort: 22999,
 		WorkspaceURL:   workspaceURL,
-		TraceID:        traceID,
 		Headless:       headless,
 		Class:          class,
 		VolumeSnapshot: volumeSnapshot,

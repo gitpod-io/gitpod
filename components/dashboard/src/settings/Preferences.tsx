@@ -14,6 +14,8 @@ import getSettingsMenu from "./settings-menu";
 import { trackEvent } from "../Analytics";
 import { PaymentContext } from "../payment-context";
 import SelectIDE from "./SelectIDE";
+import { getExperimentsClient } from "../experiments/client";
+import SelectWorkspaceClass from "./selectClass";
 
 type Theme = "light" | "dark" | "system";
 
@@ -49,6 +51,17 @@ export default function Preferences() {
             });
         }
     };
+
+    const [isShowWorkspaceClasses, setIsShowWorkspaceClasses] = useState<boolean>(false);
+    (async () => {
+        if (!user) {
+            return;
+        }
+        const showWorkspaceClasses = await getExperimentsClient().getValueAsync("workspace_classes", false, {
+            user,
+        });
+        setIsShowWorkspaceClasses(showWorkspaceClasses);
+    })();
 
     return (
         <div>
@@ -115,9 +128,7 @@ export default function Preferences() {
                     </SelectableCardSolid>
                 </div>
 
-                <h3 className="mt-12">
-                    Dotfiles{" "}
-                </h3>
+                <h3 className="mt-12">Dotfiles </h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Customize workspaces using dotfiles.</p>
                 <div className="mt-4 max-w-xl">
                     <h4>Repository URL</h4>
@@ -141,6 +152,7 @@ export default function Preferences() {
                         </p>
                     </div>
                 </div>
+                <SelectWorkspaceClass enabled={isShowWorkspaceClasses} />
             </PageWithSubMenu>
         </div>
     );

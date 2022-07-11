@@ -18,6 +18,7 @@ import {
     WorkspaceAndOwner,
     WorkspacePortsAuthData,
     WorkspaceOwnerAndSoftDeleted,
+    PrebuildWithWorkspaceAndInstances,
 } from "../workspace-db";
 import {
     Workspace,
@@ -760,6 +761,32 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         await volumeSnapshots.update(volumeSnapshot.id, volumeSnapshot);
     }
 
+    // finds all workspaces which have more then one volume snapshots
+    // as we only want to keep one latest volume snapshot per workspace
+    public async findVolumeSnapshotWorkspacesForGC(limit: number): Promise<string[]> {
+        const volumeSnapshotRepo = await this.getVolumeSnapshotRepo();
+        const qb = volumeSnapshotRepo
+            .createQueryBuilder("vs")
+            .select("vs.workspaceId", "workspaceId")
+            .groupBy("vs.workspaceId")
+            .having("COUNT(*) > 1")
+            .limit(limit);
+        const results = (await qb.getRawMany()) as Pick<DBVolumeSnapshot, "workspaceId">[];
+        return results.map((vs) => vs.workspaceId);
+    }
+
+    // returns the list of all volume snapshots for specific workspace id
+    public async findVolumeSnapshotForGCByWorkspaceId(wsId: string, limit: number): Promise<VolumeSnapshot[]> {
+        const volumeSnapshotRepo = await this.getVolumeSnapshotRepo();
+        const results = await volumeSnapshotRepo
+            .createQueryBuilder("vs")
+            .where("vs.workspaceId = :wsId", { wsId })
+            .orderBy("vs.creationTime", "DESC")
+            .limit(limit)
+            .getMany();
+        return results;
+    }
+
     public async storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace> {
         const repo = await this.getPrebuiltWorkspaceRepo();
         if (pws.error && pws.error.length > 255) {
@@ -788,6 +815,38 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                 "pws.buildWorkspaceId = ws.id and ws.contentDeletedTime = ''",
             )
             .getOne();
+    }
+
+    public async findActivePrebuiltWorkspacesByBranch(
+        projectId: string,
+        branch: string,
+    ): Promise<PrebuildWithWorkspaceAndInstances[]> {
+        if (!branch) {
+            return [];
+        }
+        const repo = await this.getPrebuiltWorkspaceRepo();
+        const result = await repo
+            .createQueryBuilder("pws")
+            .where(
+                "(pws.state = 'queued' OR pws.state = 'building') AND pws.projectId = :projectId AND pws.branch = :branch",
+                { projectId, branch },
+            )
+            .orderBy("pws.creationTime", "DESC")
+            .innerJoinAndMapOne(
+                "pws.workspace",
+                DBWorkspace,
+                "ws",
+                "pws.buildWorkspaceId = ws.id and ws.contentDeletedTime = ''",
+            )
+            .innerJoinAndMapMany("pws.instances", DBWorkspaceInstance, "wsi", "pws.buildWorkspaceId = wsi.workspaceId")
+            .getMany();
+        return result.map((r) => {
+            return {
+                prebuild: r,
+                workspace: (<any>r).workspace,
+                instances: (<any>r).instances,
+            };
+        });
     }
 
     public async findPrebuildByWorkspaceID(wsid: string): Promise<PrebuiltWorkspace | undefined> {
@@ -869,17 +928,23 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         const repo = await this.getPrebuiltWorkspaceUpdatableRepo();
         await repo.update(updatableId, { isResolved: true });
     }
-    public async getUnresolvedUpdatables(): Promise<PrebuiltUpdatableAndWorkspace[]> {
+    public async getUnresolvedUpdatables(limit?: number): Promise<PrebuiltUpdatableAndWorkspace[]> {
         const pwsuRepo = await this.getPrebuiltWorkspaceUpdatableRepo();
 
         // select * from d_b_prebuilt_workspace_updatable as pwsu left join d_b_prebuilt_workspace pws ON pws.id = pwsu.prebuiltWorkspaceId left join d_b_workspace ws on pws.buildWorkspaceId = ws.id left join d_b_workspace_instance wsi on ws.id = wsi.workspaceId where pwsu.isResolved = 0
-        return (await pwsuRepo
+        const query = pwsuRepo
             .createQueryBuilder("pwsu")
             .innerJoinAndMapOne("pwsu.prebuild", DBPrebuiltWorkspace, "pws", "pwsu.prebuiltWorkspaceId = pws.id")
             .innerJoinAndMapOne("pwsu.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id")
             .innerJoinAndMapOne("pwsu.instance", DBWorkspaceInstance, "wsi", "ws.id = wsi.workspaceId")
             .where("pwsu.isResolved = 0")
-            .getMany()) as any;
+            .orderBy("ws.creationTime", "DESC");
+
+        if (!!limit) {
+            query.limit(limit);
+        }
+
+        return (await query.getMany()) as any;
     }
 
     public async findLayoutDataByWorkspaceId(workspaceId: string): Promise<LayoutData | undefined> {
@@ -1016,7 +1081,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             .createQueryBuilder("ws")
             // We need to put the subquery into the join condition (ON) here to be able to reference `ws.id` which is
             // not possible in a subquery on JOIN (e.g. 'LEFT JOIN (SELECT ... WHERE i.workspaceId = ws.id)')
-            .leftJoinAndMapOne(
+            .innerJoinAndMapOne(
                 "ws.instance",
                 DBWorkspaceInstance,
                 "wsi",

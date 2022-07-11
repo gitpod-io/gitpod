@@ -70,11 +70,14 @@ export namespace User {
     }
 
     /**
-     * Tries to return the primaryEmail of the first identity this user signed up with.
+     * Returns the stored email or if it doesn't exist returns the primaryEmail of the first identity this user signed up with.
      * @param user
      * @returns A primaryEmail, or undefined if there is none.
      */
     export function getPrimaryEmail(user: User): string | undefined {
+        if (user.additionalData?.profile?.emailAddress) {
+            return user.additionalData?.profile?.emailAddress;
+        }
         const identities = user.identities.filter((i) => !!i.primaryEmail);
         if (identities.length <= 0) {
             return undefined;
@@ -136,6 +139,50 @@ export namespace User {
         }
         user.additionalData.ideSettings = newIDESettings;
     }
+
+    export function getProfile(user: User): Profile {
+        return {
+            name: User.getName(user!) || "",
+            email: User.getPrimaryEmail(user!) || "",
+            company: user?.additionalData?.profile?.companyName,
+            avatarURL: user?.avatarUrl,
+        };
+    }
+
+    export function setProfile(user: User, profile: Profile): User {
+        user.fullName = profile.name;
+        user.avatarUrl = profile.avatarURL;
+
+        if (!user.additionalData) {
+            user.additionalData = {};
+        }
+        if (!user.additionalData.profile) {
+            user.additionalData.profile = {};
+        }
+        user.additionalData.profile.emailAddress = profile.email;
+        user.additionalData.profile.companyName = profile.company;
+        user.additionalData.profile.lastUpdatedDetailsNudge = new Date().toISOString();
+
+        return user;
+    }
+
+    // The actual Profile of a User
+    export interface Profile {
+        name: string;
+        email: string;
+        company?: string;
+        avatarURL?: string;
+    }
+    export namespace Profile {
+        export function hasChanges(before: Profile, after: Profile) {
+            return (
+                before.name !== after.name ||
+                before.email !== after.email ||
+                before.company !== after.company ||
+                before.avatarURL !== after.avatarURL
+            );
+        }
+    }
 }
 
 export interface AdditionalUserData {
@@ -150,9 +197,24 @@ export interface AdditionalUserData {
     oauthClientsApproved?: { [key: string]: string };
     // to remember GH Orgs the user installed/updated the GH App for
     knownGitHubOrgs?: string[];
-
     // Git clone URL pointing to the user's dotfile repo
     dotfileRepo?: string;
+    // Identifies an explicit team or user ID to which all the user's workspace usage should be attributed to (e.g. for billing purposes)
+    usageAttributionId?: string;
+    // preferred workspace classes
+    workspaceClasses?: WorkspaceClasses;
+    // additional user profile data
+    profile?: ProfileDetails;
+}
+
+// The format in which we store User Profiles in
+export interface ProfileDetails {
+    // when was the last time the user updated their profile information or has been nudged to do so.
+    lastUpdatedDetailsNudge?: string;
+    // the user's company name
+    companyName?: string;
+    // the user's email
+    emailAddress?: string;
 }
 
 export interface EmailNotificationSettings {
@@ -170,6 +232,11 @@ export type IDESettings = {
     defaultDesktopIde?: string;
     useLatestVersion?: boolean;
 };
+
+export interface WorkspaceClasses {
+    regular: string;
+    prebuild: string;
+}
 
 export interface UserPlatform {
     uid: string;
@@ -205,6 +272,7 @@ export const WorkspaceFeatureFlags = {
     full_workspace_backup: undefined,
     fixed_resources: undefined,
     persistent_volume_claim: undefined,
+    protected_secrets: undefined,
 };
 export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
 
@@ -356,6 +424,68 @@ export namespace UserEnvVar {
     }
 }
 
+export interface SSHPublicKeyValue {
+    name: string;
+    key: string;
+}
+export interface UserSSHPublicKey extends SSHPublicKeyValue {
+    id: string;
+    key: string;
+    userId: string;
+    fingerprint: string;
+    creationTime: string;
+    lastUsedTime?: string;
+}
+
+export type UserSSHPublicKeyValue = Omit<UserSSHPublicKey, "key" | "userId">;
+
+export namespace SSHPublicKeyValue {
+    export function validate(value: SSHPublicKeyValue): string | undefined {
+        if (value.name.length === 0) {
+            return "Title must not be empty.";
+        }
+        if (value.name.length > 255) {
+            return "Title too long. Maximum value length is 255 characters.";
+        }
+        if (value.key.length === 0) {
+            return "Key must not be empty.";
+        }
+        try {
+            getData(value);
+        } catch (e) {
+            return "Key is invalid. You must supply a key in OpenSSH public key format.";
+        }
+        return;
+    }
+
+    export function getData(value: SSHPublicKeyValue) {
+        // Begins with 'ssh-rsa', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-ed25519', 'sk-ecdsa-sha2-nistp256@openssh.com', or 'sk-ssh-ed25519@openssh.com'.
+        const regex =
+            /^(?<type>ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521|ssh-ed25519|sk-ecdsa-sha2-nistp256@openssh\.com|sk-ssh-ed25519@openssh\.com) (?<key>.*?)( (?<email>.*?))?$/;
+        const resultGroup = regex.exec(value.key.trim());
+        if (!resultGroup) {
+            throw new Error("Key is invalid.");
+        }
+        return {
+            type: resultGroup.groups?.["type"] as string,
+            key: resultGroup.groups?.["key"] as string,
+            email: resultGroup.groups?.["email"] || undefined,
+        };
+    }
+
+    export function getFingerprint(value: SSHPublicKeyValue) {
+        const data = getData(value);
+        let buf = Buffer.from(data.key, "base64");
+        // gitlab style
+        // const hash = createHash("md5").update(buf).digest("hex");
+        // github style
+        const hash = createHash("sha256").update(buf).digest("base64");
+        return hash;
+    }
+
+    export const MAXIMUM_KEY_LENGTH = 5;
+}
+
 export interface GitpodToken {
     /** Hash value (SHA256) of the token (primary key). */
     tokenHash: string;
@@ -490,6 +620,7 @@ export interface Snapshot {
 
 export interface VolumeSnapshot {
     id: string;
+    workspaceId: string;
     creationTime: string;
     volumeHandle: string;
 }
@@ -639,6 +770,7 @@ export interface JetBrainsConfig {
 }
 export interface JetBrainsProductConfig {
     prebuilds?: JetBrainsPrebuilds;
+    vmoptions?: string;
 }
 export interface JetBrainsPrebuilds {
     version?: "stable" | "latest" | "both";

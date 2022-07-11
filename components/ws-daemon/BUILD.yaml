@@ -56,7 +56,7 @@ packages:
     config:
       packaging: app
       dontTest: true
-      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid="]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s"]
   - name: docker
     type: docker
     deps:

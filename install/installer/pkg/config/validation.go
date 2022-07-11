@@ -33,6 +33,14 @@ func Validate(version ConfigVersion, cfg interface{}) (r *ValidationResult, err 
 	}
 
 	var res ValidationResult
+
+	warnings, conflicts := version.CheckDeprecated(cfg)
+
+	for k, v := range warnings {
+		res.Warnings = append(res.Warnings, fmt.Sprintf("Deprecated config parameter: %s=%v", k, v))
+	}
+	res.Fatal = append(res.Fatal, conflicts...)
+
 	err = validate.Struct(cfg)
 	if err != nil {
 		validationErrors := err.(validator.ValidationErrors)

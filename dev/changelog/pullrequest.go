@@ -133,6 +133,6 @@ func init() {
 	prFlags.StringVarP(&prOpts.HeadBranch, "head", "H", "main", "the head branch for pull requests")
 	prFlags.StringVarP(&prOpts.BaseBranch, "base", "b", "main", "the base branch for pull requests")
 	prFlags.StringVarP(&prOpts.Title, "title", "T", "[changelog] updated changelog", "the title of the PR")
-	prFlags.StringVarP(&prOpts.Body, "body", "B", "Updated the changelog from recent PR descriptions\n\n```release-note\nNONE\n```\n/werft no-preview\n/werft no-test", "the body of the PR")
+	prFlags.StringVarP(&prOpts.Body, "body", "B", "Updated the changelog from recent PR descriptions\n\n```release-note\nNONE\n```\n/werft no-test", "the body of the PR")
 	rootCommand.AddCommand(pullRequestCommand)
 }

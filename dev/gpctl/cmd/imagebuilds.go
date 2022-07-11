@@ -17,6 +17,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
@@ -77,7 +78,7 @@ func getImagebuildsClient(ctx context.Context) (*grpc.ClientConn, api.ImageBuild
 		host = fmt.Sprintf("localhost:%d", freePort)
 	}
 
-	secopt := grpc.WithInsecure()
+	secopt := grpc.WithTransportCredentials(insecure.NewCredentials())
 	cert, _ := imagebuildsCmd.Flags().GetString("tls")
 	if cert != "" {
 		creds, err := credentials.NewClientTLSFromFile(cert, "")

@@ -1,0 +1,10 @@
+{
+  "controllerSchedule": "1h",
+  "server": {
+    "services": {
+      "grpc": {
+        "address": ":9001"
+      }
+    }
+  }
+}

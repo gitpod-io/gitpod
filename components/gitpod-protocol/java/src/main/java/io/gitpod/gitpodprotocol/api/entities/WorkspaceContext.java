@@ -10,8 +10,8 @@ public class WorkspaceContext {
     private String normalizedContextURL;
     private String ref;
 
-    public String getNormalizedContextURL() {
-        return normalizedContextURL;
+    public Optional<String> getNormalizedContextURL() {
+        return Optional.ofNullable(normalizedContextURL);
     }
 
     public void setNormalizedContextURL(String normalizedContextURL) {

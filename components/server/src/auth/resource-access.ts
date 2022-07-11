@@ -7,6 +7,7 @@
 import {
     CommitContext,
     GitpodToken,
+    PrebuiltWorkspace,
     Repository,
     Snapshot,
     Team,
@@ -36,7 +37,8 @@ export type GuardedResource =
     | GuardedContentBlob
     | GuardEnvVar
     | GuardedTeam
-    | GuardedWorkspaceLog;
+    | GuardedWorkspaceLog
+    | GuardedPrebuild;
 
 const ALL_GUARDED_RESOURCE_KINDS = new Set<GuardedResourceKind>([
     "workspace",
@@ -119,6 +121,13 @@ export interface GuardedWorkspaceLog {
     teamMembers?: TeamMemberInfo[];
 }
 
+export interface GuardedPrebuild {
+    kind: "prebuild";
+    subject: PrebuiltWorkspace;
+    workspace: Workspace;
+    teamMembers?: TeamMemberInfo[];
+}
+
 export type ResourceAccessOp = "create" | "update" | "get" | "delete";
 
 export const ResourceAccessGuard = Symbol("ResourceAccessGuard");
@@ -154,6 +163,8 @@ export class TeamMemberResourceGuard implements ResourceAccessGuard {
                 return await this.hasAccessToWorkspace(resource.workspace, resource.teamMembers);
             case "workspaceLog":
                 return await this.hasAccessToWorkspace(resource.subject, resource.teamMembers);
+            case "prebuild":
+                return !!resource.teamMembers?.some((m) => m.userId === this.userId);
         }
         return false;
     }
@@ -209,6 +220,8 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
                 }
             case "workspaceLog":
                 return resource.subject.ownerId === this.userId;
+            case "prebuild":
+                return resource.workspace.ownerId === this.userId;
         }
     }
 }
@@ -463,16 +476,47 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
     constructor(protected readonly user: User, protected readonly hostContextProvider: HostContextProvider) {}
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
-        if (resource.kind !== "workspaceLog" && resource.kind !== "snapshot") {
-            return false;
-        }
-        // only get operations are supported
+        // Only get operations are supported
         if (operation !== "get") {
             return false;
         }
 
+        // Get Workspace from GuardedResource
+        let workspace: Workspace;
+        switch (resource.kind) {
+            case "workspace":
+                workspace = resource.subject;
+                if (workspace.type !== "prebuild") {
+                    return false;
+                }
+                // We're only allowed to access prebuild workspaces with this repository guard
+                break;
+            case "workspaceInstance":
+                workspace = resource.workspace;
+                if (workspace.type !== "prebuild") {
+                    return false;
+                }
+                // We're only allowed to access prebuild workspace instances with thi repository guard
+                break;
+            case "workspaceLog":
+                workspace = resource.subject;
+                break;
+            case "snapshot":
+                workspace = resource.workspace;
+                break;
+            case "prebuild":
+                workspace = resource.workspace;
+                break;
+            default:
+                // We do not handle resource kinds here!
+                return false;
+        }
+
         // Check if user has at least read access to the repository
-        const workspace = resource.kind === "snapshot" ? resource.workspace : resource.subject;
+        return this.hasAccessToRepos(workspace);
+    }
+
+    protected async hasAccessToRepos(workspace: Workspace): Promise<boolean> {
         const repos: Repository[] = [];
         if (CommitContext.is(workspace.context)) {
             repos.push(workspace.context.repository);

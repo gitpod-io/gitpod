@@ -16,8 +16,25 @@ import {
     WorkspaceEnvVarAccessGuard,
     TeamMemberResourceGuard,
     GuardedWorkspace,
+    CompositeResourceAccessGuard,
+    OwnerResourceGuard,
+    GuardedResourceKind,
+    RepositoryResourceGuard,
+    SharedWorkspaceAccessGuard,
 } from "./resource-access";
-import { UserEnvVar } from "@gitpod/gitpod-protocol/lib/protocol";
+import { PrebuiltWorkspace, User, UserEnvVar, Workspace, WorkspaceType } from "@gitpod/gitpod-protocol/lib/protocol";
+import { TeamMemberInfo, TeamMemberRole, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { HostContextProvider } from "./host-context-provider";
+
+class MockedRepositoryResourceGuard extends RepositoryResourceGuard {
+    constructor(protected repositoryAccess: boolean) {
+        super({} as User, {} as HostContextProvider);
+    }
+
+    protected async hasAccessToRepos(workspace: Workspace): Promise<boolean> {
+        return this.repositoryAccess;
+    }
+}
 
 @suite
 class TestResourceAccess {
@@ -525,6 +542,503 @@ class TestResourceAccess {
                 );
             }),
         );
+    }
+
+    @test
+    public async workspaceLikeResourceGuardsCanAcccess() {
+        const createUser = (): User => {
+            return {
+                id: "123",
+                name: "testuser",
+                creationDate: new Date(2000, 1, 1).toISOString(),
+                identities: [
+                    {
+                        authId: "123",
+                        authName: "testuser",
+                        authProviderId: "github.com",
+                    },
+                ],
+            };
+        };
+        const otherUserId = "456";
+
+        const workspaceId = "ws-123";
+        const createWorkspace = (ownerId: string, type: WorkspaceType): Workspace => {
+            return {
+                id: workspaceId,
+                ownerId,
+                type,
+                config: {},
+                creationTime: new Date(2000, 1, 2).toISOString(),
+                description: "test workspace ws-123",
+                contextURL: "https://github.com/gitpod-io/gitpod",
+                context: {
+                    title: "gitpod-io/gitpod",
+                    normalizedContextURL: "https://github.com/gitpod-io/gitpod",
+                },
+            };
+        };
+        const createInstance = (): WorkspaceInstance => {
+            return {
+                id: "wsi-123",
+                workspaceId,
+                creationTime: new Date(2000, 1, 2).toISOString(),
+                region: "local",
+                status: {
+                    version: 1,
+                    conditions: {},
+                    phase: "running",
+                },
+                ideUrl: "https://some.where",
+                workspaceImage: "gitpod/workspace-full:latest",
+            };
+        };
+        const createPrebuild = (): PrebuiltWorkspace => {
+            return {
+                id: "pws-123",
+                buildWorkspaceId: workspaceId,
+                cloneURL: "https://github.com/gitpod-io/gitpod",
+                commit: "sha123123213",
+                creationTime: new Date(2000, 1, 2).toISOString(),
+                state: "available",
+                statusVersion: 1,
+            };
+        };
+
+        const tests: {
+            name: string;
+            resourceKind: GuardedResourceKind;
+            isOwner: boolean;
+            teamRole: TeamMemberRole | undefined;
+            workspaceType: WorkspaceType;
+            repositoryAccess?: boolean;
+            expectation: boolean;
+        }[] = [
+            // regular workspaceLog
+            {
+                name: "regular workspaceLog get owner",
+                resourceKind: "workspaceLog",
+                workspaceType: "regular",
+                isOwner: true,
+                teamRole: undefined,
+                expectation: true,
+            },
+            {
+                name: "regular workspaceLog get other",
+                resourceKind: "workspaceLog",
+                workspaceType: "regular",
+                isOwner: false,
+                teamRole: undefined,
+                expectation: false,
+            },
+            {
+                name: "regular workspaceLog get team member",
+                resourceKind: "workspaceLog",
+                workspaceType: "regular",
+                isOwner: false,
+                teamRole: "member",
+                expectation: false,
+            },
+            {
+                name: "regular workspaceLog get team owner (same as member)",
+                resourceKind: "workspaceLog",
+                workspaceType: "regular",
+                isOwner: false,
+                teamRole: "owner",
+                expectation: false,
+            },
+            // prebuild workspaceLog
+            {
+                name: "prebuild workspaceLog get owner",
+                resourceKind: "workspaceLog",
+                workspaceType: "prebuild",
+                isOwner: true,
+                teamRole: undefined,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceLog get other",
+                resourceKind: "workspaceLog",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: undefined,
+                expectation: false,
+            },
+            {
+                name: "prebuild workspaceLog get team member",
+                resourceKind: "workspaceLog",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "member",
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceLog get team owner (same as member)",
+                resourceKind: "workspaceLog",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "owner",
+                expectation: true,
+            },
+            // prebuild workspaceLog with repo access
+            {
+                name: "prebuild workspaceLog get owner with repo access",
+                resourceKind: "workspaceLog",
+                workspaceType: "prebuild",
+                isOwner: true,
+                teamRole: undefined,
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceLog get other with repo access",
+                resourceKind: "workspaceLog",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: undefined,
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceLog get team member with repo access",
+                resourceKind: "workspaceLog",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "member",
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceLog get team owner (same as member)",
+                resourceKind: "workspaceLog",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "owner",
+                repositoryAccess: true,
+                expectation: true,
+            },
+            // regular workspace
+            {
+                name: "regular workspace get owner",
+                resourceKind: "workspace",
+                workspaceType: "regular",
+                isOwner: true,
+                teamRole: undefined,
+                expectation: true,
+            },
+            {
+                name: "regular workspace get other",
+                resourceKind: "workspace",
+                workspaceType: "regular",
+                isOwner: false,
+                teamRole: undefined,
+                expectation: false,
+            },
+            {
+                name: "regular workspace get team member",
+                resourceKind: "workspace",
+                workspaceType: "regular",
+                isOwner: false,
+                teamRole: "member",
+                expectation: false,
+            },
+            {
+                name: "regular workspace get team owner (same as member)",
+                resourceKind: "workspace",
+                workspaceType: "regular",
+                isOwner: false,
+                teamRole: "owner",
+                expectation: false,
+            },
+            // prebuild workspace
+            {
+                name: "prebuild workspace get owner",
+                resourceKind: "workspace",
+                workspaceType: "prebuild",
+                isOwner: true,
+                teamRole: undefined,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspace get other",
+                resourceKind: "workspace",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: undefined,
+                expectation: false,
+            },
+            {
+                name: "prebuild workspace get team member",
+                resourceKind: "workspace",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "member",
+                expectation: true,
+            },
+            {
+                name: "prebuild workspace get team owner (same as member)",
+                resourceKind: "workspace",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "owner",
+                expectation: true,
+            },
+            // prebuild workspace with repo access
+            {
+                name: "prebuild workspace get owner",
+                resourceKind: "workspace",
+                workspaceType: "prebuild",
+                isOwner: true,
+                teamRole: undefined,
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspace get other",
+                resourceKind: "workspace",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: undefined,
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspace get team member",
+                resourceKind: "workspace",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "member",
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspace get team owner (same as member)",
+                resourceKind: "workspace",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "owner",
+                repositoryAccess: true,
+                expectation: true,
+            },
+            // regular instance
+            {
+                name: "regular workspaceInstance get owner",
+                resourceKind: "workspaceInstance",
+                workspaceType: "regular",
+                isOwner: true,
+                teamRole: undefined,
+                expectation: true,
+            },
+            {
+                name: "regular workspaceInstance get other",
+                resourceKind: "workspaceInstance",
+                workspaceType: "regular",
+                isOwner: false,
+                teamRole: undefined,
+                expectation: false,
+            },
+            {
+                name: "regular workspaceInstance get team member",
+                resourceKind: "workspaceInstance",
+                workspaceType: "regular",
+                isOwner: false,
+                teamRole: "member",
+                expectation: false,
+            },
+            {
+                name: "regular workspaceInstance get team owner (same as member)",
+                resourceKind: "workspaceInstance",
+                workspaceType: "regular",
+                isOwner: false,
+                teamRole: "owner",
+                expectation: false,
+            },
+            // prebuild instance
+            {
+                name: "prebuild workspaceInstance get owner",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: true,
+                teamRole: undefined,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceInstance get other",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: undefined,
+                expectation: false,
+            },
+            {
+                name: "prebuild workspaceInstance get team member",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "member",
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceInstance get team owner (same as member)",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "owner",
+                expectation: true,
+            },
+            // prebuild instance with repo access
+            {
+                name: "prebuild workspaceInstance get owner",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: true,
+                teamRole: undefined,
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceInstance get other",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: undefined,
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceInstance get team member",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "member",
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild workspaceInstance get team owner (same as member)",
+                resourceKind: "workspaceInstance",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "owner",
+                repositoryAccess: true,
+                expectation: true,
+            },
+            // prebuild
+            {
+                name: "prebuild get owner",
+                resourceKind: "prebuild",
+                workspaceType: "prebuild",
+                isOwner: true,
+                teamRole: undefined,
+                expectation: true,
+            },
+            {
+                name: "prebuild get other",
+                resourceKind: "prebuild",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: undefined,
+                expectation: false,
+            },
+            {
+                name: "prebuild get team member",
+                resourceKind: "prebuild",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "member",
+                expectation: true,
+            },
+            {
+                name: "prebuild get team owner (same as member)",
+                resourceKind: "prebuild",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "owner",
+                expectation: true,
+            },
+            // prebuild with repo access
+            {
+                name: "prebuild get owner",
+                resourceKind: "prebuild",
+                workspaceType: "prebuild",
+                isOwner: true,
+                teamRole: undefined,
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild get other",
+                resourceKind: "prebuild",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: undefined,
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild get team member",
+                resourceKind: "prebuild",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "member",
+                repositoryAccess: true,
+                expectation: true,
+            },
+            {
+                name: "prebuild get team owner (same as member)",
+                resourceKind: "prebuild",
+                workspaceType: "prebuild",
+                isOwner: false,
+                teamRole: "owner",
+                repositoryAccess: true,
+                expectation: true,
+            },
+        ];
+
+        for (const t of tests) {
+            const user = createUser();
+            const workspace = createWorkspace(t.isOwner ? user.id : otherUserId, t.workspaceType);
+            const resourceGuard = new CompositeResourceAccessGuard([
+                new OwnerResourceGuard(user.id),
+                new TeamMemberResourceGuard(user.id),
+                new SharedWorkspaceAccessGuard(),
+                new MockedRepositoryResourceGuard(!!t.repositoryAccess),
+            ]);
+            const teamMembers: TeamMemberInfo[] = [];
+            if (!!t.teamRole) {
+                teamMembers.push({
+                    userId: user.id,
+                    role: t.teamRole,
+                    memberSince: user.creationDate,
+                });
+            }
+
+            const kind: GuardedResourceKind = t.resourceKind;
+            let resource: GuardedResource | undefined = undefined;
+            if (kind === "workspaceInstance") {
+                const instance = createInstance();
+                resource = { kind, subject: instance, workspace, teamMembers };
+            } else if (kind === "workspaceLog") {
+                resource = { kind, subject: workspace, teamMembers };
+            } else if (kind === "workspace") {
+                resource = { kind, subject: workspace, teamMembers };
+            } else if (kind === "prebuild") {
+                if (workspace.type !== "prebuild") {
+                    throw new Error("invalid test data: PWS requires workspace to be of type prebuild!");
+                }
+                const prebuild = createPrebuild();
+                resource = { kind, subject: prebuild, workspace, teamMembers };
+            }
+            if (!resource) {
+                throw new Error("unhandled GuardedResourceKind" + kind);
+            }
+
+            const actual = await resourceGuard.canAccess(resource, "get");
+            expect(actual).to.be.eq(
+                t.expectation,
+                `"${t.name}" expected canAccess(...) === ${t.expectation}, but was ${actual}`,
+            );
+        }
     }
 }
 

@@ -62,10 +62,21 @@ export interface WorkspaceInstance {
      * resources that are provided to the workspace.
      */
     workspaceClass?: string;
+
+    /**
+     * Identifies the team or user to which this instance's runtime should be attributed to
+     * (e.g. for usage analytics or billing purposes).
+     */
+    usageAttributionId?: string;
 }
 
 // WorkspaceInstanceStatus describes the current state of a workspace instance
 export interface WorkspaceInstanceStatus {
+    // version is the current version of the workspace instance status
+    // Note: consider this value opague. The only guarantee given is that it imposes
+    //       a partial order on status updates, i.e. a.version > b.version -> a newer than b.
+    version?: number;
+
     // phase describes a high-level state of the workspace instance
     phase: WorkspaceInstancePhase;
 

@@ -12,7 +12,7 @@
           {
             alert: 'GitpodWsDaemonCrashLooping',
             labels: {
-              severity: 'critical',
+              severity: 'warning',
             },
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonCrashLooping.md',
@@ -24,31 +24,31 @@
             |||,
           },
           {
-            alert: 'GitpodWsDaemonExcessiveGC',
+            alert: 'BackupFailureBecauseOfGitpodWsDaemonCrash',
             labels: {
-              severity: 'warning',
+              severity: 'critical',
             },
             annotations: {
-              runbook_url: '',
-              summary: 'Ws-daemon is doing excessive garbage collection.',
-              description: 'Ws-daemon has excessive garbage collection time. Collecting garbage for more than 1 second.',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonCrashLooping.md',
+              summary: 'Increase the number of backup failure because of ws-daemon is crashlooping.',
+              description: 'Ws-daemon is restarting {{ printf "%.2f" $value }} times / 10 minutes.',
             },
             expr: |||
-              go_gc_duration_seconds{job="ws-daemon", quantile="1"} > 1
+              sum(increase(kube_pod_container_status_restarts_total{container="ws-daemon"}[10m])) > 0 AND sum(increase(gitpod_ws_manager_workspace_backups_failure_total{type="REGULAR"}[10m])) > 0
             |||,
           },
           {
             alert: 'GitpodWsDaemonExcessiveGC',
             labels: {
-              severity: 'critical',
+              severity: 'warning',
             },
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonExcessiveGC.md',
               summary: 'Ws-daemon is doing excessive garbage collection.',
-              description: 'Ws-daemon has excessive garbage collection time. Collecting garbage for more than 1 minute.',
+              description: 'Ws-daemon has excessive garbage collection time. Collecting garbage for more than 1 second.',
             },
             expr: |||
-              go_gc_duration_seconds{job="ws-daemon", quantile="1"} > 60
+              go_gc_duration_seconds{job="ws-daemon", quantile="1"} > 1
             |||,
           },
         ],

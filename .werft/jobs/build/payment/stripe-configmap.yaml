@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stripe-config
+  namespace: ${NAMESPACE}
+data:
+  config: |
+    {
+      "usageProductPriceIds": {
+        "EUR": "price_1LFZhJGadRXm50o3v27S1DB1",
+        "USD": "price_1LFZhJGadRXm50o3YEAaspXu"
+      }
+    }

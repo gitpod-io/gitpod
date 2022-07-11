@@ -4,9 +4,11 @@
 package usage
 
 import (
+	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -16,16 +18,58 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+const (
+	usageConfigmapVolume = "config"
+	usageConfigMountPath = "/config.json"
+)
+
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
+
+	args := []string{
+		"run",
+		fmt.Sprintf("--config=%s", usageConfigMountPath),
+	}
+
+	volumes := []corev1.Volume{
+		{
+			Name: usageConfigmapVolume,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: Component,
+					},
+				},
+			},
+		},
+	}
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      usageConfigmapVolume,
+			ReadOnly:  true,
+			MountPath: usageConfigMountPath,
+			SubPath:   configJSONFilename,
+		},
+	}
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		volume, mount, _, ok := getStripeConfig(cfg)
+		if !ok {
+			return nil
+		}
+
+		volumes = append(volumes, volume)
+		volumeMounts = append(volumeMounts, mount)
+		return nil
+	})
 
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      labels,
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
@@ -33,9 +77,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      Component,
-						Namespace: ctx.Namespace,
-						Labels:    labels,
+						Name:        Component,
+						Namespace:   ctx.Namespace,
+						Labels:      labels,
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 					},
 					Spec: corev1.PodSpec{
 						Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
@@ -45,12 +90,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						InitContainers:                []corev1.Container{*common.DatabaseWaiterContainer(ctx)},
+						Volumes:                       volumes,
 						Containers: []corev1.Container{{
-							Name:  Component,
-							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Usage.Version),
-							Args: []string{
-								"run",
-							},
+							Name:            Component,
+							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Usage.Version),
+							Args:            args,
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -62,10 +106,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),
 							},
-							Env: common.MergeEnv(
+							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
 								common.DatabaseEnv(&ctx.Config),
-							),
+							)),
+							VolumeMounts: volumeMounts,
 							LivenessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{

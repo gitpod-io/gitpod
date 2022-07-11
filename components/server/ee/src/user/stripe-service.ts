@@ -7,6 +7,7 @@
 import { inject, injectable } from "inversify";
 import Stripe from "stripe";
 import { Team, User } from "@gitpod/gitpod-protocol";
+import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 import { Config } from "../../../src/config";
 
 @injectable()
@@ -17,10 +18,10 @@ export class StripeService {
 
     protected getStripe(): Stripe {
         if (!this._stripe) {
-            if (!this.config.stripeSettings?.secretKey) {
+            if (!this.config.stripeSecrets?.secretKey) {
                 throw new Error("Stripe is not properly configured");
             }
-            this._stripe = new Stripe(this.config.stripeSettings.secretKey, { apiVersion: "2020-08-27" });
+            this._stripe = new Stripe(this.config.stripeSecrets.secretKey, { apiVersion: "2020-08-27" });
         }
         return this._stripe;
     }
@@ -112,5 +113,33 @@ export class StripeService {
             return_url: this.config.hostUrl.with(() => ({ pathname: `/t/${team.slug}/billing` })).toString(),
         });
         return session.url;
+    }
+
+    async findUncancelledSubscriptionByCustomer(customerId: string): Promise<Stripe.Subscription | undefined> {
+        const result = await this.getStripe().subscriptions.list({
+            customer: customerId,
+        });
+        if (result.data.length > 1) {
+            throw new Error(`Stripe customer '${customerId}') has more than one subscription!`);
+        }
+        return result.data[0];
+    }
+
+    async cancelSubscription(subscriptionId: string): Promise<void> {
+        await this.getStripe().subscriptions.del(subscriptionId);
+    }
+
+    async createSubscriptionForCustomer(customerId: string, currency: Currency): Promise<void> {
+        const priceId = this.config?.stripeConfig?.usageProductPriceIds[currency];
+        if (!priceId) {
+            throw new Error(`No Stripe Price ID configured for currency '${currency}'`);
+        }
+        const startOfNextMonth = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month (YYYY-MM-01)
+        startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1); // Add one month
+        await this.getStripe().subscriptions.create({
+            customer: customerId,
+            items: [{ price: priceId }],
+            billing_cycle_anchor: Math.round(startOfNextMonth.getTime() / 1000),
+        });
     }
 }

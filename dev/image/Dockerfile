@@ -64,8 +64,9 @@ RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/downl
 RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/download/v0.1.11/dazzle_0.1.11_Linux_x86_64.tar.gz | tar xz
 
 # werft CLI
-ENV WERFT_K8S_NAMESPACE=werft
-ENV WERFT_DIAL_MODE=kubernetes
+ENV WERFT_CREDENTIAL_HELPER=/workspace/gitpod/dev/preview/werft-credential-helper.sh
+ENV WERFT_HOST=werft-grpc.gitpod-dev.com:443
+ENV WERFT_TLS_MODE=system
 RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/download/v0.3.3/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
 
 # yq - jq for YAML files
@@ -106,8 +107,8 @@ RUN curl -fsSL -o /usr/bin/toxiproxy https://github.com/Shopify/toxiproxy/releas
 ### libseccomp > 2.5.2
 RUN install-packages gperf \
     && cd $(mktemp -d) \
-    && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.5.2/libseccomp-2.5.2.tar.gz | tar xz \
-    && cd libseccomp-2.5.2 && ./configure && make && make install
+    && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.5.4/libseccomp-2.5.4.tar.gz | tar xz \
+    && cd libseccomp-2.5.4 && ./configure && make && make install
 
 ### Cypress deps
 RUN install-packages \
@@ -148,9 +149,11 @@ RUN sudo chown gitpod: /opt \
     && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-388.0.0-linux-x86_64.tar.gz \
     | tar -xzvC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
-    --additional-components docker-credential-gcr alpha beta \
+    --additional-components gke-gcloud-auth-plugin docker-credential-gcr alpha beta \
     # needed for access to our private registries
     && docker-credential-gcr configure-docker
+
+ENV USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
 # Install tools for gsutil
 RUN sudo install-packages \
@@ -239,8 +242,6 @@ RUN curl -fsSLO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJS
 # Install Replicated and KOTS
 RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/v0.38.0/install.sh | sudo bash && \
     curl https://kots.io/install/1.65.0 | bash
-
-ENV WERFT_CREDENTIAL_HELPER=/workspace/gitpod/dev/preview/werft-credential-helper.sh
 
 # Copy our own tools
 ENV NEW_KUBECDL=1

@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -187,9 +188,46 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 	span.SetTag("gcsObj", obj)
 	defer tracing.FinishSpan(span, &err)
 
-	rc, _, err := rs.ObjectAccess(ctx, bkt, obj)
-	if rc == nil {
-		return false, err
+	backupDir, err := os.MkdirTemp("", "backup-")
+	if err != nil {
+		return true, err
+	}
+	defer os.RemoveAll(backupDir)
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		sa := ""
+		if rs.GCPConfig.CredentialsFile != "" {
+			sa = fmt.Sprintf(`-o "Credentials:gs_service_key_file=%v"`, rs.GCPConfig.CredentialsFile)
+		}
+
+		args := fmt.Sprintf(`gsutil -q -m %v\
+		  -o "GSUtil:sliced_object_download_max_components=8" \
+		  -o "GSUtil:parallel_thread_count=1" \
+		  cp gs://%s %s`, sa, filepath.Join(bkt, obj), backupDir)
+
+		log.WithField("flags", args).Debug("gsutil flags")
+
+		cmd := exec.Command("/bin/bash", []string{"-c", args}...)
+		var out []byte
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file to GCS using gsutil")
+			err = xerrors.Errorf("unexpected error downloading backup")
+			return
+		}
+	}()
+
+	wg.Wait()
+
+	rc, err := os.Open(filepath.Join(backupDir, obj))
+	if err != nil {
+		return true, err
 	}
 	defer rc.Close()
 
@@ -361,45 +399,48 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	uploadSpan.SetTag("bucket", bucket)
 	uploadSpan.SetTag("obj", object)
 
+	err = gcpEnsureExists(ctx, rs.client, bucket, rs.GCPConfig)
+	if err != nil {
+		err = xerrors.Errorf("unexpected error: %w", err)
+		return
+	}
+
 	var firstBackup bool
 	if _, e := obj.Attrs(ctx); e == gcpstorage.ErrObjectNotExist {
 		firstBackup = true
 	}
 
 	var wg sync.WaitGroup
-	var written int64
 
 	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
 
-		wc := obj.NewWriter(ctx)
-		wc.Metadata = options.Annotations
-		wc.ContentType = options.ContentType
-		// Increase chunk size for faster uploading
-		wc.ChunkSize = googleapi.DefaultUploadChunkSize * 4
-
-		written, err = io.Copy(wc, sfn)
-		if err != nil {
-			log.WithError(err).WithField("name", name).Error("Error while uploading file")
-			return
+		sa := ""
+		if rs.GCPConfig.CredentialsFile != "" {
+			sa = fmt.Sprintf(`-o "Credentials:gs_service_key_file=%v"`, rs.GCPConfig.CredentialsFile)
 		}
 
-		// persist changes in GCS
-		err = wc.Close()
+		args := fmt.Sprintf(`gsutil -q -m %v\
+		  -o "GSUtil:parallel_composite_upload_threshold=150M" \
+		  -o "GSUtil:parallel_process_count=3" \
+		  -o "GSUtil:parallel_thread_count=6" \
+		  cp %s gs://%s`, sa, source, filepath.Join(bucket, object))
+
+		log.WithField("flags", args).Debug("gsutil flags")
+
+		cmd := exec.Command("/bin/bash", []string{"-c", args}...)
+		var out []byte
+		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.WithError(err).WithField("name", name).Error("Error while uploading file")
+			log.WithError(err).WithField("out", string(out)).Error("unexpected error uploading file to GCS using gsutil")
+			err = xerrors.Errorf("unexpected error uploading backup")
 			return
 		}
 	}()
 
 	wg.Wait()
-
-	if written != totalSize {
-		err = xerrors.Errorf("Wrote fewer bytes than it should have, %d instead of %d", written, totalSize)
-		return
-	}
 
 	// maintain backup trail if we're asked to - we do this prior to overwriting the regular backup file
 	// to make sure we're trailign the previous backup.

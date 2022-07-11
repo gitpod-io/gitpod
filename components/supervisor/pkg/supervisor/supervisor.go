@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -90,7 +91,8 @@ func AddAPIEndpointOpts(opts ...grpc.ServerOption) {
 }
 
 type runOptions struct {
-	Args []string
+	Args  []string
+	RunGP bool
 }
 
 // RunOption customizes the run behaviour.
@@ -100,6 +102,13 @@ type RunOption func(*runOptions)
 func WithArgs(args []string) RunOption {
 	return func(r *runOptions) {
 		r.Args = args
+	}
+}
+
+// WithRunGP disables some functionality for use with run-gp
+func WithRunGP(enable bool) RunOption {
+	return func(r *runOptions) {
+		r.RunGP = enable
 	}
 }
 
@@ -185,17 +194,21 @@ func Run(options ...RunOption) {
 	}
 
 	tunneledPortsService := ports.NewTunneledPortsService(cfg.DebugEnable)
-	_, err = tunneledPortsService.Tunnel(context.Background(), &ports.TunnelOptions{
-		SkipIfExists: false,
-	}, &ports.PortTunnelDescription{
-		LocalPort:  uint32(cfg.APIEndpointPort),
-		TargetPort: uint32(cfg.APIEndpointPort),
-		Visibility: api.TunnelVisiblity_host,
-	}, &ports.PortTunnelDescription{
-		LocalPort:  uint32(cfg.SSHPort),
-		TargetPort: uint32(cfg.SSHPort),
-		Visibility: api.TunnelVisiblity_host,
-	})
+	_, err = tunneledPortsService.Tunnel(context.Background(),
+		&ports.TunnelOptions{
+			SkipIfExists: false,
+		},
+		&ports.PortTunnelDescription{
+			LocalPort:  uint32(cfg.APIEndpointPort),
+			TargetPort: uint32(cfg.APIEndpointPort),
+			Visibility: api.TunnelVisiblity_host,
+		},
+		&ports.PortTunnelDescription{
+			LocalPort:  uint32(cfg.SSHPort),
+			TargetPort: uint32(cfg.SSHPort),
+			Visibility: api.TunnelVisiblity_host,
+		},
+	)
 	if err != nil {
 		log.WithError(err).Warn("cannot tunnel internal ports")
 	}
@@ -208,25 +221,12 @@ func Run(options ...RunOption) {
 	}
 
 	var (
-		shutdown                           = make(chan ShutdownReason, 1)
-		ideReady                           = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
-		desktopIdeReady     *ideReadyState = nil
-		cstate                             = NewInMemoryContentState(cfg.RepoRoot)
-		gitpodService                      = createGitpodService(cfg, tokenService)
-		gitpodConfigService                = config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
-		portMgmt                           = ports.NewManager(
-			createExposedPortsImpl(cfg, gitpodService),
-			&ports.PollingServedPortsObserver{
-				RefreshInterval: 2 * time.Second,
-			},
-			ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
-			tunneledPortsService,
-			internalPorts...,
-		)
-		termMux             = terminal.NewMux()
-		termMuxSrv          = terminal.NewMuxTerminalService(termMux)
-		taskManager         = newTasksManager(cfg, termMuxSrv, cstate, nil)
-		analytics           = analytics.NewFromEnvironment()
+		ideReady                       = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
+		desktopIdeReady *ideReadyState = nil
+
+		cstate        = NewInMemoryContentState(cfg.RepoRoot)
+		gitpodService = createGitpodService(cfg, tokenService)
+
 		notificationService = NewNotificationService()
 	)
 	if cfg.DesktopIDE != nil {
@@ -237,11 +237,29 @@ func Run(options ...RunOption) {
 	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
+	gitpodConfigService := config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
 	go gitpodConfigService.Watch(ctx)
 
-	defer analytics.Close()
-	go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
+	portMgmt := ports.NewManager(
+		createExposedPortsImpl(cfg, gitpodService),
+		&ports.PollingServedPortsObserver{
+			RefreshInterval: 2 * time.Second,
+		},
+		ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
+		tunneledPortsService,
+		internalPorts...,
+	)
 
+	if opts.RunGP {
+		cstate.MarkContentReady(csapi.WorkspaceInitFromOther)
+	} else {
+		analytics := analytics.NewFromEnvironment()
+		defer analytics.Close()
+		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
+	}
+
+	termMux := terminal.NewMux()
+	termMuxSrv := terminal.NewMuxTerminalService(termMux)
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	if cfg.WorkspaceRoot != "" {
 		termMuxSrv.DefaultWorkdirProvider = func() string {
@@ -260,6 +278,8 @@ func Run(options ...RunOption) {
 		Uid: gitpodUID,
 		Gid: gitpodGID,
 	}
+
+	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil)
 
 	apiServices := []RegisterableService{
 		&statusService{
@@ -286,13 +306,16 @@ func Run(options ...RunOption) {
 
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
-	go startAndWatchIDE(ctx, cfg, &cfg.IDE, childProcEnvvars, &ideWG, ideReady, WebIDE)
+	go startAndWatchIDE(ctx, cfg, &cfg.IDE, childProcEnvvars, &ideWG, cstate, ideReady, WebIDE)
 	if cfg.DesktopIDE != nil {
 		ideWG.Add(1)
-		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, childProcEnvvars, &ideWG, desktopIdeReady, DesktopIDE)
+		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, childProcEnvvars, &ideWG, cstate, desktopIdeReady, DesktopIDE)
 	}
 
-	var wg sync.WaitGroup
+	var (
+		wg       sync.WaitGroup
+		shutdown = make(chan ShutdownReason, 1)
+	)
 	wg.Add(1)
 	go startContentInit(ctx, cfg, &wg, cstate)
 	wg.Add(1)
@@ -308,7 +331,7 @@ func Run(options ...RunOption) {
 	if cfg.isHeadless() {
 		wg.Add(1)
 		go stopWhenTasksAreDone(ctx, &wg, shutdown, tasksSuccessChan)
-	} else {
+	} else if !opts.RunGP {
 		wg.Add(1)
 		go portMgmt.Run(ctx, &wg)
 	}
@@ -324,7 +347,7 @@ func Run(options ...RunOption) {
 		}()
 	}
 
-	if !cfg.isHeadless() {
+	if !cfg.isHeadless() && !opts.RunGP {
 		go func() {
 			for _, repoRoot := range strings.Split(cfg.RepoRoots, ",") {
 				<-cstate.ContentReady()
@@ -333,6 +356,10 @@ func Run(options ...RunOption) {
 				defer func() {
 					log.Debugf("unshallow of local repository took %v", time.Since(start))
 				}()
+
+				if !isShallowRepository(repoRoot, childProcEnvvars) {
+					return
+				}
 
 				cmd := runAsGitpodUser(exec.Command("git", "fetch", "--unshallow", "--tags"))
 				cmd.Env = childProcEnvvars
@@ -367,6 +394,25 @@ func Run(options ...RunOption) {
 	terminateChildProcesses()
 
 	wg.Wait()
+}
+
+func isShallowRepository(rootDir string, env []string) bool {
+	cmd := runAsGitpodUser(exec.Command("git", "rev-parse", "--is-shallow-repository"))
+	cmd.Env = env
+	cmd.Dir = rootDir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.WithError(err).Error("unexpected error checking if git repository is shallow")
+		return true
+	}
+
+	isShallow, err := strconv.ParseBool(strings.TrimSpace(string(out)))
+	if err != nil {
+		log.WithError(err).WithField("input", string(out)).Error("unexpected error parsing bool")
+		return true
+	}
+
+	return isShallow
 }
 
 func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTokenService, childProcEnvvars []string) {
@@ -675,7 +721,11 @@ const (
 	statusShouldShutdown
 )
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, ideReady *ideReadyState, ide IDEKind) {
+var (
+	errSignalTerminated = errors.New("signal: terminated")
+)
+
+func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind) {
 	defer wg.Done()
 	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
 
@@ -683,6 +733,9 @@ func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, ch
 		ideReady.Set(true, nil)
 		return
 	}
+
+	// Wait until content ready to launch IDE
+	<-cstate.ContentReady()
 
 	ideStatus := statusNeverRan
 
@@ -764,7 +817,9 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 
 		err = cmd.Wait()
 		if err != nil {
-			log.WithField("ide", ide.String()).WithError(err).Warn("IDE was stopped")
+			if errSignalTerminated.Error() != err.Error() {
+				log.WithField("ide", ide.String()).WithError(err).Warn("IDE was stopped")
+			}
 
 			ideWasReady, _ := ideReady.Get()
 			if !ideWasReady {
@@ -1070,20 +1125,23 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		return true
 	}))
 
-	ms := storage.NewDiskMetricStore("", time.Minute*5, prometheus.DefaultGatherer, nil)
-	g := prometheus.Gatherers{
-		prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) { return ms.GetMetricFamilies(), nil }),
-	}
-	r := route.New()
+	metricStore := storage.NewDiskMetricStore("", time.Minute*5, prometheus.DefaultGatherer, nil)
+	metricsGatherer := prometheus.Gatherers{prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) {
+		return metricStore.GetMetricFamilies(), nil
+	})}
 
-	r.Get("/metrics", promhttp.HandlerFor(g, promhttp.HandlerOpts{}).ServeHTTP)
-	r.Put("/metrics/job/:job/*labels", handler.Push(ms, true, true, false, nil))
-	r.Post("/metrics/job/:job/*labels", handler.Push(ms, false, true, false, nil))
-	r.Del("/metrics/job/:job/*labels", handler.Delete(ms, false, nil))
-	r.Put("/metrics/job/:job", handler.Push(ms, true, true, false, nil))
-	r.Post("/metrics/job/:job", handler.Push(ms, false, true, false, nil))
+	metrics := route.New()
+	metrics.Get("/", promhttp.HandlerFor(metricsGatherer, promhttp.HandlerOpts{}).ServeHTTP)
+	metrics.Put("/job/:job/*labels", handler.Push(metricStore, true, true, false, nil))
+	metrics.Post("/job/:job/*labels", handler.Push(metricStore, false, true, false, nil))
+	metrics.Del("/job/:job/*labels", handler.Delete(metricStore, false, nil))
+	metrics.Put("/job/:job", handler.Push(metricStore, true, true, false, nil))
+	metrics.Post("/job/:job", handler.Push(metricStore, false, true, false, nil))
+	routes.Handle("/metrics", metrics)
 
-	routes.Handle("/", r)
+	ideURL, _ := url.Parse(fmt.Sprintf("http://localhost:%d", cfg.IDEPort))
+	routes.Handle("/", httputil.NewSingleHostReverseProxy(ideURL))
+	routes.Handle("/_supervisor/frontend/", http.StripPrefix("/_supervisor/frontend", http.FileServer(http.Dir(cfg.StaticConfig.FrontendLocation))))
 
 	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") ||
@@ -1234,7 +1292,8 @@ func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup, childP
 			log.WithError(err).Error("err creating SSH server")
 			return
 		}
-
+		configureSSHDefaultDir(cfg)
+		configureSSHMessageOfTheDay()
 		err = ssh.listenAndServe()
 		if err != nil {
 			log.WithError(err).Error("err starting SSH server")
@@ -1268,8 +1327,11 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		log.Info("Detected content.json in /.workspace folder, assuming PVC feature enabled")
 	}
 	f, err := os.Open(fn)
-	if os.IsNotExist(err) {
-		log.WithError(err).Info("no content init descriptor found - not trying to run it")
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.WithError(err).Error("cannot open init descriptor")
+			return
+		}
 
 		// If there is no content descriptor the content must have come from somewhere (i.e. a layer or ws-daemon).
 		// Let's wait for that to happen.
@@ -1298,10 +1360,6 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		}
 
 		err = nil
-		return
-	}
-	if err != nil {
-		log.WithError(err).Error("cannot open init descriptor")
 		return
 	}
 

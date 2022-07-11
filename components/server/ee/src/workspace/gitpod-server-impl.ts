@@ -66,9 +66,11 @@ import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { LicenseDB } from "@gitpod/gitpod-db/lib";
 import { ResourceAccessGuard } from "../../../src/auth/resource-access";
 import { AccountStatement, CreditAlert, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
+import { BillableSession, billableSessionDummyData } from "@gitpod/gitpod-protocol/lib/usage";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -76,7 +78,7 @@ import {
     TeamSubscriptionSlot,
     TeamSubscriptionSlotResolved,
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import { Currency, Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import * as pThrottle from "p-throttle";
 import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
 import { FindUserByIdentityStrResult, UserService } from "../../../src/user/user-service";
@@ -102,7 +104,7 @@ import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/webs
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
-import { getExperimentsClient } from "../../../src/experiments";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -356,7 +358,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (!runningInstance) {
             log.warn({ userId: user.id, workspaceId }, "Can only get keep-alive for running workspaces");
-            return { duration: WORKSPACE_TIMEOUT_DEFAULT_SHORT, canChange };
+            const duration = WORKSPACE_TIMEOUT_DEFAULT_SHORT;
+            return { duration, durationRaw: this.userService.workspaceTimeoutToDuration(duration), canChange };
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
 
@@ -366,7 +369,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
         const desc = await client.describeWorkspace(ctx, req);
         const duration = this.userService.durationToWorkspaceTimeout(desc.getStatus()!.getSpec()!.getTimeout());
-        return { duration, canChange };
+        const durationRaw = this.userService.workspaceTimeoutToDuration(duration);
+
+        return { duration, durationRaw, canChange };
     }
 
     public async isPrebuildDone(ctx: TraceContext, pwsId: string): Promise<boolean> {
@@ -588,7 +593,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         (await Promise.all(workspaces.map((workspace) => workspaceDb.findRunningInstance(workspace.id))))
             .filter(isDefined)
             .forEach((instance) =>
-                this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, StopWorkspacePolicy.IMMEDIATELY),
+                this.workspaceStarter.stopWorkspaceInstance(
+                    ctx,
+                    instance.id,
+                    instance.region,
+                    StopWorkspacePolicy.IMMEDIATELY,
+                ),
             );
 
         // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
@@ -605,6 +615,59 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         try {
             await this.userDeletionService.deleteUser(userId);
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
+    async adminGetBlockedRepositories(
+        ctx: TraceContext,
+        req: AdminGetListRequest<BlockedRepository>,
+    ): Promise<AdminGetListResult<BlockedRepository>> {
+        traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
+        await this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminGetBlockedRepositories", { req }, Permission.ADMIN_USERS);
+
+        try {
+            const res = await this.blockedRepostoryDB.findAllBlockedRepositories(
+                req.offset,
+                req.limit,
+                req.orderBy,
+                req.orderDir === "asc" ? "ASC" : "DESC",
+                req.searchTerm,
+            );
+            return res;
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
+    async adminCreateBlockedRepository(
+        ctx: TraceContext,
+        urlRegexp: string,
+        blockUser: boolean,
+    ): Promise<BlockedRepository> {
+        traceAPIParams(ctx, { urlRegexp, blockUser });
+        await this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminCreateBlockedRepository", { urlRegexp, blockUser }, Permission.ADMIN_USERS);
+
+        try {
+            return await this.blockedRepostoryDB.createBlockedRepository(urlRegexp, blockUser);
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
+    async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<boolean> {
+        traceAPIParams(ctx, { id });
+        await this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
+
+        try {
+            return await this.blockedRepostoryDB.deleteBlockedRepository(id);
         } catch (e) {
             throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
@@ -886,6 +949,34 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
                     return;
                 }
+
+                // (AT) At this point we found a running/building prebuild, which might also include
+                // image build in current state.
+                //
+                // The owner's client connection is automatically registered to listen on instance updates.
+                // For the remaining client connections which would handle `createWorkspace` and end up here, it
+                // also would be reasonable to listen on the instance updates of a running prebuild, or image build.
+                //
+                // We need to be forwarded the WorkspaceInstanceUpdates in the frontend, because we do not have
+                // any other means to reliably learn about the status about image builds, yet.
+                // Once we have those, we should remove this.
+                //
+                const ws = await this.workspaceDb.trace(ctx).findById(workspaceID);
+                if (!!ws && !!wsi && ws.ownerId !== this.user?.id) {
+                    const resetListener = this.localMessageBroker.listenForWorkspaceInstanceUpdates(
+                        ws.ownerId,
+                        (ctx, instance) => {
+                            if (instance.id === wsi.id) {
+                                this.forwardInstanceUpdateToClient(ctx, instance);
+                                if (instance.status.phase === "stopped") {
+                                    resetListener.dispose();
+                                }
+                            }
+                        },
+                    );
+                    this.disposables.push(resetListener);
+                }
+
                 const result = makeResult(wsi.id);
 
                 const inSameCluster = wsi.region === this.config.installationShortname;
@@ -1397,44 +1488,64 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     protected async onTeamMemberAdded(userId: string, teamId: string): Promise<void> {
         const now = new Date();
-        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
-        if (!teamSubscription) {
-            // No team subscription, nothing to do 🌴
-            return;
+        const ts2 = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (ts2) {
+            await this.updateTeamSubscriptionQuantity(ts2);
+            await this.teamSubscription2Service.addTeamMemberSubscription(ts2, userId);
         }
-        await this.updateTeamSubscriptionQuantity(teamSubscription);
-        await this.teamSubscription2Service.addTeamMemberSubscription(teamSubscription, userId);
+        const [teamCustomer, user] = await Promise.all([
+            this.stripeService.findCustomerByTeamId(teamId),
+            this.userDB.findUserById(userId),
+        ]);
+        if (teamCustomer && user && !user.additionalData?.usageAttributionId) {
+            // If the user didn't explicitly choose yet where their usage should be attributed to, and
+            // they join a team which accepts usage attribution (i.e. with usage-based billing enabled),
+            // then we simplify the UX by automatically attributing the user's usage to that team.
+            // Note: This default choice can be changed at any time by the user in their billing settings.
+            const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(teamCustomer.id);
+            if (subscription) {
+                user.additionalData = user.additionalData || {};
+                user.additionalData.usageAttributionId = `team:${teamId}`;
+                await this.userDB.updateUserPartial(user);
+            }
+        }
     }
 
     protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
         const now = new Date();
-        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
-        if (!teamSubscription) {
-            // No team subscription, nothing to do 🌴
-            return;
+        const ts2 = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (ts2) {
+            await this.updateTeamSubscriptionQuantity(ts2);
+            await this.teamSubscription2Service.cancelTeamMemberSubscription(ts2, userId, teamMembershipId, now);
         }
-        await this.updateTeamSubscriptionQuantity(teamSubscription);
-        await this.teamSubscription2Service.cancelTeamMemberSubscription(
-            teamSubscription,
-            userId,
-            teamMembershipId,
-            now,
-        );
+        const user = await this.userDB.findUserById(userId);
+        if (user && user.additionalData?.usageAttributionId === `team:${teamId}`) {
+            // If the user previously attributed all their usage to a given team, but they are now leaving this
+            // team, then the currently selected usage attribution ID is no longer valid. In this case, we must
+            // reset this ID to the default value.
+            user.additionalData.usageAttributionId = undefined;
+            await this.userDB.updateUserPartial(user);
+        }
     }
 
     protected async onTeamDeleted(teamId: string): Promise<void> {
         const now = new Date();
-        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
-        if (!teamSubscription) {
-            // No team subscription, nothing to do 🌴
-            return;
+        const ts2 = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (ts2) {
+            const chargebeeSubscriptionId = ts2.paymentReference;
+            await this.chargebeeService.cancelSubscription(
+                chargebeeSubscriptionId,
+                {},
+                { teamId, chargebeeSubscriptionId },
+            );
         }
-        const chargebeeSubscriptionId = teamSubscription.paymentReference;
-        await this.chargebeeService.cancelSubscription(
-            chargebeeSubscriptionId,
-            {},
-            { teamId, chargebeeSubscriptionId },
-        );
+        const teamCustomer = await this.stripeService.findCustomerByTeamId(teamId);
+        if (teamCustomer) {
+            const subsciption = await this.stripeService.findUncancelledSubscriptionByCustomer(teamCustomer.id);
+            if (subsciption) {
+                await this.stripeService.cancelSubscription(subsciption.id);
+            }
+        }
     }
 
     protected async updateTeamSubscriptionQuantity(teamSubscription: TeamSubscription2): Promise<void> {
@@ -1832,15 +1943,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     protected async ensureIsUsageBasedFeatureFlagEnabled(user: User): Promise<void> {
         const teams = await this.teamDB.findTeamsByUser(user.id);
-        const isUsageBasedBillingEnabled = await getExperimentsClient().getValueAsync(
+        const isUsageBasedBillingEnabled = await getExperimentsClientForBackend().getValueAsync(
             "isUsageBasedBillingEnabled",
             false,
             {
-                identifier: user.id,
-                custom: {
-                    team_ids: teams.map((t) => t.id).join(","),
-                    team_names: teams.map((t) => t.name).join(","),
-                },
+                user,
+                teams: teams,
             },
         );
         if (!isUsageBasedBillingEnabled) {
@@ -1851,7 +1959,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async getStripePublishableKey(ctx: TraceContext): Promise<string> {
         const user = this.checkAndBlockUser("getStripePublishableKey");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
-        const publishableKey = this.config.stripeSettings?.publishableKey;
+        const publishableKey = this.config.stripeSecrets?.publishableKey;
         if (!publishableKey) {
             throw new ResponseError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
@@ -1876,30 +1984,56 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async findStripeCustomerIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
-        const user = this.checkAndBlockUser("findStripeCustomerIdForTeam");
+    async findStripeSubscriptionIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
+        const user = this.checkAndBlockUser("findStripeSubscriptionIdForTeam");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
-        await this.guardTeamOperation(teamId, "update");
+        await this.guardTeamOperation(teamId, "get");
         try {
             const customer = await this.stripeService.findCustomerByTeamId(teamId);
-            return customer?.id || undefined;
+            if (!customer?.id) {
+                return undefined;
+            }
+            const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(customer.id);
+            return subscription?.id;
         } catch (error) {
-            log.error(`Failed to get Stripe Customer ID for team '${teamId}'`, error);
+            log.error(`Failed to get Stripe Subscription ID for team '${teamId}'`, error);
             throw new ResponseError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
-                `Failed to get Stripe Customer ID for team '${teamId}'`,
+                `Failed to get Stripe Subscription ID for team '${teamId}'`,
             );
         }
     }
 
-    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
+    async subscribeTeamToStripe(
+        ctx: TraceContext,
+        teamId: string,
+        setupIntentId: string,
+        currency: Currency,
+    ): Promise<void> {
         const user = this.checkAndBlockUser("subscribeUserToStripe");
         await this.ensureIsUsageBasedFeatureFlagEnabled(user);
         await this.guardTeamOperation(teamId, "update");
         const team = await this.teamDB.findTeamById(teamId);
         try {
-            await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
-            // TODO(janx): Create a Stripe usage-based Subscription for the customer
+            let customer = await this.stripeService.findCustomerByTeamId(team!.id);
+            if (!customer) {
+                customer = await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
+            }
+            await this.stripeService.createSubscriptionForCustomer(customer.id, currency);
+            // For all team members that didn't explicitly choose yet where their usage should be attributed to,
+            // we simplify the UX by automatically attributing their usage to this recently-upgraded team.
+            // Note: This default choice can be changed at any time by members in their personal billing settings.
+            const members = await this.teamDB.findMembersByTeam(teamId);
+            await Promise.all(
+                members.map(async (m) => {
+                    const u = await this.userDB.findUserById(m.userId);
+                    if (u && !u.additionalData?.usageAttributionId) {
+                        u.additionalData = u.additionalData || {};
+                        u.additionalData.usageAttributionId = `team:${teamId}`;
+                        await this.userDB.updateUserPartial(u);
+                    }
+                }),
+            );
         } catch (error) {
             log.error(`Failed to subscribe team '${teamId}' to Stripe`, error);
             throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, `Failed to subscribe team '${teamId}' to Stripe`);
@@ -1921,6 +2055,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 `Failed to get Stripe portal URL for team '${teamId}'`,
             );
         }
+    }
+
+    async getBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
+        return billableSessionDummyData;
     }
 
     // (SaaS) – admin

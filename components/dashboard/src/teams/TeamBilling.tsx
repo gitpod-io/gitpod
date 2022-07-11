@@ -31,7 +31,7 @@ export default function TeamBilling() {
     const team = getCurrentTeam(location, teams);
     const [members, setMembers] = useState<TeamMemberInfo[]>([]);
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
-    const { showPaymentUI, currency, setCurrency } = useContext(PaymentContext);
+    const { showPaymentUI, showUsageBasedUI, currency, setCurrency } = useContext(PaymentContext);
     const [pendingTeamPlan, setPendingTeamPlan] = useState<PendingPlan | undefined>();
     const [pollTeamSubscriptionTimeout, setPollTeamSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
 
@@ -140,16 +140,16 @@ export default function TeamBilling() {
 
     return (
         <PageWithSubMenu
-            subMenu={getTeamSettingsMenu({ team, showPaymentUI })}
+            subMenu={getTeamSettingsMenu({ team, showPaymentUI, showUsageBasedUI })}
             title="Billing"
             subtitle="Manage team billing and plans."
         >
             <TeamUsageBasedBilling />
-            <h3>{!teamPlan ? "Upgrade Team Plan" : "Team Plan"}</h3>
+            <h3>{!teamPlan ? "Select Team Plan" : "Team Plan"}</h3>
             <h2 className="text-gray-500">
                 {!teamPlan ? (
                     <div className="flex space-x-1">
-                        <span>Upgrade team plan to access unlimited workspace hours, and more. Currency:</span>
+                        <span>Currency:</span>
                         <DropDown
                             customClasses="w-32"
                             renderAsLink={true}
@@ -217,7 +217,7 @@ export default function TeamBilling() {
                                         </div>
                                         <div className="flex-grow flex flex-col items-stretch justify-end">
                                             <button className="m-0" onClick={() => checkout(tp)}>
-                                                Upgrade to {tp.name}
+                                                Select {tp.name}
                                             </button>
                                         </div>
                                     </div>
@@ -288,6 +288,12 @@ export default function TeamBilling() {
                         )}
                     </>
                 )}
+            </div>
+            <div className="mt-4 text-gray-500">
+                Team Billing automatically adds all members to the plan.{" "}
+                <a href="https://www.gitpod.io/docs/team-billing" rel="noopener" className="gp-link">
+                    Learn more
+                </a>
             </div>
         </PageWithSubMenu>
     );
