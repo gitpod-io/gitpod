@@ -59,7 +59,7 @@ export const apiCallDurationHistogram = new prometheusClient.Histogram({
     name: "gitpod_server_api_calls_duration_seconds",
     help: "Duration of API calls in seconds",
     labelNames: ["method"],
-    buckets: [0.01, 0.05, 0.1, 0.5, 1, 5, 10],
+    buckets: [0.1, 0.5, 1, 5, 10, 15, 30],
     registers: [prometheusClient.register],
 });
 
