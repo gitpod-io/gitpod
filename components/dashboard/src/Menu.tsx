@@ -15,7 +15,7 @@ import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { UserContext } from "./user-context";
 import { TeamsContext, getCurrentTeam } from "./teams/teams-context";
 import getSettingsMenu from "./settings/settings-menu";
-import { adminMenu } from "./admin/admin-menu";
+import { getAdminMenu } from "./admin/admin-menu";
 import ContextMenu from "./components/ContextMenu";
 import Separator from "./components/Separator";
 import PillMenuItem from "./components/PillMenuItem";
@@ -26,6 +26,7 @@ import { ProjectContext } from "./projects/project-context";
 import { PaymentContext } from "./payment-context";
 import FeedbackFormModal from "./feedback-form/FeedbackModal";
 import { inResource, isGitpodIo } from "./utils";
+import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 import { getExperimentsClient } from "./experiments/client";
 
 interface Entry {
@@ -48,6 +49,7 @@ export default function Menu() {
         setIsStudent,
         setIsChargebeeCustomer,
     } = useContext(PaymentContext);
+    const { isBlockedRepositoriesUIEnabled } = useContext(FeatureFlagContext);
     const { project, setProject } = useContext(ProjectContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
@@ -246,7 +248,7 @@ export default function Menu() {
                   {
                       title: "Admin",
                       link: "/admin",
-                      alternatives: adminMenu.flatMap((e) => e.link),
+                      alternatives: getAdminMenu(isBlockedRepositoriesUIEnabled).flatMap((e) => e.link),
                   },
               ]
             : []),

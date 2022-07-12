@@ -48,6 +48,7 @@ import { parseProps } from "./start/StartWorkspace";
 import SelectIDEModal from "./settings/SelectIDEModal";
 import { StartPage, StartPhase } from "./start/StartPage";
 import { isGitpodIo } from "./utils";
+import { BlockedRepositorySettings } from "./admin/BlockedRepositorySettings";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -364,6 +365,7 @@ function App() {
                     <AdminRoute path="/admin/teams" component={TeamsSearch} />
                     <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
                     <AdminRoute path="/admin/projects" component={ProjectsSearch} />
+                    <AdminRoute path="/admin/blocked-repositories" component={BlockedRepositorySettings} />
                     <AdminRoute path="/admin/license" component={License} />
                     <AdminRoute path="/admin/settings" component={AdminSettings} />
 

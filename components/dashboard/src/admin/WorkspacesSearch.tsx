@@ -19,12 +19,11 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
 import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEntry";
-import { adminMenu } from "./admin-menu";
 import WorkspaceDetail from "./WorkspaceDetail";
 import info from "../images/info.svg";
+import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 
 interface Props {
     user?: User;
@@ -32,9 +31,9 @@ interface Props {
 
 export default function WorkspaceSearchPage() {
     return (
-        <PageWithSubMenu subMenu={adminMenu} title="Workspaces" subtitle="Search and manage all workspaces.">
+        <PageWithAdminSubMenu title="Workspaces" subtitle="Search and manage all workspaces.">
             <WorkspaceSearch />
-        </PageWithSubMenu>
+        </PageWithAdminSubMenu>
     );
 }
 
