@@ -56,26 +56,30 @@ func (i *WorkspaceInstance) TableName() string {
 // - running
 // - instances which only just terminated after the start period
 // - instances which only just started in the period specified
-//func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstance, error) {
-//	var instances []WorkspaceInstance
-//	var instancesInBatch []WorkspaceInstance
-//	tx := conn.WithContext(ctx).
-//		Where(
-//			conn.Where("stoppedTime >= ?", TimeToISO8601(from)).Or("stoppedTime = ?", ""),
-//		).
-//		Where("creationTime < ?", TimeToISO8601(to)).
-//		Where("startedTime != ?", "").
-//		Where("usageAttributionId != ?", "").
-//		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
-//			instances = append(instances, instancesInBatch...)
-//			return nil
-//		})
-//	if tx.Error != nil {
-//		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
-//	}
-//
-//	return instances, nil
-//}
+func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstanceForUsage, error) {
+	var instances []WorkspaceInstanceForUsage
+	var instancesInBatch []WorkspaceInstanceForUsage
+
+	tx := conn.WithContext(ctx).
+		Table(fmt.Sprintf("%s as wsi", (&WorkspaceInstance{}).TableName())).
+		Select("wsi.id as id, ws.projectId as projectId, ws.type as workspaceType, wsi.workspaceClass as workspaceClass, wsi.usageAttributionId as usageAttributionId, wsi.stoppedTime as stoppedTime, wsi.creationTime as creationTime").
+		Joins(fmt.Sprintf("LEFT JOIN %s AS ws ON wsi.workspaceId = ws.id", (&Workspace{}).TableName())).
+		Where(
+			conn.Where("wsi.stoppedTime >= ?", TimeToISO8601(from)).Or("wsi.stoppedTime = ?", ""),
+		).
+		Where("wsi.creationTime < ?", TimeToISO8601(to)).
+		Where("wsi.startedTime != ?", "").
+		Where("wsi.usageAttributionId != ?", "").
+		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
+			instances = append(instances, instancesInBatch...)
+			return nil
+		})
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
+	}
+
+	return instances, nil
+}
 
 const (
 	AttributionEntity_User = "user"
@@ -135,29 +139,4 @@ func (i *WorkspaceInstanceForUsage) WorkspaceRuntimeSeconds(maxStopTime time.Tim
 	}
 
 	return int64(stop.Sub(start).Round(time.Second).Seconds())
-}
-
-func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstanceForUsage, error) {
-	var instances []WorkspaceInstanceForUsage
-	var instancesInBatch []WorkspaceInstanceForUsage
-
-	tx := conn.WithContext(ctx).
-		Table(fmt.Sprintf("%s as wsi", (&WorkspaceInstance{}).TableName())).
-		Select("wsi.id as id, ws.projectId as projectId, ws.type as workspaceType, wsi.workspaceClass as workspaceClass, wsi.usageAttributionId as usageAttributionId, wsi.stoppedTime as stoppedTime, wsi.creationTime as creationTime").
-		Joins(fmt.Sprintf("LEFT JOIN %s AS ws ON wsi.workspaceId = ws.id", (&Workspace{}).TableName())).
-		Where(
-			conn.Where("wsi.stoppedTime >= ?", TimeToISO8601(from)).Or("wsi.stoppedTime = ?", ""),
-		).
-		Where("wsi.creationTime < ?", TimeToISO8601(to)).
-		Where("wsi.startedTime != ?", "").
-		Where("wsi.usageAttributionId != ?", "").
-		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
-			instances = append(instances, instancesInBatch...)
-			return nil
-		})
-	if tx.Error != nil {
-		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
-	}
-
-	return instances, nil
 }
