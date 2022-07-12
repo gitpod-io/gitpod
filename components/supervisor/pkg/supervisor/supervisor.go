@@ -1130,14 +1130,14 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		return metricStore.GetMetricFamilies(), nil
 	})}
 
-	metrics := route.New()
-	metrics.Get("/", promhttp.HandlerFor(metricsGatherer, promhttp.HandlerOpts{}).ServeHTTP)
+	metrics := route.New().WithPrefix("/metrics")
 	metrics.Put("/job/:job/*labels", handler.Push(metricStore, true, true, false, nil))
 	metrics.Post("/job/:job/*labels", handler.Push(metricStore, false, true, false, nil))
 	metrics.Del("/job/:job/*labels", handler.Delete(metricStore, false, nil))
 	metrics.Put("/job/:job", handler.Push(metricStore, true, true, false, nil))
 	metrics.Post("/job/:job", handler.Push(metricStore, false, true, false, nil))
-	routes.Handle("/metrics", metrics)
+	routes.Handle("/metrics", promhttp.HandlerFor(metricsGatherer, promhttp.HandlerOpts{}))
+	routes.Handle("/metrics/", metrics)
 
 	ideURL, _ := url.Parse(fmt.Sprintf("http://localhost:%d", cfg.IDEPort))
 	routes.Handle("/", httputil.NewSingleHostReverseProxy(ideURL))
