@@ -51,6 +51,10 @@ pod:
   - name: fluent-bit-external
     secret:
       secretName: fluent-bit-external
+  - name: github-token-gitpod-bot
+    secret:
+      defaultMode: 420
+      secretName: github-token-gitpod-bot
   # - name: deploy-key
   #   secret:
   #     secretName: deploy-key
@@ -112,6 +116,8 @@ pod:
       mountPath: /mnt/secrets/harvester-k3s-dockerhub-pull-account
     - name: fluent-bit-external
       mountPath: /mnt/fluent-bit-external
+    - mountPath: /mnt/secrets/github-token-gitpod-bot
+      name: github-token-gitpod-bot
     # - name: deploy-key
     #   mountPath: /mnt/secrets/deploy-key
     #   readOnly: true
@@ -131,8 +137,6 @@ pod:
       value: http://athens-athens-proxy.athens.svc.cluster.local:9999
     - name: GOCACHE
       value: /go-build-cache
-    - name: WERFT_HOST
-      value: "werft.werft.svc.cluster.local:7777"
     - name: NODENAME
       valueFrom:
         fieldRef:
@@ -212,6 +216,11 @@ pod:
         secretKeyRef:
           name: replicated
           key: token
+    # Used by the Werft CLI through werft-credential-helper.sh
+    - name: WERFT_GITHUB_TOKEN_PATH
+      value: "/mnt/secrets/github-token-gitpod-bot/token"
+    - name: WERFT_CREDENTIAL_HELPER
+      value: "/workspace/dev/preview/werft-credential-helper.sh"
     command:
       - bash
       - -c
