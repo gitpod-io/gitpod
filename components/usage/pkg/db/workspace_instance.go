@@ -45,21 +45,6 @@ type WorkspaceInstance struct {
 	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
-// WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.
-// If the instance is still running (no stop time set), maxStopTime is used to to compute the duration - this is an upper bound on stop
-func (i *WorkspaceInstance) WorkspaceRuntimeSeconds(maxStopTime time.Time) int64 {
-	start := i.CreationTime.Time()
-	stop := maxStopTime
-
-	if i.StoppedTime.IsSet() {
-		if i.StoppedTime.Time().Before(maxStopTime) {
-			stop = i.StoppedTime.Time()
-		}
-	}
-
-	return int64(stop.Sub(start).Round(time.Second).Seconds())
-}
-
 // TableName sets the insert table name for this struct type
 func (i *WorkspaceInstance) TableName() string {
 	return "d_b_workspace_instance"
@@ -71,26 +56,26 @@ func (i *WorkspaceInstance) TableName() string {
 // - running
 // - instances which only just terminated after the start period
 // - instances which only just started in the period specified
-func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstance, error) {
-	var instances []WorkspaceInstance
-	var instancesInBatch []WorkspaceInstance
-	tx := conn.WithContext(ctx).
-		Where(
-			conn.Where("stoppedTime >= ?", TimeToISO8601(from)).Or("stoppedTime = ?", ""),
-		).
-		Where("creationTime < ?", TimeToISO8601(to)).
-		Where("startedTime != ?", "").
-		Where("usageAttributionId != ?", "").
-		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
-			instances = append(instances, instancesInBatch...)
-			return nil
-		})
-	if tx.Error != nil {
-		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
-	}
-
-	return instances, nil
-}
+//func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstance, error) {
+//	var instances []WorkspaceInstance
+//	var instancesInBatch []WorkspaceInstance
+//	tx := conn.WithContext(ctx).
+//		Where(
+//			conn.Where("stoppedTime >= ?", TimeToISO8601(from)).Or("stoppedTime = ?", ""),
+//		).
+//		Where("creationTime < ?", TimeToISO8601(to)).
+//		Where("startedTime != ?", "").
+//		Where("usageAttributionId != ?", "").
+//		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
+//			instances = append(instances, instancesInBatch...)
+//			return nil
+//		})
+//	if tx.Error != nil {
+//		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
+//	}
+//
+//	return instances, nil
+//}
 
 const (
 	AttributionEntity_User = "user"
@@ -125,3 +110,54 @@ func (a AttributionID) Values() (entity string, identifier string) {
 const (
 	WorkspaceClass_Default = "default"
 )
+
+type WorkspaceInstanceForUsage struct {
+	ID                 uuid.UUID      `gorm:"column:id;type:char;size:36;" json:"id"`
+	ProjectID          sql.NullString `gorm:"column:projectId;type:char;size:36;" json:"projectId"`
+	WorkspaceClass     string         `gorm:"column:workspaceClass;type:varchar;size:255;" json:"workspaceClass"`
+	Type               WorkspaceType  `gorm:"column:workspaceType;type:char;size:16;default:regular;" json:"workspaceType"`
+	UsageAttributionID AttributionID  `gorm:"column:usageAttributionId;type:varchar;size:60;" json:"usageAttributionId"`
+
+	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	StoppedTime  VarcharTime `gorm:"column:stoppedTime;type:varchar;size:255;" json:"stoppedTime"`
+}
+
+// WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.
+// If the instance is still running (no stop time set), maxStopTime is used to to compute the duration - this is an upper bound on stop
+func (i *WorkspaceInstanceForUsage) WorkspaceRuntimeSeconds(maxStopTime time.Time) int64 {
+	start := i.CreationTime.Time()
+	stop := maxStopTime
+
+	if i.StoppedTime.IsSet() {
+		if i.StoppedTime.Time().Before(maxStopTime) {
+			stop = i.StoppedTime.Time()
+		}
+	}
+
+	return int64(stop.Sub(start).Round(time.Second).Seconds())
+}
+
+func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstanceForUsage, error) {
+	var instances []WorkspaceInstanceForUsage
+	var instancesInBatch []WorkspaceInstanceForUsage
+
+	tx := conn.WithContext(ctx).
+		Table(fmt.Sprintf("%s as wsi", (&WorkspaceInstance{}).TableName())).
+		Select("wsi.id as id, ws.projectId as projectId, ws.type as workspaceType, wsi.workspaceClass as workspaceClass, wsi.usageAttributionId as usageAttributionId, wsi.stoppedTime as stoppedTime, wsi.creationTime as creationTime").
+		Joins(fmt.Sprintf("LEFT JOIN %s AS ws ON wsi.workspaceId = ws.id", (&Workspace{}).TableName())).
+		Where(
+			conn.Where("wsi.stoppedTime >= ?", TimeToISO8601(from)).Or("wsi.stoppedTime = ?", ""),
+		).
+		Where("wsi.creationTime < ?", TimeToISO8601(to)).
+		Where("wsi.startedTime != ?", "").
+		Where("wsi.usageAttributionId != ?", "").
+		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
+			instances = append(instances, instancesInBatch...)
+			return nil
+		})
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
+	}
+
+	return instances, nil
+}
