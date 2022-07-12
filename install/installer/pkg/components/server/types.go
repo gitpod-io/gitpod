@@ -50,7 +50,8 @@ type ConfigSerialized struct {
 	CodeSync                   CodeSync                   `json:"codeSync"`
 	// PrebuildLimiter defines the number of prebuilds allowed for each cloneURL in a given 1 minute interval
 	// Key of "*" defines the default limit, unless there exists a cloneURL in the map which overrides it.
-	PrebuildLimiter map[string]int `json:"prebuildLimiter"`
+	PrebuildLimiter  map[string]int   `json:"prebuildLimiter"`
+	WorkspaceClasses WorkspaceClasses `json:"workspaceClasses"`
 }
 type CodeSyncResources struct {
 	RevLimit int32 `json:"revLimit"`
@@ -125,6 +126,11 @@ type WorkspaceDefaults struct {
 	DefaultFeatureFlags []NamedWorkspaceFeatureFlag `json:"defaultFeatureFlags"`
 	TimeoutDefault      *util.Duration              `json:"timeoutDefault,omitempty"`
 	TimeoutExtended     *util.Duration              `json:"timeoutExtended,omitempty"`
+}
+
+type WorkspaceClasses struct {
+	Default              string `json:"default"`
+	DefaultMoreResources string `json:"defaultMoreResources"`
 }
 
 type NamedWorkspaceFeatureFlag string
