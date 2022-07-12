@@ -26,6 +26,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/watch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/oom"
 )
 
 const grpcServerName = "wsdaemon"
@@ -90,6 +91,11 @@ var runCmd = &cobra.Command{
 		err = syscall.Setpriority(syscall.PRIO_PROCESS, os.Getpid(), -19)
 		if err != nil {
 			log.WithError(err).Error("cannot change ws-daemon priority")
+		}
+
+		err = oom.NewWatcher()
+		if err != nil {
+			log.WithError(err).Error("cannot start OOM watcher")
 		}
 
 		err = srv.ListenAndServe()
