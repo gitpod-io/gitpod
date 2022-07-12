@@ -43,21 +43,7 @@ A config file is required which can be generated with the init command.`,
   # Install Gitpod into a non-default namespace.
   gitpod-installer render --config config.yaml --namespace gitpod | kubectl apply -f -`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, cfgVersion, cfg, err := loadConfig(renderOpts.ConfigFN)
-		if err != nil {
-			return err
-		}
-
-		if cfg.Experimental != nil {
-			if renderOpts.UseExperimentalConfig {
-				fmt.Fprintf(os.Stderr, "rendering using experimental config\n")
-			} else {
-				fmt.Fprintf(os.Stderr, "ignoring experimental config. Use `--use-experimental-config` to include the experimental section in config\n")
-				cfg.Experimental = nil
-			}
-		}
-
-		yaml, err := renderKubernetesObjects(cfgVersion, cfg)
+		yaml, err := renderFn()
 		if err != nil {
 			return err
 		}
@@ -76,6 +62,24 @@ A config file is required which can be generated with the init command.`,
 
 		return nil
 	},
+}
+
+func renderFn() ([]string, error) {
+	_, cfgVersion, cfg, err := loadConfig(renderOpts.ConfigFN)
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.Experimental != nil {
+		if renderOpts.UseExperimentalConfig {
+			fmt.Fprintf(os.Stderr, "rendering using experimental config\n")
+		} else {
+			fmt.Fprintf(os.Stderr, "ignoring experimental config. Use `--use-experimental-config` to include the experimental section in config\n")
+			cfg.Experimental = nil
+		}
+	}
+
+	return renderKubernetesObjects(cfgVersion, cfg)
 }
 
 func saveYamlToFiles(dir string, yaml []string) error {
