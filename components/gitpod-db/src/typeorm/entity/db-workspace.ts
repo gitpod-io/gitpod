@@ -121,4 +121,10 @@ export class DBWorkspace implements Workspace {
     })
     @Index("ind_basedOnSnapshotId")
     basedOnSnapshotId?: string;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    workspaceClass?: string;
 }
