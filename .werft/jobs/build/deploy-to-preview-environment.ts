@@ -509,7 +509,7 @@ export async function issueMetaCerts(
     certsNamespace: string,
     domain: string,
     slice: string,
-) {
+): Promise<boolean> {
     const additionalSubdomains: string[] = ["", "*.", `*.ws.`];
     var metaClusterCertParams = new IssueCertificateParams();
     metaClusterCertParams.pathToTemplate = "/workspace/.werft/util/templates";
@@ -521,7 +521,7 @@ export async function issueMetaCerts(
     metaClusterCertParams.ip = getCoreDevIngressIP();
     metaClusterCertParams.bucketPrefixTail = "";
     metaClusterCertParams.additionalSubdomains = additionalSubdomains;
-    await issueCertificate(werft, metaClusterCertParams, { ...metaEnv(), slice });
+    return await issueCertificate(werft, metaClusterCertParams, { ...metaEnv(), slice });
 }
 
 async function installMetaCertificates(
