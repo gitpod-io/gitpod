@@ -32,6 +32,7 @@ import { UserDB } from "@gitpod/gitpod-db/lib";
 import { UserCounter } from "../user/user-counter";
 import { increasePrebuildsStartedCounter } from "../../../src/prometheus-metrics";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
@@ -317,6 +318,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                     projectId = project.id;
                 }
             }
+            const workspaceClass = await this.getWorkspaceClass(user);
 
             const id = await this.generateWorkspaceID(context);
             const newWs: Workspace = {
@@ -338,6 +340,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 baseImageNameResolved: buildWorkspace.baseImageNameResolved,
                 basedOnPrebuildId: context.prebuiltWorkspace.id,
                 config,
+                workspaceClass,
             };
             await this.db.trace({ span }).store(newWs);
             return newWs;
@@ -347,6 +350,27 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
         } finally {
             span.finish();
         }
+    }
+
+    protected async getWorkspaceClass(user: User): Promise<string> {
+        let workspaceClass = "";
+        let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
+            user: user,
+        });
+        if (classesEnabled) {
+            if (user.additionalData?.workspaceClasses?.prebuild) {
+                workspaceClass = user.additionalData?.workspaceClasses?.prebuild;
+            } else {
+                // legacy support
+                if (await this.userService.userGetsMoreResources(user)) {
+                    workspaceClass = this.config.workspaceClasses.defaultMoreResources;
+                } else {
+                    workspaceClass = this.config.workspaceClasses.default;
+                }
+            }
+        }
+
+        return workspaceClass;
     }
 }
 

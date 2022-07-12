@@ -690,6 +690,8 @@ export interface Workspace {
     basedOnPrebuildId?: string;
 
     basedOnSnapshotId?: string;
+
+    workspaceClass?: string;
 }
 
 export type WorkspaceSoftDeletion = "user" | "gc";

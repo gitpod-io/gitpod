@@ -19,13 +19,16 @@ import {
     WorkspaceContext,
     WorkspaceProbeContext,
 } from "@gitpod/gitpod-protocol";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { generateWorkspaceID } from "@gitpod/gitpod-protocol/lib/util/generate-workspace-id";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
 import { ResponseError } from "vscode-jsonrpc";
+import { Config } from "../config";
 import { RepoURL } from "../repohost";
+import { UserService } from "../user/user-service";
 import { ConfigProvider } from "./config-provider";
 import { ImageSourceProvider } from "./image-source-provider";
 
@@ -36,6 +39,8 @@ export class WorkspaceFactory {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(ConfigProvider) protected configProvider: ConfigProvider;
     @inject(ImageSourceProvider) protected imageSourceProvider: ImageSourceProvider;
+    @inject(Config) protected config: Config;
+    @inject(UserService) protected readonly userService: UserService;
 
     public async createForContext(
         ctx: TraceContext,
@@ -124,6 +129,7 @@ export class WorkspaceFactory {
 
             const id = await this.generateWorkspaceID(context);
             const date = new Date().toISOString();
+            const workspaceClass = await this.getWorkspaceClass(user);
             const newWs = <Workspace>{
                 id,
                 type: "regular",
@@ -142,6 +148,7 @@ export class WorkspaceFactory {
                 baseImageNameResolved: workspace.baseImageNameResolved,
                 basedOnSnapshotId: context.snapshotId,
                 imageSource: workspace.imageSource,
+                workspaceClass,
             };
             if (snapshot.layoutData) {
                 // we don't need to await here, as the layoutdata will be requested earliest in a couple of seconds by the theia IDE
@@ -206,6 +213,7 @@ export class WorkspaceFactory {
             }
 
             const id = await this.generateWorkspaceID(context);
+            const workspaceClass = await this.getWorkspaceClass(user);
             const newWs: Workspace = {
                 id,
                 type: "regular",
@@ -217,6 +225,7 @@ export class WorkspaceFactory {
                 context,
                 imageSource,
                 config,
+                workspaceClass,
             };
             await this.db.trace({ span }).store(newWs);
             return newWs;
@@ -256,5 +265,27 @@ export class WorkspaceFactory {
             return await generateWorkspaceID(parsed?.owner, parsed?.repo);
         }
         return await generateWorkspaceID();
+    }
+
+    protected async getWorkspaceClass(user: User): Promise<string> {
+        let workspaceClass = "";
+        let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
+            user: user,
+        });
+        if (classesEnabled) {
+            workspaceClass = this.config.workspaceClasses.default;
+            if (user.additionalData?.workspaceClasses?.regular) {
+                workspaceClass = user.additionalData?.workspaceClasses?.regular;
+            } else {
+                // legacy support
+                if (await this.userService.userGetsMoreResources(user)) {
+                    workspaceClass = this.config.workspaceClasses.defaultMoreResources;
+                } else {
+                    workspaceClass = this.config.workspaceClasses.default;
+                }
+            }
+        }
+
+        return workspaceClass;
     }
 }
