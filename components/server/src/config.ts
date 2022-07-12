@@ -184,6 +184,14 @@ export interface ConfigSerialized {
      * considered inactive.
      */
     inactivityPeriodForRepos?: number;
+
+    /**
+     * Options related to workspace classes
+     */
+    workspaceClasses: {
+        default: string;
+        defaultMoreResources: string;
+    };
 }
 
 export namespace ConfigFile {
