@@ -422,9 +422,12 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	// Update the git status prior to deleting the workspace
 	repo, err = sess.UpdateGitStatus(ctx, sess.PersistentVolumeClaim)
 	if err != nil {
+		// do not fail workspace because we were unable to get git status
+		// which can happen for various reasons, including user corrupting his .git folder somehow
+		// instead we log the error and continue cleaning up workspace
+		// todo(pavel): it would be great if we can somehow bubble this up to user without failing workspace
 		log.WithError(err).Error("cannot get git status")
 		span.LogKV("error", err.Error())
-		return nil, status.Error(codes.Internal, "cannot get git status")
 	}
 	if repo != nil {
 		resp.GitStatus = repo
