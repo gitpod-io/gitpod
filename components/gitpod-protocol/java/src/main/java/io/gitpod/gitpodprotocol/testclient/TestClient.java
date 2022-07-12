@@ -10,6 +10,8 @@ import io.gitpod.gitpodprotocol.api.GitpodServerLauncher;
 import io.gitpod.gitpodprotocol.api.entities.SendHeartBeatOptions;
 import io.gitpod.gitpodprotocol.api.entities.User;
 
+import java.util.Collections;
+
 public class TestClient {
     public static void main(String[] args) throws Exception {
         String uri = "wss://gitpod.io/api/v1";
@@ -17,7 +19,7 @@ public class TestClient {
         String origin = "https://CHANGE-ME.gitpod.io/";
 
         GitpodClient client = new GitpodClient();
-        GitpodServerLauncher.create(client).listen(uri, origin, token, "Test", "Test");
+        GitpodServerLauncher.create(client).listen(uri, origin, token, "Test", "Test", Collections.emptyList(), null);
         GitpodServer gitpodServer = client.getServer();
         User user = gitpodServer.getLoggedInUser().join();
         System.out.println("logged in user:" + user);
