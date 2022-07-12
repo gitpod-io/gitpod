@@ -75,7 +75,7 @@ var ring0Cmd = &cobra.Command{
 		exitCode := 1
 		defer handleExit(&exitCode)
 
-		defer log.Info("done")
+		defer log.Info("ring0 stopped")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 		defer cancel()
@@ -207,7 +207,7 @@ var ring1Cmd = &cobra.Command{
 		exitCode := 1
 		defer handleExit(&exitCode)
 
-		defer log.Info("done")
+		defer log.Info("ring1 stopped")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -796,7 +796,7 @@ var ring2Cmd = &cobra.Command{
 		exitCode := 1
 		defer handleExit(&exitCode)
 
-		defer log.Info("done")
+		defer log.Info("ring2 stopped")
 
 		// we talk to ring1 using a Unix socket, so that we can send the seccomp fd across.
 		rconn, err := net.Dial("unix", args[0])

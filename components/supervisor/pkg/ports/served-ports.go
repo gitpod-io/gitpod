@@ -74,7 +74,7 @@ func (p *PollingServedPortsObserver) Observe(ctx context.Context) (<-chan []Serv
 		for {
 			select {
 			case <-ctx.Done():
-				log.Warn("done")
+				log.Info("Port observer stopped")
 				return
 			case <-ticker.C:
 			}
