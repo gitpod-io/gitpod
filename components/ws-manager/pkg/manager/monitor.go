@@ -273,7 +273,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	}()
 
 	m.writeEventTraceLog(status, wso)
-	err = actOnPodEvent(ctx, m.act, status, wso)
+	err = actOnPodEvent(ctx, m.act, m.manager, status, wso)
 
 	// To make the tracing work though we have to re-sync with OnChange. But we don't want OnChange to block our event
 	// handling, thus we wait for it to finish in a Go routine.
@@ -287,7 +287,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 
 // actOnPodEvent performs actions when a kubernetes event comes in. For example we shut down failed workspaces or start
 // polling the ready state of initializing ones.
-func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceStatus, wso *workspaceObjects) (err error) {
+func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, status *api.WorkspaceStatus, wso *workspaceObjects) (err error) {
 	pod := wso.Pod
 
 	span, ctx := tracing.FromContext(ctx, "actOnPodEvent")
@@ -447,6 +447,42 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 				//       and we should be running the backup. The only thing that keeps the pod alive, is our finalizer.
 				terminated = c.State.Running == nil
 				break
+			}
+		}
+		if !terminated {
+			// Check the underlying node status
+			var node corev1.Node
+			err = manager.Clientset.Get(ctx, types.NamespacedName{Namespace: "", Name: wso.NodeName()}, &node)
+			if err != nil {
+				if k8serr.IsNotFound(err) {
+					// The node somehow gone, try to backup the content if possible
+					log.Infof("Somehow the node was %s gone, we try to backup the content if possible", wso.NodeName())
+					terminated = true
+				}
+			} else {
+				// Check the node taint matches the pod toleration with effect NoExecute.
+				// If no, do nothing.
+				// If yes, compares if time.Now() - taint.timeAdded > tolerationSeconds, then backup the content
+				for _, taint := range node.Spec.Taints {
+					if taint.Effect != corev1.TaintEffectNoExecute {
+						continue
+					}
+
+					var tolerationDuration time.Duration
+					var found bool
+					for _, toleration := range wso.Pod.Spec.Tolerations {
+						if toleration.Effect == corev1.TaintEffectNoExecute && toleration.Key == taint.Key && toleration.TolerationSeconds != nil {
+							tolerationDuration = time.Duration(*toleration.TolerationSeconds) * time.Second
+							found = true
+							break
+						}
+					}
+					if found && !taint.TimeAdded.IsZero() && time.Since(taint.TimeAdded.Time) > tolerationDuration {
+						log.Infof("The %s toleration time %v exceeds, going to backup the content", taint.Key, tolerationDuration)
+						terminated = true
+						break
+					}
+				}
 			}
 		}
 
