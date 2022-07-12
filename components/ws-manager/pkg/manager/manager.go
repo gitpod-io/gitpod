@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -337,62 +338,62 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 
 		// wait at least 60 seconds before deleting pending pod and trying again due to pending PVC attachment
 		err = wait.PollWithContext(ctx, 100*time.Millisecond, 60*time.Second, podRunning(m.Clientset, pod.Name, pod.Namespace))
-		if err != nil {
-			jsonPod, _ := json.Marshal(pod)
-			safePod, _ := log.RedactJSON(jsonPod)
-			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to reach ready state")
-			retryErr = err
-
-			var tempPod corev1.Pod
-			finalizerRemoved := false
-			// We do below in loop as sometimes the pod might be already deleted or modified when we attempt to remove the finalizer
-			// so we first get the pod and then attempt to remove the finalizer
-			// in case the pod is not found in the first place, we return success
-			rmCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-			for i := 0; i < 3 && !finalizerRemoved; i++ {
-				getErr := m.Clientset.Get(rmCtx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
-				if getErr != nil {
-					if k8serr.IsNotFound(getErr) {
-						// pod doesn't exist, so we are safe to proceed with retry
-						return false, nil
-					}
-					clog.WithError(getErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to get pod")
-					// pod get call failed so we error out
-					return false, retryErr
-				}
-				// we successfully got the pod, now we attempt to remove finalizer
-				tempPod.Finalizers = []string{}
-				updateErr := m.Clientset.Update(rmCtx, &tempPod)
-				if updateErr != nil {
-					if k8serr.IsNotFound(updateErr) {
-						// pod doesn't exist, so we are safe to proceed with retry
-						return false, nil
-					}
-					clog.WithError(updateErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to remove finalizer")
-					continue
-				}
-				finalizerRemoved = true
-			}
-			// if even after retries we could not remove finalizers, then error out
-			if !finalizerRemoved {
-				return false, retryErr
-			}
-
-			deleteErr := m.Clientset.Delete(rmCtx, &tempPod)
-			if deleteErr != nil && !k8serr.IsNotFound(deleteErr) {
-				clog.WithError(deleteErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to delete pod")
-				// failed to delete pod, so not going to be able to create a new pod, so bail out
-				return false, retryErr
-			}
-
-			// we deleted original pod, so now we can try to create a new one and see if this one will be able to be scheduled\started
-			return false, nil
+		if err == nil {
+			// pod is running
+			return true, nil
 		}
 
-		return true, nil
+		jsonPod, _ := json.Marshal(pod)
+		safePod, _ := log.RedactJSON(jsonPod)
+		clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to reach ready state")
+		retryErr = err
+
+		var tempPod corev1.Pod
+		finalizerRemoved := false
+		// We do below in loop as sometimes the pod might be already deleted or modified when we attempt to remove the finalizer
+		// so we first get the pod and then attempt to remove the finalizer
+		// in case the pod is not found in the first place, we return success
+		for i := 0; i < 3 && !finalizerRemoved; i++ {
+			getErr := m.Clientset.Get(ctx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
+			if getErr != nil {
+				if k8serr.IsNotFound(getErr) {
+					// pod doesn't exist, so we are safe to proceed with retry
+					return false, nil
+				}
+				clog.WithError(getErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to get pod")
+				// pod get call failed so we error out
+				return false, retryErr
+			}
+			// we successfully got the pod, now we attempt to remove finalizer
+			tempPod.Finalizers = []string{}
+			updateErr := m.Clientset.Update(ctx, &tempPod)
+			if updateErr != nil {
+				if k8serr.IsNotFound(updateErr) {
+					// pod doesn't exist, so we are safe to proceed with retry
+					return false, nil
+				}
+				clog.WithError(updateErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to remove finalizer")
+				continue
+			}
+			finalizerRemoved = true
+		}
+		// if even after retries we could not remove finalizers, then error out
+		if !finalizerRemoved {
+			return false, retryErr
+		}
+
+		deleteErr := m.Clientset.Delete(ctx, &tempPod)
+		if deleteErr != nil && !k8serr.IsNotFound(deleteErr) {
+			clog.WithError(deleteErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to delete pod")
+			// failed to delete pod, so not going to be able to create a new pod, so bail out
+			return false, retryErr
+		}
+
+		// we deleted original pod, so now we can try to create a new one and see if this one will be able to be scheduled\started
+		return false, nil
+
 	})
-	if err == wait.ErrWaitTimeout && retryErr != nil {
+	if errors.Is(err, wait.ErrWaitTimeout) && retryErr != nil {
 		err = retryErr
 	}
 
