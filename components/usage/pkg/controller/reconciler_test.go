@@ -79,34 +79,45 @@ func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
 	}{
 		{
 			Name:     "no instances in report, no summary",
-			Report:   map[db.AttributionID][]db.WorkspaceInstance{},
+			Report:   map[db.AttributionID][]db.WorkspaceInstanceForUsage{},
 			Expected: map[string]int64{},
 		},
 		{
 			Name: "skips user attributions",
-			Report: map[db.AttributionID][]db.WorkspaceInstance{
+			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
 				db.NewUserAttributionID(uuid.New().String()): {
-					dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{}),
+					db.WorkspaceInstanceForUsage{
+						UsageAttributionID: db.NewUserAttributionID(uuid.New().String()),
+					},
+					//dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{}),
 				},
 			},
 			Expected: map[string]int64{},
 		},
 		{
 			Name: "two workspace instances",
-			Report: map[db.AttributionID][]db.WorkspaceInstance{
+			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
 				teamAttributionID: {
-					dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+					//db.WorkspaceInstanceForUsage{
+					//	UsageAttributionID: teamAttributionID,
+					//	WorkspaceClass: defaultWorkspaceClass,
+					//	CreationTime:   db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+					//	StoppedTime:    db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+					//},
+					db.WorkspaceInstanceForUsage{
 						// has 1 day and 23 hours of usage
-						WorkspaceClass: defaultWorkspaceClass,
-						CreationTime:   db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
-						StoppedTime:    db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-					}),
-					dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+						UsageAttributionID: teamAttributionID,
+						WorkspaceClass:     defaultWorkspaceClass,
+						CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+						StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+					},
+					db.WorkspaceInstanceForUsage{
 						// has 1 hour of usage
-						WorkspaceClass: defaultWorkspaceClass,
-						CreationTime:   db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
-						StoppedTime:    db.NewVarcharTime(time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC)),
-					}),
+						UsageAttributionID: teamAttributionID,
+						WorkspaceClass:     defaultWorkspaceClass,
+						CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+						StoppedTime:        db.NewVarcharTime(time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC)),
+					},
 				},
 			},
 			Expected: map[string]int64{
@@ -116,14 +127,15 @@ func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
 		},
 		{
 			Name: "unknown workspace class uses default",
-			Report: map[db.AttributionID][]db.WorkspaceInstance{
+			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
 				teamAttributionID: {
-					dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-						// has 1 hour of usage
-						WorkspaceClass: "yolo-workspace-class",
-						CreationTime:   db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
-						StoppedTime:    db.NewVarcharTime(time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC)),
-					}),
+					// has 1 hour of usage
+					db.WorkspaceInstanceForUsage{
+						WorkspaceClass:     "yolo-workspace-class",
+						UsageAttributionID: teamAttributionID,
+						CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+						StoppedTime:        db.NewVarcharTime(time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC)),
+					},
 				},
 			},
 			Expected: map[string]int64{
