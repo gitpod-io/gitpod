@@ -50,3 +50,5 @@ repos:
         entry: leeway run components:update-license-header
         language: system
         pass_filenames: false
+
+exclude: ^install/installer/.*/.*\.golden$
