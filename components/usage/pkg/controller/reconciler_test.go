@@ -89,7 +89,6 @@ func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
 					db.WorkspaceInstanceForUsage{
 						UsageAttributionID: db.NewUserAttributionID(uuid.New().String()),
 					},
-					//dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{}),
 				},
 			},
 			Expected: map[string]int64{},
@@ -98,12 +97,6 @@ func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
 			Name: "two workspace instances",
 			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
 				teamAttributionID: {
-					//db.WorkspaceInstanceForUsage{
-					//	UsageAttributionID: teamAttributionID,
-					//	WorkspaceClass: defaultWorkspaceClass,
-					//	CreationTime:   db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
-					//	StoppedTime:    db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-					//},
 					db.WorkspaceInstanceForUsage{
 						// has 1 day and 23 hours of usage
 						UsageAttributionID: teamAttributionID,
