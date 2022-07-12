@@ -1,5 +1,5 @@
 OUTPUT ?= dist
-VERSION_MANIFEST = ./pkg/config/versions/versions.yaml
+VERSION_MANIFEST ?= ./pkg/config/versions/versions.yaml
 
 all: clean deps versionManifest compile
 
@@ -39,3 +39,12 @@ config-doc:
 	@echo "Building doc from Config struct for current version"
 	go run ./scripts/structdoc.go
 .PHONY: config-doc
+
+generateRenderTests:
+	go test ./cmd/... -update
+.PHONY: generateRenderTests
+
+getRenderVersionManifest:
+	VERSION_MANIFEST="./cmd/testdata/render/versions.yaml" $(MAKE) versionManifest
+	yq w -i ./cmd/testdata/render/versions.yamlZ **.version test
+.PHONY: getRenderVersionManifest

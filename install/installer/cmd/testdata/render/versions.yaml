@@ -1,0 +1,101 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+commit: a043243e6ddca1800878c0012c8f76c31fa6254f
+version: main.4110
+components:
+  agentSmith:
+    version: test
+  blobserve:
+    version: test
+  caUpdater:
+    version: test
+  contentService:
+    version: test
+  dashboard:
+    version: test
+  dbMigrations:
+    version: test
+  dbSync:
+    version: test
+  ideProxy:
+    version: test
+  imageBuilderMk3:
+    builderImage:
+      version: test
+    version: test
+  installationTelemetry:
+    version: test
+  integrationTest:
+    version: test
+  kots-config-check:
+    database:
+      version: test
+    registry:
+      version: test
+    storage:
+      version: test
+    version: test
+  openVsxProxy:
+    version: test
+  paymentEndpoint:
+    version: test
+  proxy:
+    version: test
+  public-api-server:
+    version: test
+  registryFacade:
+    version: test
+  server:
+    version: test
+  serviceWaiter:
+    version: test
+  usage:
+    version: test
+  workspace:
+    codeImage:
+      version: test
+    desktopIdeImages:
+      codeDesktop:
+        version: test
+      codeDesktopInsiders:
+        version: test
+      goland:
+        version: test
+      golandLatest:
+        version: test
+      intellij:
+        version: test
+      intellijLatest:
+        version: test
+      phpstorm:
+        version: test
+      phpstormLatest:
+        version: test
+      pycharm:
+        version: test
+      pycharmLatest:
+        version: test
+      version: test
+    dockerUp:
+      version: test
+    supervisor:
+      version: test
+    workspacekit:
+      version: test
+    version: test
+  wsDaemon:
+    userNamespaces:
+      seccompProfileInstaller:
+        version: test
+      shiftfsModuleLoader:
+        version: test
+      version: test
+    version: test
+  wsManager:
+    version: test
+  wsManagerBridge:
+    version: test
+  wsProxy:
+    version: test
+  version: test
