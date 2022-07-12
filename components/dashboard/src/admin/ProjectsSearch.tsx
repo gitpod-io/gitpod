@@ -9,17 +9,16 @@ import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-import { adminMenu } from "./admin-menu";
 import ProjectDetail from "./ProjectDetail";
 import { getGitpodService } from "../service/service";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { AdminGetListResult, Project } from "@gitpod/gitpod-protocol";
+import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 
 export default function ProjectsSearchPage() {
     return (
-        <PageWithSubMenu subMenu={adminMenu} title="Projects" subtitle="Search and manage all projects.">
+        <PageWithAdminSubMenu title="Projects" subtitle="Search and manage all projects.">
             <ProjectsSearch />
-        </PageWithSubMenu>
+        </PageWithAdminSubMenu>
     );
 }
 

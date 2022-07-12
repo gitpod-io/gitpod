@@ -25,7 +25,7 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
             <Header title={p.title} subtitle={p.subtitle} />
             <div className="app-container flex pt-9">
                 <div>
-                    <ul className="flex flex-col text tracking-wide text-gray-500 pt-4 lg:pt-0 w-48 space-y-2">
+                    <ul className="flex flex-col text tracking-wide text-gray-500 pt-4 lg:pt-0 w-52 space-y-2">
                         {p.subMenu.map((e) => {
                             let classes = "flex block py-2 px-4 rounded-md";
                             if (e.link.some((l) => l === location.pathname)) {

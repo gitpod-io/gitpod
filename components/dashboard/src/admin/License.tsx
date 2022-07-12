@@ -4,9 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { adminMenu } from "./admin-menu";
-
 import { LicenseContext } from "../license-context";
 import { ReactElement, useContext, useEffect } from "react";
 import { getGitpodService } from "../service/service";
@@ -20,6 +17,7 @@ import { ReactComponent as LinkSvg } from "../images/external-link.svg";
 import SolidCard from "../components/SolidCard";
 import Card from "../components/Card";
 import { isGitpodIo } from "../utils";
+import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 
 export default function License() {
     const { license, setLicense } = useContext(LicenseContext);
@@ -44,11 +42,7 @@ export default function License() {
 
     return (
         <div>
-            <PageWithSubMenu
-                subMenu={adminMenu}
-                title="License"
-                subtitle="License associated with your Gitpod installation"
-            >
+            <PageWithAdminSubMenu title="License" subtitle="License associated with your Gitpod installation">
                 <div className="flex flex-row space-x-4">
                     <Card className="w-72 h-64">
                         <span>
@@ -91,7 +85,7 @@ export default function License() {
                         </span>
                     </SolidCard>
                 </div>
-            </PageWithSubMenu>
+            </PageWithAdminSubMenu>
         </div>
     );
 }
