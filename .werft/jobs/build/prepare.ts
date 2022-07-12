@@ -15,6 +15,10 @@ const prepareSlices = {
 };
 
 export async function prepare(werft: Werft, config: JobConfig) {
+    if (!config.withPreview)
+    {
+        return
+    }
     werft.phase(phaseName);
     try {
         werft.log(prepareSlices.CONFIGURE_CORE_DEV, prepareSlices.CONFIGURE_CORE_DEV);
@@ -22,9 +26,9 @@ export async function prepare(werft: Werft, config: JobConfig) {
         configureDocker();
         configureStaticClustersAccess();
         werft.done(prepareSlices.CONFIGURE_CORE_DEV);
-
-        await issueCertificate(werft, config);
+        var certReady = issueCertificate(werft, config);
         decideHarvesterVMCreation(werft, config);
+        await certReady
     } catch (err) {
         werft.fail(phaseName, err);
     }
@@ -71,13 +75,14 @@ function configureStaticClustersAccess() {
     }
 }
 
-async function issueCertificate(werft: Werft, config: JobConfig) {
+async function issueCertificate(werft: Werft, config: JobConfig): Promise<boolean> {
     const certName = `harvester-${previewNameFromBranchName(config.repository.branch)}`;
     const domain = `${config.previewEnvironment.destname}.preview.gitpod-dev.com`;
 
     werft.log(prepareSlices.ISSUE_CERTIFICATES, prepareSlices.ISSUE_CERTIFICATES);
-    await issueMetaCerts(werft, certName, "certs", domain, prepareSlices.ISSUE_CERTIFICATES);
+    var certReady = await issueMetaCerts(werft, certName, "certs", domain, prepareSlices.ISSUE_CERTIFICATES);
     werft.done(prepareSlices.ISSUE_CERTIFICATES);
+    return certReady
 }
 
 function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {

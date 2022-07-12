@@ -24,7 +24,7 @@ export class InstallCertificateParams {
     destinationKubeconfig: string;
 }
 
-export async function issueCertificate(werft: Werft, params: IssueCertificateParams, shellOpts: ExecOptions) {
+export async function issueCertificate(werft: Werft, params: IssueCertificateParams, shellOpts: ExecOptions): Promise<boolean> {
     var subdomains = [];
     werft.log(shellOpts.slice, `Subdomains: ${params.additionalSubdomains}`);
     for (const sd of params.additionalSubdomains) {
@@ -33,7 +33,46 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
 
     exec(`echo "Domain: ${params.domain}, Subdomains: ${subdomains}"`, { slice: shellOpts.slice });
     validateSubdomains(werft, shellOpts.slice, params.domain, subdomains);
-    createCertificateResource(werft, shellOpts, params, subdomains);
+
+    const maxAttempts = 5
+    const timeout = "150s"
+    var i: number
+    var certReady: boolean
+    while(!certReady || i < maxAttempts) {
+        exec(`echo Creating cert: Attempt ${i}`);
+        createCertificateResource(werft, shellOpts, params, subdomains);
+        exec(`echo Checking for cert readiness: Attempt ${i}`);
+        if (checkCertReadiness(params.certName, timeout)) {
+            certReady = true
+        }
+        i++
+    }
+    if (!certReady) {
+        retrieveFailedCertDebug(params.certName, shellOpts.slice)
+    }
+    return certReady
+}
+
+function checkCertReadiness(certName: string, timeout: string): boolean {
+    const rc = exec(
+        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`,
+        { dontCheckRc: true },
+    ).code
+    return rc != 0
+}
+
+function retrieveFailedCertDebug(certName: string, slice: string) {
+    const certificateYAML = exec(
+        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs get certificate ${certName} -o yaml`,
+        { silent: true },
+    ).stdout.trim();
+    const certificateDebug = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} cmctl status certificate ${certName}`);
+    exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs delete certificate ${certName}`, {
+        slice: slice,
+    });
+    reportCertificateError({ certificateName: certName, certifiateYAML: certificateYAML, certificateDebug: certificateDebug }).catch((error: Error) =>
+        console.error("Failed to send message to Slack", error),
+    );
 }
 
 function validateSubdomains(werft: Werft, slice: string, domain: string, subdomains: string[]): void {
@@ -79,39 +118,7 @@ function createCertificateResource(
 }
 
 export async function installCertificate(werft, params: InstallCertificateParams, shellOpts: ExecOptions) {
-    waitForCertificateReadiness(werft, params.certName, shellOpts.slice);
     copyCachedSecret(werft, params, shellOpts.slice);
-}
-
-function waitForCertificateReadiness(werft: Werft, certName: string, slice: string) {
-    const timeout = "600s";
-    werft.log(slice, "Waiting for certificate readiness");
-    const rc = exec(
-        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`,
-        { dontCheckRc: true },
-    ).code;
-
-    if (rc != 0) {
-        werft.log(
-            slice,
-            "The certificate never became Ready. We are deleting the certificate so that the next job can create a new one",
-        );
-        const certificateYAML = exec(
-            `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs get certificate ${certName} -o yaml`,
-            { silent: true },
-        ).stdout.trim();
-        const certificateDebug = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} cmctl status certificate ${certName}`);
-        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs delete certificate ${certName}`, {
-            slice: slice,
-        });
-        reportCertificateError({ certificateName: certName, certifiateYAML: certificateYAML, certificateDebug: certificateDebug }).catch((error: Error) =>
-            console.error("Failed to send message to Slack", error),
-        );
-        werft.fail(
-            slice,
-            `Timeout while waiting for certificate readiness after ${timeout}. We have deleted the certificate. Please retry your Werft job. The issue has been reported to the Platform team so they can investigate. Sorry for the inconveneince.`,
-        );
-    }
 }
 
 function copyCachedSecret(werft: Werft, params: InstallCertificateParams, slice: string) {
