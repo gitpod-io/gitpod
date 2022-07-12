@@ -64,7 +64,7 @@ import { Feature } from "@gitpod/licensor/lib/api";
 import { LicenseValidationResult, LicenseFeature } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { LicenseDB } from "@gitpod/gitpod-db/lib";
-import { ResourceAccessGuard } from "../../../src/auth/resource-access";
+import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
 import { AccountStatement, CreditAlert, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { EligibilityService } from "../user/eligibility-service";
@@ -105,6 +105,7 @@ import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -2058,9 +2059,49 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async getBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
+        traceAPIParams(ctx, { attributionId });
+        const user = this.checkAndBlockUser("getBilledUsage");
+
+        await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
+
         return billableSessionDummyData;
     }
 
+    protected async guardCostCenterAccess(
+        ctx: TraceContext,
+        userId: string,
+        attributionId: string,
+        operation: ResourceAccessOp,
+    ): Promise<void> {
+        traceAPIParams(ctx, { userId, attributionId });
+
+        // TODO(gpl) We need a CostCenter entity (with a strong connection to Team or User) to properly to authorize access to these reports
+        // const costCenter = await this.costCenterDB.findByAttributionId(attributionId);
+        const parsedId = AttributionId.parse(attributionId);
+        if (parsedId === undefined) {
+            log.warn({ userId }, "Unable to parse attributionId", { attributionId });
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
+        }
+
+        let owner: GuardedCostCenter["owner"];
+        switch (parsedId.kind) {
+            case "team":
+                const team = await this.teamDB.findTeamById(parsedId.teamId);
+                if (!team) {
+                    throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+                }
+                const members = await this.teamDB.findMembersByTeam(team.id);
+                owner = { kind: "team", team, members };
+                break;
+            case "user":
+                owner = { kind: "user", userId };
+                break;
+            default:
+                throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid attributionId");
+        }
+
+        await this.guardAccess({ kind: "costCenter", /*subject: costCenter,*/ owner }, operation);
+    }
     // (SaaS) – admin
     async adminGetAccountStatement(ctx: TraceContext, userId: string): Promise<AccountStatement> {
         traceAPIParams(ctx, { userId });
