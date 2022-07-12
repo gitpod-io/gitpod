@@ -368,6 +368,9 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		return nil, status.Error(codes.FailedPrecondition, "workspace content was never ready")
 	}
 
+	// update log to contain OWI information
+	log := log.WithFields(sess.OWI())
+
 	// Maybe there's someone else already trying to dispose the workspace.
 	// In that case we'll simply wait for that to happen.
 	done, repo, err := sess.WaitOrMarkForDisposal(ctx)
@@ -391,7 +394,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		// Ok, we have to do all the work
 		err = s.uploadWorkspaceLogs(ctx, sess)
 		if err != nil {
-			log.WithError(err).WithFields(sess.OWI()).Error("log backup failed")
+			log.WithError(err).Error("log backup failed")
 			// atm we do not fail the workspace here, yet, because we still might succeed with its content!
 		}
 	}
@@ -411,7 +414,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 
 		err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
 		if err != nil {
-			log.WithError(err).WithFields(sess.OWI()).Error("final backup failed")
+			log.WithError(err).Error("final backup failed")
 			return nil, status.Error(codes.DataLoss, "final backup failed")
 		}
 	}
@@ -419,7 +422,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	// Update the git status prior to deleting the workspace
 	repo, err = sess.UpdateGitStatus(ctx, sess.PersistentVolumeClaim)
 	if err != nil {
-		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot get git status")
+		log.WithError(err).Error("cannot get git status")
 		span.LogKV("error", err.Error())
 		return nil, status.Error(codes.Internal, "cannot get git status")
 	}
@@ -429,14 +432,14 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 
 	err = s.store.Delete(ctx, req.Id)
 	if err != nil {
-		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot delete workspace from store")
+		log.WithError(err).Error("cannot delete workspace from store")
 		span.LogKV("error", err.Error())
 		return nil, status.Error(codes.Internal, "cannot delete workspace from store")
 	}
 
 	// remove workspace daemon directory in the node
 	if err := os.RemoveAll(sess.ServiceLocDaemon); err != nil {
-		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot delete workspace daemon directory")
+		log.WithError(err).Error("cannot delete workspace daemon directory")
 	}
 
 	return resp, nil
