@@ -1,6 +1,11 @@
 # Change Log
 
 ## July 2022
+- [local-preview] Support `127-0-0-1.nip.io` for `DOMAIN` ([#11242](https://github.com/gitpod-io/gitpod/pull/11242)) - [@Pothulapati](https://github.com/Pothulapati)
+- [code] fix `.gitpod.yml` ports onOpen not work on workspace startup ([#11293](https://github.com/gitpod-io/gitpod/pull/11293)) - [@mustard-mh](https://github.com/mustard-mh)
+- [installer]: add test for customization of proxy service ([#11268](https://github.com/gitpod-io/gitpod/pull/11268)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [local-preview] Differentiate btw Gitpod `starting` and `running` ([#11260](https://github.com/gitpod-io/gitpod/pull/11260)) - [@Pothulapati](https://github.com/Pothulapati)
+- Users can see their billable sessions. ([#11208](https://github.com/gitpod-io/gitpod/pull/11208)) - [@laushinka](https://github.com/laushinka)
 - Requests on ws-proxy won't contain the port anymore on the "X-Forwarded-Host" header. It will contain only the host. If you need the port, you can get it from the "X-Forwarded-Port" header. ([#11253](https://github.com/gitpod-io/gitpod/pull/11253)) - [@felladrin](https://github.com/felladrin)
 - Fixed an issue that was causing the workspace to frequently timeout when using a JetBrains IDE. ([#11232](https://github.com/gitpod-io/gitpod/pull/11232)) - [@mustard-mh](https://github.com/mustard-mh)
 - Make prebuild logs responsive for small viewports ([#11192](https://github.com/gitpod-io/gitpod/pull/11192)) - [@laushinka](https://github.com/laushinka)
