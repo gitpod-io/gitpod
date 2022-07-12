@@ -8,19 +8,18 @@ import moment from "moment";
 import { useState, useEffect } from "react";
 
 import TeamDetail from "./TeamDetail";
-import { adminMenu } from "./admin-menu";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { AdminGetListResult, Team } from "@gitpod/gitpod-protocol";
 import Label from "./Label";
+import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 
 export default function TeamsSearchPage() {
     return (
-        <PageWithSubMenu subMenu={adminMenu} title="Teams" subtitle="Search and manage teams.">
+        <PageWithAdminSubMenu title="Teams" subtitle="Search and manage teams.">
             <TeamsSearch />
-        </PageWithSubMenu>
+        </PageWithAdminSubMenu>
     );
 }
 

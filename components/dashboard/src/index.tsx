@@ -14,6 +14,7 @@ import { LicenseContextProvider } from "./license-context";
 import { TeamsContextProvider } from "./teams/teams-context";
 import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
+import { FeatureFlagContextProvider } from "./contexts/FeatureFlagContext";
 import { StartWorkspaceModalContextProvider } from "./workspaces/start-workspace-modal-context";
 import { BrowserRouter } from "react-router-dom";
 
@@ -23,21 +24,23 @@ ReactDOM.render(
     <React.StrictMode>
         <UserContextProvider>
             <AdminContextProvider>
-                <PaymentContextProvider>
-                    <LicenseContextProvider>
-                        <TeamsContextProvider>
-                            <ProjectContextProvider>
-                                <ThemeContextProvider>
-                                    <StartWorkspaceModalContextProvider>
-                                        <BrowserRouter>
-                                            <App />
-                                        </BrowserRouter>
-                                    </StartWorkspaceModalContextProvider>
-                                </ThemeContextProvider>
-                            </ProjectContextProvider>
-                        </TeamsContextProvider>
-                    </LicenseContextProvider>
-                </PaymentContextProvider>
+                <FeatureFlagContextProvider>
+                    <PaymentContextProvider>
+                        <LicenseContextProvider>
+                            <TeamsContextProvider>
+                                <ProjectContextProvider>
+                                    <ThemeContextProvider>
+                                        <StartWorkspaceModalContextProvider>
+                                            <BrowserRouter>
+                                                <App />
+                                            </BrowserRouter>
+                                        </StartWorkspaceModalContextProvider>
+                                    </ThemeContextProvider>
+                                </ProjectContextProvider>
+                            </TeamsContextProvider>
+                        </LicenseContextProvider>
+                    </PaymentContextProvider>
+                </FeatureFlagContextProvider>
             </AdminContextProvider>
         </UserContextProvider>
     </React.StrictMode>,
