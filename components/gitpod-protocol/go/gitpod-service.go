@@ -1754,6 +1754,7 @@ type WorkspaceInstanceStatus struct {
 	Phase        string                       `json:"phase,omitempty"`
 	Repo         *WorkspaceInstanceRepoStatus `json:"repo,omitempty"`
 	Timeout      string                       `json:"timeout,omitempty"`
+	Version      int                          `json:"version,omitempty"`
 }
 
 // StartWorkspaceOptions is the StartWorkspaceOptions message type

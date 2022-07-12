@@ -38,9 +38,6 @@ func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
 
 	workspaceClient := v1.NewWorkspacesServiceClient(conn)
 
-	_, err = workspaceClient.ListWorkspaces(ctx, &v1.ListWorkspacesRequest{})
-	requireErrorStatusCode(t, codes.Unimplemented, err)
-
 	_, err = workspaceClient.CreateAndStartWorkspace(ctx, &v1.CreateAndStartWorkspaceRequest{})
 	requireErrorStatusCode(t, codes.Unimplemented, err)
 
