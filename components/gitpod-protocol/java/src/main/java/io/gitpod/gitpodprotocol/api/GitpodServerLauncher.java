@@ -22,7 +22,6 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketAddress;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -55,29 +54,16 @@ public class GitpodServerLauncher {
             String origin,
             String userAgent,
             String clientVersion,
-            String token
-    ) throws Exception {
-        return listen(apiUrl, origin, userAgent, clientVersion, token, Collections.emptyList(), null);
-    }
-
-    public GitpodServerConnection listen(
-            String apiUrl,
-            String origin,
-            String userAgent,
-            String clientVersion,
             String token,
             List<Proxy> proxies,
             SSLContext sslContext
     ) throws Exception {
         String gitpodHost = URI.create(apiUrl).getHost();
-        HttpClient httpClient;
-        if (sslContext == null) {
-            httpClient = new HttpClient();
-        } else {
-            SslContextFactory ssl = new SslContextFactory.Client();
+        SslContextFactory ssl = new SslContextFactory.Client();
+        if (sslContext != null) {
             ssl.setSslContext(sslContext);
-            httpClient = new HttpClient(ssl);
         }
+        HttpClient httpClient = new HttpClient(ssl);
         for (Proxy proxy : proxies) {
             if (proxy.type().equals(Proxy.Type.DIRECT)) {
                 continue;
@@ -130,10 +116,10 @@ public class GitpodServerLauncher {
         }, ClientEndpointConfig.Builder.create().configurator(new ClientEndpointConfig.Configurator() {
             @Override
             public void beforeRequest(final Map<String, List<String>> headers) {
-                headers.put("Origin", Arrays.asList(origin));
-                headers.put("Authorization", Arrays.asList("Bearer " + token));
-                headers.put("User-Agent", Arrays.asList(userAgent));
-                headers.put("X-Client-Version", Arrays.asList(clientVersion));
+                headers.put("Origin", Collections.singletonList(origin));
+                headers.put("Authorization", Collections.singletonList("Bearer " + token));
+                headers.put("User-Agent", Collections.singletonList(userAgent));
+                headers.put("X-Client-Version", Collections.singletonList(clientVersion));
             }
         }).build(), URI.create(apiUrl)));
         return connection;

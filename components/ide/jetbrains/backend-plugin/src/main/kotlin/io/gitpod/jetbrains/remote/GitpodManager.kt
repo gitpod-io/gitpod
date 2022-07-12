@@ -15,6 +15,8 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
+import com.intellij.util.net.ssl.CertificateManager
+import com.intellij.util.proxy.CommonProxy
 import com.jetbrains.rd.util.lifetime.Lifetime
 import git4idea.config.GitVcsApplicationSettings
 import io.gitpod.gitpodprotocol.api.GitpodClient
@@ -40,6 +42,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.ide.BuiltInServerManager
 import java.net.URI
+import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
@@ -269,14 +272,20 @@ class GitpodManager : Disposable {
         val connect = {
             val originalClassLoader = Thread.currentThread().contextClassLoader
             try {
+                val proxies = CommonProxy.getInstance().select(URL(info.gitpodHost))
+                val sslContext = CertificateManager.getInstance().sslContext
+
                 // see https://intellij-support.jetbrains.com/hc/en-us/community/posts/360003146180/comments/360000376240
                 Thread.currentThread().contextClassLoader = HeartbeatService::class.java.classLoader
+
                 launcher.listen(
                         info.gitpodApi.endpoint,
                         info.gitpodHost,
                         plugin.pluginId.idString,
                         plugin.version,
-                        tokenResponse.token
+                        tokenResponse.token,
+                        proxies,
+                        sslContext
                 )
             } finally {
                 Thread.currentThread().contextClassLoader = originalClassLoader
