@@ -544,7 +544,6 @@ export class WorkspaceStarter {
 
                 instance.status.phase = "pending";
                 instance.region = installation;
-                instance.workspaceClass = startRequest.getSpec()!.getClass();
                 await this.workspaceDb.trace(ctx).storeInstance(instance);
                 try {
                     await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
@@ -759,6 +758,35 @@ export class WorkspaceStarter {
 
         const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
 
+        let workspaceClass = "";
+        let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
+            user: user,
+        });
+        if (classesEnabled) {
+            workspaceClass = this.config.workspaceClasses.default;
+            if (workspace.type == "regular") {
+                if (user.additionalData?.workspaceClasses?.regular) {
+                    workspaceClass = user.additionalData?.workspaceClasses?.regular;
+                } else {
+                    // legacy support
+                    if (await this.userService.userGetsMoreResources(user)) {
+                        workspaceClass = this.config.workspaceClasses.defaultMoreResources;
+                    }
+                }
+            }
+
+            if (workspace.type == "prebuild") {
+                if (user.additionalData?.workspaceClasses?.prebuild) {
+                    workspaceClass = user.additionalData?.workspaceClasses?.prebuild;
+                } else {
+                    // legacy support
+                    if (await this.userService.userGetsMoreResources(user)) {
+                        workspaceClass = this.config.workspaceClasses.defaultMoreResources;
+                    }
+                }
+            }
+        }
+
         const now = new Date().toISOString();
         const instance: WorkspaceInstance = {
             id: uuidv4(),
@@ -774,6 +802,7 @@ export class WorkspaceStarter {
             },
             configuration,
             usageAttributionId,
+            workspaceClass,
         };
         if (WithReferrerContext.is(workspace.context)) {
             this.analytics.track({
@@ -1337,9 +1366,17 @@ export class WorkspaceStarter {
             ideImage = ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image;
         }
 
-        let workspaceClass: string = "default";
-        if (await this.userService.userGetsMoreResources(user)) {
-            workspaceClass = "gitpodio-internal-xl";
+        let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
+            user: user,
+        });
+        let workspaceClass;
+        if (!classesEnabled) {
+            workspaceClass = "default";
+            if (await this.userService.userGetsMoreResources(user)) {
+                workspaceClass = "gitpodio-internal-xl";
+            }
+        } else {
+            workspaceClass = instance.workspaceClass!;
         }
 
         const spec = new StartWorkspaceSpec();
