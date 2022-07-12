@@ -27,6 +27,7 @@ import { TermsProvider } from "../terms/terms-provider";
 import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -226,7 +227,7 @@ export class UserService {
         if (this.config.enablePayment) {
             if (!user.additionalData?.usageAttributionId) {
                 // No explicit user attribution ID yet -- attribute all usage to the user by default (regardless of project/team).
-                return `user:${user.id}`;
+                return AttributionId.render({ kind: "user", userId: user.id });
             }
             // Return the user's explicit attribution ID.
             return user.additionalData.usageAttributionId;
@@ -235,15 +236,15 @@ export class UserService {
         // B. Project-based attribution
         if (!projectId) {
             // No project -- attribute to the user.
-            return `user:${user.id}`;
+            return AttributionId.render({ kind: "user", userId: user.id });
         }
         const project = await this.projectDb.findProjectById(projectId);
         if (!project?.teamId) {
             // The project doesn't exist, or it isn't owned by a team -- attribute to the user.
-            return `user:${user.id}`;
+            return AttributionId.render({ kind: "user", userId: user.id });
         }
         // Attribute workspace usage to the team that currently owns this project.
-        return `team:${project.teamId}`;
+        return AttributionId.render({ kind: "team", teamId: project.teamId });
     }
 
     /**
