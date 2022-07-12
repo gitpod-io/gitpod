@@ -117,7 +117,7 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	return status, instancesByAttributionID, nil
 }
 
-type UsageReport map[db.AttributionID][]db.WorkspaceInstance
+type UsageReport map[db.AttributionID][]db.WorkspaceInstanceForUsage
 
 func (u UsageReport) CreditSummaryForTeams(pricer *WorkspacePricer, maxStopTime time.Time) map[string]int64 {
 	creditsPerTeamID := map[string]int64{}
@@ -149,7 +149,7 @@ type invalidWorkspaceInstance struct {
 	workspaceInstanceID uuid.UUID
 }
 
-func (u *UsageReconciler) loadWorkspaceInstances(ctx context.Context, from, to time.Time) ([]db.WorkspaceInstance, []invalidWorkspaceInstance, error) {
+func (u *UsageReconciler) loadWorkspaceInstances(ctx context.Context, from, to time.Time) ([]db.WorkspaceInstanceForUsage, []invalidWorkspaceInstance, error) {
 	log.Infof("Gathering usage data from %s to %s", from, to)
 	instances, err := db.ListWorkspaceInstancesInRange(ctx, u.conn, from, to)
 	if err != nil {
@@ -162,7 +162,7 @@ func (u *UsageReconciler) loadWorkspaceInstances(ctx context.Context, from, to t
 	return trimmed, invalid, nil
 }
 
-func validateInstances(instances []db.WorkspaceInstance) (valid []db.WorkspaceInstance, invalid []invalidWorkspaceInstance) {
+func validateInstances(instances []db.WorkspaceInstanceForUsage) (valid []db.WorkspaceInstanceForUsage, invalid []invalidWorkspaceInstance) {
 	for _, i := range instances {
 		// i is a pointer to the current element, we need to assign it to ensure we're copying the value, not the current pointer.
 		instance := i
@@ -196,8 +196,8 @@ func validateInstances(instances []db.WorkspaceInstance) (valid []db.WorkspaceIn
 }
 
 // trimStartStopTime ensures that start time or stop time of an instance is never outside of specified start or stop time range.
-func trimStartStopTime(instances []db.WorkspaceInstance, maximumStart, minimumStop time.Time) []db.WorkspaceInstance {
-	var updated []db.WorkspaceInstance
+func trimStartStopTime(instances []db.WorkspaceInstanceForUsage, maximumStart, minimumStop time.Time) []db.WorkspaceInstanceForUsage {
+	var updated []db.WorkspaceInstanceForUsage
 
 	for _, instance := range instances {
 		if instance.CreationTime.Time().Before(maximumStart) {
@@ -213,11 +213,11 @@ func trimStartStopTime(instances []db.WorkspaceInstance, maximumStart, minimumSt
 	return updated
 }
 
-func groupInstancesByAttributionID(instances []db.WorkspaceInstance) map[db.AttributionID][]db.WorkspaceInstance {
-	result := map[db.AttributionID][]db.WorkspaceInstance{}
+func groupInstancesByAttributionID(instances []db.WorkspaceInstanceForUsage) map[db.AttributionID][]db.WorkspaceInstanceForUsage {
+	result := map[db.AttributionID][]db.WorkspaceInstanceForUsage{}
 	for _, instance := range instances {
 		if _, ok := result[instance.UsageAttributionID]; !ok {
-			result[instance.UsageAttributionID] = []db.WorkspaceInstance{}
+			result[instance.UsageAttributionID] = []db.WorkspaceInstanceForUsage{}
 		}
 
 		result[instance.UsageAttributionID] = append(result[instance.UsageAttributionID], instance)

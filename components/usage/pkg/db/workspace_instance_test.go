@@ -19,6 +19,10 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
 	workspaceID := "gitpodio-gitpod-gyjr82jkfnd"
+	_ = dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{
+		ID: workspaceID,
+	}))
+
 	valid := []db.WorkspaceInstance{
 		// In the middle of May
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
