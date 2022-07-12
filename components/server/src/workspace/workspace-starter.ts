@@ -671,152 +671,149 @@ export class WorkspaceStarter {
         ideConfig: IDEConfig,
         forcePVC: boolean,
     ): Promise<WorkspaceInstance> {
+        const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
         //#endregion IDE resolution TODO(ak) move to IDE service
         // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
         delete ideConfig.ideOptions.options["code-latest"];
         delete ideConfig.ideOptions.options["code-desktop-insiders"];
 
-        const migrated = migrationIDESettings(user);
-        if (user.additionalData?.ideSettings && migrated) {
-            user.additionalData.ideSettings = migrated;
-        }
-
-        const ideChoice = user.additionalData?.ideSettings?.defaultIde;
-        const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
-
-        // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
-        //           give that value precedence over the default choice.
-        const configuration: WorkspaceInstanceConfiguration = {
-            ideImage: ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image,
-            supervisorImage: ideConfig.supervisorImage,
-            ideConfig: {
-                // We only check user setting because if code(insider) but desktopIde has no latestImage
-                // it still need to notice user that this workspace is using latest IDE
-                useLatest: user.additionalData?.ideSettings?.useLatestVersion,
-            },
-        };
-
-        if (!!ideChoice) {
-            const choose = chooseIDE(
-                ideChoice,
-                ideConfig.ideOptions,
-                useLatest,
-                this.authService.hasPermission(user, "ide-settings"),
-            );
-            configuration.ideImage = choose.ideImage;
-            configuration.desktopIdeImage = choose.desktopIdeImage;
-        }
-
-        const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
-        if (referrerIde) {
-            configuration.desktopIdeImage = useLatest
-                ? referrerIde.option.latestImage ?? referrerIde.option.image
-                : referrerIde.option.image;
-            if (!user.additionalData?.ideSettings) {
-                // A user does not have IDE settings configured yet configure it with a referrer ide as default.
-                const additionalData = user?.additionalData || {};
-                const settings = additionalData.ideSettings || {};
-                settings.settingVersion = "2.0";
-                settings.defaultIde = referrerIde.id;
-                additionalData.ideSettings = settings;
-                user.additionalData = additionalData;
-                this.userDB
-                    .trace(ctx)
-                    .updateUserPartial(user)
-                    .catch((e) => {
-                        log.error({ userId: user.id }, "cannot configure default desktop ide", e);
-                    });
-            }
-        }
-        //#endregion
-
-        let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
-        featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
-        if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
-            featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
-        }
-
-        // if the user has feature preview enabled, we need to add the respective feature flags.
-        // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
-        if (!!user.additionalData?.featurePreview) {
-            featureFlags = featureFlags.concat(
-                this.config.workspaceDefaults.previewFeatureFlags.filter((f) => !featureFlags.includes(f)),
-            );
-        }
-
-        featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
-
-        if (forcePVC === true) {
-            featureFlags = featureFlags.concat(["persistent_volume_claim"]);
-        }
-
-        if (!!featureFlags) {
-            // only set feature flags if there actually are any. Otherwise we waste the
-            // few bytes of JSON in the database for no good reason.
-            configuration.featureFlags = featureFlags;
-        }
-
-        const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
-
-        let workspaceClass = "";
-        let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
-            user: user,
-        });
-        if (classesEnabled) {
-            workspaceClass = this.config.workspaceClasses.default;
-            if (workspace.type == "regular") {
-                if (user.additionalData?.workspaceClasses?.regular) {
-                    workspaceClass = user.additionalData?.workspaceClasses?.regular;
-                } else {
-                    // legacy support
-                    if (await this.userService.userGetsMoreResources(user)) {
-                        workspaceClass = this.config.workspaceClasses.defaultMoreResources;
-                    }
-                }
+        try {
+            const migrated = migrationIDESettings(user);
+            if (user.additionalData?.ideSettings && migrated) {
+                user.additionalData.ideSettings = migrated;
             }
 
-            if (workspace.type == "prebuild") {
-                if (user.additionalData?.workspaceClasses?.prebuild) {
-                    workspaceClass = user.additionalData?.workspaceClasses?.prebuild;
-                } else {
-                    // legacy support
-                    if (await this.userService.userGetsMoreResources(user)) {
-                        workspaceClass = this.config.workspaceClasses.defaultMoreResources;
-                    }
-                }
-            }
-        }
+            const ideChoice = user.additionalData?.ideSettings?.defaultIde;
+            const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
 
-        const now = new Date().toISOString();
-        const instance: WorkspaceInstance = {
-            id: uuidv4(),
-            workspaceId: workspace.id,
-            creationTime: now,
-            ideUrl: "", // Initially empty, filled during starting process
-            region: this.config.installationShortname, // Shortname set to bridge can cleanup workspaces stuck preparing
-            workspaceImage: "", // Initially empty, filled during starting process
-            status: {
-                version: 0,
-                conditions: {},
-                phase: "preparing",
-            },
-            configuration,
-            usageAttributionId,
-            workspaceClass,
-        };
-        if (WithReferrerContext.is(workspace.context)) {
-            this.analytics.track({
-                userId: user.id,
-                event: "ide_referrer",
-                properties: {
-                    workspaceId: workspace.id,
-                    instanceId: instance.id,
-                    referrer: workspace.context.referrer,
-                    referrerIde: workspace.context.referrerIde,
+            // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
+            //           give that value precedence over the default choice.
+            const configuration: WorkspaceInstanceConfiguration = {
+                ideImage: ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image,
+                supervisorImage: ideConfig.supervisorImage,
+                ideConfig: {
+                    // We only check user setting because if code(insider) but desktopIde has no latestImage
+                    // it still need to notice user that this workspace is using latest IDE
+                    useLatest: user.additionalData?.ideSettings?.useLatestVersion,
                 },
+            };
+
+            if (!!ideChoice) {
+                const choose = chooseIDE(
+                    ideChoice,
+                    ideConfig.ideOptions,
+                    useLatest,
+                    this.authService.hasPermission(user, "ide-settings"),
+                );
+                configuration.ideImage = choose.ideImage;
+                configuration.desktopIdeImage = choose.desktopIdeImage;
+            }
+
+            const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
+            if (referrerIde) {
+                configuration.desktopIdeImage = useLatest
+                    ? referrerIde.option.latestImage ?? referrerIde.option.image
+                    : referrerIde.option.image;
+                if (!user.additionalData?.ideSettings) {
+                    // A user does not have IDE settings configured yet configure it with a referrer ide as default.
+                    const additionalData = user?.additionalData || {};
+                    const settings = additionalData.ideSettings || {};
+                    settings.settingVersion = "2.0";
+                    settings.defaultIde = referrerIde.id;
+                    additionalData.ideSettings = settings;
+                    user.additionalData = additionalData;
+                    this.userDB
+                        .trace(ctx)
+                        .updateUserPartial(user)
+                        .catch((e) => {
+                            log.error({ userId: user.id }, "cannot configure default desktop ide", e);
+                        });
+                }
+            }
+            //#endregion
+
+            let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
+            featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
+            if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
+                featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
+            }
+
+            // if the user has feature preview enabled, we need to add the respective feature flags.
+            // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
+            if (!!user.additionalData?.featurePreview) {
+                featureFlags = featureFlags.concat(
+                    this.config.workspaceDefaults.previewFeatureFlags.filter((f) => !featureFlags.includes(f)),
+                );
+            }
+
+            featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
+
+            if (forcePVC === true) {
+                featureFlags = featureFlags.concat(["persistent_volume_claim"]);
+            }
+
+            if (!!featureFlags) {
+                // only set feature flags if there actually are any. Otherwise we waste the
+                // few bytes of JSON in the database for no good reason.
+                configuration.featureFlags = featureFlags;
+            }
+
+            const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
+
+            let workspaceClass = "";
+            let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
+                user: user,
             });
+            if (classesEnabled) {
+                // this is a workspace that was started before workspace classes
+                // set the workspace class based on if the user "has more resources"
+                if (!workspace.workspaceClass) {
+                    if (await this.userService.userGetsMoreResources(user)) {
+                        workspaceClass = this.config.workspaceClasses.defaultMoreResources;
+                    } else {
+                        workspaceClass = this.config.workspaceClasses.default;
+                    }
+
+                    workspace.workspaceClass = workspaceClass;
+                    this.workspaceDb.trace({ span }).store(workspace);
+                } else {
+                    workspaceClass = workspace.workspaceClass;
+                }
+            }
+
+            const now = new Date().toISOString();
+            const instance: WorkspaceInstance = {
+                id: uuidv4(),
+                workspaceId: workspace.id,
+                creationTime: now,
+                ideUrl: "", // Initially empty, filled during starting process
+                region: this.config.installationShortname, // Shortname set to bridge can cleanup workspaces stuck preparing
+                workspaceImage: "", // Initially empty, filled during starting process
+                status: {
+                    version: 0,
+                    conditions: {},
+                    phase: "preparing",
+                },
+                configuration,
+                usageAttributionId,
+                workspaceClass,
+            };
+            if (WithReferrerContext.is(workspace.context)) {
+                this.analytics.track({
+                    userId: user.id,
+                    event: "ide_referrer",
+                    properties: {
+                        workspaceId: workspace.id,
+                        instanceId: instance.id,
+                        referrer: workspace.context.referrer,
+                        referrerIde: workspace.context.referrerIde,
+                    },
+                });
+            }
+            return instance;
+        } finally {
+            span.finish();
         }
-        return instance;
     }
 
     // TODO(ak) move to IDE service
