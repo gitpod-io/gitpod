@@ -694,7 +694,7 @@ export interface Workspace {
 
 export type WorkspaceSoftDeletion = "user" | "gc";
 
-export type WorkspaceType = "regular" | "prebuild" | "probe";
+export type WorkspaceType = "regular" | "prebuild" | "probe"; // TODO(gpl) Removed prove here
 
 export namespace Workspace {
     export function getFullRepositoryName(ws: Workspace): string | undefined {
