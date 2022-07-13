@@ -4,6 +4,11 @@
 
 set -e
 
+# Set Domain to `127-0-0-1.nip.io` if not set
+if [ -z "${DOMAIN}" ]; then
+  export DOMAIN="127-0-0-1.nip.io"
+fi
+
 if [ "$1" != "logging" ]; then
   $0 logging 2>&1 | /prettylog
   exit
@@ -24,11 +29,6 @@ total_cores=$(nproc)
 if [ "${total_cores}" -lt "${REQUIRED_CORES}" ]; then
     echo "Preview installation of Gitpod requires a system with at least 4 CPU Cores"
     exit 1
-fi
-
-# Set Domain to `127-0-0-1.nip.io` if not set
-if [ -z "${DOMAIN}" ]; then
-  DOMAIN="127-0-0-1.nip.io"
 fi
 
 echo "Gitpod Domain: $DOMAIN"
