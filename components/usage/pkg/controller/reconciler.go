@@ -243,7 +243,7 @@ func usageReportToUsageRecords(report UsageReport) []db.WorkspaceInstanceUsage {
 			}
 
 			usageRecords = append(usageRecords, db.WorkspaceInstanceUsage{
-				WorkspaceID:   instance.ID,
+				InstanceID:    instance.ID,
 				AttributionID: attributionId,
 				StartedAt:     instance.CreationTime.Time(),
 				StoppedAt:     stoppedAt,
