@@ -15,7 +15,7 @@ import (
 )
 
 type WorkspaceInstanceUsage struct {
-	WorkspaceID   uuid.UUID     `gorm:"primary_key;column:workspaceId;type:char;size:36;" json:"workspaceId"`
+	InstanceID    uuid.UUID     `gorm:"primary_key;column:instanceId;type:char;size:36;" json:"instanceId"`
 	AttributionID AttributionID `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
 	StartedAt     time.Time     `gorm:"column:startedAt;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"startedAt"`
 	StoppedAt     sql.NullTime  `gorm:"column:stoppedAt;type:timestamp;" json:"stoppedAt"`
@@ -31,7 +31,7 @@ func (u *WorkspaceInstanceUsage) TableName() string {
 
 func CreateUsageRecords(ctx context.Context, conn *gorm.DB, records []WorkspaceInstanceUsage) error {
 	db := conn.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "workspaceId"}},
+		Columns:   []clause.Column{{Name: "instanceId"}},
 		UpdateAll: true,
 	})
 
