@@ -426,7 +426,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		// which can happen for various reasons, including user corrupting his .git folder somehow
 		// instead we log the error and continue cleaning up workspace
 		// todo(pavel): it would be great if we can somehow bubble this up to user without failing workspace
-		log.WithError(err).Error("cannot get git status")
+		log.WithError(err).Warn("cannot get git status")
 		span.LogKV("error", err.Error())
 	}
 	if repo != nil {
