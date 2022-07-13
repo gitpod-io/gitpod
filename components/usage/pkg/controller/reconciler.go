@@ -213,7 +213,7 @@ func trimStartStopTime(instances []db.WorkspaceInstanceForUsage, maximumStart, m
 	return updated
 }
 
-func groupInstancesByAttributionID(instances []db.WorkspaceInstanceForUsage) map[db.AttributionID][]db.WorkspaceInstanceForUsage {
+func groupInstancesByAttributionID(instances []db.WorkspaceInstanceForUsage) UsageReport {
 	result := map[db.AttributionID][]db.WorkspaceInstanceForUsage{}
 	for _, instance := range instances {
 		if _, ok := result[instance.UsageAttributionID]; !ok {
