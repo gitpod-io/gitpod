@@ -1,6 +1,7 @@
 # Change Log
 
 ## July 2022
+- Add support for JetBrains Gateway v222.3345.1 and later. ([#11209](https://github.com/gitpod-io/gitpod/pull/11209)) - [@felladrin](https://github.com/felladrin)
 - [local-preview] Support `127-0-0-1.nip.io` for `DOMAIN` ([#11242](https://github.com/gitpod-io/gitpod/pull/11242)) - [@Pothulapati](https://github.com/Pothulapati)
 - [code] fix `.gitpod.yml` ports onOpen not work on workspace startup ([#11293](https://github.com/gitpod-io/gitpod/pull/11293)) - [@mustard-mh](https://github.com/mustard-mh)
 - [installer]: add test for customization of proxy service ([#11268](https://github.com/gitpod-io/gitpod/pull/11268)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
