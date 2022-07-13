@@ -110,10 +110,6 @@ pod:
           git config --global user.email roboquat@gitpod.io
           git remote set-url origin https://oauth2:"${ROBOQUAT_TOKEN}"@github.com/gitpod-io/gitpod.git
 
-          echo "copied config..." | werft log slice prepare
-          go install github.com/csweichel/oci-tool@latest 2>&1 | werft log slice prepare
-          werft log slice prepare --done
-
           werft log phase "build preview environment" "build preview environment"
           echo integration test >> README.md
           git checkout -B "${BRANCH}"
