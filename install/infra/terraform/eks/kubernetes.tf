@@ -2,30 +2,69 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "3.12.0"
 
-  name               = "vpc-${var.cluster_name}"
-  cidr               = var.vpc_cidr
-  azs                = var.vpc_availability_zones
-  private_subnets    = [var.private_primary_subnet_cidr, var.private_secondary_subnet_cidr]
-  public_subnets     = [var.public_primary_subnet_cidr, var.public_secondary_subnet_cidr, var.public_db_subnet_cidr_1, var.public_db_subnet_cidr_2]
-  enable_nat_gateway = true
+  name                 = "vpc-${var.cluster_name}"
+  cidr                 = var.vpc_cidr
+  azs                  = var.vpc_availability_zones
+  private_subnets      = [var.private_primary_subnet_cidr, var.private_secondary_subnet_cidr]
+  public_subnets       = [var.public_primary_subnet_cidr, var.public_secondary_subnet_cidr, var.public_db_subnet_cidr_1, var.public_db_subnet_cidr_2]
+  enable_nat_gateway   = true
   enable_dns_hostnames = true
 }
 
+locals {
+  cluster_cidrs = [var.private_primary_subnet_cidr, var.private_secondary_subnet_cidr, var.public_primary_subnet_cidr, var.public_secondary_subnet_cidr]
+}
+
 resource "aws_security_group" "nodes" {
-  name = "nodes-sg-${var.cluster_name}"
+  name   = "nodes-sg-${var.cluster_name}"
   vpc_id = module.vpc.vpc_id
 
   ingress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = local.cluster_cidrs
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = local.cluster_cidrs
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = local.cluster_cidrs
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = local.cluster_cidrs
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 10250
+    protocol    = "tcp"
+    cidr_blocks = local.cluster_cidrs
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 53
+    protocol    = "tcp"
+    cidr_blocks = local.cluster_cidrs
   }
 
   egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
@@ -34,10 +73,10 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "18.8.1"
 
-  cluster_name                    = var.cluster_name
-  cluster_version                 = "1.22"
+  cluster_name    = var.cluster_name
+  cluster_version = "1.22"
 
-  cluster_endpoint_public_access  = true
+  cluster_endpoint_public_access = true
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.public_subnets
@@ -59,18 +98,18 @@ module "eks" {
     iam_role_attach_cni_policy = true
     ami_id                     = var.image_id
     enable_bootstrap_user_data = true
-    vpc_security_group_ids = [aws_security_group.nodes.id]
+    vpc_security_group_ids     = [aws_security_group.nodes.id]
   }
 
   eks_managed_node_groups = {
     Services = {
       enable_bootstrap_user_data = true
-      instance_types = [var.service_machine_type]
-      name = "service-${var.cluster_name}"
-      subnet_ids   = module.vpc.public_subnets
-      min_size     = 1
-      max_size     = 10
-      desired_size = 1
+      instance_types             = [var.service_machine_type]
+      name                       = "service-${var.cluster_name}"
+      subnet_ids                 = module.vpc.public_subnets
+      min_size                   = 1
+      max_size                   = 10
+      desired_size               = 1
       labels = {
         "gitpod.io/workload_meta" = true
         "gitpod.io/workload_ide"  = true
@@ -88,12 +127,12 @@ module "eks" {
     }
 
     Workspaces = {
-      instance_types = [var.workspace_machine_type]
-      name = "ws-${var.cluster_name}"
-      subnet_ids   = module.vpc.public_subnets
-      min_size     = 1
-      max_size     = 10
-      desired_size = 1
+      instance_types             = [var.workspace_machine_type]
+      name                       = "ws-${var.cluster_name}"
+      subnet_ids                 = module.vpc.public_subnets
+      min_size                   = 1
+      max_size                   = 10
+      desired_size               = 1
       enable_bootstrap_user_data = true
       labels = {
         "gitpod.io/workload_workspace_services" = true
@@ -131,7 +170,7 @@ module "vpc_cni_irsa" {
 }
 
 resource "null_resource" "kubeconfig" {
-  depends_on = [ module.eks ]
+  depends_on = [module.eks]
   provisioner "local-exec" {
     command = "aws eks update-kubeconfig --region ${var.region} --name ${var.cluster_name} --kubeconfig ${var.kubeconfig}"
   }
