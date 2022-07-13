@@ -11,10 +11,10 @@ import { Transformer } from "../transformer";
 @Entity()
 export class DBWorkspaceInstanceUsage {
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
-    workspaceId: string;
+    instanceId: string;
 
     @Column("varchar")
-    @Index()
+    @Index("ind_attributionId")
     attributionId: string;
 
     @Column({
@@ -22,7 +22,7 @@ export class DBWorkspaceInstanceUsage {
         precision: 6,
         transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
-    @Index()
+    @Index("ind_startedAt")
     startedAt: string;
 
     @Column({
@@ -31,7 +31,7 @@ export class DBWorkspaceInstanceUsage {
         nullable: true,
         transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
-    @Index()
+    @Index("ind_stoppedAt")
     stoppedAt: string;
 
     @Column("double")
