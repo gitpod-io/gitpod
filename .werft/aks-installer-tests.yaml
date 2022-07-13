@@ -70,7 +70,7 @@ pod:
 
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-          export TF_VAR_TEST_ID=$(echo $RANDOM | md5sum | head -c 5; echo)
+          export TF_VAR_TEST_ID=$(echo $RANDOM | md5sum | head -c 5; echo)-azure
 
           (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
           printf '{{ toJson . }}' > context.json

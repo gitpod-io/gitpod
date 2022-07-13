@@ -3,7 +3,7 @@ provider "kubernetes" {
 }
 
 resource "kubernetes_secret" "dns_solver" {
-  count    = var.secretAccessKey == null ? 0 : 1
+  count = var.secretAccessKey == null ? 0 : 1
   metadata {
     name      = "route53-credentials"
     namespace = "cert-manager"
@@ -17,7 +17,7 @@ resource "kubernetes_secret" "dns_solver" {
 resource "kubernetes_manifest" "clusterissuer_gitpod" {
   manifest = {
     "apiVersion" = "cert-manager.io/v1"
-    "kind" = "ClusterIssuer"
+    "kind"       = "ClusterIssuer"
     "metadata" = {
       "name" = "gitpod-issuer"
     }
