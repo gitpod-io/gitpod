@@ -24,10 +24,10 @@ export interface BillableSession {
     workspaceClass: string;
 
     // When the workspace started
-    startTime: number;
+    startTime: string;
 
     // When the workspace ended
-    endTime: number;
+    endTime: string;
 
     // The credits used for this session
     credits: number;
@@ -36,7 +36,7 @@ export interface BillableSession {
     projectId?: string;
 }
 
-export type BillableWorkspaceType = Omit<WorkspaceType, "probe">;
+export type BillableWorkspaceType = WorkspaceType;
 
 export const billableSessionDummyData: BillableSession[] = [
     {
@@ -47,8 +47,8 @@ export const billableSessionDummyData: BillableSession[] = [
         workspaceId: "some-workspace-id",
         workspaceType: "prebuild",
         workspaceClass: "XL",
-        startTime: Date.now() + -3 * 24 * 3600 * 1000, // 3 days ago
-        endTime: Date.now(),
+        startTime: new Date(Date.now() + -3 * 24 * 3600 * 1000).toISOString(), // 3 days ago
+        endTime: new Date().toISOString(),
         credits: 320,
         projectId: "project-123",
     },
@@ -60,8 +60,8 @@ export const billableSessionDummyData: BillableSession[] = [
         workspaceId: "some-workspace-id2",
         workspaceType: "regular",
         workspaceClass: "standard",
-        startTime: Date.now() + -5 * 24 * 3600 * 1000,
-        endTime: Date.now(),
+        startTime: new Date(Date.now() + -5 * 24 * 3600 * 1000).toISOString(),
+        endTime: new Date().toISOString(),
         credits: 130,
         projectId: "project-123",
     },
@@ -73,8 +73,8 @@ export const billableSessionDummyData: BillableSession[] = [
         workspaceId: "some-workspace-id3",
         workspaceType: "regular",
         workspaceClass: "XL",
-        startTime: Date.now() + -5 * 24 * 3600 * 1000,
-        endTime: Date.now() + -4 * 24 * 3600 * 1000,
+        startTime: new Date(Date.now() + -5 * 24 * 3600 * 1000).toISOString(),
+        endTime: new Date(Date.now() + -4 * 24 * 3600 * 1000).toISOString(),
         credits: 150,
         projectId: "project-134",
     },
@@ -86,8 +86,8 @@ export const billableSessionDummyData: BillableSession[] = [
         workspaceId: "some-workspace-id4",
         workspaceType: "regular",
         workspaceClass: "standard",
-        startTime: Date.now() + -10 * 24 * 3600 * 1000,
-        endTime: Date.now() + -9 * 24 * 3600 * 1000,
+        startTime: new Date(Date.now() + -10 * 24 * 3600 * 1000).toISOString(),
+        endTime: new Date(Date.now() + -9 * 24 * 3600 * 1000).toISOString(),
         credits: 330,
         projectId: "project-137",
     },
@@ -99,8 +99,8 @@ export const billableSessionDummyData: BillableSession[] = [
         workspaceId: "some-workspace-id5",
         workspaceType: "regular",
         workspaceClass: "XL",
-        startTime: Date.now() + -2 * 24 * 3600 * 1000,
-        endTime: Date.now(),
+        startTime: new Date(Date.now() + -2 * 24 * 3600 * 1000).toISOString(),
+        endTime: new Date().toISOString(),
         credits: 222,
         projectId: "project-138",
     },
@@ -112,8 +112,8 @@ export const billableSessionDummyData: BillableSession[] = [
         workspaceId: "some-workspace-id3",
         workspaceType: "regular",
         workspaceClass: "XL",
-        startTime: Date.now() + -7 * 24 * 3600 * 1000,
-        endTime: Date.now() + -6 * 24 * 3600 * 1000,
+        startTime: new Date(Date.now() + -7 * 24 * 3600 * 1000).toISOString(),
+        endTime: new Date(Date.now() + -6 * 24 * 3600 * 1000).toISOString(),
         credits: 300,
         projectId: "project-134",
     },
@@ -125,8 +125,8 @@ export const billableSessionDummyData: BillableSession[] = [
         workspaceId: "some-workspace-id3",
         workspaceType: "regular",
         workspaceClass: "standard",
-        startTime: Date.now() + -1 * 24 * 3600 * 1000,
-        endTime: Date.now(),
+        startTime: new Date(Date.now() + -1 * 24 * 3600 * 1000).toISOString(),
+        endTime: new Date().toISOString(),
         credits: 100,
         projectId: "project-567",
     },
@@ -138,8 +138,8 @@ export const billableSessionDummyData: BillableSession[] = [
         workspaceId: "some-workspace-id7",
         workspaceType: "prebuild",
         workspaceClass: "XL",
-        startTime: Date.now() + -1 * 24 * 3600 * 1000,
-        endTime: Date.now(),
+        startTime: new Date(Date.now() + -1 * 24 * 3600 * 1000).toISOString(),
+        endTime: new Date().toISOString(),
         credits: 200,
         projectId: "project-345",
     },

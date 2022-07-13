@@ -30,6 +30,7 @@ type ConfigSerialized struct {
 	RunDbDeleter                      bool     `json:"runDbDeleter"`
 	ContentServiceAddr                string   `json:"contentServiceAddr"`
 	ImageBuilderAddr                  string   `json:"imageBuilderAddr"`
+	UsageServiceAddr                  string   `json:"usageServiceAddr"`
 	VSXRegistryUrl                    string   `json:"vsxRegistryUrl"`
 	ChargebeeProviderOptionsFile      string   `json:"chargebeeProviderOptionsFile"`
 	StripeSecretsFile                 string   `json:"stripeSecretsFile"`

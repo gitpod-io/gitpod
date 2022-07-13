@@ -149,6 +149,12 @@ export interface ConfigSerialized {
      */
     imageBuilderAddr: string;
 
+    /**
+     * The address usage service clients connect to
+     * Example: usage:8080
+     */
+    usageServiceAddr: string;
+
     codeSync: CodeSyncConfig;
 
     vsxRegistryUrl: string;
