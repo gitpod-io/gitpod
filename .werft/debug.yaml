@@ -96,8 +96,6 @@ pod:
       value: http://athens-athens-proxy.athens.svc.cluster.local:9999
     - name: GOCACHE
       value: /go-build-cache
-    - name: WERFT_HOST
-      value: "werft.werft.svc.cluster.local:7777"
     - name: NODENAME
       valueFrom:
         fieldRef:

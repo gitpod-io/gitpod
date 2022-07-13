@@ -30,18 +30,12 @@ pod:
         - name: sh-playground-dns-perm # this sa is used for the DNS management
           mountPath: /mnt/secrets/sh-playground-dns-perm
       env:
-        - name: WERFT_HOST
-          value: "werft.werft.svc.cluster.local:7777"
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
         - name: TF_VAR_sa_creds
           value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
         - name: TF_VAR_dns_sa_creds
           value: "/mnt/secrets/sh-playground-dns-perm/sh-dns-sa.json"
-        - name: WERFT_K8S_NAMESPACE
-          value: "werft"
-        - name: WERFT_K8S_LABEL
-          value: "component=werft"
         - name: NODENAME
           valueFrom:
             fieldRef:
