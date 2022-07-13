@@ -57,7 +57,7 @@ pod:
 
         curl -sLS https://get.k3sup.dev | sh
 
-        export TF_VAR_TEST_ID=$(echo $RANDOM | md5sum | head -c 5; echo)
+        export TF_VAR_TEST_ID=$(echo $RANDOM | md5sum | head -c 5; echo)-k3s
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
