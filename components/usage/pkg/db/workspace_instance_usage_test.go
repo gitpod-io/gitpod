@@ -29,7 +29,7 @@ func TestCanCreateUsageRecords(t *testing.T) {
 		{
 			Name: "One workspace instance",
 			UsageRecords: []db.WorkspaceInstanceUsage{{
-				WorkspaceID:   instanceID,
+				InstanceID:    instanceID,
 				AttributionID: teamAttributionID,
 				StartedAt:     time.Now(),
 				StoppedAt:     sql.NullTime{},
@@ -67,7 +67,7 @@ func TestCanHandleDuplicateRecords(t *testing.T) {
 			Name: "The same instance twice",
 			UsageRecords: []db.WorkspaceInstanceUsage{
 				{
-					WorkspaceID:   instanceID,
+					InstanceID:    instanceID,
 					AttributionID: teamAttributionID,
 					StartedAt:     instanceStartTime,
 					StoppedAt:     sql.NullTime{},
@@ -76,7 +76,7 @@ func TestCanHandleDuplicateRecords(t *testing.T) {
 					Deleted:       false,
 				},
 				{
-					WorkspaceID:   instanceID,
+					InstanceID:    instanceID,
 					AttributionID: teamAttributionID,
 					StartedAt:     instanceStartTime,
 					StoppedAt:     sql.NullTime{},
