@@ -123,11 +123,11 @@ pod:
           werft run github -a with-preview=true
           trap cleanup SIGINT SIGTERM EXIT
 
-          BUILD_ID=$(werft job list repo.ref==refs/heads/"${BRANCH}" -o yaml | yq r - "result[0].name")
+          BUILD_ID=$(werft job list repo.ref==refs/heads/"${BRANCH}" -o yaml | yq4 '.result[] | select(.metadata.annotations[].key == "with-preview") | .name' | head -1)
           until [ "$BUILD_ID" != "" ]
           do
               sleep 1
-              BUILD_ID=$(werft job list repo.ref==refs/heads/"${BRANCH}" -o yaml | yq r - "result[0].name")
+              BUILD_ID=$(werft job list repo.ref==refs/heads/"${BRANCH}" -o yaml | yq4 '.result[] | select(.metadata.annotations[].key == "with-preview") | .name' | head -1)
           done
           echo "start build preview environment, job name: ${BUILD_ID}, this will take long time" | werft log slice "build preview environment"
           werft log result -d "build job" url "https://werft.gitpod-dev.com/job/${BUILD_ID}"
