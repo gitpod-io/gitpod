@@ -1,0 +1,78 @@
+{
+  "malicious": [],
+  "deprecated": {
+      "msjsdiag.debugger-for-chrome": {
+          "disallowInstall": true,
+          "extension": {
+              "id": "ms-vscode.js-debug",
+              "displayName": "JavaScript Debugger"
+          }
+      },
+      "abusaidm.html-snippets": true,
+      "ms-vscode.vscode-typescript-tslint-plugin": true,
+      "auchenberg.vscode-browser-preview": {
+          "disallowInstall": false,
+          "extension": {
+              "id": "ms-vscode.live-server",
+              "displayName": "Live Preview"
+          }
+      },
+      "rust-lang.rust": {
+          "disallowInstall": true,
+          "extension": {
+              "id": "rust-lang.rust-analyzer",
+              "displayName": "rust-analyzer"
+          }
+      },
+      "KnisterPeter.vscode-github": {
+          "disallowInstall": true,
+          "extension": {
+              "id": "GitHub.vscode-pull-request-github",
+              "displayName": "GitHub Pull Requests and Issues"
+          }
+      },
+      "antfu.vue-i18n-ally": {
+          "disallowInstall": true,
+          "extension": {
+              "id": "lokalise.i18n-ally",
+              "displayName": "i18n Ally"
+          }
+      },
+      "antfu.i18n-ally": {
+          "disallowInstall": true,
+          "extension": {
+              "id": "lokalise.i18n-ally",
+              "displayName": "i18n Ally"
+          }
+      },
+      "redhat.vscode-didact": {
+          "disallowInstall": false,
+          "extension": {
+              "id": "vsls-contrib.codetour",
+              "displayName": "CodeTour"
+          }
+      },
+      "CoenraadS.bracket-pair-colorizer-2": {
+          "settings": [
+              "editor.bracketPairColorization.enabled",
+              "editor.guides.bracketPairs"
+          ]
+      },
+      "CoenraadS.bracket-pair-colorizer": {
+          "settings": [
+              "editor.bracketPairColorization.enabled",
+              "editor.guides.bracketPairs"
+          ]
+      },
+      "redhat.vscode-wsdl2rest": true,
+      "ms-vscode.node-debug2": true,
+      "ms-vscode.node-debug": true,
+      "HookyQR.beautify": true,
+      "tht13.python": true,
+      "lonefy.vscode-JS-CSS-HTML-formatter": true,
+      "ikappas.phpcs": true,
+      "heptio.jsonnet": true,
+      "eg2.vscode-npm-script": true
+  },
+  "migrateToPreRelease": {}
+}
