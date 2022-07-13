@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -84,6 +85,11 @@ func (u *UsageReconciler) Reconcile() (err error) {
 		return fmt.Errorf("failed to get file stats: %w", err)
 	}
 	log.Infof("Wrote usage report into %s", filepath.Join(dir, stat.Name()))
+
+	err = db.CreateUsageRecords(ctx, u.conn, usageReportToUsageRecords(report))
+	if err != nil {
+		return fmt.Errorf("failed to write usage records to database: %s", err)
+	}
 
 	return nil
 }
@@ -224,4 +230,29 @@ func groupInstancesByAttributionID(instances []db.WorkspaceInstanceForUsage) Usa
 	}
 
 	return result
+}
+
+func usageReportToUsageRecords(report UsageReport) []db.WorkspaceInstanceUsage {
+	var usageRecords []db.WorkspaceInstanceUsage
+
+	for attributionId, instances := range report {
+		for _, instance := range instances {
+			var stoppedAt sql.NullTime
+			if instance.StoppedTime.IsSet() {
+				stoppedAt.Time = instance.StoppedTime.Time()
+			}
+
+			usageRecords = append(usageRecords, db.WorkspaceInstanceUsage{
+				WorkspaceID:   instance.ID,
+				AttributionID: attributionId,
+				StartedAt:     instance.CreationTime.Time(),
+				StoppedAt:     stoppedAt,
+				CreditsUsed:   0,
+				GenerationId:  0,
+				Deleted:       false,
+			})
+		}
+	}
+
+	return usageRecords
 }
