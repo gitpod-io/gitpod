@@ -6,6 +6,7 @@ package main
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -24,7 +25,7 @@ var msgs = []struct {
 	{Msg: "downloading images", Success: "--output-split-files"},
 	{Msg: "preparing Gitpod preview installation", Success: "rm -rf /var/lib/rancher/k3s/server/manifests/gitpod"},
 	{Msg: "starting Gitpod", Success: "gitpod-telemetry-init"},
-	{Msg: "Gitpod is running"},
+	{Msg: fmt.Sprintf("Gitpod is running. Visit https://%s to access the dashboard", os.Getenv("DOMAIN"))},
 }
 
 func main() {
