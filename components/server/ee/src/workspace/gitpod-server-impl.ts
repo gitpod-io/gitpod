@@ -46,6 +46,7 @@ import {
     FindPrebuildsParams,
     TeamMemberRole,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+    WorkspaceType,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -70,7 +71,7 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import { BillableSession, billableSessionDummyData } from "@gitpod/gitpod-protocol/lib/usage";
+import { BillableSession } from "@gitpod/gitpod-protocol/lib/usage";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -106,6 +107,9 @@ import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { CachingUsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
+import * as usage from "@gitpod/usage-api/lib/usage/v1/usage_pb";
+import { billableSessionDummyData } from "@gitpod/gitpod-protocol/lib/usage";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -144,6 +148,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(UserCounter) protected readonly userCounter: UserCounter;
 
     @inject(UserService) protected readonly userService: UserService;
+
+    @inject(CachingUsageServiceClientProvider)
+    protected readonly usageServiceClientProvider: CachingUsageServiceClientProvider;
 
     initialize(
         client: GitpodClient | undefined,
@@ -2064,7 +2071,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
-        return billableSessionDummyData;
+        const usageClient = this.usageServiceClientProvider.getDefault();
+        const response = await usageClient.getBilledUsage(ctx, attributionId);
+        const sessions = response.getSessionsList().map((s) => this.mapBilledSession(s));
+
+        return sessions.concat(billableSessionDummyData); // to at least return some data for testing
     }
 
     protected async guardCostCenterAccess(
@@ -2102,6 +2113,29 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAccess({ kind: "costCenter", /*subject: costCenter,*/ owner }, operation);
     }
+
+    protected mapBilledSession(s: usage.BilledSession): BillableSession {
+        function mandatory<T>(v: T, m: (v: T) => string = (s) => "" + s): string {
+            if (!v) {
+                throw new Error(`Empty value in usage.BilledSession for instanceId '${s.getInstanceId()}'`);
+            }
+            return m(v);
+        }
+        return {
+            attributionId: mandatory(s.getAttributionId()),
+            userId: s.getUserId() || undefined,
+            teamId: s.getTeamId() || undefined,
+            projectId: s.getProjectId() || undefined,
+            workspaceId: mandatory(s.getWorkspaceId()),
+            instanceId: mandatory(s.getInstanceId()),
+            workspaceType: mandatory(s.getWorkspaceType()) as WorkspaceType,
+            workspaceClass: mandatory(s.getWorkspaceClass()),
+            startTime: mandatory(s.getStartTime(), (t) => t!.toDate().toISOString()),
+            endTime: mandatory(s.getEndTime(), (t) => t!.toDate().toISOString()),
+            credits: s.getCredits(), // optional
+        };
+    }
+
     // (SaaS) – admin
     async adminGetAccountStatement(ctx: TraceContext, userId: string): Promise<AccountStatement> {
         traceAPIParams(ctx, { userId });

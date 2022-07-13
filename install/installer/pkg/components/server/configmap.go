@@ -6,9 +6,12 @@ package server
 
 import (
 	"fmt"
+	"net"
 	"regexp"
+	"strconv"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	corev1 "k8s.io/api/core/v1"
@@ -222,6 +225,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		ContentServiceAddr:           "content-service:8080",
 		ImageBuilderAddr:             "image-builder-mk3:8080",
+		UsageServiceAddr:             net.JoinHostPort(usage.Component, strconv.Itoa(usage.GRPCServicePort)),
 		CodeSync:                     CodeSync{},
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
 		EnablePayment:                chargebeeSecret != "" || stripeSecret != "" || stripeConfig != "",
