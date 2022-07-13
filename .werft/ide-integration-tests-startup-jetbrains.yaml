@@ -10,6 +10,10 @@ pod:
         secretName: gcp-sa-gitpod-dev-deployer
     - name: config
       emptyDir: {}
+    - name: github-token-gitpod-bot
+      secret:
+        defaultMode: 420
+        secretName: github-token-gitpod-bot
   containers:
     - name: gcloud
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go184.0
@@ -25,6 +29,11 @@ pod:
             secretKeyRef:
               name: github-roboquat-automatic-changelog
               key: token
+        # Used by the Werft CLI through werft-credential-helper.sh
+        - name: WERFT_GITHUB_TOKEN_PATH
+          value: "/mnt/secrets/github-token-gitpod-bot/token"
+        - name: WERFT_CREDENTIAL_HELPER
+          value: "/workspace/dev/preview/werft-credential-helper.sh"
       volumeMounts:
         - name: gcp-sa
           mountPath: /mnt/secrets/gcp-sa
@@ -32,6 +41,8 @@ pod:
         - name: config
           mountPath: /config
           readOnly: false
+        - mountPath: /mnt/secrets/github-token-gitpod-bot
+          name: github-token-gitpod-bot
       command:
         - bash
         - -c
