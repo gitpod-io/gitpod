@@ -1507,6 +1507,10 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 
 func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface) {
 	cfgc := cfgobs.Observe(ctx)
+
+	log.Info("analyseConfigChanges")
+	log.Info(cfgc)
+
 	var (
 		cfg     *gitpod.GitpodConfig
 		t       = time.NewTicker(10 * time.Second)
