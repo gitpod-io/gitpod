@@ -36,6 +36,7 @@
     "@gitpod/image-builder": "0.1.5",
     "@gitpod/licensor": "0.1.5",
     "@gitpod/supervisor-api-grpcweb": "0.1.5",
+    "@gitpod/usage-api": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",
     "@google-cloud/storage": "^5.6.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.14.0",

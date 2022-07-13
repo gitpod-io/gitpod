@@ -13,7 +13,7 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 		{
 			Name:          gRPCPortName,
 			ContainerPort: gRPCContainerPort,
-			ServicePort:   gRPCServicePort,
+			ServicePort:   GRPCServicePort,
 		},
 	})(ctx)
 }

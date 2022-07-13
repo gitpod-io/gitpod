@@ -12,6 +12,7 @@ import { getTeamSettingsMenu } from "./TeamSettings";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { BillableSession, BillableWorkspaceType } from "@gitpod/gitpod-protocol/lib/usage";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import moment from "moment";
 import Property from "../admin/Property";
@@ -29,7 +30,8 @@ function TeamUsage() {
             return;
         }
         (async () => {
-            const billedUsageResult = await getGitpodService().server.getBilledUsage("some-attribution-id");
+            const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
+            const billedUsageResult = await getGitpodService().server.getBilledUsage(attributionId);
             setBilledUsage(billedUsageResult);
         })();
     }, [team]);
@@ -92,7 +94,9 @@ function TeamUsage() {
                             <span className="text-gray-400">{usage.workspaceClass}</span>
                         </div>
                         <div className="my-auto">
-                            <span className="text-gray-700">{getHours(usage.endTime, usage.startTime)}</span>
+                            <span className="text-gray-700">
+                                {getHours(new Date(usage.endTime).getTime(), new Date(usage.startTime).getTime())}
+                            </span>
                         </div>
                         <div className="my-auto">
                             <span className="text-gray-700">{usage.credits}</span>

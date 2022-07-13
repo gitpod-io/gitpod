@@ -8,7 +8,7 @@ const (
 	Component             = "usage"
 	gRPCContainerPort     = 9001
 	gRPCPortName          = "grpc"
-	gRPCServicePort       = 9001
+	GRPCServicePort       = 9001
 	stripeSecretMountPath = "stripe-secret"
 	stripeKeyFilename     = "apikeys"
 	configJSONFilename    = "config.json"

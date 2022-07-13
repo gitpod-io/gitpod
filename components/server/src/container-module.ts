@@ -100,6 +100,12 @@ import { InstallationAdminTelemetryDataProvider } from "./installation-admin/tel
 import { IDEService } from "./ide-service";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
+import {
+    CachingUsageServiceClientProvider,
+    UsageServiceClientCallMetrics,
+    UsageServiceClientConfig,
+    UsageServiceClientProvider,
+} from "@gitpod/usage-api/lib/usage/v1/sugar";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -247,4 +253,12 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ProjectsService).toSelf().inSingletonScope();
 
     bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
+
+    bind(UsageServiceClientConfig).toDynamicValue((ctx) => {
+        const config = ctx.container.get<Config>(Config);
+        return { address: config.usageServiceAddr };
+    });
+    bind(CachingUsageServiceClientProvider).toSelf().inSingletonScope();
+    bind(UsageServiceClientProvider).toService(CachingImageBuilderClientProvider);
+    bind(UsageServiceClientCallMetrics).toService(IClientCallMetrics);
 });
