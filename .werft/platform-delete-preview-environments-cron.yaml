@@ -38,8 +38,6 @@ pod:
         - name: harvester-k3s-dockerhub-pull-account
           mountPath: /mnt/secrets/harvester-k3s-dockerhub-pull-account
       env:
-        - name: WERFT_HOST
-          value: "werft.werft.svc.cluster.local:7777"
         - name: HONEYCOMB_DATASET
           value: "werft"
         - name: HONEYCOMB_API_KEY
