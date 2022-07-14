@@ -15,10 +15,7 @@ const prepareSlices = {
 };
 
 export async function prepare(werft: Werft, config: JobConfig) {
-    if (!config.withPreview)
-    {
-        return
-    }
+
     werft.phase(phaseName);
     try {
         werft.log(prepareSlices.CONFIGURE_CORE_DEV, prepareSlices.CONFIGURE_CORE_DEV);
