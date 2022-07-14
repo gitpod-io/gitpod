@@ -118,8 +118,8 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 			BackupWaitingTimeHist:       waitingTimeHist,
 			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
 		},
-		// we permit three concurrent backups at any given time, hence the three in the channel
-		backupWorkspaceLimiter: make(chan struct{}, 3),
+		// we permit five concurrent backups at any given time, hence the five in the channel
+		backupWorkspaceLimiter: make(chan struct{}, 5),
 	}, nil
 }
 
