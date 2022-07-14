@@ -54,12 +54,18 @@ message AdmissionConstraint {
   message HasPermission {
     string permission = 1;
   }
+  enum MaturityLevel {
+    DEFAULT = 0;
+    LOW = 1;
+    HIGH = 2;
+  }
 
   oneof constraint {
     FeaturePreview has_feature_preview = 1;
     HasPermission has_permission = 2;
     // deprecated and removed: has_user_level = 3;
     // deprecated and removed: bool has_more_resources = 4;
+    MaturityLevel maturity_level = 5;
   }
 }
 

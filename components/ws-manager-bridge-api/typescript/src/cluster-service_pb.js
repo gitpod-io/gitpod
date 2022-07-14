@@ -25,6 +25,7 @@ goog.exportSymbol('proto.workspacemanagerbridge.AdmissionConstraint', null, glob
 goog.exportSymbol('proto.workspacemanagerbridge.AdmissionConstraint.ConstraintCase', null, global);
 goog.exportSymbol('proto.workspacemanagerbridge.AdmissionConstraint.FeaturePreview', null, global);
 goog.exportSymbol('proto.workspacemanagerbridge.AdmissionConstraint.HasPermission', null, global);
+goog.exportSymbol('proto.workspacemanagerbridge.AdmissionConstraint.MaturityLevel', null, global);
 goog.exportSymbol('proto.workspacemanagerbridge.ClusterState', null, global);
 goog.exportSymbol('proto.workspacemanagerbridge.ClusterStatus', null, global);
 goog.exportSymbol('proto.workspacemanagerbridge.DeregisterRequest', null, global);
@@ -1167,7 +1168,7 @@ proto.workspacemanagerbridge.RegistrationHints.prototype.setGovern = function(va
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_ = [[1,2,3,4]];
+proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_ = [[1,2,3,4,5]];
 
 /**
  * @enum {number}
@@ -1177,7 +1178,8 @@ proto.workspacemanagerbridge.AdmissionConstraint.ConstraintCase = {
   HAS_FEATURE_PREVIEW: 1,
   HAS_PERMISSION: 2,
   HAS_USER_LEVEL: 3,
-  HAS_MORE_RESOURCES: 4
+  HAS_MORE_RESOURCES: 4,
+  MATURITY_LEVEL: 5
 };
 
 /**
@@ -1221,7 +1223,8 @@ proto.workspacemanagerbridge.AdmissionConstraint.toObject = function(includeInst
     hasFeaturePreview: (f = msg.getHasFeaturePreview()) && proto.workspacemanagerbridge.AdmissionConstraint.FeaturePreview.toObject(includeInstance, f),
     hasPermission: (f = msg.getHasPermission()) && proto.workspacemanagerbridge.AdmissionConstraint.HasPermission.toObject(includeInstance, f),
     hasUserLevel: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    hasMoreResources: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
+    hasMoreResources: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
+    maturityLevel: jspb.Message.getFieldWithDefault(msg, 5, 0)
   };
 
   if (includeInstance) {
@@ -1275,6 +1278,10 @@ proto.workspacemanagerbridge.AdmissionConstraint.deserializeBinaryFromReader = f
     case 4:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setHasMoreResources(value);
+      break;
+    case 5:
+      var value = /** @type {!proto.workspacemanagerbridge.AdmissionConstraint.MaturityLevel} */ (reader.readEnum());
+      msg.setMaturityLevel(value);
       break;
     default:
       reader.skipField();
@@ -1335,8 +1342,24 @@ proto.workspacemanagerbridge.AdmissionConstraint.serializeBinaryToWriter = funct
       f
     );
   }
+  f = /** @type {!proto.workspacemanagerbridge.AdmissionConstraint.MaturityLevel} */ (jspb.Message.getField(message, 5));
+  if (f != null) {
+    writer.writeEnum(
+      5,
+      f
+    );
+  }
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.workspacemanagerbridge.AdmissionConstraint.MaturityLevel = {
+  DEFAULT: 0,
+  LOW: 1,
+  HIGH: 2
+};
 
 
 
@@ -1712,6 +1735,42 @@ proto.workspacemanagerbridge.AdmissionConstraint.prototype.clearHasMoreResources
  */
 proto.workspacemanagerbridge.AdmissionConstraint.prototype.hasHasMoreResources = function() {
   return jspb.Message.getField(this, 4) != null;
+};
+
+
+/**
+ * optional MaturityLevel maturity_level = 5;
+ * @return {!proto.workspacemanagerbridge.AdmissionConstraint.MaturityLevel}
+ */
+proto.workspacemanagerbridge.AdmissionConstraint.prototype.getMaturityLevel = function() {
+  return /** @type {!proto.workspacemanagerbridge.AdmissionConstraint.MaturityLevel} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+};
+
+
+/**
+ * @param {!proto.workspacemanagerbridge.AdmissionConstraint.MaturityLevel} value
+ * @return {!proto.workspacemanagerbridge.AdmissionConstraint} returns this
+ */
+proto.workspacemanagerbridge.AdmissionConstraint.prototype.setMaturityLevel = function(value) {
+  return jspb.Message.setOneofField(this, 5, proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.workspacemanagerbridge.AdmissionConstraint} returns this
+ */
+proto.workspacemanagerbridge.AdmissionConstraint.prototype.clearMaturityLevel = function() {
+  return jspb.Message.setOneofField(this, 5, proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_[0], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.workspacemanagerbridge.AdmissionConstraint.prototype.hasMaturityLevel = function() {
+  return jspb.Message.getField(this, 5) != null;
 };
 
 

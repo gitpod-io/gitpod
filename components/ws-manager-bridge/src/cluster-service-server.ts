@@ -15,6 +15,8 @@ import {
     AdmissionConstraint,
     AdmissionConstraintHasPermission,
     WorkspaceClusterWoTLS,
+    ClusterMaturityLevel,
+    AdmissionConstraintHasMaturityLevel,
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import {
     ClusterServiceService,
@@ -223,6 +225,8 @@ export class ClusterService implements IClusterServiceServer {
                                     return true;
                                 }
 
+                                // There are some admission constraints which cannot be removed. The code below prevents
+                                // them from being removed.
                                 switch (v.type) {
                                     case "has-feature-preview":
                                         return false;
@@ -235,6 +239,15 @@ export class ClusterService implements IClusterServiceServer {
                                 return true;
                             });
                         }
+
+                        // To avoid clutter, by we remove all has-maturity-level=default admission constraints. They are the default
+                        // and have no effect.
+                        cluster.admissionConstraints = cluster.admissionConstraints?.filter((admissionConstraint) => {
+                            return (
+                                admissionConstraint.type !== "has-maturity-level" ||
+                                admissionConstraint.level !== "default"
+                            );
+                        });
                     }
                 }
                 await this.clusterDB.save(cluster);
@@ -340,6 +353,20 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
                 perm.setPermission(c.permission);
                 constraint.setHasPermission(perm);
                 break;
+            case "has-maturity-level":
+                var level: GRPCAdmissionConstraint.MaturityLevel;
+                switch (c.level) {
+                    case "low":
+                        level = GRPCAdmissionConstraint.MaturityLevel.LOW;
+                        break;
+                    case "default":
+                        level = GRPCAdmissionConstraint.MaturityLevel.DEFAULT;
+                        break;
+                    case "high":
+                        level = GRPCAdmissionConstraint.MaturityLevel.HIGH;
+                        break;
+                }
+                constraint.setMaturityLevel(level);
             default:
                 return;
         }
@@ -363,6 +390,23 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
         }
 
         return <AdmissionConstraintHasPermission>{ type: "has-permission", permission };
+    }
+    if (c.hasMaturityLevel()) {
+        var level: ClusterMaturityLevel;
+        switch (c.getMaturityLevel()) {
+            case GRPCAdmissionConstraint.MaturityLevel.DEFAULT:
+                level = "default";
+                break;
+            case GRPCAdmissionConstraint.MaturityLevel.LOW:
+                level = "low";
+                break;
+            case GRPCAdmissionConstraint.MaturityLevel.HIGH:
+                level = "high";
+                break;
+            default:
+                throw new Error(`Unknown maturity level: ${c.getMaturityLevel()}`);
+        }
+        return <AdmissionConstraintHasMaturityLevel>{ type: "has-maturity-level", level };
     }
     return;
 }
