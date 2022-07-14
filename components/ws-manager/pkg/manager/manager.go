@@ -290,41 +290,24 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 	}
 
-	// create the Pod in the cluster and wait until is scheduled
-	// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.22.md#workloads-that-saturate-nodes-with-pods-may-see-pods-that-fail-due-to-node-admission
-	backoff := wait.Backoff{
-		Steps:    10,
-		Duration: 100 * time.Millisecond,
-		Factor:   2.5,
-		Jitter:   0.1,
-		Cap:      5 * time.Minute,
-	}
+	err = m.Clientset.Create(ctx, pod)
+	if err != nil {
+		m, _ := json.Marshal(pod)
+		safePod, _ := log.RedactJSON(m)
 
-	var retryErr error
-	err = wait.ExponentialBackoff(backoff, func() (bool, error) {
-		// remove resource version so that we can attempt to re-create the pod
-		pod.ResourceVersion = ""
-		err = m.Clientset.Create(ctx, pod)
-		if err != nil {
-			m, _ := json.Marshal(pod)
-			safePod, _ := log.RedactJSON(m)
-
-			if k8serr.IsAlreadyExists(err) {
-				clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace which already exists")
-				return false, status.Error(codes.AlreadyExists, "workspace instance already exists")
-			}
-
-			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace")
-			return false, err
+		if k8serr.IsAlreadyExists(err) {
+			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace which already exists")
+			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
 		}
 
-		// we only calculate the time that PVC restoring from VolumeSnapshot
-		if createPVC && startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
-			err = wait.PollWithContext(ctx, 100*time.Millisecond, time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
-			if err != nil {
-				return false, nil
-			}
+		clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace")
+		return nil, err
+	}
 
+	// we only calculate the time that PVC restoring from VolumeSnapshot
+	if createPVC && startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
+		err := wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
+		if err == nil {
 			wsType := api.WorkspaceType_name[int32(req.Type)]
 			hist, err := m.metrics.volumeRestoreTimeHistVec.GetMetricWithLabelValues(wsType, req.Spec.Class)
 			if err != nil {
@@ -335,70 +318,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			}
 		}
 
-		// wait at least 60 seconds before deleting pending pod and trying again due to pending PVC attachment
-		err = wait.PollWithContext(ctx, 100*time.Millisecond, 60*time.Second, podRunning(m.Clientset, pod.Name, pod.Namespace))
-		if err != nil {
-			jsonPod, _ := json.Marshal(pod)
-			safePod, _ := log.RedactJSON(jsonPod)
-			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to reach ready state")
-			retryErr = err
-
-			var tempPod corev1.Pod
-			finalizerRemoved := false
-			// We do below in loop as sometimes the pod might be already deleted or modified when we attempt to remove the finalizer
-			// so we first get the pod and then attempt to remove the finalizer
-			// in case the pod is not found in the first place, we return success
-			rmCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-			for i := 0; i < 3 && !finalizerRemoved; i++ {
-				getErr := m.Clientset.Get(rmCtx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
-				if getErr != nil {
-					if k8serr.IsNotFound(getErr) {
-						// pod doesn't exist, so we are safe to proceed with retry
-						return false, nil
-					}
-					clog.WithError(getErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to get pod")
-					// pod get call failed so we error out
-					return false, retryErr
-				}
-				// we successfully got the pod, now we attempt to remove finalizer
-				tempPod.Finalizers = []string{}
-				updateErr := m.Clientset.Update(rmCtx, &tempPod)
-				if updateErr != nil {
-					if k8serr.IsNotFound(updateErr) {
-						// pod doesn't exist, so we are safe to proceed with retry
-						return false, nil
-					}
-					clog.WithError(updateErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to remove finalizer")
-					continue
-				}
-				finalizerRemoved = true
-			}
-			// if even after retries we could not remove finalizers, then error out
-			if !finalizerRemoved {
-				return false, retryErr
-			}
-
-			deleteErr := m.Clientset.Delete(rmCtx, &tempPod)
-			if deleteErr != nil && !k8serr.IsNotFound(deleteErr) {
-				clog.WithError(deleteErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to delete pod")
-				// failed to delete pod, so not going to be able to create a new pod, so bail out
-				return false, retryErr
-			}
-
-			// we deleted original pod, so now we can try to create a new one and see if this one will be able to be scheduled\started
-			return false, nil
-		}
-
-		return true, nil
-	})
-	if err == wait.ErrWaitTimeout && retryErr != nil {
-		err = retryErr
-	}
-
-	if err != nil {
-		clog.WithError(err).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to start workspace after backoff")
-		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
+		log.WithError(err).Warn("unexpected error waiting for PVC")
 	}
 
 	// remove annotation to signal that workspace pod was indeed created and scheduled on the node
@@ -553,41 +473,6 @@ func (m *Manager) DeleteVolumeSnapshot(ctx context.Context, req *api.DeleteVolum
 	}
 
 	return okResponse, nil
-}
-
-func podRunning(clientset client.Client, podName, namespace string) wait.ConditionWithContextFunc {
-	return func(ctx context.Context) (bool, error) {
-		var pod corev1.Pod
-		err := clientset.Get(ctx, types.NamespacedName{Namespace: namespace, Name: podName}, &pod)
-		if err != nil {
-			return false, nil
-		}
-
-		switch pod.Status.Phase {
-		case corev1.PodFailed:
-			if strings.HasPrefix(pod.Status.Reason, "OutOf") {
-				return false, xerrors.Errorf("cannot schedule pod due to out of resources, reason: %s", pod.Status.Reason)
-			}
-			return false, fmt.Errorf("pod failed with reason: %s", pod.Status.Reason)
-		case corev1.PodSucceeded:
-			return false, fmt.Errorf("pod ran to completion")
-		case corev1.PodPending:
-			for _, c := range pod.Status.Conditions {
-				if c.Type == corev1.PodScheduled && c.Status == corev1.ConditionTrue {
-					// even if pod is pending but was scheduled already, it means kubelet is pulling images and running init containers
-					// we can consider this as pod running
-					return true, nil
-				}
-			}
-
-			// if pod is pending, wait for it to get scheduled
-			return false, nil
-		case corev1.PodRunning:
-			return true, nil
-		}
-
-		return false, xerrors.Errorf("pod in unknown state: %s", pod.Status.Phase)
-	}
 }
 
 func pvcRunning(clientset client.Client, pvcName, namespace string) wait.ConditionWithContextFunc {
