@@ -31,18 +31,17 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
         subdomains.push(sd);
     }
 
-    exec(`echo "Domain: ${params.domain}, Subdomains: ${subdomains}"`, { slice: shellOpts.slice });
+    werft.log(shellOpts.slice, `"Domain: ${params.domain}, Subdomains: ${subdomains}"`);
     validateSubdomains(werft, shellOpts.slice, params.domain, subdomains);
 
     const maxAttempts = 5
-    const timeout = "150s"
-    var i: number
-    var certReady: boolean
+    var i = 0
+    var certReady = false
     while(!certReady || i < maxAttempts) {
-        exec(`echo Creating cert: Attempt ${i}`);
+        werft.log(shellOpts.slice, `Creating cert: Attempt ${i}`);
         createCertificateResource(werft, shellOpts, params, subdomains);
-        exec(`echo Checking for cert readiness: Attempt ${i}`);
-        if (checkCertReadiness(params.certName, timeout)) {
+        werft.log(shellOpts.slice, `Checking for cert readiness: Attempt ${i}`);
+        if (checkCertReadiness(params.certName)) {
             certReady = true
         }
         i++
@@ -53,7 +52,8 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
     return certReady
 }
 
-function checkCertReadiness(certName: string, timeout: string): boolean {
+function checkCertReadiness(certName: string): boolean {
+    const timeout = "150s"
     const rc = exec(
         `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`,
         { dontCheckRc: true },

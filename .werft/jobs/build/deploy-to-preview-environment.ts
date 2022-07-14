@@ -521,7 +521,7 @@ export async function issueMetaCerts(
     metaClusterCertParams.ip = getCoreDevIngressIP();
     metaClusterCertParams.bucketPrefixTail = "";
     metaClusterCertParams.additionalSubdomains = additionalSubdomains;
-    return await issueCertificate(werft, metaClusterCertParams, { ...metaEnv(), slice });
+    return issueCertificate(werft, metaClusterCertParams, { ...metaEnv(), slice });
 }
 
 async function installMetaCertificates(
