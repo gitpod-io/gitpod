@@ -5,8 +5,7 @@
  */
 
 import { Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
-import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { defaultGRPCOptions, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import {
     ImageBuilderClient,
     ImageBuilderClientCallMetrics,

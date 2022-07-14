@@ -29,7 +29,7 @@ import {
 import { ClusterService, ClusterServiceServer } from "./cluster-service-server";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { newAnalyticsWriterFromEnv } from "@gitpod/gitpod-protocol/lib/util/analytics";
-import { IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
+import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./preparing-update-emulator";
 import { PrebuildStateMapper } from "./prebuild-state-mapper";

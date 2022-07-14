@@ -8,10 +8,7 @@ import { ImageBuilderClient } from "./imgbuilder_grpc_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import {
-    createClientCallMetricsInterceptor,
-    IClientCallMetrics,
-} from "@gitpod/content-service/lib/client-call-metrics";
+import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
 import {

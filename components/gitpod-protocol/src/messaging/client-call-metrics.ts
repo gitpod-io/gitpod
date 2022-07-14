@@ -6,26 +6,7 @@
 
 import { injectable } from "inversify";
 import * as prometheusClient from "prom-client";
-
-type GrpcMethodType = "unary" | "client_stream" | "server_stream" | "bidi_stream";
-export interface IGrpcCallMetricsLabels {
-    service: string;
-    method: string;
-    type: GrpcMethodType;
-}
-
-export interface IGrpcCallMetricsLabelsWithCode extends IGrpcCallMetricsLabels {
-    code: string;
-}
-
-export const IClientCallMetrics = Symbol("IClientCallMetrics");
-
-export interface IClientCallMetrics {
-    started(labels: IGrpcCallMetricsLabels): void;
-    sent(labels: IGrpcCallMetricsLabels): void;
-    received(labels: IGrpcCallMetricsLabels): void;
-    handled(labels: IGrpcCallMetricsLabelsWithCode): void;
-}
+import { IClientCallMetrics, IGrpcCallMetricsLabels, IGrpcCallMetricsLabelsWithCode } from "../util/grpc";
 
 @injectable()
 export class PrometheusClientCallMetrics implements IClientCallMetrics {
