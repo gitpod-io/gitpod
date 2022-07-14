@@ -35,16 +35,15 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
     validateSubdomains(werft, shellOpts.slice, params.domain, subdomains);
 
     const maxAttempts = 5
-    var i = 0
     var certReady = false
-    while(!certReady || i < maxAttempts) {
+    for (var i = 1;i<=maxAttempts;i++) {
         werft.log(shellOpts.slice, `Creating cert: Attempt ${i}`);
         createCertificateResource(werft, shellOpts, params, subdomains);
         werft.log(shellOpts.slice, `Checking for cert readiness: Attempt ${i}`);
         if (checkCertReadiness(params.certName)) {
-            certReady = true
+            certReady = true;
+            break;
         }
-        i++
     }
     if (!certReady) {
         retrieveFailedCertDebug(params.certName, shellOpts.slice)
