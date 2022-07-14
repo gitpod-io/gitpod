@@ -9,7 +9,8 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
 import { ListBilledUsageRequest, ListBilledUsageResponse } from "./usage_pb";
-import { injectable, inject } from "inversify";
+import { injectable, inject, optional } from "inversify";
+import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import * as grpc from "@grpc/grpc-js";
 
 export const UsageServiceClientProvider = Symbol("UsageServiceClientProvider");
@@ -43,9 +44,9 @@ export interface UsageServiceClientConfig {
 export class CachingUsageServiceClientProvider implements UsageServiceClientProvider {
     @inject(UsageServiceClientConfig) protected readonly clientConfig: UsageServiceClientConfig;
 
-    // @inject(UsageServiceClientCallMetrics)
-    // @optional()
-    // protected readonly clientCallMetrics: IClientCallMetrics;
+    @inject(UsageServiceClientCallMetrics)
+    @optional()
+    protected readonly clientCallMetrics: IClientCallMetrics;
 
     // gRPC connections can be used concurrently, even across services.
     // Thus it makes sense to cache them rather than create a new connection for each request.
@@ -53,9 +54,9 @@ export class CachingUsageServiceClientProvider implements UsageServiceClientProv
 
     getDefault() {
         let interceptors: grpc.Interceptor[] = [];
-        // if (this.clientCallMetrics) {
-        //     interceptors = [createClientCallMetricsInterceptor(this.clientCallMetrics)];
-        // }
+        if (this.clientCallMetrics) {
+            interceptors = [createClientCallMetricsInterceptor(this.clientCallMetrics)];
+        }
 
         const createClient = () => {
             return new PromisifiedUsageServiceClient(

@@ -91,7 +91,7 @@ import { Config, ConfigFile } from "./config";
 import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { IDEConfigService } from "./ide-config";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
-import { IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
+import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messaging/local-message-broker";
 import { contentServiceBinder } from "@gitpod/content-service/lib/sugar";
