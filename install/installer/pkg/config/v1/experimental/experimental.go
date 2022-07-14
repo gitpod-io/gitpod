@@ -15,6 +15,7 @@ import (
 
 	agentSmith "github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -62,8 +63,6 @@ type WorkspaceConfig struct {
 	CPULimits struct {
 		Enabled          bool              `json:"enabled"`
 		NodeCPUBandwidth resource.Quantity `json:"nodeBandwidth"`
-		Limit            resource.Quantity `json:"limit"`
-		BurstLimit       resource.Quantity `json:"burstLimit"`
 	}
 	IOLimits struct {
 		WriteBWPerSecond resource.Quantity `json:"writeBandwidthPerSecond"`
@@ -123,13 +122,28 @@ type PersistentVolumeClaim struct {
 }
 
 type WorkspaceClass struct {
-	Name      string `json:"name" validate:"required"`
-	Resources struct {
-		Requests corev1.ResourceList `json:"requests" validate:"required"`
-		Limits   corev1.ResourceList `json:"limits,omitempty"`
-	} `json:"resources" validate:"required"`
+	Name      string                `json:"name" validate:"required"`
+	Resources WorkspaceResources    `json:"resources" validate:"required"`
 	Templates WorkspaceTemplates    `json:"templates,omitempty"`
 	PVC       PersistentVolumeClaim `json:"pvc" validate:"required"`
+}
+
+type WorkspaceResources struct {
+	Requests corev1.ResourceList `json:"requests" validate:"required"`
+	Limits   WorkspaceLimits     `json:"limits,omitempty"`
+}
+
+type WorkspaceLimits struct {
+	Cpu              WorkspaceCpuLimits `json:"cpu"`
+	Memory           string             `json:"memory"`
+	Storage          string             `json:"storage"`
+	EphemeralStorage string             `json:"ephemeral-storage"`
+}
+
+type WorkspaceCpuLimits struct {
+	Buckets    []cpulimit.Bucket `json:"buckets"`
+	MinLimit   string            `json:"min"`
+	BurstLimit string            `json:"burst"`
 }
 
 type WorkspaceTemplates struct {

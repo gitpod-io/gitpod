@@ -303,11 +303,8 @@ const (
 
 type Resources struct {
 	// todo(sje): add custom validation to corev1.ResourceList
-	Requests      corev1.ResourceList `json:"requests" validate:"required"`
-	Limits        corev1.ResourceList `json:"limits,omitempty"`
-	DynamicLimits *struct {
-		CPU []cpulimit.Bucket // todo(sje): add custom validation
-	} `json:"dynamicLimits,omitempty"`
+	Requests corev1.ResourceList `json:"requests" validate:"required"`
+	Limits   corev1.ResourceList `json:"limits,omitempty"`
 }
 
 type WorkspaceRuntime struct {
@@ -317,6 +314,24 @@ type WorkspaceRuntime struct {
 	ContainerDRuntimeDir string `json:"containerdRuntimeDir" validate:"required,startswith=/"`
 	// The location of containerd socket on the host machine
 	ContainerDSocket string `json:"containerdSocket" validate:"required,startswith=/"`
+}
+
+type WorkspaceResources struct {
+	Requests corev1.ResourceList `json:"requests" validate:"required"`
+	Limits   WorkspaceLimits     `json:"limits,omitempty"`
+}
+
+type WorkspaceLimits struct {
+	Cpu              WorkspaceCpuLimits `json:"cpu"`
+	Memory           string             `json:"memory"`
+	Storage          string             `json:"storage"`
+	EphemeralStorage string             `json:"ephemeral-storage"`
+}
+
+type WorkspaceCpuLimits struct {
+	Buckets    []cpulimit.Bucket `json:"buckets"`
+	MinLimit   string            `json:"min"`
+	BurstLimit string            `json:"burst"`
 }
 
 type WorkspaceTemplates struct {
@@ -339,7 +354,7 @@ type PersistentVolumeClaim struct {
 
 type Workspace struct {
 	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
-	Resources Resources           `json:"resources" validate:"required"`
+	Resources WorkspaceResources  `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`
 
 	// PVC is the struct that describes how to setup persistent volume claim for workspace

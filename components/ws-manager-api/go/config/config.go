@@ -290,8 +290,8 @@ func (c *PVCConfiguration) Validate() error {
 
 // ContainerConfiguration configures properties of workspace pod container
 type ContainerConfiguration struct {
-	Requests *ResourceConfiguration `json:"requests,omitempty"`
-	Limits   *ResourceConfiguration `json:"limits,omitempty"`
+	Requests *ResourceRequestConfiguration `json:"requests,omitempty"`
+	Limits   *ResourceLimitConfiguration   `json:"limits,omitempty"`
 }
 
 // Validate validates a container configuration
@@ -303,7 +303,7 @@ func (c *ContainerConfiguration) Validate() error {
 }
 
 var validResourceConfig = ozzo.By(func(o interface{}) error {
-	rc, ok := o.(*ResourceConfiguration)
+	rc, ok := o.(*ResourceRequestConfiguration)
 	if !ok {
 		return xerrors.Errorf("can only validate ResourceConfiguration")
 	}
@@ -337,7 +337,7 @@ var validResourceConfig = ozzo.By(func(o interface{}) error {
 	return nil
 })
 
-func (r *ResourceConfiguration) StorageQuantity() (resource.Quantity, error) {
+func (r *ResourceRequestConfiguration) StorageQuantity() (resource.Quantity, error) {
 	if r.Storage == "" {
 		res := resource.NewQuantity(0, resource.BinarySI)
 		return *res, nil
@@ -346,7 +346,7 @@ func (r *ResourceConfiguration) StorageQuantity() (resource.Quantity, error) {
 }
 
 // ResourceList parses the quantities in the resource config
-func (r *ResourceConfiguration) ResourceList() (corev1.ResourceList, error) {
+func (r *ResourceRequestConfiguration) ResourceList() (corev1.ResourceList, error) {
 	if r == nil {
 		return corev1.ResourceList{}, nil
 	}
@@ -453,10 +453,59 @@ func RenderWorkspacePortURL(urltpl string, ctx PortURLContext) (string, error) {
 	return b.String(), nil
 }
 
-// ResourceConfiguration configures resources of a pod/container
-type ResourceConfiguration struct {
+// ResourceRequestConfiguration configures resources of a pod/container
+type ResourceRequestConfiguration struct {
 	CPU              string `json:"cpu"`
 	Memory           string `json:"memory"`
 	EphemeralStorage string `json:"ephemeral-storage"`
 	Storage          string `json:"storage,omitempty"`
+}
+
+type ResourceLimitConfiguration struct {
+	CPU              CpuResourceLimit `json:"cpu"`
+	Memory           string           `json:"memory"`
+	EphemeralStorage string           `json:"ephemeral-storage"`
+	Storage          string           `json:"storage,omitempty"`
+}
+
+func (r *ResourceLimitConfiguration) ResourceList() (corev1.ResourceList, error) {
+	if r == nil {
+		return corev1.ResourceList{}, nil
+	}
+	res := map[corev1.ResourceName]string{
+		corev1.ResourceCPU:              r.CPU.BurstLimit,
+		corev1.ResourceMemory:           r.Memory,
+		corev1.ResourceEphemeralStorage: r.EphemeralStorage,
+	}
+
+	var l = make(corev1.ResourceList)
+	for k, v := range res {
+		if v == "" {
+			continue
+		}
+
+		q, err := resource.ParseQuantity(v)
+		if err != nil {
+			return nil, xerrors.Errorf("%s: %w", k, err)
+		}
+		if q.Value() == 0 {
+			continue
+		}
+
+		l[k] = q
+	}
+	return l, nil
+}
+
+func (r *ResourceLimitConfiguration) StorageQuantity() (resource.Quantity, error) {
+	if r.Storage == "" {
+		res := resource.NewQuantity(0, resource.BinarySI)
+		return *res, nil
+	}
+	return resource.ParseQuantity(r.Storage)
+}
+
+type CpuResourceLimit struct {
+	MinLimit   string `json:"min"`
+	BurstLimit string `json:"burst"`
 }
