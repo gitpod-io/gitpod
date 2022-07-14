@@ -40,7 +40,7 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
         werft.log(shellOpts.slice, `Creating cert: Attempt ${i}`);
         createCertificateResource(werft, shellOpts, params, subdomains);
         werft.log(shellOpts.slice, `Checking for cert readiness: Attempt ${i}`);
-        if (checkCertReadiness(params.certName)) {
+        if (isCertReady(params.certName)) {
             certReady = true;
             break;
         }
@@ -51,13 +51,13 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
     return certReady
 }
 
-function checkCertReadiness(certName: string): boolean {
+function isCertReady(certName: string): boolean {
     const timeout = "180s"
     const rc = exec(
         `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`,
         { dontCheckRc: true },
     ).code
-    return rc != 0
+    return rc == 0
 }
 
 function retrieveFailedCertDebug(certName: string, slice: string) {
