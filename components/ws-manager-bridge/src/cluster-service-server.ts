@@ -15,7 +15,6 @@ import {
     AdmissionConstraint,
     AdmissionConstraintHasPermission,
     WorkspaceClusterWoTLS,
-    AdmissionConstraintHasUserLevel,
     AdmissionConstraintHasMoreResources,
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import {
@@ -233,10 +232,6 @@ export class ClusterService implements IClusterServiceServer {
                                             return false;
                                         }
                                         break;
-                                    case "has-user-level":
-                                        if (v.level === (c as AdmissionConstraintHasUserLevel).level) {
-                                            return false;
-                                        }
                                     case "has-more-resources":
                                         return false;
                                 }
@@ -348,9 +343,6 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
                 perm.setPermission(c.permission);
                 constraint.setHasPermission(perm);
                 break;
-            case "has-user-level":
-                constraint.setHasUserLevel(c.level);
-                break;
             case "has-more-resources":
                 constraint.setHasMoreResources(true);
                 break;
@@ -377,13 +369,6 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
         }
 
         return <AdmissionConstraintHasPermission>{ type: "has-permission", permission };
-    }
-    if (c.hasHasUserLevel()) {
-        const level = c.getHasUserLevel();
-        if (!level) {
-            return;
-        }
-        return <AdmissionConstraintHasUserLevel>{ type: "has-user-level", level };
     }
     if (c.hasHasMoreResources()) {
         return <AdmissionConstraintHasMoreResources>{ type: "has-more-resources" };
