@@ -12,13 +12,13 @@ import { AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { DevData } from "../dev/dev-data";
 import { TokenProvider } from "../user/token-provider";
-import { BitbucketApiFactory, BasicAuthBitbucketApiFactory } from "./bitbucket-api-factory";
+import { BitbucketApiFactory } from "./bitbucket-api-factory";
 import { BitbucketRepositoryProvider } from "./bitbucket-repository-provider";
 import { BitbucketTokenHelper } from "./bitbucket-token-handler";
 const expect = chai.expect;
 import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 
-@suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET"))
+@suite(timeout(10000), retries(0), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET"))
 class TestBitbucketRepositoryProvider {
     protected repoProvider: BitbucketRepositoryProvider;
     protected user: User;
@@ -52,7 +52,7 @@ class TestBitbucketRepositoryProvider {
                     getFreshPortAuthenticationToken: async (user: User, workspaceId: string) =>
                         DevData.createPortAuthTestToken(workspaceId),
                 });
-                bind(BitbucketApiFactory).to(BasicAuthBitbucketApiFactory).inSingletonScope();
+                bind(BitbucketApiFactory).toSelf().inSingletonScope();
                 bind(HostContextProvider).toConstantValue({
                     get: (hostname: string) => {
                         authProvider: {
@@ -72,7 +72,7 @@ class TestBitbucketRepositoryProvider {
             host: "bitbucket.org",
             owner: "gitpod",
             name: "integration-tests",
-            cloneUrl: "https://gitpod-test@bitbucket.org/gitpod/integration-tests.git",
+            cloneUrl: "https://bitbucket.org/gitpod/integration-tests.git",
             description: "This is the repository used for integration tests.",
             webUrl: "https://bitbucket.org/gitpod/integration-tests",
         });
@@ -87,6 +87,16 @@ class TestBitbucketRepositoryProvider {
             100,
         );
         expect(result).to.deep.equal(["da2119f51b0e744cb6b36399f8433b477a4174ef"]);
+    }
+
+    @test public async testHasReadAccess_positive() {
+        const result = await this.repoProvider.hasReadAccess(this.user, "gitpod", "integration-tests");
+        expect(result).to.be.true;
+    }
+
+    @test public async testHasReadAccess_negative() {
+        const result = await this.repoProvider.hasReadAccess(this.user, "foobar", "private-repo");
+        expect(result).to.be.false;
     }
 }
 
