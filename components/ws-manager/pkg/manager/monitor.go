@@ -26,10 +26,8 @@ import (
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
-	covev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -94,10 +92,6 @@ type Monitor struct {
 
 // CreateMonitor creates a new monitor
 func (m *Manager) CreateMonitor() (*Monitor, error) {
-	broadcaster := record.NewBroadcaster()
-	broadcaster.StartRecordingToSink(&covev1client.EventSinkImpl{Interface: m.RawClient.CoreV1().Events("")})
-	eventRecorder := broadcaster.NewRecorder(runtime.NewScheme(), corev1.EventSource{Component: "ws-manager"})
-
 	monitorInterval := time.Duration(m.Config.HeartbeatInterval)
 	// Monitor interval is half the heartbeat interval to catch timed out workspaces in time.
 	// See https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem why we need this.
@@ -117,7 +111,7 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 
 		notifyPod: make(map[string]chan string),
 
-		eventRecorder: eventRecorder,
+		eventRecorder: m.eventRecorder,
 	}
 	res.eventpool = workpool.NewEventWorkerPool(res.handleEvent)
 	res.act = struct {
