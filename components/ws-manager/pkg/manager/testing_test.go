@@ -44,13 +44,13 @@ func forTestingOnlyManagerConfig() config.Configuration {
 			config.DefaultWorkspaceClass: {
 				Container: config.ContainerConfiguration{
 					Limits: &config.ResourceLimitConfiguration{
-						CPU: config.CpuResourceLimit{
-							MinLimit:   "",
+						CPU: &config.CpuResourceLimit{
+							MinLimit:   "300m",
 							BurstLimit: "900m",
 						},
 						Memory: "1000M",
 					},
-					Requests: &config.ResourceConfiguration{
+					Requests: &config.ResourceRequestConfiguration{
 						CPU:              "899m",
 						EphemeralStorage: "5Gi",
 						Memory:           "999M",

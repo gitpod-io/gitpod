@@ -22,6 +22,8 @@
                 "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
                 "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
                 "gitpod.io/attemptingToCreate": "true",
+                "gitpod.io/cpuBurstLimit": "900m",
+                "gitpod.io/cpuLimit": "300m",
                 "gitpod.io/sshPublicKeys": "Cl9zc2gtZWQyNTUxOSBBQUFBQzNOemFDMWxaREkxTlRFNUFBQUFJSG0yK2tKSy93dWwxVkd3OXJmQ21kY0dqSjBXbUdiQmpDNXA1OTA4VUdnWiBnaXRwb2RAdW5rbm93bgqvAWVjZHNhLXNoYTItbmlzdHAyNTYgQUFBQUUyVmpaSE5oTFhOb1lUSXRibWx6ZEhBeU5UWUFBQUFJYm1semRIQXlOVFlBQUFCQkJNL0Eva3JhV2pXeTI4blZmc1Y0R2EyRjROQUFWT0dwL1YzazNVOThuT3QyVVNZd3U3RXRTcUVPN1BDUFErK3pOSmR1aFk1SjBmYm42TzA0K25LdmR0OD0gZ2l0cG9kQHVua25vd24=",
                 "gitpod/admission": "admit_owner_only",
                 "gitpod/contentInitializer": "GmcKZXdvcmtzcGFjZXMvY3J5cHRpYy1pZC1nb2VzLWhlcmcvZmQ2MjgwNGItNGNhYi0xMWU5LTg0M2EtNGU2NDUzNzMwNDhlLnRhckBnaXRwb2QtZGV2LXVzZXItY2hyaXN0ZXN0aW5n",

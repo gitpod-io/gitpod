@@ -28,13 +28,13 @@ var (
 
 func TestCreateDefiniteWorkspacePod(t *testing.T) {
 	type WorkspaceClass struct {
-		DefaultTemplate    *corev1.Pod                   `json:"defaultTemplate,omitempty"`
-		PrebuildTemplate   *corev1.Pod                   `json:"prebuildTemplate,omitempty"`
-		ProbeTemplate      *corev1.Pod                   `json:"probeTemplate,omitempty"`
-		ImagebuildTemplate *corev1.Pod                   `json:"imagebuildTemplate,omitempty"`
-		RegularTemplate    *corev1.Pod                   `json:"regularTemplate,omitempty"`
-		ResourceRequests   *config.ResourceConfiguration `json:"resourceRequests,omitempty"`
-		ResourceLimits     *config.ResourceConfiguration `json:"resourceLimits,omitempty"`
+		DefaultTemplate    *corev1.Pod                          `json:"defaultTemplate,omitempty"`
+		PrebuildTemplate   *corev1.Pod                          `json:"prebuildTemplate,omitempty"`
+		ProbeTemplate      *corev1.Pod                          `json:"probeTemplate,omitempty"`
+		ImagebuildTemplate *corev1.Pod                          `json:"imagebuildTemplate,omitempty"`
+		RegularTemplate    *corev1.Pod                          `json:"regularTemplate,omitempty"`
+		ResourceRequests   *config.ResourceRequestConfiguration `json:"resourceRequests,omitempty"`
+		ResourceLimits     *config.ResourceLimitConfiguration   `json:"resourceLimits,omitempty"`
 	}
 	type tpl struct {
 		FN      string
@@ -190,9 +190,9 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 
 func TestCreatePVCForWorkspacePod(t *testing.T) {
 	type WorkspaceClass struct {
-		PVCConfig        *config.PVCConfiguration      `json:"pvcConfig,omitempty"`
-		ResourceRequests *config.ResourceConfiguration `json:"resourceRequests,omitempty"`
-		ResourceLimits   *config.ResourceConfiguration `json:"resourceLimits,omitempty"`
+		PVCConfig        *config.PVCConfiguration             `json:"pvcConfig,omitempty"`
+		ResourceRequests *config.ResourceRequestConfiguration `json:"resourceRequests,omitempty"`
+		ResourceLimits   *config.ResourceLimitConfiguration   `json:"resourceLimits,omitempty"`
 	}
 	type fixture struct {
 		WorkspaceClass

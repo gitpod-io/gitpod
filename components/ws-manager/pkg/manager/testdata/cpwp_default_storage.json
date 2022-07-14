@@ -2,7 +2,6 @@
     "classes": {
         "gitpodio-pvc": {
             "resourceRequests": {"cpu": "900m"},
-            "resourceLimits": {"cpu": "900m"},
             "pvcConfig": {
                 "size": "30Gi",
                 "storageClass": "",

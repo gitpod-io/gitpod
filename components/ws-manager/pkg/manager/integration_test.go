@@ -75,13 +75,13 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 			"": {
 				Container: config.ContainerConfiguration{
 					Limits: &config.ResourceLimitConfiguration{
-						CPU: config.CpuResourceLimit{
-							MinLimit:   "",
+						CPU: &config.CpuResourceLimit{
+							MinLimit:   "600m",
 							BurstLimit: "900m",
 						},
 						Memory: "1000M",
 					},
-					Requests: &config.ResourceConfiguration{
+					Requests: &config.ResourceRequestConfiguration{
 						CPU:    "1m",
 						Memory: "1m",
 					},
