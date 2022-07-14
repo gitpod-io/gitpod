@@ -5,7 +5,11 @@
  */
 
 import { PermissionName, RolesOrPermissions, User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { AdmissionConstraint, WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import {
+    AdmissionConstraint,
+    ClusterMaturityLevel,
+    WorkspaceClusterWoTLS,
+} from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 
 /**
  * ExtendedUser adds additional attributes to a user which are helpful
@@ -22,28 +26,37 @@ export interface WorkspaceClusterConstraintSet {
  * workspaceClusterSets defines an order of preference in which we'll select
  * workspace cluster when starting a workspace.
  */
-const workspaceClusterSets: WorkspaceClusterConstraintSet[] = [
-    {
-        name: "new workspace cluster",
-        constraint: constraintHasPermissions("new-workspace-cluster"),
-    },
-    {
-        name: "regional",
-        constraint: intersect(constraintRegional),
-    },
-    {
-        name: "non-regional",
-        constraint: intersect(invert(constraintRegional)),
-    },
-];
+export const workspaceClusterSets: WorkspaceClusterConstraintSet[] = multiply(
+    [
+        {
+            name: "new workspace cluster",
+            constraint: constraintHasPermissions("new-workspace-cluster"),
+        },
+        {
+            name: "higly mature",
+            constraint: intersect(
+                userConstraintHasPermission("mature-workspace-cluster"),
+                constraintMaturityLevelClustersOnly("high"),
+            ),
+        },
+        {
+            name: "regional",
+            constraint: constraintRegional,
+        },
+        {
+            name: "non-regional",
+            constraint: invert(constraintRegional),
+        },
+    ],
+    constraintUserIsAuthorized,
+);
 
-/**
- * workspaceClusterSetsAuthorized applies the constraint "is user authorized" to all workspaceClusterSets
- */
-export const workspaceClusterSetsAuthorized = workspaceClusterSets.map((set) => ({
-    ...set,
-    constraint: intersect(set.constraint, constraintUserIsAuthorized),
-}));
+function multiply(s: WorkspaceClusterConstraintSet[], ...constraints: Constraint[]): WorkspaceClusterConstraintSet[] {
+    return s.map((set) => ({
+        ...set,
+        constraint: intersect(set.constraint, ...constraints),
+    }));
+}
 
 export type Constraint = (
     all: WorkspaceClusterWoTLS[],
@@ -78,6 +91,12 @@ function hasPermissionConstraint(cluster: WorkspaceClusterWoTLS, permission: Per
     );
 }
 
+function hasMaturityLevel(cluster: WorkspaceClusterWoTLS, level: ClusterMaturityLevel): boolean {
+    return !!cluster.admissionConstraints?.find(
+        (constraint) => constraint.type === "has-maturity-level" && constraint.level === level,
+    );
+}
+
 /**
  * The returned Constraint _filters out_ all clusters that require _any_ of the given permissions
  * @param permissions
@@ -97,6 +116,27 @@ export function constraintInverseHasPermissions(...permissions: PermissionName[]
 export function constraintHasPermissions(...permissions: PermissionName[]): Constraint {
     return (all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance) => {
         return all.filter((cluster) => permissions.some((p) => hasPermissionConstraint(cluster, p)));
+    };
+}
+
+/**
+ * The returned Constraint returns all clusters that have exactly the given maturity level
+ * @param level
+ * @returns
+ */
+export function constraintMaturityLevelClustersOnly(level: ClusterMaturityLevel): Constraint {
+    return (all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance) => {
+        return all.filter((cluster) => hasMaturityLevel(cluster, level));
+    };
+}
+
+function userConstraintHasPermission(permission: PermissionName): Constraint {
+    return (all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance) => {
+        if (user.rolesOrPermissions?.includes(permission)) {
+            return all;
+        }
+
+        return [];
     };
 }
 
