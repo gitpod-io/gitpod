@@ -18,18 +18,17 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/gitpod-io/gitpod/common-go/cgroups"
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // Config configures the containerd resource governer dispatch
 type Config struct {
 	Enabled        bool              `json:"enabled"`
 	TotalBandwidth resource.Quantity `json:"totalBandwidth"`
-	Limit          resource.Quantity `json:"limit"`
-	BurstLimit     resource.Quantity `json:"burstLimit"`
 
 	ControlPeriod  util.Duration `json:"controlPeriod"`
 	CGroupBasePath string        `json:"cgroupBasePath"`
@@ -66,8 +65,8 @@ func NewDispatchListener(cfg *Config, prom prometheus.Registerer) *DispatchListe
 
 	if cfg.Enabled {
 		dist := NewDistributor(d.source, d.sink,
-			FixedLimiter(BandwidthFromQuantity(d.Config.Limit)),
-			FixedLimiter(BandwidthFromQuantity(d.Config.BurstLimit)),
+			AnnotationLimiter(kubernetes.WorkspaceCpuLimitAnnotation),
+			AnnotationLimiter(kubernetes.WorkspaceCpuBurstLimitAnnotation),
 			BandwidthFromQuantity(d.Config.TotalBandwidth),
 		)
 		go dist.Run(context.Background(), time.Duration(d.Config.ControlPeriod))
@@ -103,6 +102,7 @@ type workspace struct {
 	CFS       CFSController
 	OWI       logrus.Fields
 	HardLimit ResourceLimiter
+	Pod       *corev1.Pod
 
 	lastThrottled uint64
 }
@@ -141,6 +141,7 @@ func (d *DispatchListener) source(context.Context) ([]Workspace, error) {
 			ID:          id,
 			NrThrottled: throttled,
 			Usage:       usage,
+			Pod:         w.Pod,
 		})
 	}
 	return res, nil
@@ -190,6 +191,7 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 	d.workspaces[ws.InstanceID] = &workspace{
 		CFS: controller,
 		OWI: ws.OWI(),
+		Pod: ws.Pod,
 	}
 	go func() {
 		<-ctx.Done()
@@ -215,15 +217,7 @@ func (d *DispatchListener) WorkspaceUpdated(ctx context.Context, ws *dispatch.Wo
 		return xerrors.Errorf("received update for a workspace we haven't seen before: %s", ws.InstanceID)
 	}
 
-	newCPULimit := ws.Pod.Annotations[wsk8s.CPULimitAnnotation]
-	if newCPULimit != "" {
-		limit, err := resource.ParseQuantity(newCPULimit)
-		if err != nil {
-			return xerrors.Errorf("cannot enforce fixed CPU limit: %w", err)
-		}
-		wsinfo.HardLimit = FixedLimiter(BandwidthFromQuantity(limit))
-	}
-
+	wsinfo.Pod = ws.Pod
 	return nil
 }
 

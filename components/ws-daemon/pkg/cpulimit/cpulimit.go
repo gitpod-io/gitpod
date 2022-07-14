@@ -9,7 +9,11 @@ import (
 	"sort"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 type Workspace struct {
@@ -18,6 +22,7 @@ type Workspace struct {
 	NrThrottled uint64
 	Usage       CPUTime
 	QoS         int
+	Pod         *corev1.Pod
 }
 
 type WorkspaceHistory struct {
@@ -172,7 +177,11 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 	var burstBandwidth Bandwidth
 	for _, id := range wsOrder {
 		ws := d.History[id]
-		limit := d.Limiter.Limit(ws.Usage())
+		limit, err := d.Limiter.Limit(ws)
+		if err != nil {
+			log.Errorf("unable to apply min limit: %v", err)
+			continue
+		}
 
 		// if we didn't get the max bandwidth, but were throttled last time
 		// and there's still some bandwidth left to give, let's act as if had
@@ -180,7 +189,11 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 		// entire bandwidth at once.
 		var burst bool
 		if totalBandwidth < d.TotalBandwidth && ws.Throttled() {
-			limit = d.BurstLimiter.Limit(ws.Usage())
+			limit, err = d.BurstLimiter.Limit(ws)
+			if err != nil {
+				log.Errorf("unable to apply burst limit: %v", err)
+				continue
+			}
 
 			// We assume the workspace is going to use as much as their limit allows.
 			// This might not be true, because their process which consumed so much CPU
@@ -206,7 +219,7 @@ func (d *Distributor) Reset() {
 
 // ResourceLimiter implements a strategy to limit the resurce use of a workspace
 type ResourceLimiter interface {
-	Limit(budgetSpent CPUTime) (newLimit Bandwidth)
+	Limit(wsh *WorkspaceHistory) (Bandwidth, error)
 }
 
 // FixedLimiter returns a fixed limit
@@ -218,8 +231,32 @@ type fixedLimiter struct {
 	FixedLimit Bandwidth
 }
 
-func (f fixedLimiter) Limit(budgetSpent CPUTime) (newLimit Bandwidth) {
-	return f.FixedLimit
+func (f fixedLimiter) Limit(wsh *WorkspaceHistory) (Bandwidth, error) {
+	return f.FixedLimit, nil
+}
+
+func AnnotationLimiter(annotation string) ResourceLimiter {
+	return annotationLimiter{
+		Annotation: annotation,
+	}
+}
+
+type annotationLimiter struct {
+	Annotation string
+}
+
+func (a annotationLimiter) Limit(wsh *WorkspaceHistory) (Bandwidth, error) {
+	value, ok := wsh.LastUpdate.Pod.Annotations[a.Annotation]
+	if !ok {
+		return 0, xerrors.Errorf("no annotation named %s found on workspace %s", a.Annotation, wsh.ID)
+	}
+
+	limit, err := resource.ParseQuantity(value)
+	if err != nil {
+		return 0, xerrors.Errorf("failed to parse %s for workspace %s", limit, wsh.ID)
+	}
+
+	return BandwidthFromQuantity(limit), nil
 }
 
 // Bucket describes a "pot of CPU time" which can be spent at a particular rate.
@@ -241,22 +278,24 @@ type Bucket struct {
 type BucketLimiter []Bucket
 
 // Limit limits spending based on the budget that's left
-func (buckets BucketLimiter) Limit(budgetSpent CPUTime) (newLimit Bandwidth) {
+func (buckets BucketLimiter) Limit(wsh *WorkspaceHistory) (Bandwidth, error) {
+	budgetSpent := wsh.Usage()
+
 	for i, bkt := range buckets {
 		if i+1 == len(buckets) {
 			// We've reached the last bucket - budget doesn't matter anymore
-			return bkt.Limit
+			return bkt.Limit, nil
 		}
 
 		budgetSpent -= bkt.Budget
 		if budgetSpent <= 0 {
 			// BudgetSpent value is in this bucket, hence we have found our current bucket
-			return bkt.Limit
+			return bkt.Limit, nil
 		}
 	}
 
 	// empty bucket list
-	return 0
+	return 0, nil
 }
 
 // ClampingBucketLimiter is a stateful limiter that clamps the limit to the last bucket once that bucket is reached.
@@ -267,7 +306,9 @@ type ClampingBucketLimiter struct {
 }
 
 // Limit decides on a CPU use limit
-func (bl *ClampingBucketLimiter) Limit(budgetSpent CPUTime) (newLimit Bandwidth) {
+func (bl *ClampingBucketLimiter) Limit(wsh *WorkspaceHistory) (newLimit Bandwidth) {
+	budgetSpent := wsh.Usage()
+
 	if bl.lastBucketLock {
 		if budgetSpent < bl.Buckets[len(bl.Buckets)-1].Budget {
 			bl.lastBucketLock = false
