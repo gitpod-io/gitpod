@@ -23,6 +23,10 @@ export async function prepare(werft: Werft, config: JobConfig) {
         configureDocker();
         configureStaticClustersAccess();
         werft.done(prepareSlices.CONFIGURE_CORE_DEV);
+        if (!config.withPreview)
+        {
+            return
+        }
         var certReady = issueCertificate(werft, config);
         decideHarvesterVMCreation(werft, config);
         await certReady
