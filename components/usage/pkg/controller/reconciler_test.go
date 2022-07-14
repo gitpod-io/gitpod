@@ -6,12 +6,14 @@ package controller
 
 import (
 	"context"
+	"database/sql"
+	"testing"
+	"time"
+
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
@@ -141,6 +143,72 @@ func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
 			actual := s.Report.CreditSummaryForTeams(DefaultWorkspacePricer, maxStopTime)
+			require.Equal(t, s.Expected, actual)
+		})
+	}
+}
+
+func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
+	teamID := uuid.New().String()
+	teamAttributionID := db.NewTeamAttributionID(teamID)
+	instanceId := uuid.New()
+	creationTime := db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC))
+	stoppedTime := db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC))
+
+	scenarios := []struct {
+		Name     string
+		Report   UsageReport
+		Expected []db.WorkspaceInstanceUsage
+	}{
+		{
+			Name: "a stopped workspace instance",
+			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
+				teamAttributionID: {
+					db.WorkspaceInstanceForUsage{
+						ID:                 instanceId,
+						UsageAttributionID: teamAttributionID,
+						WorkspaceClass:     defaultWorkspaceClass,
+						CreationTime:       creationTime,
+						StoppedTime:        stoppedTime,
+					},
+				},
+			},
+			Expected: []db.WorkspaceInstanceUsage{{
+				InstanceID:    instanceId,
+				AttributionID: teamAttributionID,
+				StartedAt:     creationTime.Time(),
+				StoppedAt:     sql.NullTime{Time: stoppedTime.Time(), Valid: true},
+				CreditsUsed:   0,
+				GenerationId:  0,
+			}},
+		},
+		{
+			Name: "workspace instance that is still running",
+			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
+				teamAttributionID: {
+					db.WorkspaceInstanceForUsage{
+						ID:                 instanceId,
+						WorkspaceClass:     defaultWorkspaceClass,
+						UsageAttributionID: teamAttributionID,
+						CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+						StoppedTime:        db.VarcharTime{},
+					},
+				},
+			},
+			Expected: []db.WorkspaceInstanceUsage{{
+				InstanceID:    instanceId,
+				AttributionID: teamAttributionID,
+				StartedAt:     creationTime.Time(),
+				StoppedAt:     sql.NullTime{},
+				CreditsUsed:   0,
+				GenerationId:  0,
+			}},
+		},
+	}
+
+	for _, s := range scenarios {
+		t.Run(s.Name, func(t *testing.T) {
+			actual := usageReportToUsageRecords(s.Report)
 			require.Equal(t, s.Expected, actual)
 		})
 	}
