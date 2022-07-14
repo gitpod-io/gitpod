@@ -381,6 +381,18 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		}
 		annotations[customTimeoutAnnotation] = req.Spec.Timeout
 	}
+
+	limits := startContext.Class.Container.Limits
+	if limits != nil && limits.CPU != nil {
+		if limits.CPU.MinLimit != "" {
+			annotations[kubernetes.WorkspaceCpuLimitAnnotation] = limits.CPU.MinLimit
+		}
+
+		if limits.CPU.BurstLimit != "" {
+			annotations[kubernetes.WorkspaceCpuBurstLimitAnnotation] = limits.CPU.BurstLimit
+		}
+	}
+
 	for k, v := range req.Metadata.Annotations {
 		annotations[workspaceAnnotationPrefix+k] = v
 	}

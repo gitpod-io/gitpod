@@ -43,8 +43,11 @@ func forTestingOnlyManagerConfig() config.Configuration {
 		WorkspaceClasses: map[string]*config.WorkspaceClass{
 			config.DefaultWorkspaceClass: {
 				Container: config.ContainerConfiguration{
-					Limits: &config.ResourceConfiguration{
-						CPU:    "900m",
+					Limits: &config.ResourceLimitConfiguration{
+						CPU: config.CpuResourceLimit{
+							MinLimit:   "",
+							BurstLimit: "900m",
+						},
 						Memory: "1000M",
 					},
 					Requests: &config.ResourceConfiguration{

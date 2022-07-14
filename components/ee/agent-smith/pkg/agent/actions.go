@@ -70,7 +70,7 @@ func (agent *Smith) limitCPUUse(podname string) error {
 			return err
 		}
 
-		pod.Annotations[wsk8s.CPULimitAnnotation] = agent.Config.Enforcement.CPULimitPenalty
+		pod.Annotations[wsk8s.WorkspaceCpuLimitAnnotation] = agent.Config.Enforcement.CPULimitPenalty
 		_, err = pods.Update(ctx, pod, corev1.UpdateOptions{})
 		if err != nil {
 			return err
