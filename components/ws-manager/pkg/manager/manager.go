@@ -30,9 +30,12 @@ import (
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	covev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -68,6 +71,8 @@ type Manager struct {
 	subscriberLock sync.RWMutex
 
 	metrics *metrics
+
+	eventRecorder record.EventRecorder
 
 	api.UnimplementedWorkspaceManagerServer
 	regapi.UnimplementedSpecProviderServer
@@ -127,14 +132,19 @@ func New(config config.Configuration, client client.Client, rawClient kubernetes
 		return nil, err
 	}
 
+	broadcaster := record.NewBroadcaster()
+	broadcaster.StartRecordingToSink(&covev1client.EventSinkImpl{Interface: rawClient.CoreV1().Events("")})
+	eventRecorder := broadcaster.NewRecorder(runtime.NewScheme(), corev1.EventSource{Component: "ws-manager"})
+
 	m := &Manager{
-		Config:       config,
-		Clientset:    client,
-		RawClient:    rawClient,
-		Content:      cp,
-		clock:        clock.System(),
-		subscribers:  make(map[string]chan *api.SubscribeResponse),
-		wsdaemonPool: grpcpool.New(wsdaemonConnfactory, checkWSDaemonEndpoint(config.Namespace, client)),
+		Config:        config,
+		Clientset:     client,
+		RawClient:     rawClient,
+		Content:       cp,
+		clock:         clock.System(),
+		subscribers:   make(map[string]chan *api.SubscribeResponse),
+		wsdaemonPool:  grpcpool.New(wsdaemonConnfactory, checkWSDaemonEndpoint(config.Namespace, client)),
+		eventRecorder: eventRecorder,
 	}
 	m.metrics = newMetrics(m)
 	m.OnChange = m.onChange
@@ -310,20 +320,37 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 
 	// we only calculate the time that PVC restoring from VolumeSnapshot
-	if createPVC && startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
-		err := wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
-		if err == nil {
-			wsType := api.WorkspaceType_name[int32(req.Type)]
-			hist, err := m.metrics.volumeRestoreTimeHistVec.GetMetricWithLabelValues(wsType, req.Spec.Class)
-			if err != nil {
-				log.WithError(err).WithField("type", wsType).Warn("cannot get volume restore time histogram metric")
-			} else if endTime.IsZero() {
-				endTime = time.Now()
-				hist.Observe(endTime.Sub(startTime).Seconds())
-			}
+	if createPVC {
+		err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, pod)
+		if err != nil {
+			return nil, xerrors.Errorf("unable to get workspace pod %s: %w", pod.Name, err)
 		}
 
-		log.WithError(err).Warn("unexpected error waiting for PVC")
+		err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
+		if err != nil {
+			if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
+				m.eventRecorder.Eventf(pod, corev1.EventTypeWarning, "PersistentVolumeClaim", "PVC %q restored from volume snapshot %q failed %v", pvc.Name, startContext.VolumeSnapshot.VolumeSnapshotName, err)
+				clog.WithError(err).Warnf("unexpected error waiting for PVC %s volume snapshot %s", pvc.Name, startContext.VolumeSnapshot.VolumeSnapshotName)
+			} else {
+				m.eventRecorder.Eventf(pod, corev1.EventTypeWarning, "PersistentVolumeClaim", "PVC %q created failed %v", pvc.Name, err)
+				clog.WithError(err).Warnf("unexpected error waiting for PVC %s", pvc.Name)
+			}
+		} else {
+			if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
+				m.eventRecorder.Eventf(pod, corev1.EventTypeNormal, "PersistentVolumeClaim", "PVC %q restored from volume snapshot %q successfully", pvc.Name, startContext.VolumeSnapshot.VolumeSnapshotName)
+
+				wsType := api.WorkspaceType_name[int32(req.Type)]
+				hist, err := m.metrics.volumeRestoreTimeHistVec.GetMetricWithLabelValues(wsType, req.Spec.Class)
+				if err != nil {
+					log.WithError(err).WithField("type", wsType).Warn("cannot get volume restore time histogram metric")
+				} else if endTime.IsZero() {
+					endTime = time.Now()
+					hist.Observe(endTime.Sub(startTime).Seconds())
+				}
+			} else {
+				m.eventRecorder.Eventf(pod, corev1.EventTypeNormal, "PersistentVolumeClaim", "PVC %q created successfully", pvc.Name)
+			}
+		}
 	}
 
 	// remove annotation to signal that workspace pod was indeed created and scheduled on the node
