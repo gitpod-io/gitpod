@@ -1326,7 +1326,10 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		fnReady = "/.workspace/.gitpod/ready"
 		log.Info("Detected content.json in /.workspace folder, assuming PVC feature enabled")
 	}
-	f, err := os.Open(fn)
+
+	var contentFile *os.File
+
+	contentFile, err = os.Open(fn)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			log.WithError(err).Error("cannot open init descriptor")
@@ -1363,7 +1366,10 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		return
 	}
 
-	src, err := executor.Execute(ctx, "/workspace", f, true)
+	defer contentFile.Close()
+
+	var src csapi.WorkspaceInitSource
+	src, err = executor.Execute(ctx, "/workspace", contentFile, true)
 	if err != nil {
 		return
 	}
@@ -1373,6 +1379,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		// file is gone - we're good
 		err = nil
 	}
+
 	if err != nil {
 		return
 	}
