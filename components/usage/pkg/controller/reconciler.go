@@ -239,7 +239,7 @@ func usageReportToUsageRecords(report UsageReport) []db.WorkspaceInstanceUsage {
 		for _, instance := range instances {
 			var stoppedAt sql.NullTime
 			if instance.StoppedTime.IsSet() {
-				stoppedAt.Time = instance.StoppedTime.Time()
+				stoppedAt = sql.NullTime{Time: instance.StoppedTime.Time(), Valid: true}
 			}
 
 			usageRecords = append(usageRecords, db.WorkspaceInstanceUsage{
