@@ -25,6 +25,16 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Rules: []rbacv1.PolicyRule{
 				{
+					APIGroups: []string{""},
+					Resources: []string{
+						"nodes",
+					},
+					Verbs: []string{
+						"get",
+						"list",
+					},
+				},
+				{
 					APIGroups: []string{"snapshot.storage.k8s.io"},
 					Resources: []string{
 						"volumesnapshotcontents",
