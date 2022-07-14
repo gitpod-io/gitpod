@@ -15,7 +15,6 @@ import {
     AdmissionConstraint,
     AdmissionConstraintHasPermission,
     WorkspaceClusterWoTLS,
-    AdmissionConstraintHasMoreResources,
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import {
     ClusterServiceService,
@@ -232,8 +231,6 @@ export class ClusterService implements IClusterServiceServer {
                                             return false;
                                         }
                                         break;
-                                    case "has-more-resources":
-                                        return false;
                                 }
                                 return true;
                             });
@@ -343,9 +340,6 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
                 perm.setPermission(c.permission);
                 constraint.setHasPermission(perm);
                 break;
-            case "has-more-resources":
-                constraint.setHasMoreResources(true);
-                break;
             default:
                 return;
         }
@@ -369,9 +363,6 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
         }
 
         return <AdmissionConstraintHasPermission>{ type: "has-permission", permission };
-    }
-    if (c.hasHasMoreResources()) {
-        return <AdmissionConstraintHasMoreResources>{ type: "has-more-resources" };
     }
     return;
 }
