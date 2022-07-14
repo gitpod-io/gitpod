@@ -18,7 +18,7 @@ import {
     WorkspaceManagerClientProviderCompositeSource,
     WorkspaceManagerClientProviderSource,
 } from "./client-provider-source";
-import { ExtendedUser, workspaceClusterSetsAuthorized } from "./constraints";
+import { ExtendedUser, workspaceClusterSets } from "./constraints";
 import { WorkspaceManagerClient } from "./core_grpc_pb";
 import { linearBackoffStrategy, PromisifiedWorkspaceManagerClient } from "./promisified-client";
 
@@ -56,7 +56,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
         const allClusters = await this.source.getAllWorkspaceClusters();
         const availableClusters = allClusters.filter((c) => c.score > 0 && c.state === "available");
 
-        const sets = workspaceClusterSetsAuthorized
+        const sets = workspaceClusterSets
             .map((constraints) => {
                 const r = constraints.constraint(availableClusters, user, workspace, instance);
                 if (!r) {
