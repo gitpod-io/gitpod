@@ -15,6 +15,7 @@ import (
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/clock"
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestActOnPodEvent(t *testing.T) {
@@ -34,7 +35,8 @@ func TestActOnPodEvent(t *testing.T) {
 		Test: func(t *testing.T, input interface{}) interface{} {
 			fixture := input.(*workspaceObjects)
 			manager := Manager{
-				clock: clock.LogicalOnly(),
+				Clientset: fake.NewClientBuilder().Build(),
+				clock:     clock.LogicalOnly(),
 			}
 			status, serr := manager.getWorkspaceStatus(*fixture)
 			if serr != nil {
@@ -42,7 +44,7 @@ func TestActOnPodEvent(t *testing.T) {
 			}
 
 			var rec actRecorder
-			err := actOnPodEvent(context.Background(), &rec, status, fixture)
+			err := actOnPodEvent(context.Background(), &rec, &manager, status, fixture)
 
 			result := actOnPodEventResult{Actions: rec.Records}
 			if err != nil {
