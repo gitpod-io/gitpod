@@ -297,15 +297,15 @@ type ContainerConfiguration struct {
 // Validate validates a container configuration
 func (c *ContainerConfiguration) Validate() error {
 	return ozzo.ValidateStruct(c,
-		ozzo.Field(&c.Requests, validResourceConfig),
-		ozzo.Field(&c.Limits, validResourceConfig),
+		ozzo.Field(&c.Requests, validResourceRequestConfig),
+		ozzo.Field(&c.Limits, validResourceLimitConfig),
 	)
 }
 
-var validResourceConfig = ozzo.By(func(o interface{}) error {
+var validResourceRequestConfig = ozzo.By(func(o interface{}) error {
 	rc, ok := o.(*ResourceRequestConfiguration)
 	if !ok {
-		return xerrors.Errorf("can only validate ResourceConfiguration")
+		return xerrors.Errorf("can only validate ResourceRequestConfiguration")
 	}
 	if rc == nil {
 		return nil

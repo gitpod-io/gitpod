@@ -2,7 +2,12 @@
     "classes": {
         "gitpodio-internal-foobar": {
             "resourceRequests": {"cpu": "900m"},
-            "resourceLimits": {"cpu": "900m"},
+            "resourceLimits": {
+                "cpu": {
+                    "min": "900m",
+                    "burst": "1200m"
+                }
+            },
             "defaultTemplate": {
                 "spec": {
                     "dnsConfig": {

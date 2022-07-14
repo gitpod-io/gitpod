@@ -28,5 +28,11 @@
     "resourceRequests": {
       "cpu": "5m",
       "memory": "0Gi"
+    },
+    "resourceLimits": {
+        "cpu": {
+            "min": "900m",
+            "burst": "1200m"
+        }
     }
 }
