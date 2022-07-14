@@ -53,13 +53,17 @@ export namespace TLSConfig {
 export type WorkspaceClusterWoTLS = Omit<WorkspaceCluster, "tls">;
 export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, "name" | "url" | "tls">;
 
+export type ClusterMaturityLevel = "low" | "default" | "high";
+
 export type AdmissionConstraint =
     | AdmissionConstraintFeaturePreview
     | AdmissionConstraintHasPermission
-    | AdmissionConstraintHasClass;
+    | AdmissionConstraintHasClass
+    | AdmissionConstraintHasMaturityLevel;
 export type AdmissionConstraintFeaturePreview = { type: "has-feature-preview" };
 export type AdmissionConstraintHasPermission = { type: "has-permission"; permission: PermissionName };
 export type AdmissionConstraintHasClass = { type: "has-class"; id: string; displayName: string };
+export type AdmissionConstraintHasMaturityLevel = { type: "has-maturity-level"; level: ClusterMaturityLevel };
 
 export namespace AdmissionConstraint {
     export function is(o: any): o is AdmissionConstraint {

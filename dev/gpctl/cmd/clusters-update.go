@@ -87,7 +87,7 @@ var clustersUpdateMaxScoreCmd = &cobra.Command{
 }
 
 var clustersUpdateAdmissionConstraintCmd = &cobra.Command{
-	Use:   "admission-constraint add|remove has-feature-preview|has-permission=<permission>",
+	Use:   "admission-constraint add|remove has-feature-preview|has-permission=<permission>|has-maturity-level=low|default|high",
 	Short: "Updates a cluster's admission constraints",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -122,6 +122,29 @@ var clustersUpdateAdmissionConstraintCmd = &cobra.Command{
 							HasPermission: &api.AdmissionConstraint_HasPermission{
 								Permission: strings.TrimPrefix(args[1], "has-permission="),
 							},
+						},
+					},
+				},
+			}
+		} else if strings.HasPrefix(args[1], "has-maturity-level=") {
+			lvl := strings.TrimPrefix(args[1], "has-maturity-level=")
+			var level api.AdmissionConstraint_MaturityLevel
+			switch lvl {
+			case "low":
+				level = api.AdmissionConstraint_LOW
+			case "default":
+				level = api.AdmissionConstraint_DEFAULT
+			case "high":
+				level = api.AdmissionConstraint_HIGH
+			default:
+				log.Fatalf("unknown maturity level: %s", lvl)
+			}
+			request.Property = &api.UpdateRequest_AdmissionConstraint{
+				AdmissionConstraint: &api.ModifyAdmissionConstraint{
+					Add: add,
+					Constraint: &api.AdmissionConstraint{
+						Constraint: &api.AdmissionConstraint_MaturityLevel_{
+							MaturityLevel: level,
 						},
 					},
 				},
