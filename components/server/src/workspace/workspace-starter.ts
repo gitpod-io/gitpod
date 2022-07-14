@@ -464,7 +464,6 @@ export class WorkspaceStarter {
             // we add additional information to the user to help with cluster selection
             const euser: ExtendedUser = {
                 ...user,
-                getsMoreResources: await this.userService.userGetsMoreResources(user),
             };
 
             // choose a cluster and start the instance

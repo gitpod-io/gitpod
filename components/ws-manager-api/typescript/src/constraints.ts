@@ -11,10 +11,7 @@ import { AdmissionConstraint, WorkspaceClusterWoTLS } from "@gitpod/gitpod-proto
  * ExtendedUser adds additional attributes to a user which are helpful
  * during cluster selection.
  */
-export interface ExtendedUser extends User {
-    level?: string;
-    getsMoreResources?: boolean;
-}
+export interface ExtendedUser extends User {}
 
 export interface WorkspaceClusterConstraintSet {
     name: string;
