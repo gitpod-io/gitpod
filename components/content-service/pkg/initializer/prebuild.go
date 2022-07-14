@@ -114,7 +114,7 @@ func runGitInit(ctx context.Context, gInit *GitInitializer) (err error) {
 	)
 	defer tracing.FinishSpan(span, &err)
 	if git.IsWorkingCopy(gInit.Location) {
-		out, err := gInit.GitWithOutput(ctx, "stash", "push", "-u")
+		out, err := gInit.GitWithOutput(ctx, "stash", "push", "--no-include-untracked")
 		if err != nil {
 			var giterr git.OpFailedError
 			if errors.As(err, &giterr) && strings.Contains(giterr.Output, "You do not have the initial commit yet") {
@@ -122,6 +122,7 @@ func runGitInit(ctx context.Context, gInit *GitInitializer) (err error) {
 				// In this case that's not an error though, hence we don't want to fail here.
 			} else {
 				// git returned a non-zero exit code because of some reason we did not anticipate or an actual failure.
+				log.WithError(err).WithField("output", string(out)).Error("unexpected git stash error")
 				return xerrors.Errorf("prebuild initializer: %w", err)
 			}
 		}
