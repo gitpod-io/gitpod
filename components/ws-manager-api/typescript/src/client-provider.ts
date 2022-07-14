@@ -4,10 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import {
-    createClientCallMetricsInterceptor,
-    IClientCallMetrics,
-} from "@gitpod/content-service/lib/client-call-metrics";
+import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { Disposable, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
