@@ -64,6 +64,12 @@ const (
 
 	// WorkspaceSSHPublicKeys contains all authorized ssh public keys that can be connected to the workspace
 	WorkspaceSSHPublicKeys = "gitpod.io/sshPublicKeys"
+
+	// workspaceCpuLimit denotes the cpu limit of a workspace
+	WorkspaceCpuLimitAnnotation = "gitpod.io/cpuLimit"
+
+	// workspaceCpuBurstLimit denotes the cpu burst limit of a workspace
+	WorkspaceCpuBurstLimitAnnotation = "gitpod.io/cpuBurstLimit"
 )
 
 // WorkspaceSupervisorEndpoint produces the supervisor endpoint of a workspace.

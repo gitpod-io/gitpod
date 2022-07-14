@@ -337,6 +337,47 @@ var validResourceConfig = ozzo.By(func(o interface{}) error {
 	return nil
 })
 
+var validResourceLimitConfig = ozzo.By(func(o interface{}) error {
+	rc, ok := o.(*ResourceLimitConfiguration)
+	if !ok {
+		return xerrors.Errorf("can only validate ResourceLimitConfiguration")
+	}
+	if rc == nil {
+		return nil
+	}
+	if rc.CPU.MinLimit != "" {
+		_, err := resource.ParseQuantity(rc.CPU.MinLimit)
+		if err != nil {
+			return xerrors.Errorf("cannot parse low limit CPU quantity: %w", err)
+		}
+	}
+	if rc.CPU.BurstLimit != "" {
+		_, err := resource.ParseQuantity(rc.CPU.BurstLimit)
+		if err != nil {
+			return xerrors.Errorf("cannot parse burst limit CPU quantity: %w", err)
+		}
+	}
+	if rc.Memory != "" {
+		_, err := resource.ParseQuantity(rc.Memory)
+		if err != nil {
+			return xerrors.Errorf("cannot parse Memory quantity: %w", err)
+		}
+	}
+	if rc.EphemeralStorage != "" {
+		_, err := resource.ParseQuantity(rc.EphemeralStorage)
+		if err != nil {
+			return xerrors.Errorf("cannot parse EphemeralStorage quantity: %w", err)
+		}
+	}
+	if rc.Storage != "" {
+		_, err := resource.ParseQuantity(rc.Storage)
+		if err != nil {
+			return xerrors.Errorf("cannot parse Storage quantity: %w", err)
+		}
+	}
+	return nil
+})
+
 func (r *ResourceRequestConfiguration) StorageQuantity() (resource.Quantity, error) {
 	if r.Storage == "" {
 		res := resource.NewQuantity(0, resource.BinarySI)
@@ -462,10 +503,10 @@ type ResourceRequestConfiguration struct {
 }
 
 type ResourceLimitConfiguration struct {
-	CPU              CpuResourceLimit `json:"cpu"`
-	Memory           string           `json:"memory"`
-	EphemeralStorage string           `json:"ephemeral-storage"`
-	Storage          string           `json:"storage,omitempty"`
+	CPU              *CpuResourceLimit `json:"cpu"`
+	Memory           string            `json:"memory"`
+	EphemeralStorage string            `json:"ephemeral-storage"`
+	Storage          string            `json:"storage,omitempty"`
 }
 
 func (r *ResourceLimitConfiguration) ResourceList() (corev1.ResourceList, error) {
@@ -473,9 +514,12 @@ func (r *ResourceLimitConfiguration) ResourceList() (corev1.ResourceList, error)
 		return corev1.ResourceList{}, nil
 	}
 	res := map[corev1.ResourceName]string{
-		corev1.ResourceCPU:              r.CPU.BurstLimit,
 		corev1.ResourceMemory:           r.Memory,
 		corev1.ResourceEphemeralStorage: r.EphemeralStorage,
+	}
+
+	if r.CPU != nil {
+		res[corev1.ResourceCPU] = r.CPU.BurstLimit
 	}
 
 	var l = make(corev1.ResourceList)
