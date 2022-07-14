@@ -52,7 +52,7 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
 }
 
 function checkCertReadiness(certName: string): boolean {
-    const timeout = "150s"
+    const timeout = "180s"
     const rc = exec(
         `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`,
         { dontCheckRc: true },
