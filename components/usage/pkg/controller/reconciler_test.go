@@ -149,6 +149,7 @@ func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
 }
 
 func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
+	maxStopTime := time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)
 	teamID := uuid.New().String()
 	teamAttributionID := db.NewTeamAttributionID(teamID)
 	instanceId := uuid.New()
@@ -178,7 +179,7 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 				AttributionID: teamAttributionID,
 				StartedAt:     creationTime.Time(),
 				StoppedAt:     sql.NullTime{Time: stoppedTime.Time(), Valid: true},
-				CreditsUsed:   0,
+				CreditsUsed:   470,
 				GenerationId:  0,
 			}},
 		},
@@ -200,7 +201,7 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 				AttributionID: teamAttributionID,
 				StartedAt:     creationTime.Time(),
 				StoppedAt:     sql.NullTime{},
-				CreditsUsed:   0,
+				CreditsUsed:   470,
 				GenerationId:  0,
 			}},
 		},
@@ -208,7 +209,7 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
-			actual := usageReportToUsageRecords(s.Report)
+			actual := usageReportToUsageRecords(s.Report, DefaultWorkspacePricer, maxStopTime)
 			require.Equal(t, s.Expected, actual)
 		})
 	}
