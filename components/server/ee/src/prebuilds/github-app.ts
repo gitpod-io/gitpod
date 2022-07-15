@@ -17,6 +17,7 @@ import {
     WorkspaceDB,
     ProjectDB,
     TeamDB,
+    WebhookEventDB,
 } from "@gitpod/gitpod-db/lib";
 import * as express from "express";
 import { log, LogContext, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -59,6 +60,7 @@ export class GithubApp {
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(ContextParser) protected readonly contextParser: ContextParser;
     @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
+    @inject(WebhookEventDB) protected readonly webhookEvents: WebhookEventDB;
 
     readonly server: Server | undefined;
 
@@ -238,6 +240,12 @@ export class GithubApp {
         const span = TraceContext.startSpan("GithubApp.handlePushEvent", {});
         span.setTag("request", ctx.id);
 
+        const event = await this.webhookEvents.createEvent({
+            type: "push",
+            status: "received",
+            rawEvent: JSON.stringify(ctx.payload),
+        });
+
         try {
             const installationId = ctx.payload.installation?.id;
             const cloneURL = ctx.payload.repository.clone_url;
@@ -248,10 +256,12 @@ export class GithubApp {
                     lastWebhookReceived: new Date().toISOString(),
                 });
             }
+            await this.webhookEvents.updateEvent(event.id, { projectId: project?.id, cloneUrl: cloneURL });
 
             const logCtx: LogContext = { userId: user.id };
             if (!!user.blocked) {
                 log.info(logCtx, `Blocked user tried to start prebuild`, { repo: ctx.payload.repository });
+                await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
                 return;
             }
 
@@ -260,6 +270,10 @@ export class GithubApp {
             if (!branch) {
                 // This is a valid case if we receive a tag push, for instance.
                 log.debug("Unable to get branch from ref", { ref: pl.ref });
+                await this.webhookEvents.updateEvent(event.id, {
+                    prebuildStatus: "ignored_unconfigured",
+                    status: "processed",
+                });
                 return;
             }
 
@@ -274,6 +288,14 @@ export class GithubApp {
             user = r.user;
             project = r.project;
 
+            await this.webhookEvents.updateEvent(event.id, {
+                authorizedUserId: user.id,
+                projectId: project?.id,
+                cloneUrl: context.repository.cloneUrl,
+                branch: context.ref,
+                commit: context.revision,
+            });
+
             const runPrebuild =
                 this.prebuildManager.shouldPrebuild(config) &&
                 this.appRules.shouldRunPrebuild(config, branch == repo.default_branch, false, false);
@@ -281,15 +303,36 @@ export class GithubApp {
                 const reason = `Not running prebuild, the user did not enable it for this context or did not configure prebuild task(s)`;
                 log.debug(logCtx, reason, { contextURL });
                 span.log({ "not-running": reason, config: config });
+                await this.webhookEvents.updateEvent(event.id, {
+                    prebuildStatus: "ignored_unconfigured",
+                    status: "processed",
+                });
                 return;
             }
 
             const commitInfo = await this.getCommitInfo(user, repo.html_url, ctx.payload.after);
             this.prebuildManager
                 .startPrebuild({ span }, { user, context, project, commitInfo })
-                .catch((err) => log.error(logCtx, "Error while starting prebuild", err, { contextURL }));
+                .then(async (result) => {
+                    await this.webhookEvents.updateEvent(event.id, {
+                        prebuildStatus: "prebuild_triggered",
+                        status: "processed",
+                        prebuildId: result.prebuildId,
+                    });
+                })
+                .catch(async (err) => {
+                    log.error(logCtx, "Error while starting prebuild", err, { contextURL });
+                    await this.webhookEvents.updateEvent(event.id, {
+                        prebuildStatus: "prebuild_trigger_failed",
+                        status: "processed",
+                    });
+                });
         } catch (e) {
             TraceContext.setError({ span }, e);
+            await this.webhookEvents.updateEvent(event.id, {
+                prebuildStatus: "prebuild_trigger_failed",
+                status: "processed",
+            });
             throw e;
         } finally {
             span.finish();
