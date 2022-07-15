@@ -336,6 +336,48 @@ func Run(options ...RunOption) {
 		go portMgmt.Run(ctx, &wg)
 	}
 
+	// TODO: find actual trigger
+	// TODO: get current workspace url
+	// TODO: find gitpod.yml content
+	message := "The .gitpod.yml configuration file changed. Would you like to rebuild the workspace to test it?"
+	result, err := notificationService.Notify(ctx, &api.NotifyRequest{
+		Level:   api.NotifyRequest_INFO,
+		Message: message,
+		Actions: []string{"Rebuild Now"},
+	})
+	if err != nil {
+		log.WithError(err).Fatal("failed to send test notification")
+	}
+	log.Info(result)
+
+	if result.Action == "Rebuild Now" {
+		gpPath, err := exec.LookPath("gp")
+		if err != nil {
+			log.WithError(err).Fatal("failed to find gp cli")
+		}
+
+		repoUrl := "https://github.com/akosyakov/parcel-demo"
+		additionalContent := "eyJpbmRleC5qcyI6ImxhbGFsYSJ9"
+		rebuildUrl := fmt.Sprintf("%s/#additionalcontent/%s/%s", cfg.WorkspaceUrl, additionalContent, repoUrl)
+
+		// type AddititionalContent struct {
+		// 	gitpodYml string
+		// }
+
+		// var ad AddititionalContent
+
+		gpCmd := exec.Command(gpPath, "preview", "--external", rebuildUrl)
+		gpCmd = runAsGitpodUser(gpCmd)
+		err = gpCmd.Start()
+		if err != nil {
+			log.WithError(err).Fatal("todo: handle error")
+		}
+		err = gpCmd.Process.Release()
+		if err != nil {
+			log.WithError(err).Fatal("todo: handle error")
+		}
+	}
+
 	if cfg.PreventMetadataAccess {
 		go func() {
 			if !hasMetadataAccess() {
