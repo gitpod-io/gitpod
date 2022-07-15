@@ -92,7 +92,7 @@ func (u *UsageReconciler) Reconcile() (err error) {
 	}
 	log.Infof("Wrote usage report into %s", filepath.Join(dir, stat.Name()))
 
-	err = db.CreateUsageRecords(ctx, u.conn, usageReportToUsageRecords(report))
+	err = db.CreateUsageRecords(ctx, u.conn, usageReportToUsageRecords(report, u.pricer, u.nowFunc().UTC()))
 	if err != nil {
 		return fmt.Errorf("failed to write usage records to database: %s", err)
 	}
@@ -233,7 +233,7 @@ func groupInstancesByAttributionID(instances []db.WorkspaceInstanceForUsage) Usa
 	return result
 }
 
-func usageReportToUsageRecords(report UsageReport) []db.WorkspaceInstanceUsage {
+func usageReportToUsageRecords(report UsageReport, pricer *WorkspacePricer, now time.Time) []db.WorkspaceInstanceUsage {
 	var usageRecords []db.WorkspaceInstanceUsage
 
 	for attributionId, instances := range report {
@@ -248,7 +248,7 @@ func usageReportToUsageRecords(report UsageReport) []db.WorkspaceInstanceUsage {
 				AttributionID: attributionId,
 				StartedAt:     instance.CreationTime.Time(),
 				StoppedAt:     stoppedAt,
-				CreditsUsed:   0,
+				CreditsUsed:   float64(pricer.CreditsUsedByInstance(&instance, now)),
 				GenerationId:  0,
 				Deleted:       false,
 			})
