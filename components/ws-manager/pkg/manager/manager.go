@@ -304,6 +304,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, err
 	}
 
+	err = wait.PollWithContext(ctx, 100*time.Millisecond, 10*time.Minute, podRunning(m.Clientset, pod.Name, pod.Namespace))
+	if err != nil {
+		return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
+	}
+
 	// we only calculate the time that PVC restoring from VolumeSnapshot
 	if createPVC && startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
 		err := wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
@@ -554,6 +559,41 @@ func areValidPorts(value interface{}) error {
 	}
 
 	return nil
+}
+
+func podRunning(clientset client.Client, podName, namespace string) wait.ConditionWithContextFunc {
+	return func(ctx context.Context) (bool, error) {
+		var pod corev1.Pod
+		err := clientset.Get(ctx, types.NamespacedName{Namespace: namespace, Name: podName}, &pod)
+		if err != nil {
+			return false, nil
+		}
+
+		switch pod.Status.Phase {
+		case corev1.PodFailed:
+			if strings.HasPrefix(pod.Status.Reason, "OutOf") {
+				return false, xerrors.Errorf("cannot schedule pod due to out of resources, reason: %s", pod.Status.Reason)
+			}
+			return false, fmt.Errorf("pod failed with reason: %s", pod.Status.Reason)
+		case corev1.PodSucceeded:
+			return false, fmt.Errorf("pod ran to completion")
+		case corev1.PodPending:
+			for _, c := range pod.Status.Conditions {
+				if c.Type == corev1.PodScheduled && c.Status == corev1.ConditionTrue {
+					// even if pod is pending but was scheduled already, it means kubelet is pulling images and running init containers
+					// we can consider this as pod running
+					return true, nil
+				}
+			}
+
+			// if pod is pending, wait for it to get scheduled
+			return false, nil
+		case corev1.PodRunning:
+			return true, nil
+		}
+
+		return false, xerrors.Errorf("pod in unknown state: %s", pod.Status.Phase)
+	}
 }
 
 func areValidFeatureFlags(value interface{}) error {
