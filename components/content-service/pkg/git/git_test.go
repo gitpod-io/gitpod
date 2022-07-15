@@ -394,6 +394,16 @@ func TestGitStatusFromFiles(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
+			statusLocation, err := os.MkdirTemp("", "git-status")
+			if err != nil {
+				t.Errorf("cannot create temporal directory: %v", err)
+				return
+			}
+
+			defer func() {
+				os.RemoveAll(statusLocation)
+			}()
+
 			client, err := newGitClient(ctx)
 			if err != nil {
 				t.Errorf("cannot prep %s: %v", test.Name, err)
@@ -411,7 +421,7 @@ func TestGitStatusFromFiles(t *testing.T) {
 				t.Errorf("error calling GitWithOutput: %v", err)
 				return
 			}
-			if err := os.WriteFile(filepath.Join("/tmp", "git_status.txt"), gitout, 0755); err != nil {
+			if err := os.WriteFile(filepath.Join(statusLocation, "git_status.txt"), gitout, 0755); err != nil {
 				t.Errorf("error creating file: %v", err)
 				return
 			}
@@ -421,7 +431,7 @@ func TestGitStatusFromFiles(t *testing.T) {
 				t.Errorf("error calling GitWithOutput: %v", err)
 				return
 			}
-			if err := os.WriteFile(filepath.Join("/tmp", "git_log_1.txt"), gitout, 0755); err != nil {
+			if err := os.WriteFile(filepath.Join(statusLocation, "git_log_1.txt"), gitout, 0755); err != nil {
 				t.Errorf("error creating file: %v", err)
 				return
 			}
@@ -431,12 +441,12 @@ func TestGitStatusFromFiles(t *testing.T) {
 				t.Errorf("error calling GitWithOutput: %v", err)
 				return
 			}
-			if err := os.WriteFile(filepath.Join("/tmp", "git_log_2.txt"), gitout, 0755); err != nil {
+			if err := os.WriteFile(filepath.Join(statusLocation, "git_log_2.txt"), gitout, 0755); err != nil {
 				t.Errorf("error creating file: %v", err)
 				return
 			}
 
-			status, err := GitStatusFromFiles(ctx, "/tmp")
+			status, err := GitStatusFromFiles(ctx, statusLocation)
 			if err != test.Error {
 				t.Errorf("expected error does not match for %s: %v != %v", test.Name, err, test.Error)
 				return
