@@ -61,6 +61,7 @@
     "google-protobuf": "^3.18.0-rc.2",
     "heapdump": "^0.3.15",
     "inversify": "^5.0.1",
+    "is-reachable": "^5.2.1",
     "js-yaml": "^3.10.0",
     "json-stream": "^1.0.0",
     "lodash.debounce": "^4.0.8",

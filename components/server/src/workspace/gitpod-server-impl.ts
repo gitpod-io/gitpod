@@ -2873,14 +2873,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw error;
     }
 
-    // from https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address/106223#106223
-    // adapted to allow for hostnames
-    //   from [foo.bar] pumped up to [foo.(foo.)bar]
-    // and also for a trailing path segments
-    //   for example [foo.bar/gitlab]
-    protected validHostNameRegexp =
-        /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(\/([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))?$/;
-
     async updateOwnAuthProvider(
         ctx: TraceContext,
         { entry }: GitpodServer.UpdateOwnAuthProviderParams,
@@ -2905,9 +2897,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
                 const host = safeProvider.host && safeProvider.host.toLowerCase();
 
-                if (!this.validHostNameRegexp.exec(host)) {
-                    log.debug(`Invalid auth provider host.`, { entry, safeProvider });
-                    throw new Error("Invalid host name.");
+                if (!(await this.authProviderService.isHostReachable(host))) {
+                    log.debug(`Host could not be reached.`, { entry, safeProvider });
+                    throw new Error("Host could not be reached.");
                 }
 
                 const hostContext = this.hostContextProvider.get(host);
