@@ -74,6 +74,11 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 			return err
 		}
 
+		// TODO: remove workaround once https://gitlab.com/gitlab-org/gitaly/-/issues/4248 is fixed
+		if strings.Contains(ws.RemoteURI, "gitlab.com") {
+			_ = ws.Git(ctx, "config", "http.version", "HTTP/1.1")
+		}
+
 		log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
 		return ws.Clone(ctx)
 	}
