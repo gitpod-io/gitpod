@@ -75,7 +75,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go184.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-install-evans-in-base-image.1
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     resources:
