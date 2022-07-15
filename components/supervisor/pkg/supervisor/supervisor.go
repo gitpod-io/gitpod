@@ -1508,9 +1508,6 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface) {
 	cfgc := cfgobs.Observe(ctx)
 
-	log.Info("analyseConfigChanges")
-	log.Info(cfgc)
-
 	var (
 		cfg     *gitpod.GitpodConfig
 		t       = time.NewTicker(10 * time.Second)
@@ -1576,6 +1573,19 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 			if len(changes) == 0 {
 				continue
 			}
+
+			notificationService := NewNotificationService()
+			message := "The .gitpod.yml configuration file changed. Would you like to rebuild the workspace to test it?"
+			result, err := notificationService.Notify(ctx, &api.NotifyRequest{
+				Level:   api.NotifyRequest_INFO,
+				Message: message,
+				Actions: []string{"Rebuild Now"},
+			})
+			if err != nil {
+				log.WithError(err).Fatal("failed to send workspace rebuild notification")
+			}
+			log.Info(result)
+
 			w.Track(analytics.TrackMessage{
 				Identity: analytics.Identity{UserID: wscfg.GitEmail},
 				Event:    "config-changed",
