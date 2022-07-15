@@ -232,6 +232,7 @@ ctr images pull "docker.io/gitpod/workspace-full:latest" >/dev/null &
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/gitpod.debug; done
 # remove NetowrkPolicy resources as they are not relevant here
 rm /var/lib/rancher/k3s/server/manifests/gitpod/*NetworkPolicy*
+# remove Certificate resources as they are not relevant
 # update PersistentVolumeClaim's to use k3s's `local-path` storage class
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*PersistentVolumeClaim*.yaml; do yq e -i '.spec.storageClassName="local-path"' "$f"; done
 # Set `volumeClassTemplate` so that each replica creates its own PVC
@@ -246,7 +247,6 @@ touch /var/lib/rancher/k3s/server/manifests/coredns.yaml.skip
 mv -f /app/manifests/coredns.yaml /var/lib/rancher/k3s/server/manifests/custom-coredns.yaml
 
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/manifests/gitpod.yaml; done
-rm -rf /var/lib/rancher/k3s/server/manifests/gitpod
 
 # waits for gitpod pods to be ready, and manually runs the `gitpod-telemetry` cronjob
 run_telemetry(){
