@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -133,6 +134,33 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	workspaceClasses := []WorkspaceClass{
+		{
+			Id:          config.DefaultWorkspaceClass,
+			DisplayName: config.DefaultWorkspaceClass,
+			IsDefault:   true,
+			Deprecated:  false,
+		},
+	}
+	ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.WorkspaceClasses != nil && len(cfg.WebApp.WorkspaceClasses) > 0 {
+			workspaceClasses = nil
+			for _, cl := range cfg.WebApp.WorkspaceClasses {
+				class := WorkspaceClass{
+					Id:               cl.Id,
+					DisplayName:      cl.DisplayName,
+					IsDefault:        cl.IsDefault,
+					Deprecated:       cl.Deprecated,
+					CreditsPerMinute: cl.CreditsPerMinute,
+				}
+
+				workspaceClasses = append(workspaceClasses, class)
+			}
+		}
+
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -215,10 +243,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			// default limit for all cloneURLs
 			"*": 50,
 		},
-		WorkspaceClasses: WorkspaceClasses{
-			Default:              "g1-standard",
-			DefaultMoreResources: "g1-large",
-		},
+		WorkspaceClasses: workspaceClasses,
 	}
 
 	fc, err := common.ToJSONString(scfg)
