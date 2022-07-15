@@ -43,6 +43,11 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to establish database connection: %w", err)
 	}
 
+	pricer, err := controller.NewWorkspacePricer(cfg.CreditsPerMinuteByWorkspaceClass)
+	if err != nil {
+		return fmt.Errorf("failed to create workspace pricer: %w", err)
+	}
+
 	var billingController controller.BillingController = &controller.NoOpBillingController{}
 
 	if cfg.StripeCredentialsFile != "" {
@@ -56,11 +61,6 @@ func Start(cfg Config) error {
 			return fmt.Errorf("failed to initialize stripe client: %w", err)
 		}
 
-		pricer, err := controller.NewWorkspacePricer(cfg.CreditsPerMinuteByWorkspaceClass)
-		if err != nil {
-			return fmt.Errorf("failed to create workspace pricer: %w", err)
-		}
-
 		billingController = controller.NewStripeBillingController(c, pricer)
 	}
 
@@ -69,7 +69,7 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to parse schedule duration: %w", err)
 	}
 
-	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, billingController))
+	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, pricer, billingController))
 	if err != nil {
 		return fmt.Errorf("failed to initialize usage controller: %w", err)
 	}
