@@ -138,7 +138,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 
 					// get actual from workspace
 					git := common.Git(rsa)
-					err = git.ConfigSafeDirectory(test.WorkspaceRoot)
+					err = git.ConfigSafeDirectory()
 					if err != nil {
 						t.Fatal(err)
 					}

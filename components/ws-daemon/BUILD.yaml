@@ -65,6 +65,8 @@ packages:
       - components/ws-daemon/nsinsider:app
     argdeps:
       - imageRepoBase
+    srcs:
+      - default.gitconfig
     config:
       buildArgs:
         VERSION: ${version}
