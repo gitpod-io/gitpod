@@ -8,13 +8,13 @@ import * as express from "express";
 import { createHmac, timingSafeEqual } from "crypto";
 import { Buffer } from "buffer";
 import { postConstruct, injectable, inject } from "inversify";
-import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { ProjectDB, TeamDB, UserDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TokenService } from "../../../src/user/token-service";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { CommitContext, CommitInfo, Project, StartPrebuildResult, User } from "@gitpod/gitpod-protocol";
+import { CommitContext, CommitInfo, Project, StartPrebuildResult, User, WebhookEvent } from "@gitpod/gitpod-protocol";
 import { GitHubService } from "./github-service";
 import { URL } from "url";
 import { ContextParser } from "../../../src/workspace/context-parser-service";
@@ -29,6 +29,7 @@ export class GitHubEnterpriseApp {
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(ContextParser) protected readonly contextParser: ContextParser;
+    @inject(WebhookEventDB) protected readonly webhookEvents: WebhookEventDB;
 
     protected _router = express.Router();
     public static path = "/apps/ghe/";
@@ -41,6 +42,12 @@ export class GitHubEnterpriseApp {
                 const payload = req.body as GitHubEnterprisePushPayload;
                 const span = TraceContext.startSpan("GitHubEnterpriseApp.handleEvent", {});
                 span.setTag("payload", payload);
+                const event = await this.webhookEvents.createEvent({
+                    type: "push",
+                    status: "received",
+                    rawEvent: JSON.stringify(req.body),
+                });
+
                 let user: User | undefined;
                 try {
                     user = await this.findUser({ span }, payload, req);
@@ -52,11 +59,12 @@ export class GitHubEnterpriseApp {
                     res.statusCode = 401;
                     res.send();
                     span.finish();
+                    await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
                     return;
                 }
 
                 try {
-                    await this.handlePushHook({ span }, payload, user);
+                    await this.handlePushHook({ span }, payload, user, event);
                 } catch (err) {
                     TraceContext.setError({ span }, err);
                     throw err;
@@ -128,6 +136,7 @@ export class GitHubEnterpriseApp {
         ctx: TraceContext,
         payload: GitHubEnterprisePushPayload,
         user: User,
+        event: WebhookEvent,
     ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("GitHubEnterpriseApp.handlePushHook", ctx);
         try {
@@ -139,13 +148,26 @@ export class GitHubEnterpriseApp {
                     lastWebhookReceived: new Date().toISOString(),
                 });
             }
-
             const contextURL = this.createContextUrl(payload);
             span.setTag("contextURL", contextURL);
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
+
+            await this.webhookEvents.updateEvent(event.id, {
+                authorizedUserId: user.id,
+                projectId: projectAndOwner?.project?.id,
+                cloneUrl: cloneURL,
+                branch: context.ref,
+                commit: context.revision,
+            });
+
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
                 log.info("GitHub Enterprise push event: No config. No prebuild.");
+
+                await this.webhookEvents.updateEvent(event.id, {
+                    prebuildStatus: "ignored_unconfigured",
+                    status: "processed",
+                });
                 return undefined;
             }
 
@@ -161,7 +183,18 @@ export class GitHubEnterpriseApp {
                     commitInfo,
                 },
             );
+            await this.webhookEvents.updateEvent(event.id, {
+                prebuildStatus: "prebuild_triggered",
+                status: "processed",
+                prebuildId: ws.prebuildId,
+            });
             return ws;
+        } catch (e) {
+            log.error("Error processing GitHub Enterprise webhook event.", e);
+            await this.webhookEvents.updateEvent(event.id, {
+                prebuildStatus: "prebuild_trigger_failed",
+                status: "processed",
+            });
         } finally {
             span.finish();
         }
