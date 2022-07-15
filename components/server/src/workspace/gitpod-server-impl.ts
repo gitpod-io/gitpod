@@ -78,6 +78,7 @@ import {
     SnapshotContext,
     SSHPublicKeyValue,
     UserSSHPublicKeyValue,
+    PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -2372,6 +2373,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
             throw error;
         }
+    }
+
+    public async getPrebuildEvents(ctx: TraceContext, projectId: string): Promise<PrebuildEvent[]> {
+        this.checkAndBlockUser("getPrebuildEvents");
+        throw new ResponseError(
+            ErrorCodes.EE_FEATURE,
+            `Prebuild Events are implemented in Gitpod's Enterprise Edition`,
+        );
     }
 
     public async triggerPrebuild(

@@ -74,6 +74,7 @@ const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projec
 const ConfigureProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ConfigureProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Projects"));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Project"));
+const Events = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Events"));
 const ProjectSettings = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ProjectSettings"));
 const ProjectVariables = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ProjectVariables"));
 const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Prebuilds"));
@@ -397,6 +398,9 @@ function App() {
                             path={projectsPathMainWithParams}
                             render={(props) => {
                                 const { resourceOrPrebuild } = props.match.params;
+                                if (resourceOrPrebuild === "events") {
+                                    return <Events />;
+                                }
                                 if (resourceOrPrebuild === "prebuilds") {
                                     return <Prebuilds />;
                                 }
@@ -445,6 +449,9 @@ function App() {
                                     }
                                     if (maybeProject === "usage") {
                                         return <TeamUsage />;
+                                    }
+                                    if (resourceOrPrebuild === "events") {
+                                        return <Events />;
                                     }
                                     if (resourceOrPrebuild === "prebuilds") {
                                         return <Prebuilds />;
