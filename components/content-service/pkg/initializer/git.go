@@ -71,12 +71,8 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 
 	gitClone := func() error {
 		if err := os.MkdirAll(ws.Location, 0775); err != nil {
+			log.WithError(err).WithField("location", ws.Location).Error("cannot create directory")
 			return err
-		}
-
-		// TODO: remove workaround once https://gitlab.com/gitlab-org/gitaly/-/issues/4248 is fixed
-		if strings.Contains(ws.RemoteURI, "gitlab.com") {
-			_ = ws.Git(ctx, "config", "http.version", "HTTP/1.1")
 		}
 
 		log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
@@ -102,11 +98,6 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	b.MaxElapsedTime = 5 * time.Minute
 	if err = backoff.RetryNotify(gitClone, b, onGitCloneFailure); err != nil {
 		return src, xerrors.Errorf("git initializer gitClone: %w", err)
-	}
-
-	// this is only needed for prebuilds using PVC, so if it errors out, output only Debug log to prevent log spam
-	if err := ws.AddSafeDirectory(ctx, ws.Location); err != nil {
-		log.WithError(err).Debug("git initializer AddSafeDirectory")
 	}
 
 	if ws.Chown {

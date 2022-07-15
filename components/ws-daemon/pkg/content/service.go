@@ -299,11 +299,6 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		}
 	}
 
-	err = workspace.UpdateGitSafeDirectory(ctx)
-	if err != nil {
-		log.WithError(err).WithField("workspaceId", req.Id).Warn("cannot update git safe directory")
-	}
-
 	// Tell the world we're done
 	err = workspace.MarkInitDone(ctx)
 	if err != nil {

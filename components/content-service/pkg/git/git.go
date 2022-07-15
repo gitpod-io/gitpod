@@ -317,7 +317,7 @@ func (c *Client) Status(ctx context.Context) (res *Status, err error) {
 
 // Clone runs git clone
 func (c *Client) Clone(ctx context.Context) (err error) {
-	err = os.MkdirAll(c.Location, 0755)
+	err = os.MkdirAll(c.Location, 0775)
 	if err != nil {
 		log.WithError(err).Error("cannot create clone location")
 	}
@@ -327,6 +327,12 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 	for key, value := range c.Config {
 		args = append(args, "--config")
 		args = append(args, strings.TrimSpace(key)+"="+strings.TrimSpace(value))
+	}
+
+	// TODO: remove workaround once https://gitlab.com/gitlab-org/gitaly/-/issues/4248 is fixed
+	if strings.Contains(c.RemoteURI, "gitlab.com") {
+		args = append(args, "--config")
+		args = append(args, "http.version=HTTP/1.1")
 	}
 
 	args = append(args, ".")
@@ -339,10 +345,6 @@ func (c *Client) Fetch(ctx context.Context) (err error) {
 	// we need to fetch with pruning to avoid issues like github.com/gitpod-io/gitpod/issues/7561.
 	// See https://git-scm.com/docs/git-fetch#Documentation/git-fetch.txt---prune for more details.
 	return c.Git(ctx, "fetch", "-p", "-P", "--tags", "-f")
-}
-
-func (c *Client) AddSafeDirectory(ctx context.Context, dir string) (err error) {
-	return c.Git(ctx, "config", "--global", "--add", "safe.directory", dir)
 }
 
 // UpdateRemote performs a git fetch on the upstream remote URI

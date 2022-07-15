@@ -669,6 +669,7 @@ func configureGit(cfg *Config, childProcEnvvars []string) {
 		{"push.default", "simple"},
 		{"alias.lg", "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"},
 		{"credential.helper", "/usr/bin/gp credential-helper"},
+		{"safe.directory", "*"},
 	}
 	if cfg.GitUsername != "" {
 		settings = append(settings, []string{"user.name", cfg.GitUsername})

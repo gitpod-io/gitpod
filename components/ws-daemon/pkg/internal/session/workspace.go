@@ -257,28 +257,6 @@ func (s *Workspace) SetGitStatus(status *csapi.GitStatus) error {
 	return s.persist()
 }
 
-func (s *Workspace) UpdateGitSafeDirectory(ctx context.Context) (err error) {
-	loc := s.Location
-	if loc == "" {
-		log.WithField("loc", loc).WithFields(s.OWI()).Debug("not updating Git safe directory of FWB workspace")
-		return nil
-	}
-
-	loc = filepath.Join(loc, s.CheckoutLocation)
-	if !git.IsWorkingCopy(loc) {
-		log.WithField("loc", loc).WithField("checkout location", s.CheckoutLocation).WithFields(s.OWI()).Warn("did not find a Git working copy - not updating safe directory")
-		return nil
-	}
-
-	c := git.Client{Location: loc}
-
-	err = c.Git(ctx, "config", "--global", "--add", "safe.directory", loc)
-	if err != nil {
-		log.WithError(err).WithFields(s.OWI()).Warn("cannot add safe directory into git global config")
-	}
-	return err
-}
-
 // UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
 func (s *Workspace) UpdateGitStatus(ctx context.Context, persistentVolumeClaim bool) (res *csapi.GitStatus, err error) {
 	var loc string
