@@ -86,7 +86,7 @@ export class MonitoringSatelliteInstaller {
                 writeRelabelConfigs: [{
                     sourceLabels: ['__name__', 'job'],
                     separator: ';',
-                    regex: 'probe_.*|rest_client_requests_total.*|up;probe',
+                    regex: 'rest_client_requests_total.*|http_prober_.*',
                     action: 'keep',
                 }],
             },
