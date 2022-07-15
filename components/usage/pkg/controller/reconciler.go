@@ -33,11 +33,17 @@ func (f ReconcilerFunc) Reconcile() error {
 type UsageReconciler struct {
 	nowFunc           func() time.Time
 	conn              *gorm.DB
+	pricer            *WorkspacePricer
 	billingController BillingController
 }
 
-func NewUsageReconciler(conn *gorm.DB, billingController BillingController) *UsageReconciler {
-	return &UsageReconciler{conn: conn, billingController: billingController, nowFunc: time.Now}
+func NewUsageReconciler(conn *gorm.DB, pricer *WorkspacePricer, billingController BillingController) *UsageReconciler {
+	return &UsageReconciler{
+		conn:              conn,
+		pricer:            pricer,
+		billingController: billingController,
+		nowFunc:           time.Now,
+	}
 }
 
 type UsageReconcileStatus struct {
