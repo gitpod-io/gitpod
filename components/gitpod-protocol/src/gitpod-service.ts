@@ -37,6 +37,7 @@ import {
     PrebuildWithStatus,
     StartPrebuildResult,
     PartialProject,
+    PrebuildEvent,
 } from "./teams-projects-protocol";
 import { JsonRpcProxy, JsonRpcServer } from "./messaging/proxy-factory";
 import { Disposable, CancellationTokenSource } from "vscode-jsonrpc";
@@ -181,6 +182,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getTeamProjects(teamId: string): Promise<Project[]>;
     getUserProjects(): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
+    getPrebuildEvents(projectId: string): Promise<PrebuildEvent[]>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
     findPrebuildByWorkspaceID(workspaceId: string): Promise<PrebuiltWorkspace | undefined>;
     getPrebuild(prebuildId: string): Promise<PrebuildWithStatus | undefined>;
@@ -378,7 +380,7 @@ export const createServerMock = function <C extends GitpodClient, S extends Gitp
         get: (target: S, property: keyof S) => {
             const result = target[property];
             if (!result) {
-                throw new Error(`Method ${property} not implemented`);
+                throw new Error(`Method ${String(property)} not implemented`);
             }
             return result;
         },

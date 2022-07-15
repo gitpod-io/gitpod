@@ -5,7 +5,15 @@
  */
 
 import { inject, injectable } from "inversify";
-import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import {
+    DBWithTracing,
+    ProjectDB,
+    TeamDB,
+    TracedWorkspaceDB,
+    UserDB,
+    WebhookEventDB,
+    WorkspaceDB,
+} from "@gitpod/gitpod-db/lib";
 import {
     Branch,
     PrebuildWithStatus,
@@ -14,6 +22,7 @@ import {
     Project,
     ProjectEnvVar,
     User,
+    PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
@@ -31,6 +40,7 @@ export class ProjectsService {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
+    @inject(WebhookEventDB) protected readonly webhookEventDB: WebhookEventDB;
 
     async getProject(projectId: string): Promise<Project | undefined> {
         return this.projectDB.findProjectById(projectId);
@@ -267,5 +277,19 @@ export class ProjectsService {
 
     async getProjectUsage(projectId: string): Promise<ProjectUsage | undefined> {
         return this.projectDB.getProjectUsage(projectId);
+    }
+
+    async getPrebuildEvents(cloneUrl: string): Promise<PrebuildEvent[]> {
+        const events = await this.webhookEventDB.findByCloneUrl(cloneUrl, 100);
+        return events.map((we) => ({
+            id: we.id,
+            creationTime: we.creationTime,
+            cloneUrl: we.cloneUrl,
+            branch: we.branch,
+            commit: we.commit,
+            prebuildId: we.prebuildId,
+            projectId: we.projectId,
+            status: we.prebuildStatus || we.status,
+        }));
     }
 }

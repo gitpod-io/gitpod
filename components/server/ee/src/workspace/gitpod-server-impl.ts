@@ -47,6 +47,7 @@ import {
     TeamMemberRole,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     WorkspaceType,
+    PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -2290,6 +2291,20 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         return repositories;
+    }
+
+    public async getPrebuildEvents(ctx: TraceContext, projectId: string): Promise<PrebuildEvent[]> {
+        traceAPIParams(ctx, { projectId });
+        const user = this.checkAndBlockUser("getPrebuildEvents");
+
+        const project = await this.projectsService.getProject(projectId);
+        if (!project) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
+        }
+        await this.guardProjectOperation(user, projectId, "get");
+
+        const events = await this.projectsService.getPrebuildEvents(project.cloneUrl);
+        return events;
     }
 
     async triggerPrebuild(
