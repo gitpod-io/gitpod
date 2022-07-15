@@ -29,12 +29,21 @@ export class WorkspaceStarterEE extends WorkspaceStarter {
     protected async newInstance(
         ctx: TraceContext,
         workspace: Workspace,
+        previousInstance: WorkspaceInstance | undefined,
         user: User,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
         forcePVC: boolean,
     ): Promise<WorkspaceInstance> {
-        const instance = await super.newInstance(ctx, workspace, user, excludeFeatureFlags, ideConfig, forcePVC);
+        const instance = await super.newInstance(
+            ctx,
+            workspace,
+            previousInstance,
+            user,
+            excludeFeatureFlags,
+            ideConfig,
+            forcePVC,
+        );
         if (await this.eligibilityService.hasFixedWorkspaceResources(user)) {
             const config: WorkspaceInstanceConfiguration = instance.configuration!;
             const ff = config.featureFlags || [];
