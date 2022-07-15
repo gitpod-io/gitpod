@@ -7,9 +7,11 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"math"
 	"time"
+
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 )
 
 type BillingController interface {
@@ -65,6 +67,15 @@ func NewWorkspacePricer(creditMinutesByWorkspaceClass map[string]float64) (*Work
 
 type WorkspacePricer struct {
 	creditMinutesByWorkspaceClass map[string]float64
+}
+
+func (p *WorkspacePricer) CreditsUsedByInstance(instance *db.WorkspaceInstanceForUsage, maxStopTime time.Time) int64 {
+	runtime := instance.WorkspaceRuntimeSeconds(maxStopTime)
+	class := defaultWorkspaceClass
+	if instance.WorkspaceClass != "" {
+		class = instance.WorkspaceClass
+	}
+	return p.Credits(class, runtime)
 }
 
 func (p *WorkspacePricer) Credits(workspaceClass string, runtimeInSeconds int64) int64 {

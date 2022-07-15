@@ -142,12 +142,7 @@ func (u UsageReport) CreditSummaryForTeams(pricer *WorkspacePricer, maxStopTime 
 
 		var credits int64
 		for _, instance := range instances {
-			runtime := instance.WorkspaceRuntimeSeconds(maxStopTime)
-			class := defaultWorkspaceClass
-			if instance.WorkspaceClass != "" {
-				class = instance.WorkspaceClass
-			}
-			credits += pricer.Credits(class, runtime)
+			credits += pricer.CreditsUsedByInstance(&instance, maxStopTime)
 		}
 
 		creditsPerTeamID[id] = credits
