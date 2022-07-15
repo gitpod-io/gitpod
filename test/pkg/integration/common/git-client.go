@@ -58,12 +58,11 @@ func (g GitClient) Add(dir string, files ...string) error {
 	return nil
 }
 
-func (g GitClient) ConfigSafeDirectory(dir string) error {
+func (g GitClient) ConfigSafeDirectory() error {
 	var resp agent.ExecResponse
 	err := g.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
-		Dir:     dir,
 		Command: "git",
-		Args:    []string{"config", "--global", "--add", "safe.directory", dir},
+		Args:    []string{"config", "--global", "--add", "safe.directory", "'*'"},
 	}, &resp)
 	if err != nil {
 		return err
