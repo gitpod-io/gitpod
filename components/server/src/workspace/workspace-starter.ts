@@ -274,11 +274,11 @@ export class WorkspaceStarter {
             const hasValidBackup = pastInstances.some(
                 (i) => !!i.status && !!i.status.conditions && !i.status.conditions.failed,
             );
-            let lastValidWorkspaceInstanceId = "";
+            let lastValidWorkspaceInstance: WorkspaceInstance | undefined;
             if (hasValidBackup) {
-                lastValidWorkspaceInstanceId = pastInstances.reduce((previousValue, currentValue) =>
+                lastValidWorkspaceInstance = pastInstances.reduce((previousValue, currentValue) =>
                     currentValue.creationTime > previousValue.creationTime ? currentValue : previousValue,
-                ).id;
+                );
             }
 
             const ideConfig = await this.ideConfigService.config;
@@ -290,6 +290,7 @@ export class WorkspaceStarter {
                     await this.newInstance(
                         ctx,
                         workspace,
+                        lastValidWorkspaceInstance,
                         user,
                         options.excludeFeatureFlags || [],
                         ideConfig,
@@ -330,7 +331,7 @@ export class WorkspaceStarter {
                     instance,
                     workspace,
                     user,
-                    lastValidWorkspaceInstanceId,
+                    lastValidWorkspaceInstance?.id ?? "",
                     ideConfig,
                     userEnvVars,
                     projectEnvVars,
@@ -345,7 +346,7 @@ export class WorkspaceStarter {
                 instance,
                 workspace,
                 user,
-                lastValidWorkspaceInstanceId,
+                lastValidWorkspaceInstance?.id ?? "",
                 ideConfig,
                 userEnvVars,
                 projectEnvVars,
@@ -683,6 +684,7 @@ export class WorkspaceStarter {
     protected async newInstance(
         ctx: TraceContext,
         workspace: Workspace,
+        previousInstance: WorkspaceInstance | undefined,
         user: User,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
@@ -781,20 +783,31 @@ export class WorkspaceStarter {
             let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
                 user: user,
             });
+
             if (classesEnabled) {
-                // this is a workspace that was started before workspace classes
-                // set the workspace class based on if the user "has more resources"
-                if (!workspace.workspaceClass) {
-                    if (await this.userService.userGetsMoreResources(user)) {
-                        workspaceClass = this.config.workspaceClasses.defaultMoreResources;
-                    } else {
-                        workspaceClass = this.config.workspaceClasses.default;
+                // this is either the first time we start the workspace or the workspace was started
+                // before workspace classes and does not have a class yet
+                if (!previousInstance?.workspaceClass) {
+                    if (workspace.type == "regular") {
+                        if (user.additionalData?.workspaceClasses?.regular) {
+                            workspaceClass = user.additionalData?.workspaceClasses?.regular;
+                        }
                     }
 
-                    workspace.workspaceClass = workspaceClass;
-                    this.workspaceDb.trace({ span }).store(workspace);
+                    if (workspace.type == "prebuild") {
+                        if (user.additionalData?.workspaceClasses?.prebuild) {
+                            workspaceClass = user.additionalData?.workspaceClasses?.prebuild;
+                        }
+                    }
+
+                    if (!workspaceClass) {
+                        workspaceClass = this.config.workspaceClasses.find((cl) => cl.isDefault)?.id ?? "";
+                        if (await this.userService.userGetsMoreResources(user)) {
+                            workspaceClass = this.config.workspaceClasses.find((cl) => !cl.isDefault)?.id ?? "";
+                        }
+                    }
                 } else {
-                    workspaceClass = workspace.workspaceClass;
+                    workspaceClass = previousInstance.workspaceClass;
                 }
             }
 

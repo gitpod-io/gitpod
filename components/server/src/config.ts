@@ -55,6 +55,27 @@ export interface WorkspaceGarbageCollection {
     contentChunkLimit: number;
 }
 
+type WorkspaceClassesConfig = [WorkspaceClassConfig];
+
+interface WorkspaceClassConfig {
+    // The technical string we use to identify the class with internally
+    id: string;
+
+    // Is the "default" class. The config is validated to only every have exactly _one_ default class.
+    isDefault: boolean;
+
+    // The string we display to users in the UI
+    displayName: string;
+
+    // Whether or not to:
+    //  - offer users this Workspace class for selection
+    //  - use this class to start workspaces with. If a user has a class marked like this configured and starts
+    deprecated: boolean;
+
+    // The price for this workspace class in "credits per minute"
+    creditsPerMinute: number;
+}
+
 /**
  * This is the config shape as found in the configuration file, e.g. server-configmap.yaml
  */
@@ -186,12 +207,9 @@ export interface ConfigSerialized {
     inactivityPeriodForRepos?: number;
 
     /**
-     * Options related to workspace classes
+     * Supported workspace classes
      */
-    workspaceClasses: {
-        default: string;
-        defaultMoreResources: string;
-    };
+    workspaceClasses: WorkspaceClassesConfig;
 }
 
 export namespace ConfigFile {
@@ -274,6 +292,15 @@ export namespace ConfigFile {
                 inactivityPeriodForRepos = config.inactivityPeriodForRepos;
             }
         }
+
+        let defaultClasses = config.workspaceClasses
+            .map((c) => (c.isDefault ? 1 : 0))
+            .reduce((acc: number, isDefault: number) => (acc + isDefault) as number, 0);
+
+        if (defaultClasses != 1) {
+            throw new Error("exactly one default workspace class needs to be configured, not " + defaultClasses);
+        }
+
         return {
             ...config,
             hostUrl,
