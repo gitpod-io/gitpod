@@ -10,9 +10,11 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
 	logging "gopkg.in/op/go-logging.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 )
 
 // Processors list of processes executed on each resource document
@@ -21,6 +23,12 @@ var Processors = []Processor{
 	{
 		Type:       common.TypeMetaNetworkPolicy,
 		Expression: "del(.status)",
+	},
+	// Remove "status" from root of OpenVSXProxy stateful sets
+	{
+		Type:       common.TypeMetaStatefulSet,
+		Expression: "del(.status)",
+		Name:       pointer.String(openvsxproxy.Component),
 	},
 }
 
