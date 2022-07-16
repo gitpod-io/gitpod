@@ -1,6 +1,15 @@
 # Change Log
 
 ## July 2022
+- Switch to http/1.1 for gitlab.com repositories ([#11400](https://github.com/gitpod-io/gitpod/pull/11400)) - [@aledbf](https://github.com/aledbf)
+- [ws-manager-bridge] Remove HasMoreResources admission constraint ([#11384](https://github.com/gitpod-io/gitpod/pull/11384)) - [@csweichel](https://github.com/csweichel)
+- Try to backup content when the node goes into the NotReady state ([#11337](https://github.com/gitpod-io/gitpod/pull/11337)) - [@jenting](https://github.com/jenting)
+- [ws-manager-bridge] Remove HasUserLevel admission constraint ([#11383](https://github.com/gitpod-io/gitpod/pull/11383)) - [@csweichel](https://github.com/csweichel)
+- [local-preview] show `DOMAIN` in the output ([#11341](https://github.com/gitpod-io/gitpod/pull/11341)) - [@Pothulapati](https://github.com/Pothulapati)
+- Gitpod Plugin for JetBrains IDEs was updated to properly handle network proxies. ([#11307](https://github.com/gitpod-io/gitpod/pull/11307)) - [@felladrin](https://github.com/felladrin)
+- [public-api] Add `ListWorkspaces` support ([#11310](https://github.com/gitpod-io/gitpod/pull/11310)) - [@csweichel](https://github.com/csweichel)
+- [kots]: add node CPU/memory check tests to workspace node only ([#11237](https://github.com/gitpod-io/gitpod/pull/11237)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [kots]: add monitoring graphs ([#11099](https://github.com/gitpod-io/gitpod/pull/11099)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Add support for JetBrains Gateway v222.3345.1 and later. ([#11209](https://github.com/gitpod-io/gitpod/pull/11209)) - [@felladrin](https://github.com/felladrin)
 - [local-preview] Support `127-0-0-1.nip.io` for `DOMAIN` ([#11242](https://github.com/gitpod-io/gitpod/pull/11242)) - [@Pothulapati](https://github.com/Pothulapati)
 - [code] fix `.gitpod.yml` ports onOpen not work on workspace startup ([#11293](https://github.com/gitpod-io/gitpod/pull/11293)) - [@mustard-mh](https://github.com/mustard-mh)
