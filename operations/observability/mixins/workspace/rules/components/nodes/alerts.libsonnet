@@ -32,7 +32,7 @@
               summary: "Autoscaler is adding new nodes rapidly",
               description: 'Autoscaler in cluster {{ $labels.cluster }} is rapidly adding new nodes.',
             },
-            expr: '((sum(cluster_autoscaler_nodes_count) by (cluster)) - (sum(cluster_autoscaler_nodes_count offset 10m) by (cluster))) > 15',
+            expr: '((sum(kube_node_labels{nodepool=~"workspace-.*"}) by (cluster)) - (sum(kube_node_labels{nodepool=~"workspace-.*"} offset 10m) by (cluster))) > 15',
           },
           {
             alert: 'AutoscaleFailure',
