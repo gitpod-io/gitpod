@@ -5,19 +5,31 @@
 package io.gitpod.jetbrains.remote
 
 import com.intellij.ProjectTopics
+import com.intellij.analysis.AnalysisScope
+import com.intellij.codeInspection.actions.RunInspectionIntention
+import com.intellij.codeInspection.ex.InspectionManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.profile.codeInspection.InspectionProfileManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.util.application
+import io.gitpod.jetbrains.remote.inspections.GitpodConfigInspection
+import io.gitpod.jetbrains.remote.utils.GitpodConfig.gitpodYamlFile
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import org.jetbrains.yaml.psi.YAMLFile
+import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 
 
@@ -27,6 +39,34 @@ class GitpodProjectManager(
 
     init {
         configureSdks()
+    }
+
+    init {
+        application.invokeLater {
+            try {
+                runInspection()
+            } catch (ex: Exception) {
+                thisLogger().error("Failed to run inspection", ex)
+            }
+        }
+    }
+
+    private fun runInspection() {
+        val psiFile = getGitpodYamlPsiFile(project) ?: return
+        val profile = InspectionProfileManager.getInstance(project).currentProfile
+        val inspectionName = GitpodConfigInspection::class.java.simpleName
+        val tool = profile.getInspectionTool(inspectionName, psiFile) ?: return
+        val manager = InspectionManagerEx.getInstance(project) as InspectionManagerEx
+        val scope = AnalysisScope(psiFile)
+        DumbService.getInstance(project).smartInvokeLater {
+            RunInspectionIntention.rerunInspection(tool, manager, scope, psiFile)
+        }
+    }
+
+    private fun getGitpodYamlPsiFile(project: Project): PsiFile? {
+        val basePath = project.basePath ?: return null
+        val vfile = VfsUtil.findFile(Paths.get(basePath, gitpodYamlFile), true) ?: return null
+        return PsiManager.getInstance(project).findFile(vfile) as? YAMLFile ?: return null
     }
 
     /**

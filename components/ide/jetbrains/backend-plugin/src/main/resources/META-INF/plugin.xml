@@ -32,6 +32,7 @@
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodProjectManager" preload="true"/>
         <gateway.customization.name implementation="io.gitpod.jetbrains.remote.GitpodGatewayClientCustomizationProvider"/>
         <localInspection language="yaml" bundle="messages.GitpodBundle"
+                         shortName="GitpodConfigInspection"
                          groupKey="inspections.group.name"
                          key="inspections.gitpod.schema.validation.name"
                          level="WARNING" enabledByDefault="true"
