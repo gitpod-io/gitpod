@@ -57,7 +57,7 @@ export default function Preferences() {
         if (!user) {
             return;
         }
-        const showWorkspaceClasses = await getExperimentsClient().getValueAsync("workspace_classes", false, {
+        const showWorkspaceClasses = await getExperimentsClient().getValueAsync("workspace_classes", true, {
             user,
         });
         setIsShowWorkspaceClasses(showWorkspaceClasses);
@@ -73,6 +73,7 @@ export default function Preferences() {
                 <h3>Editor</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Choose the editor for opening workspaces.</p>
                 <SelectIDE location="preferences" />
+                <SelectWorkspaceClass enabled={isShowWorkspaceClasses} />
                 <h3 className="mt-12">Theme</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>
                 <div className="mt-4 space-x-3 flex">
@@ -152,7 +153,6 @@ export default function Preferences() {
                         </p>
                     </div>
                 </div>
-                <SelectWorkspaceClass enabled={isShowWorkspaceClasses} />
             </PageWithSubMenu>
         </div>
     );
