@@ -248,7 +248,7 @@ func usageReportToUsageRecords(report UsageReport, pricer *WorkspacePricer, now 
 				AttributionID: attributionId,
 				StartedAt:     instance.CreationTime.Time(),
 				StoppedAt:     stoppedAt,
-				CreditsUsed:   float64(pricer.CreditsUsedByInstance(&instance, now)),
+				CreditsUsed:   pricer.CreditsUsedByInstance(&instance, now),
 				GenerationId:  0,
 				Deleted:       false,
 			})
