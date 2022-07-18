@@ -58,8 +58,12 @@ export function isGitpodIo() {
     );
 }
 
+export function isLocalPreview() {
+    return window.location.hostname === "preview.gitpod-self-hosted.com";
+}
+
 function trimResource(resource: string): string {
-    return resource.split('/').filter(Boolean).join('/');
+    return resource.split("/").filter(Boolean).join("/");
 }
 
 // Returns 'true' if a 'pathname' is a part of 'resources' provided.
@@ -69,9 +73,9 @@ function trimResource(resource: string): string {
 // 'pathname' arg can be provided via `location.pathname`.
 export function inResource(pathname: string, resources: string[]): boolean {
     // Removes leading and trailing '/'
-    const trimmedResource = trimResource(pathname)
+    const trimmedResource = trimResource(pathname);
 
     // Checks if a path is part of a resource.
     // E.g. "api/userspace/resource" path is a part of resource "api/userspace"
-    return resources.map(res => trimmedResource.startsWith(trimResource(res))).some(Boolean)
+    return resources.map((res) => trimmedResource.startsWith(trimResource(res))).some(Boolean);
 }
