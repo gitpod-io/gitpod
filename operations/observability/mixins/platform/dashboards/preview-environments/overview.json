@@ -12,7 +12,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.5.6"
+      "version": "9.0.2"
     },
     {
       "type": "datasource",
@@ -60,7 +60,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1656107717942,
+  "iteration": 1658152238378,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -118,7 +118,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "8.5.6",
+      "pluginVersion": "9.0.2",
       "targets": [
         {
           "datasource": {
@@ -203,7 +203,7 @@
         "showThresholdLabels": true,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "8.5.6",
+      "pluginVersion": "9.0.2",
       "repeat": "node",
       "repeatDirection": "h",
       "targets": [
@@ -250,7 +250,7 @@
         "content": "We have an SLO for preview starts in Honeycomb. You can see the SLO [here](https://ui.honeycomb.io/gitpod/datasets/werft/slo/zRm48xoKMXf/Preview-Start). Alternatively you can use [this query](https://ui.honeycomb.io/gitpod/datasets/werft/result/a64cNk4sArf) to dig into succesful and failed SLI events. The definition of the SLO can be found [here](https://www.notion.so/gitpod/Preview-Environment-Service-Level-Indicators-SLIs-55b649ad17774f279c142af55ad2fec7#f483f73aa4974ad3b8b6825fa2f251fa).",
         "mode": "markdown"
       },
-      "pluginVersion": "8.5.6",
+      "pluginVersion": "9.0.2",
       "title": "Preview Start SLO",
       "type": "text"
     },
@@ -293,6 +293,7 @@
             }
           },
           "mappings": [],
+          "max": 1,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -336,13 +337,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum(probe_success{environment=\"preview-environments\", job=\"probe\"} == 1)\r\n/\r\ncount(up{environment=\"preview-environments\", job=\"probe\"})",
-          "format": "time_series",
-          "instant": false,
-          "legendFormat": "Probe success rate",
+          "expr": "1 - (\r\n  sum(rate(http_prober_probes_failed_total{environment=\"preview-environments\"}[5m]))\r\n  /\r\n  sum(rate(http_prober_probe_duration_seconds_count{environment=\"preview-environments\"}[5m]))\r\n)",
+          "hide": false,
+          "legendFormat": "Probe success ratio",
           "range": true,
-          "refId": "A"
+          "refId": "B"
         }
       ],
       "title": "Preview environments should be able to communicate to the internet",
