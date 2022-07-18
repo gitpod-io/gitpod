@@ -480,10 +480,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 			}
 		}
 
-		_, gone := wso.Pod.Annotations[wsk8s.ContainerIsGoneAnnotation]
 		_, alreadyFinalized := wso.Pod.Annotations[startedDisposalAnnotation]
-
-		if (terminated || gone) && !alreadyFinalized {
+		if terminated && !alreadyFinalized {
 			if wso.Pod.Annotations[workspaceFailedBeforeStoppingAnnotation] == util.BooleanTrueString && wso.Pod.Annotations[workspaceNeverReadyAnnotation] == util.BooleanTrueString {
 				// The workspace is never ready, so there is no need for a finalizer.
 				if _, ok := pod.Annotations[workspaceExplicitFailAnnotation]; !ok {
