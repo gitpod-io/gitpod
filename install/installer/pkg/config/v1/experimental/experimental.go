@@ -70,6 +70,8 @@ type WorkspaceConfig struct {
 		ReadIOPS         int64             `json:"readIOPS"`
 	} `json:"ioLimits"`
 
+	ProcLimit int64 `json:"procLimit"`
+
 	WSManagerRateLimits map[string]grpc.RateLimit `json:"wsManagerRateLimits,omitempty"`
 
 	RegistryFacade struct {

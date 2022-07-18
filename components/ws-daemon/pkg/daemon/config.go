@@ -24,6 +24,7 @@ type Config struct {
 	Uidmapper      iws.UidmapperConfig `json:"uidmapper"`
 	CPULimit       cpulimit.Config     `json:"cpulimit"`
 	IOLimit        IOLimitConfig       `json:"ioLimit"`
+	ProcLimit      int64               `json:"procLimit"`
 	Hosts          hosts.Config        `json:"hosts"`
 	DiskSpaceGuard diskguard.Config    `json:"disk"`
 }
