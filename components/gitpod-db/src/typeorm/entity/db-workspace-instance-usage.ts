@@ -7,6 +7,7 @@
 import { Entity, Column, PrimaryColumn, Index } from "typeorm";
 import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
+import { WorkspaceType } from "@gitpod/gitpod-protocol";
 
 @Entity()
 export class DBWorkspaceInstanceUsage {
@@ -16,6 +17,21 @@ export class DBWorkspaceInstanceUsage {
     @Column("varchar")
     @Index("ind_attributionId")
     attributionId: string;
+
+    @Column("varchar")
+    userId: string;
+
+    @Column("varchar")
+    workspaceId: string;
+
+    @Column("varchar")
+    projectId: string;
+
+    @Column("varchar")
+    workspaceType: WorkspaceType;
+
+    @Column("varchar")
+    workspaceClass: string;
 
     @Column({
         type: "timestamp",
