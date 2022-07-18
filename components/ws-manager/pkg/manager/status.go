@@ -350,7 +350,11 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 		result.Phase = api.WorkspacePhase_STOPPING
 
 		_, podFailedBeforeBeingStopped := pod.Annotations[workspaceFailedBeforeStoppingAnnotation]
-		if podFailedBeforeBeingStopped {
+		if !podFailedBeforeBeingStopped {
+			// While the pod is being deleted we do not care or want to know about any failure state.
+			// If the pod got stopped because it failed we will have sent out a Stopping status with a "failure"
+			result.Conditions.Failed = ""
+		} else {
 			if _, ok := pod.Annotations[workspaceNeverReadyAnnotation]; ok {
 				// The workspace is never ready, so there is no need for a stopping phase.
 				result.Phase = api.WorkspacePhase_STOPPED
