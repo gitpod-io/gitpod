@@ -43,18 +43,22 @@ var (
 )
 
 var (
-	ErrWorkspaceNotFound  = NewSSHError("WS_NOTFOUND", "not found workspace")
-	ErrWorkspaceIDInvalid = NewSSHError("WS_ID_INVALID", "workspace id invalid")
-	ErrAuthFailed         = NewSSHError("AUTH_FAILED", "auth failed")
-	ErrUsernameFormat     = NewSSHError("USER_FORMAT", "username format is not correct")
-	ErrMissPrivateKey     = NewSSHError("MISS_KEY", "missing privateKey")
+	ErrWorkspaceNotFound  = NewSSHErrorWithReject("WS_NOTFOUND", "not found workspace")
+	ErrWorkspaceIDInvalid = NewSSHErrorWithReject("WS_ID_INVALID", "workspace id invalid")
+	ErrUsernameFormat     = NewSSHErrorWithReject("USER_FORMAT", "username format is not correct")
+	ErrMissPrivateKey     = NewSSHErrorWithReject("MISS_KEY", "missing privateKey")
 	ErrConnFailed         = NewSSHError("CONN_FAILED", "cannot to connect with workspace")
 	ErrCreateSSHKey       = NewSSHError("CREATE_KEY_FAILED", "cannot create private pair in workspace")
+
+	ErrAuthFailed = NewSSHError("AUTH_FAILED", "auth failed")
+	// ErrAuthFailedWithReject is same with ErrAuthFailed, it will just disconnect immediately to avoid pointless retries
+	ErrAuthFailedWithReject = NewSSHErrorWithReject("AUTH_FAILED", "auth failed")
 )
 
 type SSHError struct {
 	shortName   string
 	description string
+	err         error
 }
 
 func (e SSHError) Error() string {
@@ -64,9 +68,16 @@ func (e SSHError) Error() string {
 func (e SSHError) ShortName() string {
 	return e.shortName
 }
+func (e SSHError) Unwrap() error {
+	return e.err
+}
 
 func NewSSHError(shortName string, description string) SSHError {
 	return SSHError{shortName: shortName, description: description}
+}
+
+func NewSSHErrorWithReject(shortName string, description string) SSHError {
+	return SSHError{shortName: shortName, description: description, err: ssh.ErrDenied}
 }
 
 type Session struct {
@@ -110,14 +121,14 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 		NoClientAuth:  true,
 		NoClientAuthCallback: func(conn ssh.ConnMetadata) (*ssh.Permissions, error) {
 			args := strings.Split(conn.User(), "#")
-			// NoClientAuthCallback only support workspaceId#ownerToken
-			if len(args) != 2 {
-				return nil, ssh.ErrNoAuth
-			}
 			workspaceId := args[0]
 			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
 			if err != nil {
 				return nil, err
+			}
+			// NoClientAuthCallback only support workspaceId#ownerToken
+			if len(args) != 2 {
+				return nil, ssh.ErrNoAuth
 			}
 			if wsInfo.Auth.OwnerToken != args[1] {
 				return nil, ssh.ErrNoAuth
@@ -148,7 +159,7 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 				if wsInfo.Auth.OwnerToken == ownerToken {
 					return nil, ErrMissPrivateKey
 				}
-				return nil, ErrAuthFailed
+				return nil, ErrAuthFailedWithReject
 			}
 			if wsInfo.Auth.OwnerToken != ownerToken {
 				return nil, ErrAuthFailed
@@ -206,6 +217,8 @@ func ReportSSHAttemptMetrics(err error) {
 		if authErr, ok := serverAuthErr.Errors[len(serverAuthErr.Errors)-1].(SSHError); ok {
 			errorType = authErr.ShortName()
 		}
+	} else if authErr, ok := err.(SSHError); ok {
+		errorType = authErr.ShortName()
 	}
 	SSHAttemptTotal.WithLabelValues("failed", errorType).Inc()
 }
