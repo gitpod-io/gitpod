@@ -332,7 +332,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				m.eventRecorder.Eventf(pod, corev1.EventTypeWarning, "PersistentVolumeClaim", "PVC %q restore from volume snapshot %q failed %v", pvc.Name, startContext.VolumeSnapshot.VolumeSnapshotName, err)
 				clog.WithError(err).Warnf("unexpected error waiting for PVC %s volume snapshot %s", pvc.Name, startContext.VolumeSnapshot.VolumeSnapshotName)
 			} else {
-				m.eventRecorder.Eventf(pod, corev1.EventTypeWarning, "PersistentVolumeClaim", "PVC %q created failed %v", pvc.Name, err)
+				m.eventRecorder.Eventf(pod, corev1.EventTypeWarning, "PersistentVolumeClaim", "PVC %q create failed %v", pvc.Name, err)
 				clog.WithError(err).Warnf("unexpected error waiting for PVC %s", pvc.Name)
 			}
 		} else {
