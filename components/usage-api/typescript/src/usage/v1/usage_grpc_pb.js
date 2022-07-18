@@ -11,41 +11,41 @@ var grpc = require('@grpc/grpc-js');
 var usage_v1_usage_pb = require('../../usage/v1/usage_pb.js');
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 
-function serialize_usage_v1_GetBilledUsageRequest(arg) {
-  if (!(arg instanceof usage_v1_usage_pb.GetBilledUsageRequest)) {
-    throw new Error('Expected argument of type usage.v1.GetBilledUsageRequest');
+function serialize_usage_v1_ListBilledUsageRequest(arg) {
+  if (!(arg instanceof usage_v1_usage_pb.ListBilledUsageRequest)) {
+    throw new Error('Expected argument of type usage.v1.ListBilledUsageRequest');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_usage_v1_GetBilledUsageRequest(buffer_arg) {
-  return usage_v1_usage_pb.GetBilledUsageRequest.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_usage_v1_ListBilledUsageRequest(buffer_arg) {
+  return usage_v1_usage_pb.ListBilledUsageRequest.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_usage_v1_GetBilledUsageResponse(arg) {
-  if (!(arg instanceof usage_v1_usage_pb.GetBilledUsageResponse)) {
-    throw new Error('Expected argument of type usage.v1.GetBilledUsageResponse');
+function serialize_usage_v1_ListBilledUsageResponse(arg) {
+  if (!(arg instanceof usage_v1_usage_pb.ListBilledUsageResponse)) {
+    throw new Error('Expected argument of type usage.v1.ListBilledUsageResponse');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_usage_v1_GetBilledUsageResponse(buffer_arg) {
-  return usage_v1_usage_pb.GetBilledUsageResponse.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_usage_v1_ListBilledUsageResponse(buffer_arg) {
+  return usage_v1_usage_pb.ListBilledUsageResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 
 var UsageServiceService = exports.UsageServiceService = {
-  // GetBilleadUsage retrieves all usage for a team.
-getBilledUsage: {
-    path: '/usage.v1.UsageService/GetBilledUsage',
+  // ListBilledUsage retrieves all usage for the specified attributionId
+listBilledUsage: {
+    path: '/usage.v1.UsageService/ListBilledUsage',
     requestStream: false,
     responseStream: false,
-    requestType: usage_v1_usage_pb.GetBilledUsageRequest,
-    responseType: usage_v1_usage_pb.GetBilledUsageResponse,
-    requestSerialize: serialize_usage_v1_GetBilledUsageRequest,
-    requestDeserialize: deserialize_usage_v1_GetBilledUsageRequest,
-    responseSerialize: serialize_usage_v1_GetBilledUsageResponse,
-    responseDeserialize: deserialize_usage_v1_GetBilledUsageResponse,
+    requestType: usage_v1_usage_pb.ListBilledUsageRequest,
+    responseType: usage_v1_usage_pb.ListBilledUsageResponse,
+    requestSerialize: serialize_usage_v1_ListBilledUsageRequest,
+    requestDeserialize: deserialize_usage_v1_ListBilledUsageRequest,
+    responseSerialize: serialize_usage_v1_ListBilledUsageResponse,
+    responseDeserialize: deserialize_usage_v1_ListBilledUsageResponse,
   },
 };
 

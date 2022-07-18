@@ -2066,14 +2066,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async getBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
+    async listBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
         traceAPIParams(ctx, { attributionId });
-        const user = this.checkAndBlockUser("getBilledUsage");
+        const user = this.checkAndBlockUser("listBilledUsage");
 
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
         const usageClient = this.usageServiceClientProvider.getDefault();
-        const response = await usageClient.getBilledUsage(ctx, attributionId);
+        const response = await usageClient.listBilledUsage(ctx, attributionId);
         const sessions = response.getSessionsList().map((s) => this.mapBilledSession(s));
 
         return sessions.concat(billableSessionDummyData); // to at least return some data for testing

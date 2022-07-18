@@ -17,6 +17,7 @@ import (
 	"github.com/gitpod-io/gitpod/usage/pkg/controller"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
+	"gorm.io/gorm"
 )
 
 type Config struct {
@@ -88,7 +89,7 @@ func Start(cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize usage server: %w", err)
 	}
-	err = registerGRPCServices(srv)
+	err = registerGRPCServices(srv, conn)
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
@@ -106,7 +107,7 @@ func Start(cfg Config) error {
 	return nil
 }
 
-func registerGRPCServices(srv *baseserver.Server) error {
-	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService())
+func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB) error {
+	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn))
 	return nil
 }

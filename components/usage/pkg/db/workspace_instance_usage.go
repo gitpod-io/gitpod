@@ -7,6 +7,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,4 +37,15 @@ func CreateUsageRecords(ctx context.Context, conn *gorm.DB, records []WorkspaceI
 	})
 
 	return db.CreateInBatches(records, 1000).Error
+}
+
+func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID) ([]WorkspaceInstanceUsage, error) {
+	db := conn.WithContext(ctx)
+
+	var usageRecords []WorkspaceInstanceUsage
+	result := db.Find(&usageRecords, "attributionId = ?", attributionId)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to get usage records: %s", result.Error)
+	}
+	return usageRecords, nil
 }

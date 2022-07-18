@@ -31,7 +31,7 @@ function TeamUsage() {
         }
         (async () => {
             const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
-            const billedUsageResult = await getGitpodService().server.getBilledUsage(attributionId);
+            const billedUsageResult = await getGitpodService().server.listBilledUsage(attributionId);
             setBilledUsage(billedUsageResult);
         })();
     }, [team]);
