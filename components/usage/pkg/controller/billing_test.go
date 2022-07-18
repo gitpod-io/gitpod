@@ -5,15 +5,23 @@
 package controller
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWorkspacePricer_Default(t *testing.T) {
+	const (
+		expectedCreditsPerMinute = float64(1) / 6
+		expectedCreditsPerSecond = expectedCreditsPerMinute / 60
+	)
+
 	testCases := []struct {
 		Name            string
 		Seconds         int64
-		ExpectedCredits int64
+		ExpectedCredits float64
 	}{
 		{
 			Name:            "0 seconds",
@@ -23,32 +31,32 @@ func TestWorkspacePricer_Default(t *testing.T) {
 		{
 			Name:            "1 second",
 			Seconds:         1,
-			ExpectedCredits: 1,
+			ExpectedCredits: 1 * expectedCreditsPerSecond,
 		},
 		{
 			Name:            "60 seconds",
 			Seconds:         60,
-			ExpectedCredits: 1,
+			ExpectedCredits: 1 * expectedCreditsPerMinute,
 		},
 		{
 			Name:            "90 seconds",
 			Seconds:         90,
-			ExpectedCredits: 1,
+			ExpectedCredits: 1.5 * expectedCreditsPerMinute,
 		},
 		{
 			Name:            "6 minutes",
 			Seconds:         360,
-			ExpectedCredits: 1,
+			ExpectedCredits: 6 * expectedCreditsPerMinute,
 		},
 		{
 			Name:            "6 minutes and 1 second",
 			Seconds:         361,
-			ExpectedCredits: 2,
+			ExpectedCredits: 6*expectedCreditsPerMinute + 1*expectedCreditsPerSecond,
 		},
 		{
 			Name:            "1 hour",
 			Seconds:         3600,
-			ExpectedCredits: 10,
+			ExpectedCredits: 60 * expectedCreditsPerMinute,
 		},
 	}
 
@@ -56,7 +64,7 @@ func TestWorkspacePricer_Default(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			actualCredits := DefaultWorkspacePricer.Credits(defaultWorkspaceClass, tc.Seconds)
 
-			require.Equal(t, tc.ExpectedCredits, actualCredits)
+			require.True(t, cmp.Equal(tc.ExpectedCredits, actualCredits, cmpopts.EquateApprox(0, 0.0000001)))
 		})
 	}
 }

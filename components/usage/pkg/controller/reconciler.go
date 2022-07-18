@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -140,12 +141,12 @@ func (u UsageReport) CreditSummaryForTeams(pricer *WorkspacePricer, maxStopTime 
 			continue
 		}
 
-		var credits int64
+		var credits float64
 		for _, instance := range instances {
 			credits += pricer.CreditsUsedByInstance(&instance, maxStopTime)
 		}
 
-		creditsPerTeamID[id] = credits
+		creditsPerTeamID[id] = int64(math.Ceil(credits))
 	}
 
 	return creditsPerTeamID
@@ -248,7 +249,7 @@ func usageReportToUsageRecords(report UsageReport, pricer *WorkspacePricer, now 
 				AttributionID: attributionId,
 				StartedAt:     instance.CreationTime.Time(),
 				StoppedAt:     stoppedAt,
-				CreditsUsed:   float64(pricer.CreditsUsedByInstance(&instance, now)),
+				CreditsUsed:   pricer.CreditsUsedByInstance(&instance, now),
 				GenerationId:  0,
 				Deleted:       false,
 			})
