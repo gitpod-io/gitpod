@@ -19,7 +19,7 @@ type WorkspaceInstanceUsage struct {
 	AttributionID AttributionID `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
 	StartedAt     time.Time     `gorm:"column:startedAt;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"startedAt"`
 	StoppedAt     sql.NullTime  `gorm:"column:stoppedAt;type:timestamp;" json:"stoppedAt"`
-	CreditsUsed   int64         `gorm:"column:creditsUsed;type:int;" json:"creditsUsed"`
+	CreditsUsed   int64         `gorm:"column:creditsUsed;type:bigint;" json:"creditsUsed"`
 	GenerationId  int           `gorm:"column:generationId;type:int;" json:"generationId"`
 	Deleted       bool          `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }

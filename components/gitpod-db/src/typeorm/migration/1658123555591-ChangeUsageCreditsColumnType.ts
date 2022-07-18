@@ -14,7 +14,7 @@ export class New1658123371893 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE \`d_b_workspace_instance_usage\``);
 
         await queryRunner.query(
-            `CREATE TABLE \`d_b_workspace_instance_usage\` (\`instanceId\` char(36) NOT NULL, \`attributionId\` varchar(255) NOT NULL, \`startedAt\` timestamp(6) NOT NULL, \`stoppedAt\` timestamp(6) NULL, \`creditsUsed\` int NOT NULL, \`generationId\` int NOT NULL, \`deleted\` tinyint NOT NULL, INDEX \`ind_attributionId\` (\`attributionId\`), INDEX \`ind_startedAt\` (\`startedAt\`), INDEX \`ind_stoppedAt\` (\`stoppedAt\`), PRIMARY KEY (\`instanceId\`)) ENGINE=InnoDB`,
+            `CREATE TABLE \`d_b_workspace_instance_usage\` (\`instanceId\` char(36) NOT NULL, \`attributionId\` varchar(255) NOT NULL, \`startedAt\` timestamp(6) NOT NULL, \`stoppedAt\` timestamp(6) NULL, \`creditsUsed\` bigint NOT NULL, \`generationId\` int NOT NULL, \`deleted\` tinyint NOT NULL, INDEX \`ind_attributionId\` (\`attributionId\`), INDEX \`ind_startedAt\` (\`startedAt\`), INDEX \`ind_stoppedAt\` (\`stoppedAt\`), PRIMARY KEY (\`instanceId\`)) ENGINE=InnoDB`,
         );
     }
 
