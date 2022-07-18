@@ -131,7 +131,7 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 				return nil, ssh.ErrNoAuth
 			}
 			if wsInfo.Auth.OwnerToken != args[1] {
-				return nil, ssh.ErrNoAuth
+				return nil, ErrAuthFailedWithReject
 			}
 			server.TrackSSHConnection(wsInfo, "auth", nil)
 			return &ssh.Permissions{
@@ -143,24 +143,12 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (perm *ssh.Permissions, err error) {
 			workspaceId, ownerToken := conn.User(), string(password)
 			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
+			if err != nil {
+				return nil, err
+			}
 			defer func() {
 				server.TrackSSHConnection(wsInfo, "auth", err)
 			}()
-			if err != nil {
-				args := strings.Split(conn.User(), "#")
-				if len(args) != 2 {
-					return
-				}
-				workspaceId, ownerToken = args[0], args[1]
-				wsInfo, err = server.GetWorkspaceInfo(workspaceId)
-				if err != nil {
-					return nil, ErrWorkspaceNotFound
-				}
-				if wsInfo.Auth.OwnerToken == ownerToken {
-					return nil, ErrMissPrivateKey
-				}
-				return nil, ErrAuthFailedWithReject
-			}
 			if wsInfo.Auth.OwnerToken != ownerToken {
 				return nil, ErrAuthFailed
 			}
@@ -171,8 +159,7 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 			}, nil
 		},
 		PublicKeyCallback: func(conn ssh.ConnMetadata, pk ssh.PublicKey) (perm *ssh.Permissions, err error) {
-			args := strings.Split(conn.User(), "#")
-			workspaceId := args[0]
+			workspaceId := conn.User()
 			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
 			if err != nil {
 				return nil, err
@@ -180,18 +167,10 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 			defer func() {
 				server.TrackSSHConnection(wsInfo, "auth", err)
 			}()
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			ok, _ := server.VerifyPublicKey(ctx, wsInfo, pk)
-			if ok {
-				return &ssh.Permissions{
-					Extensions: map[string]string{
-						"workspaceId": workspaceId,
-					},
-				}, nil
-			}
-			// workspaceId#ownerToken
-			if len(args) != 2 || wsInfo.Auth.OwnerToken != args[1] {
+			if !ok {
 				return nil, ErrAuthFailed
 			}
 			return &ssh.Permissions{
