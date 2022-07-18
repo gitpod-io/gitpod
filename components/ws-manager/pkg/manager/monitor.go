@@ -370,7 +370,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		}
 	}
 
-	if status.Phase == api.WorkspacePhase_CREATING {
+	switch status.Phase {
+	case api.WorkspacePhase_CREATING:
 		// The workspace has been scheduled on the cluster which means that we can start initializing it
 		go func() {
 			err := m.initializeWorkspaceContent(ctx, pod)
@@ -383,9 +384,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 				}
 			}
 		}()
-	}
 
-	if status.Phase == api.WorkspacePhase_INITIALIZING {
+	case api.WorkspacePhase_INITIALIZING:
 		// workspace is initializing (i.e. running but without the ready annotation yet). Start probing and depending on
 		// the result add the appropriate annotation or stop the workspace. waitForWorkspaceReady takes care that it does not
 		// run for the same workspace multiple times.
@@ -400,9 +400,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 				}
 			}
 		}()
-	}
 
-	if status.Phase == api.WorkspacePhase_RUNNING {
+	case api.WorkspacePhase_RUNNING:
 		// We need to register the finalizer before the pod is deleted (see https://book.kubebuilder.io/reference/using-finalizers.html).
 		// TODO (cw): Figure out if we can replace the "neverReady" flag.
 		err = m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, true)
@@ -422,9 +421,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		if err != nil {
 			log.WithError(err).Warn("was unable to remove workspace secret")
 		}
-	}
 
-	if status.Phase == api.WorkspacePhase_STOPPING {
+	case api.WorkspacePhase_STOPPING:
 		if !isPodBeingDeleted(pod) {
 			// this might be the case if a headless workspace has just completed but has not been deleted by anyone, yet
 			err := m.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
@@ -502,9 +500,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 				go m.finalizeWorkspaceContent(ctx, wso)
 			}
 		}
-	}
 
-	if status.Phase == api.WorkspacePhase_STOPPED {
+	case api.WorkspacePhase_STOPPED:
 		// we've disposed already - try to remove the finalizer and call it a day
 		return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
 	}
