@@ -27,6 +27,8 @@ import { PaymentContext } from "./payment-context";
 import FeedbackFormModal from "./feedback-form/FeedbackModal";
 import { inResource, isGitpodIo } from "./utils";
 import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
+import Alert from "./components/Alert";
+import { isLocalPreview } from "./utils";
 
 interface Entry {
     title: string;
@@ -103,6 +105,8 @@ export default function Menu() {
     const isMinimalUI = inResource(location.pathname, ["new", "teams/new", "open"]);
     const isWorkspacesUI = inResource(location.pathname, ["workspaces"]);
     const isAdminUI = inResource(window.location.pathname, ["admin"]);
+
+    const isLP = isLocalPreview();
 
     const [teamMembers, setTeamMembers] = useState<Record<string, TeamMemberInfo[]>>({});
     useEffect(() => {
@@ -466,6 +470,18 @@ export default function Menu() {
                             />
                         ))}
                     </nav>
+                )}
+                {isLP && (
+                    <Alert type="warning" className="app-container rounded-md">
+                        This is a local-preview instance. Visit{" "}
+                        <a
+                            className="gp-link hover:text-gray-600"
+                            href="https://www.gitpod.io/community-license?utm_source=local-preview"
+                        >
+                            the community license page
+                        </a>{" "}
+                        for next steps on running a production version of Gitpod.
+                    </Alert>
                 )}
             </header>
             <Separator />
