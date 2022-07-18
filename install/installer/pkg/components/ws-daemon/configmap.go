@@ -45,9 +45,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ControlPeriod:  util.Duration(15 * time.Second),
 	}
 	var ioLimitConfig daemon.IOLimitConfig
+
+	var procLimit int64
+
 	runtimeMapping := make(map[string]string)
 	// default runtime mapping
 	runtimeMapping[ctx.Config.Workspace.Runtime.ContainerDRuntimeDir] = "/mnt/node0"
+
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil
@@ -70,6 +74,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				runtimeMapping[value.Path] = value.Value
 			}
 		}
+
+		procLimit = ucfg.Workspace.ProcLimit
 
 		return nil
 	})
@@ -116,8 +122,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Size:  70000,
 				}},
 			},
-			CPULimit: cpuLimitConfig,
-			IOLimit:  ioLimitConfig,
+			CPULimit:  cpuLimitConfig,
+			IOLimit:   ioLimitConfig,
+			ProcLimit: procLimit,
 			Hosts: hosts.Config{
 				Enabled:       true,
 				NodeHostsFile: "/mnt/hosts",
