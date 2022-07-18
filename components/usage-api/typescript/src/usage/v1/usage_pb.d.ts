@@ -13,43 +13,43 @@
 import * as jspb from "google-protobuf";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 
-export class GetBilledUsageRequest extends jspb.Message {
+export class ListBilledUsageRequest extends jspb.Message {
     getAttributionId(): string;
-    setAttributionId(value: string): GetBilledUsageRequest;
+    setAttributionId(value: string): ListBilledUsageRequest;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): GetBilledUsageRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: GetBilledUsageRequest): GetBilledUsageRequest.AsObject;
+    toObject(includeInstance?: boolean): ListBilledUsageRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: ListBilledUsageRequest): ListBilledUsageRequest.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: GetBilledUsageRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): GetBilledUsageRequest;
-    static deserializeBinaryFromReader(message: GetBilledUsageRequest, reader: jspb.BinaryReader): GetBilledUsageRequest;
+    static serializeBinaryToWriter(message: ListBilledUsageRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ListBilledUsageRequest;
+    static deserializeBinaryFromReader(message: ListBilledUsageRequest, reader: jspb.BinaryReader): ListBilledUsageRequest;
 }
 
-export namespace GetBilledUsageRequest {
+export namespace ListBilledUsageRequest {
     export type AsObject = {
         attributionId: string,
     }
 }
 
-export class GetBilledUsageResponse extends jspb.Message {
+export class ListBilledUsageResponse extends jspb.Message {
     clearSessionsList(): void;
     getSessionsList(): Array<BilledSession>;
-    setSessionsList(value: Array<BilledSession>): GetBilledUsageResponse;
+    setSessionsList(value: Array<BilledSession>): ListBilledUsageResponse;
     addSessions(value?: BilledSession, index?: number): BilledSession;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): GetBilledUsageResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: GetBilledUsageResponse): GetBilledUsageResponse.AsObject;
+    toObject(includeInstance?: boolean): ListBilledUsageResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: ListBilledUsageResponse): ListBilledUsageResponse.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: GetBilledUsageResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): GetBilledUsageResponse;
-    static deserializeBinaryFromReader(message: GetBilledUsageResponse, reader: jspb.BinaryReader): GetBilledUsageResponse;
+    static serializeBinaryToWriter(message: ListBilledUsageResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ListBilledUsageResponse;
+    static deserializeBinaryFromReader(message: ListBilledUsageResponse, reader: jspb.BinaryReader): ListBilledUsageResponse;
 }
 
-export namespace GetBilledUsageResponse {
+export namespace ListBilledUsageResponse {
     export type AsObject = {
         sessionsList: Array<BilledSession.AsObject>,
     }

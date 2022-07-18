@@ -8,7 +8,7 @@ import { UsageServiceClient } from "./usage_grpc_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
-import { GetBilledUsageRequest, GetBilledUsageResponse } from "./usage_pb";
+import { ListBilledUsageRequest, ListBilledUsageResponse } from "./usage_pb";
 import { injectable, inject } from "inversify";
 import * as grpc from "@grpc/grpc-js";
 
@@ -89,18 +89,18 @@ export class PromisifiedUsageServiceClient {
         );
     }
 
-    public async getBilledUsage(_ctx: TraceContext, attributionId: string): Promise<GetBilledUsageResponse> {
-        const ctx = TraceContext.childContext(`/usage-service/getBilledUsage`, _ctx);
+    public async listBilledUsage(_ctx: TraceContext, attributionId: string): Promise<ListBilledUsageResponse> {
+        const ctx = TraceContext.childContext(`/usage-service/listBilledUsage`, _ctx);
 
         try {
-            const req = new GetBilledUsageRequest();
+            const req = new ListBilledUsageRequest();
             req.setAttributionId(attributionId);
 
-            const response = await new Promise<GetBilledUsageResponse>((resolve, reject) => {
-                this.client.getBilledUsage(
+            const response = await new Promise<ListBilledUsageResponse>((resolve, reject) => {
+                this.client.listBilledUsage(
                     req,
                     withTracing(ctx),
-                    (err: grpc.ServiceError | null, response: GetBilledUsageResponse) => {
+                    (err: grpc.ServiceError | null, response: ListBilledUsageResponse) => {
                         if (err) {
                             reject(err);
                             return;

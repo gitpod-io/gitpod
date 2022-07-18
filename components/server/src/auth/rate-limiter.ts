@@ -210,7 +210,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         findStripeSubscriptionIdForTeam: { group: "default", points: 1 },
         subscribeTeamToStripe: { group: "default", points: 1 },
         getStripePortalUrlForTeam: { group: "default", points: 1 },
-        getBilledUsage: { group: "default", points: 1 },
+        listBilledUsage: { group: "default", points: 1 },
         trackEvent: { group: "default", points: 1 },
         trackLocation: { group: "default", points: 1 },
         identifyUser: { group: "default", points: 1 },
