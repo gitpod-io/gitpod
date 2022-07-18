@@ -52,7 +52,7 @@ func TestCanCreateUsageRecords(t *testing.T) {
 	}
 }
 
-func TestCanHandleDuplicateRecords(t *testing.T) {
+func TestNoErrorOnCreatingDuplicateRecords(t *testing.T) {
 	teamID := uuid.New().String()
 	teamAttributionID := db.NewTeamAttributionID(teamID)
 	instanceID := uuid.New()

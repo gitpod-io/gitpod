@@ -6,29 +6,29 @@ package apiv1
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
-	"github.com/google/go-cmp/cmp"
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func TestUsageService_GetBilledUsage(t *testing.T) {
-	const (
-		attributionID = "team:123-456-789"
-	)
-
+func TestUsageService_ListBilledUsage(t *testing.T) {
 	srv := baseserver.NewForTests(t,
 		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
 	)
 
-	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService())
+	dbconn := dbtest.ConnectForTests(t)
+	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn))
 	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -37,9 +37,25 @@ func TestUsageService_GetBilledUsage(t *testing.T) {
 	client := v1.NewUsageServiceClient(conn)
 	ctx := context.Background()
 
+	const attributionID = "team:123-456-789"
+	instanceId := uuid.New()
+	startedAt := timestamppb.Now()
+	instanceUsages := []db.WorkspaceInstanceUsage{
+		{
+			InstanceID:    instanceId,
+			AttributionID: attributionID,
+			StartedAt:     startedAt.AsTime(),
+			StoppedAt:     sql.NullTime{},
+			CreditsUsed:   0,
+			GenerationId:  0,
+			Deleted:       false,
+		},
+	}
+	dbtest.CreateWorkspaceInstanceUsageRecords(t, dbconn, instanceUsages...)
+
 	type Expectation struct {
-		Code     codes.Code
-		Response *v1.GetBilledUsageResponse
+		Code        codes.Code
+		InstanceIds []string
 	}
 
 	scenarios := []struct {
@@ -48,30 +64,26 @@ func TestUsageService_GetBilledUsage(t *testing.T) {
 		Expect        Expectation
 	}{
 		{
-			name:          "returns a dummy response",
+			name:          "returns one usage record",
 			AttributionID: attributionID,
 			Expect: Expectation{
-				Code: codes.OK,
-				Response: &v1.GetBilledUsageResponse{
-					Sessions: []*v1.BilledSession{},
-				},
+				Code:        codes.OK,
+				InstanceIds: []string{instanceId.String()},
 			},
 		},
 	}
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			resp, err := client.GetBilledUsage(ctx, &v1.GetBilledUsageRequest{
+			resp, err := client.ListBilledUsage(ctx, &v1.ListBilledUsageRequest{
 				AttributionId: scenario.AttributionID,
 			})
-			if diff := cmp.Diff(scenario.Expect, Expectation{
-				Code:     status.Code(err),
-				Response: resp,
-			}, protocmp.Transform()); diff != "" {
-				t.Errorf("unexpected difference:\n%v", diff)
+			var instanceIds []string
+			for _, billedSession := range resp.Sessions {
+				instanceIds = append(instanceIds, billedSession.InstanceId)
 			}
+			require.Equal(t, scenario.Expect.Code, status.Code(err))
+			require.Equal(t, scenario.Expect.InstanceIds, instanceIds)
 		})
-
 	}
-
 }

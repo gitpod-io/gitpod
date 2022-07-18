@@ -15,34 +15,34 @@ import * as usage_v1_usage_pb from "../../usage/v1/usage_pb";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 
 interface IUsageServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
-    getBilledUsage: IUsageServiceService_IGetBilledUsage;
+    listBilledUsage: IUsageServiceService_IListBilledUsage;
 }
 
-interface IUsageServiceService_IGetBilledUsage extends grpc.MethodDefinition<usage_v1_usage_pb.GetBilledUsageRequest, usage_v1_usage_pb.GetBilledUsageResponse> {
-    path: "/usage.v1.UsageService/GetBilledUsage";
+interface IUsageServiceService_IListBilledUsage extends grpc.MethodDefinition<usage_v1_usage_pb.ListBilledUsageRequest, usage_v1_usage_pb.ListBilledUsageResponse> {
+    path: "/usage.v1.UsageService/ListBilledUsage";
     requestStream: false;
     responseStream: false;
-    requestSerialize: grpc.serialize<usage_v1_usage_pb.GetBilledUsageRequest>;
-    requestDeserialize: grpc.deserialize<usage_v1_usage_pb.GetBilledUsageRequest>;
-    responseSerialize: grpc.serialize<usage_v1_usage_pb.GetBilledUsageResponse>;
-    responseDeserialize: grpc.deserialize<usage_v1_usage_pb.GetBilledUsageResponse>;
+    requestSerialize: grpc.serialize<usage_v1_usage_pb.ListBilledUsageRequest>;
+    requestDeserialize: grpc.deserialize<usage_v1_usage_pb.ListBilledUsageRequest>;
+    responseSerialize: grpc.serialize<usage_v1_usage_pb.ListBilledUsageResponse>;
+    responseDeserialize: grpc.deserialize<usage_v1_usage_pb.ListBilledUsageResponse>;
 }
 
 export const UsageServiceService: IUsageServiceService;
 
 export interface IUsageServiceServer extends grpc.UntypedServiceImplementation {
-    getBilledUsage: grpc.handleUnaryCall<usage_v1_usage_pb.GetBilledUsageRequest, usage_v1_usage_pb.GetBilledUsageResponse>;
+    listBilledUsage: grpc.handleUnaryCall<usage_v1_usage_pb.ListBilledUsageRequest, usage_v1_usage_pb.ListBilledUsageResponse>;
 }
 
 export interface IUsageServiceClient {
-    getBilledUsage(request: usage_v1_usage_pb.GetBilledUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetBilledUsageResponse) => void): grpc.ClientUnaryCall;
-    getBilledUsage(request: usage_v1_usage_pb.GetBilledUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetBilledUsageResponse) => void): grpc.ClientUnaryCall;
-    getBilledUsage(request: usage_v1_usage_pb.GetBilledUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetBilledUsageResponse) => void): grpc.ClientUnaryCall;
+    listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
+    listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
+    listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class UsageServiceClient extends grpc.Client implements IUsageServiceClient {
     constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
-    public getBilledUsage(request: usage_v1_usage_pb.GetBilledUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetBilledUsageResponse) => void): grpc.ClientUnaryCall;
-    public getBilledUsage(request: usage_v1_usage_pb.GetBilledUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetBilledUsageResponse) => void): grpc.ClientUnaryCall;
-    public getBilledUsage(request: usage_v1_usage_pb.GetBilledUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetBilledUsageResponse) => void): grpc.ClientUnaryCall;
+    public listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
+    public listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
+    public listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
 }

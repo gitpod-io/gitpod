@@ -26,8 +26,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsageServiceClient interface {
-	// GetBilleadUsage retrieves all usage for a team.
-	GetBilledUsage(ctx context.Context, in *GetBilledUsageRequest, opts ...grpc.CallOption) (*GetBilledUsageResponse, error)
+	// ListBilledUsage retrieves all usage for the specified attributionId
+	ListBilledUsage(ctx context.Context, in *ListBilledUsageRequest, opts ...grpc.CallOption) (*ListBilledUsageResponse, error)
 }
 
 type usageServiceClient struct {
@@ -38,9 +38,9 @@ func NewUsageServiceClient(cc grpc.ClientConnInterface) UsageServiceClient {
 	return &usageServiceClient{cc}
 }
 
-func (c *usageServiceClient) GetBilledUsage(ctx context.Context, in *GetBilledUsageRequest, opts ...grpc.CallOption) (*GetBilledUsageResponse, error) {
-	out := new(GetBilledUsageResponse)
-	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/GetBilledUsage", in, out, opts...)
+func (c *usageServiceClient) ListBilledUsage(ctx context.Context, in *ListBilledUsageRequest, opts ...grpc.CallOption) (*ListBilledUsageResponse, error) {
+	out := new(ListBilledUsageResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/ListBilledUsage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +51,8 @@ func (c *usageServiceClient) GetBilledUsage(ctx context.Context, in *GetBilledUs
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
 type UsageServiceServer interface {
-	// GetBilleadUsage retrieves all usage for a team.
-	GetBilledUsage(context.Context, *GetBilledUsageRequest) (*GetBilledUsageResponse, error)
+	// ListBilledUsage retrieves all usage for the specified attributionId
+	ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
 }
 
@@ -60,8 +60,8 @@ type UsageServiceServer interface {
 type UnimplementedUsageServiceServer struct {
 }
 
-func (UnimplementedUsageServiceServer) GetBilledUsage(context.Context, *GetBilledUsageRequest) (*GetBilledUsageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBilledUsage not implemented")
+func (UnimplementedUsageServiceServer) ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListBilledUsage not implemented")
 }
 func (UnimplementedUsageServiceServer) mustEmbedUnimplementedUsageServiceServer() {}
 
@@ -76,20 +76,20 @@ func RegisterUsageServiceServer(s grpc.ServiceRegistrar, srv UsageServiceServer)
 	s.RegisterService(&UsageService_ServiceDesc, srv)
 }
 
-func _UsageService_GetBilledUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetBilledUsageRequest)
+func _UsageService_ListBilledUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBilledUsageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsageServiceServer).GetBilledUsage(ctx, in)
+		return srv.(UsageServiceServer).ListBilledUsage(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/usage.v1.UsageService/GetBilledUsage",
+		FullMethod: "/usage.v1.UsageService/ListBilledUsage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsageServiceServer).GetBilledUsage(ctx, req.(*GetBilledUsageRequest))
+		return srv.(UsageServiceServer).ListBilledUsage(ctx, req.(*ListBilledUsageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -102,8 +102,8 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*UsageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetBilledUsage",
-			Handler:    _UsageService_GetBilledUsage_Handler,
+			MethodName: "ListBilledUsage",
+			Handler:    _UsageService_ListBilledUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
