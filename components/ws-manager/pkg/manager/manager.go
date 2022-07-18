@@ -175,7 +175,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	clog.Info("StartWorkspace")
 	reqs, _ := protojson.Marshal(req)
 	safeReqs, _ := log.RedactJSON(reqs)
-	log.WithField("req", string(safeReqs)).Debug("StartWorkspace request received")
+	clog.WithField("req", string(safeReqs)).Debug("StartWorkspace request received")
 
 	// Make sure the objects we're about to create do not exist already
 	switch req.Type {
@@ -248,11 +248,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				// restore volume snapshot from handle
 				err = m.restoreVolumeSnapshotFromHandle(ctx, startContext.VolumeSnapshot.VolumeSnapshotName, startContext.VolumeSnapshot.VolumeSnapshotHandle)
 				if err != nil {
-					log.WithError(err).Error("was unable to restore volume snapshot")
+					clog.WithError(err).Error("was unable to restore volume snapshot")
 					return nil, err
 				}
 			} else if err != nil {
-				log.WithError(err).Error("was unable to get volume snapshot")
+				clog.WithError(err).Error("was unable to get volume snapshot")
 				return nil, err
 			}
 		}
@@ -342,7 +342,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				wsType := api.WorkspaceType_name[int32(req.Type)]
 				hist, err := m.metrics.volumeRestoreTimeHistVec.GetMetricWithLabelValues(wsType, req.Spec.Class)
 				if err != nil {
-					log.WithError(err).WithField("type", wsType).Warn("cannot get volume restore time histogram metric")
+					clog.WithError(err).WithField("type", wsType).Warn("cannot get volume restore time histogram metric")
 				} else if endTime.IsZero() {
 					endTime = time.Now()
 					hist.Observe(endTime.Sub(startTime).Seconds())
