@@ -61,7 +61,7 @@ FN_SSLKEY="./ssl.key"
 cat "${HOME}"/.local/share/mkcert/rootCA.pem > "$FN_CACERT"
 mkcert -cert-file "$FN_SSLCERT" \
   -key-file "$FN_SSLKEY" \
-  "*.ws.${DOMAIN}" "*.${DOMAIN}" "${DOMAIN}"
+  "*.ws.${DOMAIN}" "*.${DOMAIN}" "${DOMAIN}" "reg.${DOMAIN}" "registry.default.svc.cluster.local" "gitpod.default" "ws-manager.default.svc" "ws-manager" "ws-manager-dev" "registry-facade" "server" "ws-manager-bridge" "ws-proxy" "ws-manager" "ws-daemon.default.svc" "ws-daemon" "wsdaemon"
 
 CACERT=$(base64 -w0 < "$FN_CACERT")
 SSLCERT=$(base64 -w0 < "$FN_SSLCERT")
@@ -95,13 +95,6 @@ data:
   tls.key: $SSLKEY
 EOF
 
-mkcert -cert-file "$FN_SSLCERT" \
-  -key-file "$FN_SSLKEY" \
-  "registry.default.svc.cluster.local"
-
-SSLCERT=$(base64 -w0 < "$FN_SSLCERT")
-SSLKEY=$(base64 -w0 < "$FN_SSLKEY")
-
 cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/builtin-registry-certs.yaml
 ---
 apiVersion: v1
@@ -116,13 +109,6 @@ data:
   tls.crt: $SSLCERT
   tls.key: $SSLKEY
 EOF
-
-mkcert -cert-file "$FN_SSLCERT" \
-  -key-file "$FN_SSLKEY" \
-  "gitpod.default" "ws-manager.default.svc" "ws-manager" "ws-manager-dev"
-
-SSLCERT=$(base64 -w0 < "$FN_SSLCERT")
-SSLKEY=$(base64 -w0 < "$FN_SSLKEY")
 
 cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/ws-manager-tls.yaml
 ---
@@ -139,13 +125,6 @@ data:
   tls.key: $SSLKEY
 EOF
 
-mkcert -cert-file "$FN_SSLCERT" \
-  -key-file "$FN_SSLKEY" \
-  "registry-facade" "server" "ws-manager-bridge" "ws-proxy" "ws-manager"
-
-SSLCERT=$(base64 -w0 < "$FN_SSLCERT")
-SSLKEY=$(base64 -w0 < "$FN_SSLKEY")
-
 cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/ws-manager-client-tls.yaml
 ---
 apiVersion: v1
@@ -161,13 +140,6 @@ data:
   tls.key: $SSLKEY
 EOF
 
-mkcert -cert-file "$FN_SSLCERT" \
-  -key-file "$FN_SSLKEY" \
-  "gitpod.default" "ws-daemon.default.svc" "ws-daemon" "wsdaemon"
-
-SSLCERT=$(base64 -w0 < "$FN_SSLCERT")
-SSLKEY=$(base64 -w0 < "$FN_SSLKEY")
-
 cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/ws-daemon-tls.yaml
 ---
 apiVersion: v1
@@ -182,13 +154,6 @@ data:
   tls.crt: $SSLCERT
   tls.key: $SSLKEY
 EOF
-
-mkcert -cert-file "$FN_SSLCERT" \
-  -key-file "$FN_SSLKEY" \
-  "reg.${DOMAIN}"
-
-SSLCERT=$(base64 -w0 < "$FN_SSLCERT")
-SSLKEY=$(base64 -w0 < "$FN_SSLKEY")
 
 cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/builtin-registry-facade-cert.yaml
 ---
