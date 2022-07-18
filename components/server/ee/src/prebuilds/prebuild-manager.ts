@@ -60,19 +60,27 @@ export class PrebuildManager {
 
     async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
         const span = TraceContext.startSpan("abortPrebuildsForBranch", ctx);
-        const prebuilds = await this.workspaceDB
-            .trace({ span })
-            .findActivePrebuiltWorkspacesByBranch(project.id, branch);
-        const results: Promise<any>[] = [];
-        for (const prebuild of prebuilds) {
-            for (const instance of prebuild.instances) {
-                results.push(this.workspaceStarter.stopWorkspaceInstance({ span }, instance.id, instance.region));
+        try {
+            const prebuilds = await this.workspaceDB
+                .trace({ span })
+                .findActivePrebuiltWorkspacesByBranch(project.id, branch);
+            const results: Promise<any>[] = [];
+            for (const prebuild of prebuilds) {
+                for (const instance of prebuild.instances) {
+                    log.info(
+                        { userId: user.id, instanceId: instance.id, workspaceId: instance.workspaceId },
+                        "Aborting Prebuild workspace because a newer commit was pushed to the same branch.",
+                    );
+                    results.push(this.workspaceStarter.stopWorkspaceInstance({ span }, instance.id, instance.region));
+                }
+                prebuild.prebuild.state = "aborted";
+                prebuild.prebuild.error = "A newer commit was pushed to the same branch.";
+                results.push(this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild.prebuild));
             }
-            prebuild.prebuild.state = "aborted";
-            prebuild.prebuild.error = "A newer commit was pushed to the same branch.";
-            results.push(this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild.prebuild));
+            await Promise.all(results);
+        } finally {
+            span.finish();
         }
-        await Promise.all(results);
     }
 
     async startPrebuild(
