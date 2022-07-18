@@ -34,7 +34,7 @@ export class DBWorkspaceInstanceUsage {
     @Index("ind_stoppedAt")
     stoppedAt: string;
 
-    @Column("double")
+    @Column("int")
     creditsUsed: number;
 
     @Column()
