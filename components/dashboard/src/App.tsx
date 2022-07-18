@@ -47,7 +47,8 @@ import { StartWorkspaceModal } from "./workspaces/StartWorkspaceModal";
 import { parseProps } from "./start/StartWorkspace";
 import SelectIDEModal from "./settings/SelectIDEModal";
 import { StartPage, StartPhase } from "./start/StartPage";
-import { isGitpodIo } from "./utils";
+import { isGitpodIo, isLocalPreview } from "./utils";
+import Alert from "./components/Alert";
 import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
 
@@ -347,6 +348,28 @@ function App() {
         <Route>
             <div className="container">
                 <Menu />
+                {isLocalPreview() && (
+                    <div className="app-container mt-2">
+                        <Alert type="warning" className="app-container rounded-md">
+                            You are using a <b>local preview</b> installation, intended for exploring the product on a
+                            single machine without requiring a Kubernetes cluster.{" "}
+                            <a
+                                className="gp-link hover:text-gray-600"
+                                href="https://www.gitpod.io/community-license?utm_source=local-preview"
+                            >
+                                Request a community license
+                            </a>{" "}
+                            or{" "}
+                            <a
+                                className="gp-link hover:text-gray-600"
+                                href="https://www.gitpod.io/contact/sales?utm_source=local-preview"
+                            >
+                                contact sales
+                            </a>{" "}
+                            to get a professional license for running Gitpod in production.
+                        </Alert>
+                    </div>
+                )}
                 <AppNotifications />
                 <Switch>
                     <Route path={projectsPathNew} exact component={NewProject} />
