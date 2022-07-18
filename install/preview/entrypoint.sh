@@ -143,8 +143,15 @@ run_telemetry(){
   sleep 100
   # indefinitely wait for Gitpod pods to be ready
   kubectl wait --timeout=-1s --for=condition=ready pod -l app=gitpod,component!=migrations
-  # manually tun the cronjob
-  kubectl create job gitpod-telemetry-init --from=cronjob/gitpod-telemetry
+  echo "Gitpod pods are ready"
+  # honour DO_NOT_TRACK if set
+  if [ -n "${DO_NOT_TRACK}" ] && [ "${DO_NOT_TRACK}" -eq 1 ]; then
+    # suspend the cronjob
+    kubectl patch cronjobs gitpod-telemetry -p '{"spec" : {"suspend" : true }}'
+  else
+    # manually run the cronjob
+    kubectl create job gitpod-telemetry-init --from=cronjob/gitpod-telemetry
+  fi
 }
 
 run_telemetry 2>&1 &
