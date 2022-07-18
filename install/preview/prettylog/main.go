@@ -29,6 +29,10 @@ var msgs = []struct {
 }
 
 func main() {
+	defer func() {
+		pterm.Println(pterm.Green("Visit https://www.gitpod.io/community-license?utm_source=local-preview for next steps on running a Production version of Gitpod"))
+	}()
+
 	dmp, err := os.OpenFile("logs.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		panic(err)
@@ -66,9 +70,11 @@ func main() {
 	}
 	err = scan.Err()
 	if errors.Is(err, io.EOF) {
+		pterm.Println(pterm.Green("Visit https://www.gitpod.io/community-license?utm_source=local-preview for next steps on running a Production version of Gitpod"))
 		err = nil
 	}
 	if err != nil {
+		pterm.Println(pterm.Green("Visit https://www.gitpod.io/community-license?utm_source=local-preview for next steps on running a Production version of Gitpod"))
 		panic(err)
 	}
 }

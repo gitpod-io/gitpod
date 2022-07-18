@@ -9,11 +9,6 @@ if [ -z "${DOMAIN}" ]; then
   export DOMAIN="127-0-0-1.nip.io"
 fi
 
-if [ "$1" != "logging" ]; then
-  $0 logging 2>&1 | /prettylog
-  exit
-fi
-
 # check for minimum requirements
 REQUIRED_MEM_KB=$((6 * 1024 * 1024))
 total_mem_kb=$(awk '/MemTotal:/ {print $2}' /proc/meminfo)
@@ -146,6 +141,12 @@ run_telemetry(){
   # manually tun the cronjob
   kubectl create job gitpod-telemetry-init --from=cronjob/gitpod-telemetry
 }
+
+run_exit_message(){
+  echo "Visit https://www.gitpod.io/community-license?utm_source=local-preview for next steps on running a Production version of Gitpod"
+}
+
+trap 'run_exit_message 2>&1' EXIT INT HUP
 
 run_telemetry 2>&1 &
 

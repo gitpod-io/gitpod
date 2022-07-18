@@ -26,4 +26,4 @@ COPY --from=prettylog /app/prettylog /prettylog
 
 COPY entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]
+ENTRYPOINT [ "/tini", "--", "/entrypoint.sh 2>&1 | /prettylog" ]
