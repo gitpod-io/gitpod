@@ -109,7 +109,7 @@ function createCertificateResource(
     && kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f cert.yaml`;
 
     werft.log(shellOpts.slice, "Creating certificate Custom Resource");
-    const rc = exec(cmd, { slice: shellOpts.slice }).code;
+    const rc = exec(cmd, { slice: shellOpts.slice, dontCheckRc: true }).code;
 
     if (rc != 0) {
         werft.fail(shellOpts.slice, "Failed to create the certificate Custom Resource");
@@ -134,7 +134,7 @@ function copyCachedSecret(werft: Werft, params: InstallCertificateParams, slice:
     | sed 's/${params.certName}/${params.certSecretName}/g' \
     | kubectl --kubeconfig ${params.destinationKubeconfig} apply --namespace=${params.destinationNamespace} -f -`;
 
-    const rc = exec(cmd, { slice: slice }).code;
+    const rc = exec(cmd, { slice: slice, dontCheckRc: true }).code;
 
     if (rc != 0) {
         werft.fail(
