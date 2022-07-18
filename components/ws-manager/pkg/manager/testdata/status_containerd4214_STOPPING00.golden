@@ -20,7 +20,6 @@
         },
         "phase": 6,
         "conditions": {
-            "failed": "container workspace completed; containers of a workspace pod are not supposed to do that. Reason: ",
             "final_backup_complete": 1,
             "volume_snapshot": {}
         },

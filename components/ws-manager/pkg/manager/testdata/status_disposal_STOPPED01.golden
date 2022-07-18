@@ -20,7 +20,7 @@
         },
         "phase": 6,
         "conditions": {
-            "failed": "ungraceful shutdown - teardown was unsuccessful: socket did not appear before context was canceled; last backup failed: testing the backup failure mode.",
+            "failed": "last backup failed: testing the backup failure mode.",
             "final_backup_complete": 1,
             "volume_snapshot": {}
         },
