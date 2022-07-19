@@ -18,11 +18,22 @@ import (
 type WorkspaceInstanceUsage struct {
 	InstanceID    uuid.UUID     `gorm:"primary_key;column:instanceId;type:char;size:36;" json:"instanceId"`
 	AttributionID AttributionID `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
-	StartedAt     time.Time     `gorm:"column:startedAt;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"startedAt"`
-	StoppedAt     sql.NullTime  `gorm:"column:stoppedAt;type:timestamp;" json:"stoppedAt"`
-	CreditsUsed   float64       `gorm:"column:creditsUsed;type:double;" json:"creditsUsed"`
-	GenerationId  int           `gorm:"column:generationId;type:int;" json:"generationId"`
-	Deleted       bool          `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
+
+	UserID         string        `gorm:"column:userId;type:varchar;size:255;" json:"userId"`
+	WorkspaceID    string        `gorm:"column:workspaceId;type:varchar;size:255;" json:"workspaceId"`
+	ProjectID      string        `gorm:"column:projectId;type:varchar;size:255;" json:"projectId"`
+	WorkspaceType  WorkspaceType `gorm:"column:workspaceType;type:varchar;size:255;" json:"workspaceType"`
+	WorkspaceClass string        `gorm:"column:workspaceClass;type:varchar;size:255;" json:"workspaceClass"`
+
+	CreditsUsed float64 `gorm:"column:creditsUsed;type:double;" json:"creditsUsed"`
+
+	StartedAt time.Time    `gorm:"column:startedAt;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"startedAt"`
+	StoppedAt sql.NullTime `gorm:"column:stoppedAt;type:timestamp;" json:"stoppedAt"`
+
+	GenerationID int `gorm:"column:generationId;type:int;" json:"generationId"`
+
+	// deleted is used by db-sync
+	Deleted bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
 // TableName sets the insert table name for this struct type
