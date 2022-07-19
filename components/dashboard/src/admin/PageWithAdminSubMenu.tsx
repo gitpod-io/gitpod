@@ -4,10 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getAdminMenu } from "./admin-menu";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 export interface PageWithAdminSubMenuProps {
     title: string;
@@ -16,10 +14,8 @@ export interface PageWithAdminSubMenuProps {
 }
 
 export function PageWithAdminSubMenu({ title, subtitle, children }: PageWithAdminSubMenuProps) {
-    const { isBlockedRepositoriesUIEnabled } = useContext(FeatureFlagContext);
-
     return (
-        <PageWithSubMenu subMenu={getAdminMenu(isBlockedRepositoriesUIEnabled)} title={title} subtitle={subtitle}>
+        <PageWithSubMenu subMenu={getAdminMenu()} title={title} subtitle={subtitle}>
             {children}
         </PageWithSubMenu>
     );

@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export function getAdminMenu(isBlockedRepositoriesUIEnabled: boolean) {
+export function getAdminMenu() {
     return [
         {
             title: "Users",
@@ -22,14 +22,10 @@ export function getAdminMenu(isBlockedRepositoriesUIEnabled: boolean) {
             title: "Teams",
             link: ["/admin/teams"],
         },
-        ...(isBlockedRepositoriesUIEnabled
-            ? [
-                  {
-                      title: "Blocked Repositories",
-                      link: ["/admin/blocked-repositories"],
-                  },
-              ]
-            : []),
+        {
+            title: "Blocked Repositories",
+            link: ["/admin/blocked-repositories"],
+        },
         {
             title: "License",
             link: ["/admin/license"],
