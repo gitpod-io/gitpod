@@ -31,7 +31,7 @@ export default function TeamBilling() {
     const team = getCurrentTeam(location, teams);
     const [members, setMembers] = useState<TeamMemberInfo[]>([]);
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
-    const { showPaymentUI, showUsageBasedUI, currency, setCurrency } = useContext(PaymentContext);
+    const { showPaymentUI, currency, setCurrency } = useContext(PaymentContext);
     const [pendingTeamPlan, setPendingTeamPlan] = useState<PendingPlan | undefined>();
     const [pollTeamSubscriptionTimeout, setPollTeamSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
 
@@ -140,7 +140,7 @@ export default function TeamBilling() {
 
     return (
         <PageWithSubMenu
-            subMenu={getTeamSettingsMenu({ team, showPaymentUI, showUsageBasedUI })}
+            subMenu={getTeamSettingsMenu({ team, showPaymentUI })}
             title="Billing"
             subtitle="Manage team billing and plans."
         >

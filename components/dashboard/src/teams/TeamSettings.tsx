@@ -15,8 +15,8 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 
-export function getTeamSettingsMenu(params: { team?: Team; showPaymentUI?: boolean; showUsageBasedUI?: boolean }) {
-    const { team, showPaymentUI, showUsageBasedUI } = params;
+export function getTeamSettingsMenu(params: { team?: Team; showPaymentUI?: boolean }) {
+    const { team, showPaymentUI } = params;
     return [
         {
             title: "General",
@@ -27,14 +27,6 @@ export function getTeamSettingsMenu(params: { team?: Team; showPaymentUI?: boole
                   {
                       title: "Billing",
                       link: [`/t/${team?.slug}/billing`],
-                  },
-              ]
-            : []),
-        ...(showUsageBasedUI
-            ? [
-                  {
-                      title: "Usage",
-                      link: [`/t/${team?.slug}/usage`],
                   },
               ]
             : []),
@@ -49,7 +41,7 @@ export default function TeamSettings() {
     const { user } = useContext(UserContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
+    const { showPaymentUI } = useContext(PaymentContext);
 
     const close = () => setModal(false);
 
@@ -76,7 +68,7 @@ export default function TeamSettings() {
     return (
         <>
             <PageWithSubMenu
-                subMenu={getTeamSettingsMenu({ team, showPaymentUI, showUsageBasedUI })}
+                subMenu={getTeamSettingsMenu({ team, showPaymentUI })}
                 title="Settings"
                 subtitle="Manage general team settings."
             >

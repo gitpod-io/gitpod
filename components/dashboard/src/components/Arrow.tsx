@@ -4,12 +4,22 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-function Arrow(props: { up: boolean; customBorderClasses?: string }) {
+function Arrow(props: { direction: string; customBorderClasses?: string }) {
+    const { direction, customBorderClasses } = props;
+
+    // Using any because of known TS bug with bracket notation:
+    // https://github.com/microsoft/TypeScript/issues/10530
+    const directionMap: any = {
+        up: "-135deg",
+        down: "45deg",
+        left: "135deg",
+        right: "315deg",
+    };
     return (
         <span
             className={
                 "mx-2 " +
-                (props.customBorderClasses ||
+                (customBorderClasses ||
                     "border-gray-400 dark:border-gray-500 group-hover:border-gray-600 dark:group-hover:border-gray-400")
             }
             style={{
@@ -18,7 +28,7 @@ function Arrow(props: { up: boolean; customBorderClasses?: string }) {
                 padding: 3,
                 borderWidth: "0 2px 2px 0",
                 display: "inline-block",
-                transform: `rotate(${props.up ? "-135deg" : "45deg"})`,
+                transform: `rotate(${directionMap[direction]})`,
             }}
         ></span>
     );
