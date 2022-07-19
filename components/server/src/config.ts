@@ -16,6 +16,7 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
+import { WorkspaceClasses, WorkspaceClassesConfig } from "./workspace/workspace-classes";
 
 export const Config = Symbol("Config");
 export type Config = Omit<
@@ -47,27 +48,6 @@ export interface WorkspaceGarbageCollection {
     minAgePrebuildDays: number;
     contentRetentionPeriodDays: number;
     contentChunkLimit: number;
-}
-
-type WorkspaceClassesConfig = [WorkspaceClassConfig];
-
-interface WorkspaceClassConfig {
-    // The technical string we use to identify the class with internally
-    id: string;
-
-    // Is the "default" class. The config is validated to only every have exactly _one_ default class.
-    isDefault: boolean;
-
-    // The string we display to users in the UI
-    displayName: string;
-
-    // Whether or not to:
-    //  - offer users this Workspace class for selection
-    //  - use this class to start workspaces with. If a user has a class marked like this configured and starts
-    deprecated: boolean;
-
-    // The price for this workspace class in "credits per minute"
-    creditsPerMinute: number;
 }
 
 /**
@@ -272,13 +252,7 @@ export namespace ConfigFile {
             }
         }
 
-        let defaultClasses = config.workspaceClasses
-            .map((c) => (c.isDefault ? 1 : 0))
-            .reduce((acc: number, isDefault: number) => (acc + isDefault) as number, 0);
-
-        if (defaultClasses != 1) {
-            throw new Error("exactly one default workspace class needs to be configured, not " + defaultClasses);
-        }
+        WorkspaceClasses.validate(config.workspaceClasses);
 
         return {
             ...config,
