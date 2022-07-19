@@ -36,26 +36,6 @@ class BlockedRepositoryDBSpec {
     }
 
     @test(timeout(10000))
-    public async canDeleteABlockedRepository() {
-        const blockedRepository = await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/*/", true);
-
-        const result = await this.blockedRepositoryDb.deleteBlockedRepository(blockedRepository.id);
-
-        expect(result).eq(true);
-        expect(await this.blockedRepositoryDb.findBlockedRepositoryByURL("github.com/bob/some-repo")).undefined;
-    }
-
-    @test(timeout(10000))
-    public async canNotDeleteABlockedRepositoryWithAnIdThatDoesNotExist() {
-        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/*/", true);
-
-        const result = await this.blockedRepositoryDb.deleteBlockedRepository(9999);
-
-        expect(result).eq(false);
-        expect(await this.blockedRepositoryDb.findBlockedRepositoryByURL("github.com/bob/some-repo")).not.undefined;
-    }
-
-    @test(timeout(10000))
     public async checkRepositoryIsBlocked() {
         await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true);
 
