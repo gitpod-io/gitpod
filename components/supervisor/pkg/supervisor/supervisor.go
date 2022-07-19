@@ -9,6 +9,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -149,6 +150,10 @@ func (s IDEKind) String() string {
 	return "unknown"
 }
 
+type AdditionalContent struct {
+	GitpodYml string `json:".gitpod.yml"`
+}
+
 // Run serves as main entrypoint to the supervisor.
 func Run(options ...RunOption) {
 	exitCode := 0
@@ -256,6 +261,7 @@ func Run(options ...RunOption) {
 		analytics := analytics.NewFromEnvironment()
 		defer analytics.Close()
 		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
+		go notifyContainerRebuild(ctx, cfg, analytics, gitpodConfigService, notificationService)
 	}
 
 	termMux := terminal.NewMux()
@@ -334,48 +340,6 @@ func Run(options ...RunOption) {
 	} else if !opts.RunGP {
 		wg.Add(1)
 		go portMgmt.Run(ctx, &wg)
-	}
-
-	// TODO: find actual trigger
-	// TODO: get current workspace url
-	// TODO: find gitpod.yml content
-	message := "The .gitpod.yml configuration file changed. Would you like to rebuild the workspace to test it?"
-	result, err := notificationService.Notify(ctx, &api.NotifyRequest{
-		Level:   api.NotifyRequest_INFO,
-		Message: message,
-		Actions: []string{"Rebuild Now"},
-	})
-	if err != nil {
-		log.WithError(err).Fatal("failed to send test notification")
-	}
-	log.Info(result)
-
-	if result.Action == "Rebuild Now" {
-		gpPath, err := exec.LookPath("gp")
-		if err != nil {
-			log.WithError(err).Fatal("failed to find gp cli")
-		}
-
-		repoUrl := "https://github.com/akosyakov/parcel-demo"
-		additionalContent := "eyJpbmRleC5qcyI6ImxhbGFsYSJ9"
-		rebuildUrl := fmt.Sprintf("%s/#additionalcontent/%s/%s", cfg.WorkspaceUrl, additionalContent, repoUrl)
-
-		// type AddititionalContent struct {
-		// 	gitpodYml string
-		// }
-
-		// var ad AddititionalContent
-
-		gpCmd := exec.Command(gpPath, "preview", "--external", rebuildUrl)
-		gpCmd = runAsGitpodUser(gpCmd)
-		err = gpCmd.Start()
-		if err != nil {
-			log.WithError(err).Fatal("todo: handle error")
-		}
-		err = gpCmd.Process.Release()
-		if err != nil {
-			log.WithError(err).Fatal("todo: handle error")
-		}
 	}
 
 	if cfg.PreventMetadataAccess {
@@ -711,6 +675,7 @@ func configureGit(cfg *Config, childProcEnvvars []string) {
 		{"push.default", "simple"},
 		{"alias.lg", "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"},
 		{"credential.helper", "/usr/bin/gp credential-helper"},
+		{"safe.directory", "*"},
 	}
 	if cfg.GitUsername != "" {
 		settings = append(settings, []string{"user.name", cfg.GitUsername})
@@ -1368,7 +1333,10 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		fnReady = "/.workspace/.gitpod/ready"
 		log.Info("Detected content.json in /.workspace folder, assuming PVC feature enabled")
 	}
-	f, err := os.Open(fn)
+
+	var contentFile *os.File
+
+	contentFile, err = os.Open(fn)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			log.WithError(err).Error("cannot open init descriptor")
@@ -1405,7 +1373,10 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		return
 	}
 
-	src, err := executor.Execute(ctx, "/workspace", f, true)
+	defer contentFile.Close()
+
+	var src csapi.WorkspaceInitSource
+	src, err = executor.Execute(ctx, "/workspace", contentFile, true)
 	if err != nil {
 		return
 	}
@@ -1415,6 +1386,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		// file is gone - we're good
 		err = nil
 	}
+
 	if err != nil {
 		return
 	}
@@ -1547,9 +1519,86 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 	}
 }
 
-func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface) {
+func notifyContainerRebuild(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface, notificationService *NotificationService) {
+	log.Info("INFO  Running notifyContainerRebuild!")
+
 	cfgc := cfgobs.Observe(ctx)
 
+	var (
+		cfg *gitpod.GitpodConfig
+	)
+
+	for {
+		select {
+		case c, ok := <-cfgc:
+			if !ok {
+				return
+			}
+			if cfg == nil {
+				cfg = c
+				continue
+			}
+
+			log.Warn("notifyContainerRebuild spotted changes 11111!")
+			log.Info(&cfg)
+
+			message := "The .gitpod.yml configuration file changed. Would you like to rebuild the workspace to test it?"
+			result, err := notificationService.Notify(ctx, &api.NotifyRequest{
+				Level:   api.NotifyRequest_INFO,
+				Message: message,
+				Actions: []string{"Rebuild Now"},
+			})
+			if err != nil {
+				log.WithError(err).Fatal("failed to send test notification")
+			}
+
+			if result.Action == "Rebuild Now" {
+				gpPath, err := exec.LookPath("gp")
+				if err != nil {
+					log.WithError(err).Fatal("failed to find gp cli")
+				}
+
+				data, err := os.ReadFile(wscfg.RepoRoot + "/.gitpod.yml")
+				if err != nil {
+					panic(err)
+				}
+
+				fmt.Println(string(data))
+
+				additionalContentObj := &AdditionalContent{GitpodYml: string(data)}
+
+				b, err := json.Marshal(additionalContentObj)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				fmt.Println(string(b))
+
+				additionalContent := base64.StdEncoding.EncodeToString([]byte(string(b)))
+				fmt.Println(additionalContent)
+
+				repoUrl := os.Getenv("GITPOD_WORKSPACE_CONTEXT_URL")
+				rebuildUrl := fmt.Sprintf("%s/#additionalcontent/%s/%s", os.Getenv("GITPOD_HOST"), additionalContent, repoUrl)
+
+				gpCmd := exec.Command(gpPath, "preview", "--external", rebuildUrl)
+				gpCmd = runAsGitpodUser(gpCmd)
+				err = gpCmd.Start()
+				if err != nil {
+					log.WithError(err).Fatal("todo: handle error")
+				}
+				err = gpCmd.Process.Release()
+				if err != nil {
+					log.WithError(err).Fatal("todo: handle error")
+				}
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface) {
+	cfgc := cfgobs.Observe(ctx)
 	var (
 		cfg     *gitpod.GitpodConfig
 		t       = time.NewTicker(10 * time.Second)
@@ -1615,19 +1664,6 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 			if len(changes) == 0 {
 				continue
 			}
-
-			notificationService := NewNotificationService()
-			message := "The .gitpod.yml configuration file changed. Would you like to rebuild the workspace to test it?"
-			result, err := notificationService.Notify(ctx, &api.NotifyRequest{
-				Level:   api.NotifyRequest_INFO,
-				Message: message,
-				Actions: []string{"Rebuild Now"},
-			})
-			if err != nil {
-				log.WithError(err).Fatal("failed to send workspace rebuild notification")
-			}
-			log.Info(result)
-
 			w.Track(analytics.TrackMessage{
 				Identity: analytics.Identity{UserID: wscfg.GitEmail},
 				Event:    "config-changed",
