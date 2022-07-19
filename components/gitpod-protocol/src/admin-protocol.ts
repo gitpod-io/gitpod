@@ -22,7 +22,7 @@ export interface AdminServer {
     adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User>;
 
     adminCreateBlockedRepository(urlRegexp: string, blockUser: boolean): Promise<BlockedRepository>;
-    adminDeleteBlockedRepository(id: number): Promise<boolean>;
+    adminDeleteBlockedRepository(id: number): Promise<void>;
     adminGetBlockedRepositories(
         req: AdminGetListRequest<BlockedRepository>,
     ): Promise<AdminGetListResult<BlockedRepository>>;
