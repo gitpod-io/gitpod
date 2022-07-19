@@ -6,6 +6,7 @@ package db_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
@@ -13,6 +14,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+)
+
+var (
+	startOfMay  = time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
+	startOfJune = time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
 )
 
 func TestListWorkspaceInstancesInRange(t *testing.T) {
@@ -100,12 +106,78 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 
 	dbtest.CreateWorkspaceInstances(t, conn, all...)
 
-	startOfMay := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
-	startOfJune := time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
 	retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
 	require.NoError(t, err)
 
 	require.Len(t, retrieved, len(valid))
+}
+
+func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
+
+	t.Run("no project results in empty string", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{}))[0]
+		instance := dbtest.CreateWorkspaceInstances(t, conn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			WorkspaceID:  workspace.ID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
+		}))[0]
+
+		retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
+		require.NoError(t, err)
+
+		require.Len(t, retrieved, 1)
+		require.Equal(t, db.WorkspaceInstanceForUsage{
+			ID:                 instance.ID,
+			WorkspaceID:        instance.WorkspaceID,
+			OwnerID:            workspace.OwnerID,
+			ProjectID:          sql.NullString{},
+			WorkspaceClass:     instance.WorkspaceClass,
+			Type:               workspace.Type,
+			UsageAttributionID: instance.UsageAttributionID,
+			CreationTime:       instance.CreationTime,
+			StoppedTime:        instance.StoppedTime,
+		}, retrieved[0])
+	})
+
+	t.Run("with project", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{
+			ProjectID: sql.NullString{
+				String: uuid.New().String(),
+				Valid:  true,
+			},
+		}))[0]
+		instance := dbtest.CreateWorkspaceInstances(t, conn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			WorkspaceID:  workspace.ID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
+		}))[0]
+
+		retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
+		require.NoError(t, err)
+
+		require.Len(t, retrieved, 1)
+		require.Equal(t, db.WorkspaceInstanceForUsage{
+			ID:          instance.ID,
+			WorkspaceID: instance.WorkspaceID,
+			OwnerID:     workspace.OwnerID,
+			ProjectID: sql.NullString{
+				String: workspace.ProjectID.String,
+				Valid:  true,
+			},
+			WorkspaceClass:     instance.WorkspaceClass,
+			Type:               workspace.Type,
+			UsageAttributionID: instance.UsageAttributionID,
+			CreationTime:       instance.CreationTime,
+			StoppedTime:        instance.StoppedTime,
+		}, retrieved[0])
+	})
+
 }
 
 func TestListWorkspaceInstancesInRange_InBatches(t *testing.T) {
@@ -126,8 +198,6 @@ func TestListWorkspaceInstancesInRange_InBatches(t *testing.T) {
 
 	dbtest.CreateWorkspaceInstances(t, conn, instances...)
 
-	startOfMay := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
-	startOfJune := time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
 	results, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
 	require.NoError(t, err)
 	require.Len(t, results, len(instances))

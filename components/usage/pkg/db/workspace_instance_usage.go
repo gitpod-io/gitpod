@@ -19,7 +19,7 @@ type WorkspaceInstanceUsage struct {
 	InstanceID    uuid.UUID     `gorm:"primary_key;column:instanceId;type:char;size:36;" json:"instanceId"`
 	AttributionID AttributionID `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
 
-	UserID         string        `gorm:"column:userId;type:varchar;size:255;" json:"userId"`
+	UserID         uuid.UUID     `gorm:"column:userId;type:varchar;size:255;" json:"userId"`
 	WorkspaceID    string        `gorm:"column:workspaceId;type:varchar;size:255;" json:"workspaceId"`
 	ProjectID      string        `gorm:"column:projectId;type:varchar;size:255;" json:"projectId"`
 	WorkspaceType  WorkspaceType `gorm:"column:workspaceType;type:varchar;size:255;" json:"workspaceType"`

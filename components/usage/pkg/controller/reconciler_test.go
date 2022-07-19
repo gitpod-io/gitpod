@@ -150,7 +150,8 @@ func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
 
 func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 	maxStopTime := time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)
-	teamID := uuid.New().String()
+	teamID, ownerID, projectID := uuid.New().String(), uuid.New(), uuid.New()
+	workspaceID := dbtest.GenerateWorkspaceID()
 	teamAttributionID := db.NewTeamAttributionID(teamID)
 	instanceId := uuid.New()
 	creationTime := db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC))
@@ -167,19 +168,30 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 				teamAttributionID: {
 					db.WorkspaceInstanceForUsage{
 						ID:                 instanceId,
-						UsageAttributionID: teamAttributionID,
+						WorkspaceID:        workspaceID,
+						OwnerID:            ownerID,
+						ProjectID:          sql.NullString{},
 						WorkspaceClass:     defaultWorkspaceClass,
+						Type:               db.WorkspaceType_Prebuild,
+						UsageAttributionID: teamAttributionID,
 						CreationTime:       creationTime,
 						StoppedTime:        stoppedTime,
 					},
 				},
 			},
 			Expected: []db.WorkspaceInstanceUsage{{
-				InstanceID:    instanceId,
-				AttributionID: teamAttributionID,
-				StartedAt:     creationTime.Time(),
-				StoppedAt:     sql.NullTime{Time: stoppedTime.Time(), Valid: true},
-				CreditsUsed:   470,
+				InstanceID:     instanceId,
+				AttributionID:  teamAttributionID,
+				UserID:         ownerID,
+				WorkspaceID:    workspaceID,
+				ProjectID:      "",
+				WorkspaceType:  db.WorkspaceType_Prebuild,
+				WorkspaceClass: defaultWorkspaceClass,
+				CreditsUsed:    470,
+				StartedAt:      creationTime.Time(),
+				StoppedAt:      sql.NullTime{Time: stoppedTime.Time(), Valid: true},
+				GenerationID:   0,
+				Deleted:        false,
 			}},
 		},
 		{
@@ -188,7 +200,11 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 				teamAttributionID: {
 					db.WorkspaceInstanceForUsage{
 						ID:                 instanceId,
+						OwnerID:            ownerID,
+						ProjectID:          sql.NullString{String: projectID.String(), Valid: true},
 						WorkspaceClass:     defaultWorkspaceClass,
+						Type:               db.WorkspaceType_Regular,
+						WorkspaceID:        workspaceID,
 						UsageAttributionID: teamAttributionID,
 						CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
 						StoppedTime:        db.VarcharTime{},
@@ -196,11 +212,16 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 				},
 			},
 			Expected: []db.WorkspaceInstanceUsage{{
-				InstanceID:    instanceId,
-				AttributionID: teamAttributionID,
-				StartedAt:     creationTime.Time(),
-				StoppedAt:     sql.NullTime{},
-				CreditsUsed:   470,
+				InstanceID:     instanceId,
+				AttributionID:  teamAttributionID,
+				UserID:         ownerID,
+				ProjectID:      projectID.String(),
+				WorkspaceID:    workspaceID,
+				WorkspaceType:  db.WorkspaceType_Regular,
+				StartedAt:      creationTime.Time(),
+				StoppedAt:      sql.NullTime{},
+				WorkspaceClass: defaultWorkspaceClass,
+				CreditsUsed:    470,
 			}},
 		},
 	}
