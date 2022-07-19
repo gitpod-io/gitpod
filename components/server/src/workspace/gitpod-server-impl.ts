@@ -2665,7 +2665,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<boolean> {
+    adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 

@@ -29,11 +29,10 @@ export class TypeORMBlockedRepositoryDBImpl implements BlockedRepositoryDB {
         return await blockedRepositoryRepo.save({ urlRegexp: urlRegexp, blockUser: blockUser, deleted: false });
     }
 
-    public async deleteBlockedRepository(id: number): Promise<boolean> {
+    public async deleteBlockedRepository(id: number): Promise<void> {
         const blockedRepositoryRepo = await this.getBlockedRepositoryRepo();
 
-        const result = await blockedRepositoryRepo.delete(id);
-        return !!result.affected;
+        await blockedRepositoryRepo.update(id, { deleted: true });
     }
 
     public async findAllBlockedRepositories(

@@ -23,5 +23,5 @@ export interface BlockedRepositoryDB {
 
     createBlockedRepository(urlRegexp: string, blockUser: boolean): Promise<BlockedRepository>;
 
-    deleteBlockedRepository(id: number): Promise<boolean>;
+    deleteBlockedRepository(id: number): Promise<void>;
 }
