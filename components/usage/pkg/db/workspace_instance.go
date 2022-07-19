@@ -62,7 +62,16 @@ func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to 
 
 	tx := conn.WithContext(ctx).
 		Table(fmt.Sprintf("%s as wsi", (&WorkspaceInstance{}).TableName())).
-		Select("wsi.id as id, ws.projectId as projectId, ws.type as workspaceType, wsi.workspaceClass as workspaceClass, wsi.usageAttributionId as usageAttributionId, wsi.stoppedTime as stoppedTime, wsi.creationTime as creationTime").
+		Select("wsi.id as id, "+
+			"ws.projectId as projectId, "+
+			"ws.type as workspaceType, "+
+			"wsi.workspaceClass as workspaceClass, "+
+			"wsi.usageAttributionId as usageAttributionId, "+
+			"wsi.stoppedTime as stoppedTime, "+
+			"wsi.creationTime as creationTime, "+
+			"ws.ownerId as ownerId, "+
+			"ws.id as workspaceId",
+		).
 		Joins(fmt.Sprintf("LEFT JOIN %s AS ws ON wsi.workspaceId = ws.id", (&Workspace{}).TableName())).
 		Where(
 			conn.Where("wsi.stoppedTime >= ?", TimeToISO8601(from)).Or("wsi.stoppedTime = ?", ""),
@@ -117,6 +126,8 @@ const (
 
 type WorkspaceInstanceForUsage struct {
 	ID                 uuid.UUID      `gorm:"column:id;type:char;size:36;" json:"id"`
+	WorkspaceID        string         `gorm:"column:workspaceId;type:char;size:36;" json:"workspaceId"`
+	OwnerID            uuid.UUID      `gorm:"column:ownerId;type:char;size:36;" json:"ownerId"`
 	ProjectID          sql.NullString `gorm:"column:projectId;type:char;size:36;" json:"projectId"`
 	WorkspaceClass     string         `gorm:"column:workspaceClass;type:varchar;size:255;" json:"workspaceClass"`
 	Type               WorkspaceType  `gorm:"column:workspaceType;type:char;size:16;default:regular;" json:"workspaceType"`

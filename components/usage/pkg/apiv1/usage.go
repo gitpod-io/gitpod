@@ -36,7 +36,7 @@ func (us *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUs
 		}
 		billedSession := &v1.BilledSession{
 			AttributionId:  string(usageRecord.AttributionID),
-			UserId:         usageRecord.UserID,
+			UserId:         usageRecord.UserID.String(),
 			WorkspaceId:    usageRecord.WorkspaceID,
 			WorkspaceType:  string(usageRecord.WorkspaceType),
 			ProjectId:      usageRecord.ProjectID,
