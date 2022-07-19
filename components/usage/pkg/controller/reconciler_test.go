@@ -180,7 +180,6 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 				StartedAt:     creationTime.Time(),
 				StoppedAt:     sql.NullTime{Time: stoppedTime.Time(), Valid: true},
 				CreditsUsed:   470,
-				GenerationId:  0,
 			}},
 		},
 		{
@@ -202,7 +201,6 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 				StartedAt:     creationTime.Time(),
 				StoppedAt:     sql.NullTime{},
 				CreditsUsed:   470,
-				GenerationId:  0,
 			}},
 		},
 	}
