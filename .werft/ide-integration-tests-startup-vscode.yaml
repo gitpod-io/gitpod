@@ -148,7 +148,13 @@ pod:
           echo "start build preview environment, job name: ${BUILD_ID}, this will take long time" | werft log slice "build test environment"
           werft log result -d "build job" url "https://werft.gitpod-dev.com/job/${BUILD_ID}"
 
-          if ! werft job logs ${BUILD_ID} | werft log slice "build test environment";
+          BUILD_STATUS=$(werft job get ${BUILD_ID} -o yaml | yq4 '.phase')
+          until [ "$BUILD_STATUS" == "4" ]
+          do
+              sleep 10
+              BUILD_STATUS=$(werft job get ${BUILD_ID} -o yaml | yq4 '.phase')
+          done
+          if ! [ "$(werft job get "${BUILD_ID}" -o yaml | yq4 '.conditions.success')" == "true" ];
           then
               echo "build failed" | werft log slice "build test environment"
               exit 1
