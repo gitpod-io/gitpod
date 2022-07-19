@@ -1,6 +1,9 @@
 # Change Log
 
 ## July 2022
+- Add support for limiting number of processes in workspaces ([#11448](https://github.com/gitpod-io/gitpod/pull/11448)) - [@aledbf](https://github.com/aledbf)
+- [experimental] Add PVC created message to the workspace pod event ([#11367](https://github.com/gitpod-io/gitpod/pull/11367)) - [@jenting](https://github.com/jenting), [@sagor999](https://github.com/sagor999)
+- Test if host of a Git Integration is reachable. ([#11409](https://github.com/gitpod-io/gitpod/pull/11409)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Switch to http/1.1 for gitlab.com repositories ([#11400](https://github.com/gitpod-io/gitpod/pull/11400)) - [@aledbf](https://github.com/aledbf)
 - [ws-manager-bridge] Remove HasMoreResources admission constraint ([#11384](https://github.com/gitpod-io/gitpod/pull/11384)) - [@csweichel](https://github.com/csweichel)
 - Try to backup content when the node goes into the NotReady state ([#11337](https://github.com/gitpod-io/gitpod/pull/11337)) - [@jenting](https://github.com/jenting)
