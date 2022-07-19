@@ -45,7 +45,6 @@ type ConfigSerialized struct {
 	AuthProviderConfigFiles    []string                   `json:"authProviderConfigFiles"`
 	IncrementalPrebuilds       IncrementalPrebuilds       `json:"incrementalPrebuilds"`
 	BlockNewUsers              config.BlockNewUsers       `json:"blockNewUsers"`
-	BlockedRepositories        []BlockedRepository        `json:"blockedRepositories,omitempty"`
 	OAuthServer                OAuthServer                `json:"oauthServer"`
 	RateLimiter                RateLimiter                `json:"rateLimiter"`
 	CodeSync                   CodeSync                   `json:"codeSync"`
@@ -53,12 +52,6 @@ type ConfigSerialized struct {
 	// Key of "*" defines the default limit, unless there exists a cloneURL in the map which overrides it.
 	PrebuildLimiter map[string]int `json:"prebuildLimiter"`
 }
-
-type BlockedRepository struct {
-	UrlRegExp string `json:"urlRegExp"`
-	BlockUser bool   `json:"blockUser"`
-}
-
 type CodeSyncResources struct {
 	RevLimit int32 `json:"revLimit"`
 }

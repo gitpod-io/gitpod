@@ -27,7 +27,6 @@ func TestConfigMap(t *testing.T) {
 		WorkspaceImage                    string
 		JWTSecret                         string
 		SessionSecret                     string
-		BlockedRepositories               []experimental.BlockedRepository
 		GitHubApp                         experimental.GithubApp
 	}
 
@@ -40,10 +39,6 @@ func TestConfigMap(t *testing.T) {
 		WorkspaceImage:                    "some-workspace-image",
 		JWTSecret:                         "some-jwt-secret",
 		SessionSecret:                     "some-session-secret",
-		BlockedRepositories: []experimental.BlockedRepository{{
-			UrlRegExp: "https://github.com/some-user/some-bad-repo",
-			BlockUser: true,
-		}},
 		GitHubApp: experimental.GithubApp{
 			AppId:           123,
 			AuthProviderId:  "some-auth-provider-id",
@@ -75,8 +70,7 @@ func TestConfigMap(t *testing.T) {
 					Session: experimental.Session{
 						Secret: expectation.SessionSecret,
 					},
-					GithubApp:           &expectation.GitHubApp,
-					BlockedRepositories: expectation.BlockedRepositories,
+					GithubApp: &expectation.GitHubApp,
 				},
 			},
 		},
@@ -113,16 +107,6 @@ func TestConfigMap(t *testing.T) {
 		WorkspaceImage:                    config.WorkspaceDefaults.WorkspaceImage,
 		JWTSecret:                         config.OAuthServer.JWTSecret,
 		SessionSecret:                     config.Session.Secret,
-		BlockedRepositories: func(config ConfigSerialized) []experimental.BlockedRepository {
-			var blockedRepos []experimental.BlockedRepository
-			for _, repo := range config.BlockedRepositories {
-				blockedRepos = append(blockedRepos, experimental.BlockedRepository{
-					UrlRegExp: repo.UrlRegExp,
-					BlockUser: repo.BlockUser,
-				})
-			}
-			return blockedRepos
-		}(config),
 		GitHubApp: experimental.GithubApp{
 			AppId:           config.GitHubApp.AppId,
 			AuthProviderId:  config.GitHubApp.AuthProviderId,
@@ -137,26 +121,4 @@ func TestConfigMap(t *testing.T) {
 	}
 
 	assert.Equal(t, expectation, actual)
-}
-
-func TestInvalidBlockedRepositoryRegularExpressions(t *testing.T) {
-	const invalidRegexp = "["
-
-	ctx, err := common.NewRenderContext(config.Config{
-		Experimental: &experimental.Config{
-			WebApp: &experimental.WebAppConfig{
-				Server: &experimental.ServerConfig{
-					BlockedRepositories: []experimental.BlockedRepository{{
-						UrlRegExp: invalidRegexp,
-						BlockUser: false,
-					}},
-				},
-			},
-		},
-	}, versions.Manifest{}, "test_namespace")
-	require.NoError(t, err)
-
-	_, err = configmap(ctx)
-
-	require.Error(t, err, "expected to fail when rendering configmap with invalid blocked repo regexp %q", invalidRegexp)
 }
