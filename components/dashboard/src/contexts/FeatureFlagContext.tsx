@@ -4,43 +4,19 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { getExperimentsClient } from "../experiments/client";
+import React, { createContext, useContext, useEffect } from "react";
 import { UserContext } from "../user-context";
 
-const FeatureFlagContext = createContext<{
-    isBlockedRepositoriesUIEnabled: boolean;
-    setIsBlockedRepositoriesUIEnabled: React.Dispatch<boolean>;
-}>({
-    isBlockedRepositoriesUIEnabled: false,
-    setIsBlockedRepositoriesUIEnabled: () => {},
-});
+const FeatureFlagContext = createContext({});
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
-    const [isBlockedRepositoriesUIEnabled, setIsBlockedRepositoriesUIEnabled] = useState(false);
     const { user } = useContext(UserContext);
 
     useEffect(() => {
-        (async () => {
-            const isBlockedRepositoriesUIEnabled = await getExperimentsClient().getValueAsync(
-                "isblockedrepositoriesuienabled",
-                false,
-                { user },
-            );
-            setIsBlockedRepositoriesUIEnabled(isBlockedRepositoriesUIEnabled);
-        })();
+        // Query FeatureFlag here
     }, [user]);
 
-    return (
-        <FeatureFlagContext.Provider
-            value={{
-                isBlockedRepositoriesUIEnabled,
-                setIsBlockedRepositoriesUIEnabled,
-            }}
-        >
-            {children}
-        </FeatureFlagContext.Provider>
-    );
+    return <FeatureFlagContext.Provider value={{}}>{children}</FeatureFlagContext.Provider>;
 };
 
 export { FeatureFlagContext, FeatureFlagContextProvider };
