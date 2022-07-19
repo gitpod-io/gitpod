@@ -14,6 +14,7 @@ import Modal from "../components/Modal";
 import CheckBox from "../components/CheckBox";
 import { ItemFieldContextMenu } from "../components/ItemsList";
 import { ContextMenuEntry } from "../components/ContextMenu";
+import Alert from "../components/Alert";
 
 export function BlockedRepositories() {
     return (
@@ -81,7 +82,7 @@ export function BlockedRepositoriesList(props: Props) {
 
     const validate = (blockedRepository: NewBlockedRepository): string | undefined => {
         if (blockedRepository.urlRegexp === "") {
-            return "Empty RegEx!";
+            return "Repository URL can not be empty";
         }
     };
 
@@ -146,11 +147,15 @@ export function BlockedRepositoriesList(props: Props) {
                     </div>
                 </div>
             </div>
+
+            <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
+                <span>Search entries by their Repositoriy URL regular expression (RegEx).</span>
+            </Alert>
             <div className="flex flex-col space-y-2">
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
-                    <div className="w-9/12">Repository URL Regex</div>
-                    <div className="w-1/12">Block user</div>
-                    <div className="w-2/12">Delete</div>
+                    <div className="w-9/12">Repository URL (RegEx)</div>
+                    <div className="w-1/12">Block Users</div>
+                    <div className="w-1/12"></div>
                 </div>
                 {searchResult.rows.map((br) => (
                     <BlockedRepositoryEntry br={br} confirmedDelete={confirmDeleteBlockedRepository} />
@@ -165,17 +170,18 @@ function BlockedRepositoryEntry(props: { br: BlockedRepository; confirmedDelete:
         {
             title: "Delete",
             onClick: () => props.confirmedDelete(props.br),
+            customFontStyle: "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
         },
     ];
     return (
-        <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+        <div className="rounded whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
             <div className="flex flex-col w-9/12 truncate">
                 <span className="mr-3 text-lg text-gray-600 truncate">{props.br.urlRegexp}</span>
             </div>
             <div className="flex flex-col self-center w-1/12">
-                <CheckBox title={""} desc={""} checked={props.br.blockUser} disabled={true} />
+                <span className="mr-3 text-lg text-gray-600 truncate">{props.br.blockUser ? "Yes" : "No"}</span>
             </div>
-            <div className="flex flex-col w-2/12">
+            <div className="flex flex-col w-1/12">
                 <ItemFieldContextMenu menuEntries={menuEntries} />
             </div>
         </div>
@@ -233,6 +239,12 @@ function AddBlockedRepositoryModal(p: AddBlockedRepositoryModalProps) {
                 </button>,
             ]}
         >
+            <Alert type={"warning"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
+                <span>Entries in this table have an immediate effect on all users. Please use it carefully.</span>
+            </Alert>
+            <Alert type={"message"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
+                <span>Repositories are blocked by matching their URL against this regular expression.</span>
+            </Alert>
             <Details br={br} update={update} error={error} />
         </Modal>
     );
@@ -276,6 +288,7 @@ function Details(props: {
                     className="w-full"
                     type="text"
                     value={props.br.urlRegexp}
+                    placeholder={'e.g. "https://github.com/malicious-user/*"'}
                     disabled={!props.update}
                     onChange={(v) => {
                         if (!!props.update) {
@@ -285,7 +298,7 @@ function Details(props: {
                 />
             </div>
             <CheckBox
-                title={"Block User"}
+                title={"Block Users"}
                 desc={"Block any user that tries to open a workspace for a repository URL that matches this RegEx."}
                 checked={props.br.blockUser}
                 disabled={!props.update}

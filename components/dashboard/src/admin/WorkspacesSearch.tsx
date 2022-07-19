@@ -140,7 +140,7 @@ export function WorkspaceSearch(props: Props) {
             </div>
             <div
                 className={
-                    "flex rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 p-2 w-2/3 mb-2"
+                    "flex rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 p-2 w-2/3 mb-2 w-full"
                 }
             >
                 <img className="w-4 h-4 m-1 ml-2 mr-4" alt="info" src={info} />
