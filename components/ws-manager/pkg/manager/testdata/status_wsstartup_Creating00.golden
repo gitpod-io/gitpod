@@ -16,7 +16,6 @@
         },
         "phase": 3,
         "conditions": {
-            "failed": "container sync completed; containers of a workspace pod are not supposed to do that. Reason: ",
             "volume_snapshot": {}
         },
         "message": "workspace initializer is running",
