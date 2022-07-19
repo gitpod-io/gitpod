@@ -26,7 +26,6 @@ import { ProjectContext } from "./projects/project-context";
 import { PaymentContext } from "./payment-context";
 import FeedbackFormModal from "./feedback-form/FeedbackModal";
 import { inResource, isGitpodIo } from "./utils";
-import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 import { getExperimentsClient } from "./experiments/client";
 
 interface Entry {
@@ -49,7 +48,6 @@ export default function Menu() {
         setIsStudent,
         setIsChargebeeCustomer,
     } = useContext(PaymentContext);
-    const { isBlockedRepositoriesUIEnabled } = useContext(FeatureFlagContext);
     const { project, setProject } = useContext(ProjectContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
@@ -248,7 +246,7 @@ export default function Menu() {
                   {
                       title: "Admin",
                       link: "/admin",
-                      alternatives: getAdminMenu(isBlockedRepositoriesUIEnabled).flatMap((e) => e.link),
+                      alternatives: getAdminMenu().flatMap((e) => e.link),
                   },
               ]
             : []),
