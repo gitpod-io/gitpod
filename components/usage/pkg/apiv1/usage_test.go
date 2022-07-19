@@ -47,8 +47,7 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 			StartedAt:     startedAt.AsTime(),
 			StoppedAt:     sql.NullTime{},
 			CreditsUsed:   0,
-			GenerationId:  0,
-			Deleted:       false,
+			GenerationID:  0,
 		},
 	}
 	dbtest.CreateWorkspaceInstanceUsageRecords(t, dbconn, instanceUsages...)
