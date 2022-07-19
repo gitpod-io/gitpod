@@ -117,6 +117,7 @@ import { ContextParser } from "./context-parser-service";
 import { IDEService } from "../ide-service";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { WorkspaceClasses } from "./workspace-classes";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -784,13 +785,16 @@ export class WorkspaceStarter {
                     }
 
                     if (!workspaceClass) {
-                        workspaceClass = this.config.workspaceClasses.find((cl) => cl.isDefault)?.id ?? "";
+                        workspaceClass = WorkspaceClasses.getDefaultId(this.config.workspaceClasses);
                         if (await this.userService.userGetsMoreResources(user)) {
-                            workspaceClass = this.config.workspaceClasses.find((cl) => !cl.isDefault)?.id ?? "";
+                            workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(this.config.workspaceClasses);
                         }
                     }
                 } else {
-                    workspaceClass = previousInstance.workspaceClass;
+                    workspaceClass = WorkspaceClasses.getPreviousOrDefault(
+                        this.config.workspaceClasses,
+                        previousInstance.workspaceClass,
+                    );
                 }
             }
 
@@ -1381,6 +1385,7 @@ export class WorkspaceStarter {
         });
         let workspaceClass;
         if (!classesEnabled) {
+            // This is branch is not relevant once we roll out WorkspaceClasses, so we don't try to integrate these old classes into our model
             workspaceClass = "default";
             if (await this.userService.userGetsMoreResources(user)) {
                 workspaceClass = "gitpodio-internal-xl";

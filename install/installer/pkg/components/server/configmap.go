@@ -147,11 +147,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			workspaceClasses = nil
 			for _, cl := range cfg.WebApp.WorkspaceClasses {
 				class := WorkspaceClass{
-					Id:               cl.Id,
-					DisplayName:      cl.DisplayName,
-					IsDefault:        cl.IsDefault,
-					Deprecated:       cl.Deprecated,
-					CreditsPerMinute: cl.CreditsPerMinute,
+					Id:          cl.Id,
+					DisplayName: cl.DisplayName,
+					IsDefault:   cl.IsDefault,
+					Deprecated:  cl.Deprecated,
+					Marker:      cl.Marker,
 				}
 
 				workspaceClasses = append(workspaceClasses, class)

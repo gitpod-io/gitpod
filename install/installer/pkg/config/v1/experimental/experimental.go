@@ -208,11 +208,11 @@ type UsageConfig struct {
 }
 
 type WebAppWorkspaceClass struct {
-	Id               string `json:"id"`
-	DisplayName      string `json:"displayName"`
-	IsDefault        bool   `json:"isDefault"`
-	Deprecated       bool   `json:"deprecated"`
-	CreditsPerMinute int32  `json:"creditsPerMinute"`
+	Id          string          `json:"id"`
+	DisplayName string          `json:"displayName"`
+	IsDefault   bool            `json:"isDefault"`
+	Deprecated  bool            `json:"deprecated"`
+	Marker      map[string]bool `json:"marker,omitempty"`
 }
 
 type IDEConfig struct {
