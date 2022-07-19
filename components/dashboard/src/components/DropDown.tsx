@@ -49,7 +49,7 @@ function DropDown(props: DropDownProps) {
             >
                 {props.prefix}
                 {current}
-                <Arrow up={false} customBorderClasses={props.renderAsLink ? asLinkArrowBorder : undefined} />
+                <Arrow direction={"down"} customBorderClasses={props.renderAsLink ? asLinkArrowBorder : undefined} />
             </span>
         </ContextMenu>
     );

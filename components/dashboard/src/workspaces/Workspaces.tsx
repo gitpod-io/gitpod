@@ -158,7 +158,7 @@ export default function () {
                                         className="flex cursor-pointer py-6 px-6 flex-row text-gray-400 bg-gray-50  hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl mb-2"
                                     >
                                         <div className="pr-2">
-                                            <Arrow up={!!showInactive} />
+                                            <Arrow direction={showInactive ? "up" : "down"} />
                                         </div>
                                         <div className="flex flex-grow flex-col ">
                                             <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
@@ -168,7 +168,7 @@ export default function () {
                                                 </span>
                                             </div>
                                             <div className="text-sm flex-auto">
-                                                Workspaces that have been stopped for more than 24 hours. Inactive 
+                                                Workspaces that have been stopped for more than 24 hours. Inactive
                                                 workspaces are automatically deleted after 14 days.{" "}
                                                 <a
                                                     className="gp-link"
