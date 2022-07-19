@@ -519,7 +519,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 >
                                     <button className="secondary">
                                         More Actions...
-                                        <Arrow up={false} />
+                                        <Arrow direction={"down"} />
                                     </button>
                                 </ContextMenu>
                                 <button

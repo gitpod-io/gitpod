@@ -20,7 +20,6 @@ export interface BillableSession {
 
     workspaceType: BillableWorkspaceType;
 
-    // "standard" or "XL"
     workspaceClass: string;
 
     // When the workspace started

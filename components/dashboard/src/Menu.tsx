@@ -217,11 +217,17 @@ export default function Menu() {
                     link: `/t/${team.slug}/members`,
                 },
             ];
+            if (showUsageBasedUI) {
+                teamSettingsList.push({
+                    title: "Usage",
+                    link: `/t/${team.slug}/usage`,
+                });
+            }
             if (currentUserInTeam?.role === "owner") {
                 teamSettingsList.push({
                     title: "Settings",
                     link: `/t/${team.slug}/settings`,
-                    alternatives: getTeamSettingsMenu({ team, showPaymentUI, showUsageBasedUI }).flatMap((e) => e.link),
+                    alternatives: getTeamSettingsMenu({ team, showPaymentUI }).flatMap((e) => e.link),
                 });
             }
 
