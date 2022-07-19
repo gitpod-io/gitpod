@@ -20,12 +20,7 @@ import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 export const Config = Symbol("Config");
 export type Config = Omit<
     ConfigSerialized,
-    | "blockedRepositories"
-    | "hostUrl"
-    | "chargebeeProviderOptionsFile"
-    | "stripeSecretsFile"
-    | "stripeConfigFile"
-    | "licenseFile"
+    "hostUrl" | "chargebeeProviderOptionsFile" | "stripeSecretsFile" | "stripeConfigFile" | "licenseFile"
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
@@ -33,7 +28,6 @@ export type Config = Omit<
     stripeSecrets?: { publishableKey: string; secretKey: string };
     stripeConfig?: { usageProductPriceIds: { EUR: string; USD: string } };
     builtinAuthProvidersConfigured: boolean;
-    blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[];
     inactivityPeriodForRepos?: number;
 };
 
@@ -174,12 +168,6 @@ export interface ConfigSerialized {
     prebuildLimiter: { [cloneURL: string]: number } & { "*": number };
 
     /**
-     * List of repositories not allowed to be used for workspace starts.
-     * `blockUser` attribute to control handling of the user's account.
-     */
-    blockedRepositories?: { urlRegExp: string; blockUser: boolean }[];
-
-    /**
      * If a numeric value interpreted as days is set, repositories not beeing opened with Gitpod are
      * considered inactive.
      */
@@ -251,15 +239,6 @@ export namespace ConfigFile {
         if (licenseFile) {
             license = fs.readFileSync(filePathTelepresenceAware(licenseFile), "utf-8");
         }
-        const blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[] = [];
-        if (config.blockedRepositories) {
-            for (const { blockUser, urlRegExp } of config.blockedRepositories) {
-                blockedRepositories.push({
-                    blockUser,
-                    urlRegExp: new RegExp(urlRegExp),
-                });
-            }
-        }
         let inactivityPeriodForRepos: number | undefined;
         if (typeof config.inactivityPeriodForRepos === "number") {
             if (config.inactivityPeriodForRepos >= 1) {
@@ -281,7 +260,6 @@ export namespace ConfigFile {
                     ? new Date(config.workspaceGarbageCollection.startDate).getTime()
                     : Date.now(),
             },
-            blockedRepositories,
             inactivityPeriodForRepos,
         };
     }

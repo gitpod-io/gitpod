@@ -174,24 +174,18 @@ type WsManagerBridgeConfig struct {
 }
 
 type ServerConfig struct {
-	WorkspaceDefaults                 WorkspaceDefaults   `json:"workspaceDefaults"`
-	OAuthServer                       OAuthServer         `json:"oauthServer"`
-	Session                           Session             `json:"session"`
-	GithubApp                         *GithubApp          `json:"githubApp"`
-	ChargebeeSecret                   string              `json:"chargebeeSecret"`
-	StripeSecret                      string              `json:"stripeSecret"`
-	StripeConfig                      string              `json:"stripeConfig"`
-	DisableDynamicAuthProviderLogin   bool                `json:"disableDynamicAuthProviderLogin"`
-	EnableLocalApp                    *bool               `json:"enableLocalApp"`
-	RunDbDeleter                      *bool               `json:"runDbDeleter"`
-	DefaultBaseImageRegistryWhiteList []string            `json:"defaultBaseImageRegistryWhitelist"`
-	DisableWorkspaceGarbageCollection bool                `json:"disableWorkspaceGarbageCollection"`
-	BlockedRepositories               []BlockedRepository `json:"blockedRepositories,omitempty"`
-}
-
-type BlockedRepository struct {
-	UrlRegExp string `json:"urlRegExp"`
-	BlockUser bool   `json:"blockUser"`
+	WorkspaceDefaults                 WorkspaceDefaults `json:"workspaceDefaults"`
+	OAuthServer                       OAuthServer       `json:"oauthServer"`
+	Session                           Session           `json:"session"`
+	GithubApp                         *GithubApp        `json:"githubApp"`
+	ChargebeeSecret                   string            `json:"chargebeeSecret"`
+	StripeSecret                      string            `json:"stripeSecret"`
+	StripeConfig                      string            `json:"stripeConfig"`
+	DisableDynamicAuthProviderLogin   bool              `json:"disableDynamicAuthProviderLogin"`
+	EnableLocalApp                    *bool             `json:"enableLocalApp"`
+	RunDbDeleter                      *bool             `json:"runDbDeleter"`
+	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`
+	DisableWorkspaceGarbageCollection bool              `json:"disableWorkspaceGarbageCollection"`
 }
 
 type ProxyConfig struct {
