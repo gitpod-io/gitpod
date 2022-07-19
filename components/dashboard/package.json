@@ -7,7 +7,7 @@
     "@gitpod/gitpod-protocol": "0.1.5",
     "@stripe/react-stripe-js": "^1.7.2",
     "@stripe/stripe-js": "^1.29.0",
-    "configcat-js": "^5.7.2",
+    "configcat-js": "^6.0.0",
     "countries-list": "^2.6.1",
     "js-cookie": "^3.0.1",
     "moment": "^2.29.1",
