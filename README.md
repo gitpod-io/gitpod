@@ -36,9 +36,9 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 👐 [GitLab, GitHub, and Bitbucket integration](https://www.gitpod.io/docs/integrations/) - Gitpod seamlessly integrates into your workflow and works with all major git hosting platforms including GitHub, GitLab and Bitbucket.
 
-👀 [Integrated code reviews](https://www.gitpod.io/docs/context-urls#pullmerge-request-context) - with Gitpod you can do native code reviews on any PR/MR. No need to switch context anymore and clutter your local machine with your colleagues' PR/MR.
+👀 [Integrated code reviews](https://www.gitpod.io/docs/context-urls#pullmerge-request-context) - Gitpod allows you to perform native code reviews on any PR/MR. No need to switch context anymore and clutter your local machine with your colleagues' PR/MR.
 
-👯‍♀️ [Collaboration](https://www.gitpod.io/docs/sharing-and-collaboration/) - invite team members to your dev environment or snapshot any state of your dev environment to share it with your team asynchronously.
+👯‍♀️ [Collaboration](https://www.gitpod.io/docs/sharing-and-collaboration/) - Gitpod lets you invite team members to your dev environment or snapshot any state of your dev environment to share it with your team asynchronously.
 
 🛠 Professional & customizable developer experience - a Gitpod workspace gives you the same capabilities (yes, even [root & docker](https://www.gitpod.io/docs/config-docker#configure-a-custom-dockerfile)) as your Linux machine - pre-configured and optimized for your individual development workflow. Install any [VS Code extension](https://www.gitpod.io/docs/vscode-extensions/) with one click on a user and/or team level.
 
