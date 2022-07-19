@@ -350,11 +350,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 		result.Phase = api.WorkspacePhase_STOPPING
 
 		_, podFailedBeforeBeingStopped := pod.Annotations[workspaceFailedBeforeStoppingAnnotation]
-		if !podFailedBeforeBeingStopped {
-			// While the pod is being deleted we do not care or want to know about any failure state.
-			// If the pod got stopped because it failed we will have sent out a Stopping status with a "failure"
-			result.Conditions.Failed = ""
-		} else {
+		if podFailedBeforeBeingStopped {
 			if _, ok := pod.Annotations[workspaceNeverReadyAnnotation]; ok {
 				// The workspace is never ready, so there is no need for a stopping phase.
 				result.Phase = api.WorkspacePhase_STOPPED
@@ -591,11 +587,8 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 					return fmt.Sprintf("container %s ran with an error: exit code %d", cs.Name, terminationState.ExitCode), &phase
 				}
 			} else if terminationState.Reason == "Completed" {
-				if wso.IsWorkspaceHeadless() {
-					// default way for headless workspaces to be done
-					return "", nil
-				}
-				return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that. Reason: %s", cs.Name, terminationState.Message), nil
+				// container terminated successfully - this is not a failure
+				return "", nil
 			} else if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerUnknownExitCode {
 				// if a container is terminated and it wasn't because of either:
 				//  - regular shutdown
