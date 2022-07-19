@@ -17,5 +17,6 @@
     'gitpod-component-ws-proxy.json': (import 'dashboards/components/ws-proxy.json'),
     'gitpod-workspace-success-criteria.json': (import 'dashboards/success-criteria.json'),
     'gitpod-workspace-coredns.json': (import 'dashboards/coredns.json'),
+    'gitpod-node-swap.json': (import 'dashboards/node-swap.json'),
   },
 }
