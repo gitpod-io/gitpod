@@ -244,13 +244,23 @@ func usageReportToUsageRecords(report UsageReport, pricer *WorkspacePricer, now 
 				stoppedAt = sql.NullTime{Time: instance.StoppedTime.Time(), Valid: true}
 			}
 
+			projectID := ""
+			if instance.ProjectID.Valid {
+				projectID = instance.ProjectID.String
+			}
+
 			usageRecords = append(usageRecords, db.WorkspaceInstanceUsage{
-				InstanceID:    instance.ID,
-				AttributionID: attributionId,
-				StartedAt:     instance.CreationTime.Time(),
-				StoppedAt:     stoppedAt,
-				CreditsUsed:   pricer.CreditsUsedByInstance(&instance, now),
-				GenerationID:  0,
+				InstanceID:     instance.ID,
+				AttributionID:  attributionId,
+				WorkspaceID:    instance.WorkspaceID,
+				ProjectID:      projectID,
+				UserID:         instance.OwnerID,
+				WorkspaceType:  instance.Type,
+				WorkspaceClass: instance.WorkspaceClass,
+				StartedAt:      instance.CreationTime.Time(),
+				StoppedAt:      stoppedAt,
+				CreditsUsed:    pricer.CreditsUsedByInstance(&instance, now),
+				GenerationID:   0,
 			})
 		}
 	}

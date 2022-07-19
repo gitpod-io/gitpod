@@ -5,6 +5,7 @@
 package dbtest
 
 import (
+	"database/sql"
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
@@ -34,6 +35,14 @@ func NewWorkspace(t *testing.T, workspace db.Workspace) db.Workspace {
 		ownerID = workspace.OwnerID
 	}
 
+	projectID := sql.NullString{
+		String: "",
+		Valid:  false,
+	}
+	if workspace.ProjectID.Valid {
+		projectID = workspace.ProjectID
+	}
+
 	workspaceType := db.WorkspaceType_Regular
 	if workspace.Type != "" {
 		workspaceType = workspace.Type
@@ -58,6 +67,7 @@ func NewWorkspace(t *testing.T, workspace db.Workspace) db.Workspace {
 		ID:         id,
 		OwnerID:    ownerID,
 		Type:       workspaceType,
+		ProjectID:  projectID,
 		ContextURL: contextURL,
 		Context:    context,
 		Config:     config,
