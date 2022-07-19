@@ -47,7 +47,7 @@
     "base-64": "^1.0.0",
     "bitbucket": "^2.7.0",
     "body-parser": "^1.19.2",
-    "configcat-node": "^6.7.1",
+    "configcat-node": "^8.0.0",
     "cookie": "^0.4.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.4",
