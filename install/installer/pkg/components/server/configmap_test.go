@@ -53,6 +53,12 @@ func TestConfigMap(t *testing.T) {
 	}
 
 	ctx, err := common.NewRenderContext(config.Config{
+		Workspace: config.Workspace{
+			WorkspaceImage: expectation.WorkspaceImage,
+		},
+		ContainerRegistry: config.ContainerRegistry{
+			PrivateBaseImageAllowList: expectation.DefaultBaseImageRegistryWhiteList,
+		},
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
 				Server: &experimental.ServerConfig{
@@ -60,10 +66,6 @@ func TestConfigMap(t *testing.T) {
 					EnableLocalApp:                    pointer.Bool(expectation.EnableLocalApp),
 					RunDbDeleter:                      pointer.Bool(expectation.RunDbDeleter),
 					DisableWorkspaceGarbageCollection: expectation.DisableWorkspaceGarbageCollection,
-					DefaultBaseImageRegistryWhiteList: expectation.DefaultBaseImageRegistryWhiteList,
-					WorkspaceDefaults: experimental.WorkspaceDefaults{
-						WorkspaceImage: expectation.WorkspaceImage,
-					},
 					OAuthServer: experimental.OAuthServer{
 						JWTSecret: expectation.JWTSecret,
 					},
