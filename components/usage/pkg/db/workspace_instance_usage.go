@@ -27,7 +27,7 @@ type WorkspaceInstanceUsage struct {
 
 	CreditsUsed float64 `gorm:"column:creditsUsed;type:double;" json:"creditsUsed"`
 
-	StartedAt time.Time    `gorm:"column:startedAt;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"startedAt"`
+	StartedAt time.Time    `gorm:"column:startedAt;type:timestamp;" json:"startedAt"`
 	StoppedAt sql.NullTime `gorm:"column:stoppedAt;type:timestamp;" json:"stoppedAt"`
 
 	GenerationID int `gorm:"column:generationId;type:int;" json:"generationId"`
@@ -43,7 +43,6 @@ func (u *WorkspaceInstanceUsage) TableName() string {
 
 func CreateUsageRecords(ctx context.Context, conn *gorm.DB, records []WorkspaceInstanceUsage) error {
 	db := conn.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "instanceId"}},
 		UpdateAll: true,
 	})
 
