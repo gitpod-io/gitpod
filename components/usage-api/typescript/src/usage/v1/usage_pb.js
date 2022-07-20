@@ -121,7 +121,9 @@ proto.usage.v1.ListBilledUsageRequest.prototype.toObject = function(opt_includeI
  */
 proto.usage.v1.ListBilledUsageRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    attributionId: jspb.Message.getFieldWithDefault(msg, 1, "")
+    attributionId: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    from: (f = msg.getFrom()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
+    to: (f = msg.getTo()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -162,6 +164,16 @@ proto.usage.v1.ListBilledUsageRequest.deserializeBinaryFromReader = function(msg
       var value = /** @type {string} */ (reader.readString());
       msg.setAttributionId(value);
       break;
+    case 2:
+      var value = new google_protobuf_timestamp_pb.Timestamp;
+      reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
+      msg.setFrom(value);
+      break;
+    case 3:
+      var value = new google_protobuf_timestamp_pb.Timestamp;
+      reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
+      msg.setTo(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -198,6 +210,22 @@ proto.usage.v1.ListBilledUsageRequest.serializeBinaryToWriter = function(message
       f
     );
   }
+  f = message.getFrom();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
+    );
+  }
+  f = message.getTo();
+  if (f != null) {
+    writer.writeMessage(
+      3,
+      f,
+      google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
+    );
+  }
 };
 
 
@@ -216,6 +244,80 @@ proto.usage.v1.ListBilledUsageRequest.prototype.getAttributionId = function() {
  */
 proto.usage.v1.ListBilledUsageRequest.prototype.setAttributionId = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional google.protobuf.Timestamp from = 2;
+ * @return {?proto.google.protobuf.Timestamp}
+ */
+proto.usage.v1.ListBilledUsageRequest.prototype.getFrom = function() {
+  return /** @type{?proto.google.protobuf.Timestamp} */ (
+    jspb.Message.getWrapperField(this, google_protobuf_timestamp_pb.Timestamp, 2));
+};
+
+
+/**
+ * @param {?proto.google.protobuf.Timestamp|undefined} value
+ * @return {!proto.usage.v1.ListBilledUsageRequest} returns this
+*/
+proto.usage.v1.ListBilledUsageRequest.prototype.setFrom = function(value) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.usage.v1.ListBilledUsageRequest} returns this
+ */
+proto.usage.v1.ListBilledUsageRequest.prototype.clearFrom = function() {
+  return this.setFrom(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.usage.v1.ListBilledUsageRequest.prototype.hasFrom = function() {
+  return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional google.protobuf.Timestamp to = 3;
+ * @return {?proto.google.protobuf.Timestamp}
+ */
+proto.usage.v1.ListBilledUsageRequest.prototype.getTo = function() {
+  return /** @type{?proto.google.protobuf.Timestamp} */ (
+    jspb.Message.getWrapperField(this, google_protobuf_timestamp_pb.Timestamp, 3));
+};
+
+
+/**
+ * @param {?proto.google.protobuf.Timestamp|undefined} value
+ * @return {!proto.usage.v1.ListBilledUsageRequest} returns this
+*/
+proto.usage.v1.ListBilledUsageRequest.prototype.setTo = function(value) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.usage.v1.ListBilledUsageRequest} returns this
+ */
+proto.usage.v1.ListBilledUsageRequest.prototype.clearTo = function() {
+  return this.setTo(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.usage.v1.ListBilledUsageRequest.prototype.hasTo = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
