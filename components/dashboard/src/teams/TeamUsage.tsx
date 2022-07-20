@@ -47,7 +47,9 @@ function TeamUsage() {
         return "Prebuild";
     };
 
-    const getHours = (endTime: number, startTime: number) => {
+    const getHours = (endTime: number | undefined, startTime: number) => {
+        if (!endTime) return "";
+
         return (endTime - startTime) / (1000 * 60 * 60) + "hrs";
     };
 
@@ -95,7 +97,10 @@ function TeamUsage() {
                         </div>
                         <div className="my-auto">
                             <span className="text-gray-700">
-                                {getHours(new Date(usage.endTime).getTime(), new Date(usage.startTime).getTime())}
+                                {getHours(
+                                    usage.endTime ? new Date(usage.endTime).getTime() : undefined,
+                                    new Date(usage.startTime).getTime(),
+                                )}
                             </span>
                         </div>
                         <div className="my-auto">
