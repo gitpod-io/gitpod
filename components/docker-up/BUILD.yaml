@@ -6,6 +6,8 @@ packages:
       - go.sum
       - "docker-up/**"
       - dependencies.sh
+    deps:
+      - components/common-go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -21,6 +23,8 @@ packages:
       - go.mod
       - go.sum
       - "runc-facade/**"
+    deps:
+      - components/common-go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
