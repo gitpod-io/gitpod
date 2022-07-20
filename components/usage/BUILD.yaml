@@ -8,6 +8,7 @@ packages:
     deps:
       - components/common-go:lib
       - components/usage-api/go:lib
+      - components/content-service-api/go:lib
       - :init-testdb
     env:
       - CGO_ENABLED=0
@@ -21,6 +22,7 @@ packages:
     deps:
       - components/common-go:lib
       - components/usage-api/go:lib
+      - components/content-service-api/go:lib
     srcs:
       - "**/*.go"
       - "go.mod"
