@@ -53,7 +53,7 @@ func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID) 
 	db := conn.WithContext(ctx)
 
 	var usageRecords []WorkspaceInstanceUsage
-	result := db.Find(&usageRecords, "attributionId = ?", attributionId)
+	result := db.Order("startedAt").Find(&usageRecords, "attributionId = ?", attributionId)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get usage records: %s", result.Error)
 	}

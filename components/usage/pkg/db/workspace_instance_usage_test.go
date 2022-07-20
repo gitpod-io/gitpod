@@ -98,7 +98,7 @@ func TestNoErrorOnCreatingDuplicateRecords(t *testing.T) {
 }
 
 func TestCreateUsageRecords_Updates(t *testing.T) {
-	conn := dbtest.ConnectForTests(t).Debug()
+	conn := dbtest.ConnectForTests(t)
 
 	instanceID := uuid.New()
 	teamID := uuid.New().String()
@@ -148,4 +148,44 @@ func TestCreateUsageRecords_Updates(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, list, 1)
 	require.Equal(t, update, list[0])
+}
+
+func TestListUsage_Ordering(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+	teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
+	newest := db.WorkspaceInstanceUsage{
+		InstanceID:     uuid.New(),
+		AttributionID:  teamAttributionID,
+		UserID:         uuid.New(),
+		WorkspaceID:    dbtest.GenerateWorkspaceID(),
+		ProjectID:      uuid.New().String(),
+		WorkspaceType:  db.WorkspaceType_Prebuild,
+		WorkspaceClass: db.WorkspaceClass_Default,
+		CreditsUsed:    4.505,
+		StartedAt:      time.Date(2022, 7, 15, 10, 30, 30, 5000, time.UTC),
+		// not stopped
+	}
+
+	oldest := db.WorkspaceInstanceUsage{
+		InstanceID:     uuid.New(),
+		AttributionID:  teamAttributionID,
+		UserID:         uuid.New(),
+		WorkspaceID:    dbtest.GenerateWorkspaceID(),
+		ProjectID:      uuid.New().String(),
+		WorkspaceType:  db.WorkspaceType_Prebuild,
+		WorkspaceClass: db.WorkspaceClass_Default,
+		CreditsUsed:    4.505,
+		StartedAt:      time.Date(2022, 7, 14, 10, 30, 30, 5000, time.UTC),
+		StoppedAt: sql.NullTime{
+			Time:  time.Date(2022, 7, 15, 15, 30, 30, 5000, time.UTC),
+			Valid: true,
+		},
+	}
+
+	require.NoError(t, db.CreateUsageRecords(context.Background(), conn, []db.WorkspaceInstanceUsage{newest, oldest}))
+
+	listed, err := db.ListUsage(context.Background(), conn, teamAttributionID)
+	require.NoError(t, err)
+
+	require.Equal(t, []db.WorkspaceInstanceUsage{oldest, newest}, listed)
 }
