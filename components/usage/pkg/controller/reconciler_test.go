@@ -206,7 +206,7 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 						Type:               db.WorkspaceType_Regular,
 						WorkspaceID:        workspaceID,
 						UsageAttributionID: teamAttributionID,
-						CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+						CreationTime:       creationTime,
 						StoppedTime:        db.VarcharTime{},
 					},
 				},
