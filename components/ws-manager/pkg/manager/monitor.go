@@ -1043,6 +1043,16 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			return true, nil, err
 		}
 
+		// only build prebuild snapshots of initialized/ready workspaces.
+		if tpe == api.WorkspaceType_PREBUILD {
+			_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
+			if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.FailedPrecondition &&
+				(st.Message() == "workspace is not initializing or ready" || st.Message() == "workspace is not ready") {
+				log.Warn("skipping snapshot creation because content-initializer never finished or the workspace reached a ready state")
+				doSnapshot = false
+			}
+		}
+
 		ctx, cancelReq := context.WithTimeout(ctx, time.Duration(m.manager.Config.Timeouts.ContentFinalization))
 		m.finalizerMap[workspaceID] = cancelReq
 		m.finalizerMapLock.Unlock()
