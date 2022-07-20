@@ -147,6 +147,7 @@ type WebAppConfig struct {
 }
 
 type WorkspaceDefaults struct {
+	// @deprecated use workspace.workspaceImage instead
 	WorkspaceImage string `json:"workspaceImage"`
 }
 
@@ -185,8 +186,10 @@ type ServerConfig struct {
 	DisableDynamicAuthProviderLogin   bool              `json:"disableDynamicAuthProviderLogin"`
 	EnableLocalApp                    *bool             `json:"enableLocalApp"`
 	RunDbDeleter                      *bool             `json:"runDbDeleter"`
-	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`
 	DisableWorkspaceGarbageCollection bool              `json:"disableWorkspaceGarbageCollection"`
+
+	// @deprecated use containerRegistry.privateBaseImageAllowList instead
+	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`
 }
 
 type ProxyConfig struct {

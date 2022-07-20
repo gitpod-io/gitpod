@@ -56,6 +56,7 @@ func (v version) Defaults(in interface{}) error {
 		},
 	}
 	cfg.ContainerRegistry.InCluster = pointer.Bool(true)
+	cfg.ContainerRegistry.PrivateBaseImageAllowList = []string{}
 	cfg.Workspace.Resources.Requests = corev1.ResourceList{
 		corev1.ResourceCPU:    resource.MustParse("1000m"),
 		corev1.ResourceMemory: resource.MustParse("2Gi"),
@@ -78,23 +79,52 @@ func (v version) CheckDeprecated(rawCfg interface{}) (map[string]interface{}, []
 	conflicts := make([]string, 0)
 	cfg := rawCfg.(*Config)
 
-	if cfg.Experimental != nil && cfg.Experimental.WebApp != nil && cfg.Experimental.WebApp.ProxyConfig != nil && cfg.Experimental.WebApp.ProxyConfig.ServiceType != nil {
-		warnings["experimental.webapp.proxy.serviceType"] = *cfg.Experimental.WebApp.ProxyConfig.ServiceType
+	if cfg.Experimental != nil && cfg.Experimental.WebApp != nil {
+		// service type of proxy is now configurable from main config
+		if cfg.Experimental.WebApp.ProxyConfig != nil && cfg.Experimental.WebApp.ProxyConfig.ServiceType != nil {
+			warnings["experimental.webapp.proxy.serviceType"] = *cfg.Experimental.WebApp.ProxyConfig.ServiceType
 
-		if cfg.Components != nil && cfg.Components.Proxy != nil && cfg.Components.Proxy.Service != nil && cfg.Components.Proxy.Service.ServiceType != nil {
-			conflicts = append(conflicts, "Cannot set proxy service type in both components and experimental")
-		} else {
-			// Promote the experimental value to the components
-			if cfg.Components == nil {
-				cfg.Components = &Components{}
+			if cfg.Components != nil && cfg.Components.Proxy != nil && cfg.Components.Proxy.Service != nil && cfg.Components.Proxy.Service.ServiceType != nil {
+				conflicts = append(conflicts, "Cannot set proxy service type in both components and experimental")
+			} else {
+				// Promote the experimental value to the components
+				if cfg.Components == nil {
+					cfg.Components = &Components{}
+				}
+				if cfg.Components.Proxy == nil {
+					cfg.Components.Proxy = &ProxyComponent{}
+				}
+				if cfg.Components.Proxy.Service == nil {
+					cfg.Components.Proxy.Service = &ComponentTypeService{}
+				}
+				cfg.Components.Proxy.Service.ServiceType = cfg.Experimental.WebApp.ProxyConfig.ServiceType
 			}
-			if cfg.Components.Proxy == nil {
-				cfg.Components.Proxy = &ProxyComponent{}
+		}
+
+		// default workspace base image is now configurable from main config
+		if cfg.Experimental.WebApp.Server != nil {
+
+			workspaceImage := cfg.Experimental.WebApp.Server.WorkspaceDefaults.WorkspaceImage
+			if workspaceImage != "" {
+				warnings["experimental.webapp.server.workspaceDefaults.workspaceImage"] = workspaceImage
+
+				if cfg.Workspace.WorkspaceImage != "" {
+					conflicts = append(conflicts, "Cannot set default workspace image in both workspaces and experimental")
+				} else {
+					cfg.Workspace.WorkspaceImage = workspaceImage
+				}
 			}
-			if cfg.Components.Proxy.Service == nil {
-				cfg.Components.Proxy.Service = &ComponentTypeService{}
+
+			registryAllowList := cfg.Experimental.WebApp.Server.DefaultBaseImageRegistryWhiteList
+			if registryAllowList != nil {
+				warnings["experimental.webapp.server.defaultBaseImageRegistryWhitelist"] = registryAllowList
+
+				if len(cfg.ContainerRegistry.PrivateBaseImageAllowList) > 0 {
+					conflicts = append(conflicts, "Cannot set allow list for private base image in both containerRegistry and experimental")
+				} else {
+					cfg.ContainerRegistry.PrivateBaseImageAllowList = registryAllowList
+				}
 			}
-			cfg.Components.Proxy.Service.ServiceType = cfg.Experimental.WebApp.ProxyConfig.ServiceType
 		}
 	}
 
@@ -235,9 +265,10 @@ const (
 )
 
 type ContainerRegistry struct {
-	InCluster *bool                      `json:"inCluster,omitempty" validate:"required"`
-	External  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
-	S3Storage *S3Storage                 `json:"s3storage,omitempty"`
+	InCluster                 *bool                      `json:"inCluster,omitempty" validate:"required"`
+	External                  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
+	S3Storage                 *S3Storage                 `json:"s3storage,omitempty"`
+	PrivateBaseImageAllowList []string                   `json:"privateBaseImageAllowList"`
 }
 
 type ContainerRegistryExternal struct {
@@ -320,6 +351,8 @@ type Workspace struct {
 
 	// TimeoutAfterClose is the time a workspace timed out after it has been closed (“closed” means that it does not get a heartbeat from an IDE anymore)
 	TimeoutAfterClose *util.Duration `json:"timeoutAfterClose,omitempty"`
+
+	WorkspaceImage string `json:"workspaceImage,omitempty"`
 }
 
 type OpenVSX struct {

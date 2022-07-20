@@ -37,13 +37,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		license = licenseFilePath
 	}
 
-	workspaceImage := ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion)
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.WorkspaceDefaults.WorkspaceImage != "" {
-			workspaceImage = cfg.WebApp.Server.WorkspaceDefaults.WorkspaceImage
-		}
-		return nil
-	})
+	workspaceImage := ctx.Config.Workspace.WorkspaceImage
+	if workspaceImage == "" {
+		workspaceImage = ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion)
+	}
 
 	sessionSecret := "Important!Really-Change-This-Key!"
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
@@ -78,14 +75,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	})
 
 	defaultBaseImageRegistryWhitelist := []string{}
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
-			if cfg.WebApp.Server.DefaultBaseImageRegistryWhiteList != nil {
-				defaultBaseImageRegistryWhitelist = cfg.WebApp.Server.DefaultBaseImageRegistryWhiteList
-			}
-		}
-		return nil
-	})
+	allowList := ctx.Config.ContainerRegistry.PrivateBaseImageAllowList
+	if len(allowList) > 0 {
+		defaultBaseImageRegistryWhitelist = allowList
+	}
 
 	chargebeeSecret := ""
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
