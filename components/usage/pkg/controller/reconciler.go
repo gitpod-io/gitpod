@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -36,13 +37,15 @@ type UsageReconciler struct {
 	conn              *gorm.DB
 	pricer            *WorkspacePricer
 	billingController BillingController
+	contentService    contentservice.Interface
 }
 
-func NewUsageReconciler(conn *gorm.DB, pricer *WorkspacePricer, billingController BillingController) *UsageReconciler {
+func NewUsageReconciler(conn *gorm.DB, pricer *WorkspacePricer, billingController BillingController, contentService contentservice.Interface) *UsageReconciler {
 	return &UsageReconciler{
 		conn:              conn,
 		pricer:            pricer,
 		billingController: billingController,
+		contentService:    contentService,
 		nowFunc:           time.Now,
 	}
 }
