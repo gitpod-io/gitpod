@@ -50,7 +50,7 @@ function TeamUsage() {
     const getHours = (endTime: number | undefined, startTime: number) => {
         if (!endTime) return "";
 
-        return (endTime - startTime) / (1000 * 60 * 60) + "hrs";
+        return ((endTime - startTime) / (1000 * 60 * 60)).toFixed(1) + "hrs";
     };
 
     return (
@@ -104,7 +104,7 @@ function TeamUsage() {
                             </span>
                         </div>
                         <div className="my-auto">
-                            <span className="text-gray-700">{usage.credits}</span>
+                            <span className="text-gray-700">{usage.credits.toFixed(1)}</span>
                         </div>
                         <div className="my-auto">
                             <span className="text-gray-400">
