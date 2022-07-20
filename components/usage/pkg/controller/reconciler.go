@@ -5,14 +5,13 @@
 package controller
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -76,36 +75,26 @@ func (u *UsageReconciler) Reconcile() (err error) {
 	}
 	log.WithField("usage_reconcile_status", status).Info("Reconcile completed.")
 
-	// For now, write the report to a temp directory so we can manually retrieve it
-	dir := os.TempDir()
-	f, err := ioutil.TempFile(dir, fmt.Sprintf("%s-*", now.Format(time.RFC3339)))
-	if err != nil {
-		return fmt.Errorf("failed to create temporary file: %w", err)
-	}
-	defer f.Close()
-
-	enc := json.NewEncoder(f)
-	err = enc.Encode(report)
+	reportBytes := &bytes.Buffer{}
+	gz := gzip.NewWriter(reportBytes)
+	err = json.NewEncoder(gz).Encode(report)
 	if err != nil {
 		return fmt.Errorf("failed to marshal report to JSON: %w", err)
 	}
-
-	stat, err := f.Stat()
-	filePath := filepath.Join(dir, stat.Name())
+	err = gz.Close()
 	if err != nil {
-		return fmt.Errorf("failed to get file stats: %w", err)
+		return fmt.Errorf("failed to compress usage report: %w", err)
 	}
-	log.Infof("Wrote usage report into %s", filePath)
-
-	uploadURL, err := u.contentService.GetSignedUploadUrl(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to obtain signed upload URL: %w", err)
-	}
-	log.Infof("signed upload url: %s", uploadURL)
 
 	err = db.CreateUsageRecords(ctx, u.conn, usageReportToUsageRecords(report, u.pricer, u.nowFunc().UTC()))
 	if err != nil {
 		return fmt.Errorf("failed to write usage records to database: %s", err)
+	}
+
+	filename := fmt.Sprintf("%s.gz", now.Format(time.RFC3339))
+	err = u.contentService.UploadFile(ctx, filename, reportBytes)
+	if err != nil {
+		return fmt.Errorf("failed to upload usage report: %w", err)
 	}
 
 	return nil
