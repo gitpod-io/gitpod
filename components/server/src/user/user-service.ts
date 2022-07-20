@@ -16,7 +16,7 @@ import {
     WORKSPACE_TIMEOUT_EXTENDED,
     WORKSPACE_TIMEOUT_EXTENDED_ALT,
 } from "@gitpod/gitpod-protocol";
-import { ProjectDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { CostCenterDB, ProjectDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
@@ -65,6 +65,7 @@ export class UserService {
     @inject(TermsAcceptanceDB) protected readonly termsAcceptanceDb: TermsAcceptanceDB;
     @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
     @inject(ProjectDB) protected readonly projectDb: ProjectDB;
+    @inject(CostCenterDB) protected readonly costCenterDb: CostCenterDB;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User
