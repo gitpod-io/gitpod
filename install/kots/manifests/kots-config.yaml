@@ -294,6 +294,8 @@ spec:
             To download the certificate, run
             `kubectl get secrets -n {{repl Namespace }}  ca-issuer-ca -o jsonpath='{.data.ca\.crt}' | base64 -d > ./ca.crt`
 
+            If deploying to a [K3s](https://k3s.io) instance you will need to run `sudo service k3s restart` on each node and hit redeploy in order for the CA to be registered to the Kubelet. See [11502](https://github.com/gitpod-io/gitpod/pull/11502) for more details.
+
         - name: cert_manager_enabled
           title: Use cert-manager
           type: bool

@@ -30,7 +30,7 @@ spec:
       containers:
         - name: installation-status
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-installer-post-process.6"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:mrsimonemms-resolve-inter-pod-communication-1.4"
           command:
             - /bin/sh
             - -c

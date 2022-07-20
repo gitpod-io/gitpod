@@ -146,11 +146,14 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	useHostPid := false
+
 	initContainers := []corev1.Container{
 		*common.InternalCAContainer(ctx),
 	}
 	// Load `customCACert` into Kubelet's only if its self-signed
 	if ctx.Config.CustomCACert != nil && ctx.Config.CustomCACert.Name != "" {
+		useHostPid = true
 		initContainers = append(initContainers,
 			*common.InternalCAContainer(ctx, func(c *corev1.Container) {
 				c.Name = "update-containerd-certificates"
@@ -170,7 +173,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						// Install gitpod ca.crt in containerd to allow pulls from the host
 						// https://github.com/containerd/containerd/blob/main/docs/hosts.md
 						Name:  "SETUP_SCRIPT",
-						Value: fmt.Sprintf(`TARGETS="docker containerd";for TARGET in $TARGETS;do mkdir -p /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v && echo "$GITPOD_CA_CERT" > /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v/ca.crt && echo "OK";done`, ctx.Config.Domain, ServicePort, ctx.Config.Domain, ServicePort),
+						Value: fmt.Sprintf(`echo "$GITPOD_CA_CERT" > /etc/ssl/certs/reg.%s:%v.crt && update-ca-certificates && eval "systemctl restart containerd || echo \"Failed to restart containerd - this must be done manually\""`, ctx.Config.Domain, ServicePort),
 					},
 				)
 				c.VolumeMounts = append(c.VolumeMounts,
@@ -179,7 +182,19 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						MountPath: "/mnt/dst",
 					},
 				)
-				c.Command = []string{"sh", "-c", "$(SETUP_SCRIPT)"}
+				c.Command = []string{
+					"nsenter",
+				}
+				c.SecurityContext = &corev1.SecurityContext{
+					Privileged: pointer.Bool(true),
+				}
+				c.Args = []string{
+					"--mount=/proc/1/ns/mnt",
+					"--",
+					"sh",
+					"-c",
+					"$(SETUP_SCRIPT)",
+				}
 			}),
 		)
 	}
@@ -212,6 +227,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					DNSPolicy:                     "ClusterFirst",
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
+					HostPID:                       useHostPid,
 					InitContainers:                initContainers,
 					Containers: []corev1.Container{{
 						Name:            Component,
