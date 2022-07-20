@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/apiv1"
+	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"github.com/gitpod-io/gitpod/usage/pkg/controller"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
@@ -27,6 +28,8 @@ type Config struct {
 	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass,omitempty"`
 
 	StripeCredentialsFile string `json:"stripeCredentialsFile,omitempty"`
+
+	ContentServiceUrl string `json:"contentServiceUrl,omitempty"`
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
 }
@@ -70,7 +73,12 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to parse schedule duration: %w", err)
 	}
 
-	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, pricer, billingController))
+	var contentService contentservice.Interface = &contentservice.NoOpClient{}
+	if cfg.ContentServiceUrl != "" {
+		contentService = contentservice.New(cfg.ContentServiceUrl)
+	}
+
+	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, pricer, billingController, contentService))
 	if err != nil {
 		return fmt.Errorf("failed to initialize usage controller: %w", err)
 	}
