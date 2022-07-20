@@ -2132,7 +2132,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             workspaceType: mandatory(s.getWorkspaceType()) as WorkspaceType,
             workspaceClass: mandatory(s.getWorkspaceClass()),
             startTime: mandatory(s.getStartTime(), (t) => t!.toDate().toISOString()),
-            endTime: mandatory(s.getEndTime(), (t) => t!.toDate().toISOString()),
+            endTime: s.getEndTime()?.toDate().toISOString(),
             credits: s.getCredits(), // optional
         };
     }

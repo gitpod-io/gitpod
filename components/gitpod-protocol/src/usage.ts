@@ -26,8 +26,8 @@ export interface BillableSession {
     // When the workspace started
     startTime: string;
 
-    // When the workspace ended
-    endTime: string;
+    // When the workspace ended. Not set when the workspace is still running.
+    endTime?: string;
 
     // The credits used for this session
     credits: number;
