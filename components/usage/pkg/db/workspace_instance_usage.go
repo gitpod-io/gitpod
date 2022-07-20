@@ -49,11 +49,22 @@ func CreateUsageRecords(ctx context.Context, conn *gorm.DB, records []WorkspaceI
 	return db.CreateInBatches(records, 1000).Error
 }
 
-func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID) ([]WorkspaceInstanceUsage, error) {
+func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to time.Time) ([]WorkspaceInstanceUsage, error) {
 	db := conn.WithContext(ctx)
 
 	var usageRecords []WorkspaceInstanceUsage
-	result := db.Order("startedAt").Find(&usageRecords, "attributionId = ?", attributionId)
+	result := db.
+		Order("startedAt").
+		Where("attributionId = ?", attributionId).
+		// started before, finished inside query range
+		Where("? <= stoppedAt AND stoppedAt < ?", from, to).
+		// started inside query range, finished inside
+		Or("startedAt >= ? AND stoppedAt < ?", from, to).
+		// started inside query range, finished outside
+		Or("? <= startedAt AND startedAt < ?", from, to).
+		// started before query range, still running
+		Or("startedAt <= ? AND (stoppedAt > ? OR stoppedAt IS NULL)", from, to).
+		Find(&usageRecords)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get usage records: %s", result.Error)
 	}
