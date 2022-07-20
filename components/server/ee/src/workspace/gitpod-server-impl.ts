@@ -110,7 +110,6 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CachingUsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import * as usage from "@gitpod/usage-api/lib/usage/v1/usage_pb";
-import { billableSessionDummyData } from "@gitpod/gitpod-protocol/lib/usage";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -2068,7 +2067,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const response = await usageClient.listBilledUsage(ctx, attributionId);
         const sessions = response.getSessionsList().map((s) => this.mapBilledSession(s));
 
-        return sessions.concat(billableSessionDummyData); // to at least return some data for testing
+        return sessions;
     }
 
     protected async guardCostCenterAccess(
