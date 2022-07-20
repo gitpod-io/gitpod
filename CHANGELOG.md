@@ -1,6 +1,7 @@
 # Change Log
 
 ## July 2022
+- [installer]: add in ability to post-process the generated YAML ([#11391](https://github.com/gitpod-io/gitpod/pull/11391)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Add support for limiting number of processes in workspaces ([#11448](https://github.com/gitpod-io/gitpod/pull/11448)) - [@aledbf](https://github.com/aledbf)
 - [experimental] Add PVC created message to the workspace pod event ([#11367](https://github.com/gitpod-io/gitpod/pull/11367)) - [@jenting](https://github.com/jenting), [@sagor999](https://github.com/sagor999)
 - Test if host of a Git Integration is reachable. ([#11409](https://github.com/gitpod-io/gitpod/pull/11409)) - [@AlexTugarev](https://github.com/AlexTugarev)
