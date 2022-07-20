@@ -9,6 +9,7 @@ local row = grafana.row;
 local prometheus = grafana.prometheus;
 local template = grafana.template;
 local graphPanel = grafana.graphPanel;
+local barGaugePanel = import '../../components/bar_gauge_panel.libsonnet';
 local heatmapPanel = grafana.heatmapPanel;
 local link = grafana.link;
 local _config = (import '../config.libsonnet')._config;
@@ -42,6 +43,34 @@ local clusterTemplate =
   );
 
 // Panels
+local summaryByPhaseGraph =
+  barGaugePanel.new(
+    'Workspaces by phase',
+    datasource='$datasource',
+    orientation='horizontal',
+    displayMode='lcd',
+    color={
+      fixedColor: 'semi-dark-orange',
+      mode: 'fixed'
+    }
+  )
+  .addTarget(prometheus.target('sum(gitpod_ws_manager_workspace_phase_total{}) by (phase)' % _config, legendFormat='{{ label_name }}'))
+;
+
+local summaryRunningGraph =
+  barGaugePanel.new(
+    'Running workspaces',
+    datasource='$datasource',
+    orientation='horizontal',
+    displayMode='lcd',
+    color={
+      fixedColor: 'green',
+      mode: 'fixed'
+    }
+  )
+  .addTarget(prometheus.target('sum(gitpod_ws_manager_workspace_phase_total{phase="RUNNING"}) by (cluster,type)' % _config, legendFormat='{{cluster}}: {{type}}'))
+;
+
 local runningWorkspacesGraph =
   graphPanel.new(
     '$cluster: Running Workspaces',
@@ -187,6 +216,14 @@ local clusterScaleSizeGraph =
       )
       .addTemplate(datasourceTemplate)
       .addTemplate(clusterTemplate)
+      .addRow(
+        row.new(
+          'Summary',
+          collapse=true
+        )
+        .addPanel(summaryByPhaseGraph, gridPos={x:0, y:1, w:8, h: 7})
+        .addPanel(summaryRunningGraph, gridPos={x:8, y:1, w:16, h: 7})
+      )
       .addRow(
         row.new('Running workspaces')
         .addPanel(runningWorkspacesGraph)
