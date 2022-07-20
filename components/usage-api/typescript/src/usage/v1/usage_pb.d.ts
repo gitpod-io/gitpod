@@ -17,6 +17,16 @@ export class ListBilledUsageRequest extends jspb.Message {
     getAttributionId(): string;
     setAttributionId(value: string): ListBilledUsageRequest;
 
+    hasFrom(): boolean;
+    clearFrom(): void;
+    getFrom(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setFrom(value?: google_protobuf_timestamp_pb.Timestamp): ListBilledUsageRequest;
+
+    hasTo(): boolean;
+    clearTo(): void;
+    getTo(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setTo(value?: google_protobuf_timestamp_pb.Timestamp): ListBilledUsageRequest;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListBilledUsageRequest.AsObject;
     static toObject(includeInstance: boolean, msg: ListBilledUsageRequest): ListBilledUsageRequest.AsObject;
@@ -30,6 +40,8 @@ export class ListBilledUsageRequest extends jspb.Message {
 export namespace ListBilledUsageRequest {
     export type AsObject = {
         attributionId: string,
+        from?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        to?: google_protobuf_timestamp_pb.Timestamp.AsObject,
     }
 }
 
