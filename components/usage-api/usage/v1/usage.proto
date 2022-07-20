@@ -13,6 +13,14 @@ service UsageService {
 
 message ListBilledUsageRequest {
     string attribution_id = 1;
+
+    // from specifies the starting time range for this request.
+    // All instances which existed starting at from will be returned.
+    google.protobuf.Timestamp from = 2;
+
+    // to specifies the end time range for this request.
+    // All instances which existed ending at to will be returned.
+    google.protobuf.Timestamp to = 3;
 }
 
 message ListBilledUsageResponse {
