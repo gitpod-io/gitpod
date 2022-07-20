@@ -96,3 +96,56 @@ func TestNoErrorOnCreatingDuplicateRecords(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateUsageRecords_Updates(t *testing.T) {
+	conn := dbtest.ConnectForTests(t).Debug()
+
+	instanceID := uuid.New()
+	teamID := uuid.New().String()
+	teamAttributionID := db.NewTeamAttributionID(teamID)
+	start := time.Date(2022, 7, 19, 21, 11, 12, 5000, time.UTC)
+	stop := time.Date(2022, 7, 19, 21, 9, 12, 5000, time.UTC)
+	record := db.WorkspaceInstanceUsage{
+		InstanceID:     instanceID,
+		AttributionID:  teamAttributionID,
+		UserID:         uuid.New(),
+		WorkspaceID:    dbtest.GenerateWorkspaceID(),
+		ProjectID:      uuid.New().String(),
+		WorkspaceType:  db.WorkspaceType_Prebuild,
+		WorkspaceClass: db.WorkspaceClass_Default,
+		CreditsUsed:    4.505,
+		StartedAt:      start,
+		StoppedAt: sql.NullTime{
+			Time:  stop,
+			Valid: true,
+		},
+	}
+
+	require.NoError(t, db.CreateUsageRecords(context.Background(), conn, []db.WorkspaceInstanceUsage{record}))
+
+	// time is changed
+	updatedStart := time.Date(2022, 7, 19, 20, 55, 12, 5000, time.UTC)
+	updatedStop := time.Date(2022, 7, 19, 21, 55, 12, 5000, time.UTC)
+	update := db.WorkspaceInstanceUsage{
+		InstanceID:     instanceID,
+		AttributionID:  teamAttributionID,
+		UserID:         uuid.New(),
+		WorkspaceID:    dbtest.GenerateWorkspaceID(),
+		ProjectID:      uuid.New().String(),
+		WorkspaceType:  db.WorkspaceType_Prebuild,
+		WorkspaceClass: db.WorkspaceClass_Default,
+		CreditsUsed:    9,
+		StartedAt:      updatedStart,
+		StoppedAt: sql.NullTime{
+			Time:  updatedStop,
+			Valid: true,
+		},
+	}
+
+	require.NoError(t, db.CreateUsageRecords(context.Background(), conn, []db.WorkspaceInstanceUsage{update}))
+
+	list, err := db.ListUsage(context.Background(), conn, teamAttributionID)
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+	require.Equal(t, update, list[0])
+}
