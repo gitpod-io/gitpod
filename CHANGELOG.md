@@ -1,6 +1,8 @@
 # Change Log
 
 ## July 2022
+- [kots]: add preflight checks for IDE/meta nodes ([#11348](https://github.com/gitpod-io/gitpod/pull/11348)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [local-preview] honour `DO_NOT_TRACK` env variable. ([#11430](https://github.com/gitpod-io/gitpod/pull/11430)) - [@Pothulapati](https://github.com/Pothulapati)
 - [installer]: add in ability to post-process the generated YAML ([#11391](https://github.com/gitpod-io/gitpod/pull/11391)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Add support for limiting number of processes in workspaces ([#11448](https://github.com/gitpod-io/gitpod/pull/11448)) - [@aledbf](https://github.com/aledbf)
 - [experimental] Add PVC created message to the workspace pod event ([#11367](https://github.com/gitpod-io/gitpod/pull/11367)) - [@jenting](https://github.com/jenting), [@sagor999](https://github.com/sagor999)
