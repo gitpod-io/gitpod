@@ -54,7 +54,6 @@ module "eks" {
   }
 
   eks_managed_node_group_defaults = {
-    disk_size                  = 150
     ami_type                   = "CUSTOM"
     iam_role_attach_cni_policy = true
     ami_id                     = var.image_id
@@ -71,6 +70,13 @@ module "eks" {
       min_size     = 1
       max_size     = 10
       desired_size = 1
+      block_device_mappings =  [{
+        device_name = "/dev/sda1"
+
+        ebs =  [{
+          volume_size = 150
+        }]
+      }]
       labels = {
         "gitpod.io/workload_meta" = true
         "gitpod.io/workload_ide"  = true
@@ -93,6 +99,13 @@ module "eks" {
       subnet_ids   = module.vpc.public_subnets
       min_size     = 1
       max_size     = 10
+      block_device_mappings =  [{
+        device_name = "/dev/sda1"
+
+        ebs =  [{
+          volume_size = 150
+        }]
+      }]
       desired_size = 1
       enable_bootstrap_user_data = true
       labels = {
