@@ -36,6 +36,7 @@ packages:
     type: docker
     deps:
       - :app
+      - dev/ready-probe-labeler:app
     argdeps:
       - imageRepoBase
     config:

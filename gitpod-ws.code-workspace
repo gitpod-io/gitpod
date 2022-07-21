@@ -27,7 +27,8 @@
         { "path": "dev/gp-gcloud" },
         { "path": "dev/loadgen" },
         { "path": "install/installer" },
-        { "path": "install/preview" }
+        { "path": "install/preview" },
+        { "path": "dev/ready-probe-labeler" },
     ],
     "settings": {
         "typescript.tsdk": "gitpod/node_modules/typescript/lib",

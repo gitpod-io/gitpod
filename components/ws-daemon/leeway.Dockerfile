@@ -27,7 +27,7 @@ RUN apt update \
       python3-crcmod \
   && echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
   && curl -sSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - \
-  && apt update && apt install -y --no-install-recommends  google-cloud-sdk=${CLOUD_SDK_VERSION}-0 kubectl \
+  && apt update && apt install -y --no-install-recommends  google-cloud-sdk=${CLOUD_SDK_VERSION}-0 \
   && gcloud config set core/disable_usage_reporting true \
   && gcloud config set component_manager/disable_update_check true \
   && gcloud config set metrics/environment github_docker_image \
@@ -39,9 +39,6 @@ RUN apt update \
     /tmp/* \
     /var/tmp/*
 
-RUN cd /usr/bin \
-  && curl -fsSL https://github.com/atkrad/wait4x/releases/download/v2.4.0/wait4x-linux-amd64.tar.gz | tar xzv --no-anchored wait4x
-
 COPY --from=dl /dl/runc.amd64 /usr/bin/runc
 
 # Add gitpod user for operations (e.g. checkout because of the post-checkout hook!)
@@ -52,6 +49,7 @@ RUN groupadd -r -g 33333 gitpod \
 COPY components-ws-daemon--app/ws-daemon /app/ws-daemond
 COPY components-ws-daemon--content-initializer/ws-daemon /app/content-initializer
 COPY components-ws-daemon-nsinsider--app/nsinsider /app/nsinsider
+COPY dev-ready-probe-labeler--app/ready-probe-labeler /app/ready-probe-labeler
 
 COPY default.gitconfig /etc/gitconfig
 COPY default.gitconfig /home/gitpod/.gitconfig

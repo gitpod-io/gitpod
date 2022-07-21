@@ -289,24 +289,41 @@ fi
 					SuccessThreshold:    1,
 					FailureThreshold:    5,
 				},
-				Lifecycle: &corev1.Lifecycle{
-					PostStart: &corev1.LifecycleHandler{
-						Exec: &corev1.ExecAction{
-							Command: []string{
-								"/bin/bash", "-c", fmt.Sprintf(`wait4x http http://localhost:%v/ready -t30s --expect-status-code 200 && kubectl label --overwrite nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}=true`, ReadinessPort),
+			},
+			*common.KubeRBACProxyContainer(ctx),
+			{
+				Name:  "node-labeler",
+				Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSDaemon.Version),
+				Command: []string{
+					"/app/ready-probe-labeler",
+					fmt.Sprintf("--label=gitpod.io/ws-daemon_ready_ns_%v", ctx.Namespace),
+					fmt.Sprintf(`--probe-url=http://localhost:%v/ready`, ReadinessPort),
+				},
+				Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
+					[]corev1.EnvVar{
+						{
+							Name: "NODENAME",
+							ValueFrom: &corev1.EnvVarSource{
+								FieldRef: &corev1.ObjectFieldSelector{
+									FieldPath: "spec.nodeName",
+								},
 							},
 						},
 					},
+				)),
+				ImagePullPolicy: corev1.PullIfNotPresent,
+				Lifecycle: &corev1.Lifecycle{
 					PreStop: &corev1.LifecycleHandler{
 						Exec: &corev1.ExecAction{
 							Command: []string{
-								"/bin/bash", "-c", `kubectl label nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}-`,
+								"/app/ready-probe-labeler",
+								fmt.Sprintf("--label=gitpod.io/ws-daemon_ready_ns_%v", ctx.Namespace),
+								"--shutdown",
 							},
 						},
 					},
 				},
 			},
-			*common.KubeRBACProxyContainer(ctx),
 		},
 		RestartPolicy:                 "Always",
 		TerminationGracePeriodSeconds: pointer.Int64(30),
