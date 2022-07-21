@@ -117,16 +117,17 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
                     this.client.startWorkspace(
                         request,
                         withTracing({ span }),
-                        this.getDefaultUnaryOptions(),
+                        {
+                            // Important!!!!: client timeout must be higher than ws-manager to be able to process any error
+                            // https://github.com/gitpod-io/gitpod/blob/main/components/ws-manager/pkg/manager/manager.go#L171
+                            deadline: new Date(new Date().getTime() + 60000*11),
+                            interceptors: this.interceptor,
+                        },
                         (err, resp) => {
                             span.finish();
                             if (err) {
-                                if (attempt < 3 && err.message.indexOf("already exists") !== -1) {
-                                    // lets wait a bit more
-                                } else {
-                                    TraceContext.setError(ctx, err);
-                                    reject(err);
-                                }
+                                TraceContext.setError(ctx, err);
+                                reject(err);
                             } else {
                                 resolve(resp);
                             }

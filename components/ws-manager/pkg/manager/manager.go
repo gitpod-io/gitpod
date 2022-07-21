@@ -164,7 +164,13 @@ func (m *Manager) Close() {
 }
 
 // StartWorkspace creates a new running workspace within the manager's cluster
-func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
+func (m *Manager) StartWorkspace(_ context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
+	// We cannot use the passed context because we need to decouple the timeouts
+	// Create a context with a high timeout value to be able to wait for scale-up events in the cluster (slow operation)
+	// Important!!!: this timeout must be lower than https://github.com/gitpod-io/gitpod/blob/main/components/ws-manager-api/typescript/src/promisified-client.ts#L122
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
 	owi := log.LogContext(req.Metadata.Owner, req.Metadata.MetaId, req.Id, req.Metadata.GetProject(), req.Metadata.GetTeam())
 	clog := log.WithFields(owi)
 	span, ctx := tracing.FromContext(ctx, "StartWorkspace")
@@ -314,8 +320,12 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, err
 	}
 
-	err = wait.PollWithContext(ctx, 100*time.Millisecond, 10*time.Minute, podRunning(m.Clientset, pod.Name, pod.Namespace))
+	// if we reach this point the pod is created
+	// in case the context is canceled or a timeout happens we should delete the pod?
+
+	err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, 7*time.Minute, podRunning(m.Clientset, pod.Name, pod.Namespace))
 	if err != nil {
+		clog.WithError(err).WithField("req", req).WithField("pod", pod.Name).Warn("was unable to start workspace")
 		return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
 	}
 
@@ -326,7 +336,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			return nil, xerrors.Errorf("unable to get workspace pod %s: %w", pod.Name, err)
 		}
 
-		err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
+		err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, 5*time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
 		if err != nil {
 			if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
 				m.eventRecorder.Eventf(pod, corev1.EventTypeWarning, "PersistentVolumeClaim", "PVC %q restore from volume snapshot %q failed %v", pvc.Name, startContext.VolumeSnapshot.VolumeSnapshotName, err)
