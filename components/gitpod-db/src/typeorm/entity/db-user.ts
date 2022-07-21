@@ -78,4 +78,10 @@ export class DBUser implements User {
         nullable: true,
     })
     additionalData?: AdditionalUserData;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    usageAttributionId?: string;
 }
