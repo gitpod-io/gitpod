@@ -97,8 +97,7 @@ proto.contentservice.UsageReportUploadURLRequest.prototype.toObject = function(o
  */
 proto.contentservice.UsageReportUploadURLRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    bucket: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    name: jspb.Message.getFieldWithDefault(msg, 2, "")
+    name: jspb.Message.getFieldWithDefault(msg, 1, "")
   };
 
   if (includeInstance) {
@@ -137,10 +136,6 @@ proto.contentservice.UsageReportUploadURLRequest.deserializeBinaryFromReader = f
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setBucket(value);
-      break;
-    case 2:
-      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     default:
@@ -172,17 +167,10 @@ proto.contentservice.UsageReportUploadURLRequest.prototype.serializeBinary = fun
  */
 proto.contentservice.UsageReportUploadURLRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getBucket();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
   f = message.getName();
   if (f.length > 0) {
     writer.writeString(
-      2,
+      1,
       f
     );
   }
@@ -190,10 +178,10 @@ proto.contentservice.UsageReportUploadURLRequest.serializeBinaryToWriter = funct
 
 
 /**
- * optional string bucket = 1;
+ * optional string name = 1;
  * @return {string}
  */
-proto.contentservice.UsageReportUploadURLRequest.prototype.getBucket = function() {
+proto.contentservice.UsageReportUploadURLRequest.prototype.getName = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
@@ -202,26 +190,8 @@ proto.contentservice.UsageReportUploadURLRequest.prototype.getBucket = function(
  * @param {string} value
  * @return {!proto.contentservice.UsageReportUploadURLRequest} returns this
  */
-proto.contentservice.UsageReportUploadURLRequest.prototype.setBucket = function(value) {
-  return jspb.Message.setProto3StringField(this, 1, value);
-};
-
-
-/**
- * optional string name = 2;
- * @return {string}
- */
-proto.contentservice.UsageReportUploadURLRequest.prototype.getName = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.contentservice.UsageReportUploadURLRequest} returns this
- */
 proto.contentservice.UsageReportUploadURLRequest.prototype.setName = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
