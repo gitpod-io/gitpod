@@ -207,6 +207,7 @@ func (m *Monitor) onVolumesnapshotEvent(evt watch.Event) error {
 
 // onPodEvent interpretes Kubernetes events, translates and broadcasts them, and acts based on them
 func (m *Monitor) onPodEvent(evt watch.Event) error {
+	log.Infof("onPodEvent(evt watch.Event)")
 	// Beware: we patch running pods to add annotations. At the moment this is not a problem as do not attach
 	//         state to pods from which we did not want events to be created. However, we might have to filter out
 	//         some MODIFIED events here if that ever changes. Otherwise the monitor clients will receive multiple
@@ -282,6 +283,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 // actOnPodEvent performs actions when a kubernetes event comes in. For example we shut down failed workspaces or start
 // polling the ready state of initializing ones.
 func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, status *api.WorkspaceStatus, wso *workspaceObjects) (err error) {
+	log.Infof(" actOnPodEvent(ctx context.Context")
 	pod := wso.Pod
 
 	span, ctx := tracing.FromContext(ctx, "actOnPodEvent")
