@@ -408,6 +408,8 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 	}
 
 	status := pod.Status
+	log.WithField("status", status).WithField("pod", pod.Name).Info("DEBUG workspace pod status")
+
 	if status.Phase == corev1.PodPending {
 		// check if any container is still pulling images
 		for _, cs := range status.ContainerStatuses {
@@ -427,12 +429,15 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 				result.Phase = api.WorkspacePhase_CREATING
 				result.Conditions.PullingImages = api.WorkspaceConditionBool_TRUE
 				result.Message = "containers are being created"
+				log.WithField("result", result).WithField("pod", pod.Name).Info("DEBUG WorkspacePhase_CREATING")
+
 				return nil
 			}
 		}
 
 		result.Phase = api.WorkspacePhase_PENDING
 		result.Message = "pod is pending"
+		log.WithField("result", result).WithField("pod", pod.Name).Info("DEBUG WorkspacePhase_PENDING")
 		return nil
 	} else if status.Phase == corev1.PodRunning {
 		if firstUserActivity, ok := wso.Pod.Annotations[firstUserActivityAnnotation]; ok {
