@@ -65,7 +65,7 @@ import { LicenseKeySource } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { LicenseValidationResult, LicenseFeature } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
-import { LicenseDB } from "@gitpod/gitpod-db/lib";
+import { CostCenterDB, LicenseDB } from "@gitpod/gitpod-db/lib";
 import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
 import { AccountStatement, CreditAlert, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -151,6 +151,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     @inject(CachingUsageServiceClientProvider)
     protected readonly usageServiceClientProvider: CachingUsageServiceClientProvider;
+
+    @inject(CostCenterDB) protected readonly costCenterDB: CostCenterDB;
 
     initialize(
         client: GitpodClient | undefined,
@@ -2001,6 +2003,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    protected defaultSpendingLimit = 100;
     async subscribeTeamToStripe(
         ctx: TraceContext,
         teamId: string,
@@ -2017,6 +2020,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 customer = await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
             }
             await this.stripeService.createSubscriptionForCustomer(customer.id, currency);
+
+            const attributionId = AttributionId.render({ kind: "team", teamId });
+
+            // Creating a cost center for this team
+            await this.costCenterDB.storeEntry({
+                id: attributionId,
+                spendingLimit: this.defaultSpendingLimit,
+            });
+
             // For all team members that didn't explicitly choose yet where their usage should be attributed to,
             // we simplify the UX by automatically attributing their usage to this recently-upgraded team.
             // Note: This default choice can be changed at any time by members in their personal billing settings.
@@ -2025,7 +2037,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 members.map(async (m) => {
                     const u = await this.userDB.findUserById(m.userId);
                     if (u && !u.usageAttributionId) {
-                        await this.userService.setUsageAttribution(u, `team:${teamId}`);
+                        u.usageAttributionId = attributionId;
+                        await this.userDB.storeUser(u);
                     }
                 }),
             );
@@ -2050,6 +2063,37 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 `Failed to get Stripe portal URL for team '${teamId}'`,
             );
         }
+    }
+
+    async getSpendingLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
+        const user = this.checkAndBlockUser("getSpendingLimitForTeam");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.guardTeamOperation(teamId, "get");
+
+        const attributionId = AttributionId.render({ kind: "team", teamId });
+        await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
+
+        const costCenter = await this.costCenterDB.findById(attributionId);
+        if (costCenter) {
+            return costCenter.spendingLimit;
+        }
+        return undefined;
+    }
+
+    async setSpendingLimitForTeam(ctx: TraceContext, teamId: string, spendingLimit: number): Promise<void> {
+        const user = this.checkAndBlockUser("setSpendingLimitForTeam");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.guardTeamOperation(teamId, "update");
+        if (typeof spendingLimit !== "number" || spendingLimit < 0) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unexpected `spendingLimit` value.");
+        }
+        const attributionId = AttributionId.render({ kind: "team", teamId });
+        await this.guardCostCenterAccess(ctx, user.id, attributionId, "update");
+
+        await this.costCenterDB.storeEntry({
+            id: AttributionId.render({ kind: "team", teamId }),
+            spendingLimit,
+        });
     }
 
     async listBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
