@@ -58,6 +58,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 
 		cpuLimitConfig.Enabled = ucfg.Workspace.CPULimits.Enabled
+		cpuLimitConfig.BurstLimit = ucfg.Workspace.CPULimits.BurstLimit
+		cpuLimitConfig.Limit = ucfg.Workspace.CPULimits.Limit
 		cpuLimitConfig.TotalBandwidth = ucfg.Workspace.CPULimits.NodeCPUBandwidth
 
 		ioLimitConfig.WriteBWPerSecond = ucfg.Workspace.IOLimits.WriteBWPerSecond

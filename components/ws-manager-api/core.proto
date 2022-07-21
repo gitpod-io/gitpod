@@ -597,6 +597,9 @@ enum WorkspaceFeatureFlag {
 
     // PROTECTED_SECRETS feature flag for enable secrets support
     PROTECTED_SECRETS = 8;
+
+    // WORKSPACE_CLASS_LIMITING feature flag for enabling resuorce limiting based on workspace class
+    WORKSPACE_CLASS_LIMITING = 9;
 }
 
 // GitSpec configures the Git available within the workspace

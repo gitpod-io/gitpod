@@ -29,6 +29,8 @@ import (
 type Config struct {
 	Enabled        bool              `json:"enabled"`
 	TotalBandwidth resource.Quantity `json:"totalBandwidth"`
+	Limit          resource.Quantity `json:"limit"`
+	BurstLimit     resource.Quantity `json:"burstLimit"`
 
 	ControlPeriod  util.Duration `json:"controlPeriod"`
 	CGroupBasePath string        `json:"cgroupBasePath"`
@@ -65,8 +67,8 @@ func NewDispatchListener(cfg *Config, prom prometheus.Registerer) *DispatchListe
 
 	if cfg.Enabled {
 		dist := NewDistributor(d.source, d.sink,
-			AnnotationLimiter(kubernetes.WorkspaceCpuLimitAnnotation),
-			AnnotationLimiter(kubernetes.WorkspaceCpuBurstLimitAnnotation),
+			CompositeLimiter(AnnotationLimiter(kubernetes.WorkspaceCpuMinLimitAnnotation), FixedLimiter(BandwidthFromQuantity(d.Config.Limit))),
+			CompositeLimiter(AnnotationLimiter(kubernetes.WorkspaceCpuBurstLimitAnnotation), FixedLimiter(BandwidthFromQuantity(d.Config.BurstLimit))),
 			BandwidthFromQuantity(d.Config.TotalBandwidth),
 		)
 		go dist.Run(context.Background(), time.Duration(d.Config.ControlPeriod))

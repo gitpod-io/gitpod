@@ -763,14 +763,6 @@ export class WorkspaceStarter {
                 featureFlags = featureFlags.concat(["persistent_volume_claim"]);
             }
 
-            if (!!featureFlags) {
-                // only set feature flags if there actually are any. Otherwise we waste the
-                // few bytes of JSON in the database for no good reason.
-                configuration.featureFlags = featureFlags;
-            }
-
-            const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
-
             let workspaceClass = "";
             let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
                 user: user,
@@ -810,7 +802,17 @@ export class WorkspaceStarter {
                         workspaceClass = workspaceClass + "-pvc";
                     }
                 }
+                
+                featureFlags = featureFlags.concat(["workspace_class_limiting"]);
             }
+
+            if (!!featureFlags) {
+                // only set feature flags if there actually are any. Otherwise we waste the
+                // few bytes of JSON in the database for no good reason.
+                configuration.featureFlags = featureFlags;
+            }
+
+            const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
 
             const now = new Date().toISOString();
             const instance: WorkspaceInstance = {

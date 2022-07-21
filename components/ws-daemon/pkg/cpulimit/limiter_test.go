@@ -37,15 +37,18 @@ func TestBucketLimiter(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			//limiter := cpulimit.BucketLimiter(test.Buckets)
-			// ws := &cpulimit.WorkspaceHistory {
+			limiter := cpulimit.BucketLimiter(test.Buckets)
+			ws := &cpulimit.WorkspaceHistory{
+				LastUpdate: &cpulimit.Workspace{
+					Usage: test.BudgetSpent,
+				},
+				UsageT0: 0,
+			}
 
-			// }
-
-			// limit,_ := limiter.Limit(test.BudgetSpent)
-			// if limit != test.ExpectedLimit {
-			// 	t.Errorf("unexpected limit %d: expected %d", limit, test.ExpectedLimit)
-			// }
+			limit, _ := limiter.Limit(ws)
+			if limit != test.ExpectedLimit {
+				t.Errorf("unexpected limit %d: expected %d", limit, test.ExpectedLimit)
+			}
 		})
 	}
 }
