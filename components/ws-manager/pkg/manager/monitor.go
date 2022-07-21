@@ -798,6 +798,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 
 		_, alreadyInitializing := m.initializerMap[pod.Name]
 		if alreadyInitializing {
+			log.Info("DEBUG -> alreadyInitializing")
 			return nil
 		}
 
@@ -861,6 +862,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	}
 	if err == nil && snc == nil {
 		// we are already initialising
+		log.Info("DEBUG -> err == nil && snc == nil")
 		return nil
 	}
 	t := time.Now()
@@ -878,6 +880,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			RemoteStorageDisabled: shouldDisableRemoteStorage(pod),
 			StorageQuotaBytes:     storage.Value(),
 		})
+		log.WithError(err).Info("DEBUG -> InitWorkspace")
 		return err
 	})
 	if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.AlreadyExists {
@@ -886,6 +889,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	} else {
 		err = handleGRPCError(ctx, err)
 	}
+	log.WithError(err).Info("DEBUG -> retryIfUnavailable")
 	wsType := strings.ToUpper(pod.Labels[wsk8s.TypeLabel])
 	wsClass := pod.Labels[workspaceClassLabel]
 	hist, errHist := m.manager.metrics.initializeTimeHistVec.GetMetricWithLabelValues(wsType, wsClass)
