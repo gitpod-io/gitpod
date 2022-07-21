@@ -217,6 +217,8 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         getIDEOptions: { group: "default", points: 1 },
         getPrebuildEvents: { group: "default", points: 1 },
         setUsageAttribution: { group: "default", points: 1 },
+        getSpendingLimitForTeam: { group: "default", points: 1 },
+        setSpendingLimitForTeam: { group: "default", points: 1 },
     };
 
     return {
