@@ -65,8 +65,8 @@ const (
 	// WorkspaceSSHPublicKeys contains all authorized ssh public keys that can be connected to the workspace
 	WorkspaceSSHPublicKeys = "gitpod.io/sshPublicKeys"
 
-	// workspaceCpuLimit denotes the cpu limit of a workspace
-	WorkspaceCpuLimitAnnotation = "gitpod.io/cpuLimit"
+	// workspaceCpuMinLimitAnnotation denotes the minimum cpu limit of a workspace i.e. the minimum amount of resources it is guaranteed to get
+	WorkspaceCpuMinLimitAnnotation = "gitpod.io/cpuMinLimit"
 
 	// workspaceCpuBurstLimit denotes the cpu burst limit of a workspace
 	WorkspaceCpuBurstLimitAnnotation = "gitpod.io/cpuBurstLimit"

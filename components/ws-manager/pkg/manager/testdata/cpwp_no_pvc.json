@@ -4,7 +4,7 @@
             "resourceRequests": {"cpu": "900m"},
             "resourceLimits": {
                 "cpu": {
-                    "low": "900m",
+                    "min": "900m",
                     "burst": "1200m"
                 }
             }
