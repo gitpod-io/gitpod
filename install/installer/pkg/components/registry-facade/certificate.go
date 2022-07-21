@@ -33,6 +33,9 @@ func certificate(ctx *common.RenderContext) ([]runtime.Object, error) {
 			DNSNames: []string{
 				fmt.Sprintf("reg.%s", ctx.Config.Domain),
 			},
+			SecretTemplate: &certmanagerv1.CertificateSecretTemplate{
+				Labels: common.DefaultLabels(Component),
+			},
 		},
 	}}, nil
 }

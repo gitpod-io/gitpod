@@ -49,6 +49,9 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Kind:  "Issuer",
 					Group: "cert-manager.io",
 				},
+				SecretTemplate: &certmanagerv1.CertificateSecretTemplate{
+					Labels: common.DefaultLabels(Component),
+				},
 			},
 		},
 		&certmanagerv1.Certificate{
@@ -66,6 +69,9 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Name:  issuer,
 					Kind:  "Issuer",
 					Group: "cert-manager.io",
+				},
+				SecretTemplate: &certmanagerv1.CertificateSecretTemplate{
+					Labels: common.DefaultLabels(Component),
 				},
 			},
 		},
