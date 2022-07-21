@@ -13,8 +13,6 @@
 import * as jspb from "google-protobuf";
 
 export class UsageReportUploadURLRequest extends jspb.Message {
-    getBucket(): string;
-    setBucket(value: string): UsageReportUploadURLRequest;
     getName(): string;
     setName(value: string): UsageReportUploadURLRequest;
 
@@ -30,7 +28,6 @@ export class UsageReportUploadURLRequest extends jspb.Message {
 
 export namespace UsageReportUploadURLRequest {
     export type AsObject = {
-        bucket: string,
         name: string,
     }
 }

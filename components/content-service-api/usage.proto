@@ -14,8 +14,7 @@ service UsageReportService {
 }
 
 message UsageReportUploadURLRequest {
-  string bucket = 1;
-  string name = 2;
+  string name = 1;
 }
 
 message UsageReportUploadURLResponse {

@@ -18,6 +18,10 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
+const (
+	bucketName = "usage-reports"
+)
+
 // UsageReportService implements UsageReportServiceServer
 type UsageReportService struct {
 	cfg config.StorageConfig
@@ -41,17 +45,17 @@ func (us *UsageReportService) UploadURL(ctx context.Context, req *api.UsageRepor
 	span.SetTag("name", req.Name)
 	defer tracing.FinishSpan(span, &err)
 
-	err = us.s.EnsureExists(ctx, req.Bucket)
+	err = us.s.EnsureExists(ctx, bucketName)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	info, err := us.s.SignUpload(ctx, req.Bucket, req.Name, &storage.SignedURLOptions{
+	info, err := us.s.SignUpload(ctx, bucketName, req.Name, &storage.SignedURLOptions{
 		ContentType: "*/*",
 	})
 	if err != nil {
 		log.WithField("name", req.Name).
-			WithField("bucket", req.Bucket).
+			WithField("bucket", bucketName).
 			WithError(err).
 			Error("Error getting UsageReport SignUpload URL")
 		if err == storage.ErrNotFound {
