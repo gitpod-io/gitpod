@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	bucketName = "usage-reports"
+	usageReportBucketName = "usage-reports"
 )
 
 // UsageReportService implements UsageReportServiceServer
@@ -45,17 +45,17 @@ func (us *UsageReportService) UploadURL(ctx context.Context, req *api.UsageRepor
 	span.SetTag("name", req.Name)
 	defer tracing.FinishSpan(span, &err)
 
-	err = us.s.EnsureExists(ctx, bucketName)
+	err = us.s.EnsureExists(ctx, usageReportBucketName)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	info, err := us.s.SignUpload(ctx, bucketName, req.Name, &storage.SignedURLOptions{
+	info, err := us.s.SignUpload(ctx, usageReportBucketName, req.Name, &storage.SignedURLOptions{
 		ContentType: "*/*",
 	})
 	if err != nil {
 		log.WithField("name", req.Name).
-			WithField("bucket", bucketName).
+			WithField("bucket", usageReportBucketName).
 			WithError(err).
 			Error("Error getting UsageReport SignUpload URL")
 		if err == storage.ErrNotFound {
