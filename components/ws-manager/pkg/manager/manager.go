@@ -164,10 +164,10 @@ func (m *Manager) Close() {
 }
 
 // StartWorkspace creates a new running workspace within the manager's cluster
-func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
+func (m *Manager) StartWorkspace(_ context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
 	owi := log.LogContext(req.Metadata.Owner, req.Metadata.MetaId, req.Id, req.Metadata.GetProject(), req.Metadata.GetTeam())
 	clog := log.WithFields(owi)
-	span, ctx := tracing.FromContext(ctx, "StartWorkspace")
+	span, ctx := tracing.FromContext(context.Background(), "StartWorkspace")
 	tracing.LogRequestSafe(span, req)
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
@@ -356,6 +356,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 	}
 
+	clog.Info("DEBUG About to remove attemptingToCreatePodAnnotation")
 	// remove annotation to signal that workspace pod was indeed created and scheduled on the node
 	err = m.markWorkspace(ctx, req.Id, deleteMark(attemptingToCreatePodAnnotation))
 	if err != nil {
