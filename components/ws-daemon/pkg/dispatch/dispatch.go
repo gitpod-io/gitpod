@@ -104,6 +104,14 @@ func (d *Dispatch) Start() error {
 	ifac := informers.NewSharedInformerFactoryWithOptions(d.Kubernetes, podInformerResyncInterval, informers.WithNamespace(d.KubernetesNamespace))
 	podInformer := ifac.Core().V1().Pods().Informer()
 	podInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(newObj interface{}) {
+			newPod, ok := newObj.(*corev1.Pod)
+			if !ok {
+				return
+			}
+
+			d.handlePodUpdate(newPod)
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			oldPod, ok := oldObj.(*corev1.Pod)
 			if !ok {
@@ -114,7 +122,15 @@ func (d *Dispatch) Start() error {
 				return
 			}
 
-			d.handlePodUpdate(oldPod, newPod)
+			if newPod.ResourceVersion == oldPod.ResourceVersion {
+				return
+			}
+
+			if newPod.DeletionTimestamp != nil {
+				return
+			}
+
+			d.handlePodUpdate(newPod)
 		},
 		DeleteFunc: func(obj interface{}) {
 			pod, ok := obj.(*corev1.Pod)
@@ -170,7 +186,7 @@ func (d *Dispatch) WorkspaceExistsOnNode(instanceID string) (ok bool) {
 	return
 }
 
-func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
+func (d *Dispatch) handlePodUpdate(newPod *corev1.Pod) {
 	workspaceID, ok := newPod.Labels[wsk8s.MetaIDLabel]
 	if !ok {
 		return
@@ -260,7 +276,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 		go func() {
 			err := lu.WorkspaceUpdated(state.Context, state.Workspace)
 			if err != nil {
-				log.WithError(err).WithFields(wsk8s.GetOWIFromObject(&oldPod.ObjectMeta)).Error("dispatch listener failed")
+				log.WithError(err).WithFields(wsk8s.GetOWIFromObject(&newPod.ObjectMeta)).Error("dispatch listener failed")
 			}
 		}()
 	}
