@@ -57,7 +57,7 @@ export class GitHubEnterpriseApp {
                 }
                 if (!user) {
                     res.statusCode = 401;
-                    res.send();
+                    res.send("Unauthorized: Cannot find user.");
                     span.finish();
                     await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
                     return;
