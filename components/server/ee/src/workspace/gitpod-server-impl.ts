@@ -1497,16 +1497,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             this.stripeService.findCustomerByTeamId(teamId),
             this.userDB.findUserById(userId),
         ]);
-        if (teamCustomer && user && !user.additionalData?.usageAttributionId) {
+        if (teamCustomer && user && !user.usageAttributionId) {
             // If the user didn't explicitly choose yet where their usage should be attributed to, and
             // they join a team which accepts usage attribution (i.e. with usage-based billing enabled),
             // then we simplify the UX by automatically attributing the user's usage to that team.
             // Note: This default choice can be changed at any time by the user in their billing settings.
             const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(teamCustomer.id);
             if (subscription) {
-                user.additionalData = user.additionalData || {};
-                user.additionalData.usageAttributionId = `team:${teamId}`;
-                await this.userDB.updateUserPartial(user);
+                await this.userService.setUsageAttribution(user, AttributionId.render({ kind: "team", teamId }));
             }
         }
     }
@@ -1519,12 +1517,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.teamSubscription2Service.cancelTeamMemberSubscription(ts2, userId, teamMembershipId, now);
         }
         const user = await this.userDB.findUserById(userId);
-        if (user && user.additionalData?.usageAttributionId === `team:${teamId}`) {
+        if (user && user.usageAttributionId === AttributionId.render({ kind: "team", teamId })) {
             // If the user previously attributed all their usage to a given team, but they are now leaving this
             // team, then the currently selected usage attribution ID is no longer valid. In this case, we must
             // reset this ID to the default value.
-            user.additionalData.usageAttributionId = undefined;
-            await this.userDB.updateUserPartial(user);
+            await this.userService.setUsageAttribution(user, undefined);
         }
     }
 
@@ -2027,10 +2024,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await Promise.all(
                 members.map(async (m) => {
                     const u = await this.userDB.findUserById(m.userId);
-                    if (u && !u.additionalData?.usageAttributionId) {
-                        u.additionalData = u.additionalData || {};
-                        u.additionalData.usageAttributionId = `team:${teamId}`;
-                        await this.userDB.updateUserPartial(u);
+                    if (u && !u.usageAttributionId) {
+                        await this.userService.setUsageAttribution(u, `team:${teamId}`);
                     }
                 }),
             );
