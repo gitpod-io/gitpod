@@ -42,6 +42,8 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, nil
 	}
 
+	r.Log.Info("DEBUG Event", "pod", pod)
+
 	r.Monitor.eventpool.Add(queue, watch.Event{
 		Type:   watch.Modified,
 		Object: &pod,
