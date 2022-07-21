@@ -901,8 +901,11 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		m.manager.metrics.totalRestoreCounterVec.WithLabelValues(wsType, wsClass).Inc()
 		if err != nil {
 			m.manager.metrics.totalRestoreFailureCounterVec.WithLabelValues(wsType, wsClass).Inc()
-			return xerrors.Errorf("cannot initialize workspace: %w", err)
 		}
+	}
+
+	if err != nil {
+		return xerrors.Errorf("cannot initialize workspace: %w", err)
 	}
 	return nil
 }
