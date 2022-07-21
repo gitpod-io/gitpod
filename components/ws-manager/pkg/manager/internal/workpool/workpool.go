@@ -8,6 +8,8 @@ import (
 	"sync"
 
 	"k8s.io/apimachinery/pkg/watch"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // EventWorkerPool lets us work on events concurrently with the following guarantees:
@@ -105,10 +107,12 @@ func (p *EventWorkerPool) work(idx int) (stopped bool) {
 	// We always try work first. Only if there's no work do we start waiting.
 	p.mu.Lock()
 	for i, item := range p.journal {
+		log.WithField("queue", item.Queue).Infof("processing queue")
 		// We skip any queue that we're already working on. This ensures guarantee 2, because
 		// we hold a read lock on mu and any modification of the queueSet is guarded by a mu write lock.
 		// Thus the queueSet cannot change as we loop.
 		if _, inUse := p.queueSet[item.Queue]; inUse {
+			log.WithField("queue", item.Queue).Infof("queue in use")
 			continue
 		}
 
@@ -120,12 +124,14 @@ func (p *EventWorkerPool) work(idx int) (stopped bool) {
 		p.journal = append(p.journal[:i], p.journal[i+1:]...)
 		p.mu.Unlock()
 
+		log.WithField("queue", item.Queue).Infof("before WorkOn")
 		// now that we hold the queue for this item we can start working on it
 		p.WorkOn(item.Evt)
 
 		// we're done working on this item - release the queue
 		p.mu.Lock()
 		item.State = eventWorkerPoolItemDone
+		log.WithField("queue", item.Queue).Infof("deleting queue")
 		delete(p.queueSet, item.Queue)
 		p.mu.Unlock()
 
