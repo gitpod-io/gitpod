@@ -6,6 +6,7 @@ package dockerregistry
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
@@ -36,6 +37,9 @@ func certificate(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			DNSNames: []string{
 				fmt.Sprintf("registry.%s.svc.cluster.local", ctx.Namespace),
+			},
+			SecretTemplate: &certmanagerv1.CertificateSecretTemplate{
+				Labels: common.DefaultLabels(Component),
 			},
 		},
 	}}, nil
