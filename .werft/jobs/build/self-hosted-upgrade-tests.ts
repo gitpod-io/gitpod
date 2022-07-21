@@ -39,7 +39,7 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
     const channel: string = config.replicatedChannel || "beta";
 
     exec(`git config --global user.name "${username}"`);
-    var annotation = `-a version=${config.fromVersion} -a upgrade=true -a channel=${channel} -a preview=true`;
+    var annotation = `-a version=${config.fromVersion} -a upgrade=true -a channel=${channel} -a preview=true -a skipTests=true`;
 
     for (let phase in phases) {
         const upgradeConfig = phases[phase];
