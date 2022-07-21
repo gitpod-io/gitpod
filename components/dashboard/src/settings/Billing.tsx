@@ -42,9 +42,8 @@ export default function Billing() {
         if (!user) {
             return;
         }
-        const additionalData = user.additionalData || {};
-        additionalData.usageAttributionId = team ? `team:${team.id}` : `user:${user.id}`;
-        await getGitpodService().server.updateLoggedInUser({ additionalData });
+        const usageAttributionId = team ? `team:${team.id}` : `user:${user.id}`;
+        await getGitpodService().server.setUsageAttribution(usageAttributionId);
     };
 
     return (
@@ -73,9 +72,7 @@ export default function Billing() {
                         <span>Bill all my usage to:</span>
                         <DropDown
                             activeEntry={
-                                teamsWithBillingEnabled.find(
-                                    (t) => `team:${t.id}` === user?.additionalData?.usageAttributionId,
-                                )?.name
+                                teamsWithBillingEnabled.find((t) => `team:${t.id}` === user?.usageAttributionId)?.name
                             }
                             customClasses="w-32"
                             renderAsLink={true}

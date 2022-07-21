@@ -16,7 +16,7 @@ import {
     WORKSPACE_TIMEOUT_EXTENDED,
     WORKSPACE_TIMEOUT_EXTENDED_ALT,
 } from "@gitpod/gitpod-protocol";
-import { CostCenterDB, ProjectDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { CostCenterDB, ProjectDB, TeamDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
@@ -28,6 +28,7 @@ import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { StripeService } from "../../ee/src/user/stripe-service";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -66,6 +67,8 @@ export class UserService {
     @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
     @inject(ProjectDB) protected readonly projectDb: ProjectDB;
     @inject(CostCenterDB) protected readonly costCenterDb: CostCenterDB;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(StripeService) protected readonly stripeService: StripeService;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User
@@ -226,12 +229,12 @@ export class UserService {
     async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<string | undefined> {
         // A. Billing-based attribution
         if (this.config.enablePayment) {
-            if (!user.additionalData?.usageAttributionId) {
+            if (!user.usageAttributionId) {
                 // No explicit user attribution ID yet -- attribute all usage to the user by default (regardless of project/team).
                 return AttributionId.render({ kind: "user", userId: user.id });
             }
             // Return the user's explicit attribution ID.
-            return user.additionalData.usageAttributionId;
+            return user.usageAttributionId;
         }
 
         // B. Project-based attribution
@@ -246,6 +249,37 @@ export class UserService {
         }
         // Attribute workspace usage to the team that currently owns this project.
         return AttributionId.render({ kind: "team", teamId: project.teamId });
+    }
+
+    async setUsageAttribution(user: User, usageAttributionId: string | undefined): Promise<void> {
+        if (typeof usageAttributionId !== "string") {
+            user.usageAttributionId = undefined;
+            await this.userDb.storeUser(user);
+            return;
+        }
+        const attributionId = AttributionId.parse(usageAttributionId);
+        if (attributionId?.kind === "user") {
+            if (user.id === attributionId.userId) {
+                user.usageAttributionId = usageAttributionId;
+                await this.userDb.storeUser(user);
+                return;
+            }
+            throw new Error("Permission denied: cannot attribute another user.");
+        }
+        if (attributionId?.kind === "team") {
+            const membership = await this.teamDB.findTeamMembership(user.id, attributionId.teamId);
+            if (!membership) {
+                throw new Error("Cannot attribute to an unrelated team.");
+            }
+            const teamCustomer = await this.stripeService.findCustomerByTeamId(attributionId.teamId);
+            if (!teamCustomer) {
+                throw new Error("Cannot attribute to team without Stripe customer.");
+            }
+            user.usageAttributionId = usageAttributionId;
+            await this.userDb.storeUser(user);
+            return;
+        }
+        throw new Error("Unexpected call arguments for `setUsageAttribution`");
     }
 
     /**
