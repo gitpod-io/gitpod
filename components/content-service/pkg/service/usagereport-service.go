@@ -53,7 +53,7 @@ func (us *UsageReportService) UploadURL(ctx context.Context, req *api.UsageRepor
 		log.WithField("name", req.Name).
 			WithField("bucket", req.Bucket).
 			WithError(err).
-			Error("error getting UsageReport SignUpload URL")
+			Error("Error getting UsageReport SignUpload URL")
 		if err == storage.ErrNotFound {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
