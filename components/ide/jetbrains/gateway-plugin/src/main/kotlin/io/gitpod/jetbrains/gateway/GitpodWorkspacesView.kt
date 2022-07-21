@@ -37,6 +37,7 @@ import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import org.apache.http.client.utils.URIBuilder
 import java.time.OffsetDateTime
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -276,7 +277,7 @@ class GitpodWorkspacesView(
                                         browserLink(info.workspace.id, info.latestInstance.ideUrl)
                                     }
                                     info.workspace.context.normalizedContextURL.ifPresent {
-                                        contextUrlRow.rowComment("<a href='${it}'>${it}</a>")
+                                        contextUrlRow.rowComment("<a href='$it'>$it</a>")
                                     }
                                 }
                                 label("").resizableColumn().horizontalAlign(HorizontalAlign.FILL)
@@ -286,7 +287,7 @@ class GitpodWorkspacesView(
                                         it.totalUncommitedFiles + it.totalUntrackedFiles + it.totalUnpushedCommits
                                     } ?: 0
                                     row {
-                                        info.workspace.context.ref.ifPresentOrElse({ label(it) },{ label("(detached)") })
+                                        info.workspace.context.ref.ifPresentOrElse({ label(it) }, { label("(detached)") })
                                     }.rowComment(
                                         when {
                                             changes == 1 -> "<b>$changes Change</b>"
@@ -298,7 +299,14 @@ class GitpodWorkspacesView(
                                 label(getRelativeTimeSpan(info.latestInstance.creationTime))
                                 button("Connect") {
                                     if (!canConnect) {
-                                        BrowserUtil.browse(info.latestInstance.ideUrl)
+                                        val startUrl = URIBuilder()
+                                                .setScheme("https")
+                                                .setHost(gitpodHost)
+                                                .setPath("start")
+                                                .setFragment(info.workspace.id)
+                                                .build()
+                                                .toString()
+                                        BrowserUtil.browse(startUrl)
                                     } else {
                                         GatewayUI.getInstance().connect(
                                             mapOf(
