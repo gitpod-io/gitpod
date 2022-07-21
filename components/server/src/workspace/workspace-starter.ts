@@ -796,6 +796,12 @@ export class WorkspaceStarter {
                         previousInstance.workspaceClass,
                     );
                 }
+
+                if (featureFlags.includes("persistent_volume_claim")) {
+                    if (workspaceClass === "g1-standard" || workspaceClass === "g1-large") {
+                        workspaceClass = workspaceClass + "-pvc";
+                    }
+                }
             }
 
             const now = new Date().toISOString();
