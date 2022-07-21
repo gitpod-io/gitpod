@@ -215,9 +215,12 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	span.LogKV("event", "validated workspace start request")
 	// create the objects required to start the workspace pod/service
-	startContext, err := m.newStartWorkspaceContext(ctx, req)
+	var startContext *startWorkspaceContext
+	startContext, err = m.newStartWorkspaceContext(ctx, req)
+	clog.WithError(err).Debug("starting new workspace")
 	if err != nil {
-		return nil, xerrors.Errorf("cannot create context: %w", err)
+		err = xerrors.Errorf("cannot create context: %w", err)
+		return
 	}
 	span.LogKV("event", "created start workspace context")
 	clog.Debug("starting new workspace")
