@@ -1368,7 +1368,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	// find the ws-daemon on this node
 	var hostIP string
 	for _, pod := range podList.Items {
-		if pod.Spec.NodeName == nodeName {
+		if pod.Spec.NodeName == nodeName && pod.Status.Phase == corev1.PodRunning {
 			hostIP = pod.Status.PodIP
 			break
 		}
