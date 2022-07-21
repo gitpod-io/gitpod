@@ -91,10 +91,17 @@ func (u *UsageReconciler) Reconcile() (err error) {
 	}
 
 	stat, err := f.Stat()
+	filePath := filepath.Join(dir, stat.Name())
 	if err != nil {
 		return fmt.Errorf("failed to get file stats: %w", err)
 	}
-	log.Infof("Wrote usage report into %s", filepath.Join(dir, stat.Name()))
+	log.Infof("Wrote usage report into %s", filePath)
+
+	uploadURL, err := u.contentService.GetSignedUploadUrl(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to obtain signed upload URL: %w", err)
+	}
+	log.Infof("signed upload url: %s", uploadURL)
 
 	err = db.CreateUsageRecords(ctx, u.conn, usageReportToUsageRecords(report, u.pricer, u.nowFunc().UTC()))
 	if err != nil {
