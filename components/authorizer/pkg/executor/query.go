@@ -82,7 +82,11 @@ func GroupChainAnd(parent QueryBuilder, subjectTable string, terms ...QueryBuild
 	}
 }
 
-func Build(root QueryBuilder, res *query) (sql string, params []string, err error) {
+func Build(root QueryBuilder, res *Query) (result *Query, err error) {
+	if res == nil {
+		res = NewQuery(&Namespace{}, "")
+	}
+
 	switch query := root.(type) {
 	case queryExists:
 		alias := res.TableAlias(query.Table)
@@ -94,9 +98,9 @@ func Build(root QueryBuilder, res *query) (sql string, params []string, err erro
 		res.Where("%s = %s", vala, valb)
 	case queryParentRel:
 		child := NewQuery(res.NS, "")
-		_, _, err := Build(query.Actor, child)
+		_, err := Build(query.Actor, child)
 		if err != nil {
-			return "", nil, err
+			return nil, err
 		}
 
 		for k, v := range child.Parameter {
@@ -111,12 +115,14 @@ func Build(root QueryBuilder, res *query) (sql string, params []string, err erro
 		subjTable := res.TableAlias(query.SubjectTable)
 		res.Where("%s.%s = %s.%s", child.LastAlias(), query.ActorKeyCol, subjTable, query.SubjectRelationCol)
 	case ExprQueryBuilder:
-		res.TableAlias(query.SubjectTable)
+		if query.SubjectTable != "" {
+			res.TableAlias(query.SubjectTable)
+		}
 		child := NewQuery(res.NS, "")
 		for _, term := range query.Terms {
-			_, _, err := Build(term, child)
+			_, err := Build(term, child)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 		}
 
@@ -134,7 +140,7 @@ func Build(root QueryBuilder, res *query) (sql string, params []string, err erro
 		res.WhereExpr = append(res.WhereExpr, fmt.Sprintf("(%s)", strings.Join(child.WhereExpr, op)))
 	}
 
-	return "", nil, nil
+	return res, nil
 }
 
 type Namespace struct {
@@ -146,8 +152,8 @@ func (ns *Namespace) Next() int {
 	return ns.x
 }
 
-func NewQuery(ns *Namespace, prefix string) *query {
-	return &query{
+func NewQuery(ns *Namespace, prefix string) *Query {
+	return &Query{
 		NS:        ns,
 		Prefix:    prefix,
 		Tables:    make(map[string]string),
@@ -155,7 +161,7 @@ func NewQuery(ns *Namespace, prefix string) *query {
 	}
 }
 
-type query struct {
+type Query struct {
 	NS        *Namespace
 	Prefix    string
 	Tables    map[string]string
@@ -165,7 +171,7 @@ type query struct {
 	lastAlias string
 }
 
-func (q *query) SQL() (res string, params map[string]string) {
+func (q *Query) SQL() (res string, params map[string]string) {
 	var tables []string
 	for k, v := range q.Tables {
 		tables = append(tables, v+" "+k)
@@ -173,7 +179,7 @@ func (q *query) SQL() (res string, params map[string]string) {
 	return fmt.Sprintf("SELECT COUNT(1) FROM %s WHERE %s", strings.Join(tables, ", "), strings.Join(q.WhereExpr, " AND ")), q.Parameter
 }
 
-func (q *query) NormalizeValues() {
+func (q *Query) NormalizeValues() {
 	for k, v := range q.Parameter {
 		for nk, nv := range q.Parameter {
 			if nv != v || nk == k {
@@ -200,7 +206,7 @@ func (q *query) NormalizeValues() {
 	}
 }
 
-func (q *query) DangerousInsertValues() {
+func (q *Query) DangerousInsertValues() {
 	for k, v := range q.Parameter {
 		for i := range q.WhereExpr {
 			q.WhereExpr[i] = strings.ReplaceAll(q.WhereExpr[i], k, `"`+v+`"`)
@@ -208,7 +214,7 @@ func (q *query) DangerousInsertValues() {
 	}
 }
 
-func (q *query) Add(other *query) {
+func (q *Query) Add(other *Query) {
 	q.WhereExpr = append(q.WhereExpr, other.WhereExpr...)
 	for k, v := range other.Parameter {
 		q.Parameter[k] = v
@@ -218,13 +224,13 @@ func (q *query) Add(other *query) {
 	}
 }
 
-func (q *query) Where(expr string, args ...interface{}) {
+func (q *Query) Where(expr string, args ...interface{}) {
 	q.WhereExpr = append(q.WhereExpr, fmt.Sprintf(expr, args...))
 }
 
-func (q *query) TableAlias(table string) string {
+func (q *Query) TableAlias(table string) string {
 	alias := fmt.Sprintf("%st%03d", q.Prefix, q.NS.Next())
-	if alias == "p001t003" {
+	if alias == "t001" {
 		fmt.Println()
 	}
 	q.Tables[alias] = table
@@ -232,10 +238,10 @@ func (q *query) TableAlias(table string) string {
 	return alias
 }
 
-func (q *query) Param(value string) (key string) {
+func (q *Query) Param(value string) (key string) {
 	alias := fmt.Sprintf("%sv%03d", q.Prefix, q.NS.Next())
 	q.Parameter[alias] = value
 	return alias
 }
 
-func (q *query) LastAlias() string { return q.lastAlias }
+func (q *Query) LastAlias() string { return q.lastAlias }

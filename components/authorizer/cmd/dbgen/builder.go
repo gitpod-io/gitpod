@@ -5,10 +5,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
-
 	"github.com/gitpod-io/gitpod/authorizer/pkg/executor"
 )
 
@@ -96,21 +92,21 @@ func checkWorkspaceInstanceAccess(actorKey, subjectKey string) executor.QueryBui
 	)
 }
 
-func main() {
-	q := checkWorkspaceInstanceOwner("userfoo", "instancebla")
-	q = executor.GroupChainAnd(q, "d_b_workspace_instance",
-		executor.StartChainWithExists("subject exists", "d_b_workspace_instance", "id", "instancebla"),
-		q,
-	)
-	json.NewEncoder(os.Stdout).Encode(q)
+// func main() {
+// 	q := checkWorkspaceInstanceAccess("userfoo", "instancebla")
+// 	q = executor.GroupChainAnd(q, "d_b_workspace_instance",
+// 		executor.StartChainWithExists("subject exists", "d_b_workspace_instance", "id", "instancebla"),
+// 		q,
+// 	)
+// 	json.NewEncoder(os.Stdout).Encode(q)
 
-	res := executor.NewQuery(&executor.Namespace{}, "")
-	executor.Build(q, res)
-	res.NormalizeValues()
-	res.DangerousInsertValues()
-	json.NewEncoder(os.Stdout).Encode(res)
+// 	res := executor.NewQuery(&executor.Namespace{}, "")
+// 	executor.Build(q, res)
+// 	res.NormalizeValues()
+// 	res.DangerousInsertValues()
+// 	json.NewEncoder(os.Stdout).Encode(res)
 
-	sql, _ := res.SQL()
-	fmt.Println()
-	fmt.Println(sql)
-}
+// 	sql, _ := res.SQL()
+// 	fmt.Println()
+// 	fmt.Println(sql)
+// }

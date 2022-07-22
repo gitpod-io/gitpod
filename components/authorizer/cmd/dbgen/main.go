@@ -5,6 +5,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gitpod-io/gitpod/authorizer/pkg/dbgen"
 )
 
@@ -105,11 +107,11 @@ var workspaceInstance = &dbgen.TypeSpec{
 	},
 }
 
-// func main() {
-// 	sess := dbgen.NewSession("main_test")
-// 	sess.Generate(user)
-// 	sess.Generate(workspace)
-// 	sess.Generate(workspaceInstance)
-// 	sess.Commit()
-// 	fmt.Println(sess)
-// }
+func main() {
+	sess := dbgen.NewSession("main_test")
+	sess.Generate(user)
+	sess.Generate(workspace)
+	sess.Generate(workspaceInstance)
+	sess.Commit()
+	fmt.Println(sess)
+}
