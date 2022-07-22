@@ -5,6 +5,8 @@ package usage
 
 import (
 	"fmt"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -21,7 +23,7 @@ import (
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := server.Config{
 		ControllerSchedule:    time.Hour.String(),
-		ContentServiceAddress: fmt.Sprintf("%s:%d", content_service.Component, content_service.RPCPort),
+		ContentServiceAddress: net.JoinHostPort(content_service.Component, strconv.Itoa(content_service.RPCPort)),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
