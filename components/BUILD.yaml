@@ -114,6 +114,7 @@ packages:
       - components/ws-daemon:app
       - components/ws-manager-bridge:app
       - components/ws-manager:app
+      - components/authorizer:app
 scripts:
   - name: update-license-header
     description: Updates the license header in all source files
