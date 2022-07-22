@@ -47,6 +47,7 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
     }
     if (!certReady) {
         retrieveFailedCertDebug(params.certName, shellOpts.slice)
+        werft.fail(shellOpts.slice, `Certificate ${params.certName} never reached the Ready state`)
     }
     return certReady
 }
