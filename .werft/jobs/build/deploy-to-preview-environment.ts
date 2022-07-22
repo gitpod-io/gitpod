@@ -80,7 +80,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         withObservability,
         installEELicense,
         workspaceFeatureFlags,
-        dynamicCPULimits,
         storage,
     } = jobConfig;
 
@@ -241,8 +240,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         jobConfig,
         deploymentConfig,
         workspaceFeatureFlags,
-        dynamicCPULimits,
-        storage,
+        storage
     );
 }
 
@@ -254,7 +252,6 @@ async function deployToDevWithInstaller(
     jobConfig: JobConfig,
     deploymentConfig: DeploymentConfig,
     workspaceFeatureFlags: string[],
-    dynamicCPULimits,
     storage,
 ) {
     // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:

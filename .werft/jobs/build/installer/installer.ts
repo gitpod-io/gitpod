@@ -109,13 +109,8 @@ export class Installer {
             `yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.blockNewUsers | yq prefix - 'blockNewUsers' > ${BLOCK_NEW_USER_CONFIG_PATH}`,
             { slice: slice },
         );
-        exec(
-            `yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing.dynamic.cpu.buckets | yq prefix - 'workspace.resources.dynamicLimits.cpu' > ${WORKSPACE_SIZE_CONFIG_PATH}`,
-            { slice: slice },
-        );
 
         exec(`yq m -i --overwrite ${this.options.installerConfigPath} ${BLOCK_NEW_USER_CONFIG_PATH}`, { slice: slice });
-        exec(`yq m -i ${this.options.installerConfigPath} ${WORKSPACE_SIZE_CONFIG_PATH}`, { slice: slice });
     }
 
     private configureMetadata(slice: string): void {
