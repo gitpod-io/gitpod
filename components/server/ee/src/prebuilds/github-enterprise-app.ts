@@ -57,7 +57,7 @@ export class GitHubEnterpriseApp {
                 }
                 if (!user) {
                     res.statusCode = 401;
-                    res.send("Unauthorized: Cannot find user.");
+                    res.send("Unauthorized: Cannot find authorized user.");
                     span.finish();
                     await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
                     return;
@@ -82,7 +82,7 @@ export class GitHubEnterpriseApp {
         ctx: TraceContext,
         payload: GitHubEnterprisePushPayload,
         req: express.Request,
-    ): Promise<User> {
+    ): Promise<User | undefined> {
         const span = TraceContext.startSpan("GitHubEnterpriseApp.findUser", ctx);
         try {
             let host = req.header("X-Github-Enterprise-Host");
@@ -95,38 +95,39 @@ export class GitHubEnterpriseApp {
             if (!hostContext) {
                 throw new Error("Unsupported GitHub Enterprise host: " + host);
             }
-            const { authProviderId } = hostContext.authProvider;
-            const authId = payload.sender.id;
-            const user = await this.userDB.findUserByIdentity({ authProviderId, authId });
-            if (!user) {
-                throw new Error(`No user found with identity ${authProviderId}/${authId}.`);
-            } else if (!!user.blocked) {
-                throw new Error(`Blocked user ${user.id} tried to start prebuild.`);
+            const cloneURL = payload.repository.clone_url;
+            const projectOwners = await this.findProjectOwners(cloneURL);
+            if (!projectOwners) {
+                throw new Error("No project found.");
             }
-            const gitpodIdentity = user.identities.find(
-                (i) => i.authProviderId === TokenService.GITPOD_AUTH_PROVIDER_ID,
-            );
-            if (!gitpodIdentity) {
-                throw new Error(`User ${user.id} has no identity for '${TokenService.GITPOD_AUTH_PROVIDER_ID}'.`);
+            for (const user of projectOwners.users) {
+                const gitpodIdentity = user.identities.find(
+                    (i) => i.authProviderId === TokenService.GITPOD_AUTH_PROVIDER_ID,
+                );
+                if (!gitpodIdentity) {
+                    continue;
+                }
+                // Verify the webhook signature
+                const signature = req.header("X-Hub-Signature-256");
+                const body = (req as any).rawBody;
+                const tokenEntries = (await this.userDB.findTokensForIdentity(gitpodIdentity)).filter((tokenEntry) => {
+                    return tokenEntry.token.scopes.includes(GitHubService.PREBUILD_TOKEN_SCOPE);
+                });
+                const signatureMatched = tokenEntries.some((tokenEntry) => {
+                    const sig =
+                        "sha256=" +
+                        createHmac("sha256", user.id + "|" + tokenEntry.token.value)
+                            .update(body)
+                            .digest("hex");
+                    return timingSafeEqual(Buffer.from(sig), Buffer.from(signature ?? ""));
+                });
+                if (signatureMatched) {
+                    if (!!user.blocked) {
+                        throw new Error(`Blocked user ${user.id} tried to start prebuild.`);
+                    }
+                    return user;
+                }
             }
-            // Verify the webhook signature
-            const signature = req.header("X-Hub-Signature-256");
-            const body = (req as any).rawBody;
-            const tokenEntries = (await this.userDB.findTokensForIdentity(gitpodIdentity)).filter((tokenEntry) => {
-                return tokenEntry.token.scopes.includes(GitHubService.PREBUILD_TOKEN_SCOPE);
-            });
-            const signingToken = tokenEntries.find((tokenEntry) => {
-                const sig =
-                    "sha256=" +
-                    createHmac("sha256", user.id + "|" + tokenEntry.token.value)
-                        .update(body)
-                        .digest("hex");
-                return timingSafeEqual(Buffer.from(sig), Buffer.from(signature ?? ""));
-            });
-            if (!signingToken) {
-                throw new Error(`User ${user.id} has no token matching the payload signature.`);
-            }
-            return user;
         } finally {
             span.finish();
         }
@@ -253,6 +254,33 @@ export class GitHubEnterpriseApp {
             }
         }
         return { user: webhookInstaller };
+    }
+
+    protected async findProjectOwners(cloneURL: string): Promise<{ users: User[]; project: Project } | undefined> {
+        const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
+        if (project) {
+            if (project.userId) {
+                const user = await this.userDB.findUserById(project.userId);
+                if (user) {
+                    return { users: [user], project };
+                }
+            } else if (project.teamId) {
+                const users = [];
+                const owners = (await this.teamDB.findMembersByTeam(project.teamId || "")).filter(
+                    (m) => m.role === "owner",
+                );
+                const hostContext = this.hostContextProvider.get(new URL(cloneURL).host);
+                const authProviderId = hostContext?.authProvider.authProviderId;
+                for (const teamMember of owners) {
+                    const user = await this.userDB.findUserById(teamMember.userId);
+                    if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
+                        users.push(user);
+                    }
+                }
+                return { users, project };
+            }
+        }
+        return undefined;
     }
 
     protected getBranchFromRef(ref: string): string | undefined {
