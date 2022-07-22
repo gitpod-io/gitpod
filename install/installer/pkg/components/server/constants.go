@@ -18,8 +18,6 @@ const (
 	stripeSecretMountPath = "/stripe-secret"
 	stripeConfigMountPath = "/stripe-config"
 	githubAppCertSecret   = "github-app-cert-secret"
-	PrometheusPort        = 9500
-	PrometheusPortName    = "metrics"
 	InstallationAdminPort = common.ServerInstallationAdminPort
 	InstallationAdminName = "install-admin"
 	DebugPortName         = "debug"

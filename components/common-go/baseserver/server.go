@@ -343,6 +343,8 @@ const (
 	BuiltinDebugPort   = 6060
 	BuiltinMetricsPort = 9500
 	BuiltinHealthPort  = 9501
+
+	BuiltinMetricsPortName = "metrics"
 )
 
 type builtinServices struct {

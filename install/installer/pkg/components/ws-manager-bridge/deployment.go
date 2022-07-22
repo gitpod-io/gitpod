@@ -7,6 +7,7 @@ package wsmanagerbridge
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
@@ -138,8 +139,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							)),
 							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort: 9500,
-									Name:          "metrics",
+									ContainerPort: baseserver.BuiltinMetricsPort,
+									Name:          baseserver.BuiltinMetricsPortName,
 								},
 							},
 							VolumeMounts: []corev1.VolumeMount{{

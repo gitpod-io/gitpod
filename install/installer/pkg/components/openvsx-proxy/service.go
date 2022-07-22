@@ -5,6 +5,7 @@
 package openvsx_proxy
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
@@ -28,9 +29,9 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ServicePort:   ServicePort,
 		},
 		{
-			Name:          PrometheusPortName,
-			ContainerPort: PrometheusPort,
-			ServicePort:   PrometheusPort,
+			Name:          baseserver.BuiltinMetricsPortName,
+			ContainerPort: baseserver.BuiltinMetricsPort,
+			ServicePort:   baseserver.BuiltinMetricsPort,
 		},
 	}
 

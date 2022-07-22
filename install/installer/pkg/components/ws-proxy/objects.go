@@ -5,6 +5,7 @@
 package wsproxy
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -30,9 +31,9 @@ var Objects = common.CompositeRenderFunc(
 				ServicePort:   HTTPSProxyPort,
 			},
 			{
-				Name:          MetricsPortName,
-				ContainerPort: MetricsPort,
-				ServicePort:   MetricsPort,
+				Name:          baseserver.BuiltinMetricsPortName,
+				ContainerPort: baseserver.BuiltinMetricsPort,
+				ServicePort:   baseserver.BuiltinMetricsPort,
 			},
 			{
 				Name:          SSHPortName,

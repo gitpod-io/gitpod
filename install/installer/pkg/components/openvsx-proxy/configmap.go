@@ -25,7 +25,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		URLLocal:             fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain),
 		MaxIdleConns:         1000,
 		MaxIdleConnsPerHost:  1000,
-		PrometheusAddr:       fmt.Sprintf(":%d", PrometheusPort),
+		PrometheusAddr:       common.LocalhostPrometheusAddr(),
 		RedisAddr:            "localhost:6379",
 	}
 

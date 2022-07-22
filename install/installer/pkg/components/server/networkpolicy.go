@@ -5,6 +5,7 @@
 package server
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/gitpod"
 
@@ -50,7 +51,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
 								Protocol: common.TCPProtocol,
-								Port:     &intstr.IntOrString{IntVal: PrometheusPort},
+								Port:     &intstr.IntOrString{IntVal: baseserver.BuiltinMetricsPort},
 							},
 						},
 						From: []networkingv1.NetworkPolicyPeer{

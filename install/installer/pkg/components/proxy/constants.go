@@ -14,13 +14,11 @@ const (
 	ContainerHTTPSName    = common.ProxyContainerHTTPSName
 	ContainerSSHPort      = 22
 	ContainerSSHName      = "ssh"
-	PrometheusPort        = 9500
 	InitContainerImage    = "library/alpine"
 	InitContainerTag      = "3.15"
 	KubeRBACProxyRepo     = common.KubeRBACProxyRepo
 	KubeRBACProxyImage    = common.KubeRBACProxyImage
 	KubeRBACProxyTag      = common.KubeRBACProxyTag
-	MetricsContainerName  = "metrics"
 	ReadinessPort         = 8003
 	RegistryAuthSecret    = common.RegistryAuthSecret
 	RegistryTLSCertSecret = common.RegistryTLSCertSecret

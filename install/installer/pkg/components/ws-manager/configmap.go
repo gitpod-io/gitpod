@@ -226,10 +226,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		PProf: struct {
 			Addr string `json:"addr"`
-		}{Addr: "localhost:6060"},
+		}{Addr: common.LocalhostPprofAddr()},
 		Prometheus: struct {
 			Addr string `json:"addr"`
-		}{Addr: "127.0.0.1:9500"},
+		}{Addr: common.LocalhostPrometheusAddr()},
 	}
 
 	fc, err := common.ToJSONString(wsmcfg)

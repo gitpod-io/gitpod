@@ -70,12 +70,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
 							common.WorkspaceTracingEnv(ctx),
-							[]corev1.EnvVar{{
-								Name: "NODENAME",
-								ValueFrom: &corev1.EnvVarSource{
-									FieldRef: &corev1.ObjectFieldSelector{FieldPath: "spec.nodeName"},
-								},
-							}},
+							common.NodeNameEnv(ctx),
 						)),
 						SecurityContext: &corev1.SecurityContext{
 							Privileged: pointer.Bool(true),
