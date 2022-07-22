@@ -39,7 +39,7 @@ resource "google_compute_subnetwork" "subnet" {
 }
 
 resource "google_container_cluster" "gitpod-cluster" {
-  name     = "c${var.name}"
+  name     = "gitpod-${var.name}"
   location = var.zone == null ? var.region : var.zone
 
   cluster_autoscaling {
@@ -58,7 +58,7 @@ resource "google_container_cluster" "gitpod-cluster" {
     }
   }
 
-  min_master_version = var.kubernetes_version
+  min_master_version = var.cluster_version
   # the default nodepool is used as the services nodepool
   remove_default_node_pool = false
   node_config {
@@ -82,7 +82,7 @@ resource "google_container_cluster" "gitpod-cluster" {
     }
   }
 
-  initial_node_count       = 1
+  initial_node_count = 1
   release_channel {
     channel = "UNSPECIFIED"
   }
@@ -115,7 +115,7 @@ resource "google_container_node_pool" "workspaces" {
   name               = "workspaces-${var.name}"
   location           = google_container_cluster.gitpod-cluster.location
   cluster            = google_container_cluster.gitpod-cluster.name
-  version            = var.kubernetes_version // kubernetes version
+  version            = var.cluster_version // kubernetes version
   initial_node_count = 1
   max_pods_per_node  = 110
 
@@ -153,26 +153,26 @@ resource "google_container_node_pool" "workspaces" {
 }
 
 resource "google_sql_database_instance" "gitpod" {
-  name = "sql-${var.name}"
+  name             = "sql-${var.name}"
   database_version = "MYSQL_5_7"
-  region = "${var.region}"
+  region           = var.region
   settings {
-      tier = "db-n1-standard-2"
+    tier = "db-n1-standard-2"
   }
   deletion_protection = false
 }
 
 resource "google_sql_database" "database" {
-    name = "gitpod"
-    instance = "${google_sql_database_instance.gitpod.name}"
-    charset = "utf8"
-    collation = "utf8_general_ci"
+  name      = "gitpod"
+  instance  = google_sql_database_instance.gitpod.name
+  charset   = "utf8"
+  collation = "utf8_general_ci"
 }
 
 resource "google_sql_user" "users" {
-    name = "gitpod"
-    instance = "${google_sql_database_instance.gitpod.name}"
-    password = "gitpod"
+  name     = "gitpod"
+  instance = google_sql_database_instance.gitpod.name
+  password = "gitpod"
 }
 
 module "gke_auth" {
@@ -182,7 +182,7 @@ module "gke_auth" {
 
   project_id   = var.project
   location     = google_container_cluster.gitpod-cluster.location
-  cluster_name = "c${var.name}"
+  cluster_name = "gitpod-${var.name}"
 }
 
 resource "local_file" "kubeconfig" {

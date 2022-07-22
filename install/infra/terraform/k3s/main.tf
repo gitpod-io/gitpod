@@ -73,7 +73,7 @@ resource "google_compute_instance" "k3s_master_instance" {
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-2004-focal-v20220419"
+      image = var.image_id
       size  = 100
       type  = "pd-ssd"
     }
@@ -118,6 +118,7 @@ resource "null_resource" "k3sup_install" {
               --context k3s \
               --user gitpod \
               --local-path ${var.kubeconfig} \
+              --k3s-version ${var.cluster_version} \
               --k3s-extra-args=" --disable=traefik --node-label=gitpod.io/workload_meta=true --node-label=gitpod.io/workload_ide=true --node-label=gitpod.io/workload_workspace_services=true --node-label=gitpod.io/workload_workspace_regular=true --node-label=gitpod.io/workload_workspace_headless=true" \
           EOT
   }
@@ -125,7 +126,7 @@ resource "null_resource" "k3sup_install" {
 
 resource "google_dns_record_set" "gitpod-dns" {
   provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null ) ? 0 : 1
+  count        = (var.domain_name == null) || (var.managed_dns_zone == null) ? 0 : 1
   name         = "${var.domain_name}."
   managed_zone = var.managed_dns_zone
   project      = var.dns_project == null ? var.gcp_project : var.dns_project
@@ -137,7 +138,7 @@ resource "google_dns_record_set" "gitpod-dns" {
 
 resource "google_dns_record_set" "gitpod-dns-1" {
   provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null ) ? 0 : 1
+  count        = (var.domain_name == null) || (var.managed_dns_zone == null) ? 0 : 1
   name         = "ws.${var.domain_name}."
   managed_zone = var.managed_dns_zone
   project      = var.dns_project == null ? var.gcp_project : var.dns_project
@@ -149,7 +150,7 @@ resource "google_dns_record_set" "gitpod-dns-1" {
 
 resource "google_dns_record_set" "gitpod-dns-2" {
   provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null ) ? 0 : 1
+  count        = (var.domain_name == null) || (var.managed_dns_zone == null) ? 0 : 1
   name         = "*.${var.domain_name}."
   managed_zone = var.managed_dns_zone
   project      = var.dns_project == null ? var.gcp_project : var.dns_project
@@ -161,7 +162,7 @@ resource "google_dns_record_set" "gitpod-dns-2" {
 
 resource "google_dns_record_set" "gitpod-dns-3" {
   provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null ) ? 0 : 1
+  count        = (var.domain_name == null) || (var.managed_dns_zone == null) ? 0 : 1
   name         = "*.ws.${var.domain_name}."
   managed_zone = var.managed_dns_zone
   project      = var.dns_project == null ? var.gcp_project : var.dns_project
@@ -172,26 +173,26 @@ resource "google_dns_record_set" "gitpod-dns-3" {
 }
 
 resource "google_sql_database_instance" "gitpod" {
-  name = "sql-${var.name}"
+  name             = "sql-${var.name}"
   database_version = "MYSQL_5_7"
-  region = "${var.gcp_region}"
+  region           = var.gcp_region
   settings {
-      tier = "db-n1-standard-2"
+    tier = "db-n1-standard-2"
   }
   deletion_protection = false
 }
 
 resource "google_sql_database" "database" {
-    name = "gitpod"
-    instance = "${google_sql_database_instance.gitpod.name}"
-    charset = "utf8"
-    collation = "utf8_general_ci"
+  name      = "gitpod"
+  instance  = google_sql_database_instance.gitpod.name
+  charset   = "utf8"
+  collation = "utf8_general_ci"
 }
 
 resource "google_sql_user" "users" {
-    name = "gitpod"
-    instance = "${google_sql_database_instance.gitpod.name}"
-    password = "gitpod"
+  name     = "gitpod"
+  instance = google_sql_database_instance.gitpod.name
+  password = "gitpod"
 }
 
 data "local_file" "kubeconfig" {

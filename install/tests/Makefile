@@ -17,6 +17,11 @@ ifndef cloud
 	$(error cloud is not defined)
 endif
 
+check-env-cluster-version:
+ifndef TF_VAR_cluster_version
+	$(error TF_VAR_cluster_version is not defined)
+endif
+
 .PHONY: help
 all: help
 help: Makefile
@@ -41,12 +46,13 @@ k3s-kubeconfig: sync-kubeconfig
 gcp-kubeconfig:
 	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	export KUBECONFIG=${KUBECONFIG} && \
-	gcloud container clusters get-credentials c${TF_VAR_TEST_ID} --zone europe-west1-d --project sh-automated-tests || $(MAKE) sync-kubeconfig || echo "No cluster present"
+	gcloud container clusters get-credentials gitpod-${TF_VAR_TEST_ID} --zone europe-west1-d --project sh-automated-tests || $(MAKE) sync-kubeconfig || echo "No cluster present"
 
 ## azure-kubeconfig: Get the kubeconfig configuration for Azure AKS
 azure-kubeconfig:
 	export KUBECONFIG=${KUBECONFIG} && \
-	az aks get-credentials --name gitpod-test-nor-primary-${TF_VAR_TEST_ID} --resource-group gitpod-test-nor-${TF_VAR_TEST_ID} --file ${KUBECONFIG} || echo "No cluster present"
+	export resource=$$(echo "$$TF_VAR_TEST_ID" | sed "s/[\\W\\-]//") && \
+	az aks get-credentials --name gitpod-test-nor-primary-$$resource --resource-group gitpod-test-nor-$$resource --file ${KUBECONFIG} || echo "No cluster present"
 
 ## aws-kubeconfig: Get the kubeconfig configuration for AWS EKS
 aws-kubeconfig:
@@ -56,23 +62,30 @@ aws-kubeconfig:
 
 .PHONY:
 ## gke-standard-cluster: Creates a zonal GKE cluster
-gke-standard-cluster:
+gke-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
 	terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done creating GKE cluster"
 
+ami_id_120 := "ami-0ecb917eb4fbf4387"
+
+ami_id_121 := "ami-0d57fb01036fac543"
+
+ami_id_122 := "ami-0b306cb7e98db98e4"
+
 .PHONY:
 ## eks-standard-cluster: Creates an EKS cluster
-eks-standard-cluster:
+eks-standard-cluster: ami_id = $(if $(ami_id_${TF_VAR_cluster_version//.}),$(ami_id_${TF_VAR_cluster_version//.}),$(ami_id_122))
+eks-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
-	terraform apply -target=module.eks -var kubeconfig=${KUBECONFIG} --auto-approve
+	terraform apply -target=module.eks -var kubeconfig=${KUBECONFIG} -var eks_node_image_id=${ami_id} --auto-approve
 	@echo "Done creating EKS cluster"
 
 .PHONY:
 ## aks-standard-cluster: Creates an AKS cluster
-aks-standard-cluster:
+aks-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
 	terraform apply -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
@@ -94,12 +107,20 @@ cluster-issuer: check-env-cloud
 	terraform apply -target=module.$(cloud)-issuer  -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done creating cluster issuer"
 
+image_id_1804 := "ubuntu-1804-bionic-v20220712"
+
+image_id_2004 := "ubuntu-2004-focal-v20220712"
+
+image_id_2204 := "ubuntu-2204-jammy-v20220712a"
+
+os_version ?= "2004"
 .PHONY:
 ## k3s-standard-cluster: Creates a K3S cluster on GCP with one master and 1 worker node
-k3s-standard-cluster:
+k3s-standard-cluster: image_id = $(if $(image_id_$(os_version)),$(image_id_$(os_version)),$(image_id_2004))
+k3s-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
-	terraform apply -target=module.k3s -var kubeconfig=${KUBECONFIG} --auto-approve && \
+	terraform apply -target=module.k3s -var kubeconfig=${KUBECONFIG} -var k3s_node_image_id=${image_id} --auto-approve && \
 	$(MAKE) upload-kubeconfig-to-gcp # we upload the file to GCP since we cannot retrieve the file against without SSHing to the master
 	@echo "Done creating k3s cluster"
 
@@ -241,8 +262,13 @@ delete-cm-setup: sleeptime=$(if $(time_to_sleep_$(cloud)),$(time_to_sleep_$(clou
 delete-cm-setup:
 	sleep 180 && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep ${sleeptime};
 
+gitpod-debug-info:
+	@echo "Gitpod is not ready"
+	@kubectl get pods -n gitpod
+	@kubectl get certificate -n gitpod
+
 check-kots-app:
-	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { echo "Gitpod is not ready"; exit 1; }
+	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { $(MAKE) gitpod-debug-info; exit 1; }
 
 check-gitpod-installation: delete-cm-setup check-kots-app check-env-sub-domain
 	@echo "Curling http://${TF_VAR_TEST_ID}.tests.gitpod-self-hosted.com/api/version"
@@ -293,7 +319,7 @@ destroy-cluster: destroy-gcp destroy-aws destroy-azure
 destroy-kubeconfig:
 	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	gsutil rm gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-kubeconfig || echo "No kubeconfig"
-	rm ${KUBECONFIG}
+	rm ${KUBECONFIG} || echo "No kubeconfig"
 
 select-workspace:
 	terraform workspace select $(TF_VAR_TEST_ID)
