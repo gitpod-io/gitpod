@@ -302,6 +302,11 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     trackEvent(event: RemoteTrackMessage): Promise<void>;
     trackLocation(event: RemotePageMessage): Promise<void>;
     identifyUser(event: RemoteIdentifyMessage): Promise<void>;
+
+    /**
+     * Frontend notifications
+     */
+    getNotifications(): Promise<string[]>;
 }
 
 export interface RateLimiterError {

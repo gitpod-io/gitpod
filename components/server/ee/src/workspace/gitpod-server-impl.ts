@@ -2096,6 +2096,26 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
     }
 
+    async getNotifications(ctx: TraceContext): Promise<string[]> {
+        const result = await super.getNotifications(ctx);
+        const user = this.checkAndBlockUser("getNotifications");
+        if (user.usageAttributionId) {
+            const allSessions = await this.listBilledUsage(ctx, user.usageAttributionId);
+            const totalUsage = allSessions.map((s) => s.credits).reduce((a, b) => a + b, 0);
+            const costCenter = await this.costCenterDB.findById(user.usageAttributionId);
+            if (costCenter) {
+                if (totalUsage > costCenter.spendingLimit) {
+                    result.unshift("The spending limit is reached.");
+                } else if (totalUsage > 0.8 * costCenter.spendingLimit * 0.8) {
+                    result.unshift("The spending limit is almost reached.");
+                }
+            } else {
+                log.warn("No costcenter found.", { userId: user.id, attributionId: user.usageAttributionId });
+            }
+        }
+        return result;
+    }
+
     async listBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
         traceAPIParams(ctx, { attributionId });
         const user = this.checkAndBlockUser("listBilledUsage");
