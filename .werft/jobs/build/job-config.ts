@@ -8,7 +8,6 @@ export interface JobConfig {
     cleanSlateDeployment: boolean;
     coverageOutput: string;
     dontTest: boolean;
-    dynamicCPULimits: boolean;
     fromVersion: string;
     installEELicense: boolean;
     localAppVersion: string;
@@ -73,7 +72,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
 
     // Main build should only contain the annotations below:
     // ['with-contrib', 'publish-to-npm', 'publish-to-jb-marketplace', 'with-clean-slate-deployment']
-    const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig && !mainBuild;
     const withContrib = "with-contrib" in buildConfig || mainBuild;
     const withPreview = "with-preview" in buildConfig && !mainBuild;
     const storage = buildConfig["storage"] || "";
@@ -119,7 +117,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         cleanSlateDeployment,
         coverageOutput,
         dontTest,
-        dynamicCPULimits,
         fromVersion,
         installEELicense,
         localAppVersion,
