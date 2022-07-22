@@ -129,11 +129,14 @@ type WorkspaceDefaults struct {
 }
 
 type WorkspaceClass struct {
-	Id          string          `json:"id"`
-	DisplayName string          `json:"displayName"`
-	IsDefault   bool            `json:"isDefault"`
-	Deprecated  bool            `json:"deprecated"`
-	Marker      map[string]bool `json:"marker,omitempty"`
+	Id          string                 `json:"id"`
+	Category    WorkspaceClassCategory `json:"category"`
+	DisplayName string                 `json:"displayName"`
+	Description string                 `json:"description"`
+	PowerUps    uint32                 `json:"powerups"`
+	IsDefault   bool                   `json:"isDefault"`
+	Deprecated  bool                   `json:"deprecated"`
+	Marker      map[string]bool        `json:"marker,omitempty"`
 }
 
 type NamedWorkspaceFeatureFlag string
@@ -141,4 +144,10 @@ type NamedWorkspaceFeatureFlag string
 const (
 	NamedWorkspaceFeatureFlagFullWorkspaceBackup NamedWorkspaceFeatureFlag = "full_workspace_backup"
 	NamedWorkspaceFeatureFlagFixedResources      NamedWorkspaceFeatureFlag = "fixed_resources"
+)
+
+type WorkspaceClassCategory string
+
+const (
+	GeneralPurpose WorkspaceClassCategory = "GENERAL PURPOSE"
 )
