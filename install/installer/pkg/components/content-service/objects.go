@@ -4,7 +4,10 @@
 
 package content_service
 
-import "github.com/gitpod-io/gitpod/installer/pkg/common"
+import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+)
 
 var Objects = common.CompositeRenderFunc(
 	configmap,
@@ -18,9 +21,9 @@ var Objects = common.CompositeRenderFunc(
 			ServicePort:   RPCPort,
 		},
 		{
-			Name:          PrometheusName,
-			ContainerPort: PrometheusPort,
-			ServicePort:   PrometheusPort,
+			Name:          baseserver.BuiltinMetricsPortName,
+			ContainerPort: baseserver.BuiltinMetricsPort,
+			ServicePort:   baseserver.BuiltinMetricsPort,
 		},
 	}),
 	common.DefaultServiceAccount(Component),

@@ -334,7 +334,7 @@ func KubeRBACProxyContainerWithConfig(ctx *RenderContext) *corev1.Container {
 			fmt.Sprintf("--upstream=http://127.0.0.1:%d/", baseserver.BuiltinMetricsPort),
 		},
 		Ports: []corev1.ContainerPort{
-			{Name: "metrics", ContainerPort: baseserver.BuiltinMetricsPort},
+			{Name: baseserver.BuiltinMetricsPortName, ContainerPort: baseserver.BuiltinMetricsPort},
 		},
 		Env: []corev1.EnvVar{
 			{
@@ -450,7 +450,7 @@ var (
 		Ports: []networkingv1.NetworkPolicyPort{
 			{
 				Protocol: TCPProtocol,
-				Port:     &intstr.IntOrString{IntVal: 9500},
+				Port:     &intstr.IntOrString{IntVal: baseserver.BuiltinMetricsPort},
 			},
 		},
 		From: []networkingv1.NetworkPolicyPeer{
@@ -603,4 +603,13 @@ func ThirdPartyContainerRepo(configRegistry string, thirdPartyRegistry string) s
 // ToJSONString returns the serialized JSON string of an object
 func ToJSONString(input interface{}) ([]byte, error) {
 	return json.MarshalIndent(input, "", "  ")
+}
+
+func NodeNameEnv(context *RenderContext) []corev1.EnvVar {
+	return []corev1.EnvVar{{
+		Name: "NODENAME",
+		ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{FieldPath: "spec.nodeName"},
+		},
+	}}
 }

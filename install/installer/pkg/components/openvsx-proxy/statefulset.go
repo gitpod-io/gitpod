@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
@@ -93,8 +94,8 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:          PortName,
 							ContainerPort: ContainerPort,
 						}, {
-							Name:          PrometheusPortName,
-							ContainerPort: PrometheusPort,
+							Name:          baseserver.BuiltinMetricsPortName,
+							ContainerPort: baseserver.BuiltinMetricsPort,
 						}},
 						VolumeMounts: []v1.VolumeMount{{
 							Name:      "config",

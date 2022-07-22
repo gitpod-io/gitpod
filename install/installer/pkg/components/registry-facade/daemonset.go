@@ -241,15 +241,8 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Name:  "GRPC_GO_RETRY",
 									Value: "on",
 								},
-								{
-									Name: "NODENAME",
-									ValueFrom: &corev1.EnvVarSource{
-										FieldRef: &corev1.ObjectFieldSelector{
-											FieldPath: "spec.nodeName",
-										},
-									},
-								},
 							},
+							common.NodeNameEnv(ctx),
 							envvars,
 						)),
 						VolumeMounts: append(
@@ -313,16 +306,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								fmt.Sprintf(`--probe-url=http://localhost:%v/ready`, ReadinessPort),
 							},
 							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
-								[]corev1.EnvVar{
-									{
-										Name: "NODENAME",
-										ValueFrom: &corev1.EnvVarSource{
-											FieldRef: &corev1.ObjectFieldSelector{
-												FieldPath: "spec.nodeName",
-											},
-										},
-									},
-								},
+								common.NodeNameEnv(ctx),
 							)),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Lifecycle: &corev1.Lifecycle{

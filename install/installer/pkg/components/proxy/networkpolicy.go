@@ -7,6 +7,7 @@ package proxy
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	networkingv1 "k8s.io/api/networking/v1"
@@ -42,7 +43,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}, {
 				Ports: []networkingv1.NetworkPolicyPort{{
 					Protocol: common.TCPProtocol,
-					Port:     &intstr.IntOrString{IntVal: PrometheusPort},
+					Port:     &intstr.IntOrString{IntVal: baseserver.BuiltinMetricsPort},
 				}},
 				From: []networkingv1.NetworkPolicyPeer{{
 					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{

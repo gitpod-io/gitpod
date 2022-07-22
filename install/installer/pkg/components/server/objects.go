@@ -5,6 +5,7 @@
 package server
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server/ide"
 )
@@ -23,9 +24,9 @@ var Objects = common.CompositeRenderFunc(
 			ServicePort:   ServicePort,
 		},
 		{
-			Name:          PrometheusPortName,
-			ContainerPort: PrometheusPort,
-			ServicePort:   PrometheusPort,
+			Name:          baseserver.BuiltinMetricsPortName,
+			ContainerPort: baseserver.BuiltinMetricsPort,
+			ServicePort:   baseserver.BuiltinMetricsPort,
 		},
 		{
 			Name:          InstallationAdminName,
@@ -34,8 +35,8 @@ var Objects = common.CompositeRenderFunc(
 		},
 		{
 			Name:          DebugPortName,
-			ContainerPort: common.DebugPort,
-			ServicePort:   common.DebugPort,
+			ContainerPort: baseserver.BuiltinDebugPort,
+			ServicePort:   baseserver.BuiltinDebugPort,
 		},
 		{
 			Name:          DebugNodePortName,

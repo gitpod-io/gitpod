@@ -7,6 +7,7 @@ package proxy
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
@@ -32,8 +33,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	prometheusPort := corev1.ContainerPort{
-		ContainerPort: PrometheusPort,
-		Name:          MetricsContainerName,
+		ContainerPort: baseserver.BuiltinMetricsPort,
+		Name:          baseserver.BuiltinMetricsPortName,
 	}
 
 	volumes := []corev1.Volume{{
@@ -176,9 +177,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Args: []string{
-								"--v=10",
 								"--logtostderr",
-								fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", PrometheusPort),
+								fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", baseserver.BuiltinMetricsPort),
 								"--upstream=http://127.0.0.1:9545/",
 							},
 							Env: []corev1.EnvVar{{
@@ -191,8 +191,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							}},
 							Ports: []corev1.ContainerPort{{
-								ContainerPort: PrometheusPort,
-								Name:          MetricsContainerName,
+								ContainerPort: baseserver.BuiltinMetricsPort,
+								Name:          baseserver.BuiltinMetricsPortName,
 								Protocol:      *common.TCPProtocol,
 							}},
 							Resources: common.ResourceRequirements(ctx, Component, kubeRbacProxyContainerName, corev1.ResourceRequirements{
