@@ -21,6 +21,13 @@ message ListBilledUsageRequest {
     // to specifies the end time range for this request.
     // All instances which existed ending at to will be returned.
     google.protobuf.Timestamp to = 3;
+
+    enum Ordering {
+        ORDERING_DESCENDING = 0;
+        ORDERING_ASCENDING = 1;
+    }
+
+    Ordering order = 4;
 }
 
 message ListBilledUsageResponse {
