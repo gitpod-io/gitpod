@@ -15,8 +15,17 @@ export interface WorkspaceClassConfig {
     // Is the "default" class. The config is validated to only every have exactly _one_ default class.
     isDefault: boolean;
 
+    // Identifies which category this class belongs to e.g. general purpose
+    category: string;
+
     // The string we display to users in the UI
     displayName: string;
+
+    // The description for the workspace class
+    description: string;
+
+    // The "power level" of the workspace class
+    powerups: number;
 
     // Whether or not to:
     //  - offer users this Workspace class for selection

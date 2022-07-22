@@ -220,6 +220,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         getSpendingLimitForTeam: { group: "default", points: 1 },
         setSpendingLimitForTeam: { group: "default", points: 1 },
         getNotifications: { group: "default", points: 1 },
+        getSupportedWorkspaceClasses: { group: "default", points: 1 },
     };
 
     return {
