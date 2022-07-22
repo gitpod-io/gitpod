@@ -4,12 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
 import { WorkspaceClasses } from "@gitpod/gitpod-protocol";
 import WorkspaceClass from "../components/WorkspaceClass";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 
 interface SelectWorkspaceClassProps {
     enabled: boolean;
@@ -18,12 +19,10 @@ interface SelectWorkspaceClassProps {
 export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
     const { user } = useContext(UserContext);
 
-    const [workspaceClass, setWorkspaceClass] = useState<string>(
-        user?.additionalData?.workspaceClasses?.regular || "g1-standard",
-    );
+    const [workspaceClass, setWorkspaceClass] = useState<string>(user?.additionalData?.workspaceClasses?.regular || "");
     const actuallySetWorkspaceClass = async (value: string) => {
         const additionalData = user?.additionalData || {};
-        const prevWorkspaceClass = additionalData?.workspaceClasses?.regular || "g1-standard";
+        const prevWorkspaceClass = additionalData?.workspaceClasses?.regular || "";
         const workspaceClasses = (additionalData?.workspaceClasses || {}) as WorkspaceClasses;
         workspaceClasses.regular = value;
         workspaceClasses.prebuild = value;
@@ -38,6 +37,17 @@ export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
         }
     };
 
+    const [supportedClasses, setSupportedClasses] = useState<SupportedWorkspaceClass[]>([]);
+
+    useEffect(() => {
+        const fetchClasses = async () => {
+            const classes = await getGitpodService().server.getSupportedWorkspaceClasses();
+            setSupportedClasses(classes);
+        };
+
+        fetchClasses().catch(console.error);
+    }, []);
+
     if (!props.enabled) {
         return <div></div>;
     } else {
@@ -48,24 +58,19 @@ export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
                     Choose the workspace machine type for your workspaces.
                 </p>
                 <div className="mt-4 space-x-3 flex">
-                    <WorkspaceClass
-                        additionalStyles="w-80 h-32"
-                        selected={workspaceClass === "g1-standard"}
-                        onClick={() => actuallySetWorkspaceClass("g1-standard")}
-                        category="GENERAL PURPOSE"
-                        friendlyName="Standard"
-                        description="Up to 4 vCPU, 8GB memory, 30GB disk"
-                        powerUps={1}
-                    />
-                    <WorkspaceClass
-                        additionalStyles="w-80 h-32"
-                        selected={workspaceClass === "g1-large"}
-                        onClick={() => actuallySetWorkspaceClass("g1-large")}
-                        category="GENERAL PURPOSE"
-                        friendlyName="Large"
-                        description="Up to 8 vCPU, 16GB memory, 50GB disk"
-                        powerUps={2}
-                    />
+                    {supportedClasses.map((c) => {
+                        return (
+                            <WorkspaceClass
+                                additionalStyles="w-80 h-32"
+                                selected={workspaceClass === c.id}
+                                onClick={() => actuallySetWorkspaceClass(c.id)}
+                                category={c.category}
+                                friendlyName={c.displayName}
+                                description={c.description}
+                                powerUps={c.powerups}
+                            />
+                        );
+                    })}
                 </div>
             </div>
         );
