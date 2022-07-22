@@ -49,9 +49,9 @@ func CreateUsageRecords(ctx context.Context, conn *gorm.DB, records []WorkspaceI
 	return db.CreateInBatches(records, 1000).Error
 }
 
-type order int
+type Order int
 
-func (o order) ToSQL() string {
+func (o Order) ToSQL() string {
 	switch o {
 	case AscendingOrder:
 		return "ASC"
@@ -61,11 +61,11 @@ func (o order) ToSQL() string {
 }
 
 const (
-	DescendingOrder order = iota
+	DescendingOrder Order = iota
 	AscendingOrder
 )
 
-func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to time.Time, sort order) ([]WorkspaceInstanceUsage, error) {
+func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to time.Time, sort Order) ([]WorkspaceInstanceUsage, error) {
 	db := conn.WithContext(ctx)
 
 	var usageRecords []WorkspaceInstanceUsage

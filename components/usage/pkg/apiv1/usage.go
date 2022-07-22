@@ -44,7 +44,15 @@ func (us *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUs
 		return nil, status.Errorf(codes.InvalidArgument, "Maximum range exceeded. Range specified can be at most %s", maxQuerySize.String())
 	}
 
-	usageRecords, err := db.ListUsage(ctx, us.conn, db.AttributionID(in.GetAttributionId()), from, to, db.DescendingOrder)
+	var order db.Order
+	switch in.Order {
+	case v1.ListBilledUsageRequest_ORDERING_ASCENDING:
+		order = db.AscendingOrder
+	default:
+		order = db.DescendingOrder
+	}
+
+	usageRecords, err := db.ListUsage(ctx, us.conn, db.AttributionID(in.GetAttributionId()), from, to, order)
 	if err != nil {
 		log.Log.
 			WithField("attribution_id", in.AttributionId).

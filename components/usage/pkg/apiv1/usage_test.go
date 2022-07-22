@@ -70,8 +70,39 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 			start := time.Date(2022, 07, 1, 13, 0, 0, 0, time.UTC)
 			attrID := db.NewTeamAttributionID(uuid.New().String())
 			var instances []db.WorkspaceInstanceUsage
+			for i := 0; i < 4; i++ {
+				instance := dbtest.NewWorkspaceInstanceUsage(t, db.WorkspaceInstanceUsage{
+					AttributionID: attrID,
+					StartedAt:     start.Add(time.Duration(i) * 24 * time.Hour),
+					StoppedAt: sql.NullTime{
+						Time:  start.Add(time.Duration(i)*24*time.Hour + time.Hour),
+						Valid: true,
+					},
+				})
+				instances = append(instances, instance)
+			}
+
+			return Scenario{
+				name:      "filters results to specified time range, ascending",
+				Instances: instances,
+				Request: &v1.ListBilledUsageRequest{
+					AttributionId: string(attrID),
+					From:          timestamppb.New(start),
+					To:            timestamppb.New(start.Add(3 * 24 * time.Hour)),
+					Order:         v1.ListBilledUsageRequest_ORDERING_ASCENDING,
+				},
+				Expect: Expectation{
+					Code:        codes.OK,
+					InstanceIds: []string{instances[0].InstanceID.String(), instances[1].InstanceID.String(), instances[2].InstanceID.String()},
+				},
+			}
+		})(),
+		(func() Scenario {
+			start := time.Date(2022, 07, 1, 13, 0, 0, 0, time.UTC)
+			attrID := db.NewTeamAttributionID(uuid.New().String())
+			var instances []db.WorkspaceInstanceUsage
 			var instanceIDs []string
-			for i := 0; i < 10; i++ {
+			for i := 0; i < 3; i++ {
 				instance := dbtest.NewWorkspaceInstanceUsage(t, db.WorkspaceInstanceUsage{
 					AttributionID: attrID,
 					StartedAt:     start.Add(time.Duration(i) * 24 * time.Hour),
@@ -85,20 +116,18 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 				instanceIDs = append(instanceIDs, instance.InstanceID.String())
 			}
 
-			matchingIDs := instanceIDs[0:5]
-			reverse(matchingIDs)
-
 			return Scenario{
-				name:      "filters results to specified time range",
+				name:      "filters results to specified time range, descending",
 				Instances: instances,
 				Request: &v1.ListBilledUsageRequest{
 					AttributionId: string(attrID),
 					From:          timestamppb.New(start),
 					To:            timestamppb.New(start.Add(5 * 24 * time.Hour)),
+					Order:         v1.ListBilledUsageRequest_ORDERING_DESCENDING,
 				},
 				Expect: Expectation{
 					Code:        codes.OK,
-					InstanceIds: matchingIDs,
+					InstanceIds: []string{instances[2].InstanceID.String(), instances[1].InstanceID.String(), instances[0].InstanceID.String()},
 				},
 			}
 		})(),
@@ -135,11 +164,5 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 
 			require.Equal(t, scenario.Expect.InstanceIds, instanceIds)
 		})
-	}
-}
-
-func reverse[S ~[]E, E any](s S) {
-	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
-		s[i], s[j] = s[j], s[i]
 	}
 }
