@@ -311,7 +311,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 		case config.PenaltyStopWorkspaceAndBlockUser:
 			log.WithField("infringement", ws.Infringements).WithFields(owi).Info("stopping workspace and blocking user")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
-			err := agent.stopWorkspaceAndBlockUser(ws.SupervisorPID, ws.Owner)
+			err := agent.stopWorkspaceAndBlockUser(ws.SupervisorPID, ws.Owner, ws.WorkspaceID)
 			if err != nil {
 				log.WithError(err).WithFields(owi).Debug("failed to stop workspace and block user")
 				agent.metrics.penaltyFailures.WithLabelValues(string(p), err.Error()).Inc()
