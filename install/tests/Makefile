@@ -74,6 +74,12 @@ ami_id_121 := "ami-0d57fb01036fac543"
 
 ami_id_122 := "ami-0b306cb7e98db98e4"
 
+ami_id_120 := "ami-0ecb917eb4fbf4387"
+
+ami_id_121 := "ami-0d57fb01036fac543"
+
+ami_id_122 := "ami-0b306cb7e98db98e4"
+
 .PHONY:
 ## eks-standard-cluster: Creates an EKS cluster
 eks-standard-cluster: ami_id = $(if $(ami_id_${TF_VAR_cluster_version//.}),$(ami_id_${TF_VAR_cluster_version//.}),$(ami_id_122))
