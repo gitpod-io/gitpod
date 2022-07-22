@@ -29,7 +29,7 @@ type Config struct {
 
 	StripeCredentialsFile string `json:"stripeCredentialsFile,omitempty"`
 
-	ContentServiceUrl string `json:"contentServiceUrl,omitempty"`
+	ContentServiceAddress string `json:"contentServiceAddress,omitempty"`
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
 }
@@ -74,8 +74,8 @@ func Start(cfg Config) error {
 	}
 
 	var contentService contentservice.Interface = &contentservice.NoOpClient{}
-	if cfg.ContentServiceUrl != "" {
-		contentService = contentservice.New(cfg.ContentServiceUrl)
+	if cfg.ContentServiceAddress != "" {
+		contentService = contentservice.New(cfg.ContentServiceAddress)
 	}
 
 	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, pricer, billingController, contentService))
