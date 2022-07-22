@@ -3243,4 +3243,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return this.imagebuilderClientProvider.getClient(user, workspace, instance);
         }
     }
+
+    async getNotifications(ctx: TraceContext): Promise<string[]> {
+        this.checkAndBlockUser("getNotifications");
+        return [];
+    }
 }
