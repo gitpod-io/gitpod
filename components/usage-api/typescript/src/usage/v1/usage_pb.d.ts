@@ -26,6 +26,8 @@ export class ListBilledUsageRequest extends jspb.Message {
     clearTo(): void;
     getTo(): google_protobuf_timestamp_pb.Timestamp | undefined;
     setTo(value?: google_protobuf_timestamp_pb.Timestamp): ListBilledUsageRequest;
+    getOrder(): ListBilledUsageRequest.Ordering;
+    setOrder(value: ListBilledUsageRequest.Ordering): ListBilledUsageRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListBilledUsageRequest.AsObject;
@@ -42,7 +44,14 @@ export namespace ListBilledUsageRequest {
         attributionId: string,
         from?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         to?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        order: ListBilledUsageRequest.Ordering,
     }
+
+    export enum Ordering {
+    ORDERING_DESCENDING = 0,
+    ORDERING_ASCENDING = 1,
+    }
+
 }
 
 export class ListBilledUsageResponse extends jspb.Message {
