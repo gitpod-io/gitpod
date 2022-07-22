@@ -183,19 +183,20 @@ func (m *Monitor) onVolumesnapshotEvent(evt watch.Event) error {
 
 	// get the pod resource
 	var pod corev1.Pod
-	if err := m.manager.Clientset.Get(context.Background(), types.NamespacedName{Namespace: vs.Namespace, Name: podName}, &pod); err != nil {
-		log.WithError(err).Warnf("the pod %s/%s is missing", podName, vs.Namespace)
-		return nil
-	}
+	_ = m.manager.Clientset.Get(context.Background(), types.NamespacedName{Namespace: vs.Namespace, Name: podName}, &pod)
 
 	if vs.Status == nil || vs.Status.ReadyToUse == nil || !*vs.Status.ReadyToUse || vs.Status.BoundVolumeSnapshotContentName == nil {
-		m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is in progress", vs.Name)
+		if !pod.CreationTimestamp.IsZero() {
+			m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is in progress", vs.Name)
+		}
 		return nil
 	}
 
 	vsc := *vs.Status.BoundVolumeSnapshotContentName
 	log.Infof("the vsc %s is ready to use", vsc)
-	m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is ready to use", vs.Name)
+	if !pod.CreationTimestamp.IsZero() {
+		m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is ready to use", vs.Name)
+	}
 
 	if m.notifyPod[podName] == nil {
 		m.notifyPod[podName] = make(chan string)
