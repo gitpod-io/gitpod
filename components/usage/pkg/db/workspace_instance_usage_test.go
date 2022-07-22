@@ -135,6 +135,16 @@ func TestListUsageInRange(t *testing.T) {
 		},
 	})
 
+	// started inside query range, and also finished inside query range
+	startInsideFinishInsideButDifferentAttributionID := dbtest.NewWorkspaceInstanceUsage(t, db.WorkspaceInstanceUsage{
+		AttributionID: db.NewTeamAttributionID(uuid.New().String()),
+		StartedAt:     start.Add(3 * time.Hour),
+		StoppedAt: sql.NullTime{
+			Time:  start.Add(5 * time.Hour),
+			Valid: true,
+		},
+	})
+
 	// started inside query range, and finished after
 	startedInsideFinishedOutside := dbtest.NewWorkspaceInstanceUsage(t, db.WorkspaceInstanceUsage{
 		AttributionID: attributionID,
@@ -165,7 +175,7 @@ func TestListUsageInRange(t *testing.T) {
 		StartedAt:     start.Add(24 * time.Hour),
 	})
 
-	instances := []db.WorkspaceInstanceUsage{startBeforeFinishBefore, startBeforeFinishInside, startInsideFinishInside, startedInsideFinishedOutside, startedOutsideFinishedOutside, startedBeforeAndStillRunning, startedInsideAndStillRunning}
+	instances := []db.WorkspaceInstanceUsage{startBeforeFinishBefore, startBeforeFinishInside, startInsideFinishInside, startInsideFinishInsideButDifferentAttributionID, startedInsideFinishedOutside, startedOutsideFinishedOutside, startedBeforeAndStillRunning, startedInsideAndStillRunning}
 	dbtest.CreateWorkspaceInstanceUsageRecords(t, conn, instances...)
 
 	results, err := db.ListUsage(context.Background(), conn, attributionID, start, end, db.DescendingOrder)
