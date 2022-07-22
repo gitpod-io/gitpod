@@ -27,6 +27,16 @@ variable "name" {
   default     = "k3s"
 }
 
+variable "image_id" {
+  description = "Node image ID to be used to provision EC2 instances"
+  default     = "ubuntu-2004-focal-v20220419"
+}
+
+variable "cluster_version" {
+  description = "Kubernetes version to use to provision the cluster"
+  default     = "v1.22.12+k3s1"
+}
+
 variable "dns_sa_creds" {
   description = "Credentials with DNS admin rights to the project with managed DNS record"
   default     = ""

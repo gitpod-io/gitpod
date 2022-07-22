@@ -1,8 +1,3 @@
-data "azurerm_kubernetes_service_versions" "k8s" {
-  location        = azurerm_resource_group.gitpod.location
-  include_preview = false
-}
-
 resource "azurerm_role_assignment" "k8s" {
   count = var.dns_enabled ? 1 : 0
 
@@ -20,14 +15,14 @@ resource "azurerm_role_assignment" "k8s_reader" {
 }
 
 resource "azurerm_kubernetes_cluster" "k8s" {
-  name                = format(local.name_format, local.location, "primary")
-  location            = azurerm_resource_group.gitpod.location
-  resource_group_name = azurerm_resource_group.gitpod.name
-  dns_prefix          = "gitpod"
-  tags                = {}
-  api_server_authorized_ip_ranges     = []
+  name                            = format(local.name_format, local.location, "primary")
+  location                        = azurerm_resource_group.gitpod.location
+  resource_group_name             = azurerm_resource_group.gitpod.name
+  dns_prefix                      = "gitpod"
+  tags                            = {}
+  api_server_authorized_ip_ranges = []
 
-  kubernetes_version               = data.azurerm_kubernetes_service_versions.k8s.latest_version
+  kubernetes_version               = var.cluster_version
   http_application_routing_enabled = false
 
   default_node_pool {
@@ -35,14 +30,14 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     vm_size = local.machine
 
 
-    node_taints                  = []
-    tags                         = {}
-    zones                        = []
+    node_taints = []
+    tags        = {}
+    zones       = []
 
     enable_auto_scaling  = true
     min_count            = 1
     max_count            = 10
-    orchestrator_version = data.azurerm_kubernetes_service_versions.k8s.latest_version
+    orchestrator_version = var.cluster_version
     node_labels          = local.nodes.0.labels
 
     type           = "VirtualMachineScaleSets"
@@ -50,7 +45,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
   }
 
   identity {
-    type = "SystemAssigned"
+    type         = "SystemAssigned"
     identity_ids = []
   }
 
@@ -74,7 +69,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "pools" {
   enable_auto_scaling  = true
   min_count            = 1
   max_count            = 10
-  orchestrator_version = data.azurerm_kubernetes_service_versions.k8s.latest_version
+  orchestrator_version = var.cluster_version
   node_labels          = local.nodes[count.index + 1].labels
   vnet_subnet_id       = azurerm_subnet.network.id
 }

@@ -1,8 +1,12 @@
 // Common variables
 variable "kubeconfig" {
-    default = "./kubeconfig"
-
+  default = "./kubeconfig"
 }
+
+variable "cluster_version" {
+  description = "kubernetes version of to create the cluster with"
+}
+
 variable "dns_enabled" {}
 variable "domain_name" {}
 variable "enable_airgapped" {}
@@ -14,6 +18,5 @@ variable "workspace_name" {
 
 // Azure-specific variables
 variable "location" {
-    default = "northeurope"
-
+  default = "northeurope"
 }

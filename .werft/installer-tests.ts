@@ -33,12 +33,15 @@ interface TestConfig {
     CLOUD: string;
 }
 
+const k8s_version: string = randK8sVersion(testConfig)
+const os_version: string = randOsVersion() // applicable only for k3s
+
 // Each of the TEST_CONFIGURATIONS define an integration test end-to-end
 // It should be a combination of multiple INFRA_PHASES, order of PHASES slice is important
 const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     STANDARD_GKE_TEST: {
         CLOUD: "gcp",
-        DESCRIPTION: "Deploy Gitpod on GKE, with managed DNS, and run integration tests",
+        DESCRIPTION: `Deploy Gitpod on GKE(version ${k8s_version})`,
         PHASES: [
             "STANDARD_GKE_CLUSTER",
             "CERT_MANAGER",
@@ -52,8 +55,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     STANDARD_K3S_TEST: {
         CLOUD: "gcp", // the cloud provider is still GCP
         DESCRIPTION:
-            "Deploy Gitpod on a K3s cluster, created on a GCP instance," +
-            " with managed DNS and run integrations tests",
+            `Deploy Gitpod on a K3s cluster(version ${k8s_version}), on a GCP instance with ubuntu ${os_version}`,
         PHASES: [
             "STANDARD_K3S_CLUSTER_ON_GCP",
             "CERT_MANAGER",
@@ -65,7 +67,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     },
     STANDARD_AKS_TEST: {
         CLOUD: "azure",
-        DESCRIPTION: "Deploy Gitpod on AKS, with managed DNS, and run integration tests",
+        DESCRIPTION: `Deploy Gitpod on AKS(version ${k8s_version})`,
         PHASES: [
             "STANDARD_AKS_CLUSTER",
             "CERT_MANAGER",
@@ -79,7 +81,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     },
     STANDARD_EKS_TEST: {
         CLOUD: "aws",
-        DESCRIPTION: "Create an EKS cluster",
+        DESCRIPTION: `Create an EKS cluster(version ${k8s_version})`,
         PHASES: [
             "STANDARD_EKS_CLUSTER",
             "CERT_MANAGER",
@@ -110,23 +112,23 @@ const cloud: string = config.CLOUD;
 const INFRA_PHASES: { [name: string]: InfraConfig } = {
     STANDARD_GKE_CLUSTER: {
         phase: "create-std-gke-cluster",
-        makeTarget: "gke-standard-cluster",
-        description: "Creating a GKE cluster with 1 nodepool each for workspace and server",
+        makeTarget: `gke-standard-cluster`,
+        description: `Creating a GCP GKE cluster(version: ${k8s_version}) with 1 nodepool each for workspace and server`,
     },
     STANDARD_K3S_CLUSTER_ON_GCP: {
         phase: "create-std-k3s-cluster",
-        makeTarget: "k3s-standard-cluster",
-        description: "Creating a k3s cluster on GCP with 1 node",
+        makeTarget: `k3s-standard-cluster os_version=${os_version}`,
+        description: `Creating a k3s(version: ${k8s_version}) cluster on GCP with 1 node`,
     },
     STANDARD_AKS_CLUSTER: {
         phase: "create-std-aks-cluster",
-        makeTarget: "aks-standard-cluster",
-        description: "Creating an aks cluster(azure)",
+        makeTarget: `aks-standard-cluster`,
+        description: `Creating an Azure AKS cluster(version: ${k8s_version})`,
     },
     STANDARD_EKS_CLUSTER: {
         phase: "create-std-eks-cluster",
-        makeTarget: "eks-standard-cluster",
-        description: "Creating a EKS cluster with 1 nodepool each for workspace and server",
+        makeTarget: `eks-standard-cluster`,
+        description: `Creating a AWS EKS cluster(version: ${k8s_version}) with 1 nodepool each for workspace and server`,
     },
     CERT_MANAGER: {
         phase: "setup-cert-manager",
@@ -140,7 +142,7 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     GENERATE_KOTS_CONFIG: {
         phase: "generate-kots-config",
-        makeTarget: `generate-kots-config storage=${randomize()} registry=${randomize()} db=${randomize()}`,
+        makeTarget: `generate-kots-config storage=${randDeps()} registry=${randDeps()} db=${randDeps()}`,
         description: `Generate KOTS Config file`,
     },
     CLUSTER_ISSUER: {
@@ -335,7 +337,7 @@ function callMakeTargets(phase: string, description: string, makeTarget: string,
     werft.log(phase, `Calling ${makeTarget}`);
 
     // exporting cloud env var is important for the make targets
-    const response = exec(`export cloud=${cloud} && make -C ${makefilePath} ${makeTarget}`, {
+    const response = exec(`export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} && make -C ${makefilePath} ${makeTarget}`, {
         slice: phase,
         dontCheckRc: true,
     });
@@ -347,24 +349,61 @@ function callMakeTargets(phase: string, description: string, makeTarget: string,
             werft.fail(phase, "Operation failed");
             return response.code;
         }
-        werft.log(phase, `Phase failed`);
+        werft.log(phase, `'${description}' failed`);
     } else {
-        werft.log(phase, `Phase succeeded`);
+        werft.log(phase, `'${description}' succeeded`);
         werft.done(phase);
     }
 
     return response.code;
 }
 
-function randomize(): string {
-    // in the follow-up PR we will add `${platform}-${resource}` as an option here to
-    // test against resource dependencies(storage, db, registry) for each cloud platform
+function randomize(options: string[]): string {
+    return options[Math.floor(Math.random() * options.length)];
+}
+
+function randDeps(): string {
     var depOptions: string[] = ["incluster", "external"]
+
     if(deps && depOptions.includes(deps)) {
         return deps
     }
 
-    return depOptions[Math.floor(Math.random() * depOptions.length)];
+    return randomize(depOptions)
+}
+
+function randK8sVersion(config: string): string {
+    var options: string[] = []
+    switch(config) {
+        case "STANDARD_GKE_TEST": {
+            options = ["1.21", "1.22", "1.23"]
+            break;
+        }
+        case "STANDARD_AKS_TEST": {
+            options = ["1.21", "1.22", "1.23"]
+            break;
+        }
+        case "STANDARD_EKS_TEST": {
+            options = ["1.20", "1.21", "1.22"]
+            break;
+        }
+        case "STANDARD_K3S_TEST": {
+            options = ["v1.22.12+k3s1", "v1.23.9+k3s1", "v1.24.3+k3s1"]
+            break;
+        }
+    }
+    // in the follow-up PR we will add `${platform}-${resource}` as an option here to
+    // test against resource dependencies(storage, db, registry) for each cloud platform
+
+    return randomize(options)
+}
+
+function randOsVersion(): string {
+    // in the follow-up PR we will add `${platform}-${resource}` as an option here to
+    // test against resource dependencies(storage, db, registry) for each cloud platform
+    var options: string[] = ["2204", "2004", "1804"]
+
+    return randomize(options)
 }
 
 function cleanup() {

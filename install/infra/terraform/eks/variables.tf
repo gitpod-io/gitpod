@@ -2,6 +2,13 @@ variable "cluster_name" {
   type        = string
   description = "EKS cluster name."
 }
+
+variable "cluster_version" {
+  type        = string
+  description = "Kubernetes version to create the cluster with"
+  default     = "1.22"
+}
+
 variable "kubeconfig" {
   type        = string
   description = "Path to the kubeconfig file"
@@ -9,31 +16,31 @@ variable "kubeconfig" {
 }
 
 variable "image_id" {
-  type = string
+  type        = string
   description = "AMI Image ID specific to the region"
   // latest ubuntu image for 1.22 k8s for eu-west-1 region, refer https://cloud-images.ubuntu.com/docs/aws/eks/
   default = "ami-0793b4124359a6ad7"
 }
 
 variable "service_machine_type" {
-  type = string
+  type        = string
   description = "Machine type for service workload node pool"
-  default = "m6i.xlarge"
+  default     = "m6i.xlarge"
 }
 
 variable "workspace_machine_type" {
-  type = string
+  type        = string
   description = "Machine type for workspace workload node pool"
-  default = "m6i.2xlarge"
+  default     = "m6i.2xlarge"
 }
 
 variable "region" {
-  type = string
+  type    = string
   default = "eu-west-1"
 }
 
 variable "vpc_availability_zones" {
-  type = list(string)
+  type    = list(string)
   default = ["eu-west-1c", "eu-west-1b"]
 }
 
