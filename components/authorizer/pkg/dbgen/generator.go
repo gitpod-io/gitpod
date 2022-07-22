@@ -51,6 +51,7 @@ func (s *Session) Commit() {
 						g.Id("res").Op("=").Id("sess."+checkFuncName(spec, rel)).Call(jen.Id("actorKey"), jen.Id("subjectKey"))
 					})
 				}
+				g.Default().Block(jen.Return(jen.Nil(), jen.Qual("fmt", "Errorf").Call(jen.Lit("unknown relation \"%s\" is \"%s\" on \"%s\""), jen.Id("actorType"), jen.Id("rel"), jen.Id("subjectType"))))
 			})
 
 			g.Line()

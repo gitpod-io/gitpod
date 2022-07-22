@@ -5,6 +5,7 @@
 package main_test
 
 import (
+	"fmt"
 	dbgen "github.com/gitpod-io/gitpod/authorizer/pkg/dbgen"
 	executor "github.com/gitpod-io/gitpod/authorizer/pkg/executor"
 )
@@ -82,6 +83,8 @@ func (sess *Session) Check(actor, rel, subject string) (executor.QueryBuilder, e
 		res = sess.checkWorkspaceInstanceOwner(actorKey, subjectKey)
 	case subjectType == "workspace_instance" && rel == "access":
 		res = sess.checkWorkspaceInstanceAccess(actorKey, subjectKey)
+	default:
+		return nil, fmt.Errorf("unknown relation \"%s\" is \"%s\" on \"%s\"", actorType, rel, subjectType)
 	}
 
 	actorTpe := types[actorType]
