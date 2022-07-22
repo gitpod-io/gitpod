@@ -62,6 +62,7 @@ import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
 import { Currency } from "./plans";
 import { BillableSession } from "./usage";
+import { SupportedWorkspaceClass } from "./workspace-class";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -307,6 +308,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * Frontend notifications
      */
     getNotifications(): Promise<string[]>;
+    
+    getSupportedWorkspaceClasses(): Promise<SupportedWorkspaceClass[]>;
 }
 
 export interface RateLimiterError {
