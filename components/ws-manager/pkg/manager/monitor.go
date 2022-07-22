@@ -19,6 +19,7 @@ import (
 	tracelog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
@@ -53,7 +54,7 @@ const (
 
 var (
 	// wsdaemonMaxAttempts is the number of times we'll attempt to work with ws-daemon when a former attempt returned unavailable.
-	// We rety for two minutes every 5 seconds (see wwsdaemonRetryInterval).
+	// We rety for two minutes every 5 seconds (see wsdaemonRetryInterval).
 	//
 	// Note: this is a variable rather than a constant so that tests can modify this value.
 	wsdaemonMaxAttempts = 120 / 5
@@ -1044,7 +1045,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
 		if err != nil {
 			m.finalizerMapLock.Unlock()
-			return true, nil, err
+			return true, nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 		}
 
 		// only build prebuild snapshots of initialized/ready workspaces.
@@ -1242,7 +1243,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		gitStatus   *csapi.GitStatus
 	)
 	t := time.Now()
-	for i := 0; i < wsdaemonMaxAttempts; i++ {
+
+	// since we're within the content backup loop, the maximum retry time should
+	// rely on the content finalization configuration
+	maxRetry := int(m.manager.Config.Timeouts.ContentFinalization / util.Duration(wsdaemonRetryInterval))
+	for i := 0; i < maxRetry; i++ {
 		span.LogKV("attempt", i)
 		didSometing, gs, err := doFinalize()
 		if !didSometing {
