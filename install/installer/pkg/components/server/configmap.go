@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
@@ -137,7 +138,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	workspaceClasses := []WorkspaceClass{
 		{
 			Id:          config.DefaultWorkspaceClass,
-			DisplayName: config.DefaultWorkspaceClass,
+			Category:    GeneralPurpose,
+			DisplayName: strings.Title(config.DefaultWorkspaceClass),
+			Description: "Default workspace class",
+			PowerUps:    1,
 			IsDefault:   true,
 			Deprecated:  false,
 		},
@@ -148,7 +152,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			for _, cl := range cfg.WebApp.WorkspaceClasses {
 				class := WorkspaceClass{
 					Id:          cl.Id,
+					Category:    WorkspaceClassCategory(cl.Category),
 					DisplayName: cl.DisplayName,
+					Description: cl.Description,
+					PowerUps:    cl.PowerUps,
 					IsDefault:   cl.IsDefault,
 					Deprecated:  cl.Deprecated,
 					Marker:      cl.Marker,
