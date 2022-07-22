@@ -5,8 +5,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/gitpod-io/gitpod/authorizer/pkg/dbgen"
 )
 
@@ -46,9 +44,10 @@ var workspace = &dbgen.TypeSpec{
 		{
 			Name: "owner",
 			Targets: []dbgen.RelationTarget{
-				dbgen.RelationTable{
-					Target: user,
-					Column: "ownerId",
+				dbgen.RelationRemoteRef{
+					Target:         user,
+					Name:           "owner",
+					RelationColumn: "ownerId",
 				},
 			},
 		},
@@ -86,8 +85,9 @@ var workspaceInstance = &dbgen.TypeSpec{
 			Name: "owner",
 			Targets: []dbgen.RelationTarget{
 				dbgen.RelationRemoteRef{
-					Target: workspace,
-					Name:   "owner",
+					Target:         workspace,
+					Name:           "owner",
+					RelationColumn: "workspaceId",
 				},
 			},
 		},
@@ -96,19 +96,20 @@ var workspaceInstance = &dbgen.TypeSpec{
 			Targets: []dbgen.RelationTarget{
 				dbgen.RelationRef("owner"),
 				dbgen.RelationRemoteRef{
-					Target: workspace,
-					Name:   "access",
+					Target:         workspace,
+					Name:           "access",
+					RelationColumn: "workspaceId",
 				},
 			},
 		},
 	},
 }
 
-func main() {
-	sess := dbgen.NewSession("main_test")
-	sess.Generate(user)
-	sess.Generate(workspace)
-	sess.Generate(workspaceInstance)
-	sess.Commit()
-	fmt.Println(sess)
-}
+// func main() {
+// 	sess := dbgen.NewSession("main_test")
+// 	sess.Generate(user)
+// 	sess.Generate(workspace)
+// 	sess.Generate(workspaceInstance)
+// 	sess.Commit()
+// 	fmt.Println(sess)
+// }

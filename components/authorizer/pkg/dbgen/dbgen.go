@@ -21,8 +21,9 @@ type RelationRef string
 func (RelationRef) privateType() {}
 
 type RelationRemoteRef struct {
-	Target *TypeSpec
-	Name   string
+	Target         *TypeSpec
+	Name           string
+	RelationColumn string
 }
 
 func (RelationRemoteRef) privateType() {}
