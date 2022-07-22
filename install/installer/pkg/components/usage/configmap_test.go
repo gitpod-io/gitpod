@@ -23,7 +23,7 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
 	require.JSONEq(t,
 		`{
        "controllerSchedule": "2m",
-       "contentServiceUrl": "content-service:8080",
+       "contentServiceAddress": "content-service:8080",
        "stripeCredentialsFile": "stripe-secret/apikeys",
        "server": {
          "services": {
