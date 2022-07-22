@@ -778,7 +778,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 
 	class, ok := m.manager.Config.WorkspaceClasses[pod.Labels[workspaceClassLabel]]
 	if !ok {
-		return xerrors.Errorf("pod %s has unknown workspace class", pod.Name, pod.Labels[workspaceClassLabel])
+		return xerrors.Errorf("pod %s has unknown workspace class %s", pod.Name, pod.Labels[workspaceClassLabel])
 	}
 	storage, err := class.Container.Limits.StorageQuantity()
 	if !ok {
