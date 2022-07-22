@@ -115,6 +115,7 @@ import {
     RemotePageMessage,
     RemoteTrackMessage,
 } from "@gitpod/gitpod-protocol/lib/analytics";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { ImageBuilderClientProvider, LogsRequest } from "@gitpod/image-builder/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
@@ -3040,6 +3041,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getIDEOptions(ctx: TraceContext): Promise<IDEOptions> {
         const ideConfig = await this.ideConfigService.config;
         return ideConfig.ideOptions;
+    }
+
+    async getSupportedWorkspaceClasses(ctx: TraceContext): Promise<SupportedWorkspaceClass[]> {
+        let classes = this.config.workspaceClasses
+            .filter((c) => !c.deprecated)
+            .map((c) => ({
+                id: c.id,
+                category: c.category,
+                displayName: c.displayName,
+                description: c.description,
+                powerups: c.powerups,
+            }));
+
+        return classes;
     }
 
     //#region gitpod.io concerns
