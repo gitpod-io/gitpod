@@ -85,6 +85,9 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 				instanceIDs = append(instanceIDs, instance.InstanceID.String())
 			}
 
+			matchingIDs := instanceIDs[0:5]
+			reverse(matchingIDs)
+
 			return Scenario{
 				name:      "filters results to specified time range",
 				Instances: instances,
@@ -95,7 +98,7 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 				},
 				Expect: Expectation{
 					Code:        codes.OK,
-					InstanceIds: instanceIDs[0:5],
+					InstanceIds: matchingIDs,
 				},
 			}
 		})(),
@@ -132,5 +135,11 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 
 			require.Equal(t, scenario.Expect.InstanceIds, instanceIds)
 		})
+	}
+}
+
+func reverse[S ~[]E, E any](s S) {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
 	}
 }

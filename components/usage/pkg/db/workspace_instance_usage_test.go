@@ -60,7 +60,7 @@ func TestCreateUsageRecords_Updates(t *testing.T) {
 		conn.Model(&db.WorkspaceInstanceUsage{}).Delete(update)
 	})
 
-	list, err := db.ListUsage(context.Background(), conn, teamAttributionID, time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC), time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC))
+	list, err := db.ListUsage(context.Background(), conn, teamAttributionID, time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC), time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC), db.DescendingOrder)
 	require.NoError(t, err)
 	require.Len(t, list, 1)
 	require.Equal(t, update, list[0])
@@ -91,7 +91,7 @@ func TestListUsage_Ordering(t *testing.T) {
 		conn.Model(&db.WorkspaceInstanceUsage{}).Delete(instances)
 	})
 
-	listed, err := db.ListUsage(context.Background(), conn, teamAttributionID, time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC), time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC))
+	listed, err := db.ListUsage(context.Background(), conn, teamAttributionID, time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC), time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC), db.AscendingOrder)
 	require.NoError(t, err)
 
 	require.Equal(t, []db.WorkspaceInstanceUsage{oldest, newest}, listed)
@@ -168,11 +168,11 @@ func TestListUsageInRange(t *testing.T) {
 	instances := []db.WorkspaceInstanceUsage{startBeforeFinishBefore, startBeforeFinishInside, startInsideFinishInside, startedInsideFinishedOutside, startedOutsideFinishedOutside, startedBeforeAndStillRunning, startedInsideAndStillRunning}
 	dbtest.CreateWorkspaceInstanceUsageRecords(t, conn, instances...)
 
-	results, err := db.ListUsage(context.Background(), conn, attributionID, start, end)
+	results, err := db.ListUsage(context.Background(), conn, attributionID, start, end, db.DescendingOrder)
 	require.NoError(t, err)
 
 	require.Len(t, results, 5)
 	require.Equal(t, []db.WorkspaceInstanceUsage{
-		startedBeforeAndStillRunning, startBeforeFinishInside, startInsideFinishInside, startedInsideAndStillRunning, startedInsideFinishedOutside,
+		startedInsideFinishedOutside, startedInsideAndStillRunning, startInsideFinishInside, startBeforeFinishInside, startedBeforeAndStillRunning,
 	}, results)
 }
