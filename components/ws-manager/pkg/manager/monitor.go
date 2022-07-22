@@ -183,7 +183,10 @@ func (m *Monitor) onVolumesnapshotEvent(evt watch.Event) error {
 
 	// get the pod resource
 	var pod corev1.Pod
-	_ = m.manager.Clientset.Get(context.Background(), types.NamespacedName{Namespace: vs.Namespace, Name: podName}, &pod)
+	err := m.manager.Clientset.Get(context.Background(), types.NamespacedName{Namespace: vs.Namespace, Name: podName}, &pod)
+	if err != nil && !k8serr.IsNotFound(err) {
+		log.WithError(err).Warnf("cannot get pod")
+	}
 
 	if vs.Status == nil || vs.Status.ReadyToUse == nil || !*vs.Status.ReadyToUse || vs.Status.BoundVolumeSnapshotContentName == nil {
 		if !pod.CreationTimestamp.IsZero() {
