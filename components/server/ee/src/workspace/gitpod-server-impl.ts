@@ -1495,20 +1495,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.updateTeamSubscriptionQuantity(ts2);
             await this.teamSubscription2Service.addTeamMemberSubscription(ts2, userId);
         }
-        const [teamCustomer, user] = await Promise.all([
-            this.stripeService.findCustomerByTeamId(teamId),
-            this.userDB.findUserById(userId),
-        ]);
-        if (teamCustomer && user && !user.usageAttributionId) {
-            // If the user didn't explicitly choose yet where their usage should be attributed to, and
-            // they join a team which accepts usage attribution (i.e. with usage-based billing enabled),
-            // then we simplify the UX by automatically attributing the user's usage to that team.
-            // Note: This default choice can be changed at any time by the user in their billing settings.
-            const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(teamCustomer.id);
-            if (subscription) {
-                await this.userService.setUsageAttribution(user, AttributionId.render({ kind: "team", teamId }));
-            }
-        }
     }
 
     protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
@@ -1517,13 +1503,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (ts2) {
             await this.updateTeamSubscriptionQuantity(ts2);
             await this.teamSubscription2Service.cancelTeamMemberSubscription(ts2, userId, teamMembershipId, now);
-        }
-        const user = await this.userDB.findUserById(userId);
-        if (user && user.usageAttributionId === AttributionId.render({ kind: "team", teamId })) {
-            // If the user previously attributed all their usage to a given team, but they are now leaving this
-            // team, then the currently selected usage attribution ID is no longer valid. In this case, we must
-            // reset this ID to the default value.
-            await this.userService.setUsageAttribution(user, undefined);
         }
     }
 
