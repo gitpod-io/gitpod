@@ -5,10 +5,8 @@
 package openvsx_proxy
 
 const (
-	Component          = "openvsx-proxy"
-	ContainerPort      = 8080
-	ServicePort        = 8080
-	PortName           = "http"
-	PrometheusPort     = 9500
-	PrometheusPortName = "metrics"
+	Component     = "openvsx-proxy"
+	ContainerPort = 8080
+	ServicePort   = 8080
+	PortName      = "http"
 )

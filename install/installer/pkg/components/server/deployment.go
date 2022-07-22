@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -359,14 +360,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:          ContainerPortName,
 								ContainerPort: ContainerPort,
 							}, {
-								Name:          PrometheusPortName,
-								ContainerPort: PrometheusPort,
+								Name:          baseserver.BuiltinMetricsPortName,
+								ContainerPort: baseserver.BuiltinMetricsPort,
 							}, {
 								Name:          InstallationAdminName,
 								ContainerPort: InstallationAdminPort,
 							}, {
 								Name:          DebugPortName,
-								ContainerPort: common.DebugPort,
+								ContainerPort: baseserver.BuiltinDebugPort,
 							}, {
 								Name:          DebugNodePortName,
 								ContainerPort: common.DebugNodePort,

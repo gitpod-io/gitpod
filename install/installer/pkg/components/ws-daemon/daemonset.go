@@ -204,14 +204,7 @@ fi
 				Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 					common.DefaultEnv(&cfg),
 					common.WorkspaceTracingEnv(ctx),
-					[]corev1.EnvVar{{
-						Name: "NODENAME",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								FieldPath: "spec.nodeName",
-							},
-						},
-					}},
+					common.NodeNameEnv(ctx),
 				)),
 				Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{Requests: corev1.ResourceList{
 					"cpu":    resource.MustParse("1m"),
@@ -300,16 +293,7 @@ fi
 					fmt.Sprintf(`--probe-url=http://localhost:%v/ready`, ReadinessPort),
 				},
 				Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
-					[]corev1.EnvVar{
-						{
-							Name: "NODENAME",
-							ValueFrom: &corev1.EnvVarSource{
-								FieldRef: &corev1.ObjectFieldSelector{
-									FieldPath: "spec.nodeName",
-								},
-							},
-						},
-					},
+					common.NodeNameEnv(ctx),
 				)),
 				ImagePullPolicy: corev1.PullIfNotPresent,
 				Lifecycle: &corev1.Lifecycle{

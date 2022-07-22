@@ -7,6 +7,7 @@ package registryfacade
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -87,8 +88,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			RedisCache: redisCache,
 		},
 		AuthCfg:            "/mnt/pull-secret.json",
-		PProfAddr:          ":6060",
-		PrometheusAddr:     "127.0.0.1:9500",
+		PProfAddr:          common.LocalhostAddressFromPort(baseserver.BuiltinDebugPort),
+		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 	}
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
@@ -18,8 +19,8 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	ascfg := config.ServiceConfig{
-		PProfAddr:      fmt.Sprintf("localhost:%d", PProfPort),
-		PrometheusAddr: fmt.Sprintf("localhost:%d", PrometheusPort),
+		PProfAddr:      common.LocalhostAddressFromPort(baseserver.BuiltinDebugPort),
+		PrometheusAddr: common.LocalhostPrometheusAddr(),
 		Namespace:      ctx.Namespace,
 		Config: config.Config{
 			Kubernetes:          config.Kubernetes{Enabled: true},

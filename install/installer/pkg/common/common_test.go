@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
-	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
 )
 
 func TestKubeRBACProxyContainer_DefaultPorts(t *testing.T) {
@@ -21,11 +23,11 @@ func TestKubeRBACProxyContainer_DefaultPorts(t *testing.T) {
 	container := common.KubeRBACProxyContainer(ctx)
 	require.Equal(t, []string{
 		"--logtostderr",
-		"--insecure-listen-address=[$(IP)]:9500",
-		"--upstream=http://127.0.0.1:9500/",
+		fmt.Sprintf("--insecure-listen-address=[$(IP)]:%v", baseserver.BuiltinMetricsPort),
+		fmt.Sprintf("--upstream=http://%v/", common.LocalhostPrometheusAddr()),
 	}, container.Args)
 	require.Equal(t, []corev1.ContainerPort{
-		{Name: "metrics", ContainerPort: 9500},
+		{Name: baseserver.BuiltinMetricsPortName, ContainerPort: baseserver.BuiltinMetricsPort},
 	}, container.Ports)
 }
 
@@ -33,14 +35,13 @@ func TestKubeRBACProxyContainerWithConfig(t *testing.T) {
 	ctx, err := common.NewRenderContext(config.Config{}, versions.Manifest{}, "test_namespace")
 	require.NoError(t, err)
 
-	listenPort := int32(9500)
 	container := common.KubeRBACProxyContainerWithConfig(ctx)
 	require.Equal(t, []string{
 		"--logtostderr",
-		fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", listenPort),
-		"--upstream=http://127.0.0.1:9500/",
+		fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", baseserver.BuiltinMetricsPort),
+		fmt.Sprintf("--upstream=http://%v/", common.LocalhostPrometheusAddr()),
 	}, container.Args)
 	require.Equal(t, []corev1.ContainerPort{
-		{Name: "metrics", ContainerPort: listenPort},
+		{Name: baseserver.BuiltinMetricsPortName, ContainerPort: baseserver.BuiltinMetricsPort},
 	}, container.Ports)
 }

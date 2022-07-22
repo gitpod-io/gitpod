@@ -5,6 +5,7 @@
 package content_service
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
@@ -58,8 +59,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:          RPCServiceName,
 				ContainerPort: RPCPort,
 			}, {
-				ContainerPort: PrometheusPort,
-				Name:          PrometheusName,
+				ContainerPort: baseserver.BuiltinMetricsPort,
+				Name:          baseserver.BuiltinMetricsPortName,
 			}},
 			SecurityContext: &corev1.SecurityContext{
 				Privileged: pointer.Bool(false),
