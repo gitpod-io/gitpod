@@ -22,8 +22,8 @@ import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEntry";
 import WorkspaceDetail from "./WorkspaceDetail";
-import info from "../images/info.svg";
 import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import Alert from "../components/Alert";
 
 interface Props {
     user?: User;
@@ -138,14 +138,9 @@ export function WorkspaceSearch(props: Props) {
                     </button>
                 </div>
             </div>
-            <div
-                className={
-                    "flex rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 p-2 w-2/3 mb-2 w-full"
-                }
-            >
-                <img className="w-4 h-4 m-1 ml-2 mr-4" alt="info" src={info} />
-                <span>Please enter complete IDs - this search does not perform partial-matching.</span>
-            </div>
+            <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
+                <span>Search workspaces using workspace ID.</span>
+            </Alert>
             <div className="flex flex-col space-y-2">
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
                     <div className="w-8"></div>
