@@ -44,6 +44,7 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
             certReady = true;
             break;
         }
+        deleteCertificateResource(werft, shellOpts, params)
     }
     if (!certReady) {
         retrieveFailedCertDebug(params.certName, shellOpts.slice)
@@ -113,7 +114,22 @@ function createCertificateResource(
     const rc = exec(cmd, { slice: shellOpts.slice, dontCheckRc: true }).code;
 
     if (rc != 0) {
-        werft.fail(shellOpts.slice, "Failed to create the certificate Custom Resource");
+        werft.fail(shellOpts.slice, `Failed to create the certificate (${params.certName}) Custom Resource`);
+    }
+}
+
+function deleteCertificateResource(
+    werft: Werft,
+    shellOpts: ExecOptions,
+    params: IssueCertificateParams,
+) {
+    const rc = exec(
+        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n ${params.certNamespace} delete ${params.certName}`,
+        { slice: shellOpts.slice, dontCheckRc: true }
+    ).code;
+
+    if (rc != 0) {
+        werft.fail(shellOpts.slice, `Failed to delete the certificate (${params.certName}) Custom Resource`);
     }
 }
 
