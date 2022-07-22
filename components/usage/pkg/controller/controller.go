@@ -20,6 +20,16 @@ func New(schedule time.Duration, reconciler Reconciler) (*Controller, error) {
 	}, nil
 }
 
+type Reconciler interface {
+	Reconcile() error
+}
+
+type ReconcilerFunc func() error
+
+func (f ReconcilerFunc) Reconcile() error {
+	return f()
+}
+
 type Controller struct {
 	schedule   time.Duration
 	reconciler Reconciler

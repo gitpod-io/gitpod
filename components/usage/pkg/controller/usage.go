@@ -21,16 +21,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type Reconciler interface {
-	Reconcile() error
-}
-
-type ReconcilerFunc func() error
-
-func (f ReconcilerFunc) Reconcile() error {
-	return f()
-}
-
 type UsageReconciler struct {
 	nowFunc           func() time.Time
 	conn              *gorm.DB
