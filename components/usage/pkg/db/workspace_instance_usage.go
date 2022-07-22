@@ -49,12 +49,28 @@ func CreateUsageRecords(ctx context.Context, conn *gorm.DB, records []WorkspaceI
 	return db.CreateInBatches(records, 1000).Error
 }
 
-func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to time.Time) ([]WorkspaceInstanceUsage, error) {
+type order int
+
+func (o order) ToSQL() string {
+	switch o {
+	case AscendingOrder:
+		return "ASC"
+	default:
+		return "DESC"
+	}
+}
+
+const (
+	DescendingOrder order = iota
+	AscendingOrder
+)
+
+func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to time.Time, sort order) ([]WorkspaceInstanceUsage, error) {
 	db := conn.WithContext(ctx)
 
 	var usageRecords []WorkspaceInstanceUsage
 	result := db.
-		Order("startedAt").
+		Order(fmt.Sprintf("startedAt %s", sort.ToSQL())).
 		Where("attributionId = ?", attributionId).
 		// started before, finished inside query range
 		Where("? <= stoppedAt AND stoppedAt < ?", from, to).
