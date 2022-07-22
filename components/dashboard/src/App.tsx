@@ -49,6 +49,7 @@ import SelectIDEModal from "./settings/SelectIDEModal";
 import { StartPage, StartPhase } from "./start/StartPage";
 import { isGitpodIo } from "./utils";
 import { BlockedRepositories } from "./admin/BlockedRepositories";
+import { AppNotifications } from "./AppNotifications";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -346,6 +347,7 @@ function App() {
         <Route>
             <div className="container">
                 <Menu />
+                <AppNotifications />
                 <Switch>
                     <Route path={projectsPathNew} exact component={NewProject} />
                     <Route path="/open" exact component={Open} />
