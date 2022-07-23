@@ -18,5 +18,6 @@
     'gitpod-workspace-success-criteria.json': (import 'dashboards/success-criteria.json'),
     'gitpod-workspace-coredns.json': (import 'dashboards/coredns.json'),
     'gitpod-node-swap.json': (import 'dashboards/node-swap.json'),
+    'gitpod-node-ephemeral-storage.json': (import 'dashboards/ephemeral-storage.json')
   },
 }
