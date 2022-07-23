@@ -15,7 +15,7 @@ const (
 	ContainerSSHPort      = 22
 	ContainerSSHName      = "ssh"
 	InitContainerImage    = "library/alpine"
-	InitContainerTag      = "3.15"
+	InitContainerTag      = "3.16"
 	KubeRBACProxyRepo     = common.KubeRBACProxyRepo
 	KubeRBACProxyImage    = common.KubeRBACProxyImage
 	KubeRBACProxyTag      = common.KubeRBACProxyTag
