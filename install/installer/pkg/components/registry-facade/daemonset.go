@@ -306,7 +306,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						*common.KubeRBACProxyContainer(ctx),
 						{
 							Name:  "node-labeler",
-							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSDaemon.Version),
+							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
 							Command: []string{
 								"/app/ready-probe-labeler",
 								fmt.Sprintf("--label=gitpod.io/registry-facade_ready_ns_%v", ctx.Namespace),
