@@ -8,12 +8,12 @@ import { AccountingDB } from "@gitpod/gitpod-db/lib/accounting-db";
 import { User } from "@gitpod/gitpod-protocol";
 import { AccountEntry, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { inject, injectable } from "inversify";
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Plan, Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { orderByStartDateAscEndDateAsc } from "./accounting-util";
 import { SubscriptionModel } from "./subscription-model";
 
-export type UserCreated = Pick<User, 'id' | 'creationDate'>;
+export type UserCreated = Pick<User, "id" | "creationDate">;
 
 @injectable()
 export class SubscriptionService {
@@ -24,12 +24,14 @@ export class SubscriptionService {
      * @param user
      * @returns All persisted subscriptions + the Free subscriptions that fill up the periods in between, sorted by startDate (ASC)
      */
-    async getSubscriptionHistoryForUserInPeriod(user: UserCreated, startDate: string, endDate: string): Promise<Subscription[]> {
+    async getSubscriptionHistoryForUserInPeriod(
+        user: UserCreated,
+        startDate: string,
+        endDate: string,
+    ): Promise<Subscription[]> {
         const subscriptions = await this.accountingDB.findSubscriptionsForUserInPeriod(user.id, startDate, endDate);
         const model = new SubscriptionModel(user.id, subscriptions);
-        return model
-            .mergedWithFreeSubscriptions(user.creationDate)
-            .sort(orderByStartDateAscEndDateAsc);
+        return model.mergedWithFreeSubscriptions(user.creationDate).sort(orderByStartDateAscEndDateAsc);
     }
 
     /**
@@ -40,9 +42,7 @@ export class SubscriptionService {
     async getNotYetCancelledSubscriptions(user: UserCreated, date: string): Promise<Subscription[]> {
         const subscriptions = await this.accountingDB.findNotYetCancelledSubscriptions(user.id, date);
         const model = new SubscriptionModel(user.id, subscriptions);
-        return model
-            .mergedWithFreeSubscriptions(user.creationDate)
-            .sort(orderByStartDateAscEndDateAsc);
+        return model.mergedWithFreeSubscriptions(user.creationDate).sort(orderByStartDateAscEndDateAsc);
     }
 
     /**
@@ -54,7 +54,7 @@ export class SubscriptionService {
             throw new Error("unsubscribe only works for 'free' plans!");
         }
 
-        return this.accountingDB.transaction(async db => {
+        return this.accountingDB.transaction(async (db) => {
             await this.doUnsubscribe(db, userId, endDate, planId);
         });
     }
@@ -66,21 +66,28 @@ export class SubscriptionService {
      * @param startDate
      * @param endDate
      */
-    async subscribe(userId: string, plan: Plan, paymentReference: string | undefined, startDate: string, endDate?: string): Promise<Subscription> {
+    async subscribe(
+        userId: string,
+        plan: Plan,
+        paymentReference: string | undefined,
+        startDate: string,
+        endDate?: string,
+    ): Promise<Subscription> {
         if (!Plans.isFreePlan(plan.chargebeeId)) {
             throw new Error("subscribe only works for 'free' plans!");
         }
 
-        return this.accountingDB.transaction(async db => {
+        return this.accountingDB.transaction(async (db) => {
             await this.doUnsubscribe(db, userId, startDate, plan.chargebeeId);
-            const newSubscription = <Subscription> {
+            const newSubscription = <Subscription>{
                 userId,
                 amount: Plans.getHoursPerMonth(plan),
                 planId: plan.chargebeeId,
                 paymentReference,
                 startDate,
-                endDate };
-            log.info({ userId }, 'Creating subscription', { subscription: newSubscription });
+                endDate,
+            };
+            log.info({ userId }, "Creating subscription", { subscription: newSubscription });
             return db.newSubscription(newSubscription);
         });
     }
@@ -95,7 +102,9 @@ export class SubscriptionService {
 
         // don't override but keep an existing, not-yet cancelled Prof. OSS subscription
         const subs = await this.getNotYetCancelledSubscriptions(user, now.toISOString());
-        const uncancelledOssSub = subs.find(s => s.planId === Plans.FREE_OPEN_SOURCE.chargebeeId && !s.cancellationDate);
+        const uncancelledOssSub = subs.find(
+            (s) => s.planId === Plans.FREE_OPEN_SOURCE.chargebeeId && !s.cancellationDate,
+        );
         if (uncancelledOssSub) {
             log.debug({ userId: userId }, "already has professional OSS subscription");
             return;
@@ -107,10 +116,14 @@ export class SubscriptionService {
     }
 
     async addCredit(userId: string, amount: number, date: string, expiryDate?: string): Promise<AccountEntry> {
-        const entry = <AccountEntry> {
-            userId, amount, date, expiryDate, kind: 'credit'
+        const entry = <AccountEntry>{
+            userId,
+            amount,
+            date,
+            expiryDate,
+            kind: "credit",
         };
-        log.info({ userId }, 'Adding credit', { accountEntry: entry });
+        log.info({ userId }, "Adding credit", { accountEntry: entry });
         return this.accountingDB.newAccountEntry(entry);
     }
 
@@ -121,20 +134,23 @@ export class SubscriptionService {
      */
     async hasActivePaidSubscription(userId: string, date: Date): Promise<boolean> {
         const subscriptions = await this.accountingDB.findActiveSubscriptionsForUser(userId, date.toISOString());
-        return subscriptions
-            .filter(s => Subscription.isActive(s, date.toISOString()))
-            .length > 0;
+        return subscriptions.filter((s) => Subscription.isActive(s, date.toISOString())).length > 0;
     }
 
     async store(db: AccountingDB, model: SubscriptionModel) {
         const delta = model.getResult();
         await Promise.all([
-            ...delta.updates.map(s => db.storeSubscription(s)),
-            ...delta.inserts.map(s => db.newSubscription(s))
+            ...delta.updates.map((s) => db.storeSubscription(s)),
+            ...delta.inserts.map((s) => db.newSubscription(s)),
         ]);
     }
 
-    private async doUnsubscribe(db: AccountingDB, userId: string, endDate: string, planId: string) : Promise<Subscription[]>{
+    private async doUnsubscribe(
+        db: AccountingDB,
+        userId: string,
+        endDate: string,
+        planId: string,
+    ): Promise<Subscription[]> {
         const subscriptions = await db.findAllSubscriptionsForUser(userId);
         for (let subscription of subscriptions) {
             if (planId === subscription.planId) {
@@ -144,7 +160,7 @@ export class SubscriptionService {
                     } else {
                         Subscription.cancelSubscription(subscription, subscription.startDate);
                     }
-                    log.info({ userId }, 'Canceling subscription', { subscription });
+                    log.info({ userId }, "Canceling subscription", { subscription });
                     await db.storeSubscription(subscription);
                 }
             }
