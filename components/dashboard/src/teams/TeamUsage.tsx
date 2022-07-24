@@ -26,6 +26,10 @@ function TeamUsage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [resultsPerPage] = useState(10);
     const [errorMessage, setErrorMessage] = useState("");
+    const today = new Date();
+    const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const timestampOfStart = startOfCurrentMonth.getTime();
+    const [startDateOfBillMonth] = useState(timestampOfStart);
 
     useEffect(() => {
         if (!team) {
@@ -34,7 +38,11 @@ function TeamUsage() {
         (async () => {
             const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
             try {
-                const billedUsageResult = await getGitpodService().server.listBilledUsage(attributionId);
+                const billedUsageResult = await getGitpodService().server.listBilledUsage(
+                    attributionId,
+                    startDateOfBillMonth, // TODO: set based on selected month
+                    Date.now(), // TODO: set based on selected month
+                );
                 setBilledUsage(billedUsageResult);
             } catch (error) {
                 if (error.code === ErrorCodes.PERMISSION_DENIED) {
@@ -90,7 +98,10 @@ function TeamUsage() {
                             <div className="space-y-8 mb-6" style={{ width: "max-content" }}>
                                 <div className="flex flex-col truncate">
                                     <div className="text-base text-gray-500 truncate">Period</div>
-                                    <div className="text-lg text-gray-600 font-semibold truncate">June 2022</div>
+                                    <div className="text-lg text-gray-600 font-semibold truncate">
+                                        {startOfCurrentMonth.toLocaleString("default", { month: "long" })}{" "}
+                                        {startOfCurrentMonth.getFullYear()}
+                                    </div>
                                 </div>
                                 <div className="flex flex-col truncate">
                                     <div className="text-base text-gray-500">Total usage</div>

@@ -293,7 +293,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getSpendingLimitForTeam(teamId: string): Promise<number | undefined>;
     setSpendingLimitForTeam(teamId: string, spendingLimit: number): Promise<void>;
 
-    listBilledUsage(attributionId: string): Promise<BillableSession[]>;
+    listBilledUsage(attributionId: string, from?: number, to?: number): Promise<BillableSession[]>;
     setUsageAttribution(usageAttribution: string): Promise<void>;
 
     /**
