@@ -12,6 +12,7 @@ import { ListBilledUsageRequest, ListBilledUsageResponse } from "./usage_pb";
 import { injectable, inject, optional } from "inversify";
 import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import * as grpc from "@grpc/grpc-js";
+import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 
 export const UsageServiceClientProvider = Symbol("UsageServiceClientProvider");
 
@@ -90,12 +91,14 @@ export class PromisifiedUsageServiceClient {
         );
     }
 
-    public async listBilledUsage(_ctx: TraceContext, attributionId: string): Promise<ListBilledUsageResponse> {
+    public async listBilledUsage(_ctx: TraceContext, attributionId: string, from?: Timestamp, to?: Timestamp): Promise<ListBilledUsageResponse> {
         const ctx = TraceContext.childContext(`/usage-service/listBilledUsage`, _ctx);
 
         try {
             const req = new ListBilledUsageRequest();
             req.setAttributionId(attributionId);
+            req.setFrom(from);
+            req.setTo(to);
 
             const response = await new Promise<ListBilledUsageResponse>((resolve, reject) => {
                 this.client.listBilledUsage(

@@ -110,6 +110,7 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CachingUsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import * as usage from "@gitpod/usage-api/lib/usage/v1/usage_pb";
+import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -2095,14 +2096,27 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return result;
     }
 
-    async listBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
+    async listBilledUsage(
+        ctx: TraceContext,
+        attributionId: string,
+        from?: number,
+        to?: number,
+    ): Promise<BillableSession[]> {
         traceAPIParams(ctx, { attributionId });
+        let timestampFrom;
+        let timestampTo;
         const user = this.checkAndBlockUser("listBilledUsage");
 
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
+        if (from) {
+            timestampFrom = new Timestamp().setSeconds(from);
+        }
+        if (to) {
+            timestampTo = new Timestamp().setSeconds(to);
+        }
         const usageClient = this.usageServiceClientProvider.getDefault();
-        const response = await usageClient.listBilledUsage(ctx, attributionId);
+        const response = await usageClient.listBilledUsage(ctx, attributionId, timestampFrom, timestampTo);
         const sessions = response.getSessionsList().map((s) => this.mapBilledSession(s));
 
         return sessions;
