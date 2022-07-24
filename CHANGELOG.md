@@ -1,6 +1,14 @@
 # Change Log
 
 ## July 2022
+- Notify when spending limit is reached. ([#11556](https://github.com/gitpod-io/gitpod/pull/11556)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- NNE ([#11543](https://github.com/gitpod-io/gitpod/pull/11543)) - [@geropl](https://github.com/geropl)
+- Fixed the Connect Button on JetBrains Gateway workspaces list to avoid opening an invalid URL in case the workspace was not running. ([#11523](https://github.com/gitpod-io/gitpod/pull/11523)) - [@felladrin](https://github.com/felladrin)
+- Update GoLand IDE image to version 221.6008.15. ([#11525](https://github.com/gitpod-io/gitpod/pull/11525)) - [@roboquat](https://github.com/roboquat)
+- [installer]: add secret template to certs ([#11524](https://github.com/gitpod-io/gitpod/pull/11524)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Configure team's spending limit on its Billing page. ([#11508](https://github.com/gitpod-io/gitpod/pull/11508)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Update IntelliJ IDEA IDE image to version 221.6008.13. ([#11496](https://github.com/gitpod-io/gitpod/pull/11496)) - [@roboquat](https://github.com/roboquat)
+- [local-preview] Remove `cert-manager` dependency ([#11412](https://github.com/gitpod-io/gitpod/pull/11412)) - [@Pothulapati](https://github.com/Pothulapati)
 - [kots]: add preflight checks for IDE/meta nodes ([#11348](https://github.com/gitpod-io/gitpod/pull/11348)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [local-preview] honour `DO_NOT_TRACK` env variable. ([#11430](https://github.com/gitpod-io/gitpod/pull/11430)) - [@Pothulapati](https://github.com/Pothulapati)
 - [installer]: add in ability to post-process the generated YAML ([#11391](https://github.com/gitpod-io/gitpod/pull/11391)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
