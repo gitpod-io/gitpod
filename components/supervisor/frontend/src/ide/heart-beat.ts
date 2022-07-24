@@ -41,22 +41,10 @@ export function schedule(wsInfo: WorkspaceInfo, sessionId: string): void {
         }
     }
     sendHeartBeat();
-    let unloadTimeout: any;
-    const beforeUnloadListener = () => {
-        unloadTimeout = setTimeout(() => {
-            // if unload was cancelled then resume heartbeating
-            sendHeartBeat();
-        }, 2000);
-        sendHeartBeat(true);
-    };
     const unloadListener = () => {
-        if (unloadTimeout) {
-            clearTimeout(unloadTimeout);
-        }
+        sendHeartBeat(true);
     }
-    window.addEventListener('beforeunload', beforeUnloadListener);
     window.addEventListener('unload', unloadListener);
-    toCancel.push(Disposable.create(() => window.removeEventListener('beforeunload', beforeUnloadListener)));
     toCancel.push(Disposable.create(() => window.removeEventListener('unload', unloadListener)));
 
     let activityInterval = 30000;
