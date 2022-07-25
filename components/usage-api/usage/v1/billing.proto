@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package usage.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
+
+import "google/protobuf/timestamp.proto";
+import "usage/v1/usage.proto";
+
+service BillingService {
+  rpc UpdateInvoices(UpdateInvoicesRequest) returns (UpdateInvoicesResponse) {};
+}
+
+message UpdateInvoicesRequest {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+
+  repeated BilledSession sessions = 3;
+}
+
+message UpdateInvoicesResponse {
+}

@@ -7,6 +7,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
+	"math"
 	"time"
 
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
@@ -14,31 +16,51 @@ import (
 )
 
 type BillingController interface {
-	Reconcile(ctx context.Context, now time.Time, report UsageReport) error
+	Reconcile(ctx context.Context, sessions []*v1.BilledSession) error
 }
 
 type NoOpBillingController struct{}
 
-func (b *NoOpBillingController) Reconcile(_ context.Context, _ time.Time, _ UsageReport) error {
+func (b *NoOpBillingController) Reconcile(_ context.Context, _ []*v1.BilledSession) error {
 	return nil
 }
 
 type StripeBillingController struct {
-	pricer *WorkspacePricer
-	sc     *stripe.Client
+	sc *stripe.Client
 }
 
-func NewStripeBillingController(sc *stripe.Client, pricer *WorkspacePricer) *StripeBillingController {
+func NewStripeBillingController(sc *stripe.Client) *StripeBillingController {
 	return &StripeBillingController{
-		sc:     sc,
-		pricer: pricer,
+		sc: sc,
 	}
 }
 
-func (b *StripeBillingController) Reconcile(_ context.Context, now time.Time, report UsageReport) error {
-	runtimeReport := report.CreditSummaryForTeams(b.pricer, now)
+func (b *StripeBillingController) Reconcile(_ context.Context, sessions []*v1.BilledSession) error {
+	creditsPerTeamID := map[string]int64{}
 
-	err := b.sc.UpdateUsage(runtimeReport)
+	for _, instance := range sessions {
+		attribution, err := db.ParseAttributionID(instance.AttributionId)
+		if err != nil {
+			return fmt.Errorf("invalid attribution: %w", err)
+		}
+
+		entity, id := attribution.Values()
+		if entity != db.AttributionEntity_Team {
+			continue
+		}
+
+		if _, ok := creditsPerTeamID[id]; !ok {
+			creditsPerTeamID[id] = 0
+		}
+		creditsPerTeamID[id] += instance.Credits
+	}
+
+	// Round credits up once we've accumulated all of them
+	for team, credits := range creditsPerTeamID {
+		creditsPerTeamID[team] = int64(math.Ceil(float64(credits)))
+	}
+
+	err := b.sc.UpdateUsage(creditsPerTeamID)
 	if err != nil {
 		return fmt.Errorf("failed to update usage: %w", err)
 	}

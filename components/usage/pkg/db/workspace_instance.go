@@ -120,6 +120,22 @@ func (a AttributionID) Values() (entity string, identifier string) {
 	return tokens[0], tokens[1]
 }
 
+func ParseAttributionID(s string) (AttributionID, error) {
+	tokens := strings.Split(s, ":")
+	if len(tokens) != 2 {
+		return "", fmt.Errorf("invalid attribution ID: %s", s)
+	}
+
+	switch tokens[0] {
+	case AttributionEntity_Team:
+		return NewTeamAttributionID(tokens[1]), nil
+	case AttributionEntity_User:
+		return NewUserAttributionID(tokens[1]), nil
+	default:
+		return "", fmt.Errorf("invalid attribution ID entity: %s", s)
+	}
+}
+
 const (
 	WorkspaceClass_Default = "default"
 )
