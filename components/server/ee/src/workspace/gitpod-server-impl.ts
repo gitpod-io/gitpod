@@ -2110,10 +2110,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
         if (from) {
-            timestampFrom = new Timestamp().setSeconds(from);
+            timestampFrom = Timestamp.fromDate(new Date(from));
         }
         if (to) {
-            timestampTo = new Timestamp().setSeconds(to);
+            timestampTo = Timestamp.fromDate(new Date(to));
         }
         const usageClient = this.usageServiceClientProvider.getDefault();
         const response = await usageClient.listBilledUsage(ctx, attributionId, timestampFrom, timestampTo);
