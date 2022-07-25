@@ -9,6 +9,10 @@ if [ -z "${DOMAIN}" ]; then
   export DOMAIN="127-0-0-1.nip.io"
 fi
 
+# Create a USER_ID to be used everywhere
+USER_ID="$(od -x /dev/urandom | head -1 | awk '{OFS="-"; print $2$3,$4,$5,$6,$7$8$9}')"
+export USER_ID
+
 if [ "$1" != "logging" ]; then
   $0 logging 2>&1 | /prettylog
   exit
