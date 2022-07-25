@@ -100,8 +100,11 @@ func (s *UsageService) CollectUsage(ctx context.Context, req *v1.CollectUsageReq
 	}, nil
 }
 
-func NewUsageService(conn *gorm.DB) *UsageService {
-	return &UsageService{conn: conn}
+func NewUsageService(conn *gorm.DB, ctrl *controller.UsageReconciler) *UsageService {
+	return &UsageService{
+		conn: conn,
+		ctrl: ctrl,
+	}
 }
 
 func usageRecordToBilledUsageProto(usageRecord db.WorkspaceInstanceUsage) *v1.BilledSession {

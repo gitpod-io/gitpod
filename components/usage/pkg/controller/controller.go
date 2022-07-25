@@ -5,9 +5,12 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/robfig/cron"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"sync"
 	"time"
 )
@@ -81,4 +84,44 @@ func (c *Controller) Stop() {
 	// Wait for existing jobs to finish
 	c.runningJobs.Wait()
 
+}
+
+type DelegatingReconciler struct {
+	usageService   v1.UsageServiceClient
+	billingService v1.BillingServiceClient
+}
+
+func NewDelegatingReconciler(usageSvc v1.UsageServiceClient, billingSvc v1.BillingServiceClient) *DelegatingReconciler {
+	return &DelegatingReconciler{
+		usageService:   usageSvc,
+		billingService: billingSvc,
+	}
+}
+
+func (r *DelegatingReconciler) Reconcile() error {
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	startOfCurrentMonth := timestamppb.New(start)
+	startOfNextMonth := timestamppb.New(start.AddDate(0, 1, 0))
+
+	usage, err := r.usageService.CollectUsage(ctx, &v1.CollectUsageRequest{
+		StartTime: startOfCurrentMonth,
+		EndTime:   startOfNextMonth,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to collect usage: %w", err)
+	}
+
+	_, err = r.billingService.UpdateInvoices(ctx, &v1.UpdateInvoicesRequest{
+		StartTime: startOfCurrentMonth,
+		EndTime:   startOfNextMonth,
+		Sessions:  usage.GetSessions(),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update invoices: %w", err)
+	}
+
+	return nil
 }

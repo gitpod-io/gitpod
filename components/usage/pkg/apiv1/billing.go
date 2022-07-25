@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
-	"github.com/gitpod-io/gitpod/usage/pkg/controller"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"google.golang.org/grpc/codes"
@@ -17,9 +16,14 @@ import (
 	"math"
 )
 
+func NewBillingService(sc *stripe.Client) *BillingService {
+	return &BillingService{
+		sc: sc,
+	}
+}
+
 type BillingService struct {
-	sc   *stripe.Client
-	ctrl controller.BillingController
+	sc *stripe.Client
 
 	v1.UnimplementedBillingServiceServer
 }
