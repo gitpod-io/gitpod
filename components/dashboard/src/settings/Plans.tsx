@@ -22,10 +22,9 @@ import Modal from "../components/Modal";
 import SelectableCard from "../components/SelectableCard";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import Tooltip from "../components/Tooltip";
-import getSettingsMenu from "./settings-menu";
 import { PaymentContext } from "../payment-context";
+import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 type PlanWithOriginalPrice = Plan & { originalPrice?: number };
 type Pending = { pendingSince: number };
@@ -45,8 +44,7 @@ type TeamClaimModal =
 
 export default function () {
     const { user } = useContext(UserContext);
-    const { showPaymentUI, showUsageBasedUI, currency, setCurrency, isStudent, isChargebeeCustomer } =
-        useContext(PaymentContext);
+    const { showPaymentUI, currency, setCurrency, isStudent, isChargebeeCustomer } = useContext(PaymentContext);
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
     const [availableCoupons, setAvailableCoupons] = useState<PlanCoupon[]>();
     const [appliedCoupons, setAppliedCoupons] = useState<PlanCoupon[]>();
@@ -636,11 +634,7 @@ export default function () {
 
     return (
         <div>
-            <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
-                title="Plans"
-                subtitle="Manage account usage and billing."
-            >
+            <PageWithSettingsSubMenu title="Plans" subtitle="Manage account usage and billing.">
                 {showPaymentUI && (
                     <div className="w-full text-center">
                         <p className="text-xl text-gray-500">
@@ -858,7 +852,7 @@ export default function () {
                         </div>
                     </Modal>
                 )}
-            </PageWithSubMenu>
+            </PageWithSettingsSubMenu>
         </div>
     );
 }

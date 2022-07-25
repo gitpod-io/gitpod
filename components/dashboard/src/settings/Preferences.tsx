@@ -5,23 +5,20 @@
  */
 
 import { useContext, useState } from "react";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import SelectableCardSolid from "../components/SelectableCardSolid";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
 import { UserContext } from "../user-context";
-import getSettingsMenu from "./settings-menu";
 import { trackEvent } from "../Analytics";
-import { PaymentContext } from "../payment-context";
 import SelectIDE from "./SelectIDE";
 import { getExperimentsClient } from "../experiments/client";
 import SelectWorkspaceClass from "./selectClass";
+import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 type Theme = "light" | "dark" | "system";
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
-    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
     const { setIsDark } = useContext(ThemeContext);
 
     const [theme, setTheme] = useState<Theme>(localStorage.theme || "system");
@@ -65,11 +62,7 @@ export default function Preferences() {
 
     return (
         <div>
-            <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
-                title="Preferences"
-                subtitle="Configure user preferences."
-            >
+            <PageWithSettingsSubMenu title="Preferences" subtitle="Configure user preferences.">
                 <h3>Editor</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Choose the editor for opening workspaces.</p>
                 <SelectIDE location="preferences" />
@@ -153,7 +146,7 @@ export default function Preferences() {
                         </p>
                     </div>
                 </div>
-            </PageWithSubMenu>
+            </PageWithSettingsSubMenu>
         </div>
     );
 }

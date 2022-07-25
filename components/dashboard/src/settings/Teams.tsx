@@ -6,7 +6,6 @@
 
 import React, { useContext, useEffect, useRef, useState } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
 import AlertBox from "../components/AlertBox";
 import Modal from "../components/Modal";
@@ -21,22 +20,19 @@ import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { poll, PollOptions } from "../utils";
-import getSettingsMenu from "./settings-menu";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { PaymentContext } from "../payment-context";
+import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 export default function Teams() {
-    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
-
     return (
         <div>
-            <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
+            <PageWithSettingsSubMenu
                 title="Team Plans"
                 subtitle="View and manage subscriptions for your team with one centralized billing."
             >
                 <AllTeams />
-            </PageWithSubMenu>
+            </PageWithSettingsSubMenu>
         </div>
     );
 }
