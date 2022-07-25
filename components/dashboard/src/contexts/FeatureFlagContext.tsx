@@ -11,8 +11,9 @@ import { ProjectContext } from "../projects/project-context";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { UserContext } from "../user-context";
 
-const FeatureFlagContext = createContext<{ showUsageBasedPricingUI: boolean }>({
+const FeatureFlagContext = createContext<{ showUsageBasedPricingUI: boolean; showWorkspaceClassesUI: boolean }>({
     showUsageBasedPricingUI: false,
+    showWorkspaceClassesUI: false,
 });
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
@@ -22,6 +23,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [showUsageBasedPricingUI, setShowUsageBasedPricingUI] = useState<boolean>(false);
+    const [showWorkspaceClassesUI, setShowWorkspaceClassesUI] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) {
@@ -40,10 +42,19 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 },
             );
             setShowUsageBasedPricingUI(isUsageBasedBillingEnabled);
+
+            const showWorkspaceClasses = await getExperimentsClient().getValueAsync("workspace_classes", true, {
+                user,
+            });
+            setShowWorkspaceClassesUI(showWorkspaceClasses);
         })();
     }, [user, teams, team, project]);
 
-    return <FeatureFlagContext.Provider value={{ showUsageBasedPricingUI }}>{children}</FeatureFlagContext.Provider>;
+    return (
+        <FeatureFlagContext.Provider value={{ showUsageBasedPricingUI, showWorkspaceClassesUI }}>
+            {children}
+        </FeatureFlagContext.Provider>
+    );
 };
 
 export { FeatureFlagContext, FeatureFlagContextProvider };
