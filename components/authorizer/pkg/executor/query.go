@@ -230,9 +230,6 @@ func (q *Query) Where(expr string, args ...interface{}) {
 
 func (q *Query) TableAlias(table string) string {
 	alias := fmt.Sprintf("%st%03d", q.Prefix, q.NS.Next())
-	if alias == "t001" {
-		fmt.Println()
-	}
 	q.Tables[alias] = table
 	q.lastAlias = alias
 	return alias

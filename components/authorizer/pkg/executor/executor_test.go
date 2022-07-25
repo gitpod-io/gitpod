@@ -2,11 +2,12 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package main
+package executor_test
 
 import (
 	"context"
 	"log"
+	"testing"
 
 	"github.com/gitpod-io/gitpod/authorizer/pkg/dbgen"
 	"github.com/gitpod-io/gitpod/authorizer/pkg/executor"
@@ -28,13 +29,6 @@ var user = &dbgen.TypeSpec{
 			Targets: []dbgen.RelationTarget{
 				dbgen.RelationSelf{},
 				dbgen.RelationRef("owner"),
-			},
-		},
-		{
-			Name: "reader",
-			Targets: []dbgen.RelationTarget{
-				dbgen.RelationSelf{},
-				dbgen.RelationRef("writer"),
 			},
 		},
 	},
@@ -75,6 +69,12 @@ var workspace = &dbgen.TypeSpec{
 				dbgen.RelationSelf{},
 				dbgen.RelationRef("access"),
 				dbgen.RelationRef("writer"),
+				dbgen.RelationRemoteRef{
+					Target:         token,
+					Name:           "reader",
+					RelationColumn: "ownerId",
+					ActorRelColumn: "userId",
+				},
 			},
 		},
 	},
@@ -109,21 +109,47 @@ var workspaceInstance = &dbgen.TypeSpec{
 	},
 }
 
-func main() {
-	// sess := dbgen.NewSession("main_test")
-	// sess.Generate(user)
-	// sess.Generate(workspace)
-	// sess.Generate(workspaceInstance)
-	// sess.Commit()
-	// fmt.Println(sess)
+var token = &dbgen.TypeSpec{
+	Name:     "token",
+	Table:    "d_b_gitpod_token",
+	IDColumn: "tokenHash",
+	Relations: []dbgen.Relation{
+		{
+			Name: "owner",
+			Targets: []dbgen.RelationTarget{
+				dbgen.RelationRemoteRef{
+					Target:         user,
+					Name:           "owner",
+					RelationColumn: "userId",
+				},
+			},
+		},
+		{
+			Name: "reader",
+			Targets: []dbgen.RelationTarget{
+				dbgen.RelationSelfContains{
+					Column:    "scopes",
+					Substring: "reader",
+				},
+			},
+		},
+	},
+}
 
+func BenchmarkCheck(b *testing.B) {
 	exec, err := executor.NewExecutor(
 		user,
 		workspace,
 		workspaceInstance,
+		token,
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	exec.Check(context.Background(), "owner", "user:foo", "workspace_instance:instancebla")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	exec.Check(context.Background(), "reader", "token:foo", "workspace:instancebla")
+	// for n := 0; n < b.N; n++ {
+	// }
 }

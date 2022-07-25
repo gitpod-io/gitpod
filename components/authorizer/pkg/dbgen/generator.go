@@ -101,8 +101,8 @@ func (s *Session) Generate(spec *TypeSpec) error {
 					jen.Lit(spec.Table),
 					jen.Lit(rt.RelationColumn),
 				))
-			case RelationTable:
-				return fmt.Errorf("RelationTable unsupported")
+			case RelationSelfContains:
+				return fmt.Errorf("RelationSelfContains unsupported")
 
 			case RelationSelf:
 				res = append(res, jen.Qual(pkgExecutor, "StartChainWithExists").Call(jen.Lit(fmt.Sprintf("%s is self", spec.Name)), jen.Lit(spec.Table), jen.Lit(spec.IDColumn), jen.Id("actorKey")))

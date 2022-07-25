@@ -24,6 +24,7 @@ type RelationRemoteRef struct {
 	Target         *TypeSpec
 	Name           string
 	RelationColumn string
+	ActorRelColumn string
 }
 
 func (RelationRemoteRef) privateType() {}
@@ -36,9 +37,9 @@ type RelationSelf struct{}
 
 func (RelationSelf) privateType() {}
 
-type RelationTable struct {
-	Target *TypeSpec
-	Column string
+type RelationSelfContains struct {
+	Column    string
+	Substring string
 }
 
-func (RelationTable) privateType() {}
+func (RelationSelfContains) privateType() {}
