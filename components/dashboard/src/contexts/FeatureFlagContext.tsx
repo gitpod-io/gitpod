@@ -4,19 +4,46 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import React, { createContext, useContext, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useLocation } from "react-router";
+import { getExperimentsClient } from "../experiments/client";
+import { ProjectContext } from "../projects/project-context";
+import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { UserContext } from "../user-context";
 
-const FeatureFlagContext = createContext({});
+const FeatureFlagContext = createContext<{ showUsageBasedPricingUI: boolean }>({
+    showUsageBasedPricingUI: false,
+});
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const { user } = useContext(UserContext);
+    const { teams } = useContext(TeamsContext);
+    const { project } = useContext(ProjectContext);
+    const location = useLocation();
+    const team = getCurrentTeam(location, teams);
+    const [showUsageBasedPricingUI, setShowUsageBasedPricingUI] = useState<boolean>(false);
 
     useEffect(() => {
-        // Query FeatureFlag here
-    }, [user]);
+        if (!user) {
+            return;
+        }
+        (async () => {
+            const isUsageBasedBillingEnabled = await getExperimentsClient().getValueAsync(
+                "isUsageBasedBillingEnabled",
+                false,
+                {
+                    user,
+                    projectId: project?.id,
+                    teamId: team?.id,
+                    teamName: team?.name,
+                    teams,
+                },
+            );
+            setShowUsageBasedPricingUI(isUsageBasedBillingEnabled);
+        })();
+    }, [user, teams, team, project]);
 
-    return <FeatureFlagContext.Provider value={{}}>{children}</FeatureFlagContext.Provider>;
+    return <FeatureFlagContext.Provider value={{ showUsageBasedPricingUI }}>{children}</FeatureFlagContext.Provider>;
 };
 
 export { FeatureFlagContext, FeatureFlagContextProvider };
