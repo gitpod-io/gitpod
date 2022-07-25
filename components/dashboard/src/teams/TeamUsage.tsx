@@ -7,7 +7,6 @@
 import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
-import { PaymentContext } from "../payment-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { BillableSession, BillableWorkspaceType } from "@gitpod/gitpod-protocol/lib/usage";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
@@ -16,10 +15,11 @@ import moment from "moment";
 import Pagination from "../components/Pagination";
 import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 function TeamUsage() {
     const { teams } = useContext(TeamsContext);
-    const { showUsageBasedUI } = useContext(PaymentContext);
+    const { showUsageBasedPricingUI } = useContext(FeatureFlagContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [billedUsage, setBilledUsage] = useState<BillableSession[]>([]);
@@ -52,7 +52,7 @@ function TeamUsage() {
         })();
     }, [team]);
 
-    if (!showUsageBasedUI) {
+    if (!showUsageBasedPricingUI) {
         return <Redirect to="/" />;
     }
 
