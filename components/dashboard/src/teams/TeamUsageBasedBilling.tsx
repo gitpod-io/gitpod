@@ -14,6 +14,7 @@ import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 type PendingStripeSubscription = { pendingSince: number };
 
@@ -21,7 +22,8 @@ export default function TeamUsageBasedBilling() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const { showUsageBasedUI, currency } = useContext(PaymentContext);
+    const { currency } = useContext(PaymentContext);
+    const { showUsageBasedPricingUI } = useContext(FeatureFlagContext);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
@@ -135,7 +137,7 @@ export default function TeamUsageBasedBilling() {
         }
     }, [pendingStripeSubscription, pollStripeSubscriptionTimeout, stripeSubscriptionId, team]);
 
-    if (!showUsageBasedUI) {
+    if (!showUsageBasedPricingUI) {
         return <></>;
     }
 
