@@ -16,6 +16,7 @@
     'gitpod-component-ws-manager-bridge.json': (import 'dashboards/components/ws-manager-bridge.json'),
     'gitpod-component-proxy.json': (import 'dashboards/components/proxy.json'),
     'gitpod-component-server.json': (import 'dashboards/components/server.json'),
+    'gitpod-component-usage.json': (import 'dashboards/components/usage.json'),
     'gitpod-slo-login.json': (import 'dashboards/SLOs/login.json'),
     'gitpod-meta-overview.json': (import 'dashboards/components/meta-overview.json'),
     'gitpod-meta-services.json': (import 'dashboards/components/meta-services.json'),
