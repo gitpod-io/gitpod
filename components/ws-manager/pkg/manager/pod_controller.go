@@ -8,13 +8,13 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // PodReconciler reconciles a Pod object
@@ -31,10 +31,12 @@ type PodReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var pod corev1.Pod
-	err := r.Client.Get(context.Background(), req.NamespacedName, &pod)
-	if errors.IsNotFound(err) {
-		// pod is gone - that's ok
-		return reconcile.Result{}, nil
+	if err := r.Client.Get(context.Background(), req.NamespacedName, &pod); err != nil {
+		if errors.IsNotFound(err) {
+			// pod is gone - that's ok
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, xerrors.Errorf("error getting pod %s: %v", req.String(), err)
 	}
 
 	queue := pod.Annotations[workspaceIDAnnotation]
