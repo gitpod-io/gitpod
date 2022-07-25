@@ -3,14 +3,12 @@ packages:
     type: docker
     deps:
       - install/installer:app
+      - install/preview/prettylog:app
     argdeps:
       - imageRepoBase
     srcs:
       - "entrypoint.sh"
       - "manifests/*.yaml"
-      - "prettylog/main.go"
-      - "prettylog/go.sum"
-      - "prettylog/go.mod"
     config:
       dockerfile: leeway.Dockerfile
       image:
