@@ -14,6 +14,7 @@
    * @param description (optional) Panel description.
    * @param datasource (optional) Panel datasource.
    * @param unit (optional) The unit of the data.
+   * @param decimals (optional) Number of decimal.
    * @param thresholds (optional) An array of threashold values.
    * @param values (optional) Bool if show values
    * @param calcs (optional) An array of type of calculation
@@ -31,6 +32,7 @@
     description=null,
     datasource=null,
     unit=null,
+    decimals=null,
     thresholds=[],
     values=false,
     calcs=['mean'],
@@ -48,6 +50,7 @@
     ],
     fieldConfig: {
       defaults: {
+        [if decimals != null then 'decimals']: decimals,
         unit: unit,
         [if color != null then 'color']: color,
         thresholds: {
