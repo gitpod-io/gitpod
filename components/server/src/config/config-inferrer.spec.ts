@@ -53,7 +53,7 @@ vscode:
 });
 
 describe("config inferrer", () => {
-    it("check node", async () =>
+    it("[node] yarn", async () =>
         expect(
             {
                 "yarn.lock": "",
@@ -65,8 +65,7 @@ describe("config inferrer", () => {
                         "build": "npx tsc",
                         "watch": "npx tsc -w"
                     }
-                }
-            `,
+                }`,
             },
             {
                 tasks: [
@@ -80,6 +79,56 @@ describe("config inferrer", () => {
                 },
             },
         )),
+        it("[node] npm", async () =>
+            expect(
+                {
+                    "package.json": `
+                    {
+                        "scripts": {
+                            "clean": "npx rimraf lib",
+                            "build": "npx tsc",
+                            "watch": "npx tsc -w"
+                        }
+                    }`,
+                },
+                {
+                    tasks: [
+                        {
+                            init: "npm install && npm run build",
+                            command: "npm run watch",
+                        },
+                    ],
+                    vscode: {
+                        extensions: ["dbaeumer.vscode-eslint"],
+                    },
+                },
+            )),
+        it("[node] pnpm", async () =>
+            expect(
+                {
+                    "pnpm-lock.yaml": "",
+                    "package.json": `
+                        {
+                            "packageManager": "pnpm@6.32.4",
+                            "scripts": {
+                                "clean": "npx rimraf lib",
+                                "build": "npx tsc",
+                                "watch": "npx tsc -w"
+                            }
+                        }`,
+                },
+                {
+                    tasks: [
+                        {
+                            init: "pnpm install && pnpm run build",
+                            command: "pnpm run watch",
+                        },
+                    ],
+                    vscode: {
+                        extensions: ["dbaeumer.vscode-eslint"],
+                    },
+                },
+            )),
         it("[java] mvn wrapper", async () =>
             expect(
                 {
