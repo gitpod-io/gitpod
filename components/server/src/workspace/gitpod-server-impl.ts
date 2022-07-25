@@ -3052,6 +3052,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 displayName: c.displayName,
                 description: c.description,
                 powerups: c.powerups,
+                isDefault: c.isDefault,
             }));
 
         return classes;

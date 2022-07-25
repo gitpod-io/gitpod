@@ -43,10 +43,14 @@ export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
         const fetchClasses = async () => {
             const classes = await getGitpodService().server.getSupportedWorkspaceClasses();
             setSupportedClasses(classes);
+
+            if (!workspaceClass) {
+                setWorkspaceClass(supportedClasses.find((c) => c.isDefault)?.id || "");
+            }
         };
 
         fetchClasses().catch(console.error);
-    }, []);
+    });
 
     if (!props.enabled) {
         return <div></div>;
