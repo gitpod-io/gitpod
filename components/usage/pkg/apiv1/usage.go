@@ -7,6 +7,7 @@ package apiv1
 import (
 	context "context"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/usage/pkg/controller"
 	"time"
 
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
@@ -21,6 +22,9 @@ var _ v1.UsageServiceServer = (*UsageService)(nil)
 
 type UsageService struct {
 	conn *gorm.DB
+
+	ctrl *controller.UsageReconciler
+
 	v1.UnimplementedUsageServiceServer
 }
 
@@ -64,23 +68,7 @@ func (us *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUs
 
 	var billedSessions []*v1.BilledSession
 	for _, usageRecord := range usageRecords {
-		var endTime *timestamppb.Timestamp
-		if usageRecord.StoppedAt.Valid {
-			endTime = timestamppb.New(usageRecord.StoppedAt.Time)
-		}
-		billedSession := &v1.BilledSession{
-			AttributionId:  string(usageRecord.AttributionID),
-			UserId:         usageRecord.UserID.String(),
-			WorkspaceId:    usageRecord.WorkspaceID,
-			WorkspaceType:  string(usageRecord.WorkspaceType),
-			ProjectId:      usageRecord.ProjectID,
-			InstanceId:     usageRecord.InstanceID.String(),
-			WorkspaceClass: usageRecord.WorkspaceClass,
-			StartTime:      timestamppb.New(usageRecord.StartedAt),
-			EndTime:        endTime,
-			Credits:        int64(usageRecord.CreditsUsed),
-		}
-		billedSessions = append(billedSessions, billedSession)
+		billedSessions = append(billedSessions, usageRecordToBilledUsageProto(usageRecord))
 	}
 
 	return &v1.ListBilledUsageResponse{
@@ -88,6 +76,49 @@ func (us *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUs
 	}, nil
 }
 
+func (s *UsageService) CollectUsage(ctx context.Context, req *v1.CollectUsageRequest) (*v1.CollectUsageResponse, error) {
+	from := req.GetStartTime().AsTime()
+	to := req.GetEndTime().AsTime()
+
+	if from.Before(to) {
+		return nil, status.Errorf(codes.InvalidArgument, "End time must be after start time")
+	}
+
+	_, report, err := s.ctrl.ReconcileTimeRange(ctx, from, to)
+	if err != nil {
+		log.Log.WithError(err).Error("Failed to reconcile time range.")
+		return nil, status.Error(codes.Internal, "failed to reconcile time range")
+	}
+
+	var sessions []*v1.BilledSession
+	for _, instance := range report {
+		sessions = append(sessions, usageRecordToBilledUsageProto(instance))
+	}
+
+	return &v1.CollectUsageResponse{
+		Sessions: sessions,
+	}, nil
+}
+
 func NewUsageService(conn *gorm.DB) *UsageService {
 	return &UsageService{conn: conn}
+}
+
+func usageRecordToBilledUsageProto(usageRecord db.WorkspaceInstanceUsage) *v1.BilledSession {
+	var endTime *timestamppb.Timestamp
+	if usageRecord.StoppedAt.Valid {
+		endTime = timestamppb.New(usageRecord.StoppedAt.Time)
+	}
+	return &v1.BilledSession{
+		AttributionId:  string(usageRecord.AttributionID),
+		UserId:         usageRecord.UserID.String(),
+		WorkspaceId:    usageRecord.WorkspaceID,
+		WorkspaceType:  string(usageRecord.WorkspaceType),
+		ProjectId:      usageRecord.ProjectID,
+		InstanceId:     usageRecord.InstanceID.String(),
+		WorkspaceClass: usageRecord.WorkspaceClass,
+		StartTime:      timestamppb.New(usageRecord.StartedAt),
+		EndTime:        endTime,
+		Credits:        int64(usageRecord.CreditsUsed),
+	}
 }

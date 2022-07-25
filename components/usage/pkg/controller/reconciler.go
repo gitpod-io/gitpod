@@ -72,11 +72,6 @@ func (u *UsageReconciler) Reconcile() (err error) {
 	}
 	log.WithField("usage_reconcile_status", status).Info("Reconcile completed.")
 
-	err = db.CreateUsageRecords(ctx, u.conn, usageReportToUsageRecords(report, u.pricer, u.nowFunc().UTC()))
-	if err != nil {
-		return fmt.Errorf("failed to write usage records to database: %s", err)
-	}
-
 	filename := fmt.Sprintf("%s.gz", now.Format(time.RFC3339))
 	err = u.contentService.UploadUsageReport(ctx, filename, report)
 	if err != nil {
@@ -105,17 +100,53 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	}
 	log.WithField("workspace_instances", instances).Debug("Successfully loaded workspace instances.")
 
-	instancesByAttributionID := groupInstancesByAttributionID(instances)
+	//instancesByAttributionID := groupInstancesByAttributionID(instances)
 
-	err = u.billingController.Reconcile(ctx, now, instancesByAttributionID)
+	usageRecords := convertInstancesToUsageRecords(instances, u.pricer, now)
+
+	err = db.CreateUsageRecords(ctx, u.conn, usageRecords)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to reconcile billing: %w", err)
+		return nil, nil, fmt.Errorf("failed to write usage records to database: %s", err)
 	}
 
-	return status, instancesByAttributionID, nil
+	//err = u.billingController.Reconcile(ctx, now, instancesByAttributionID)
+	//if err != nil {
+	//	return nil, nil, fmt.Errorf("failed to reconcile billing: %w", err)
+	//}
+
+	return status, usageRecords, nil
 }
 
-type UsageReport map[db.AttributionID][]db.WorkspaceInstanceForUsage
+func convertInstancesToUsageRecords(instances []db.WorkspaceInstanceForUsage, pricer *WorkspacePricer, now time.Time) []db.WorkspaceInstanceUsage {
+	var usageRecords []db.WorkspaceInstanceUsage
+	for _, instance := range instances {
+		var stoppedAt sql.NullTime
+		if instance.StoppedTime.IsSet() {
+			stoppedAt = sql.NullTime{Time: instance.StoppedTime.Time(), Valid: true}
+		}
+
+		projectID := ""
+		if instance.ProjectID.Valid {
+			projectID = instance.ProjectID.String
+		}
+
+		usageRecords = append(usageRecords, db.WorkspaceInstanceUsage{
+			InstanceID:     instance.ID,
+			AttributionID:  instance.UsageAttributionID,
+			WorkspaceID:    instance.WorkspaceID,
+			ProjectID:      projectID,
+			UserID:         instance.OwnerID,
+			WorkspaceType:  instance.Type,
+			WorkspaceClass: instance.WorkspaceClass,
+			StartedAt:      instance.CreationTime.Time(),
+			StoppedAt:      stoppedAt,
+			CreditsUsed:    pricer.CreditsUsedByInstance(&instance, now),
+			GenerationID:   0,
+		})
+	}
+}
+
+type UsageReport []db.WorkspaceInstanceUsage
 
 func (u UsageReport) CreditSummaryForTeams(pricer *WorkspacePricer, maxStopTime time.Time) map[string]int64 {
 	creditsPerTeamID := map[string]int64{}

@@ -9,6 +9,9 @@ import "google/protobuf/timestamp.proto";
 service UsageService {
     // ListBilledUsage retrieves all usage for the specified attributionId
     rpc ListBilledUsage(ListBilledUsageRequest) returns (ListBilledUsageResponse) {}
+
+    // CollectUsage collects usage for the specified time range, for all users and teams.
+    rpc CollectUsage(CollectUsageRequest) returns (CollectUsageResponse) {}
 }
 
 message ListBilledUsageRequest {
@@ -50,4 +53,13 @@ message BilledSession {
     google.protobuf.Timestamp end_time = 10;
 
     int64 credits = 11;
+}
+
+message CollectUsageRequest {
+    google.protobuf.Timestamp start_time = 1;
+    google.protobuf.Timestamp end_time = 2;
+}
+
+message CollectUsageResponse {
+    repeated BilledSession sessions = 1;
 }
