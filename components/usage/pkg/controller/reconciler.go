@@ -5,11 +5,8 @@
 package controller
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"math"
 	"time"
@@ -75,24 +72,13 @@ func (u *UsageReconciler) Reconcile() (err error) {
 	}
 	log.WithField("usage_reconcile_status", status).Info("Reconcile completed.")
 
-	reportBytes := &bytes.Buffer{}
-	gz := gzip.NewWriter(reportBytes)
-	err = json.NewEncoder(gz).Encode(report)
-	if err != nil {
-		return fmt.Errorf("failed to marshal report to JSON: %w", err)
-	}
-	err = gz.Close()
-	if err != nil {
-		return fmt.Errorf("failed to compress usage report: %w", err)
-	}
-
 	err = db.CreateUsageRecords(ctx, u.conn, usageReportToUsageRecords(report, u.pricer, u.nowFunc().UTC()))
 	if err != nil {
 		return fmt.Errorf("failed to write usage records to database: %s", err)
 	}
 
 	filename := fmt.Sprintf("%s.gz", now.Format(time.RFC3339))
-	err = u.contentService.UploadFile(ctx, filename, reportBytes)
+	err = u.contentService.UploadUsageReport(ctx, filename, report)
 	if err != nil {
 		return fmt.Errorf("failed to upload usage report: %w", err)
 	}

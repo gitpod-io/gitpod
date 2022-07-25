@@ -6,11 +6,12 @@ package contentservice
 
 import (
 	"context"
-	"io"
+
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 )
 
 type NoOpClient struct{}
 
-func (c *NoOpClient) UploadFile(ctx context.Context, filename string, body io.Reader) error {
+func (c *NoOpClient) UploadUsageReport(ctx context.Context, filename string, report map[db.AttributionID][]db.WorkspaceInstanceForUsage) error {
 	return nil
 }

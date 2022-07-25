@@ -5,19 +5,22 @@
 package contentservice
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Interface interface {
-	UploadFile(ctx context.Context, filename string, body io.Reader) error
+	UploadUsageReport(ctx context.Context, filename string, report map[db.AttributionID][]db.WorkspaceInstanceForUsage) error
 }
 
 type Client struct {
@@ -28,13 +31,24 @@ func New(url string) *Client {
 	return &Client{url: url}
 }
 
-func (c *Client) UploadFile(ctx context.Context, filename string, body io.Reader) error {
+func (c *Client) UploadUsageReport(ctx context.Context, filename string, report map[db.AttributionID][]db.WorkspaceInstanceForUsage) error {
 	url, err := c.getSignedUploadUrl(ctx, filename)
 	if err != nil {
 		return fmt.Errorf("failed to obtain signed upload URL: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPut, url, body)
+	reportBytes := &bytes.Buffer{}
+	gz := gzip.NewWriter(reportBytes)
+	err = json.NewEncoder(gz).Encode(report)
+	if err != nil {
+		return fmt.Errorf("failed to marshal report to JSON: %w", err)
+	}
+	err = gz.Close()
+	if err != nil {
+		return fmt.Errorf("failed to compress usage report: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPut, url, reportBytes)
 	if err != nil {
 		return fmt.Errorf("failed to construct http request: %w", err)
 	}
