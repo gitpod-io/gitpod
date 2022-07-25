@@ -24,23 +24,23 @@ ReactDOM.render(
     <React.StrictMode>
         <UserContextProvider>
             <AdminContextProvider>
-                <FeatureFlagContextProvider>
-                    <PaymentContextProvider>
-                        <LicenseContextProvider>
-                            <TeamsContextProvider>
-                                <ProjectContextProvider>
-                                    <ThemeContextProvider>
-                                        <StartWorkspaceModalContextProvider>
-                                            <BrowserRouter>
+                <PaymentContextProvider>
+                    <LicenseContextProvider>
+                        <TeamsContextProvider>
+                            <ProjectContextProvider>
+                                <ThemeContextProvider>
+                                    <StartWorkspaceModalContextProvider>
+                                        <BrowserRouter>
+                                            <FeatureFlagContextProvider>
                                                 <App />
-                                            </BrowserRouter>
-                                        </StartWorkspaceModalContextProvider>
-                                    </ThemeContextProvider>
-                                </ProjectContextProvider>
-                            </TeamsContextProvider>
-                        </LicenseContextProvider>
-                    </PaymentContextProvider>
-                </FeatureFlagContextProvider>
+                                            </FeatureFlagContextProvider>
+                                        </BrowserRouter>
+                                    </StartWorkspaceModalContextProvider>
+                                </ThemeContextProvider>
+                            </ProjectContextProvider>
+                        </TeamsContextProvider>
+                    </LicenseContextProvider>
+                </PaymentContextProvider>
             </AdminContextProvider>
         </UserContextProvider>
     </React.StrictMode>,
