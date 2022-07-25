@@ -25,6 +25,10 @@ export class GitHubService extends RepositoryService {
     @inject(TokenService) protected tokenService: TokenService;
     @inject(GithubContextParser) protected githubContextParser: GithubContextParser;
 
+    // TODO: consider refactoring this to either use GH Search API w/ typeahead search only OR
+    // return results in a stream, appending pages as being fetched (via callback below) OR
+    // simply use octokit.request w/ basic paginated api funcs (return # of pages + return a single page),
+    // so the UI can remain interactive vs. currently frozen for 5-10+ mins until all pages are fetched.
     async getRepositoriesForAutomatedPrebuilds(user: User): Promise<ProviderRepository[]> {
         const octokit = await this.githubApi.create(user);
         const repositories = await octokit.paginate(
@@ -32,7 +36,8 @@ export class GitHubService extends RepositoryService {
             { per_page: 100 },
             (response) =>
                 response.data
-                    .filter((r) => !!r.permissions?.admin)
+                    // On very large GH Enterprise (3.3.9) instances, items can be null
+                    .filter((r) => !!r?.permissions?.admin)
                     .map((r) => {
                         return <ProviderRepository>{
                             name: r.name,
