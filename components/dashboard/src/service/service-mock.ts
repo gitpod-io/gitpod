@@ -218,6 +218,7 @@ const gitpodServiceMock = createServiceMock({
                 displayName: "Standard",
                 description: "Up to 4 vCPU, 8GB memory, 30GB disk",
                 powerups: 1,
+                isDefault: true,
             },
             {
                 id: "g1-large",
@@ -225,6 +226,7 @@ const gitpodServiceMock = createServiceMock({
                 displayName: "Large",
                 description: "Up to 8 vCPU, 16GB memory, 50GB disk",
                 powerups: 2,
+                isDefault: false,
             },
         ];
     },
