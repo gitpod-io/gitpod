@@ -4,10 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useState } from "react";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import getSettingsMenu from "./settings-menu";
-import { PaymentContext } from "../payment-context";
+import { useEffect, useState } from "react";
 import Modal from "../components/Modal";
 import Alert from "../components/Alert";
 import { Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
@@ -15,6 +12,7 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { SSHPublicKeyValue, UserSSHPublicKeyValue } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
 import moment from "moment";
+import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 interface AddModalProps {
     value: SSHPublicKeyValue;
@@ -147,8 +145,6 @@ export function DeleteSSHKeyModal(props: DeleteModalProps) {
 }
 
 export default function SSHKeys() {
-    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
-
     const [dataList, setDataList] = useState<UserSSHPublicKeyValue[]>([]);
     const [currentData, setCurrentData] = useState<SSHPublicKeyValue>({ name: "", key: "" });
     const [currentDelData, setCurrentDelData] = useState<UserSSHPublicKeyValue>();
@@ -178,11 +174,7 @@ export default function SSHKeys() {
     };
 
     return (
-        <PageWithSubMenu
-            subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
-            title="SSH Keys"
-            subtitle="Connect securely to workspaces."
-        >
+        <PageWithSettingsSubMenu title="SSH Keys" subtitle="Connect securely to workspaces.">
             {showAddModal && (
                 <AddSSHKeyModal value={currentData} onSave={loadData} onClose={() => setShowAddModal(false)} />
             )}
@@ -239,7 +231,7 @@ export default function SSHKeys() {
                     })}
                 </div>
             )}
-        </PageWithSubMenu>
+        </PageWithSettingsSubMenu>
     );
 }
 

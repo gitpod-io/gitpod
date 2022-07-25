@@ -7,18 +7,15 @@
 import { Team } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import getSettingsMenu from "./settings-menu";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import DropDown from "../components/DropDown";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { TeamsContext } from "../teams/teams-context";
 import { UserContext } from "../user-context";
+import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 export default function Billing() {
     const { user } = useContext(UserContext);
-    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
     const { teams } = useContext(TeamsContext);
     const [teamsWithBillingEnabled, setTeamsWithBillingEnabled] = useState<Team[] | undefined>();
 
@@ -47,11 +44,7 @@ export default function Billing() {
     };
 
     return (
-        <PageWithSubMenu
-            subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
-            title="Billing"
-            subtitle="Usage-Based Billing."
-        >
+        <PageWithSettingsSubMenu title="Billing" subtitle="Usage-Based Billing.">
             <h3>Usage-Based Billing</h3>
             <h2 className="text-gray-500">Manage usage-based billing, spending limit, and payment method.</h2>
             <div className="mt-8">
@@ -91,6 +84,6 @@ export default function Billing() {
                     </div>
                 )}
             </div>
-        </PageWithSubMenu>
+        </PageWithSettingsSubMenu>
     );
 }

@@ -14,31 +14,26 @@ import { ContextMenuEntry } from "../components/ContextMenu";
 import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon, ItemsList } from "../components/ItemsList";
 import Modal from "../components/Modal";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
-import { PaymentContext } from "../payment-context";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { isGitpodIo } from "../utils";
+import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { SelectAccountModal } from "./SelectAccountModal";
-import getSettingsMenu from "./settings-menu";
 
 export default function Integrations() {
-    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
-
     return (
         <div>
-            <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
+            <PageWithSettingsSubMenu
                 title="Integrations"
                 subtitle="Manage permissions for Git providers and integrations."
             >
                 <GitProviders />
                 <div className="h-12"></div>
                 <GitIntegrations />
-            </PageWithSubMenu>
+            </PageWithSettingsSubMenu>
         </div>
     );
 }
