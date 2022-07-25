@@ -16,6 +16,7 @@ import Pagination from "../components/Pagination";
 import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { ReactComponent as CreditsSvg } from "../images/credits.svg";
 
 function TeamUsage() {
     const { teams } = useContext(TeamsContext);
@@ -28,8 +29,9 @@ function TeamUsage() {
     const [errorMessage, setErrorMessage] = useState("");
     const today = new Date();
     const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const timestampOfStart = startOfCurrentMonth.getTime();
-    const [startDateOfBillMonth] = useState(timestampOfStart);
+    const timestampStartOfCurrentMonth = startOfCurrentMonth.getTime();
+    const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(timestampStartOfCurrentMonth);
+    const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(Date.now());
 
     useEffect(() => {
         if (!team) {
@@ -40,8 +42,8 @@ function TeamUsage() {
             try {
                 const billedUsageResult = await getGitpodService().server.listBilledUsage(
                     attributionId,
-                    startDateOfBillMonth, // TODO: set based on selected month
-                    Date.now(), // TODO: set based on selected month
+                    startDateOfBillMonth,
+                    endDateOfBillMonth,
                 );
                 setBilledUsage(billedUsageResult);
             } catch (error) {
@@ -50,7 +52,7 @@ function TeamUsage() {
                 }
             }
         })();
-    }, [team]);
+    }, [team, startDateOfBillMonth, endDateOfBillMonth]);
 
     if (!showUsageBasedPricingUI) {
         return <Redirect to="/" />;
@@ -79,7 +81,34 @@ function TeamUsage() {
     const calculateTotalUsage = () => {
         let totalCredits = 0;
         billedUsage.forEach((session) => (totalCredits += session.credits));
-        return totalCredits;
+        return totalCredits.toFixed(2);
+    };
+
+    const handleMonthClick = (start: any, end: any) => {
+        setStartDateOfBillMonth(start);
+        setEndDateOfBillMonth(end);
+    };
+
+    const getBillingHistory = () => {
+        let rows = [];
+        // This goes back 6 months from the current month
+        for (let i = 1; i < 7; i++) {
+            const endDateVar = i - 1;
+            const startDate = new Date(today.getFullYear(), today.getMonth() - i);
+            const endDate = new Date(today.getFullYear(), today.getMonth() - endDateVar, 0);
+            const timeStampOfStartDate = startDate.getTime();
+            const timeStampOfEndDate = endDate.getTime();
+            rows.push(
+                <div
+                    key={`billing${i}`}
+                    className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
+                    onClick={() => handleMonthClick(timeStampOfStartDate, timeStampOfEndDate)}
+                >
+                    {startDate.toLocaleString("default", { month: "long" })} {startDate.getFullYear()}
+                </div>,
+            );
+        }
+        return rows;
     };
 
     const lastResultOnCurrentPage = currentPage * resultsPerPage;
@@ -90,50 +119,29 @@ function TeamUsage() {
     return (
         <>
             <Header title="Usage" subtitle="Manage team usage." />
-            <div className="app-container pt-9">
+            <div className="app-container pt-5">
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
                 {!errorMessage && (
                     <div className="flex space-x-16">
                         <div className="flex">
                             <div className="space-y-8 mb-6" style={{ width: "max-content" }}>
                                 <div className="flex flex-col truncate">
-                                    <div className="text-base text-gray-500 truncate">Period</div>
-                                    <div className="text-lg text-gray-600 font-semibold truncate">
+                                    <div className="text-base text-gray-500 truncate">Current Month</div>
+                                    <div
+                                        className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer mb-5"
+                                        onClick={() => handleMonthClick(timestampStartOfCurrentMonth, Date.now())}
+                                    >
                                         {startOfCurrentMonth.toLocaleString("default", { month: "long" })}{" "}
                                         {startOfCurrentMonth.getFullYear()}
                                     </div>
+                                    <div className="text-base text-gray-500 truncate">Previous Months</div>
+                                    {getBillingHistory()}
                                 </div>
                                 <div className="flex flex-col truncate">
                                     <div className="text-base text-gray-500">Total usage</div>
                                     <div className="flex text-lg text-gray-600 font-semibold">
-                                        <svg
-                                            className="my-auto mr-1"
-                                            width="20"
-                                            height="20"
-                                            fill="none"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <path
-                                                fill-rule="evenodd"
-                                                clip-rule="evenodd"
-                                                d="M5 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V5a3 3 0 0 0-3-3H5Zm5.2 11.4a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z"
-                                                fill="url(#a)"
-                                            />
-                                            <defs>
-                                                <linearGradient
-                                                    id="a"
-                                                    x1="4.3"
-                                                    y1="4.3"
-                                                    x2="16.071"
-                                                    y2="17.107"
-                                                    gradientUnits="userSpaceOnUse"
-                                                >
-                                                    <stop stop-color="#FFAD33" />
-                                                    <stop offset="1" stop-color="#FF8A00" />
-                                                </linearGradient>
-                                            </defs>
-                                        </svg>
-                                        <span>{calculateTotalUsage()} Total Credits</span>
+                                        <CreditsSvg className="my-auto mr-1" />
+                                        <span>{calculateTotalUsage()} Credits</span>
                                     </div>
                                 </div>
                             </div>
@@ -147,14 +155,16 @@ function TeamUsage() {
                                         {" "}
                                         workspaces
                                     </a>{" "}
-                                    or checked your other teams?
+                                    in{" "}
+                                    {new Date(startDateOfBillMonth).toLocaleString("default", {
+                                        month: "long",
+                                    })}{" "}
+                                    {new Date(startDateOfBillMonth).getFullYear()} or checked your other teams?
                                 </p>
                             </div>
                         )}
                         {billedUsage.length > 0 && (
                             <div className="flex flex-col w-full mb-8">
-                                <h3>All Usage</h3>
-                                <span className="text-gray-500 mb-5">View usage details of all team members.</span>
                                 <ItemsList className="mt-2 text-gray-500">
                                     <Item header={false} className="grid grid-cols-5 bg-gray-100 mb-5">
                                         <ItemField className="my-auto">
@@ -167,33 +177,7 @@ function TeamUsage() {
                                             <span>Usage</span>
                                         </ItemField>
                                         <ItemField className="flex my-auto">
-                                            <svg
-                                                className="my-auto mr-1"
-                                                width="20"
-                                                height="20"
-                                                fill="none"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                            >
-                                                <path
-                                                    fill-rule="evenodd"
-                                                    clip-rule="evenodd"
-                                                    d="M5 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V5a3 3 0 0 0-3-3H5Zm5.2 11.4a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z"
-                                                    fill="url(#a)"
-                                                />
-                                                <defs>
-                                                    <linearGradient
-                                                        id="a"
-                                                        x1="4.3"
-                                                        y1="4.3"
-                                                        x2="16.071"
-                                                        y2="17.107"
-                                                        gradientUnits="userSpaceOnUse"
-                                                    >
-                                                        <stop stop-color="#FFAD33" />
-                                                        <stop offset="1" stop-color="#FF8A00" />
-                                                    </linearGradient>
-                                                </defs>
-                                            </svg>
+                                            <CreditsSvg className="my-auto mr-1" />
                                             <span>Credits</span>
                                         </ItemField>
                                         <ItemField className="my-auto" />
