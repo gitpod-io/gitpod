@@ -13,6 +13,19 @@
             }
         },
         {
+            "Func": "markWorkspace",
+            "Params": {
+                "annotations": [
+                    {
+                        "Name": "gitpod/explicitFail",
+                        "Value": "workspace failed to start.",
+                        "Delete": false
+                    }
+                ],
+                "workspaceID": "7b26a643-d588-4346-bc9e-b46e70831078"
+            }
+        },
+        {
             "Func": "modifyFinalizer",
             "Params": {
                 "add": false,

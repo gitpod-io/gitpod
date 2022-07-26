@@ -20,7 +20,7 @@
             },
             "class": "default"
         },
-        "phase": 6,
+        "phase": 5,
         "conditions": {
             "volume_snapshot": {}
         },
