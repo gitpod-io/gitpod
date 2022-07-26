@@ -724,6 +724,23 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 	return nil
 }
 
+func (m *Manager) deleteWorkspacePVC(ctx context.Context, pvcName string) error {
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pvcName,
+			Namespace: m.Config.Namespace,
+		},
+	}
+	err := m.Clientset.Delete(ctx, pvc)
+	if k8serr.IsNotFound(err) {
+		err = nil
+	}
+	if err != nil {
+		return xerrors.Errorf("cannot delete workspace pvc: %w", err)
+	}
+	return nil
+}
+
 func (m *Manager) deleteWorkspaceSecrets(ctx context.Context, podName string) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
