@@ -33,10 +33,10 @@ func NewStripeBillingController(sc *stripe.Client) *StripeBillingController {
 	}
 }
 
-func (b *StripeBillingController) Reconcile(_ context.Context, report UsageReport) error {
+func (b *StripeBillingController) Reconcile(ctx context.Context, report UsageReport) error {
 	runtimeReport := report.CreditSummaryForTeams()
 
-	err := b.sc.UpdateUsage(runtimeReport)
+	err := b.sc.UpdateUsage(ctx, runtimeReport)
 	if err != nil {
 		return fmt.Errorf("failed to update usage: %w", err)
 	}

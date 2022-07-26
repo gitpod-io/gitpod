@@ -5,6 +5,7 @@
 package stripe
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -46,7 +47,7 @@ func New(config ClientConfig) (*Client, error) {
 
 // UpdateUsage updates teams' Stripe subscriptions with usage data
 // `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
-func (c *Client) UpdateUsage(creditsPerTeam map[string]int64) error {
+func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]int64) error {
 	teamIds := make([]string, 0, len(creditsPerTeam))
 	for k := range creditsPerTeam {
 		teamIds = append(teamIds, k)
@@ -57,8 +58,9 @@ func (c *Client) UpdateUsage(creditsPerTeam map[string]int64) error {
 		log.Infof("about to make query %q", query)
 		params := &stripe.CustomerSearchParams{
 			SearchParams: stripe.SearchParams{
-				Query:  query,
-				Expand: []*string{stripe.String("data.subscriptions")},
+				Query:   query,
+				Expand:  []*string{stripe.String("data.subscriptions")},
+				Context: ctx,
 			},
 		}
 		iter := c.sc.Customers.Search(params)
