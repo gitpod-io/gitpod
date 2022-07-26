@@ -70,3 +70,7 @@ func sessionsToCreditReportForTeams(sessions []*v1.BilledSession) (map[string]in
 	}
 	return creditsPerTeamID, nil
 }
+
+type UnimplementedBillingService struct {
+	v1.UnimplementedBillingServiceServer
+}

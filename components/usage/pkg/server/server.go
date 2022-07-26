@@ -63,8 +63,6 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to create workspace pricer: %w", err)
 	}
 
-	var billingController controller.BillingController = &controller.NoOpBillingController{}
-
 	var sc *stripe.Client
 	if cfg.StripeCredentialsFile != "" {
 		config, err := stripe.ReadConfigFromFile(cfg.StripeCredentialsFile)
@@ -72,12 +70,10 @@ func Start(cfg Config) error {
 			return fmt.Errorf("failed to load stripe credentials: %w", err)
 		}
 
-		c, err := stripe.New(config)
+		sc, err = stripe.New(config)
 		if err != nil {
 			return fmt.Errorf("failed to initialize stripe client: %w", err)
 		}
-
-		billingController = controller.NewStripeBillingController(c, pricer)
 	}
 
 	schedule, err := time.ParseDuration(cfg.ControllerSchedule)
@@ -90,7 +86,7 @@ func Start(cfg Config) error {
 		contentService = contentservice.New(cfg.ContentServiceAddress)
 	}
 
-	usageController := controller.NewUsageReconciler(conn, pricer, billingController, contentService)
+	usageController := controller.NewUsageReconciler(conn, pricer, contentService)
 
 	selfConn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -132,6 +128,12 @@ func Start(cfg Config) error {
 
 func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, sc *stripe.Client, usageReconciler *controller.UsageReconciler) error {
 	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn, usageReconciler))
-	v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(sc))
+
+	if sc == nil {
+		v1.RegisterBillingServiceServer(srv.GRPC(), &apiv1.UnimplementedBillingService{})
+	} else {
+		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(sc))
+	}
+
 	return nil
 }
