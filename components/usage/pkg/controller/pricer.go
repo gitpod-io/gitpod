@@ -5,43 +5,11 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"time"
 
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 )
-
-type BillingController interface {
-	Reconcile(ctx context.Context, report UsageReport) error
-}
-
-type NoOpBillingController struct{}
-
-func (b *NoOpBillingController) Reconcile(_ context.Context, _ UsageReport) error {
-	return nil
-}
-
-type StripeBillingController struct {
-	sc *stripe.Client
-}
-
-func NewStripeBillingController(sc *stripe.Client) *StripeBillingController {
-	return &StripeBillingController{
-		sc: sc,
-	}
-}
-
-func (b *StripeBillingController) Reconcile(ctx context.Context, report UsageReport) error {
-	runtimeReport := report.CreditSummaryForTeams()
-
-	err := b.sc.UpdateUsage(ctx, runtimeReport)
-	if err != nil {
-		return fmt.Errorf("failed to update usage: %w", err)
-	}
-	return nil
-}
 
 const (
 	defaultWorkspaceClass = "default"
