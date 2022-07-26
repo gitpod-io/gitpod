@@ -8,9 +8,9 @@ data local_file "gcp_credentials" {
 
 provider "google" {
   credentials = var.credentials
-  project = var.gcp_project
-  region  = var.gcp_region
-  zone    = var.gcp_zone
+  project = var.project
+  region  = var.region
+  zone    = var.zone
 }
 
 provider "helm" {
@@ -57,7 +57,7 @@ resource "helm_release" "external-dns" {
   }
   set {
     name  = "google.project"
-    value = var.gcp_project
+    value = var.project
   }
   set {
     name  = "logFormat"

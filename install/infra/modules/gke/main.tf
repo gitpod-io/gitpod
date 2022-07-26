@@ -175,6 +175,18 @@ resource "google_sql_user" "users" {
   password = "gitpod"
 }
 
+resource "google_dns_managed_zone" "gitpod-dns-zone" {
+  count = var.domain_name == null ? 0 : 1
+
+  name          = "gitpod-tf-managed-zone"
+  dns_name      = "${var.domain_name}."
+  description   = "Terraform managed DNS zone for ${var.name}"
+  force_destroy = true
+  labels = {
+    app = "gitpod"
+  }
+}
+
 module "gke_auth" {
   depends_on = [google_container_node_pool.workspaces]
 

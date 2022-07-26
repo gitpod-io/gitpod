@@ -14,7 +14,6 @@ This module will do the following steps:
 
 > 💡 If you would like to create the infrastructure orchestrating the terraform modules by yourself, you can find all the modules we support [here](../../modules/).
 
-
 Since the entire setup requires more than one terraform target to be run due to
 dependencies (eg: helm provider depends on kubernetes cluster config, which is
 not available until the `eks` module finishes), this directory has a `Makefile`
@@ -79,9 +78,6 @@ be used as registry backend. By default `enable_external_storage_for_registry_ba
 is set to `false`. One can re-use the same `S3` bucket for both object storage and registry backend.
 
 The expectation is that you can use the credentials to these setups(provided later
-as terraform outputs) during the setup of Gitpod via UI later in the process.
-Alternatively, one can choose to use incluster dependencies or separately
-created resources of choice.
 
 ### AMI Image ID and Kubernetes version
 
