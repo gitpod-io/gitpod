@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -10,9 +10,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-
-	"golang.org/x/xerrors"
+	"fmt"
 )
+
+// AdditionalRepositoriesItems
+type AdditionalRepositoriesItems struct {
+
+	// Path to where the repository should be checked out relative to `/workspace`. Defaults to the simple repository name.
+	CheckoutLocation string `yaml:"checkoutLocation,omitempty"`
+
+	// The url of the git repository to clone. Supports any context URLs.
+	Url string `yaml:"url"`
+}
 
 // Env Environment variables to set.
 type Env struct {
@@ -28,8 +37,14 @@ type Github struct {
 // GitpodConfig
 type GitpodConfig struct {
 
-	// Path to where the repository should be checked out.
+	// List of additional repositories that are part of this project.
+	AdditionalRepositories []*AdditionalRepositoriesItems `yaml:"additionalRepositories,omitempty"`
+
+	// Path to where the repository should be checked out relative to `/workspace`. Defaults to the simple repository name.
 	CheckoutLocation string `yaml:"checkoutLocation,omitempty"`
+
+	// Experimental network configuration in workspaces (deprecated). Enabled by default
+	ExperimentalNetwork bool `yaml:"experimentalNetwork,omitempty"`
 
 	// Git config values should be provided in pairs. E.g. `core.autocrlf: input`. See https://git-scm.com/docs/git-config#_values.
 	GitConfig map[string]string `yaml:"gitConfig,omitempty"`
@@ -37,11 +52,14 @@ type GitpodConfig struct {
 	// Configures Gitpod's GitHub app
 	Github *Github `yaml:"github,omitempty"`
 
-	// Controls what ide should be used for a workspace.
-	Ide interface{} `yaml:"ide,omitempty"`
-
 	// The Docker image to run your workspace in.
 	Image interface{} `yaml:"image,omitempty"`
+
+	// Configure JetBrains integration
+	Jetbrains *Jetbrains `yaml:"jetbrains,omitempty"`
+
+	// The main repository, containing the dev environment configuration.
+	MainConfiguration string `yaml:"mainConfiguration,omitempty"`
 
 	// List of exposed ports.
 	Ports []*PortsItems `yaml:"ports,omitempty"`
@@ -52,10 +70,7 @@ type GitpodConfig struct {
 	// Configure VS Code integration
 	Vscode *Vscode `yaml:"vscode,omitempty"`
 
-	// Configure JetBrains integration
-	JetBrains *JetBrains `yaml:"jetbrains,omitempty"`
-
-	// Path to where the IDE's workspace should be opened.
+	// Path to where the IDE's workspace should be opened. Supports vscode's `*.code-workspace` files.
 	WorkspaceLocation string `yaml:"workspaceLocation,omitempty"`
 }
 
@@ -67,6 +82,38 @@ type Image_object struct {
 
 	// Relative path to a docker file.
 	File string `yaml:"file"`
+}
+
+// Jetbrains Configure JetBrains integration
+type Jetbrains struct {
+
+	// Configure GoLand integration
+	Goland *JetbrainsProduct `yaml:"goland,omitempty"`
+
+	// Configure IntelliJ integration
+	Intellij *JetbrainsProduct `yaml:"intellij,omitempty"`
+
+	// Configure PhpStorm integration
+	Phpstorm *JetbrainsProduct `yaml:"phpstorm,omitempty"`
+
+	// List of plugins which should be installed for all JetBrains product for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.
+	Plugins []string `yaml:"plugins,omitempty"`
+
+	// Configure PyCharm integration
+	Pycharm *JetbrainsProduct `yaml:"pycharm,omitempty"`
+}
+
+// JetbrainsProduct
+type JetbrainsProduct struct {
+
+	// List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.
+	Plugins []string `yaml:"plugins,omitempty"`
+
+	// Enable warming up of JetBrains backend in prebuilds.
+	Prebuilds *Prebuilds `yaml:"prebuilds,omitempty"`
+
+	// Configure JVM options, for instance '-Xmx=4096m'.
+	Vmoptions string `yaml:"vmoptions,omitempty"`
 }
 
 // PortsItems
@@ -91,11 +138,21 @@ type PortsItems struct {
 	Visibility string `yaml:"visibility,omitempty"`
 }
 
+// Prebuilds Enable warming up of JetBrains backend in prebuilds.
+type Prebuilds struct {
+
+	// Whether only stable, latest or both versions should be warmed up. Default is stable only.
+	Version string `yaml:"version,omitempty"`
+}
+
 // Prebuilds_object Set to true to enable workspace prebuilds, false to disable them. Defaults to true.
 type Prebuilds_object struct {
 
 	// Add a Review in Gitpod badge to pull requests. Defaults to true.
 	AddBadge bool `yaml:"addBadge,omitempty"`
+
+	// Add a commit check to pull requests. Set to 'fail-on-error' if you want broken prebuilds to block merging. Defaults to true.
+	AddCheck interface{} `yaml:"addCheck,omitempty"`
 
 	// Add a label to a PR when it's prebuilt. Set to true to use the default label (prebuilt-in-gitpod) or set to a string to use a different label name. This is a beta feature and may be unreliable. Defaults to false.
 	AddLabel interface{} `yaml:"addLabel,omitempty"`
@@ -117,28 +174,28 @@ type Prebuilds_object struct {
 type TasksItems struct {
 
 	// A shell command to run before `init` and the main `command`. This command is executed on every start and is expected to terminate. If it fails, the following commands will not be executed.
-	Before string `yaml:"before,omitempty" json:"before,omitempty"`
+	Before string `yaml:"before,omitempty"`
 
 	// The main shell command to run after `before` and `init`. This command is executed last on every start and doesn't have to terminate.
-	Command string `yaml:"command,omitempty" json:"command,omitempty"`
+	Command string `yaml:"command,omitempty"`
 
 	// Environment variables to set.
-	Env *Env `yaml:"env,omitempty" json:"env,omitempty"`
+	Env *Env `yaml:"env,omitempty"`
 
 	// A shell command to run between `before` and the main `command`. This command is executed only on after initializing a workspace with a fresh clone, but not on restarts and snapshots. This command is expected to terminate. If it fails, the `command` property will not be executed.
-	Init string `yaml:"init,omitempty" json:"init,omitempty"`
+	Init string `yaml:"init,omitempty"`
 
 	// Name of the task. Shown on the tab of the opened terminal.
-	Name string `yaml:"name,omitempty" json:"name,omitempty"`
+	Name string `yaml:"name,omitempty"`
 
 	// The panel/area where to open the terminal. Default is 'bottom' panel.
-	OpenIn string `yaml:"openIn,omitempty" json:"openIn,omitempty"`
+	OpenIn string `yaml:"openIn,omitempty"`
 
 	// The opening mode. Default is 'tab-after'.
-	OpenMode string `yaml:"openMode,omitempty" json:"openMode,omitempty"`
+	OpenMode string `yaml:"openMode,omitempty"`
 
 	// A shell command to run after `before`. This command is executed only on during workspace prebuilds. This command is expected to terminate. If it fails, the workspace build fails.
-	Prebuild string `yaml:"prebuild,omitempty" json:"prebuild,omitempty"`
+	Prebuild string `yaml:"prebuild,omitempty"`
 }
 
 // Vscode Configure VS Code integration
@@ -148,43 +205,67 @@ type Vscode struct {
 	Extensions []string `yaml:"extensions,omitempty"`
 }
 
-// Configure JetBrains integration
-type JetBrains struct {
+func (strct *AdditionalRepositoriesItems) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0))
+	buf.WriteString("{")
+	comma := false
+	// Marshal the "checkoutLocation" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"checkoutLocation\": ")
+	if tmp, err := json.Marshal(strct.CheckoutLocation); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// "Url" field is required
+	// only required object types supported for marshal checking (for now)
+	// Marshal the "url" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"url\": ")
+	if tmp, err := json.Marshal(strct.Url); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
 
-	// List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.
-	Plugins []string `yaml:"plugins,omitempty"`
-
-	// Configure IntelliJ integration
-	IntelliJ *JetBrainsProduct `yaml:"intellij,omitempty"`
-
-	// Configure GoLand integration
-	GoLand *JetBrainsProduct `yaml:"goland,omitempty"`
-
-	// Configure PyCharm integration
-	PyCharm *JetBrainsProduct `yaml:"pycharm,omitempty"`
-
-	// Configure PhpStorm integration
-	PhpStorm *JetBrainsProduct `yaml:"phpstorm,omitempty"`
+	buf.WriteString("}")
+	rv := buf.Bytes()
+	return rv, nil
 }
 
-// Configure JetBrains product
-type JetBrainsProduct struct {
-
-	// List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.
-	Plugins []string `yaml:"plugins,omitempty"`
-
-	// Enable warming up of JetBrains product in prebuilds
-	Prebuilds *JetBrainsPrebuilds `yaml:"prebuilds,omitempty"`
-
-	// JVM Options for IDE backend server, separated by space
-	VMOptions string `yaml:"vmoptions,omitempty"`
-}
-
-// Enable warming up of JetBrains product in prebuilds
-type JetBrainsPrebuilds struct {
-
-	// Whether only stable, latest or both versions should be warmed up.
-	Version string `yaml:"version,omitempty"`
+func (strct *AdditionalRepositoriesItems) UnmarshalJSON(b []byte) error {
+	urlReceived := false
+	var jsonMap map[string]json.RawMessage
+	if err := json.Unmarshal(b, &jsonMap); err != nil {
+		return err
+	}
+	// parse all the defined properties
+	for k, v := range jsonMap {
+		switch k {
+		case "checkoutLocation":
+			if err := json.Unmarshal([]byte(v), &strct.CheckoutLocation); err != nil {
+				return err
+			}
+		case "url":
+			if err := json.Unmarshal([]byte(v), &strct.Url); err != nil {
+				return err
+			}
+			urlReceived = true
+		default:
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+		}
+	}
+	// check if url (a required property) was received
+	if !urlReceived {
+		return errors.New("\"url\" is required but was not present")
+	}
+	return nil
 }
 
 func (strct *Github) MarshalJSON() ([]byte, error) {
@@ -221,7 +302,7 @@ func (strct *Github) UnmarshalJSON(b []byte) error {
 				return err
 			}
 		default:
-			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	return nil
@@ -231,12 +312,34 @@ func (strct *GitpodConfig) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0))
 	buf.WriteString("{")
 	comma := false
+	// Marshal the "additionalRepositories" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"additionalRepositories\": ")
+	if tmp, err := json.Marshal(strct.AdditionalRepositories); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
 	// Marshal the "checkoutLocation" field
 	if comma {
 		buf.WriteString(",")
 	}
 	buf.WriteString("\"checkoutLocation\": ")
 	if tmp, err := json.Marshal(strct.CheckoutLocation); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "experimentalNetwork" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"experimentalNetwork\": ")
+	if tmp, err := json.Marshal(strct.ExperimentalNetwork); err != nil {
 		return nil, err
 	} else {
 		buf.Write(tmp)
@@ -264,23 +367,34 @@ func (strct *GitpodConfig) MarshalJSON() ([]byte, error) {
 		buf.Write(tmp)
 	}
 	comma = true
-	// Marshal the "ide" field
-	if comma {
-		buf.WriteString(",")
-	}
-	buf.WriteString("\"ide\": ")
-	if tmp, err := json.Marshal(strct.Ide); err != nil {
-		return nil, err
-	} else {
-		buf.Write(tmp)
-	}
-	comma = true
 	// Marshal the "image" field
 	if comma {
 		buf.WriteString(",")
 	}
 	buf.WriteString("\"image\": ")
 	if tmp, err := json.Marshal(strct.Image); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "jetbrains" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"jetbrains\": ")
+	if tmp, err := json.Marshal(strct.Jetbrains); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "mainConfiguration" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"mainConfiguration\": ")
+	if tmp, err := json.Marshal(strct.MainConfiguration); err != nil {
 		return nil, err
 	} else {
 		buf.Write(tmp)
@@ -344,8 +458,16 @@ func (strct *GitpodConfig) UnmarshalJSON(b []byte) error {
 	// parse all the defined properties
 	for k, v := range jsonMap {
 		switch k {
+		case "additionalRepositories":
+			if err := json.Unmarshal([]byte(v), &strct.AdditionalRepositories); err != nil {
+				return err
+			}
 		case "checkoutLocation":
 			if err := json.Unmarshal([]byte(v), &strct.CheckoutLocation); err != nil {
+				return err
+			}
+		case "experimentalNetwork":
+			if err := json.Unmarshal([]byte(v), &strct.ExperimentalNetwork); err != nil {
 				return err
 			}
 		case "gitConfig":
@@ -356,12 +478,16 @@ func (strct *GitpodConfig) UnmarshalJSON(b []byte) error {
 			if err := json.Unmarshal([]byte(v), &strct.Github); err != nil {
 				return err
 			}
-		case "ide":
-			if err := json.Unmarshal([]byte(v), &strct.Ide); err != nil {
-				return err
-			}
 		case "image":
 			if err := json.Unmarshal([]byte(v), &strct.Image); err != nil {
+				return err
+			}
+		case "jetbrains":
+			if err := json.Unmarshal([]byte(v), &strct.Jetbrains); err != nil {
+				return err
+			}
+		case "mainConfiguration":
+			if err := json.Unmarshal([]byte(v), &strct.MainConfiguration); err != nil {
 				return err
 			}
 		case "ports":
@@ -381,7 +507,7 @@ func (strct *GitpodConfig) UnmarshalJSON(b []byte) error {
 				return err
 			}
 		default:
-			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	return nil
@@ -440,7 +566,7 @@ func (strct *Image_object) UnmarshalJSON(b []byte) error {
 			}
 			fileReceived = true
 		default:
-			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	// check if file (a required property) was received
@@ -450,10 +576,191 @@ func (strct *Image_object) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (strct *Jetbrains) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0))
+	buf.WriteString("{")
+	comma := false
+	// Marshal the "goland" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"goland\": ")
+	if tmp, err := json.Marshal(strct.Goland); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "intellij" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"intellij\": ")
+	if tmp, err := json.Marshal(strct.Intellij); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "phpstorm" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"phpstorm\": ")
+	if tmp, err := json.Marshal(strct.Phpstorm); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "plugins" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"plugins\": ")
+	if tmp, err := json.Marshal(strct.Plugins); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "pycharm" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"pycharm\": ")
+	if tmp, err := json.Marshal(strct.Pycharm); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+
+	buf.WriteString("}")
+	rv := buf.Bytes()
+	return rv, nil
+}
+
+func (strct *Jetbrains) UnmarshalJSON(b []byte) error {
+	var jsonMap map[string]json.RawMessage
+	if err := json.Unmarshal(b, &jsonMap); err != nil {
+		return err
+	}
+	// parse all the defined properties
+	for k, v := range jsonMap {
+		switch k {
+		case "goland":
+			if err := json.Unmarshal([]byte(v), &strct.Goland); err != nil {
+				return err
+			}
+		case "intellij":
+			if err := json.Unmarshal([]byte(v), &strct.Intellij); err != nil {
+				return err
+			}
+		case "phpstorm":
+			if err := json.Unmarshal([]byte(v), &strct.Phpstorm); err != nil {
+				return err
+			}
+		case "plugins":
+			if err := json.Unmarshal([]byte(v), &strct.Plugins); err != nil {
+				return err
+			}
+		case "pycharm":
+			if err := json.Unmarshal([]byte(v), &strct.Pycharm); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+		}
+	}
+	return nil
+}
+
+func (strct *JetbrainsProduct) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0))
+	buf.WriteString("{")
+	comma := false
+	// Marshal the "plugins" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"plugins\": ")
+	if tmp, err := json.Marshal(strct.Plugins); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "prebuilds" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"prebuilds\": ")
+	if tmp, err := json.Marshal(strct.Prebuilds); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "vmoptions" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"vmoptions\": ")
+	if tmp, err := json.Marshal(strct.Vmoptions); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+
+	buf.WriteString("}")
+	rv := buf.Bytes()
+	return rv, nil
+}
+
+func (strct *JetbrainsProduct) UnmarshalJSON(b []byte) error {
+	var jsonMap map[string]json.RawMessage
+	if err := json.Unmarshal(b, &jsonMap); err != nil {
+		return err
+	}
+	// parse all the defined properties
+	for k, v := range jsonMap {
+		switch k {
+		case "plugins":
+			if err := json.Unmarshal([]byte(v), &strct.Plugins); err != nil {
+				return err
+			}
+		case "prebuilds":
+			if err := json.Unmarshal([]byte(v), &strct.Prebuilds); err != nil {
+				return err
+			}
+		case "vmoptions":
+			if err := json.Unmarshal([]byte(v), &strct.Vmoptions); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+		}
+	}
+	return nil
+}
+
 func (strct *PortsItems) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0))
 	buf.WriteString("{")
 	comma := false
+	// Marshal the "description" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"description\": ")
+	if tmp, err := json.Marshal(strct.Description); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
 	// Marshal the "name" field
 	if comma {
 		buf.WriteString(",")
@@ -526,6 +833,10 @@ func (strct *PortsItems) UnmarshalJSON(b []byte) error {
 	// parse all the defined properties
 	for k, v := range jsonMap {
 		switch k {
+		case "description":
+			if err := json.Unmarshal([]byte(v), &strct.Description); err != nil {
+				return err
+			}
 		case "name":
 			if err := json.Unmarshal([]byte(v), &strct.Name); err != nil {
 				return err
@@ -548,12 +859,52 @@ func (strct *PortsItems) UnmarshalJSON(b []byte) error {
 				return err
 			}
 		default:
-			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	// check if port (a required property) was received
 	if !portReceived {
 		return errors.New("\"port\" is required but was not present")
+	}
+	return nil
+}
+
+func (strct *Prebuilds) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0))
+	buf.WriteString("{")
+	comma := false
+	// Marshal the "version" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"version\": ")
+	if tmp, err := json.Marshal(strct.Version); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+
+	buf.WriteString("}")
+	rv := buf.Bytes()
+	return rv, nil
+}
+
+func (strct *Prebuilds) UnmarshalJSON(b []byte) error {
+	var jsonMap map[string]json.RawMessage
+	if err := json.Unmarshal(b, &jsonMap); err != nil {
+		return err
+	}
+	// parse all the defined properties
+	for k, v := range jsonMap {
+		switch k {
+		case "version":
+			if err := json.Unmarshal([]byte(v), &strct.Version); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+		}
 	}
 	return nil
 }
@@ -697,7 +1048,7 @@ func (strct *TasksItems) UnmarshalJSON(b []byte) error {
 				return err
 			}
 		default:
-			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	return nil
@@ -737,7 +1088,7 @@ func (strct *Vscode) UnmarshalJSON(b []byte) error {
 				return err
 			}
 		default:
-			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	return nil

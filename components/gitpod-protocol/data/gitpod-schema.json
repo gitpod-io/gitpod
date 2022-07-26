@@ -261,140 +261,20 @@
                     }
                 },
                 "intellij": {
-                    "type": "object",
-                    "description": "Configure IntelliJ integration",
-                    "additionalProperties": false,
-                    "properties": {
-                        "plugins": {
-                            "type": "array",
-                            "description": "List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "prebuilds": {
-                            "type": "object",
-                            "description": "Enable warming up of IntelliJ in prebuilds.",
-                            "additionalProperties": false,
-                            "properties": {
-                                "version": {
-                                    "type": "string",
-                                    "enum": [
-                                        "stable",
-                                        "latest",
-                                        "both"
-                                    ],
-                                    "description": "Whether only stable, latest or both versions should be warmed up. Default is stable only."
-                                }
-                            }
-                        },
-                        "vmoptions": {
-                            "type": "string",
-                            "description": "Configure JVM options, for instance '-Xmx=4096m'."
-                        }
-                    }
+                    "$ref": "#/definitions/jetbrainsProduct",
+                    "description": "Configure IntelliJ integration"
                 },
                 "goland": {
-                    "type": "object",
-                    "description": "Configure GoLand integration",
-                    "additionalProperties": false,
-                    "properties": {
-                        "plugins": {
-                            "type": "array",
-                            "description": "List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "prebuilds": {
-                            "type": "object",
-                            "description": "Enable warming up of GoLand in prebuilds.",
-                            "additionalProperties": false,
-                            "properties": {
-                                "version": {
-                                    "type": "string",
-                                    "enum": [
-                                        "stable",
-                                        "latest",
-                                        "both"
-                                    ],
-                                    "description": "Whether only stable, latest or both versions should be warmed up. Default is stable only."
-                                }
-                            }
-                        },
-                        "vmoptions": {
-                            "type": "string",
-                            "description": "Configure JVM options, for instance '-Xmx=4096m'."
-                        }
-                    }
+                    "$ref": "#/definitions/jetbrainsProduct",
+                    "description": "Configure GoLand integration"
                 },
                 "pycharm": {
-                    "type": "object",
-                    "description": "Configure PyCharm integration",
-                    "additionalProperties": false,
-                    "properties": {
-                        "plugins": {
-                            "type": "array",
-                            "description": "List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "prebuilds": {
-                            "type": "object",
-                            "description": "Enable warming up of PyCharm in prebuilds.",
-                            "additionalProperties": false,
-                            "properties": {
-                                "version": {
-                                    "type": "string",
-                                    "enum": [
-                                        "stable",
-                                        "latest",
-                                        "both"
-                                    ],
-                                    "description": "Whether only stable, latest or both versions should be warmed up. Default is stable only."
-                                }
-                            }
-                        },
-                        "vmoptions": {
-                            "type": "string",
-                            "description": "Configure JVM options, for instance '-Xmx=4096m'."
-                        }
-                    }
+                    "$ref": "#/definitions/jetbrainsProduct",
+                    "description": "Configure PyCharm integration"
                 },
                 "phpstorm": {
-                    "type": "object",
-                    "description": "Configure PhpStorm integration",
-                    "additionalProperties": false,
-                    "properties": {
-                        "plugins": {
-                            "type": "array",
-                            "description": "List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "prebuilds": {
-                            "type": "object",
-                            "description": "Enable warming up of PhpStorm in prebuilds.",
-                            "additionalProperties": false,
-                            "properties": {
-                                "version": {
-                                    "type": "string",
-                                    "enum": [
-                                        "stable",
-                                        "latest",
-                                        "both"
-                                    ],
-                                    "description": "Whether only stable, latest or both versions should be warmed up. Default is stable only."
-                                }
-                            }
-                        },
-                        "vmoptions": {
-                            "type": "string",
-                            "description": "Configure JVM options, for instance '-Xmx=4096m'."
-                        }
-                    }
+                    "$ref": "#/definitions/jetbrainsProduct",
+                    "description": "Configure PhpStorm integration"
                 }
             }
         },
@@ -404,5 +284,40 @@
             "description": "Experimental network configuration in workspaces (deprecated). Enabled by default"
         }
     },
-    "additionalProperties": false
+    "additionalProperties": false,
+    "definitions": {
+        "jetbrainsProduct": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "plugins": {
+                    "type": "array",
+                    "description": "List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "prebuilds": {
+                    "type": "object",
+                    "description": "Enable warming up of JetBrains backend in prebuilds.",
+                    "additionalProperties": false,
+                    "properties": {
+                        "version": {
+                            "type": "string",
+                            "enum": [
+                                "stable",
+                                "latest",
+                                "both"
+                            ],
+                            "description": "Whether only stable, latest or both versions should be warmed up. Default is stable only."
+                        }
+                    }
+                },
+                "vmoptions": {
+                    "type": "string",
+                    "description": "Configure JVM options, for instance '-Xmx=4096m'."
+                }
+            }
+        }
+    }
 }

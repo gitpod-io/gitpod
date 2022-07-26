@@ -276,9 +276,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       LABEL="gitpod.io/workspace_$NODE_POOL_INDEX"
       yq w -i /tmp/"$NAME"overrides.yaml spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key "$LABEL"
       yq w -i /tmp/"$NAME"overrides.yaml spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator Exists
-      yq w -i /tmp/"$NAME"overrides.yaml spec.containers[+].name workspace
-      yq w -i /tmp/"$NAME"overrides.yaml "spec.containers.(name==workspace).env[+].name" GITPOD_PREVENT_METADATA_ACCESS
-      yq w -i /tmp/"$NAME"overrides.yaml "spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value" "true"
 
       yq w -i k8s.yaml -d "$documentIndex" "data.[default.yaml]" -- "$(< /tmp/"$NAME"overrides.yaml)"
    fi

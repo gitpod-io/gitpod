@@ -31,7 +31,7 @@ export type InstallerOptions = {
     previewName: string;
     imagePullSecretName: string;
     deploymentNamespace: string;
-    analytics: Analytics;
+    analytics?: Analytics;
     withEELicense: boolean;
     workspaceFeatureFlags: string[];
     gitpodDaemonsetPorts: GitpodDaemonsetPorts;
@@ -75,6 +75,8 @@ export class Installer {
             this.configureUsage(slice);
             this.configureConfigCat(slice);
 
+            this.configureDefaultTemplate(slice);
+
             if (this.options.analytics) {
                 this.includeAnalytics(slice);
             } else {
@@ -102,6 +104,11 @@ export class Installer {
             throw new Error(err);
         }
         this.options.werft.done(slice);
+    }
+    configureDefaultTemplate(slice: string): void {
+        exec(`yq w -i ${this.options.installerConfigPath} 'workspace.templates.default.spec.containers[+].name' workspace`);
+        exec(`yq w -i ${this.options.installerConfigPath} 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' GITPOD_PREVENT_METADATA_ACCESS`);
+        exec(`yq w -i ${this.options.installerConfigPath} 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"`);
     }
 
     private getDevCustomValues(slice: string): void {
@@ -253,6 +260,10 @@ EOF`);
         exec(`yq w -i ${this.options.installerConfigPath} analytics.segmentKey ${this.options.analytics.token}`, {
             slice: slice,
         });
+        exec(`yq w -i ${this.options.installerConfigPath} 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' GITPOD_ANALYTICS_WRITER`);
+        exec(`yq w -i ${this.options.installerConfigPath} 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"`);
+        exec(`yq w -i ${this.options.installerConfigPath} 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' GITPOD_ANALYTICS_SEGMENT_KEY`);
+        exec(`yq w -i ${this.options.installerConfigPath} 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_KEY).value' "${this.options.analytics.token}"`);
     }
 
     private dontIncludeAnalytics(slice: string): void {

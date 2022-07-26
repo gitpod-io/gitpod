@@ -45,6 +45,11 @@ repos:
 
   - repo: local
     hooks:
+      - id: generate-gitpod-config-types
+        name: generate-gitpod-config-types
+        entry: ./components/gitpod-protocol/hack/generate-config.sh
+        language: script
+        pass_filenames: false
       - id: license-header
         name: license-header
         entry: leeway run components:update-license-header

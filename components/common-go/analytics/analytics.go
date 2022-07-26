@@ -41,10 +41,13 @@ type TrackMessage struct {
 func NewFromEnvironment() Writer {
 	switch os.Getenv("GITPOD_ANALYTICS_WRITER") {
 	case "log":
+		log.Debug("log analytics")
 		return &logAnalyticsWriter{}
 	case "segment":
+		log.Debug("segment analytics")
 		return &segmentAnalyticsWriter{Client: segment.New(os.Getenv("GITPOD_ANALYTICS_SEGMENT_KEY"))}
 	default:
+		log.Debug("no analytics")
 		return &noAnalyticsWriter{}
 	}
 }

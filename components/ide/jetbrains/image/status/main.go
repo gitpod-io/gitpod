@@ -368,7 +368,7 @@ func updateVMOptions(config *gitpod.GitpodConfig, alias string, content string) 
 	if config != nil {
 		productConfig := getProductConfig(config, alias)
 		if productConfig != nil {
-			projectVMOptions := strings.Fields(productConfig.VMOptions)
+			projectVMOptions := strings.Fields(productConfig.Vmoptions)
 			if len(projectVMOptions) > 0 {
 				vmoptions = deduplicateVMOption(vmoptions, projectVMOptions, filterFunc)
 			}
@@ -492,11 +492,11 @@ func parseGitpodConfig(repoRoot string) (*gitpod.GitpodConfig, error) {
 
 func getPlugins(config *gitpod.GitpodConfig, alias string) ([]string, error) {
 	var plugins []string
-	if config == nil || config.JetBrains == nil {
+	if config == nil || config.Jetbrains == nil {
 		return nil, nil
 	}
-	if config.JetBrains.Plugins != nil {
-		plugins = append(plugins, config.JetBrains.Plugins...)
+	if config.Jetbrains.Plugins != nil {
+		plugins = append(plugins, config.Jetbrains.Plugins...)
 	}
 	productConfig := getProductConfig(config, alias)
 	if productConfig != nil && productConfig.Plugins != nil {
@@ -505,16 +505,16 @@ func getPlugins(config *gitpod.GitpodConfig, alias string) ([]string, error) {
 	return plugins, nil
 }
 
-func getProductConfig(config *gitpod.GitpodConfig, alias string) *gitpod.JetBrainsProduct {
+func getProductConfig(config *gitpod.GitpodConfig, alias string) *gitpod.JetbrainsProduct {
 	defer func() {
 		if err := recover(); err != nil {
 			log.WithField("error", err).WithField("alias", alias).Error("failed to extract JB product config")
 		}
 	}()
-	v := reflect.ValueOf(*config.JetBrains).FieldByNameFunc(func(s string) bool {
+	v := reflect.ValueOf(*config.Jetbrains).FieldByNameFunc(func(s string) bool {
 		return strings.ToLower(s) == alias
 	}).Interface()
-	productConfig, ok := v.(*gitpod.JetBrainsProduct)
+	productConfig, ok := v.(*gitpod.JetbrainsProduct)
 	if !ok {
 		return nil
 	}

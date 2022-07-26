@@ -36,15 +36,22 @@ type ConfigService struct {
 	pollTimer *time.Timer
 
 	log *logrus.Entry
+
+	ready     chan struct{}
+	readyOnce sync.Once
+
+	debounceDuration time.Duration
 }
 
 // NewConfigService creates a new instance of ConfigService.
 func NewConfigService(configLocation string, locationReady <-chan struct{}, log *logrus.Entry) *ConfigService {
 	return &ConfigService{
-		location:      configLocation,
-		locationReady: locationReady,
-		cond:          sync.NewCond(&sync.Mutex{}),
-		log:           log.WithField("location", configLocation),
+		location:         configLocation,
+		locationReady:    locationReady,
+		cond:             sync.NewCond(&sync.Mutex{}),
+		log:              log.WithField("location", configLocation),
+		ready:            make(chan struct{}),
+		debounceDuration: 100 * time.Millisecond,
 	}
 }
 
@@ -53,6 +60,8 @@ func (service *ConfigService) Observe(ctx context.Context) <-chan *gitpod.Gitpod
 	configs := make(chan *gitpod.GitpodConfig)
 	go func() {
 		defer close(configs)
+
+		<-service.ready
 
 		service.cond.L.Lock()
 		defer service.cond.L.Unlock()
@@ -83,6 +92,12 @@ func (service *ConfigService) Watch(ctx context.Context) {
 		service.poll(ctx)
 	}
 	service.watch(ctx)
+}
+
+func (service *ConfigService) markReady() {
+	service.readyOnce.Do(func() {
+		close(service.ready)
+	})
 }
 
 func (service *ConfigService) watch(ctx context.Context) {
@@ -132,7 +147,7 @@ func (service *ConfigService) scheduleUpdateConfig(ctx context.Context, polling 
 	if service.pollTimer != nil {
 		service.pollTimer.Stop()
 	}
-	service.pollTimer = time.AfterFunc(100*time.Millisecond, func() {
+	service.pollTimer = time.AfterFunc(service.debounceDuration, func() {
 		err := service.updateConfig()
 		if os.IsNotExist(err) {
 			polling <- struct{}{}
@@ -144,6 +159,8 @@ func (service *ConfigService) scheduleUpdateConfig(ctx context.Context, polling 
 }
 
 func (service *ConfigService) poll(ctx context.Context) {
+	service.markReady()
+
 	timer := time.NewTicker(2 * time.Second)
 	defer timer.Stop()
 
@@ -166,10 +183,13 @@ func (service *ConfigService) updateConfig() error {
 	defer service.cond.L.Unlock()
 
 	config, err := service.parse()
-	service.config = config
-	service.cond.Broadcast()
+	if err == nil || os.IsNotExist(err) {
+		service.config = config
+		service.markReady()
+		service.cond.Broadcast()
 
-	service.log.WithField("config", service.config).Debug("gitpod config watcher: updated")
+		service.log.WithField("config", service.config).Debug("gitpod config watcher: updated")
+	}
 
 	return err
 }

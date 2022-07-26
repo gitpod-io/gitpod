@@ -8,7 +8,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -255,7 +254,7 @@ func Run(options ...RunOption) {
 	} else {
 		analytics := analytics.NewFromEnvironment()
 		defer analytics.Close()
-		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
+		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService, gitpodService)
 	}
 
 	termMux := terminal.NewMux()
@@ -1513,82 +1512,39 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 	}
 }
 
-func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface) {
-	cfgc := cfgobs.Observe(ctx)
-	var (
-		cfg     *gitpod.GitpodConfig
-		t       = time.NewTicker(10 * time.Second)
-		changes []string
-	)
-	defer t.Stop()
-
-	computeHash := func(i interface{}) (string, error) {
-		b, err := json.Marshal(i)
-		if err != nil {
-			return "", err
-		}
-		h := sha256.New()
-		_, err = h.Write(b)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("%x", h.Sum(nil)), nil
+func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface, gitpodAPI gitpod.APIInterface) {
+	info, err := gitpodAPI.GetWorkspace(ctx, wscfg.WorkspaceID)
+	if err != nil {
+		log.WithError(err).Error("gitpod config analytics: failed to track config changes")
+		return
 	}
 
+	var analyzer *config.ConfigAnalyzer
+	log.Debug("gitpod config analytics: watching...")
+
+	cfgs := cfgobs.Observe(ctx)
 	for {
 		select {
-		case c, ok := <-cfgc:
+		case cfg, ok := <-cfgs:
 			if !ok {
 				return
 			}
-			if cfg == nil {
-				cfg = c
-				continue
+			if analyzer != nil {
+				analyzer.Analyse(cfg)
+			} else {
+				analyzer = config.NewConfigAnalyzer(log.Log, 5*time.Second, func(field string) {
+					w.Track(analytics.TrackMessage{
+						Identity: analytics.Identity{UserID: info.Workspace.OwnerID},
+						Event:    "gitpod_config_changed",
+						Properties: map[string]interface{}{
+							"key":         field,
+							"instanceId":  wscfg.WorkspaceInstanceID,
+							"workspaceId": wscfg.WorkspaceID,
+						},
+					})
+				}, cfg)
 			}
 
-			pch := []struct {
-				Name string
-				G    func(*gitpod.GitpodConfig) interface{}
-			}{
-				{"ports", func(gc *gitpod.GitpodConfig) interface{} {
-					if gc == nil {
-						return nil
-					}
-					return gc.Ports
-				}},
-				{"tasks", func(gc *gitpod.GitpodConfig) interface{} {
-					if gc == nil {
-						return nil
-					}
-					return gc.Tasks
-				}},
-				{"prebuild", func(gc *gitpod.GitpodConfig) interface{} {
-					if gc == nil || gc.Github == nil {
-						return nil
-					}
-					return gc.Github.Prebuilds
-				}},
-			}
-			for _, ch := range pch {
-				prev, _ := computeHash(ch.G(cfg))
-				curr, _ := computeHash(ch.G(cfg))
-				if prev != curr {
-					changes = append(changes, ch.Name)
-				}
-			}
-		case <-t.C:
-			if len(changes) == 0 {
-				continue
-			}
-			w.Track(analytics.TrackMessage{
-				Identity: analytics.Identity{UserID: wscfg.GitEmail},
-				Event:    "config-changed",
-				Properties: map[string]interface{}{
-					"workspaceId": wscfg.WorkspaceID,
-					"changes":     changes,
-				},
-			})
-			changes = nil
 		case <-ctx.Done():
 			return
 		}

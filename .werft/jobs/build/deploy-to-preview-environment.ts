@@ -334,7 +334,7 @@ async function deployToDevWithInstaller(
     }
     werft.done(installerSlices.IMAGE_PULL_SECRET);
 
-    let analytics: Analytics;
+    let analytics: Analytics | undefined;
     if ((deploymentConfig.analytics || "").startsWith("segment|")) {
         analytics = {
             type: "segment",
