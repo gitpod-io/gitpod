@@ -13,7 +13,7 @@ import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
-import { getExperimentsClient } from "./../experiments/client";
+import { getExperimentsClient } from "../experiments/client";
 import { UserContext } from "../user-context";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
@@ -52,19 +52,13 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
 
 export default function () {
     const { user } = useContext(UserContext);
-    const { project } = useContext(ProjectContext);
     const location = useLocation();
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
-
     const [isShowPersistentVolumeClaim, setIsShowPersistentVolumeClaim] = useState<boolean>(false);
-    const [projectSettings, setProjectSettings] = useState<ProjectSettings>({});
+    const { project, setProject } = useContext(ProjectContext);
 
     useEffect(() => {
-        if (!project) {
-            return;
-        }
-        setProjectSettings({ ...project.settings });
         (async () => {
             if (!user) {
                 return;
@@ -84,29 +78,14 @@ export default function () {
         })();
     }, [project, team, teams]);
 
-    const updateProjectSettings = () => {
-        if (!project) {
-            return;
-        }
-        setProjectSettings({
-            ...projectSettings,
-        });
-        return getGitpodService().server.updateProjectPartial({ id: project.id, settings: projectSettings });
-    };
+    if (!project) return null;
 
-    const toggleIncrementalPrebuilds = async () => {
-        projectSettings.useIncrementalPrebuilds = !projectSettings.useIncrementalPrebuilds;
-        updateProjectSettings();
-    };
+    const updateProjectSettings = (settings: ProjectSettings) => {
+        if (!project) return;
 
-    const toggleCancelOutdatedPrebuilds = async () => {
-        projectSettings.keepOutdatedPrebuildsRunning = !projectSettings.keepOutdatedPrebuildsRunning;
-        updateProjectSettings();
-    };
-
-    const togglePersistentVolumeClaim = async () => {
-        projectSettings.usePersistentVolumeClaim = !projectSettings.usePersistentVolumeClaim;
-        updateProjectSettings();
+        const newSettings = { ...project.settings, ...settings };
+        getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
+        setProject({ ...project, settings: newSettings });
     };
 
     return (
@@ -131,14 +110,14 @@ export default function () {
                         </a>
                     </span>
                 }
-                checked={!!projectSettings.useIncrementalPrebuilds}
-                onChange={toggleIncrementalPrebuilds}
+                checked={project.settings?.useIncrementalPrebuilds ?? false}
+                onChange={({ target }) => updateProjectSettings({ useIncrementalPrebuilds: target.checked })}
             />
             <CheckBox
                 title={<span>Cancel Prebuilds on Outdated Commits </span>}
                 desc={<span>Cancel pending or running prebuilds on the same branch when new commits are pushed.</span>}
-                checked={!projectSettings.keepOutdatedPrebuildsRunning}
-                onChange={toggleCancelOutdatedPrebuilds}
+                checked={!project.settings?.keepOutdatedPrebuildsRunning}
+                onChange={({ target }) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !target.checked })}
             />
             <br></br>
             <h3 className="mt-12">Workspace Persistence</h3>
@@ -152,9 +131,9 @@ export default function () {
                     </span>
                 }
                 desc={<span>Experimental feature that is still under development.</span>}
-                checked={!!projectSettings.usePersistentVolumeClaim}
+                checked={project.settings?.usePersistentVolumeClaim ?? false}
                 disabled={!isShowPersistentVolumeClaim}
-                onChange={togglePersistentVolumeClaim}
+                onChange={({ target }) => updateProjectSettings({ usePersistentVolumeClaim: target.checked })}
             />
         </ProjectSettingsPage>
     );
