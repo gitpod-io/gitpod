@@ -182,15 +182,12 @@ export class ConfigProvider {
                 }
                 const services = hostContext.services;
                 const contextRepoConfig = services.fileProvider.getGitpodFileContent(commit, user);
-                const projectDBConfig = this.projectDB
-                    .findProjectByCloneUrl(commit.repository.cloneUrl)
-                    .then((project) => project?.config);
-                const definitelyGpConfig = this.fetchExternalGitpodFileContent({ span }, commit.repository);
-                const inferredConfig = this.configurationService.guessRepositoryConfiguration({ span }, user, commit);
-
                 customConfigString = await contextRepoConfig;
                 let origin: WorkspaceConfig["_origin"] = "repo";
                 if (!customConfigString) {
+                    const projectDBConfig = this.projectDB
+                        .findProjectByCloneUrl(commit.repository.cloneUrl)
+                        .then((project) => project?.config);
                     // We haven't found a Gitpod configuration file in the context repo - check the "Project" in the DB.
                     const config = await projectDBConfig;
                     if (config) {
@@ -206,6 +203,7 @@ export class ConfigProvider {
                      * While all those checks will be in vain, they should not leak memory either as they'll simply
                      * be resolved and garbage collected.
                      */
+                    const definitelyGpConfig = this.fetchExternalGitpodFileContent({ span }, commit.repository);
                     const { content, basePath } = await definitelyGpConfig;
                     customConfigString = content;
                     // We do not only care about the config itself but also where we got it from
@@ -214,6 +212,11 @@ export class ConfigProvider {
                 }
 
                 if (!customConfigString) {
+                    const inferredConfig = this.configurationService.guessRepositoryConfiguration(
+                        { span },
+                        user,
+                        commit,
+                    );
                     // if there's still no configuration, let's infer one
                     customConfigString = await inferredConfig;
                     origin = "derived";
