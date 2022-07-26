@@ -65,13 +65,6 @@ func GetHttpContent(url string) ([]byte, error) {
 
 func TestJetBrainsGatewayWorkspace(t *testing.T) {
 	userToken, _ := os.LookupEnv("USER_TOKEN")
-	ideName, ok := annotations["jetbrains-ide"]
-	if !ok {
-		t.Skip("not provide a special IDE name")
-	}
-	if _, ok = ideProjectMap[ideName]; !ok {
-		t.Skip("not support " + ideName + " now")
-	}
 	roboquatToken, ok := os.LookupEnv("ROBOQUAT_TOKEN")
 	if !ok {
 		t.Skip("this test need github action run permission")
@@ -79,107 +72,127 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 
-	f := features.New("Start a workspace and let JetBrains Gateway connect").
-		WithLabel("component", "IDE").
-		Assess("it can start a workspace and let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-			defer cancel()
+	var featureList []features.Feature
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
+	for ideName, repo := range ideProjectMap {
+		f := features.New("Start a workspace using "+ideName).
+			WithLabel("component", "IDE").
+			WithLabel("ide", ideName).
+			Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+				defer cancel()
 
-			config, err := integration.GetServerConfig(cfg.Namespace(), cfg.Client())
-			if err != nil {
-				t.Fatal(err)
-			}
+				api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+				t.Cleanup(func() {
+					api.Done(t)
+				})
 
-			t.Logf("get or create user")
-			_, err = api.CreateUser(username, userToken)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			t.Logf("connecting to server...")
-			server, err := api.GitpodServer(integration.WithGitpodUser(username))
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Logf("connected to server")
-
-			t.Logf("starting workspace")
-			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "referrer:jetbrains-gateway:"+ideName+"/"+ideProjectMap[ideName], username, api)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer stopWs(true)
-
-			t.Logf("get oauth2 token")
-			oauthToken, err := api.CreateOAuth2Token(username, []string{
-				"function:getGitpodTokenScopes",
-				"function:getIDEOptions",
-				"function:getOwnerToken",
-				"function:getWorkspace",
-				"function:getWorkspaces",
-				"function:listenForWorkspaceInstanceUpdates",
-				"resource:default",
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			t.Logf("make port 63342 public")
-			_, err = server.OpenPort(ctx, nfo.Workspace.ID, &protocol.WorkspaceInstancePort{Port: 63342, Visibility: "public"})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			gatewayLink := fmt.Sprintf("jetbrains-gateway://connect#gitpodHost=%s&workspaceId=%s", strings.TrimPrefix(config.HostURL, "https://"), nfo.Workspace.ID)
-
-			ts := oauth2.StaticTokenSource(
-				&oauth2.Token{AccessToken: roboquatToken},
-			)
-			tc := oauth2.NewClient(ctx, ts)
-
-			githubClient := github.NewClient(tc)
-
-			t.Logf("trigger github action")
-			_, err = githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, "gitpod-io", "gitpod", "jetbrains-integration-test.yml", github.CreateWorkflowDispatchEventRequest{
-				Ref: "main",
-				Inputs: map[string]interface{}{
-					"secret_gateway_link": gatewayLink,
-					"secret_access_token": oauthToken,
-					"secret_endpoint":     strings.TrimPrefix(nfo.LatestInstance.IdeURL, "https://"),
-				},
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			checkUrl := fmt.Sprintf("https://63342-%s/codeWithMe/unattendedHostStatus?token=gitpod", strings.TrimPrefix(nfo.LatestInstance.IdeURL, "https://"))
-
-			t.Logf("waiting result")
-			testStatus := false
-			for ctx.Err() == nil {
-				time.Sleep(1 * time.Second)
-				body, _ := GetHttpContent(checkUrl)
-				var status GatewayHostStatus
-				err = json.Unmarshal(body, &status)
+				config, err := integration.GetServerConfig(cfg.Namespace(), cfg.Client())
 				if err != nil {
-					continue
+					t.Fatal(err)
 				}
-				if len(status.Projects) == 1 && status.Projects[0].ControllerConnected {
-					testStatus = true
-					break
+
+				t.Logf("get or create user")
+				_, err = api.CreateUser(username, userToken)
+				if err != nil {
+					t.Fatal(err)
 				}
-			}
-			if !testStatus {
-				t.Fatal(ctx.Err())
-			}
-			time.Sleep(time.Second * 10)
-			return ctx
-		}).
-		Feature()
-	testEnv.Test(t, f)
+
+				t.Logf("connecting to server...")
+				server, err := api.GitpodServer(integration.WithGitpodUser(username))
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Logf("connected to server")
+
+				t.Logf("starting workspace")
+				var nfo *protocol.WorkspaceInfo
+				var stopWs func(waitForStop bool)
+
+				for i := 0; i < 3; i++ {
+					nfo, stopWs, err = integration.LaunchWorkspaceFromContextURL(ctx, "referrer:jetbrains-gateway:"+ideName+"/"+repo, username, api)
+					if err != nil {
+						if strings.Contains(err.Error(), "code 429 message: too many requests") {
+							t.Log(err)
+							time.Sleep(10 * time.Second)
+							continue
+						}
+						t.Fatal(err)
+					} else {
+						break
+					}
+				}
+
+				defer stopWs(true)
+
+				t.Logf("get oauth2 token")
+				oauthToken, err := api.CreateOAuth2Token(username, []string{
+					"function:getGitpodTokenScopes",
+					"function:getIDEOptions",
+					"function:getOwnerToken",
+					"function:getWorkspace",
+					"function:getWorkspaces",
+					"function:listenForWorkspaceInstanceUpdates",
+					"resource:default",
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				t.Logf("make port 63342 public")
+				_, err = server.OpenPort(ctx, nfo.Workspace.ID, &protocol.WorkspaceInstancePort{Port: 63342, Visibility: "public"})
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				gatewayLink := fmt.Sprintf("jetbrains-gateway://connect#gitpodHost=%s&workspaceId=%s", strings.TrimPrefix(config.HostURL, "https://"), nfo.Workspace.ID)
+
+				ts := oauth2.StaticTokenSource(
+					&oauth2.Token{AccessToken: roboquatToken},
+				)
+				tc := oauth2.NewClient(ctx, ts)
+
+				githubClient := github.NewClient(tc)
+
+				t.Logf("trigger github action")
+				_, err = githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, "gitpod-io", "gitpod", "jetbrains-integration-test.yml", github.CreateWorkflowDispatchEventRequest{
+					Ref: "main",
+					Inputs: map[string]interface{}{
+						"secret_gateway_link": gatewayLink,
+						"secret_access_token": oauthToken,
+						"secret_endpoint":     strings.TrimPrefix(nfo.LatestInstance.IdeURL, "https://"),
+					},
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				checkUrl := fmt.Sprintf("https://63342-%s/codeWithMe/unattendedHostStatus?token=gitpod", strings.TrimPrefix(nfo.LatestInstance.IdeURL, "https://"))
+
+				t.Logf("waiting result")
+				testStatus := false
+				for ctx.Err() == nil {
+					time.Sleep(1 * time.Second)
+					body, _ := GetHttpContent(checkUrl)
+					var status GatewayHostStatus
+					err = json.Unmarshal(body, &status)
+					if err != nil {
+						continue
+					}
+					if len(status.Projects) == 1 && status.Projects[0].ControllerConnected {
+						testStatus = true
+						break
+					}
+				}
+				if !testStatus {
+					t.Fatal(ctx.Err())
+				}
+				time.Sleep(time.Second * 10)
+				return ctx
+			}).
+			Feature()
+		featureList = append(featureList, f)
+	}
+
+	testEnv.TestInParallel(t, featureList...)
 }
