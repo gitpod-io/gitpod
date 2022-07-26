@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package usage.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
+
+import "google/protobuf/timestamp.proto";
+import "usage/v1/usage.proto";
+
+service BillingService {
+  // UpdateInvoices takes provides BilledSessions and reflects their usage
+  // in a billing system.
+  // This is an Internal RPC used by the usage reconciler and not intended for general consumption.
+  rpc UpdateInvoices(UpdateInvoicesRequest) returns (UpdateInvoicesResponse) {};
+}
+
+message UpdateInvoicesRequest {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+
+  repeated BilledSession sessions = 3;
+}
+
+message UpdateInvoicesResponse {
+}
