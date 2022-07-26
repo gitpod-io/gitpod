@@ -1358,7 +1358,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 
 	nodeName := wso.NodeName()
 	if nodeName == "" {
-		return nil, xerrors.Errorf("no nodeName found")
+		return nil, xerrors.Errorf("workspace without a valid node name")
 	}
 
 	var podList corev1.PodList
@@ -1372,13 +1372,13 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("unexpected error searching for Gitpod ws-daemon pod: %w", err)
 	}
 
 	// find the ws-daemon on this node
 	var hostIP string
 	for _, pod := range podList.Items {
-		if pod.Spec.NodeName == nodeName && pod.Status.Phase == corev1.PodRunning {
+		if pod.Spec.NodeName == nodeName {
 			hostIP = pod.Status.PodIP
 			break
 		}
@@ -1389,7 +1389,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	}
 	conn, err := m.wsdaemonPool.Get(hostIP)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("unexpected error creating connection to Gitpod ws-daemon: %w", err)
 	}
 
 	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
