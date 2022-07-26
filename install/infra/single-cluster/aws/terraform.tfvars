@@ -1,8 +1,8 @@
-# the cluster_name should be of length less than 16 characters
-cluster_name = "nan"
+# the cluster_name should be of length less than 15 characters and surrounded by double quotes
+cluster_name =
 
-# a route53 zone and certificate request will be created for this domain
-domain_name = "nan-cluster.doptig.com"
+# a route53 zone and certificate request will be created for this domain and surrounded by double quotes
+domain_name =
 
 region = "eu-west-1"
 
