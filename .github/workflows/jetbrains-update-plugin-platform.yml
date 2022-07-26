@@ -1,0 +1,25 @@
+name: JB Plugins Platform Update
+on:
+    workflow_dispatch:
+    schedule:
+        # At 11:00 on every day-of-week from Monday through Friday.
+        - cron: "0 11 * * 1-5"
+jobs:
+    update-backend-plugin-platform:
+        uses: ./.github/workflows/jetbrains-update-plugin-platform-template.yml
+        with:
+            pluginName: JetBrains Backend Plugin
+            pluginId: backend-plugin
+            xpath: "(/html/body/table[preceding::h2/text()='com.jetbrains.intellij.idea'][1]/tbody/tr/td[contains(text(),'-EAP-CANDIDATE-SNAPSHOT') and starts-with(text(),'MAJOR_VERSION_PLACEHOLDER')]/text())[1]"
+            gradlePropertiesPath: components/ide/jetbrains/backend-plugin/gradle-latest.properties
+        secrets:
+            slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+    update-gateway-plugin-platform:
+        uses: ./.github/workflows/jetbrains-update-plugin-platform-template.yml
+        with:
+            pluginName: JetBrains Gateway Plugin
+            pluginId: gateway-plugin
+            xpath: "(/html/body/table[preceding::h2/text()='com.jetbrains.gateway'][1]/tbody/tr/td[contains(text(),'-CUSTOM-SNAPSHOT') and starts-with(text(),'MAJOR_VERSION_PLACEHOLDER') and not(contains(text(),'-NIGHTLY'))]/text())[1]"
+            gradlePropertiesPath: components/ide/jetbrains/gateway-plugin/gradle.properties
+        secrets:
+            slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
