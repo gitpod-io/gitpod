@@ -1,4 +1,4 @@
-lo<p align="center">
+<p align="center">
   <a href="https://www.gitpod.io">
     <img src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/src/icons/gitpod.svg" alt="Gitpod Logo" height="60" />
     <br />
