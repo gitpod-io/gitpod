@@ -1,3 +1,12 @@
+locals {
+  private_primary_subnet_cidr   = cidrsubnet(var.vpc_cidr, 7, 0)
+  private_secondary_subnet_cidr = cidrsubnet(var.vpc_cidr, 7, 1)
+  public_primary_subnet_cidr    = cidrsubnet(var.vpc_cidr, 7, 2)
+  public_secondary_subnet_cidr  = cidrsubnet(var.vpc_cidr, 7, 3)
+  public_db_subnet_cidr_1       = cidrsubnet(var.vpc_cidr, 7, 4)
+  public_db_subnet_cidr_2       = cidrsubnet(var.vpc_cidr, 7, 5)
+}
+
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "3.12.0"
@@ -5,8 +14,8 @@ module "vpc" {
   name                 = "vpc-${var.cluster_name}"
   cidr                 = var.vpc_cidr
   azs                  = var.vpc_availability_zones
-  private_subnets      = [var.private_primary_subnet_cidr, var.private_secondary_subnet_cidr]
-  public_subnets       = [var.public_primary_subnet_cidr, var.public_secondary_subnet_cidr, var.public_db_subnet_cidr_1, var.public_db_subnet_cidr_2]
+  private_subnets      = [local.private_primary_subnet_cidr, local.private_secondary_subnet_cidr]
+  public_subnets       = [local.public_primary_subnet_cidr, local.public_secondary_subnet_cidr, local.public_db_subnet_cidr_1, local.public_db_subnet_cidr_2]
   enable_nat_gateway   = true
   enable_dns_hostnames = true
 }
@@ -64,16 +73,16 @@ module "eks" {
   eks_managed_node_groups = {
     Services = {
       enable_bootstrap_user_data = true
-      instance_types = [var.service_machine_type]
-      name = "service-${var.cluster_name}"
-      subnet_ids   = module.vpc.public_subnets
-      min_size     = 1
-      max_size     = 10
-      desired_size = 1
-      block_device_mappings =  [{
+      instance_types             = [var.service_machine_type]
+      name                       = "service-${var.cluster_name}"
+      subnet_ids                 = module.vpc.public_subnets
+      min_size                   = 1
+      max_size                   = 10
+      desired_size               = 1
+      block_device_mappings = [{
         device_name = "/dev/sda1"
 
-        ebs =  [{
+        ebs = [{
           volume_size = 150
         }]
       }]
@@ -95,18 +104,18 @@ module "eks" {
 
     Workspaces = {
       instance_types = [var.workspace_machine_type]
-      name = "ws-${var.cluster_name}"
-      subnet_ids   = module.vpc.public_subnets
-      min_size     = 1
-      max_size     = 10
-      block_device_mappings =  [{
+      name           = "ws-${var.cluster_name}"
+      subnet_ids     = module.vpc.public_subnets
+      min_size       = 1
+      max_size       = 10
+      block_device_mappings = [{
         device_name = "/dev/sda1"
 
-        ebs =  [{
+        ebs = [{
           volume_size = 150
         }]
       }]
-      desired_size = 1
+      desired_size               = 1
       enable_bootstrap_user_data = true
       labels = {
         "gitpod.io/workload_workspace_services" = true
