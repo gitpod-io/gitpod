@@ -562,7 +562,8 @@ proto.usage.v1.BilledSession.toObject = function(includeInstance, msg) {
     workspaceClass: jspb.Message.getFieldWithDefault(msg, 8, ""),
     startTime: (f = msg.getStartTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
     endTime: (f = msg.getEndTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-    credits: jspb.Message.getFieldWithDefault(msg, 11, 0)
+    creditsDeprecated: jspb.Message.getFieldWithDefault(msg, 11, 0),
+    credits: jspb.Message.getFloatingPointFieldWithDefault(msg, 12, 0.0)
   };
 
   if (includeInstance) {
@@ -643,6 +644,10 @@ proto.usage.v1.BilledSession.deserializeBinaryFromReader = function(msg, reader)
       break;
     case 11:
       var value = /** @type {number} */ (reader.readInt64());
+      msg.setCreditsDeprecated(value);
+      break;
+    case 12:
+      var value = /** @type {number} */ (reader.readDouble());
       msg.setCredits(value);
       break;
     default:
@@ -746,10 +751,17 @@ proto.usage.v1.BilledSession.serializeBinaryToWriter = function(message, writer)
       google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
     );
   }
-  f = message.getCredits();
+  f = message.getCreditsDeprecated();
   if (f !== 0) {
     writer.writeInt64(
       11,
+      f
+    );
+  }
+  f = message.getCredits();
+  if (f !== 0.0) {
+    writer.writeDouble(
+      12,
       f
     );
   }
@@ -975,10 +987,10 @@ proto.usage.v1.BilledSession.prototype.hasEndTime = function() {
 
 
 /**
- * optional int64 credits = 11;
+ * optional int64 credits_deprecated = 11;
  * @return {number}
  */
-proto.usage.v1.BilledSession.prototype.getCredits = function() {
+proto.usage.v1.BilledSession.prototype.getCreditsDeprecated = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 11, 0));
 };
 
@@ -987,8 +999,26 @@ proto.usage.v1.BilledSession.prototype.getCredits = function() {
  * @param {number} value
  * @return {!proto.usage.v1.BilledSession} returns this
  */
-proto.usage.v1.BilledSession.prototype.setCredits = function(value) {
+proto.usage.v1.BilledSession.prototype.setCreditsDeprecated = function(value) {
   return jspb.Message.setProto3IntField(this, 11, value);
+};
+
+
+/**
+ * optional double credits = 12;
+ * @return {number}
+ */
+proto.usage.v1.BilledSession.prototype.getCredits = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 12, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.usage.v1.BilledSession} returns this
+ */
+proto.usage.v1.BilledSession.prototype.setCredits = function(value) {
+  return jspb.Message.setProto3FloatField(this, 12, value);
 };
 
 
