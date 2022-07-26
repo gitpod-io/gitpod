@@ -110,7 +110,9 @@ function createVM(werft: Werft, config: JobConfig) {
     }
 
     werft.log(prepareSlices.BOOT_VM, "Creating  VM");
-    VM.startVM({ name: config.previewEnvironment.destname });
+    const cpu = config.withLargeVM ? 12 : 6;
+    const memory = config.withLargeVM ? 24 : 12;
+    VM.startVM({ name: config.previewEnvironment.destname, cpu, memory });
     werft.currentPhaseSpan.setAttribute("preview.created_vm", true);
 }
 

@@ -19,6 +19,8 @@ type VirtualMachineManifestArguments = {
     claimName: string;
     storageClaimName: string;
     userDataSecretName: string;
+    cpu: number;
+    memory: number;
 };
 
 export function VirtualMachineManifest({
@@ -27,6 +29,8 @@ export function VirtualMachineManifest({
     claimName,
     storageClaimName,
     userDataSecretName,
+    cpu,
+    memory
 }: VirtualMachineManifestArguments) {
     return `
 apiVersion: kubevirt.io/v1
@@ -63,7 +67,7 @@ spec:
         machine:
           type: q35
         cpu:
-          cores: 6
+          cores: ${cpu}
           sockets: 1
           threads: 1
         devices:
@@ -84,8 +88,8 @@ spec:
                 bus: virtio
         resources:
           limits:
-            memory: 12Gi
-            cpu: 6
+            memory: ${memory}Gi
+            cpu: ${cpu}
       evictionStrategy: LiveMigrate
       networks:
         - pod: {}
