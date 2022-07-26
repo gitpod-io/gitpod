@@ -55,11 +55,12 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 		billingController: &NoOpBillingController{},
 		nowFunc:           func() time.Time { return scenarioRunTime },
 		conn:              conn,
+		pricer:            DefaultWorkspacePricer,
 	}
 	status, report, err := reconciler.ReconcileTimeRange(context.Background(), startOfMay, startOfJune)
 	require.NoError(t, err)
 
-	require.Len(t, report, 1)
+	require.Len(t, report, 2)
 	require.Equal(t, &UsageReconcileStatus{
 		StartTime:                 startOfMay,
 		EndTime:                   startOfJune,
@@ -69,8 +70,6 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 }
 
 func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
-	maxStopTime := time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)
-
 	teamID := uuid.New().String()
 	teamAttributionID := db.NewTeamAttributionID(teamID)
 
@@ -81,38 +80,42 @@ func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
 	}{
 		{
 			Name:     "no instances in report, no summary",
-			Report:   map[db.AttributionID][]db.WorkspaceInstanceForUsage{},
+			Report:   []db.WorkspaceInstanceUsage{},
 			Expected: map[string]int64{},
 		},
 		{
 			Name: "skips user attributions",
-			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
-				db.NewUserAttributionID(uuid.New().String()): {
-					db.WorkspaceInstanceForUsage{
-						UsageAttributionID: db.NewUserAttributionID(uuid.New().String()),
-					},
+			Report: []db.WorkspaceInstanceUsage{
+				{
+					AttributionID: db.NewUserAttributionID(uuid.New().String()),
 				},
 			},
 			Expected: map[string]int64{},
 		},
 		{
 			Name: "two workspace instances",
-			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
-				teamAttributionID: {
-					db.WorkspaceInstanceForUsage{
-						// has 1 day and 23 hours of usage
-						UsageAttributionID: teamAttributionID,
-						WorkspaceClass:     defaultWorkspaceClass,
-						CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
-						StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+			Report: []db.WorkspaceInstanceUsage{
+				{
+					// has 1 day and 23 hours of usage
+					AttributionID:  teamAttributionID,
+					WorkspaceClass: defaultWorkspaceClass,
+					StartedAt:      time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC),
+					StoppedAt: sql.NullTime{
+						Time:  time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC),
+						Valid: true,
 					},
-					db.WorkspaceInstanceForUsage{
-						// has 1 hour of usage
-						UsageAttributionID: teamAttributionID,
-						WorkspaceClass:     defaultWorkspaceClass,
-						CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
-						StoppedTime:        db.NewVarcharTime(time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC)),
+					CreditsUsed: (24 + 23) * 10,
+				},
+				{
+					// has 1 hour of usage
+					AttributionID:  teamAttributionID,
+					WorkspaceClass: defaultWorkspaceClass,
+					StartedAt:      time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC),
+					StoppedAt: sql.NullTime{
+						Time:  time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC),
+						Valid: true,
 					},
+					CreditsUsed: 10,
 				},
 			},
 			Expected: map[string]int64{
@@ -122,15 +125,17 @@ func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
 		},
 		{
 			Name: "unknown workspace class uses default",
-			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
-				teamAttributionID: {
-					// has 1 hour of usage
-					db.WorkspaceInstanceForUsage{
-						WorkspaceClass:     "yolo-workspace-class",
-						UsageAttributionID: teamAttributionID,
-						CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
-						StoppedTime:        db.NewVarcharTime(time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC)),
+			Report: []db.WorkspaceInstanceUsage{
+				// has 1 hour of usage
+				{
+					WorkspaceClass: "yolo-workspace-class",
+					AttributionID:  teamAttributionID,
+					StartedAt:      time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC),
+					StoppedAt: sql.NullTime{
+						Time:  time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC),
+						Valid: true,
 					},
+					CreditsUsed: 10,
 				},
 			},
 			Expected: map[string]int64{
@@ -142,13 +147,13 @@ func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
-			actual := s.Report.CreditSummaryForTeams(DefaultWorkspacePricer, maxStopTime)
+			actual := s.Report.CreditSummaryForTeams()
 			require.Equal(t, s.Expected, actual)
 		})
 	}
 }
 
-func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
+func TestInstanceToUsageRecords(t *testing.T) {
 	maxStopTime := time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)
 	teamID, ownerID, projectID := uuid.New().String(), uuid.New(), uuid.New()
 	workspaceID := dbtest.GenerateWorkspaceID()
@@ -159,24 +164,22 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 
 	scenarios := []struct {
 		Name     string
-		Report   UsageReport
+		Records  []db.WorkspaceInstanceForUsage
 		Expected []db.WorkspaceInstanceUsage
 	}{
 		{
 			Name: "a stopped workspace instance",
-			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
-				teamAttributionID: {
-					db.WorkspaceInstanceForUsage{
-						ID:                 instanceId,
-						WorkspaceID:        workspaceID,
-						OwnerID:            ownerID,
-						ProjectID:          sql.NullString{},
-						WorkspaceClass:     defaultWorkspaceClass,
-						Type:               db.WorkspaceType_Prebuild,
-						UsageAttributionID: teamAttributionID,
-						CreationTime:       creationTime,
-						StoppedTime:        stoppedTime,
-					},
+			Records: []db.WorkspaceInstanceForUsage{
+				{
+					ID:                 instanceId,
+					WorkspaceID:        workspaceID,
+					OwnerID:            ownerID,
+					ProjectID:          sql.NullString{},
+					WorkspaceClass:     defaultWorkspaceClass,
+					Type:               db.WorkspaceType_Prebuild,
+					UsageAttributionID: teamAttributionID,
+					CreationTime:       creationTime,
+					StoppedTime:        stoppedTime,
 				},
 			},
 			Expected: []db.WorkspaceInstanceUsage{{
@@ -196,19 +199,17 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 		},
 		{
 			Name: "workspace instance that is still running",
-			Report: map[db.AttributionID][]db.WorkspaceInstanceForUsage{
-				teamAttributionID: {
-					db.WorkspaceInstanceForUsage{
-						ID:                 instanceId,
-						OwnerID:            ownerID,
-						ProjectID:          sql.NullString{String: projectID.String(), Valid: true},
-						WorkspaceClass:     defaultWorkspaceClass,
-						Type:               db.WorkspaceType_Regular,
-						WorkspaceID:        workspaceID,
-						UsageAttributionID: teamAttributionID,
-						CreationTime:       creationTime,
-						StoppedTime:        db.VarcharTime{},
-					},
+			Records: []db.WorkspaceInstanceForUsage{
+				{
+					ID:                 instanceId,
+					OwnerID:            ownerID,
+					ProjectID:          sql.NullString{String: projectID.String(), Valid: true},
+					WorkspaceClass:     defaultWorkspaceClass,
+					Type:               db.WorkspaceType_Regular,
+					WorkspaceID:        workspaceID,
+					UsageAttributionID: teamAttributionID,
+					CreationTime:       creationTime,
+					StoppedTime:        db.VarcharTime{},
 				},
 			},
 			Expected: []db.WorkspaceInstanceUsage{{
@@ -228,7 +229,7 @@ func TestUsageReportConversionToDBUsageRecords(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
-			actual := usageReportToUsageRecords(s.Report, DefaultWorkspacePricer, maxStopTime)
+			actual := instancesToUsageRecords(s.Records, DefaultWorkspacePricer, maxStopTime)
 			require.Equal(t, s.Expected, actual)
 		})
 	}

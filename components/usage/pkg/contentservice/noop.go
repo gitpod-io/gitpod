@@ -12,6 +12,6 @@ import (
 
 type NoOpClient struct{}
 
-func (c *NoOpClient) UploadUsageReport(ctx context.Context, filename string, report map[db.AttributionID][]db.WorkspaceInstanceForUsage) error {
+func (c *NoOpClient) UploadUsageReport(ctx context.Context, filename string, report []db.WorkspaceInstanceUsage) error {
 	return nil
 }
