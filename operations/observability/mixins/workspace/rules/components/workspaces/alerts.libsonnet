@@ -12,7 +12,8 @@
           {
             alert: 'GitpodWorkspaceStuckOnStarting',
             labels: {
-              severity: 'critical',
+              severity: 'warning',
+              team: 'workspace',
             },
             'for': '20m',
             annotations: {
