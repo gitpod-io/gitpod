@@ -92,6 +92,9 @@ module "eks" {
   image_id               = var.eks_node_image_id
   kubeconfig             = var.kubeconfig
   cluster_version        = var.cluster_version
+  create_external_registry = true
+  create_external_database = true
+  create_external_storage  = true
 }
 
 module "certmanager" {

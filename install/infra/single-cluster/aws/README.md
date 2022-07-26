@@ -97,6 +97,9 @@ corresponding TLS certificate requests.
 
 ## Initialize terraform backend and confirm the plan
 
+> ⚠️  We ship 4 terraform modules here and some of them have dependencies among each other (eg: `cert-manager` module depends on `eks` module for `kubeconfig`, or the `cluster-issuer` module depends on `cert-manager` for the CRD). Hence a simple run of `terraform plan` or `terraform apply` may lead to errors. Hence we wrap [targeted `terraform` operations](https://learn.hashicorp.com/tutorials/terraform/resource-targeting) in the following make targets. If you wish you use `terraform` commands instead, please make sure you look into the Makefile to understand the target order.
+
+
 * Initialize the terraform backend with:
 
   ``` sh
