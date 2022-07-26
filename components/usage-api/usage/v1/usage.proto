@@ -49,5 +49,6 @@ message BilledSession {
     google.protobuf.Timestamp start_time = 9;
     google.protobuf.Timestamp end_time = 10;
 
-    int64 credits = 11;
+    int64 credits_deprecated = 11 [deprecated=true];   // insufficient precision to represent credits for workspace time
+    double credits = 12;
 }

@@ -103,6 +103,8 @@ export class BilledSession extends jspb.Message {
     clearEndTime(): void;
     getEndTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
     setEndTime(value?: google_protobuf_timestamp_pb.Timestamp): BilledSession;
+    getCreditsDeprecated(): number;
+    setCreditsDeprecated(value: number): BilledSession;
     getCredits(): number;
     setCredits(value: number): BilledSession;
 
@@ -128,6 +130,7 @@ export namespace BilledSession {
         workspaceClass: string,
         startTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         endTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        creditsDeprecated: number,
         credits: number,
     }
 }

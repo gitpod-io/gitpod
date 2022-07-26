@@ -78,7 +78,7 @@ func (us *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUs
 			WorkspaceClass: usageRecord.WorkspaceClass,
 			StartTime:      timestamppb.New(usageRecord.StartedAt),
 			EndTime:        endTime,
-			Credits:        int64(usageRecord.CreditsUsed),
+			Credits:        usageRecord.CreditsUsed,
 		}
 		billedSessions = append(billedSessions, billedSession)
 	}
