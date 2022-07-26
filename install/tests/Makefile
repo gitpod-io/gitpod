@@ -46,7 +46,7 @@ k3s-kubeconfig: sync-kubeconfig
 gcp-kubeconfig:
 	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	export KUBECONFIG=${KUBECONFIG} && \
-	gcloud container clusters get-credentials gitpod-${TF_VAR_TEST_ID} --zone europe-west1-d --project sh-automated-tests || $(MAKE) sync-kubeconfig || echo "No cluster present"
+	gcloud container clusters get-credentials gp-${TF_VAR_TEST_ID} --zone europe-west1-d --project sh-automated-tests || $(MAKE) sync-kubeconfig || echo "No cluster present"
 
 ## azure-kubeconfig: Get the kubeconfig configuration for Azure AKS
 azure-kubeconfig:

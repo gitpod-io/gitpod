@@ -1,4 +1,3 @@
-
 # the cluster_name should be of length less than 16 characters
 cluster_name = "nan"
 

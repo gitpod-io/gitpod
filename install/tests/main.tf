@@ -29,7 +29,7 @@ module "gke" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/gke?ref=main" # we can later use tags here
   source = "../infra/modules/gke" # we can later use tags here
 
-  name            = var.TEST_ID
+  cluster_name    = "gp-${var.TEST_ID}"
   project         = var.project
   credentials     = var.sa_creds
   kubeconfig      = var.kubeconfig
