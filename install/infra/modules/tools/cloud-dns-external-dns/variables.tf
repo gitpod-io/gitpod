@@ -3,17 +3,17 @@ variable "kubeconfig" {
     default = "./kubeconfig"
 }
 
-variable "gcp_project" {
+variable "project" {
     description = "Google cloud Region to perform operations in"
     default = "dns-for-playgrounds"
 }
 
-variable "gcp_region" {
+variable "region" {
     description = "Google cloud Region to perform operations in"
     default = "europe-west1"
 }
 
-variable "gcp_zone" {
+variable "zone" {
     description = "Google cloud Zone to perform operations in"
     default = "europe-west1-d"
 }
