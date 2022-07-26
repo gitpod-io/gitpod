@@ -349,14 +349,6 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 	if isPodBeingDeleted(pod) {
 		result.Phase = api.WorkspacePhase_STOPPING
 
-		_, podFailedBeforeBeingStopped := pod.Annotations[workspaceFailedBeforeStoppingAnnotation]
-		if podFailedBeforeBeingStopped {
-			if _, ok := pod.Annotations[workspaceNeverReadyAnnotation]; ok {
-				// The workspace is never ready, so there is no need for a stopping phase.
-				result.Phase = api.WorkspacePhase_STOPPED
-			}
-		}
-
 		var hasFinalizer bool
 		for _, f := range wso.Pod.Finalizers {
 			if f == gitpodFinalizerName {
