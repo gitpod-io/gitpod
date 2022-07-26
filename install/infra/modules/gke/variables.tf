@@ -35,13 +35,13 @@ variable "name" {
 variable "workspaces_machine_type" {
   type        = string
   description = "Type of the node compute engines for workspace nodepool."
-  default     = "n2-standard-8"
+  default     = "n2d-standard-8"
 }
 
 variable "services_machine_type" {
   type        = string
   description = "Type of the node compute engines for services nodepool."
-  default     = "n2-standard-4"
+  default     = "n2d-standard-4"
 }
 
 variable "max_count" {
