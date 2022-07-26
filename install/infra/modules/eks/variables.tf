@@ -51,26 +51,17 @@ variable "vpc_cidr" {
   default = "10.100.0.0/16"
 }
 
-variable "private_primary_subnet_cidr" {
-  default = "10.100.160.0/19"
+variable "enable_external_database" {
+  default     = true
+  description = "Set this to false to avoid creating an RDS database to use with Gitpod instead of inclsuter mysql"
 }
 
-variable "private_secondary_subnet_cidr" {
-  default = "10.100.128.0/19"
+variable "enable_external_storage" {
+  default     = true
+  description = "Set this to false to avoid creating an s3 storage to use with Gitpod instead of incluster minio"
 }
 
-variable "public_primary_subnet_cidr" {
-  default = "10.100.64.0/18"
-}
-
-variable "public_secondary_subnet_cidr" {
-  default = "10.100.0.0/18"
-}
-
-variable "public_db_subnet_cidr_1" {
-  default = "10.100.192.0/19"
-}
-
-variable "public_db_subnet_cidr_2" {
-  default = "10.100.224.0/19"
+variable "enable_external_registry" {
+  default     = true
+  description = "Set this to false to avoid creating an AWS registry to use with Gitpod instead of incluster registry"
 }
