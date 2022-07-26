@@ -17,12 +17,12 @@ provider "google" {
 }
 
 resource "google_compute_network" "vpc" {
-  name                    = "vpc-${var.name}"
+  name                    = "vpc-${var.cluster_name}"
   auto_create_subnetworks = "false"
 }
 
 resource "google_compute_subnetwork" "subnet" {
-  name          = "subnet-${var.name}"
+  name          = "subnet-${var.cluster_name}"
   region        = var.region
   network       = google_compute_network.vpc.name
   ip_cidr_range = "10.255.0.0/16"
@@ -39,7 +39,7 @@ resource "google_compute_subnetwork" "subnet" {
 }
 
 resource "google_container_cluster" "gitpod-cluster" {
-  name     = "gitpod-${var.name}"
+  name     = var.cluster_name
   location = var.zone == null ? var.region : var.zone
 
   cluster_autoscaling {
@@ -112,7 +112,7 @@ resource "google_container_cluster" "gitpod-cluster" {
 }
 
 resource "google_container_node_pool" "workspaces" {
-  name               = "workspaces-${var.name}"
+  name               = "workspaces-${var.cluster_name}"
   location           = google_container_cluster.gitpod-cluster.location
   cluster            = google_container_cluster.gitpod-cluster.name
   version            = var.cluster_version // kubernetes version
@@ -153,7 +153,8 @@ resource "google_container_node_pool" "workspaces" {
 }
 
 resource "google_sql_database_instance" "gitpod" {
-  name             = "sql-${var.name}"
+  count            = var.enable_external_database ? 1 : 0
+  name             = "sql-${var.cluster_name}"
   database_version = "MYSQL_5_7"
   region           = var.region
   settings {
@@ -162,17 +163,43 @@ resource "google_sql_database_instance" "gitpod" {
   deletion_protection = false
 }
 
+resource "random_password" "password" {
+  count = var.enable_external_database ? 1 : 0
+
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
 resource "google_sql_database" "database" {
+  count     = var.enable_external_database ? 1 : 0
   name      = "gitpod"
-  instance  = google_sql_database_instance.gitpod.name
+  instance  = google_sql_database_instance.gitpod[count.index].name
   charset   = "utf8"
   collation = "utf8_general_ci"
 }
 
 resource "google_sql_user" "users" {
-  name     = "gitpod"
-  instance = google_sql_database_instance.gitpod.name
-  password = "gitpod"
+  count    = var.enable_external_database ? 1 : 0
+  name     = "dbuser-${var.cluster_name}-${count.index}"
+  instance = google_sql_database_instance.gitpod[count.index].name
+  password = random_password.password[count.index].result
+}
+
+resource "google_dns_managed_zone" "gitpod-dns-zone" {
+  count = var.domain_name == null ? 0 : 1
+
+  name          = "zone-${var.cluster_name}"
+  dns_name      = "${var.domain_name}."
+  description   = "Terraform managed DNS zone for ${var.cluster_name}"
+  force_destroy = true
+  labels = {
+    app = "gitpod"
+  }
+}
+
+data "google_container_registry_repository" "gitpod" {
+  count = var.enable_external_registry ? 1 : 0
 }
 
 module "gke_auth" {
@@ -182,7 +209,7 @@ module "gke_auth" {
 
   project_id   = var.project
   location     = google_container_cluster.gitpod-cluster.location
-  cluster_name = "gitpod-${var.name}"
+  cluster_name = var.cluster_name
 }
 
 resource "local_file" "kubeconfig" {
