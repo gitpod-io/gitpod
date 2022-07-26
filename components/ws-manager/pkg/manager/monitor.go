@@ -499,6 +499,11 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 					}
 				}
 
+				// delete PVC because the workspace pod is never ready
+				if err = manager.deleteWorkspacePVC(ctx, pod.Name); err != nil {
+					log.Error(err)
+					return err
+				}
 				return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
 			} else {
 				// We start finalizing the workspace content only after the container is gone. This way we ensure there's
@@ -1184,16 +1189,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			// backup is done and we are ready to kill the pod, mark PVC for deletion
 			if readyVolumeSnapshot && !deletedPVC {
 				// todo: once we add snapshot objects, this will be changed to create snapshot object first
-				pvcErr := m.manager.Clientset.Delete(ctx,
-					&corev1.PersistentVolumeClaim{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      pvcName,
-							Namespace: m.manager.Config.Namespace,
-						},
-					},
-				)
-				if pvcErr != nil && !k8serr.IsNotFound(pvcErr) {
-					log.WithError(pvcErr).Errorf("failed to delete pvc `%s`", pvcName)
+				err = m.manager.deleteWorkspacePVC(ctx, pvcName)
+				if err != nil {
+					log.Error(err)
+					return true, nil, err
 				}
 				deletedPVC = true
 			}
