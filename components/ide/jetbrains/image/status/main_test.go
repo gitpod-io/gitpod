@@ -15,10 +15,10 @@ import (
 )
 
 func TestGetProductConfig(t *testing.T) {
-	expectation := &protocol.JetBrainsProduct{}
+	expectation := &protocol.JetbrainsProduct{}
 	actual := getProductConfig(&protocol.GitpodConfig{
-		JetBrains: &protocol.JetBrains{
-			IntelliJ: expectation,
+		Jetbrains: &protocol.Jetbrains{
+			Intellij: expectation,
 		},
 	}, "intellij")
 
@@ -29,10 +29,10 @@ func TestGetProductConfig(t *testing.T) {
 
 func TestParseGitpodConfig(t *testing.T) {
 	gitpodConfig, _ := parseGitpodConfig("testdata")
-	assert.Equal(t, 1, len(gitpodConfig.JetBrains.IntelliJ.Plugins))
-	assert.Equal(t, "both", gitpodConfig.JetBrains.IntelliJ.Prebuilds.Version)
-	assert.Equal(t, "-Xmx3g", gitpodConfig.JetBrains.IntelliJ.VMOptions)
-	assert.Equal(t, "-Xmx4096m -XX:MaxRAMPercentage=75", gitpodConfig.JetBrains.GoLand.VMOptions)
+	assert.Equal(t, 1, len(gitpodConfig.Jetbrains.Intellij.Plugins))
+	assert.Equal(t, "both", gitpodConfig.Jetbrains.Intellij.Prebuilds.Version)
+	assert.Equal(t, "-Xmx3g", gitpodConfig.Jetbrains.Intellij.Vmoptions)
+	assert.Equal(t, "-Xmx4096m -XX:MaxRAMPercentage=75", gitpodConfig.Jetbrains.Goland.Vmoptions)
 }
 
 func TestUpdateVMOptions(t *testing.T) {

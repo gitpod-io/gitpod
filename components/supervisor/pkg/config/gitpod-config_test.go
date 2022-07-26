@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
@@ -81,7 +82,7 @@ vscode:
 	}
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			tempDir, err := os.MkdirTemp("", "test-gitpor-config-*")
+			tempDir, err := os.MkdirTemp("", "test-gitpod-config-*")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -144,5 +145,87 @@ vscode:
 				}
 			}
 		})
+	}
+}
+
+func TestInvalidGitpodConfig(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "test-gitpod-config-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	locationReady := make(chan struct{})
+	configService := NewConfigService(tempDir+"/.gitpod.yml", locationReady, log)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	close(locationReady)
+
+	go configService.Watch(ctx)
+
+	listener := configService.Observe(ctx)
+
+	config := <-listener
+	if diff := cmp.Diff((*gitpod.GitpodConfig)(nil), config); diff != "" {
+		t.Errorf("unexpected output (-want +got):\n%s", diff)
+	}
+
+	err = os.WriteFile(configService.location, []byte(`
+ports:
+  - port: 8080
+
+tasks:
+  - command: echo "Hello World"
+
+vscode:
+  extensions:
+    - foo.bar
+`), 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config = <-listener
+	if diff := cmp.Diff(&gitpod.GitpodConfig{
+		Ports:  []*gitpod.PortsItems{{Port: 8080}},
+		Tasks:  []*gitpod.TasksItems{{Command: "echo \"Hello World\""}},
+		Vscode: &gitpod.Vscode{Extensions: []string{"foo.bar"}},
+	}, config); diff != "" {
+		t.Errorf("unexpected output (-want +got):\n%s", diff)
+	}
+
+	err = os.WriteFile(configService.location, []byte(`
+ports:
+  - port:
+	visibility: private
+  - port: 8080
+
+tasks:
+  - before:
+  - command: echo "Hello World"
+
+vscode:
+  extensions:
+    -
+`), 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(configService.debounceDuration * 10)
+
+	err = os.WriteFile(configService.location, []byte(`
+ports:
+  - port: 8081
+`), 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config = <-listener
+	if diff := cmp.Diff(&gitpod.GitpodConfig{
+		Ports: []*gitpod.PortsItems{{Port: 8081}},
+	}, config); diff != "" {
+		t.Errorf("unexpected output (-want +got):\n%s", diff)
 	}
 }
