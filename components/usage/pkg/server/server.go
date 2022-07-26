@@ -65,7 +65,7 @@ func Start(cfg Config) error {
 			return fmt.Errorf("failed to initialize stripe client: %w", err)
 		}
 
-		billingController = controller.NewStripeBillingController(c, pricer)
+		billingController = controller.NewStripeBillingController(c)
 	}
 
 	schedule, err := time.ParseDuration(cfg.ControllerSchedule)

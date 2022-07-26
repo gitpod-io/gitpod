@@ -72,7 +72,7 @@ func (u *UsageReconciler) Reconcile() (err error) {
 	}
 	log.WithField("usage_reconcile_status", status).Info("Reconcile completed.")
 
-	err = db.CreateUsageRecords(ctx, u.conn, usageReportToUsageRecords(report, u.pricer, u.nowFunc().UTC()))
+	err = db.CreateUsageRecords(ctx, u.conn, report)
 	if err != nil {
 		return fmt.Errorf("failed to write usage records to database: %s", err)
 	}
@@ -105,33 +105,69 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	}
 	log.WithField("workspace_instances", instances).Debug("Successfully loaded workspace instances.")
 
-	instancesByAttributionID := groupInstancesByAttributionID(instances)
+	usageRecords := instancesToUsageRecords(instances, u.pricer, now)
+	//instancesByAttributionID := groupInstancesByAttributionID(instances)
 
-	err = u.billingController.Reconcile(ctx, now, instancesByAttributionID)
+	err = u.billingController.Reconcile(ctx, usageRecords)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to reconcile billing: %w", err)
 	}
 
-	return status, instancesByAttributionID, nil
+	return status, usageRecords, nil
 }
 
-type UsageReport map[db.AttributionID][]db.WorkspaceInstanceForUsage
+func instancesToUsageRecords(instances []db.WorkspaceInstanceForUsage, pricer *WorkspacePricer, now time.Time) []db.WorkspaceInstanceUsage {
+	var usageRecords []db.WorkspaceInstanceUsage
 
-func (u UsageReport) CreditSummaryForTeams(pricer *WorkspacePricer, maxStopTime time.Time) map[string]int64 {
+	for _, instance := range instances {
+		var stoppedAt sql.NullTime
+		if instance.StoppedTime.IsSet() {
+			stoppedAt = sql.NullTime{Time: instance.StoppedTime.Time(), Valid: true}
+		}
+
+		projectID := ""
+		if instance.ProjectID.Valid {
+			projectID = instance.ProjectID.String
+		}
+
+		usageRecords = append(usageRecords, db.WorkspaceInstanceUsage{
+			InstanceID:     instance.ID,
+			AttributionID:  instance.UsageAttributionID,
+			WorkspaceID:    instance.WorkspaceID,
+			ProjectID:      projectID,
+			UserID:         instance.OwnerID,
+			WorkspaceType:  instance.Type,
+			WorkspaceClass: instance.WorkspaceClass,
+			StartedAt:      instance.CreationTime.Time(),
+			StoppedAt:      stoppedAt,
+			CreditsUsed:    pricer.CreditsUsedByInstance(&instance, now),
+			GenerationID:   0,
+		})
+	}
+
+	return usageRecords
+}
+
+type UsageReport []db.WorkspaceInstanceUsage
+
+func (u UsageReport) CreditSummaryForTeams() map[string]int64 {
 	creditsPerTeamID := map[string]int64{}
 
-	for attribution, instances := range u {
-		entity, id := attribution.Values()
+	for _, instance := range u {
+		entity, id := instance.AttributionID.Values()
 		if entity != db.AttributionEntity_Team {
 			continue
 		}
 
-		var credits float64
-		for _, instance := range instances {
-			credits += pricer.CreditsUsedByInstance(&instance, maxStopTime)
+		if _, ok := creditsPerTeamID[id]; !ok {
+			creditsPerTeamID[id] = 0
 		}
 
-		creditsPerTeamID[id] = int64(math.Ceil(credits))
+		creditsPerTeamID[id] += int64(instance.CreditsUsed)
+	}
+
+	for teamID, credits := range creditsPerTeamID {
+		creditsPerTeamID[teamID] = int64(math.Ceil(float64(credits)))
 	}
 
 	return creditsPerTeamID
@@ -204,51 +240,4 @@ func trimStartStopTime(instances []db.WorkspaceInstanceForUsage, maximumStart, m
 		updated = append(updated, instance)
 	}
 	return updated
-}
-
-func groupInstancesByAttributionID(instances []db.WorkspaceInstanceForUsage) UsageReport {
-	result := map[db.AttributionID][]db.WorkspaceInstanceForUsage{}
-	for _, instance := range instances {
-		if _, ok := result[instance.UsageAttributionID]; !ok {
-			result[instance.UsageAttributionID] = []db.WorkspaceInstanceForUsage{}
-		}
-
-		result[instance.UsageAttributionID] = append(result[instance.UsageAttributionID], instance)
-	}
-
-	return result
-}
-
-func usageReportToUsageRecords(report UsageReport, pricer *WorkspacePricer, now time.Time) []db.WorkspaceInstanceUsage {
-	var usageRecords []db.WorkspaceInstanceUsage
-
-	for attributionId, instances := range report {
-		for _, instance := range instances {
-			var stoppedAt sql.NullTime
-			if instance.StoppedTime.IsSet() {
-				stoppedAt = sql.NullTime{Time: instance.StoppedTime.Time(), Valid: true}
-			}
-
-			projectID := ""
-			if instance.ProjectID.Valid {
-				projectID = instance.ProjectID.String
-			}
-
-			usageRecords = append(usageRecords, db.WorkspaceInstanceUsage{
-				InstanceID:     instance.ID,
-				AttributionID:  attributionId,
-				WorkspaceID:    instance.WorkspaceID,
-				ProjectID:      projectID,
-				UserID:         instance.OwnerID,
-				WorkspaceType:  instance.Type,
-				WorkspaceClass: instance.WorkspaceClass,
-				StartedAt:      instance.CreationTime.Time(),
-				StoppedAt:      stoppedAt,
-				CreditsUsed:    pricer.CreditsUsedByInstance(&instance, now),
-				GenerationID:   0,
-			})
-		}
-	}
-
-	return usageRecords
 }
