@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { useLocation } from "react-router";
 import { Project, ProjectSettings, Team } from "@gitpod/gitpod-protocol";
 import CheckBox from "../components/CheckBox";
@@ -13,8 +13,7 @@ import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
-import { getExperimentsClient } from "../experiments/client";
-import { UserContext } from "../user-context";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? "t/" + team.slug : "projects";
@@ -51,32 +50,8 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
 }
 
 export default function () {
-    const { user } = useContext(UserContext);
-    const location = useLocation();
-    const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
-    const [isShowPersistentVolumeClaim, setIsShowPersistentVolumeClaim] = useState<boolean>(false);
+    const { showPersistentVolumeClaimUI } = useContext(FeatureFlagContext);
     const { project, setProject } = useContext(ProjectContext);
-
-    useEffect(() => {
-        (async () => {
-            if (!user) {
-                return;
-            }
-            const showPersistentVolumeClaim = await getExperimentsClient().getValueAsync(
-                "persistent_volume_claim",
-                false,
-                {
-                    user,
-                    projectId: project?.id,
-                    teamId: team?.id,
-                    teamName: team?.name,
-                    teams,
-                },
-            );
-            setIsShowPersistentVolumeClaim(showPersistentVolumeClaim);
-        })();
-    }, [project, team, teams]);
 
     if (!project) return null;
 
@@ -132,7 +107,7 @@ export default function () {
                 }
                 desc={<span>Experimental feature that is still under development.</span>}
                 checked={project.settings?.usePersistentVolumeClaim ?? false}
-                disabled={!isShowPersistentVolumeClaim}
+                disabled={!showPersistentVolumeClaimUI}
                 onChange={({ target }) => updateProjectSettings({ usePersistentVolumeClaim: target.checked })}
             />
         </ProjectSettingsPage>

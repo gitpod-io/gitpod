@@ -11,9 +11,14 @@ import { ProjectContext } from "../projects/project-context";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { UserContext } from "../user-context";
 
-const FeatureFlagContext = createContext<{ showUsageBasedPricingUI: boolean; showWorkspaceClassesUI: boolean }>({
+const FeatureFlagContext = createContext<{
+    showUsageBasedPricingUI: boolean;
+    showWorkspaceClassesUI: boolean;
+    showPersistentVolumeClaimUI: boolean;
+}>({
     showUsageBasedPricingUI: false,
     showWorkspaceClassesUI: false,
+    showPersistentVolumeClaimUI: false,
 });
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
@@ -24,6 +29,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const team = getCurrentTeam(location, teams);
     const [showUsageBasedPricingUI, setShowUsageBasedPricingUI] = useState<boolean>(false);
     const [showWorkspaceClassesUI, setShowWorkspaceClassesUI] = useState<boolean>(false);
+    const [showPersistentVolumeClaimUI, setShowPersistentVolumeClaimUI] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) {
@@ -47,11 +53,26 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 user,
             });
             setShowWorkspaceClassesUI(showWorkspaceClasses);
+
+            const showPersistentVolumeClaim = await getExperimentsClient().getValueAsync(
+                "persistent_volume_claim",
+                false,
+                {
+                    user,
+                    projectId: project?.id,
+                    teamId: team?.id,
+                    teamName: team?.name,
+                    teams,
+                },
+            );
+            setShowPersistentVolumeClaimUI(showPersistentVolumeClaim);
         })();
     }, [user, teams, team, project]);
 
     return (
-        <FeatureFlagContext.Provider value={{ showUsageBasedPricingUI, showWorkspaceClassesUI }}>
+        <FeatureFlagContext.Provider
+            value={{ showUsageBasedPricingUI, showWorkspaceClassesUI, showPersistentVolumeClaimUI }}
+        >
             {children}
         </FeatureFlagContext.Provider>
     );
