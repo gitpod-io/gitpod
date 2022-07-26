@@ -25,6 +25,7 @@ require (
 )
 
 require (
+	github.com/configcat/go-sdk/v7 v7.6.0
 	github.com/containerd/cgroups v1.0.4
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/hashicorp/golang-lru v0.5.1
@@ -37,6 +38,7 @@ require (
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cilium/ebpf v0.4.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect

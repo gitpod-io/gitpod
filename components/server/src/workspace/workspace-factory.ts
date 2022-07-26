@@ -124,6 +124,7 @@ export class WorkspaceFactory {
 
             const id = await this.generateWorkspaceID(context);
             const date = new Date().toISOString();
+
             const newWs = <Workspace>{
                 id,
                 type: "regular",

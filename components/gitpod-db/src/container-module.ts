@@ -65,6 +65,10 @@ import { TeamSubscription2DB } from "./team-subscription-2-db";
 import { TeamSubscription2DBImpl } from "./typeorm/team-subscription-2-db-impl";
 import { TypeORMBlockedRepositoryDBImpl } from "./typeorm/blocked-repository-db-impl";
 import { BlockedRepositoryDB } from "./blocked-repository-db";
+import { WebhookEventDB } from "./webhook-event-db";
+import { WebhookEventDBImpl } from "./typeorm/webhook-event-db-impl";
+import { CostCenterDB } from "./cost-center-db";
+import { CostCenterDBImpl } from "./typeorm/cost-center-db-impl";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -139,6 +143,11 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(TeamDB).toService(TeamDBImpl);
     bind(ProjectDBImpl).toSelf().inSingletonScope();
     bind(ProjectDB).toService(ProjectDBImpl);
+    bind(WebhookEventDBImpl).toSelf().inSingletonScope();
+    bind(WebhookEventDB).toService(WebhookEventDBImpl);
+
+    bind(CostCenterDBImpl).toSelf().inSingletonScope();
+    bind(CostCenterDB).toService(CostCenterDBImpl);
 
     // com concerns
     bind(AccountingDB).to(TypeORMAccountingDBImpl).inSingletonScope();

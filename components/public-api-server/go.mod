@@ -1,14 +1,17 @@
 module github.com/gitpod-io/gitpod/public-api-server
 
-go 1.17
+go 1.18
 
 require (
+	github.com/AdaLogics/go-fuzz-headers v0.0.0-20220708163326-82d177caec6e
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/public-api v0.0.0-00010101000000-000000000000
+	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.7
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/prometheus/client_golang v1.12.1
+	github.com/relvacode/iso8601 v1.1.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.0
@@ -19,8 +22,8 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect

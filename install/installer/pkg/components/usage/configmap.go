@@ -5,12 +5,15 @@ package usage
 
 import (
 	"fmt"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/usage/pkg/server"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +22,8 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := server.Config{
-		ControllerSchedule: time.Hour.String(),
+		ControllerSchedule:    time.Hour.String(),
+		ContentServiceAddress: net.JoinHostPort(content_service.Component, strconv.Itoa(content_service.RPCPort)),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
@@ -29,11 +33,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
-	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg != nil && ucfg.WebApp != nil && ucfg.WebApp.Usage != nil && ucfg.WebApp.Usage.Schedule != "" {
-			cfg.ControllerSchedule = ucfg.WebApp.Usage.Schedule
+	expConfig := getExperimentalConfig(ctx)
+	if expConfig != nil {
+		if expConfig.Schedule != "" {
+			cfg.ControllerSchedule = expConfig.Schedule
 		}
 
+		cfg.CreditsPerMinuteByWorkspaceClass = expConfig.CreditsPerMinuteByWorkspaceClass
+	}
+
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		_, _, path, ok := getStripeConfig(ucfg)
 		if !ok {
 			return nil

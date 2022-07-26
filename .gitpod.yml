@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:ljb-werft-cli-grpc-changes.2
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-install-evans-in-base-image.1
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -30,11 +30,14 @@ ports:
     onOpen: ignore
   # Dev Theia
   - port: 13444
+  # Used when using port-forwarding to SSH to preview environment VMs
+  - port: 8022
+    onOpen: ignore
 tasks:
   - name: Install Preview Environment kube-context
     command: |
       (cd dev/preview/previewctl && go install .)
-      previewctl install-context
+      previewctl install-context --watch
       exit
   - name: Add Harvester kubeconfig
     command: |

@@ -19,6 +19,7 @@ import (
 	tracelog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
@@ -26,10 +27,8 @@ import (
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
-	covev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -55,7 +54,7 @@ const (
 
 var (
 	// wsdaemonMaxAttempts is the number of times we'll attempt to work with ws-daemon when a former attempt returned unavailable.
-	// We rety for two minutes every 5 seconds (see wwsdaemonRetryInterval).
+	// We rety for two minutes every 5 seconds (see wsdaemonRetryInterval).
 	//
 	// Note: this is a variable rather than a constant so that tests can modify this value.
 	wsdaemonMaxAttempts = 120 / 5
@@ -94,10 +93,6 @@ type Monitor struct {
 
 // CreateMonitor creates a new monitor
 func (m *Manager) CreateMonitor() (*Monitor, error) {
-	broadcaster := record.NewBroadcaster()
-	broadcaster.StartRecordingToSink(&covev1client.EventSinkImpl{Interface: m.RawClient.CoreV1().Events("")})
-	eventRecorder := broadcaster.NewRecorder(runtime.NewScheme(), corev1.EventSource{Component: "ws-manager"})
-
 	monitorInterval := time.Duration(m.Config.HeartbeatInterval)
 	// Monitor interval is half the heartbeat interval to catch timed out workspaces in time.
 	// See https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem why we need this.
@@ -117,7 +112,7 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 
 		notifyPod: make(map[string]chan string),
 
-		eventRecorder: eventRecorder,
+		eventRecorder: m.eventRecorder,
 	}
 	res.eventpool = workpool.NewEventWorkerPool(res.handleEvent)
 	res.act = struct {
@@ -189,19 +184,23 @@ func (m *Monitor) onVolumesnapshotEvent(evt watch.Event) error {
 
 	// get the pod resource
 	var pod corev1.Pod
-	if err := m.manager.Clientset.Get(context.Background(), types.NamespacedName{Namespace: vs.Namespace, Name: podName}, &pod); err != nil {
-		log.WithError(err).Warnf("the pod %s/%s is missing", podName, vs.Namespace)
-		return nil
+	err := m.manager.Clientset.Get(context.Background(), types.NamespacedName{Namespace: vs.Namespace, Name: podName}, &pod)
+	if err != nil && !k8serr.IsNotFound(err) {
+		log.WithError(err).Warnf("cannot get pod")
 	}
 
 	if vs.Status == nil || vs.Status.ReadyToUse == nil || !*vs.Status.ReadyToUse || vs.Status.BoundVolumeSnapshotContentName == nil {
-		m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is in progress", vs.Name)
+		if !pod.CreationTimestamp.IsZero() {
+			m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is in progress", vs.Name)
+		}
 		return nil
 	}
 
 	vsc := *vs.Status.BoundVolumeSnapshotContentName
 	log.Infof("the vsc %s is ready to use", vsc)
-	m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is ready to use", vs.Name)
+	if !pod.CreationTimestamp.IsZero() {
+		m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is ready to use", vs.Name)
+	}
 
 	if m.notifyPod[podName] == nil {
 		m.notifyPod[podName] = make(chan string)
@@ -273,7 +272,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	}()
 
 	m.writeEventTraceLog(status, wso)
-	err = actOnPodEvent(ctx, m.act, status, wso)
+	err = actOnPodEvent(ctx, m.act, m.manager, status, wso)
 
 	// To make the tracing work though we have to re-sync with OnChange. But we don't want OnChange to block our event
 	// handling, thus we wait for it to finish in a Go routine.
@@ -287,7 +286,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 
 // actOnPodEvent performs actions when a kubernetes event comes in. For example we shut down failed workspaces or start
 // polling the ready state of initializing ones.
-func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceStatus, wso *workspaceObjects) (err error) {
+func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, status *api.WorkspaceStatus, wso *workspaceObjects) (err error) {
 	pod := wso.Pod
 
 	span, ctx := tracing.FromContext(ctx, "actOnPodEvent")
@@ -376,7 +375,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		}
 	}
 
-	if status.Phase == api.WorkspacePhase_CREATING {
+	switch status.Phase {
+	case api.WorkspacePhase_CREATING:
 		// The workspace has been scheduled on the cluster which means that we can start initializing it
 		go func() {
 			err := m.initializeWorkspaceContent(ctx, pod)
@@ -389,9 +389,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 				}
 			}
 		}()
-	}
 
-	if status.Phase == api.WorkspacePhase_INITIALIZING {
+	case api.WorkspacePhase_INITIALIZING:
 		// workspace is initializing (i.e. running but without the ready annotation yet). Start probing and depending on
 		// the result add the appropriate annotation or stop the workspace. waitForWorkspaceReady takes care that it does not
 		// run for the same workspace multiple times.
@@ -406,9 +405,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 				}
 			}
 		}()
-	}
 
-	if status.Phase == api.WorkspacePhase_RUNNING {
+	case api.WorkspacePhase_RUNNING:
 		// We need to register the finalizer before the pod is deleted (see https://book.kubebuilder.io/reference/using-finalizers.html).
 		// TODO (cw): Figure out if we can replace the "neverReady" flag.
 		err = m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, true)
@@ -428,9 +426,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		if err != nil {
 			log.WithError(err).Warn("was unable to remove workspace secret")
 		}
-	}
 
-	if status.Phase == api.WorkspacePhase_STOPPING {
+	case api.WorkspacePhase_STOPPING:
 		if !isPodBeingDeleted(pod) {
 			// this might be the case if a headless workspace has just completed but has not been deleted by anyone, yet
 			err := m.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
@@ -449,11 +446,45 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 				break
 			}
 		}
+		if !terminated {
+			// Check the underlying node status
+			var node corev1.Node
+			err = manager.Clientset.Get(ctx, types.NamespacedName{Namespace: "", Name: wso.NodeName()}, &node)
+			if err != nil {
+				if k8serr.IsNotFound(err) {
+					// The node somehow gone, try to backup the content if possible
+					log.Infof("Somehow the node was %s gone, we try to backup the content if possible", wso.NodeName())
+					terminated = true
+				}
+			} else {
+				// Check the node taint matches the pod toleration with effect NoExecute.
+				// If no, do nothing.
+				// If yes, compares if time.Now() - taint.timeAdded > tolerationSeconds, then backup the content
+				for _, taint := range node.Spec.Taints {
+					if taint.Effect != corev1.TaintEffectNoExecute {
+						continue
+					}
 
-		_, gone := wso.Pod.Annotations[wsk8s.ContainerIsGoneAnnotation]
+					var tolerationDuration time.Duration
+					var found bool
+					for _, toleration := range wso.Pod.Spec.Tolerations {
+						if toleration.Effect == corev1.TaintEffectNoExecute && toleration.Key == taint.Key && toleration.TolerationSeconds != nil {
+							tolerationDuration = time.Duration(*toleration.TolerationSeconds) * time.Second
+							found = true
+							break
+						}
+					}
+					if found && !taint.TimeAdded.IsZero() && time.Since(taint.TimeAdded.Time) > tolerationDuration {
+						log.Infof("The %s toleration time %v exceeds, going to backup the content", taint.Key, tolerationDuration)
+						terminated = true
+						break
+					}
+				}
+			}
+		}
+
 		_, alreadyFinalized := wso.Pod.Annotations[startedDisposalAnnotation]
-
-		if (terminated || gone) && !alreadyFinalized {
+		if terminated && !alreadyFinalized {
 			if wso.Pod.Annotations[workspaceFailedBeforeStoppingAnnotation] == util.BooleanTrueString && wso.Pod.Annotations[workspaceNeverReadyAnnotation] == util.BooleanTrueString {
 				// The workspace is never ready, so there is no need for a finalizer.
 				if _, ok := pod.Annotations[workspaceExplicitFailAnnotation]; !ok {
@@ -474,9 +505,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 				go m.finalizeWorkspaceContent(ctx, wso)
 			}
 		}
-	}
 
-	if status.Phase == api.WorkspacePhase_STOPPED {
+	case api.WorkspacePhase_STOPPED:
 		// we've disposed already - try to remove the finalizer and call it a day
 		return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
 	}
@@ -753,7 +783,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 
 	class, ok := m.manager.Config.WorkspaceClasses[pod.Labels[workspaceClassLabel]]
 	if !ok {
-		return xerrors.Errorf("pod %s has unknown workspace class", pod.Name, pod.Labels[workspaceClassLabel])
+		return xerrors.Errorf("pod %s has unknown workspace class %s", pod.Name, pod.Labels[workspaceClassLabel])
 	}
 	storage, err := class.Container.Limits.StorageQuantity()
 	if !ok {
@@ -876,8 +906,11 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		m.manager.metrics.totalRestoreCounterVec.WithLabelValues(wsType, wsClass).Inc()
 		if err != nil {
 			m.manager.metrics.totalRestoreFailureCounterVec.WithLabelValues(wsType, wsClass).Inc()
-			return xerrors.Errorf("cannot initialize workspace: %w", err)
 		}
+	}
+
+	if err != nil {
+		return xerrors.Errorf("cannot initialize workspace: %w", err)
 	}
 	return nil
 }
@@ -1012,7 +1045,17 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
 		if err != nil {
 			m.finalizerMapLock.Unlock()
-			return true, nil, err
+			return true, nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
+		}
+
+		// only build prebuild snapshots of initialized/ready workspaces.
+		if tpe == api.WorkspaceType_PREBUILD {
+			_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
+			if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.FailedPrecondition &&
+				(st.Message() == "workspace is not initializing or ready" || st.Message() == "workspace is not ready") {
+				log.Warn("skipping snapshot creation because content-initializer never finished or the workspace reached a ready state")
+				doSnapshot = false
+			}
 		}
 
 		ctx, cancelReq := context.WithTimeout(ctx, time.Duration(m.manager.Config.Timeouts.ContentFinalization))
@@ -1200,7 +1243,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		gitStatus   *csapi.GitStatus
 	)
 	t := time.Now()
-	for i := 0; i < wsdaemonMaxAttempts; i++ {
+
+	// since we're within the content backup loop, the maximum retry time should
+	// rely on the content finalization configuration
+	maxRetry := int(m.manager.Config.Timeouts.ContentFinalization / util.Duration(wsdaemonRetryInterval))
+	for i := 0; i < maxRetry; i++ {
 		span.LogKV("attempt", i)
 		didSometing, gs, err := doFinalize()
 		if !didSometing {

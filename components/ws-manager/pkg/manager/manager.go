@@ -30,9 +30,12 @@ import (
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	covev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -68,6 +71,8 @@ type Manager struct {
 	subscriberLock sync.RWMutex
 
 	metrics *metrics
+
+	eventRecorder record.EventRecorder
 
 	api.UnimplementedWorkspaceManagerServer
 	regapi.UnimplementedSpecProviderServer
@@ -127,14 +132,19 @@ func New(config config.Configuration, client client.Client, rawClient kubernetes
 		return nil, err
 	}
 
+	broadcaster := record.NewBroadcaster()
+	broadcaster.StartRecordingToSink(&covev1client.EventSinkImpl{Interface: rawClient.CoreV1().Events("")})
+	eventRecorder := broadcaster.NewRecorder(runtime.NewScheme(), corev1.EventSource{Component: "ws-manager"})
+
 	m := &Manager{
-		Config:       config,
-		Clientset:    client,
-		RawClient:    rawClient,
-		Content:      cp,
-		clock:        clock.System(),
-		subscribers:  make(map[string]chan *api.SubscribeResponse),
-		wsdaemonPool: grpcpool.New(wsdaemonConnfactory, checkWSDaemonEndpoint(config.Namespace, client)),
+		Config:        config,
+		Clientset:     client,
+		RawClient:     rawClient,
+		Content:       cp,
+		clock:         clock.System(),
+		subscribers:   make(map[string]chan *api.SubscribeResponse),
+		wsdaemonPool:  grpcpool.New(wsdaemonConnfactory, checkWSDaemonEndpoint(config.Namespace, client)),
+		eventRecorder: eventRecorder,
 	}
 	m.metrics = newMetrics(m)
 	m.OnChange = m.onChange
@@ -154,7 +164,13 @@ func (m *Manager) Close() {
 }
 
 // StartWorkspace creates a new running workspace within the manager's cluster
-func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
+func (m *Manager) StartWorkspace(_ context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
+	// We cannot use the passed context because we need to decouple the timeouts
+	// Create a context with a high timeout value to be able to wait for scale-up events in the cluster (slow operation)
+	// Important!!!: this timeout must be lower than https://github.com/gitpod-io/gitpod/blob/main/components/ws-manager-api/typescript/src/promisified-client.ts#L122
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
 	owi := log.LogContext(req.Metadata.Owner, req.Metadata.MetaId, req.Id, req.Metadata.GetProject(), req.Metadata.GetTeam())
 	clog := log.WithFields(owi)
 	span, ctx := tracing.FromContext(ctx, "StartWorkspace")
@@ -165,7 +181,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	clog.Info("StartWorkspace")
 	reqs, _ := protojson.Marshal(req)
 	safeReqs, _ := log.RedactJSON(reqs)
-	log.WithField("req", string(safeReqs)).Debug("StartWorkspace request received")
+	clog.WithField("req", string(safeReqs)).Debug("StartWorkspace request received")
 
 	// Make sure the objects we're about to create do not exist already
 	switch req.Type {
@@ -238,11 +254,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				// restore volume snapshot from handle
 				err = m.restoreVolumeSnapshotFromHandle(ctx, startContext.VolumeSnapshot.VolumeSnapshotName, startContext.VolumeSnapshot.VolumeSnapshotHandle)
 				if err != nil {
-					log.WithError(err).Error("was unable to restore volume snapshot")
+					clog.WithError(err).Error("was unable to restore volume snapshot")
 					return nil, err
 				}
 			} else if err != nil {
-				log.WithError(err).Error("was unable to get volume snapshot")
+				clog.WithError(err).Error("was unable to get volume snapshot")
 				return nil, err
 			}
 		}
@@ -290,115 +306,61 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 	}
 
-	// create the Pod in the cluster and wait until is scheduled
-	// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.22.md#workloads-that-saturate-nodes-with-pods-may-see-pods-that-fail-due-to-node-admission
-	backoff := wait.Backoff{
-		Steps:    10,
-		Duration: 100 * time.Millisecond,
-		Factor:   2.5,
-		Jitter:   0.1,
-		Cap:      5 * time.Minute,
-	}
-
-	var retryErr error
-	err = wait.ExponentialBackoff(backoff, func() (bool, error) {
-		// remove resource version so that we can attempt to re-create the pod
-		pod.ResourceVersion = ""
-		err = m.Clientset.Create(ctx, pod)
-		if err != nil {
-			m, _ := json.Marshal(pod)
-			safePod, _ := log.RedactJSON(m)
-
-			if k8serr.IsAlreadyExists(err) {
-				clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace which already exists")
-				return false, status.Error(codes.AlreadyExists, "workspace instance already exists")
-			}
-
-			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace")
-			return false, err
-		}
-
-		// we only calculate the time that PVC restoring from VolumeSnapshot
-		if createPVC && startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
-			err = wait.PollWithContext(ctx, 100*time.Millisecond, time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
-			if err != nil {
-				return false, nil
-			}
-
-			wsType := api.WorkspaceType_name[int32(req.Type)]
-			hist, err := m.metrics.volumeRestoreTimeHistVec.GetMetricWithLabelValues(wsType, req.Spec.Class)
-			if err != nil {
-				log.WithError(err).WithField("type", wsType).Warn("cannot get volume restore time histogram metric")
-			} else if endTime.IsZero() {
-				endTime = time.Now()
-				hist.Observe(endTime.Sub(startTime).Seconds())
-			}
-		}
-
-		// wait at least 60 seconds before deleting pending pod and trying again due to pending PVC attachment
-		err = wait.PollWithContext(ctx, 100*time.Millisecond, 60*time.Second, podRunning(m.Clientset, pod.Name, pod.Namespace))
-		if err != nil {
-			jsonPod, _ := json.Marshal(pod)
-			safePod, _ := log.RedactJSON(jsonPod)
-			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to reach ready state")
-			retryErr = err
-
-			var tempPod corev1.Pod
-			finalizerRemoved := false
-			// We do below in loop as sometimes the pod might be already deleted or modified when we attempt to remove the finalizer
-			// so we first get the pod and then attempt to remove the finalizer
-			// in case the pod is not found in the first place, we return success
-			rmCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-			for i := 0; i < 3 && !finalizerRemoved; i++ {
-				getErr := m.Clientset.Get(rmCtx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
-				if getErr != nil {
-					if k8serr.IsNotFound(getErr) {
-						// pod doesn't exist, so we are safe to proceed with retry
-						return false, nil
-					}
-					clog.WithError(getErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to get pod")
-					// pod get call failed so we error out
-					return false, retryErr
-				}
-				// we successfully got the pod, now we attempt to remove finalizer
-				tempPod.Finalizers = []string{}
-				updateErr := m.Clientset.Update(rmCtx, &tempPod)
-				if updateErr != nil {
-					if k8serr.IsNotFound(updateErr) {
-						// pod doesn't exist, so we are safe to proceed with retry
-						return false, nil
-					}
-					clog.WithError(updateErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to remove finalizer")
-					continue
-				}
-				finalizerRemoved = true
-			}
-			// if even after retries we could not remove finalizers, then error out
-			if !finalizerRemoved {
-				return false, retryErr
-			}
-
-			deleteErr := m.Clientset.Delete(rmCtx, &tempPod)
-			if deleteErr != nil && !k8serr.IsNotFound(deleteErr) {
-				clog.WithError(deleteErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Warn("was unable to delete pod")
-				// failed to delete pod, so not going to be able to create a new pod, so bail out
-				return false, retryErr
-			}
-
-			// we deleted original pod, so now we can try to create a new one and see if this one will be able to be scheduled\started
-			return false, nil
-		}
-
-		return true, nil
-	})
-	if err == wait.ErrWaitTimeout && retryErr != nil {
-		err = retryErr
-	}
-
+	err = m.Clientset.Create(ctx, pod)
 	if err != nil {
-		clog.WithError(err).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to start workspace after backoff")
-		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
+		m, _ := json.Marshal(pod)
+		safePod, _ := log.RedactJSON(m)
+
+		if k8serr.IsAlreadyExists(err) {
+			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace which already exists")
+			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
+		}
+
+		clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace")
+		return nil, err
+	}
+
+	// if we reach this point the pod is created
+	// in case the context is canceled or a timeout happens we should delete the pod?
+
+	err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, 7*time.Minute, podRunning(m.Clientset, pod.Name, pod.Namespace))
+	if err != nil {
+		clog.WithError(err).WithField("req", req).WithField("pod", pod.Name).Warn("was unable to start workspace")
+		return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
+	}
+
+	// we only calculate the time that PVC restoring from VolumeSnapshot
+	if createPVC {
+		err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, pod)
+		if err != nil {
+			return nil, xerrors.Errorf("unable to get workspace pod %s: %w", pod.Name, err)
+		}
+
+		err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, 5*time.Minute, pvcRunning(m.Clientset, pvc.Name, pvc.Namespace))
+		if err != nil {
+			if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
+				m.eventRecorder.Eventf(pod, corev1.EventTypeWarning, "PersistentVolumeClaim", "PVC %q restore from volume snapshot %q failed %v", pvc.Name, startContext.VolumeSnapshot.VolumeSnapshotName, err)
+				clog.WithError(err).Warnf("unexpected error waiting for PVC %s volume snapshot %s", pvc.Name, startContext.VolumeSnapshot.VolumeSnapshotName)
+			} else {
+				m.eventRecorder.Eventf(pod, corev1.EventTypeWarning, "PersistentVolumeClaim", "PVC %q create failed %v", pvc.Name, err)
+				clog.WithError(err).Warnf("unexpected error waiting for PVC %s", pvc.Name)
+			}
+		} else {
+			if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
+				m.eventRecorder.Eventf(pod, corev1.EventTypeNormal, "PersistentVolumeClaim", "PVC %q restored from volume snapshot %q successfully", pvc.Name, startContext.VolumeSnapshot.VolumeSnapshotName)
+
+				wsType := api.WorkspaceType_name[int32(req.Type)]
+				hist, err := m.metrics.volumeRestoreTimeHistVec.GetMetricWithLabelValues(wsType, req.Spec.Class)
+				if err != nil {
+					clog.WithError(err).WithField("type", wsType).Warn("cannot get volume restore time histogram metric")
+				} else if endTime.IsZero() {
+					endTime = time.Now()
+					hist.Observe(endTime.Sub(startTime).Seconds())
+				}
+			} else {
+				m.eventRecorder.Eventf(pod, corev1.EventTypeNormal, "PersistentVolumeClaim", "PVC %q created successfully", pvc.Name)
+			}
+		}
 	}
 
 	// remove annotation to signal that workspace pod was indeed created and scheduled on the node
@@ -555,41 +517,6 @@ func (m *Manager) DeleteVolumeSnapshot(ctx context.Context, req *api.DeleteVolum
 	return okResponse, nil
 }
 
-func podRunning(clientset client.Client, podName, namespace string) wait.ConditionWithContextFunc {
-	return func(ctx context.Context) (bool, error) {
-		var pod corev1.Pod
-		err := clientset.Get(ctx, types.NamespacedName{Namespace: namespace, Name: podName}, &pod)
-		if err != nil {
-			return false, nil
-		}
-
-		switch pod.Status.Phase {
-		case corev1.PodFailed:
-			if strings.HasPrefix(pod.Status.Reason, "OutOf") {
-				return false, xerrors.Errorf("cannot schedule pod due to out of resources, reason: %s", pod.Status.Reason)
-			}
-			return false, fmt.Errorf("pod failed with reason: %s", pod.Status.Reason)
-		case corev1.PodSucceeded:
-			return false, fmt.Errorf("pod ran to completion")
-		case corev1.PodPending:
-			for _, c := range pod.Status.Conditions {
-				if c.Type == corev1.PodScheduled && c.Status == corev1.ConditionTrue {
-					// even if pod is pending but was scheduled already, it means kubelet is pulling images and running init containers
-					// we can consider this as pod running
-					return true, nil
-				}
-			}
-
-			// if pod is pending, wait for it to get scheduled
-			return false, nil
-		case corev1.PodRunning:
-			return true, nil
-		}
-
-		return false, xerrors.Errorf("pod in unknown state: %s", pod.Status.Phase)
-	}
-}
-
 func pvcRunning(clientset client.Client, pvcName, namespace string) wait.ConditionWithContextFunc {
 	return func(ctx context.Context) (bool, error) {
 		var pvc corev1.PersistentVolumeClaim
@@ -669,6 +596,41 @@ func areValidPorts(value interface{}) error {
 	}
 
 	return nil
+}
+
+func podRunning(clientset client.Client, podName, namespace string) wait.ConditionWithContextFunc {
+	return func(ctx context.Context) (bool, error) {
+		var pod corev1.Pod
+		err := clientset.Get(ctx, types.NamespacedName{Namespace: namespace, Name: podName}, &pod)
+		if err != nil {
+			return false, nil
+		}
+
+		switch pod.Status.Phase {
+		case corev1.PodFailed:
+			if strings.HasPrefix(pod.Status.Reason, "OutOf") {
+				return false, xerrors.Errorf("cannot schedule pod due to out of resources, reason: %s", pod.Status.Reason)
+			}
+			return false, fmt.Errorf("pod failed with reason: %s", pod.Status.Reason)
+		case corev1.PodSucceeded:
+			return false, fmt.Errorf("pod ran to completion")
+		case corev1.PodPending:
+			for _, c := range pod.Status.Conditions {
+				if c.Type == corev1.PodScheduled && c.Status == corev1.ConditionTrue {
+					// even if pod is pending but was scheduled already, it means kubelet is pulling images and running init containers
+					// we can consider this as pod running
+					return true, nil
+				}
+			}
+
+			// if pod is pending, wait for it to get scheduled
+			return false, nil
+		case corev1.PodRunning:
+			return true, nil
+		}
+
+		return false, xerrors.Errorf("pod in unknown state: %s", pod.Status.Phase)
+	}
 }
 
 func areValidFeatureFlags(value interface{}) error {
@@ -1416,7 +1378,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	// find the ws-daemon on this node
 	var hostIP string
 	for _, pod := range podList.Items {
-		if pod.Spec.NodeName == nodeName {
+		if pod.Spec.NodeName == nodeName && pod.Status.Phase == corev1.PodRunning {
 			hostIP = pod.Status.PodIP
 			break
 		}

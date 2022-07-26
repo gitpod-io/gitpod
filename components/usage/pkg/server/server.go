@@ -14,16 +14,22 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/apiv1"
+	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"github.com/gitpod-io/gitpod/usage/pkg/controller"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
+	"gorm.io/gorm"
 )
 
 type Config struct {
 	// ControllerSchedule determines how frequently to run the Usage/Billing controller
 	ControllerSchedule string `json:"controllerSchedule,omitempty"`
 
+	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass,omitempty"`
+
 	StripeCredentialsFile string `json:"stripeCredentialsFile,omitempty"`
+
+	ContentServiceAddress string `json:"contentServiceAddress,omitempty"`
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
 }
@@ -41,6 +47,11 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to establish database connection: %w", err)
 	}
 
+	pricer, err := controller.NewWorkspacePricer(cfg.CreditsPerMinuteByWorkspaceClass)
+	if err != nil {
+		return fmt.Errorf("failed to create workspace pricer: %w", err)
+	}
+
 	var billingController controller.BillingController = &controller.NoOpBillingController{}
 
 	if cfg.StripeCredentialsFile != "" {
@@ -53,7 +64,8 @@ func Start(cfg Config) error {
 		if err != nil {
 			return fmt.Errorf("failed to initialize stripe client: %w", err)
 		}
-		billingController = controller.NewStripeBillingController(c, controller.DefaultWorkspacePricer)
+
+		billingController = controller.NewStripeBillingController(c, pricer)
 	}
 
 	schedule, err := time.ParseDuration(cfg.ControllerSchedule)
@@ -61,7 +73,12 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to parse schedule duration: %w", err)
 	}
 
-	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, billingController))
+	var contentService contentservice.Interface = &contentservice.NoOpClient{}
+	if cfg.ContentServiceAddress != "" {
+		contentService = contentservice.New(cfg.ContentServiceAddress)
+	}
+
+	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, pricer, billingController, contentService))
 	if err != nil {
 		return fmt.Errorf("failed to initialize usage controller: %w", err)
 	}
@@ -80,7 +97,7 @@ func Start(cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize usage server: %w", err)
 	}
-	err = registerGRPCServices(srv)
+	err = registerGRPCServices(srv, conn)
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
@@ -98,7 +115,7 @@ func Start(cfg Config) error {
 	return nil
 }
 
-func registerGRPCServices(srv *baseserver.Server) error {
-	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService())
+func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB) error {
+	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn))
 	return nil
 }

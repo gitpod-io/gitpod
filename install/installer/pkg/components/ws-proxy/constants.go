@@ -18,7 +18,5 @@ const (
 	SSHServicePort     = 22
 	SSHTargetPort      = 2200
 	SSHPortName        = "ssh"
-	MetricsPort        = 9500
-	MetricsPortName    = "metrics"
 	ReadinessPort      = 8086
 )

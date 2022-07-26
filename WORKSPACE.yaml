@@ -7,12 +7,12 @@ defaultArgs:
   jbMarketplacePublishTrigger: "false"
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: e3470407e00cc935ad984cbb79651f444f67b3cc
+  codeCommit: 3fef802aa6bfd601cf182315ba949931401772f8
   codeQuality: stable
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.1.3.tar.gz"
-  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.1.3.tar.gz"
-  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2022.1.3.tar.gz"
-  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2022.1.3.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.1.4.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.1.4.tar.gz"
+  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2022.1.4.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2022.1.4.tar.gz"
 provenance:
   enabled: true
   slsa: true
@@ -23,7 +23,7 @@ defaultVariant:
       - "**/node_modules/**"
   config:
     go:
-      lintCommand: ["sh", "-c", "golangci-lint run --disable govet,errcheck,typecheck,staticcheck --allow-parallel-runners --timeout 5m"]
+      lintCommand: ["sh", "-c", "golangci-lint run --disable govet,errcheck,typecheck,staticcheck,structcheck --allow-parallel-runners --timeout 5m"]
 variants:
   - name: oss
     srcs:

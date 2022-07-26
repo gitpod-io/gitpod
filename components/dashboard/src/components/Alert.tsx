@@ -26,6 +26,7 @@ export interface AlertProps {
     // Without background color, default false
     light?: boolean;
     closable?: boolean;
+    onClose?: () => void;
     showIcon?: boolean;
     icon?: React.ReactNode;
     children?: React.ReactNode;
@@ -80,7 +81,15 @@ export default function Alert(props: AlertProps) {
             <span className="flex-1 text-left">{props.children}</span>
             {props.closable && (
                 <span className={`mt-1 ml-4 h-4 w-4`}>
-                    <XSvg onClick={() => setVisible(false)} className="w-3 h-4 cursor-pointer"></XSvg>
+                    <XSvg
+                        onClick={() => {
+                            setVisible(false);
+                            if (props.onClose) {
+                                props.onClose();
+                            }
+                        }}
+                        className="w-3 h-4 cursor-pointer"
+                    ></XSvg>
                 </span>
             )}
         </div>

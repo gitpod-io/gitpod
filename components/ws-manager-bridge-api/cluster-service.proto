@@ -58,8 +58,8 @@ message AdmissionConstraint {
   oneof constraint {
     FeaturePreview has_feature_preview = 1;
     HasPermission has_permission = 2;
-    string has_user_level = 3;
-    bool has_more_resources = 4;
+    // deprecated and removed: has_user_level = 3;
+    // deprecated and removed: bool has_more_resources = 4;
   }
 }
 

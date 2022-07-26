@@ -15,6 +15,7 @@ import { oauthUrls as gitlabUrls } from "../gitlab/gitlab-urls";
 import { oauthUrls as bbsUrls } from "../bitbucket-server/bitbucket-server-urls";
 import { oauthUrls as bbUrls } from "../bitbucket/bitbucket-urls";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import isReachable = require("is-reachable");
 
 @injectable()
 export class AuthProviderService {
@@ -172,7 +173,12 @@ export class AuthProviderService {
     }
 
     protected callbackUrl = (host: string) => {
-        const pathname = `/auth/${host}/callback`;
+        const safeHost = host.replace(":", "_");
+        const pathname = `/auth/${safeHost}/callback`;
         return this.config.hostUrl.with({ pathname }).toString();
     };
+
+    async isHostReachable(host: string) {
+        return await isReachable(host, { timeout: 2000 });
+    }
 }

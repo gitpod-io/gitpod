@@ -91,7 +91,7 @@ import { Config, ConfigFile } from "./config";
 import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { IDEConfigService } from "./ide-config";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
-import { IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
+import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messaging/local-message-broker";
 import { contentServiceBinder } from "@gitpod/content-service/lib/sugar";
@@ -99,6 +99,13 @@ import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser
 import { InstallationAdminTelemetryDataProvider } from "./installation-admin/telemetry-data-provider";
 import { IDEService } from "./ide-service";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
+import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
+import {
+    CachingUsageServiceClientProvider,
+    UsageServiceClientCallMetrics,
+    UsageServiceClientConfig,
+    UsageServiceClientProvider,
+} from "@gitpod/usage-api/lib/usage/v1/sugar";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -162,6 +169,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         return { address: config.imageBuilderAddr };
     });
     bind(CachingImageBuilderClientProvider).toSelf().inSingletonScope();
+    bind(WorkspaceClusterImagebuilderClientProvider).toSelf().inSingletonScope(); // during the transition period, we have two kinds of image builder client providers
     bind(ImageBuilderClientProvider).toService(CachingImageBuilderClientProvider);
     bind(ImageBuilderClientCallMetrics).toService(IClientCallMetrics);
 
@@ -245,4 +253,12 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ProjectsService).toSelf().inSingletonScope();
 
     bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
+
+    bind(UsageServiceClientConfig).toDynamicValue((ctx) => {
+        const config = ctx.container.get<Config>(Config);
+        return { address: config.usageServiceAddr };
+    });
+    bind(CachingUsageServiceClientProvider).toSelf().inSingletonScope();
+    bind(UsageServiceClientProvider).toService(CachingImageBuilderClientProvider);
+    bind(UsageServiceClientCallMetrics).toService(IClientCallMetrics);
 });

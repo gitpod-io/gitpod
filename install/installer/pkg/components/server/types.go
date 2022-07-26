@@ -30,6 +30,7 @@ type ConfigSerialized struct {
 	RunDbDeleter                      bool     `json:"runDbDeleter"`
 	ContentServiceAddr                string   `json:"contentServiceAddr"`
 	ImageBuilderAddr                  string   `json:"imageBuilderAddr"`
+	UsageServiceAddr                  string   `json:"usageServiceAddr"`
 	VSXRegistryUrl                    string   `json:"vsxRegistryUrl"`
 	ChargebeeProviderOptionsFile      string   `json:"chargebeeProviderOptionsFile"`
 	StripeSecretsFile                 string   `json:"stripeSecretsFile"`
@@ -44,20 +45,14 @@ type ConfigSerialized struct {
 	AuthProviderConfigFiles    []string                   `json:"authProviderConfigFiles"`
 	IncrementalPrebuilds       IncrementalPrebuilds       `json:"incrementalPrebuilds"`
 	BlockNewUsers              config.BlockNewUsers       `json:"blockNewUsers"`
-	BlockedRepositories        []BlockedRepository        `json:"blockedRepositories,omitempty"`
 	OAuthServer                OAuthServer                `json:"oauthServer"`
 	RateLimiter                RateLimiter                `json:"rateLimiter"`
 	CodeSync                   CodeSync                   `json:"codeSync"`
 	// PrebuildLimiter defines the number of prebuilds allowed for each cloneURL in a given 1 minute interval
 	// Key of "*" defines the default limit, unless there exists a cloneURL in the map which overrides it.
-	PrebuildLimiter map[string]int `json:"prebuildLimiter"`
+	PrebuildLimiter  map[string]int   `json:"prebuildLimiter"`
+	WorkspaceClasses []WorkspaceClass `json:"workspaceClasses"`
 }
-
-type BlockedRepository struct {
-	UrlRegExp string `json:"urlRegExp"`
-	BlockUser bool   `json:"blockUser"`
-}
-
 type CodeSyncResources struct {
 	RevLimit int32 `json:"revLimit"`
 }
@@ -133,9 +128,26 @@ type WorkspaceDefaults struct {
 	TimeoutExtended     *util.Duration              `json:"timeoutExtended,omitempty"`
 }
 
+type WorkspaceClass struct {
+	Id          string                 `json:"id"`
+	Category    WorkspaceClassCategory `json:"category"`
+	DisplayName string                 `json:"displayName"`
+	Description string                 `json:"description"`
+	PowerUps    uint32                 `json:"powerups"`
+	IsDefault   bool                   `json:"isDefault"`
+	Deprecated  bool                   `json:"deprecated"`
+	Marker      map[string]bool        `json:"marker,omitempty"`
+}
+
 type NamedWorkspaceFeatureFlag string
 
 const (
 	NamedWorkspaceFeatureFlagFullWorkspaceBackup NamedWorkspaceFeatureFlag = "full_workspace_backup"
 	NamedWorkspaceFeatureFlagFixedResources      NamedWorkspaceFeatureFlag = "fixed_resources"
+)
+
+type WorkspaceClassCategory string
+
+const (
+	GeneralPurpose WorkspaceClassCategory = "GENERAL PURPOSE"
 )

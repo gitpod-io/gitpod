@@ -9,9 +9,8 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
-import { adminMenu } from "./admin-menu";
+import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 import UserDetail from "./UserDetail";
 
 export default function UserSearch() {
@@ -58,7 +57,7 @@ export default function UserSearch() {
         }
     };
     return (
-        <PageWithSubMenu subMenu={adminMenu} title="Users" subtitle="Search and manage all users.">
+        <PageWithAdminSubMenu title="Users" subtitle="Search and manage all users.">
             <div className="pt-8 flex">
                 <div className="flex justify-between w-full">
                     <div className="flex">
@@ -104,7 +103,7 @@ export default function UserSearch() {
                         <UserEntry user={u} />
                     ))}
             </div>
-        </PageWithSubMenu>
+        </PageWithAdminSubMenu>
     );
 }
 

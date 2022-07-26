@@ -7,18 +7,21 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
-	"math"
 	"time"
+
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 )
 
 type BillingController interface {
-	Reconcile(ctx context.Context, now time.Time, report UsageReport)
+	Reconcile(ctx context.Context, now time.Time, report UsageReport) error
 }
 
 type NoOpBillingController struct{}
 
-func (b *NoOpBillingController) Reconcile(_ context.Context, _ time.Time, _ UsageReport) {}
+func (b *NoOpBillingController) Reconcile(_ context.Context, _ time.Time, _ UsageReport) error {
+	return nil
+}
 
 type StripeBillingController struct {
 	pricer *WorkspacePricer
@@ -32,9 +35,14 @@ func NewStripeBillingController(sc *stripe.Client, pricer *WorkspacePricer) *Str
 	}
 }
 
-func (b *StripeBillingController) Reconcile(ctx context.Context, now time.Time, report UsageReport) {
+func (b *StripeBillingController) Reconcile(_ context.Context, now time.Time, report UsageReport) error {
 	runtimeReport := report.CreditSummaryForTeams(b.pricer, now)
-	b.sc.UpdateUsage(runtimeReport)
+
+	err := b.sc.UpdateUsage(runtimeReport)
+	if err != nil {
+		return fmt.Errorf("failed to update usage: %w", err)
+	}
+	return nil
 }
 
 const (
@@ -60,9 +68,18 @@ type WorkspacePricer struct {
 	creditMinutesByWorkspaceClass map[string]float64
 }
 
-func (p *WorkspacePricer) Credits(workspaceClass string, runtimeInSeconds int64) int64 {
+func (p *WorkspacePricer) CreditsUsedByInstance(instance *db.WorkspaceInstanceForUsage, maxStopTime time.Time) float64 {
+	runtime := instance.WorkspaceRuntimeSeconds(maxStopTime)
+	class := defaultWorkspaceClass
+	if instance.WorkspaceClass != "" {
+		class = instance.WorkspaceClass
+	}
+	return p.Credits(class, runtime)
+}
+
+func (p *WorkspacePricer) Credits(workspaceClass string, runtimeInSeconds int64) float64 {
 	inMinutes := float64(runtimeInSeconds) / 60
-	return int64(math.Ceil(p.CreditsPerMinuteForClass(workspaceClass) * inMinutes))
+	return p.CreditsPerMinuteForClass(workspaceClass) * inMinutes
 }
 
 func (p *WorkspacePricer) CreditsPerMinuteForClass(workspaceClass string) float64 {

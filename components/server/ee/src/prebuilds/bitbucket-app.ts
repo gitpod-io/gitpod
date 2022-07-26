@@ -6,8 +6,8 @@
 
 import * as express from "express";
 import { postConstruct, injectable, inject } from "inversify";
-import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
-import { User, StartPrebuildResult, CommitContext, CommitInfo, Project } from "@gitpod/gitpod-protocol";
+import { ProjectDB, TeamDB, UserDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
+import { User, StartPrebuildResult, CommitContext, CommitInfo, Project, WebhookEvent } from "@gitpod/gitpod-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TokenService } from "../../../src/user/token-service";
@@ -24,6 +24,7 @@ export class BitbucketApp {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(ContextParser) protected readonly contextParser: ContextParser;
     @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
+    @inject(WebhookEventDB) protected readonly webhookEvents: WebhookEventDB;
 
     protected _router = express.Router();
     public static path = "/apps/bitbucket/";
@@ -35,7 +36,13 @@ export class BitbucketApp {
                 if (req.header("X-Event-Key") === "repo:push") {
                     const span = TraceContext.startSpan("BitbucketApp.handleEvent", {});
                     const secretToken = req.query["token"] as string;
+                    const event = await this.webhookEvents.createEvent({
+                        type: "push",
+                        status: "received",
+                        rawEvent: JSON.stringify(req.body),
+                    });
                     if (!secretToken) {
+                        await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
                         throw new Error("No secretToken provided.");
                     }
                     const user = await this.findUser({ span }, secretToken);
@@ -45,12 +52,13 @@ export class BitbucketApp {
                         res.statusCode = 401;
                         res.send();
                         span.finish();
+                        await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
                         return;
                     }
                     try {
                         const data = toData(req.body);
                         if (data) {
-                            await this.handlePushHook({ span }, data, user);
+                            await this.handlePushHook({ span }, data, user, event);
                         }
                     } catch (err) {
                         TraceContext.setError({ span }, err);
@@ -100,6 +108,7 @@ export class BitbucketApp {
         ctx: TraceContext,
         data: ParsedRequestData,
         user: User,
+        event: WebhookEvent,
     ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
@@ -112,11 +121,22 @@ export class BitbucketApp {
             }
 
             const contextURL = this.createContextUrl(data);
-            const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
             span.setTag("contextURL", contextURL);
+            const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
+            await this.webhookEvents.updateEvent(event.id, {
+                authorizedUserId: user.id,
+                projectId: projectAndOwner?.project?.id,
+                cloneUrl: context.repository.cloneUrl,
+                branch: context.ref,
+                commit: context.revision,
+            });
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
                 console.log("Bitbucket push event: No config. No prebuild.");
+                await this.webhookEvents.updateEvent(event.id, {
+                    prebuildStatus: "ignored_unconfigured",
+                    status: "processed",
+                });
                 return undefined;
             }
 
@@ -132,12 +152,23 @@ export class BitbucketApp {
                     data.commitHash,
                 );
             }
-            // todo@alex: add branch and project args
             const ws = await this.prebuildManager.startPrebuild(
                 { span },
                 { user, project: projectAndOwner.project, context, commitInfo },
             );
+            await this.webhookEvents.updateEvent(event.id, {
+                prebuildStatus: "prebuild_triggered",
+                status: "processed",
+                prebuildId: ws.prebuildId,
+            });
             return ws;
+        } catch (e) {
+            console.error("Error processing Bitbucket webhook event", e);
+            await this.webhookEvents.updateEvent(event.id, {
+                prebuildStatus: "prebuild_trigger_failed",
+                status: "processed",
+            });
+            throw e;
         } finally {
             span.finish();
         }

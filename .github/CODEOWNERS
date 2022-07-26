@@ -27,7 +27,7 @@
 /install @gitpod-io/engineering-self-hosted
 /install/installer @gitpod-io/engineering-self-hosted
 /install/installer/pkg/components/agent-smith @gitpod-io/engineering-workspace
-/install/installer/pkg/components/blobserve @gitpod-io/engineering-workspace
+/install/installer/pkg/components/blobserve @gitpod-io/engineering-ide
 /install/installer/pkg/components/components-webapp @gitpod-io/engineering-webapp
 /install/installer/pkg/components/components-workspace @gitpod-io/engineering-workspace
 /install/installer/pkg/components/content-service @gitpod-io/engineering-workspace
@@ -41,6 +41,7 @@
 /install/installer/pkg/components/server @gitpod-io/engineering-webapp
 /install/installer/pkg/components/server/ide @gitpod-io/engineering-ide
 /install/installer/pkg/components/usage @gitpod-io/engineering-webapp
+/install/installer/pkg/components/usage-api @gitpod-io/engineering-webapp
 /install/installer/pkg/components/workspace @gitpod-io/engineering-workspace
 /install/installer/pkg/components/workspace/ide @gitpod-io/engineering-ide
 /install/installer/pkg/components/ws-daemon @gitpod-io/engineering-workspace
@@ -62,6 +63,7 @@
 /components/supervisor-api @csweichel @akosyakov
 /components/supervisor @gitpod-io/engineering-ide
 /components/usage @gitpod-io/engineering-webapp
+/components/usage-api @gitpod-io/engineering-webapp
 /components/workspacekit @gitpod-io/engineering-workspace
 /components/ws-daemon-api @aledbf @Furisto
 /components/ws-daemon @gitpod-io/engineering-workspace

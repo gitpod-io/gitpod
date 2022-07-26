@@ -210,6 +210,61 @@ const gitpodServiceMock = createServiceMock({
     onDidCloseConnection: Event.None,
     trackEvent: async (event) => {},
     trackLocation: async (event) => {},
+    getSupportedWorkspaceClasses: async () => {
+        return [
+            {
+                id: "g1-standard",
+                category: "GENERAL PURPOSE",
+                displayName: "Standard",
+                description: "Up to 4 vCPU, 8GB memory, 30GB disk",
+                powerups: 1,
+                isDefault: true,
+            },
+            {
+                id: "g1-large",
+                category: "GENERAL PURPOSE",
+                displayName: "Large",
+                description: "Up to 8 vCPU, 16GB memory, 50GB disk",
+                powerups: 2,
+                isDefault: false,
+            },
+        ];
+    },
+    getShowPaymentUI: async () => {
+        return false;
+    },
+    getClientRegion: async () => {
+        return "europe-west-1";
+    },
+    isStudent: async () => {
+        return false;
+    },
+    isChargebeeCustomer: async () => {
+        return false;
+    },
+    getSuggestedContextURLs: async () => {
+        return [];
+    },
+    getIDEOptions: async () => {
+        return {
+            defaultDesktopIde: "code-desktop",
+            defaultIde: "code",
+            options: {
+                code: {
+                    title: "VS Code",
+                    type: "browser",
+                    logo: "",
+                    image: "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-050c611f28564c6c7b1e58db470f07997dfb4730",
+                },
+                "code-desktop": {
+                    title: "VS Code",
+                    type: "desktop",
+                    logo: "",
+                    image: "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop:commit-9b29fc94cc1f0c776ef74f60dc3a7ce68d41bdbe",
+                },
+            },
+        };
+    },
 });
 
 export { gitpodServiceMock };

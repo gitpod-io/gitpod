@@ -39,7 +39,7 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
     const channel: string = config.replicatedChannel || "beta";
 
     exec(`git config --global user.name "${username}"`);
-    var annotation = `-a version=${config.fromVersion} -a upgrade=true -a channel=${channel} -a preview=true`;
+    var annotation = `-a version=${config.fromVersion} -a upgrade=true -a channel=${channel} -a preview=true -a skipTests=true`;
 
     for (let phase in phases) {
         const upgradeConfig = phases[phase];
@@ -52,7 +52,7 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
 
         try {
             exec(
-                `WERFT_HOST="werft-grpc.gitpod-dev.com:443" WERFT_TLS_MODE="system" GITHUB_TOKEN_PATH="/mnt/secrets/gitpod-bot-github-token/token" WERFT_CREDENTIAL_HELPER="./dev/preview/werft-credential-helper.sh" KUBECONFIG=/workspace/gitpod/kubeconfigs/core-dev werft run --remote-job-path ${testFile} ${annotation} github`,
+                `werft run --remote-job-path ${testFile} ${annotation} github`,
                 {
                     slice: upgradeConfig.phase,
                 },

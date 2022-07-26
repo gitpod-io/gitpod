@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/gpctl/cmd/api"
 	"os"
 	"path/filepath"
 
@@ -43,8 +42,6 @@ func init() {
 
 	rootCmd.PersistentFlags().StringP("output-format", "o", "template", "Output format. One of: string|json|jsonpath|template")
 	rootCmd.PersistentFlags().String("output-template", "", "Output format Go template or jsonpath. Use with -o template or -o jsonpath")
-
-	rootCmd.AddCommand(api.NewCommand())
 }
 
 func getKubeconfig() (*rest.Config, string, error) {

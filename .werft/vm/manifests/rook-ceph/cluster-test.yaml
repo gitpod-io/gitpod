@@ -28,7 +28,7 @@ metadata:
 spec:
   dataDirHostPath: /var/lib/rook
   cephVersion:
-    image: quay.io/ceph/ceph:v17
+    image: quay.io/ceph/ceph:v17.2.1
     allowUnsupported: true
   mon:
     count: 1

@@ -12,6 +12,7 @@ package experimental
 
 import (
 	agentSmith "github.com/gitpod-io/gitpod/agent-smith/pkg/config"
+	"github.com/gitpod-io/gitpod/common-go/grpc"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -48,8 +49,13 @@ type NodeToContainerMappingValues struct {
 }
 
 type WorkspaceConfig struct {
-	Tracing *Tracing `json:"tracing,omitempty"`
-	Stage   string   `json:"stage"`
+	Tracing                  *Tracing `json:"tracing,omitempty"`
+	Stage                    string   `json:"stage,omitempty"`
+	SchedulerName            string   `json:"schedulerName,omitempty"`
+	HostURL                  string   `json:"hostURL,omitempty"`
+	WorkspaceClusterHost     string   `json:"workspaceClusterHost,omitempty"`
+	WorkspaceURLTemplate     string   `json:"workspaceURLTemplate,omitempty"`
+	WorkspacePortURLTemplate string   `json:"workspacePortURLTemplate,omitempty"`
 
 	CPULimits struct {
 		Enabled          bool              `json:"enabled"`
@@ -63,6 +69,10 @@ type WorkspaceConfig struct {
 		WriteIOPS        int64             `json:"writeIOPS"`
 		ReadIOPS         int64             `json:"readIOPS"`
 	} `json:"ioLimits"`
+
+	ProcLimit int64 `json:"procLimit"`
+
+	WSManagerRateLimits map[string]grpc.RateLimit `json:"wsManagerRateLimits,omitempty"`
 
 	RegistryFacade struct {
 		IPFSCache struct {
@@ -85,6 +95,14 @@ type WorkspaceConfig struct {
 	} `json:"wsDaemon"`
 
 	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
+
+	WSProxy struct {
+		IngressHeader                              string `json:"ingressHeader"`
+		BlobServeHost                              string `json:"blobServeHost"`
+		GitpodInstallationHostName                 string `json:"gitpodInstallationHostName"`
+		GitpodInstallationWorkspaceHostSuffix      string `json:"gitpodInstallationWorkspaceHostSuffix"`
+		GitpodInstallationWorkspaceHostSuffixRegex string `json:"gitpodInstallationWorkspaceHostSuffixRegex"`
+	} `json:"wsProxy"`
 }
 
 type PersistentVolumeClaim struct {
@@ -125,6 +143,7 @@ type WebAppConfig struct {
 	DisableMigration       bool                   `json:"disableMigration"`
 	Usage                  *UsageConfig           `json:"usage,omitempty"`
 	ConfigcatKey           string                 `json:"configcatKey"`
+	WorkspaceClasses       []WebAppWorkspaceClass `json:"workspaceClasses"`
 }
 
 type WorkspaceDefaults struct {
@@ -156,24 +175,18 @@ type WsManagerBridgeConfig struct {
 }
 
 type ServerConfig struct {
-	WorkspaceDefaults                 WorkspaceDefaults   `json:"workspaceDefaults"`
-	OAuthServer                       OAuthServer         `json:"oauthServer"`
-	Session                           Session             `json:"session"`
-	GithubApp                         *GithubApp          `json:"githubApp"`
-	ChargebeeSecret                   string              `json:"chargebeeSecret"`
-	StripeSecret                      string              `json:"stripeSecret"`
-	StripeConfig                      string              `json:"stripeConfig"`
-	DisableDynamicAuthProviderLogin   bool                `json:"disableDynamicAuthProviderLogin"`
-	EnableLocalApp                    *bool               `json:"enableLocalApp"`
-	RunDbDeleter                      *bool               `json:"runDbDeleter"`
-	DefaultBaseImageRegistryWhiteList []string            `json:"defaultBaseImageRegistryWhitelist"`
-	DisableWorkspaceGarbageCollection bool                `json:"disableWorkspaceGarbageCollection"`
-	BlockedRepositories               []BlockedRepository `json:"blockedRepositories,omitempty"`
-}
-
-type BlockedRepository struct {
-	UrlRegExp string `json:"urlRegExp"`
-	BlockUser bool   `json:"blockUser"`
+	WorkspaceDefaults                 WorkspaceDefaults `json:"workspaceDefaults"`
+	OAuthServer                       OAuthServer       `json:"oauthServer"`
+	Session                           Session           `json:"session"`
+	GithubApp                         *GithubApp        `json:"githubApp"`
+	ChargebeeSecret                   string            `json:"chargebeeSecret"`
+	StripeSecret                      string            `json:"stripeSecret"`
+	StripeConfig                      string            `json:"stripeConfig"`
+	DisableDynamicAuthProviderLogin   bool              `json:"disableDynamicAuthProviderLogin"`
+	EnableLocalApp                    *bool             `json:"enableLocalApp"`
+	RunDbDeleter                      *bool             `json:"runDbDeleter"`
+	DefaultBaseImageRegistryWhiteList []string          `json:"defaultBaseImageRegistryWhitelist"`
+	DisableWorkspaceGarbageCollection bool              `json:"disableWorkspaceGarbageCollection"`
 }
 
 type ProxyConfig struct {
@@ -189,8 +202,20 @@ type PublicAPIConfig struct {
 }
 
 type UsageConfig struct {
-	Enabled  bool   `json:"enabled"`
-	Schedule string `json:"schedule"`
+	Enabled                          bool               `json:"enabled"`
+	Schedule                         string             `json:"schedule"`
+	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass"`
+}
+
+type WebAppWorkspaceClass struct {
+	Id          string          `json:"id"`
+	Category    string          `json:"category"`
+	DisplayName string          `json:"displayName"`
+	Description string          `json:"description"`
+	PowerUps    uint32          `json:"powerups"`
+	IsDefault   bool            `json:"isDefault"`
+	Deprecated  bool            `json:"deprecated"`
+	Marker      map[string]bool `json:"marker,omitempty"`
 }
 
 type IDEConfig struct {

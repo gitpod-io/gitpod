@@ -2,9 +2,9 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full:latest
+FROM gitpod/workspace-full:2022-07-13-11-16-09
 
-ENV TRIGGER_REBUILD 19
+ENV TRIGGER_REBUILD 20
 
 USER root
 
@@ -51,7 +51,7 @@ RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | sudo apt-key
 RUN install-packages mysql-client
 
 ### CertManager's cmctl
-RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cmctl-linux-amd64.tar.gz | tar xzv --no-anchored cmctl
+RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.8.2/cmctl-linux-amd64.tar.gz | tar xzv --no-anchored cmctl
 
 # gokart
 RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
@@ -59,6 +59,9 @@ RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/
 # leeway
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
 RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.17/leeway_0.2.17_Linux_x86_64.tar.gz | tar xz
+
+# evans (gRPC client)
+RUN cd /usr/bin && curl -fsSL https://github.com/ktr0731/evans/releases/download/v0.10.6/evans_linux_amd64.tar.gz | tar xz evans
 
 # dazzle
 RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/download/v0.1.11/dazzle_0.1.11_Linux_x86_64.tar.gz | tar xz
@@ -128,7 +131,7 @@ RUN install-packages netcat
 USER gitpod
 
 # Fix node version we develop against
-ARG GITPOD_NODE_VERSION=16.15.0
+ARG GITPOD_NODE_VERSION=16.16.0
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
     && npm install -g typescript yarn"
@@ -146,7 +149,7 @@ ARG GCS_DIR=/opt/google-cloud-sdk
 ENV PATH=$GCS_DIR/bin:$PATH
 RUN sudo chown gitpod: /opt \
     && mkdir $GCS_DIR \
-    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-388.0.0-linux-x86_64.tar.gz \
+    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-393.0.0-linux-x86_64.tar.gz \
     | tar -xzvC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
     --additional-components gke-gcloud-auth-plugin docker-credential-gcr alpha beta \
@@ -222,7 +225,8 @@ ARG PROM_VERSION="2.36.0"
 RUN curl -LO https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz && \
     tar -xzvf prometheus-${PROM_VERSION}.linux-amd64.tar.gz && \
     sudo mv prometheus-${PROM_VERSION}.linux-amd64/promtool /usr/local/bin/promtool && \
-    rm -rf prometheus-${PROM_VERSION}.linux-amd64/
+    rm -rf prometheus-${PROM_VERSION}.linux-amd64/ && \
+    rm -f prometheus-${PROM_VERSION}.linux-amd64.tar.gz
 
 ARG JSONNET_BUNDLER_VERSION="0.4.0"
 RUN curl -fsSL -o jb https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v${JSONNET_BUNDLER_VERSION}/jb-linux-amd64 && \
@@ -232,12 +236,16 @@ ARG JSONNET_VERSION="0.17.0"
 RUN curl -fsSLO https://github.com/google/go-jsonnet/releases/download/v${JSONNET_VERSION}/go-jsonnet_${JSONNET_VERSION}_Linux_x86_64.tar.gz && \
     tar -xzvf go-jsonnet_${JSONNET_VERSION}_Linux_x86_64.tar.gz && \
     sudo mv jsonnet /usr/local/bin/jsonnet && \
-    sudo mv jsonnetfmt /usr/local/bin/jsonnetfmt
+    sudo mv jsonnetfmt /usr/local/bin/jsonnetfmt && \
+    tar -tzf go-jsonnet_${JSONNET_VERSION}_Linux_x86_64.tar.gz | xargs rm -f && \
+    rm -f go-jsonnet_${JSONNET_VERSION}_Linux_x86_64.tar.gz
 
 ARG GOJSONTOYAML_VERSION="0.1.0"
 RUN curl -fsSLO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJSONTOYAML_VERSION}/gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
     tar -xzvf gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
-    sudo mv gojsontoyaml /usr/local/bin/gojsontoyaml
+    sudo mv gojsontoyaml /usr/local/bin/gojsontoyaml && \
+    tar -tzf gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz | xargs rm -f && \
+    rm -f gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz
 
 # Install Replicated and KOTS
 RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/v0.38.0/install.sh | sudo bash && \

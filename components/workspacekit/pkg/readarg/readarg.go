@@ -38,6 +38,9 @@ func OpenMem(pid uint32) (*os.File, error) {
 }
 
 func ReadString(memFile *os.File, offset int64) (string, error) {
+	if offset == 0 {
+		return "", nil
+	}
 	var buffer = make([]byte, 4096) // PATH_MAX
 
 	_, err := unix.Pread(int(memFile.Fd()), buffer, offset)
@@ -58,6 +61,9 @@ func ReadString(memFile *os.File, offset int64) (string, error) {
 }
 
 func ReadBytes(memFile *os.File, offset int64, len int) ([]byte, error) {
+	if offset == 0 && len == 0 {
+		return nil, nil
+	}
 	var buffer = make([]byte, len)
 
 	// pread() will always return the size of the buffer

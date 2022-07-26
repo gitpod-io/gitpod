@@ -27,16 +27,16 @@ func (agent *Smith) stopWorkspace(supervisorPID int) error {
 }
 
 // stopWorkspaceAndBlockUser stops a workspace and blocks the user (who would have guessed?)
-func (agent *Smith) stopWorkspaceAndBlockUser(supervisorPID int, ownerID string) error {
+func (agent *Smith) stopWorkspaceAndBlockUser(supervisorPID int, ownerID, workspaceID string) error {
 	err := agent.stopWorkspace(supervisorPID)
 	if err != nil {
-		log.WithError(err).WithField("owner", ownerID).Warn("error stopping workspace")
+		log.WithError(err).WithField("owner", ownerID).WithField("workspaceID", workspaceID).Warn("error stopping workspace")
 	}
-	err = agent.blockUser(ownerID)
+	err = agent.blockUser(ownerID, workspaceID)
 	return err
 }
 
-func (agent *Smith) blockUser(ownerID string) error {
+func (agent *Smith) blockUser(ownerID, workspaceID string) error {
 	if agent.GitpodAPI == nil {
 		return xerrors.Errorf("not connected to Gitpod API")
 	}
@@ -45,7 +45,7 @@ func (agent *Smith) blockUser(ownerID string) error {
 		return xerrors.Errorf("cannot block user as user id is empty")
 	}
 
-	log.Infof("Blocking user %s", ownerID)
+	log.Infof("Blocking user %s - workspace %v", ownerID, workspaceID)
 
 	req := protocol.AdminBlockUserRequest{
 		UserID:    ownerID,

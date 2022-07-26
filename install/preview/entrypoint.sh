@@ -4,6 +4,11 @@
 
 set -e
 
+# Set Domain to `127-0-0-1.nip.io` if not set
+if [ -z "${DOMAIN}" ]; then
+  export DOMAIN="127-0-0-1.nip.io"
+fi
+
 if [ "$1" != "logging" ]; then
   $0 logging 2>&1 | /prettylog
   exit
@@ -24,13 +29,6 @@ total_cores=$(nproc)
 if [ "${total_cores}" -lt "${REQUIRED_CORES}" ]; then
     echo "Preview installation of Gitpod requires a system with at least 4 CPU Cores"
     exit 1
-fi
-
-# Get container's IP address
-if [ -z "${DOMAIN}" ]; then
-  NODE_IP=$(hostname -i)
-  DOMAIN_STRING=$(echo "${NODE_IP}" | sed "s/\./-/g")
-  DOMAIN="${DOMAIN_STRING}.nip.io"
 fi
 
 echo "Gitpod Domain: $DOMAIN"
@@ -56,45 +54,121 @@ cat "${HOME}"/.local/share/mkcert/rootCA.pem >> /etc/ssl/certs/ca-certificates.c
 # also send root cert into a volume
 cat "${HOME}"/.local/share/mkcert/rootCA.pem > /var/gitpod/gitpod-ca.crt
 
-cat << EOF > /var/lib/rancher/k3s/server/manifests/ca-pair.yaml
+FN_CACERT="./ca.pem"
+FN_SSLCERT="./ssl.crt"
+FN_SSLKEY="./ssl.key"
+
+cat "${HOME}"/.local/share/mkcert/rootCA.pem > "$FN_CACERT"
+mkcert -cert-file "$FN_SSLCERT" \
+  -key-file "$FN_SSLKEY" \
+  "*.ws.${DOMAIN}" "*.${DOMAIN}" "${DOMAIN}" "reg.${DOMAIN}" "registry.default.svc.cluster.local" "gitpod.default" "ws-manager.default.svc" "ws-manager" "ws-manager-dev" "registry-facade" "server" "ws-manager-bridge" "ws-proxy" "ws-manager" "ws-daemon.default.svc" "ws-daemon" "wsdaemon"
+
+CACERT=$(base64 -w0 < "$FN_CACERT")
+SSLCERT=$(base64 -w0 < "$FN_SSLCERT")
+SSLKEY=$(base64 -w0 < "$FN_SSLKEY")
+
+mkdir -p /var/lib/rancher/k3s/server/manifests/gitpod
+
+cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/customCA-cert.yaml
+---
 apiVersion: v1
 kind: Secret
 metadata:
   name: ca-key-pair
+  labels:
+    app: gitpod
 data:
-  ca.crt: $(base64 -w0 "${HOME}"/.local/share/mkcert/rootCA.pem)
-  tls.crt: $(base64 -w0 "${HOME}"/.local/share/mkcert/rootCA.pem)
-  tls.key: $(base64 -w0 "${HOME}"/.local/share/mkcert/rootCA-key.pem)
+  ca.crt: $CACERT
 EOF
 
-cat << EOF > /var/lib/rancher/k3s/server/manifests/issuer.yaml
-apiVersion: cert-manager.io/v1
-kind: Issuer
+cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/https-cert.yaml
+---
+apiVersion: v1
+kind: Secret
 metadata:
-  name: ca-issuer
-spec:
-  ca:
-    secretName: ca-key-pair
+  name: https-certificates
+  labels:
+    app: gitpod
+type: kubernetes.io/tls
+data:
+  tls.crt: $SSLCERT
+  tls.key: $SSLKEY
 EOF
 
-echo "creating Gitpod SSL secret..."
-cat << EOF > /var/lib/rancher/k3s/server/manifests/https-cert.yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
+cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/builtin-registry-certs.yaml
+---
+apiVersion: v1
+kind: Secret
 metadata:
-  name: https-cert
-spec:
-  secretName: https-certificates
-  issuerRef:
-    name: ca-issuer
-    kind: Issuer
-  dnsNames:
-    - "$DOMAIN"
-    - "*.$DOMAIN"
-    - "*.ws.$DOMAIN"
+  name: builtin-registry-certs
+  labels:
+    app: gitpod
+type: kubernetes.io/tls
+data:
+  ca.crt: $CACERT
+  tls.crt: $SSLCERT
+  tls.key: $SSLKEY
 EOF
 
-mkdir -p /var/lib/rancher/k3s/server/manifests/gitpod
+cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/ws-manager-tls.yaml
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ws-manager-tls
+  labels:
+    app: gitpod
+type: kubernetes.io/tls
+data:
+  ca.crt: $CACERT
+  tls.crt: $SSLCERT
+  tls.key: $SSLKEY
+EOF
+
+cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/ws-manager-client-tls.yaml
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ws-manager-client-tls
+  labels:
+    app: gitpod
+type: kubernetes.io/tls
+data:
+  ca.crt: $CACERT
+  tls.crt: $SSLCERT
+  tls.key: $SSLKEY
+EOF
+
+cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/ws-daemon-tls.yaml
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ws-daemon-tls
+  labels:
+    app: gitpod
+type: kubernetes.io/tls
+data:
+  ca.crt: $CACERT
+  tls.crt: $SSLCERT
+  tls.key: $SSLKEY
+EOF
+
+cat << EOF > /var/lib/rancher/k3s/server/manifests/gitpod/builtin-registry-facade-cert.yaml
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: builtin-registry-facade-cert
+  labels:
+    app: gitpod
+type: kubernetes.io/tls
+data:
+  ca.crt: $CACERT
+  tls.crt: $SSLCERT
+  tls.key: $SSLKEY
+EOF
 
 /gitpod-installer init > config.yaml
 yq e -i '.domain = "'"${DOMAIN}"'"' config.yaml
@@ -121,8 +195,10 @@ ctr images pull "docker.io/gitpod/workspace-full:latest" >/dev/null &
 
 # store files in `gitpod.debug` for debugging purposes
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/gitpod.debug; done
-# remove NetowrkPolicy resources as they are not relevant here
+# remove unused resources
 rm /var/lib/rancher/k3s/server/manifests/gitpod/*NetworkPolicy*
+rm /var/lib/rancher/k3s/server/manifests/gitpod/*Certificate*
+rm /var/lib/rancher/k3s/server/manifests/gitpod/*Issuer*
 # update PersistentVolumeClaim's to use k3s's `local-path` storage class
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*PersistentVolumeClaim*.yaml; do yq e -i '.spec.storageClassName="local-path"' "$f"; done
 # Set `volumeClassTemplate` so that each replica creates its own PVC
@@ -133,6 +209,9 @@ for f in /var/lib/rancher/k3s/server/manifests/gitpod/*StatefulSet*.yaml; do yq 
 # removing init container from ws-daemon (systemd and Ubuntu)
 yq eval-all -i 'del(.spec.template.spec.initContainers[0])' /var/lib/rancher/k3s/server/manifests/gitpod/*_DaemonSet_ws-daemon.yaml
 
+touch /var/lib/rancher/k3s/server/manifests/coredns.yaml.skip
+mv -f /app/manifests/coredns.yaml /var/lib/rancher/k3s/server/manifests/custom-coredns.yaml
+
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/manifests/gitpod.yaml; done
 rm -rf /var/lib/rancher/k3s/server/manifests/gitpod
 
@@ -142,8 +221,15 @@ run_telemetry(){
   sleep 100
   # indefinitely wait for Gitpod pods to be ready
   kubectl wait --timeout=-1s --for=condition=ready pod -l app=gitpod,component!=migrations
-  # manually tun the cronjob
-  kubectl create job gitpod-telemetry-init --from=cronjob/gitpod-telemetry
+  echo "Gitpod pods are ready"
+  # honour DO_NOT_TRACK if set
+  if [ -n "${DO_NOT_TRACK}" ] && [ "${DO_NOT_TRACK}" -eq 1 ]; then
+    # suspend the cronjob
+    kubectl patch cronjobs gitpod-telemetry -p '{"spec" : {"suspend" : true }}'
+  else
+    # manually run the cronjob
+    kubectl create job gitpod-telemetry-init --from=cronjob/gitpod-telemetry
+  fi
 }
 
 run_telemetry 2>&1 &

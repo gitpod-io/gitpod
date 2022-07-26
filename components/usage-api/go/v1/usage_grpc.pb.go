@@ -26,8 +26,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsageServiceClient interface {
-	// GetUsage retrieves all usage for a team.
-	GetUsage(ctx context.Context, in *GetUsageRequest, opts ...grpc.CallOption) (*GetUsageResponse, error)
+	// ListBilledUsage retrieves all usage for the specified attributionId
+	ListBilledUsage(ctx context.Context, in *ListBilledUsageRequest, opts ...grpc.CallOption) (*ListBilledUsageResponse, error)
 }
 
 type usageServiceClient struct {
@@ -38,9 +38,9 @@ func NewUsageServiceClient(cc grpc.ClientConnInterface) UsageServiceClient {
 	return &usageServiceClient{cc}
 }
 
-func (c *usageServiceClient) GetUsage(ctx context.Context, in *GetUsageRequest, opts ...grpc.CallOption) (*GetUsageResponse, error) {
-	out := new(GetUsageResponse)
-	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/GetUsage", in, out, opts...)
+func (c *usageServiceClient) ListBilledUsage(ctx context.Context, in *ListBilledUsageRequest, opts ...grpc.CallOption) (*ListBilledUsageResponse, error) {
+	out := new(ListBilledUsageResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/ListBilledUsage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +51,8 @@ func (c *usageServiceClient) GetUsage(ctx context.Context, in *GetUsageRequest, 
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
 type UsageServiceServer interface {
-	// GetUsage retrieves all usage for a team.
-	GetUsage(context.Context, *GetUsageRequest) (*GetUsageResponse, error)
+	// ListBilledUsage retrieves all usage for the specified attributionId
+	ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
 }
 
@@ -60,8 +60,8 @@ type UsageServiceServer interface {
 type UnimplementedUsageServiceServer struct {
 }
 
-func (UnimplementedUsageServiceServer) GetUsage(context.Context, *GetUsageRequest) (*GetUsageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUsage not implemented")
+func (UnimplementedUsageServiceServer) ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListBilledUsage not implemented")
 }
 func (UnimplementedUsageServiceServer) mustEmbedUnimplementedUsageServiceServer() {}
 
@@ -76,20 +76,20 @@ func RegisterUsageServiceServer(s grpc.ServiceRegistrar, srv UsageServiceServer)
 	s.RegisterService(&UsageService_ServiceDesc, srv)
 }
 
-func _UsageService_GetUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUsageRequest)
+func _UsageService_ListBilledUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBilledUsageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsageServiceServer).GetUsage(ctx, in)
+		return srv.(UsageServiceServer).ListBilledUsage(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/usage.v1.UsageService/GetUsage",
+		FullMethod: "/usage.v1.UsageService/ListBilledUsage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsageServiceServer).GetUsage(ctx, req.(*GetUsageRequest))
+		return srv.(UsageServiceServer).ListBilledUsage(ctx, req.(*ListBilledUsageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -102,8 +102,8 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*UsageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetUsage",
-			Handler:    _UsageService_GetUsage_Handler,
+			MethodName: "ListBilledUsage",
+			Handler:    _UsageService_ListBilledUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

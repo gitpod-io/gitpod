@@ -19,6 +19,7 @@ import {
     DBUser,
     DBWithTracing,
     ProjectDB,
+    TeamDB,
     TracedUserDB,
     TracedWorkspaceDB,
     UserDB,
@@ -114,6 +115,9 @@ import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
 import { IDEService } from "../ide-service";
+import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { WorkspaceClasses } from "./workspace-classes";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -197,6 +201,8 @@ export class WorkspaceStarter {
     @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(ImageBuilderClientProvider) protected readonly imagebuilderClientProvider: ImageBuilderClientProvider;
+    @inject(WorkspaceClusterImagebuilderClientProvider)
+    protected readonly wsClusterImageBuilderClientProvider: ImageBuilderClientProvider;
     @inject(ImageSourceProvider) protected readonly imageSourceProvider: ImageSourceProvider;
     @inject(UserService) protected readonly userService: UserService;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
@@ -204,6 +210,7 @@ export class WorkspaceStarter {
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(ContextParser) protected contextParser: ContextParser;
     @inject(BlockedRepositoryDB) protected readonly blockedRepositoryDB: BlockedRepositoryDB;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -226,7 +233,6 @@ export class WorkspaceStarter {
         options = options || {};
         try {
             await this.checkBlockedRepository(user, workspace.contextURL);
-            await this.checkBlockedRepositoryInDB(user, workspace.contextURL);
 
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
@@ -256,7 +262,7 @@ export class WorkspaceStarter {
                 auth.setTotal(allowAll);
                 req.setAuth(auth);
 
-                const client = this.imagebuilderClientProvider.getDefault();
+                const client = await this.getImageBuilderClient(user, workspace, undefined);
                 const res = await client.resolveBaseImage({ span }, req);
                 workspace.imageSource = <WorkspaceImageSourceReference>{
                     baseImageResolved: res.getRef(),
@@ -268,11 +274,11 @@ export class WorkspaceStarter {
             const hasValidBackup = pastInstances.some(
                 (i) => !!i.status && !!i.status.conditions && !i.status.conditions.failed,
             );
-            let lastValidWorkspaceInstanceId = "";
+            let lastValidWorkspaceInstance: WorkspaceInstance | undefined;
             if (hasValidBackup) {
-                lastValidWorkspaceInstanceId = pastInstances.reduce((previousValue, currentValue) =>
+                lastValidWorkspaceInstance = pastInstances.reduce((previousValue, currentValue) =>
                     currentValue.creationTime > previousValue.creationTime ? currentValue : previousValue,
-                ).id;
+                );
             }
 
             const ideConfig = await this.ideConfigService.config;
@@ -284,6 +290,7 @@ export class WorkspaceStarter {
                     await this.newInstance(
                         ctx,
                         workspace,
+                        lastValidWorkspaceInstance,
                         user,
                         options.excludeFeatureFlags || [],
                         ideConfig,
@@ -324,7 +331,7 @@ export class WorkspaceStarter {
                     instance,
                     workspace,
                     user,
-                    lastValidWorkspaceInstanceId,
+                    lastValidWorkspaceInstance?.id ?? "",
                     ideConfig,
                     userEnvVars,
                     projectEnvVars,
@@ -339,7 +346,7 @@ export class WorkspaceStarter {
                 instance,
                 workspace,
                 user,
-                lastValidWorkspaceInstanceId,
+                lastValidWorkspaceInstance?.id ?? "",
                 ideConfig,
                 userEnvVars,
                 projectEnvVars,
@@ -369,22 +376,6 @@ export class WorkspaceStarter {
     }
 
     protected async checkBlockedRepository(user: User, contextURL: string) {
-        const hit = this.config.blockedRepositories.find((r) => !!contextURL && r.urlRegExp.test(contextURL));
-        if (!hit) {
-            return;
-        }
-        if (hit.blockUser) {
-            try {
-                await this.userService.blockUser(user.id, true);
-                log.info({ userId: user.id }, "Blocked user.", { contextURL });
-            } catch (error) {
-                log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });
-            }
-        }
-        throw new Error(`${contextURL} is blocklisted on Gitpod.`);
-    }
-
-    protected async checkBlockedRepositoryInDB(user: User, contextURL: string) {
         const blockedRepository = await this.blockedRepositoryDB.findBlockedRepositoryByURL(contextURL);
         if (!blockedRepository) return;
 
@@ -458,7 +449,6 @@ export class WorkspaceStarter {
             // we add additional information to the user to help with cluster selection
             const euser: ExtendedUser = {
                 ...user,
-                getsMoreResources: await this.userService.userGetsMoreResources(user),
             };
 
             // choose a cluster and start the instance
@@ -556,7 +546,6 @@ export class WorkspaceStarter {
 
                 instance.status.phase = "pending";
                 instance.region = installation;
-                instance.workspaceClass = startRequest.getSpec()!.getClass();
                 await this.workspaceDb.trace(ctx).storeInstance(instance);
                 try {
                     await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
@@ -679,127 +668,175 @@ export class WorkspaceStarter {
     protected async newInstance(
         ctx: TraceContext,
         workspace: Workspace,
+        previousInstance: WorkspaceInstance | undefined,
         user: User,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
         forcePVC: boolean,
     ): Promise<WorkspaceInstance> {
+        const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
         //#endregion IDE resolution TODO(ak) move to IDE service
         // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
         delete ideConfig.ideOptions.options["code-latest"];
         delete ideConfig.ideOptions.options["code-desktop-insiders"];
 
-        const migrated = migrationIDESettings(user);
-        if (user.additionalData?.ideSettings && migrated) {
-            user.additionalData.ideSettings = migrated;
-        }
-
-        const ideChoice = user.additionalData?.ideSettings?.defaultIde;
-        const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
-
-        // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
-        //           give that value precedence over the default choice.
-        const configuration: WorkspaceInstanceConfiguration = {
-            ideImage: ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image,
-            supervisorImage: ideConfig.supervisorImage,
-            ideConfig: {
-                // We only check user setting because if code(insider) but desktopIde has no latestImage
-                // it still need to notice user that this workspace is using latest IDE
-                useLatest: user.additionalData?.ideSettings?.useLatestVersion,
-            },
-        };
-
-        if (!!ideChoice) {
-            const choose = chooseIDE(
-                ideChoice,
-                ideConfig.ideOptions,
-                useLatest,
-                this.authService.hasPermission(user, "ide-settings"),
-            );
-            configuration.ideImage = choose.ideImage;
-            configuration.desktopIdeImage = choose.desktopIdeImage;
-        }
-
-        const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
-        if (referrerIde) {
-            configuration.desktopIdeImage = useLatest
-                ? referrerIde.option.latestImage ?? referrerIde.option.image
-                : referrerIde.option.image;
-            if (!user.additionalData?.ideSettings) {
-                // A user does not have IDE settings configured yet configure it with a referrer ide as default.
-                const additionalData = user?.additionalData || {};
-                const settings = additionalData.ideSettings || {};
-                settings.settingVersion = "2.0";
-                settings.defaultIde = referrerIde.id;
-                additionalData.ideSettings = settings;
-                user.additionalData = additionalData;
-                this.userDB
-                    .trace(ctx)
-                    .updateUserPartial(user)
-                    .catch((e) => {
-                        log.error({ userId: user.id }, "cannot configure default desktop ide", e);
-                    });
+        try {
+            const migrated = migrationIDESettings(user);
+            if (user.additionalData?.ideSettings && migrated) {
+                user.additionalData.ideSettings = migrated;
             }
-        }
-        //#endregion
 
-        let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
-        featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
-        if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
-            featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
-        }
+            const ideChoice = user.additionalData?.ideSettings?.defaultIde;
+            const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
 
-        // if the user has feature preview enabled, we need to add the respective feature flags.
-        // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
-        if (!!user.additionalData?.featurePreview) {
-            featureFlags = featureFlags.concat(
-                this.config.workspaceDefaults.previewFeatureFlags.filter((f) => !featureFlags.includes(f)),
-            );
-        }
-
-        featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
-
-        if (forcePVC === true) {
-            featureFlags = featureFlags.concat(["persistent_volume_claim"]);
-        }
-
-        if (!!featureFlags) {
-            // only set feature flags if there actually are any. Otherwise we waste the
-            // few bytes of JSON in the database for no good reason.
-            configuration.featureFlags = featureFlags;
-        }
-
-        const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
-
-        const now = new Date().toISOString();
-        const instance: WorkspaceInstance = {
-            id: uuidv4(),
-            workspaceId: workspace.id,
-            creationTime: now,
-            ideUrl: "", // Initially empty, filled during starting process
-            region: this.config.installationShortname, // Shortname set to bridge can cleanup workspaces stuck preparing
-            workspaceImage: "", // Initially empty, filled during starting process
-            status: {
-                version: 0,
-                conditions: {},
-                phase: "preparing",
-            },
-            configuration,
-            usageAttributionId,
-        };
-        if (WithReferrerContext.is(workspace.context)) {
-            this.analytics.track({
-                userId: user.id,
-                event: "ide_referrer",
-                properties: {
-                    workspaceId: workspace.id,
-                    instanceId: instance.id,
-                    referrer: workspace.context.referrer,
-                    referrerIde: workspace.context.referrerIde,
+            // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
+            //           give that value precedence over the default choice.
+            const configuration: WorkspaceInstanceConfiguration = {
+                ideImage: ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image,
+                supervisorImage: ideConfig.supervisorImage,
+                ideConfig: {
+                    // We only check user setting because if code(insider) but desktopIde has no latestImage
+                    // it still need to notice user that this workspace is using latest IDE
+                    useLatest: user.additionalData?.ideSettings?.useLatestVersion,
                 },
+            };
+
+            if (!!ideChoice) {
+                const choose = chooseIDE(
+                    ideChoice,
+                    ideConfig.ideOptions,
+                    useLatest,
+                    this.authService.hasPermission(user, "ide-settings"),
+                );
+                configuration.ideImage = choose.ideImage;
+                configuration.desktopIdeImage = choose.desktopIdeImage;
+            }
+
+            const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
+            if (referrerIde) {
+                configuration.desktopIdeImage = useLatest
+                    ? referrerIde.option.latestImage ?? referrerIde.option.image
+                    : referrerIde.option.image;
+                if (!user.additionalData?.ideSettings) {
+                    // A user does not have IDE settings configured yet configure it with a referrer ide as default.
+                    const additionalData = user?.additionalData || {};
+                    const settings = additionalData.ideSettings || {};
+                    settings.settingVersion = "2.0";
+                    settings.defaultIde = referrerIde.id;
+                    additionalData.ideSettings = settings;
+                    user.additionalData = additionalData;
+                    this.userDB
+                        .trace(ctx)
+                        .updateUserPartial(user)
+                        .catch((e) => {
+                            log.error({ userId: user.id }, "cannot configure default desktop ide", e);
+                        });
+                }
+            }
+            //#endregion
+
+            let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
+            featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
+            if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
+                featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
+            }
+
+            // if the user has feature preview enabled, we need to add the respective feature flags.
+            // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
+            if (!!user.additionalData?.featurePreview) {
+                featureFlags = featureFlags.concat(
+                    this.config.workspaceDefaults.previewFeatureFlags.filter((f) => !featureFlags.includes(f)),
+                );
+            }
+
+            featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
+
+            if (forcePVC === true) {
+                featureFlags = featureFlags.concat(["persistent_volume_claim"]);
+            }
+
+            if (!!featureFlags) {
+                // only set feature flags if there actually are any. Otherwise we waste the
+                // few bytes of JSON in the database for no good reason.
+                configuration.featureFlags = featureFlags;
+            }
+
+            const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
+
+            let workspaceClass = "";
+            let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
+                user: user,
             });
+
+            if (classesEnabled) {
+                // this is either the first time we start the workspace or the workspace was started
+                // before workspace classes and does not have a class yet
+                if (!previousInstance?.workspaceClass) {
+                    if (workspace.type == "regular") {
+                        if (user.additionalData?.workspaceClasses?.regular) {
+                            workspaceClass = user.additionalData?.workspaceClasses?.regular;
+                        }
+                    }
+
+                    if (workspace.type == "prebuild") {
+                        if (user.additionalData?.workspaceClasses?.prebuild) {
+                            workspaceClass = user.additionalData?.workspaceClasses?.prebuild;
+                        }
+                    }
+
+                    if (!workspaceClass) {
+                        workspaceClass = WorkspaceClasses.getDefaultId(this.config.workspaceClasses);
+                        if (await this.userService.userGetsMoreResources(user)) {
+                            workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(this.config.workspaceClasses);
+                        }
+                    }
+                } else {
+                    workspaceClass = WorkspaceClasses.getPreviousOrDefault(
+                        this.config.workspaceClasses,
+                        previousInstance.workspaceClass,
+                    );
+                }
+
+                if (featureFlags.includes("persistent_volume_claim")) {
+                    if (workspaceClass === "g1-standard" || workspaceClass === "g1-large") {
+                        workspaceClass = workspaceClass + "-pvc";
+                    }
+                }
+            }
+
+            const now = new Date().toISOString();
+            const instance: WorkspaceInstance = {
+                id: uuidv4(),
+                workspaceId: workspace.id,
+                creationTime: now,
+                ideUrl: "", // Initially empty, filled during starting process
+                region: this.config.installationShortname, // Shortname set to bridge can cleanup workspaces stuck preparing
+                workspaceImage: "", // Initially empty, filled during starting process
+                status: {
+                    version: 0,
+                    conditions: {},
+                    phase: "preparing",
+                },
+                configuration,
+                usageAttributionId,
+                workspaceClass,
+            };
+            if (WithReferrerContext.is(workspace.context)) {
+                this.analytics.track({
+                    userId: user.id,
+                    event: "ide_referrer",
+                    properties: {
+                        workspaceId: workspace.id,
+                        instanceId: instance.id,
+                        referrer: workspace.context.referrer,
+                        referrerIde: workspace.context.referrerIde,
+                    },
+                });
+            }
+            return instance;
+        } finally {
+            span.finish();
         }
-        return instance;
     }
 
     // TODO(ak) move to IDE service
@@ -974,7 +1011,7 @@ export class WorkspaceStarter {
     ): Promise<boolean> {
         const span = TraceContext.startSpan("needsImageBuild", ctx);
         try {
-            const client = this.imagebuilderClientProvider.getDefault();
+            const client = await this.getImageBuilderClient(user, workspace, instance);
             const { src, auth, disposable } = await this.prepareBuildRequest(
                 { span },
                 workspace,
@@ -1014,7 +1051,7 @@ export class WorkspaceStarter {
 
         try {
             // Start build...
-            const client = this.imagebuilderClientProvider.getDefault();
+            const client = await this.getImageBuilderClient(user, workspace, instance);
             const { src, auth, disposable } = await this.prepareBuildRequest(
                 { span },
                 workspace,
@@ -1349,9 +1386,18 @@ export class WorkspaceStarter {
             ideImage = ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image;
         }
 
-        let workspaceClass: string = "default";
-        if (await this.userService.userGetsMoreResources(user)) {
-            workspaceClass = "gitpodio-internal-xl";
+        let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
+            user: user,
+        });
+        let workspaceClass;
+        if (!classesEnabled) {
+            // This is branch is not relevant once we roll out WorkspaceClasses, so we don't try to integrate these old classes into our model
+            workspaceClass = "default";
+            if (await this.userService.userGetsMoreResources(user)) {
+                workspaceClass = "gitpodio-internal-xl";
+            }
+        } else {
+            workspaceClass = instance.workspaceClass!;
         }
 
         const spec = new StartWorkspaceSpec();
@@ -1711,5 +1757,35 @@ export class WorkspaceStarter {
             .filter((f) => !!f) as WorkspaceFeatureFlag[];
 
         return result;
+    }
+
+    /**
+     * This method is temporary until we moved image-builder into workspace clusters
+     * @param user
+     * @param workspace
+     * @param instance
+     * @returns
+     */
+    protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        const isMovedImageBuilder = await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", false, {
+            user,
+            projectId: workspace.projectId,
+            teams,
+        });
+        log.info(
+            { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
+            "image-builder in workspace cluster?",
+            {
+                userId: user.id,
+                projectId: workspace.projectId,
+                isMovedImageBuilder,
+            },
+        );
+        if (isMovedImageBuilder) {
+            return this.wsClusterImageBuilderClientProvider.getClient(user, workspace, instance);
+        } else {
+            return this.imagebuilderClientProvider.getClient(user, workspace, instance);
+        }
     }
 }

@@ -18,11 +18,10 @@ import moment from "moment";
 import { useEffect, useRef, useState } from "react";
 import CheckBox from "../components/CheckBox";
 import Modal from "../components/Modal";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
-import { adminMenu } from "./admin-menu";
 import { WorkspaceSearch } from "./WorkspacesSearch";
 import Property from "./Property";
+import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 
 export default function UserDetail(p: { user: User }) {
     const [activity, setActivity] = useState(false);
@@ -117,7 +116,7 @@ export default function UserDetail(p: { user: User }) {
 
     return (
         <>
-            <PageWithSubMenu subMenu={adminMenu} title="Users" subtitle="Search and manage all users.">
+            <PageWithAdminSubMenu title="Users" subtitle="Search and manage all users.">
                 <div className="flex">
                     <div className="flex-1">
                         <div className="flex">
@@ -246,7 +245,7 @@ export default function UserDetail(p: { user: User }) {
                     </div>
                 </div>
                 <WorkspaceSearch user={user} />
-            </PageWithSubMenu>
+            </PageWithAdminSubMenu>
             <Modal
                 visible={editFeatureFlags}
                 onClose={() => setEditFeatureFlags(false)}

@@ -16,16 +16,12 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
+import { WorkspaceClasses, WorkspaceClassesConfig } from "./workspace/workspace-classes";
 
 export const Config = Symbol("Config");
 export type Config = Omit<
     ConfigSerialized,
-    | "blockedRepositories"
-    | "hostUrl"
-    | "chargebeeProviderOptionsFile"
-    | "stripeSecretsFile"
-    | "stripeConfigFile"
-    | "licenseFile"
+    "hostUrl" | "chargebeeProviderOptionsFile" | "stripeSecretsFile" | "stripeConfigFile" | "licenseFile"
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
@@ -33,7 +29,6 @@ export type Config = Omit<
     stripeSecrets?: { publishableKey: string; secretKey: string };
     stripeConfig?: { usageProductPriceIds: { EUR: string; USD: string } };
     builtinAuthProvidersConfigured: boolean;
-    blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[];
     inactivityPeriodForRepos?: number;
 };
 
@@ -149,6 +144,12 @@ export interface ConfigSerialized {
      */
     imageBuilderAddr: string;
 
+    /**
+     * The address usage service clients connect to
+     * Example: usage:8080
+     */
+    usageServiceAddr: string;
+
     codeSync: CodeSyncConfig;
 
     vsxRegistryUrl: string;
@@ -168,16 +169,15 @@ export interface ConfigSerialized {
     prebuildLimiter: { [cloneURL: string]: number } & { "*": number };
 
     /**
-     * List of repositories not allowed to be used for workspace starts.
-     * `blockUser` attribute to control handling of the user's account.
-     */
-    blockedRepositories?: { urlRegExp: string; blockUser: boolean }[];
-
-    /**
      * If a numeric value interpreted as days is set, repositories not beeing opened with Gitpod are
      * considered inactive.
      */
     inactivityPeriodForRepos?: number;
+
+    /**
+     * Supported workspace classes
+     */
+    workspaceClasses: WorkspaceClassesConfig;
 }
 
 export namespace ConfigFile {
@@ -245,21 +245,15 @@ export namespace ConfigFile {
         if (licenseFile) {
             license = fs.readFileSync(filePathTelepresenceAware(licenseFile), "utf-8");
         }
-        const blockedRepositories: { urlRegExp: RegExp; blockUser: boolean }[] = [];
-        if (config.blockedRepositories) {
-            for (const { blockUser, urlRegExp } of config.blockedRepositories) {
-                blockedRepositories.push({
-                    blockUser,
-                    urlRegExp: new RegExp(urlRegExp),
-                });
-            }
-        }
         let inactivityPeriodForRepos: number | undefined;
         if (typeof config.inactivityPeriodForRepos === "number") {
             if (config.inactivityPeriodForRepos >= 1) {
                 inactivityPeriodForRepos = config.inactivityPeriodForRepos;
             }
         }
+
+        WorkspaceClasses.validate(config.workspaceClasses);
+
         return {
             ...config,
             hostUrl,
@@ -275,7 +269,6 @@ export namespace ConfigFile {
                     ? new Date(config.workspaceGarbageCollection.startDate).getTime()
                     : Date.now(),
             },
-            blockedRepositories,
             inactivityPeriodForRepos,
         };
     }

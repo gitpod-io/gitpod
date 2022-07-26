@@ -6,6 +6,7 @@ package db_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
@@ -15,14 +16,20 @@ import (
 	"time"
 )
 
+var (
+	startOfMay  = time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
+	startOfJune = time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
+)
+
 func TestListWorkspaceInstancesInRange(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
-	workspaceID := "gitpodio-gitpod-gyjr82jkfnd"
+	workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{}))[0]
+
 	valid := []db.WorkspaceInstance{
 		// In the middle of May
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			WorkspaceID:  workspaceID,
+			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
@@ -30,7 +37,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 		// Start of May
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
-			WorkspaceID:  workspaceID,
+			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)),
@@ -38,7 +45,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 		// End of May
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
-			WorkspaceID:  workspaceID,
+			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 59, 59, 999999, time.UTC)),
@@ -46,7 +53,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 		// Started in April, but continued into May
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
-			WorkspaceID:  workspaceID,
+			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 0, 0, 0, 0, time.UTC)),
@@ -54,7 +61,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 		// Started in May, but continued into June
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
-			WorkspaceID:  workspaceID,
+			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
@@ -62,7 +69,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 		// Started in April, but continued into June (ran for all of May)
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
-			WorkspaceID:  workspaceID,
+			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
@@ -70,14 +77,14 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 		// Stopped in May, no creation time, should be retrieved but this is a poor data quality record.
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:          uuid.New(),
-			WorkspaceID: workspaceID,
+			WorkspaceID: workspace.ID,
 			StartedTime: db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
 			StoppedTime: db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
 		}),
 		// Started in April, no stop time, still running
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
-			WorkspaceID:  workspaceID,
+			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
 		}),
@@ -86,7 +93,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 		// Start of June
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
-			WorkspaceID:  workspaceID,
+			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 06, 1, 00, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 00, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
@@ -99,12 +106,78 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 
 	dbtest.CreateWorkspaceInstances(t, conn, all...)
 
-	startOfMay := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
-	startOfJune := time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
 	retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
 	require.NoError(t, err)
 
 	require.Len(t, retrieved, len(valid))
+}
+
+func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
+
+	t.Run("no project results in empty string", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{}))[0]
+		instance := dbtest.CreateWorkspaceInstances(t, conn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			WorkspaceID:  workspace.ID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
+		}))[0]
+
+		retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
+		require.NoError(t, err)
+
+		require.Len(t, retrieved, 1)
+		require.Equal(t, db.WorkspaceInstanceForUsage{
+			ID:                 instance.ID,
+			WorkspaceID:        instance.WorkspaceID,
+			OwnerID:            workspace.OwnerID,
+			ProjectID:          sql.NullString{},
+			WorkspaceClass:     instance.WorkspaceClass,
+			Type:               workspace.Type,
+			UsageAttributionID: instance.UsageAttributionID,
+			CreationTime:       instance.CreationTime,
+			StoppedTime:        instance.StoppedTime,
+		}, retrieved[0])
+	})
+
+	t.Run("with project", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{
+			ProjectID: sql.NullString{
+				String: uuid.New().String(),
+				Valid:  true,
+			},
+		}))[0]
+		instance := dbtest.CreateWorkspaceInstances(t, conn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			WorkspaceID:  workspace.ID,
+			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
+		}))[0]
+
+		retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
+		require.NoError(t, err)
+
+		require.Len(t, retrieved, 1)
+		require.Equal(t, db.WorkspaceInstanceForUsage{
+			ID:          instance.ID,
+			WorkspaceID: instance.WorkspaceID,
+			OwnerID:     workspace.OwnerID,
+			ProjectID: sql.NullString{
+				String: workspace.ProjectID.String,
+				Valid:  true,
+			},
+			WorkspaceClass:     instance.WorkspaceClass,
+			Type:               workspace.Type,
+			UsageAttributionID: instance.UsageAttributionID,
+			CreationTime:       instance.CreationTime,
+			StoppedTime:        instance.StoppedTime,
+		}, retrieved[0])
+	})
+
 }
 
 func TestListWorkspaceInstancesInRange_InBatches(t *testing.T) {
@@ -125,8 +198,6 @@ func TestListWorkspaceInstancesInRange_InBatches(t *testing.T) {
 
 	dbtest.CreateWorkspaceInstances(t, conn, instances...)
 
-	startOfMay := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
-	startOfJune := time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
 	results, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
 	require.NoError(t, err)
 	require.Len(t, results, len(instances))

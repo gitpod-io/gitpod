@@ -63,6 +63,11 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, err
 	}
 
+	procV2Plugin, err := cgroup.NewProcLimiterV2(config.ProcLimit)
+	if err != nil {
+		return nil, err
+	}
+
 	cgroupPlugins, err := cgroup.NewPluginHost(config.CPULimit.CGroupBasePath,
 		&cgroup.CacheReclaim{},
 		&cgroup.FuseDeviceEnablerV1{},
@@ -80,6 +85,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 				cgroup.ProcessCodeServerHelper: -5,
 			},
 		},
+		procV2Plugin,
 	)
 	if err != nil {
 		return nil, err
@@ -94,6 +100,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	configReloader = append(configReloader, ConfigReloaderFunc(func(ctx context.Context, config *Config) error {
 		cgroupV1IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
 		cgroupV2IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
+		procV2Plugin.Update(config.ProcLimit)
 		return nil
 	}))
 

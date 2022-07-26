@@ -73,27 +73,27 @@ var runCmd = &cobra.Command{
 
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), opts)
 		if err != nil {
-			log.WithError(err).Fatal(err, "unable to start manager")
+			log.WithError(err).Fatal("unable to start manager")
 		}
 
 		kubeConfig, err := ctrl.GetConfig()
 		if err != nil {
-			log.WithError(err).Fatal(err, "unable to create a Kubernetes API Client configuration")
+			log.WithError(err).Fatal("unable to create a Kubernetes API Client configuration")
 		}
 		if err != nil {
-			log.WithError(err).Fatal(err, "unable to getting Kubernetes client config")
+			log.WithError(err).Fatal("unable to getting Kubernetes client config")
 		}
 
 		clientset, err := kubernetes.NewForConfig(kubeConfig)
 		if err != nil {
-			log.WithError(err).Fatal(err, "constructing Kubernetes client")
+			log.WithError(err).Fatal("constructing Kubernetes client")
 		}
 
 		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 			log.WithError(err).Fatal("unable to set up health check")
 		}
 		if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-			log.WithError(err).Fatal(err, "unable to set up ready check")
+			log.WithError(err).Fatal("unable to set up ready check")
 		}
 
 		cp, err := layer.NewProvider(&cfg.Content.Storage)
@@ -197,7 +197,7 @@ var runCmd = &cobra.Command{
 			Scheme:  mgr.GetScheme(),
 		}).SetupWithManager(mgr)
 		if err != nil {
-			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Pod")
+			log.WithError(err).Fatal("unable to create controller", "controller", "Pod")
 		}
 
 		// enable the volume snapshot controller when the VolumeSnapshot CRD exists
@@ -210,7 +210,7 @@ var runCmd = &cobra.Command{
 				Scheme:  mgr.GetScheme(),
 			}).SetupWithManager(mgr)
 			if err != nil {
-				log.WithError(err).Fatal(err, "unable to create controller", "controller", "VolumeSnapshot")
+				log.WithError(err).Fatal("unable to create controller", "controller", "VolumeSnapshot")
 			}
 		}
 
@@ -221,7 +221,7 @@ var runCmd = &cobra.Command{
 		// run until we're told to stop
 		log.Info("🦸  wsman is up and running. Stop with SIGINT or CTRL+C")
 		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-			log.WithError(err).Fatal(err, "problem starting wsman")
+			log.WithError(err).Fatal("problem starting wsman")
 		}
 
 		log.Info("Received SIGINT - shutting down")

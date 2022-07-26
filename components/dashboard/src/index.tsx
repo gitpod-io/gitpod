@@ -14,6 +14,7 @@ import { LicenseContextProvider } from "./license-context";
 import { TeamsContextProvider } from "./teams/teams-context";
 import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
+import { FeatureFlagContextProvider } from "./contexts/FeatureFlagContext";
 import { StartWorkspaceModalContextProvider } from "./workspaces/start-workspace-modal-context";
 import { BrowserRouter } from "react-router-dom";
 
@@ -30,7 +31,9 @@ ReactDOM.render(
                                 <ThemeContextProvider>
                                     <StartWorkspaceModalContextProvider>
                                         <BrowserRouter>
-                                            <App />
+                                            <FeatureFlagContextProvider>
+                                                <App />
+                                            </FeatureFlagContextProvider>
                                         </BrowserRouter>
                                     </StartWorkspaceModalContextProvider>
                                 </ThemeContextProvider>

@@ -6,8 +6,8 @@
 
 import * as express from "express";
 import { postConstruct, injectable, inject } from "inversify";
-import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
-import { Project, User, StartPrebuildResult, CommitContext, CommitInfo } from "@gitpod/gitpod-protocol";
+import { ProjectDB, TeamDB, UserDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
+import { Project, User, StartPrebuildResult, CommitContext, CommitInfo, WebhookEvent } from "@gitpod/gitpod-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TokenService } from "../../../src/user/token-service";
@@ -26,6 +26,7 @@ export class GitLabApp {
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(ContextParser) protected readonly contextParser: ContextParser;
+    @inject(WebhookEventDB) protected readonly webhookEvents: WebhookEventDB;
 
     protected _router = express.Router();
     public static path = "/apps/gitlab/";
@@ -42,18 +43,26 @@ export class GitLabApp {
          *  - to support fast response times, perform I/O or computationally intensive operations asynchronously
          */
         this._router.post("/", async (req, res) => {
-            const event = req.header("X-Gitlab-Event");
+            const eventType = req.header("X-Gitlab-Event");
             const secretToken = req.header("X-Gitlab-Token");
             const context = req.body as GitLabPushHook;
-            if (event !== "Push Hook" || !secretToken) {
-                log.warn("Unhandled GitLab event.", { event, secretToken: !!secretToken });
+
+            const event = await this.webhookEvents.createEvent({
+                type: "push",
+                status: "received",
+                rawEvent: JSON.stringify(req.body),
+            });
+
+            if (eventType !== "Push Hook" || !secretToken) {
+                log.warn("Unhandled GitLab event.", { event: eventType, secretToken: !!secretToken });
                 res.status(200).send("Unhandled event.");
+                await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
                 return;
             }
 
             const span = TraceContext.startSpan("GitLapApp.handleEvent", {});
             span.setTag("request", context);
-            log.debug("GitLab push event received.", { event, context });
+            log.debug("GitLab push event received.", { event: eventType, context });
             let user: User | undefined;
             try {
                 user = await this.findUser({ span }, context, secretToken);
@@ -66,9 +75,10 @@ export class GitLabApp {
                 // we should send a UNAUTHORIZED signal.
                 span.finish();
                 res.status(401).send("Unauthorized.");
+                await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
                 return;
             }
-            /** no await */ this.handlePushHook({ span }, context, user).catch((error) => {
+            /** no await */ this.handlePushHook({ span }, context, user, event).catch((error) => {
                 console.error(`Couldn't handle request.`, error, { headers: req.headers });
                 TraceContext.setError({ span }, error);
             });
@@ -115,6 +125,7 @@ export class GitLabApp {
         ctx: TraceContext,
         body: GitLabPushHook,
         user: User,
+        event: WebhookEvent,
     ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("GitLapApp.handlePushHook", ctx);
         try {
@@ -131,12 +142,23 @@ export class GitLabApp {
                     })
                     .catch((e) => log.error(e));
             }
+            await this.webhookEvents.updateEvent(event.id, {
+                authorizedUserId: user.id,
+                projectId: projectAndOwner?.project?.id,
+                cloneUrl: context.repository.cloneUrl,
+                branch: context.ref,
+                commit: context.revision,
+            });
 
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
                 log.debug({ userId: user.id }, "GitLab push hook: There is no prebuild config.", {
                     context: body,
                     contextURL,
+                });
+                await this.webhookEvents.updateEvent(event.id, {
+                    prebuildStatus: "ignored_unconfigured",
+                    status: "processed",
                 });
                 return undefined;
             }
@@ -153,10 +175,18 @@ export class GitLabApp {
                     commitInfo,
                 },
             );
-
+            await this.webhookEvents.updateEvent(event.id, {
+                prebuildStatus: "prebuild_triggered",
+                status: "processed",
+                prebuildId: ws.prebuildId,
+            });
             return ws;
         } catch (e) {
-            log.error("error processing GitLab webhook", e, body);
+            log.error("Error processing GitLab webhook event", e, body);
+            await this.webhookEvents.updateEvent(event.id, {
+                prebuildStatus: "prebuild_trigger_failed",
+                status: "processed",
+            });
         } finally {
             span.finish();
         }

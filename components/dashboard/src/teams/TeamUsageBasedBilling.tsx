@@ -14,6 +14,7 @@ import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 type PendingStripeSubscription = { pendingSince: number };
 
@@ -21,13 +22,16 @@ export default function TeamUsageBasedBilling() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const { showUsageBasedUI, currency } = useContext(PaymentContext);
+    const { currency } = useContext(PaymentContext);
+    const { showUsageBasedPricingUI } = useContext(FeatureFlagContext);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>();
     const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
+    const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
+    const [spendingLimit, setSpendingLimit] = useState<number | undefined>();
 
     useEffect(() => {
         if (!team) {
@@ -54,6 +58,8 @@ export default function TeamUsageBasedBilling() {
         (async () => {
             const portalUrl = await getGitpodService().server.getStripePortalUrlForTeam(team.id);
             setStripePortalUrl(portalUrl);
+            const spendingLimit = await getGitpodService().server.getSpendingLimitForTeam(team.id);
+            setSpendingLimit(spendingLimit);
         })();
     }, [team, stripeSubscriptionId]);
 
@@ -131,34 +137,54 @@ export default function TeamUsageBasedBilling() {
         }
     }, [pendingStripeSubscription, pollStripeSubscriptionTimeout, stripeSubscriptionId, team]);
 
-    if (!showUsageBasedUI) {
+    if (!showUsageBasedPricingUI) {
         return <></>;
     }
+
+    const showSpinner = isLoading || pendingStripeSubscription;
+    const showUpgradeBilling = !showSpinner && !stripeSubscriptionId;
+    const showManageBilling = !showSpinner && !!stripeSubscriptionId;
+
+    const doUpdateLimit = async (newLimit: number) => {
+        if (!team) {
+            return;
+        }
+        const oldLimit = spendingLimit;
+        setSpendingLimit(newLimit);
+        try {
+            await getGitpodService().server.setSpendingLimitForTeam(team.id, newLimit);
+        } catch (error) {
+            setSpendingLimit(oldLimit);
+            console.error(error);
+            alert(error?.message || "Failed to update spending limit. See console for error message.");
+        }
+        setShowUpdateLimitModal(false);
+    };
 
     return (
         <div className="mb-16">
             <h3>Usage-Based Billing</h3>
             <h2 className="text-gray-500">Manage usage-based billing, spending limit, and payment method.</h2>
-            <div className="max-w-xl">
-                <div className="mt-4 h-32 p-4 flex flex-col rounded-xl bg-gray-100 dark:bg-gray-800">
-                    <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
-                    {(isLoading || pendingStripeSubscription) && (
-                        <>
-                            <Spinner className="m-2 h-5 w-5 animate-spin" />
-                        </>
-                    )}
-                    {!isLoading && !pendingStripeSubscription && !stripeSubscriptionId && (
-                        <>
-                            <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
-                                Inactive
-                            </div>
-                            <button className="self-end" onClick={() => setShowBillingSetupModal(true)}>
-                                Upgrade Billing
-                            </button>
-                        </>
-                    )}
-                    {!isLoading && !pendingStripeSubscription && !!stripeSubscriptionId && (
-                        <>
+            <div className="max-w-xl flex flex-col">
+                {showSpinner && (
+                    <div className="flex flex-col mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
+                        <Spinner className="m-2 h-5 w-5 animate-spin" />
+                    </div>
+                )}
+                {showUpgradeBilling && (
+                    <div className="flex flex-col mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
+                        <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">Inactive</div>
+                        <button className="self-end" onClick={() => setShowBillingSetupModal(true)}>
+                            Upgrade Billing
+                        </button>
+                    </div>
+                )}
+                {showManageBilling && (
+                    <div className="max-w-xl flex space-x-4">
+                        <div className="flex flex-col w-72 mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
+                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
                             <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
                                 Active
                             </div>
@@ -167,11 +193,27 @@ export default function TeamUsageBasedBilling() {
                                     Manage Billing →
                                 </button>
                             </a>
-                        </>
-                    )}
-                </div>
+                        </div>
+                        <div className="flex flex-col w-72 mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
+                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Spending Limit</div>
+                            <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
+                                {spendingLimit || "–"}
+                            </div>
+                            <button className="self-end" onClick={() => setShowUpdateLimitModal(true)}>
+                                Update Limit
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
             {showBillingSetupModal && <BillingSetupModal onClose={() => setShowBillingSetupModal(false)} />}
+            {showUpdateLimitModal && (
+                <UpdateLimitModal
+                    currentValue={spendingLimit}
+                    onClose={() => setShowUpdateLimitModal(false)}
+                    onUpdate={(newLimit) => doUpdateLimit(newLimit)}
+                />
+            )}
         </div>
     );
 }
@@ -180,6 +222,49 @@ function getStripeAppearance(isDark?: boolean): Appearance {
     return {
         theme: isDark ? "night" : "stripe",
     };
+}
+
+function UpdateLimitModal(props: {
+    currentValue: number | undefined;
+    onClose: () => void;
+    onUpdate: (newLimit: number) => {};
+}) {
+    const [newLimit, setNewLimit] = useState<number | undefined>(props.currentValue);
+
+    return (
+        <Modal visible={true} onClose={props.onClose}>
+            <h3 className="flex">Update Limit</h3>
+            <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
+                <p className="pb-4 text-gray-500 text-base">Set up a spending limit on a monthly basis.</p>
+
+                <label htmlFor="newLimit" className="font-medium">
+                    Limit
+                </label>
+                <div className="w-full">
+                    <input
+                        name="newLimit"
+                        type="number"
+                        min={0}
+                        value={newLimit}
+                        className="rounded-md w-full truncate overflow-x-scroll pr-8"
+                        onChange={(e) => setNewLimit(parseInt(e.target.value || "1", 10))}
+                    />
+                </div>
+            </div>
+            <div className="flex justify-end mt-6 space-x-2">
+                <button
+                    className="secondary"
+                    onClick={() => {
+                        if (typeof newLimit === "number") {
+                            props.onUpdate(newLimit);
+                        }
+                    }}
+                >
+                    Update
+                </button>
+            </div>
+        </Modal>
+    );
 }
 
 function BillingSetupModal(props: { onClose: () => void }) {
@@ -243,7 +328,7 @@ function CreditCardInputForm() {
             }
         } catch (error) {
             console.error(error);
-            alert(error);
+            alert(error?.message || "Failed to submit form. See console for error message.");
         } finally {
             setIsLoading(false);
         }

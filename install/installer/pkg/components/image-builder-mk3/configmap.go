@@ -65,10 +65,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Addr: fmt.Sprintf(":%d", RPCPort),
 		},
 		Prometheus: config.Service{
-			Addr: fmt.Sprintf("127.0.0.1:%d", PrometheusPort),
+			Addr: common.LocalhostPrometheusAddr(),
 		},
 		PProf: config.PProf{
-			Addr: fmt.Sprintf(":%d", PProfPort),
+			Addr: common.LocalhostPprofAddr(),
 		},
 	}
 

@@ -17,7 +17,7 @@ import {
     settingsPathSSHKeys,
 } from "./settings.routes";
 
-export default function getSettingsMenu(params: { showPaymentUI?: boolean; showUsageBasedUI?: boolean }) {
+export default function getSettingsMenu(params: { showPaymentUI?: boolean; showUsageBasedPricingUI?: boolean }) {
     return [
         {
             title: "Account",
@@ -29,7 +29,7 @@ export default function getSettingsMenu(params: { showPaymentUI?: boolean; showU
         },
         ...(params.showPaymentUI
             ? [
-                  ...(params.showUsageBasedUI
+                  ...(params.showUsageBasedPricingUI
                       ? [
                             {
                                 title: "Billing",

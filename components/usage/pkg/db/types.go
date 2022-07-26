@@ -92,6 +92,14 @@ func (n VarcharTime) String() string {
 	return ""
 }
 
+func (u VarcharTime) MarshalJSON() ([]byte, error) {
+	if !u.IsSet() {
+		return []byte(""), nil
+	}
+
+	return u.Time().MarshalJSON()
+}
+
 const ISO8601Format = "2006-01-02T15:04:05.000Z"
 
 func TimeToISO8601(t time.Time) string {

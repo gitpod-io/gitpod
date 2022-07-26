@@ -15,7 +15,7 @@ import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { UserContext } from "./user-context";
 import { TeamsContext, getCurrentTeam } from "./teams/teams-context";
 import getSettingsMenu from "./settings/settings-menu";
-import { adminMenu } from "./admin/admin-menu";
+import { getAdminMenu } from "./admin/admin-menu";
 import ContextMenu from "./components/ContextMenu";
 import Separator from "./components/Separator";
 import PillMenuItem from "./components/PillMenuItem";
@@ -26,7 +26,7 @@ import { ProjectContext } from "./projects/project-context";
 import { PaymentContext } from "./payment-context";
 import FeedbackFormModal from "./feedback-form/FeedbackModal";
 import { inResource, isGitpodIo } from "./utils";
-import { getExperimentsClient } from "./experiments/client";
+import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 
 interface Entry {
     title: string;
@@ -39,15 +39,9 @@ export default function Menu() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const {
-        showPaymentUI,
-        setShowPaymentUI,
-        showUsageBasedUI,
-        setShowUsageBasedUI,
-        setCurrency,
-        setIsStudent,
-        setIsChargebeeCustomer,
-    } = useContext(PaymentContext);
+    const { showPaymentUI, setShowPaymentUI, setCurrency, setIsStudent, setIsChargebeeCustomer } =
+        useContext(PaymentContext);
+    const { showUsageBasedPricingUI } = useContext(FeatureFlagContext);
     const { project, setProject } = useContext(ProjectContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
@@ -162,26 +156,6 @@ export default function Menu() {
         ]).then((setters) => setters.forEach((s) => s()));
     }, []);
 
-    useEffect(() => {
-        if (!user) {
-            return;
-        }
-        (async () => {
-            const isUsageBasedBillingEnabled = await getExperimentsClient().getValueAsync(
-                "isUsageBasedBillingEnabled",
-                false,
-                {
-                    user,
-                    projectId: project?.id,
-                    teamId: team?.id,
-                    teamName: team?.name,
-                    teams,
-                },
-            );
-            setShowUsageBasedUI(isUsageBasedBillingEnabled);
-        })();
-    }, [user, teams, team, project]);
-
     const teamOrUserSlug = !!team ? "/t/" + team.slug : "/projects";
     const leftMenu: Entry[] = (() => {
         // Project menu
@@ -217,11 +191,17 @@ export default function Menu() {
                     link: `/t/${team.slug}/members`,
                 },
             ];
+            if (showUsageBasedPricingUI) {
+                teamSettingsList.push({
+                    title: "Usage",
+                    link: `/t/${team.slug}/usage`,
+                });
+            }
             if (currentUserInTeam?.role === "owner") {
                 teamSettingsList.push({
                     title: "Settings",
                     link: `/t/${team.slug}/settings`,
-                    alternatives: getTeamSettingsMenu({ team, showPaymentUI, showUsageBasedUI }).flatMap((e) => e.link),
+                    alternatives: getTeamSettingsMenu({ team, showPaymentUI }).flatMap((e) => e.link),
                 });
             }
 
@@ -236,7 +216,7 @@ export default function Menu() {
             {
                 title: "Settings",
                 link: "/settings",
-                alternatives: getSettingsMenu({ showPaymentUI, showUsageBasedUI }).flatMap((e) => e.link),
+                alternatives: getSettingsMenu({ showPaymentUI, showUsageBasedPricingUI }).flatMap((e) => e.link),
             },
         ];
     })();
@@ -246,7 +226,7 @@ export default function Menu() {
                   {
                       title: "Admin",
                       link: "/admin",
-                      alternatives: adminMenu.flatMap((e) => e.link),
+                      alternatives: getAdminMenu().flatMap((e) => e.link),
                   },
               ]
             : []),

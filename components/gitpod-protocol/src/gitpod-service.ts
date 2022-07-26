@@ -37,6 +37,7 @@ import {
     PrebuildWithStatus,
     StartPrebuildResult,
     PartialProject,
+    PrebuildEvent,
 } from "./teams-projects-protocol";
 import { JsonRpcProxy, JsonRpcServer } from "./messaging/proxy-factory";
 import { Disposable, CancellationTokenSource } from "vscode-jsonrpc";
@@ -61,6 +62,7 @@ import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
 import { Currency } from "./plans";
 import { BillableSession } from "./usage";
+import { SupportedWorkspaceClass } from "./workspace-class";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -181,6 +183,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getTeamProjects(teamId: string): Promise<Project[]>;
     getUserProjects(): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
+    getPrebuildEvents(projectId: string): Promise<PrebuildEvent[]>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
     findPrebuildByWorkspaceID(workspaceId: string): Promise<PrebuiltWorkspace | undefined>;
     getPrebuild(prebuildId: string): Promise<PrebuildWithStatus | undefined>;
@@ -288,8 +291,11 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     findStripeSubscriptionIdForTeam(teamId: string): Promise<string | undefined>;
     subscribeTeamToStripe(teamId: string, setupIntentId: string, currency: Currency): Promise<void>;
     getStripePortalUrlForTeam(teamId: string): Promise<string>;
+    getSpendingLimitForTeam(teamId: string): Promise<number | undefined>;
+    setSpendingLimitForTeam(teamId: string, spendingLimit: number): Promise<void>;
 
-    getBilledUsage(attributionId: string): Promise<BillableSession[]>;
+    listBilledUsage(attributionId: string, from?: number, to?: number): Promise<BillableSession[]>;
+    setUsageAttribution(usageAttribution: string): Promise<void>;
 
     /**
      * Analytics
@@ -297,6 +303,13 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     trackEvent(event: RemoteTrackMessage): Promise<void>;
     trackLocation(event: RemotePageMessage): Promise<void>;
     identifyUser(event: RemoteIdentifyMessage): Promise<void>;
+
+    /**
+     * Frontend notifications
+     */
+    getNotifications(): Promise<string[]>;
+    
+    getSupportedWorkspaceClasses(): Promise<SupportedWorkspaceClass[]>;
 }
 
 export interface RateLimiterError {
@@ -378,7 +391,7 @@ export const createServerMock = function <C extends GitpodClient, S extends Gitp
         get: (target: S, property: keyof S) => {
             const result = target[property];
             if (!result) {
-                throw new Error(`Method ${property} not implemented`);
+                throw new Error(`Method ${String(property)} not implemented`);
             }
             return result;
         },

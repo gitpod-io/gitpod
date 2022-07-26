@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/stretchr/testify/require"
@@ -175,6 +176,28 @@ func TestCustomizeAnnotation(t *testing.T) {
 				"key1": "value1",
 				"key2": "original",
 				"key3": "",
+			},
+		},
+		{
+			Customization: []config.Customization{
+				{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "Service",
+					},
+					Metadata: metav1.ObjectMeta{
+						Name: "proxy",
+						Annotations: map[string]string{
+							"service.beta.kubernetes.io/aws-load-balancer-ip-address-type": "ipv4",
+						},
+					},
+				},
+			},
+			Name:      "Test service #11106",
+			TypeMeta:  common.TypeMetaService,
+			Component: proxy.Component,
+			Expect: map[string]string{
+				"service.beta.kubernetes.io/aws-load-balancer-ip-address-type": "ipv4",
 			},
 		},
 	}

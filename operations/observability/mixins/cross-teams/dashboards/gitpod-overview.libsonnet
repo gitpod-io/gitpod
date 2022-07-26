@@ -9,6 +9,7 @@ local row = grafana.row;
 local prometheus = grafana.prometheus;
 local template = grafana.template;
 local graphPanel = grafana.graphPanel;
+local barGaugePanel = import '../../components/bar_gauge_panel.libsonnet';
 local heatmapPanel = grafana.heatmapPanel;
 local link = grafana.link;
 local _config = (import '../config.libsonnet')._config;
@@ -42,6 +43,50 @@ local clusterTemplate =
   );
 
 // Panels
+local summarySevenDaysGraph =
+  grafana.statPanel.new(
+    'Stats(7d)',
+    datasource='$datasource',
+    orientation='vertical',
+    decimals=0,
+    justifyMode='center',
+    graphMode='none'
+  )
+  .addTarget(prometheus.target('sum(avg_over_time(gitpod_ws_manager_workspace_phase_total{phase="RUNNING"}[7d]))' % _config, legendFormat='Avg'))
+  .addTarget(prometheus.target('sum(min_over_time(gitpod_ws_manager_workspace_phase_total{phase="RUNNING"}[7d]))' % _config, legendFormat='Min'))
+  .addTarget(prometheus.target('sum(max_over_time(gitpod_ws_manager_workspace_phase_total{phase="RUNNING"}[7d]))' % _config, legendFormat='Max'))
+;
+
+local summaryByPhaseGraph =
+  barGaugePanel.new(
+    'Workspaces by phase',
+    datasource='$datasource',
+    orientation='horizontal',
+    displayMode='lcd',
+    color={
+      fixedColor: 'semi-dark-orange',
+      mode: 'fixed'
+    },
+    decimals=0
+  )
+  .addTarget(prometheus.target('sum(gitpod_ws_manager_workspace_phase_total{}) by (phase)' % _config, legendFormat='{{ label_name }}'))
+;
+
+local summaryRunningGraph =
+  barGaugePanel.new(
+    'Running workspaces',
+    datasource='$datasource',
+    orientation='horizontal',
+    displayMode='lcd',
+    color={
+      fixedColor: 'green',
+      mode: 'fixed'
+    },
+    decimals=0
+  )
+  .addTarget(prometheus.target('sum(gitpod_ws_manager_workspace_phase_total{phase="RUNNING"}) by (cluster,type)' % _config, legendFormat='{{cluster}}: {{type}}'))
+;
+
 local runningWorkspacesGraph =
   graphPanel.new(
     '$cluster: Running Workspaces',
@@ -187,6 +232,15 @@ local clusterScaleSizeGraph =
       )
       .addTemplate(datasourceTemplate)
       .addTemplate(clusterTemplate)
+      .addRow(
+        row.new(
+          'Summary',
+          collapse=true
+        )
+        .addPanel(summarySevenDaysGraph, gridPos={x:0, y:1, w:8, h: 7})
+        .addPanel(summaryByPhaseGraph, gridPos={x:8, y:1, w:8, h: 7})
+        .addPanel(summaryRunningGraph, gridPos={x:16, y:1, w:24, h: 7})
+      )
       .addRow(
         row.new('Running workspaces')
         .addPanel(runningWorkspacesGraph)

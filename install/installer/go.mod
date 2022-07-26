@@ -21,12 +21,14 @@ require (
 	github.com/gitpod-io/gitpod/ws-proxy v0.0.0-00010101000000-000000000000
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/google/go-cmp v0.5.8
-	github.com/jetstack/cert-manager v1.4.4
+	github.com/jetstack/cert-manager v1.5.0
+	github.com/mikefarah/yq/v4 v4.25.3
 	github.com/replicatedhq/kots v1.67.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/cobra v1.4.0
+	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898
+	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
 	helm.sh/helm/v3 v3.7.1
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
@@ -43,8 +45,8 @@ require (
 	cloud.google.com/go/storage v1.22.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest v0.11.18 // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.9.13 // indirect
+	github.com/Azure/go-autorest/autorest v0.11.19 // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.9.14 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
@@ -58,6 +60,7 @@ require (
 	github.com/Microsoft/hcsshim v0.9.3 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/a8m/envsubst v1.3.0 // indirect
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -90,6 +93,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/eko/gocache v1.1.1 // indirect
 	github.com/elazarl/goproxy v0.0.0-20191011121108-aa519ddbe484 // indirect
+	github.com/elliotchance/orderedmap v1.4.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
@@ -116,6 +120,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/goccy/go-yaml v1.9.5 // indirect
 	github.com/godbus/dbus/v5 v5.0.6 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -167,6 +172,7 @@ require (
 	github.com/ipld/go-codec-dagpb v1.3.0 // indirect
 	github.com/ipld/go-ipld-prime v0.11.0 // indirect
 	github.com/jbenet/goprocess v0.1.4 // indirect
+	github.com/jinzhu/copier v0.3.5 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/jmoiron/sqlx v1.3.1 // indirect
@@ -185,8 +191,9 @@ require (
 	github.com/libp2p/go-libp2p-core v0.8.6 // indirect
 	github.com/libp2p/go-openssl v0.0.7 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
+	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
-	github.com/mattn/go-colorable v0.1.9 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
@@ -244,6 +251,8 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stripe/stripe-go/v72 v72.114.0 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
+	github.com/timtadh/data-structures v0.5.3 // indirect
+	github.com/timtadh/lexmachine v0.2.2 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
@@ -279,7 +288,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.63.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/datatypes v1.0.6 // indirect
 	gorm.io/driver/mysql v1.3.3 // indirect
 	gorm.io/gorm v1.23.5 // indirect

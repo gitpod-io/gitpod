@@ -109,13 +109,8 @@ export class Installer {
             `yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.blockNewUsers | yq prefix - 'blockNewUsers' > ${BLOCK_NEW_USER_CONFIG_PATH}`,
             { slice: slice },
         );
-        exec(
-            `yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing.dynamic.cpu.buckets | yq prefix - 'workspace.resources.dynamicLimits.cpu' > ${WORKSPACE_SIZE_CONFIG_PATH}`,
-            { slice: slice },
-        );
 
         exec(`yq m -i --overwrite ${this.options.installerConfigPath} ${BLOCK_NEW_USER_CONFIG_PATH}`, { slice: slice });
-        exec(`yq m -i ${this.options.installerConfigPath} ${WORKSPACE_SIZE_CONFIG_PATH}`, { slice: slice });
     }
 
     private configureMetadata(slice: string): void {
@@ -239,7 +234,10 @@ EOF`);
     }
 
     private configureUsage(slice: string) {
-        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.enabled true`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.enabled true`, { slice: slice })
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.schedule 1m`, { slice: slice })
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.creditsPerMinuteByWorkspaceClass['default'] 0.1666666667`, { slice: slice })
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.creditsPerMinuteByWorkspaceClass['gitpodio-internal-xl'] 0.3333333333`, { slice: slice })
     }
 
     private configureConfigCat(slice: string) {

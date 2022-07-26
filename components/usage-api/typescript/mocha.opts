@@ -1,0 +1,6 @@
+--require ts-node/register
+--require reflect-metadata/Reflect
+--require source-map-support/register
+--reporter spec
+--watch-extensions ts
+--exit

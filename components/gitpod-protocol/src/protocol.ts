@@ -45,6 +45,9 @@ export interface User {
     markedDeleted?: boolean;
 
     additionalData?: AdditionalUserData;
+
+    // Identifies an explicit team or user ID to which all the user's workspace usage should be attributed to (e.g. for billing purposes)
+    usageAttributionId?: string;
 }
 
 export namespace User {
@@ -199,8 +202,6 @@ export interface AdditionalUserData {
     knownGitHubOrgs?: string[];
     // Git clone URL pointing to the user's dotfile repo
     dotfileRepo?: string;
-    // Identifies an explicit team or user ID to which all the user's workspace usage should be attributed to (e.g. for billing purposes)
-    usageAttributionId?: string;
     // preferred workspace classes
     workspaceClasses?: WorkspaceClasses;
     // additional user profile data
@@ -694,7 +695,7 @@ export interface Workspace {
 
 export type WorkspaceSoftDeletion = "user" | "gc";
 
-export type WorkspaceType = "regular" | "prebuild" | "probe";
+export type WorkspaceType = "regular" | "prebuild" | "probe"; // TODO(gpl) Removed prove here
 
 export namespace Workspace {
     export function getFullRepositoryName(ws: Workspace): string | undefined {
@@ -1480,4 +1481,12 @@ export interface Terms {
     readonly updateMessage: string;
     readonly content: string;
     readonly formElements?: object;
+}
+
+export interface CostCenter {
+    readonly id: string;
+    /**
+     * Unit: credits
+     */
+    spendingLimit: number;
 }

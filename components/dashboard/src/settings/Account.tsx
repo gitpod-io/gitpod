@@ -6,17 +6,14 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { useContext, useState } from "react";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
-import getSettingsMenu from "./settings-menu";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { PaymentContext } from "../payment-context";
 import ProfileInformation, { ProfileState } from "./ProfileInformation";
+import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
-    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
     const [modal, setModal] = useState(false);
     const primaryEmail = User.getPrimaryEmail(user!) || "";
     const [typedEmail, setTypedEmail] = useState("");
@@ -69,11 +66,7 @@ export default function Account() {
                 <input autoFocus className="w-full" type="text" onChange={(e) => setTypedEmail(e.target.value)}></input>
             </ConfirmationModal>
 
-            <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
-                title="Account"
-                subtitle="Manage account and Git configuration."
-            >
+            <PageWithSettingsSubMenu title="Account" subtitle="Manage account and Git configuration.">
                 <h3>Profile</h3>
                 <form
                     onSubmit={(e) => {
@@ -104,7 +97,7 @@ export default function Account() {
                 <button className="danger secondary" onClick={() => setModal(true)}>
                     Delete Account
                 </button>
-            </PageWithSubMenu>
+            </PageWithSettingsSubMenu>
         </div>
     );
 }

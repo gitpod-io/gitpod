@@ -5,5 +5,7 @@ breaking:
 lint:
   use:
     - DEFAULT
+  except:
+    - ENUM_ZERO_VALUE_SUFFIX
   ignore:
     - google

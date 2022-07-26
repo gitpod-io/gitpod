@@ -78,6 +78,7 @@ import {
     SnapshotContext,
     SSHPublicKeyValue,
     UserSSHPublicKeyValue,
+    PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -114,6 +115,7 @@ import {
     RemotePageMessage,
     RemoteTrackMessage,
 } from "@gitpod/gitpod-protocol/lib/analytics";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { ImageBuilderClientProvider, LogsRequest } from "@gitpod/image-builder/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
@@ -168,6 +170,7 @@ import { Feature } from "@gitpod/licensor/lib/api";
 import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { BillableSession } from "@gitpod/gitpod-protocol/lib/usage";
+import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -199,7 +202,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(WorkspaceManagerClientProvider)
     protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
-    @inject(ImageBuilderClientProvider) protected imageBuilderClientProvider: ImageBuilderClientProvider;
+    @inject(ImageBuilderClientProvider) protected imagebuilderClientProvider: ImageBuilderClientProvider;
+    @inject(WorkspaceClusterImagebuilderClientProvider)
+    protected readonly wsClusterImageBuilderClientProvider: ImageBuilderClientProvider;
 
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(BlockedRepositoryDB) protected readonly blockedRepostoryDB: BlockedRepositoryDB;
@@ -1573,12 +1578,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const logInfo = instance.imageBuildInfo?.log;
         if (!logInfo) {
+            const teams = await this.teamDB.findTeamsByUser(user.id);
             const isOldImageBuildLogsMechanismDeprecated = await getExperimentsClientForBackend().getValueAsync(
                 "deprecateOldImageLogsMechanism",
                 false,
                 {
                     user,
                     projectId: workspace.projectId,
+                    teams,
                 },
             );
             if (isOldImageBuildLogsMechanismDeprecated) {
@@ -1594,7 +1601,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // a change to move the imageBuildLogInfo across the globe.
             log.warn(logCtx, "imageBuild logs: fallback!");
             ctx.span?.setTag("workspace.imageBuild.logs.fallback", true);
-            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, workspace);
+            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, user, workspace);
             return;
         }
 
@@ -1644,6 +1651,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async deprecatedDoWatchWorkspaceImageBuildLogs(
         ctx: TraceContext,
         logCtx: LogContext,
+        user: User,
         workspace: Workspace,
     ) {
         if (!workspace.imageNameResolved) {
@@ -1652,7 +1660,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         try {
-            const imgbuilder = this.imageBuilderClientProvider.getDefault();
+            const imgbuilder = await this.getImageBuilderClient(user, workspace, undefined);
             const req = new LogsRequest();
             req.setCensored(true);
             req.setBuildRef(workspace.imageNameResolved);
@@ -2368,6 +2376,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
+    public async getPrebuildEvents(ctx: TraceContext, projectId: string): Promise<PrebuildEvent[]> {
+        this.checkAndBlockUser("getPrebuildEvents");
+        throw new ResponseError(
+            ErrorCodes.EE_FEATURE,
+            `Prebuild Events are implemented in Gitpod's Enterprise Edition`,
+        );
+    }
+
     public async triggerPrebuild(
         ctx: TraceContext,
         projectId: string,
@@ -2650,7 +2666,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<boolean> {
+    adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
@@ -2858,14 +2874,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw error;
     }
 
-    // from https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address/106223#106223
-    // adapted to allow for hostnames
-    //   from [foo.bar] pumped up to [foo.(foo.)bar]
-    // and also for a trailing path segments
-    //   for example [foo.bar/gitlab]
-    protected validHostNameRegexp =
-        /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(\/([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))?$/;
-
     async updateOwnAuthProvider(
         ctx: TraceContext,
         { entry }: GitpodServer.UpdateOwnAuthProviderParams,
@@ -2890,9 +2898,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
                 const host = safeProvider.host && safeProvider.host.toLowerCase();
 
-                if (!this.validHostNameRegexp.exec(host)) {
-                    log.debug(`Invalid auth provider host.`, { entry, safeProvider });
-                    throw new Error("Invalid host name.");
+                if (!(await this.authProviderService.isHostReachable(host))) {
+                    log.debug(`Host could not be reached.`, { entry, safeProvider });
+                    throw new Error("Host could not be reached.");
                 }
 
                 const hostContext = this.hostContextProvider.get(host);
@@ -3033,6 +3041,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getIDEOptions(ctx: TraceContext): Promise<IDEOptions> {
         const ideConfig = await this.ideConfigService.config;
         return ideConfig.ideOptions;
+    }
+
+    async getSupportedWorkspaceClasses(ctx: TraceContext): Promise<SupportedWorkspaceClass[]> {
+        let classes = this.config.workspaceClasses
+            .filter((c) => !c.deprecated)
+            .map((c) => ({
+                id: c.id,
+                category: c.category,
+                displayName: c.displayName,
+                description: c.description,
+                powerups: c.powerups,
+                isDefault: c.isDefault,
+            }));
+
+        return classes;
     }
 
     //#region gitpod.io concerns
@@ -3184,10 +3207,66 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 
-    async getBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
+    async listBilledUsage(
+        ctx: TraceContext,
+        attributionId: string,
+        from?: number,
+        to?: number,
+    ): Promise<BillableSession[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getSpendingLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async setSpendingLimitForTeam(ctx: TraceContext, teamId: string, spendingLimit: number): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+
+    async setUsageAttribution(ctx: TraceContext, usageAttributionId: string): Promise<void> {
+        const user = this.checkAndBlockUser("setUsageAttribution");
+        try {
+            await this.userService.setUsageAttribution(user, usageAttributionId);
+        } catch (error) {
+            log.error("cannot set usage attribution", error, { userId: user.id, usageAttributionId });
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `cannot set usage attribution`);
+        }
     }
 
     //
     //#endregion
+
+    /**
+     * This method is temporary until we moved image-builder into workspace clusters
+     * @param user
+     * @param workspace
+     * @param instance
+     * @returns
+     */
+    protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        const isMovedImageBuilder = await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", false, {
+            user,
+            projectId: workspace.projectId,
+            teams,
+        });
+        log.info(
+            { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
+            "image-builder in workspace cluster?",
+            {
+                userId: user.id,
+                projectId: workspace.projectId,
+                isMovedImageBuilder,
+            },
+        );
+        if (isMovedImageBuilder) {
+            return this.wsClusterImageBuilderClientProvider.getClient(user, workspace, instance);
+        } else {
+            return this.imagebuilderClientProvider.getClient(user, workspace, instance);
+        }
+    }
+
+    async getNotifications(ctx: TraceContext): Promise<string[]> {
+        this.checkAndBlockUser("getNotifications");
+        return [];
+    }
 }

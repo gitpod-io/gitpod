@@ -53,7 +53,7 @@ func TestGitActions(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				err = git.ConfigSafeDirectory(workspaceRoot)
+				err = git.ConfigSafeDirectory()
 				if err != nil {
 					return err
 				}
@@ -94,7 +94,7 @@ func TestGitActions(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				err = git.ConfigSafeDirectory(workspaceRoot)
+				err = git.ConfigSafeDirectory()
 				if err != nil {
 					return err
 				}

@@ -269,6 +269,10 @@ func (s *Server) initializeGRPC() error {
 	unary := []grpc.UnaryServerInterceptor{
 		grpc_logrus.UnaryServerInterceptor(s.Logger(),
 			grpc_logrus.WithDecider(func(fullMethodName string, err error) bool {
+				// Skip logs for anything that does not contain an error.
+				if err == nil {
+					return false
+				}
 				// Skip gRPC healthcheck logs, they are frequent and pollute our logging infra
 				return fullMethodName != "/grpc.health.v1.Health/Check"
 			}),
@@ -339,6 +343,8 @@ const (
 	BuiltinDebugPort   = 6060
 	BuiltinMetricsPort = 9500
 	BuiltinHealthPort  = 9501
+
+	BuiltinMetricsPortName = "metrics"
 )
 
 type builtinServices struct {

@@ -19,3 +19,7 @@ spec:
     - '{{repl ConfigOption "domain" }}'
     - '*.{{repl ConfigOption "domain" }}'
     - '*.ws.{{repl ConfigOption "domain" }}'
+  secretTemplate:
+    labels:
+      app: gitpod
+      component: gitpod-installer

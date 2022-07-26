@@ -46,10 +46,6 @@ const (
 	// CPULimitAnnotation enforces a strict CPU limit on a workspace by virtue of ws-daemon
 	CPULimitAnnotation = "gitpod.io/cpuLimit"
 
-	// ContainerIsGoneAnnotation is used as workaround for containerd https://github.com/containerd/containerd/pull/4214
-	// which might cause workspace container status propagation to fail, which in turn would keep a workspace running indefinitely.
-	ContainerIsGoneAnnotation = "gitpod.io/containerIsGone"
-
 	// WorkspaceURLAnnotation is the annotation on the WS pod which contains the public workspace URL.
 	WorkspaceURLAnnotation = "gitpod/url"
 

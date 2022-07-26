@@ -54,33 +54,22 @@ func getVMInstanceIPAddress(vm virtv1.VirtualMachineInstance) (string, error) {
 }
 
 func parseVMInstanceIPAddress(obj *unstructured.Unstructured) (string, error) {
-	var vm virtv1.VirtualMachineInstance
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), &vm)
+	var vmi virtv1.VirtualMachineInstance
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), &vmi)
 	if err != nil {
 		return "", errors.Wrap(err, ErrGettingVMIpAddress.Error())
 	}
 
-	return getVMInstanceIPAddress(vm)
+	return getVMInstanceIPAddress(vmi)
 }
 
 func (c *Config) GetVMStatus(ctx context.Context, name, namespace string) error {
-	_, err := c.coreClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
-	if err != nil && !kerrors.IsNotFound(err) {
+	vmi, err := c.getVMI(ctx, name, namespace)
+	if err != nil {
 		return err
 	}
 
-	if kerrors.IsNotFound(err) {
-		c.logger.Infof("namespace [%s] not found", namespace)
-		return errors.Wrap(ErrVmNotReady, err.Error())
-	}
-
-	vmClient := c.dynamicClient.Resource(vmInstanceResource).Namespace(namespace)
-	res, err := vmClient.Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return errors.Wrap(ErrVmNotReady, err.Error())
-	}
-
-	ip, err := parseVMInstanceIPAddress(res)
+	ip, err := getVMInstanceIPAddress(*vmi)
 	if err != nil {
 		return errors.Wrap(ErrVmNotReady, err.Error())
 	}
@@ -90,6 +79,16 @@ func (c *Config) GetVMStatus(ctx context.Context, name, namespace string) error 
 	}
 
 	return nil
+}
+
+func (c *Config) GetVMICreationTimestamp(ctx context.Context, name, namespace string) (*metav1.Time, error) {
+	vmi, err := c.getVMI(ctx, name, namespace)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &vmi.ObjectMeta.CreationTimestamp, nil
 }
 
 func (c *Config) WaitVMReady(ctx context.Context, name, namespace string, doneCh chan struct{}) error {
@@ -162,4 +161,30 @@ func (c *Config) GetVMs(ctx context.Context) ([]string, error) {
 	}
 
 	return vms, nil
+}
+
+func (c *Config) getVMI(ctx context.Context, name, namespace string) (*virtv1.VirtualMachineInstance, error) {
+	_, err := c.coreClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	if err != nil && !kerrors.IsNotFound(err) {
+		return nil, errors.Wrap(ErrVmNotReady, err.Error())
+	}
+
+	if kerrors.IsNotFound(err) {
+		c.logger.Infof("namespace [%s] not found", namespace)
+		return nil, errors.Wrap(ErrVmNotReady, err.Error())
+	}
+
+	vmClient := c.dynamicClient.Resource(vmInstanceResource).Namespace(namespace)
+	res, err := vmClient.Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(ErrVmNotReady, err.Error())
+	}
+
+	var vmi virtv1.VirtualMachineInstance
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), &vmi)
+	if err != nil {
+		return nil, errors.Wrap(ErrVmNotReady, err.Error())
+	}
+
+	return &vmi, nil
 }

@@ -193,18 +193,134 @@ spec:
           - pass:
               message: Cert-manager is installed and available.
     - nodeResources:
-        checkName: CPU Cores per node
+        checkName: CPU Cores per workload_meta node
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_meta: "true"
         outcomes:
           - fail:
               when: "min(cpuCapacity) < 2"
-              message: The cluster must contain at least 2 cores
+              message: The nodes must contain at least 2 cores
           - warn:
               when: "min(cpuCapacity) < 4"
-              message: The cluster must contain at least 4 cores
+              message: The nodes must contain at least 4 cores
           - pass:
-              message: There are at least 4 cores in the cluster
+              message: There are at least 4 cores in the nodes
     - nodeResources:
-        checkName: Memory per node
+        checkName: CPU Cores per workload_ide node
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_ide: "true"
+        outcomes:
+          - fail:
+              when: "min(cpuCapacity) < 2"
+              message: The nodes must contain at least 2 cores
+          - pass:
+              message: There are at least 2 cores in the nodes
+    - nodeResources:
+        checkName: CPU Cores per workload_workspace_services node
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_workspace_services: "true"
+        outcomes:
+          - fail:
+              when: "min(cpuCapacity) < 2"
+              message: The nodes must contain at least 2 cores
+          - warn:
+              when: "min(cpuCapacity) < 4"
+              message: The nodes must contain at least 4 cores
+          - pass:
+              message: There are at least 4 cores in the nodes
+    - nodeResources:
+        checkName: CPU Cores per workload_workspace_regular node
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_workspace_regular: "true"
+        outcomes:
+          - fail:
+              when: "min(cpuCapacity) < 2"
+              message: The nodes must contain at least 2 cores
+          - warn:
+              when: "min(cpuCapacity) < 4"
+              message: The nodes must contain at least 4 cores
+          - pass:
+              message: There are at least 4 cores in the nodes
+    - nodeResources:
+        checkName: CPU Cores per workload_workspace_headless node
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_workspace_headless: "true"
+        outcomes:
+          - fail:
+              when: "min(cpuCapacity) < 2"
+              message: The nodes must contain at least 2 cores
+          - warn:
+              when: "min(cpuCapacity) < 4"
+              message: The nodes must contain at least 4 cores
+          - pass:
+              message: There are at least 4 cores in the nodes
+    - nodeResources:
+        checkName: Memory per workload_meta node
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_meta: "true"
+        outcomes:
+          - fail:
+              when: "min(memoryCapacity) < 8G"
+              message: Each node must have at least 8GB of memory
+          - warn:
+              when: "min(memoryCapacity) < 16G"
+              message: Each node must have at least 16GB of memory
+          - pass:
+              message: Each node has at least 16GB of memory
+    - nodeResources:
+        checkName: Memory per workload_ide node
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_ide: "true"
+        outcomes:
+          - fail:
+              when: "min(memoryCapacity) < 4G"
+              message: Each node must have at least 4GB of memory
+          - pass:
+              message: Each node has at least 4GB of memory
+    - nodeResources:
+        checkName: Memory per workload_workspace_services node
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_workspace_services: "true"
+        outcomes:
+          - fail:
+              when: "min(memoryCapacity) < 16G"
+              message: Each node must have at least 16GB of memory
+          - pass:
+              message: Each node has at least 16GB of memory
+    - nodeResources:
+        checkName: Memory per workload_workspace_regular node
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_workspace_regular: "true"
+        outcomes:
+          - fail:
+              when: "min(memoryCapacity) < 16G"
+              message: Each node must have at least 16GB of memory
+          - pass:
+              message: Each node has at least 16GB of memory
+    - nodeResources:
+        checkName: Memory per workload_workspace_headless node
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_workspace_headless: "true"
         outcomes:
           - fail:
               when: "min(memoryCapacity) < 16G"

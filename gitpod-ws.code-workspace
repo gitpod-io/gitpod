@@ -15,6 +15,7 @@
         { "path": "components/registry-facade" },
         { "path": "components/service-waiter" },
         { "path": "components/supervisor" },
+        { "path": "components/usage" },
         { "path": "components/workspacekit" },
         { "path": "components/ws-daemon" },
         { "path": "components/ws-manager" },
@@ -23,9 +24,11 @@
         { "path": "dev/blowtorch" },
         { "path": "dev/changelog" },
         { "path": "dev/gpctl" },
+        { "path": "dev/gp-gcloud" },
         { "path": "dev/loadgen" },
         { "path": "install/installer" },
-        { "path": "install/preview" }
+        { "path": "install/preview" },
+        { "path": "dev/ready-probe-labeler" },
     ],
     "settings": {
         "typescript.tsdk": "gitpod/node_modules/typescript/lib",

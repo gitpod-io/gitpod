@@ -7,6 +7,7 @@ package proxy
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
@@ -64,9 +65,9 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ServicePort:   ContainerHTTPSPort,
 		},
 		{
-			Name:          MetricsContainerName,
-			ContainerPort: PrometheusPort,
-			ServicePort:   PrometheusPort,
+			Name:          baseserver.BuiltinMetricsPortName,
+			ContainerPort: baseserver.BuiltinMetricsPort,
+			ServicePort:   baseserver.BuiltinMetricsPort,
 		},
 	}
 	if ctx.Config.SSHGatewayHostKey != nil {

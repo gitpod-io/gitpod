@@ -669,6 +669,7 @@ func configureGit(cfg *Config, childProcEnvvars []string) {
 		{"push.default", "simple"},
 		{"alias.lg", "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"},
 		{"credential.helper", "/usr/bin/gp credential-helper"},
+		{"safe.directory", "*"},
 	}
 	if cfg.GitUsername != "" {
 		settings = append(settings, []string{"user.name", cfg.GitUsername})
@@ -1130,14 +1131,14 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		return metricStore.GetMetricFamilies(), nil
 	})}
 
-	metrics := route.New()
-	metrics.Get("/", promhttp.HandlerFor(metricsGatherer, promhttp.HandlerOpts{}).ServeHTTP)
+	metrics := route.New().WithPrefix("/metrics")
 	metrics.Put("/job/:job/*labels", handler.Push(metricStore, true, true, false, nil))
 	metrics.Post("/job/:job/*labels", handler.Push(metricStore, false, true, false, nil))
 	metrics.Del("/job/:job/*labels", handler.Delete(metricStore, false, nil))
 	metrics.Put("/job/:job", handler.Push(metricStore, true, true, false, nil))
 	metrics.Post("/job/:job", handler.Push(metricStore, false, true, false, nil))
-	routes.Handle("/metrics", metrics)
+	routes.Handle("/metrics", promhttp.HandlerFor(metricsGatherer, promhttp.HandlerOpts{}))
+	routes.Handle("/metrics/", metrics)
 
 	ideURL, _ := url.Parse(fmt.Sprintf("http://localhost:%d", cfg.IDEPort))
 	routes.Handle("/", httputil.NewSingleHostReverseProxy(ideURL))
@@ -1326,7 +1327,10 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		fnReady = "/.workspace/.gitpod/ready"
 		log.Info("Detected content.json in /.workspace folder, assuming PVC feature enabled")
 	}
-	f, err := os.Open(fn)
+
+	var contentFile *os.File
+
+	contentFile, err = os.Open(fn)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			log.WithError(err).Error("cannot open init descriptor")
@@ -1363,7 +1367,10 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		return
 	}
 
-	src, err := executor.Execute(ctx, "/workspace", f, true)
+	defer contentFile.Close()
+
+	var src csapi.WorkspaceInitSource
+	src, err = executor.Execute(ctx, "/workspace", contentFile, true)
 	if err != nil {
 		return
 	}
@@ -1373,6 +1380,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		// file is gone - we're good
 		err = nil
 	}
+
 	if err != nil {
 		return
 	}

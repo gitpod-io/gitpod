@@ -46,6 +46,8 @@ import {
     FindPrebuildsParams,
     TeamMemberRole,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+    WorkspaceType,
+    PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -63,14 +65,14 @@ import { LicenseKeySource } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { LicenseValidationResult, LicenseFeature } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
-import { LicenseDB } from "@gitpod/gitpod-db/lib";
-import { ResourceAccessGuard } from "../../../src/auth/resource-access";
+import { CostCenterDB, LicenseDB } from "@gitpod/gitpod-db/lib";
+import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
 import { AccountStatement, CreditAlert, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import { BillableSession, billableSessionDummyData } from "@gitpod/gitpod-protocol/lib/usage";
+import { BillableSession } from "@gitpod/gitpod-protocol/lib/usage";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -105,6 +107,10 @@ import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { CachingUsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
+import * as usage from "@gitpod/usage-api/lib/usage/v1/usage_pb";
+import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -143,6 +149,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(UserCounter) protected readonly userCounter: UserCounter;
 
     @inject(UserService) protected readonly userService: UserService;
+
+    @inject(CachingUsageServiceClientProvider)
+    protected readonly usageServiceClientProvider: CachingUsageServiceClientProvider;
+
+    @inject(CostCenterDB) protected readonly costCenterDB: CostCenterDB;
 
     initialize(
         client: GitpodClient | undefined,
@@ -653,24 +664,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminCreateBlockedRepository", { urlRegexp, blockUser }, Permission.ADMIN_USERS);
 
-        try {
-            return await this.blockedRepostoryDB.createBlockedRepository(urlRegexp, blockUser);
-        } catch (e) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
-        }
+        return await this.blockedRepostoryDB.createBlockedRepository(urlRegexp, blockUser);
     }
 
-    async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<boolean> {
+    async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
         traceAPIParams(ctx, { id });
         await this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
 
-        try {
-            return await this.blockedRepostoryDB.deleteBlockedRepository(id);
-        } catch (e) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
-        }
+        await this.blockedRepostoryDB.deleteBlockedRepository(id);
     }
 
     async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
@@ -1493,22 +1496,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.updateTeamSubscriptionQuantity(ts2);
             await this.teamSubscription2Service.addTeamMemberSubscription(ts2, userId);
         }
-        const [teamCustomer, user] = await Promise.all([
-            this.stripeService.findCustomerByTeamId(teamId),
-            this.userDB.findUserById(userId),
-        ]);
-        if (teamCustomer && user && !user.additionalData?.usageAttributionId) {
-            // If the user didn't explicitly choose yet where their usage should be attributed to, and
-            // they join a team which accepts usage attribution (i.e. with usage-based billing enabled),
-            // then we simplify the UX by automatically attributing the user's usage to that team.
-            // Note: This default choice can be changed at any time by the user in their billing settings.
-            const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(teamCustomer.id);
-            if (subscription) {
-                user.additionalData = user.additionalData || {};
-                user.additionalData.usageAttributionId = `team:${teamId}`;
-                await this.userDB.updateUserPartial(user);
-            }
-        }
     }
 
     protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
@@ -1517,14 +1504,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (ts2) {
             await this.updateTeamSubscriptionQuantity(ts2);
             await this.teamSubscription2Service.cancelTeamMemberSubscription(ts2, userId, teamMembershipId, now);
-        }
-        const user = await this.userDB.findUserById(userId);
-        if (user && user.additionalData?.usageAttributionId === `team:${teamId}`) {
-            // If the user previously attributed all their usage to a given team, but they are now leaving this
-            // team, then the currently selected usage attribution ID is no longer valid. In this case, we must
-            // reset this ID to the default value.
-            user.additionalData.usageAttributionId = undefined;
-            await this.userDB.updateUserPartial(user);
         }
     }
 
@@ -2004,6 +1983,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    protected defaultSpendingLimit = 100;
     async subscribeTeamToStripe(
         ctx: TraceContext,
         teamId: string,
@@ -2020,6 +2000,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 customer = await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
             }
             await this.stripeService.createSubscriptionForCustomer(customer.id, currency);
+
+            const attributionId = AttributionId.render({ kind: "team", teamId });
+
+            // Creating a cost center for this team
+            await this.costCenterDB.storeEntry({
+                id: attributionId,
+                spendingLimit: this.defaultSpendingLimit,
+            });
+
             // For all team members that didn't explicitly choose yet where their usage should be attributed to,
             // we simplify the UX by automatically attributing their usage to this recently-upgraded team.
             // Note: This default choice can be changed at any time by members in their personal billing settings.
@@ -2027,10 +2016,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await Promise.all(
                 members.map(async (m) => {
                     const u = await this.userDB.findUserById(m.userId);
-                    if (u && !u.additionalData?.usageAttributionId) {
-                        u.additionalData = u.additionalData || {};
-                        u.additionalData.usageAttributionId = `team:${teamId}`;
-                        await this.userDB.updateUserPartial(u);
+                    if (u && !u.usageAttributionId) {
+                        u.usageAttributionId = attributionId;
+                        await this.userDB.storeUser(u);
                     }
                 }),
             );
@@ -2057,8 +2045,139 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async getBilledUsage(ctx: TraceContext, attributionId: string): Promise<BillableSession[]> {
-        return billableSessionDummyData;
+    async getSpendingLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
+        const user = this.checkAndBlockUser("getSpendingLimitForTeam");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.guardTeamOperation(teamId, "get");
+
+        const attributionId = AttributionId.render({ kind: "team", teamId });
+        await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
+
+        const costCenter = await this.costCenterDB.findById(attributionId);
+        if (costCenter) {
+            return costCenter.spendingLimit;
+        }
+        return undefined;
+    }
+
+    async setSpendingLimitForTeam(ctx: TraceContext, teamId: string, spendingLimit: number): Promise<void> {
+        const user = this.checkAndBlockUser("setSpendingLimitForTeam");
+        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.guardTeamOperation(teamId, "update");
+        if (typeof spendingLimit !== "number" || spendingLimit < 0) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unexpected `spendingLimit` value.");
+        }
+        const attributionId = AttributionId.render({ kind: "team", teamId });
+        await this.guardCostCenterAccess(ctx, user.id, attributionId, "update");
+
+        await this.costCenterDB.storeEntry({
+            id: AttributionId.render({ kind: "team", teamId }),
+            spendingLimit,
+        });
+    }
+
+    async getNotifications(ctx: TraceContext): Promise<string[]> {
+        const result = await super.getNotifications(ctx);
+        const user = this.checkAndBlockUser("getNotifications");
+        if (user.usageAttributionId) {
+            const allSessions = await this.listBilledUsage(ctx, user.usageAttributionId);
+            const totalUsage = allSessions.map((s) => s.credits).reduce((a, b) => a + b, 0);
+            const costCenter = await this.costCenterDB.findById(user.usageAttributionId);
+            if (costCenter) {
+                if (totalUsage > costCenter.spendingLimit) {
+                    result.unshift("The spending limit is reached.");
+                } else if (totalUsage > 0.8 * costCenter.spendingLimit * 0.8) {
+                    result.unshift("The spending limit is almost reached.");
+                }
+            } else {
+                log.warn("No costcenter found.", { userId: user.id, attributionId: user.usageAttributionId });
+            }
+        }
+        return result;
+    }
+
+    async listBilledUsage(
+        ctx: TraceContext,
+        attributionId: string,
+        from?: number,
+        to?: number,
+    ): Promise<BillableSession[]> {
+        traceAPIParams(ctx, { attributionId });
+        let timestampFrom;
+        let timestampTo;
+        const user = this.checkAndBlockUser("listBilledUsage");
+
+        await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
+
+        if (from) {
+            timestampFrom = Timestamp.fromDate(new Date(from));
+        }
+        if (to) {
+            timestampTo = Timestamp.fromDate(new Date(to));
+        }
+        const usageClient = this.usageServiceClientProvider.getDefault();
+        const response = await usageClient.listBilledUsage(ctx, attributionId, timestampFrom, timestampTo);
+        const sessions = response.getSessionsList().map((s) => this.mapBilledSession(s));
+
+        return sessions;
+    }
+
+    protected async guardCostCenterAccess(
+        ctx: TraceContext,
+        userId: string,
+        attributionId: string,
+        operation: ResourceAccessOp,
+    ): Promise<void> {
+        traceAPIParams(ctx, { userId, attributionId });
+
+        // TODO(gpl) We need a CostCenter entity (with a strong connection to Team or User) to properly to authorize access to these reports
+        // const costCenter = await this.costCenterDB.findByAttributionId(attributionId);
+        const parsedId = AttributionId.parse(attributionId);
+        if (parsedId === undefined) {
+            log.warn({ userId }, "Unable to parse attributionId", { attributionId });
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
+        }
+
+        let owner: GuardedCostCenter["owner"];
+        switch (parsedId.kind) {
+            case "team":
+                const team = await this.teamDB.findTeamById(parsedId.teamId);
+                if (!team) {
+                    throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+                }
+                const members = await this.teamDB.findMembersByTeam(team.id);
+                owner = { kind: "team", team, members };
+                break;
+            case "user":
+                owner = { kind: "user", userId };
+                break;
+            default:
+                throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid attributionId");
+        }
+
+        await this.guardAccess({ kind: "costCenter", /*subject: costCenter,*/ owner }, operation);
+    }
+
+    protected mapBilledSession(s: usage.BilledSession): BillableSession {
+        function mandatory<T>(v: T, m: (v: T) => string = (s) => "" + s): string {
+            if (!v) {
+                throw new Error(`Empty value in usage.BilledSession for instanceId '${s.getInstanceId()}'`);
+            }
+            return m(v);
+        }
+        return {
+            attributionId: mandatory(s.getAttributionId()),
+            userId: s.getUserId() || undefined,
+            teamId: s.getTeamId() || undefined,
+            projectId: s.getProjectId() || undefined,
+            workspaceId: mandatory(s.getWorkspaceId()),
+            instanceId: mandatory(s.getInstanceId()),
+            workspaceType: mandatory(s.getWorkspaceType()) as WorkspaceType,
+            workspaceClass: s.getWorkspaceClass(),
+            startTime: mandatory(s.getStartTime(), (t) => t!.toDate().toISOString()),
+            endTime: s.getEndTime()?.toDate().toISOString(),
+            credits: s.getCredits(), // optional
+        };
     }
 
     // (SaaS) – admin
@@ -2215,6 +2334,20 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         return repositories;
+    }
+
+    public async getPrebuildEvents(ctx: TraceContext, projectId: string): Promise<PrebuildEvent[]> {
+        traceAPIParams(ctx, { projectId });
+        const user = this.checkAndBlockUser("getPrebuildEvents");
+
+        const project = await this.projectsService.getProject(projectId);
+        if (!project) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
+        }
+        await this.guardProjectOperation(user, projectId, "get");
+
+        const events = await this.projectsService.getPrebuildEvents(project.cloneUrl);
+        return events;
     }
 
     async triggerPrebuild(

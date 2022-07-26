@@ -29,10 +29,10 @@ export async function triggerIntegrationTests(werft: Werft, config: JobConfig, u
 
         exec(`git config --global user.name "${username}"`);
         const annotations = [
-            `version=${imageVersion}`,
-            `namespace=${config.previewEnvironment.namespace}`,
-            `username=${username}`,
-            `updateGitHubStatus=gitpod-io/gitpod`,
+            `version="${imageVersion}"`,
+            `namespace="${config.previewEnvironment.namespace}"`,
+            `username="${username}"`,
+            `updateGitHubStatus="gitpod-io/gitpod"`,
         ]
             .map((annotation) => `-a ${annotation}`)
             .join(" ");

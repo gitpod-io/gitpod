@@ -48,6 +48,8 @@ import { parseProps } from "./start/StartWorkspace";
 import SelectIDEModal from "./settings/SelectIDEModal";
 import { StartPage, StartPhase } from "./start/StartPage";
 import { isGitpodIo } from "./utils";
+import { BlockedRepositories } from "./admin/BlockedRepositories";
+import { AppNotifications } from "./AppNotifications";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -73,6 +75,7 @@ const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projec
 const ConfigureProject = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ConfigureProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Projects"));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Project"));
+const Events = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Events"));
 const ProjectSettings = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ProjectSettings"));
 const ProjectVariables = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/ProjectVariables"));
 const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ "./projects/Prebuilds"));
@@ -344,6 +347,7 @@ function App() {
         <Route>
             <div className="container">
                 <Menu />
+                <AppNotifications />
                 <Switch>
                     <Route path={projectsPathNew} exact component={NewProject} />
                     <Route path="/open" exact component={Open} />
@@ -364,6 +368,7 @@ function App() {
                     <AdminRoute path="/admin/teams" component={TeamsSearch} />
                     <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
                     <AdminRoute path="/admin/projects" component={ProjectsSearch} />
+                    <AdminRoute path="/admin/blocked-repositories" component={BlockedRepositories} />
                     <AdminRoute path="/admin/license" component={License} />
                     <AdminRoute path="/admin/settings" component={AdminSettings} />
 
@@ -395,6 +400,9 @@ function App() {
                             path={projectsPathMainWithParams}
                             render={(props) => {
                                 const { resourceOrPrebuild } = props.match.params;
+                                if (resourceOrPrebuild === "events") {
+                                    return <Events />;
+                                }
                                 if (resourceOrPrebuild === "prebuilds") {
                                     return <Prebuilds />;
                                 }
@@ -443,6 +451,9 @@ function App() {
                                     }
                                     if (maybeProject === "usage") {
                                         return <TeamUsage />;
+                                    }
+                                    if (resourceOrPrebuild === "events") {
+                                        return <Events />;
                                     }
                                     if (resourceOrPrebuild === "prebuilds") {
                                         return <Prebuilds />;

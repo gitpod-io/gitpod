@@ -12,6 +12,4 @@ const (
 	Component      = common.ImageBuilderComponent
 	RPCPort        = common.ImageBuilderRPCPort
 	RPCPortName    = "service"
-	PProfPort      = 6060
-	PrometheusPort = 9500
 )

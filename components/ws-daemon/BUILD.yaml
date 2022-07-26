@@ -63,8 +63,11 @@ packages:
       - :app
       - :content-initializer
       - components/ws-daemon/nsinsider:app
+      - dev/ready-probe-labeler:app
     argdeps:
       - imageRepoBase
+    srcs:
+      - default.gitconfig
     config:
       buildArgs:
         VERSION: ${version}

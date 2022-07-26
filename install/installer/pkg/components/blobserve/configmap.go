@@ -10,6 +10,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
 	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
@@ -39,18 +40,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PrePull: []string{},
 					Workdir: "/ide",
 					Replacements: []blobserve.StringReplacement{{
-						Search:      "vscode-webview.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
-					}, {
-						Search:      "vscode-webview.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
-					}, {
-						Search:      "vscode-webview.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
-					}, {
 						Search:      "vscode-cdn.net",
 						Replacement: ctx.Config.Domain,
 						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
@@ -69,6 +58,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}, {
 						Search:      "open-vsx.org",
 						Replacement: openVSXProxyUrl,
+						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
+					}, {
+						Search:      "ide.gitpod.io/code/markeplace.json",
+						Replacement: fmt.Sprintf("ide.%s/code/marketplace.json", ctx.Config.Domain),
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
 					}},
 					InlineStatic: []blobserve.InlineReplacement{{
@@ -99,8 +92,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 		AuthCfg:            "/mnt/pull-secret.json",
-		PProfAddr:          ":6060",
-		PrometheusAddr:     "127.0.0.1:9500",
+		PProfAddr:          common.LocalhostAddressFromPort(baseserver.BuiltinDebugPort),
+		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 	}
 

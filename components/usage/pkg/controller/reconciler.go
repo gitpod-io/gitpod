@@ -6,14 +6,13 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
+	"database/sql"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
+	"math"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -32,11 +31,19 @@ func (f ReconcilerFunc) Reconcile() error {
 type UsageReconciler struct {
 	nowFunc           func() time.Time
 	conn              *gorm.DB
+	pricer            *WorkspacePricer
 	billingController BillingController
+	contentService    contentservice.Interface
 }
 
-func NewUsageReconciler(conn *gorm.DB, billingController BillingController) *UsageReconciler {
-	return &UsageReconciler{conn: conn, billingController: billingController, nowFunc: time.Now}
+func NewUsageReconciler(conn *gorm.DB, pricer *WorkspacePricer, billingController BillingController, contentService contentservice.Interface) *UsageReconciler {
+	return &UsageReconciler{
+		conn:              conn,
+		pricer:            pricer,
+		billingController: billingController,
+		contentService:    contentService,
+		nowFunc:           time.Now,
+	}
 }
 
 type UsageReconcileStatus struct {
@@ -65,25 +72,16 @@ func (u *UsageReconciler) Reconcile() (err error) {
 	}
 	log.WithField("usage_reconcile_status", status).Info("Reconcile completed.")
 
-	// For now, write the report to a temp directory so we can manually retrieve it
-	dir := os.TempDir()
-	f, err := ioutil.TempFile(dir, fmt.Sprintf("%s-*", now.Format(time.RFC3339)))
+	err = db.CreateUsageRecords(ctx, u.conn, usageReportToUsageRecords(report, u.pricer, u.nowFunc().UTC()))
 	if err != nil {
-		return fmt.Errorf("failed to create temporary file: %w", err)
-	}
-	defer f.Close()
-
-	enc := json.NewEncoder(f)
-	err = enc.Encode(report)
-	if err != nil {
-		return fmt.Errorf("failed to marshal report to JSON: %w", err)
+		return fmt.Errorf("failed to write usage records to database: %s", err)
 	}
 
-	stat, err := f.Stat()
+	filename := fmt.Sprintf("%s.gz", now.Format(time.RFC3339))
+	err = u.contentService.UploadUsageReport(ctx, filename, report)
 	if err != nil {
-		return fmt.Errorf("failed to get file stats: %w", err)
+		return fmt.Errorf("failed to upload usage report: %w", err)
 	}
-	log.Infof("Wrote usage report into %s", filepath.Join(dir, stat.Name()))
 
 	return nil
 }
@@ -109,12 +107,15 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 
 	instancesByAttributionID := groupInstancesByAttributionID(instances)
 
-	u.billingController.Reconcile(ctx, now, instancesByAttributionID)
+	err = u.billingController.Reconcile(ctx, now, instancesByAttributionID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to reconcile billing: %w", err)
+	}
 
 	return status, instancesByAttributionID, nil
 }
 
-type UsageReport map[db.AttributionID][]db.WorkspaceInstance
+type UsageReport map[db.AttributionID][]db.WorkspaceInstanceForUsage
 
 func (u UsageReport) CreditSummaryForTeams(pricer *WorkspacePricer, maxStopTime time.Time) map[string]int64 {
 	creditsPerTeamID := map[string]int64{}
@@ -125,17 +126,12 @@ func (u UsageReport) CreditSummaryForTeams(pricer *WorkspacePricer, maxStopTime 
 			continue
 		}
 
-		var credits int64
+		var credits float64
 		for _, instance := range instances {
-			runtime := instance.WorkspaceRuntimeSeconds(maxStopTime)
-			class := defaultWorkspaceClass
-			if instance.WorkspaceClass != "" {
-				class = instance.WorkspaceClass
-			}
-			credits += pricer.Credits(class, runtime)
+			credits += pricer.CreditsUsedByInstance(&instance, maxStopTime)
 		}
 
-		creditsPerTeamID[id] = credits
+		creditsPerTeamID[id] = int64(math.Ceil(credits))
 	}
 
 	return creditsPerTeamID
@@ -146,7 +142,7 @@ type invalidWorkspaceInstance struct {
 	workspaceInstanceID uuid.UUID
 }
 
-func (u *UsageReconciler) loadWorkspaceInstances(ctx context.Context, from, to time.Time) ([]db.WorkspaceInstance, []invalidWorkspaceInstance, error) {
+func (u *UsageReconciler) loadWorkspaceInstances(ctx context.Context, from, to time.Time) ([]db.WorkspaceInstanceForUsage, []invalidWorkspaceInstance, error) {
 	log.Infof("Gathering usage data from %s to %s", from, to)
 	instances, err := db.ListWorkspaceInstancesInRange(ctx, u.conn, from, to)
 	if err != nil {
@@ -159,7 +155,7 @@ func (u *UsageReconciler) loadWorkspaceInstances(ctx context.Context, from, to t
 	return trimmed, invalid, nil
 }
 
-func validateInstances(instances []db.WorkspaceInstance) (valid []db.WorkspaceInstance, invalid []invalidWorkspaceInstance) {
+func validateInstances(instances []db.WorkspaceInstanceForUsage) (valid []db.WorkspaceInstanceForUsage, invalid []invalidWorkspaceInstance) {
 	for _, i := range instances {
 		// i is a pointer to the current element, we need to assign it to ensure we're copying the value, not the current pointer.
 		instance := i
@@ -193,8 +189,8 @@ func validateInstances(instances []db.WorkspaceInstance) (valid []db.WorkspaceIn
 }
 
 // trimStartStopTime ensures that start time or stop time of an instance is never outside of specified start or stop time range.
-func trimStartStopTime(instances []db.WorkspaceInstance, maximumStart, minimumStop time.Time) []db.WorkspaceInstance {
-	var updated []db.WorkspaceInstance
+func trimStartStopTime(instances []db.WorkspaceInstanceForUsage, maximumStart, minimumStop time.Time) []db.WorkspaceInstanceForUsage {
+	var updated []db.WorkspaceInstanceForUsage
 
 	for _, instance := range instances {
 		if instance.CreationTime.Time().Before(maximumStart) {
@@ -210,15 +206,49 @@ func trimStartStopTime(instances []db.WorkspaceInstance, maximumStart, minimumSt
 	return updated
 }
 
-func groupInstancesByAttributionID(instances []db.WorkspaceInstance) map[db.AttributionID][]db.WorkspaceInstance {
-	result := map[db.AttributionID][]db.WorkspaceInstance{}
+func groupInstancesByAttributionID(instances []db.WorkspaceInstanceForUsage) UsageReport {
+	result := map[db.AttributionID][]db.WorkspaceInstanceForUsage{}
 	for _, instance := range instances {
 		if _, ok := result[instance.UsageAttributionID]; !ok {
-			result[instance.UsageAttributionID] = []db.WorkspaceInstance{}
+			result[instance.UsageAttributionID] = []db.WorkspaceInstanceForUsage{}
 		}
 
 		result[instance.UsageAttributionID] = append(result[instance.UsageAttributionID], instance)
 	}
 
 	return result
+}
+
+func usageReportToUsageRecords(report UsageReport, pricer *WorkspacePricer, now time.Time) []db.WorkspaceInstanceUsage {
+	var usageRecords []db.WorkspaceInstanceUsage
+
+	for attributionId, instances := range report {
+		for _, instance := range instances {
+			var stoppedAt sql.NullTime
+			if instance.StoppedTime.IsSet() {
+				stoppedAt = sql.NullTime{Time: instance.StoppedTime.Time(), Valid: true}
+			}
+
+			projectID := ""
+			if instance.ProjectID.Valid {
+				projectID = instance.ProjectID.String
+			}
+
+			usageRecords = append(usageRecords, db.WorkspaceInstanceUsage{
+				InstanceID:     instance.ID,
+				AttributionID:  attributionId,
+				WorkspaceID:    instance.WorkspaceID,
+				ProjectID:      projectID,
+				UserID:         instance.OwnerID,
+				WorkspaceType:  instance.Type,
+				WorkspaceClass: instance.WorkspaceClass,
+				StartedAt:      instance.CreationTime.Time(),
+				StoppedAt:      stoppedAt,
+				CreditsUsed:    pricer.CreditsUsedByInstance(&instance, now),
+				GenerationID:   0,
+			})
+		}
+	}
+
+	return usageRecords
 }

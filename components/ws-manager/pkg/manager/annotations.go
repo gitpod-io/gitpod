@@ -108,7 +108,10 @@ func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotat
 	err := retry.RetryOnConflict(backoff, func() error {
 		pod, err := m.findWorkspacePod(ctx, workspaceID)
 		if err != nil {
-			return fmt.Errorf("cannot find workspace %s: %w", workspaceID, err)
+			if isKubernetesObjNotFoundError(err) {
+				return nil
+			}
+			return fmt.Errorf("cannot mark workspace %s: %w", workspaceID, err)
 		}
 		if pod == nil {
 			return fmt.Errorf("workspace %s does not exist", workspaceID)

@@ -35,7 +35,7 @@ kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-swrlp"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-swrlp-onereplica"}},{"metadata":{"name":"${storageClaimName}"},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"30Gi"}},"volumeMode":"Block","storageClassName":"longhorn"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-tfmk6"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-tfmk6-onereplica"}},{"metadata":{"name":"${storageClaimName}"},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"30Gi"}},"volumeMode":"Block","storageClassName":"longhorn"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
@@ -304,11 +304,16 @@ write_files:
           --disable metrics-server \\
           --flannel-backend=none \\
           --kubelet-arg config=/etc/kubernetes/kubelet-config.json \\
+          --kubelet-arg cgroup-driver=systemd \\
           --kubelet-arg feature-gates=LocalStorageCapacityIsolation=true \\
           --kubelet-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \\
           --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolation=true \\
           --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \\
           --cluster-init
+
+      # Seems like this is a bit flaky now, with k3s not always being ready, and the labeling
+      # failing occasionally. Sleeping for a bit solves it.
+      sleep 10
 
       kubectl label nodes ${vmName} \\
           gitpod.io/workload_meta=true \\
@@ -334,8 +339,8 @@ write_files:
       kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
 
       # install CSI snapshotter CRDs and snapshot controller
-      kubectl apply -f /var/lib/gitpod/manifests/csi-snapshotter-crd.yaml
-      kubectl apply -f /var/lib/gitpod/manifests/csi-snapshot-controller.yaml
+      kubectl apply -f /var/lib/gitpod/manifests/csi-driver.yaml
+      kubectl apply -f /var/lib/gitpod/manifests/csi-config.yaml
 
       cat <<EOF >> /etc/bash.bashrc
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml

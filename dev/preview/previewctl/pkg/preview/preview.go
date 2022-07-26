@@ -9,12 +9,15 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -30,6 +33,8 @@ type Preview struct {
 	kubeClient *k8s.Config
 
 	logger *logrus.Entry
+
+	vmiCreationTime *metav1.Time
 }
 
 func New(branch string, logger *logrus.Logger) (*Preview, error) {
@@ -55,17 +60,20 @@ func New(branch string, logger *logrus.Logger) (*Preview, error) {
 	}
 
 	return &Preview{
-		branch:     branch,
-		namespace:  fmt.Sprintf("preview-%s", GetName(branch)),
-		name:       GetName(branch),
-		kubeClient: harvesterConfig,
-		logger:     logEntry,
+		branch:          branch,
+		namespace:       fmt.Sprintf("preview-%s", GetName(branch)),
+		name:            GetName(branch),
+		kubeClient:      harvesterConfig,
+		logger:          logEntry,
+		vmiCreationTime: nil,
 	}, nil
 }
 
-func (p *Preview) InstallContext(watch bool, timeout time.Duration) error {
+func (p *Preview) InstallContext(wait bool, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+
+	p.logger.WithFields(logrus.Fields{"timeout": timeout}).Infof("Installing context")
 
 	// we use this channel to signal when we've found an event in wait functions, so we know when we're done
 	doneCh := make(chan struct{})
@@ -75,9 +83,9 @@ func (p *Preview) InstallContext(watch bool, timeout time.Duration) error {
 	err := p.kubeClient.GetVMStatus(ctx, p.name, p.namespace)
 	if err != nil && !errors.Is(err, k8s.ErrVmNotReady) {
 		return err
-	} else if errors.Is(err, k8s.ErrVmNotReady) && !watch {
+	} else if errors.Is(err, k8s.ErrVmNotReady) && !wait {
 		return err
-	} else if errors.Is(err, k8s.ErrVmNotReady) && watch {
+	} else if errors.Is(err, k8s.ErrVmNotReady) && wait {
 		err = p.kubeClient.WaitVMReady(ctx, p.name, p.namespace, doneCh)
 		if err != nil {
 			return err
@@ -87,16 +95,16 @@ func (p *Preview) InstallContext(watch bool, timeout time.Duration) error {
 	err = p.kubeClient.GetProxyVMServiceStatus(ctx, p.namespace)
 	if err != nil && !errors.Is(err, k8s.ErrSvcNotReady) {
 		return err
-	} else if errors.Is(err, k8s.ErrSvcNotReady) && !watch {
+	} else if errors.Is(err, k8s.ErrSvcNotReady) && !wait {
 		return err
-	} else if errors.Is(err, k8s.ErrSvcNotReady) && watch {
+	} else if errors.Is(err, k8s.ErrSvcNotReady) && wait {
 		err = p.kubeClient.WaitProxySvcReady(ctx, p.namespace, doneCh)
 		if err != nil {
 			return err
 		}
 	}
 
-	if watch {
+	if wait {
 		for {
 			select {
 			case <-ctx.Done():
@@ -105,6 +113,7 @@ func (p *Preview) InstallContext(watch bool, timeout time.Duration) error {
 				p.logger.Infof("waiting for context install to succeed")
 				err = installContext(p.branch)
 				if err == nil {
+					p.logger.Infof("Successfully installed context")
 					return nil
 				}
 			}
@@ -112,6 +121,36 @@ func (p *Preview) InstallContext(watch bool, timeout time.Duration) error {
 	}
 
 	return installContext(p.branch)
+}
+
+// Same compares two preview envrionments
+//
+// Preview environments are considered the same if they are based on the same underlying
+// branch and the VM hasn't changed.
+//
+func (p *Preview) Same(newPreview *Preview) bool {
+	sameBranch := p.branch == newPreview.branch
+	if !sameBranch {
+		return false
+	}
+
+	ensureVMICreationTime(p)
+	ensureVMICreationTime(newPreview)
+
+	return p.vmiCreationTime.Equal(newPreview.vmiCreationTime)
+}
+
+func ensureVMICreationTime(p *Preview) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if p.vmiCreationTime == nil {
+		creationTime, err := p.kubeClient.GetVMICreationTimestamp(ctx, p.name, p.namespace)
+		p.vmiCreationTime = creationTime
+		if err != nil {
+			p.logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to get creation time")
+		}
+	}
 }
 
 func installContext(branch string) error {

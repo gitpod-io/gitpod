@@ -24,16 +24,56 @@ export class InstallCertificateParams {
     destinationKubeconfig: string;
 }
 
-export async function issueCertificate(werft: Werft, params: IssueCertificateParams, shellOpts: ExecOptions) {
+export async function issueCertificate(werft: Werft, params: IssueCertificateParams, shellOpts: ExecOptions): Promise<boolean> {
     var subdomains = [];
     werft.log(shellOpts.slice, `Subdomains: ${params.additionalSubdomains}`);
     for (const sd of params.additionalSubdomains) {
         subdomains.push(sd);
     }
 
-    exec(`echo "Domain: ${params.domain}, Subdomains: ${subdomains}"`, { slice: shellOpts.slice });
+    werft.log(shellOpts.slice, `"Domain: ${params.domain}, Subdomains: ${subdomains}"`);
     validateSubdomains(werft, shellOpts.slice, params.domain, subdomains);
-    createCertificateResource(werft, shellOpts, params, subdomains);
+
+    const maxAttempts = 5
+    var certReady = false
+    for (var i = 1;i<=maxAttempts;i++) {
+        werft.log(shellOpts.slice, `Creating cert: Attempt ${i}`);
+        createCertificateResource(werft, shellOpts, params, subdomains);
+        werft.log(shellOpts.slice, `Checking for cert readiness: Attempt ${i}`);
+        if (isCertReady(params.certName)) {
+            certReady = true;
+            break;
+        }
+        deleteCertificateResource(werft, shellOpts, params)
+    }
+    if (!certReady) {
+        retrieveFailedCertDebug(params.certName, shellOpts.slice)
+        werft.fail(shellOpts.slice, `Certificate ${params.certName} never reached the Ready state`)
+    }
+    return certReady
+}
+
+function isCertReady(certName: string): boolean {
+    const timeout = "180s"
+    const rc = exec(
+        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`,
+        { dontCheckRc: true },
+    ).code
+    return rc == 0
+}
+
+function retrieveFailedCertDebug(certName: string, slice: string) {
+    const certificateYAML = exec(
+        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs get certificate ${certName} -o yaml`,
+        { silent: true },
+    ).stdout.trim();
+    const certificateDebug = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} cmctl status certificate ${certName} -n certs`);
+    exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs delete certificate ${certName}`, {
+        slice: slice,
+    });
+    reportCertificateError({ certificateName: certName, certifiateYAML: certificateYAML, certificateDebug: certificateDebug }).catch((error: Error) =>
+        console.error("Failed to send message to Slack", error),
+    );
 }
 
 function validateSubdomains(werft: Werft, slice: string, domain: string, subdomains: string[]): void {
@@ -71,47 +111,30 @@ function createCertificateResource(
     && kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f cert.yaml`;
 
     werft.log(shellOpts.slice, "Creating certificate Custom Resource");
-    const rc = exec(cmd, { slice: shellOpts.slice }).code;
+    const rc = exec(cmd, { slice: shellOpts.slice, dontCheckRc: true }).code;
 
     if (rc != 0) {
-        werft.fail(shellOpts.slice, "Failed to create the certificate Custom Resource");
+        werft.fail(shellOpts.slice, `Failed to create the certificate (${params.certName}) Custom Resource`);
+    }
+}
+
+function deleteCertificateResource(
+    werft: Werft,
+    shellOpts: ExecOptions,
+    params: IssueCertificateParams,
+) {
+    const rc = exec(
+        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n ${params.certNamespace} delete ${params.certName}`,
+        { slice: shellOpts.slice, dontCheckRc: true }
+    ).code;
+
+    if (rc != 0) {
+        werft.fail(shellOpts.slice, `Failed to delete the certificate (${params.certName}) Custom Resource`);
     }
 }
 
 export async function installCertificate(werft, params: InstallCertificateParams, shellOpts: ExecOptions) {
-    waitForCertificateReadiness(werft, params.certName, shellOpts.slice);
     copyCachedSecret(werft, params, shellOpts.slice);
-}
-
-function waitForCertificateReadiness(werft: Werft, certName: string, slice: string) {
-    const timeout = "600s";
-    werft.log(slice, "Waiting for certificate readiness");
-    const rc = exec(
-        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`,
-        { dontCheckRc: true },
-    ).code;
-
-    if (rc != 0) {
-        werft.log(
-            slice,
-            "The certificate never became Ready. We are deleting the certificate so that the next job can create a new one",
-        );
-        const certificateYAML = exec(
-            `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs get certificate ${certName} -o yaml`,
-            { silent: true },
-        ).stdout.trim();
-        const certificateDebug = exec(`cmctl status certificate ${certName}`);
-        exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs delete certificate ${certName}`, {
-            slice: slice,
-        });
-        reportCertificateError({ certificateName: certName, certifiateYAML: certificateYAML, certificateDebug: certificateDebug }).catch((error: Error) =>
-            console.error("Failed to send message to Slack", error),
-        );
-        werft.fail(
-            slice,
-            `Timeout while waiting for certificate readiness after ${timeout}. We have deleted the certificate. Please retry your Werft job. The issue has been reported to the Platform team so they can investigate. Sorry for the inconveneince.`,
-        );
-    }
 }
 
 function copyCachedSecret(werft: Werft, params: InstallCertificateParams, slice: string) {
@@ -128,7 +151,7 @@ function copyCachedSecret(werft: Werft, params: InstallCertificateParams, slice:
     | sed 's/${params.certName}/${params.certSecretName}/g' \
     | kubectl --kubeconfig ${params.destinationKubeconfig} apply --namespace=${params.destinationNamespace} -f -`;
 
-    const rc = exec(cmd, { slice: slice }).code;
+    const rc = exec(cmd, { slice: slice, dontCheckRc: true }).code;
 
     if (rc != 0) {
         werft.fail(

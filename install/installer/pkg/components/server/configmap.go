@@ -6,11 +6,15 @@ package server
 
 import (
 	"fmt"
-	"regexp"
+	"net"
+	"strconv"
+	"strings"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -115,26 +119,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	var blockedRepositories []BlockedRepository
-	err = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil && len(cfg.WebApp.Server.BlockedRepositories) > 0 {
-			for _, repo := range cfg.WebApp.Server.BlockedRepositories {
-				_, err := regexp.Compile(repo.UrlRegExp)
-				if err != nil {
-					return fmt.Errorf("invalid regexp %q for blocked user URL: %w", repo.UrlRegExp, err)
-				}
-				blockedRepositories = append(blockedRepositories, BlockedRepository{
-					UrlRegExp: repo.UrlRegExp,
-					BlockUser: repo.BlockUser,
-				})
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	githubApp := GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
@@ -148,6 +132,39 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			githubApp.WebhookSecret = cfg.WebApp.Server.GithubApp.WebhookSecret
 			githubApp.CertSecretName = cfg.WebApp.Server.GithubApp.CertSecretName
 		}
+		return nil
+	})
+
+	workspaceClasses := []WorkspaceClass{
+		{
+			Id:          config.DefaultWorkspaceClass,
+			Category:    GeneralPurpose,
+			DisplayName: strings.Title(config.DefaultWorkspaceClass),
+			Description: "Default workspace class",
+			PowerUps:    1,
+			IsDefault:   true,
+			Deprecated:  false,
+		},
+	}
+	ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.WorkspaceClasses != nil && len(cfg.WebApp.WorkspaceClasses) > 0 {
+			workspaceClasses = nil
+			for _, cl := range cfg.WebApp.WorkspaceClasses {
+				class := WorkspaceClass{
+					Id:          cl.Id,
+					Category:    WorkspaceClassCategory(cl.Category),
+					DisplayName: cl.DisplayName,
+					Description: cl.Description,
+					PowerUps:    cl.PowerUps,
+					IsDefault:   cl.IsDefault,
+					Deprecated:  cl.Deprecated,
+					Marker:      cl.Marker,
+				}
+
+				workspaceClasses = append(workspaceClasses, class)
+			}
+		}
+
 		return nil
 	})
 
@@ -198,7 +215,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		MaxConcurrentPrebuildsPerRef:      10,
 		IncrementalPrebuilds:              IncrementalPrebuilds{CommitHistory: 100, RepositoryPasslist: []string{}},
 		BlockNewUsers:                     ctx.Config.BlockNewUsers,
-		BlockedRepositories:               blockedRepositories,
 		MakeNewUsersAdmin:                 false,
 		DefaultBaseImageRegistryWhitelist: defaultBaseImageRegistryWhitelist,
 		RunDbDeleter:                      runDbDeleter,
@@ -222,6 +238,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		ContentServiceAddr:           "content-service:8080",
 		ImageBuilderAddr:             "image-builder-mk3:8080",
+		UsageServiceAddr:             net.JoinHostPort(usage.Component, strconv.Itoa(usage.GRPCServicePort)),
 		CodeSync:                     CodeSync{},
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
 		EnablePayment:                chargebeeSecret != "" || stripeSecret != "" || stripeConfig != "",
@@ -233,6 +250,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			// default limit for all cloneURLs
 			"*": 50,
 		},
+		WorkspaceClasses: workspaceClasses,
 	}
 
 	fc, err := common.ToJSONString(scfg)

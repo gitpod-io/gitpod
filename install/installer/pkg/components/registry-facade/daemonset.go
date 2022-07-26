@@ -241,15 +241,8 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Name:  "GRPC_GO_RETRY",
 									Value: "on",
 								},
-								{
-									Name: "NODENAME",
-									ValueFrom: &corev1.EnvVarSource{
-										FieldRef: &corev1.ObjectFieldSelector{
-											FieldPath: "spec.nodeName",
-										},
-									},
-								},
 							},
+							common.NodeNameEnv(ctx),
 							envvars,
 						)),
 						VolumeMounts: append(
@@ -302,25 +295,32 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							SuccessThreshold:    1,
 							FailureThreshold:    3,
 						},
-						Lifecycle: &corev1.Lifecycle{
-							PostStart: &corev1.LifecycleHandler{
-								Exec: &corev1.ExecAction{
-									Command: []string{
-										"/bin/bash", "-c", fmt.Sprintf(`wait4x http http://localhost:%v/ready -t30s --expect-status-code 200 && kubectl label --overwrite nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}=true`, ReadinessPort),
-									},
-								},
+					},
+						*common.KubeRBACProxyContainer(ctx),
+						{
+							Name:  "node-labeler",
+							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
+							Command: []string{
+								"/app/ready-probe-labeler",
+								fmt.Sprintf("--label=gitpod.io/registry-facade_ready_ns_%v", ctx.Namespace),
+								fmt.Sprintf(`--probe-url=http://localhost:%v/ready`, ReadinessPort),
 							},
-							PreStop: &corev1.LifecycleHandler{
-								Exec: &corev1.ExecAction{
-									Command: []string{
-										"/bin/bash", "-c", `kubectl label nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}-`,
+							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
+								common.NodeNameEnv(ctx),
+							)),
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Lifecycle: &corev1.Lifecycle{
+								PreStop: &corev1.LifecycleHandler{
+									Exec: &corev1.ExecAction{
+										Command: []string{
+											"/app/ready-probe-labeler",
+											fmt.Sprintf("--label=gitpod.io/registry-facade_ready_ns_%v", ctx.Namespace),
+											"--shutdown",
+										},
 									},
 								},
 							},
 						},
-					},
-
-						*common.KubeRBACProxyContainer(ctx),
 					},
 					Volumes: append([]corev1.Volume{{
 						Name:         "cache",

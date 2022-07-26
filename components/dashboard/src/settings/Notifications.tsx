@@ -8,14 +8,11 @@ import { useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import getSettingsMenu from "./settings-menu";
 import { identifyUser } from "../Analytics";
-import { PaymentContext } from "../payment-context";
+import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 export default function Notifications() {
     const { user, setUser } = useContext(UserContext);
-    const { showPaymentUI, showUsageBasedUI } = useContext(PaymentContext);
     const [isOnboardingMail, setOnboardingMail] = useState(
         !!user?.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
     );
@@ -83,11 +80,7 @@ export default function Notifications() {
 
     return (
         <div>
-            <PageWithSubMenu
-                subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedUI })}
-                title="Notifications"
-                subtitle="Choose when to be notified."
-            >
+            <PageWithSettingsSubMenu title="Notifications" subtitle="Choose when to be notified.">
                 <h3>Email Notification Preferences</h3>
                 <CheckBox
                     title="Account Notifications [required]"
@@ -113,7 +106,7 @@ export default function Notifications() {
                     checked={isDevXMail}
                     onChange={toggleDevXMail}
                 />
-            </PageWithSubMenu>
+            </PageWithSettingsSubMenu>
         </div>
     );
 }

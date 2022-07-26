@@ -210,11 +210,17 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         findStripeSubscriptionIdForTeam: { group: "default", points: 1 },
         subscribeTeamToStripe: { group: "default", points: 1 },
         getStripePortalUrlForTeam: { group: "default", points: 1 },
-        getBilledUsage: { group: "default", points: 1 },
+        listBilledUsage: { group: "default", points: 1 },
         trackEvent: { group: "default", points: 1 },
         trackLocation: { group: "default", points: 1 },
         identifyUser: { group: "default", points: 1 },
         getIDEOptions: { group: "default", points: 1 },
+        getPrebuildEvents: { group: "default", points: 1 },
+        setUsageAttribution: { group: "default", points: 1 },
+        getSpendingLimitForTeam: { group: "default", points: 1 },
+        setSpendingLimitForTeam: { group: "default", points: 1 },
+        getNotifications: { group: "default", points: 1 },
+        getSupportedWorkspaceClasses: { group: "default", points: 1 },
     };
 
     return {
