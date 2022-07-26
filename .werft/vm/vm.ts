@@ -31,7 +31,7 @@ EOF
  * Start a VM
  * Does not wait for the VM to be ready.
  */
-export function startVM(options: { name: string }) {
+export function startVM(options: { name: string, cpu: number, memory: number }) {
     const namespace = `preview-${options.name}`;
     const userDataSecretName = `userdata-${options.name}`;
 
@@ -56,6 +56,8 @@ export function startVM(options: { name: string }) {
             claimName: `${options.name}-${Date.now()}`,
             storageClaimName: `${options.name}-storage-${Date.now()}`,
             userDataSecretName,
+            cpu: options.cpu,
+            memory: options.memory
         }),
         { validate: false },
     );
@@ -97,6 +99,8 @@ export function deleteVM(options: { name: string }) {
             claimName: `${options.name}-${Date.now()}`,
             storageClaimName: `${options.name}-storage-${Date.now()}`,
             userDataSecretName,
+            cpu: 0,
+            memory: 0,
         }),
     );
 

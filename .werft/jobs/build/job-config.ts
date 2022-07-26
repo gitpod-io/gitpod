@@ -30,6 +30,7 @@ export interface JobConfig {
     previewEnvironment: PreviewEnvironmentConfig;
     repository: Repository;
     observability: Observability;
+    withLargeVM: boolean;
 }
 
 export interface PreviewEnvironmentConfig {
@@ -89,6 +90,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const installEELicense = !("without-ee-license" in buildConfig) || mainBuild;
     const withPayment = "with-payment" in buildConfig && !mainBuild;
     const withObservability = "with-observability" in buildConfig && !mainBuild;
+    const withLargeVM = "with-large-vm" in buildConfig && !mainBuild;
     const repository: Repository = {
         owner: context.Repository.owner,
         repo: context.Repository.repo,
@@ -139,6 +141,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withPayment,
         withUpgradeTests,
         workspaceFeatureFlags,
+        withLargeVM,
     };
 
     werft.log("job config", JSON.stringify(jobConfig));
