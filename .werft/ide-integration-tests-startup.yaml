@@ -135,7 +135,7 @@ pod:
           git add README.md
           git commit -m "integration test"
           git push --set-upstream origin $BRANCH
-          werft run github -a with-preview=true
+          werft run github -a with-preview=true -a with-large-vm=true
 
           trap cleanup SIGINT SIGTERM EXIT
 
@@ -172,9 +172,11 @@ pod:
           args=()
           args+=( "-kubeconfig=/home/gitpod/.kube/config" )
           args+=( "-namespace=default" )
+          args+=( "--parallel")
+
           [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
 
-          IDE_TEST_LIST=(/workspace/test/tests/ide/vscode)
+          IDE_TEST_LIST=(/workspace/test/tests/ide/vscode /workspace/test/tests/ide/jetbrains)
           for TEST_PATH in "${IDE_TEST_LIST[@]}"
           do
               TEST_NAME=$(basename "${TEST_PATH}")
@@ -182,7 +184,7 @@ pod:
 
               cd "${TEST_PATH}"
               set +e
-              go test -v ./... "${args[@]}" 2>&1 | tee "${TEST_NAME}".log | werft log slice "test-${TEST_NAME}"
+              go test -v -timeout 30m ./... -args "${args[@]}" 2>&1 | tee "${TEST_NAME}".log | werft log slice "test-${TEST_NAME}"
               RC=${PIPESTATUS[0]}
               set -e
 
