@@ -20,7 +20,7 @@ import (
 )
 
 type Interface interface {
-	UploadUsageReport(ctx context.Context, filename string, report map[db.AttributionID][]db.WorkspaceInstanceForUsage) error
+	UploadUsageReport(ctx context.Context, filename string, report []db.WorkspaceInstanceUsage) error
 }
 
 type Client struct {
@@ -31,7 +31,7 @@ func New(url string) *Client {
 	return &Client{url: url}
 }
 
-func (c *Client) UploadUsageReport(ctx context.Context, filename string, report map[db.AttributionID][]db.WorkspaceInstanceForUsage) error {
+func (c *Client) UploadUsageReport(ctx context.Context, filename string, report []db.WorkspaceInstanceUsage) error {
 	url, err := c.getSignedUploadUrl(ctx, filename)
 	if err != nil {
 		return fmt.Errorf("failed to obtain signed upload URL: %w", err)

@@ -14,29 +14,27 @@ import (
 )
 
 type BillingController interface {
-	Reconcile(ctx context.Context, now time.Time, report UsageReport) error
+	Reconcile(ctx context.Context, report UsageReport) error
 }
 
 type NoOpBillingController struct{}
 
-func (b *NoOpBillingController) Reconcile(_ context.Context, _ time.Time, _ UsageReport) error {
+func (b *NoOpBillingController) Reconcile(_ context.Context, _ UsageReport) error {
 	return nil
 }
 
 type StripeBillingController struct {
-	pricer *WorkspacePricer
-	sc     *stripe.Client
+	sc *stripe.Client
 }
 
-func NewStripeBillingController(sc *stripe.Client, pricer *WorkspacePricer) *StripeBillingController {
+func NewStripeBillingController(sc *stripe.Client) *StripeBillingController {
 	return &StripeBillingController{
-		sc:     sc,
-		pricer: pricer,
+		sc: sc,
 	}
 }
 
-func (b *StripeBillingController) Reconcile(_ context.Context, now time.Time, report UsageReport) error {
-	runtimeReport := report.CreditSummaryForTeams(b.pricer, now)
+func (b *StripeBillingController) Reconcile(_ context.Context, report UsageReport) error {
+	runtimeReport := report.CreditSummaryForTeams()
 
 	err := b.sc.UpdateUsage(runtimeReport)
 	if err != nil {
