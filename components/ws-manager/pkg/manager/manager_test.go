@@ -296,7 +296,7 @@ func TestConnectToWorkspaceDaemon(t *testing.T) {
 				Ctx: context.Background(),
 				WSO: workspaceObjects{},
 			},
-			ExpectedErr: "no nodeName found",
+			ExpectedErr: "workspace without a valid node name",
 		},
 		{
 			Name: "handles no endpoints",
@@ -400,7 +400,7 @@ func TestConnectToWorkspaceDaemon(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) {
 			got, err := manager.connectToWorkspaceDaemon(tt.Args.Ctx, tt.Args.WSO)
 			if (err != nil) && !strings.Contains(err.Error(), tt.ExpectedErr) {
-				t.Errorf("Manager.connectToWorkspaceDaemon() error = %v, wantErr %v", err, tt.WantErr)
+				t.Errorf("Manager.connectToWorkspaceDaemon() error = %v, wantErr %v (%v)", err, tt.WantErr, tt.ExpectedErr)
 				return
 			}
 			if err != nil && got != nil {
