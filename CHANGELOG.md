@@ -1,6 +1,10 @@
 # Change Log
 
 ## July 2022
+- [.gitpod.yml generator] Use 'pnpm' package manager when there is a pnpm-lock.yaml file or the package.json specifies it ([#10731](https://github.com/gitpod-io/gitpod/pull/10731)) - [@jankeromnes](https://github.com/jankeromnes)
+- Update PhpStorm IDE image to version 221.6008.16. ([#11564](https://github.com/gitpod-io/gitpod/pull/11564)) - [@roboquat](https://github.com/roboquat)
+- Update PyCharm IDE image to version 221.6008.17. ([#11565](https://github.com/gitpod-io/gitpod/pull/11565)) - [@roboquat](https://github.com/roboquat)
+- Update docker compose to v2.7.0 ([#11604](https://github.com/gitpod-io/gitpod/pull/11604)) - [@aledbf](https://github.com/aledbf)
 - Notify when spending limit is reached. ([#11556](https://github.com/gitpod-io/gitpod/pull/11556)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - NNE ([#11543](https://github.com/gitpod-io/gitpod/pull/11543)) - [@geropl](https://github.com/geropl)
 - Fixed the Connect Button on JetBrains Gateway workspaces list to avoid opening an invalid URL in case the workspace was not running. ([#11523](https://github.com/gitpod-io/gitpod/pull/11523)) - [@felladrin](https://github.com/felladrin)
