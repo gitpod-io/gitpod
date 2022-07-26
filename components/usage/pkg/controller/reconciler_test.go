@@ -7,6 +7,8 @@ package controller
 import (
 	"context"
 	"database/sql"
+	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
+	"google.golang.org/grpc"
 	"testing"
 	"time"
 
@@ -52,10 +54,10 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 	dbtest.CreateWorkspaceInstances(t, conn, instances...)
 
 	reconciler := &UsageReconciler{
-		billingController: &NoOpBillingController{},
-		nowFunc:           func() time.Time { return scenarioRunTime },
-		conn:              conn,
-		pricer:            DefaultWorkspacePricer,
+		billingService: &NoOpBillingServiceClient{},
+		nowFunc:        func() time.Time { return scenarioRunTime },
+		conn:           conn,
+		pricer:         DefaultWorkspacePricer,
 	}
 	status, report, err := reconciler.ReconcileTimeRange(context.Background(), startOfMay, startOfJune)
 	require.NoError(t, err)
@@ -69,88 +71,10 @@ func TestUsageReconciler_ReconcileTimeRange(t *testing.T) {
 	}, status)
 }
 
-func TestUsageReport_CreditSummaryForTeams(t *testing.T) {
-	teamID := uuid.New().String()
-	teamAttributionID := db.NewTeamAttributionID(teamID)
+type NoOpBillingServiceClient struct{}
 
-	scenarios := []struct {
-		Name     string
-		Report   UsageReport
-		Expected map[string]int64
-	}{
-		{
-			Name:     "no instances in report, no summary",
-			Report:   []db.WorkspaceInstanceUsage{},
-			Expected: map[string]int64{},
-		},
-		{
-			Name: "skips user attributions",
-			Report: []db.WorkspaceInstanceUsage{
-				{
-					AttributionID: db.NewUserAttributionID(uuid.New().String()),
-				},
-			},
-			Expected: map[string]int64{},
-		},
-		{
-			Name: "two workspace instances",
-			Report: []db.WorkspaceInstanceUsage{
-				{
-					// has 1 day and 23 hours of usage
-					AttributionID:  teamAttributionID,
-					WorkspaceClass: defaultWorkspaceClass,
-					StartedAt:      time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC),
-					StoppedAt: sql.NullTime{
-						Time:  time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC),
-						Valid: true,
-					},
-					CreditsUsed: (24 + 23) * 10,
-				},
-				{
-					// has 1 hour of usage
-					AttributionID:  teamAttributionID,
-					WorkspaceClass: defaultWorkspaceClass,
-					StartedAt:      time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC),
-					StoppedAt: sql.NullTime{
-						Time:  time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC),
-						Valid: true,
-					},
-					CreditsUsed: 10,
-				},
-			},
-			Expected: map[string]int64{
-				// total of 2 days runtime, at 10 credits per hour, that's 480 credits
-				teamID: 480,
-			},
-		},
-		{
-			Name: "unknown workspace class uses default",
-			Report: []db.WorkspaceInstanceUsage{
-				// has 1 hour of usage
-				{
-					WorkspaceClass: "yolo-workspace-class",
-					AttributionID:  teamAttributionID,
-					StartedAt:      time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC),
-					StoppedAt: sql.NullTime{
-						Time:  time.Date(2022, 05, 30, 1, 0, 0, 0, time.UTC),
-						Valid: true,
-					},
-					CreditsUsed: 10,
-				},
-			},
-			Expected: map[string]int64{
-				// total of 1 hour usage, at default cost of 10 credits per hour
-				teamID: 10,
-			},
-		},
-	}
-
-	for _, s := range scenarios {
-		t.Run(s.Name, func(t *testing.T) {
-			actual := s.Report.CreditSummaryForTeams()
-			require.Equal(t, s.Expected, actual)
-		})
-	}
+func (c *NoOpBillingServiceClient) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoicesRequest, opts ...grpc.CallOption) (*v1.UpdateInvoicesResponse, error) {
+	return &v1.UpdateInvoicesResponse{}, nil
 }
 
 func TestInstanceToUsageRecords(t *testing.T) {

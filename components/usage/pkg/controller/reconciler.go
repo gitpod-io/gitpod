@@ -8,7 +8,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math"
+	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -29,20 +30,20 @@ func (f ReconcilerFunc) Reconcile() error {
 }
 
 type UsageReconciler struct {
-	nowFunc           func() time.Time
-	conn              *gorm.DB
-	pricer            *WorkspacePricer
-	billingController BillingController
-	contentService    contentservice.Interface
+	nowFunc        func() time.Time
+	conn           *gorm.DB
+	pricer         *WorkspacePricer
+	billingService v1.BillingServiceClient
+	contentService contentservice.Interface
 }
 
-func NewUsageReconciler(conn *gorm.DB, pricer *WorkspacePricer, billingController BillingController, contentService contentservice.Interface) *UsageReconciler {
+func NewUsageReconciler(conn *gorm.DB, pricer *WorkspacePricer, billingClient v1.BillingServiceClient, contentService contentservice.Interface) *UsageReconciler {
 	return &UsageReconciler{
-		conn:              conn,
-		pricer:            pricer,
-		billingController: billingController,
-		contentService:    contentService,
-		nowFunc:           time.Now,
+		conn:           conn,
+		pricer:         pricer,
+		billingService: billingClient,
+		contentService: contentService,
+		nowFunc:        time.Now,
 	}
 }
 
@@ -106,11 +107,14 @@ func (u *UsageReconciler) ReconcileTimeRange(ctx context.Context, from, to time.
 	log.WithField("workspace_instances", instances).Debug("Successfully loaded workspace instances.")
 
 	usageRecords := instancesToUsageRecords(instances, u.pricer, now)
-	//instancesByAttributionID := groupInstancesByAttributionID(instances)
 
-	err = u.billingController.Reconcile(ctx, usageRecords)
+	_, err = u.billingService.UpdateInvoices(ctx, &v1.UpdateInvoicesRequest{
+		StartTime: timestamppb.New(from),
+		EndTime:   timestamppb.New(to),
+		Sessions:  instancesToBilledSessions(usageRecords),
+	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to reconcile billing: %w", err)
+		return nil, nil, fmt.Errorf("failed to update invoices: %w", err)
 	}
 
 	return status, usageRecords, nil
@@ -148,30 +152,35 @@ func instancesToUsageRecords(instances []db.WorkspaceInstanceForUsage, pricer *W
 	return usageRecords
 }
 
-type UsageReport []db.WorkspaceInstanceUsage
+func instancesToBilledSessions(instances []db.WorkspaceInstanceUsage) []*v1.BilledSession {
+	var sessions []*v1.BilledSession
 
-func (u UsageReport) CreditSummaryForTeams() map[string]int64 {
-	creditsPerTeamID := map[string]int64{}
+	for _, instance := range instances {
+		var endTime *timestamppb.Timestamp
 
-	for _, instance := range u {
-		entity, id := instance.AttributionID.Values()
-		if entity != db.AttributionEntity_Team {
-			continue
+		if instance.StoppedAt.Valid {
+			endTime = timestamppb.New(instance.StoppedAt.Time)
 		}
 
-		if _, ok := creditsPerTeamID[id]; !ok {
-			creditsPerTeamID[id] = 0
-		}
-
-		creditsPerTeamID[id] += int64(instance.CreditsUsed)
+		sessions = append(sessions, &v1.BilledSession{
+			AttributionId:  string(instance.AttributionID),
+			UserId:         instance.UserID.String(),
+			TeamId:         "",
+			WorkspaceId:    instance.WorkspaceID,
+			WorkspaceType:  string(instance.WorkspaceType),
+			ProjectId:      instance.ProjectID,
+			InstanceId:     instance.InstanceID.String(),
+			WorkspaceClass: instance.WorkspaceClass,
+			StartTime:      timestamppb.New(instance.StartedAt),
+			EndTime:        endTime,
+			Credits:        instance.CreditsUsed,
+		})
 	}
 
-	for teamID, credits := range creditsPerTeamID {
-		creditsPerTeamID[teamID] = int64(math.Ceil(float64(credits)))
-	}
-
-	return creditsPerTeamID
+	return sessions
 }
+
+type UsageReport []db.WorkspaceInstanceUsage
 
 type invalidWorkspaceInstance struct {
 	reason              string

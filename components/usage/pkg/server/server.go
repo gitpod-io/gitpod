@@ -6,6 +6,8 @@ package server
 
 import (
 	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"os"
 	"time"
@@ -47,13 +49,26 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to establish database connection: %w", err)
 	}
 
+	var serverOpts []baseserver.Option
+	if cfg.Server != nil {
+		serverOpts = append(serverOpts, baseserver.WithConfig(cfg.Server))
+	}
+	srv, err := baseserver.New("usage", serverOpts...)
+	if err != nil {
+		return fmt.Errorf("failed to initialize usage server: %w", err)
+	}
+
+	selfConnection, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to create self-connection to grpc server: %w", err)
+	}
+
 	pricer, err := controller.NewWorkspacePricer(cfg.CreditsPerMinuteByWorkspaceClass)
 	if err != nil {
 		return fmt.Errorf("failed to create workspace pricer: %w", err)
 	}
 
-	var billingController controller.BillingController = &controller.NoOpBillingController{}
-
+	var stripeClient *stripe.Client
 	if cfg.StripeCredentialsFile != "" {
 		config, err := stripe.ReadConfigFromFile(cfg.StripeCredentialsFile)
 		if err != nil {
@@ -65,7 +80,7 @@ func Start(cfg Config) error {
 			return fmt.Errorf("failed to initialize stripe client: %w", err)
 		}
 
-		billingController = controller.NewStripeBillingController(c)
+		stripeClient = c
 	}
 
 	schedule, err := time.ParseDuration(cfg.ControllerSchedule)
@@ -78,7 +93,7 @@ func Start(cfg Config) error {
 		contentService = contentservice.New(cfg.ContentServiceAddress)
 	}
 
-	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, pricer, billingController, contentService))
+	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, pricer, v1.NewBillingServiceClient(selfConnection), contentService))
 	if err != nil {
 		return fmt.Errorf("failed to initialize usage controller: %w", err)
 	}
@@ -89,15 +104,7 @@ func Start(cfg Config) error {
 	}
 	defer ctrl.Stop()
 
-	var serverOpts []baseserver.Option
-	if cfg.Server != nil {
-		serverOpts = append(serverOpts, baseserver.WithConfig(cfg.Server))
-	}
-	srv, err := baseserver.New("usage", serverOpts...)
-	if err != nil {
-		return fmt.Errorf("failed to initialize usage server: %w", err)
-	}
-	err = registerGRPCServices(srv, conn)
+	err = registerGRPCServices(srv, conn, stripeClient)
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
@@ -115,7 +122,12 @@ func Start(cfg Config) error {
 	return nil
 }
 
-func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB) error {
+func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client) error {
 	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn))
+	if stripeClient == nil {
+		v1.RegisterBillingServiceServer(srv.GRPC(), &apiv1.BillingServiceNoop{})
+	} else {
+		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(stripeClient))
+	}
 	return nil
 }
