@@ -29,6 +29,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
@@ -570,7 +571,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		case api.WorkspaceFeatureFlag_NOOP:
 
 		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
-			pod.Labels[pvcWorkspaceFeatureAnnotation] = "true"
+			pod.Labels[pvcWorkspaceFeatureAnnotation] = util.BooleanTrueString
 
 			// update volume to use persistent volume claim, and name of it is the same as pod's name
 			pvcName := pod.ObjectMeta.Name
