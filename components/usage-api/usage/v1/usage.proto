@@ -9,6 +9,9 @@ import "google/protobuf/timestamp.proto";
 service UsageService {
     // ListBilledUsage retrieves all usage for the specified attributionId
     rpc ListBilledUsage(ListBilledUsageRequest) returns (ListBilledUsageResponse) {}
+
+    // CollectUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
+    rpc CollectUsage(CollectUsageRequest) returns (CollectUsageResponse) {}
 }
 
 message ListBilledUsageRequest {
@@ -51,4 +54,13 @@ message BilledSession {
 
     int64 credits_deprecated = 11 [deprecated=true];   // insufficient precision to represent credits for workspace time
     double credits = 12;
+}
+
+message CollectUsageRequest {
+    google.protobuf.Timestamp start_time = 1;
+    google.protobuf.Timestamp end_time = 2;
+}
+
+message CollectUsageResponse {
+    repeated BilledSession sessions = 1;
 }
