@@ -11,6 +11,7 @@ spec:
         collectorName: database
         image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/database:sje-kots-config-check.9
         name: database
+        namespace: '{{repl Namespace }}'
         args:
           - '{{repl ConfigOption "db_incluster" }}' # DB_IN_CLUSTER_ENABLED
           - '{{repl ConfigOption "db_cloudsql_enabled" }}' # DB_CLOUDSQL_ENABLED
@@ -24,6 +25,7 @@ spec:
         collectorName: registry
         image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/registry:sje-kots-registry-check.16
         name: registry
+        namespace: '{{repl Namespace }}'
         args:
           - '{{repl ConfigOption "reg_incluster" }}' # REG_IN_CLUSTER_ENABLED
           - '{{repl ConfigOption "reg_username" }}' # REG_USERNAME
@@ -40,6 +42,7 @@ spec:
         collectorName: storage
         image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/storage:sje-kots-storage-check.9
         name: storage
+        namespace: '{{repl Namespace }}'
         args:
           - '{{repl ConfigOption "store_provider" }}' # STORE_PROVIDER
           - '{{repl ConfigOption "store_region" }}' # STORE_LOCATION
@@ -55,6 +58,7 @@ spec:
         collectorName: ping-registry
         image: alpine/curl
         name: ping-registry
+        namespace: '{{repl Namespace }}'
         command:
           - /bin/sh
           - -c
