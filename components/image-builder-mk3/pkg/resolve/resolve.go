@@ -6,9 +6,11 @@ package resolve
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -52,6 +54,15 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 
 	options := getOptions(opts)
 
+	var client *http.Client
+
+	if options.SkipTLSVerify {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client = &http.Client{Transport: tr}
+	}
+
 	var r remotes.Resolver
 	if sr.ResolverFactory == nil {
 		r = dockerremote.NewResolver(dockerremote.ResolverOptions{
@@ -62,6 +73,7 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 
 				return options.Auth.Username, options.Auth.Password, nil
 			})),
+			Client: client,
 		})
 	} else {
 		r = sr.ResolverFactory()
@@ -71,7 +83,7 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 	// To make this a valid digested form we first need to normalize that familiar name.
 	pref, err := reference.ParseNormalizedNamed(ref)
 	if err != nil {
-		return "", xerrors.Errorf("cannt resolve image ref: %w", err)
+		return "", xerrors.Errorf("cannot resolve image ref: %w", err)
 	}
 
 	// The reference is already in digest form we don't have to do anything
@@ -166,7 +178,8 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 }
 
 type opts struct {
-	Auth *auth.Authentication
+	Auth          *auth.Authentication
+	SkipTLSVerify bool
 }
 
 // DockerRefResolverOption configures reference resolution
@@ -176,6 +189,12 @@ type DockerRefResolverOption func(o *opts)
 func WithAuthentication(auth *auth.Authentication) DockerRefResolverOption {
 	return func(o *opts) {
 		o.Auth = auth
+	}
+}
+
+func WithSkipTLSVerify(skipTLSVerify bool) DockerRefResolverOption {
+	return func(o *opts) {
+		o.SkipTLSVerify = skipTLSVerify
 	}
 }
 

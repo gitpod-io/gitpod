@@ -111,7 +111,7 @@ func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err e
 		censorship:    make(map[string][]string),
 		metrics:       newMetrics(),
 	}
-	o.monitor = newBuildMonitor(o, o.wsman)
+	o.monitor = newBuildMonitor(o, o.wsman, cfg.SkipTLSVerify)
 
 	return o, nil
 }
@@ -535,7 +535,7 @@ func (o *Orchestrator) checkImageExists(ctx context.Context, ref string, authent
 	defer tracing.FinishSpan(span, &err)
 	span.SetTag("ref", ref)
 
-	_, err = o.RefResolver.Resolve(ctx, ref, resolve.WithAuthentication(authentication))
+	_, err = o.RefResolver.Resolve(ctx, ref, resolve.WithAuthentication(authentication), resolve.WithSkipTLSVerify(o.Config.SkipTLSVerify))
 	if errors.Is(err, resolve.ErrNotFound) {
 		return false, nil
 	}
@@ -556,7 +556,7 @@ func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allo
 		return "", status.Errorf(codes.InvalidArgument, "cannt resolve base image ref: %v", err)
 	}
 
-	ref, err = o.RefResolver.Resolve(ctx, ref, resolve.WithAuthentication(auth))
+	ref, err = o.RefResolver.Resolve(ctx, ref, resolve.WithAuthentication(auth), resolve.WithSkipTLSVerify(o.Config.SkipTLSVerify))
 	if xerrors.Is(err, resolve.ErrNotFound) {
 		return "", status.Error(codes.NotFound, "cannot resolve image")
 	}
