@@ -57,7 +57,7 @@ var runCmd = &cobra.Command{
 		}
 		api.RegisterIDEPluginServiceServer(srv.GRPC(), idePluginService)
 
-		usageReportService, err := service.NewUsageReportService(cfg.Storage)
+		usageReportService, err := service.NewUsageReportService(cfg.Storage, cfg.UsageReports.BucketName)
 		if err != nil {
 			log.WithError(err).Fatalf("Cannot create usage report service")
 		}
