@@ -11,6 +11,10 @@ import { ProjectContext } from "../projects/project-context";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { UserContext } from "../user-context";
 
+interface FeatureFlagConfig {
+    [flagName: string]: { defaultValue: boolean; setter: React.Dispatch<React.SetStateAction<boolean>> };
+}
+
 const FeatureFlagContext = createContext<{
     showUsageBasedPricingUI: boolean;
     showWorkspaceClassesUI: boolean;
@@ -31,41 +35,25 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [showWorkspaceClassesUI, setShowWorkspaceClassesUI] = useState<boolean>(false);
     const [showPersistentVolumeClaimUI, setShowPersistentVolumeClaimUI] = useState<boolean>(false);
 
+    const featureFlags: FeatureFlagConfig = {
+        isUsageBasedBillingEnabled: { defaultValue: false, setter: setShowUsageBasedPricingUI },
+        workspace_classes: { defaultValue: true, setter: setShowWorkspaceClassesUI },
+        persistent_volume_claim: { defaultValue: true, setter: setShowPersistentVolumeClaimUI },
+    };
+
     useEffect(() => {
-        if (!user) {
-            return;
-        }
+        if (!user) return;
         (async () => {
-            const isUsageBasedBillingEnabled = await getExperimentsClient().getValueAsync(
-                "isUsageBasedBillingEnabled",
-                false,
-                {
+            for (const [flagName, config] of Object.entries(featureFlags)) {
+                const flagValue = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
                     user,
                     projectId: project?.id,
                     teamId: team?.id,
                     teamName: team?.name,
                     teams,
-                },
-            );
-            setShowUsageBasedPricingUI(isUsageBasedBillingEnabled);
-
-            const showWorkspaceClasses = await getExperimentsClient().getValueAsync("workspace_classes", true, {
-                user,
-            });
-            setShowWorkspaceClassesUI(showWorkspaceClasses);
-
-            const showPersistentVolumeClaim = await getExperimentsClient().getValueAsync(
-                "persistent_volume_claim",
-                false,
-                {
-                    user,
-                    projectId: project?.id,
-                    teamId: team?.id,
-                    teamName: team?.name,
-                    teams,
-                },
-            );
-            setShowPersistentVolumeClaimUI(showPersistentVolumeClaim);
+                });
+                config.setter(flagValue);
+            }
         })();
     }, [user, teams, team, project]);
 
