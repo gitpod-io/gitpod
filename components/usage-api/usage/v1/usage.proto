@@ -10,8 +10,8 @@ service UsageService {
     // ListBilledUsage retrieves all usage for the specified attributionId
     rpc ListBilledUsage(ListBilledUsageRequest) returns (ListBilledUsageResponse) {}
 
-    // CollectUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
-    rpc CollectUsage(CollectUsageRequest) returns (CollectUsageResponse) {}
+    // ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
+    rpc ReconcileUsage(ReconcileUsageRequest) returns (ReconcileUsageResponse) {}
 }
 
 message ListBilledUsageRequest {
@@ -56,11 +56,11 @@ message BilledSession {
     double credits = 12;
 }
 
-message CollectUsageRequest {
+message ReconcileUsageRequest {
     google.protobuf.Timestamp start_time = 1;
     google.protobuf.Timestamp end_time = 2;
 }
 
-message CollectUsageResponse {
+message ReconcileUsageResponse {
     repeated BilledSession sessions = 1;
 }
