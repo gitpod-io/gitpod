@@ -77,6 +77,10 @@ func (c *NoOpBillingServiceClient) UpdateInvoices(ctx context.Context, in *v1.Up
 	return &v1.UpdateInvoicesResponse{}, nil
 }
 
+func (c *NoOpBillingServiceClient) GetLatestInvoice(ctx context.Context, in *v1.GetLatestInvoiceRequest, opts ...grpc.CallOption) (*v1.GetLatestInvoiceResponse, error) {
+	return &v1.GetLatestInvoiceResponse{}, nil
+}
+
 func TestInstanceToUsageRecords(t *testing.T) {
 	maxStopTime := time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)
 	teamID, ownerID, projectID := uuid.New().String(), uuid.New(), uuid.New()
