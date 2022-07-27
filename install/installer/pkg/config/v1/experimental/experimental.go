@@ -103,6 +103,10 @@ type WorkspaceConfig struct {
 		GitpodInstallationWorkspaceHostSuffix      string `json:"gitpodInstallationWorkspaceHostSuffix"`
 		GitpodInstallationWorkspaceHostSuffixRegex string `json:"gitpodInstallationWorkspaceHostSuffixRegex"`
 	} `json:"wsProxy"`
+
+	ContentService struct {
+		UsageReportBucketName string `json:"usageReportBucketName"`
+	} `json:"contentService"`
 }
 
 type PersistentVolumeClaim struct {
