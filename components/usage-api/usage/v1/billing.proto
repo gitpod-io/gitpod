@@ -12,6 +12,9 @@ service BillingService {
   // in a billing system.
   // This is an Internal RPC used by the usage reconciler and not intended for general consumption.
   rpc UpdateInvoices(UpdateInvoicesRequest) returns (UpdateInvoicesResponse) {};
+
+  // GetLatestInvoice retrieves the latest invoice for a given query.
+  rpc GetLatestInvoice(GetLatestInvoiceRequest) returns (GetLatestInvoiceResponse) {};
 }
 
 message UpdateInvoicesRequest {
@@ -22,4 +25,15 @@ message UpdateInvoicesRequest {
 }
 
 message UpdateInvoicesResponse {
+}
+
+message GetLatestInvoiceRequest {
+  string team_id = 1;
+  string user_id = 2;
+}
+
+message GetLatestInvoiceResponse {
+  string invoice_id = 1;
+  string currency = 2;
+  double amount = 3;
 }

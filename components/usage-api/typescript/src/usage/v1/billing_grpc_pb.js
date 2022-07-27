@@ -12,6 +12,28 @@ var usage_v1_billing_pb = require('../../usage/v1/billing_pb.js');
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 var usage_v1_usage_pb = require('../../usage/v1/usage_pb.js');
 
+function serialize_usage_v1_GetLatestInvoiceRequest(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.GetLatestInvoiceRequest)) {
+    throw new Error('Expected argument of type usage.v1.GetLatestInvoiceRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_GetLatestInvoiceRequest(buffer_arg) {
+  return usage_v1_billing_pb.GetLatestInvoiceRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_usage_v1_GetLatestInvoiceResponse(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.GetLatestInvoiceResponse)) {
+    throw new Error('Expected argument of type usage.v1.GetLatestInvoiceResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_GetLatestInvoiceResponse(buffer_arg) {
+  return usage_v1_billing_pb.GetLatestInvoiceResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_usage_v1_UpdateInvoicesRequest(arg) {
   if (!(arg instanceof usage_v1_billing_pb.UpdateInvoicesRequest)) {
     throw new Error('Expected argument of type usage.v1.UpdateInvoicesRequest');
@@ -49,6 +71,17 @@ updateInvoices: {
     requestDeserialize: deserialize_usage_v1_UpdateInvoicesRequest,
     responseSerialize: serialize_usage_v1_UpdateInvoicesResponse,
     responseDeserialize: deserialize_usage_v1_UpdateInvoicesResponse,
+  },
+  getLatestInvoice: {
+    path: '/usage.v1.BillingService/GetLatestInvoice',
+    requestStream: false,
+    responseStream: false,
+    requestType: usage_v1_billing_pb.GetLatestInvoiceRequest,
+    responseType: usage_v1_billing_pb.GetLatestInvoiceResponse,
+    requestSerialize: serialize_usage_v1_GetLatestInvoiceRequest,
+    requestDeserialize: deserialize_usage_v1_GetLatestInvoiceRequest,
+    responseSerialize: serialize_usage_v1_GetLatestInvoiceResponse,
+    responseDeserialize: deserialize_usage_v1_GetLatestInvoiceResponse,
   },
 };
 
