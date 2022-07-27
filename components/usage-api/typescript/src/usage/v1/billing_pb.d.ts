@@ -64,3 +64,67 @@ export namespace UpdateInvoicesResponse {
     export type AsObject = {
     }
 }
+
+export class GetLatestInvoiceRequest extends jspb.Message {
+
+    hasTeamId(): boolean;
+    clearTeamId(): void;
+    getTeamId(): string;
+    setTeamId(value: string): GetLatestInvoiceRequest;
+
+    hasUserId(): boolean;
+    clearUserId(): void;
+    getUserId(): string;
+    setUserId(value: string): GetLatestInvoiceRequest;
+
+    getIdentifierCase(): GetLatestInvoiceRequest.IdentifierCase;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetLatestInvoiceRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: GetLatestInvoiceRequest): GetLatestInvoiceRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetLatestInvoiceRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetLatestInvoiceRequest;
+    static deserializeBinaryFromReader(message: GetLatestInvoiceRequest, reader: jspb.BinaryReader): GetLatestInvoiceRequest;
+}
+
+export namespace GetLatestInvoiceRequest {
+    export type AsObject = {
+        teamId: string,
+        userId: string,
+    }
+
+    export enum IdentifierCase {
+        IDENTIFIER_NOT_SET = 0,
+        TEAM_ID = 1,
+        USER_ID = 2,
+    }
+
+}
+
+export class GetLatestInvoiceResponse extends jspb.Message {
+    getInvoiceId(): string;
+    setInvoiceId(value: string): GetLatestInvoiceResponse;
+    getCurrency(): string;
+    setCurrency(value: string): GetLatestInvoiceResponse;
+    getAmount(): number;
+    setAmount(value: number): GetLatestInvoiceResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetLatestInvoiceResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: GetLatestInvoiceResponse): GetLatestInvoiceResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetLatestInvoiceResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetLatestInvoiceResponse;
+    static deserializeBinaryFromReader(message: GetLatestInvoiceResponse, reader: jspb.BinaryReader): GetLatestInvoiceResponse;
+}
+
+export namespace GetLatestInvoiceResponse {
+    export type AsObject = {
+        invoiceId: string,
+        currency: string,
+        amount: number,
+    }
+}
