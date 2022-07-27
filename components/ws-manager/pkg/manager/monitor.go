@@ -335,7 +335,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		// we should mark the workspace as failedBeforeStopping - this way the failure status will persist
 		// while we stop the workspace
 		_, hasFailureAnnotation := pod.Annotations[workspaceFailedBeforeStoppingAnnotation]
-		if status.Conditions.Failed != "" && !hasFailureAnnotation {
+		if !hasFailureAnnotation {
 			// If this marking operation failes that's ok - we'll still continue to shut down the workspace.
 			// The failure message won't persist while stopping the workspace though.
 			err := m.markWorkspace(ctx, workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, util.BooleanTrueString))
