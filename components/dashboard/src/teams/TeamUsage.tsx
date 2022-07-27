@@ -17,6 +17,7 @@ import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { ReactComponent as CreditsSvg } from "../images/credits.svg";
+import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 
 function TeamUsage() {
     const { teams } = useContext(TeamsContext);
@@ -32,6 +33,7 @@ function TeamUsage() {
     const timestampStartOfCurrentMonth = startOfCurrentMonth.getTime();
     const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(timestampStartOfCurrentMonth);
     const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(Date.now());
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     useEffect(() => {
         if (!team) {
@@ -50,6 +52,8 @@ function TeamUsage() {
                 if (error.code === ErrorCodes.PERMISSION_DENIED) {
                     setErrorMessage("Access to usage details is restricted to team owners.");
                 }
+            } finally {
+                setIsLoading(false);
             }
         })();
     }, [team, startDateOfBillMonth, endDateOfBillMonth]);
@@ -146,7 +150,7 @@ function TeamUsage() {
                                 </div>
                             </div>
                         </div>
-                        {billedUsage.length === 0 && !errorMessage && (
+                        {billedUsage.length === 0 && !errorMessage && !isLoading && (
                             <div className="flex flex-col w-full mb-8">
                                 <h3 className="text-center text-gray-500 mt-8">No sessions found.</h3>
                                 <p className="text-center text-gray-500 mt-1">
@@ -163,7 +167,15 @@ function TeamUsage() {
                                 </p>
                             </div>
                         )}
-                        {billedUsage.length > 0 && (
+                        {isLoading && (
+                            <div className="flex flex-col place-items-center align-center w-full">
+                                <div className="uppercase text-sm text-gray-400 dark:text-gray-500 mb-5">
+                                    Fetching usage...
+                                </div>
+                                <Spinner className="m-2 h-5 w-5 animate-spin" />
+                            </div>
+                        )}
+                        {billedUsage.length > 0 && !isLoading && (
                             <div className="flex flex-col w-full mb-8">
                                 <ItemsList className="mt-2 text-gray-500">
                                     <Item header={false} className="grid grid-cols-5 bg-gray-100 mb-5">
