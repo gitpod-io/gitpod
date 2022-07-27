@@ -65,7 +65,7 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to create self-connection to grpc server: %w", err)
 	}
 
-	pricer, err := controller.NewWorkspacePricer(cfg.CreditsPerMinuteByWorkspaceClass)
+	pricer, err := apiv1.NewWorkspacePricer(cfg.CreditsPerMinuteByWorkspaceClass)
 	if err != nil {
 		return fmt.Errorf("failed to create workspace pricer: %w", err)
 	}
@@ -95,7 +95,11 @@ func Start(cfg Config) error {
 		contentService = contentservice.New(cfg.ContentServiceAddress)
 	}
 
-	ctrl, err := controller.New(schedule, controller.NewUsageReconciler(conn, pricer, v1.NewBillingServiceClient(selfConnection), contentService))
+	reportGenerator := apiv1.NewReportGenerator(conn, pricer)
+	ctrl, err := controller.New(schedule, controller.NewUsageAndBillingReconciler(
+		v1.NewUsageServiceClient(selfConnection),
+		v1.NewBillingServiceClient(selfConnection),
+	))
 	if err != nil {
 		return fmt.Errorf("failed to initialize usage controller: %w", err)
 	}
@@ -106,7 +110,7 @@ func Start(cfg Config) error {
 	}
 	defer ctrl.Stop()
 
-	err = registerGRPCServices(srv, conn, stripeClient)
+	err = registerGRPCServices(srv, conn, stripeClient, reportGenerator, contentService)
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
@@ -124,8 +128,8 @@ func Start(cfg Config) error {
 	return nil
 }
 
-func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client) error {
-	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn))
+func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, reportGenerator *apiv1.ReportGenerator, contentSvc contentservice.Interface) error {
+	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn, reportGenerator, contentSvc))
 	if stripeClient == nil {
 		v1.RegisterBillingServiceServer(srv.GRPC(), &apiv1.BillingServiceNoop{})
 	} else {
