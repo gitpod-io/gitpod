@@ -269,6 +269,7 @@ type ContainerRegistry struct {
 	External                  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
 	S3Storage                 *S3Storage                 `json:"s3storage,omitempty"`
 	PrivateBaseImageAllowList []string                   `json:"privateBaseImageAllowList"`
+	SkipTLSVerify             *bool                      `json:"skipTLSVerify,omitempty"`
 }
 
 type ContainerRegistryExternal struct {

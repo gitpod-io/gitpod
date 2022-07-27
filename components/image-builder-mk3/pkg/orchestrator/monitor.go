@@ -6,6 +6,7 @@ package orchestrator
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,12 +37,13 @@ type orchestrator interface {
 	PublishLog(buildID string, message string)
 }
 
-func newBuildMonitor(o orchestrator, wsman wsmanapi.WorkspaceManagerClient) *buildMonitor {
+func newBuildMonitor(o orchestrator, wsman wsmanapi.WorkspaceManagerClient, skipTLSVerify bool) *buildMonitor {
 	return &buildMonitor{
 		O:             o,
 		wsman:         wsman,
 		runningBuilds: make(map[string]*runningBuild),
 		logs:          map[string]context.CancelFunc{},
+		skipTLSVerify: skipTLSVerify,
 	}
 }
 
@@ -53,6 +55,8 @@ type buildMonitor struct {
 	runningBuildsMu sync.RWMutex
 
 	logs map[string]context.CancelFunc
+
+	skipTLSVerify bool
 }
 
 type runningBuild struct {
@@ -141,7 +145,7 @@ func (m *buildMonitor) handleStatusUpdate(status *wsmanapi.WorkspaceStatus) {
 		if _, ok := m.logs[status.Id]; !ok {
 			// we don't have a headless log listener yet, but need one
 			ctx, cancel := context.WithCancel(context.Background())
-			go listenToHeadlessLogs(ctx, bld.Logs.IdeURL, bld.Logs.OwnerToken, m.handleHeadlessLogs(status.Id))
+			go listenToHeadlessLogs(ctx, bld.Logs.IdeURL, bld.Logs.OwnerToken, m.handleHeadlessLogs(status.Id), m.skipTLSVerify)
 			m.logs[status.Id] = cancel
 		}
 	} else {
@@ -284,7 +288,7 @@ func (m *buildMonitor) RegisterNewBuild(buildID string, ref, baseRef, url, owner
 
 type listenToHeadlessLogsCallback func(content []byte, err error)
 
-func listenToHeadlessLogs(ctx context.Context, url, authToken string, callback listenToHeadlessLogsCallback) {
+func listenToHeadlessLogs(ctx context.Context, url, authToken string, callback listenToHeadlessLogsCallback, skipTLSVerify bool) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -297,7 +301,7 @@ func listenToHeadlessLogs(ctx context.Context, url, authToken string, callback l
 		noTerminalErr = fmt.Errorf("no terminal")
 	)
 	err = retry(ctx, func(ctx context.Context) error {
-		logURL, err = findTaskLogURL(ctx, url, authToken)
+		logURL, err = findTaskLogURL(ctx, url, authToken, skipTLSVerify)
 		if err != nil {
 			return err
 		}
@@ -362,7 +366,7 @@ func listenToHeadlessLogs(ctx context.Context, url, authToken string, callback l
 	}
 }
 
-func findTaskLogURL(ctx context.Context, ideURL, authToken string) (taskLogURL string, err error) {
+func findTaskLogURL(ctx context.Context, ideURL, authToken string, skipTLSVerify bool) (taskLogURL string, err error) {
 	ideURL = strings.TrimSuffix(ideURL, "/")
 	tasksURL := ideURL + "/_supervisor/v1/status/tasks"
 	req, err := http.NewRequestWithContext(ctx, "GET", tasksURL, nil)
@@ -389,6 +393,13 @@ func findTaskLogURL(ctx context.Context, ideURL, authToken string) (taskLogURL s
 			return true, nil
 		}
 		return retryablehttp.DefaultRetryPolicy(ctx, resp, err)
+	}
+
+	if skipTLSVerify {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client.HTTPClient.Transport = tr
 	}
 
 	resp, err := client.StandardClient().Do(req)

@@ -82,6 +82,9 @@ type Configuration struct {
 
 	// BuilderImage is an image ref to the workspace builder image
 	BuilderImage string `json:"builderImage"`
+
+	// SkipTLSVerify skips TLS verification in case if using self-signed certificate.
+	SkipTLSVerify bool `json:"skipTLSVerify,omitempty"`
 }
 
 type TLS struct {
