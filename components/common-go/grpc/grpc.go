@@ -9,7 +9,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -89,7 +88,7 @@ func DefaultServerOptions() []grpc.ServerOption {
 // By default, Interceptors for OpenTracing (grpc_opentracing) are added as the last one.
 func ServerOptionsWithInterceptors(stream []grpc.StreamServerInterceptor, unary []grpc.UnaryServerInterceptor) []grpc.ServerOption {
 	tracingFilterFunc := grpc_opentracing.WithFilterFunc(func(ctx context.Context, fullMethodName string) bool {
-		return path.Base(fullMethodName) != "HealthCheck"
+		return fullMethodName != "/grpc.health.v1.Health/Check"
 	})
 
 	stream = append(stream,
