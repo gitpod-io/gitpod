@@ -72,7 +72,7 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import { BillableSession } from "@gitpod/gitpod-protocol/lib/usage";
+import { BillableSession, BillableSessionRequest, SortOrder } from "@gitpod/gitpod-protocol/lib/usage";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -2080,7 +2080,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const result = await super.getNotifications(ctx);
         const user = this.checkAndBlockUser("getNotifications");
         if (user.usageAttributionId) {
-            const allSessions = await this.listBilledUsage(ctx, user.usageAttributionId);
+            // This change doesn't matter much because the listBilledUsage() call
+            // will be removed anyway in https://github.com/gitpod-io/gitpod/issues/11692
+            const request = {
+                attributionId: user.usageAttributionId,
+                startedTimeOrder: SortOrder.Descending,
+            };
+            const allSessions = await this.listBilledUsage(ctx, request);
             const totalUsage = allSessions.map((s) => s.credits).reduce((a, b) => a + b, 0);
             const costCenter = await this.costCenterDB.findById(user.usageAttributionId);
             if (costCenter) {
@@ -2096,12 +2102,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return result;
     }
 
-    async listBilledUsage(
-        ctx: TraceContext,
-        attributionId: string,
-        from?: number,
-        to?: number,
-    ): Promise<BillableSession[]> {
+    async listBilledUsage(ctx: TraceContext, req: BillableSessionRequest): Promise<BillableSession[]> {
+        const { attributionId, startedTimeOrder, from, to } = req;
         traceAPIParams(ctx, { attributionId });
         let timestampFrom;
         let timestampTo;
@@ -2116,7 +2118,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             timestampTo = Timestamp.fromDate(new Date(to));
         }
         const usageClient = this.usageServiceClientProvider.getDefault();
-        const response = await usageClient.listBilledUsage(ctx, attributionId, timestampFrom, timestampTo);
+        const response = await usageClient.listBilledUsage(
+            ctx,
+            attributionId,
+            startedTimeOrder as number,
+            timestampFrom,
+            timestampTo,
+        );
         const sessions = response.getSessionsList().map((s) => this.mapBilledSession(s));
 
         return sessions;

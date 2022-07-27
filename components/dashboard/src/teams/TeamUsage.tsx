@@ -8,7 +8,7 @@ import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { BillableSession, BillableWorkspaceType } from "@gitpod/gitpod-protocol/lib/usage";
+import { BillableSession, BillableWorkspaceType, SortOrder } from "@gitpod/gitpod-protocol/lib/usage";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import moment from "moment";
@@ -34,6 +34,7 @@ function TeamUsage() {
     const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(timestampStartOfCurrentMonth);
     const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(Date.now());
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [startedTimeOrder] = useState<SortOrder>(SortOrder.Descending);
 
     useEffect(() => {
         if (!team) {
@@ -41,12 +42,14 @@ function TeamUsage() {
         }
         (async () => {
             const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
+            const request = {
+                attributionId,
+                startedTimeOrder,
+                startDateOfBillMonth,
+                endDateOfBillMonth,
+            };
             try {
-                const billedUsageResult = await getGitpodService().server.listBilledUsage(
-                    attributionId,
-                    startDateOfBillMonth,
-                    endDateOfBillMonth,
-                );
+                const billedUsageResult = await getGitpodService().server.listBilledUsage(request);
                 setBilledUsage(billedUsageResult);
             } catch (error) {
                 if (error.code === ErrorCodes.PERMISSION_DENIED) {
@@ -56,7 +59,7 @@ function TeamUsage() {
                 setIsLoading(false);
             }
         })();
-    }, [team, startDateOfBillMonth, endDateOfBillMonth]);
+    }, [team, startDateOfBillMonth, endDateOfBillMonth, startedTimeOrder]);
 
     if (!showUsageBasedPricingUI) {
         return <Redirect to="/" />;
