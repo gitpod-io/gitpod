@@ -207,25 +207,6 @@
           "name": "eu.gcr.io-gitpod"
         }
       ],
-      "affinity": {
-        "nodeAffinity": {
-          "requiredDuringSchedulingIgnoredDuringExecution": {
-            "nodeSelectorTerms": [
-              {
-                "matchExpressions": [
-                  {
-                    "key": "gitpod.io/workload_workspace_regular",
-                    "operator": "In",
-                    "values": [
-                      "true"
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      },
       "schedulerName": "default-scheduler",
       "tolerations": [
         {

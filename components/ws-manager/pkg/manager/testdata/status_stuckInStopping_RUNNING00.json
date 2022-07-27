@@ -1027,22 +1027,6 @@
                     "tolerationSeconds": 300
                 }
             ],
-            "affinity": {
-                "nodeAffinity": {
-                    "requiredDuringSchedulingIgnoredDuringExecution": {
-                        "nodeSelectorTerms": [
-                            {
-                                "matchExpressions": [
-                                    {
-                                        "key": "gitpod.io/workload_workspace_regular",
-                                        "operator": "Exists"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                }
-            },
             "securityContext": {
                 "fsGroup": 1,
                 "seccompProfile": {

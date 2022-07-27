@@ -641,22 +641,6 @@
                     "8.8.8.8"
                 ]
             },
-            "affinity": {
-                "nodeAffinity": {
-                    "requiredDuringSchedulingIgnoredDuringExecution": {
-                        "nodeSelectorTerms": [
-                            {
-                                "matchExpressions": [
-                                    {
-                                        "key": "gitpod.io/workload_workspace_regulars",
-                                        "operator": "Exists"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                }
-            },
             "tolerations": [
                 {
                     "effect": "NoExecute",

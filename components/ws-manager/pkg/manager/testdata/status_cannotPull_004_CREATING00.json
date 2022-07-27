@@ -782,22 +782,6 @@
         ]
       },
       "dnsPolicy": "None",
-      "affinity": {
-        "nodeAffinity": {
-          "requiredDuringSchedulingIgnoredDuringExecution": {
-            "nodeSelectorTerms": [
-              {
-                "matchExpressions": [
-                  {
-                    "operator": "Exists",
-                    "key": "gitpod.io/workload_workspace_regular"
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      },
       "imagePullSecrets": [
         {
           "name": "workspace-registry-pull-secret"

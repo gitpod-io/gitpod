@@ -268,22 +268,6 @@
           "name": "gcp-sa-registry-auth"
         }
       ],
-      "affinity": {
-        "nodeAffinity": {
-          "requiredDuringSchedulingIgnoredDuringExecution": {
-            "nodeSelectorTerms": [
-              {
-                "matchExpressions": [
-                  {
-                    "key": "gitpod.io/workload_workspace_regular",
-                    "operator": "Exists"
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      },
       "tolerations": [
         {
           "key": "node.kubernetes.io/disk-pressure",

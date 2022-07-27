@@ -26,29 +26,6 @@
             ]
         }
     },
-    "prebuildTemplate": {
-        "spec": {
-            "affinity": {
-                "nodeAffinity": {
-                    "requiredDuringSchedulingIgnoredDuringExecution": {
-                        "nodeSelectorTerms": [
-                            {
-                                "matchExpressions": [
-                                    {
-                                        "key": "gitpod.io/workload_prebuild",
-                                        "operator": "In",
-                                        "values": [
-                                            "true"
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                }
-            }
-        }
-    },
     "request": {
         "id": "foobar",
         "type": 1,
