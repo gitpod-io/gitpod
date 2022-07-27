@@ -466,36 +466,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		)
 	}
 
-	workloadType := "regular"
-	if startContext.Headless {
-		workloadType = "headless"
-	}
-
-	affinity := &corev1.Affinity{
-		NodeAffinity: &corev1.NodeAffinity{
-			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-				NodeSelectorTerms: []corev1.NodeSelectorTerm{
-					{
-						MatchExpressions: []corev1.NodeSelectorRequirement{
-							{
-								Key:      "gitpod.io/workload_workspace_" + workloadType,
-								Operator: corev1.NodeSelectorOpExists,
-							},
-							{
-								Key:      "gitpod.io/ws-daemon_ready_ns_" + m.Config.Namespace,
-								Operator: corev1.NodeSelectorOpExists,
-							},
-							{
-								Key:      "gitpod.io/registry-facade_ready_ns_" + m.Config.Namespace,
-								Operator: corev1.NodeSelectorOpExists,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        podName(req),
@@ -510,7 +480,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			ServiceAccountName:           "workspace",
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
-			Affinity:                     affinity,
 			SecurityContext:              &corev1.PodSecurityContext{},
 			Containers: []corev1.Container{
 				*workspaceContainer,
