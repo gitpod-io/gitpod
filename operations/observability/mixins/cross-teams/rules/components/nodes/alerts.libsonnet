@@ -30,6 +30,23 @@
               |||,
           },
           {
+            alert: 'GitpodSuspiciouslyHighConntrackEntries',
+            labels: {
+              severity: 'warning',
+              team: 'workspace',
+            },
+            'for': '5m',
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodNodeConntrackTableIsFull.md',
+              summary: 'Node conntrack count is very high, probably too high',
+              description: 'Node {{ $labels.node }} conntrack entries are high, check the node for abuse.',
+            },
+            expr:
+              |||
+                node_nf_conntrack_entries > 10000
+              |||,
+          },
+          {
             alert: 'GitpodNodeConntrackTableIsFull',
             labels: {
               severity: 'critical',
