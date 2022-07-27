@@ -315,7 +315,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 	result.Spec.ExposedPorts = extractExposedPorts(pod).Ports
 
 	// check failure states, i.e. determine value of result.Failed
-	failure, phase := extractFailure(wso)
+	failure, phase := extractFailure(wso, m.metrics)
 	result.Conditions.Failed = failure
 	if phase != nil {
 		result.Phase = *phase
@@ -525,7 +525,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then
 // one should extract the phase themselves. If the pod has not failed, this function returns "", nil.
-func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
+func extractFailure(wso workspaceObjects, metrics *metrics) (string, *api.WorkspacePhase) {
 	pod := wso.Pod
 
 	// if the workspace was explicitely marked as failed that also constitutes a failure reason
@@ -588,6 +588,13 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 				}
 			} else if terminationState.Reason == "Completed" {
 				// container terminated successfully - this is not a failure
+				if !isPodBeingDeleted(pod) {
+					wsType := strings.ToUpper(pod.Labels[wsk8s.TypeLabel])
+					wsClass := pod.Labels[workspaceClassLabel]
+					if metrics != nil && !wso.IsWorkspaceHeadless() {
+						metrics.totalUnintentionalWorkspaceStopCounterVec.WithLabelValues(wsType, wsClass).Inc()
+					}
+				}
 				return "", nil
 			} else if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerUnknownExitCode {
 				// if a container is terminated and it wasn't because of either:
