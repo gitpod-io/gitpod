@@ -91,7 +91,7 @@ export class PromisifiedUsageServiceClient {
         );
     }
 
-    public async listBilledUsage(_ctx: TraceContext, attributionId: string, from?: Timestamp, to?: Timestamp): Promise<ListBilledUsageResponse> {
+    public async listBilledUsage(_ctx: TraceContext, attributionId: string, order: ListBilledUsageRequest.Ordering, from?: Timestamp, to?: Timestamp): Promise<ListBilledUsageResponse> {
         const ctx = TraceContext.childContext(`/usage-service/listBilledUsage`, _ctx);
 
         try {
@@ -99,6 +99,7 @@ export class PromisifiedUsageServiceClient {
             req.setAttributionId(attributionId);
             req.setFrom(from);
             req.setTo(to);
+            req.setOrder(order);
 
             const response = await new Promise<ListBilledUsageResponse>((resolve, reject) => {
                 this.client.listBilledUsage(

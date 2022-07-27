@@ -169,7 +169,7 @@ import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { BillableSession } from "@gitpod/gitpod-protocol/lib/usage";
+import { BillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol/lib/usage";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 
 // shortcut
@@ -3207,12 +3207,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 
-    async listBilledUsage(
-        ctx: TraceContext,
-        attributionId: string,
-        from?: number,
-        to?: number,
-    ): Promise<BillableSession[]> {
+    async listBilledUsage(ctx: TraceContext, req: BillableSessionRequest): Promise<BillableSession[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getSpendingLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {

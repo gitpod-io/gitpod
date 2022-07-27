@@ -35,4 +35,16 @@ export interface BillableSession {
     projectId?: string;
 }
 
+export interface BillableSessionRequest {
+    attributionId: string;
+    startedTimeOrder: SortOrder;
+    from?: number;
+    to?: number;
+}
+
 export type BillableWorkspaceType = WorkspaceType;
+
+export enum SortOrder {
+    Descending = 0,
+    Ascending = 1,
+}
