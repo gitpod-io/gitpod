@@ -1,6 +1,11 @@
 # Change Log
 
 ## July 2022
+- fix: new project widget broken if 'null' item(s) received from gh api ([#11630](https://github.com/gitpod-io/gitpod/pull/11630)) - [@szab100](https://github.com/szab100)
+- [dashboard] Fix persistence of checkbox values on settings page ([#11652](https://github.com/gitpod-io/gitpod/pull/11652)) - [@andrew-farries](https://github.com/andrew-farries)
+- Replce workspace search alert ([#11592](https://github.com/gitpod-io/gitpod/pull/11592)) - [@gtsiolis](https://github.com/gtsiolis)
+- Check the following in cgroup v1/v2 ([#11491](https://github.com/gitpod-io/gitpod/pull/11491)) - [@utam0k](https://github.com/utam0k)
+- Eliminate dockerd rootless mode in cgroup v2 ([#11491](https://github.com/gitpod-io/gitpod/pull/11491)) - [@utam0k](https://github.com/utam0k)
 - [.gitpod.yml generator] Use 'pnpm' package manager when there is a pnpm-lock.yaml file or the package.json specifies it ([#10731](https://github.com/gitpod-io/gitpod/pull/10731)) - [@jankeromnes](https://github.com/jankeromnes)
 - Update PhpStorm IDE image to version 221.6008.16. ([#11564](https://github.com/gitpod-io/gitpod/pull/11564)) - [@roboquat](https://github.com/roboquat)
 - Update PyCharm IDE image to version 221.6008.17. ([#11565](https://github.com/gitpod-io/gitpod/pull/11565)) - [@roboquat](https://github.com/roboquat)
