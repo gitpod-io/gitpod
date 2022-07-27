@@ -61,7 +61,7 @@ import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./
 import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
 import { Currency } from "./plans";
-import { BillableSession } from "./usage";
+import { BillableSession, BillableSessionRequest } from "./usage";
 import { SupportedWorkspaceClass } from "./workspace-class";
 
 export interface GitpodClient {
@@ -294,7 +294,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getSpendingLimitForTeam(teamId: string): Promise<number | undefined>;
     setSpendingLimitForTeam(teamId: string, spendingLimit: number): Promise<void>;
 
-    listBilledUsage(attributionId: string, from?: number, to?: number): Promise<BillableSession[]>;
+    listBilledUsage(req: BillableSessionRequest): Promise<BillableSession[]>;
+
     setUsageAttribution(usageAttribution: string): Promise<void>;
 
     /**
@@ -308,7 +309,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * Frontend notifications
      */
     getNotifications(): Promise<string[]>;
-    
+
     getSupportedWorkspaceClasses(): Promise<SupportedWorkspaceClass[]>;
 }
 
