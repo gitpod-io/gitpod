@@ -132,7 +132,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:      "redis-data",
 							MountPath: "/data",
 						}},
-					},
+					}, *common.KubeRBACProxyContainer(ctx),
 					},
 				},
 			},
