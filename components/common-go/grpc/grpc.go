@@ -5,15 +5,18 @@
 package grpc
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
@@ -85,12 +88,16 @@ func DefaultServerOptions() []grpc.ServerOption {
 // ServerOptionsWithInterceptors returns the default ServerOption sets options for internal components with additional interceptors.
 // By default, Interceptors for OpenTracing (grpc_opentracing) are added as the last one.
 func ServerOptionsWithInterceptors(stream []grpc.StreamServerInterceptor, unary []grpc.UnaryServerInterceptor) []grpc.ServerOption {
+	tracingFilterFunc := grpc_opentracing.WithFilterFunc(func(ctx context.Context, fullMethodName string) bool {
+		return path.Base(fullMethodName) != "HealthCheck"
+	})
+
 	stream = append(stream,
-		grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
+		grpc_opentracing.StreamServerInterceptor(tracingFilterFunc),
 		grpc_recovery.StreamServerInterceptor(), // must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with
 	)
 	unary = append(unary,
-		grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
+		grpc_opentracing.UnaryServerInterceptor(tracingFilterFunc),
 		grpc_recovery.UnaryServerInterceptor(), // must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with
 	)
 
