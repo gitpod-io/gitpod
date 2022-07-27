@@ -5,8 +5,11 @@
 package apiv1
 
 import (
-	context "context"
+	"context"
+	"database/sql"
+	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"time"
 
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
@@ -21,12 +24,17 @@ var _ v1.UsageServiceServer = (*UsageService)(nil)
 
 type UsageService struct {
 	conn *gorm.DB
+
+	contentService contentservice.Interface
+
+	reportGenerator *ReportGenerator
+
 	v1.UnimplementedUsageServiceServer
 }
 
 const maxQuerySize = 31 * 24 * time.Hour
 
-func (us *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUsageRequest) (*v1.ListBilledUsageResponse, error) {
+func (s *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUsageRequest) (*v1.ListBilledUsageResponse, error) {
 	to := time.Now()
 	if in.To != nil {
 		to = in.To.AsTime()
@@ -52,7 +60,7 @@ func (us *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUs
 		order = db.DescendingOrder
 	}
 
-	usageRecords, err := db.ListUsage(ctx, us.conn, db.AttributionID(in.GetAttributionId()), from, to, order)
+	usageRecords, err := db.ListUsage(ctx, s.conn, db.AttributionID(in.GetAttributionId()), from, to, order)
 	if err != nil {
 		log.Log.
 			WithField("attribution_id", in.AttributionId).
@@ -88,6 +96,100 @@ func (us *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUs
 	}, nil
 }
 
-func NewUsageService(conn *gorm.DB) *UsageService {
-	return &UsageService{conn: conn}
+func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsageRequest) (*v1.ReconcileUsageResponse, error) {
+	from := req.GetStartTime().AsTime()
+	to := req.GetEndTime().AsTime()
+
+	if to.Before(from) {
+		return nil, status.Errorf(codes.InvalidArgument, "End time must be after start time")
+	}
+
+	report, err := s.reportGenerator.GenerateUsageReport(ctx, from, to)
+	if err != nil {
+		log.Log.WithError(err).Error("Failed to reconcile time range.")
+		return nil, status.Error(codes.Internal, "failed to reconcile time range")
+	}
+
+	err = db.CreateUsageRecords(ctx, s.conn, report.UsageRecords)
+	if err != nil {
+		log.Log.WithError(err).Error("Failed to persist usage records.")
+		return nil, status.Error(codes.Internal, "failed to persist usage records")
+	}
+
+	filename := fmt.Sprintf("%s.gz", time.Now().Format(time.RFC3339))
+	err = s.contentService.UploadUsageReport(ctx, filename, report.UsageRecords)
+	if err != nil {
+		log.Log.WithError(err).Error("Failed to persist usage report to content service.")
+		return nil, status.Error(codes.Internal, "failed to persist usage report to content service")
+	}
+
+	var sessions []*v1.BilledSession
+	for _, instance := range report.UsageRecords {
+		sessions = append(sessions, usageRecordToBilledUsageProto(instance))
+	}
+
+	return &v1.ReconcileUsageResponse{
+		Sessions: sessions,
+	}, nil
+
+}
+
+func NewUsageService(conn *gorm.DB, reportGenerator *ReportGenerator, contentSvc contentservice.Interface) *UsageService {
+	return &UsageService{
+		conn:            conn,
+		reportGenerator: reportGenerator,
+		contentService:  contentSvc,
+	}
+}
+
+func usageRecordToBilledUsageProto(usageRecord db.WorkspaceInstanceUsage) *v1.BilledSession {
+	var endTime *timestamppb.Timestamp
+	if usageRecord.StoppedAt.Valid {
+		endTime = timestamppb.New(usageRecord.StoppedAt.Time)
+	}
+	return &v1.BilledSession{
+		AttributionId:  string(usageRecord.AttributionID),
+		UserId:         usageRecord.UserID.String(),
+		WorkspaceId:    usageRecord.WorkspaceID,
+		TeamId:         "",
+		WorkspaceType:  string(usageRecord.WorkspaceType),
+		ProjectId:      usageRecord.ProjectID,
+		InstanceId:     usageRecord.InstanceID.String(),
+		WorkspaceClass: usageRecord.WorkspaceClass,
+		StartTime:      timestamppb.New(usageRecord.StartedAt),
+		EndTime:        endTime,
+		Credits:        usageRecord.CreditsUsed,
+	}
+}
+
+func instancesToUsageRecords(instances []db.WorkspaceInstanceForUsage, pricer *WorkspacePricer, now time.Time) []db.WorkspaceInstanceUsage {
+	var usageRecords []db.WorkspaceInstanceUsage
+
+	for _, instance := range instances {
+		var stoppedAt sql.NullTime
+		if instance.StoppedTime.IsSet() {
+			stoppedAt = sql.NullTime{Time: instance.StoppedTime.Time(), Valid: true}
+		}
+
+		projectID := ""
+		if instance.ProjectID.Valid {
+			projectID = instance.ProjectID.String
+		}
+
+		usageRecords = append(usageRecords, db.WorkspaceInstanceUsage{
+			InstanceID:     instance.ID,
+			AttributionID:  instance.UsageAttributionID,
+			WorkspaceID:    instance.WorkspaceID,
+			ProjectID:      projectID,
+			UserID:         instance.OwnerID,
+			WorkspaceType:  instance.Type,
+			WorkspaceClass: instance.WorkspaceClass,
+			StartedAt:      instance.CreationTime.Time(),
+			StoppedAt:      stoppedAt,
+			CreditsUsed:    pricer.CreditsUsedByInstance(&instance, now),
+			GenerationID:   0,
+		})
+	}
+
+	return usageRecords
 }
