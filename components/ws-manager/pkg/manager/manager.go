@@ -163,12 +163,27 @@ func (m *Manager) Close() {
 	m.wsdaemonPool.Close()
 }
 
+type (
+	ctxKeyRemainingTime struct{}
+)
+
 // StartWorkspace creates a new running workspace within the manager's cluster
-func (m *Manager) StartWorkspace(_ context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
+func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
+	startWorkspaceTime := time.Now()
+
 	// We cannot use the passed context because we need to decouple the timeouts
 	// Create a context with a high timeout value to be able to wait for scale-up events in the cluster (slow operation)
 	// Important!!!: this timeout must be lower than https://github.com/gitpod-io/gitpod/blob/main/components/ws-manager-api/typescript/src/promisified-client.ts#L122
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	startWorkspaceTimeout := 10 * time.Minute
+
+	// Edge case: when a workspace cannot be scheduled can stay in Pending state forever we
+	// delete the pod and call StartWorkspace passing the remaining process time until timeout.
+	// In case of timeout, the context is canceled and the error is propagated to the caller.
+	if remainingTime, ok := ctx.Value(ctxKeyRemainingTime{}).(time.Duration); ok {
+		startWorkspaceTimeout = remainingTime
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), startWorkspaceTimeout)
 	defer cancel()
 
 	owi := log.LogContext(req.Metadata.Owner, req.Metadata.MetaId, req.Id, req.Metadata.GetProject(), req.Metadata.GetTeam())
@@ -317,11 +332,24 @@ func (m *Manager) StartWorkspace(_ context.Context, req *api.StartWorkspaceReque
 	}
 
 	// if we reach this point the pod is created
-	// in case the context is canceled or a timeout happens we should delete the pod?
-
 	err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, 7*time.Minute, podRunning(m.Clientset, pod.Name, pod.Namespace))
 	if err != nil {
 		clog.WithError(err).WithField("req", req).WithField("pod", pod.Name).Warn("was unable to start workspace")
+		if err == wait.ErrWaitTimeout && isPodUnschedulable(m.Clientset, pod.Name, pod.Namespace) {
+			// this could be an error due to a scale-up event
+			delErr := deleteWorkspacePodForce(m.Clientset, pod.Name, pod.Namespace)
+			if delErr != nil {
+				clog.WithError(delErr).WithField("req", req).WithField("pod", pod.Name).Warn("was unable to delete workspace pod")
+				return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
+			}
+
+			// invoke StartWorkspace passing the remaining execution time in the context
+			ctx := context.Background()
+			remainingTime := startWorkspaceTimeout - time.Since(startWorkspaceTime)
+			ctx = context.WithValue(ctx, ctxKeyRemainingTime{}, remainingTime)
+			return m.StartWorkspace(ctx, req)
+		}
+
 		return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
 	}
 
@@ -629,6 +657,55 @@ func podRunning(clientset client.Client, podName, namespace string) wait.Conditi
 	}
 }
 
+func isPodUnschedulable(clientset client.Client, podName, namespace string) bool {
+	var pod corev1.Pod
+	err := clientset.Get(context.Background(), types.NamespacedName{Namespace: namespace, Name: podName}, &pod)
+	if err != nil {
+		return false
+	}
+
+	if pod.Status.Phase != corev1.PodPending {
+		return false
+	}
+
+	for _, c := range pod.Status.Conditions {
+		if c.Type == corev1.PodScheduled &&
+			c.Status == corev1.ConditionFalse &&
+			c.Reason == corev1.PodReasonUnschedulable {
+			return true
+		}
+	}
+
+	return false
+}
+
+func deleteWorkspacePodForce(clientset client.Client, name, namespace string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	var pod corev1.Pod
+	err := clientset.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, &pod)
+	if err != nil {
+		if k8serr.IsNotFound(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	// we successfully got the pod, now we attempt to remove finalizer
+	pod.Finalizers = []string{}
+	err = clientset.Update(ctx, &pod)
+	if err != nil {
+		if k8serr.IsNotFound(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	return nil
+}
 func areValidFeatureFlags(value interface{}) error {
 	s, ok := value.([]api.WorkspaceFeatureFlag)
 	if !ok {
