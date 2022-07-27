@@ -44,6 +44,10 @@ func (s *BillingService) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoic
 	return &v1.UpdateInvoicesResponse{}, nil
 }
 
+func (s *BillingService) GetLatestInvoice(ctx context.Context, req *v1.GetLatestInvoiceRequest) (*v1.GetLatestInvoiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLatestInvoice not implemented")
+}
+
 func creditSummaryForTeams(sessions []*v1.BilledSession) (map[string]int64, error) {
 	creditsPerTeamID := map[string]float64{}
 
