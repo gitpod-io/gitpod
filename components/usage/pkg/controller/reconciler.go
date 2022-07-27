@@ -58,6 +58,7 @@ func (r *UsageAndBillingReconciler) Reconcile() (err error) {
 	}
 
 	sessions := usageResp.GetSessions()
+	reportSessionsRetrievedTotal(len(sessions))
 
 	_, err = r.billingClient.UpdateInvoices(ctx, &v1.UpdateInvoicesRequest{
 		StartTime: timestamppb.New(startOfCurrentMonth),
