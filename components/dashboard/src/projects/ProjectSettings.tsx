@@ -94,22 +94,25 @@ export default function () {
                 checked={!project.settings?.keepOutdatedPrebuildsRunning}
                 onChange={({ target }) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !target.checked })}
             />
-            <br></br>
-            <h3 className="mt-12">Workspace Persistence</h3>
-            <CheckBox
-                title={
-                    <span>
-                        Enable Persistent Volume Claim{" "}
-                        <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
-                            Experimental
-                        </PillLabel>
-                    </span>
-                }
-                desc={<span>Experimental feature that is still under development.</span>}
-                checked={project.settings?.usePersistentVolumeClaim ?? false}
-                disabled={!showPersistentVolumeClaimUI}
-                onChange={({ target }) => updateProjectSettings({ usePersistentVolumeClaim: target.checked })}
-            />
+            {showPersistentVolumeClaimUI && (
+                <>
+                    <br></br>
+                    <h3 className="mt-12">Workspace Persistence</h3>
+                    <CheckBox
+                        title={
+                            <span>
+                                Enable Persistent Volume Claim{" "}
+                                <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
+                                    Experimental
+                                </PillLabel>
+                            </span>
+                        }
+                        desc={<span>Experimental feature that is still under development.</span>}
+                        checked={project.settings?.usePersistentVolumeClaim ?? false}
+                        onChange={({ target }) => updateProjectSettings({ usePersistentVolumeClaim: target.checked })}
+                    />
+                </>
+            )}
         </ProjectSettingsPage>
     );
 }
