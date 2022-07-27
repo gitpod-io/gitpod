@@ -18,25 +18,22 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
-const (
-	usageReportBucketName = "usage-reports"
-)
-
 // UsageReportService implements UsageReportServiceServer
 type UsageReportService struct {
-	cfg config.StorageConfig
-	s   storage.PresignedAccess
+	cfg        config.StorageConfig
+	s          storage.PresignedAccess
+	bucketName string
 
 	api.UnimplementedUsageReportServiceServer
 }
 
 // NewUsageReportService create a new usagereport service
-func NewUsageReportService(cfg config.StorageConfig) (res *UsageReportService, err error) {
+func NewUsageReportService(cfg config.StorageConfig, bucketName string) (res *UsageReportService, err error) {
 	s, err := storage.NewPresignedAccess(&cfg)
 	if err != nil {
 		return nil, err
 	}
-	return &UsageReportService{cfg: cfg, s: s}, nil
+	return &UsageReportService{cfg: cfg, s: s, bucketName: bucketName}, nil
 }
 
 // UploadURL provides a URL to which clients can upload the content via HTTP PUT.
@@ -45,17 +42,17 @@ func (us *UsageReportService) UploadURL(ctx context.Context, req *api.UsageRepor
 	span.SetTag("name", req.Name)
 	defer tracing.FinishSpan(span, &err)
 
-	err = us.s.EnsureExists(ctx, usageReportBucketName)
+	err = us.s.EnsureExists(ctx, us.bucketName)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	info, err := us.s.SignUpload(ctx, usageReportBucketName, req.Name, &storage.SignedURLOptions{
+	info, err := us.s.SignUpload(ctx, us.bucketName, req.Name, &storage.SignedURLOptions{
 		ContentType: "*/*",
 	})
 	if err != nil {
 		log.WithField("name", req.Name).
-			WithField("bucket", usageReportBucketName).
+			WithField("bucket", us.bucketName).
 			WithError(err).
 			Error("Error getting UsageReport SignUpload URL")
 		return nil, status.Error(codes.Unknown, err.Error())

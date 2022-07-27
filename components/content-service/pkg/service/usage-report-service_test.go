@@ -19,16 +19,20 @@ import (
 // TestUploadURL tests that usageReportService.UploadURL interacts with PresignedAccess
 // correctly to produce an upload URL for the correct bucket and filename.
 func TestUploadURL(t *testing.T) {
+	const (
+		fileName   = "some-report-filename"
+		bucketName = "gitpod-usage-reports"
+	)
+
 	ctrl := gomock.NewController(t)
 	s := storagemock.NewMockPresignedAccess(ctrl)
-	const fileName = "some-report-filename"
 
-	s.EXPECT().EnsureExists(gomock.Any(), usageReportBucketName).
+	s.EXPECT().EnsureExists(gomock.Any(), bucketName).
 		Return(nil)
-	s.EXPECT().SignUpload(gomock.Any(), usageReportBucketName, fileName, gomock.Any()).
+	s.EXPECT().SignUpload(gomock.Any(), bucketName, fileName, gomock.Any()).
 		Return(&storage.UploadInfo{URL: "http://example.com/some-path"}, nil)
 
-	svc := &UsageReportService{cfg: config.StorageConfig{}, s: s}
+	svc := &UsageReportService{cfg: config.StorageConfig{}, s: s, bucketName: bucketName}
 	resp, err := svc.UploadURL(context.Background(), &api.UsageReportUploadURLRequest{Name: fileName})
 
 	require.NoError(t, err)
