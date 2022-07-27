@@ -234,7 +234,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 		go func() {
 			// no matter if the container was deleted or not - we've lost our guard that was waiting for that to happen.
 			// Hence, we must stop listening for it to come into existence and cancel the context.
-			err := d.Runtime.WaitForContainerStop(waitForPodCtx, workspaceInstanceID)
+			err := d.Runtime.WaitForContainerStop(context.Background(), workspaceInstanceID)
 			if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 				log.WithError(err).WithFields(owi).Error("unexpected waiting for container to stop")
 			}
