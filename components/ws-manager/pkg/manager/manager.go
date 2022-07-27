@@ -233,7 +233,7 @@ func (m *Manager) StartWorkspace(_ context.Context, req *api.StartWorkspaceReque
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
-	span.LogKV("event", "pod description created")
+	span.LogKV("event", "pod created", "name", pod.Name, "namespace", pod.Namespace)
 
 	var (
 		createPVC          bool
