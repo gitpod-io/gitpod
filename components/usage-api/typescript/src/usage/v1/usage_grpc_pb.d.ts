@@ -16,7 +16,7 @@ import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/t
 
 interface IUsageServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     listBilledUsage: IUsageServiceService_IListBilledUsage;
-    collectUsage: IUsageServiceService_ICollectUsage;
+    reconcileUsage: IUsageServiceService_IReconcileUsage;
 }
 
 interface IUsageServiceService_IListBilledUsage extends grpc.MethodDefinition<usage_v1_usage_pb.ListBilledUsageRequest, usage_v1_usage_pb.ListBilledUsageResponse> {
@@ -28,30 +28,30 @@ interface IUsageServiceService_IListBilledUsage extends grpc.MethodDefinition<us
     responseSerialize: grpc.serialize<usage_v1_usage_pb.ListBilledUsageResponse>;
     responseDeserialize: grpc.deserialize<usage_v1_usage_pb.ListBilledUsageResponse>;
 }
-interface IUsageServiceService_ICollectUsage extends grpc.MethodDefinition<usage_v1_usage_pb.CollectUsageRequest, usage_v1_usage_pb.CollectUsageResponse> {
-    path: "/usage.v1.UsageService/CollectUsage";
+interface IUsageServiceService_IReconcileUsage extends grpc.MethodDefinition<usage_v1_usage_pb.ReconcileUsageRequest, usage_v1_usage_pb.ReconcileUsageResponse> {
+    path: "/usage.v1.UsageService/ReconcileUsage";
     requestStream: false;
     responseStream: false;
-    requestSerialize: grpc.serialize<usage_v1_usage_pb.CollectUsageRequest>;
-    requestDeserialize: grpc.deserialize<usage_v1_usage_pb.CollectUsageRequest>;
-    responseSerialize: grpc.serialize<usage_v1_usage_pb.CollectUsageResponse>;
-    responseDeserialize: grpc.deserialize<usage_v1_usage_pb.CollectUsageResponse>;
+    requestSerialize: grpc.serialize<usage_v1_usage_pb.ReconcileUsageRequest>;
+    requestDeserialize: grpc.deserialize<usage_v1_usage_pb.ReconcileUsageRequest>;
+    responseSerialize: grpc.serialize<usage_v1_usage_pb.ReconcileUsageResponse>;
+    responseDeserialize: grpc.deserialize<usage_v1_usage_pb.ReconcileUsageResponse>;
 }
 
 export const UsageServiceService: IUsageServiceService;
 
 export interface IUsageServiceServer extends grpc.UntypedServiceImplementation {
     listBilledUsage: grpc.handleUnaryCall<usage_v1_usage_pb.ListBilledUsageRequest, usage_v1_usage_pb.ListBilledUsageResponse>;
-    collectUsage: grpc.handleUnaryCall<usage_v1_usage_pb.CollectUsageRequest, usage_v1_usage_pb.CollectUsageResponse>;
+    reconcileUsage: grpc.handleUnaryCall<usage_v1_usage_pb.ReconcileUsageRequest, usage_v1_usage_pb.ReconcileUsageResponse>;
 }
 
 export interface IUsageServiceClient {
     listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
     listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
     listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
-    collectUsage(request: usage_v1_usage_pb.CollectUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.CollectUsageResponse) => void): grpc.ClientUnaryCall;
-    collectUsage(request: usage_v1_usage_pb.CollectUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.CollectUsageResponse) => void): grpc.ClientUnaryCall;
-    collectUsage(request: usage_v1_usage_pb.CollectUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.CollectUsageResponse) => void): grpc.ClientUnaryCall;
+    reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
+    reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
+    reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class UsageServiceClient extends grpc.Client implements IUsageServiceClient {
@@ -59,7 +59,7 @@ export class UsageServiceClient extends grpc.Client implements IUsageServiceClie
     public listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
     public listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
     public listBilledUsage(request: usage_v1_usage_pb.ListBilledUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ListBilledUsageResponse) => void): grpc.ClientUnaryCall;
-    public collectUsage(request: usage_v1_usage_pb.CollectUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.CollectUsageResponse) => void): grpc.ClientUnaryCall;
-    public collectUsage(request: usage_v1_usage_pb.CollectUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.CollectUsageResponse) => void): grpc.ClientUnaryCall;
-    public collectUsage(request: usage_v1_usage_pb.CollectUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.CollectUsageResponse) => void): grpc.ClientUnaryCall;
+    public reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
+    public reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
+    public reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
 }

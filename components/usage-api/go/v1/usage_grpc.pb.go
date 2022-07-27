@@ -28,8 +28,8 @@ const _ = grpc.SupportPackageIsVersion7
 type UsageServiceClient interface {
 	// ListBilledUsage retrieves all usage for the specified attributionId
 	ListBilledUsage(ctx context.Context, in *ListBilledUsageRequest, opts ...grpc.CallOption) (*ListBilledUsageResponse, error)
-	// CollectUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
-	CollectUsage(ctx context.Context, in *CollectUsageRequest, opts ...grpc.CallOption) (*CollectUsageResponse, error)
+	// ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
+	ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error)
 }
 
 type usageServiceClient struct {
@@ -49,9 +49,9 @@ func (c *usageServiceClient) ListBilledUsage(ctx context.Context, in *ListBilled
 	return out, nil
 }
 
-func (c *usageServiceClient) CollectUsage(ctx context.Context, in *CollectUsageRequest, opts ...grpc.CallOption) (*CollectUsageResponse, error) {
-	out := new(CollectUsageResponse)
-	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/CollectUsage", in, out, opts...)
+func (c *usageServiceClient) ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error) {
+	out := new(ReconcileUsageResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/ReconcileUsage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +64,8 @@ func (c *usageServiceClient) CollectUsage(ctx context.Context, in *CollectUsageR
 type UsageServiceServer interface {
 	// ListBilledUsage retrieves all usage for the specified attributionId
 	ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error)
-	// CollectUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
-	CollectUsage(context.Context, *CollectUsageRequest) (*CollectUsageResponse, error)
+	// ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
+	ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
 }
 
@@ -76,8 +76,8 @@ type UnimplementedUsageServiceServer struct {
 func (UnimplementedUsageServiceServer) ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListBilledUsage not implemented")
 }
-func (UnimplementedUsageServiceServer) CollectUsage(context.Context, *CollectUsageRequest) (*CollectUsageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CollectUsage not implemented")
+func (UnimplementedUsageServiceServer) ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReconcileUsage not implemented")
 }
 func (UnimplementedUsageServiceServer) mustEmbedUnimplementedUsageServiceServer() {}
 
@@ -110,20 +110,20 @@ func _UsageService_ListBilledUsage_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UsageService_CollectUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CollectUsageRequest)
+func _UsageService_ReconcileUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReconcileUsageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsageServiceServer).CollectUsage(ctx, in)
+		return srv.(UsageServiceServer).ReconcileUsage(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/usage.v1.UsageService/CollectUsage",
+		FullMethod: "/usage.v1.UsageService/ReconcileUsage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsageServiceServer).CollectUsage(ctx, req.(*CollectUsageRequest))
+		return srv.(UsageServiceServer).ReconcileUsage(ctx, req.(*ReconcileUsageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -140,8 +140,8 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UsageService_ListBilledUsage_Handler,
 		},
 		{
-			MethodName: "CollectUsage",
-			Handler:    _UsageService_CollectUsage_Handler,
+			MethodName: "ReconcileUsage",
+			Handler:    _UsageService_ReconcileUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
