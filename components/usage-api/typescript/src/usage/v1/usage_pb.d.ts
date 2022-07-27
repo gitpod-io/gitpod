@@ -135,52 +135,52 @@ export namespace BilledSession {
     }
 }
 
-export class CollectUsageRequest extends jspb.Message {
+export class ReconcileUsageRequest extends jspb.Message {
 
     hasStartTime(): boolean;
     clearStartTime(): void;
     getStartTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setStartTime(value?: google_protobuf_timestamp_pb.Timestamp): CollectUsageRequest;
+    setStartTime(value?: google_protobuf_timestamp_pb.Timestamp): ReconcileUsageRequest;
 
     hasEndTime(): boolean;
     clearEndTime(): void;
     getEndTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setEndTime(value?: google_protobuf_timestamp_pb.Timestamp): CollectUsageRequest;
+    setEndTime(value?: google_protobuf_timestamp_pb.Timestamp): ReconcileUsageRequest;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): CollectUsageRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: CollectUsageRequest): CollectUsageRequest.AsObject;
+    toObject(includeInstance?: boolean): ReconcileUsageRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: ReconcileUsageRequest): ReconcileUsageRequest.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: CollectUsageRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): CollectUsageRequest;
-    static deserializeBinaryFromReader(message: CollectUsageRequest, reader: jspb.BinaryReader): CollectUsageRequest;
+    static serializeBinaryToWriter(message: ReconcileUsageRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ReconcileUsageRequest;
+    static deserializeBinaryFromReader(message: ReconcileUsageRequest, reader: jspb.BinaryReader): ReconcileUsageRequest;
 }
 
-export namespace CollectUsageRequest {
+export namespace ReconcileUsageRequest {
     export type AsObject = {
         startTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         endTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
     }
 }
 
-export class CollectUsageResponse extends jspb.Message {
+export class ReconcileUsageResponse extends jspb.Message {
     clearSessionsList(): void;
     getSessionsList(): Array<BilledSession>;
-    setSessionsList(value: Array<BilledSession>): CollectUsageResponse;
+    setSessionsList(value: Array<BilledSession>): ReconcileUsageResponse;
     addSessions(value?: BilledSession, index?: number): BilledSession;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): CollectUsageResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: CollectUsageResponse): CollectUsageResponse.AsObject;
+    toObject(includeInstance?: boolean): ReconcileUsageResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: ReconcileUsageResponse): ReconcileUsageResponse.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: CollectUsageResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): CollectUsageResponse;
-    static deserializeBinaryFromReader(message: CollectUsageResponse, reader: jspb.BinaryReader): CollectUsageResponse;
+    static serializeBinaryToWriter(message: ReconcileUsageResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ReconcileUsageResponse;
+    static deserializeBinaryFromReader(message: ReconcileUsageResponse, reader: jspb.BinaryReader): ReconcileUsageResponse;
 }
 
-export namespace CollectUsageResponse {
+export namespace ReconcileUsageResponse {
     export type AsObject = {
         sessionsList: Array<BilledSession.AsObject>,
     }
