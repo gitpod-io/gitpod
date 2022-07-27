@@ -114,7 +114,13 @@ type PProf struct {
 	Addr string `json:"address"`
 }
 
+// UsageReportConfig configures the upload of workspace instance usage reports
+type UsageReportConfig struct {
+	BucketName string `json:"bucketName"`
+}
+
 type ServiceConfig struct {
-	Service baseserver.ServerConfiguration `json:"service"`
-	Storage StorageConfig                  `json:"storage"`
+	Service      baseserver.ServerConfiguration `json:"service"`
+	Storage      StorageConfig                  `json:"storage"`
+	UsageReports UsageReportConfig              `json:"usageReport"`
 }
