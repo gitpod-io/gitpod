@@ -28,6 +28,8 @@ const _ = grpc.SupportPackageIsVersion7
 type UsageServiceClient interface {
 	// ListBilledUsage retrieves all usage for the specified attributionId
 	ListBilledUsage(ctx context.Context, in *ListBilledUsageRequest, opts ...grpc.CallOption) (*ListBilledUsageResponse, error)
+	// CollectUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
+	CollectUsage(ctx context.Context, in *CollectUsageRequest, opts ...grpc.CallOption) (*CollectUsageResponse, error)
 }
 
 type usageServiceClient struct {
@@ -47,12 +49,23 @@ func (c *usageServiceClient) ListBilledUsage(ctx context.Context, in *ListBilled
 	return out, nil
 }
 
+func (c *usageServiceClient) CollectUsage(ctx context.Context, in *CollectUsageRequest, opts ...grpc.CallOption) (*CollectUsageResponse, error) {
+	out := new(CollectUsageResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/CollectUsage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsageServiceServer is the server API for UsageService service.
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
 type UsageServiceServer interface {
 	// ListBilledUsage retrieves all usage for the specified attributionId
 	ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error)
+	// CollectUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
+	CollectUsage(context.Context, *CollectUsageRequest) (*CollectUsageResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
 }
 
@@ -62,6 +75,9 @@ type UnimplementedUsageServiceServer struct {
 
 func (UnimplementedUsageServiceServer) ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListBilledUsage not implemented")
+}
+func (UnimplementedUsageServiceServer) CollectUsage(context.Context, *CollectUsageRequest) (*CollectUsageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CollectUsage not implemented")
 }
 func (UnimplementedUsageServiceServer) mustEmbedUnimplementedUsageServiceServer() {}
 
@@ -94,6 +110,24 @@ func _UsageService_ListBilledUsage_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageService_CollectUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CollectUsageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).CollectUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/CollectUsage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).CollectUsage(ctx, req.(*CollectUsageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UsageService_ServiceDesc is the grpc.ServiceDesc for UsageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -104,6 +138,10 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListBilledUsage",
 			Handler:    _UsageService_ListBilledUsage_Handler,
+		},
+		{
+			MethodName: "CollectUsage",
+			Handler:    _UsageService_CollectUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
