@@ -3,5 +3,9 @@
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
-(import './openvsx-proxy/alerts.libsonnet') +
-(import './openvsx-proxy/rules.libsonnet')
+{
+  prometheusRules+:: {
+    groups+: [],
+    // There is no recording rules for this component.
+  },
+}
