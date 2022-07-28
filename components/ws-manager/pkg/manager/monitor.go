@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -903,9 +904,9 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	_, isBackup := initializer.Spec.(*csapi.WorkspaceInitializer_Backup)
 
 	if isBackup {
-		m.manager.metrics.totalRestoreCounterVec.WithLabelValues(wsType, wsClass).Inc()
+		m.manager.metrics.totalRestoreCounterVec.WithLabelValues(wsType, strconv.FormatBool(pvcFeatureEnabled), wsClass).Inc()
 		if err != nil {
-			m.manager.metrics.totalRestoreFailureCounterVec.WithLabelValues(wsType, wsClass).Inc()
+			m.manager.metrics.totalRestoreFailureCounterVec.WithLabelValues(wsType, strconv.FormatBool(pvcFeatureEnabled), wsClass).Inc()
 		}
 	}
 
@@ -1301,11 +1302,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 
 	if doBackup || doSnapshot {
-		m.manager.metrics.totalBackupCounterVec.WithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel]).Inc()
+		m.manager.metrics.totalBackupCounterVec.WithLabelValues(wsType, strconv.FormatBool(pvcFeatureEnabled), wso.Pod.Labels[workspaceClassLabel]).Inc()
 	}
 
 	if backupError != nil {
-		m.manager.metrics.totalBackupFailureCounterVec.WithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel]).Inc()
+		m.manager.metrics.totalBackupFailureCounterVec.WithLabelValues(wsType, strconv.FormatBool(pvcFeatureEnabled), wso.Pod.Labels[workspaceClassLabel]).Inc()
 
 		if dataloss {
 			disposalStatus.BackupFailure = backupError.Error()
