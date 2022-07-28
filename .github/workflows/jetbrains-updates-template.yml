@@ -54,7 +54,7 @@ jobs:
           git diff
       - name: Create Pull Request
         if: steps.latest-release.outputs.result != steps.used-release.outputs.result
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4
         with:
           title: "[${{ inputs.productId }}] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
           body: |
