@@ -40,6 +40,7 @@ func (v version) Defaults(in interface{}) error {
 	}
 
 	cfg.Kind = InstallationFull
+	cfg.Type = InstalaltionSelfHosted
 	cfg.Repository = "eu.gcr.io/gitpod-core-dev/build"
 	cfg.Observability = Observability{
 		LogLevel: LogLevelInfo,
@@ -103,8 +104,10 @@ func (v version) CheckDeprecated(rawCfg interface{}) (map[string]interface{}, []
 
 // Config defines the v1 version structure of the gitpod config file
 type Config struct {
-	// Installation type to run - for most users, this will be Full
+	// Installation type used for rendering - for most users, this will be Full
 	Kind InstallationKind `json:"kind" validate:"required,installation_kind"`
+	// Installation type to be passed down to the *run-time*
+	Type InstallationType `json:"type" validate:"required,installation_type"`
 	// The domain to deploy to
 	Domain     string   `json:"domain" validate:"required,fqdn"`
 	Metadata   Metadata `json:"metadata"`
@@ -221,6 +224,14 @@ const (
 	InstallationMeta      InstallationKind = "Meta"
 	InstallationWorkspace InstallationKind = "Workspace"
 	InstallationFull      InstallationKind = "Full"
+)
+
+type InstallationType string
+
+const (
+	InstallationSAAS         InstallationType = "SAAS"
+	InstalaltionSelfHosted   InstallationType = "self-hosted"
+	InstallationLocalPreview InstallationType = "local-preview"
 )
 
 type ObjectRef struct {

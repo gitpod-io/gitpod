@@ -55,12 +55,20 @@ export interface WorkspaceGarbageCollection {
     contentChunkLimit: number;
 }
 
+enum InstallationType {
+    selfHosted = "self-hosted",
+    saas = "saas",
+    localPreview = "local-preview",
+}
+
 /**
  * This is the config shape as found in the configuration file, e.g. server-configmap.yaml
  */
 export interface ConfigSerialized {
     version: string;
     hostUrl: string;
+    // Use this to more concretely get the type of Instalaltion
+    installationType?: InstallationType;
     installationShortname: string;
     devBranch?: string;
     insecureNoDomain: boolean;

@@ -90,6 +90,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getConfiguration(): Promise<Configuration>;
     getToken(query: GitpodServer.GetTokenSearchOptions): Promise<Token | undefined>;
     getGitpodTokenScopes(tokenHash: string): Promise<string[]>;
+    getGitpodInstanceType(): Promise<InstallationType>;
     /**
      * @deprecated
      */

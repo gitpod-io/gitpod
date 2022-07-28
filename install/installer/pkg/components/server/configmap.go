@@ -159,6 +159,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Version:               ctx.VersionManifest.Version,
 		HostURL:               fmt.Sprintf("https://%s", ctx.Config.Domain),
 		InstallationShortname: ctx.Config.Metadata.InstallationShortname,
+		InstallationType:      string(ctx.Config.Type),
 		LicenseFile:           license,
 		WorkspaceHeartbeat: WorkspaceHeartbeat{
 			IntervalSeconds: 60,

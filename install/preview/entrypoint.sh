@@ -95,6 +95,8 @@ EOF
 mkdir -p /var/lib/rancher/k3s/server/manifests/gitpod
 
 /gitpod-installer init > config.yaml
+yq e -i '.installationType = "local-preview"' config.yaml
+yq e -i '.experimental.telemetry.data.platform = "local-preview"' config.yaml
 yq e -i '.domain = "'"${DOMAIN}"'"' config.yaml
 yq e -i '.certificate.name = "https-certificates"' config.yaml
 yq e -i '.certificate.kind = "secret"' config.yaml
@@ -103,7 +105,6 @@ yq e -i '.customCACert.kind = "secret"' config.yaml
 yq e -i '.observability.logLevel = "debug"' config.yaml
 yq e -i '.workspace.runtime.containerdSocket = "/run/k3s/containerd/containerd.sock"' config.yaml
 yq e -i '.workspace.runtime.containerdRuntimeDir = "/var/lib/rancher/k3s/agent/containerd/io.containerd.runtime.v2.task/k8s.io/"' config.yaml
-yq e -i '.experimental.telemetry.data.platform = "local-preview"' config.yaml
 
 echo "extracting images to download ahead..."
 /gitpod-installer render --use-experimental-config --config config.yaml | grep 'image:' | sed 's/ *//g' | sed 's/image://g' | sed 's/\"//g' | sed 's/^-//g' | sort | uniq > /gitpod-images.txt
