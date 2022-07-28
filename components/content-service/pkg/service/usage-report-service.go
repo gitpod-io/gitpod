@@ -48,7 +48,7 @@ func (us *UsageReportService) UploadURL(ctx context.Context, req *api.UsageRepor
 	}
 
 	info, err := us.s.SignUpload(ctx, us.bucketName, req.Name, &storage.SignedURLOptions{
-		ContentType: "*/*",
+		ContentType: "application/json",
 	})
 	if err != nil {
 		log.WithField("name", req.Name).
