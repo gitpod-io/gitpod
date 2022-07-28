@@ -53,12 +53,17 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		WorkspaceImageRepository: fmt.Sprintf("%s/workspace-images", registryName),
 	}
 
+	workspaceImage := ctx.Config.Workspace.WorkspaceImage
+	if workspaceImage == "" {
+		workspaceImage = ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion)
+	}
+
 	imgcfg := config.ServiceConfig{
 		Orchestrator: orchestrator,
 		RefCache: config.RefCacheConfig{
 			Interval: util.Duration(time.Hour * 6).String(),
 			Refs: []string{
-				ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
+				workspaceImage,
 			},
 		},
 		Service: config.Service{
