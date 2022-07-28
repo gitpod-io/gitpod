@@ -306,6 +306,7 @@ func (s *Containerd) handleNewTask(cid string, rootfs []*types.Mount, pid uint32
 func (s *Containerd) WaitForContainer(ctx context.Context, workspaceInstanceID string) (cid ID, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "WaitForContainer")
+	span.LogKV("workspaceInstanceID", workspaceInstanceID)
 	defer tracing.FinishSpan(span, &err)
 
 	rchan := make(chan ID, 1)
@@ -348,6 +349,7 @@ func (s *Containerd) WaitForContainer(ctx context.Context, workspaceInstanceID s
 func (s *Containerd) WaitForContainerStop(ctx context.Context, workspaceInstanceID string) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "WaitForContainerStop")
+	span.LogKV("workspaceInstanceID", workspaceInstanceID)
 	defer tracing.FinishSpan(span, &err)
 
 	rchan := make(chan struct{}, 1)
