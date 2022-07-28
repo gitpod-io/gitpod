@@ -30,7 +30,7 @@ spec:
       containers:
         - name: installation-status
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:nvn-fix-11408.15"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:pavel-11005.7"
           command:
             - /bin/sh
             - -c

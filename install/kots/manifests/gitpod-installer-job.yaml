@@ -28,7 +28,7 @@ spec:
       containers:
         - name: installer
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:nvn-fix-11408.15"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:pavel-11005.7"
           volumeMounts:
             - mountPath: /config-patch
               name: config-patch
@@ -242,11 +242,13 @@ spec:
                 echo "Gitpod: Generating a self-signed certificate with the internal CA"
                 yq e -i '.customCACert.kind = "secret"' "${CONFIG_FILE}"
                 yq e -i '.customCACert.name = "ca-issuer-ca"' "${CONFIG_FILE}"
+                yq e -i '.containerRegistry.skipTLSVerify = true' "${CONFIG_FILE}"
               elif [ '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") (ConfigOptionNotEquals "tls_ca_crt" "") }}' = "true" ];
               then
                 echo "Gitpod: Setting CA to be used for certificate"
                 yq e -i '.customCACert.kind = "secret"' "${CONFIG_FILE}"
                 yq e -i '.customCACert.name = "ca-certificate"' "${CONFIG_FILE}"
+                yq e -i '.containerRegistry.skipTLSVerify = true' "${CONFIG_FILE}"
               fi
 
               if [ '{{repl ConfigOptionEquals "user_management_block_enabled" "1" }}' = "true" ];
