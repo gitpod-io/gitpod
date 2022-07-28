@@ -75,9 +75,8 @@ jobs:
 
                       ## How to test
                       1. Ensure you have the [latest JetBrains Gateway](https://www.jetbrains.com/remote-development/gateway/) installed.
-                      2. Download the plugin build related to this branch in [Dev Versions](https://plugins.jetbrains.com/plugin/18438-gitpod-gateway/versions/dev), and install it on the Gateway following [these instructions](https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk).
-                      3. Change the "Gitpod Host" (in JetBrains Gateway Preferences >> Tools >> Gitpod) to the preview environment hostname, so you can see the list of workspaces running on it.
-                      4. Create a new workspace from JetBrains Gateway (it's ok to use the pre-selected IDE and Repository) and confirm if JetBrains Client can connect to it.
+                      2. Download the plugin build related to this branch in [Dev Versions](https://plugins.jetbrains.com/plugin/18438-gitpod-gateway/versions/dev), and [install it on the Gateway](https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk).
+                      3. Create a new workspace from the Gateway (it's ok to use the pre-selected IDE and Repository) and confirm if JetBrains Client can connect to it.
 
                       ## Release Notes
                       ```release-note
@@ -88,8 +87,8 @@ jobs:
                       - [ ] /werft with-preview
 
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
-                  commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.version }}"
-                  branch: "jetbrains/update-${{ inputs.pluginId }}-platform-version-to-${{ steps.latest-version.outputs.version }}"
+                  commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
+                  branch: "jetbrains/${{ inputs.pluginId }}-platform-${{ steps.latest-version.outputs.result }}"
                   labels: "team: IDE"
                   team-reviewers: "engineering-ide"
             - name: Create Pull Request for Backend Plugin
@@ -117,8 +116,8 @@ jobs:
                       - [x] /werft with-preview
 
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
-                  commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.version }}"
-                  branch: "jetbrains/update-${{ inputs.pluginId }}-platform-version-to-${{ steps.latest-version.outputs.version }}"
+                  commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
+                  branch: "jetbrains/${{ inputs.pluginId }}-platform-${{ steps.latest-version.outputs.result }}"
                   labels: "team: IDE"
                   team-reviewers: "engineering-ide"
             - name: Slack Notification
