@@ -53,6 +53,7 @@ func (c *Client) UploadUsageReport(ctx context.Context, filename string, report 
 		return fmt.Errorf("failed to construct http request: %w", err)
 	}
 
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Encoding", "gzip")
 
 	log.Infof("Uploading %q to object storage...", filename)
