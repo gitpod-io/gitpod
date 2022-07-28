@@ -25,7 +25,7 @@ type IOLimiterV2 struct {
 
 func NewIOLimiterV2(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) (*IOLimiterV2, error) {
 	devices := buildDevices()
-	log.WithField("devices", devices).Info("io limiting devices")
+	log.WithField("devices", devices).Debug("io limiting devices")
 	return &IOLimiterV2{
 		limits: buildV2Limits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs, devices),
 
@@ -57,7 +57,7 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 	}()
 
 	go func() {
-		log.WithField("cgroupPath", cgroupPath).Info("starting io limiting")
+		log.WithField("cgroupPath", cgroupPath).Debug("starting io limiting")
 
 		_, err := v2.NewManager(basePath, filepath.Join("/", cgroupPath), c.limits)
 		if err != nil {
@@ -79,7 +79,7 @@ func (c *IOLimiterV2) Apply(ctx context.Context, basePath, cgroupPath string) er
 				if err != nil {
 					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
 				}
-				log.WithField("cgroupPath", cgroupPath).Info("stopping io limiting")
+				log.WithField("cgroupPath", cgroupPath).Debug("stopping io limiting")
 				return
 			}
 		}
@@ -106,19 +106,19 @@ func buildV2Limits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs 
 	for _, device := range devices {
 		majmin := strings.Split(device, ":")
 		if len(majmin) != 2 {
-			log.WithField("device", device).Info("invalid device")
+			log.WithField("device", device).Error("invalid device")
 			continue
 		}
 
 		major, err := strconv.ParseInt(majmin[0], 10, 64)
 		if err != nil {
-			log.WithError(err).Info("invalid major device")
+			log.WithError(err).Error("invalid major device")
 			continue
 		}
 
 		minor, err := strconv.ParseInt(majmin[1], 10, 64)
 		if err != nil {
-			log.WithError(err).Info("invalid minor device")
+			log.WithError(err).Error("invalid minor device")
 			continue
 		}
 
@@ -139,7 +139,7 @@ func buildV2Limits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs 
 		}
 	}
 
-	log.WithField("resources", resources).Info("cgroups v2 limits")
+	log.WithField("resources", resources).Debug("cgroups v2 limits")
 
 	return resources
 }
