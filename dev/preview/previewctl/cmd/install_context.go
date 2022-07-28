@@ -23,7 +23,7 @@ func installContextCmd(logger *logrus.Logger) *cobra.Command {
 	var lastSuccessfulPreviewEnvironment *preview.Preview = nil
 
 	install := func(timeout time.Duration) error {
-		p, err := preview.New("", logger)
+		p, err := preview.New(branch, logger)
 
 		if err != nil {
 			return err
