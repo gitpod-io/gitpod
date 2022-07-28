@@ -1,6 +1,8 @@
 # Change Log
 
 ## July 2022
+- [kots]: put the "run" collectors into the active namespace ([#11698](https://github.com/gitpod-io/gitpod/pull/11698)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Update IntelliJ IDEA IDE image to version 222.3345.118. ([#11680](https://github.com/gitpod-io/gitpod/pull/11680)) - [@felladrin](https://github.com/felladrin)
 - fix: new project widget broken if 'null' item(s) received from gh api ([#11630](https://github.com/gitpod-io/gitpod/pull/11630)) - [@szab100](https://github.com/szab100)
 - [dashboard] Fix persistence of checkbox values on settings page ([#11652](https://github.com/gitpod-io/gitpod/pull/11652)) - [@andrew-farries](https://github.com/andrew-farries)
 - Replce workspace search alert ([#11592](https://github.com/gitpod-io/gitpod/pull/11592)) - [@gtsiolis](https://github.com/gtsiolis)
