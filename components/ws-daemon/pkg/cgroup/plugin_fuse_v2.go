@@ -25,7 +25,7 @@ func (c *FuseDeviceEnablerV2) Type() Version { return Version2 }
 
 func (c *FuseDeviceEnablerV2) Apply(ctx context.Context, basePath, cgroupPath string) error {
 	fullCgroupPath := filepath.Join(basePath, cgroupPath)
-	log.WithField("cgroupPath", fullCgroupPath).Info("configuring devices")
+	log.WithField("cgroupPath", fullCgroupPath).Debug("configuring devices")
 
 	cgroupFD, err := unix.Open(fullCgroupPath, unix.O_DIRECTORY|unix.O_RDONLY|unix.O_CLOEXEC, 0600)
 	if err != nil {
