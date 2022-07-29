@@ -7,7 +7,7 @@ defaultArgs:
   jbMarketplacePublishTrigger: "false"
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: 3fef802aa6bfd601cf182315ba949931401772f8
+  codeCommit: 9a4dbcf1367331cdd6a840be0c3ca351849ec5a2
   codeQuality: stable
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.2.tar.gz"
   golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.2.tar.gz"
