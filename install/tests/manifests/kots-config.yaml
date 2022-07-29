@@ -8,3 +8,9 @@ spec:
       ssh_gateway:
         value: "1"
         data: "ssh_gateway"
+      advanced_mode_enabled:
+        value: "1"
+        data: "advanced_mode_enabled"
+      config_patch:
+        data: "config_patch"
+        value: ${PATCH}

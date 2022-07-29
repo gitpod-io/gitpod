@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as https from "https";
 import { join } from "path";
 import { exec } from "./util/shell";
 import { Werft } from "./util/werft";
@@ -16,6 +17,11 @@ const upgrade: string = annotations.upgrade || "false"; // setting to true will 
 const skipTests: string = annotations.skipTests || "false"; // setting to true skips the integration tests
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
 
+const slackHook = new Map<string, string>([
+    ["self-hosted-jobs", process.env.SH_SLACK_NOTIFICATION_PATH.trim()],
+    ["workspace-jobs", process.env.WS_SLACK_NOTIFICATION_PATH.trim()],
+    ["ide-jobs", process.env.IDE_SLACK_NOTIFICATION_PATH.trim()],
+]);
 
 const makefilePath: string = join("install/tests");
 
@@ -25,6 +31,7 @@ interface InfraConfig {
     phase: string;
     makeTarget: string;
     description: string;
+    slackhook?: string;
 }
 
 interface TestConfig {
@@ -35,13 +42,14 @@ interface TestConfig {
 
 const k8s_version: string = randK8sVersion(testConfig)
 const os_version: string = randOsVersion() // applicable only for k3s
+const op: string = preview == "true" ? "Preview" : "Test"
 
 // Each of the TEST_CONFIGURATIONS define an integration test end-to-end
 // It should be a combination of multiple INFRA_PHASES, order of PHASES slice is important
 const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     STANDARD_GKE_TEST: {
         CLOUD: "gcp",
-        DESCRIPTION: `Deploy Gitpod on GKE(version ${k8s_version})`,
+        DESCRIPTION: `${op} Gitpod on GKE managed cluster(version ${k8s_version})`,
         PHASES: [
             "STANDARD_GKE_CLUSTER",
             "CERT_MANAGER",
@@ -54,8 +62,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     },
     STANDARD_K3S_TEST: {
         CLOUD: "gcp", // the cloud provider is still GCP
-        DESCRIPTION:
-            `Deploy Gitpod on a K3s cluster(version ${k8s_version}), on a GCP instance with ubuntu ${os_version}`,
+        DESCRIPTION: `${op} Gitpod on a K3s cluster(version ${k8s_version}) on a GCP instance with ubuntu ${os_version}`,
         PHASES: [
             "STANDARD_K3S_CLUSTER_ON_GCP",
             "CERT_MANAGER",
@@ -67,7 +74,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     },
     STANDARD_AKS_TEST: {
         CLOUD: "azure",
-        DESCRIPTION: `Deploy Gitpod on AKS(version ${k8s_version})`,
+        DESCRIPTION: `${op} Gitpod on AKS(version ${k8s_version})`,
         PHASES: [
             "STANDARD_AKS_CLUSTER",
             "CERT_MANAGER",
@@ -81,7 +88,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     },
     STANDARD_EKS_TEST: {
         CLOUD: "aws",
-        DESCRIPTION: `Create an EKS cluster(version ${k8s_version})`,
+        DESCRIPTION: `${op} an EKS cluster(version ${k8s_version})`,
         PHASES: [
             "STANDARD_EKS_CLUSTER",
             "CERT_MANAGER",
@@ -198,47 +205,52 @@ const TESTS: { [name: string]: InfraConfig } = {
     WORKSPACE_TEST: {
         phase: "run-workspace-tests",
         makeTarget: "run-workspace-tests",
-        description: "Run the test for workspaces",
+        description: "Run the workspace tests test/tests/workspace",
+        slackhook: slackHook.get("workspace-jobs"),
     },
     VSCODE_IDE_TEST: {
         phase: "run-vscode-ide-tests",
         makeTarget: "run-vscode-ide-tests",
-        description: "Run the test for vscode IDE",
+        description: "Run the vscode IDE tests test/tests/ide/vscode",
+        slackhook: slackHook.get("ide-jobs"),
     },
     JB_IDE_TEST: {
         phase: "run-jb-ide-tests",
         makeTarget: "run-jb-ide-tests",
-        description: "Run the test for jetbrains IDE",
+        description: "Run the jetbrains IDE tests test/tests/ide/jetbrains",
+        slackhook: slackHook.get("ide-jobs"),
     },
     CONTENTSERVICE_TEST: {
         phase: "run-cs-component-tests",
         makeTarget: "run-cs-component-tests",
-        description: "Run the test for content-service component",
+        description: "Run the content-service tests test/tests/components/content-service",
     },
     DB_TEST: {
         phase: "run-db-component-tests",
         makeTarget: "run-db-component-tests",
-        description: "Run the test for database component",
+        description: "Run the database tests test/tests/components/database",
     },
     IMAGEBUILDER_TEST: {
         phase: "run-ib-component-tests",
         makeTarget: "run-ib-component-tests",
-        description: "Run the test for image-builder component",
+        description: "Run the image-builder tests test/tests/components/image-builder",
     },
     SERVER_TEST: {
         phase: "run-server-component-tests",
         makeTarget: "run-server-component-tests",
-        description: "Run the test for server component",
+        description: "Run the server tests test/tests/components/server",
     },
     WS_DAEMON_TEST: {
         phase: "run-wsd-component-tests",
         makeTarget: "run-wsd-component-tests",
-        description: "Run the test for ws-daemon component",
+        description: "Run the ws-daemon tests test/tests/components/ws-daemon",
+        slackhook: slackHook.get("workspace-jobs"),
     },
     WS_MNGR_TEST: {
         phase: "run-wsm-component-tests",
         makeTarget: "run-wsm-component-tests",
-        description: "Run the test for ws-manager component",
+        description: "Run the ws-manager tests test/tests/components/ws-manager",
+        slackhook: slackHook.get("workspace-jobs"),
     },
 }
 
@@ -259,14 +271,21 @@ export async function installerTests(config: TestConfig) {
     // If the cloud variable is not set, we have a cleanup job in hand
     const majorPhase: string = cloud == "" ? `create-${cloud}-infra` : "cleanup-infra"
 
-    werft.phase(majorPhase, `Manage the infrastructure`);
+    werft.phase(majorPhase, `Manage the infrastructure in ${cloud}`);
     for (let phase of config.PHASES) {
         const phaseSteps = INFRA_PHASES[phase];
         const ret = callMakeTargets(phaseSteps.phase, phaseSteps.description, phaseSteps.makeTarget);
         if (ret) {
             // there is not point in continuing if one stage fails for infra setup
-            werft.fail(`create-${cloud}-infra`, "Cluster creation failed");
-            break;
+            const err: Error = new Error("Cluster creation failed")
+
+            console.log("Trying to send slack alert")
+
+            await sendFailureSlackAlert(phaseSteps.description, err, slackHook.get("self-hosted-jobs"))
+
+            werft.fail(`create-${cloud}-infra`, err.message);
+
+            return
         }
     }
     werft.done(majorPhase);
@@ -284,6 +303,8 @@ export async function installerTests(config: TestConfig) {
         const upgradePhase = INFRA_PHASES["KOTS_UPGRADE"];
         const ret = callMakeTargets(upgradePhase.phase, upgradePhase.description, upgradePhase.makeTarget);
         if (ret) {
+            sendFailureSlackAlert(upgradePhase.description, new Error("Upgrade test failed"), slackHook.get("self-hosted-jobs"))
+
             return;
         }
     }
@@ -308,6 +329,11 @@ export async function installerTests(config: TestConfig) {
             exec(`werft log result -d  "KUBECONFIG Connection details" url "Follow cloud specific instructions to connect to the cluster"`);
         }
 
+        sendPreviewSlackAlert().catch((error: Error) => {
+            console.error("Failed to send message to Slack", error);
+        });
+
+
         exec(`werft log result -d  "Terraform state" url "Terraform state file name is ${process.env["TF_VAR_TEST_ID"]}"`);
 
         werft.done("print-output");
@@ -321,12 +347,13 @@ function runIntegrationTests() {
     werft.phase("run-integration-tests", "Run all existing integration tests");
     for (let test in TESTS) {
         const testPhase = TESTS[test];
-        // todo(nvn): handle the test failures by alerting teams
         const ret = callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
         if (ret) {
             exec(
                 `werft log result -d "failed test" url "${testPhase.description}(Phase ${testPhase.phase}) failed. Please refer logs."`,
             );
+
+            sendFailureSlackAlert(testPhase.description, new Error("Integration test failed"), testPhase.slackhook)
         }
     }
 
@@ -432,10 +459,127 @@ function cleanup() {
 
         console.log(`Cleanup the following resources manually: ${itemsTobeCleaned}`);
 
-        werft.fail(phase.phase, "Destroying of resources failed");
-    } else {
-        werft.done(phase.phase);
+        sendFailureSlackAlert(phase.description, new Error("Cleanup job failed"), slackHook.get("self-hosted-jobs"))
     }
 
+    werft.done(phase.phase);
+
     return ret;
+}
+
+export function sendFailureSlackAlert(phase: string, err: Error, hook: string): Promise<void> {
+    if (typeof hook === 'undefined' || hook === null) {
+        return
+    }
+
+    const repo = context.Repository.host + "/" + context.Repository.owner + "/" + context.Repository.repo;
+    const data = JSON.stringify({
+        blocks: [
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: ":X: *self-hosted " + op + " failed*\n_Test configuration:_ `" + config.DESCRIPTION + "`\n_Replicated channel_: `" + channel + "`\n_Build:_ `" + context.Name + "`",
+                },
+                accessory: {
+                    type: "button",
+                    text: {
+                        type: "plain_text",
+                        text: "Go to Werft",
+                        emoji: true,
+                    },
+                    value: "click_me_123",
+                    url: "https://werft.gitpod-dev.com/job/" + context.Name,
+                    action_id: "button-action",
+                },
+            },
+            {
+                type: "section",
+                fields: [
+                    {
+                        type: "mrkdwn",
+                        text: "*Failed step:*\n" + phase + "\n",
+                    },
+                    {
+                        type: "mrkdwn",
+                        text: "*Error:*\n`" + err + "`\n",
+                    },
+                ]
+            },
+        ],
+    });
+    return new Promise((resolve, reject) => {
+        const req = https.request(
+            {
+                hostname: "hooks.slack.com",
+                port: 443,
+                path: process.env.SH_SLACK_NOTIFICATION_PATH.trim(),
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Content-Length": data.length,
+                },
+            },
+            () => resolve(),
+        );
+        req.on("error", (error: Error) => reject(error));
+        req.write(data);
+        req.end();
+    });
+}
+
+export async function sendPreviewSlackAlert(): Promise<void> {
+    const data = JSON.stringify({
+        blocks: [
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: ":white_check_mark: *self-hosted preview environment*\n_Test configuration:_ `" + config.DESCRIPTION + "`\n_Build:_ `" + context.Name + "`\n_Owner:_ `" + context.Owner + "`",
+                },
+                accessory: {
+                    type: "button",
+                    text: {
+                        type: "plain_text",
+                        text: "Go to Werft",
+                        emoji: true
+                    },
+                    value: "click_me_123",
+                    url: "https://werft.gitpod-dev.com/job/" + context.Name,
+                    action_id: "button-action"
+                }
+            },
+            {
+                type: "section",
+                fields: [
+                    {
+                        type: "mrkdwn",
+                        text: "*URL:*\n<https://" + process.env["TF_VAR_TEST_ID"] + ".tests.gitpod-self-hosted.com|Access preview setup>",
+                    },
+                    {
+                        type: "mrkdwn",
+                        text: "*Terraform workspace:*\n`" + process.env["TF_VAR_TEST_ID"] + "`\n",
+                    },
+                ]
+            },
+        ],
+    });
+    return new Promise((resolve, reject) => {
+        const req = https.request(
+            {
+                hostname: "hooks.slack.com",
+                port: 443,
+                path: process.env.SH_SLACK_NOTIFICATION_PATH.trim(),
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Content-Length": data.length,
+                },
+            },
+            () => resolve(),
+        );
+        req.on("error", (error: Error) => reject(error));
+        req.write(data);
+        req.end();
+    });
 }

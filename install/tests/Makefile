@@ -147,9 +147,25 @@ external-dns: check-env-cloud select-workspace
 ## get-kubeconfig: Returns KUBECONFIG of a just created cluster
 get-kubeconfig: ${cloud}-kubeconfig
 
+
+get-github-config:
+ifneq ($(GITHUB_SCM_OAUTH),)
+	export SCM_OAUTH=./manifests/github-oauth.yaml && \
+	cat $$GITHUB_SCM_OAUTH/provider > $$SCM_OAUTH && \
+	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' http://${TF_VAR_TEST_ID}.tests.gitpod-self-hosted.com/auth/github.com/callback && \
+	kubectl --kubeconfig=${KUBECONFIG} create namespace gitpod || echo "Gitpod namespace already exist" && \
+	kubectl --kubeconfig=${KUBECONFIG} delete secret github-oauth -n gitpod || echo "gitpod-oauth secret needs to be created" && \
+	kubectl --kubeconfig=${KUBECONFIG} create secret generic "github-oauth" --namespace gitpod --from-literal=provider="$$(cat $$SCM_OAUTH)" && \
+	echo -en  "authProviders:\n  - kind: secret\n    name: github-oauth\n" > ./manifests/config-patch.yaml
+else
+	echo "Skipping github setup since var GITHUB_SCM_OAUTH is not set"
+endif
+
 KOTS_KONFIG := "./manifests/kots-config.yaml"
 
-get-base-config:
+get-base-config: get-github-config
+	export CONFIG_PATCH=./manifests/config-patch.yaml && \
+	export PATCH=$$(cat $$CONFIG_PATCH | base64 -w 0) || export PATCH="" && \
 	envsubst < ${KOTS_KONFIG} > tmp_config.yml
 
 storage-config-gcp:
@@ -264,8 +280,8 @@ delete-cm-setup:
 
 gitpod-debug-info:
 	@echo "Gitpod is not ready"
-	@kubectl get pods -n gitpod
-	@kubectl get certificate -n gitpod
+	@kubectl --kubeconfig=${KUBECONFIG} get pods -n gitpod
+	@kubectl --kubeconfig=${KUBECONFIG} get certificate -n gitpod
 
 check-kots-app:
 	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { $(MAKE) gitpod-debug-info; exit 1; }
@@ -297,7 +313,7 @@ run-ib-component-tests:
 	$(call runtests,"test/tests/components/image-builder/")
 
 run-server-component-tests:
-	$(call runtests,"test/tests/components/content-service/")
+	$(call runtests,"test/tests/components/server/")
 
 run-wsd-component-tests:
 	$(call runtests,"test/tests/components/ws-daemon/")
@@ -310,9 +326,12 @@ kots-upgrade:
 	kubectl kots upstream upgrade --kubeconfig=${KUBECONFIG} gitpod -n gitpod --deploy
 
 cloud ?= cluster
-cleanup: $(cloud)-kubeconfig destroy-gitpod destroy-$(cloud) destroy-workspace destroy-kubeconfig
+cleanup: $(cloud)-kubeconfig destroy-gitpod tf-init destroy-$(cloud) destroy-workspace destroy-kubeconfig
 
 cluster-kubeconfig: azure-kubeconfig aws-kubeconfig k3s-kubeconfig gcp-kubeconfig
+
+tf-init:
+	@terraform init
 
 destroy-cluster: destroy-gcp destroy-aws destroy-azure
 

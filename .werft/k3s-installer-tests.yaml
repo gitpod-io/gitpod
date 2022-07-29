@@ -45,6 +45,21 @@ pod:
           secretKeyRef:
             name: integration-test-user
             key: token
+      - name: IDE_SLACK_NOTIFICATION_PATH
+        valueFrom:
+          secretKeyRef:
+            name: slack-webhook-urls
+            key: ide_jobs
+      - name: WS_SLACK_NOTIFICATION_PATH
+        valueFrom:
+          secretKeyRef:
+            name: slack-webhook-urls
+            key: workspace_jobs
+      - name: SH_SLACK_NOTIFICATION_PATH
+        valueFrom:
+          secretKeyRef:
+            name: slack-webhook-urls
+            key: self_hosted_jobs
     command:
       - bash
       - -c
