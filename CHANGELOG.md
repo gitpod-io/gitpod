@@ -1,6 +1,7 @@
 # Change Log
 
 ## July 2022
+- Update PyCharm IDE image to version 222.3345.131. ([#11728](https://github.com/gitpod-io/gitpod/pull/11728)) - [@felladrin](https://github.com/felladrin)
 - [kots]: put the "run" collectors into the active namespace ([#11698](https://github.com/gitpod-io/gitpod/pull/11698)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Update IntelliJ IDEA IDE image to version 222.3345.118. ([#11680](https://github.com/gitpod-io/gitpod/pull/11680)) - [@felladrin](https://github.com/felladrin)
 - fix: new project widget broken if 'null' item(s) received from gh api ([#11630](https://github.com/gitpod-io/gitpod/pull/11630)) - [@szab100](https://github.com/szab100)
