@@ -61,12 +61,6 @@ const (
 	// firstUserActivityAnnotation marks a workspace woth the timestamp of first user activity in it
 	firstUserActivityAnnotation = "gitpod/firstUserActivity"
 
-	// fullWorkspaceBackupAnnotation is set on workspaces which operate using a full workspace backup
-	fullWorkspaceBackupAnnotation = "gitpod/fullWorkspaceBackup"
-
-	// pvcWorkspaceFeatureAnnotation is set on workspaces which are using persistent_volume_claim feature
-	pvcWorkspaceFeatureAnnotation = "gitpod.io/pvcFeature"
-
 	// pvcWorkspaceVolumeSnapshotAnnotation stores volume snapshot name when snapshot was created from pvc
 	pvcWorkspaceVolumeSnapshotAnnotation = "gitpod.io/volumeSnapshotName"
 
