@@ -44,8 +44,8 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	_, fullWorkspaceBackupEnabled := pod.Labels[fullWorkspaceBackupAnnotation]
-	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureAnnotation]
+	_, fullWorkspaceBackupEnabled := pod.Labels[fullWorkspaceBackupLabel]
+	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureLabel]
 
 	if fullWorkspaceBackupEnabled || pvcFeatureEnabled {
 		owner := pod.Labels[wsk8s.OwnerLabel]

@@ -555,8 +555,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		switch feature {
 		case api.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP:
 			removeVolume(&pod, workspaceVolumeName)
-			pod.Labels[fullWorkspaceBackupAnnotation] = "true"
-			pod.Annotations[fullWorkspaceBackupAnnotation] = "true"
+			pod.Labels[fullWorkspaceBackupLabel] = util.BooleanTrueString
 
 		case api.WorkspaceFeatureFlag_FIXED_RESOURCES:
 			var cpuLimit string
@@ -571,7 +570,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		case api.WorkspaceFeatureFlag_NOOP:
 
 		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
-			pod.Labels[pvcWorkspaceFeatureAnnotation] = util.BooleanTrueString
+			pod.Labels[pvcWorkspaceFeatureLabel] = util.BooleanTrueString
 
 			// update volume to use persistent volume claim, and name of it is the same as pod's name
 			pvcName := pod.ObjectMeta.Name

@@ -770,8 +770,8 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 // If we're already initializing the workspace, thus function will return immediately. If we were not initializing,
 // prior to this call this function returns once initialization is complete.
 func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error) {
-	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupAnnotation]
-	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureAnnotation]
+	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupLabel]
+	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureLabel]
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
@@ -1008,7 +1008,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		volumeSnapshotTime time.Time
 	)
 	if wso.Pod != nil {
-		_, pvcFeatureEnabled = wso.Pod.Labels[pvcWorkspaceFeatureAnnotation]
+		_, pvcFeatureEnabled = wso.Pod.Labels[pvcWorkspaceFeatureLabel]
 
 		if _, ok := wso.Pod.Labels[workspaceClassLabel]; ok {
 			wsClassName := wso.Pod.Labels[workspaceClassLabel]

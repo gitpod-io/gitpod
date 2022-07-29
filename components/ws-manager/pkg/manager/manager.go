@@ -255,7 +255,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		pvc                *corev1.PersistentVolumeClaim
 		startTime, endTime time.Time // the start time and end time of PVC restoring from VolumeSnapshot
 	)
-	_, createPVC = pod.Labels[pvcWorkspaceFeatureAnnotation]
+	_, createPVC = pod.Labels[pvcWorkspaceFeatureLabel]
 
 	if createPVC {
 		if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
