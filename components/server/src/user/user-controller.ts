@@ -27,9 +27,12 @@ import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from "../../src/prometheus-metrics";
 import { v4 as uuidv4 } from "uuid";
-import { ScopedResourceGuard } from "../auth/resource-access";
+import { OwnerResourceGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { trackSignup } from "../analytics";
+import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
+import { EnforcementControllerServerFactory } from "./enforcement-endpoint";
+import { ClientMetadata } from "../websocket/websocket-connection-manager";
 
 @injectable()
 export class UserController {
@@ -46,6 +49,9 @@ export class UserController {
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(OneTimeSecretDB) protected readonly otsDb: OneTimeSecretDB;
+    @inject(WorkspaceManagerClientProvider)
+    protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
+    @inject(EnforcementControllerServerFactory) private readonly serverFactory: EnforcementControllerServerFactory;
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -279,6 +285,64 @@ export class UserController {
                     domain: `.${this.config.hostUrl.url.host}`,
                 });
                 res.sendStatus(200);
+            },
+        );
+
+        router.post(
+            "/auth/workspacePageClose/:instanceID",
+            async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                if (!req.isAuthenticated() || !User.is(req.user)) {
+                    res.sendStatus(401);
+                    log.warn("unauthenticated workspacePageClose", { instanceId: req.params.instanceID });
+                    return;
+                }
+
+                const user = req.user as User;
+                if (user.blocked) {
+                    res.sendStatus(403);
+                    log.warn("blocked user attempted to workspacePageClose", {
+                        instanceId: req.params.instanceID,
+                        userId: user.id,
+                    });
+                    return;
+                }
+
+                const instanceID = req.params.instanceID;
+                if (!instanceID) {
+                    res.sendStatus(400);
+                    log.warn("attempted to workspacePageClose without instance ID", {
+                        instanceId: req.params.instanceID,
+                        userId: user.id,
+                    });
+                    return;
+                }
+                const sessionId = req.body.sessionId;
+                const server = this.createGitpodServer(user);
+                try {
+                    await server.sendHeartBeat({}, { wasClosed: true, instanceId: instanceID });
+                    /** no await */ server
+                        .trackEvent(
+                            {},
+                            {
+                                event: "ide_close_signal",
+                                properties: {
+                                    sessionId,
+                                    instanceId: instanceID,
+                                    clientKind: "supervisor-frontend",
+                                },
+                            },
+                        )
+                        .catch((err) =>
+                            log.warn({ userId: user.id }, "workspacePageClose: failed to track ide close signal", err),
+                        );
+                    res.sendStatus(200);
+                } catch (e) {
+                    log.error("workspacePageClose failed", e);
+                    res.sendStatus(500);
+                    return;
+                } finally {
+                    server.dispose();
+                }
             },
         );
         if (this.config.enableLocalApp) {
@@ -704,5 +768,18 @@ export class UserController {
 
         log.debug({ sessionId: req.sessionID }, "The redirect URL does not match", { query: req.query });
         return;
+    }
+
+    private createGitpodServer(user: User) {
+        const server = this.serverFactory();
+        server.initialize(
+            undefined,
+            user,
+            new OwnerResourceGuard(user.id),
+            ClientMetadata.from(user.id),
+            undefined,
+            {},
+        );
+        return server;
     }
 }
