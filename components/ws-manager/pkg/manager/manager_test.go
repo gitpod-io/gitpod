@@ -18,7 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestValidateStartWorkspaceRequest(t *testing.T) {
@@ -310,7 +309,7 @@ func TestConnectToWorkspaceDaemon(t *testing.T) {
 					},
 				},
 			},
-			ExpectedErr: "no running ws-daemon pod found",
+			ExpectedErr: "cannot create connection to Gitpod component: no ws-daemon found in the host",
 		},
 		{
 			Name: "handles no endpoint on current node",
@@ -349,7 +348,7 @@ func TestConnectToWorkspaceDaemon(t *testing.T) {
 					},
 				},
 			},
-			ExpectedErr: "no running ws-daemon pod found",
+			ExpectedErr: "cannot create connection to Gitpod component: no ws-daemon found in the host",
 		},
 		{
 			Name: "finds endpoint on current node",
@@ -395,109 +394,16 @@ func TestConnectToWorkspaceDaemon(t *testing.T) {
 		// Add dummy daemon pool - slightly hacky but we aren't testing the actual connectivity here
 		manager.wsdaemonPool = grpcpool.New(func(host string) (*grpc.ClientConn, error) {
 			return nil, nil
-		}, func(checkAddress string) bool { return false })
+		})
 
 		t.Run(tt.Name, func(t *testing.T) {
-			got, err := manager.connectToWorkspaceDaemon(tt.Args.Ctx, tt.Args.WSO)
+			got, _, err := manager.connectToWorkspaceDaemon(tt.Args.Ctx, tt.Args.WSO)
 			if (err != nil) && !strings.Contains(err.Error(), tt.ExpectedErr) {
 				t.Errorf("Manager.connectToWorkspaceDaemon() error = %v, wantErr %v (%v)", err, tt.WantErr, tt.ExpectedErr)
 				return
 			}
 			if err != nil && got != nil {
 				t.Errorf("Manager.connectToWorkspaceDaemon() = %v, wanted nil", got)
-			}
-		})
-	}
-}
-
-func TestCheckWSDaemonEntpoint(t *testing.T) {
-	type Args struct {
-		Objs []client.Object
-	}
-	tests := []struct {
-		Name     string
-		Input    string
-		Args     Args
-		Expected bool
-	}{
-		{
-			Name:     "handles no endpoints",
-			Input:    "10.1.2.3",
-			Args:     Args{},
-			Expected: false,
-		},
-		{
-			Name: "handles no endpoint on current node",
-			Args: Args{
-				Objs: []client.Object{
-					&corev1.Pod{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "ws-daemon-endpoints",
-							Namespace: "default",
-							Labels: labels.Set{
-								"component": "ws-daemon",
-								"app":       "gitpod",
-							},
-						},
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:  "workspace",
-									Image: "dummy",
-								},
-							},
-							NodeName: "nodeName",
-						},
-						Status: corev1.PodStatus{
-							Phase: corev1.PodRunning,
-							PodIP: "10.1.2.2",
-						},
-					},
-				},
-			},
-			Expected: false,
-		},
-		{
-			Name:  "finds endpoint on current node",
-			Input: "10.1.2.3",
-			Args: Args{
-				Objs: []client.Object{
-					&corev1.Pod{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "ws-daemon-endpoints",
-							Namespace: "default",
-							Labels: labels.Set{
-								"component": "ws-daemon",
-								"app":       "gitpod",
-							},
-						},
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:  "workspace",
-									Image: "dummy",
-								},
-							},
-							NodeName: "nodeName",
-						},
-						Status: corev1.PodStatus{
-							Phase: corev1.PodRunning,
-							PodIP: "10.1.2.3",
-						},
-					},
-				},
-			},
-			Expected: true,
-		},
-	}
-
-	for _, tt := range tests {
-		clientset := fake.NewClientBuilder().WithObjects(tt.Args.Objs...).Build()
-
-		t.Run(tt.Name, func(t *testing.T) {
-			got := checkWSDaemonEndpoint("default", clientset)(tt.Input)
-			if got != tt.Expected {
-				t.Errorf("checkWSDaemonEndpoint = %v, wanted %v", got, tt.Expected)
 			}
 		})
 	}

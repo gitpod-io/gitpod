@@ -117,23 +117,16 @@ const (
 	stopWorkspaceNormallyGracePeriod = 30 * time.Second
 	// stopWorkspaceImmediatelyGracePeriod is the grace period we use when stopping a pod as soon as possbile
 	stopWorkspaceImmediatelyGracePeriod = 1 * time.Second
-	// wsdaemonDialTimeout is the time we allow for trying to connect to ws-daemon.
-	// Note: this is NOT the time we allow for RPC calls to wsdaemon, but just for establishing the connection.
-	wsdaemonDialTimeout = 10 * time.Second
-
 	// kubernetesOperationTimeout is the time we give Kubernetes operations in general.
 	kubernetesOperationTimeout = 5 * time.Second
 )
 
 // New creates a new workspace manager
 func New(config config.Configuration, client client.Client, rawClient kubernetes.Interface, cp *layer.Provider) (*Manager, error) {
-	wsdaemonConnfactory, err := newWssyncConnectionFactory(config)
-	if err != nil {
-		return nil, err
-	}
 
 	broadcaster := record.NewBroadcaster()
-	broadcaster.StartRecordingToSink(&covev1client.EventSinkImpl{Interface: rawClient.CoreV1().Events("")})
+	broadcaster.StartRecordingToSink(&covev1client.EventSinkImpl{Interface: rawClient.CoreV1().Events(config.Namespace)})
+
 	eventRecorder := broadcaster.NewRecorder(runtime.NewScheme(), corev1.EventSource{Component: "ws-manager"})
 
 	m := &Manager{
@@ -143,7 +136,6 @@ func New(config config.Configuration, client client.Client, rawClient kubernetes
 		Content:       cp,
 		clock:         clock.System(),
 		subscribers:   make(map[string]chan *api.SubscribeResponse),
-		wsdaemonPool:  grpcpool.New(wsdaemonConnfactory, checkWSDaemonEndpoint(config.Namespace, client)),
 		eventRecorder: eventRecorder,
 	}
 	m.metrics = newMetrics(m)
@@ -160,7 +152,17 @@ func Register(grpcServer *grpc.Server, manager *Manager) {
 // Close disposes some of the resources held by the manager. After calling close, the manager is not guaranteed
 // to function properly anymore.
 func (m *Manager) Close() {
-	m.wsdaemonPool.Close()
+
+}
+
+func (m *Manager) CreateGRPCPool() (*grpcpool.Pool, error) {
+	wsdaemonConnfactory, err := newWssyncConnectionFactory(m.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	m.wsdaemonPool = grpcpool.New(wsdaemonConnfactory)
+	return m.wsdaemonPool, nil
 }
 
 type (
@@ -1441,7 +1443,7 @@ func isKubernetesObjNotFoundError(err error) bool {
 }
 
 // connectToWorkspaceDaemon establishes a connection to the ws-daemon daemon running on the node of the pod/workspace.
-func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObjects) (wcsClient wsdaemon.WorkspaceContentServiceClient, err error) {
+func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObjects) (wcsClient wsdaemon.WorkspaceContentServiceClient, conn *grpc.ClientConn, err error) {
 	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "connectToWorkspaceDaemon")
 	tracing.ApplyOWI(span, wso.GetOWI())
@@ -1449,45 +1451,33 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 
 	nodeName := wso.NodeName()
 	if nodeName == "" {
-		return nil, xerrors.Errorf("workspace without a valid node name")
+		return nil, nil, xerrors.Errorf("workspace without a valid node name")
 	}
 
-	var podList corev1.PodList
-	err = m.Clientset.List(ctx, &podList,
-		&client.ListOptions{
-			Namespace: m.Config.Namespace,
-			LabelSelector: labels.SelectorFromSet(labels.Set{
-				"component": "ws-daemon",
-				"app":       "gitpod",
-			}),
-		},
-	)
+	conn, err = m.wsdaemonPool.Get(nodeName)
 	if err != nil {
-		return nil, xerrors.Errorf("unexpected error searching for Gitpod ws-daemon pod: %w", err)
+		return nil, nil, xerrors.Errorf("cannot create connection to Gitpod component: %w", err)
 	}
 
-	// find the ws-daemon on this node
-	var hostIP string
-	for _, pod := range podList.Items {
-		if pod.Spec.NodeName == nodeName {
-			hostIP = pod.Status.PodIP
-			break
-		}
-	}
-
-	if hostIP == "" {
-		return nil, xerrors.Errorf("no running ws-daemon pod found")
-	}
-	conn, err := m.wsdaemonPool.Get(hostIP)
-	if err != nil {
-		return nil, xerrors.Errorf("unexpected error creating connection to Gitpod ws-daemon: %w", err)
-	}
-
-	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
+	return wsdaemon.NewWorkspaceContentServiceClient(conn), conn, nil
 }
 
+func extractExposedPorts(pod *corev1.Pod) *api.ExposedPorts {
+	if data, ok := pod.Annotations[wsk8s.WorkspaceExposedPorts]; ok {
+		ports, _ := api.ExposedPortsFromBase64(data)
+		return ports
+	}
+
+	return &api.ExposedPorts{}
+}
+
+var (
+	// wsdaemonDialTimeout is the time we allow for trying to connect to ws-daemon.
+	wsdaemonDialTimeout = 10 * time.Second
+)
+
 // newWssyncConnectionFactory creates a new wsdaemon connection factory based on the wsmanager configuration
-func newWssyncConnectionFactory(managerConfig config.Configuration) (grpcpool.Factory, error) {
+func newWssyncConnectionFactory(managerConfig config.Configuration) (grpcpool.Dial, error) {
 	cfg := managerConfig.WorkspaceDaemon
 	// TODO(cw): add client-side gRPC metrics
 	grpcOpts := common_grpc.DefaultClientOptions()
@@ -1527,40 +1517,4 @@ func newWssyncConnectionFactory(managerConfig config.Configuration) (grpcpool.Fa
 		}
 		return conn, nil
 	}, nil
-}
-
-func checkWSDaemonEndpoint(namespace string, clientset client.Client) func(string) bool {
-	return func(address string) bool {
-		var podList corev1.PodList
-		err := clientset.List(context.Background(), &podList,
-			&client.ListOptions{
-				Namespace: namespace,
-				LabelSelector: labels.SelectorFromSet(labels.Set{
-					"component": "ws-daemon",
-					"app":       "gitpod",
-				}),
-			},
-		)
-		if err != nil {
-			log.WithError(err).Error("cannot list ws-daemon pods")
-			return false
-		}
-
-		for _, pod := range podList.Items {
-			if pod.Status.PodIP == address {
-				return true
-			}
-		}
-
-		return false
-	}
-}
-
-func extractExposedPorts(pod *corev1.Pod) *api.ExposedPorts {
-	if data, ok := pod.Annotations[wsk8s.WorkspaceExposedPorts]; ok {
-		ports, _ := api.ExposedPortsFromBase64(data)
-		return ports
-	}
-
-	return &api.ExposedPorts{}
 }

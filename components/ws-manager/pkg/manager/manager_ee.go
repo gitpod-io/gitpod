@@ -54,10 +54,11 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 		return nil, status.Errorf(codes.FailedPrecondition, "can only take snapshots of running workspaces")
 	}
 
-	sync, err := m.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
+	sync, conn, err := m.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 	}
+	defer conn.Close()
 
 	r, err := sync.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{
 		Id:                req.Id,
@@ -154,10 +155,11 @@ func (m *Manager) BackupWorkspace(ctx context.Context, req *api.BackupWorkspaceR
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 	span.LogKV("event", "get pod")
 
-	sync, err := m.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
+	sync, conn, err := m.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 	}
+	defer conn.Close()
 
 	r, err := sync.BackupWorkspace(ctx, &wsdaemon.BackupWorkspaceRequest{Id: req.Id})
 	if err != nil {

@@ -173,9 +173,14 @@ var runCmd = &cobra.Command{
 		go grpcServer.Serve(lis)
 		log.WithField("addr", cfg.RPCServer.Addr).Info("started gRPC server")
 
+		wsdaemonPool, err := mgmt.CreateGRPCPool()
+		if err != nil {
+			log.WithError(err).Fatal("cannot create grpc pool")
+		}
+
 		monitor, err := mgmt.CreateMonitor()
 		if err != nil {
-			log.WithError(err).Fatal("cannot start workspace monitor")
+			log.WithError(err).Fatal("cannot create workspace monitor")
 		}
 
 		go func() {
@@ -187,8 +192,10 @@ var runCmd = &cobra.Command{
 			}
 		}()
 
-		defer monitor.Stop()
 		log.Info("workspace monitor is up and running")
+
+		defer monitor.Stop()
+		defer wsdaemonPool.Stop()
 
 		err = (&manager.PodReconciler{
 			Monitor: monitor,
@@ -198,6 +205,16 @@ var runCmd = &cobra.Command{
 		}).SetupWithManager(mgr)
 		if err != nil {
 			log.WithError(err).Fatal("unable to create controller", "controller", "Pod")
+		}
+
+		err = (&manager.WSDaemonReconciler{
+			WSDaemonPool: wsdaemonPool,
+			Client:       mgr.GetClient(),
+			Log:          ctrl.Log.WithName("controllers").WithName("ws-daemon pods"),
+			Scheme:       mgr.GetScheme(),
+		}).SetupWithManager(mgr, cfg.Manager.Namespace)
+		if err != nil {
+			log.WithError(err).Fatal("unable to create controller", "controller", "ws-daemon pods")
 		}
 
 		// enable the volume snapshot controller when the VolumeSnapshot CRD exists

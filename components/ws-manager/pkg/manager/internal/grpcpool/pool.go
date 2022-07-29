@@ -6,48 +6,36 @@ package grpcpool
 
 import (
 	"fmt"
-	"strings"
 	"sync"
-	"time"
 
+	conn_pool "github.com/shimingyah/pool"
+	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
 )
 
 var (
 	// ErrPoolClosed is returned if Get is called after Close
 	ErrPoolClosed = fmt.Errorf("pool is closed")
+	// ErrNoWSDaemonFoundInPool is returned is there is no ws-daemon pod in the host
+	ErrNoWSDaemonFoundInPool = fmt.Errorf("no ws-daemon found in the host")
 )
 
-// Factory is a function which creates new grpc connections
-type Factory func(host string) (*grpc.ClientConn, error)
+// Dial is a function which creates new grpc connections
+type Dial func(host string) (*grpc.ClientConn, error)
 
 // Pool is the gRPC client pool
 type Pool struct {
-	connections map[string]*grpc.ClientConn
-	factory     Factory
-	closed      bool
-	mu          sync.RWMutex
+	dial     Dial
+	isClosed bool
 
-	isValidConnection ConnectionValidationFunc
+	pools sync.Map
 }
 
-type ConnectionValidationFunc func(hostIP string) (valid bool)
-
 // New creates a new connection pool
-func New(factory Factory, callback ConnectionValidationFunc) *Pool {
+func New(dial Dial) *Pool {
 	pool := &Pool{
-		connections: make(map[string]*grpc.ClientConn),
-		factory:     factory,
-
-		isValidConnection: callback,
+		dial: dial,
 	}
-
-	go func() {
-		for range time.Tick(5 * time.Minute) {
-			pool.ValidateConnections()
-		}
-	}()
 
 	return pool
 }
@@ -55,84 +43,87 @@ func New(factory Factory, callback ConnectionValidationFunc) *Pool {
 // Get will return a client connection to the host. If no connection exists yet, the factory
 // is used to create one.
 func (p *Pool) Get(host string) (*grpc.ClientConn, error) {
-	p.mu.RLock()
-	if p.closed {
-		p.mu.RUnlock()
+	if p.isClosed {
 		return nil, ErrPoolClosed
 	}
-	conn, exists := p.connections[host]
-	p.mu.RUnlock()
 
-	if !exists || conn.GetState() == connectivity.Shutdown {
-		return p.add(host)
+	conn, exists := p.pools.Load(host)
+	if !exists {
+		return nil, ErrNoWSDaemonFoundInPool
 	}
 
-	return conn, nil
+	connPool, exists := conn.(conn_pool.Pool)
+	if !exists {
+		return nil, ErrNoWSDaemonFoundInPool
+	}
+
+	c, err := connPool.Get()
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create connection to ws-daemon: %w", err)
+	}
+
+	return c.Value(), nil
 }
 
 // add adds a new connection to the host if one doesn't exist already in a state that is not Shutdown.
 // Compared to Get, this function holds a write lock on mu. Get uses this function if it cannot find
 // an existing connection.
-func (p *Pool) add(host string) (*grpc.ClientConn, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	conn, exists := p.connections[host]
-	if exists && conn.GetState() != connectivity.Shutdown {
-		return conn, nil
+func (p *Pool) Add(host, address string) error {
+	_, exists := p.pools.Load(host)
+	if exists {
+		return nil
 	}
 
-	conn, err := p.factory(host)
+	connPool, err := conn_pool.New(address, conn_pool.Options{
+		Dial:                 p.dial,
+		MaxIdle:              8,
+		MaxActive:            64,
+		MaxConcurrentStreams: 64,
+		Reuse:                false,
+	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	p.connections[host] = conn
-	return conn, nil
-}
+	p.pools.Store(host, connPool)
 
-// Close empties the pool after closing all connections it held.
-// It waits for all connections to close.
-// Once the pool is closed, calling Get will result in ErrPoolClosed
-func (p *Pool) Close() error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	p.closed = true
-	errs := make([]string, 0)
-	for _, c := range p.connections {
-		err := c.Close()
-		if err != nil {
-			errs = append(errs, err.Error())
-		}
-	}
-
-	if len(errs) != 0 {
-		return fmt.Errorf("pool close: %s", strings.Join(errs, "; "))
+	_, err = connPool.Get()
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// ValidateConnections check if existing connections in the pool
-// are using valid addresses and remove them from the pool if not.
-func (p *Pool) ValidateConnections() {
-	p.mu.RLock()
-	addresses := make([]string, 0, len(p.connections))
-	for address := range p.connections {
-		addresses = append(addresses, address)
+func (p *Pool) Remove(host string) error {
+	conn, exists := p.pools.Load(host)
+	if !exists {
+		return nil
 	}
-	p.mu.RUnlock()
 
-	for _, address := range addresses {
-		if p.isValidConnection(address) {
-			continue
-		}
-
-		p.mu.Lock()
-		conn := p.connections[address]
-		conn.Close()
-		delete(p.connections, address)
-		p.mu.Unlock()
+	connPool, exists := conn.(conn_pool.Pool)
+	if !exists {
+		return nil
 	}
+
+	return connPool.Close()
+}
+
+// Stop empties the pool after closing all connections it held.
+// It waits for all connections to close.
+// Once the pool is closed, calling Get will result in ErrPoolClosed
+func (p *Pool) Stop() {
+	if p.isClosed {
+		return
+	}
+
+	p.pools.Range(func(key, value any) bool {
+		host := key.(string)
+		conn := value.(conn_pool.Pool)
+		p.pools.Delete(host)
+		_ = conn.Close()
+		return true
+	})
+
+	p.isClosed = true
 }

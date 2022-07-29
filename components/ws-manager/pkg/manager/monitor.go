@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -19,8 +20,8 @@ import (
 	"github.com/opentracing/opentracing-go"
 	tracelog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
@@ -29,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -669,10 +671,11 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 	}
 
 	// Theia is available - let's wait until the workspace is initialized
-	snc, err := m.manager.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
+	snc, conn, err := m.manager.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
 	if err != nil {
 		return xerrors.Errorf("cannot connect to workspace daemon: %w", err)
 	}
+	defer conn.Close()
 
 	// Note: we don't have to use the same cancelable context that we used for the original Init call.
 	//       If the init call gets canceled, WaitForInit will return as well. We're synchronizing through
@@ -807,9 +810,17 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 
 	var (
 		initializer     csapi.WorkspaceInitializer
+		conn            *grpc.ClientConn
 		snc             wsdaemon.WorkspaceContentServiceClient
 		contentManifest []byte
 	)
+
+	defer func() {
+		if conn != nil {
+			conn.Close()
+		}
+	}()
+
 	// The function below deliniates the initializer lock. It's just there so that we can
 	// defer the unlock call, thus making sure we actually call it.
 	err = func() error {
@@ -866,7 +877,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		}
 
 		// connect to the appropriate ws-daemon
-		snc, err = m.manager.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
+		snc, conn, err = m.manager.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
 		if err != nil {
 			return err
 		}
@@ -1039,6 +1050,36 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 	}
 
+	var snc wsdaemon.WorkspaceContentServiceClient
+	var wsDaemonIsReachable = func(ctx context.Context, wso workspaceObjects) wait.ConditionWithContextFunc {
+		return func(ctx context.Context) (bool, error) {
+			var conn *grpc.ClientConn
+			snc, conn, err = m.manager.connectToWorkspaceDaemon(ctx, wso)
+			if err != nil {
+				return false, err
+			}
+			defer conn.Close()
+
+			return true, nil
+		}
+	}
+
+	err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, 5*time.Minute, wsDaemonIsReachable(ctx, *wso))
+	if err != nil {
+		msg := err.Error()
+
+		if errors.Is(err, wait.ErrWaitTimeout) {
+			msg = "ws-daemon is not running in the node"
+		}
+
+		disposalStatus = &workspaceDisposalStatus{
+			BackupComplete: false,
+			BackupFailure:  msg,
+		}
+
+		return
+	}
+
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
 	doBackupLogs := tpe == api.WorkspaceType_PREBUILD
 	doSnapshot := tpe == api.WorkspaceType_PREBUILD
@@ -1061,11 +1102,6 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 
 		// we're not yet finalizing - start the process
-		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
-		if err != nil {
-			tracing.LogError(span, err)
-			return true, nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
-		}
 
 		// only build prebuild snapshots of initialized/ready workspaces.
 		if tpe == api.WorkspaceType_PREBUILD {
