@@ -13,7 +13,7 @@ metadata:
 spec:
   secretName: https-certificates
   issuerRef:
-    name: '{{repl if (ConfigOptionEquals "tls_self_signed_enabled" "1" ) }}ca-issuer{{repl else }}{{repl ConfigOption "cert_manager_issuer_name" }}{{repl end }}'
+    name: '{{repl if (ConfigOptionEquals "tls_self_signed_enabled" "1" ) }}gitpod{{repl else }}{{repl ConfigOption "cert_manager_issuer_name" }}{{repl end }}'
     kind: '{{repl if (ConfigOptionEquals "tls_self_signed_enabled" "1" ) }}Issuer{{repl else }}{{repl ConfigOption "cert_manager_issuer" }}{{repl end }}'
   dnsNames:
     - '{{repl ConfigOption "domain" }}'
