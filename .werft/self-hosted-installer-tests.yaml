@@ -54,12 +54,17 @@ pod:
   - name: sh-aks-perm
     secret:
       secretName: aks-credentials
+  - name: self-hosted-github-oauth
+    secret:
+      secretName: self-hosted-github-oauth
   containers:
   - name: nightly-test
     image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-kots-latest-img.2
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
+    - name: self-hosted-github-oauth
+      mountPath: /mnt/secrets/self-hosted-github-oauth
     - name: sh-playground-sa-perm
       mountPath: /mnt/secrets/sh-playground-sa-perm
     - name: sh-playground-dns-perm # this sa is used for the DNS management
@@ -115,6 +120,21 @@ pod:
         secretKeyRef:
           name: aws-credentials
           key: aws-region
+    - name: IDE_SLACK_NOTIFICATION_PATH
+      valueFrom:
+        secretKeyRef:
+          name: slack-webhook-urls
+          key: ide_jobs
+    - name: WS_SLACK_NOTIFICATION_PATH
+      valueFrom:
+        secretKeyRef:
+          name: slack-webhook-urls
+          key: workspace_jobs
+    - name: SH_SLACK_NOTIFICATION_PATH
+      valueFrom:
+        secretKeyRef:
+          name: slack-webhook-urls
+          key: self_hosted_jobs
     command:
       - bash
       - -c
