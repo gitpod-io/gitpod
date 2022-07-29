@@ -6,11 +6,12 @@ package server
 
 import (
 	"fmt"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"os"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -58,7 +59,8 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to initialize usage server: %w", err)
 	}
 
-	selfConnection, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	dialerOpt := grpcDialerWithInitialDelay(1 * time.Second)
+	selfConnection, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()), dialerOpt)
 	if err != nil {
 		return fmt.Errorf("failed to create self-connection to grpc server: %w", err)
 	}
