@@ -1,6 +1,9 @@
 # Change Log
 
 ## July 2022
+- Update stable Browser VSCode image with in-product changelog and experimental `Ports` view improvement ([#11754](https://github.com/gitpod-io/gitpod/pull/11754)) - [@mustard-mh](https://github.com/mustard-mh)
+- Update GoLand IDE image to version 222.3345.118. ([#11744](https://github.com/gitpod-io/gitpod/pull/11744)) - [@roboquat](https://github.com/roboquat)
+- [local-preview] Add separated anonymous telemetry ([#11642](https://github.com/gitpod-io/gitpod/pull/11642)) - [@Pothulapati](https://github.com/Pothulapati)
 - Update PyCharm IDE image to version 222.3345.131. ([#11728](https://github.com/gitpod-io/gitpod/pull/11728)) - [@felladrin](https://github.com/felladrin)
 - [kots]: put the "run" collectors into the active namespace ([#11698](https://github.com/gitpod-io/gitpod/pull/11698)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Update IntelliJ IDEA IDE image to version 222.3345.118. ([#11680](https://github.com/gitpod-io/gitpod/pull/11680)) - [@felladrin](https://github.com/felladrin)
