@@ -23,6 +23,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { ReactComponent as CreditsSvg } from "../images/credits.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import Arrow from "../components/Arrow";
 
 function TeamUsage() {
     const { teams } = useContext(TeamsContext);
@@ -39,7 +40,7 @@ function TeamUsage() {
     const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(timestampStartOfCurrentMonth);
     const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(Date.now());
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [startedTimeOrder] = useState<SortOrder>(SortOrder.Descending);
+    const [isStartedTimeDescending, setIsStartedTimeDescending] = useState<boolean>(true);
 
     useEffect(() => {
         if (!team) {
@@ -49,7 +50,7 @@ function TeamUsage() {
             const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
             const request: BillableSessionRequest = {
                 attributionId,
-                startedTimeOrder,
+                startedTimeOrder: isStartedTimeDescending ? SortOrder.Descending : SortOrder.Ascending,
                 from: startDateOfBillMonth,
                 to: endDateOfBillMonth,
             };
@@ -64,7 +65,7 @@ function TeamUsage() {
                 setIsLoading(false);
             }
         })();
-    }, [team, startDateOfBillMonth, endDateOfBillMonth, startedTimeOrder]);
+    }, [team, startDateOfBillMonth, endDateOfBillMonth, isStartedTimeDescending]);
 
     if (!showUsageBasedPricingUI) {
         return <Redirect to="/" />;
@@ -200,7 +201,12 @@ function TeamUsage() {
                                             <CreditsSvg className="my-auto mr-1" />
                                             <span>Credits</span>
                                         </ItemField>
-                                        <ItemField className="my-auto" />
+                                        <ItemField className="my-auto cursor-pointer">
+                                            <span onClick={() => setIsStartedTimeDescending(!isStartedTimeDescending)}>
+                                                Started
+                                                <Arrow direction={isStartedTimeDescending ? "down" : "up"} />
+                                            </span>
+                                        </ItemField>
                                     </Item>
                                     {currentPaginatedResults &&
                                         currentPaginatedResults.map((usage) => (
