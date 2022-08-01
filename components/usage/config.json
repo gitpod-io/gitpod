@@ -8,6 +8,9 @@
     "services": {
       "grpc": {
         "address": ":9001"
+      },
+      "http": {
+        "address": ":9002"
       }
     }
   }
