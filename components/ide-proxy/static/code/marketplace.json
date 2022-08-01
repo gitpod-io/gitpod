@@ -52,6 +52,13 @@
               "displayName": "CodeTour"
           }
       },
+      "EmberTooling.prettier-for-handlebars-vscode": {
+          "disallowInstall": true,
+          "extension": {
+              "id": "esbenp.prettier-vscode",
+              "displayName": "Prettier - Code formatter"
+          }
+      },
       "CoenraadS.bracket-pair-colorizer-2": {
           "settings": [
               "editor.bracketPairColorization.enabled",
@@ -64,6 +71,13 @@
               "editor.guides.bracketPairs"
           ]
       },
+      "idleberg.innosetup": {
+        "disallowInstall": true,
+        "extension": {
+          "id": "Chouzz.vscode-innosetup",
+          "displayName": "Inno Setup"
+        }
+      },
       "redhat.vscode-wsdl2rest": true,
       "ms-vscode.node-debug2": true,
       "ms-vscode.node-debug": true,
@@ -72,7 +86,8 @@
       "lonefy.vscode-JS-CSS-HTML-formatter": true,
       "ikappas.phpcs": true,
       "heptio.jsonnet": true,
-      "eg2.vscode-npm-script": true
+      "eg2.vscode-npm-script": true,
+      "ethan-reesor.vscode-go-test-adapter": true
   },
   "migrateToPreRelease": {}
 }
