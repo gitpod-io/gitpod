@@ -1,6 +1,7 @@
 # Change Log
 
 ## July 2022
+- Update docker compose to v2.8.0 ([#11761](https://github.com/gitpod-io/gitpod/pull/11761)) - [@aledbf](https://github.com/aledbf)
 - Update stable Browser VSCode image with in-product changelog and experimental `Ports` view improvement ([#11754](https://github.com/gitpod-io/gitpod/pull/11754)) - [@mustard-mh](https://github.com/mustard-mh)
 - Update GoLand IDE image to version 222.3345.118. ([#11744](https://github.com/gitpod-io/gitpod/pull/11744)) - [@roboquat](https://github.com/roboquat)
 - [local-preview] Add separated anonymous telemetry ([#11642](https://github.com/gitpod-io/gitpod/pull/11642)) - [@Pothulapati](https://github.com/Pothulapati)
