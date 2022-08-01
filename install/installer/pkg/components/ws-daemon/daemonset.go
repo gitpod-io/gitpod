@@ -207,8 +207,8 @@ fi
 					common.NodeNameEnv(ctx),
 				)),
 				Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{Requests: corev1.ResourceList{
-					"cpu":    resource.MustParse("1m"),
-					"memory": resource.MustParse("1Mi"),
+					"cpu":    resource.MustParse("500m"),
+					"memory": resource.MustParse("4Gi"),
 				}}),
 				VolumeMounts: []corev1.VolumeMount{
 					{
