@@ -8,7 +8,12 @@ import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { BillableSession, BillableWorkspaceType, SortOrder } from "@gitpod/gitpod-protocol/lib/usage";
+import {
+    BillableSession,
+    BillableSessionRequest,
+    BillableWorkspaceType,
+    SortOrder,
+} from "@gitpod/gitpod-protocol/lib/usage";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import moment from "moment";
@@ -42,11 +47,11 @@ function TeamUsage() {
         }
         (async () => {
             const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
-            const request = {
+            const request: BillableSessionRequest = {
                 attributionId,
                 startedTimeOrder,
-                startDateOfBillMonth,
-                endDateOfBillMonth,
+                from: startDateOfBillMonth,
+                to: endDateOfBillMonth,
             };
             try {
                 const billedUsageResult = await getGitpodService().server.listBilledUsage(request);
