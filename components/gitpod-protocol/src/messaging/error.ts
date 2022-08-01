@@ -32,14 +32,17 @@ export namespace ErrorCodes {
     // 430 Repository not whitelisted (custom status code)
     export const REPOSITORY_NOT_WHITELISTED = 430;
 
+    // 450 Payment error
+    export const PAYMENT_ERROR = 450;
+
+    // 455 Invalid cost center (custom status code)
+    export const INVALID_COST_CENTER = 455;
+
     // 460 Context Parse Error (custom status code)
     export const CONTEXT_PARSE_ERROR = 460;
 
-    // 461 Invalid gitpod yml
+    // 461 Invalid gitpod yml (custom status code)
     export const INVALID_GITPOD_YML = 461;
-
-    // 450 Payment error
-    export const PAYMENT_ERROR = 450;
 
     // 470 User Blocked (custom status code)
     export const USER_BLOCKED = 470;
