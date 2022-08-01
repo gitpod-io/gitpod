@@ -36,7 +36,7 @@
               summary: 'Prometheus is failing to scrape OpenVSX-proxy',
               description: 'OpenVSX-proxy is possibly down, or prometheus is failing to scrape it.',
             },
-            expr: 'up{job="openvsx-proxy"} == 0 or absent(up{job="openvsx-proxy"}) == 1',
+            expr: 'up{job="openvsx-proxy"} == 0',
           },
         ],
       },
