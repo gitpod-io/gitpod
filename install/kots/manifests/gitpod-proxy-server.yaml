@@ -1,0 +1,18 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxy-server # Name set in /install/installer/pkg/common/constants.go
+  labels:
+    app: gitpod
+    component: gitpod-installer
+  # annotations:
+  #   kots.io/when: '{{repl ConfigOptionEquals "proxy_server_enabled" "1" }}'
+data:
+  httpProxy: '{{repl (ConfigOption "proxy_server_http_proxy" | default (HTTPProxy)) }}'
+  # @todo(sje): There is currently no HTTPSProxy function in KOTS
+  # @link https://github.com/replicated-collab/replicated-gitpod/issues/39
+  httpsProxy: '{{repl ConfigOption "proxy_server_https_proxy" | default (HTTPProxy) }}'
+  noProxy: 'kotsadm,kotsadm-postgres,kotsadm-minio,kotsadm-api-node,.{{repl Namespace }}.svc.cluster.local,{{repl NoProxy }},{{repl ConfigOption "proxy_server_no_proxy" }}' # Merge the KOTS NO_PROXY so we don't lose the ability to talk to it

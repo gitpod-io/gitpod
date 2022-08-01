@@ -27,6 +27,7 @@ const (
 	KubeRBACProxyTag            = "v0.12.0"
 	MinioServiceAPIPort         = 9000
 	MonitoringChart             = "monitoring"
+	ProxyServerConfigMap        = "proxy-server" // Not related to proxy component, but where proxy server values stored
 	ProxyComponent              = "proxy"
 	ProxyContainerHTTPPort      = 80
 	ProxyContainerHTTPName      = "http"

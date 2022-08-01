@@ -369,6 +369,39 @@ spec:
 
             Add the domain only (eg, `gitpod.io`). Separate multiple domains with spaces.
 
+    - name: proxy_server
+      title: Proxy server
+      description: Route your access through a proxy server
+      items:
+        - name: proxy_server_enabled
+          title: Route through a proxy server
+          type: bool
+          default: "0"
+          help_text: Configure proxy access to the Internet
+
+        - name: proxy_server_http_proxy
+          title: HTTP proxy
+          type: text
+          default: '{{repl HTTPProxy }}'
+          when: '{{repl ConfigOptionEquals "proxy_server_enabled" "1" }}'
+          help_text: Configure HTTP proxy server to route all traffic through. This should be in the format "user:password@proxy.domain.com:1234"
+
+        - name: proxy_server_https_proxy
+          title: HTTPS proxy
+          type: text
+          # @todo(sje): There is currently no HTTPSProxy function in KOTS
+          # @link https://github.com/replicated-collab/replicated-gitpod/issues/39
+          default: ''
+          when: '{{repl ConfigOptionEquals "proxy_server_enabled" "1" }}'
+          help_text: Configure HTTPS proxy server to route all traffic through. This should be in the format "user:password@proxy.domain.com:1234"
+
+        - name: proxy_server_no_proxy
+          title: No proxy
+          type: text
+          default: '{{repl NoProxy }}'
+          when: '{{repl ConfigOptionEquals "proxy_server_enabled" "1" }}'
+          help_text: Configure URLs that bypass the proxy. This should be a CSV in the format "domain1.com,domain2.com".
+
     - name: advanced
       title: Advanced Options
       description: Here are advanced options that you should only make use of in coordination with us or when you know what you are doing.

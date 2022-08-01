@@ -13,6 +13,7 @@ data:
   channelName: repl{{ ChannelName | quote }}
   cursor: repl{{ Cursor | quote }}
   isAirgap: repl{{ IsAirgap | quote }}
+  kotsVersion: repl{{ KotsVersion | quote }}
   releaseNotes: repl{{ ReleaseNotes | quote }}
   sequence: repl{{ Sequence | quote }}
   version: repl{{ VersionLabel | quote }}
