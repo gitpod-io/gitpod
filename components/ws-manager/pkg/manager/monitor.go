@@ -293,15 +293,18 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 	span, ctx := tracing.FromContext(ctx, "actOnPodEvent")
 	defer tracing.FinishSpan(span, &err)
 	log := log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta))
+	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
 		return xerrors.Errorf("cannot act on pod %s: has no %s annotation", pod.Name, workspaceIDAnnotation)
 	}
+	span.LogKV("phase", status.Phase.String())
 
 	if status.Phase == api.WorkspacePhase_STOPPING || status.Phase == api.WorkspacePhase_STOPPED {
 		// Beware: do not else-if this condition with the other phases as we don't want the stop
 		//         login in any other phase, too.
+		span.LogKV("event", "stopping or stopped special case")
 		m.clearInitializerFromMap(pod.Name)
 
 		// if the secret is already gone, this won't error
@@ -315,6 +318,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		//               The workspace is already shutting down, it just fails to do so properly. Instead, we need
 		//               to update the disposal status to reflect this timeout situation.
 		if status.Conditions.Timeout != "" && strings.Contains(status.Conditions.Timeout, string(activityBackup)) {
+			span.LogKV("event", "timeout during backup")
 			err = func() error {
 				b, err := json.Marshal(workspaceDisposalStatus{BackupComplete: true, BackupFailure: status.Conditions.Timeout})
 				if err != nil {
@@ -328,20 +332,23 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 				return nil
 			}()
 			if err != nil {
+				tracing.LogError(span, err)
 				log.WithError(err).Error("was unable to update pod's disposal state - this will break someone's experience")
 			}
 		}
 	} else if status.Conditions.Failed != "" || status.Conditions.Timeout != "" {
+		span.LogKV("event", "failed or timed out")
 		// the workspace has failed to run/start - shut it down
 		// we should mark the workspace as failedBeforeStopping - this way the failure status will persist
 		// while we stop the workspace
 		_, hasFailureAnnotation := pod.Annotations[workspaceFailedBeforeStoppingAnnotation]
 		if status.Conditions.Failed != "" && !hasFailureAnnotation {
+			span.LogKV("event", "failed and no failed before stopping annotation")
 			// If this marking operation failes that's ok - we'll still continue to shut down the workspace.
 			// The failure message won't persist while stopping the workspace though.
 			err := m.markWorkspace(ctx, workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, util.BooleanTrueString))
 			if err != nil {
-				log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Debug("cannot mark workspace as workspaceFailedBeforeStoppingAnnotation")
+				log.WithError(err).Debug("cannot mark workspace as workspaceFailedBeforeStoppingAnnotation")
 			}
 		}
 
@@ -359,13 +366,14 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 
 		return nil
 	} else if status.Conditions.StoppedByRequest == api.WorkspaceConditionBool_TRUE {
+		span.LogKV("event", "stopped by request")
 		gracePeriod := stopWorkspaceNormallyGracePeriod
 		if gp, ok := pod.Annotations[stoppedByRequestAnnotation]; ok {
 			dt, err := time.ParseDuration(gp)
 			if err == nil {
 				gracePeriod = dt
 			} else {
-				log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Warn("invalid duration on stoppedByRequestAnnotation")
+				log.WithError(err).Warn("invalid duration on stoppedByRequestAnnotation")
 			}
 		}
 
@@ -429,7 +437,9 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		}
 
 	case api.WorkspacePhase_STOPPING:
+		span.LogKV("event", "stopping")
 		if !isPodBeingDeleted(pod) {
+			span.LogKV("event", "pod not being deleted")
 			// this might be the case if a headless workspace has just completed but has not been deleted by anyone, yet
 			err := m.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
 			if err != nil && !isKubernetesObjNotFoundError(err) {
@@ -447,6 +457,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 				break
 			}
 		}
+		span.LogKV("terminated", terminated)
 		if !terminated {
 			// Check the underlying node status
 			var node corev1.Node
@@ -484,8 +495,9 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 			}
 		}
 
-		_, alreadyFinalized := wso.Pod.Annotations[startedDisposalAnnotation]
-		if terminated && !alreadyFinalized {
+		_, startedDisposal := wso.Pod.Annotations[startedDisposalAnnotation]
+		span.LogKV("startedDisposal", startedDisposal)
+		if terminated && !startedDisposal {
 			if wso.Pod.Annotations[workspaceFailedBeforeStoppingAnnotation] == util.BooleanTrueString && wso.Pod.Annotations[workspaceNeverReadyAnnotation] == util.BooleanTrueString {
 				// The workspace is never ready, so there is no need for a finalizer.
 				if _, ok := pod.Annotations[workspaceExplicitFailAnnotation]; !ok {
@@ -508,6 +520,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 			} else {
 				// We start finalizing the workspace content only after the container is gone. This way we ensure there's
 				// no process modifying the workspace content as we create the backup.
+				span.LogKV("event", "called finalizeWorkspaceContent")
 				go m.finalizeWorkspaceContent(ctx, wso)
 			}
 		}
@@ -965,6 +978,7 @@ func shouldDisableRemoteStorage(pod *corev1.Pod) bool {
 func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceObjects) {
 	span, ctx := tracing.FromContext(ctx, "finalizeWorkspaceContent")
 	defer tracing.FinishSpan(span, nil)
+	tracing.ApplyOWI(span, wso.GetOWI())
 	log := log.WithFields(wso.GetOWI())
 
 	workspaceID, ok := wso.WorkspaceID()
@@ -977,17 +991,20 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	var disposalStatus *workspaceDisposalStatus
 	defer func() {
 		if disposalStatus == nil {
+			span.LogKV("disposalStatus", "nil")
 			return
 		}
 
 		b, err := json.Marshal(disposalStatus)
 		if err != nil {
+			tracing.LogError(span, err)
 			log.WithError(err).Error("unable to marshal disposalStatus - this will break someone's experience")
 			return
 		}
 
 		err = m.manager.markWorkspace(ctx, workspaceID, addMark(disposalStatusAnnotation, string(b)))
 		if err != nil {
+			tracing.LogError(span, err)
 			log.WithError(err).Error("was unable to update pod's disposal state - this will break someone's experience")
 		}
 	}()
@@ -1033,6 +1050,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		m.finalizerMapLock.Lock()
 		_, alreadyFinalizing := m.finalizerMap[workspaceID]
 		if alreadyFinalizing {
+			span.LogKV("alreadyFinalizing", true)
 			m.finalizerMapLock.Unlock()
 			return false, nil, nil
 		}
@@ -1044,6 +1062,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		// fail as loud as we can in this case.
 		if !doBackup && !doSnapshot && wso.NodeName() == "" {
 			// we don't need a backup and have never spoken to ws-daemon: we're good here.
+			span.LogKV("noBackupNeededAndNoNode", true)
 			m.finalizerMapLock.Unlock()
 			return true, &csapi.GitStatus{}, nil
 		}
@@ -1051,6 +1070,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		// we're not yet finalizing - start the process
 		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
 		if err != nil {
+			tracing.LogError(span, err)
 			m.finalizerMapLock.Unlock()
 			return true, nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 		}
@@ -1077,6 +1097,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 
 		err = m.manager.markWorkspace(ctx, workspaceID, addMark(startedDisposalAnnotation, util.BooleanTrueString))
 		if err != nil {
+			tracing.LogError(span, err)
 			log.WithError(err).Error("was unable to update pod's start disposal state - this might cause an incorrect disposal state")
 		}
 
@@ -1203,11 +1224,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			res, err = snc.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: workspaceID})
 			if err != nil {
 				tracing.LogError(span, err)
-				log.WithError(err).Warn("cannot take snapshot")
+				log.WithError(err).Error("cannot take snapshot")
 				err = xerrors.Errorf("cannot take snapshot: %v", err)
 				err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
 				if err != nil {
-					log.WithError(err).Warn("was unable to mark workspace as failed")
+					log.WithError(err).Error("was unable to mark workspace as failed")
 				}
 			}
 
@@ -1215,11 +1236,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				err = m.manager.markWorkspace(context.Background(), workspaceID, addMark(workspaceSnapshotAnnotation, res.Url))
 				if err != nil {
 					tracing.LogError(span, err)
-					log.WithError(err).Warn("cannot mark headless workspace with snapshot - that's one prebuild lost")
+					log.WithError(err).Error("cannot mark headless workspace with snapshot - that's one prebuild lost")
 					err = xerrors.Errorf("cannot remember snapshot: %v", err)
 					err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
 					if err != nil {
-						log.WithError(err).Warn("was unable to mark workspace as failed")
+						log.WithError(err).Error("was unable to mark workspace as failed")
 					}
 				}
 			}
@@ -1250,6 +1271,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		didSometing, gs, err := doFinalize()
 		if !didSometing {
 			// someone else is managing finalization process ... we don't have to bother
+			span.LogKV("did-nothing", true)
 			return
 		}
 
@@ -1271,6 +1293,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			st.Code() == codes.Unavailable ||
 			st.Code() == codes.Canceled {
 			// service is currently unavailable or we did not finish in time - let's wait some time and try again
+			span.LogKV("retrying-after-sleep", true)
 			time.Sleep(wsdaemonRetryInterval)
 			continue
 		}
@@ -1306,15 +1329,13 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 
 	if backupError != nil {
+		tracing.LogError(span, backupError)
+		log.WithError(backupError).Warn("internal error while disposing workspace content")
+
 		m.manager.metrics.totalBackupFailureCounterVec.WithLabelValues(wsType, strconv.FormatBool(pvcFeatureEnabled), wso.Pod.Labels[workspaceClassLabel]).Inc()
 
 		if dataloss {
 			disposalStatus.BackupFailure = backupError.Error()
-		} else {
-			// internal errors make no difference to the user experience. The backup still worked, we just messed up some
-			// state management or cleanup. No need to worry the user.
-			log.WithError(backupError).WithFields(wso.GetOWI()).Warn("internal error while disposing workspace content")
-			tracing.LogError(span, backupError)
 		}
 	}
 }
