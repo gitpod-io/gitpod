@@ -15,6 +15,7 @@ import {
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
     WORKSPACE_TIMEOUT_EXTENDED,
     WORKSPACE_TIMEOUT_EXTENDED_ALT,
+    Team,
 } from "@gitpod/gitpod-protocol";
 import { CostCenterDB, ProjectDB, TeamDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
@@ -29,6 +30,8 @@ import { EmailAddressAlreadyTakenException, SelectAccountException } from "../au
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { StripeService } from "../../ee/src/user/stripe-service";
+import { ResponseError } from "vscode-ws-jsonrpc";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -191,6 +194,66 @@ export class UserService {
         }
     }
 
+    protected async findTeamUsageBasedSubscriptionId(team: Team): Promise<string | undefined> {
+        const customer = await this.stripeService.findCustomerByTeamId(team.id);
+        if (!customer) {
+            return;
+        }
+        const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(customer.id);
+        return subscription?.id;
+    }
+
+    protected async validateUsageAttributionId(user: User, usageAttributionId: string): Promise<void> {
+        const attribution = AttributionId.parse(usageAttributionId);
+        if (attribution?.kind === "team") {
+            const team = await this.teamDB.findTeamById(attribution.teamId);
+            if (!team) {
+                throw new ResponseError(
+                    ErrorCodes.INVALID_COST_CENTER,
+                    "The billing team you've selected no longer exists.",
+                );
+            }
+            const members = await this.teamDB.findMembersByTeam(team.id);
+            if (!members.find((m) => m.userId === user.id)) {
+                throw new ResponseError(
+                    ErrorCodes.INVALID_COST_CENTER,
+                    "You're no longer a member of the selected billing team.",
+                );
+            }
+            const subscriptionId = await this.findTeamUsageBasedSubscriptionId(team);
+            if (!subscriptionId) {
+                throw new ResponseError(
+                    ErrorCodes.INVALID_COST_CENTER,
+                    "The billing team you've selected has no active subscription.",
+                );
+            }
+        }
+    }
+
+    protected async findSingleTeamWithUsageBasedBilling(user: User): Promise<Team | undefined> {
+        // Find all the user's teams with usage-based billing enabled.
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        const teamsWithBilling: Team[] = [];
+        await Promise.all(
+            teams.map(async (team) => {
+                const subscriptionId = await this.findTeamUsageBasedSubscriptionId(team);
+                if (subscriptionId) {
+                    teamsWithBilling.push(team);
+                }
+            }),
+        );
+        if (teamsWithBilling.length > 1) {
+            // Multiple teams with usage-based billing enabled -- ask the user to make an explicit choice.
+            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Multiple teams have billing enabled.");
+        }
+        if (teamsWithBilling.length === 1) {
+            // Single team with usage-based billing enabled -- attribute all usage to it.
+            return teamsWithBilling[0];
+        }
+        // No team with usage-based billing enabled.
+        return undefined;
+    }
+
     /**
      * Identifies the team or user to which a workspace instance's running time should be attributed to
      * (e.g. for usage analytics or billing purposes).
@@ -209,12 +272,18 @@ export class UserService {
     async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<string | undefined> {
         // A. Billing-based attribution
         if (this.config.enablePayment) {
-            if (!user.usageAttributionId) {
-                // No explicit user attribution ID yet -- attribute all usage to the user by default (regardless of project/team).
-                return AttributionId.render({ kind: "user", userId: user.id });
+            if (user.usageAttributionId) {
+                await this.validateUsageAttributionId(user, user.usageAttributionId);
+                // Return the user's explicit attribution ID.
+                return user.usageAttributionId;
             }
-            // Return the user's explicit attribution ID.
-            return user.usageAttributionId;
+            const billingTeam = await this.findSingleTeamWithUsageBasedBilling(user);
+            if (billingTeam) {
+                // Single team with usage-based billing enabled -- attribute all usage to it.
+                return AttributionId.render({ kind: "team", teamId: billingTeam.id });
+            }
+            // Attribute all usage to the user by default (regardless of project/team).
+            return AttributionId.render({ kind: "user", userId: user.id });
         }
 
         // B. Project-based attribution

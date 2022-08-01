@@ -25,6 +25,7 @@ import PrebuildLogs from "../components/PrebuildLogs";
 import CodeText from "../components/CodeText";
 import FeedbackComponent from "../feedback-form/FeedbackComponent";
 import { isGitpodIo } from "../utils";
+import { BillingAccountSelector } from "../components/BillingAccountSelector";
 
 export interface CreateWorkspaceProps {
     contextUrl: string;
@@ -185,6 +186,19 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                     phase = StartPhase.Stopped;
                     statusMessage = <LimitReachedOutOfHours />;
                     break;
+                case ErrorCodes.INVALID_COST_CENTER:
+                    // HACK: Hide the error (behind the modal)
+                    error = undefined;
+                    phase = StartPhase.Stopped;
+                    statusMessage = (
+                        <SelectCostCenterModal
+                            onSelected={() => {
+                                this.setState({ error: undefined });
+                                this.createWorkspace();
+                            }}
+                        />
+                    );
+                    break;
                 default:
                     statusMessage = (
                         <p className="text-base text-gitpod-red w-96">
@@ -288,6 +302,15 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
             </StartPage>
         );
     }
+}
+
+function SelectCostCenterModal(props: { onSelected?: () => void }) {
+    return (
+        <Modal visible={true} closeable={false} onClose={() => {}}>
+            <h3>Choose Billing Team</h3>
+            <BillingAccountSelector onSelected={props.onSelected} />
+        </Modal>
+    );
 }
 
 function LimitReachedModal(p: { children: React.ReactNode }) {
