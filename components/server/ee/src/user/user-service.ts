@@ -5,7 +5,14 @@
  */
 
 import { UserService, CheckSignUpParams, CheckTermsParams } from "../../../src/user/user-service";
-import { User, WorkspaceTimeoutDuration, WORKSPACE_TIMEOUT_EXTENDED, WORKSPACE_TIMEOUT_EXTENDED_ALT, WORKSPACE_TIMEOUT_DEFAULT_LONG, WORKSPACE_TIMEOUT_DEFAULT_SHORT } from "@gitpod/gitpod-protocol";
+import {
+    User,
+    WorkspaceTimeoutDuration,
+    WORKSPACE_TIMEOUT_EXTENDED,
+    WORKSPACE_TIMEOUT_EXTENDED_ALT,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+} from "@gitpod/gitpod-protocol";
 import { inject } from "inversify";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
@@ -78,7 +85,8 @@ export class UserServiceEE extends UserService {
 
         // 1. check the license
         const userCount = await this.userDb.getUserCount(true);
-        if (!this.licenseEvaluator.hasEnoughSeats(userCount)) {
+        if (userCount > -1) {
+            //!this.licenseEvaluator.hasEnoughSeats(userCount)) {
             const msg = `Maximum number of users permitted by the license exceeded`;
             throw AuthException.create("Cannot sign up", msg, { userCount, params });
         }
