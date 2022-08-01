@@ -473,14 +473,22 @@ export default function Menu() {
                 )}
                 {isLP && (
                     <Alert type="warning" className="app-container rounded-md">
-                        This is a local-preview instance. Visit{" "}
+                        You are using a <b>local preview</b> installation, intended for exploring the product on a
+                        single machine without requiring a Kubernetes cluster.{" "}
                         <a
                             className="gp-link hover:text-gray-600"
                             href="https://www.gitpod.io/community-license?utm_source=local-preview"
                         >
-                            the community license page
+                            Request a community license
                         </a>{" "}
-                        for next steps on running a production version of Gitpod.
+                        or{" "}
+                        <a
+                            className="gp-link hover:text-gray-600"
+                            href="https://www.gitpod.io/contact/sales?utm_source=local-preview"
+                        >
+                            contact sales
+                        </a>{" "}
+                        to get a professional license for running Gitpod in production.
                     </Alert>
                 )}
             </header>
