@@ -111,6 +111,9 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
 
+	h := stripe.NewWebhookHandler()
+	registerHttpHandlers(srv, h)
+
 	err = controller.RegisterMetrics(srv.MetricsRegistry())
 	if err != nil {
 		return fmt.Errorf("failed to register controller metrics: %w", err)
@@ -132,4 +135,8 @@ func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *s
 		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(stripeClient))
 	}
 	return nil
+}
+
+func registerHttpHandlers(srv *baseserver.Server, h *stripe.WebhookHandler) {
+	srv.HTTPMux().HandleFunc("/webhook", h.Handle)
 }
