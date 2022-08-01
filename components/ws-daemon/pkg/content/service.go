@@ -500,10 +500,6 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		log.WithError(err).WithFields(sess.OWI()).Warn("cannot remove workspace ready file")
 	}
 
-	if s.config.Storage.BackupTrail.Enabled && !sess.FullWorkspaceBackup {
-		opts = append(opts, storage.WithBackupTrail("trail", s.config.Storage.BackupTrail.MaxLength))
-	}
-
 	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {
 		return xerrors.Errorf("no remote storage configured")

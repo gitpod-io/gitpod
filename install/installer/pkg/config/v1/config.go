@@ -218,13 +218,12 @@ type DatabaseCloudSQL struct {
 }
 
 type ObjectStorage struct {
-	InCluster          *bool                      `json:"inCluster,omitempty"`
-	S3                 *ObjectStorageS3           `json:"s3,omitempty"`
-	CloudStorage       *ObjectStorageCloudStorage `json:"cloudStorage,omitempty"`
-	Azure              *ObjectStorageAzure        `json:"azure,omitempty"`
-	MaximumBackupCount *int                       `json:"maximumBackupCount,omitempty"`
-	BlobQuota          *int64                     `json:"blobQuota,omitempty"`
-	Resources          *Resources                 `json:"resources,omitempty"`
+	InCluster    *bool                      `json:"inCluster,omitempty"`
+	S3           *ObjectStorageS3           `json:"s3,omitempty"`
+	CloudStorage *ObjectStorageCloudStorage `json:"cloudStorage,omitempty"`
+	Azure        *ObjectStorageAzure        `json:"azure,omitempty"`
+	BlobQuota    *int64                     `json:"blobQuota,omitempty"`
+	Resources    *Resources                 `json:"resources,omitempty"`
 }
 
 type ObjectStorageS3 struct {

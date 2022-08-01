@@ -20,16 +20,9 @@ import (
 
 func TestListLogs(t *testing.T) {
 	cfg := config.StorageConfig{
-		Stage: config.StageProduction,
-		Kind:  config.GCloudStorage, // dummy, mocked away
-		BackupTrail: struct {
-			Enabled   bool "json:\"enabled\""
-			MaxLength int  "json:\"maxLength\""
-		}{
-			Enabled:   false,
-			MaxLength: 3,
-		},
-		BlobQuota: 1073741824, // 1Gi
+		Stage:     config.StageProduction,
+		Kind:      config.GCloudStorage, // dummy, mocked away
+		BlobQuota: 1073741824,           // 1Gi
 	}
 
 	OwnerId := "1234"

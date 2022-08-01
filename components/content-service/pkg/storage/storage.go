@@ -165,12 +165,6 @@ type DirectAccess interface {
 
 // UploadOptions configure remote storage upload
 type UploadOptions struct {
-	BackupTrail struct {
-		Enabled      bool
-		ThisBackupID string
-		TrailLength  int
-	}
-
 	// Annotations are generic metadata atteched to a storage object
 	Annotations map[string]string
 
@@ -179,24 +173,6 @@ type UploadOptions struct {
 
 // UploadOption configures a particular aspect of remote storage upload
 type UploadOption func(*UploadOptions) error
-
-// WithBackupTrail enables backup trailing for this upload
-func WithBackupTrail(thisBackupID string, trailLength int) UploadOption {
-	return func(opts *UploadOptions) error {
-		if thisBackupID == "" {
-			return xerrors.Errorf("backup ID is missing")
-		}
-		if trailLength < 1 {
-			return xerrors.Errorf("backup trail length must be greater zero")
-		}
-
-		opts.BackupTrail.Enabled = true
-		opts.BackupTrail.ThisBackupID = thisBackupID
-		opts.BackupTrail.TrailLength = trailLength
-
-		return nil
-	}
-}
 
 // WithAnnotations adds arbitrary metadata to a storage object
 func WithAnnotations(md map[string]string) UploadOption {
