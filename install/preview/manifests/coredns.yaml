@@ -56,18 +56,18 @@ metadata:
   namespace: kube-system
 data:
   gitpod.db: |
-    ; 127-0-0-1.nip.io test file
-    127-0-0-1.nip.io.       IN      SOA    sns.dns.icann.org. noc.dns.icann.org. 2015082541 7200 3600 1209600 3600
-    127-0-0-1.nip.io.       IN      CNAME  proxy.default.svc.cluster.local.
-    *.127-0-0-1.nip.io.     IN      CNAME  proxy.default.svc.cluster.local.
-    *.ws.127-0-0-1.nip.io.  IN      CNAME  proxy.default.svc.cluster.local.
+    ; local.gitpod-self-hosted.com test file
+    local.gitpod-self-hosted.com.       IN      SOA    sns.dns.icann.org. noc.dns.icann.org. 2015082541 7200 3600 1209600 3600
+    local.gitpod-self-hosted.com.       IN      CNAME  proxy.default.svc.cluster.local.
+    *.local.gitpod-self-hosted.com.     IN      CNAME  proxy.default.svc.cluster.local.
+    *.ws.local.gitpod-self-hosted.com.  IN      CNAME  proxy.default.svc.cluster.local.
   Corefile: |
     .:53 {
         errors
         health
         ready
-        # extra configuration for `127-0-0-1.nip.io`
-        file /etc/coredns/gitpod.db 127-0-0-1.nip.io
+        # extra configuration for `local.gitpod-self-hosted.com`
+        file /etc/coredns/gitpod.db local.gitpod-self-hosted.com
         kubernetes cluster.local in-addr.arpa ip6.arpa {
           pods insecure
           fallthrough in-addr.arpa ip6.arpa

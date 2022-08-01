@@ -4,9 +4,9 @@
 
 set -e
 
-# Set Domain to `127-0-0-1.nip.io` if not set
+# Set Domain to `local.gitpod-self-hosted.com` if not set
 if [ -z "${DOMAIN}" ]; then
-  export DOMAIN="127-0-0-1.nip.io"
+  export DOMAIN="local.gitpod-self-hosted.com"
 fi
 
 # Create a USER_ID to be used everywhere
