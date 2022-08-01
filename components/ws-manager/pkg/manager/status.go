@@ -495,6 +495,10 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 		result.Phase = api.WorkspacePhase_STOPPING
 		result.Message = "headless workspace is stopping"
 		return nil
+	} else if status.Phase == corev1.PodSucceeded {
+		result.Phase = api.WorkspacePhase_STOPPING
+		result.Message = "workspace is stopping"
+		return nil
 	} else if status.Phase == corev1.PodUnknown {
 		result.Phase = api.WorkspacePhase_UNKNOWN
 		result.Message = "Kubernetes reports workspace phase as unknown"
