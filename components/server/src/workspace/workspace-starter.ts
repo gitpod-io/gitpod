@@ -749,6 +749,12 @@ export class WorkspaceStarter {
                 );
             }
 
+            if (await getExperimentsClientForBackend().getValueAsync("protected_secrets", false, { user })) {
+                // We roll out the protected secrets feature using a ConfigCat feature flag, to ensure
+                // a smooth, gradual roll out without breaking users.
+                featureFlags = featureFlags.concat(["protected_secrets"]);
+            }
+
             featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
 
             if (forcePVC === true) {
