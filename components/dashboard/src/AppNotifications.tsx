@@ -7,11 +7,36 @@
 import { useEffect, useState } from "react";
 import Alert from "./components/Alert";
 import { getGitpodService } from "./service/service";
+import { isLocalPreview } from "./utils";
 
 const KEY_APP_NOTIFICATIONS = "KEY_APP_NOTIFICATIONS";
 
 export function AppNotifications() {
     const [notifications, setNotifications] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (isLocalPreview()) {
+            const notificationText = `You are using a <b>local preview</b> installation, intended for exploring the product on a
+            single machine without requiring a Kubernetes cluster.{" "}
+            ${(
+                <a
+                    className="gp-link hover:text-gray-600"
+                    href="https://www.gitpod.io/community-license?utm_source=local-preview"
+                >
+                    Request a community license
+                </a>
+            )} or
+            ${(
+                <a
+                    className="gp-link hover:text-gray-600"
+                    href="https://www.gitpod.io/contact/sales?utm_source=local-preview"
+                >
+                    contact sales{" "}
+                </a>
+            )} to get a professional license for running Gitpod in production.`;
+            setNotifications([notificationText]);
+        }
+    }, []);
 
     useEffect(() => {
         let localState = getLocalStorageObject(KEY_APP_NOTIFICATIONS);
