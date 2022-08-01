@@ -423,7 +423,7 @@ export class GenericAuthProvider implements AuthProvider {
 
             let message = "Authorization failed. Please try again.";
             if (AuthException.is(err)) {
-                message = `Login was interrupted: ${err.message}`;
+                return this.sendCompletionRedirectWithError(response, { error: err.message });
             }
             if (this.isOAuthError(err)) {
                 message = "OAuth Error. Please try again."; // this is a 5xx response from authorization service
