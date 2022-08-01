@@ -79,7 +79,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				MountPath: "/config",
 				ReadOnly:  true,
 			}},
-		}},
+		}, *common.KubeRBACProxyContainer(ctx),
+		},
 	}
 
 	err = common.AddStorageMounts(ctx, &podSpec, Component)
