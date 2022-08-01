@@ -752,6 +752,7 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 
 	span, ctx := tracing.FromContext(ctx, "stopWorkspace")
 	defer tracing.FinishSpan(span, &err)
+	span.LogKV("workspaceID", workspaceID)
 
 	pod, err := m.findWorkspacePod(ctx, workspaceID)
 	if isKubernetesObjNotFoundError(err) {
