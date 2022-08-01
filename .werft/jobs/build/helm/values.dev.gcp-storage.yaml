@@ -2,9 +2,6 @@ components:
   contentService:
     remoteStorage:
       kind: gcloud
-      backupTrail:
-        enabled: true
-        maxLength: 2
       gcloud:
         credentialsFile: /credentials/service-account.json
         projectId: gitpod-core-dev

@@ -24,12 +24,6 @@ type StorageConfig struct {
 	// MinIOConfig configures the MinIO remote storage
 	MinIOConfig MinIOConfig `json:"minio,omitempty"`
 
-	// BackupTrail maintains a number of backups for the same workspace
-	BackupTrail struct {
-		Enabled   bool `json:"enabled"`
-		MaxLength int  `json:"maxLength"`
-	} `json:"backupTrail"`
-
 	BlobQuota int64 `json:"blobQuota"`
 }
 
@@ -91,8 +85,6 @@ type GCPConfig struct {
 	CredentialsFile string `json:"credentialsFile"`
 	Region          string `json:"region"`
 	Project         string `json:"projectId"`
-
-	MaximumBackupCount int `json:"maximumBackupCount"`
 }
 
 // MinIOConfig MinIOconfigures the MinIO remote storage backend

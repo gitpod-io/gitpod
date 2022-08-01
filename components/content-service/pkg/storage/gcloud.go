@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -356,22 +355,9 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	defer tracing.FinishSpan(span, &err)
 	log := log.WithFields(log.OWI(rs.Username, rs.WorkspaceName, ""))
 
-	options, err := GetUploadOptions(opts)
-	if err != nil {
-		err = xerrors.Errorf("cannot get options: %w", err)
-		return
-	}
-
 	if rs.client == nil {
 		err = xerrors.Errorf("no gcloud client available - did you call Init()?")
 		return
-	}
-
-	// check if we have not yet exceeded the max number of backups
-	if name != DefaultBackup {
-		if err = rs.ensureBackupSlotAvailable(); err != nil {
-			return
-		}
 	}
 
 	sfn, err := os.Open(source)
@@ -390,10 +376,7 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	span.SetTag("totalSize", totalSize)
 
 	bucket = rs.bucketName()
-	bkt := rs.client.Bucket(bucket)
-
 	object = rs.objectName(name)
-	obj := bkt.Object(object)
 
 	uploadSpan := opentracing.StartSpan("remote-upload", opentracing.ChildOf(span.Context()))
 	uploadSpan.SetTag("bucket", bucket)
@@ -403,11 +386,6 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	if err != nil {
 		err = xerrors.Errorf("unexpected error: %w", err)
 		return
-	}
-
-	var firstBackup bool
-	if _, e := obj.Attrs(ctx); e == gcpstorage.ErrObjectNotExist {
-		firstBackup = true
 	}
 
 	var wg sync.WaitGroup
@@ -442,97 +420,10 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 
 	wg.Wait()
 
-	// maintain backup trail if we're asked to - we do this prior to overwriting the regular backup file
-	// to make sure we're trailign the previous backup.
-	if options.BackupTrail.Enabled && !firstBackup {
-		err := rs.trailBackup(ctx, bkt, obj, options.BackupTrail.ThisBackupID, options.BackupTrail.TrailLength)
-		if err != nil {
-			log.WithError(err).Error("cannot maintain backup trail")
-		}
-	}
-
 	uploadSpan.Finish()
 
 	err = nil
 	return
-}
-
-func (rs *DirectGCPStorage) ensureBackupSlotAvailable() error {
-	if rs.GCPConfig.MaximumBackupCount == 0 {
-		// check is disabled
-		return nil
-	}
-	if rs.client == nil {
-		return xerrors.Errorf("no gcloud client available - did you call Init()?")
-	}
-
-	bkt := rs.client.Bucket(rs.bucketName())
-	ctx := context.Background()
-	objs := bkt.Objects(ctx, &gcpstorage.Query{Prefix: fmt.Sprintf("workspaces/%s", rs.WorkspaceName)})
-
-	objcnt := 0
-	for {
-		_, err := objs.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		objcnt++
-	}
-
-	if objcnt > rs.GCPConfig.MaximumBackupCount {
-		return xerrors.Errorf("Maximum number of snapshots (%d of %d) reached", objcnt, rs.GCPConfig.MaximumBackupCount)
-	}
-
-	return nil
-}
-
-func (rs *DirectGCPStorage) trailBackup(ctx context.Context, bkt *gcpstorage.BucketHandle, obj *gcpstorage.ObjectHandle, backupID string, trailLength int) (err error) {
-	//nolint:ineffassign
-	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadChunk")
-	defer tracing.FinishSpan(span, &err)
-
-	trailIter := bkt.Objects(ctx, &gcpstorage.Query{Prefix: rs.trailPrefix()})
-	trailingObj := bkt.Object(rs.trailingObjectName(backupID, time.Now()))
-	_, err = trailingObj.CopierFrom(obj).Run(ctx)
-	if err != nil {
-		return
-	}
-	span.LogKV("trailingBackupDone", trailingObj.ObjectName())
-	log.WithField("obj", trailingObj.ObjectName()).Debug("trailing backup done")
-
-	var (
-		oldTrailObj *gcpstorage.ObjectAttrs
-		trail       []string
-	)
-	for oldTrailObj, err = trailIter.Next(); oldTrailObj != nil; oldTrailObj, err = trailIter.Next() {
-		trail = append(trail, oldTrailObj.Name)
-	}
-	if err != iterator.Done && err != nil {
-		return
-	}
-	log.WithField("trailLength", len(trail)).Debug("listed backup trail")
-	span.LogKV("trailLength", len(trail), "event", "listed backup trail")
-
-	sort.Slice(trail, func(i, j int) bool { return trail[i] < trail[j] })
-
-	for i, oldTrailObj := range trail {
-		if i >= len(trail)-trailLength {
-			break
-		}
-
-		err := bkt.Object(oldTrailObj).Delete(ctx)
-		if err != nil {
-			span.LogKV("event", "cannot delete trailing backup", "bkt", rs.bucketName(), "obj", oldTrailObj)
-			log.WithError(err).WithField("obj", oldTrailObj).Warn("cannot delete old trailing backup")
-			continue
-		}
-		span.LogKV("event", "old trailing object deleted", "bkt", rs.bucketName(), "obj", oldTrailObj)
-		log.WithField("obj", oldTrailObj).WithField("originalTrailLength", len(trail)).Debug("old trailing object deleted")
-	}
-	return nil
 }
 
 func (rs *DirectGCPStorage) bucketName() string {
@@ -563,14 +454,6 @@ func (rs *DirectGCPStorage) workspacePrefix() string {
 
 func (rs *DirectGCPStorage) objectName(name string) string {
 	return gcpWorkspaceBackupObjectName(rs.workspacePrefix(), name)
-}
-
-func (rs *DirectGCPStorage) trailPrefix() string {
-	return fmt.Sprintf("%s/trail-", rs.workspacePrefix())
-}
-
-func (rs *DirectGCPStorage) trailingObjectName(id string, t time.Time) string {
-	return fmt.Sprintf("%s%d-%s", rs.trailPrefix(), t.Unix(), id)
 }
 
 func newGCPClient(ctx context.Context, cfg config.GCPConfig) (*gcpstorage.Client, error) {

@@ -156,7 +156,7 @@
           "env": [
             {
               "name": "WSSYNCD",
-              "value": "{\"workspace\":{\"location\":\"/workspace\",\"name\":\"foobas\",\"cleanup\":true},\"remoteStorage\":{\"kind\":\"\"},\"gcloud\":{\"credentialsFile\":\"\",\"region\":\"\",\"project\":\"\",\"tmpdir\":\"\",\"maximumBackupSize\":0,\"maximumBackupCount\":0},\"initializer\":{\"kind\":\"\",\"git\":{\"remoteURI\":\"\",\"targetMode\":\"\"}},\"notification\":{\"url\":\"http://localhost:23000/gitpod/syncd\"},\"syncDisabled\":true,\"apiserver\":{\"enabled\":true,\"host\":\"127.0.0.1\",\"port\":44444,\"apitoken\":\"c17a7eaf-e5de-4e9d-815a-7919379e2bf8\"}}"
+              "value": "{\"workspace\":{\"location\":\"/workspace\",\"name\":\"foobas\",\"cleanup\":true},\"remoteStorage\":{\"kind\":\"\"},\"gcloud\":{\"credentialsFile\":\"\",\"region\":\"\",\"project\":\"\",\"tmpdir\":\"\",\"maximumBackupSize\":0},\"initializer\":{\"kind\":\"\",\"git\":{\"remoteURI\":\"\",\"targetMode\":\"\"}},\"notification\":{\"url\":\"http://localhost:23000/gitpod/syncd\"},\"syncDisabled\":true,\"apiserver\":{\"enabled\":true,\"host\":\"127.0.0.1\",\"port\":44444,\"apitoken\":\"c17a7eaf-e5de-4e9d-815a-7919379e2bf8\"}}"
             }
           ],
           "resources": {

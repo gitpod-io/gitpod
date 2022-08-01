@@ -13,8 +13,7 @@
                 "region": "europe-west1",
                 "project": "gitpod-dev",
                 "parallelUpload": 4,
-                "maximumBackupSize": 32212254720,
-                "maximumBackupCount": 20
+                "maximumBackupSize": 32212254720
             },
             "minio": {
                 "endpoint": "127.0.0.1:9000",
