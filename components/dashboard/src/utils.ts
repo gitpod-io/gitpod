@@ -59,7 +59,7 @@ export function isGitpodIo() {
 }
 
 export function isLocalPreview() {
-    return window.location.hostname === "local.gitpod-self-hosted.com";
+    return window.location.hostname === "preview.gitpod-self-hosted.com";
 }
 
 function trimResource(resource: string): string {
