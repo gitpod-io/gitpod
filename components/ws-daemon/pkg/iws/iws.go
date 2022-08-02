@@ -761,6 +761,10 @@ func cleanupMaskedMount(owi map[string]interface{}, base string, paths []string)
 	err := unix.Unmount(base, 0)
 	if err != nil {
 		log.WithError(err).WithField("fn", base).WithFields(owi).Warn("cannot unmount dangling base mount")
+		err = unix.Unmount(base, syscall.MNT_DETACH)
+		if err != nil {
+			log.WithError(err).WithField("fn", base).WithFields(owi).Warn("cannot detach dangling base mount")
+		}
 		return
 	}
 
