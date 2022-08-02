@@ -7,6 +7,7 @@ package initializer
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -97,6 +98,7 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	b := backoff.NewExponentialBackOff()
 	b.MaxElapsedTime = 5 * time.Minute
 	if err = backoff.RetryNotify(gitClone, b, onGitCloneFailure); err != nil {
+		err = checkGitStatus(err)
 		return src, xerrors.Errorf("git initializer gitClone: %w", err)
 	}
 
@@ -155,6 +157,7 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		// Because we don't want to make the "git fetch" mechanism in supervisor more complicated,
 		// we'll just fetch the 20 commits right away.
 		if err := ws.Git(ctx, "fetch", "origin", ws.CloneTarget, "--depth=20"); err != nil {
+			err = checkGitStatus(err)
 			return err
 		}
 
@@ -175,4 +178,14 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		}
 	}
 	return nil
+}
+
+func checkGitStatus(err error) error {
+	if err != nil {
+		if strings.Contains(err.Error(), "The requested URL returned error: 524") {
+			return fmt.Errorf("Git clone returned HTTP status 524 (see https://gitlab.com/gitlab-com/gl-infra/reliability/-/issues/8475). Please try restarting your workspace")
+		}
+	}
+
+	return err
 }

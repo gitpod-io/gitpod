@@ -129,9 +129,11 @@ func runGitInit(ctx context.Context, gInit *GitInitializer) (err error) {
 		didStash := !strings.Contains(string(out), "No local changes to save")
 
 		err = gInit.Fetch(ctx)
+		err = checkGitStatus(err)
 		if err != nil {
 			return xerrors.Errorf("prebuild initializer: %w", err)
 		}
+
 		err = gInit.realizeCloneTarget(ctx)
 		if err != nil {
 			return xerrors.Errorf("prebuild initializer: %w", err)
