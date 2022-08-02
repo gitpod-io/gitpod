@@ -138,5 +138,5 @@ func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *s
 }
 
 func registerHttpHandlers(srv *baseserver.Server, h *stripe.WebhookHandler) {
-	srv.HTTPMux().HandleFunc("/webhook", h.Handle)
+	srv.HTTPMux().HandleFunc("/stripe/invoices/webhook", h.Handle)
 }
