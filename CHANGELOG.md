@@ -1,6 +1,9 @@
 # Change Log
 
-## July 2022
+## August 2022
+- Fix broken prebuild trigger for GHE. ([#11570](https://github.com/gitpod-io/gitpod/pull/11570)) - [@AlexTugarev](https://github.com/AlexTugarev)
+
+##  July 2022
 - Update docker compose to v2.8.0 ([#11761](https://github.com/gitpod-io/gitpod/pull/11761)) - [@aledbf](https://github.com/aledbf)
 - Update stable Browser VSCode image with in-product changelog and experimental `Ports` view improvement ([#11754](https://github.com/gitpod-io/gitpod/pull/11754)) - [@mustard-mh](https://github.com/mustard-mh)
 - Update GoLand IDE image to version 222.3345.118. ([#11744](https://github.com/gitpod-io/gitpod/pull/11744)) - [@roboquat](https://github.com/roboquat)
