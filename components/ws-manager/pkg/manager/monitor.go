@@ -80,8 +80,7 @@ type Monitor struct {
 	initializerMap     map[string]struct{}
 	initializerMapLock sync.Mutex
 
-	finalizerMap     map[string]context.CancelFunc
-	finalizerMapLock sync.Mutex
+	finalizerMap sync.Map
 
 	act actingManager
 
@@ -105,7 +104,6 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 		ticker:         time.NewTicker(monitorInterval),
 		probeMap:       make(map[string]context.CancelFunc),
 		initializerMap: make(map[string]struct{}),
-		finalizerMap:   make(map[string]context.CancelFunc),
 
 		OnError: func(err error) {
 			log.WithError(err).Error("workspace monitor error")
@@ -1047,11 +1045,9 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	doBackupLogs := tpe == api.WorkspaceType_PREBUILD
 	doSnapshot := tpe == api.WorkspaceType_PREBUILD
 	doFinalize := func() (worked bool, gitStatus *csapi.GitStatus, err error) {
-		m.finalizerMapLock.Lock()
-		_, alreadyFinalizing := m.finalizerMap[workspaceID]
+		_, alreadyFinalizing := m.finalizerMap.Load(workspaceID)
 		if alreadyFinalizing {
 			span.LogKV("alreadyFinalizing", true)
-			m.finalizerMapLock.Unlock()
 			return false, nil, nil
 		}
 
@@ -1063,15 +1059,12 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		if !doBackup && !doSnapshot && wso.NodeName() == "" {
 			// we don't need a backup and have never spoken to ws-daemon: we're good here.
 			span.LogKV("noBackupNeededAndNoNode", true)
-			m.finalizerMapLock.Unlock()
 			return true, &csapi.GitStatus{}, nil
 		}
 
 		// we're not yet finalizing - start the process
 		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
 		if err != nil {
-			tracing.LogError(span, err)
-			m.finalizerMapLock.Unlock()
 			return true, nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 		}
 
@@ -1086,13 +1079,16 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 
 		ctx, cancelReq := context.WithTimeout(ctx, time.Duration(m.manager.Config.Timeouts.ContentFinalization))
-		m.finalizerMap[workspaceID] = cancelReq
-		m.finalizerMapLock.Unlock()
+		m.finalizerMap.Store(workspaceID, cancelReq)
 		defer func() {
 			// we're done disposing - remove from the finalizerMap
-			m.finalizerMapLock.Lock()
-			delete(m.finalizerMap, workspaceID)
-			m.finalizerMapLock.Unlock()
+			val, ok := m.finalizerMap.LoadAndDelete(workspaceID)
+			if !ok {
+				return
+			}
+
+			cancelReq := val.(context.CancelFunc)
+			cancelReq()
 		}()
 
 		err = m.manager.markWorkspace(ctx, workspaceID, addMark(startedDisposalAnnotation, util.BooleanTrueString))
