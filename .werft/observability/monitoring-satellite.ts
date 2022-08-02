@@ -1,4 +1,4 @@
-import { exec } from "../util/shell";
+import { exec, ExecResult } from "../util/shell";
 import { getGlobalWerftInstance, Werft } from "../util/werft";
 import * as fs from "fs";
 
@@ -105,7 +105,7 @@ export class MonitoringSatelliteInstaller {
 
         this.ensureCorrectInstallationOrder();
         this.deployGitpodServiceMonitors();
-        await this.waitForReadiness();
+        await this.waitForReadiness(werft);
     }
 
     private ensureCorrectInstallationOrder() {
@@ -115,44 +115,43 @@ export class MonitoringSatelliteInstaller {
         exec(`cd observability && hack/deploy-satellite.sh --kubeconfig ${kubeconfigPath}`, { slice: sliceName });
     }
 
-    private async waitForReadiness() {
+    private async waitForReadiness(werft: Werft) {
         const { kubeconfigPath, satelliteNamespace } = this.options;
+
+        async function execAndLogOnError(werft: Werft, objectType:string, objectName: string, preSleep: number = 0): Promise<void> {
+            const rc = exec(`sleep(${preSleep}) && kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} ${objectType} ${objectName}`, {
+                slice: sliceName,
+                dontCheckRc: true,
+            }).code
+            if (rc != 0) {
+                werft.log(sliceName, `Observability failed to install for ${objectName} of type ${objectType}`)
+                const statusDebug = exec(`kubectl --kubeconfig ${kubeconfigPath} -n ${satelliteNamespace} get ${objectType} ${objectName} -o jsonpath="{.status}"`, {
+                    slice: sliceName
+                })
+                werft.log(sliceName, `Status for ${objectName} of type ${objectType}: ${statusDebug}`)
+            }
+            return
+        }
 
         const checks: Promise<any>[] = [];
         // For some reason prometheus' statefulset always take quite some time to get created
         // Therefore we wait a couple of seconds
         checks.push(
-            exec(
-                `sleep 30 && kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} statefulset prometheus-k8s`,
-                { slice: sliceName, async: true },
-            ),
+            execAndLogOnError(werft, "statefulset", "prometheus-k8s", 30)
         );
         checks.push(
-            exec(`kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment grafana`, {
-                slice: sliceName,
-                async: true,
-            }),
+            execAndLogOnError(werft, "deployment", "grafana")
         );
         checks.push(
-            exec(
-                `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment kube-state-metrics`,
-                { slice: sliceName, async: true },
-            ),
+            execAndLogOnError(werft, "deployment", "kube-state-metrics")
         );
         checks.push(
-            exec(
-                `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} deployment otel-collector`,
-                { slice: sliceName, async: true },
-            ),
+            execAndLogOnError(werft, "deployment", "otel-collector")
         );
-
         // core-dev is just too unstable for node-exporter
         // we don't guarantee that it will run at all
         checks.push(
-            exec(
-                `kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} daemonset node-exporter`,
-                { slice: sliceName, async: true },
-            ),
+            execAndLogOnError(werft, "daemonset", "node-exporter")
         );
 
         await Promise.all(checks);
