@@ -107,6 +107,10 @@ import {
     UsageServiceClientProvider,
 } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import { CommunityEntitlementService, EntitlementService } from "./billing/entitlement-service";
+import {
+    ConfigCatClientFactory,
+    getExperimentsClientForBackend,
+} from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -264,4 +268,10 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(UsageServiceClientCallMetrics).toService(IClientCallMetrics);
 
     bind(EntitlementService).to(CommunityEntitlementService).inSingletonScope();
+
+    bind(ConfigCatClientFactory)
+        .toDynamicValue((ctx) => {
+            return () => getExperimentsClientForBackend();
+        })
+        .inSingletonScope();
 });

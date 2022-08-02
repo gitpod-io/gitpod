@@ -12,6 +12,9 @@ import { newAlwaysReturningDefaultValueClient } from "./always-default";
 
 let client: Client | undefined;
 
+export type ConfigCatClientFactory = () => Client;
+export const ConfigCatClientFactory = Symbol("ConfigCatClientFactory");
+
 export function getExperimentsClientForBackend(): Client {
     // We have already instantiated a client, we can just re-use it.
     if (client !== undefined) {
