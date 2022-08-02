@@ -17,7 +17,7 @@ import {
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import moment from "moment";
-import Pagination from "../components/Pagination";
+import Pagination from "../Pagination/Pagination";
 import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
@@ -32,7 +32,7 @@ function TeamUsage() {
     const team = getCurrentTeam(location, teams);
     const [billedUsage, setBilledUsage] = useState<BillableSession[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [resultsPerPage] = useState(10);
+    const [resultsPerPage] = useState(15);
     const [errorMessage, setErrorMessage] = useState("");
     const today = new Date();
     const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -126,7 +126,7 @@ function TeamUsage() {
 
     const lastResultOnCurrentPage = currentPage * resultsPerPage;
     const firstResultOnCurrentPage = lastResultOnCurrentPage - resultsPerPage;
-    const numberOfPages = Math.ceil(billedUsage.length / resultsPerPage);
+    const totalNumberOfPages = Math.ceil(billedUsage.length / resultsPerPage);
     const currentPaginatedResults = billedUsage.slice(firstResultOnCurrentPage, lastResultOnCurrentPage);
 
     return (
@@ -236,9 +236,10 @@ function TeamUsage() {
                                 </ItemsList>
                                 {billedUsage.length > resultsPerPage && (
                                     <Pagination
+                                        totalResults={billedUsage.length}
                                         currentPage={currentPage}
                                         setCurrentPage={setCurrentPage}
-                                        numberOfPages={numberOfPages}
+                                        totalNumberOfPages={totalNumberOfPages}
                                     />
                                 )}
                             </div>
