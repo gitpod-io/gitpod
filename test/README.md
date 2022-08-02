@@ -50,7 +50,7 @@ Best for when you want to validate an environment.
 
 #### Go test
 
-Best for when you're actively developing Gitpod.
+This is best for when you're actively developing Gitpod.
 Test will work if images that they use are already cached by Gitpod instance. If not, they might fail if it takes too long to pull an image.
 There are 4 different types of tests:
 1. Enterprise specific, that require valid license to be installed. Run those with `-enterprise=true`
