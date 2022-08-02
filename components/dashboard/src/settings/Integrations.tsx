@@ -643,6 +643,12 @@ export function GitIntegrationModal(
                 newHostValue = host.replace("https://", "");
             }
 
+            // Negative Lookahead (?!\/)
+            // `\/` matches the character `/`
+            // "https://foobar:80".replace(/:(?!\/)/, "_")
+            // => 'https://foobar_80'
+            newHostValue = host.replace(/:(?!\/)/, "_");
+
             setHost(newHostValue);
             setRedirectURL(callbackUrl(newHostValue));
             setErrorMessage(undefined);
