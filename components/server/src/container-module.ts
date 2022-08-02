@@ -106,6 +106,10 @@ import {
     UsageServiceClientConfig,
     UsageServiceClientProvider,
 } from "@gitpod/usage-api/lib/usage/v1/sugar";
+import {
+    ConfigCatClientFactory,
+    getExperimentsClientForBackend,
+} from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -261,4 +265,10 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(CachingUsageServiceClientProvider).toSelf().inSingletonScope();
     bind(UsageServiceClientProvider).toService(CachingImageBuilderClientProvider);
     bind(UsageServiceClientCallMetrics).toService(IClientCallMetrics);
+
+    bind(ConfigCatClientFactory)
+        .toDynamicValue((ctx) => {
+            return () => getExperimentsClientForBackend();
+        })
+        .inSingletonScope();
 });
