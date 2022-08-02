@@ -11,7 +11,7 @@ import Alert from "./Alert";
 function ErrorMessage(props: { imgSrc: string; imgAlt?: string; message: string }) {
     return (
         <>
-            <div className="space-y-4 mt-4">
+            <div className="mt-16 w-96">
                 <Alert closable={false} showIcon={true} type="error">
                     <span>{props.message}</span>
                 </Alert>
