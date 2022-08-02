@@ -763,6 +763,10 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 	span.SetTag("workspace", req.Id)
 	defer tracing.FinishSpan(span, &err)
 
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "ID is required")
+	}
+
 	sess := s.store.Get(req.Id)
 	if sess == nil {
 		return nil, status.Error(codes.NotFound, "cannot find workspace during TakeSnapshot")
@@ -821,6 +825,10 @@ func (s *WorkspaceService) BackupWorkspace(ctx context.Context, req *api.BackupW
 	span, ctx := opentracing.StartSpanFromContext(ctx, "BackupWorkspace")
 	span.SetTag("workspace", req.Id)
 	defer tracing.FinishSpan(span, &err)
+
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "ID is required")
+	}
 
 	sess := s.store.Get(req.Id)
 	if sess == nil {
