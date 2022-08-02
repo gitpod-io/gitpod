@@ -306,7 +306,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		m.clearInitializerFromMap(pod.Name)
 
 		// if the secret is already gone, this won't error
-		err := m.deleteWorkspaceSecrets(ctx, pod.Name)
+		err = m.deleteWorkspaceSecrets(ctx, pod.Name)
 		if err != nil {
 			return err
 		}
@@ -330,7 +330,6 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 				return nil
 			}()
 			if err != nil {
-				tracing.LogError(span, err)
 				log.WithError(err).Error("was unable to update pod's disposal state - this will break someone's experience")
 			}
 		}
@@ -357,7 +356,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		// The alternative is to stop the pod only when the workspaceFailedBeforeStoppingAnnotation is present.
 		// However, that's much more brittle than stopping the workspace twice (something that Kubernetes can handle).
 		// It is important that we do not fail here if the pod is already gone, i.e. when we lost the race.
-		err := m.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
+		err = m.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
 		if err != nil && !isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("cannot stop workspace: %w", err)
 		}
@@ -376,7 +375,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		}
 
 		// we're asked to stop the workspace but aren't doing so yet
-		err := m.stopWorkspace(ctx, workspaceID, gracePeriod)
+		err = m.stopWorkspace(ctx, workspaceID, gracePeriod)
 		if err != nil && !isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("cannot stop workspace: %w", err)
 		}
@@ -423,7 +422,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 
 		// In case the pod gets evicted we would not know the hostIP that pod ran on anymore.
 		// In preparation for those cases, we'll add it as an annotation.
-		err := m.markWorkspace(ctx, workspaceID, addMark(nodeNameAnnotation, wso.NodeName()))
+		err = m.markWorkspace(ctx, workspaceID, addMark(nodeNameAnnotation, wso.NodeName()))
 		if err != nil {
 			log.WithError(err).Warn("was unable to add host IP annotation from/to workspace")
 		}
@@ -439,7 +438,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		if !isPodBeingDeleted(pod) {
 			span.LogKV("event", "pod not being deleted")
 			// this might be the case if a headless workspace has just completed but has not been deleted by anyone, yet
-			err := m.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
+			err = m.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
 			if err != nil && !isKubernetesObjNotFoundError(err) {
 				return xerrors.Errorf("cannot stop workspace: %w", err)
 			}
@@ -518,7 +517,6 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 			} else {
 				// We start finalizing the workspace content only after the container is gone. This way we ensure there's
 				// no process modifying the workspace content as we create the backup.
-				span.LogKV("event", "called finalizeWorkspaceContent")
 				go m.finalizeWorkspaceContent(ctx, wso)
 			}
 		}
