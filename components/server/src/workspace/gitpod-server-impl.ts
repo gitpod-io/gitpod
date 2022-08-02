@@ -108,7 +108,11 @@ import {
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { Cancelable } from "@gitpod/gitpod-protocol/lib/util/cancelable";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { InterfaceWithTraceContext, TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import {
+    InterfaceWithTraceContext,
+    TraceContext,
+    TraceContextWithSpan,
+} from "@gitpod/gitpod-protocol/lib/util/tracing";
 import {
     IdentifyMessage,
     RemoteIdentifyMessage,
@@ -171,6 +175,7 @@ import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { BillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol/lib/usage";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2056,13 +2061,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return await this.projectsService.getProjectEnvironmentVariables(projectId);
     }
 
-    protected async guardTeamOperation(teamId: string | undefined, op: ResourceAccessOp): Promise<void> {
+    protected async guardTeamOperation(teamId: string | undefined, op: ResourceAccessOp): Promise<Team> {
         const team = await this.teamDB.findTeamById(teamId || "");
         if (!team) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
         }
         const members = await this.teamDB.findMembersByTeam(team.id);
         await this.guardAccess({ kind: "team", subject: team, members }, op);
+        return team;
     }
 
     public async getTeams(ctx: TraceContext): Promise<Team[]> {
@@ -3225,6 +3231,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             log.error("cannot set usage attribution", error, { userId: user.id, usageAttributionId });
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `cannot set usage attribution`);
         }
+    }
+
+    async getBillingModeForUser(ctx: TraceContextWithSpan): Promise<BillingMode> {
+        traceAPIParams(ctx, {});
+
+        return BillingMode.NONE;
+    }
+
+    async getBillingModeForTeam(ctx: TraceContextWithSpan, teamId: string): Promise<BillingMode> {
+        traceAPIParams(ctx, { teamId });
+
+        return BillingMode.NONE;
     }
 
     //

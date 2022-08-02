@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 import { GitpodServerImpl, traceAPIParams, traceWI, censor } from "../../../src/workspace/gitpod-server-impl";
-import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { TraceContext, TraceContextWithSpan } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import {
     GitpodServer,
     GitpodClient,
@@ -106,12 +106,14 @@ import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/webs
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CachingUsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import * as usage from "@gitpod/usage-api/lib/usage/v1/usage_pb";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { EntitlementService } from "../../../src/billing/entitlement-service";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { BillingModes } from "../billing/billing-mode";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -156,6 +158,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     @inject(CostCenterDB) protected readonly costCenterDB: CostCenterDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
+
+    @inject(BillingModes) protected readonly billingModes: BillingModes;
 
     initialize(
         client: GitpodClient | undefined,
@@ -2188,6 +2192,22 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             endTime: s.getEndTime()?.toDate().toISOString(),
             credits: s.getCredits(), // optional
         };
+    }
+
+    async getBillingModeForUser(ctx: TraceContextWithSpan): Promise<BillingMode> {
+        traceAPIParams(ctx, {});
+
+        const user = this.checkUser("getBillingModeForUser");
+        return this.billingModes.getBillingModeForUser(user, new Date());
+    }
+
+    async getBillingModeForTeam(ctx: TraceContextWithSpan, teamId: string): Promise<BillingMode> {
+        traceAPIParams(ctx, { teamId });
+
+        this.checkAndBlockUser("getBillingModeForTeam");
+        const team = await this.guardTeamOperation(teamId, "get");
+
+        return this.billingModes.getBillingModeForTeam(team, new Date());
     }
 
     // (SaaS) – admin

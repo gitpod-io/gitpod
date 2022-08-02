@@ -63,6 +63,7 @@ import { InstallationAdminSettings, TelemetryData } from "./installation-admin-p
 import { Currency } from "./plans";
 import { BillableSession, BillableSessionRequest } from "./usage";
 import { SupportedWorkspaceClass } from "./workspace-class";
+import { BillingMode } from "./billing-mode";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -297,6 +298,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     listBilledUsage(req: BillableSessionRequest): Promise<BillableSession[]>;
 
     setUsageAttribution(usageAttribution: string): Promise<void>;
+
+    getBillingModeForUser(): Promise<BillingMode>;
+    getBillingModeForTeam(teamId: string): Promise<BillingMode>;
 
     /**
      * Analytics
