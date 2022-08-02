@@ -19,7 +19,7 @@ func NewWebhookHandler() *WebhookHandler {
 	return &WebhookHandler{}
 }
 
-func (h *WebhookHandler) Handle(w http.ResponseWriter, req *http.Request) {
+func (h *WebhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	const maxBodyBytes = int64(65536)
 
 	req.Body = http.MaxBytesReader(w, req.Body, maxBodyBytes)

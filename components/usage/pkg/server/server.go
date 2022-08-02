@@ -21,6 +21,7 @@ import (
 	"github.com/gitpod-io/gitpod/usage/pkg/controller"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
+	"github.com/gorilla/handlers"
 	"gorm.io/gorm"
 )
 
@@ -138,5 +139,5 @@ func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *s
 }
 
 func registerHttpHandlers(srv *baseserver.Server, h *stripe.WebhookHandler) {
-	srv.HTTPMux().HandleFunc("/stripe/invoices/webhook", h.Handle)
+	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(h, "application/json"))
 }
