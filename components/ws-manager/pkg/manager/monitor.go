@@ -971,6 +971,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	if !ok {
 		tracing.LogError(span, xerrors.Errorf("cannot find %s annotation", workspaceIDAnnotation))
 		log.Errorf("cannot find %s annotation", workspaceIDAnnotation)
+		return
 	}
 
 	var disposalStatus *workspaceDisposalStatus
