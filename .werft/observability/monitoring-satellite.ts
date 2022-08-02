@@ -119,7 +119,7 @@ export class MonitoringSatelliteInstaller {
         const { kubeconfigPath, satelliteNamespace } = this.options;
 
         async function execAndLogOnError(werft: Werft, objectType:string, objectName: string, preSleep: number = 0): Promise<void> {
-            const rc = exec(`sleep(${preSleep}) && kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} ${objectType} ${objectName}`, {
+            const rc = exec(`sleep ${preSleep} && kubectl --kubeconfig ${kubeconfigPath} rollout status -n ${satelliteNamespace} ${objectType} ${objectName}`, {
                 slice: sliceName,
                 dontCheckRc: true,
             }).code
