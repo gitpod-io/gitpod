@@ -6,12 +6,15 @@ package server
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/public-api/config"
 	"net/url"
+
+	"github.com/gitpod-io/gitpod/public-api/config"
+	"github.com/gorilla/handlers"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -35,6 +38,10 @@ func Start(logger *logrus.Entry, cfg *config.Configuration) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize public api server: %w", err)
 	}
+
+	srv.HTTPMux().Handle("/stripe/invoices/webhook",
+		handlers.ContentTypeHandler(webhooks.NewStripeWebhookHandler(), "application/json"),
+	)
 
 	if registerErr := register(srv, gitpodAPI, registry); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
