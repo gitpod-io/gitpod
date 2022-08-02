@@ -23,7 +23,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { ReactComponent as CreditsSvg } from "../images/credits.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
-import Arrow from "../components/Arrow";
+import { ReactComponent as SortArrow } from "../images/sort-arrow.svg";
 
 function TeamUsage() {
     const { teams } = useContext(TeamsContext);
@@ -202,9 +202,16 @@ function TeamUsage() {
                                             <span>Credits</span>
                                         </ItemField>
                                         <ItemField className="my-auto cursor-pointer">
-                                            <span onClick={() => setIsStartedTimeDescending(!isStartedTimeDescending)}>
+                                            <span
+                                                className="flex my-auto"
+                                                onClick={() => setIsStartedTimeDescending(!isStartedTimeDescending)}
+                                            >
                                                 Started
-                                                <Arrow direction={isStartedTimeDescending ? "down" : "up"} />
+                                                <SortArrow
+                                                    className={`h-4 w-4 my-auto ${
+                                                        isStartedTimeDescending ? "" : " transform rotate-180"
+                                                    }`}
+                                                />
                                             </span>
                                         </ItemField>
                                     </Item>
