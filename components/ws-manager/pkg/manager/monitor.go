@@ -1065,6 +1065,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		// we're not yet finalizing - start the process
 		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
 		if err != nil {
+			tracing.LogError(span, err)
 			return true, nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 		}
 
