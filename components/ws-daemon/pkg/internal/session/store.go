@@ -6,6 +6,8 @@ package session
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -186,6 +188,9 @@ func (s *Store) StartHousekeeping(ctx context.Context, interval time.Duration) {
 	log.Debug("stopping workspace housekeeping")
 }
 
+// For good measure, we only GC ontent directories older than this age.
+const minContentGCAge = 2 * time.Hour
+
 func (s *Store) doHousekeeping(ctx context.Context) (errs []error) {
 	//nolint:ineffassign,staticcheck
 	span, ctx := opentracing.StartSpanFromContext(ctx, "doHousekeeping")
@@ -204,74 +209,51 @@ func (s *Store) doHousekeeping(ctx context.Context) (errs []error) {
 
 	errs = make([]error, 0)
 
-	// find session files which are no longer needed
-	// TODO: This broke with FWB where the actual content can lay somewhere completely different
-	//       Really we should not never remove workspaces from the ws-daemon side, but instead have
-	//       ws-manager do that for us.
-
-	// existingWorkspaces, err := filepath.Glob(filepath.Join(s.Location, workspaceFilePattern))
-	// if err != nil {
-	// 	return []error{xerrors.Errorf("cannot list existing workspaces: %w", err)}
-	// }
-	// for _, ws := range existingWorkspaces {
-	// 	contentDirPath := strings.TrimSuffix(ws, ".workspace.json")
-	// 	if _, err := os.Stat(contentDirPath); err == nil || !os.IsNotExist(err) {
-	// 		// content directory still exists - we're good here
-	// 		continue
-	// 	}
-
-	// 	name := strings.TrimSuffix(filepath.Base(ws), ".json")
-	// 	err = s.Delete(ctx, name)
-	// 	if err != nil {
-	// 		log.WithError(err).Warn("Found workspace without workspace content, but cannot delete from store")
-	// 		errs = append(errs, err)
-	// 		continue
-	// 	}
-
-	// 	// if we didn't get the name right, or didn't have the session loaded (e.g. because it's broken),
-	// 	// we might still have to delete the JSON file.
-	// 	if _, err := os.Stat(contentDirPath); err == nil || !os.IsNotExist(err) {
-	// 		err := os.Remove(ws)
-	// 		if err != nil {
-	// 			log.WithError(err).Warn("Found workspace without workspace content, delete from store, but cannot delete from filesystem. We'll inadvertantly load this workspace again upon restart.")
-	// 			errs = append(errs, err)
-	// 			continue
-	// 		}
-	// 	}
-
-	// 	log.WithField("workspace", ws).Info("deleted workspaces without content directory")
 	// }
 
-	// find workspace directories which are left over.
-	// For the time being we won't do that because we're not sure we're the only ones working in this directory!
-	// Legacy ws-daemon will work here too.
-	//
-	// files, err := os.ReadDir(s.Location)
-	// if err != nil {
-	// 	return []error{xerrors.Errorf("cannot list existing workspaces content directory: %w", err)}
-	// }
-	// for _, f := range files {
-	// 	if !f.IsDir() {
-	// 		continue
-	// 	}
+	// Find workspace directories which are left over.
+	files, err := os.ReadDir(s.Location)
+	if err != nil {
+		return []error{xerrors.Errorf("cannot list existing workspaces content directory: %w", err)}
+	}
+	for _, f := range files {
+		if !f.IsDir() {
+			continue
+		}
 
-	// 	loc := filepath.Join(s.Location, f.Name())
-	// 	if _, err := os.Stat(fmt.Sprintf("%s.workspace.json", loc)); !os.IsNotExist(err) {
-	// 		continue
-	// 	}
+		// If this is the -daemon directory, make sure we assume the correct state file name
+		name := f.Name()
+		name = strings.TrimSuffix(name, string(filepath.Separator))
+		name = strings.TrimSuffix(name, "-daemon")
 
-	// 	// We have found a workspace content directory without a workspace state file, which means we don't manage this folder.
-	// 	// Within the working area/location of a session store we must be the only one who creates directories, because we want to
-	// 	// make sure we don't leak files over time.
-	// 	err := os.RemoveAll(loc)
-	// 	if err != nil {
-	// 		log.WithError(err).Warn("Found workspace content directory without a corresponding state file, but could not delete the content directory")
-	// 		errs = append(errs, err)
-	// 		continue
-	// 	}
+		if _, err := os.Stat(filepath.Join(s.Location, fmt.Sprintf("%s.workspace.json", name))); !os.IsNotExist(err) {
+			continue
+		}
 
-	// 	log.WithField("directory", f.Name()).Info("deleted workspace content directory without corresponding state file")
-	// }
+		// We have found a workspace content directory without a workspace state file, which means we don't manage this folder.
+		// Within the working area/location of a session store we must be the only one who creates directories, because we want to
+		// make sure we don't leak files over time.
+
+		// For good measure we wait a while before deleting that directory.
+		nfo, err := f.Info()
+		if err != nil {
+			log.WithError(err).Warn("Found workspace content directory without a corresponding state file, but could not retrieve its info")
+			errs = append(errs, err)
+			continue
+		}
+		if time.Since(nfo.ModTime()) < minContentGCAge {
+			continue
+		}
+
+		err = os.RemoveAll(filepath.Join(s.Location, f.Name()))
+		if err != nil {
+			log.WithError(err).Warn("Found workspace content directory without a corresponding state file, but could not delete the content directory")
+			errs = append(errs, err)
+			continue
+		}
+
+		log.WithField("directory", f.Name()).Info("deleted workspace content directory without corresponding state file")
+	}
 
 	return errs
 }
