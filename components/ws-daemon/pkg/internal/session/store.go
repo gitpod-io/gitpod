@@ -137,13 +137,13 @@ func (s *Store) Delete(ctx context.Context, name string) (err error) {
 	if !exists {
 		return nil
 	}
+	defer delete(s.workspaces, name)
 
 	err = session.Dispose(ctx)
 	if err != nil {
-		return xerrors.Errorf("cannot delete session: %w", err)
+		return xerrors.Errorf("cannot delete session for workspace %s: %w", session.InstanceID, err)
 	}
 
-	delete(s.workspaces, name)
 	return nil
 }
 
