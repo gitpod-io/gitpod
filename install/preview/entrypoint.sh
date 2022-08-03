@@ -50,7 +50,6 @@ fi
 
 mount --make-shared /sys/fs/cgroup
 mount --make-shared /proc
-mount --make-shared /var/gitpod
 
 # install in local store
 mkcert -install
