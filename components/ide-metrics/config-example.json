@@ -1,0 +1,33 @@
+{
+  "server": {
+    "port": 3000,
+    "counterMetrics": [
+      {
+        "name": "gitpod_test_counter",
+        "help": "help",
+        "labels": [
+          {
+            "name": "ide",
+            "allowValues": ["vscode", "idea", "goland", "pycharm"]
+          }
+        ]
+      }
+    ],
+    "histogramMetrics": [
+      {
+        "name": "gitpod_test_hist",
+        "help": "hist_help",
+        "labels": [
+          {
+            "name": "ide",
+            "allowValues": ["idea", "goland", "pycharm"]
+          }
+        ],
+        "buckets": [1, 10, 100]
+      }
+    ]
+  },
+  "prometheus": {
+    "addr": "127.0.0.1:9500"
+  }
+}
