@@ -1,0 +1,78 @@
+/**
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+import {
+    User,
+    WorkspaceInstance,
+    WorkspaceTimeoutDuration,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+} from "@gitpod/gitpod-protocol";
+import { MayStartWorkspaceResult } from "../../ee/src/user/eligibility-service";
+
+export const EntitlementService = Symbol("EntitlementService");
+export interface EntitlementService {
+    /**
+     * Whether a user is allowed to start a workspace
+     * !!! This is executed on the hot path of workspace startup, be careful with async when changing !!!
+     * @param user
+     * @param date now
+     * @param runningInstances
+     */
+    mayStartWorkspace(
+        user: User,
+        date: Date,
+        runningInstances: Promise<WorkspaceInstance[]>,
+    ): Promise<MayStartWorkspaceResult>;
+
+    /**
+     * A user may set the workspace timeout if they have a professional subscription
+     * @param user
+     * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
+     */
+    maySetTimeout(user: User, date: Date): Promise<boolean>;
+
+    /**
+     * Returns the default workspace timeout for the given user at a given point in time
+     * @param user
+     * @param date The date for which we want to know the default workspace timeout (depends on active subscription)
+     */
+    getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration>;
+
+    /**
+     * Returns true if the user ought to land on a workspace cluster that provides more resources
+     * compared to the default case.
+     */
+    userGetsMoreResources(user: User): Promise<boolean>;
+}
+
+/**
+ * The default implementation that is used for the community edition.
+ */
+export class CommunityEntitlementService implements EntitlementService {
+    async mayStartWorkspace(
+        user: User,
+        date: Date,
+        runningInstances: Promise<WorkspaceInstance[]>,
+    ): Promise<MayStartWorkspaceResult> {
+        return { enoughCredits: true };
+    }
+
+    async maySetTimeout(user: User, date: Date): Promise<boolean> {
+        return true;
+    }
+
+    async hasFixedWorkspaceResources(user: User, date: Date = new Date()): Promise<boolean> {
+        return true;
+    }
+
+    async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
+        return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
+    }
+
+    async userGetsMoreResources(user: User): Promise<boolean> {
+        return false;
+    }
+}

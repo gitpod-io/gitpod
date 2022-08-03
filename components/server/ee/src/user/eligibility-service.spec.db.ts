@@ -9,8 +9,7 @@ import { DBUser, DBIdentity, UserDB, AccountingDB, TeamSubscriptionDB } from "@g
 import { TypeORM } from "@gitpod/gitpod-db/lib/typeorm/typeorm";
 import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
-import * as chai from "chai";
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, timeout } from "mocha-typescript";
 import { Config } from "../../../src/config";
 import { EligibilityService } from "./eligibility-service";
 import { DBSubscription } from "@gitpod/gitpod-db/lib/typeorm/entity/db-subscription";
@@ -25,8 +24,6 @@ import {
 import { EMailDomainService, EMailDomainServiceImpl } from "../auth/email-domain-service";
 import { TokenProvider } from "../../../src/user/token-provider";
 import { AccountStatementProvider } from "./account-statement-provider";
-
-const expect = chai.expect;
 
 const localTestContainer = testContainer.createChild();
 localTestContainer.bind(EligibilityService).toSelf().inSingletonScope();
@@ -147,26 +144,27 @@ class AccountServiceSpec {
         return { plan, sub, ts, slot };
     }
 
-    @timeout(5000)
-    @test
-    async testUserGetsMoreResources() {
-        await this.createTsSubscription();
+    // TODO(gpl) These should be moved over to EntitlementService.spec.ts
+    // @timeout(5000)
+    // @test
+    // async testUserGetsMoreResources() {
+    //     await this.createTsSubscription();
 
-        const actual = await this.cut.userGetsMoreResources(this.user);
-        expect(actual, "user with Team Unleashed gets 'more resources'").to.equal(true);
-    }
+    //     const actual = await this.cut.userGetsMoreResources(this.user);
+    //     expect(actual, "user with Team Unleashed gets 'more resources'").to.equal(true);
+    // }
 
-    @timeout(5000)
-    @test
-    async testUserGetsMoreResources_excludeFromMoreResources() {
-        await this.createTsSubscription(true);
+    // @timeout(5000)
+    // @test
+    // async testUserGetsMoreResources_excludeFromMoreResources() {
+    //     await this.createTsSubscription(true);
 
-        const actual = await this.cut.userGetsMoreResources(this.user);
-        expect(
-            actual,
-            "user with Team Unleashed but excludeFromMoreResources set does not get 'more resources'",
-        ).to.equal(false);
-    }
+    //     const actual = await this.cut.userGetsMoreResources(this.user);
+    //     expect(
+    //         actual,
+    //         "user with Team Unleashed but excludeFromMoreResources set does not get 'more resources'",
+    //     ).to.equal(false);
+    // }
 }
 
 module.exports = new AccountServiceSpec();

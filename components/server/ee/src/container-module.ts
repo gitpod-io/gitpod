@@ -61,6 +61,8 @@ import { SnapshotService } from "./workspace/snapshot-service";
 import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
 import { UserCounter } from "./user/user-counter";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
+import { EntitlementService } from "../../src/billing/entitlement-service";
+import { EntitlementServiceChargebee } from "./billing/entitlement-service-chargebee";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -122,4 +124,7 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(ChargebeeCouponComputer).toSelf().inSingletonScope();
     bind(ChargebeeService).toSelf().inSingletonScope();
     bind(StripeService).toSelf().inSingletonScope();
+
+    bind(EntitlementServiceChargebee).toSelf().inSingletonScope();
+    rebind(EntitlementService).to(EntitlementServiceChargebee).inSingletonScope();
 });

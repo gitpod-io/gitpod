@@ -6,15 +6,12 @@
 
 import { Workspace, User, WorkspaceInstance, NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { inject, injectable } from "inversify";
+import { injectable } from "inversify";
 import { IDEConfig } from "../../../src/ide-config";
 import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
-import { EligibilityService } from "../user/eligibility-service";
 
 @injectable()
 export class WorkspaceStarterEE extends WorkspaceStarter {
-    @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
-
     /**
      * Creates a new instance for a given workspace and its owner
      *
