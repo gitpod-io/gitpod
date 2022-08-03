@@ -81,7 +81,7 @@ async function issueCertificate(werft: Werft, config: JobConfig): Promise<boolea
     const domain = `${config.previewEnvironment.destname}.preview.gitpod-dev.com`;
 
     werft.log(prepareSlices.ISSUE_CERTIFICATES, prepareSlices.ISSUE_CERTIFICATES);
-    var certReady = await issueMetaCerts(werft, certName, "certs", domain, prepareSlices.ISSUE_CERTIFICATES);
+    var certReady = await issueMetaCerts(werft, certName, "certs", domain, config.repository.branch, prepareSlices.ISSUE_CERTIFICATES);
     werft.done(prepareSlices.ISSUE_CERTIFICATES);
     return certReady
 }
