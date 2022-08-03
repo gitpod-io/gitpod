@@ -21,6 +21,7 @@ func NetworkIsReachableProbe(url string) func() error {
 	return func() error {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			Proxy:           http.ProxyFromEnvironment,
 		}
 		client := &http.Client{
 			Transport: tr,
