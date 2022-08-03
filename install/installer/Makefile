@@ -46,5 +46,5 @@ generateRenderTests:
 
 getRenderVersionManifest:
 	VERSION_MANIFEST="./cmd/testdata/render/versions.yaml" $(MAKE) versionManifest
-	yq w -i ./cmd/testdata/render/versions.yamlZ **.version test
+	yq w -i ./cmd/testdata/render/versions.yaml **.version test
 .PHONY: getRenderVersionManifest
