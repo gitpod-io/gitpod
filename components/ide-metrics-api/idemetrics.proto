@@ -1,0 +1,31 @@
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package ide_metrics_api;
+
+option go_package = "github.com/gitpod-io/gitpod/ide-metrics/api";
+option java_package = "io.gitpod.idemetrics.api";
+
+service MetricsService {
+    rpc AddCounter(AddCounterRequest) returns (AddCounterResponse) {}
+    rpc ObserveHistogram(ObserveHistogramRequest) returns (ObserveHistogramResponse) {}
+}
+
+message AddCounterRequest {
+    string name = 1;
+    map<string, string> labels = 2;
+    optional int32 value = 3;
+}
+
+message AddCounterResponse {}
+
+message ObserveHistogramRequest {
+    string name = 1;
+    map<string, string> labels = 2;
+    double value = 3;
+}
+
+message ObserveHistogramResponse {}
