@@ -43,6 +43,10 @@ tasks:
     command: |
       ./dev/preview/util/download-and-merge-harvester-kubeconfig.sh
       exit 0
+  - name: Installer dependencies
+    init: |
+      (cd install/installer && make deps)
+      exit 0
   - name: Java
     command: |
       if [ -z "$RUN_GRADLE_TASK" ]; then
