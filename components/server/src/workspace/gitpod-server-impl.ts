@@ -1234,7 +1234,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     /**
-     * Extension point for implementing eligibility checks. Throws a ResponseError if not eligible.
+     * Extension point for implementing entitlement checks. Throws a ResponseError if not eligible.
      * @param ctx
      * @param user
      * @param runningInstances

@@ -166,6 +166,7 @@ export class UserService {
         }
     }
 
+    // TODO(gpl) Needs to fold into EntitlementService
     /**
      * Returns the default workspace timeout for the given user at a given point in time
      * @param user
@@ -200,6 +201,7 @@ export class UserService {
         }
     }
 
+    // TODO(gpl) Needs to fold into EntitlementService
     /**
      * Returns true if the user ought land in a cluster which offers more resources than
      * the default.

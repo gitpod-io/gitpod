@@ -106,6 +106,7 @@ import {
     UsageServiceClientConfig,
     UsageServiceClientProvider,
 } from "@gitpod/usage-api/lib/usage/v1/sugar";
+import { CommunityEntitlementService, EntitlementService } from "./billing/entitlement-service";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -261,4 +262,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(CachingUsageServiceClientProvider).toSelf().inSingletonScope();
     bind(UsageServiceClientProvider).toService(CachingImageBuilderClientProvider);
     bind(UsageServiceClientCallMetrics).toService(IClientCallMetrics);
+
+    bind(EntitlementService).to(CommunityEntitlementService).inSingletonScope();
 });

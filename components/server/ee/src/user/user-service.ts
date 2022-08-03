@@ -17,24 +17,25 @@ import { inject } from "inversify";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { AuthException } from "../../../src/auth/errors";
-import { EligibilityService } from "./eligibility-service";
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { OssAllowListDB } from "@gitpod/gitpod-db/lib/oss-allowlist-db";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { Config } from "../../../src/config";
+import { EntitlementService } from "../../../src/billing/entitlement-service";
 
 export class UserServiceEE extends UserService {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
-    @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
+    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
     @inject(OssAllowListDB) protected readonly OssAllowListDb: OssAllowListDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
 
+    // TODO(gpl) Needs to fold into EntitlementService
     async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
         if (this.config.enablePayment) {
             // the SaaS case
-            return this.eligibilityService.getDefaultWorkspaceTimeout(user, date);
+            return this.entitlementService.getDefaultWorkspaceTimeout(user, date);
         }
 
         const userCount = await this.userDb.getUserCount(true);
@@ -72,9 +73,10 @@ export class UserServiceEE extends UserService {
         }
     }
 
+    // TODO(gpl) Needs to fold into EntitlementService
     async userGetsMoreResources(user: User): Promise<boolean> {
         if (this.config.enablePayment) {
-            return this.eligibilityService.userGetsMoreResources(user);
+            return this.entitlementService.userGetsMoreResources(user);
         }
 
         return false;

@@ -111,6 +111,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CachingUsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import * as usage from "@gitpod/usage-api/lib/usage/v1/usage_pb";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
+import { EntitlementService } from "../../../src/billing/entitlement-service";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -154,6 +155,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     protected readonly usageServiceClientProvider: CachingUsageServiceClientProvider;
 
     @inject(CostCenterDB) protected readonly costCenterDB: CostCenterDB;
+    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     initialize(
         client: GitpodClient | undefined,
@@ -250,7 +252,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     ): Promise<void> {
         await super.mayStartWorkspace(ctx, user, runningInstances);
 
-        const result = await this.eligibilityService.mayStartWorkspace(user, new Date(), runningInstances);
+        const result = await this.entitlementService.mayStartWorkspace(user, new Date(), runningInstances);
         if (!result.enoughCredits) {
             throw new ResponseError(
                 ErrorCodes.NOT_ENOUGH_CREDIT,
@@ -404,7 +406,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
      * gitpod.io Extension point for implementing eligibility checks. Throws a ResponseError if not eligible.
      */
     protected async maySetTimeout(user: User): Promise<boolean> {
-        return this.eligibilityService.maySetTimeout(user);
+        return this.entitlementService.maySetTimeout(user, new Date());
     }
 
     public async controlAdmission(ctx: TraceContext, workspaceId: string, level: "owner" | "everyone"): Promise<void> {
