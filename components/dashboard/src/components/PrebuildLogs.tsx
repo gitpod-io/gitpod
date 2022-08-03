@@ -121,14 +121,16 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                 disposables.push(retryWatchWorkspaceImageBuildLogs(workspaceId));
                 break;
             // When we're "running" we want to switch to the logs from the actual prebuild workspace, instead
+            // When the prebuild has "stopped", we still want to go for the logs
             case "running":
+            case "stopped":
                 disposables.push(
                     watchHeadlessLogs(
                         workspaceInstance.id,
                         (chunk) => {
                             logsEmitter.emit("logs", chunk);
                         },
-                        async () => workspaceInstance?.status.phase === "stopped",
+                        async () => false,
                     ),
                 );
         }
