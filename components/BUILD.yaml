@@ -85,6 +85,8 @@ packages:
   - name: publish-api
     type: generic
     deps:
+      - components/ide-metrics-api/typescript-grpc:publish
+      - components/ide-metrics-api/typescript-grpcweb:publish
       - components/gitpod-protocol:publish
       - components/local-app-api/typescript-grpcweb:publish
       - components/supervisor-api/typescript-grpc:publish
