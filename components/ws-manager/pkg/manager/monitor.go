@@ -984,6 +984,12 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		return
 	}
 
+	err := m.manager.markWorkspace(ctx, workspaceID, addMark(startedDisposalAnnotation, util.BooleanTrueString))
+	if err != nil {
+		tracing.LogError(span, err)
+		log.WithError(err).Error("was unable to update pod's start disposal state - this might cause an incorrect disposal state")
+	}
+
 	var disposalStatus *workspaceDisposalStatus
 	defer func() {
 		if disposalStatus == nil {
@@ -1089,12 +1095,6 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			cancelReq := val.(context.CancelFunc)
 			cancelReq()
 		}()
-
-		err = m.manager.markWorkspace(ctx, workspaceID, addMark(startedDisposalAnnotation, util.BooleanTrueString))
-		if err != nil {
-			tracing.LogError(span, err)
-			log.WithError(err).Error("was unable to update pod's start disposal state - this might cause an incorrect disposal state")
-		}
 
 		if pvcFeatureEnabled {
 			// pvc was created with the name of the pod. see createDefiniteWorkspacePod()
