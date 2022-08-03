@@ -505,6 +505,7 @@ export async function issueMetaCerts(
     certName: string,
     certsNamespace: string,
     domain: string,
+    branch: string,
     slice: string,
 ): Promise<boolean> {
     const additionalSubdomains: string[] = ["", "*.", `*.ws.`];
@@ -513,6 +514,7 @@ export async function issueMetaCerts(
     metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
     metaClusterCertParams.certName = certName;
     metaClusterCertParams.certNamespace = certsNamespace;
+    metaClusterCertParams.previewName = previewNameFromBranchName(branch)
     metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
     metaClusterCertParams.domain = domain;
     metaClusterCertParams.ip = getCoreDevIngressIP();
