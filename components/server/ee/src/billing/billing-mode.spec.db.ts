@@ -343,8 +343,7 @@ class BillingModeSpec {
                     usageBasedPricingEnabled: false,
                 },
                 expectation: {
-                    mode: "chargebee",
-                    tier: "free",
+                    mode: "none",
                 },
             },
             // team: chargebee
