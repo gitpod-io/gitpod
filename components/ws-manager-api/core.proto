@@ -585,9 +585,9 @@ enum WorkspaceFeatureFlag {
     // the registry facade and back them up using regular "hardlink backups".
     FULL_WORKSPACE_BACKUP = 4;
 
-    // FixedResources ensures this workspace is not subject to ws-daemon's dynamic resource limits.
+    // Was used to ensure a workspace is not subject to ws-daemon's dynamic resource limits.
     // In this sence it's akin to "guaranteed" (as compared to burstable) resources for workspaces.
-    FIXED_RESOURCES = 5;
+    reserved 5;
 
     // Was used for UserNamespace
     reserved 6;

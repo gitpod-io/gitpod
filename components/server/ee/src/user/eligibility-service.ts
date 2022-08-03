@@ -266,21 +266,6 @@ export class EligibilityService {
     }
 
     /**
-     * Returns true if the user is never subject to CPU limiting
-     */
-    async hasFixedWorkspaceResources(user: User, date: Date = new Date()): Promise<boolean> {
-        const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, date.toISOString());
-        const eligblePlans = [
-            Plans.PROFESSIONAL_EUR,
-            Plans.PROFESSIONAL_USD,
-            Plans.TEAM_PROFESSIONAL_EUR,
-            Plans.TEAM_PROFESSIONAL_USD,
-        ].map((p) => p.chargebeeId);
-
-        return subscriptions.filter((s) => eligblePlans.includes(s.planId!)).length > 0;
-    }
-
-    /**
      * Returns true if the user ought to land on a workspace cluster that provides more resources
      * compared to the default case.
      */

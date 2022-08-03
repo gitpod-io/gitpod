@@ -143,7 +143,6 @@ type NamedWorkspaceFeatureFlag string
 
 const (
 	NamedWorkspaceFeatureFlagFullWorkspaceBackup NamedWorkspaceFeatureFlag = "full_workspace_backup"
-	NamedWorkspaceFeatureFlagFixedResources      NamedWorkspaceFeatureFlag = "fixed_resources"
 )
 
 type WorkspaceClassCategory string
