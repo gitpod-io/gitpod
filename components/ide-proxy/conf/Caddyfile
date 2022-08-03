@@ -1,6 +1,12 @@
 {
 	auto_https off
 	admin off
+	servers {
+		protocol {
+			# gprc service required this, see detail https://github.com/gitpod-io/gitpod/pull/11542#discussion_r937947826
+			allow_h2c
+		}
+	}
 }
 
 (compression) {
@@ -63,7 +69,7 @@
 	}
 
 	@static_path {
-		path /*
+		path /code/* /image/*
 	}
 
 	handle @static_path {
@@ -77,8 +83,16 @@
 		}
 	}
 
+	@metrics_web {
+		path /metrics-api/*
+	}
+
+	handle @metrics_web {
+		reverse_proxy ide-metrics.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
+	}
+
 	handle {
-		respond "404 - Not Found" 404
+		reverse_proxy h2c://ide-metrics.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
 	}
 }
 

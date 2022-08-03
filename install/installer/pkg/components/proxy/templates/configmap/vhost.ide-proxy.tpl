@@ -4,6 +4,6 @@ https://ide.{{.Domain}} {
     import ssl_configuration
 
     reverse_proxy  {
-        to {{.ReverseProxy}}
+        to h2c://{{.ReverseProxy}}
     }
 }
