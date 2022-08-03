@@ -128,6 +128,10 @@ func (v version) CheckDeprecated(rawCfg interface{}) (map[string]interface{}, []
 		}
 	}
 
+	if cfg.ObjectStorage.MaximumBackupCount != nil {
+		warnings["objectStorage.maximumBackupCount"] = cfg.ObjectStorage.MaximumBackupCount
+	}
+
 	return warnings, conflicts
 }
 
@@ -222,8 +226,10 @@ type ObjectStorage struct {
 	S3           *ObjectStorageS3           `json:"s3,omitempty"`
 	CloudStorage *ObjectStorageCloudStorage `json:"cloudStorage,omitempty"`
 	Azure        *ObjectStorageAzure        `json:"azure,omitempty"`
-	BlobQuota    *int64                     `json:"blobQuota,omitempty"`
-	Resources    *Resources                 `json:"resources,omitempty"`
+	// DEPRECATED
+	MaximumBackupCount *int       `json:"maximumBackupCount,omitempty"`
+	BlobQuota          *int64     `json:"blobQuota,omitempty"`
+	Resources          *Resources `json:"resources,omitempty"`
 }
 
 type ObjectStorageS3 struct {
