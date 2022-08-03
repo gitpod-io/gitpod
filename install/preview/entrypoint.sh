@@ -43,8 +43,11 @@ if [ -f /sys/fs/cgroup/cgroup.controllers ]; then
   echo "[$(date -Iseconds)] [CgroupV2 Fix] Done"
 fi
 
+mkdir -p /var/gitpod
+
 mount --make-shared /sys/fs/cgroup
 mount --make-shared /proc
+mount --make-shared /var/gitpod
 
 # install in local store
 mkcert -install
