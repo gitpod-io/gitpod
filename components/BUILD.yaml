@@ -71,6 +71,7 @@ packages:
       - components/ws-manager:docker
       - components/ws-proxy:docker
       - components/ide-proxy:docker
+      - components/ide-metrics:docker
       - components/kots-config-check/database:docker
       - components/kots-config-check/registry:docker
       - components/kots-config-check/storage:docker
@@ -116,6 +117,7 @@ packages:
       - components/ws-daemon:app
       - components/ws-manager-bridge:app
       - components/ws-manager:app
+      - components/ide-metrics:app
 scripts:
   - name: update-license-header
     description: Updates the license header in all source files

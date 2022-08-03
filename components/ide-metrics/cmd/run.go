@@ -1,0 +1,65 @@
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+package cmd
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/watch"
+	"github.com/gitpod-io/gitpod/ide-metrics-api/config"
+	"github.com/gitpod-io/gitpod/ide-metrics/pkg/server"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/spf13/cobra"
+)
+
+func init() {
+	rootCmd.AddCommand(runCommand)
+}
+
+var runCommand = &cobra.Command{
+	Use:     "run",
+	Short:   "Starts the service",
+	Version: Version,
+	Run: func(cmd *cobra.Command, args []string) {
+		cfg, err := config.Read(rootOpts.CfgFile)
+		if err != nil {
+			log.WithError(err).Fatal("cannot read configuration")
+		}
+		registry := prometheus.NewRegistry()
+		s := server.NewMetricsServer(cfg, registry)
+
+		handler := http.NewServeMux()
+		handler.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+
+		go func() {
+			err := http.ListenAndServe(cfg.Prometheus.Addr, handler)
+			if err != nil {
+				log.WithError(err).Fatal("prometheus metrics server failed")
+			}
+		}()
+		log.WithField("addr", cfg.Prometheus.Addr).Info("started prometheus metrics server")
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err = watch.File(ctx, rootOpts.CfgFile, func() {
+			cfg, err := config.Read(rootOpts.CfgFile)
+			if err != nil {
+				log.WithError(err).Warn("cannot read configuration")
+				return
+			}
+			s.ReloadConfig(cfg)
+		})
+		if err != nil {
+			log.WithError(err).Fatal("cannot start watch of configuration file")
+		}
+		if err := s.Start(); err != nil {
+			log.WithError(err).Fatal("cannot start server")
+		}
+	},
+}
