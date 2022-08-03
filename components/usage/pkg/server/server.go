@@ -123,6 +123,11 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to register controller metrics: %w", err)
 	}
 
+	err = stripe.RegisterMetrics(srv.MetricsRegistry())
+	if err != nil {
+		return fmt.Errorf("failed to register stripe metrics: %w", err)
+	}
+
 	err = srv.ListenAndServe()
 	if err != nil {
 		return fmt.Errorf("failed to listen and serve: %w", err)
