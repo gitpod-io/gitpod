@@ -49,6 +49,22 @@
               increase(cluster_autoscaler_failed_scale_ups_total[1m]) != 0
             |||,
           },
+          {
+            alert: 'NetworkConnectionsTooHigh',
+            labels: {
+              severity: 'warning',
+              team: 'workspace'
+            },
+            'for': '10m',
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/NetworkConnectionsTooHigh.md',
+              summary: "Network connection numbers remain high for 5 minutes.",
+              description: 'Network connection numbers remain high for 5 minutes.',
+            },
+            expr: |||
+              node_nf_conntrack_entries{instance=~"workspace-.*", instance!~"serv.*"} > 20000
+            |||,
+          },
         ],
       },
     ],
