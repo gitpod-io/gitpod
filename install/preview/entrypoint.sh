@@ -13,11 +13,6 @@ fi
 USER_ID="$(od -x /dev/urandom | head -1 | awk '{OFS="-"; print $2$3,$4,$5,$6,$7$8$9}')"
 export USER_ID
 
-if [ "$1" != "logging" ]; then
-  $0 logging 2>&1 | /prettylog
-  exit
-fi
-
 # check for minimum requirements
 REQUIRED_MEM_KB=$((6 * 1024 * 1024))
 total_mem_kb=$(awk '/MemTotal:/ {print $2}' /proc/meminfo)
