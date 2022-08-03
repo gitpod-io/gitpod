@@ -45,6 +45,11 @@ func New(config ClientConfig) (*Client, error) {
 	return &Client{sc: client.New(config.SecretKey, nil)}, nil
 }
 
+type UsageRecord struct {
+	SubscriptionItemID string
+	Quantity           int64
+}
+
 // UpdateUsage updates teams' Stripe subscriptions with usage data
 // `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
 func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]int64) error {
@@ -55,7 +60,7 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]int6
 	queries := queriesForCustomersWithTeamIds(teamIds)
 
 	for _, query := range queries {
-		log.Infof("about to make query %q", query)
+		log.Infof("Searching customers in Stripe with query: %q", query)
 		params := &stripe.CustomerSearchParams{
 			SearchParams: stripe.SearchParams{
 				Query:   query,
@@ -66,34 +71,55 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]int6
 		iter := c.sc.Customers.Search(params)
 		for iter.Next() {
 			customer := iter.Customer()
-			log.Infof("found customer %q for teamId %q", customer.Name, customer.Metadata["teamId"])
-			subscriptions := customer.Subscriptions.Data
-			if len(subscriptions) != 1 {
-				log.Errorf("customer has an unexpected number of subscriptions (expected 1, got %d)", len(subscriptions))
-				continue
-			}
-			subscription := customer.Subscriptions.Data[0]
+			teamID := customer.Metadata["teamId"]
+			log.Infof("Found customer %q for teamId %q", customer.Name, teamID)
 
-			log.Infof("customer has subscription: %q", subscription.ID)
-			if len(subscription.Items.Data) != 1 {
-				log.Errorf("this subscription has an unexpected number of subscriptionItems (expected 1, got %d)", len(subscription.Items.Data))
-				continue
-			}
-
-			creditsUsed := creditsPerTeam[customer.Metadata["teamId"]]
-
-			subscriptionItemId := subscription.Items.Data[0].ID
-			log.Infof("registering usage against subscriptionItem %q", subscriptionItemId)
-			_, err := c.sc.UsageRecords.New(&stripe.UsageRecordParams{
-				SubscriptionItem: stripe.String(subscriptionItemId),
-				Quantity:         stripe.Int64(creditsUsed),
-			})
+			_, err := c.updateUsageForCustomer(ctx, customer, creditsPerTeam[teamID])
 			if err != nil {
-				log.WithError(err).Errorf("failed to register usage for customer %q", customer.Name)
+				log.WithField("customer_id", customer.ID).
+					WithField("customer_name", customer.Name).
+					WithField("subscriptions", customer.Subscriptions).
+					WithError(err).
+					Errorf("Failed to update usage.")
+
+				reportStripeUsageUpdate(err)
+				continue
 			}
+			reportStripeUsageUpdate(nil)
 		}
 	}
 	return nil
+}
+
+func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, credits int64) (*UsageRecord, error) {
+	subscriptions := customer.Subscriptions.Data
+	if len(subscriptions) != 1 {
+		return nil, fmt.Errorf("customer has an unexpected number of subscriptions %v (expected 1, got %d)", subscriptions, len(subscriptions))
+	}
+	subscription := customer.Subscriptions.Data[0]
+
+	log.Infof("Customer has subscription: %q", subscription.ID)
+	if len(subscription.Items.Data) != 1 {
+		return nil, fmt.Errorf("subscription %s has an unexpected number of subscriptionItems (expected 1, got %d)", subscription.ID, len(subscription.Items.Data))
+	}
+
+	subscriptionItemId := subscription.Items.Data[0].ID
+	log.Infof("Registering usage against subscriptionItem %q", subscriptionItemId)
+	_, err := c.sc.UsageRecords.New(&stripe.UsageRecordParams{
+		Params: stripe.Params{
+			Context: ctx,
+		},
+		SubscriptionItem: stripe.String(subscriptionItemId),
+		Quantity:         stripe.Int64(credits),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to register usage for customer %q on subscription item %s", customer.Name, subscriptionItemId)
+	}
+
+	return &UsageRecord{
+		SubscriptionItemID: subscriptionItemId,
+		Quantity:           credits,
+	}, nil
 }
 
 // queriesForCustomersWithTeamIds constructs Stripe query strings to find the Stripe Customer for each teamId
