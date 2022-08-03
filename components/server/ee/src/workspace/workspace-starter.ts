@@ -4,13 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import {
-    Workspace,
-    User,
-    WorkspaceInstance,
-    WorkspaceInstanceConfiguration,
-    NamedWorkspaceFeatureFlag,
-} from "@gitpod/gitpod-protocol";
+import { Workspace, User, WorkspaceInstance, NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
 import { IDEConfig } from "../../../src/ide-config";
@@ -44,13 +38,6 @@ export class WorkspaceStarterEE extends WorkspaceStarter {
             ideConfig,
             forcePVC,
         );
-        if (await this.eligibilityService.hasFixedWorkspaceResources(user)) {
-            const config: WorkspaceInstanceConfiguration = instance.configuration!;
-            const ff = config.featureFlags || [];
-            ff.push("fixed_resources");
-            config.featureFlags = ff;
-            instance.configuration = config;
-        }
 
         return instance;
     }

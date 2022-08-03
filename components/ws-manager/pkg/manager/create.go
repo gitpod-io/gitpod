@@ -563,16 +563,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			removeVolume(&pod, workspaceVolumeName)
 			pod.Labels[fullWorkspaceBackupLabel] = util.BooleanTrueString
 
-		case api.WorkspaceFeatureFlag_FIXED_RESOURCES:
-			var cpuLimit string
-			for _, c := range pod.Spec.Containers {
-				if c.Name != "workspace" {
-					continue
-				}
-				cpuLimit = c.Resources.Limits.Cpu().String()
-			}
-			pod.Annotations[wsk8s.CPULimitAnnotation] = cpuLimit
-
 		case api.WorkspaceFeatureFlag_NOOP:
 
 		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
