@@ -30,11 +30,15 @@ func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
 }
 
 func renderContextWithPublicAPIEnabled(t *testing.T) *common.RenderContext {
+	return renderContextWithPublicAPIConfig(t, &experimental.PublicAPIConfig{Enabled: true})
+}
+
+func renderContextWithPublicAPIConfig(t *testing.T, cfg *experimental.PublicAPIConfig) *common.RenderContext {
 	ctx, err := common.NewRenderContext(config.Config{
 		Domain: "test.domain.everything.awesome.is",
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
-				PublicAPI: &experimental.PublicAPIConfig{Enabled: true},
+				PublicAPI: cfg,
 			},
 		},
 	}, versions.Manifest{
