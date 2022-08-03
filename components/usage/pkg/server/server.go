@@ -59,8 +59,11 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to initialize usage server: %w", err)
 	}
 
-	dialerOpt := grpcDialerWithInitialDelay(1 * time.Second)
-	selfConnection, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()), dialerOpt)
+	selfConnection, err := grpc.Dial(srv.GRPCAddress(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpcDialerWithInitialDelay(1*time.Second),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(30*1024*1024)),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create self-connection to grpc server: %w", err)
 	}
