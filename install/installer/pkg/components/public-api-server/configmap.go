@@ -32,6 +32,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
+	if exp := getExperimentalPublicAPIConfig(ctx); exp != nil && exp.HttpPort != 0 {
+		cfg.Server.Services.HTTP = &baseserver.ServerConfiguration{
+			Address: fmt.Sprintf(":%d", exp.HttpPort),
+		}
+	}
+
 	fc, err := common.ToJSONString(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal config: %w", err)

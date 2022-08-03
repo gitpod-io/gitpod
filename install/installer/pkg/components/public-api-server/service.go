@@ -9,11 +9,21 @@ import (
 )
 
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
-	return common.GenerateService(Component, []common.ServicePort{
+	servicePorts := []common.ServicePort{
 		{
 			Name:          GRPCPortName,
 			ContainerPort: GRPCContainerPort,
 			ServicePort:   GRPCServicePort,
 		},
-	})(ctx)
+	}
+
+	if exp := getExperimentalPublicAPIConfig(ctx); exp != nil && exp.HttpPort != 0 {
+		servicePorts = append(servicePorts, common.ServicePort{
+			Name:          HTTPPortName,
+			ContainerPort: exp.HttpPort,
+			ServicePort:   HTTPServicePort,
+		})
+	}
+
+	return common.GenerateService(Component, servicePorts)(ctx)
 }

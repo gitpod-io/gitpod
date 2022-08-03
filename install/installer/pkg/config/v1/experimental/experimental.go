@@ -205,7 +205,8 @@ type ProxyConfig struct {
 }
 
 type PublicAPIConfig struct {
-	Enabled bool `json:"enabled"`
+	Enabled  bool  `json:"enabled"`
+	HttpPort int32 `json:"httpPort"`
 }
 
 type UsageConfig struct {
