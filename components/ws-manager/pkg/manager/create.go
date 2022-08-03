@@ -28,6 +28,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -551,6 +552,11 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			continue
 		}
 		ffidx[feature] = struct{}{}
+
+		if feature == api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM {
+			log.WithField("request", startContext).Warn("Request with PVC enabled. Skipping feature.")
+			continue
+		}
 
 		switch feature {
 		case api.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP:
