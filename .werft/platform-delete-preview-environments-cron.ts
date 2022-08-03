@@ -1,7 +1,6 @@
 import { Werft } from "./util/werft";
 import * as Tracing from "./observability/tracing";
 import { SpanStatusCode } from "@opentelemetry/api";
-import { wipePreviewEnvironmentAndNamespace, helmInstallName, listAllPreviewNamespaces } from "./util/kubectl";
 import { exec } from "./util/shell";
 import { previewNameFromBranchName } from "./util/preview";
 import { CORE_DEV_KUBECONFIG_PATH, HARVESTER_KUBECONFIG_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "./jobs/build/const";
@@ -10,7 +9,7 @@ import * as VM from "./vm/vm";
 
 // for testing purposes
 // if set to 'true' it shows only previews that would be deleted
-const DRY_RUN = false;
+const DRY_RUN = true;
 
 const SLICES = {
     CONFIGURE_ACCESS: "Configuring access to relevant resources",
@@ -21,6 +20,7 @@ const SLICES = {
     CHECKING_FOR_DB_ACTIVITY: "Checking for DB activity",
     DETERMINING_STALE_PREVIEW_ENVIRONMENTS: "Determining stale preview environments",
     DELETING_PREVIEW_ENVIRONMNETS: "Deleting preview environments",
+    DELETING_ORPHAN_CERTIFICATES: "Deleting certificates without a matching preview environment",
 };
 
 // Will be set once tracing has been initialized
@@ -32,6 +32,7 @@ Tracing.initialize()
     })
     .then(() => deletePreviewEnvironments())
     .then(() => cleanLoadbalancer())
+    .then(() => removeOrphanCertificates())
     .catch((err) => {
         werft.rootSpan.setStatus({
             code: SpanStatusCode.ERROR,
@@ -413,7 +414,6 @@ async function removePreviewEnvironment(previewEnvironment: PreviewEnvironment) 
     werft.log(sliceID, `Starting deletion of all resources related to ${previewEnvironment.name}`);
     try {
         // We're running these promises sequentially to make it easier to read the log output.
-        await removeCertificate(previewEnvironment.name, CORE_DEV_KUBECONFIG_PATH, sliceID);
         await previewEnvironment.removeDNSRecords(sliceID);
         await previewEnvironment.delete();
         werft.done(sliceID);
@@ -422,11 +422,47 @@ async function removePreviewEnvironment(previewEnvironment: PreviewEnvironment) 
     }
 }
 
-async function removeCertificate(preview: string, kubectlConfig: string, slice: string) {
-    return exec(
-        `kubectl --kubeconfig ${kubectlConfig} -n certs delete --ignore-not-found=true cert harvester-${preview} ${preview}`,
-        { slice: slice, async: true },
-    );
+async function removeOrphanCertificates() {
+    const certificatesNamespace = "certs"
+    werft.phase(SLICES.DELETING_ORPHAN_CERTIFICATES);
+
+    const certificates = exec(
+        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get certificates -n ${certificatesNamespace} -o=custom-columns=:metadata.name | grep harvester-`,
+        { slice: SLICES.DELETING_ORPHAN_CERTIFICATES, silent: true, async: false },
+    )
+    .stdout.trim()
+    .split("\n");
+
+    const previews = exec(
+        `kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} get ns -o=custom-columns=:metadata.name | grep preview-`,
+        { slice: SLICES.DELETING_ORPHAN_CERTIFICATES, silent: true, async: false },
+    )
+    .stdout.trim()
+    .replace(/preview-/g, "")
+    .split("\n");
+
+    certificates.forEach(certificate => {
+        const owner = exec(
+            `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get certificates ${certificate} -n ${certificatesNamespace} -o=custom-columns=:metadata.annotations.preview/owner`,
+            { slice: SLICES.DELETING_ORPHAN_CERTIFICATES, silent: true, async: false },
+            ).stdout.trim()
+
+        if (DRY_RUN) {
+            if (!previews.includes(owner)) {
+                werft.log(SLICES.DELETING_ORPHAN_CERTIFICATES, `Certificate ${certificate} would have been deleted`)
+            } else {
+                werft.log(SLICES.DELETING_ORPHAN_CERTIFICATES, `Certificate ${certificate} would NOT have been deleted`)
+            }
+        }
+
+        if (!previews.includes(owner) && !DRY_RUN) {
+            exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n ${certificatesNamespace} delete --ignore-not-found=true cert ${certificate}`,
+                { slice: SLICES.DELETING_ORPHAN_CERTIFICATES, async: true, silent: true },
+            );
+        }
+    });
+
+    werft.done(SLICES.DELETING_ORPHAN_CERTIFICATES)
 }
 
 async function cleanLoadbalancer() {
