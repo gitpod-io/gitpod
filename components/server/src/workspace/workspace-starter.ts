@@ -1366,6 +1366,16 @@ export class WorkspaceStarter {
         let volumeSnapshotInfo = new VolumeSnapshotInfo();
         const volumeSnapshots = await this.workspaceDb.trace(traceCtx).findVolumeSnapshotById(volumeSnapshotId);
         if (volumeSnapshots !== undefined) {
+            log.info(
+                {
+                    lastInstanceId: lastValidWorkspaceInstanceId,
+                    volSnapshotId: volumeSnapshotId,
+                    snapshotId: volumeSnapshots.id,
+                    volumeHandle: volumeSnapshots.volumeHandle,
+                    workspaceId: workspace.id,
+                },
+                "starting workspace with volume snapshot info",
+            );
             volumeSnapshotInfo.setVolumeSnapshotName(volumeSnapshots.id);
             volumeSnapshotInfo.setVolumeSnapshotHandle(volumeSnapshots.volumeHandle);
         }
