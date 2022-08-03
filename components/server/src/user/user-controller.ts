@@ -27,12 +27,13 @@ import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from "../../src/prometheus-metrics";
 import { v4 as uuidv4 } from "uuid";
-import { OwnerResourceGuard, ScopedResourceGuard } from "../auth/resource-access";
+import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { trackSignup } from "../analytics";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { EnforcementControllerServerFactory } from "./enforcement-endpoint";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
+import { ResponseError } from "vscode-jsonrpc";
 
 @injectable()
 export class UserController {
@@ -291,33 +292,29 @@ export class UserController {
         router.post(
             "/auth/workspacePageClose/:instanceID",
             async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                const logCtx: LogContext = { instanceId: req.params.instanceID };
                 if (!req.isAuthenticated() || !User.is(req.user)) {
                     res.sendStatus(401);
-                    log.warn("unauthenticated workspacePageClose", { instanceId: req.params.instanceID });
+                    log.warn(logCtx, "unauthenticated workspacePageClose");
                     return;
                 }
 
                 const user = req.user as User;
+                logCtx.userId = user.id;
                 if (user.blocked) {
                     res.sendStatus(403);
-                    log.warn("blocked user attempted to workspacePageClose", {
-                        instanceId: req.params.instanceID,
-                        userId: user.id,
-                    });
+                    log.warn(logCtx, "blocked user attempted to workspacePageClose");
                     return;
                 }
 
                 const instanceID = req.params.instanceID;
                 if (!instanceID) {
                     res.sendStatus(400);
-                    log.warn("attempted to workspacePageClose without instance ID", {
-                        instanceId: req.params.instanceID,
-                        userId: user.id,
-                    });
+                    log.warn(logCtx, "attempted to workspacePageClose without instance ID");
                     return;
                 }
                 const sessionId = req.body.sessionId;
-                const server = this.createGitpodServer(user);
+                const server = this.createGitpodServer(user, new OwnerResourceGuard(user.id));
                 try {
                     await server.sendHeartBeat({}, { wasClosed: true, instanceId: instanceID });
                     /** no await */ server
@@ -332,12 +329,18 @@ export class UserController {
                                 },
                             },
                         )
-                        .catch((err) =>
-                            log.warn({ userId: user.id }, "workspacePageClose: failed to track ide close signal", err),
-                        );
+                        .catch((err) => log.warn(logCtx, "workspacePageClose: failed to track ide close signal", err));
                     res.sendStatus(200);
                 } catch (e) {
-                    log.error("workspacePageClose failed", e);
+                    if (e instanceof ResponseError) {
+                        res.status(e.code).send(e.message);
+                        log.warn(
+                            logCtx,
+                            `workspacePageClose: server sendHeartBeat respond with code: ${e.code}, message: ${e.message}`,
+                        );
+                        return;
+                    }
+                    log.error(logCtx, "workspacePageClose failed", e);
                     res.sendStatus(500);
                     return;
                 } finally {
@@ -770,16 +773,9 @@ export class UserController {
         return;
     }
 
-    private createGitpodServer(user: User) {
+    private createGitpodServer(user: User, resourceGuard: ResourceAccessGuard) {
         const server = this.serverFactory();
-        server.initialize(
-            undefined,
-            user,
-            new OwnerResourceGuard(user.id),
-            ClientMetadata.from(user.id),
-            undefined,
-            {},
-        );
+        server.initialize(undefined, user, resourceGuard, ClientMetadata.from(user.id), undefined, {});
         return server;
     }
 }
