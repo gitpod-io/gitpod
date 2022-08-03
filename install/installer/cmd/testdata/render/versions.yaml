@@ -1,8 +1,8 @@
 # Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-commit: a043243e6ddca1800878c0012c8f76c31fa6254f
-version: main.4110
+commit: 5c9e6394c1372f4c73031671ae786909a85d5730
+version: pd-ide-metrics.23
 components:
   agentSmith:
     version: test
@@ -17,6 +17,8 @@ components:
   dbMigrations:
     version: test
   dbSync:
+    version: test
+  ideMetrics:
     version: test
   ideProxy:
     version: test

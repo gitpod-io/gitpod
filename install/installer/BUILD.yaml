@@ -20,6 +20,7 @@ packages:
       - components/content-service:lib
       - components/ee/agent-smith:lib
       - components/gitpod-protocol/go:lib
+      - components/ide-metrics-api/go:lib
       - components/image-builder-api/go:lib
       - components/openvsx-proxy:lib
       - components/public-api/go:lib
