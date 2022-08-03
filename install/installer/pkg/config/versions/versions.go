@@ -22,6 +22,7 @@ type Components struct {
 	DBMigrations    Versioned `json:"dbMigrations"`
 	DBSync          Versioned `json:"dbSync"`
 	IDEProxy        Versioned `json:"ideProxy"`
+	IDEMetrics      Versioned `json:"ideMetrics"`
 	ImageBuilder    Versioned `json:"imageBuilder"`
 	ImageBuilderMk3 struct {
 		Versioned

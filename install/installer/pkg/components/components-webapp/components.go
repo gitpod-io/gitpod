@@ -10,6 +10,7 @@ import (
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database"
+	ide_metrics "github.com/gitpod-io/gitpod/installer/pkg/components/ide-metrics"
 	ide_proxy "github.com/gitpod-io/gitpod/installer/pkg/components/ide-proxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/migrations"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio"
@@ -27,6 +28,7 @@ var Objects = common.CompositeRenderFunc(
 	contentservice.Objects,
 	dashboard.Objects,
 	database.Objects,
+	ide_metrics.Objects,
 	ide_proxy.Objects,
 	migrations.Objects,
 	minio.Objects,
