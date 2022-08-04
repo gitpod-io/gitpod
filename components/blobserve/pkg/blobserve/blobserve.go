@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"html"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -294,7 +293,7 @@ func inlineVars(req *http.Request, r io.ReadSeeker, inlineReplacements []InlineR
 		return r, xerrors.Errorf("cannot parse inline vars: %w: %s", err, inlineVars)
 	}
 
-	content, err := ioutil.ReadAll(r)
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return r, xerrors.Errorf("cannot read index.html: %w", err)
 	}
