@@ -31,22 +31,11 @@ export class EntitlementServiceChargebee implements EntitlementService {
     @inject(TeamDB) protected readonly teamDb: TeamDB;
     @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
 
-    /**
-     * Whether a user is allowed to start a workspace
-     * !!! This is executed on the hot path of workspace startup, be careful with async when changing !!!
-     * @param user
-     * @param date now
-     * @param runningInstances
-     */
     async mayStartWorkspace(
         user: User,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
-        if (!this.config.enablePayment) {
-            return { enoughCredits: true };
-        }
-
         const hasHitParallelWorkspaceLimit = async (): Promise<HitParallelWorkspaceLimit | undefined> => {
             const max = await this.getMaxParallelWorkspaces(user);
             const instances = (await runningInstances).filter((i) => i.status.phase !== "preparing");
@@ -77,11 +66,6 @@ export class EntitlementServiceChargebee implements EntitlementService {
      * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
      */
     protected async getMaxParallelWorkspaces(user: User, date: Date = new Date()): Promise<number> {
-        // if payment is not enabled users can start as many parallel workspaces as they want
-        if (!this.config.enablePayment) {
-            return MAX_PARALLEL_WORKSPACES;
-        }
-
         const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, date.toISOString());
         return subscriptions.map((s) => Plans.getParallelWorkspacesById(s.planId)).reduce((p, v) => Math.max(p, v));
     }
@@ -126,17 +110,7 @@ export class EntitlementServiceChargebee implements EntitlementService {
         return cachedStatement.remainingHours - maxPossibleUsage;
     }
 
-    /**
-     * A user may set the workspace timeout if they have a professional subscription
-     * @param user
-     * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
-     */
     async maySetTimeout(user: User, date: Date = new Date()): Promise<boolean> {
-        if (!this.config.enablePayment) {
-            // when payment is disabled users can do everything
-            return true;
-        }
-
         const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, date.toISOString());
         const eligblePlans = [
             Plans.PROFESSIONAL_EUR,
@@ -152,11 +126,6 @@ export class EntitlementServiceChargebee implements EntitlementService {
         return subscriptions.filter((s) => eligblePlans.includes(s.planId!)).length > 0;
     }
 
-    /**
-     * Returns the default workspace timeout for the given user at a given point in time
-     * @param user
-     * @param date The date for which we want to know the default workspace timeout (depends on active subscription)
-     */
     async getDefaultWorkspaceTimeout(user: User, date: Date = new Date()): Promise<WorkspaceTimeoutDuration> {
         if (await this.maySetTimeout(user, date)) {
             return WORKSPACE_TIMEOUT_DEFAULT_LONG;
@@ -170,11 +139,6 @@ export class EntitlementServiceChargebee implements EntitlementService {
      * compared to the default case.
      */
     async userGetsMoreResources(user: User): Promise<boolean> {
-        if (!this.config.enablePayment) {
-            // when payment is disabled users can do everything
-            return true;
-        }
-
         const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(
             user,
             new Date().toISOString(),

@@ -331,7 +331,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         // if any other running instance has a custom timeout other than the user's default, we'll reset that timeout
         const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-        const defaultTimeout = await this.userService.getDefaultWorkspaceTimeout(user);
+        const defaultTimeout = await this.entitlementService.getDefaultWorkspaceTimeout(user, new Date());
         const instancesWithReset = runningInstances.filter(
             (i) => i.workspaceId !== workspaceId && i.status.timeout !== defaultTimeout && i.status.phase === "running",
         );

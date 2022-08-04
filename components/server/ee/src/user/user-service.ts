@@ -15,7 +15,6 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { inject } from "inversify";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
-import { Feature } from "@gitpod/licensor/lib/api";
 import { AuthException } from "../../../src/auth/errors";
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { OssAllowListDB } from "@gitpod/gitpod-db/lib/oss-allowlist-db";
@@ -30,23 +29,6 @@ export class UserServiceEE extends UserService {
     @inject(OssAllowListDB) protected readonly OssAllowListDb: OssAllowListDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
-
-    // TODO(gpl) Needs to fold into EntitlementService
-    async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
-        if (this.config.enablePayment) {
-            // the SaaS case
-            return this.entitlementService.getDefaultWorkspaceTimeout(user, date);
-        }
-
-        const userCount = await this.userDb.getUserCount(true);
-
-        // the self-hosted case
-        if (!this.licenseEvaluator.isEnabled(Feature.FeatureSetTimeout, userCount)) {
-            return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-        }
-
-        return WORKSPACE_TIMEOUT_DEFAULT_LONG;
-    }
 
     public workspaceTimeoutToDuration(timeout: WorkspaceTimeoutDuration): string {
         switch (timeout) {
@@ -71,15 +53,6 @@ export class UserServiceEE extends UserService {
             default:
                 return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
         }
-    }
-
-    // TODO(gpl) Needs to fold into EntitlementService
-    async userGetsMoreResources(user: User): Promise<boolean> {
-        if (this.config.enablePayment) {
-            return this.entitlementService.userGetsMoreResources(user);
-        }
-
-        return false;
     }
 
     async checkSignUp(params: CheckSignUpParams) {
