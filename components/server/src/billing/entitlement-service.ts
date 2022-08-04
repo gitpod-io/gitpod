@@ -66,10 +66,6 @@ export class CommunityEntitlementService implements EntitlementService {
         return true;
     }
 
-    async hasFixedWorkspaceResources(user: User, date: Date = new Date()): Promise<boolean> {
-        return true;
-    }
-
     async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
         return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
     }

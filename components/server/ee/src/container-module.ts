@@ -9,8 +9,6 @@ import { GitpodServerImpl } from "../../src/workspace/gitpod-server-impl";
 import { GitpodServerEEImpl } from "./workspace/gitpod-server-impl";
 import { Server } from "../../src/server";
 import { ServerEE } from "./server";
-import { UserController } from "../../src/user/user-controller";
-import { UserControllerEE } from "./user/user-controller";
 import { LicenseKeySource } from "@gitpod/licensor/lib";
 import { DBLicenseKeySource } from "./license-source";
 import { UserService } from "../../src/user/user-service";
@@ -100,7 +98,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();
     rebind(BlockedUserFilter).toService(EMailDomainService);
-    rebind(UserController).to(UserControllerEE).inSingletonScope();
     bind(SnapshotService).toSelf().inSingletonScope();
 
     bind(UserDeletionServiceEE).toSelf().inSingletonScope();
