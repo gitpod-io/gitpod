@@ -52,10 +52,6 @@ func TestRender(t *testing.T) {
 			renderOpts.ConfigFN = "testdata/render/" + testCase.Name + "/config.yaml"
 			goldenPath := "testdata/render/" + testCase.Name + "/output.golden"
 
-			f, err := os.OpenFile(goldenPath, os.O_RDWR, 0644)
-			defer f.Close()
-			require.NoError(t, err)
-
 			// Generate the YAML from the render function
 			yaml, err := renderFn()
 			require.NoError(t, err)
@@ -73,6 +69,10 @@ func TestRender(t *testing.T) {
 			}
 
 			// Get the expected output from the golden file
+			f, err := os.OpenFile(goldenPath, os.O_RDWR, 0644)
+			defer f.Close()
+			require.NoError(t, err)
+
 			content, err := ioutil.ReadAll(f)
 			if err != nil {
 				require.NoError(t, err)
