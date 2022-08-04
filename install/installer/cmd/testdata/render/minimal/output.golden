@@ -1617,6 +1617,14 @@ data:
         snapshotClass: ""
         storageClass: ""
       resources:
+        limits:
+          cpu:
+            buckets: null
+            burst: ""
+            min: ""
+          ephemeral-storage: ""
+          memory: ""
+          storage: ""
         requests:
           cpu: "1"
           memory: 2Gi
@@ -4400,7 +4408,10 @@ data:
                 "ephemeral-storage": ""
               },
               "limits": {
-                "cpu": "",
+                "cpu": {
+                  "min": "",
+                  "burst": ""
+                },
                 "memory": "",
                 "ephemeral-storage": ""
               }
@@ -8692,7 +8703,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 966e84fc3e1e16cc7f11151e2ec428a593541b08489f75cc2d0f707887f22644
+        gitpod.io/checksum_config: e16234f5c33fe9d8144f6977f78d2bec0e856ef276fe8e5c7bc99277021ea389
       creationTimestamp: null
       labels:
         app: gitpod
