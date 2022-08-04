@@ -10,8 +10,8 @@
         name: 'gitpod-component-webapp-usage-alerts',
         rules: [
           {
-            alert: 'ScheduledReconciliationFailures',
-            expr: 'sum(increase(gitpod_usage_reconcile_completed_duration_seconds_count[1h])) > 1',
+            alert: 'GitpodUsageScheduledReconciliationFailures',
+            expr: 'sum(increase(gitpod_usage_reconcile_completed_duration_seconds_count{outcome!="success"}[1h])) > 1',
             'for': '30m',
             labels: {
               severity: 'warning',
