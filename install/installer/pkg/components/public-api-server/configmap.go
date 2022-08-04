@@ -28,6 +28,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				GRPC: &baseserver.ServerConfiguration{
 					Address: fmt.Sprintf(":%d", GRPCContainerPort),
 				},
+				HTTP: &baseserver.ServerConfiguration{
+					Address: fmt.Sprintf(":%d", HTTPContainerPort),
+				},
 			},
 		},
 	}
