@@ -64,7 +64,7 @@ func TestRender(t *testing.T) {
 			}
 
 			if *update {
-				_, err := f.WriteString(got)
+				err := os.WriteFile(goldenPath, []byte(got), 0600)
 				require.NoError(t, err)
 				return
 			}
