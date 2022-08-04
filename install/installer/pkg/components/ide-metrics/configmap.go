@@ -16,8 +16,17 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	counterMetrics := make([]config.CounterMetricsConfiguration, 0)
-	histogramMetrics := make([]config.HistogramMetricsConfiguration, 0)
+	counterMetrics := []config.CounterMetricsConfiguration{
+		{
+			Name: "gitpod_supervisor_frontend_error_total",
+			Help: "Total count of supervisor frontend client errors",
+		},
+		{
+			Name: "gitpod_supervisor_frontend_client_total",
+			Help: "Total count of supervisor frontend client",
+		},
+	}
+	histogramMetrics := []config.HistogramMetricsConfiguration{}
 
 	cfg := config.ServiceConfiguration{
 		Server: config.MetricsServerConfiguration{

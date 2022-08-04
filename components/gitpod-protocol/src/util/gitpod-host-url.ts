@@ -175,4 +175,21 @@ export class GitpodHostUrl {
     asApiLogout(): GitpodHostUrl {
         return this.withApi((url) => ({ pathname: "/logout/" }));
     }
+
+    asIDEProxy(): GitpodHostUrl {
+        const hostSegments = this.url.host.split(".");
+        if (hostSegments[0] === "ide") {
+            return this;
+        }
+        return this.with((url) => ({ host: "ide." + url.host }));
+    }
+
+    asIDEMetrics(): GitpodHostUrl {
+        let newUrl: GitpodHostUrl = this;
+        const hostSegments = this.url.host.split(".");
+        if (hostSegments[0] !== "ide") {
+            newUrl = newUrl.asIDEProxy();
+        }
+        return newUrl.with((url) => ({ pathname: "/metrics-api" }));
+    }
 }

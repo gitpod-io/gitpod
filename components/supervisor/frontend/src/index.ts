@@ -8,7 +8,11 @@
  * <script type="text/javascript" src="/_supervisor/frontend/main.js" charset="utf-8"></script> should be inserted to index.html as first body script,
  * all other IDE scripts should go afterwards, head element should not have scripts
  */
-
+import { IDEMetricsServiceClient, MetricsName } from "./ide/ide-metrics-service-client";
+IDEMetricsServiceClient.addCounter(MetricsName.SupervisorFrontendClientTotal).catch(() => {})
+window.addEventListener('error', () => {
+    IDEMetricsServiceClient.addCounter(MetricsName.SupervisorFrontendErrorTotal).catch(() => {})
+})
 require('../src/shared/index.css');
 
 import { createGitpodService, WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
