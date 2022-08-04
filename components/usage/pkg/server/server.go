@@ -34,6 +34,10 @@ type Config struct {
 
 	ContentServiceAddress string `json:"contentServiceAddress,omitempty"`
 
+	// billInstancesAfter sets the date after which instances should be considered for billing -
+	// instances started before `billInstancesAfter` will not be considered by the billing controller.
+	BillInstancesAfter *time.Time `json:"billInstancesAfter,omitempty"`
+
 	Server *baseserver.Configuration `json:"server,omitempty"`
 }
 
@@ -113,7 +117,7 @@ func Start(cfg Config) error {
 	}
 	defer ctrl.Stop()
 
-	err = registerGRPCServices(srv, conn, stripeClient, reportGenerator, contentService)
+	err = registerGRPCServices(srv, conn, stripeClient, reportGenerator, contentService, *cfg.BillInstancesAfter)
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
@@ -131,12 +135,12 @@ func Start(cfg Config) error {
 	return nil
 }
 
-func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, reportGenerator *apiv1.ReportGenerator, contentSvc contentservice.Interface) error {
+func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, reportGenerator *apiv1.ReportGenerator, contentSvc contentservice.Interface, billInstancesAfter time.Time) error {
 	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn, reportGenerator, contentSvc))
 	if stripeClient == nil {
 		v1.RegisterBillingServiceServer(srv.GRPC(), &apiv1.BillingServiceNoop{})
 	} else {
-		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(stripeClient))
+		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(stripeClient, billInstancesAfter))
 	}
 	return nil
 }

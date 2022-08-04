@@ -5,11 +5,15 @@
 package apiv1
 
 import (
+	"testing"
+	"time"
+
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"testing"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestCreditSummaryForTeams(t *testing.T) {
@@ -17,17 +21,20 @@ func TestCreditSummaryForTeams(t *testing.T) {
 	teamAttributionID_A, teamAttributionID_B := db.NewTeamAttributionID(teamID_A), db.NewTeamAttributionID(teamID_B)
 
 	scenarios := []struct {
-		Name     string
-		Sessions []*v1.BilledSession
-		Expected map[string]int64
+		Name              string
+		Sessions          []*v1.BilledSession
+		BillSessionsAfter time.Time
+		Expected          map[string]int64
 	}{
 		{
-			Name:     "no instances in report, no summary",
-			Sessions: []*v1.BilledSession{},
-			Expected: map[string]int64{},
+			Name:              "no instances in report, no summary",
+			BillSessionsAfter: time.Time{},
+			Sessions:          []*v1.BilledSession{},
+			Expected:          map[string]int64{},
 		},
 		{
-			Name: "skips user attributions",
+			Name:              "skips user attributions",
+			BillSessionsAfter: time.Time{},
 			Sessions: []*v1.BilledSession{
 				{
 					AttributionId: string(db.NewUserAttributionID(uuid.New().String())),
@@ -36,7 +43,8 @@ func TestCreditSummaryForTeams(t *testing.T) {
 			Expected: map[string]int64{},
 		},
 		{
-			Name: "two workspace instances",
+			Name:              "two workspace instances",
+			BillSessionsAfter: time.Time{},
 			Sessions: []*v1.BilledSession{
 				{
 					// has 1 day and 23 hours of usage
@@ -55,7 +63,8 @@ func TestCreditSummaryForTeams(t *testing.T) {
 			},
 		},
 		{
-			Name: "multiple teams",
+			Name:              "multiple teams",
+			BillSessionsAfter: time.Time{},
 			Sessions: []*v1.BilledSession{
 				{
 					// has 12 hours of usage
@@ -74,11 +83,33 @@ func TestCreditSummaryForTeams(t *testing.T) {
 				teamID_B: 240,
 			},
 		},
+		{
+			Name:              "two instances, same team, one of which started too early to be considered",
+			BillSessionsAfter: time.Now().AddDate(0, 0, -2),
+			Sessions: []*v1.BilledSession{
+				{
+					// has 12 hours of usage, started yesterday
+					AttributionId: string(teamAttributionID_A),
+					Credits:       (12) * 10,
+					StartTime:     timestamppb.New(time.Now().AddDate(0, 0, -1)),
+				},
+				{
+					// has 1 day of usage, but started three days ago
+					AttributionId: string(teamAttributionID_A),
+					Credits:       (24) * 10,
+					StartTime:     timestamppb.New(time.Now().AddDate(0, 0, -3)),
+				},
+			},
+			Expected: map[string]int64{
+				teamID_A: 120,
+			},
+		},
 	}
 
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
-			actual, err := creditSummaryForTeams(s.Sessions)
+			svc := NewBillingService(&stripe.Client{}, s.BillSessionsAfter)
+			actual, err := svc.creditSummaryForTeams(s.Sessions)
 			require.NoError(t, err)
 			require.Equal(t, s.Expected, actual)
 		})
