@@ -1424,8 +1424,7 @@ data:
           "gcloud": {
             "credentialsFile": "",
             "region": "",
-            "projectId": "",
-            "maximumBackupCount": 0
+            "projectId": ""
           },
           "minio": {
             "endpoint": "minio.default.svc.cluster.local:9000",
@@ -1435,10 +1434,6 @@ data:
             "secretKeyFile": "",
             "region": "local",
             "parallelUpload": 6
-          },
-          "backupTrail": {
-            "enabled": true,
-            "maxLength": 3
           },
           "blobQuota": 5368709120
         }
@@ -1897,8 +1892,7 @@ data:
         "gcloud": {
           "credentialsFile": "",
           "region": "",
-          "projectId": "",
-          "maximumBackupCount": 0
+          "projectId": ""
         },
         "minio": {
           "endpoint": "minio.default.svc.cluster.local:9000",
@@ -1908,10 +1902,6 @@ data:
           "secretKeyFile": "",
           "region": "local",
           "parallelUpload": 6
-        },
-        "backupTrail": {
-          "enabled": true,
-          "maxLength": 3
         },
         "blobQuota": 5368709120
       },
@@ -2375,8 +2365,7 @@ data:
             "gcloud": {
               "credentialsFile": "",
               "region": "",
-              "projectId": "",
-              "maximumBackupCount": 0
+              "projectId": ""
             },
             "minio": {
               "endpoint": "minio.default.svc.cluster.local:9000",
@@ -2386,10 +2375,6 @@ data:
               "secretKeyFile": "",
               "region": "local",
               "parallelUpload": 6
-            },
-            "backupTrail": {
-              "enabled": true,
-              "maxLength": 3
             },
             "blobQuota": 5368709120
           },
@@ -6102,7 +6087,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: e92e410ab6f83a684b3e31478b028f0c54d3d44228d9c90515e242454d9c5da7
+        gitpod.io/checksum_config: 7b3c26f99bf554df16b50f731d661892d434d46344675d315726d6782b518ec6
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -7204,7 +7189,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 3a29470a227cf6ddedbe417bfbdb653e3b99a2c0ae3e2e2801958aa98cfbcbc9
+        gitpod.io/checksum_config: 94e6e4829aa089a570ba9f479575cdd42a6c273877223830c790397aa40dcd99
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7816,7 +7801,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 9fe64765eb5a6a8651ac8d5a7b33a5651256c122b02e59cc0bed35bf2a6c5916
+        gitpod.io/checksum_config: 1cc551778dc4d691c3286f85950ec45ab6fb1b76962098646a311f5fe4520656
       creationTimestamp: null
       labels:
         app: gitpod
