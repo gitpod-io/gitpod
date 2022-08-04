@@ -19,7 +19,6 @@ var (
 func init() {
 	// Ensure that the randomisation always returns the same values
 	rootOpts.SeedValue = 42
-	setSeed()
 }
 
 func TestMain(m *testing.M) {
@@ -45,6 +44,10 @@ func TestRender(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
+
+			// reset seed for each test case
+			setSeed()
+
 			rootOpts.VersionMF = "testdata/render/versions.yaml"
 			renderOpts.ConfigFN = "testdata/render/" + testCase.Name + "/config.yaml"
 			goldenPath := "testdata/render/" + testCase.Name + "/output.golden"
