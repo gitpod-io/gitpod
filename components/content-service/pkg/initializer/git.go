@@ -152,12 +152,14 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 	if ws.TargetMode == RemoteBranch {
 		// create local branch based on specific remote branch
 		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
-			log.WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Debug("Remote branch doesn't exist.")
-			return nil
+			log.WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Remote branch doesn't exist.")
+			err = checkGitStatus(err)
+			return err
 		}
 	} else if ws.TargetMode == LocalBranch {
 		// checkout local branch based on remote HEAD
 		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/HEAD", "--no-track"); err != nil {
+			err = checkGitStatus(err)
 			return err
 		}
 	} else if ws.TargetMode == RemoteCommit {
@@ -171,6 +173,7 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 
 		// checkout specific commit
 		if err := ws.Git(ctx, "checkout", ws.CloneTarget); err != nil {
+			err = checkGitStatus(err)
 			return err
 		}
 	} else {
