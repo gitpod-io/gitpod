@@ -133,8 +133,17 @@ export class SubscriptionService {
      * @returns Whether the user has an active subscription (user-paid or team s.) at the given date
      */
     async hasActivePaidSubscription(userId: string, date: Date): Promise<boolean> {
+        return (await this.getActivePaidSubscription(userId, date)).length > 0;
+    }
+
+    /**
+     * @param userId
+     * @param date The date on which the subscription has to be active
+     * @returns The list of a active subscriptions (user-paid or team s.) at the given date
+     */
+    async getActivePaidSubscription(userId: string, date: Date): Promise<Subscription[]> {
         const subscriptions = await this.accountingDB.findActiveSubscriptionsForUser(userId, date.toISOString());
-        return subscriptions.filter((s) => Subscription.isActive(s, date.toISOString())).length > 0;
+        return subscriptions.filter((s) => Subscription.isActive(s, date.toISOString()));
     }
 
     async store(db: AccountingDB, model: SubscriptionModel) {
