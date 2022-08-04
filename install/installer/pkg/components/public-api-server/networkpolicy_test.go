@@ -30,6 +30,10 @@ func TestNetworkPolicy(t *testing.T) {
 				Protocol: common.TCPProtocol,
 				Port:     &intstr.IntOrString{IntVal: GRPCContainerPort},
 			},
+			{
+				Protocol: common.TCPProtocol,
+				Port:     &intstr.IntOrString{IntVal: HTTPContainerPort},
+			},
 		},
 		From: []networkingv1.NetworkPolicyPeer{
 			{
