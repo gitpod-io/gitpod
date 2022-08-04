@@ -144,19 +144,20 @@ spec:
 
               if [ '{{repl HasLocalRegistry }}' = "true" ];
               then
-                echo "Gitpod: configuring mirrored container registry"
+                echo "Gitpod: configuring mirrored container registry for airgapped installation"
 
                 yq e -i ".repository = \"{{repl LocalRegistryAddress }}\"" "${CONFIG_FILE}"
                 yq e -i ".imagePullSecrets[0].kind = \"secret\"" "${CONFIG_FILE}"
                 yq e -i ".imagePullSecrets[0].name = \"{{repl ImagePullSecretName }}\"" "${CONFIG_FILE}"
                 yq e -i '.dropImageRepo = true' "${CONFIG_FILE}"
+
+                # Add the registry to the server allowlist - keep docker.io in case it's just using the mirrored registry functionality without being airgapped
+                yq e -i ".containerRegistry.privateBaseImageAllowList += \"{{repl LocalRegistryHost }}\"" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.privateBaseImageAllowList += \"docker.io\"" "${CONFIG_FILE}"
               fi
 
               # Output the local registry secret - this is proxy.replicated.com if user hasn't set their own
               echo "{{repl LocalRegistryImagePullSecret }}" | base64 -d > /tmp/kotsregistry.json
-
-              # Add the registries to the server allowlist
-              yq e -i ".containerRegistry.privateBaseImageAllowList += $(cat /tmp/kotsregistry.json | jq '.auths' | jq -rc 'keys')" "${CONFIG_FILE}"
 
               if [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
               then
