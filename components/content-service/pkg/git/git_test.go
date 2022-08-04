@@ -153,7 +153,6 @@ func TestGitStatus(t *testing.T) {
 			},
 			nil,
 		},
-
 		{
 			"pending in sub-dir files",
 			func(ctx context.Context, c *Client) error {
@@ -205,7 +204,7 @@ func TestGitStatus(t *testing.T) {
 
 			if status != nil {
 				if test.Result.BranchOID == notEmpty && status.LatestCommit != "" {
-					test.Result.BranchOID = status.LatestCommit
+					test.Result.BranchOID = status.BranchOID
 				}
 				if test.Result.LatestCommit == notEmpty && status.LatestCommit != "" {
 					test.Result.LatestCommit = status.LatestCommit
@@ -454,7 +453,7 @@ func TestGitStatusFromFiles(t *testing.T) {
 
 			if status != nil {
 				if test.Result.BranchOID == notEmpty && status.LatestCommit != "" {
-					test.Result.BranchOID = status.LatestCommit
+					test.Result.BranchOID = status.BranchOID
 				}
 				if test.Result.LatestCommit == notEmpty && status.LatestCommit != "" {
 					test.Result.LatestCommit = status.LatestCommit

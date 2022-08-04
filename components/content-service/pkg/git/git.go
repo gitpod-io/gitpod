@@ -300,7 +300,7 @@ func (c *Client) Status(ctx context.Context) (res *Status, err error) {
 	}
 
 	latestCommit := ""
-	gitout, err = c.GitWithOutput(ctx, "log", "--pretty=%H", "-n", "1")
+	gitout, err = c.GitWithOutput(ctx, "log", "--pretty=%H", "--branches", "-n", "1")
 	if err != nil && !strings.Contains(err.Error(), errNoCommitsYet) {
 		return nil, err
 	}
