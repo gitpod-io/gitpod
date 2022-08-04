@@ -6,4 +6,5 @@
 (import './nodes/alerts.libsonnet') +
 (import './nodes/rules.libsonnet') +
 (import './server/alerts.libsonnet') +
-(import './messagebus/alerts.libsonnet')
+(import './messagebus/alerts.libsonnet') +
+(import './usage/alerts.libsonnet')
