@@ -10,7 +10,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -180,7 +179,7 @@ func (b *diskBlobspace) Get(name string) (fs http.FileSystem, state blobstate) {
 		return nil, blobUnready
 	}
 
-	os.WriteFile(fmt.Sprintf("%s.used", fn), nil, 0644)
+	_ = os.WriteFile(fmt.Sprintf("%s.used", fn), nil, 0644)
 	return http.Dir(fn), blobReady
 }
 
@@ -205,7 +204,7 @@ func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reade
 	cmd.Stdin = cin
 	go func() {
 		<-ctx.Done()
-		cmd.Process.Kill()
+		_ = cmd.Process.Kill()
 	}()
 
 	out, err := cmd.CombinedOutput()
@@ -220,9 +219,9 @@ func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reade
 		}
 	}
 
-	os.WriteFile(fmt.Sprintf("%s.size", fn), []byte(fmt.Sprintf("%d", cw.C)), 0644)
-	os.WriteFile(fmt.Sprintf("%s.used", fn), nil, 0644)
-	os.WriteFile(fmt.Sprintf("%s.ready", fn), nil, 0644)
+	_ = os.WriteFile(fmt.Sprintf("%s.size", fn), []byte(fmt.Sprintf("%d", cw.C)), 0644)
+	_ = os.WriteFile(fmt.Sprintf("%s.used", fn), nil, 0644)
+	_ = os.WriteFile(fmt.Sprintf("%s.ready", fn), nil, 0644)
 
 	return nil
 }
@@ -252,12 +251,12 @@ func (b *diskBlobspace) modifyFile(blobName, filename string, mod FileModifier) 
 		return errdefs.ErrInvalidArgument
 	}
 
-	input, err := ioutil.ReadFile(fn)
+	input, err := os.ReadFile(fn)
 	if err != nil {
 		return err
 	}
 	f, err := os.OpenFile(fn, os.O_TRUNC|os.O_WRONLY, 0644)
-	f.Seek(0, 0)
+	_, _ = f.Seek(0, 0)
 	if err != nil {
 		return err
 	}

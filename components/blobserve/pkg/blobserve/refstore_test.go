@@ -52,7 +52,12 @@ func TestBlobFor(t *testing.T) {
 			out := bytes.NewBuffer(nil)
 			gz := gzip.NewWriter(out)
 			tr := tar.NewWriter(gz)
-			tr.WriteHeader(&tar.Header{Typeflag: tar.TypeReg, Name: "foo.txt", Size: 0})
+
+			err := tr.WriteHeader(&tar.Header{Typeflag: tar.TypeReg, Name: "foo.txt", Size: 0})
+			if err != nil {
+				return nil, err
+			}
+
 			tr.Close()
 			gz.Close()
 			return out.Bytes(), nil

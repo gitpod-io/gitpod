@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -43,14 +42,21 @@ func Test_diskBlobspace_modifyFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			tmp, err := ioutil.TempDir("", "")
+			tmp, err := os.MkdirTemp("", "")
 			if err != nil {
 				t.Fatal(err)
 			}
 			defer os.RemoveAll(tmp)
 
-			os.MkdirAll(filepath.Join(tmp, "b1"), 0755)
-			ioutil.WriteFile(filepath.Join(tmp, "b1", "f1"), []byte("hello world"), 0600)
+			err = os.MkdirAll(filepath.Join(tmp, "b1"), 0755)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = os.WriteFile(filepath.Join(tmp, "b1", "f1"), []byte("hello world"), 0600)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			b := &diskBlobspace{
 				Location: tmp,
@@ -60,7 +66,7 @@ func Test_diskBlobspace_modifyFile(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			ctnt, err := ioutil.ReadFile(filepath.Join(tmp, "b1", "f1"))
+			ctnt, err := os.ReadFile(filepath.Join(tmp, "b1", "f1"))
 			if err != nil {
 				t.Fatal(err)
 			}
