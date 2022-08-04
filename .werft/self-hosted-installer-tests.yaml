@@ -56,7 +56,7 @@ pod:
       secretName: aks-credentials
   containers:
   - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-install-evans-in-base-image.1
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go.18
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
