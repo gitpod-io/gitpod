@@ -38,6 +38,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if expConfig.Schedule != "" {
 			cfg.ControllerSchedule = expConfig.Schedule
 		}
+		if expConfig.BillInstancesAfter != nil {
+			cfg.BillInstancesAfter = expConfig.BillInstancesAfter
+		}
 
 		cfg.CreditsPerMinuteByWorkspaceClass = expConfig.CreditsPerMinuteByWorkspaceClass
 	}
