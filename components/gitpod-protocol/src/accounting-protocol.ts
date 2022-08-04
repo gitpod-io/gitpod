@@ -199,6 +199,9 @@ export namespace Subscription {
     export function isActive(s: Subscription, date: string): boolean {
         return s.startDate <= date && (s.endDate === undefined || date < s.endDate);
     }
+    export function isCancelled(s: Subscription, date: string): boolean {
+        return (!!s.cancellationDate && s.cancellationDate < date) || (!!s.endDate && s.endDate < date); // This edge case is meant to handle bad data: If for whatever reason cancellationDate has not been set: treat endDate as such
+    }
     export function isDowngraded(s: Subscription) {
         return s.paymentData && s.paymentData.downgradeDate;
     }
