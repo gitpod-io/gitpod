@@ -5,6 +5,7 @@ package usage
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,34 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
 	require.JSONEq(t,
 		`{
        "controllerSchedule": "2m",
+       "contentServiceAddress": "content-service:8080",
+       "stripeCredentialsFile": "stripe-secret/apikeys",
+       "server": {
+         "services": {
+           "grpc": {
+             "address": ":9001"
+           }
+         }
+       }
+     }`,
+		cfgmap.Data[configJSONFilename],
+	)
+}
+
+func TestConfigMap_ContainsBillInstancesAfter(t *testing.T) {
+	afterTime := time.Date(2022, 8, 4, 0, 0, 0, 0, time.UTC)
+	ctx := renderContextWithUsageConfig(t, &experimental.UsageConfig{Enabled: true, BillInstancesAfter: &afterTime})
+
+	objs, err := configmap(ctx)
+	require.NoError(t, err)
+
+	cfgmap, ok := objs[0].(*corev1.ConfigMap)
+	require.True(t, ok)
+
+	require.JSONEq(t,
+		`{
+       "controllerSchedule": "1h0m0s",
+       "billInstancesAfter": "2022-08-04T00:00:00Z",
        "contentServiceAddress": "content-service:8080",
        "stripeCredentialsFile": "stripe-secret/apikeys",
        "server": {

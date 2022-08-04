@@ -11,6 +11,8 @@
 package experimental
 
 import (
+	"time"
+
 	agentSmith "github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/grpc"
 	corev1 "k8s.io/api/core/v1"
@@ -211,6 +213,7 @@ type PublicAPIConfig struct {
 type UsageConfig struct {
 	Enabled                          bool               `json:"enabled"`
 	Schedule                         string             `json:"schedule"`
+	BillInstancesAfter               *time.Time         `json:"billInstancesAfter"`
 	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass"`
 }
 
