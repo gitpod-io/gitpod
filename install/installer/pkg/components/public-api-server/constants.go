@@ -10,4 +10,7 @@ const (
 	GRPCPortName      = "grpc"
 	GRPCContainerPort = 9001
 	GRPCServicePort   = 9001
+	HTTPContainerPort = 9002
+	HTTPServicePort   = 9002
+	HTTPPortName      = "http"
 )
