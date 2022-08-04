@@ -77,7 +77,15 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		}
 
 		log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
-		return ws.Clone(ctx)
+		err = ws.Clone(ctx)
+		if err != nil {
+			if strings.Contains(err.Error(), "Access denied") {
+				err = &backoff.PermanentError{
+					Err: fmt.Errorf("Access denied. Please check that Gitpod was given permission to access the repository"),
+				}
+			}
+		}
+		return err
 	}
 	onGitCloneFailure := func(e error, d time.Duration) {
 		if err := os.RemoveAll(ws.Location); err != nil {
