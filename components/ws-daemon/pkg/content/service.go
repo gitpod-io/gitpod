@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -346,7 +347,15 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DisposeWorkspace")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	tracing.LogRequestSafe(span, req)
-	defer tracing.FinishSpan(span, &err)
+	defer func() {
+		// https://github.com/gitpod-io/gitpod/issues/11710
+		if err != nil && strings.Contains(err.Error(), "cannot find workspace") {
+			log.WithFields(log.OWI("", "", req.Id)).Warn(err)
+			err = nil
+		}
+		tracing.FinishSpan(span, &err)
+	}()
+
 	log.WithField("req", req.String()).WithFields(log.OWI("", "", req.Id)).Debug("DisposeWorkspace called")
 
 	if req.Id == "" {
@@ -736,7 +745,14 @@ func (s *WorkspaceService) WaitForInit(ctx context.Context, req *api.WaitForInit
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "WaitForInit")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
-	defer tracing.FinishSpan(span, &err)
+	defer func() {
+		// https://github.com/gitpod-io/gitpod/issues/11713
+		if err != nil && strings.Contains(err.Error(), "cannot find workspace") {
+			log.WithFields(log.OWI("", "", req.Id)).Warn(err)
+			err = nil
+		}
+		tracing.FinishSpan(span, &err)
+	}()
 
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "ID is required")
@@ -761,7 +777,13 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "TakeSnapshot")
 	span.SetTag("workspace", req.Id)
-	defer tracing.FinishSpan(span, &err)
+	defer func() {
+		if err != nil && strings.Contains(err.Error(), "cannot find workspace") {
+			log.WithFields(log.OWI("", "", req.Id)).Warn(err)
+			err = nil
+		}
+		tracing.FinishSpan(span, &err)
+	}()
 
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "ID is required")
@@ -824,7 +846,13 @@ func (s *WorkspaceService) BackupWorkspace(ctx context.Context, req *api.BackupW
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "BackupWorkspace")
 	span.SetTag("workspace", req.Id)
-	defer tracing.FinishSpan(span, &err)
+	defer func() {
+		if err != nil && strings.Contains(err.Error(), "cannot find workspace") {
+			log.WithFields(log.OWI("", "", req.Id)).Warn(err)
+			err = nil
+		}
+		tracing.FinishSpan(span, &err)
+	}()
 
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "ID is required")
