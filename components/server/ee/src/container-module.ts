@@ -64,6 +64,8 @@ import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { EntitlementService } from "../../src/billing/entitlement-service";
 import { EntitlementServiceChargebee } from "./billing/entitlement-service-chargebee";
 import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
+import { EntitlementServiceLicense } from "./billing/entitlement-service-license";
+import { EntitlementServiceImpl } from "./billing/entitlement-service";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -127,6 +129,8 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(StripeService).toSelf().inSingletonScope();
 
     bind(EntitlementServiceChargebee).toSelf().inSingletonScope();
-    rebind(EntitlementService).to(EntitlementServiceChargebee).inSingletonScope();
+    bind(EntitlementServiceLicense).toSelf().inSingletonScope();
+    bind(EntitlementServiceImpl).toSelf().inSingletonScope();
+    rebind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
     bind(BillingModes).to(BillingModesImpl).inSingletonScope();
 });

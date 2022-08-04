@@ -166,16 +166,6 @@ export class UserService {
         }
     }
 
-    // TODO(gpl) Needs to fold into EntitlementService
-    /**
-     * Returns the default workspace timeout for the given user at a given point in time
-     * @param user
-     * @param date The date for which we want to know the default workspace timeout
-     */
-    async getDefaultWorkspaceTimeout(user: User, date: Date = new Date()): Promise<WorkspaceTimeoutDuration> {
-        return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-    }
-
     public workspaceTimeoutToDuration(timeout: WorkspaceTimeoutDuration): string {
         switch (timeout) {
             case WORKSPACE_TIMEOUT_DEFAULT_SHORT:
@@ -199,18 +189,6 @@ export class UserService {
             default:
                 return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
         }
-    }
-
-    // TODO(gpl) Needs to fold into EntitlementService
-    /**
-     * Returns true if the user ought land in a cluster which offers more resources than
-     * the default.
-     *
-     * @param user user to check for
-     * @returns
-     */
-    async userGetsMoreResources(user: User): Promise<boolean> {
-        return false;
     }
 
     /**

@@ -118,6 +118,7 @@ import { IDEService } from "../ide-service";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceClasses } from "./workspace-classes";
+import { EntitlementService } from "../billing/entitlement-service";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -211,6 +212,7 @@ export class WorkspaceStarter {
     @inject(ContextParser) protected contextParser: ContextParser;
     @inject(BlockedRepositoryDB) protected readonly blockedRepositoryDB: BlockedRepositoryDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -792,7 +794,7 @@ export class WorkspaceStarter {
 
                     if (!workspaceClass) {
                         workspaceClass = WorkspaceClasses.getDefaultId(this.config.workspaceClasses);
-                        if (await this.userService.userGetsMoreResources(user)) {
+                        if (await this.entitlementService.userGetsMoreResources(user)) {
                             workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(this.config.workspaceClasses);
                         }
                     }
@@ -1388,7 +1390,7 @@ export class WorkspaceStarter {
             lastValidWorkspaceInstanceId,
             volumeSnapshots !== undefined,
         );
-        const userTimeoutPromise = this.userService.getDefaultWorkspaceTimeout(user);
+        const userTimeoutPromise = this.entitlementService.getDefaultWorkspaceTimeout(user, new Date());
 
         let featureFlags = instance.configuration!.featureFlags || [];
         if (volumeSnapshots !== undefined) {
@@ -1409,7 +1411,7 @@ export class WorkspaceStarter {
         if (!classesEnabled) {
             // This is branch is not relevant once we roll out WorkspaceClasses, so we don't try to integrate these old classes into our model
             workspaceClass = "default";
-            if (await this.userService.userGetsMoreResources(user)) {
+            if (await this.entitlementService.userGetsMoreResources(user)) {
                 workspaceClass = "gitpodio-internal-xl";
             }
         } else {
