@@ -1969,7 +1969,7 @@ data:
             to openvsx-proxy.default.svc.cluster.local:8080
         }
     }
-  vhost.payment-endpoint: |-
+  vhost.payment-endpoint: |
     https://payment.minimal-test.gitpod.com {
         import enable_log
         import remove_server_header
@@ -1979,6 +1979,14 @@ data:
         reverse_proxy payment-endpoint.default.svc.cluster.local:3002 {
             import upstream_headers
             import upstream_connection
+        }
+
+        @backend path /stripe/invoices/webhook
+        handle @backend {
+            reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
+                import upstream_headers
+                import upstream_connection
+            }
         }
 
         handle_errors {
@@ -8505,7 +8513,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 376f6713002e46d8ebff894855ecd010de87d856d5c4c412c2a2649847f2017a
+        gitpod.io/checksum_config: 926e623fd161e557fe9ebb5f2dc7f2e31ed391fb5a3fb1308cefc8b76945401a
       creationTimestamp: null
       labels:
         app: gitpod
