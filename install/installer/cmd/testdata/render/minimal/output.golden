@@ -988,6 +988,18 @@ metadata:
   name: gitpod
   namespace: default
 ---
+# v1/ServiceAccount ide-metrics
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-metrics
+  name: ide-metrics
+  namespace: default
+---
 # v1/ServiceAccount ide-proxy
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1615,7 +1627,7 @@ data:
   versions.json: |-
     {
       "versions": {
-        "version": "main.4110",
+        "version": "pd-ide-metrics.23",
         "components": {
           "agentSmith": {
             "version": "test"
@@ -1639,6 +1651,9 @@ data:
             "version": "test"
           },
           "ideProxy": {
+            "version": "test"
+          },
+          "ideMetrics": {
             "version": "test"
           },
           "imageBuilder": {
@@ -2208,6 +2223,75 @@ data:
         app: gitpod
         component: db
       name: db
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-metrics
+      name: ide-metrics
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-metrics
+      name: ide-metrics
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-metrics
+      name: default-ide-metrics-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-metrics
+      name: ide-metrics
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-metrics
+      name: ide-metrics
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-metrics
+        kind: service
+      name: ide-metrics
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-metrics
+      name: ide-metrics
       namespace: default
     ---
     apiVersion: apps/v1
@@ -3559,6 +3643,45 @@ metadata:
   namespace: default
 
 ---
+# v1/ConfigMap ide-metrics
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "server": {
+        "port": 3000,
+        "ratelimits": null,
+        "counterMetrics": [
+          {
+            "name": "gitpod_supervisor_frontend_error_total",
+            "help": "Total count of supervisor frontend client errors",
+            "labels": null
+          },
+          {
+            "name": "gitpod_supervisor_frontend_client_total",
+            "help": "Total count of supervisor frontend client",
+            "labels": null
+          }
+        ],
+        "histogramMetrics": []
+      },
+      "debug": false,
+      "pprof": {
+        "addr": ""
+      },
+      "prometheus": {
+        "addr": "127.0.0.1:9500"
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-metrics
+  name: ide-metrics
+  namespace: default
+---
 # v1/ConfigMap image-builder-mk3-config
 apiVersion: v1
 data:
@@ -3706,14 +3829,14 @@ data:
         }
     }
   vhost.empty: '# Placeholder to avoid errors loading files using a glob pattern'
-  vhost.ide-proxy: |-
+  vhost.ide-proxy: |
     https://ide.minimal-test.gitpod.com {
         import enable_log_debug
         import remove_server_header
         import ssl_configuration
 
         reverse_proxy  {
-            to ide-proxy.default.svc.cluster.local:80
+            to h2c://ide-proxy.default.svc.cluster.local:80
         }
     }
   vhost.minio: |-
@@ -3863,7 +3986,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
-      "version": "main.4110",
+      "version": "pd-ide-metrics.23",
       "hostUrl": "https://minimal-test.gitpod.com",
       "installationShortname": "default",
       "devBranch": "",
@@ -4236,7 +4359,7 @@ data:
       "manager": {
         "namespace": "default",
         "schedulerName": "",
-        "seccompProfile": "localhost/workspace_default_main.4110.json",
+        "seccompProfile": "localhost/workspace_default_pd-ide-metrics.23.json",
         "timeouts": {
           "startup": "1h0m0s",
           "initialization": "30m0s",
@@ -4717,6 +4840,24 @@ subjects:
   name: blobserve
   namespace: default
 ---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ide-metrics-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-metrics
+  name: default-ide-metrics-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: ide-metrics
+  namespace: default
+---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-image-builder-mk3-proxy-kube-rbac-proxy
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -4913,6 +5054,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ws-proxy
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding ide-metrics
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-metrics
+  name: ide-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ide-metrics
+subjects:
+- kind: ServiceAccount
+  name: ide-metrics
   namespace: default
 ---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding ws-manager
@@ -5250,6 +5409,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: gitpod
+---
+# rbac.authorization.k8s.io/v1/RoleBinding ide-metrics
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-metrics
+  name: ide-metrics
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:restricted-root-user
+subjects:
+- kind: ServiceAccount
+  name: ide-metrics
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding ide-proxy
 apiVersion: rbac.authorization.k8s.io/v1
@@ -5634,6 +5811,30 @@ spec:
     targetPort: 3306
   selector:
     app.kubernetes.io/name: mysql
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+# v1/Service ide-metrics
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-metrics
+    kind: service
+  name: ide-metrics
+  namespace: default
+spec:
+  ports:
+  - name: http
+    port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: gitpod
+    component: ide-metrics
   type: ClusterIP
 status:
   loadBalancer: {}
@@ -6586,7 +6787,7 @@ spec:
       - command:
         - /bin/sh
         - -c
-        - cp -f /installer/workspace_default.json /mnt/dst/workspace_default_main.4110.json
+        - cp -f /installer/workspace_default.json /mnt/dst/workspace_default_pd-ide-metrics.23.json
         image: eu.gcr.io/gitpod-core-dev/build/seccomp-profile-installer:test
         name: seccomp-profile-installer
         resources: {}
@@ -7511,6 +7712,121 @@ spec:
       terminationGracePeriodSeconds: 30
 status: {}
 ---
+# apps/v1/Deployment ide-metrics
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-metrics
+  name: ide-metrics
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: ide-metrics
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-metrics
+      name: ide-metrics
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config
+        - /config/config.json
+        env:
+        - name: GITPOD_DOMAIN
+          value: minimal-test.gitpod.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://minimal-test.gitpod.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        image: eu.gcr.io/gitpod-core-dev/build/ide-metrics:test
+        imagePullPolicy: IfNotPresent
+        name: ide-metrics
+        ports:
+        - containerPort: 3000
+          name: http
+        readinessProbe:
+          failureThreshold: 3
+          successThreshold: 1
+          tcpSocket:
+            port: 3000
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /config
+          name: config
+          readOnly: true
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      restartPolicy: Always
+      serviceAccountName: ide-metrics
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: ide-metrics
+        name: config
+status: {}
+---
 # apps/v1/Deployment ide-proxy
 apiVersion: apps/v1
 kind: Deployment
@@ -7874,7 +8190,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 926e623fd161e557fe9ebb5f2dc7f2e31ed391fb5a3fb1308cefc8b76945401a
+        gitpod.io/checksum_config: e7bd0fbf14bea22bc368a35dacba85c5ed8b12f98149b351f0038af13985dddf
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8115,7 +8431,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: e92d8797d9bd75ef018cbfdedd7eee104a4d45c1a66dcdf0f017779bcb348dbd
+        gitpod.io/checksum_config: 03ddfd9ca77e5d762d5752ef22be533b7cbe0ccaf9013470f435b3959224727b
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8376,7 +8692,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 1cc551778dc4d691c3286f85950ec45ab6fb1b76962098646a311f5fe4520656
+        gitpod.io/checksum_config: 966e84fc3e1e16cc7f11151e2ec428a593541b08489f75cc2d0f707887f22644
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9017,7 +9333,7 @@ spec:
             - send
             env:
             - name: GITPOD_INSTALLATION_VERSION
-              value: main.4110
+              value: pd-ide-metrics.23
             - name: GITPOD_INSTALLATION_PLATFORM
               value: unknown
             - name: SERVER_URL

@@ -8919,6 +8919,11 @@ grpc-tools@^1.11.2:
   dependencies:
     "@mapbox/node-pre-gyp" "^1.0.5"
 
+grpc-web@^1.3.1:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/grpc-web/-/grpc-web-1.3.1.tgz#6d8affe75a103790b7ad570824e765a1d6a418e4"
+  integrity sha512-VxyYEAGsatecAFY3xieRDzsuhm92yQBsJD7fd5Z3MY150hZWPwkrUWetzJ0QK5W0uym4+VedPQrei38wk0eIjQ==
+
 grpc_tools_node_protoc_ts@^5.3.2:
   version "5.3.2"
   resolved "https://registry.npmjs.org/grpc_tools_node_protoc_ts/-/grpc_tools_node_protoc_ts-5.3.2.tgz"
