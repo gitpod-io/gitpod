@@ -681,23 +681,34 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 		_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
 		return err
 	})
-	if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.NotFound {
-		// Looks like we have missed the CREATING phase in which we'd otherwise start the workspace content initialization.
-		// Let's see if we're initializing already. If so, there's something very wrong because ws-daemon does not know about
-		// this workspace yet. In that case we'll run another desperate attempt to initialize the workspace.
-		m.initializerMapLock.Lock()
-		if _, alreadyInitializing := m.initializerMap[pod.Name]; alreadyInitializing {
-			// we're already initializing but wsdaemon does not know about this workspace. That's very bad.
-			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wsdaemon does not know about this workspace (bug in ws-daemon?). Trying again!")
-			delete(m.initializerMap, pod.Name)
-		}
-		m.initializerMapLock.Unlock()
 
-		// It's ok - maybe we were restarting in that time. Instead of waiting for things to finish, we'll just start the
-		// initialization now.
-		err = m.initializeWorkspaceContent(ctx, pod)
-	} else {
-		err = handleGRPCError(ctx, err)
+	if err != nil {
+		// Check if it's a gRPC error.
+		// - if not, do nothing.
+		// - if yes, check the gRPC status code.
+		if grpcErr, ok := grpc_status.FromError(err); ok {
+			switch grpcErr.Code() {
+			case codes.NotFound:
+				// Looks like we have missed the CREATING phase in which we'd otherwise start the workspace content initialization.
+				// Let's see if we're initializing already. If so, there's something very wrong because ws-daemon does not know about
+				// this workspace yet. In that case we'll run another desperate attempt to initialize the workspace.
+				m.initializerMapLock.Lock()
+				if _, alreadyInitializing := m.initializerMap[pod.Name]; alreadyInitializing {
+					// we're already initializing but wsdaemon does not know about this workspace. That's very bad.
+					log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wsdaemon does not know about this workspace (bug in ws-daemon?). Trying again!")
+					delete(m.initializerMap, pod.Name)
+				}
+				m.initializerMapLock.Unlock()
+
+				// It's ok - maybe we were restarting in that time. Instead of waiting for things to finish, we'll just start the
+				// initialization now.
+				err = m.initializeWorkspaceContent(ctx, pod)
+			case codes.Unavailable:
+				err = xerrors.Errorf("workspace initialization is currently unavailable - please try again")
+			default:
+				err = xerrors.Errorf(grpcErr.Message())
+			}
+		}
 	}
 	if err != nil {
 		return xerrors.Errorf("cannot wait for workspace to initialize: %w", err)
@@ -900,12 +911,24 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		})
 		return err
 	})
-	if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.AlreadyExists {
-		// we're already initializing, things are good - we'll wait for it later
-		err = nil
-	} else {
-		err = handleGRPCError(ctx, err)
+
+	if err != nil {
+		// Check if it's a gRPC error.
+		// - if not, do nothing.
+		// - if yes, check the gRPC status code.
+		if grpcErr, ok := grpc_status.FromError(err); ok {
+			switch grpcErr.Code() {
+			case codes.AlreadyExists:
+				// we're already initializing, things are good - we'll wait for it later
+				err = nil
+			case codes.Unavailable:
+				err = xerrors.Errorf("workspace initialization is currently unavailable - please try again")
+			default:
+				err = xerrors.Errorf(grpcErr.Message())
+			}
+		}
 	}
+
 	wsType := strings.ToUpper(pod.Labels[wsk8s.TypeLabel])
 	wsClass := pod.Labels[workspaceClassLabel]
 	hist, errHist := m.manager.metrics.initializeTimeHistVec.GetMetricWithLabelValues(wsType, wsClass)
@@ -1408,13 +1431,6 @@ func handleGRPCError(ctx context.Context, err error) error {
 	grpcErr, ok := grpc_status.FromError(err)
 	if !ok {
 		return err
-	}
-
-	if grpcErr.Code() == codes.Unavailable {
-		span, _ := tracing.FromContext(ctx, "handleGRPCError")
-		tracing.FinishSpan(span, &err)
-
-		return xerrors.Errorf("workspace initialization is currently unavailable - please try again")
 	}
 
 	return xerrors.Errorf(grpcErr.Message())
