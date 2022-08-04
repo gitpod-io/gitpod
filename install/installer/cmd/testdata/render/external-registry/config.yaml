@@ -1,0 +1,12 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: v1
+domain: minimal-test.gitpod.com
+containerRegistry:
+  inCluster: false
+  external:
+    url: my-registry.example.com
+    certificate:
+      kind: secret
+      name: my-registry-credentials
