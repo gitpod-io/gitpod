@@ -7,29 +7,33 @@ package apiv1
 import (
 	"context"
 	"fmt"
+	"math"
+	"time"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"math"
 )
 
-func NewBillingService(stripeClient *stripe.Client) *BillingService {
+func NewBillingService(stripeClient *stripe.Client, billInstancesAfter time.Time) *BillingService {
 	return &BillingService{
-		stripeClient: stripeClient,
+		stripeClient:       stripeClient,
+		billInstancesAfter: billInstancesAfter,
 	}
 }
 
 type BillingService struct {
-	stripeClient *stripe.Client
+	stripeClient       *stripe.Client
+	billInstancesAfter time.Time
 
 	v1.UnimplementedBillingServiceServer
 }
 
 func (s *BillingService) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoicesRequest) (*v1.UpdateInvoicesResponse, error) {
-	credits, err := creditSummaryForTeams(in.GetSessions())
+	credits, err := s.creditSummaryForTeams(in.GetSessions())
 	if err != nil {
 		log.Log.WithError(err).Errorf("Failed to compute credit summary.")
 		return nil, status.Errorf(codes.InvalidArgument, "failed to compute credit summary")
@@ -44,10 +48,14 @@ func (s *BillingService) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoic
 	return &v1.UpdateInvoicesResponse{}, nil
 }
 
-func creditSummaryForTeams(sessions []*v1.BilledSession) (map[string]int64, error) {
+func (s *BillingService) creditSummaryForTeams(sessions []*v1.BilledSession) (map[string]int64, error) {
 	creditsPerTeamID := map[string]float64{}
 
 	for _, session := range sessions {
+		if session.StartTime.AsTime().Before(s.billInstancesAfter) {
+			continue
+		}
+
 		attributionID, err := db.ParseAttributionID(session.AttributionId)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse attribution ID: %w", err)
