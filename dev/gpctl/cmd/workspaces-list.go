@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/spf13/cobra"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -32,12 +32,40 @@ var workspacesListCmd = &cobra.Command{
 			log.WithError(err).Fatal("error during RPC call")
 		}
 
-		tpl := `OWNER	WORKSPACE	INSTANCE	PHASE
-{{- range .Status }}
-{{ .Metadata.Owner }}	{{ .Metadata.MetaId }}	{{ .Id }}	{{ .Phase -}}
+		type PrintWorkspace struct {
+			Owner       string
+			WorkspaceID string
+			Instance    string
+			Phase       string
+			Type        string
+			Pod         string
+		}
+
+		var out []PrintWorkspace
+		for _, w := range resp.Status {
+			pod := "unknown"
+			switch w.GetSpec().GetType() {
+			case api.WorkspaceType_REGULAR:
+				pod = fmt.Sprintf("ws-%s", w.GetId())
+			case api.WorkspaceType_PREBUILD:
+				pod = fmt.Sprintf("prebuild-%s", w.GetId())
+			}
+			out = append(out, PrintWorkspace{
+				Owner:       w.GetMetadata().GetOwner(),
+				WorkspaceID: w.GetMetadata().GetMetaId(),
+				Instance:    w.GetId(),
+				Phase:       w.GetPhase().String(),
+				Type:        w.GetSpec().GetType().String(),
+				Pod:         pod,
+			})
+		}
+
+		tpl := `OWNER	WORKSPACE	INSTANCE	PHASE	TYPE	POD
+{{- range . }}
+{{ .Owner }}	{{ .WorkspaceID }}	{{ .Instance }}	{{ .Phase }}	{{ .Type }}	{{ .Pod -}}
 {{ end }}
 `
-		err = getOutputFormat(tpl, "{..id}").Print(resp)
+		err = getOutputFormat(tpl, "{.id}").Print(out)
 		if err != nil {
 			log.Fatal(err)
 		}
