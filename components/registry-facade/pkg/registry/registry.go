@@ -239,7 +239,8 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 		if err != nil {
 			return nil, xerrors.Errorf("cannot connect to IPFS: %w", err)
 		}
-		core, err := httpapi.NewApi(maddr)
+
+		core, err := httpapi.NewApiWithClient(maddr, NewRetryableHTTPClient())
 		if err != nil {
 			return nil, xerrors.Errorf("cannot connect to IPFS: %w", err)
 		}
