@@ -56,9 +56,11 @@ export default function TeamUsageBasedBilling() {
             return;
         }
         (async () => {
-            const portalUrl = await getGitpodService().server.getStripePortalUrlForTeam(team.id);
+            const [portalUrl, spendingLimit] = await Promise.all([
+                getGitpodService().server.getStripePortalUrlForTeam(team.id),
+                getGitpodService().server.getSpendingLimitForTeam(team.id),
+            ]);
             setStripePortalUrl(portalUrl);
-            const spendingLimit = await getGitpodService().server.getSpendingLimitForTeam(team.id);
             setSpendingLimit(spendingLimit);
         })();
     }, [team, stripeSubscriptionId]);
