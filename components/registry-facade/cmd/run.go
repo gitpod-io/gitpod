@@ -98,13 +98,17 @@ var runCmd = &cobra.Command{
 		}
 
 		resolverProvider := func() remotes.Resolver {
-			var resolverOpts docker.ResolverOptions
+			client := registry.NewRetryableHTTPClient()
+			client.Transport = rtt
+
+			resolverOpts := docker.ResolverOptions{
+				Client: client,
+			}
+
 			if dockerCfg != nil {
 				resolverOpts.Hosts = docker.ConfigureDefaultRegistries(
 					docker.WithAuthorizer(authorizerFromDockerConfig(dockerCfg)),
-					docker.WithClient(&http.Client{
-						Transport: rtt,
-					}),
+					docker.WithClient(client),
 				)
 			}
 
