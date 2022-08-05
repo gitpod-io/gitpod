@@ -12,6 +12,28 @@ var usage_v1_billing_pb = require('../../usage/v1/billing_pb.js');
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 var usage_v1_usage_pb = require('../../usage/v1/usage_pb.js');
 
+function serialize_usage_v1_FinalizeInvoiceRequest(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.FinalizeInvoiceRequest)) {
+    throw new Error('Expected argument of type usage.v1.FinalizeInvoiceRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_FinalizeInvoiceRequest(buffer_arg) {
+  return usage_v1_billing_pb.FinalizeInvoiceRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_usage_v1_FinalizeInvoiceResponse(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.FinalizeInvoiceResponse)) {
+    throw new Error('Expected argument of type usage.v1.FinalizeInvoiceResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_FinalizeInvoiceResponse(buffer_arg) {
+  return usage_v1_billing_pb.FinalizeInvoiceResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_usage_v1_GetLatestInvoiceRequest(arg) {
   if (!(arg instanceof usage_v1_billing_pb.GetLatestInvoiceRequest)) {
     throw new Error('Expected argument of type usage.v1.GetLatestInvoiceRequest');
@@ -83,6 +105,19 @@ getLatestInvoice: {
     requestDeserialize: deserialize_usage_v1_GetLatestInvoiceRequest,
     responseSerialize: serialize_usage_v1_GetLatestInvoiceResponse,
     responseDeserialize: deserialize_usage_v1_GetLatestInvoiceResponse,
+  },
+  // FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
+// having been invoiced.
+finalizeInvoice: {
+    path: '/usage.v1.BillingService/FinalizeInvoice',
+    requestStream: false,
+    responseStream: false,
+    requestType: usage_v1_billing_pb.FinalizeInvoiceRequest,
+    responseType: usage_v1_billing_pb.FinalizeInvoiceResponse,
+    requestSerialize: serialize_usage_v1_FinalizeInvoiceRequest,
+    requestDeserialize: deserialize_usage_v1_FinalizeInvoiceRequest,
+    responseSerialize: serialize_usage_v1_FinalizeInvoiceResponse,
+    responseDeserialize: deserialize_usage_v1_FinalizeInvoiceResponse,
   },
 };
 

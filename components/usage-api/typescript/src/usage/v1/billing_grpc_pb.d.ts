@@ -18,6 +18,7 @@ import * as usage_v1_usage_pb from "../../usage/v1/usage_pb";
 interface IBillingServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     updateInvoices: IBillingServiceService_IUpdateInvoices;
     getLatestInvoice: IBillingServiceService_IGetLatestInvoice;
+    finalizeInvoice: IBillingServiceService_IFinalizeInvoice;
 }
 
 interface IBillingServiceService_IUpdateInvoices extends grpc.MethodDefinition<usage_v1_billing_pb.UpdateInvoicesRequest, usage_v1_billing_pb.UpdateInvoicesResponse> {
@@ -38,12 +39,22 @@ interface IBillingServiceService_IGetLatestInvoice extends grpc.MethodDefinition
     responseSerialize: grpc.serialize<usage_v1_billing_pb.GetLatestInvoiceResponse>;
     responseDeserialize: grpc.deserialize<usage_v1_billing_pb.GetLatestInvoiceResponse>;
 }
+interface IBillingServiceService_IFinalizeInvoice extends grpc.MethodDefinition<usage_v1_billing_pb.FinalizeInvoiceRequest, usage_v1_billing_pb.FinalizeInvoiceResponse> {
+    path: "/usage.v1.BillingService/FinalizeInvoice";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<usage_v1_billing_pb.FinalizeInvoiceRequest>;
+    requestDeserialize: grpc.deserialize<usage_v1_billing_pb.FinalizeInvoiceRequest>;
+    responseSerialize: grpc.serialize<usage_v1_billing_pb.FinalizeInvoiceResponse>;
+    responseDeserialize: grpc.deserialize<usage_v1_billing_pb.FinalizeInvoiceResponse>;
+}
 
 export const BillingServiceService: IBillingServiceService;
 
 export interface IBillingServiceServer extends grpc.UntypedServiceImplementation {
     updateInvoices: grpc.handleUnaryCall<usage_v1_billing_pb.UpdateInvoicesRequest, usage_v1_billing_pb.UpdateInvoicesResponse>;
     getLatestInvoice: grpc.handleUnaryCall<usage_v1_billing_pb.GetLatestInvoiceRequest, usage_v1_billing_pb.GetLatestInvoiceResponse>;
+    finalizeInvoice: grpc.handleUnaryCall<usage_v1_billing_pb.FinalizeInvoiceRequest, usage_v1_billing_pb.FinalizeInvoiceResponse>;
 }
 
 export interface IBillingServiceClient {
@@ -53,6 +64,9 @@ export interface IBillingServiceClient {
     getLatestInvoice(request: usage_v1_billing_pb.GetLatestInvoiceRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetLatestInvoiceResponse) => void): grpc.ClientUnaryCall;
     getLatestInvoice(request: usage_v1_billing_pb.GetLatestInvoiceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetLatestInvoiceResponse) => void): grpc.ClientUnaryCall;
     getLatestInvoice(request: usage_v1_billing_pb.GetLatestInvoiceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetLatestInvoiceResponse) => void): grpc.ClientUnaryCall;
+    finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
+    finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
+    finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class BillingServiceClient extends grpc.Client implements IBillingServiceClient {
@@ -63,4 +77,7 @@ export class BillingServiceClient extends grpc.Client implements IBillingService
     public getLatestInvoice(request: usage_v1_billing_pb.GetLatestInvoiceRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetLatestInvoiceResponse) => void): grpc.ClientUnaryCall;
     public getLatestInvoice(request: usage_v1_billing_pb.GetLatestInvoiceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetLatestInvoiceResponse) => void): grpc.ClientUnaryCall;
     public getLatestInvoice(request: usage_v1_billing_pb.GetLatestInvoiceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetLatestInvoiceResponse) => void): grpc.ClientUnaryCall;
+    public finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
+    public finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
+    public finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
 }
