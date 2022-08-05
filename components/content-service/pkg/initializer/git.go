@@ -144,7 +144,7 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 	if ws.TargetMode == RemoteBranch {
 		// create local branch based on specific remote branch
 		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
-			log.WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Remote branch doesn't exist.")
+			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Remote branch doesn't exist.")
 			err = checkGitStatus(err)
 			return err
 		}
