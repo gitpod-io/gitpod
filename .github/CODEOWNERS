@@ -3,6 +3,7 @@
 # A single review from anyone who is allowed to review PRs is sufficent.
 #
 /.github/CODEOWNERS
+/install/installer/cmd/testdata
 
 /components/blobserve @gitpod-io/engineering-ide
 /components/common-go @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp
@@ -28,7 +29,6 @@
 /components/installation-telemetry @gitpod-io/engineering-self-hosted
 /install @gitpod-io/engineering-self-hosted
 /install/installer @gitpod-io/engineering-self-hosted
-/install/installer/cmd/testdata @gitpod-io/engineering-self-hosted @gitpod-io/engineering-ide @gitpod-io/engineering-webapp @gitpod-io/engineering-workspace
 /install/installer/pkg/components/agent-smith @gitpod-io/engineering-workspace
 /install/installer/pkg/components/blobserve @gitpod-io/engineering-ide
 /install/installer/pkg/components/components-webapp @gitpod-io/engineering-webapp
