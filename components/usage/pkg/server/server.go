@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"net"
 	"os"
 	"time"
@@ -54,19 +55,26 @@ func Start(cfg Config) error {
 	if cfg.Server != nil {
 		serverOpts = append(serverOpts, baseserver.WithConfig(cfg.Server))
 	}
+
 	srv, err := baseserver.New("usage", serverOpts...)
 	if err != nil {
 		return fmt.Errorf("failed to initialize usage server: %w", err)
 	}
 
+	grpcClientMetrics := grpc_prometheus.NewClientMetrics()
+	err = srv.MetricsRegistry().Register(grpcClientMetrics)
+	if err != nil {
+		return fmt.Errorf("failed to register grpc client metrics: %w", err)
+	}
 	selfConnection, err := grpc.Dial(srv.GRPCAddress(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpcDialerWithInitialDelay(1*time.Second),
+		grpc.WithUnaryInterceptor(grpcClientMetrics.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(grpcClientMetrics.StreamClientInterceptor()),
 		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(30*1024*1024),
-			grpc.MaxCallSendMsgSize(30*1024*1024),
-		),
-	)
+			grpc.MaxCallRecvMsgSize(50*1024*1024),
+			grpc.MaxCallSendMsgSize(50*1024*1024),
+		))
 	if err != nil {
 		return fmt.Errorf("failed to create self-connection to grpc server: %w", err)
 	}
