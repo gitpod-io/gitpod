@@ -22,6 +22,7 @@ import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getTeamSettingsMenu } from "./TeamSettings";
 import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 type PendingPlan = Plan & { pendingSince: number };
 
@@ -31,7 +32,8 @@ export default function TeamBilling() {
     const team = getCurrentTeam(location, teams);
     const [members, setMembers] = useState<TeamMemberInfo[]>([]);
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
-    const { showPaymentUI, currency, setCurrency } = useContext(PaymentContext);
+    const { currency, setCurrency } = useContext(PaymentContext);
+    const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [pendingTeamPlan, setPendingTeamPlan] = useState<PendingPlan | undefined>();
     const [pollTeamSubscriptionTimeout, setPollTeamSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
 
@@ -40,12 +42,14 @@ export default function TeamBilling() {
             return;
         }
         (async () => {
-            const [memberInfos, subscription] = await Promise.all([
+            const [memberInfos, subscription, teamBillingMode] = await Promise.all([
                 getGitpodService().server.getTeamMembers(team.id),
                 getGitpodService().server.getTeamSubscription(team.id),
+                getGitpodService().server.getBillingModeForTeam(team.id),
             ]);
             setMembers(memberInfos);
             setTeamSubscription(subscription);
+            setTeamBillingMode(teamBillingMode);
         })();
     }, [team]);
 
@@ -140,7 +144,7 @@ export default function TeamBilling() {
 
     return (
         <PageWithSubMenu
-            subMenu={getTeamSettingsMenu({ team, showPaymentUI })}
+            subMenu={getTeamSettingsMenu({ team, billingMode: teamBillingMode })}
             title="Billing"
             subtitle="Manage team billing and plans."
         >

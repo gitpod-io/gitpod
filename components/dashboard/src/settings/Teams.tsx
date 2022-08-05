@@ -23,6 +23,7 @@ import { poll, PollOptions } from "../utils";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { PaymentContext } from "../payment-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
+import { UserContext } from "../user-context";
 
 export default function Teams() {
     return (
@@ -43,8 +44,8 @@ interface Slot extends TeamSubscriptionSlotResolved {
 }
 
 function AllTeams() {
-    const { showPaymentUI, currency, isStudent, isChargebeeCustomer, setIsChargebeeCustomer } =
-        useContext(PaymentContext);
+    const { userBillingMode } = useContext(UserContext);
+    const { currency, isStudent, isChargebeeCustomer, setIsChargebeeCustomer } = useContext(PaymentContext);
 
     const [slots, setSlots] = useState<Slot[]>([]);
     const [teamSubscriptions, setTeamSubscriptions] = useState<TeamSubscription[]>([]);
@@ -603,9 +604,13 @@ function AllTeams() {
         </React.Fragment>
     );
 
+    const showTeamPlans =
+        userBillingMode &&
+        (userBillingMode.mode === "chargebee" ||
+            (userBillingMode.mode === "usage-based" && !!userBillingMode.hasChargebeeTeamPlan));
     return (
         <div>
-            {showPaymentUI ? (
+            {showTeamPlans ? (
                 renderTeams()
             ) : (
                 <div className="flex flex-row">

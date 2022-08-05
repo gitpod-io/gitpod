@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import {
     settingsPathAccount,
     settingsPathBilling,
@@ -17,7 +18,7 @@ import {
     settingsPathSSHKeys,
 } from "./settings.routes";
 
-export default function getSettingsMenu(params: { showPaymentUI?: boolean; showUsageBasedPricingUI?: boolean }) {
+export default function getSettingsMenu(params: { userBillingMode?: BillingMode }) {
     return [
         {
             title: "Account",
@@ -27,26 +28,7 @@ export default function getSettingsMenu(params: { showPaymentUI?: boolean; showU
             title: "Notifications",
             link: [settingsPathNotifications],
         },
-        ...(params.showPaymentUI
-            ? [
-                  ...(params.showUsageBasedPricingUI
-                      ? [
-                            {
-                                title: "Billing",
-                                link: [settingsPathBilling],
-                            },
-                        ]
-                      : []),
-                  {
-                      title: "Plans",
-                      link: [settingsPathPlans],
-                  },
-                  {
-                      title: "Team Plans",
-                      link: [settingsPathTeams],
-                  },
-              ]
-            : []),
+        ...renderBillingMenuEntries(params.userBillingMode),
         {
             title: "Variables",
             link: [settingsPathVariables],
@@ -64,4 +46,41 @@ export default function getSettingsMenu(params: { showPaymentUI?: boolean; showU
             link: [settingsPathPreferences],
         },
     ];
+}
+
+function renderBillingMenuEntries(billingMode?: BillingMode) {
+    if (!billingMode) {
+        return [];
+    }
+    switch (billingMode.mode) {
+        case "none":
+            return [];
+        case "chargebee":
+            return [
+                {
+                    title: "Plans",
+                    link: [settingsPathPlans],
+                },
+                {
+                    title: "Team Plans",
+                    link: [settingsPathTeams],
+                },
+            ];
+        case "usage-based":
+            return [
+                // We need to allow access to "Team Plans" here, at least for owners.
+                ...(billingMode.hasChargebeeTeamSubscription
+                    ? [
+                          {
+                              title: "Team Plans",
+                              link: [settingsPathTeams],
+                          },
+                      ]
+                    : []),
+                {
+                    title: "Billing",
+                    link: [settingsPathBilling],
+                },
+            ];
+    }
 }

@@ -26,7 +26,7 @@ import { ProjectContext } from "./projects/project-context";
 import { PaymentContext } from "./payment-context";
 import FeedbackFormModal from "./feedback-form/FeedbackModal";
 import { inResource, isGitpodIo } from "./utils";
-import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 interface Entry {
     title: string;
@@ -35,13 +35,12 @@ interface Entry {
 }
 
 export default function Menu() {
-    const { user } = useContext(UserContext);
+    const { user, userBillingMode, refreshUserBillingMode } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const { showPaymentUI, setShowPaymentUI, setCurrency, setIsStudent, setIsChargebeeCustomer } =
-        useContext(PaymentContext);
-    const { showUsageBasedPricingUI } = useContext(FeatureFlagContext);
+    const { setCurrency, setIsStudent, setIsChargebeeCustomer } = useContext(PaymentContext);
+    const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const { project, setProject } = useContext(ProjectContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
@@ -146,7 +145,6 @@ export default function Menu() {
     useEffect(() => {
         const { server } = getGitpodService();
         Promise.all([
-            server.getShowPaymentUI().then((v) => () => setShowPaymentUI(v)),
             server.getClientRegion().then((v) => () => {
                 // @ts-ignore
                 setCurrency(countries[v]?.currency === "EUR" ? "EUR" : "USD");
@@ -154,6 +152,12 @@ export default function Menu() {
             server.isStudent().then((v) => () => setIsStudent(v)),
             server.isChargebeeCustomer().then((v) => () => setIsChargebeeCustomer(v)),
         ]).then((setters) => setters.forEach((s) => s()));
+
+        // Refresh billing mode
+        refreshUserBillingMode();
+        if (team) {
+            server.getBillingModeForTeam(team.id).then(setTeamBillingMode);
+        }
     }, []);
 
     const teamOrUserSlug = !!team ? "/t/" + team.slug : "/projects";
@@ -191,7 +195,7 @@ export default function Menu() {
                     link: `/t/${team.slug}/members`,
                 },
             ];
-            if (showUsageBasedPricingUI) {
+            if (teamBillingMode && teamBillingMode.mode === "usage-based") {
                 teamSettingsList.push({
                     title: "Usage",
                     link: `/t/${team.slug}/usage`,
@@ -201,7 +205,7 @@ export default function Menu() {
                 teamSettingsList.push({
                     title: "Settings",
                     link: `/t/${team.slug}/settings`,
-                    alternatives: getTeamSettingsMenu({ team, showPaymentUI }).flatMap((e) => e.link),
+                    alternatives: getTeamSettingsMenu({ team, billingMode: teamBillingMode }).flatMap((e) => e.link),
                 });
             }
 
@@ -216,7 +220,7 @@ export default function Menu() {
             {
                 title: "Settings",
                 link: "/settings",
-                alternatives: getSettingsMenu({ showPaymentUI, showUsageBasedPricingUI }).flatMap((e) => e.link),
+                alternatives: getSettingsMenu({ userBillingMode }).flatMap((e) => e.link),
             },
         ];
     })();

@@ -43,8 +43,8 @@ type TeamClaimModal =
       };
 
 export default function () {
-    const { user } = useContext(UserContext);
-    const { showPaymentUI, currency, setCurrency, isStudent, isChargebeeCustomer } = useContext(PaymentContext);
+    const { user, userBillingMode } = useContext(UserContext);
+    const { currency, setCurrency, isStudent, isChargebeeCustomer } = useContext(PaymentContext);
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
     const [availableCoupons, setAvailableCoupons] = useState<PlanCoupon[]>();
     const [appliedCoupons, setAppliedCoupons] = useState<PlanCoupon[]>();
@@ -632,10 +632,11 @@ export default function () {
         );
     }
 
+    const showPlans = userBillingMode && userBillingMode.mode === "chargebee";
     return (
         <div>
             <PageWithSettingsSubMenu title="Plans" subtitle="Manage account usage and billing.">
-                {showPaymentUI && (
+                {showPlans && (
                     <div className="w-full text-center">
                         <p className="text-xl text-gray-500">
                             You are currently using the{" "}

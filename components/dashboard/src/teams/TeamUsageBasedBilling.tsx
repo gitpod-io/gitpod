@@ -14,7 +14,7 @@ import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 type PendingStripeSubscription = { pendingSince: number };
 
@@ -23,7 +23,7 @@ export default function TeamUsageBasedBilling() {
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const { currency } = useContext(PaymentContext);
-    const { showUsageBasedPricingUI } = useContext(FeatureFlagContext);
+    const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
@@ -37,6 +37,10 @@ export default function TeamUsageBasedBilling() {
         if (!team) {
             return;
         }
+        (async () => {
+            const teamBillingMode = await getGitpodService().server.getBillingModeForTeam(team.id);
+            setTeamBillingMode(teamBillingMode);
+        })();
         (async () => {
             setStripeSubscriptionId(undefined);
             setIsLoading(true);
@@ -139,7 +143,7 @@ export default function TeamUsageBasedBilling() {
         }
     }, [pendingStripeSubscription, pollStripeSubscriptionTimeout, stripeSubscriptionId, team]);
 
-    if (!showUsageBasedPricingUI) {
+    if (!BillingMode.showUsageBasedBilling(teamBillingMode)) {
         return <></>;
     }
 
