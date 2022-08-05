@@ -35,6 +35,9 @@ export namespace ErrorCodes {
     // 450 Payment error
     export const PAYMENT_ERROR = 450;
 
+    // 451 Out of credits
+    export const PAYMENT_SPENDING_LIMIT_REACHED = 451;
+
     // 455 Invalid cost center (custom status code)
     export const INVALID_COST_CENTER = 455;
 

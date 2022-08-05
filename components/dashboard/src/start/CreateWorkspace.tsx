@@ -11,6 +11,7 @@ import {
     RunningWorkspacePrebuildStarting,
     ContextURL,
     DisposableCollection,
+    Team,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
@@ -26,6 +27,8 @@ import CodeText from "../components/CodeText";
 import FeedbackComponent from "../feedback-form/FeedbackComponent";
 import { isGitpodIo } from "../utils";
 import { BillingAccountSelector } from "../components/BillingAccountSelector";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { TeamsContext } from "../teams/teams-context";
 
 export interface CreateWorkspaceProps {
     contextUrl: string;
@@ -199,6 +202,11 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                         />
                     );
                     break;
+                case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
+                    error = undefined; // to hide the error (otherwise rendered behind the modal)
+                    phase = StartPhase.Stopped;
+                    statusMessage = <SpendingLimitReachedModal hints={this.state?.error?.data} />;
+                    break;
                 default:
                     statusMessage = (
                         <p className="text-base text-gitpod-red w-96">
@@ -356,6 +364,44 @@ function LimitReachedOutOfHours() {
                 for your workspaces.
             </p>
         </LimitReachedModal>
+    );
+}
+function SpendingLimitReachedModal(p: { hints: any }) {
+    const { teams } = useContext(TeamsContext);
+    // const [attributionId, setAttributionId] = useState<AttributionId | undefined>();
+    const [attributedTeam, setAttributedTeam] = useState<Team | undefined>();
+
+    useEffect(() => {
+        const attributionId: AttributionId | undefined =
+            p.hints && p.hints.attributionId && AttributionId.parse(p.hints.attributionId);
+        if (attributionId) {
+            // setAttributionId(attributionId);
+            if (attributionId.kind === "team") {
+                const team = teams?.find((t) => t.id === attributionId.teamId);
+                setAttributedTeam(team);
+            }
+        }
+    }, []);
+
+    return (
+        <Modal visible={true} closeable={false} onClose={() => {}}>
+            <h3 className="flex">
+                <span className="flex-grow">Spending Limit Reached</span>
+            </h3>
+            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
+                <p className="mt-1 mb-2 text-base dark:text-gray-400">Please increase the spending limit and retry.</p>
+            </div>
+            <div className="flex justify-end mt-6 space-x-2">
+                <a href={gitpodHostUrl.with({ pathname: "billing" }).toString()}>
+                    <button>Billing Settings</button>
+                </a>
+                {attributedTeam && (
+                    <a href={gitpodHostUrl.with({ pathname: `t/${attributedTeam?.slug}/billing` }).toString()}>
+                        <button>Team Billing</button>
+                    </a>
+                )}
+            </div>
+        </Modal>
     );
 }
 
