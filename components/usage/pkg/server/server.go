@@ -62,7 +62,10 @@ func Start(cfg Config) error {
 	selfConnection, err := grpc.Dial(srv.GRPCAddress(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpcDialerWithInitialDelay(1*time.Second),
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(30*1024*1024)),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(30*1024*1024),
+			grpc.MaxCallSendMsgSize(30*1024*1024),
+		),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create self-connection to grpc server: %w", err)
