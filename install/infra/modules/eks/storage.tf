@@ -4,10 +4,6 @@ resource "aws_s3_bucket" "gitpod-storage" {
   force_destroy = true
   bucket        = "bucket-${var.cluster_name}"
   acl           = "private"
-
-  versioning {
-    enabled = true
-  }
 }
 
 resource "aws_s3_bucket" "gitpod-registry-backend" {
@@ -16,9 +12,23 @@ resource "aws_s3_bucket" "gitpod-registry-backend" {
   force_destroy = true
   bucket        = "reg-bucket-${var.cluster_name}"
   acl           = "private"
+}
 
-  versioning {
-    enabled = true
+resource "aws_s3_bucket_versioning" "storage" {
+  count = var.enable_external_storage ? 1 : 0
+
+  bucket = aws_s3_bucket.gitpod-storage[0].id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "registry" {
+  count = var.enable_external_storage_for_registry_backend ? 1 : 0
+
+  bucket = aws_s3_bucket.gitpod-registry-backend[0].id
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 

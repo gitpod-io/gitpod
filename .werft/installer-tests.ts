@@ -269,7 +269,7 @@ export async function installerTests(config: TestConfig) {
     console.log(config.DESCRIPTION);
     // these phases sets up or clean up the infrastructure
     // If the cloud variable is not set, we have a cleanup job in hand
-    const majorPhase: string = cloud == "" ? `create-${cloud}-infra` : "cleanup-infra"
+    const majorPhase: string = cloud == "" ? "cleanup-infra" :`create-${cloud}-infra`
 
     werft.phase(majorPhase, `Manage the infrastructure in ${cloud}`);
     for (let phase of config.PHASES) {
@@ -411,7 +411,7 @@ function randK8sVersion(config: string): string {
             break;
         }
         case "STANDARD_EKS_TEST": {
-            options = ["1.20", "1.21", "1.22"]
+            options = ["1.21", "1.22"]
             break;
         }
         case "STANDARD_K3S_TEST": {

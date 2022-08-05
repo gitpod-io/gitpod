@@ -12,6 +12,9 @@ This module will do the following steps:
   - Set up external-dns using our [`external-dns` module](../../modules/tools/external-dns/)
   - Creates a cluster-issuer using our [`issuer` module](../../modules/tools/issuer/)
 
+> 💡 If you would like to create the infrastructure orchestrating the terraform modules by yourself, you can find all the modules we support [here](../../modules/).
+
+
 Since the entire setup requires more than one terraform target to be run due to
 dependencies (eg: helm provider depends on kubernetes cluster config, which is
 not available until the `eks` module finishes), this directory has a `Makefile`
@@ -137,6 +140,8 @@ You can list all the other outputs with the following command:
 make output
 ```
 
+> 💡 Alternatively, you can get the simple JSON output with a `terraform output` command
+
 ## Note the NS records from terraform output
 
 Once the apply process has exited successfully, we can go ahead and prepare to
@@ -210,6 +215,14 @@ After a few minutes, you should see the https-certificate become ready.
 kubectl get certificate
 NAME                        READY   SECRET                      AGE
 https-certificates          True    https-certificates          5m
+```
+
+### Cannot connect to the created cluster after a while
+
+There is a chance that your kubeconfig has gotten expired after a specific amount of time. You can reconnect to the cluster by using:
+
+``` sh
+aws eks --region <regon> update-kubeconfig --name <cluster_name>
 ```
 
 ## Cleanup
