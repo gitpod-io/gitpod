@@ -1,6 +1,14 @@
 # Change Log
 
-## July 2022
+## August 2022
+- Fix in-product changelog relative URLs not working problem ([#11877](https://github.com/gitpod-io/gitpod/pull/11877)) - [@mustard-mh](https://github.com/mustard-mh)
+- Fix rendering of the redirect URI on Git Integrations page ([#11798](https://github.com/gitpod-io/gitpod/pull/11798)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [installer]: create tests to verify render result ([#11288](https://github.com/gitpod-io/gitpod/pull/11288)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [dashboard] Next steps nudge for local-preview ([#11434](https://github.com/gitpod-io/gitpod/pull/11434)) - [@Pothulapati](https://github.com/Pothulapati)
+- display an alert on signup if a user cannot login because they license does not cover for that additional seat ([#11768](https://github.com/gitpod-io/gitpod/pull/11768)) - [@geropl](https://github.com/geropl)
+- Fix broken prebuild trigger for GHE. ([#11570](https://github.com/gitpod-io/gitpod/pull/11570)) - [@AlexTugarev](https://github.com/AlexTugarev)
+
+##  July 2022
 - Update docker compose to v2.8.0 ([#11761](https://github.com/gitpod-io/gitpod/pull/11761)) - [@aledbf](https://github.com/aledbf)
 - Update stable Browser VSCode image with in-product changelog and experimental `Ports` view improvement ([#11754](https://github.com/gitpod-io/gitpod/pull/11754)) - [@mustard-mh](https://github.com/mustard-mh)
 - Update GoLand IDE image to version 222.3345.118. ([#11744](https://github.com/gitpod-io/gitpod/pull/11744)) - [@roboquat](https://github.com/roboquat)
