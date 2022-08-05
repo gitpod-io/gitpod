@@ -269,35 +269,35 @@ export class UserService {
      * @param user
      * @param projectId
      */
-    async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<string | undefined> {
+    async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<AttributionId | undefined> {
         // A. Billing-based attribution
         if (this.config.enablePayment) {
             if (user.usageAttributionId) {
                 await this.validateUsageAttributionId(user, user.usageAttributionId);
                 // Return the user's explicit attribution ID.
-                return user.usageAttributionId;
+                return AttributionId.parse(user.usageAttributionId);
             }
             const billingTeam = await this.findSingleTeamWithUsageBasedBilling(user);
             if (billingTeam) {
                 // Single team with usage-based billing enabled -- attribute all usage to it.
-                return AttributionId.render({ kind: "team", teamId: billingTeam.id });
+                return { kind: "team", teamId: billingTeam.id };
             }
             // Attribute all usage to the user by default (regardless of project/team).
-            return AttributionId.render({ kind: "user", userId: user.id });
+            return { kind: "user", userId: user.id };
         }
 
         // B. Project-based attribution
         if (!projectId) {
             // No project -- attribute to the user.
-            return AttributionId.render({ kind: "user", userId: user.id });
+            return { kind: "user", userId: user.id };
         }
         const project = await this.projectDb.findProjectById(projectId);
         if (!project?.teamId) {
             // The project doesn't exist, or it isn't owned by a team -- attribute to the user.
-            return AttributionId.render({ kind: "user", userId: user.id });
+            return { kind: "user", userId: user.id };
         }
         // Attribute workspace usage to the team that currently owns this project.
-        return AttributionId.render({ kind: "team", teamId: project.teamId });
+        return { kind: "team", teamId: project.teamId };
     }
 
     async setUsageAttribution(user: User, usageAttributionId: string | undefined): Promise<void> {

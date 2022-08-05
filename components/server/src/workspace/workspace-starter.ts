@@ -119,6 +119,7 @@ import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceClasses } from "./workspace-classes";
 import { EntitlementService } from "../billing/entitlement-service";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -835,7 +836,7 @@ export class WorkspaceStarter {
                     phase: "preparing",
                 },
                 configuration,
-                usageAttributionId,
+                usageAttributionId: usageAttributionId && AttributionId.render(usageAttributionId),
                 workspaceClass,
             };
             if (WithReferrerContext.is(workspace.context)) {
