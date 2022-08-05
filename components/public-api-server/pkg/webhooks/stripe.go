@@ -22,12 +22,24 @@ func NewStripeWebhookHandler() *webhookHandler {
 func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	const maxBodyBytes = int64(65536)
 
+	if req.Method != http.MethodPost {
+		log.Errorf("Bad HTTP method: %s", req.Method)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	req.Body = http.MaxBytesReader(w, req.Body, maxBodyBytes)
 
 	event := stripe.Event{}
 	err := json.NewDecoder(req.Body).Decode(&event)
 	if err != nil {
 		log.WithError(err).Error("Stripe webhook error while parsing event payload")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if event.Type != "invoice.finalized" {
+		log.Errorf("Unexpected Stripe event type: %s", event.Type)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
