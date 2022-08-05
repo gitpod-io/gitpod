@@ -1,4 +1,5 @@
 # Integration Tests
+test
 
 This directory contains Gitpod's integration tests, including the framework that makes them possible.
 
