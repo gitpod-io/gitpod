@@ -772,8 +772,10 @@ export class WorkspaceStarter {
             const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
 
             let workspaceClass = "";
+            const userTeams = await this.teamDB.findTeamsByUser(user.id);
             let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
                 user: user,
+                teams: userTeams,
             });
 
             if (classesEnabled) {
@@ -1404,8 +1406,10 @@ export class WorkspaceStarter {
             ideImage = ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image;
         }
 
+        const userTeams = await this.teamDB.findTeamsByUser(user.id);
         let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
             user: user,
+            teams: userTeams,
         });
         let workspaceClass;
         if (!classesEnabled) {
