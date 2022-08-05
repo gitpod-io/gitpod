@@ -117,7 +117,7 @@ import { ContextParser } from "./context-parser-service";
 import { IDEService } from "../ide-service";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { WorkspaceClasses } from "./workspace-classes";
+import { WorkspaceClasses, WorkspaceClassesConfig } from "./workspace-classes";
 import { EntitlementService } from "../billing/entitlement-service";
 
 export interface StartWorkspaceOptions {
@@ -188,6 +188,55 @@ export const chooseIDE = (
     }
     return data;
 };
+
+export async function getWorkspaceClassForInstance(
+    ctx: TraceContext,
+    workspace: Workspace,
+    previousInstance: WorkspaceInstance | undefined,
+    user: User,
+    entitlementService: EntitlementService,
+    config: WorkspaceClassesConfig,
+    workspaceDb: DBWithTracing<WorkspaceDB>,
+): Promise<string> {
+    const span = TraceContext.startSpan("getWorkspaceClassForInstance", ctx);
+    try {
+        let workspaceClass = "";
+        if (!previousInstance?.workspaceClass) {
+            if (workspace.type == "regular") {
+                const prebuildClass = await WorkspaceClasses.getFromPrebuild(ctx, workspace, workspaceDb, config);
+                if (prebuildClass) {
+                    const userClass = await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(
+                        user,
+                        config,
+                        entitlementService,
+                    );
+                    workspaceClass = WorkspaceClasses.canSubstitute(prebuildClass, userClass, config);
+                } else if (user.additionalData?.workspaceClasses?.regular) {
+                    workspaceClass = user.additionalData?.workspaceClasses?.regular;
+                }
+            }
+
+            if (workspace.type == "prebuild") {
+                if (user.additionalData?.workspaceClasses?.prebuild) {
+                    workspaceClass = user.additionalData?.workspaceClasses?.prebuild;
+                }
+            }
+
+            if (!workspaceClass) {
+                workspaceClass = WorkspaceClasses.getDefaultId(config);
+                if (await entitlementService.userGetsMoreResources(user)) {
+                    workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(config);
+                }
+            }
+        } else {
+            workspaceClass = WorkspaceClasses.getPreviousOrDefault(config, previousInstance.workspaceClass);
+        }
+
+        return workspaceClass;
+    } finally {
+        span.finish();
+    }
+}
 
 @injectable()
 export class WorkspaceStarter {
@@ -773,43 +822,15 @@ export class WorkspaceStarter {
             if (classesEnabled) {
                 // this is either the first time we start the workspace or the workspace was started
                 // before workspace classes and does not have a class yet
-                if (!previousInstance?.workspaceClass) {
-                    if (workspace.type == "regular") {
-                        const prebuildClass = await WorkspaceClasses.getFromPrebuild(
-                            ctx,
-                            workspace,
-                            this.workspaceDb,
-                            this.config.workspaceClasses,
-                        );
-                        if (prebuildClass) {
-                            workspaceClass = WorkspaceClasses.canSubstitute(
-                                prebuildClass,
-                                user.additionalData?.workspaceClasses?.regular,
-                                this.config.workspaceClasses,
-                            );
-                        } else if (user.additionalData?.workspaceClasses?.regular) {
-                            workspaceClass = user.additionalData?.workspaceClasses?.regular;
-                        }
-                    }
-
-                    if (workspace.type == "prebuild") {
-                        if (user.additionalData?.workspaceClasses?.prebuild) {
-                            workspaceClass = user.additionalData?.workspaceClasses?.prebuild;
-                        }
-                    }
-
-                    if (!workspaceClass) {
-                        workspaceClass = WorkspaceClasses.getDefaultId(this.config.workspaceClasses);
-                        if (await this.entitlementService.userGetsMoreResources(user)) {
-                            workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(this.config.workspaceClasses);
-                        }
-                    }
-                } else {
-                    workspaceClass = WorkspaceClasses.getPreviousOrDefault(
-                        this.config.workspaceClasses,
-                        previousInstance.workspaceClass,
-                    );
-                }
+                workspaceClass = await getWorkspaceClassForInstance(
+                    ctx,
+                    workspace,
+                    previousInstance,
+                    user,
+                    this.entitlementService,
+                    this.config.workspaceClasses,
+                    this.workspaceDb,
+                );
 
                 if (featureFlags.includes("persistent_volume_claim")) {
                     if (workspaceClass === "g1-standard" || workspaceClass === "g1-large") {
