@@ -7,6 +7,7 @@ require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/public-api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/usage-api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.7
 	github.com/gorilla/handlers v1.5.1
@@ -17,7 +18,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.0
 	github.com/stripe/stripe-go/v72 v72.122.0
-	google.golang.org/grpc v1.45.0
+	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 )
 

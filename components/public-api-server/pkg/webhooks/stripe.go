@@ -9,13 +9,16 @@ import (
 	"net/http"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
 	"github.com/stripe/stripe-go/v72"
 )
 
-type webhookHandler struct{}
+type webhookHandler struct {
+	billingService billingservice.Interface
+}
 
-func NewStripeWebhookHandler() *webhookHandler {
-	return &webhookHandler{}
+func NewStripeWebhookHandler(billingService billingservice.Interface) *webhookHandler {
+	return &webhookHandler{billingService: billingService}
 }
 
 func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -52,5 +55,10 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-	log.Infof("finalizing invoice for invoice id: %s", invoiceId)
+	err = h.billingService.FinalizeInvoice(req.Context(), invoiceId)
+	if err != nil {
+		log.WithError(err).Error("Failed to finalize invoice")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
