@@ -60,7 +60,6 @@ func getConfig() *config.Configuration {
 
 	var cfg config.Configuration
 	dec := json.NewDecoder(bytes.NewReader(ctnt))
-	dec.DisallowUnknownFields()
 	err = dec.Decode(&cfg)
 	if err != nil {
 		log.WithError(err).Fatal("Cannot decode configuration. Maybe missing --config?")
