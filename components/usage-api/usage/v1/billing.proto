@@ -19,6 +19,9 @@ service BillingService {
   // FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
   // having been invoiced.
   rpc FinalizeInvoice(FinalizeInvoiceRequest) returns (FinalizeInvoiceResponse) {};
+
+  // SetBilledSession marks an instance as billed with a billing system
+  rpc SetBilledSession(SetBilledSessionRequest) returns (SetBilledSessionResponse) {};
 }
 
 message UpdateInvoicesRequest {
@@ -49,4 +52,21 @@ message FinalizeInvoiceRequest {
 }
 
 message FinalizeInvoiceResponse {
+}
+
+enum System {
+  UNKNOWN = 0;
+  CHARGEBEE = 1;
+  STRIPE = 2;
+}
+
+// If there are two billable sessions for this instance ID,
+// the second one's "from" will be the first one's "to"
+message SetBilledSessionRequest {
+  string instance_id = 1;
+  google.protobuf.Timestamp from = 2;
+  System system = 3;
+}
+
+message SetBilledSessionResponse {
 }
