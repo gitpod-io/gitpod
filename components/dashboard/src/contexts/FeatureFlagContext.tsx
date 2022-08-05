@@ -16,11 +16,9 @@ interface FeatureFlagConfig {
 }
 
 const FeatureFlagContext = createContext<{
-    showUsageBasedPricingUI: boolean;
     showWorkspaceClassesUI: boolean;
     showPersistentVolumeClaimUI: boolean;
 }>({
-    showUsageBasedPricingUI: false,
     showWorkspaceClassesUI: false,
     showPersistentVolumeClaimUI: false,
 });
@@ -31,12 +29,10 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const { project } = useContext(ProjectContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const [showUsageBasedPricingUI, setShowUsageBasedPricingUI] = useState<boolean>(false);
     const [showWorkspaceClassesUI, setShowWorkspaceClassesUI] = useState<boolean>(false);
     const [showPersistentVolumeClaimUI, setShowPersistentVolumeClaimUI] = useState<boolean>(false);
 
     const featureFlags: FeatureFlagConfig = {
-        isUsageBasedBillingEnabled: { defaultValue: false, setter: setShowUsageBasedPricingUI },
         workspace_classes: { defaultValue: true, setter: setShowWorkspaceClassesUI },
         persistent_volume_claim: { defaultValue: true, setter: setShowPersistentVolumeClaimUI },
     };
@@ -58,9 +54,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     }, [user, teams, team, project]);
 
     return (
-        <FeatureFlagContext.Provider
-            value={{ showUsageBasedPricingUI, showWorkspaceClassesUI, showPersistentVolumeClaimUI }}
-        >
+        <FeatureFlagContext.Provider value={{ showWorkspaceClassesUI, showPersistentVolumeClaimUI }}>
             {children}
         </FeatureFlagContext.Provider>
     );

@@ -6,8 +6,7 @@
 
 import { useContext } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
-import { PaymentContext } from "../payment-context";
+import { UserContext } from "../user-context";
 import getSettingsMenu from "./settings-menu";
 
 export interface PageWithAdminSubMenuProps {
@@ -17,15 +16,10 @@ export interface PageWithAdminSubMenuProps {
 }
 
 export function PageWithSettingsSubMenu({ title, subtitle, children }: PageWithAdminSubMenuProps) {
-    const { showUsageBasedPricingUI } = useContext(FeatureFlagContext);
-    const { showPaymentUI } = useContext(PaymentContext);
+    const { userBillingMode } = useContext(UserContext);
 
     return (
-        <PageWithSubMenu
-            subMenu={getSettingsMenu({ showPaymentUI, showUsageBasedPricingUI })}
-            title={title}
-            subtitle={subtitle}
-        >
+        <PageWithSubMenu subMenu={getSettingsMenu({ userBillingMode })} title={title} subtitle={subtitle}>
             {children}
         </PageWithSubMenu>
     );

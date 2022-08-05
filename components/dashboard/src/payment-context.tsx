@@ -8,8 +8,6 @@ import React, { createContext, useState } from "react";
 import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 
 const PaymentContext = createContext<{
-    showPaymentUI?: boolean;
-    setShowPaymentUI: React.Dispatch<boolean>;
     currency: Currency;
     setCurrency: React.Dispatch<Currency>;
     isStudent?: boolean;
@@ -17,7 +15,6 @@ const PaymentContext = createContext<{
     isChargebeeCustomer?: boolean;
     setIsChargebeeCustomer: React.Dispatch<boolean>;
 }>({
-    setShowPaymentUI: () => null,
     currency: "USD",
     setCurrency: () => null,
     setIsStudent: () => null,
@@ -25,7 +22,6 @@ const PaymentContext = createContext<{
 });
 
 const PaymentContextProvider: React.FC = ({ children }) => {
-    const [showPaymentUI, setShowPaymentUI] = useState<boolean>();
     const [currency, setCurrency] = useState<Currency>("USD");
     const [isStudent, setIsStudent] = useState<boolean>();
     const [isChargebeeCustomer, setIsChargebeeCustomer] = useState<boolean>();
@@ -33,8 +29,6 @@ const PaymentContextProvider: React.FC = ({ children }) => {
     return (
         <PaymentContext.Provider
             value={{
-                showPaymentUI,
-                setShowPaymentUI,
                 currency,
                 setCurrency,
                 isStudent,

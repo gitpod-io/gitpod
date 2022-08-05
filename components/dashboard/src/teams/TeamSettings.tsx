@@ -5,24 +5,25 @@
  */
 
 import { Team } from "@gitpod/gitpod-protocol";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import CodeText from "../components/CodeText";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { PaymentContext } from "../payment-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 
-export function getTeamSettingsMenu(params: { team?: Team; showPaymentUI?: boolean }) {
-    const { team, showPaymentUI } = params;
+export function getTeamSettingsMenu(params: { team?: Team; billingMode?: BillingMode }) {
+    const { team, billingMode } = params;
     return [
         {
             title: "General",
             link: [`/t/${team?.slug}/settings`],
         },
-        ...(showPaymentUI
+        // The Billing page contains both chargebee and usage-based components, so: always show them!
+        ...(billingMode && billingMode.mode !== "none"
             ? [
                   {
                       title: "Billing",
@@ -39,9 +40,9 @@ export default function TeamSettings() {
     const [isUserOwner, setIsUserOwner] = useState(true);
     const { teams } = useContext(TeamsContext);
     const { user } = useContext(UserContext);
+    const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const { showPaymentUI } = useContext(PaymentContext);
 
     const close = () => setModal(false);
 
@@ -51,6 +52,10 @@ export default function TeamSettings() {
             const members = await getGitpodService().server.getTeamMembers(team.id);
             const currentUserInTeam = members.find((member) => member.userId === user?.id);
             setIsUserOwner(currentUserInTeam?.role === "owner");
+
+            // TODO(gpl) Maybe we should have TeamContext here instead of repeating ourselves...
+            const billingMode = await getGitpodService().server.getBillingModeForTeam(team.id);
+            setBillingMode(billingMode);
         })();
     }, []);
 
@@ -68,7 +73,7 @@ export default function TeamSettings() {
     return (
         <>
             <PageWithSubMenu
-                subMenu={getTeamSettingsMenu({ team, showPaymentUI })}
+                subMenu={getTeamSettingsMenu({ team, billingMode })}
                 title="Settings"
                 subtitle="Manage general team settings."
             >

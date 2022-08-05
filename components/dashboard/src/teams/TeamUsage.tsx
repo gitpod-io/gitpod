@@ -20,16 +20,16 @@ import moment from "moment";
 import Pagination from "../Pagination/Pagination";
 import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { ReactComponent as CreditsSvg } from "../images/credits.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as SortArrow } from "../images/sort-arrow.svg";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 function TeamUsage() {
     const { teams } = useContext(TeamsContext);
-    const { showUsageBasedPricingUI } = useContext(FeatureFlagContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
+    const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [billedUsage, setBilledUsage] = useState<BillableSession[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [resultsPerPage] = useState(15);
@@ -46,6 +46,10 @@ function TeamUsage() {
         if (!team) {
             return;
         }
+        (async () => {
+            const teamBillingMode = await getGitpodService().server.getBillingModeForTeam(team.id);
+            setTeamBillingMode(teamBillingMode);
+        })();
         (async () => {
             const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
             const request: BillableSessionRequest = {
@@ -67,7 +71,7 @@ function TeamUsage() {
         })();
     }, [team, startDateOfBillMonth, endDateOfBillMonth, isStartedTimeDescending]);
 
-    if (!showUsageBasedPricingUI) {
+    if (!BillingMode.showUsageBasedBilling(teamBillingMode)) {
         return <Redirect to="/" />;
     }
 

@@ -5,18 +5,33 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import React, { createContext, useState } from "react";
+import { getGitpodService } from "./service/service";
 
 const UserContext = createContext<{
     user?: User;
     setUser: React.Dispatch<User>;
+    userBillingMode?: BillingMode;
+    refreshUserBillingMode: () => void;
 }>({
     setUser: () => null,
+    refreshUserBillingMode: () => null,
 });
 
 const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>();
-    return <UserContext.Provider value={{ user, setUser }}>{children}</UserContext.Provider>;
+    const [billingMode, setBillingMode] = useState<BillingMode>();
+    function refreshUserBillingMode() {
+        getGitpodService()
+            .server.getBillingModeForUser()
+            .then((bm) => setBillingMode);
+    }
+    return (
+        <UserContext.Provider value={{ user, setUser, userBillingMode: billingMode, refreshUserBillingMode }}>
+            {children}
+        </UserContext.Provider>
+    );
 };
 
 export { UserContext, UserContextProvider };
