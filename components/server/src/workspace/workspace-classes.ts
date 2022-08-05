@@ -5,10 +5,10 @@
  */
 
 import { DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Workspace } from "@gitpod/gitpod-protocol";
+import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { WorkspaceClass } from "@gitpod/ws-manager/lib";
+import { EntitlementService } from "../billing/entitlement-service";
 
 export type WorkspaceClassesConfig = [WorkspaceClassConfig];
 
@@ -161,6 +161,28 @@ export namespace WorkspaceClasses {
     }
 
     /**
+     * @param user
+     * @param classes
+     * @param entitlementService
+     */
+    export async function getConfiguredOrUpgradeFromLegacy(
+        user: User,
+        classes: WorkspaceClassesConfig,
+        entitlementService: EntitlementService,
+    ): Promise<string> {
+        if (user.additionalData?.workspaceClasses?.regular) {
+            return user.additionalData?.workspaceClasses?.regular;
+        }
+
+        let workspaceClass = WorkspaceClasses.getDefaultId(classes);
+        if (await entitlementService.userGetsMoreResources(user)) {
+            workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(classes);
+        }
+
+        return workspaceClass;
+    }
+
+    /**
      * Checks if the current class can be replaced by another class
      * - If both classes are the same the current class will be returned
      * - If the proposed substitute class has at least as much resources as the current class replace it
@@ -183,21 +205,25 @@ export namespace WorkspaceClasses {
         }
 
         const current = classes.find((c) => c.id === currentClassId);
-        const substitute = classes.find((c) => c.id === substituteClassId);
+        let substitute = classes.find((c) => c.id === substituteClassId);
 
         if (!current) {
-            if (!substitute) {
-                return getDefaultId(classes);
-            } else {
-                return substitute.id;
-            }
+            throw new Error("class not defined: " + currentClassId);
+        }
+
+        if (!substitute) {
+            throw new Error("class not defined: " + substituteClassId);
+        }
+
+        if (substitute.deprecated) {
+            substitute = classes.find((c) => c.id === getMoreResourcesIdOrDefault(classes));
+        }
+
+        if (substitute && providesMinimalResources(substitute, current)) {
+            return substitute.id;
         }
 
         if (current.deprecated) {
-            if (substitute && !substitute.deprecated && providesMinimalResources(substitute, current)) {
-                return substitute.id;
-            }
-
             const alternative = classes
                 .sort((a, b) => a.resources.storage - b.resources.storage)
                 .find((cl) => providesMinimalResources(cl, current));
@@ -206,10 +232,6 @@ export namespace WorkspaceClasses {
             } else {
                 return alternative.id;
             }
-        }
-
-        if (substitute && providesMinimalResources(substitute, current)) {
-            return substitute.id;
         }
 
         return current.id;
