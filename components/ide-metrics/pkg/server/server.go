@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	api "github.com/gitpod-io/gitpod/ide-metrics-api"
 	"github.com/gitpod-io/gitpod/ide-metrics-api/config"
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/soheilhy/cmux"
@@ -182,6 +183,12 @@ func (s *IDEMetricsServer) Start() error {
 	m := cmux.New(l)
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
 	var opts []grpc.ServerOption
+	if s.config.Debug {
+		opts = append(opts,
+			grpc.UnaryInterceptor(grpc_logrus.UnaryServerInterceptor(log.Log)),
+			grpc.StreamInterceptor(grpc_logrus.StreamServerInterceptor(log.Log)),
+		)
+	}
 	grpcServer := grpc.NewServer(opts...)
 	s.register(grpcServer)
 	go grpcServer.Serve(grpcMux)
