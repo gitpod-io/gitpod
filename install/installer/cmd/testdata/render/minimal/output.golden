@@ -6372,9 +6372,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: NODENAME
@@ -6440,9 +6440,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -6567,9 +6567,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: GRPC_GO_RETRY
@@ -6670,9 +6670,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -6715,6 +6715,47 @@ spec:
         - -c
         - set -e; update-ca-certificates -f; cp /etc/ssl/certs/* /ssl-certs; echo
           'OK'
+        env:
+        - name: HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: NO_PROXY
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ca-updater:test
         imagePullPolicy: IfNotPresent
         name: update-ca-certificates
@@ -6852,9 +6893,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: NODENAME
@@ -6961,9 +7002,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -6987,6 +7028,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: NO_PROXY
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
         imagePullPolicy: IfNotPresent
         lifecycle:
@@ -7018,6 +7099,47 @@ spec:
         - -a
         - /bin/bash
         - -c
+        env:
+        - name: HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: NO_PROXY
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: docker.io/library/ubuntu:20.04
         name: disable-kube-health-monitor
         resources: {}
@@ -7028,6 +7150,47 @@ spec:
         - /bin/sh
         - -c
         - cp -f /installer/workspace_default.json /mnt/dst/workspace_default_pd-ide-metrics.23.json
+        env:
+        - name: HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: NO_PROXY
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/seccomp-profile-installer:test
         name: seccomp-profile-installer
         resources: {}
@@ -7044,6 +7207,47 @@ spec:
           &&\n\tsysctl -w fs.inotify.max_user_watches=1000000 &&\n\tsysctl -w \"kernel.dmesg_restrict=1\"
           &&\n\tsysctl -w vm.unprivileged_userfaultfd=0\n) && echo \"done!\" || echo
           \"failed!\"\n"
+        env:
+        - name: HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: NO_PROXY
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
         name: sysctl
         resources: {}
@@ -7563,9 +7767,9 @@ spec:
                   name: proxy-server
                   optional: true
             - name: NO_PROXY
-              value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+              value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
             - name: no_proxy
-              value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+              value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
           image: eu.gcr.io/gitpod-core-dev/build/openvsx-proxy:test
           imagePullPolicy: IfNotPresent
           name: openvsx-proxy
@@ -7651,9 +7855,9 @@ spec:
                   name: proxy-server
                   optional: true
             - name: NO_PROXY
-              value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+              value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
             - name: no_proxy
-              value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+              value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
           image: quay.io/brancz/kube-rbac-proxy:v0.12.0
           name: kube-rbac-proxy
           ports:
@@ -7791,9 +7995,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         image: eu.gcr.io/gitpod-core-dev/build/blobserve:test
@@ -7882,9 +8086,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -8010,9 +8214,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: GRPC_GO_RETRY
@@ -8082,9 +8286,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -8202,9 +8406,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/dashboard:test
         imagePullPolicy: IfNotPresent
         name: dashboard
@@ -8328,9 +8532,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ide-metrics:test
         imagePullPolicy: IfNotPresent
         name: ide-metrics
@@ -8399,9 +8603,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -8519,9 +8723,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ide-proxy:test
         imagePullPolicy: IfNotPresent
         name: ide-proxy
@@ -8647,9 +8851,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         image: eu.gcr.io/gitpod-core-dev/build/image-builder-mk3:test
@@ -8721,9 +8925,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -8746,6 +8950,47 @@ spec:
         - -c
         - set -e; update-ca-certificates -f; cp /etc/ssl/certs/* /ssl-certs; echo
           'OK'
+        env:
+        - name: HTTP_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpProxy
+              name: proxy-server
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: httpsProxy
+              name: proxy-server
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            configMapKeyRef:
+              key: noProxy
+              name: proxy-server
+              optional: true
+        - name: NO_PROXY
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ca-updater:test
         imagePullPolicy: IfNotPresent
         name: update-ca-certificates
@@ -9005,9 +9250,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: PROXY_DOMAIN
           value: minimal-test.gitpod.com
         image: eu.gcr.io/gitpod-core-dev/build/proxy:test
@@ -9261,9 +9506,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: DB_HOST
           valueFrom:
             secretKeyRef:
@@ -9405,9 +9650,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -9490,9 +9735,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
         name: database-waiter
         resources: {}
@@ -9565,9 +9810,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
         name: msgbus-waiter
         resources: {}
@@ -9686,9 +9931,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: GRPC_GO_RETRY
@@ -9764,9 +10009,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -9895,9 +10140,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: MESSAGEBUS_USERNAME
@@ -10018,9 +10263,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -10104,9 +10349,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
         name: database-waiter
         resources: {}
@@ -10179,9 +10424,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
         name: msgbus-waiter
         resources: {}
@@ -10298,9 +10543,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         image: eu.gcr.io/gitpod-core-dev/build/ws-proxy:test
@@ -10390,9 +10635,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -10563,9 +10808,9 @@ spec:
               name: proxy-server
               optional: true
         - name: NO_PROXY
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         - name: no_proxy
-          value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+          value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
         name: database-waiter
         resources: {}
@@ -10690,9 +10935,9 @@ spec:
                   name: proxy-server
                   optional: true
             - name: NO_PROXY
-              value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+              value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
             - name: no_proxy
-              value: .$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)
+              value: 127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)
             image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
             name: database-waiter
             resources: {}

@@ -47,6 +47,7 @@ func InternalCAContainer(ctx *RenderContext, mod ...func(*corev1.Container)) *co
 				MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
 			},
 		},
+		Env: ProxyEnv(&ctx.Config),
 	}
 
 	for _, m := range mod {
@@ -87,11 +88,14 @@ func CustomCACertVolume(ctx *RenderContext) (vol *corev1.Volume, mnt *corev1.Vol
 		MountPath: customCAMountPath,
 		SubPath:   "ca.crt",
 	}
-	env = []corev1.EnvVar{
-		{Name: "NODE_EXTRA_CA_CERTS", Value: customCAMountPath},
-		{Name: "GIT_SSL_CAPATH", Value: certsMountPath},
-		{Name: "GIT_SSL_CAINFO", Value: customCAMountPath},
-	}
+	env = MergeEnv(
+		[]corev1.EnvVar{
+			{Name: "NODE_EXTRA_CA_CERTS", Value: customCAMountPath},
+			{Name: "GIT_SSL_CAPATH", Value: certsMountPath},
+			{Name: "GIT_SSL_CAINFO", Value: customCAMountPath},
+		},
+		ProxyEnv(&ctx.Config),
+	)
 	ok = true
 	return
 }

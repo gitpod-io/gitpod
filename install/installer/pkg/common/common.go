@@ -69,7 +69,7 @@ func MergeEnv(envs ...[]corev1.EnvVar) (res []corev1.EnvVar) {
 }
 
 func ProxyEnv(cfg *config.Config) []corev1.EnvVar {
-	noProxyValue := ".$(KUBE_NAMESPACE).svc.cluster.local,$(CUSTOM_NO_PROXY)"
+	noProxyValue := "127.0.0.1,localhost,.$(KUBE_NAMESPACE).svc.cluster.local,.cluster.local,$(CUSTOM_NO_PROXY)"
 
 	return MergeEnv(
 		getProxyServerEnvvar(cfg, "HTTP_PROXY", "httpProxy"),

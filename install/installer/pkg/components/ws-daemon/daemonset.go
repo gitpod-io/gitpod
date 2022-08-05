@@ -58,6 +58,7 @@ fi
 				Privileged: pointer.Bool(true),
 				ProcMount:  func() *corev1.ProcMountType { r := corev1.DefaultProcMount; return &r }(),
 			},
+			Env: common.ProxyEnv(&cfg),
 		},
 		{
 			Name:  "seccomp-profile-installer",
@@ -72,6 +73,7 @@ fi
 				MountPath: "/mnt/dst",
 			}},
 			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
+			Env:             common.ProxyEnv(&cfg),
 		},
 		{
 			Name:  "sysctl",
@@ -91,6 +93,7 @@ fi
 `,
 			},
 			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
+			Env:             common.ProxyEnv(&cfg),
 		},
 	}
 
@@ -104,6 +107,7 @@ fi
 				MountPath: "/usr/src_node",
 			}},
 			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
+			Env:             common.ProxyEnv(&cfg),
 		})
 	}
 
@@ -294,6 +298,7 @@ fi
 				},
 				Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 					common.NodeNameEnv(ctx),
+					common.ProxyEnv(&cfg),
 				)),
 				ImagePullPolicy: corev1.PullIfNotPresent,
 				Lifecycle: &corev1.Lifecycle{
