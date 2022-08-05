@@ -32,6 +32,9 @@ type BillingServiceClient interface {
 	UpdateInvoices(ctx context.Context, in *UpdateInvoicesRequest, opts ...grpc.CallOption) (*UpdateInvoicesResponse, error)
 	// GetLatestInvoice retrieves the latest invoice for a given query.
 	GetLatestInvoice(ctx context.Context, in *GetLatestInvoiceRequest, opts ...grpc.CallOption) (*GetLatestInvoiceResponse, error)
+	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
+	// having been invoiced.
+	FinalizeInvoice(ctx context.Context, in *FinalizeInvoiceRequest, opts ...grpc.CallOption) (*FinalizeInvoiceResponse, error)
 }
 
 type billingServiceClient struct {
@@ -60,6 +63,15 @@ func (c *billingServiceClient) GetLatestInvoice(ctx context.Context, in *GetLate
 	return out, nil
 }
 
+func (c *billingServiceClient) FinalizeInvoice(ctx context.Context, in *FinalizeInvoiceRequest, opts ...grpc.CallOption) (*FinalizeInvoiceResponse, error) {
+	out := new(FinalizeInvoiceResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/FinalizeInvoice", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BillingServiceServer is the server API for BillingService service.
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility
@@ -70,6 +82,9 @@ type BillingServiceServer interface {
 	UpdateInvoices(context.Context, *UpdateInvoicesRequest) (*UpdateInvoicesResponse, error)
 	// GetLatestInvoice retrieves the latest invoice for a given query.
 	GetLatestInvoice(context.Context, *GetLatestInvoiceRequest) (*GetLatestInvoiceResponse, error)
+	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
+	// having been invoiced.
+	FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }
 
@@ -82,6 +97,9 @@ func (UnimplementedBillingServiceServer) UpdateInvoices(context.Context, *Update
 }
 func (UnimplementedBillingServiceServer) GetLatestInvoice(context.Context, *GetLatestInvoiceRequest) (*GetLatestInvoiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestInvoice not implemented")
+}
+func (UnimplementedBillingServiceServer) FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalizeInvoice not implemented")
 }
 func (UnimplementedBillingServiceServer) mustEmbedUnimplementedBillingServiceServer() {}
 
@@ -132,6 +150,24 @@ func _BillingService_GetLatestInvoice_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_FinalizeInvoice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FinalizeInvoiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).FinalizeInvoice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/FinalizeInvoice",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).FinalizeInvoice(ctx, req.(*FinalizeInvoiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BillingService_ServiceDesc is the grpc.ServiceDesc for BillingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -146,6 +182,10 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLatestInvoice",
 			Handler:    _BillingService_GetLatestInvoice_Handler,
+		},
+		{
+			MethodName: "FinalizeInvoice",
+			Handler:    _BillingService_FinalizeInvoice_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

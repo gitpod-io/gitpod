@@ -128,3 +128,40 @@ export namespace GetLatestInvoiceResponse {
         amount: number,
     }
 }
+
+export class FinalizeInvoiceRequest extends jspb.Message {
+    getInvoiceId(): string;
+    setInvoiceId(value: string): FinalizeInvoiceRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): FinalizeInvoiceRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: FinalizeInvoiceRequest): FinalizeInvoiceRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: FinalizeInvoiceRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): FinalizeInvoiceRequest;
+    static deserializeBinaryFromReader(message: FinalizeInvoiceRequest, reader: jspb.BinaryReader): FinalizeInvoiceRequest;
+}
+
+export namespace FinalizeInvoiceRequest {
+    export type AsObject = {
+        invoiceId: string,
+    }
+}
+
+export class FinalizeInvoiceResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): FinalizeInvoiceResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: FinalizeInvoiceResponse): FinalizeInvoiceResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: FinalizeInvoiceResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): FinalizeInvoiceResponse;
+    static deserializeBinaryFromReader(message: FinalizeInvoiceResponse, reader: jspb.BinaryReader): FinalizeInvoiceResponse;
+}
+
+export namespace FinalizeInvoiceResponse {
+    export type AsObject = {
+    }
+}
