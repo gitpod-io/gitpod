@@ -19,6 +19,7 @@ interface IBillingServiceService extends grpc.ServiceDefinition<grpc.UntypedServ
     updateInvoices: IBillingServiceService_IUpdateInvoices;
     getLatestInvoice: IBillingServiceService_IGetLatestInvoice;
     finalizeInvoice: IBillingServiceService_IFinalizeInvoice;
+    setBilledSession: IBillingServiceService_ISetBilledSession;
 }
 
 interface IBillingServiceService_IUpdateInvoices extends grpc.MethodDefinition<usage_v1_billing_pb.UpdateInvoicesRequest, usage_v1_billing_pb.UpdateInvoicesResponse> {
@@ -48,6 +49,15 @@ interface IBillingServiceService_IFinalizeInvoice extends grpc.MethodDefinition<
     responseSerialize: grpc.serialize<usage_v1_billing_pb.FinalizeInvoiceResponse>;
     responseDeserialize: grpc.deserialize<usage_v1_billing_pb.FinalizeInvoiceResponse>;
 }
+interface IBillingServiceService_ISetBilledSession extends grpc.MethodDefinition<usage_v1_billing_pb.SetBilledSessionRequest, usage_v1_billing_pb.SetBilledSessionResponse> {
+    path: "/usage.v1.BillingService/SetBilledSession";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<usage_v1_billing_pb.SetBilledSessionRequest>;
+    requestDeserialize: grpc.deserialize<usage_v1_billing_pb.SetBilledSessionRequest>;
+    responseSerialize: grpc.serialize<usage_v1_billing_pb.SetBilledSessionResponse>;
+    responseDeserialize: grpc.deserialize<usage_v1_billing_pb.SetBilledSessionResponse>;
+}
 
 export const BillingServiceService: IBillingServiceService;
 
@@ -55,6 +65,7 @@ export interface IBillingServiceServer extends grpc.UntypedServiceImplementation
     updateInvoices: grpc.handleUnaryCall<usage_v1_billing_pb.UpdateInvoicesRequest, usage_v1_billing_pb.UpdateInvoicesResponse>;
     getLatestInvoice: grpc.handleUnaryCall<usage_v1_billing_pb.GetLatestInvoiceRequest, usage_v1_billing_pb.GetLatestInvoiceResponse>;
     finalizeInvoice: grpc.handleUnaryCall<usage_v1_billing_pb.FinalizeInvoiceRequest, usage_v1_billing_pb.FinalizeInvoiceResponse>;
+    setBilledSession: grpc.handleUnaryCall<usage_v1_billing_pb.SetBilledSessionRequest, usage_v1_billing_pb.SetBilledSessionResponse>;
 }
 
 export interface IBillingServiceClient {
@@ -67,6 +78,9 @@ export interface IBillingServiceClient {
     finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
     finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
     finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
+    setBilledSession(request: usage_v1_billing_pb.SetBilledSessionRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.SetBilledSessionResponse) => void): grpc.ClientUnaryCall;
+    setBilledSession(request: usage_v1_billing_pb.SetBilledSessionRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.SetBilledSessionResponse) => void): grpc.ClientUnaryCall;
+    setBilledSession(request: usage_v1_billing_pb.SetBilledSessionRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.SetBilledSessionResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class BillingServiceClient extends grpc.Client implements IBillingServiceClient {
@@ -80,4 +94,7 @@ export class BillingServiceClient extends grpc.Client implements IBillingService
     public finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
     public finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
     public finalizeInvoice(request: usage_v1_billing_pb.FinalizeInvoiceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.FinalizeInvoiceResponse) => void): grpc.ClientUnaryCall;
+    public setBilledSession(request: usage_v1_billing_pb.SetBilledSessionRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.SetBilledSessionResponse) => void): grpc.ClientUnaryCall;
+    public setBilledSession(request: usage_v1_billing_pb.SetBilledSessionRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.SetBilledSessionResponse) => void): grpc.ClientUnaryCall;
+    public setBilledSession(request: usage_v1_billing_pb.SetBilledSessionRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.SetBilledSessionResponse) => void): grpc.ClientUnaryCall;
 }

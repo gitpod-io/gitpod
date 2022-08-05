@@ -35,6 +35,8 @@ type BillingServiceClient interface {
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
 	FinalizeInvoice(ctx context.Context, in *FinalizeInvoiceRequest, opts ...grpc.CallOption) (*FinalizeInvoiceResponse, error)
+	// SetBilledSession marks an instance as billed with a billing system
+	SetBilledSession(ctx context.Context, in *SetBilledSessionRequest, opts ...grpc.CallOption) (*SetBilledSessionResponse, error)
 }
 
 type billingServiceClient struct {
@@ -72,6 +74,15 @@ func (c *billingServiceClient) FinalizeInvoice(ctx context.Context, in *Finalize
 	return out, nil
 }
 
+func (c *billingServiceClient) SetBilledSession(ctx context.Context, in *SetBilledSessionRequest, opts ...grpc.CallOption) (*SetBilledSessionResponse, error) {
+	out := new(SetBilledSessionResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/SetBilledSession", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BillingServiceServer is the server API for BillingService service.
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility
@@ -85,6 +96,8 @@ type BillingServiceServer interface {
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
 	FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error)
+	// SetBilledSession marks an instance as billed with a billing system
+	SetBilledSession(context.Context, *SetBilledSessionRequest) (*SetBilledSessionResponse, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }
 
@@ -100,6 +113,9 @@ func (UnimplementedBillingServiceServer) GetLatestInvoice(context.Context, *GetL
 }
 func (UnimplementedBillingServiceServer) FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalizeInvoice not implemented")
+}
+func (UnimplementedBillingServiceServer) SetBilledSession(context.Context, *SetBilledSessionRequest) (*SetBilledSessionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetBilledSession not implemented")
 }
 func (UnimplementedBillingServiceServer) mustEmbedUnimplementedBillingServiceServer() {}
 
@@ -168,6 +184,24 @@ func _BillingService_FinalizeInvoice_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_SetBilledSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetBilledSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).SetBilledSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/SetBilledSession",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).SetBilledSession(ctx, req.(*SetBilledSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BillingService_ServiceDesc is the grpc.ServiceDesc for BillingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -186,6 +220,10 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FinalizeInvoice",
 			Handler:    _BillingService_FinalizeInvoice_Handler,
+		},
+		{
+			MethodName: "SetBilledSession",
+			Handler:    _BillingService_SetBilledSession_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

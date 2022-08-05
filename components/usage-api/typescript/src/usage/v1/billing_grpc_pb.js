@@ -56,6 +56,28 @@ function deserialize_usage_v1_GetLatestInvoiceResponse(buffer_arg) {
   return usage_v1_billing_pb.GetLatestInvoiceResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_usage_v1_SetBilledSessionRequest(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.SetBilledSessionRequest)) {
+    throw new Error('Expected argument of type usage.v1.SetBilledSessionRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_SetBilledSessionRequest(buffer_arg) {
+  return usage_v1_billing_pb.SetBilledSessionRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_usage_v1_SetBilledSessionResponse(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.SetBilledSessionResponse)) {
+    throw new Error('Expected argument of type usage.v1.SetBilledSessionResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_SetBilledSessionResponse(buffer_arg) {
+  return usage_v1_billing_pb.SetBilledSessionResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_usage_v1_UpdateInvoicesRequest(arg) {
   if (!(arg instanceof usage_v1_billing_pb.UpdateInvoicesRequest)) {
     throw new Error('Expected argument of type usage.v1.UpdateInvoicesRequest');
@@ -118,6 +140,18 @@ finalizeInvoice: {
     requestDeserialize: deserialize_usage_v1_FinalizeInvoiceRequest,
     responseSerialize: serialize_usage_v1_FinalizeInvoiceResponse,
     responseDeserialize: deserialize_usage_v1_FinalizeInvoiceResponse,
+  },
+  // SetBilledSession marks an instance as billed with a billing system
+setBilledSession: {
+    path: '/usage.v1.BillingService/SetBilledSession',
+    requestStream: false,
+    responseStream: false,
+    requestType: usage_v1_billing_pb.SetBilledSessionRequest,
+    responseType: usage_v1_billing_pb.SetBilledSessionResponse,
+    requestSerialize: serialize_usage_v1_SetBilledSessionRequest,
+    requestDeserialize: deserialize_usage_v1_SetBilledSessionRequest,
+    responseSerialize: serialize_usage_v1_SetBilledSessionResponse,
+    responseDeserialize: deserialize_usage_v1_SetBilledSessionResponse,
   },
 };
 

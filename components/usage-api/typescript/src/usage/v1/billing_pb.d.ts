@@ -165,3 +165,49 @@ export namespace FinalizeInvoiceResponse {
     export type AsObject = {
     }
 }
+
+export class SetBilledSessionRequest extends jspb.Message {
+    getInstanceId(): string;
+    setInstanceId(value: string): SetBilledSessionRequest;
+
+    hasFrom(): boolean;
+    clearFrom(): void;
+    getFrom(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setFrom(value?: google_protobuf_timestamp_pb.Timestamp): SetBilledSessionRequest;
+    getSystem(): string;
+    setSystem(value: string): SetBilledSessionRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): SetBilledSessionRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: SetBilledSessionRequest): SetBilledSessionRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: SetBilledSessionRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): SetBilledSessionRequest;
+    static deserializeBinaryFromReader(message: SetBilledSessionRequest, reader: jspb.BinaryReader): SetBilledSessionRequest;
+}
+
+export namespace SetBilledSessionRequest {
+    export type AsObject = {
+        instanceId: string,
+        from?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        system: string,
+    }
+}
+
+export class SetBilledSessionResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): SetBilledSessionResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: SetBilledSessionResponse): SetBilledSessionResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: SetBilledSessionResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): SetBilledSessionResponse;
+    static deserializeBinaryFromReader(message: SetBilledSessionResponse, reader: jspb.BinaryReader): SetBilledSessionResponse;
+}
+
+export namespace SetBilledSessionResponse {
+    export type AsObject = {
+    }
+}
