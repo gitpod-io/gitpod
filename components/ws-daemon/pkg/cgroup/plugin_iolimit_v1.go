@@ -76,8 +76,8 @@ func (c *IOLimiterV1) Update(writeBytesPerSecond, readBytesPerSecond, writeIOPs,
 	c.cond.L.Lock()
 	defer c.cond.L.Unlock()
 
-	log.WithField("limits", c.limits).Info("updating I/O cgroups v1 limits")
 	c.limits = buildLimits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs)
+	log.WithField("limits", c.limits).Info("updating I/O cgroups v1 limits")
 
 	c.cond.Broadcast()
 }

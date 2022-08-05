@@ -86,5 +86,6 @@ func (c *ProcLimiterV2) Update(processes int64) {
 		},
 	}
 
+	log.WithField("limits", c.limits.Pids).Info("updating proc cgroups v2 limits")
 	c.cond.Broadcast()
 }

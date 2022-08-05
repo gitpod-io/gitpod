@@ -92,8 +92,8 @@ func (c *IOLimiterV2) Update(writeBytesPerSecond, readBytesPerSecond, writeIOPs,
 	c.cond.L.Lock()
 	defer c.cond.L.Unlock()
 
-	log.WithField("limits", c.limits).Info("updating I/O cgroups v2 limits")
 	c.limits = buildV2Limits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs, c.devices)
+	log.WithField("limits", c.limits.IO).Info("updating I/O cgroups v2 limits")
 
 	c.cond.Broadcast()
 }
