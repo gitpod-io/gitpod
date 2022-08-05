@@ -40,6 +40,7 @@ const (
 	ServerComponent             = "server"
 	ServerInstallationAdminPort = 9000
 	SystemNodeCritical          = "system-node-critical"
+	PublicApiComponent          = "public-api-server"
 	WSManagerComponent          = "ws-manager"
 	WSManagerBridgeComponent    = "ws-manager-bridge"
 	WSProxyComponent            = "ws-proxy"
