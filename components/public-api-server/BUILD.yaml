@@ -8,6 +8,7 @@ packages:
     deps:
       - components/common-go:lib
       - components/public-api/go:lib
+      - components/usage-api/go:lib
       - components/gitpod-protocol/go:lib
     env:
       - CGO_ENABLED=0
