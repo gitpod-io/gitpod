@@ -123,8 +123,9 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		var srcs []BlobSource
 
+		ipfsSrc := ipfsBlobSource{source: bh.IPFS}
 		if bh.IPFS != nil {
-			srcs = append(srcs, ipfsBlobSource{source: bh.IPFS})
+			srcs = append(srcs, ipfsSrc)
 		}
 
 		srcs = append(srcs, storeBlobSource{Store: bh.Store})
@@ -176,23 +177,25 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 			return nil
 		}
 
-		go func() {
-			// we can do this only after the io.Copy above. Otherwise we might expect the blob
-			// to be in the blobstore when in reality it isn't.
-			_, _, _, rc, err := src.GetBlob(context.Background(), bh.Spec, bh.Digest)
-			if err != nil {
-				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS - unable to get blob")
-				return
-			}
-			if rc == nil {
-				log.WithField("digest", bh.Digest).Warn("cannot push to IPFS - blob is nil")
-				return
-			}
-			err = bh.IPFS.Store(context.Background(), bh.Digest, rc, mediaType)
-			if err != nil {
-				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS")
-			}
-		}()
+		if src != ipfsSrc {
+			go func() {
+				// we can do this only after the io.Copy above. Otherwise we might expect the blob
+				// to be in the blobstore when in reality it isn't.
+				_, _, _, rc, err := src.GetBlob(context.Background(), bh.Spec, bh.Digest)
+				if err != nil {
+					log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS - unable to get blob")
+					return
+				}
+				if rc == nil {
+					log.WithField("digest", bh.Digest).Warn("cannot push to IPFS - blob is nil")
+					return
+				}
+				err = bh.IPFS.Store(context.Background(), bh.Digest, rc, mediaType)
+				if err != nil {
+					log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS")
+				}
+			}()
+		}
 
 		return nil
 	}()
