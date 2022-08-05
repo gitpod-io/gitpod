@@ -23,7 +23,8 @@ func TestConfigMap(t *testing.T) {
 	require.Len(t, objs, 1, "must only render one configmap")
 
 	expectedConfiguration := config.Configuration{
-		GitpodServiceURL: "wss://test.domain.everything.awesome.is/api/v1",
+		GitpodServiceURL:      "wss://test.domain.everything.awesome.is/api/v1",
+		BillingServiceAddress: "usage:9001",
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
