@@ -57,6 +57,8 @@ replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // 
 
 replace github.com/gitpod-io/gitpod/public-api => ../public-api/go // leeway
 
+replace github.com/gitpod-io/gitpod/usage-api => ../usage-api/go // leeway
+
 replace k8s.io/api => k8s.io/api v0.23.5 // leeway indirect from components/common-go:lib
 
 replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.23.5 // leeway indirect from components/common-go:lib
