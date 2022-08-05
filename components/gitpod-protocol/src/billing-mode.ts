@@ -16,23 +16,11 @@ export namespace BillingMode {
         mode: "none",
     };
 
-    export function showChargebeeBilling(billingMode: BillingMode): boolean {
-        if (billingMode.mode === "chargebee") {
-            return true;
-        }
-        return false;
-    }
-
-    export function showChargebeeInvoices(billingMode: BillingMode): boolean {
-        if (showChargebeeBilling(billingMode)) {
-            return true;
-        }
-        // TODO(gpl) or hasBeenCustomer, so they can access invoices (edge case?)
-        return false;
-    }
-
     /** Incl. upgrade and status */
-    export function showStripeBilling(billingMode: BillingMode): boolean {
+    export function showUsageBasedBilling(billingMode?: BillingMode): boolean {
+        if (!billingMode) {
+            return false;
+        }
         return (
             billingMode.mode === "usage-based" || (billingMode.mode === "chargebee" && !!billingMode.canUpgradeToUBB)
         );
@@ -63,4 +51,10 @@ interface Chargebee {
 /** Session is handld with new usage-based logic */
 interface UsageBased {
     mode: "usage-based";
+
+    /** User is already converted, but is member with at least one Chargebee-based "Team Plan" */
+    hasChargebeeTeamPlan?: boolean;
+
+    /** User is already converted, but is member in at least one Chargebee-based "Team Subscription" */
+    hasChargebeeTeamSubscription?: boolean;
 }
