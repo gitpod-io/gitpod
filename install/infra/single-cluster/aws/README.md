@@ -4,10 +4,13 @@ This directory has terraform configuration necessary to achieve a infrastructure
 corresponding to the [Single-cluster reference architecture for Gitpod on AWS](https://www.gitpod.io/docs/self-hosted/latest/reference-architecture/single-cluster-ref-arch).
 
 This module will do the following steps:
-- Create an EKS managed cluster
-- Creates external dependencies like database, storage and registry (if chosen)
-- Sets up route53 entries for the domain name (if chosen)
-- Set up cert-manager, external-dns and cluster issuer on the created cluster
+- Creates the infrastructure using our [`eks` terraform module](../../modules/eks/), which does:
+  - Setup an EKS managed cluster, along with external dependencies like database, storage and registry (if chosen)
+  - Sets up route53 entries for the domain name (if chosen)
+- Provisioning the cluster:
+  - Set up cert-manager using our [`cert-manager` module](../../modules/tools/cert-manager/)
+  - Set up external-dns using our [`external-dns` module](../../modules/tools/external-dns/)
+  - Creates a cluster-issuer using our [`issuer` module](../../modules/tools/issuer/)
 
 Since the entire setup requires more than one terraform target to be run due to
 dependencies (eg: helm provider depends on kubernetes cluster config, which is
@@ -19,6 +22,7 @@ explain the execution of the terraform module in terms of these `make` targets.
 
 * `terraform` >= `v1.1.0`
 * `kubectl`   >= `v1.20.0`
+* [`jq`](https://stedolan.github.io/jq/download/)
 
 ## Setup AWS authentication and s3 backend storage
 
@@ -47,7 +51,7 @@ by terraform to create the cluster. While some of them are fairly
 straightforward like the name of the cluster(`cluster_name`), others need a bit
 more attention:
 
-* VPC CIDR IP
+### VPC CIDR IP
 
 It is necessary to ensure that the `VPC` setup will not have conflicts with
 existing VPCs or has sufficiently large enough IP range so as to not run out of
@@ -55,25 +59,28 @@ them. Please check under the region's VPCs if the IP range you are choosing is
 already in use. The CIDR will be split among 5 subnets and hence we recommend
 `/16` as prefix to allow sufficient IP ranges. The default value is: `10.100.0.0/16`
 
-* External database, storage and registry
+### External database, storage and registry backend
 
-If you wish to create cloud specific database, storage and registry to be used
+If you wish to create cloud specific database, storage and registry backend to be used
 with `Gitpod`, leave the following 3 booleans set:
 
 ``` sh
-enable_external_database = true
-enable_external_storage  = true
-enable_external_registry = true
+enable_external_database                     = true
+enable_external_storage                      = true
+enable_external_storage_for_registry_backend = true
 ```
 
 The corresponding resources will be created by the terraform script which
-inclustes an `RDS` mysql database, an `S3` bucket and an AWS container registry setup. The
-expectation is that you can use the credentials to these setups(provided later
+inclustes an `RDS` mysql database, an `S3` bucket and another `S3` bucket to
+be used as registry backend. By default `enable_external_storage_for_registry_backend`
+is set to `false`. One can re-use the same `S3` bucket for both object storage and registry backend.
+
+The expectation is that you can use the credentials to these setups(provided later
 as terraform outputs) during the setup of Gitpod via UI later in the process.
 Alternatively, one can choose to use incluster dependencies or separately
 created resources of choice.
 
-* AMI Image ID and Kubernetes version
+### AMI Image ID and Kubernetes version
 
 We officially support Ubuntu images for Gitpod setup. In EKS cluster, AMI images
 are kubernetes version and region specific. You can find a list of AMI IDs
@@ -82,7 +89,7 @@ are kubernetes version and region specific. You can find a list of AMI IDs
 Make sure you provide the corresponding kubernetes version as a value to the
 variable `cluster_version`. We officially support kubernetes versions >= `1.20`.
 
-* Domain name configuration
+### Domain name configuration
 
 If you are already sure of the domain name under which you want to setup Gitpod,
 we recommend highly to provide the value as `domain_name`. This will save a lot
@@ -139,19 +146,15 @@ cluster. Now you have to configure whichever provider you use to host your
 domain name to route traffic to the AWS name servers. You can find these name
 servers in the `make output` command from above. It would be of the format:
 
-``` json
- "nameservers": {
-    "sensitive": false,
-    "type": [
-      "list",
-      "string"
-    ],
-    "value": [
-      "ns-100.awsdns-12.com.",
-      "ns-1434.awsdns-51.org.",
-      "ns-1765.awsdns-28.co.uk.",
-      "ns-786.awsdns-34.net."
-    ]
+```json
+Nameservers for the domain(to be added as NS records in your domain provider):
+=================
+[
+  "ns-1444.awsdns-52.org.",
+  "ns-1559.awsdns-02.co.uk.",
+  "ns-209.awsdns-26.com.",
+  "ns-969.awsdns-57.net."
+]
 ```
 
 Add the `ns` records similar to the above 4 URIs as NS records under your domain
@@ -182,3 +185,47 @@ kubectl kots install gitpod/stable # you can replace `stable` with `unstable` or
 Upon completion, you can access `KOTS` UI in `localhost:8800`. Here you can
 proceed to configuring and intalling Gitpod. Please follow the [official
 documentaion](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod) to complete the Gitpod setup.
+
+## Troubleshooting
+
+### Some pods never start (Init state)
+
+```sh
+kubectl get pods -l component=proxy
+NAME                     READY   STATUS    RESTARTS   AGE
+proxy-5998488f4c-t8vkh   0/1     Init 0/1  0          5m
+```
+
+The most likely reason is that the DNS01 challenge has yet to resolve. To fix this, make sure you have added the NS records corresponding to the `route53` zone of the `domain_name` added to your domain provider.
+
+Once the DNS record has been updated, you will need to delete all Cert Manager pods to retrigger the certificate request
+
+```
+kubectl delete pods -n cert-manager --all
+```
+
+After a few minutes, you should see the https-certificate become ready.
+
+```
+kubectl get certificate
+NAME                        READY   SECRET                      AGE
+https-certificates          True    https-certificates          5m
+```
+
+## Cleanup
+
+Make sure you first delete the `gitpod` resources in the cluster so things like load balancer created by the k8s `service` gets deleted. Otherwise terraform will not be able to delete the VPC.
+
+```sh
+kubectl delete --now namespace gitpod
+```
+
+> It is okay to ignore any dangling workspaces that are not deleted
+
+Now run the terraform destroy step to cleanup all the cloud resources:
+
+```sh
+make destroy
+```
+
+The destroy should take around 20 minutes.
