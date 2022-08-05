@@ -50,7 +50,7 @@ export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
         };
 
         fetchClasses().catch(console.error);
-    });
+    }, []);
 
     if (!props.enabled) {
         return <div></div>;

@@ -234,7 +234,7 @@ function App() {
             // Choose which experiments to run for this session/user
             Experiment.set(Experiment.seed(true));
         }
-    });
+    }, []);
 
     useEffect(() => {
         return history.listen((location: any) => {

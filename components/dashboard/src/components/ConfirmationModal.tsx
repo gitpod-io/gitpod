@@ -60,7 +60,7 @@ export default function ConfirmationModal(props: {
     const buttonDisabled = useRef(props.buttonDisabled);
     useEffect(() => {
         buttonDisabled.current = props.buttonDisabled;
-    });
+    }, []);
 
     return (
         <Modal
