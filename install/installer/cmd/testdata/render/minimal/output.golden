@@ -2197,7 +2197,7 @@ data:
             "type": "browser",
             "logo": "https://ide.minimal-test.gitpod.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8cdc51634e84dfb0f66df6c66186c90ce5ed0c80",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-ce3e2bc5edd1cf37d66ef0b37c38645543021831",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
