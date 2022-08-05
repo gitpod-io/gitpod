@@ -528,7 +528,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         try {
                                             const desktopLink = new URL(openLink);
                                             redirect =
-                                                desktopLink.protocol != "http:" && desktopLink.protocol != "https:";
+                                                desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
                                         } catch {}
                                         if (redirect) {
                                             window.location.href = openLink;

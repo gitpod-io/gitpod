@@ -256,6 +256,32 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     ): Promise<void> {
         await super.mayStartWorkspace(ctx, user, runningInstances);
 
+        // TODO(at) replace the naive implementation based on usage service
+        // with a proper call check against the upcoming invoice.
+        // For now this should just enable the work on fronend.
+        if (await this.isUsageBasedFeatureFlagEnabled(user)) {
+            // dummy implementation to test frontend bits
+            const attributionId = await this.userService.getWorkspaceUsageAttributionId(user);
+            const costCenter = !!attributionId && (await this.costCenterDB.findById(attributionId));
+            if (costCenter) {
+                const allSessions = await this.listBilledUsage(ctx, {
+                    attributionId,
+                    startedTimeOrder: SortOrder.Descending,
+                });
+                const totalUsage = allSessions.map((s) => s.credits).reduce((a, b) => a + b, 0);
+
+                if (totalUsage >= costCenter.spendingLimit) {
+                    throw new ResponseError(
+                        ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
+                        "Increase spending limit and try again.",
+                        {
+                            attributionId: user.usageAttributionId,
+                        },
+                    );
+                }
+            }
+        }
+
         const result = await this.entitlementService.mayStartWorkspace(user, new Date(), runningInstances);
         if (!result.enoughCredits) {
             throw new ResponseError(
@@ -1926,16 +1952,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return subscription;
     }
 
-    protected async ensureIsUsageBasedFeatureFlagEnabled(user: User): Promise<void> {
+    protected async isUsageBasedFeatureFlagEnabled(user: User): Promise<boolean> {
         const teams = await this.teamDB.findTeamsByUser(user.id);
-        const isUsageBasedBillingEnabled = await getExperimentsClientForBackend().getValueAsync(
-            "isUsageBasedBillingEnabled",
-            false,
-            {
-                user,
-                teams: teams,
-            },
-        );
+        return await getExperimentsClientForBackend().getValueAsync("isUsageBasedBillingEnabled", false, {
+            user,
+            teams: teams,
+        });
+    }
+
+    protected async ensureIsUsageBasedFeatureFlagEnabled(user: User): Promise<void> {
+        const isUsageBasedBillingEnabled = await this.isUsageBasedFeatureFlagEnabled(user);
         if (!isUsageBasedBillingEnabled) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
@@ -2084,7 +2110,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             if (costCenter) {
                 if (totalUsage > costCenter.spendingLimit) {
                     result.unshift("The spending limit is reached.");
-                } else if (totalUsage > 0.8 * costCenter.spendingLimit * 0.8) {
+                } else if (totalUsage > costCenter.spendingLimit * 0.8) {
                     result.unshift("The spending limit is almost reached.");
                 }
             } else {
