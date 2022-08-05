@@ -10,6 +10,18 @@ resource "aws_s3_bucket" "gitpod-storage" {
   }
 }
 
+resource "aws_s3_bucket" "gitpod-registry-backend" {
+  count = var.enable_external_storage_for_registry_backend ? 1 : 0
+
+  force_destroy = true
+  bucket        = "reg-bucket-${var.cluster_name}"
+  acl           = "private"
+
+  versioning {
+    enabled = true
+  }
+}
+
 data "aws_iam_policy_document" "s3_policy" {
   count = var.enable_external_storage ? 1 : 0
   statement {
