@@ -22,7 +22,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // Config configures the containerd resource governer dispatch
@@ -101,10 +100,10 @@ type DispatchListener struct {
 }
 
 type workspace struct {
-	CFS       CFSController
-	OWI       logrus.Fields
-	HardLimit ResourceLimiter
-	Pod       *corev1.Pod
+	CFS         CFSController
+	OWI         logrus.Fields
+	HardLimit   ResourceLimiter
+	Annotations map[string]string
 
 	lastThrottled uint64
 }
@@ -143,7 +142,7 @@ func (d *DispatchListener) source(context.Context) ([]Workspace, error) {
 			ID:          id,
 			NrThrottled: throttled,
 			Usage:       usage,
-			Pod:         w.Pod,
+			Annotations: w.Annotations,
 		})
 	}
 	return res, nil
@@ -191,9 +190,9 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 	}
 
 	d.workspaces[ws.InstanceID] = &workspace{
-		CFS: controller,
-		OWI: ws.OWI(),
-		Pod: ws.Pod,
+		CFS:         controller,
+		OWI:         ws.OWI(),
+		Annotations: ws.Pod.Annotations,
 	}
 	go func() {
 		<-ctx.Done()
@@ -219,7 +218,7 @@ func (d *DispatchListener) WorkspaceUpdated(ctx context.Context, ws *dispatch.Wo
 		return xerrors.Errorf("received update for a workspace we haven't seen before: %s", ws.InstanceID)
 	}
 
-	wsinfo.Pod = ws.Pod
+	wsinfo.Annotations = ws.Pod.Annotations
 	return nil
 }
 

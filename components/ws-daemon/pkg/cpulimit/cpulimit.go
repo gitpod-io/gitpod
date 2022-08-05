@@ -13,7 +13,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -23,7 +22,7 @@ type Workspace struct {
 	NrThrottled uint64
 	Usage       CPUTime
 	QoS         int
-	Pod         *corev1.Pod
+	Annotations map[string]string
 }
 
 type WorkspaceHistory struct {
@@ -253,7 +252,7 @@ type annotationLimiter struct {
 }
 
 func (a annotationLimiter) Limit(wsh *WorkspaceHistory) (Bandwidth, error) {
-	value, ok := wsh.LastUpdate.Pod.Annotations[a.Annotation]
+	value, ok := wsh.LastUpdate.Annotations[a.Annotation]
 	if !ok {
 		return 0, xerrors.Errorf("no annotation named %s found on workspace %s", a.Annotation, wsh.ID)
 	}
