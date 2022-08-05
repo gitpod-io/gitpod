@@ -49,6 +49,10 @@ var workspacesListCmd = &cobra.Command{
 				pod = fmt.Sprintf("ws-%s", w.GetId())
 			case api.WorkspaceType_PREBUILD:
 				pod = fmt.Sprintf("prebuild-%s", w.GetId())
+			case api.WorkspaceType_IMAGEBUILD:
+				pod = fmt.Sprintf("imagebuild-%s", w.GetId())
+			case api.WorkspaceType_PROBE:
+				pod = fmt.Sprintf("probe-%s", w.GetId())
 			}
 			out = append(out, PrintWorkspace{
 				Owner:       w.GetMetadata().GetOwner(),
