@@ -5,9 +5,11 @@
 package ide_proxy
 
 const (
-	Component     = "ide-proxy"
-	ContainerPort = 80
-	PortName      = "http"
-	ServicePort   = 80
-	ReadinessPort = 8080
+	Component          = "ide-proxy"
+	ContainerHTTPPort  = 80
+	ContainerHTTPSPort = 443
+	ContainerHTTPName  = "http"
+	ContainerHTTPSName = "https"
+	ReadinessPort      = 8080
+	ServicePort        = ContainerHTTPPort
 )

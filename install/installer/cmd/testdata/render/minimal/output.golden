@@ -5856,6 +5856,10 @@ spec:
     port: 80
     protocol: TCP
     targetPort: 80
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 443
   selector:
     app: gitpod
     component: ide-proxy
@@ -7902,11 +7906,18 @@ spec:
             memory: 32Mi
         securityContext:
           privileged: false
+        volumeMounts:
+        - mountPath: /etc/caddy/certificates
+          name: config-certificates
       dnsPolicy: ClusterFirst
       enableServiceLinks: false
       restartPolicy: Always
       serviceAccountName: ide-proxy
       terminationGracePeriodSeconds: 30
+      volumes:
+      - name: config-certificates
+        secret:
+          secretName: https-certificates
 status: {}
 ---
 # apps/v1/Deployment image-builder-mk3

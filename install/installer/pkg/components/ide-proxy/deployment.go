@@ -47,6 +47,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						DNSPolicy:                     "ClusterFirst",
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
+						Volumes: []corev1.Volume{{
+							Name: "config-certificates",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: ctx.Config.Certificate.Name,
+								},
+							},
+						}},
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.IDEProxy.Version),
@@ -58,8 +66,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							}),
 							Ports: []corev1.ContainerPort{{
-								ContainerPort: ContainerPort,
-								Name:          PortName,
+								ContainerPort: ContainerHTTPPort,
+								Name:          ContainerHTTPName,
 							}},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),
@@ -67,6 +75,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
 							)),
+							VolumeMounts: []corev1.VolumeMount{{
+								Name:      "config-certificates",
+								MountPath: "/etc/caddy/certificates",
+							}},
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{

@@ -21,7 +21,13 @@
 	lb_try_duration 1s
 }
 
-:80 {
+(ssl_configuration) {
+	tls /etc/caddy/certificates/tls.crt /etc/caddy/certificates/tls.key {
+		protocols tls1.2
+	}
+}
+
+:80, ide.{$GITPOD_DOMAIN}:443 {
 	header -Server
 
 	@blobserve path /blobserve/*

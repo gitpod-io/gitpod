@@ -23,9 +23,14 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	ports := []common.ServicePort{
 		{
-			Name:          PortName,
-			ContainerPort: ContainerPort,
-			ServicePort:   ServicePort,
+			Name:          ContainerHTTPName,
+			ContainerPort: ContainerHTTPPort,
+			ServicePort:   ContainerHTTPPort,
+		},
+		{
+			Name:          ContainerHTTPSName,
+			ContainerPort: ContainerHTTPSPort,
+			ServicePort:   ContainerHTTPSPort,
 		},
 	}
 
