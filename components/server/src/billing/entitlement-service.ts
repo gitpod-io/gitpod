@@ -10,6 +10,7 @@ import {
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
 } from "@gitpod/gitpod-protocol";
+import { injectable } from "inversify";
 import { MayStartWorkspaceResult } from "../../ee/src/user/eligibility-service";
 
 export const EntitlementService = Symbol("EntitlementService");
@@ -51,6 +52,7 @@ export interface EntitlementService {
 /**
  * The default implementation that is used for the community edition.
  */
+@injectable()
 export class CommunityEntitlementService implements EntitlementService {
     async mayStartWorkspace(
         user: User,
