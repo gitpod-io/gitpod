@@ -109,24 +109,26 @@ export class BillingModesImpl implements BillingModes {
         const cbSubscriptions = await this.subscriptionSvc.getActivePaidSubscription(user.id, now);
         const cbTeamSubscriptions = cbSubscriptions.filter((s) => isTeamSubscription(s));
         const cbPersonalSubscriptions = cbSubscriptions.filter((s) => !isTeamSubscription(s));
+        let canUpgradeToUBB = false;
         if (cbPersonalSubscriptions.length > 0) {
             if (cbPersonalSubscriptions.every((s) => Subscription.isCancelled(s, now.toISOString()))) {
                 // The user has one or more paid subscriptions, but all of them have already been cancelled
-                return { mode: "chargebee", canUpgradeToUBB: true };
+                canUpgradeToUBB = true;
+            } else {
+                // The user has at least one paid personal subscription
+                return {
+                    mode: "chargebee",
+                };
             }
-
-            // The user has at least one paid personal subscription
-            return {
-                mode: "chargebee",
-            };
         }
 
         // Stripe: Active personal subsciption?
+        let hasUbbPersonal = false;
         const customer = await this.stripeSvc.findCustomerByUserId(user.id);
         if (customer) {
             const subscription = await this.stripeSvc.findUncancelledSubscriptionByCustomer(customer.id);
             if (subscription) {
-                return { mode: "usage-based" };
+                hasUbbPersonal = true;
             }
         }
 
@@ -137,10 +139,18 @@ export class BillingModesImpl implements BillingModes {
         const hasCbTeam = teamsModes.some((tm) => tm.mode === "chargebee");
         const hasCbTeamSeat = cbTeamSubscriptions.length > 0;
 
-        if (hasUbbTeam) {
-            return { mode: "usage-based" }; // UBB is gready: once a user has at least a team seat, they should benefit from it!
+        if (hasUbbTeam || hasUbbPersonal) {
+            // UBB is gready: once a user has at least a team seat, they should benefit from it!
+            const result: BillingMode = { mode: "usage-based" };
+            if (hasCbTeam) {
+                result.hasChargebeeTeamPlan = true;
+            }
+            if (hasCbTeamSeat) {
+                result.hasChargebeeTeamSubscription = true;
+            }
+            return result;
         }
-        if (hasCbTeam || hasCbTeamSeat) {
+        if (hasCbTeam || hasCbTeamSeat || canUpgradeToUBB) {
             // TODO(gpl): Q: How to test the free-tier, then? A: Make sure you have no CB seats anymore
             // For that we could add a new field here, which lists all seats that are "blocking" you, and display them in the UI somewhere.
             return { mode: "chargebee", canUpgradeToUBB: true }; // UBB is enabled, but no seat nor subscription yet.

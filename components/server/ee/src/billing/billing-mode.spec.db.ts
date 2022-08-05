@@ -87,7 +87,9 @@ class BillingModeSpec {
     @test(timeout(20000))
     public async testBillingModes() {
         const userId = "123";
+        const teamName = "team-123";
         const stripeCustomerId = "customer-123";
+        const stripeTeamCustomerId = "customer-t-123";
         const creationDate = "2022-01-01T19:00:00.000Z";
         const cancellationDate = "2022-01-15T19:00:00.000Z";
         const now = "2022-01-15T20:00:00.000Z";
@@ -102,7 +104,7 @@ class BillingModeSpec {
 
         function team(): Pick<Team, "name"> {
             return {
-                name: "team-123",
+                name: teamName,
             };
         }
 
@@ -117,10 +119,11 @@ class BillingModeSpec {
             });
         }
 
-        function stripeSubscription(): StripeSubscription {
+        function stripeSubscription(team: boolean = false) {
             return {
                 id: "stripe-123",
-                customer: stripeCustomerId,
+                customer: team ? stripeTeamCustomerId : stripeCustomerId,
+                isTeam: team,
             };
         }
 
@@ -131,9 +134,10 @@ class BillingModeSpec {
                 enablePayment: boolean;
                 usageBasedPricingEnabled: boolean;
                 subscriptions?: Subscription[];
-                stripeSubscription?: StripeSubscription;
+                stripeSubscription?: StripeSubscription & { isTeam: boolean };
             };
             expectation: BillingMode;
+            only?: true;
         }
         const tests: Test[] = [
             // user: payment?
@@ -238,6 +242,23 @@ class BillingModeSpec {
                 expectation: {
                     mode: "chargebee",
                     canUpgradeToUBB: true,
+                },
+            },
+            {
+                name: "user: chargbee paid personal (cancelled) + team seat (active) + stripe",
+                subject: user(),
+                config: {
+                    enablePayment: true,
+                    usageBasedPricingEnabled: true,
+                    subscriptions: [
+                        subscription(Plans.PERSONAL_EUR, cancellationDate, endDate),
+                        subscription(Plans.TEAM_PROFESSIONAL_EUR),
+                    ],
+                    stripeSubscription: stripeSubscription(true),
+                },
+                expectation: {
+                    mode: "usage-based",
+                    hasChargebeeTeamSubscription: true,
                 },
             },
             // user: usage-based
@@ -419,7 +440,8 @@ class BillingModeSpec {
             },
         ];
 
-        for (const test of tests) {
+        const onlyTest = tests.find((t) => t.only);
+        for (const test of onlyTest ? [onlyTest] : tests) {
             // Setup test code, environment and data
             const testContainer = new Container();
             testContainer.load(dbContainerModule);
@@ -440,12 +462,25 @@ class BillingModeSpec {
                 }),
             );
 
+            // Wipe DB
+            const typeorm = testContainer.get<TypeORM>(TypeORM);
+            const manager = await typeorm.getConnection();
+            await manager.getRepository(DBSubscription).delete({});
+            await manager.getRepository(DBTeamSubscription).delete({});
+            await manager.getRepository(DBTeamSubscription2).delete({});
+            await manager.getRepository(DBTeamSubscriptionSlot).delete({});
+            await manager.getRepository(DBTeam).delete({});
+            await manager.getRepository(DBTeamMembership).delete({});
+            await manager.getRepository(DBUser).delete({});
+
+            // Prepare test config
             const userDB = testContainer.get<UserDB>(UserDB);
             const teamDB = testContainer.get<TeamDB>(TeamDB);
             const accountingDB = testContainer.get<AccountingDB>(AccountingDB);
             const teamSubscriptionDB = testContainer.get<TeamSubscriptionDB>(TeamSubscriptionDB);
             const teamSubscription2DB = testContainer.get<TeamSubscription2DB>(TeamSubscription2DB);
 
+            let isTeam = false;
             let teamId: string | undefined = undefined;
             let teamMembershipId: string | undefined = undefined;
             let attributionId: AttributionId | undefined = undefined;
@@ -454,14 +489,19 @@ class BillingModeSpec {
                 await userDB.storeUser(user);
                 attributionId = { kind: "user", userId };
             } else {
-                const team = await teamDB.createTeam(userId, test.subject.name);
-                teamId = team.id;
-                attributionId = { kind: "team", teamId: team.id };
-                const membership = await teamDB.findTeamMembership(userId, teamId);
+                isTeam = true;
+            }
+            if (isTeam || test.config.stripeSubscription?.isTeam) {
+                const team = await teamDB.createTeam(userId, teamName);
+                const membership = await teamDB.findTeamMembership(userId, team.id);
                 if (!membership) {
                     throw new Error(`${test.name}: Invalid test data: expected membership for team to exist!`);
                 }
                 teamMembershipId = membership.id;
+                if (isTeam) {
+                    attributionId = { kind: "team", teamId: team.id };
+                    teamId = team.id;
+                }
             }
             if (!attributionId) {
                 throw new Error("Invalid test data: no subject configured!");
@@ -521,17 +561,6 @@ class BillingModeSpec {
                     test.expectation,
                 )}' but got '${JSON.stringify(actual)}'`,
             ).to.deep.equalInAnyOrder(test.expectation);
-
-            // Wipe DB
-            const typeorm = testContainer.get<TypeORM>(TypeORM);
-            const manager = await typeorm.getConnection();
-            await manager.getRepository(DBSubscription).delete({});
-            await manager.getRepository(DBTeamSubscription).delete({});
-            await manager.getRepository(DBTeamSubscription2).delete({});
-            await manager.getRepository(DBTeamSubscriptionSlot).delete({});
-            await manager.getRepository(DBTeam).delete({});
-            await manager.getRepository(DBTeamMembership).delete({});
-            await manager.getRepository(DBUser).delete({});
         }
     }
 }
