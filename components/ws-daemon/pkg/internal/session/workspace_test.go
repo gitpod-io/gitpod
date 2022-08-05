@@ -144,7 +144,7 @@ func TestWaitForInit(t *testing.T) {
 			t.Errorf("%s: cannot create test workspace: %v", test.Desc, err)
 			continue
 		}
-		ws.state = test.State
+		ws.state.Store(test.State)
 
 		waitStarted := make(chan struct{})
 		waitComplete := make(chan struct{})
@@ -199,7 +199,7 @@ func TestWaitOrMarkForDisposalRace(t *testing.T) {
 		t.Errorf("cannot create test workspace: %v", err)
 		return
 	}
-	ws.state = WorkspaceReady
+	ws.state.Store(WorkspaceReady)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -222,7 +222,7 @@ func TestWaitOrMarkForDisposalRace(t *testing.T) {
 
 				time.Sleep(1 * time.Second)
 				t.Logf("num go routines: %03d", runtime.NumGoroutine())
-				ws.Dispose(ctx)
+				_ = ws.Dispose(ctx)
 			}
 		}()
 	}
@@ -263,7 +263,7 @@ func TestWaitOrMarkForDisposal(t *testing.T) {
 			t.Errorf("%s: cannot create test workspace: %v", test.Desc, err)
 			continue
 		}
-		ws.state = test.State
+		ws.state.Store(test.State)
 
 		waitStarted := make(chan struct{})
 		waitComplete := make(chan struct{})

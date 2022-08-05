@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/opentracing/opentracing-go"
@@ -55,15 +56,15 @@ type Workspace struct {
 	// workspace resides. If this workspace has no Git working copy, this field is an empty string.
 	CheckoutLocation string `json:"checkoutLocation"`
 
-	CreatedAt             time.Time        `json:"createdAt"`
-	DoBackup              bool             `json:"doBackup"`
-	Owner                 string           `json:"owner"`
-	WorkspaceID           string           `json:"metaID"`
-	InstanceID            string           `json:"workspaceID"`
-	LastGitStatus         *csapi.GitStatus `json:"lastGitStatus"`
-	FullWorkspaceBackup   bool             `json:"fullWorkspaceBackup"`
-	PersistentVolumeClaim bool             `json:"persistentVolumeClaim"`
-	ContentManifest       []byte           `json:"contentManifest"`
+	CreatedAt             time.Time    `json:"createdAt"`
+	DoBackup              bool         `json:"doBackup"`
+	Owner                 string       `json:"owner"`
+	WorkspaceID           string       `json:"metaID"`
+	InstanceID            string       `json:"workspaceID"`
+	lastGitStatus         atomic.Value `json:"lastGitStatus"`
+	FullWorkspaceBackup   bool         `json:"fullWorkspaceBackup"`
+	PersistentVolumeClaim bool         `json:"persistentVolumeClaim"`
+	ContentManifest       []byte       `json:"contentManifest"`
 
 	ServiceLocNode   string `json:"serviceLocNode"`
 	ServiceLocDaemon string `json:"serviceLocDaemon"`
@@ -76,8 +77,7 @@ type Workspace struct {
 	NonPersistentAttrs map[string]interface{} `json:"-"`
 
 	store              *Store
-	state              WorkspaceState
-	stateLock          sync.RWMutex
+	state              atomic.Value
 	operatingCondition *sync.Cond
 }
 
@@ -108,15 +108,11 @@ func (s *Workspace) WaitForInit(ctx context.Context) (ready bool) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "workspace.WaitForInit")
 	defer tracing.FinishSpan(span, nil)
 
-	s.stateLock.RLock()
-	if s.state == WorkspaceReady {
-		s.stateLock.RUnlock()
+	if s.currentState() == WorkspaceReady {
 		return true
-	} else if s.state != WorkspaceInitializing {
-		s.stateLock.RUnlock()
+	} else if s.currentState() != WorkspaceInitializing {
 		return false
 	}
-	s.stateLock.RUnlock()
 
 	s.operatingCondition.L.Lock()
 	s.operatingCondition.Wait()
@@ -139,10 +135,8 @@ func (s *Workspace) MarkInitDone(ctx context.Context) (err error) {
 		return xerrors.Errorf("cannot mark init done: %w", err)
 	}
 
-	s.stateLock.Lock()
-	s.state = WorkspaceReady
+	s.setState(WorkspaceReady)
 	s.operatingCondition.Broadcast()
-	s.stateLock.Unlock()
 
 	err = s.store.runLifecycleHooks(ctx, s)
 	if err != nil {
@@ -164,14 +158,10 @@ func (s *Workspace) WaitOrMarkForDisposal(ctx context.Context) (done bool, repo 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "workspace.WaitOrMarkForDisposal")
 	defer tracing.FinishSpan(span, &err)
 
-	s.stateLock.Lock()
-	if s.state == WorkspaceDisposed {
-		s.stateLock.Unlock()
+	if s.currentState() == WorkspaceDisposed {
 		return true, nil, nil
-	} else if s.state != WorkspaceDisposing {
-		s.state = WorkspaceDisposing
-		s.stateLock.Unlock()
-
+	} else if s.currentState() != WorkspaceDisposing {
+		s.setState(WorkspaceDisposing)
 		err = s.persist()
 		if err != nil {
 			return false, nil, xerrors.Errorf("cannot mark as disposing: %w", err)
@@ -184,12 +174,11 @@ func (s *Workspace) WaitOrMarkForDisposal(ctx context.Context) (done bool, repo 
 
 		return false, nil, nil
 	}
-	s.stateLock.Unlock()
 
 	s.operatingCondition.L.Lock()
 	s.operatingCondition.Wait()
 	done = true
-	repo = s.LastGitStatus
+	repo = s.GitStatus()
 	s.operatingCondition.L.Unlock()
 	return
 }
@@ -207,10 +196,8 @@ func (s *Workspace) Dispose(ctx context.Context) (err error) {
 		return xerrors.Errorf("cannot remove workspace: %w", err)
 	}
 
-	s.stateLock.Lock()
-	s.state = WorkspaceDisposed
+	s.setState(WorkspaceDisposed)
 	s.operatingCondition.Broadcast()
-	s.stateLock.Unlock()
 
 	err = s.store.runLifecycleHooks(ctx, s)
 	if err != nil {
@@ -234,27 +221,23 @@ func (s *Workspace) Dispose(ctx context.Context) (err error) {
 
 // IsReady returns true if the workspace is in the ready state
 func (s *Workspace) IsReady() bool {
-	s.stateLock.RLock()
-	r := s.state == WorkspaceReady
-	s.stateLock.RUnlock()
-	return r
+	return s.currentState() == WorkspaceReady
 }
 
 // IsDisposing returns true if the workspace is in the disposing/disposed state
 func (s *Workspace) IsDisposing() bool {
-	s.stateLock.RLock()
-	r := s.state == WorkspaceDisposing || s.state == WorkspaceDisposed
-	s.stateLock.RUnlock()
-	return r
+	return s.currentState() == WorkspaceDisposing || s.currentState() == WorkspaceDisposed
 }
 
 // SetGitStatus sets the last git status field and persists the change
 func (s *Workspace) SetGitStatus(status *csapi.GitStatus) error {
-	s.stateLock.Lock()
-	s.LastGitStatus = status
-	s.stateLock.Unlock()
-
+	s.lastGitStatus.Store(status)
 	return s.persist()
+}
+
+func (s *Workspace) GitStatus() *csapi.GitStatus {
+	val := s.lastGitStatus.Load()
+	return val.(*csapi.GitStatus)
 }
 
 // UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
@@ -267,7 +250,7 @@ func (s *Workspace) UpdateGitStatus(ctx context.Context, persistentVolumeClaim b
 			return nil, err
 		}
 
-		s.LastGitStatus = toGitStatus(stat)
+		s.SetGitStatus(toGitStatus(stat))
 	} else {
 		loc = s.Location
 		if loc == "" {
@@ -296,7 +279,7 @@ func (s *Workspace) UpdateGitStatus(ctx context.Context, persistentVolumeClaim b
 			return nil, err
 		}
 
-		s.LastGitStatus = toGitStatus(stat)
+		s.SetGitStatus(toGitStatus(stat))
 	}
 
 	err = s.persist()
@@ -305,7 +288,7 @@ func (s *Workspace) UpdateGitStatus(ctx context.Context, persistentVolumeClaim b
 		err = nil
 	}
 
-	return s.LastGitStatus, nil
+	return s.GitStatus(), nil
 }
 
 func toGitStatus(s *git.Status) *csapi.GitStatus {
@@ -339,9 +322,7 @@ func (s *Workspace) persistentStateLocation() string {
 }
 
 func (s *Workspace) persist() error {
-	s.stateLock.RLock()
-	fc, err := json.Marshal(persistentWorkspace{s, s.state})
-	s.stateLock.RUnlock()
+	fc, err := json.Marshal(persistentWorkspace{s, s.currentState()})
 	if err != nil {
 		return xerrors.Errorf("cannot persist workspace: %w", err)
 	}
@@ -372,8 +353,17 @@ func loadWorkspace(ctx context.Context, path string) (sess *Workspace, err error
 
 	res := p.Workspace
 	res.NonPersistentAttrs = make(map[string]interface{})
-	res.state = p.State
+	res.setState(p.State)
 	res.operatingCondition = sync.NewCond(&sync.Mutex{})
 
 	return res, nil
+}
+
+func (s *Workspace) setState(state WorkspaceState) {
+	s.state.Store(state)
+}
+
+func (s *Workspace) currentState() WorkspaceState {
+	val := s.state.Load()
+	return val.(WorkspaceState)
 }

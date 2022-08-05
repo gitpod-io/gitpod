@@ -81,7 +81,7 @@ func NewStore(ctx context.Context, location string, hooks map[WorkspaceState][]W
 }
 
 func (s *Store) runLifecycleHooks(ctx context.Context, ws *Workspace) error {
-	hooks := s.hooks[ws.state]
+	hooks := s.hooks[ws.currentState()]
 	log.WithFields(ws.OWI()).WithField("state", ws.state).WithField("hooks", len(hooks)).Debug("running lifecycle hooks")
 
 	for _, h := range hooks {
@@ -111,7 +111,7 @@ func (s *Store) NewWorkspace(ctx context.Context, instanceID, location string, c
 	if err != nil {
 		return nil, err
 	}
-	res.state = WorkspaceInitializing
+	res.state.Store(WorkspaceInitializing)
 	if res.NonPersistentAttrs == nil {
 		res.NonPersistentAttrs = make(map[string]interface{})
 	}
