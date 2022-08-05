@@ -9,17 +9,17 @@ module "externaldns" {
   source      = "../../modules/tools/cloud-dns-external-dns"
   kubeconfig  = var.kubeconfig
   credentials = var.credentials
-  project     = "sh-automated-tests"
-  region      = "europe-west1"
-  zone        = "europe-west1-d"
+  project     = var.project
+  region      = var.region
+  zone        = var.zone
 }
 
 module "cluster-issuer" {
-  source      = "../../modules/tools/issuer"
-  kubeconfig  = var.kubeconfig
-  issuer_name = "cloudDNS"
+  source              = "../../modules/tools/issuer"
+  kubeconfig          = var.kubeconfig
+  issuer_name         = "cloudDNS"
   cert_manager_issuer = {
-    project = "sh-automated-tests"
+    project                 = var.project
     serviceAccountSecretRef = {
       name = "clouddns-dns01-solver"
       key  = "keys.json"
