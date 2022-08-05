@@ -41,6 +41,8 @@ type HistogramMetricsConfiguration struct {
 type ServiceConfiguration struct {
 	Server MetricsServerConfiguration `json:"server"`
 
+	Debug bool `json:"debug"`
+
 	PProf struct {
 		Addr string `json:"addr"`
 	} `json:"pprof"`
