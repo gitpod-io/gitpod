@@ -47,9 +47,9 @@ variable "enable_external_storage" {
   description = "Set this to false to avoid creating an s3 storage to use with Gitpod instead of incluster minio"
 }
 
-variable "enable_external_registry" {
-  default     = true
-  description = "Set this to false to avoid creating an AWS registry to use with Gitpod instead of incluster registry"
+variable "enable_external_storage_for_registry_backend" {
+  default     = false
+  description = "Set this to true to create a separate S3 bucket to use as registry backend(if not, you can use the same bucket as above or the incluster registry)"
 }
 
 variable "cluster_version" {

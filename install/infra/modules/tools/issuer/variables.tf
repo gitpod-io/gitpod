@@ -14,3 +14,7 @@ variable "secretAccessKey" {
 variable "issuer_name" {
     default     = "route53"
 }
+
+variable "cluster_issuer_name" {
+    default     = "gitpod-issuer"
+}
