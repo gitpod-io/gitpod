@@ -4,7 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { Workspace } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { WorkspaceClass } from "@gitpod/ws-manager/lib";
 
 export type WorkspaceClassesConfig = [WorkspaceClassConfig];
 
@@ -37,6 +41,18 @@ export interface WorkspaceClassConfig {
         // Marks this class as the one that users marked with "GetMoreResources" receive
         moreResources: boolean;
     };
+
+    // The resources that this class provides
+    resources: WorkspaceClassResources;
+}
+
+export interface WorkspaceClassResources {
+    // Storage in gigabyte
+    storage: number;
+    // Number of cpus
+    cpu: number;
+    // Memory in gigabyte
+    memory: number;
 }
 
 export namespace WorkspaceClasses {
@@ -110,5 +126,101 @@ export namespace WorkspaceClasses {
                 "Exactly one default workspace class needs to be configured:" + JSON.stringify(defaultClasses),
             );
         }
+    }
+
+    /**
+     * Gets the workspace class of the prebuild
+     * If the class is not supported anymore undefined will be returned
+     * @param ctx
+     * @param workspace
+     * @param db
+     * @param classes
+     */
+    export async function getFromPrebuild(
+        ctx: TraceContext,
+        workspace: Workspace,
+        db: DBWithTracing<WorkspaceDB>,
+        classes: WorkspaceClassesConfig,
+    ): Promise<string | undefined> {
+        const span = TraceContext.startSpan("getFromPrebuild", ctx);
+        try {
+            if (!workspace.basedOnPrebuildId) {
+                return undefined;
+            }
+
+            const prebuild = await db.trace({ span }).findPrebuildByID(workspace.basedOnPrebuildId);
+            if (!prebuild) {
+                return undefined;
+            }
+
+            const buildWorkspaceInstance = await db.trace({ span }).findCurrentInstance(prebuild.buildWorkspaceId);
+            return buildWorkspaceInstance?.id;
+        } finally {
+            span.finish();
+        }
+    }
+
+    /**
+     * Checks if the current class can be replaced by another class
+     * - If both classes are the same the current class will be returned
+     * - If the proposed substitute class has at least as much resources as the current class replace it
+     * - If the substitute does not provide sufficient resources
+     *   - If current class is deprecated
+     *     - Try to find another class that provides at least as much resources as the deprecated one
+     *     - If this also fails, return default class
+     *   - If current class is not deprecated return current class
+     * @param currentClassId
+     * @param substituteClassId
+     * @param classes
+     */
+    export function canSubstitute(
+        currentClassId: string,
+        substituteClassId: string | undefined,
+        classes: WorkspaceClassesConfig,
+    ): string {
+        if (currentClassId === substituteClassId) {
+            return currentClassId;
+        }
+
+        const current = classes.find((c) => c.id === currentClassId);
+        const substitute = classes.find((c) => c.id === substituteClassId);
+
+        if (!current) {
+            if (!substitute) {
+                return getDefaultId(classes);
+            } else {
+                return substitute.id;
+            }
+        }
+
+        if (current.deprecated) {
+            if (substitute && !substitute.deprecated && providesMinimalResources(substitute, current)) {
+                return substitute.id;
+            }
+
+            const alternative = classes
+                .sort((a, b) => a.resources.storage - b.resources.storage)
+                .find((cl) => providesMinimalResources(cl, current));
+            if (!alternative) {
+                return getDefaultId(classes);
+            } else {
+                return alternative.id;
+            }
+        }
+
+        if (substitute && providesMinimalResources(substitute, current)) {
+            return substitute.id;
+        }
+
+        return current.id;
+    }
+
+    function providesMinimalResources(class1: WorkspaceClassConfig, class2: WorkspaceClassConfig): boolean {
+        return (
+            class1.category === class2.category &&
+            class1.resources.cpu >= class2.resources.cpu &&
+            class1.resources.memory >= class2.resources.memory &&
+            class1.resources.storage >= class2.resources.storage
+        );
     }
 }

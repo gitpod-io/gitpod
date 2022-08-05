@@ -775,7 +775,19 @@ export class WorkspaceStarter {
                 // before workspace classes and does not have a class yet
                 if (!previousInstance?.workspaceClass) {
                     if (workspace.type == "regular") {
-                        if (user.additionalData?.workspaceClasses?.regular) {
+                        const prebuildClass = await WorkspaceClasses.getFromPrebuild(
+                            ctx,
+                            workspace,
+                            this.workspaceDb,
+                            this.config.workspaceClasses,
+                        );
+                        if (prebuildClass) {
+                            workspaceClass = WorkspaceClasses.canSubstitute(
+                                prebuildClass,
+                                user.additionalData?.workspaceClasses?.regular,
+                                this.config.workspaceClasses,
+                            );
+                        } else if (user.additionalData?.workspaceClasses?.regular) {
                             workspaceClass = user.additionalData?.workspaceClasses?.regular;
                         }
                     }
