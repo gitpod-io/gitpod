@@ -69,9 +69,13 @@ func DependencySortingRenderFunc(objects []RuntimeObject) ([]RuntimeObject, erro
 		sortMap[v] = k
 	}
 
-	sort.Slice(objects, func(i, j int) bool {
+	sort.SliceStable(objects, func(i, j int) bool {
 		scoreI := sortMap[objects[i].Kind]
 		scoreJ := sortMap[objects[j].Kind]
+
+		if scoreI == scoreJ {
+			return objects[i].Metadata.Name < objects[j].Metadata.Name
+		}
 
 		return scoreI < scoreJ
 	})
