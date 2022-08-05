@@ -10,14 +10,15 @@ import {
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
 } from "@gitpod/gitpod-protocol";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { injectable } from "inversify";
 
 export interface MayStartWorkspaceResult {
     hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
     enoughCredits?: boolean;
 
-    /** Usage-Based Pricing */
-    spendingLimitReached?: boolean;
+    /** Usage-Based Pricing: AttributionId of the CostCenter that reached it's spending limit */
+    spendingLimitReachedOnCostCenter?: AttributionId;
 }
 
 export interface HitParallelWorkspaceLimit {
