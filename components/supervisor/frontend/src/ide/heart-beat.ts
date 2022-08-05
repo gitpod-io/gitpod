@@ -6,6 +6,8 @@
 
 import { DisposableCollection, Disposable } from '@gitpod/gitpod-protocol/lib/util/disposable';
 import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { isSaaSServerGreaterThan, isSaaS } from './gitpod-server-compatibility';
+import { serverUrl } from '../shared/urls';
 
 let lastActivity = 0;
 const updateLastActivitiy = () => {
@@ -15,6 +17,12 @@ export const track = (w: Window) => {
     w.document.addEventListener('mousemove', updateLastActivitiy, { capture: true });
     w.document.addEventListener('keydown', updateLastActivitiy, { capture: true });
 }
+
+let pageCloseCompatibile: boolean = false
+
+isSaaSServerGreaterThan("main.4124").then((r) => {
+    pageCloseCompatibile = r
+})
 
 let toCancel: DisposableCollection | undefined;
 export function schedule(wsInfo: WorkspaceInfo, sessionId: string): void {
@@ -41,22 +49,25 @@ export function schedule(wsInfo: WorkspaceInfo, sessionId: string): void {
         }
     }
     sendHeartBeat();
-    let unloadTimeout: any;
-    const beforeUnloadListener = () => {
-        unloadTimeout = setTimeout(() => {
-            // if unload was cancelled then resume heartbeating
-            sendHeartBeat();
-        }, 2000);
-        sendHeartBeat(true);
-    };
-    const unloadListener = () => {
-        if (unloadTimeout) {
-            clearTimeout(unloadTimeout);
-        }
+
+    const beaconWorkspacePageClose = () => {
+        const instanceId = wsInfo.latestInstance!.id;
+        const data = { sessionId };
+        const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+        const url = serverUrl.withApi({ pathname: `/auth/workspacePageClose/${instanceId}` }).toString();
+        navigator.sendBeacon(url, blob);
     }
-    window.addEventListener('beforeunload', beforeUnloadListener);
+
+    const workspacePageCloseCompatible = () => {
+        if (isSaaS && !pageCloseCompatibile) {
+            sendHeartBeat(true);
+            return;
+        }
+        beaconWorkspacePageClose();
+    }
+
+    const unloadListener = () => { workspacePageCloseCompatible() };
     window.addEventListener('unload', unloadListener);
-    toCancel.push(Disposable.create(() => window.removeEventListener('beforeunload', beforeUnloadListener)));
     toCancel.push(Disposable.create(() => window.removeEventListener('unload', unloadListener)));
 
     let activityInterval = 30000;
