@@ -73,10 +73,10 @@ class StripeServiceMock extends StripeService {
 }
 
 class ConfigCatClientMock implements Client {
-    constructor(protected readonly usageBasedPricingEnabled: boolean) {}
+    constructor(protected readonly featureFlags: { [key: string]: boolean }) {}
 
     async getValueAsync<T>(experimentName: string, defaultValue: T, attributes: Attributes): Promise<T> {
-        return this.usageBasedPricingEnabled as any as T;
+        return !!this.featureFlags[experimentName] as any as T;
     }
 
     dispose() {}
@@ -431,7 +431,11 @@ class BillingModeSpec {
 
                     bind(StripeService).toConstantValue(new StripeServiceMock(test.config.stripeSubscription));
                     bind(ConfigCatClientFactory).toConstantValue(
-                        () => new ConfigCatClientMock(test.config.usageBasedPricingEnabled),
+                        () =>
+                            new ConfigCatClientMock({
+                                isUsageBasedBillingEnabled: test.config.usageBasedPricingEnabled,
+                                isBillingModeEnabled: true,
+                            }),
                     );
                 }),
             );
