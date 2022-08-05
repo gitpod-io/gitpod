@@ -11,7 +11,19 @@ import {
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
 } from "@gitpod/gitpod-protocol";
 import { injectable } from "inversify";
-import { MayStartWorkspaceResult } from "../../ee/src/user/eligibility-service";
+
+export interface MayStartWorkspaceResult {
+    hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
+    enoughCredits?: boolean;
+
+    /** Usage-Based Pricing */
+    spendingLimitReached?: boolean;
+}
+
+export interface HitParallelWorkspaceLimit {
+    max: number;
+    current: number;
+}
 
 export const EntitlementService = Symbol("EntitlementService");
 export interface EntitlementService {

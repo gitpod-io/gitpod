@@ -17,10 +17,13 @@ import { RemainingHours } from "@gitpod/gitpod-protocol/lib/accounting-protocol"
 import { MAX_PARALLEL_WORKSPACES, Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { millisecondsToHours } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { inject, injectable } from "inversify";
-import { EntitlementService } from "../../../src/billing/entitlement-service";
+import {
+    EntitlementService,
+    HitParallelWorkspaceLimit,
+    MayStartWorkspaceResult,
+} from "../../../src/billing/entitlement-service";
 import { Config } from "../../../src/config";
 import { AccountStatementProvider, CachedAccountStatement } from "../user/account-statement-provider";
-import { HitParallelWorkspaceLimit, MayStartWorkspaceResult } from "../user/eligibility-service";
 
 @injectable()
 export class EntitlementServiceChargebee implements EntitlementService {

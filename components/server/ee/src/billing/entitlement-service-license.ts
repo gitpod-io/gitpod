@@ -15,9 +15,8 @@ import {
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { inject, injectable } from "inversify";
-import { EntitlementService } from "../../../src/billing/entitlement-service";
+import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { Config } from "../../../src/config";
-import { MayStartWorkspaceResult } from "../user/eligibility-service";
 
 @injectable()
 export class EntitlementServiceLicense implements EntitlementService {
