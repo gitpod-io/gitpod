@@ -4,52 +4,103 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User, WorkspaceInstance, WorkspaceTimeoutDuration } from "@gitpod/gitpod-protocol";
+import {
+    User,
+    WorkspaceInstance,
+    WorkspaceTimeoutDuration,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+} from "@gitpod/gitpod-protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { EntitlementService } from "../../../src/billing/entitlement-service";
+import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { Config } from "../../../src/config";
-import { MayStartWorkspaceResult } from "../user/eligibility-service";
+import { BillingModes } from "./billing-mode";
 import { EntitlementServiceChargebee } from "./entitlement-service-chargebee";
 import { EntitlementServiceLicense } from "./entitlement-service-license";
+import { EntitlementServiceUBP } from "./entitlement-service-ubp";
 
 /**
  * The default implementation for the Enterprise Edition (EE). It decides based on config which ruleset to choose for each call.
+ *
+ * As a last safety net for rolling this out, it swallows all errors and turns them into log statements.
  */
 @injectable()
 export class EntitlementServiceImpl implements EntitlementService {
     @inject(Config) protected readonly config: Config;
-    @inject(EntitlementServiceChargebee) protected readonly etsChargebee: EntitlementServiceChargebee;
-    @inject(EntitlementServiceLicense) protected readonly etsLicense: EntitlementServiceLicense;
+    @inject(BillingModes) protected readonly billingModes: BillingModes;
+    @inject(EntitlementServiceChargebee) protected readonly chargebee: EntitlementServiceChargebee;
+    @inject(EntitlementServiceLicense) protected readonly license: EntitlementServiceLicense;
+    @inject(EntitlementServiceUBP) protected readonly ubp: EntitlementServiceUBP;
 
     async mayStartWorkspace(
         user: User,
-        date: Date,
+        date: Date = new Date(),
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
-        if (!this.config.enablePayment) {
-            return await this.etsLicense.mayStartWorkspace(user, date, runningInstances);
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.mayStartWorkspace(user, date, runningInstances);
+                case "chargebee":
+                    return this.chargebee.mayStartWorkspace(user, date, runningInstances);
+                case "usage-based":
+                    return this.ubp.mayStartWorkspace(user, date, runningInstances);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: mayStartWorkspace", err);
+            return {};
         }
-        return await this.etsChargebee.mayStartWorkspace(user, date, runningInstances);
     }
 
-    async maySetTimeout(user: User, date: Date): Promise<boolean> {
-        if (!this.config.enablePayment) {
-            return await this.etsLicense.maySetTimeout(user, date);
+    async maySetTimeout(user: User, date: Date = new Date()): Promise<boolean> {
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.maySetTimeout(user, date);
+                case "chargebee":
+                    return this.chargebee.maySetTimeout(user, date);
+                case "usage-based":
+                    return this.ubp.maySetTimeout(user, date);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: maySetTimeout", err);
+            return true;
         }
-        return await this.etsChargebee.maySetTimeout(user, date);
     }
 
-    async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
-        if (!this.config.enablePayment) {
-            return await this.etsLicense.getDefaultWorkspaceTimeout(user, date);
+    async getDefaultWorkspaceTimeout(user: User, date: Date = new Date()): Promise<WorkspaceTimeoutDuration> {
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.getDefaultWorkspaceTimeout(user, date);
+                case "chargebee":
+                    return this.chargebee.getDefaultWorkspaceTimeout(user, date);
+                case "usage-based":
+                    return this.ubp.getDefaultWorkspaceTimeout(user, date);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: getDefaultWorkspaceTimeout", err);
+            return WORKSPACE_TIMEOUT_DEFAULT_LONG;
         }
-        return await this.etsChargebee.getDefaultWorkspaceTimeout(user, date);
     }
 
-    async userGetsMoreResources(user: User): Promise<boolean> {
-        if (!this.config.enablePayment) {
-            return await this.etsLicense.userGetsMoreResources(user);
+    async userGetsMoreResources(user: User, date: Date = new Date()): Promise<boolean> {
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.userGetsMoreResources(user);
+                case "chargebee":
+                    return this.chargebee.userGetsMoreResources(user);
+                case "usage-based":
+                    return this.ubp.userGetsMoreResources(user);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: userGetsMoreResources", err);
+            return true;
         }
-        return await this.etsChargebee.userGetsMoreResources(user);
     }
 }

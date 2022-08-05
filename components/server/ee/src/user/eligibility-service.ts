@@ -15,16 +15,6 @@ import { EMailDomainService } from "../auth/email-domain-service";
 import fetch from "node-fetch";
 import { Config } from "../../../src/config";
 
-export interface MayStartWorkspaceResult {
-    hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
-    enoughCredits: boolean;
-}
-
-export interface HitParallelWorkspaceLimit {
-    max: number;
-    current: number;
-}
-
 /**
  * Response from the GitHub Education Student Developer / Faculty Member Pack.
  * The flags `student` and `faculty` are mutually exclusive (the cannot both become `true`).

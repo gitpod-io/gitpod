@@ -1,0 +1,96 @@
+/**
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+import { UserDB } from "@gitpod/gitpod-db/lib";
+import {
+    User,
+    WorkspaceInstance,
+    WorkspaceTimeoutDuration,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+} from "@gitpod/gitpod-protocol";
+import { inject, injectable } from "inversify";
+import {
+    EntitlementService,
+    HitParallelWorkspaceLimit,
+    MayStartWorkspaceResult,
+} from "../../../src/billing/entitlement-service";
+import { Config } from "../../../src/config";
+import { BillingModes } from "./billing-mode";
+
+const MAX_PARALLEL_WORKSPACES_FREE = 4;
+const MAX_PARALLEL_WORKSPACES_PAID = 16;
+
+/**
+ * EntitlementService implementation for Usage-Based Pricing (UBP)
+ */
+@injectable()
+export class EntitlementServiceUBP implements EntitlementService {
+    @inject(Config) protected readonly config: Config;
+    @inject(UserDB) protected readonly userDb: UserDB;
+    @inject(BillingModes) protected readonly billingModes: BillingModes;
+
+    async mayStartWorkspace(
+        user: User,
+        date: Date,
+        runningInstances: Promise<WorkspaceInstance[]>,
+    ): Promise<MayStartWorkspaceResult> {
+        const hasHitParallelWorkspaceLimit = async (): Promise<HitParallelWorkspaceLimit | undefined> => {
+            const max = await this.getMaxParallelWorkspaces(user, date);
+            const current = (await runningInstances).filter((i) => i.status.phase !== "preparing").length;
+            if (current >= max) {
+                return {
+                    current,
+                    max,
+                };
+            } else {
+                return undefined;
+            }
+        };
+        const [spendingLimitReached, hitParallelWorkspaceLimit] = await Promise.all([
+            this.checkSpendingLimitReached(user.id, date),
+            hasHitParallelWorkspaceLimit(),
+        ]);
+
+        return {
+            spendingLimitReached,
+            hitParallelWorkspaceLimit,
+        };
+    }
+
+    protected async checkSpendingLimitReached(userId: string, date: Date): Promise<boolean> {
+        return false;
+    }
+
+    protected async getMaxParallelWorkspaces(user: User, date: Date): Promise<number> {
+        if (await this.hasPaidSubscription(user, date)) {
+            return MAX_PARALLEL_WORKSPACES_PAID;
+        } else {
+            return MAX_PARALLEL_WORKSPACES_FREE;
+        }
+    }
+
+    async maySetTimeout(user: User, date: Date): Promise<boolean> {
+        return this.hasPaidSubscription(user, date);
+    }
+
+    async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
+        if (await this.hasPaidSubscription(user, date)) {
+            return WORKSPACE_TIMEOUT_DEFAULT_LONG;
+        } else {
+            return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
+        }
+    }
+
+    async userGetsMoreResources(user: User, date: Date = new Date()): Promise<boolean> {
+        return this.hasPaidSubscription(user, date);
+    }
+
+    protected async hasPaidSubscription(user: User, date: Date): Promise<boolean> {
+        // TODO(gpl) UBP personal: implement!
+        return true;
+    }
+}
