@@ -16,8 +16,47 @@ apply: apply-cluster apply-tools
 destroy: destroy-tools destroy-cluster
 
 .PHONY: output
-output:
-	@terraform output -json
+output: output-done-msg output-url output-nameservers output-registry output-database output-storage output-issuer
+
+output-done-msg:
+	@echo "=========================="
+	@echo "🎉🥳🔥🧡🚀"
+	@echo "Your cloud infrastructure is ready to install Gitpod. Please visit"
+	@echo "https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod"
+	@echo "for your next steps."
+	@echo "================="
+	@echo "Config Parameters"
+	@echo "================="
+
+output-url:
+	@echo "\nGitpod domain name:"
+	@echo "================="
+	@terraform output -json url | jq
+
+output-nameservers:
+	@echo "\nNameservers for the domain(to be added as NS records in your domain provider):"
+	@echo "================="
+	@terraform output -json nameservers | jq
+
+output-storage:
+	@echo "\nObject storage:"
+	@echo "=============="
+	@terraform output -json storage | jq
+
+output-registry:
+	@echo "\nS3 registry backend:"
+	@echo "=================="
+	@terraform output -json registry | jq
+
+output-database:
+	@echo "\nDatabase:"
+	@echo "========"
+	@terraform output -json database | jq
+
+output-issuer:
+	@echo "\nClusterIssuer name:"
+	@echo "================="
+	@terraform output -json cluster_issuer | jq
 
 .PHONY: plan-cluster
 plan-cluster:
@@ -45,9 +84,9 @@ apply-tools: install-cm-edns install-cluster-issuer
 install-cm-edns:
 	@terraform apply -target=module.certmanager -target=module.externaldns --auto-approve
 
-.PHONY: install-cluster-issuer
+PHONY: install-cluster-issuer
 install-cluster-issuer:
-	@terraform apply -target=module.externaldns  --auto-approve
+	@terraform apply -target=module.cluster-issuer  --auto-approve
 
 .PHONY: destroy-cluster
 destroy-cluster:

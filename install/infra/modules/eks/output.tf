@@ -48,7 +48,7 @@ output "database" {
     password = random_password.password[0].result
     port     = 3306
     username = "${aws_db_instance.gitpod[0].username}"
-  }, {})
+  }, "No database created")
 }
 
 output "registry" {
@@ -57,7 +57,7 @@ output "registry" {
     server   = aws_ecr_repository.gitpod[0].repository_url
     username = data.aws_ecr_authorization_token.gitpod[0].user_name
     password = data.aws_ecr_authorization_token.gitpod[0].password
-  }, {})
+  }, "No EKS registry created")
 }
 
 output "storage" {
@@ -67,6 +67,17 @@ output "storage" {
     secret_access_key = aws_iam_access_key.bucket_storage_user[0].secret
     region            = aws_s3_bucket.gitpod-storage[0].region
     bucket_name       = aws_s3_bucket.gitpod-storage[0].id
-    endpoint          = "s3.amazonaws.com"
-  }, {})
+    endpoint          = "s3.${aws_s3_bucket.gitpod-storage[0].region}.amazonaws.com"
+  }, "No s3 bucket created for object storage")
+}
+
+output "registry_backend" {
+  sensitive = true
+  value = try({
+    access_key_id     = aws_iam_access_key.bucket_storage_user[0].id
+    secret_access_key = aws_iam_access_key.bucket_storage_user[0].secret
+    region            = aws_s3_bucket.gitpod-registry-backend[0].region
+    bucket_name       = aws_s3_bucket.gitpod-registry-backend[0].id
+    endpoint          = "s3.${aws_s3_bucket.gitpod-registry-backend[0].region}.amazonaws.com"
+  }, "No s3 bucket created for registry backend.")
 }

@@ -19,7 +19,7 @@ resource "kubernetes_manifest" "clusterissuer_gitpod" {
     "apiVersion" = "cert-manager.io/v1"
     "kind"       = "ClusterIssuer"
     "metadata" = {
-      "name" = "gitpod-issuer"
+      "name" = var.cluster_issuer_name
     }
     "spec" = {
       "acme" = {
