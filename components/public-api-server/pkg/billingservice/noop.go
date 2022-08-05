@@ -1,0 +1,13 @@
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+package billingservice
+
+import "context"
+
+type NoOpClient struct{}
+
+func (c *NoOpClient) FinalizeInvoice(ctx context.Context, invoiceId string) error {
+	return nil
+}
