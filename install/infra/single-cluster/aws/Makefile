@@ -46,7 +46,7 @@ output-storage:
 output-registry:
 	@echo "\nS3 registry backend:"
 	@echo "=================="
-	@terraform output -json registry | jq
+	@terraform output -json registry_backend | jq
 
 output-database:
 	@echo "\nDatabase:"
