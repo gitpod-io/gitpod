@@ -9,5 +9,7 @@ import "github.com/gitpod-io/gitpod/common-go/baseserver"
 type Configuration struct {
 	GitpodServiceURL string `json:"gitpodServiceUrl"`
 
+	BillingServiceAddress string `json:"billingServiceAddress,omitempty"`
+
 	Server *baseserver.Configuration `json:"server,omitempty"`
 }

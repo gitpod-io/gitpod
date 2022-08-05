@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
 	"github.com/stretchr/testify/require"
 )
 
@@ -105,7 +106,7 @@ func baseServerWithStripeWebhook(t *testing.T) *baseserver.Server {
 	)
 	baseserver.StartServerForTests(t, srv)
 
-	srv.HTTPMux().Handle("/webhook", NewStripeWebhookHandler())
+	srv.HTTPMux().Handle("/webhook", NewStripeWebhookHandler(&billingservice.NoOpClient{}))
 
 	return srv
 }
