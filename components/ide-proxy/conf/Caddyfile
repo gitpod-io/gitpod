@@ -69,7 +69,7 @@
 	}
 
 	@static_path {
-		path /code/* /image/*
+		path /code/* /image/* /static/*
 	}
 
 	handle @static_path {
