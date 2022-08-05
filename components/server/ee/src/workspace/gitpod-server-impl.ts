@@ -1152,6 +1152,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.eligibilityService.isStudent(user);
     }
 
+    // TODO(gpl) Should we deprecate this entirely to more clearly distinguish between "license" and "paid"?
     async getShowPaymentUI(ctx: TraceContext): Promise<boolean> {
         this.checkUser("getShowPaymentUI");
         return !!this.config.enablePayment;
@@ -1229,6 +1230,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async createPortalSession(ctx: TraceContext): Promise<{}> {
         const user = this.checkUser("createPortalSession");
         const logContext = { userId: user.id };
+        // TODO(gpl) This _might_ lock out people from their invoices (test). But if we wanted to keep it, we'd have to explicitly disabled/deny upgrading from the portal, first!
+        await this.ensureChargebeeApiIsAllowed({ user });
 
         return await new Promise((resolve, reject) => {
             this.chargebeeProvider.portal_session
@@ -1258,6 +1261,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (!team) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
         }
+        // TODO(gpl) This _might_ lock out people from their invoices (test). But if we wanted to keep it, we'd have to explicitly disabled/deny upgrading from the portal, first!
+        await this.ensureChargebeeApiIsAllowed({ team });
         const members = await this.teamDB.findMembersByTeam(team.id);
         await this.guardAccess({ kind: "team", subject: team, members }, "update");
 
@@ -1285,6 +1290,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkUser("checkout");
         const logContext = { userId: user.id };
+        await this.ensureChargebeeApiIsAllowed({ user });
 
         // Throws an error if not the case
         await this.ensureIsEligibleForPlan(user, planId);
@@ -1335,6 +1341,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (!team) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
         }
+        await this.ensureChargebeeApiIsAllowed({ team });
         const members = await this.teamDB.findMembersByTeam(team.id);
         await this.guardAccess({ kind: "team", subject: team, members }, "update");
 
@@ -1393,6 +1400,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         traceAPIParams(ctx, { subscriptionId, chargebeePlanId });
 
         const user = this.checkUser("subscriptionUpgradeTo");
+        await this.ensureChargebeeApiIsAllowed({ user });
         await this.ensureIsEligibleForPlan(user, chargebeePlanId);
         await this.doUpdateUserPaidSubscription(user.id, subscriptionId, chargebeePlanId, false);
     }
@@ -1401,6 +1409,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         traceAPIParams(ctx, { subscriptionId, chargebeePlanId });
 
         const user = this.checkUser("subscriptionDowngradeTo");
+        await this.ensureChargebeeApiIsAllowed({ user });
         await this.ensureIsEligibleForPlan(user, chargebeePlanId);
         await this.doUpdateUserPaidSubscription(user.id, subscriptionId, chargebeePlanId, true);
     }
@@ -1439,6 +1448,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         traceAPIParams(ctx, { subscriptionId });
 
         const user = this.checkUser("subscriptionCancelDowngrade");
+        await this.ensureChargebeeApiIsAllowed({ user });
         await this.doCancelDowngradeUserPaidSubscription(user.id, subscriptionId);
     }
 
@@ -1608,6 +1618,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("tsAddSlots");
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
+        await this.ensureChargebeeApiIsAllowedTS(ts);
 
         if (addQuantity <= 0) {
             const err = new Error(`Invalid quantity!`);
@@ -1641,6 +1652,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const user = this.checkAndBlockUser("tsAssignSlot");
         // assigning a slot can be done by third users
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, identityStr ? user.id : undefined);
+        await this.ensureChargebeeApiIsAllowedTS(ts);
         const logCtx = { userId: user.id };
 
         try {
@@ -1721,6 +1733,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("tsReassignSlot");
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
+        await this.ensureChargebeeApiIsAllowedTS(ts);
         const logCtx = { userId: user.id };
         const assigneeInfo = await this.findAssignee(logCtx, newIdentityStr);
 
@@ -1804,6 +1817,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("tsReactivateSlot");
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
+        await this.ensureChargebeeApiIsAllowedTS(ts);
 
         this.updateTeamSubscriptionQueue
             .enqueue(async () => {
@@ -1821,6 +1835,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             .catch((err) => {
                 /** ignore */
             });
+    }
+
+    protected async ensureChargebeeApiIsAllowedTS(ts: TeamSubscription): Promise<void> {
+        const tsOwner = await this.userDB.findUserById(ts.userId);
+        if (!tsOwner) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, "Cannot find TeamSubscription owner!");
+        }
+        await this.ensureChargebeeApiIsAllowed({ user: tsOwner });
     }
 
     async getGithubUpgradeUrls(ctx: TraceContext): Promise<GithubUpgradeURL[]> {
@@ -1967,9 +1989,38 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    protected async ensureChargebeeApiIsAllowed(sub: { user?: User; team?: Team }): Promise<void> {
+        await this.ensureBillingMode(sub, (m) => m.mode === "chargebee");
+    }
+
+    protected async ensureStripeApiIsAllowed(sub: { user?: User; team?: Team }): Promise<void> {
+        await this.ensureBillingMode(
+            sub,
+            // Stripe is allowed when you either are on the usage-based side already, or you can switch to)
+            (m) => m.mode === "usage-based" || (m.mode === "chargebee" && !!m.canUpgradeToUBB),
+        );
+    }
+
+    protected async ensureBillingMode(
+        subject: { user?: User; team?: Team },
+        predicate: (m: BillingMode) => boolean,
+    ): Promise<void> {
+        let billingMode: BillingMode | undefined = undefined;
+        if (subject.user) {
+            billingMode = await this.billingModes.getBillingModeForUser(subject.user, new Date());
+        } else if (subject.team) {
+            billingMode = await this.billingModes.getBillingModeForTeam(subject.team, new Date());
+        }
+
+        if (billingMode && predicate(billingMode)) {
+            return;
+        }
+        throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+    }
+
     async getStripePublishableKey(ctx: TraceContext): Promise<string> {
         const user = this.checkAndBlockUser("getStripePublishableKey");
-        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.ensureStripeApiIsAllowed({ user });
         const publishableKey = this.config.stripeSecrets?.publishableKey;
         if (!publishableKey) {
             throw new ResponseError(
@@ -1982,7 +2033,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string> {
         const user = this.checkAndBlockUser("getStripeSetupIntentClientSecret");
-        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
+        await this.ensureStripeApiIsAllowed({ user });
         try {
             const setupIntent = await this.stripeService.createSetupIntent();
             if (!setupIntent.client_secret) {
@@ -1996,9 +2047,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async findStripeSubscriptionIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
-        const user = this.checkAndBlockUser("findStripeSubscriptionIdForTeam");
-        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
-        await this.guardTeamOperation(teamId, "get");
+        this.checkAndBlockUser("findStripeSubscriptionIdForTeam");
+        const team = await this.guardTeamOperation(teamId, "get");
+        await this.ensureStripeApiIsAllowed({ team });
         try {
             const customer = await this.stripeService.findCustomerByTeamId(teamId);
             if (!customer?.id) {
@@ -2023,9 +2074,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         currency: Currency,
     ): Promise<void> {
         const user = this.checkAndBlockUser("subscribeUserToStripe");
-        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
-        await this.guardTeamOperation(teamId, "update");
-        const team = await this.teamDB.findTeamById(teamId);
+        const team = await this.guardTeamOperation(teamId, "update");
+        await this.ensureStripeApiIsAllowed({ team });
         try {
             let customer = await this.stripeService.findCustomerByTeamId(team!.id);
             if (!customer) {
@@ -2047,10 +2097,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async getStripePortalUrlForTeam(ctx: TraceContext, teamId: string): Promise<string> {
-        const user = this.checkAndBlockUser("getStripePortalUrlForTeam");
-        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
-        await this.guardTeamOperation(teamId, "update");
-        const team = await this.teamDB.findTeamById(teamId);
+        this.checkAndBlockUser("getStripePortalUrlForTeam");
+        const team = await this.guardTeamOperation(teamId, "update");
+        await this.ensureStripeApiIsAllowed({ team });
         try {
             const url = await this.stripeService.getPortalUrlForTeam(team!);
             return url;
@@ -2065,8 +2114,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async getSpendingLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
         const user = this.checkAndBlockUser("getSpendingLimitForTeam");
-        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
-        await this.guardTeamOperation(teamId, "get");
+        const team = await this.guardTeamOperation(teamId, "get");
+        await this.ensureStripeApiIsAllowed({ team });
 
         const attributionId = AttributionId.render({ kind: "team", teamId });
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
@@ -2080,8 +2129,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async setSpendingLimitForTeam(ctx: TraceContext, teamId: string, spendingLimit: number): Promise<void> {
         const user = this.checkAndBlockUser("setSpendingLimitForTeam");
-        await this.ensureIsUsageBasedFeatureFlagEnabled(user);
-        await this.guardTeamOperation(teamId, "update");
+        const team = await this.guardTeamOperation(teamId, "update");
+        await this.ensureStripeApiIsAllowed({ team });
         if (typeof spendingLimit !== "number" || spendingLimit < 0) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unexpected `spendingLimit` value.");
         }
