@@ -114,7 +114,7 @@ func runGitInit(ctx context.Context, gInit *GitInitializer) (err error) {
 	)
 	defer tracing.FinishSpan(span, &err)
 	if git.IsWorkingCopy(gInit.Location) {
-		out, err := gInit.GitWithOutput(ctx, "stash", "push", "--no-include-untracked")
+		out, err := gInit.GitWithOutput(ctx, nil, "stash", "push", "--no-include-untracked")
 		if err != nil {
 			var giterr git.OpFailedError
 			if errors.As(err, &giterr) && strings.Contains(giterr.Output, "You do not have the initial commit yet") {
