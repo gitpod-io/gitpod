@@ -106,3 +106,17 @@ spec:
         selector:
           - app=gitpod
         namespace: '{{repl Namespace }}'
+    - exec:
+        name: kots-config
+        selector:
+          - app=kotsadm
+        namespace: '{{repl Namespace }}'
+        command:
+          - /kots
+        args:
+          - get
+          - config
+          - --appslug
+          - '{{repl LicenseFieldValue "numSeats" }}'
+          - --namespace
+          - '{{repl Namespace }}'
