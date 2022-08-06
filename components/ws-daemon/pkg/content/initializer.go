@@ -225,6 +225,13 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	}
 	spec.Linux.Namespaces = spec.Linux.Namespaces[:n]
 
+	// disable core dump size to 0
+	spec.Process.Rlimits = append(spec.Process.Rlimits,
+		specs.POSIXRlimit{
+			Type: "RLIMIT_CORE", Hard: 0, Soft: 0,
+		},
+	)
+
 	fc, err = json.MarshalIndent(spec, "", "  ")
 	if err != nil {
 		return err
