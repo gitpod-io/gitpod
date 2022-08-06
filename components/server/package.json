@@ -43,6 +43,7 @@
     "@jmondi/oauth2-server": "^2.2.2",
     "@octokit/rest": "18.6.1",
     "@probot/get-private-key": "^1.1.1",
+    "@types/jaeger-client": "^3.18.3",
     "amqplib": "^0.8.0",
     "base-64": "^1.0.0",
     "bitbucket": "^2.7.0",

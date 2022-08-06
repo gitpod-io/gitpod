@@ -207,7 +207,7 @@ export async function getWorkspaceClassForInstance(
         let workspaceClass = "";
         if (!previousInstance?.workspaceClass) {
             if (workspace.type == "regular") {
-                const prebuildClass = await WorkspaceClasses.getFromPrebuild(ctx, workspace, workspaceDb, config);
+                const prebuildClass = await WorkspaceClasses.getFromPrebuild(ctx, workspace, workspaceDb.trace(ctx));
                 if (prebuildClass) {
                     const userClass = await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(
                         user,
