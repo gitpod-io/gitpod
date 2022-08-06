@@ -416,7 +416,7 @@ func TestGitStatusFromFiles(t *testing.T) {
 				return
 			}
 
-			gitout, err := client.GitWithOutput(ctx, "status", "--porcelain=v2", "--branch", "-uall")
+			gitout, err := client.GitWithOutput(ctx, nil, "status", "--porcelain=v2", "--branch", "-uall")
 			if err != nil {
 				t.Errorf("error calling GitWithOutput: %v", err)
 				return
@@ -426,7 +426,7 @@ func TestGitStatusFromFiles(t *testing.T) {
 				return
 			}
 
-			gitout, err = client.GitWithOutput(ctx, "log", "--pretty=%h: %s", "--branches", "--not", "--remotes")
+			gitout, err = client.GitWithOutput(ctx, &errNoCommitsYet, "log", "--pretty=%h: %s", "--branches", "--not", "--remotes")
 			if err != nil {
 				t.Errorf("error calling GitWithOutput: %v", err)
 				return
@@ -436,7 +436,7 @@ func TestGitStatusFromFiles(t *testing.T) {
 				return
 			}
 
-			gitout, err = client.GitWithOutput(ctx, "log", "--pretty=%H", "-n", "1")
+			gitout, err = client.GitWithOutput(ctx, &errNoCommitsYet, "log", "--pretty=%H", "-n", "1")
 			if err != nil && !strings.Contains(err.Error(), "fatal: your current branch 'master' does not have any commits yet") {
 				t.Errorf("error calling GitWithOutput: %v", err)
 				return
