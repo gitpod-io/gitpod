@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -139,8 +139,7 @@ export namespace WorkspaceClasses {
     export async function getFromPrebuild(
         ctx: TraceContext,
         workspace: Workspace,
-        db: DBWithTracing<WorkspaceDB>,
-        classes: WorkspaceClassesConfig,
+        db: WorkspaceDB,
     ): Promise<string | undefined> {
         const span = TraceContext.startSpan("getFromPrebuild", ctx);
         try {
@@ -148,12 +147,12 @@ export namespace WorkspaceClasses {
                 return undefined;
             }
 
-            const prebuild = await db.trace({ span }).findPrebuildByID(workspace.basedOnPrebuildId);
+            const prebuild = await db.findPrebuildByID(workspace.basedOnPrebuildId);
             if (!prebuild) {
                 return undefined;
             }
 
-            const buildWorkspaceInstance = await db.trace({ span }).findCurrentInstance(prebuild.buildWorkspaceId);
+            const buildWorkspaceInstance = await db.findCurrentInstance(prebuild.buildWorkspaceId);
             return buildWorkspaceInstance?.id;
         } finally {
             span.finish();
@@ -216,7 +215,7 @@ export namespace WorkspaceClasses {
         }
 
         if (substitute.deprecated) {
-            substitute = classes.find((c) => c.id === getMoreResourcesIdOrDefault(classes));
+            substitute = findClosestAlternative(substitute, classes);
         }
 
         if (substitute && providesMinimalResources(substitute, current)) {
@@ -224,9 +223,7 @@ export namespace WorkspaceClasses {
         }
 
         if (current.deprecated) {
-            const alternative = classes
-                .sort((a, b) => a.resources.storage - b.resources.storage)
-                .find((cl) => providesMinimalResources(cl, current));
+            const alternative = findClosestAlternative(current, classes);
             if (!alternative) {
                 return getDefaultId(classes);
             } else {
@@ -244,5 +241,15 @@ export namespace WorkspaceClasses {
             class1.resources.memory >= class2.resources.memory &&
             class1.resources.storage >= class2.resources.storage
         );
+    }
+
+    function findClosestAlternative(
+        current: WorkspaceClassConfig,
+        classes: WorkspaceClassesConfig,
+    ): WorkspaceClassConfig | undefined {
+        return classes
+            .filter((cl) => !cl.deprecated)
+            .sort((a, b) => a.resources.storage - b.resources.storage)
+            .find((cl) => providesMinimalResources(cl, current));
     }
 }
