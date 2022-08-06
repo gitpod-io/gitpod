@@ -351,9 +351,10 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		// https://github.com/gitpod-io/gitpod/issues/11710
 		if err != nil && strings.Contains(err.Error(), "cannot find workspace") {
 			log.WithFields(log.OWI("", "", req.Id)).Warn(err)
-			err = nil
+			tracing.FinishSpan(span, nil)
+		} else {
+			tracing.FinishSpan(span, &err)
 		}
-		tracing.FinishSpan(span, &err)
 	}()
 
 	log.WithField("req", req.String()).WithFields(log.OWI("", "", req.Id)).Debug("DisposeWorkspace called")
@@ -745,9 +746,10 @@ func (s *WorkspaceService) WaitForInit(ctx context.Context, req *api.WaitForInit
 		// https://github.com/gitpod-io/gitpod/issues/11713
 		if err != nil && strings.Contains(err.Error(), "cannot find workspace") {
 			log.WithFields(log.OWI("", "", req.Id)).Warn(err)
-			err = nil
+			tracing.FinishSpan(span, nil)
+		} else {
+			tracing.FinishSpan(span, &err)
 		}
-		tracing.FinishSpan(span, &err)
 	}()
 
 	if req.Id == "" {
@@ -776,9 +778,10 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 	defer func() {
 		if err != nil && strings.Contains(err.Error(), "cannot find workspace") {
 			log.WithFields(log.OWI("", "", req.Id)).Warn(err)
-			err = nil
+			tracing.FinishSpan(span, nil)
+		} else {
+			tracing.FinishSpan(span, &err)
 		}
-		tracing.FinishSpan(span, &err)
 	}()
 
 	if req.Id == "" {
@@ -845,9 +848,10 @@ func (s *WorkspaceService) BackupWorkspace(ctx context.Context, req *api.BackupW
 	defer func() {
 		if err != nil && strings.Contains(err.Error(), "cannot find workspace") {
 			log.WithFields(log.OWI("", "", req.Id)).Warn(err)
-			err = nil
+			tracing.FinishSpan(span, nil)
+		} else {
+			tracing.FinishSpan(span, &err)
 		}
-		tracing.FinishSpan(span, &err)
 	}()
 
 	if req.Id == "" {
