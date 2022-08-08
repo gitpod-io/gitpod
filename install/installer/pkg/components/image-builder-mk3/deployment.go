@@ -118,7 +118,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 		},
 		Spec: appsv1.DeploymentSpec{
-			Selector: &metav1.LabelSelector{MatchLabels: labels},
+			Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 			Replicas: common.Replicas(ctx, Component),
 			Strategy: common.DeploymentStrategy,
 			Template: corev1.PodTemplateSpec{

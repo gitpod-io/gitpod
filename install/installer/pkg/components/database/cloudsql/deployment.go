@@ -37,7 +37,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						MaxSurge:       &intstr.IntOrString{IntVal: 1},
 					},
 				},
-				Selector: &metav1.LabelSelector{MatchLabels: labels},
+				Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 				Replicas: common.Replicas(ctx, Component),
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
