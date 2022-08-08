@@ -66,7 +66,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Affinity:          common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
 		TopologySpreadConstraints: []corev1.TopologySpreadConstraint{
 			corev1.TopologySpreadConstraint{
-				LabelSelector:     &metav1.LabelSelector{MatchLabels: labels},
+				LabelSelector:     &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 				MaxSkew:           1,
 				TopologyKey:       "kubernetes.io/hostname",
 				WhenUnsatisfiable: corev1.DoNotSchedule,
@@ -177,7 +177,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{MatchLabels: labels},
+				Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 				Replicas: common.Replicas(ctx, Component),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{

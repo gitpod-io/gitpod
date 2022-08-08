@@ -358,7 +358,7 @@ fi
 			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDaemonset),
 		},
 		Spec: appsv1.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{MatchLabels: labels},
+			Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,

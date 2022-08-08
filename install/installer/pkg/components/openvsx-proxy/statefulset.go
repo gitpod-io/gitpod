@@ -40,7 +40,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		Spec: appsv1.StatefulSetSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: labels,
+				MatchLabels: common.DefaultLabels(Component),
 			},
 			ServiceName: Component,
 			// todo(sje): receive config value
@@ -139,7 +139,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			VolumeClaimTemplates: []v1.PersistentVolumeClaim{{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:   "redis-data",
-					Labels: labels,
+					Labels: common.DefaultLabels(Component),
 				},
 				Spec: v1.PersistentVolumeClaimSpec{
 					AccessModes: []v1.PersistentVolumeAccessMode{
