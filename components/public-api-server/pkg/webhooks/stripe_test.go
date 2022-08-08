@@ -13,6 +13,8 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
+	mockbillingservice "github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice/mock_billingservice"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,7 +44,7 @@ func TestWebhookAcceptsPostRequests(t *testing.T) {
 		},
 	}
 
-	srv := baseServerWithStripeWebhook(t)
+	srv := baseServerWithStripeWebhook(t, &billingservice.NoOpClient{})
 
 	payload := payloadForStripeEvent(t, invoiceFinalizedEventType)
 
@@ -80,7 +82,7 @@ func TestWebhookIgnoresIrrelevantEvents(t *testing.T) {
 		},
 	}
 
-	srv := baseServerWithStripeWebhook(t)
+	srv := baseServerWithStripeWebhook(t, &billingservice.NoOpClient{})
 
 	url := fmt.Sprintf("%s%s", srv.HTTPAddress(), "/webhook")
 
@@ -98,7 +100,28 @@ func TestWebhookIgnoresIrrelevantEvents(t *testing.T) {
 	}
 }
 
-func baseServerWithStripeWebhook(t *testing.T) *baseserver.Server {
+// TestWebhookInvokesFinalizeInvoiceRPC ensures that when the webhook is hit with a
+// `invoice.finalized` event, the `FinalizeInvoice` method on the billing service is invoked
+// with the invoice id from the event payload.
+func TestWebhookInvokesFinalizeInvoiceRPC(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	m := mockbillingservice.NewMockInterface(ctrl)
+	m.EXPECT().FinalizeInvoice(gomock.Any(), gomock.Eq("in_1LUQi7GadRXm50o36jWK7ehs"))
+
+	srv := baseServerWithStripeWebhook(t, m)
+
+	url := fmt.Sprintf("%s%s", srv.HTTPAddress(), "/webhook")
+
+	payload := payloadForStripeEvent(t, invoiceFinalizedEventType)
+	req, err := http.NewRequest(http.MethodPost, url, payload)
+	require.NoError(t, err)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func baseServerWithStripeWebhook(t *testing.T, billingService billingservice.Interface) *baseserver.Server {
 	t.Helper()
 
 	srv := baseserver.NewForTests(t,
@@ -106,7 +129,7 @@ func baseServerWithStripeWebhook(t *testing.T) *baseserver.Server {
 	)
 	baseserver.StartServerForTests(t, srv)
 
-	srv.HTTPMux().Handle("/webhook", NewStripeWebhookHandler(&billingservice.NoOpClient{}))
+	srv.HTTPMux().Handle("/webhook", NewStripeWebhookHandler(billingService))
 
 	return srv
 }
