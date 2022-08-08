@@ -863,6 +863,7 @@ func (m *Manager) findWorkspacePod(ctx context.Context, workspaceID string) (*co
 }
 
 // getPodID computes the pod ID from a workpace ID
+//
 //nolint:unused,deadcode
 func getPodID(workspaceType, workspaceID string) string {
 	return fmt.Sprintf("%s-%s", strings.TrimSpace(strings.ToLower(workspaceType)), strings.TrimSpace(workspaceID))

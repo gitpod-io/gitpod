@@ -31,7 +31,8 @@ const (
 
 // OWI builds a structure meant for logrus which contains the owner, workspace and instance.
 // Beware that this refers to the terminology outside of wsman which maps like:
-//    owner = owner, workspace = metaID, instance = workspaceID
+//
+//	owner = owner, workspace = metaID, instance = workspaceID
 func OWI(owner, workspace, instance string) log.Fields {
 	return log.Fields{
 		OwnerField:     owner,
@@ -42,7 +43,8 @@ func OWI(owner, workspace, instance string) log.Fields {
 
 // LogContext builds a structure meant for logrus which contains the owner, workspace and instance.
 // Beware that this refers to the terminology outside of wsman which maps like:
-//    owner = owner, workspace = metaID, instance = workspaceID
+//
+//	owner = owner, workspace = metaID, instance = workspaceID
 func LogContext(owner, workspace, instance, project, team string) log.Fields {
 	logFields := log.Fields{}
 

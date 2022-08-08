@@ -20,6 +20,7 @@ var (
 )
 
 // Init initializes the global license evaluator from an environment variable
+//
 //export Init
 func Init(key *C.char, domain *C.char) (id int) {
 	id = nextID
@@ -36,6 +37,7 @@ func Init(key *C.char, domain *C.char) (id int) {
 }
 
 // GetLicenseData returns the info about license for the admin dashboard
+//
 //export GetLicenseData
 func GetLicenseData(id int) (licData *C.char, ok bool) {
 	e, ok := instances[id]
@@ -54,6 +56,7 @@ func GetLicenseData(id int) (licData *C.char, ok bool) {
 }
 
 // Validate returns false if the license isn't valid and a message explaining why that is.
+//
 //export Validate
 func Validate(id int) (msg *C.char, valid bool) {
 	e, ok := instances[id]
@@ -66,6 +69,7 @@ func Validate(id int) (msg *C.char, valid bool) {
 }
 
 // Enabled returns true if a license enables a feature
+//
 //export Enabled
 func Enabled(id int, feature *C.char, seats int) (enabled, ok bool) {
 	e, ok := instances[id]
@@ -77,6 +81,7 @@ func Enabled(id int, feature *C.char, seats int) (enabled, ok bool) {
 }
 
 // HasEnoughSeats returns true if the license supports at least the given number of seats.
+//
 //export HasEnoughSeats
 func HasEnoughSeats(id int, seats int) (permitted, ok bool) {
 	e, ok := instances[id]
@@ -88,6 +93,7 @@ func HasEnoughSeats(id int, seats int) (permitted, ok bool) {
 }
 
 // Inspect returns the license information this evaluator holds.
+//
 //export Inspect
 func Inspect(id int) (lic *C.char, ok bool) {
 	e, ok := instances[id]
@@ -105,6 +111,7 @@ func Inspect(id int) (lic *C.char, ok bool) {
 }
 
 // Dispose removes/disposes an instance formerly created using Init. If the id does not exist, nothing happens.
+//
 //export Dispose
 func Dispose(id int) {
 	delete(instances, id)

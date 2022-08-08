@@ -12,9 +12,10 @@ import (
 )
 
 // This clock roughly implements a Hybrid Logical Clock (HLC) as described in
-//   Logical Physical Clocks and Consistent Snapshots in Globally Distributed Databases
-//   Kulkarni et al.
-//   https://cse.buffalo.edu/tech-reports/2014-04.pdf
+//
+//	Logical Physical Clocks and Consistent Snapshots in Globally Distributed Databases
+//	Kulkarni et al.
+//	https://cse.buffalo.edu/tech-reports/2014-04.pdf
 //
 // This implementation is very much geared towards single process use, yet still
 // protects us from the funny bits of physical wall time, e.g. clock skew or time
@@ -22,7 +23,8 @@ import (
 //
 // In the future, if we ever make ws-manager properly distributed, we might want
 // to take inspiration from cockroachDB's implementation:
-//     https://github.com/cockroachdb/cockroach/blob/master/pkg/util/hlc/hlc.go
+//
+//	https://github.com/cockroachdb/cockroach/blob/master/pkg/util/hlc/hlc.go
 type HLC struct {
 	physicalTime          func() uint64
 	backwardsFlowReporter func(diff uint64)
@@ -37,8 +39,9 @@ type HLC struct {
 
 // System takes the wall time from the actual system time.
 // Beware: when using the clock wall time, it's a good idea to wait out
-//         the maximum expected real wall time skew, e.g. as imposed by
-//         NTP. time.Sleep(2*time.Second) should be enough in most cases.
+//
+//	the maximum expected real wall time skew, e.g. as imposed by
+//	NTP. time.Sleep(2*time.Second) should be enough in most cases.
 func System() *HLC {
 	return &HLC{
 		physicalTime: func() uint64 { return uint64(time.Now().Unix()) },
@@ -59,7 +62,8 @@ const (
 // ReportBackwardsTime registers a reporter which gets called when the wall time
 // does not increase monotonously.
 // Beware: this function is not synchronised with Tick() and must not be called
-//         concurrently.
+//
+//	concurrently.
 func (c *HLC) ReportBackwardsTime(r func(diff uint64)) {
 	c.backwardsFlowReporter = r
 }

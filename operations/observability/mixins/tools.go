@@ -2,7 +2,8 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-//+build tools
+//go:build tools
+// +build tools
 
 // Package tools tracks dependencies for tools that used in the build process.
 // See https://github.com/golang/go/wiki/Modules

@@ -127,7 +127,6 @@ func (p *Preview) InstallContext(wait bool, timeout time.Duration) error {
 //
 // Preview environments are considered the same if they are based on the same underlying
 // branch and the VM hasn't changed.
-//
 func (p *Preview) Same(newPreview *Preview) bool {
 	sameBranch := p.branch == newPreview.branch
 	if !sameBranch {

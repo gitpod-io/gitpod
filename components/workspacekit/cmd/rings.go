@@ -623,7 +623,8 @@ var (
 // That's how configMaps and secrets behave in Kubernetes.
 //
 // Note/Caveat: configMap or secret volumes with a subPath do not behave as described above and will not be recognised by this function.
-//              in those cases you'll want to use GITPOD_WORKSPACEKIT_BIND_MOUNTS to explicitely list those paths.
+//
+//	in those cases you'll want to use GITPOD_WORKSPACEKIT_BIND_MOUNTS to explicitely list those paths.
 func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (dest string, err error)) (mounts []string, err error) {
 	scanner := bufio.NewScanner(procMounts)
 	for scanner.Scan() {

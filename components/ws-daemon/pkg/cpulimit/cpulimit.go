@@ -274,10 +274,12 @@ type Bucket struct {
 // BucketLimiter limits CPU use based on different "pots of CPU time".
 // The current limit is decided by the current bucket which is taken in order.
 // For example:
-//    buckets = [ { Budget: 50, Limit: 20 }, { Budget: 20, Limit: 10 }, { Budget: 0, Limit: 5 } ]
-//    budgetSpent = totalBudget - budgetLeft == 65
-//    then the current limit is 10, because we have spent all our budget from bucket 0, and are currently
-//    spending from the second bucket.
+//
+//	buckets = [ { Budget: 50, Limit: 20 }, { Budget: 20, Limit: 10 }, { Budget: 0, Limit: 5 } ]
+//	budgetSpent = totalBudget - budgetLeft == 65
+//	then the current limit is 10, because we have spent all our budget from bucket 0, and are currently
+//	spending from the second bucket.
+//
 // The last bucket's Budget is always ignored and becomes the default limit if all other
 // buckets are used up.
 // If the list of buckets is empty, this limiter limits to zero.
