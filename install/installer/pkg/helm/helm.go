@@ -218,7 +218,9 @@ func CustomizeAnnotation(registryValues []string, prefix string, ctx *common.Ren
 	annotations := common.CustomizeAnnotation(ctx, component, typeMeta, existingAnnotations...)
 	if len(annotations) > 0 {
 		for k, v := range annotations {
-			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, k), v))
+			// Escape any dots in the keys so they're not expanded
+			key := strings.Replace(k, ".", "\\.", -1)
+			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, key), v))
 		}
 	}
 
@@ -236,7 +238,9 @@ func CustomizeLabel(registryValues []string, prefix string, ctx *common.RenderCo
 
 	if len(labels) > 0 {
 		for k, v := range labels {
-			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, k), v))
+			// Escape any dots in the keys so they're not expanded
+			key := strings.Replace(k, ".", "\\.", -1)
+			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, key), v))
 		}
 	}
 
