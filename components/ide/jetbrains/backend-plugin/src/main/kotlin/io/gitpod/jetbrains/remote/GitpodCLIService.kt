@@ -16,6 +16,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.application
+import com.intellij.util.withFragment
+import com.intellij.util.withPath
+import com.intellij.util.withQuery
+import com.jetbrains.rd.util.URI
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
@@ -31,6 +35,7 @@ import java.nio.file.Path
 class GitpodCLIService : RestService() {
 
     private val manager = service<GitpodManager>()
+    private val portsService = service<GitpodPortsService>()
 
     override fun getServiceName() = SERVICE_NAME
 
@@ -68,11 +73,28 @@ class GitpodCLIService : RestService() {
             if (url.isNullOrBlank()) {
                 return "url is missing"
             }
+
+            val resolvedUrl = resolveExternalUrl(url)
+
             return withClient(request, context) { project ->
-                BrowserUtil.browse(url, project)
+                BrowserUtil.browse(resolvedUrl, project)
             }
         }
         return "invalid operation"
+    }
+
+    private fun resolveExternalUrl(url: String): String {
+        val uri = URI.create(url)
+        val optionalLocalHostUriMetadata = portsService.extractLocalHostUriMetaDataForPortMapping(uri)
+
+        return when {
+            optionalLocalHostUriMetadata.isEmpty -> url
+            else -> portsService.getLocalHostUriFromHostPort(optionalLocalHostUriMetadata.get().port)
+                    .withPath(uri.path)
+                    .withQuery(uri.query)
+                    .withFragment(uri.fragment)
+                    .toString()
+        }
     }
 
     private fun withClient(request: FullHttpRequest, context: ChannelHandlerContext, action: (project: Project?) -> Unit): String? {

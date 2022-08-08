@@ -33,11 +33,13 @@ import org.jetbrains.ide.BuiltInServerManager
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 
+@Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 class GitpodClientProjectSessionTracker(
         private val session: ClientProjectSession
 ) : Disposable {
 
     private val manager = service<GitpodManager>()
+    private val portsService = service<GitpodPortsService>()
 
     private lateinit var info: Info.WorkspaceInfoResponse
     private val lifetime = Lifetime.Eternal.createNested()
@@ -54,19 +56,26 @@ class GitpodClientProjectSessionTracker(
         }
     }
 
-    private fun isExposedServedPort(port: Status.PortsStatus?): Boolean {
+    private fun isExposedServedPort(port: PortsStatus?): Boolean {
         if (port === null) {
             return false
         }
         return port.served && port.hasExposed()
     }
 
+    private fun getForwardedPortUrl(port: PortsStatus): String {
+        return when {
+            portsService.isForwarded(port.localPort) -> portsService.getLocalHostUriFromHostPort(port.localPort).toString()
+            else -> port.exposed.url
+        }
+    }
+
     private fun showOpenServiceNotification(port: PortsStatus, offerMakePublic: Boolean = false) {
         val message = "A service is available on port ${port.localPort}"
         val notification = manager.notificationGroup.createNotification(message, NotificationType.INFORMATION)
 
-        val openBrowserAction = NotificationAction.createSimple("Open Browser") {
-            openBrowser(port.exposed.url)
+        val openBrowserAction = NotificationAction.createSimple("Open browser") {
+            openBrowser(getForwardedPortUrl(port))
         }
         notification.addAction(openBrowserAction)
 
@@ -76,7 +85,7 @@ class GitpodClientProjectSessionTracker(
                     makePortPublic(info.workspaceId, port)
                 }
             }
-            val makePublicAction = NotificationAction.createSimple("Make Public", makePublicLambda)
+            val makePublicAction = NotificationAction.createSimple("Make public", makePublicLambda)
             notification.addAction(makePublicAction)
         }
 
@@ -113,7 +122,7 @@ class GitpodClientProjectSessionTracker(
         val backendPort = BuiltInServerManager.getInstance().waitForStart().port
         val serverPort = StartupUtil.getServerFuture().await().port
         val ignorePorts = listOf(backendPort, serverPort, 5990)
-        val portsStatus = hashMapOf<Int, Status.PortsStatus>()
+        val portsStatus = hashMapOf<Int, PortsStatus>()
 
         val status = StatusServiceGrpc.newStub(GitpodManager.supervisorChannel)
         while (isActive) {
@@ -147,7 +156,7 @@ class GitpodClientProjectSessionTracker(
                                         }
 
                                         if (port.exposed.onExposed.number == Status.OnPortExposedAction.open_browser_VALUE || port.exposed.onExposed.number == Status.OnPortExposedAction.open_preview_VALUE) {
-                                            openBrowser(port.exposed.url)
+                                            openBrowser(getForwardedPortUrl(port))
                                             continue
                                         }
 
@@ -157,7 +166,7 @@ class GitpodClientProjectSessionTracker(
                                         }
 
                                         if (port.exposed.onExposed.number == Status.OnPortExposedAction.notify_private_VALUE) {
-                                            showOpenServiceNotification(port, port.exposed.visibilityValue !== PortVisibility.public_visibility_VALUE)
+                                            showOpenServiceNotification(port, port.exposed.visibilityValue != PortVisibility.public_visibility_VALUE)
                                             continue
                                         }
                                     }
