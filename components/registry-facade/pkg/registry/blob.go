@@ -359,8 +359,7 @@ func (sbs ipfsBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst
 func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	log := log.WithField("digest", dgst)
 
-	var ipfsCID string
-	ipfsCID, err = sbs.source.Redis.Get(ctx, dgst.String()).Result()
+	ipfsCID, err := sbs.source.Redis.Get(ctx, dgst.String()).Result()
 	if err != nil {
 		log.WithError(err).Error("unable to get blob details from Redis")
 		err = distv2.ErrorCodeBlobUnknown
