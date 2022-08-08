@@ -3687,6 +3687,8 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
+      annotations:
+        hello: world
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: primary
@@ -3749,6 +3751,8 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
+      annotations:
+        hello: world
       creationTimestamp: null
       labels:
         app.kubernetes.io/instance: Minio
@@ -6331,6 +6335,8 @@ metadata:
     helm.sh/chart: minio-11.6.3
     app.kubernetes.io/instance: Minio
     app.kubernetes.io/managed-by: Helm
+  annotations:
+    hello: world
 spec:
   type: ClusterIP
   ports:
@@ -6360,6 +6366,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
   annotations:
+    hello: world
 spec:
   type: ClusterIP
   sessionAffinity: None
@@ -7490,12 +7497,14 @@ spec:
     metadata:
       annotations:
         checksum/configuration: f96f510015050d9b0165d12f144f5eca5641c065ccbe9c75e64f58e81a9b3d8c
+        hello: world
       labels:
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.1.2
         app.kubernetes.io/instance: MySQL
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: primary
+        hello: world
     spec:
       serviceAccountName: db
       
@@ -8509,8 +8518,10 @@ spec:
         helm.sh/chart: minio-11.6.3
         app.kubernetes.io/instance: Minio
         app.kubernetes.io/managed-by: Helm
+        hello: world
       annotations:
         checksum/credentials-secret: 254e39ef7087b8d977946ed0027240eda9a1c7f64ae430fca5644a50b23cece3
+        hello: world
     spec:
       
       serviceAccountName: minio
