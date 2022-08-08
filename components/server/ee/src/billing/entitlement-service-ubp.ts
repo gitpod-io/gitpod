@@ -12,6 +12,7 @@ import {
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
 } from "@gitpod/gitpod-protocol";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { inject, injectable } from "inversify";
 import {
     EntitlementService,
@@ -20,6 +21,7 @@ import {
 } from "../../../src/billing/entitlement-service";
 import { Config } from "../../../src/config";
 import { BillingModes } from "./billing-mode";
+import { BillingService } from "./billing-service";
 
 const MAX_PARALLEL_WORKSPACES_FREE = 4;
 const MAX_PARALLEL_WORKSPACES_PAID = 16;
@@ -32,6 +34,7 @@ export class EntitlementServiceUBP implements EntitlementService {
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(BillingModes) protected readonly billingModes: BillingModes;
+    @inject(BillingService) protected readonly billingService: BillingService;
 
     async mayStartWorkspace(
         user: User,
@@ -50,19 +53,23 @@ export class EntitlementServiceUBP implements EntitlementService {
                 return undefined;
             }
         };
-        const [spendingLimitReached, hitParallelWorkspaceLimit] = await Promise.all([
-            this.checkSpendingLimitReached(user.id, date),
+        const [spendingLimitReachedOnCostCenter, hitParallelWorkspaceLimit] = await Promise.all([
+            this.checkSpendingLimitReached(user, date),
             hasHitParallelWorkspaceLimit(),
         ]);
 
         return {
-            spendingLimitReached,
+            spendingLimitReachedOnCostCenter,
             hitParallelWorkspaceLimit,
         };
     }
 
-    protected async checkSpendingLimitReached(userId: string, date: Date): Promise<boolean> {
-        return false;
+    protected async checkSpendingLimitReached(user: User, date: Date): Promise<AttributionId | undefined> {
+        const result = await this.billingService.checkSpendingLimitReached(user);
+        if (result.reached) {
+            return result.attributionId;
+        }
+        return undefined;
     }
 
     protected async getMaxParallelWorkspaces(user: User, date: Date): Promise<number> {
