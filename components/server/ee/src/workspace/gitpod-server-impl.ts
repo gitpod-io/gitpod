@@ -1230,8 +1230,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async createPortalSession(ctx: TraceContext): Promise<{}> {
         const user = this.checkUser("createPortalSession");
         const logContext = { userId: user.id };
-        // TODO(gpl) This _might_ lock out people from their invoices (test). But if we wanted to keep it, we'd have to explicitly disabled/deny upgrading from the portal, first!
-        await this.ensureChargebeeApiIsAllowed({ user });
 
         return await new Promise((resolve, reject) => {
             this.chargebeeProvider.portal_session
@@ -1261,8 +1259,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (!team) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
         }
-        // TODO(gpl) This _might_ lock out people from their invoices (test). But if we wanted to keep it, we'd have to explicitly disabled/deny upgrading from the portal, first!
-        await this.ensureChargebeeApiIsAllowed({ team });
         const members = await this.teamDB.findMembersByTeam(team.id);
         await this.guardAccess({ kind: "team", subject: team, members }, "update");
 
