@@ -6,7 +6,6 @@ package webhooks
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -28,6 +27,9 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// TODO: verify webhook signature.
+	// Conditional on there being a secret configured.
+
 	req.Body = http.MaxBytesReader(w, req.Body, maxBodyBytes)
 
 	event := stripe.Event{}
@@ -44,8 +46,11 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// TODO: verify webhook signature.
-	// Conditional on there being a secret configured.
+	invoiceId, ok := event.Data.Object["id"].(string)
+	if !ok {
+		log.Error("failed to find invoice id in Stripe event payload")
+		w.WriteHeader(http.StatusBadRequest)
+	}
 
-	fmt.Fprintf(w, "event type: %s", event.Type)
+	log.Infof("finalizing invoice for invoice id: %s", invoiceId)
 }
