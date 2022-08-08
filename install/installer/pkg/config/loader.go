@@ -6,9 +6,9 @@ package config
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/yq"
 	"github.com/go-playground/validator/v10"
 
 	"sigs.k8s.io/yaml"
@@ -107,17 +107,18 @@ func Load(overrideConfig string, strict bool) (cfg interface{}, version string, 
 		return
 	}
 
-	// `apiVersion: vx` line is removed from config since the version dependant
-	// Config structure doesn't have that field
-	// The line-ending is either comma (minified YAML) or newline (unminified)
-	apiVersionRegexp := regexp.MustCompile(`apiVersion: ` + apiVersion + `(,)?`)
-	overrideConfig = apiVersionRegexp.ReplaceAllString(overrideConfig, "")
+	// Remove the apiVersion from the config as this has already been parsed
+	// Use yq to make processing reliable
+	output, err := yq.Process(overrideConfig, "del(.apiVersion)")
+	if err != nil {
+		return
+	}
 
 	// Override passed configuration onto the default
 	if strict {
-		err = yaml.UnmarshalStrict([]byte(overrideConfig), cfg)
+		err = yaml.UnmarshalStrict([]byte(*output), cfg)
 	} else {
-		err = yaml.Unmarshal([]byte(overrideConfig), cfg)
+		err = yaml.Unmarshal([]byte(*output), cfg)
 	}
 	if err != nil {
 		return
