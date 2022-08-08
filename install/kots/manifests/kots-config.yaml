@@ -23,7 +23,7 @@ spec:
 
     - name: container_registry
       title: Container registry
-      description: Gitpod requires a container registry to store container images. This can either be an in-cluster or external container registry.
+      description: Gitpod requires a container registry to store container images that are used to start workspaces. This can either be an in-cluster or external container registry.
       items:
         - name: reg_incluster
           title: Use in-cluster container registry
@@ -299,7 +299,7 @@ spec:
           type: bool
           default: "1"
           when: '{{repl ConfigOptionEquals "tls_self_signed_enabled" "0" }}'
-          help_text: Automate certificate management with [cert-manager](https://cert-manager.io).
+          help_text: Automate certificate management with [cert-manager](https://cert-manager.io). For more information about how Gitpod uses cert-manager, please visit our [docmentation](https://www.gitpod.io/docs/self-hosted/latest/required-components#cert-manager).
 
         - name: cert_manager_issuer_name
           title: Issuer name
@@ -307,7 +307,7 @@ spec:
           value: gitpod-issuer
           required: true
           when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
-          help_text: The name of the issuer you wish to use to generate your certificate. This will be the Kubernetes resource name.
+          help_text: Insert the kubernetes resource name of the cert-manager certificate issuer that should exist in your cluster already. This let's gitpod know which issue to use.
 
         - name: cert_manager_issuer
           title: Issuer type
@@ -327,7 +327,7 @@ spec:
           type: file
           required: true
           when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") }}'
-          help_text: A file containing the TLS crt.
+          help_text: A file containing the TLS certificate.
 
         - name: tls_key
           title: Private key
@@ -346,10 +346,10 @@ spec:
       title: Additional features
       items:
         - name: ssh_gateway
-          title: Allow login to your workspace via SSH
+          title: Install SSH gateway to enable Desktop IDE Access
           type: bool
           default: "0"
-          help_text: 'Enabling the SSH gateway allows use of additional desktop IDEs. IMPORTANT: This uses port 22 on your Kubernetes nodes. When enabled, this will prevent login to the cluster via SSH. If you wish to maintain SSH access to your cluster, please configure another SSH port on your nodes.'
+          help_text: 'Enabling the SSH gateway allows use of additional desktop IDEs. IMPORTANT: This uses port 22 on your Kubernetes nodes. When enabled, this will prevent login to the cluster via SSH. If you wish to maintain SSH access to your cluster, please configure another SSH port on your nodes. Further, your cluster need to have a loadbalancer capable of handling SSH traffic.'
 
     - name: user_management
       title: User management
