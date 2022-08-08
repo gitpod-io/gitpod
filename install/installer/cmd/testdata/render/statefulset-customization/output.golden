@@ -7123,12 +7123,14 @@ spec:
     metadata:
       annotations:
         checksum/configuration: f96f510015050d9b0165d12f144f5eca5641c065ccbe9c75e64f58e81a9b3d8c
+        hello: world
       labels:
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.1.2
         app.kubernetes.io/instance: MySQL
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: primary
+        hello: world
     spec:
       serviceAccountName: db
       

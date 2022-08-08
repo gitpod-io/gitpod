@@ -23,3 +23,5 @@ spec:
     labels:
       app: gitpod
       component: gitpod-installer
+      kots.io/app-slug: '{{repl LicenseFieldValue "appSlug" }}'
+      kots.io/backup: velero

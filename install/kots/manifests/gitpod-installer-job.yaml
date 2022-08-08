@@ -33,6 +33,9 @@ spec:
             - mountPath: /config-patch
               name: config-patch
               readOnly: true
+            - mountPath: /custom-labels
+              name: custom-labels
+              readOnly: true
             - mountPath: /mnt/node0
               name: node-fs0
               readOnly: true
@@ -273,6 +276,7 @@ spec:
                   yq e -i ".components.proxy.service.serviceType = \"{{repl ConfigOption "component_proxy_service_serviceType" }}\"" "${CONFIG_FILE}"
                 fi
 
+                yq e -i ".customization = []" "${CONFIG_FILE}"
                 if [ '{{repl ConfigOptionNotEquals "customization_patch" "" }}' = "true" ];
                 then
                   CUSTOMIZATION='{{repl ConfigOptionData "customization_patch" | Base64Encode }}'
@@ -285,6 +289,9 @@ spec:
                 echo "Gitpod: No advanced configuration applied"
               fi
 
+              echo "Gitpod: Apply the backup labels"
+              yq e -i '.customization += load("/custom-labels/customization.yaml")' "${CONFIG_FILE}"
+
               echo "Gitpod: Update platform telemetry value"
               yq eval-all --inplace '.experimental.telemetry.data.platform = "{{repl Distribution }}"' "${CONFIG_FILE}"
 
@@ -293,6 +300,9 @@ spec:
               config_patch=$(cat /tmp/patch.yaml)
               echo "Gitpod: ${CONFIG_PATCH_FILE}=${config_patch}"
               yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' "${CONFIG_FILE}" /tmp/patch.yaml
+
+              echo "Gitpod: Escape all keys - this avoids any collisions in the customizations/patch"
+              yq e -i '.' -o json -I 0 "${CONFIG_FILE}"
 
               echo "Gitpod: Generate the Kubernetes objects"
               config=$(cat "${CONFIG_FILE}")
@@ -361,6 +371,9 @@ spec:
         - name: config-patch
           configMap:
             name: gitpod-config-patch
+        - name: custom-labels
+          configMap:
+            name: gitpod-custom-labels
         - name: node-fs0
           hostPath:
             path: /

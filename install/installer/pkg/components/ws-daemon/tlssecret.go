@@ -37,7 +37,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Group: "cert-manager.io",
 				},
 				SecretTemplate: &certmanagerv1.CertificateSecretTemplate{
-					Labels: common.DefaultLabels(Component),
+					Labels: common.CustomizeLabel(ctx, Component, common.TypeMetaCertificate),
 				},
 			},
 		},

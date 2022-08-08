@@ -24,8 +24,9 @@ var Helm = common.CompositeHelmFunc(
 			return nil, err
 		}
 
-		customization := helm.CustomizeAnnotation([]string{}, "mysql.primary.podAnnotations", cfg, Component, common.TypeMetaDeployment)
-		customization = helm.CustomizeLabel(customization, "mysql.primary.podLabels", cfg, Component, common.TypeMetaDeployment)
+		customization := make([]string, 0)
+		customization = helm.CustomizeAnnotation(customization, "mysql.primary.podAnnotations", cfg, Component, common.TypeMetaStatefulSet)
+		customization = helm.CustomizeLabel(customization, "mysql.primary.podLabels", cfg, Component, common.TypeMetaStatefulSet)
 		customization = helm.CustomizeAnnotation(customization, "mysql.primary.service.annotations", cfg, Component, common.TypeMetaService)
 
 		return &common.HelmConfig{

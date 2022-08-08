@@ -39,7 +39,7 @@ func certificate(ctx *common.RenderContext) ([]runtime.Object, error) {
 				fmt.Sprintf("registry.%s.svc.cluster.local", ctx.Namespace),
 			},
 			SecretTemplate: &certmanagerv1.CertificateSecretTemplate{
-				Labels: common.DefaultLabels(Component),
+				Labels: common.CustomizeLabel(ctx, Component, common.TypeMetaCertificate),
 			},
 		},
 	}}, nil

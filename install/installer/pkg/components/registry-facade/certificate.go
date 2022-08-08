@@ -34,7 +34,7 @@ func certificate(ctx *common.RenderContext) ([]runtime.Object, error) {
 				fmt.Sprintf("reg.%s", ctx.Config.Domain),
 			},
 			SecretTemplate: &certmanagerv1.CertificateSecretTemplate{
-				Labels: common.DefaultLabels(Component),
+				Labels: common.CustomizeLabel(ctx, Component, common.TypeMetaCertificate),
 			},
 		},
 	}}, nil

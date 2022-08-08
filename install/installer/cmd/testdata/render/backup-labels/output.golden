@@ -523,7 +523,8 @@ spec:
     labels:
       app: gitpod
       component: docker-registry
-      hello: world
+      kots.io/app-slug: gitpod
+      kots.io/backup: velero
 status: {}
 ---
 # cert-manager.io/v1/Certificate builtin-registry-facade-cert
@@ -538,7 +539,7 @@ metadata:
   namespace: default
 spec:
   dnsNames:
-  - reg.customization-test.gitpod.com
+  - reg.backup-labels-test.gitpod.com
   duration: 2160h0m0s
   issuerRef:
     group: cert-manager.io
@@ -549,7 +550,8 @@ spec:
     labels:
       app: gitpod
       component: registry-facade
-      hello: world
+      kots.io/app-slug: gitpod
+      kots.io/backup: velero
 status: {}
 ---
 # cert-manager.io/v1/Certificate ca-issuer-ca
@@ -578,7 +580,8 @@ spec:
     labels:
       app: gitpod
       component: cluster
-      hello: world
+      kots.io/app-slug: gitpod
+      kots.io/backup: velero
 status: {}
 ---
 # cert-manager.io/v1/Certificate ws-daemon-tls
@@ -607,7 +610,8 @@ spec:
     labels:
       app: gitpod
       component: ws-daemon
-      hello: world
+      kots.io/app-slug: gitpod
+      kots.io/backup: velero
 status: {}
 ---
 # cert-manager.io/v1/Certificate ws-manager
@@ -637,7 +641,8 @@ spec:
     labels:
       app: gitpod
       component: ws-manager
-      hello: world
+      kots.io/app-slug: gitpod
+      kots.io/backup: velero
 status: {}
 ---
 # cert-manager.io/v1/Certificate ws-manager-tls
@@ -666,7 +671,8 @@ spec:
     labels:
       app: gitpod
       component: ws-manager
-      hello: world
+      kots.io/app-slug: gitpod
+      kots.io/backup: velero
 status: {}
 ---
 # policy/v1beta1/PodSecurityPolicy default-ns-privileged
@@ -915,13 +921,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: agent-smith
-    hello: world
   name: agent-smith
   namespace: default
 ---
@@ -930,13 +933,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: blobserve
-    hello: world
   name: blobserve
   namespace: default
 ---
@@ -945,13 +945,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: content-service
-    hello: world
   name: content-service
   namespace: default
 ---
@@ -960,13 +957,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: dashboard
-    hello: world
   name: dashboard
   namespace: default
 ---
@@ -975,13 +969,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: db
-    hello: world
   name: db
   namespace: default
 ---
@@ -990,13 +981,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: docker-registry
-    hello: world
   name: docker-registry
   namespace: default
 ---
@@ -1005,13 +993,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: gitpod
-    hello: world
   name: gitpod
   namespace: default
 ---
@@ -1020,13 +1005,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-metrics
-    hello: world
   name: ide-metrics
   namespace: default
 ---
@@ -1035,13 +1017,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-proxy
-    hello: world
   name: ide-proxy
   namespace: default
 ---
@@ -1050,13 +1029,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: image-builder-mk3
-    hello: world
   name: image-builder-mk3
   namespace: default
 ---
@@ -1065,13 +1041,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: migrations
-    hello: world
   name: migrations
   namespace: default
 ---
@@ -1096,13 +1069,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: nobody
-    hello: world
   name: nobody
   namespace: default
 ---
@@ -1111,13 +1081,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: openvsx-proxy
-    hello: world
   name: openvsx-proxy
   namespace: default
 ---
@@ -1126,13 +1093,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: proxy
-    hello: world
   name: proxy
   namespace: default
 ---
@@ -1157,13 +1121,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: registry-facade
-    hello: world
   name: registry-facade
   namespace: default
 ---
@@ -1172,13 +1133,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: server
-    hello: world
   name: server
   namespace: default
 ---
@@ -1187,13 +1145,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: workspace
-    hello: world
   name: workspace
   namespace: default
 ---
@@ -1202,13 +1157,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-daemon
-    hello: world
   name: ws-daemon
   namespace: default
 ---
@@ -1217,13 +1169,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager
-    hello: world
   name: ws-manager
   namespace: default
 ---
@@ -1232,13 +1181,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager-bridge
-    hello: world
   name: ws-manager-bridge
   namespace: default
 ---
@@ -1247,20 +1193,17 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-proxy
-    hello: world
   name: ws-proxy
   namespace: default
 ---
 # v1/Secret builtin-registry-auth
 apiVersion: v1
 data:
-  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5jdXN0b21pemF0aW9uLXRlc3QuZ2l0cG9kLmNvbSI6eyJhdXRoIjoiZUZObFpFcHBSR2RLVVZGbk5FSnJWelY0UzNVNlExYzBRMUpDYW1rMlVqQmlSMGM0TVdkNVJYaz0ifX19
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5iYWNrdXAtbGFiZWxzLXRlc3QuZ2l0cG9kLmNvbSI6eyJhdXRoIjoiZUZObFpFcHBSR2RLVVZGbk5FSnJWelY0UzNVNlExYzBRMUpDYW1rMlVqQmlSMGM0TVdkNVJYaz0ifX19
   password: Q1c0Q1JCamk2UjBiR0c4MWd5RXk=
   user: eFNlZEppRGdKUVFnNEJrVzV4S3U=
 kind: Secret
@@ -1441,7 +1384,7 @@ data:
   config.json: |-
     {
       "gitpodAPI": {
-        "hostURL": "https://customization-test.gitpod.com",
+        "hostURL": "https://backup-labels-test.gitpod.com",
         "apiToken": ""
       },
       "enforcement": {},
@@ -1454,13 +1397,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: agent-smith
-    hello: world
   name: agent-smith
   namespace: default
 ---
@@ -1479,32 +1419,32 @@ data:
               {
                 "path": "/ide/out/vs/workbench/workbench.web.api.js",
                 "search": "vscode-cdn.net",
-                "replacement": "customization-test.gitpod.com"
+                "replacement": "backup-labels-test.gitpod.com"
               },
               {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
                 "search": "vscode-cdn.net",
-                "replacement": "customization-test.gitpod.com"
+                "replacement": "backup-labels-test.gitpod.com"
               },
               {
                 "path": "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
                 "search": "vscode-cdn.net",
-                "replacement": "customization-test.gitpod.com"
+                "replacement": "backup-labels-test.gitpod.com"
               },
               {
                 "path": "/ide/out/vs/workbench/workbench.web.api.js",
                 "search": "open-vsx.org",
-                "replacement": "open-vsx.customization-test.gitpod.com"
+                "replacement": "open-vsx.backup-labels-test.gitpod.com"
               },
               {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
                 "search": "open-vsx.org",
-                "replacement": "open-vsx.customization-test.gitpod.com"
+                "replacement": "open-vsx.backup-labels-test.gitpod.com"
               },
               {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
                 "search": "ide.gitpod.io/code/markeplace.json",
-                "replacement": "ide.customization-test.gitpod.com/code/marketplace.json"
+                "replacement": "ide.backup-labels-test.gitpod.com/code/marketplace.json"
               }
             ],
             "inlineStatic": [
@@ -1547,13 +1487,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: blobserve
-    hello: world
   name: blobserve
   namespace: default
 ---
@@ -1590,13 +1527,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: content-service
-    hello: world
   name: content-service
   namespace: default
 ---
@@ -1648,13 +1582,10 @@ data:
   tuneMysql.sql: SET GLOBAL innodb_lru_scan_depth=256;
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: db
-    hello: world
   name: db-init-scripts
   namespace: default
 ---
@@ -1674,21 +1605,50 @@ data:
       inCluster: true
       privateBaseImageAllowList: []
     customization:
-    - apiVersion: '*'
-      kind: '*'
+    - apiVersion: apps/v1
+      kind: StatefulSet
       metadata:
-        annotations:
-          hello: world
         creationTimestamp: null
         labels:
-          hello: world
+          kots.io/app-slug: gitpod
+          kots.io/backup: velero
+        name: db
+      spec:
+        env: null
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        creationTimestamp: null
+        labels:
+          kots.io/app-slug: gitpod
+          kots.io/backup: velero
+        name: minio
+      spec:
+        env: null
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        creationTimestamp: null
+        labels:
+          kots.io/app-slug: gitpod
+          kots.io/backup: velero
+        name: minio
+      spec:
+        env: null
+    - apiVersion: cert-manager.io/v1
+      kind: Certificate
+      metadata:
+        creationTimestamp: null
+        labels:
+          kots.io/app-slug: gitpod
+          kots.io/backup: velero
         name: '*'
       spec:
         env: null
     database:
       inCluster: true
     disableDefinitelyGp: true
-    domain: customization-test.gitpod.com
+    domain: backup-labels-test.gitpod.com
     kind: Full
     metadata:
       region: local
@@ -1911,13 +1871,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: docker-registry
-        hello: world
       name: docker-registry
       namespace: default
     ---
@@ -2040,13 +1997,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: nobody
-        hello: world
       name: nobody
       namespace: default
     ---
@@ -2073,13 +2027,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: gitpod
-        hello: world
       name: gitpod
       namespace: default
     ---
@@ -2096,26 +2047,20 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: blobserve
-        hello: world
       name: blobserve
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: blobserve
-        hello: world
       name: blobserve
       namespace: default
     ---
@@ -2151,13 +2096,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: blobserve
-        hello: world
         kind: service
       name: blobserve
       namespace: default
@@ -2165,39 +2107,30 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: blobserve
-        hello: world
       name: blobserve
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: content-service
-        hello: world
       name: content-service
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: content-service
-        hello: world
       name: content-service
       namespace: default
     ---
@@ -2224,13 +2157,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: content-service
-        hello: world
         kind: service
       name: content-service
       namespace: default
@@ -2238,26 +2168,20 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: content-service
-        hello: world
       name: content-service
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: dashboard
-        hello: world
       name: dashboard
       namespace: default
     ---
@@ -2284,13 +2208,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: dashboard
-        hello: world
         kind: service
       name: dashboard
       namespace: default
@@ -2298,26 +2219,20 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: dashboard
-        hello: world
       name: dashboard
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: db
-        hello: world
       name: db-init-scripts
       namespace: default
     ---
@@ -2354,52 +2269,40 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: db
-        hello: world
       name: db
       namespace: default
     ---
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: db
-        hello: world
       name: db
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-metrics
-        hello: world
       name: ide-metrics
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-metrics
-        hello: world
       name: ide-metrics
       namespace: default
     ---
@@ -2434,13 +2337,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-metrics
-        hello: world
         kind: service
       name: ide-metrics
       namespace: default
@@ -2448,26 +2348,20 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-metrics
-        hello: world
       name: ide-metrics
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-proxy
-        hello: world
       name: ide-proxy
       namespace: default
     ---
@@ -2484,13 +2378,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-proxy
-        hello: world
         kind: service
       name: ide-proxy
       namespace: default
@@ -2498,13 +2389,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-proxy
-        hello: world
       name: ide-proxy
       namespace: default
     ---
@@ -2521,13 +2409,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: migrations
-        hello: world
       name: migrations
       namespace: default
     ---
@@ -2544,13 +2429,10 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: openvsx-proxy
-        hello: world
       name: openvsx-proxy-config
       namespace: default
     ---
@@ -2586,26 +2468,20 @@ data:
     apiVersion: apps/v1
     kind: StatefulSet
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: openvsx-proxy
-        hello: world
       name: openvsx-proxy
       namespace: default
     ---
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: openvsx-proxy
-        hello: world
         kind: service
       name: openvsx-proxy
       namespace: default
@@ -2613,39 +2489,30 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: openvsx-proxy
-        hello: world
       name: openvsx-proxy
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: proxy
-        hello: world
       name: proxy-config
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: proxy
-        hello: world
       name: proxy
       namespace: default
     ---
@@ -2683,13 +2550,11 @@ data:
     metadata:
       annotations:
         cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
-        external-dns.alpha.kubernetes.io/hostname: customization-test.gitpod.com,*.customization-test.gitpod.com,*.ws.customization-test.gitpod.com
-        hello: world
+        external-dns.alpha.kubernetes.io/hostname: backup-labels-test.gitpod.com,*.backup-labels-test.gitpod.com,*.ws.backup-labels-test.gitpod.com
       creationTimestamp: null
       labels:
         app: gitpod
         component: proxy
-        hello: world
         kind: service
       name: proxy
       namespace: default
@@ -2697,13 +2562,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: proxy
-        hello: world
       name: proxy
       namespace: default
     ---
@@ -2740,39 +2602,30 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        hello: world
       name: server-config
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        hello: world
       name: server
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        hello: world
       name: server-ide-config
       namespace: default
     ---
@@ -2828,13 +2681,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        hello: world
         kind: service
       name: server
       namespace: default
@@ -2842,39 +2692,30 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        hello: world
       name: server
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager-bridge
-        hello: world
       name: ws-manager-bridge-config
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager-bridge
-        hello: world
       name: ws-manager-bridge
       namespace: default
     ---
@@ -2900,26 +2741,20 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager-bridge
-        hello: world
       name: ws-manager-bridge
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: agent-smith
-        hello: world
       name: agent-smith
       namespace: default
     ---
@@ -2927,13 +2762,11 @@ data:
     kind: DaemonSet
     metadata:
       annotations:
-        gitpod.io/checksum_config: f6ab79188657e686df6565b90559817815863ba21b9f11f7d3d274d3bc834a70
-        hello: world
+        gitpod.io/checksum_config: 920ed28ab6358f5fc6620fe7dbec15f1627ca2d1129f559a96cd030df8228dc9
       creationTimestamp: null
       labels:
         app: gitpod
         component: agent-smith
-        hello: world
       name: agent-smith
       namespace: default
     ---
@@ -2979,13 +2812,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: agent-smith
-        hello: world
       name: agent-smith
       namespace: default
     ---
@@ -3001,26 +2831,20 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: registry-facade
-        hello: world
       name: registry-facade
       namespace: default
     ---
     apiVersion: apps/v1
     kind: DaemonSet
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: registry-facade
-        hello: world
       name: registry-facade
       namespace: default
     ---
@@ -3079,13 +2903,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: registry-facade
-        hello: world
         kind: service
       name: registry-facade
       namespace: default
@@ -3093,13 +2914,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: registry-facade
-        hello: world
       name: registry-facade
       namespace: default
     ---
@@ -3148,13 +2966,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: workspace
-        hello: world
       name: workspace
       namespace: default
     ---
@@ -3170,39 +2985,30 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-daemon
-        hello: world
       name: ws-daemon
       namespace: default
     ---
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-daemon
-        hello: world
       name: ws-daemon
       namespace: default
     ---
     apiVersion: apps/v1
     kind: DaemonSet
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-daemon
-        hello: world
       name: ws-daemon
       namespace: default
     ---
@@ -3237,13 +3043,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-daemon
-        hello: world
         kind: service
       name: ws-daemon
       namespace: default
@@ -3261,13 +3064,10 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager
-        hello: world
       name: ws-manager
       namespace: default
     ---
@@ -3284,13 +3084,10 @@ data:
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager
-        hello: world
       name: ws-manager
       namespace: default
     ---
@@ -3355,26 +3152,20 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager
-        hello: world
       name: ws-manager
       namespace: default
     ---
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager
-        hello: world
         kind: service
       name: ws-manager
       namespace: default
@@ -3412,26 +3203,20 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-proxy
-        hello: world
       name: ws-proxy
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-proxy
-        hello: world
       name: ws-proxy
       namespace: default
     ---
@@ -3487,13 +3272,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-proxy
-        hello: world
         kind: service
       name: ws-proxy
       namespace: default
@@ -3501,13 +3283,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-proxy
-        hello: world
       name: ws-proxy
       namespace: default
     ---
@@ -3523,26 +3302,20 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: image-builder-mk3
-        hello: world
       name: image-builder-mk3-config
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: image-builder-mk3
-        hello: world
       name: image-builder-mk3
       namespace: default
     ---
@@ -3578,13 +3351,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: image-builder-mk3
-        hello: world
         kind: service
       name: image-builder-mk3
       namespace: default
@@ -3592,13 +3362,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: image-builder-mk3
-        hello: world
       name: image-builder-mk3
       namespace: default
     ---
@@ -3641,8 +3408,6 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: docker-registry
@@ -3693,8 +3458,6 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: primary
@@ -3757,8 +3520,6 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app.kubernetes.io/instance: Minio
@@ -3927,24 +3688,18 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: gitpod-app
-        hello: world
       name: gitpod-app
       namespace: default
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: gitpod-app
-    hello: world
   name: gitpod-app
   namespace: default
 
@@ -3981,13 +3736,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-metrics
-    hello: world
   name: ide-metrics
   namespace: default
 ---
@@ -4007,8 +3759,8 @@ data:
         },
         "pullSecret": "builtin-registry-auth",
         "pullSecretFile": "/config/pull-secret.json",
-        "baseImageRepository": "registry.customization-test.gitpod.com/base-images",
-        "workspaceImageRepository": "registry.customization-test.gitpod.com/workspace-images",
+        "baseImageRepository": "registry.backup-labels-test.gitpod.com/base-images",
+        "workspaceImageRepository": "registry.backup-labels-test.gitpod.com/workspace-images",
         "builderImage": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:test"
       },
       "refCache": {
@@ -4039,13 +3791,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: image-builder-mk3
-    hello: world
   name: image-builder-mk3-config
   namespace: default
 ---
@@ -4104,7 +3853,7 @@ data:
       "cache_duration_regular": "5m0s",
       "cache_duration_backup": "72h0m0s",
       "url_upstream": "https://open-vsx.org",
-      "url_local": "https://open-vsx.customization-test.gitpod.com",
+      "url_local": "https://open-vsx.backup-labels-test.gitpod.com",
       "max_idle_conns": 1000,
       "max_idle_conns_per_host": 1000,
       "redis_addr": "localhost:6379",
@@ -4113,13 +3862,10 @@ data:
   redis.conf: "\nmaxmemory 100mb\nmaxmemory-policy allkeys-lfu\n\t"
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: openvsx-proxy
-    hello: world
   name: openvsx-proxy-config
   namespace: default
 ---
@@ -4127,7 +3873,7 @@ metadata:
 apiVersion: v1
 data:
   vhost.docker-registry: |-
-    https://registry.customization-test.gitpod.com {
+    https://registry.backup-labels-test.gitpod.com {
         import enable_log
         import remove_server_header
         import ssl_configuration
@@ -4145,7 +3891,7 @@ data:
     }
   vhost.empty: '# Placeholder to avoid errors loading files using a glob pattern'
   vhost.ide-proxy: |
-    https://ide.customization-test.gitpod.com {
+    https://ide.backup-labels-test.gitpod.com {
         import enable_log_debug
         import remove_server_header
         import ssl_configuration
@@ -4155,7 +3901,7 @@ data:
         }
     }
   vhost.minio: |-
-    https://minio.customization-test.gitpod.com {
+    https://minio.backup-labels-test.gitpod.com {
         import enable_log
         import remove_server_header
         import ssl_configuration
@@ -4165,7 +3911,7 @@ data:
         }
     }
   vhost.open-vsx: |-
-    https://open-vsx.customization-test.gitpod.com {
+    https://open-vsx.backup-labels-test.gitpod.com {
         import enable_log_debug
         import remove_server_header
         import ssl_configuration
@@ -4175,7 +3921,7 @@ data:
         }
     }
   vhost.payment-endpoint: |
-    https://payment.customization-test.gitpod.com {
+    https://payment.backup-labels-test.gitpod.com {
         import enable_log
         import remove_server_header
         import ssl_configuration
@@ -4200,13 +3946,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: proxy
-    hello: world
   name: proxy-config
   namespace: default
 ---
@@ -4292,13 +4035,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: registry-facade
-    hello: world
   name: registry-facade
   namespace: default
 ---
@@ -4308,7 +4048,7 @@ data:
   config.json: |-
     {
       "version": "pd-ide-metrics.23",
-      "hostUrl": "https://customization-test.gitpod.com",
+      "hostUrl": "https://backup-labels-test.gitpod.com",
       "installationShortname": "default",
       "devBranch": "",
       "insecureNoDomain": false,
@@ -4325,7 +4065,7 @@ data:
       "contentServiceAddr": "content-service:8080",
       "imageBuilderAddr": "image-builder-mk3:8080",
       "usageServiceAddr": "usage:9001",
-      "vsxRegistryUrl": "https://open-vsx.customization-test.gitpod.com",
+      "vsxRegistryUrl": "https://open-vsx.backup-labels-test.gitpod.com",
       "chargebeeProviderOptionsFile": "/chargebee/providerOptions",
       "stripeSecretsFile": "/stripe-secret/apikeys",
       "stripeConfigFile": "/stripe-config/config",
@@ -4424,13 +4164,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: server
-    hello: world
   name: server-config
   namespace: default
 ---
@@ -4446,7 +4183,7 @@ data:
             "orderKey": "00",
             "title": "VS Code",
             "type": "browser",
-            "logo": "https://ide.customization-test.gitpod.com/image/ide-logo/vscode.svg",
+            "logo": "https://ide.backup-labels-test.gitpod.com/image/ide-logo/vscode.svg",
             "label": "Browser",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-ce3e2bc5edd1cf37d66ef0b37c38645543021831",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
@@ -4455,7 +4192,7 @@ data:
             "orderKey": "02",
             "title": "VS Code",
             "type": "desktop",
-            "logo": "https://ide.customization-test.gitpod.com/image/ide-logo/vscode.svg",
+            "logo": "https://ide.backup-labels-test.gitpod.com/image/ide-logo/vscode.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:test"
           },
@@ -4463,7 +4200,7 @@ data:
             "orderKey": "05",
             "title": "GoLand",
             "type": "desktop",
-            "logo": "https://ide.customization-test.gitpod.com/image/ide-logo/golandLogo.svg",
+            "logo": "https://ide.backup-labels-test.gitpod.com/image/ide-logo/golandLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/goland:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:latest"
           },
@@ -4471,7 +4208,7 @@ data:
             "orderKey": "04",
             "title": "IntelliJ IDEA",
             "type": "desktop",
-            "logo": "https://ide.customization-test.gitpod.com/image/ide-logo/intellijIdeaLogo.svg",
+            "logo": "https://ide.backup-labels-test.gitpod.com/image/ide-logo/intellijIdeaLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest"
           },
@@ -4479,7 +4216,7 @@ data:
             "orderKey": "07",
             "title": "PhpStorm",
             "type": "desktop",
-            "logo": "https://ide.customization-test.gitpod.com/image/ide-logo/phpstormLogo.svg",
+            "logo": "https://ide.backup-labels-test.gitpod.com/image/ide-logo/phpstormLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:latest"
           },
@@ -4487,7 +4224,7 @@ data:
             "orderKey": "06",
             "title": "PyCharm",
             "type": "desktop",
-            "logo": "https://ide.customization-test.gitpod.com/image/ide-logo/pycharmLogo.svg",
+            "logo": "https://ide.backup-labels-test.gitpod.com/image/ide-logo/pycharmLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest"
           }
@@ -4530,13 +4267,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: server
-    hello: world
   name: server-ide-config
   namespace: default
 ---
@@ -4644,7 +4378,7 @@ data:
             "registryFacade": [
               {
                 "addr": "127.0.0.1",
-                "name": "reg.customization-test.gitpod.com"
+                "name": "reg.backup-labels-test.gitpod.com"
               }
             ]
           }
@@ -4671,13 +4405,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-daemon
-    hello: world
   name: ws-daemon
   namespace: default
 ---
@@ -4704,11 +4435,11 @@ data:
         "initProbe": {
           "timeout": "1s"
         },
-        "urlTemplate": "https://{{ .Prefix }}.ws.customization-test.gitpod.com",
-        "portUrlTemplate": "https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.customization-test.gitpod.com",
+        "urlTemplate": "https://{{ .Prefix }}.ws.backup-labels-test.gitpod.com",
+        "portUrlTemplate": "https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.backup-labels-test.gitpod.com",
         "workspaceHostPath": "/var/gitpod/workspaces",
         "heartbeatInterval": "30s",
-        "hostURL": "https://customization-test.gitpod.com",
+        "hostURL": "https://backup-labels-test.gitpod.com",
         "reconnectionInterval": "30s",
         "wsdaemon": {
           "port": 8080,
@@ -4718,8 +4449,8 @@ data:
             "key": "/ws-daemon-tls-certs/tls.key"
           }
         },
-        "registryFacadeHost": "reg.customization-test.gitpod.com:20000",
-        "workspaceClusterHost": "ws.customization-test.gitpod.com",
+        "registryFacadeHost": "reg.backup-labels-test.gitpod.com:20000",
+        "workspaceClusterHost": "ws.backup-labels-test.gitpod.com",
         "workspaceClass": {
           "default": {
             "name": "default",
@@ -4789,13 +4520,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager
-    hello: world
   name: ws-manager
   namespace: default
 ---
@@ -4838,13 +4566,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager-bridge
-    hello: world
   name: ws-manager-bridge-config
   namespace: default
 ---
@@ -4871,14 +4596,14 @@ data:
         },
         "blobServer": {
           "scheme": "https",
-          "host": "ide.customization-test.gitpod.com",
+          "host": "ide.backup-labels-test.gitpod.com",
           "pathPrefix": "/blobserve"
         },
         "gitpodInstallation": {
           "scheme": "https",
-          "hostName": "customization-test.gitpod.com",
-          "workspaceHostSuffix": ".ws.customization-test.gitpod.com",
-          "workspaceHostSuffixRegex": "\\.ws[^\\.]*\\.customization-test.gitpod.com"
+          "hostName": "backup-labels-test.gitpod.com",
+          "workspaceHostSuffix": ".ws.backup-labels-test.gitpod.com",
+          "workspaceHostSuffixRegex": "\\.ws[^\\.]*\\.backup-labels-test.gitpod.com"
         },
         "workspacePodConfig": {
           "theiaPort": 23000,
@@ -4904,13 +4629,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-proxy
-    hello: world
   name: ws-proxy
   namespace: default
 ---
@@ -6064,13 +5786,10 @@ subjects:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: blobserve
-    hello: world
     kind: service
   name: blobserve
   namespace: default
@@ -6091,13 +5810,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: content-service
-    hello: world
     kind: service
   name: content-service
   namespace: default
@@ -6122,13 +5838,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: dashboard
-    hello: world
     kind: service
   name: dashboard
   namespace: default
@@ -6149,13 +5862,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: db
-    hello: world
   name: db
   namespace: default
 spec:
@@ -6173,13 +5883,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-metrics
-    hello: world
     kind: service
   name: ide-metrics
   namespace: default
@@ -6200,13 +5907,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-proxy
-    hello: world
     kind: service
   name: ide-proxy
   namespace: default
@@ -6227,13 +5931,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: image-builder-mk3
-    hello: world
     kind: service
   name: image-builder-mk3
   namespace: default
@@ -6341,8 +6042,6 @@ metadata:
     helm.sh/chart: minio-11.6.3
     app.kubernetes.io/instance: Minio
     app.kubernetes.io/managed-by: Helm
-  annotations:
-    hello: world
 spec:
   type: ClusterIP
   ports:
@@ -6372,7 +6071,6 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
   annotations:
-    hello: world
 spec:
   type: ClusterIP
   sessionAffinity: None
@@ -6418,13 +6116,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: openvsx-proxy
-    hello: world
     kind: service
   name: openvsx-proxy
   namespace: default
@@ -6451,13 +6146,11 @@ kind: Service
 metadata:
   annotations:
     cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
-    external-dns.alpha.kubernetes.io/hostname: customization-test.gitpod.com,*.customization-test.gitpod.com,*.ws.customization-test.gitpod.com
-    hello: world
+    external-dns.alpha.kubernetes.io/hostname: backup-labels-test.gitpod.com,*.backup-labels-test.gitpod.com,*.ws.backup-labels-test.gitpod.com
   creationTimestamp: null
   labels:
     app: gitpod
     component: proxy
-    hello: world
     kind: service
   name: proxy
   namespace: default
@@ -6494,8 +6187,6 @@ metadata:
     chart: docker-registry-1.16.0
     release: docker-registry
     heritage: Helm
-  annotations:
-    hello: world
 spec:
   type: ClusterIP
   ports:
@@ -6511,13 +6202,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: registry-facade
-    hello: world
     kind: service
   name: registry-facade
   namespace: default
@@ -6538,13 +6226,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: server
-    hello: world
     kind: service
   name: server
   namespace: default
@@ -6581,13 +6266,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-daemon
-    hello: world
     kind: service
   name: ws-daemon
   namespace: default
@@ -6604,13 +6286,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager
-    hello: world
     kind: service
   name: ws-manager
   namespace: default
@@ -6631,13 +6310,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-proxy
-    hello: world
     kind: service
   name: ws-proxy
   namespace: default
@@ -6671,13 +6347,11 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   annotations:
-    gitpod.io/checksum_config: f6ab79188657e686df6565b90559817815863ba21b9f11f7d3d274d3bc834a70
-    hello: world
+    gitpod.io/checksum_config: 920ed28ab6358f5fc6620fe7dbec15f1627ca2d1129f559a96cd030df8228dc9
   creationTimestamp: null
   labels:
     app: gitpod
     component: agent-smith
-    hello: world
   name: agent-smith
   namespace: default
 spec:
@@ -6687,13 +6361,10 @@ spec:
       component: agent-smith
   template:
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: agent-smith
-        hello: world
       name: agent-smith
     spec:
       affinity:
@@ -6713,13 +6384,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -6791,13 +6462,10 @@ status:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: registry-facade
-    hello: world
   name: registry-facade
   namespace: default
 spec:
@@ -6808,13 +6476,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: d7e239f4e0e82cf846f1ee34fdb72f1b6ee68c21287ac3634c631745f523596a
-        hello: world
+        gitpod.io/checksum_config: 1568539df3f78cad79c3dd7b7e3ae3f5cf4fa74ad7263936762f004a8a6af77c
       creationTimestamp: null
       labels:
         app: gitpod
         component: registry-facade
-        hello: world
       name: registry-facade
     spec:
       affinity:
@@ -6833,13 +6499,13 @@ spec:
         - /mnt/config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -7000,13 +6666,10 @@ status:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-daemon
-    hello: world
   name: ws-daemon
   namespace: default
 spec:
@@ -7017,14 +6680,12 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: b7e73a20a41c9d3a3d183987d6d3a6de3e3c191cb6526896890c4ba18a622cec
-        hello: world
+        gitpod.io/checksum_config: fedc0bccff366ffde7897c5f9d65dcb3c4d3aedc79f19efedb82d714d1becd23
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-daemon
-        hello: world
     spec:
       affinity:
         nodeAffinity:
@@ -7043,13 +6704,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -7503,14 +7164,14 @@ spec:
     metadata:
       annotations:
         checksum/configuration: f96f510015050d9b0165d12f144f5eca5641c065ccbe9c75e64f58e81a9b3d8c
-        hello: world
       labels:
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.1.2
         app.kubernetes.io/instance: MySQL
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: primary
-        hello: world
+        kots.io/app-slug: gitpod
+        kots.io/backup: velero
     spec:
       serviceAccountName: db
       
@@ -7640,13 +7301,10 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: openvsx-proxy
-    hello: world
   name: openvsx-proxy
   namespace: default
 spec:
@@ -7659,13 +7317,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 054afe7f7f5ca17c2fdd7a177dfa9a896edbd2027b665778ccb5e8eb8c49599b
-        hello: world
+        gitpod.io/checksum_config: 422a3a37871d43d692985a19e7a63caf0af244c8688402a7e043f2267505a36b
       creationTimestamp: null
       labels:
         app: gitpod
         component: openvsx-proxy
-        hello: world
       name: openvsx-proxy
       namespace: default
     spec:
@@ -7681,13 +7337,13 @@ spec:
             - /config/config.json
           env:
             - name: GITPOD_DOMAIN
-              value: customization-test.gitpod.com
+              value: backup-labels-test.gitpod.com
             - name: GITPOD_INSTALLATION_SHORTNAME
               value: default
             - name: GITPOD_REGION
               value: local
             - name: HOST_URL
-              value: https://customization-test.gitpod.com
+              value: https://backup-labels-test.gitpod.com
             - name: KUBE_NAMESPACE
               valueFrom:
                 fieldRef:
@@ -7788,13 +7444,10 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: blobserve
-    hello: world
   name: blobserve
   namespace: default
 spec:
@@ -7811,13 +7464,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 1001fb6cb2686c89c0e933f5d783b1df6e5323b27aa5c913cef623868e97645d
-        hello: world
+        gitpod.io/checksum_config: 654aa60221ab2d4c9535fe0f18f49f2cdd7b2083d521b2ccbbc85d5f8918c320
       creationTimestamp: null
       labels:
         app: gitpod
         component: blobserve
-        hello: world
       name: blobserve
       namespace: default
     spec:
@@ -7834,13 +7485,13 @@ spec:
         - /mnt/config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -7931,13 +7582,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: content-service
-    hello: world
   name: content-service
   namespace: default
 spec:
@@ -7954,13 +7602,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 1784cca87cd2467b7217f8acf4474fd726cebf3a0006b4c4a49ffc95481f6aaf
-        hello: world
+        gitpod.io/checksum_config: 94e6e4829aa089a570ba9f479575cdd42a6c273877223830c790397aa40dcd99
       creationTimestamp: null
       labels:
         app: gitpod
         component: content-service
-        hello: world
       name: content-service
       namespace: default
     spec:
@@ -7978,13 +7624,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -8054,13 +7700,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: dashboard
-    hello: world
   name: dashboard
   namespace: default
 spec:
@@ -8076,13 +7719,10 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: dashboard
-        hello: world
       name: dashboard
       namespace: default
     spec:
@@ -8096,13 +7736,13 @@ spec:
       containers:
       - env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -8142,13 +7782,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-metrics
-    hello: world
   name: ide-metrics
   namespace: default
 spec:
@@ -8164,13 +7801,10 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-metrics
-        hello: world
       name: ide-metrics
       namespace: default
     spec:
@@ -8188,13 +7822,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -8263,13 +7897,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-proxy
-    hello: world
   name: ide-proxy
   namespace: default
 spec:
@@ -8285,13 +7916,10 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-proxy
-        hello: world
       name: ide-proxy
       namespace: default
     spec:
@@ -8305,13 +7933,13 @@ spec:
       containers:
       - env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -8351,13 +7979,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: image-builder-mk3
-    hello: world
   name: image-builder-mk3
   namespace: default
 spec:
@@ -8374,13 +7999,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c2556504b1a63bcfc9833e2ce1c5650388429b2ba28f2daeb79419233fbde694
-        hello: world
+        gitpod.io/checksum_config: d4895b127ffacb44d49f7a9cfd635100411ef235aa2f33b4ec632fa96a53b804
       creationTimestamp: null
       labels:
         app: gitpod
         component: image-builder-mk3
-        hello: world
       name: image-builder-mk3
       namespace: default
     spec:
@@ -8398,13 +8021,13 @@ spec:
         - /config/image-builder.json
         env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -8524,10 +8147,10 @@ spec:
         helm.sh/chart: minio-11.6.3
         app.kubernetes.io/instance: Minio
         app.kubernetes.io/managed-by: Helm
-        hello: world
+        kots.io/app-slug: gitpod
+        kots.io/backup: velero
       annotations:
         checksum/credentials-secret: 254e39ef7087b8d977946ed0027240eda9a1c7f64ae430fca5644a50b23cece3
-        hello: world
     spec:
       
       serviceAccountName: minio
@@ -8615,13 +8238,10 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: proxy
-    hello: world
   name: proxy
   namespace: default
 spec:
@@ -8638,13 +8258,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 0eb7f60b9f3d42f6e4e7488dc38e511a2abe1882228ede11a77e8aecaf326e6d
-        hello: world
+        gitpod.io/checksum_config: a2ca3ac6d2873f4fb51bfaca44b2604f4c33cb4ce91af27eda1f485ec083464f
       creationTimestamp: null
       labels:
         app: gitpod
         component: proxy
-        hello: world
       name: proxy
       namespace: default
     spec:
@@ -8683,13 +8301,13 @@ spec:
           runAsUser: 65532
       - env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -8699,7 +8317,7 @@ spec:
         - name: LOG_LEVEL
           value: info
         - name: PROXY_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         image: eu.gcr.io/gitpod-core-dev/build/proxy:test
         imagePullPolicy: IfNotPresent
         name: proxy
@@ -8796,11 +8414,9 @@ spec:
       labels:
         app: docker-registry
         release: docker-registry
-        hello: world
       annotations:
         checksum/config: 1d22b82e19bbc654e029029c4fb86ad02dc13422dc3ac52f8175ad190e52a0bb
         gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
-        hello: world
     spec:
       serviceAccountName: docker-registry
       securityContext:
@@ -8863,13 +8479,10 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: server
-    hello: world
   name: server
   namespace: default
 spec:
@@ -8886,13 +8499,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: b49daa9a299648789c9d60dae3330e287ec711ecad98f51438c47e745fbc75db
-        hello: world
+        gitpod.io/checksum_config: 93c96d7abef916ab96f11cfc897dca820780c6bf76ed50a95608eb8f0459449b
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        hello: world
       name: server
       namespace: default
     spec:
@@ -8906,13 +8517,13 @@ spec:
       containers:
       - env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -9129,13 +8740,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager
-    hello: world
   name: ws-manager
   namespace: default
 spec:
@@ -9152,13 +8760,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 1947b34eb7d790c15e59226066d4ffef9f37601077c426804a26065ffd15072a
-        hello: world
+        gitpod.io/checksum_config: 168963fcc935736dee8de9a0c28b37deb56edfc7cbc153cc686c89aa014995c8
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager
-        hello: world
       name: ws-manager
       namespace: default
     spec:
@@ -9176,13 +8782,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -9267,13 +8873,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager-bridge
-    hello: world
   name: ws-manager-bridge
   namespace: default
 spec:
@@ -9290,13 +8893,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 45e8b17301335534885f24a6d2674faea5a6a0987c6ef2d34c59f6773d6f8400
-        hello: world
+        gitpod.io/checksum_config: bacace964780fd56bdd04b997df0017c24563c2aac6bffd10962c297b54c91ba
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager-bridge
-        hello: world
       name: ws-manager-bridge
       namespace: default
     spec:
@@ -9310,13 +8911,13 @@ spec:
       containers:
       - env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -9512,13 +9113,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-proxy
-    hello: world
   name: ws-proxy
   namespace: default
 spec:
@@ -9535,13 +9133,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 188b3e36991de124e0f5415a5cf0ec9832a3c02b0c675df966dde345b0da2d1b
-        hello: world
+        gitpod.io/checksum_config: fb1b4aaf90b59ce85ba4b9202c02db7eb05eedf4f9ed39a133b54eb534df3b29
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-proxy
-        hello: world
       name: ws-proxy
       namespace: default
     spec:
@@ -9558,13 +9154,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: customization-test.gitpod.com
+          value: backup-labels-test.gitpod.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://customization-test.gitpod.com
+          value: https://backup-labels-test.gitpod.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -9668,25 +9264,19 @@ status: {}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  annotations:
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: migrations
-    hello: world
   name: migrations
   namespace: default
 spec:
   template:
     metadata:
-      annotations:
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: migrations
-        hello: world
       name: migrations
       namespace: default
     spec:

@@ -1,0 +1,26 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitpod-custom-labels
+  labels:
+    app: gitpod
+    component: gitpod-installer
+data:
+  customization.yaml: |
+    - apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: db
+        labels:
+          "kots.io/app-slug": "{{repl LicenseFieldValue "appSlug" }}"
+          "kots.io/backup": "velero"
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: minio
+        labels:
+          "kots.io/app-slug": "{{repl LicenseFieldValue "appSlug" }}"
+          "kots.io/backup": "velero"

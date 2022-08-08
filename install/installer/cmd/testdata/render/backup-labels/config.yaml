@@ -1,0 +1,34 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: v1
+domain: backup-labels-test.gitpod.com
+customization:
+  - apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      name: db
+      labels:
+        "kots.io/app-slug": "gitpod"
+        "kots.io/backup": "velero"
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: minio
+      labels:
+        "kots.io/app-slug": "gitpod"
+        "kots.io/backup": "velero"
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: minio
+      labels:
+        "kots.io/app-slug": "gitpod"
+        "kots.io/backup": "velero"
+  - apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      name: "*"
+      labels:
+        "kots.io/app-slug": "gitpod"
+        "kots.io/backup": "velero"
