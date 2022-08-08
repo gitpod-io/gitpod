@@ -13,10 +13,12 @@ import (
 	"net/url"
 	"os"
 
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/gitpod-io/gitpod/common-go/util"
+	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 func main() {
@@ -91,11 +93,7 @@ func main() {
 }
 
 func GetWSInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
-	supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-	if supervisorAddr == "" {
-		supervisorAddr = "localhost:22999"
-	}
-	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	supervisorConn, err := grpc.Dial(util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}

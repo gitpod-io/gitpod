@@ -12,6 +12,7 @@ packages:
       - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
+      - components/common-go:lib
     argdeps:
       - version
     config:
