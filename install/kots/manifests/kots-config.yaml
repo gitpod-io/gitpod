@@ -307,7 +307,7 @@ spec:
           value: gitpod-issuer
           required: true
           when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
-          help_text: Insert the kubernetes resource name of the cert-manager certificate issuer that should exist in your cluster already. This let's gitpod know which issue to use.
+          help_text: Insert the Kubernetes resource name of the cert-manager certificate issuer that should exist in your cluster already. This lets Gitpod know which issue to use.
 
         - name: cert_manager_issuer
           title: Issuer type
@@ -349,7 +349,7 @@ spec:
           title: Install SSH gateway to enable Desktop IDE Access
           type: bool
           default: "0"
-          help_text: 'Enabling the SSH gateway allows use of additional desktop IDEs. IMPORTANT: This uses port 22 on your Kubernetes nodes. When enabled, this will prevent login to the cluster via SSH. If you wish to maintain SSH access to your cluster, please configure another SSH port on your nodes. Further, your cluster need to have a loadbalancer capable of handling SSH traffic.'
+          help_text: 'Enabling the SSH gateway allows the use of desktop IDEs. IMPORTANT: This uses port 22 on your Kubernetes nodes. When enabled, this will prevent login to the cluster via SSH. If you wish to maintain SSH access to your cluster, please configure another SSH port on your nodes. Further, your cluster needs to have a load balancer capable of handling SSH traffic.'
 
     - name: user_management
       title: User management
