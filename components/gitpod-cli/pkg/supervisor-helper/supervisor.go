@@ -6,19 +6,16 @@ package supervisor_helper
 
 import (
 	"context"
-	"os"
 
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
 func Dial(ctx context.Context) (*grpc.ClientConn, error) {
-	supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-	if supervisorAddr == "" {
-		supervisorAddr = "localhost:22999"
-	}
-	supervisorConn, err := grpc.DialContext(ctx, supervisorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	supervisorConn, err := grpc.DialContext(ctx, util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		err = xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}

@@ -31,6 +31,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/util"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
@@ -218,11 +219,7 @@ func terminateIDE(backendPort string) error {
 
 func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
 	resolve := func(ctx context.Context) (wsInfo *supervisor.WorkspaceInfoResponse, err error) {
-		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-		if supervisorAddr == "" {
-			supervisorAddr = "localhost:22999"
-		}
-		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		supervisorConn, err := grpc.Dial(util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			err = errors.New("dial supervisor failed: " + err.Error())
 			return

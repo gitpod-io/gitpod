@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/imdario/mergo"
+	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -35,7 +36,6 @@ import (
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
-	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 )
 
 // Protobuf structures often require pointer to boolean values (as that's Go's best means of expression optionallity).
@@ -983,7 +983,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		OwnerToken:     ownerToken,
 		Request:        req,
 		IDEPort:        23000,
-		SupervisorPort: 22999,
+		SupervisorPort: util.SupervisorPort,
 		WorkspaceURL:   workspaceURL,
 		Headless:       headless,
 		Class:          class,

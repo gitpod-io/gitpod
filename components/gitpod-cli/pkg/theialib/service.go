@@ -16,6 +16,8 @@ import (
 
 	"github.com/pkg/errors"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
 // HTTPTheiaService provides access to Theia's CLI service
@@ -50,11 +52,8 @@ func NewServiceFromEnv() (*HTTPTheiaService, error) {
 	}
 	go func() {
 		defer close(service.ideReady)
-		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-		if supervisorAddr == "" {
-			supervisorAddr = "localhost:22999"
-		}
-		resp, err := http.Get(fmt.Sprintf("http://%s/_supervisor/v1/status/ide/wait/true", supervisorAddr))
+
+		resp, err := http.Get(fmt.Sprintf("http://%s/_supervisor/v1/status/ide/wait/true", util.GetSupervisorAddress()))
 		if err != nil {
 			service.ideError = err
 		}
