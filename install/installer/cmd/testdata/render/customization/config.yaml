@@ -10,5 +10,7 @@ customization:
       name: "*"
       labels:
         hello: world
+        gitpod.io: hello
       annotations:
         hello: world
+        gitpod.io: hello
