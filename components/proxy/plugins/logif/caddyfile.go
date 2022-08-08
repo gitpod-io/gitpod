@@ -13,9 +13,10 @@ import (
 // UnmarshalCaddyfile sets up the module form Caddyfile tokens.
 //
 // Syntax:
-// if {
-//     "<expression>"
-// } [<encoder>]
+//
+//	if {
+//	    "<expression>"
+//	} [<encoder>]
 //
 // The <expression> must be on a single line.
 // Refer to `lang.Lang` for its syntax.

@@ -379,24 +379,26 @@ func updateVMOptions(config *gitpod.GitpodConfig, alias string, content string) 
 	return strings.Join(vmoptions, "\n") + "\n"
 }
 
-/**
-{
-  "buildNumber" : "221.4994.44",
-  "customProperties" : [ ],
-  "dataDirectoryName" : "IntelliJIdea2022.1",
-  "launch" : [ {
-    "javaExecutablePath" : "jbr/bin/java",
-    "launcherPath" : "bin/idea.sh",
-    "os" : "Linux",
-    "startupWmClass" : "jetbrains-idea",
-    "vmOptionsFilePath" : "bin/idea64.vmoptions"
-  } ],
-  "name" : "IntelliJ IDEA",
-  "productCode" : "IU",
-  "svgIconPath" : "bin/idea.svg",
-  "version" : "2022.1",
-  "versionSuffix" : "EAP"
-}
+/*
+*
+
+	{
+	  "buildNumber" : "221.4994.44",
+	  "customProperties" : [ ],
+	  "dataDirectoryName" : "IntelliJIdea2022.1",
+	  "launch" : [ {
+	    "javaExecutablePath" : "jbr/bin/java",
+	    "launcherPath" : "bin/idea.sh",
+	    "os" : "Linux",
+	    "startupWmClass" : "jetbrains-idea",
+	    "vmOptionsFilePath" : "bin/idea64.vmoptions"
+	  } ],
+	  "name" : "IntelliJ IDEA",
+	  "productCode" : "IU",
+	  "svgIconPath" : "bin/idea.svg",
+	  "version" : "2022.1",
+	  "versionSuffix" : "EAP"
+	}
 */
 type ProductInfo struct {
 	Version string `json:"version"`

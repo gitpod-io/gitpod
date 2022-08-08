@@ -934,7 +934,8 @@ func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *ap
 //
 // <container-cgorup>  drwxr-xr-x 3 root      root
 // └── workspace       drwxr-xr-x 5 gitpodUid gitpodGid
-//     └── user        drwxr-xr-x 5 gitpodUid gitpodGid
+//
+//	└── user        drwxr-xr-x 5 gitpodUid gitpodGid
 func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *api.EvacuateCGroupRequest) (*api.EvacuateCGroupResponse, error) {
 	unified, err := cgroups.IsUnifiedCgroupSetup()
 	if err != nil {

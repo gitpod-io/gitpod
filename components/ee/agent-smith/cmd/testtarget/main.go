@@ -15,6 +15,7 @@ func main() {
 }
 
 // don't inline to produce an elf entry
+//
 //go:noinline
 func agentSmithTestTarget() {
 	fmt.Println("something")

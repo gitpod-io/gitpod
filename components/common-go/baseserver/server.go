@@ -61,18 +61,18 @@ func New(name string, opts ...Option) (*Server, error) {
 // Server implements graceful shutdown making it suitable for usage in integration tests. See server_test.go.
 //
 // Server is composed of the following:
-// 	* Debug server which serves observability and debug endpoints
-//		- /metrics for Prometheus metrics
-//		- /pprof for Golang profiler
-//		- /ready for kubernetes readiness check
-//		- /live for kubernetes liveness check
-//	* (optional) gRPC server with standard interceptors and configuration
-//		- Started when baseserver is configured WithGRPCPort (port is non-negative)
-//		- Use Server.GRPC() to get access to the underlying grpc.Server and register services
-//	* (optional) HTTP server
-//		- Currently does not come with any standard HTTP middlewares
-//		- Started when baseserver is configured WithHTTPPort (port is non-negative)
-// 		- Use Server.HTTPMux() to get access to the root handler and register your endpoints
+//   - Debug server which serves observability and debug endpoints
+//   - /metrics for Prometheus metrics
+//   - /pprof for Golang profiler
+//   - /ready for kubernetes readiness check
+//   - /live for kubernetes liveness check
+//   - (optional) gRPC server with standard interceptors and configuration
+//   - Started when baseserver is configured WithGRPCPort (port is non-negative)
+//   - Use Server.GRPC() to get access to the underlying grpc.Server and register services
+//   - (optional) HTTP server
+//   - Currently does not come with any standard HTTP middlewares
+//   - Started when baseserver is configured WithHTTPPort (port is non-negative)
+//   - Use Server.HTTPMux() to get access to the root handler and register your endpoints
 type Server struct {
 	// Name is the name of this server, used for logging context
 	Name string

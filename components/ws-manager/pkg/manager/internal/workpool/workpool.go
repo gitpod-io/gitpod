@@ -30,7 +30,6 @@ import (
 // Why not use kubernetes/client-go/workqueue?
 // We have different requirements than the workqueue. The Kubernetes workqueue cares about the order/
 // execution of single items. We care about the order of several items grouped by some factor.
-//
 type EventWorkerPool struct {
 	WorkOn func(watch.Event)
 

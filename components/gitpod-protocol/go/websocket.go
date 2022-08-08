@@ -39,7 +39,7 @@ var (
 	pingPeriod = (pongWait * 9) / 10
 )
 
-//NewWebsocketConnection converts a websocket.Conn into a net.Conn
+// NewWebsocketConnection converts a websocket.Conn into a net.Conn
 func NewWebsocketConnection(ctx context.Context, websocketConn *websocket.Conn, onStale func(staleErr error)) (*WebsocketConnection, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	c := &WebsocketConnection{
@@ -90,8 +90,8 @@ func (c *WebsocketConnection) Wait() error {
 	return c.closeErr
 }
 
-//Read is not threadsafe though thats okay since there
-//should never be more than one reader
+// Read is not threadsafe though thats okay since there
+// should never be more than one reader
 func (c *WebsocketConnection) Read(dst []byte) (int, error) {
 	ldst := len(dst)
 	//use buffer or read new message

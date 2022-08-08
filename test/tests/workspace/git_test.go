@@ -19,7 +19,6 @@ import (
 	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
-//
 type GitTest struct {
 	Skip          bool
 	Name          string
