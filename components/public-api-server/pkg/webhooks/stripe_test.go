@@ -5,15 +5,14 @@
 package webhooks
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/stretchr/testify/require"
-	"github.com/stripe/stripe-go/v72"
 )
 
 // https://stripe.com/docs/api/events/types
@@ -44,15 +43,13 @@ func TestWebhookAcceptsPostRequests(t *testing.T) {
 
 	srv := baseServerWithStripeWebhook(t)
 
-	ev := stripe.Event{Type: invoiceFinalizedEventType}
-	payload, err := json.Marshal(ev)
-	require.NoError(t, err)
+	payload := payloadForStripeEvent(t, invoiceFinalizedEventType)
 
 	url := fmt.Sprintf("%s%s", srv.HTTPAddress(), "/webhook")
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.HttpMethod, func(t *testing.T) {
-			req, err := http.NewRequest(scenario.HttpMethod, url, bytes.NewBuffer(payload))
+			req, err := http.NewRequest(scenario.HttpMethod, url, payload)
 			require.NoError(t, err)
 
 			resp, err := http.DefaultClient.Do(req)
@@ -88,11 +85,8 @@ func TestWebhookIgnoresIrrelevantEvents(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.EventType, func(t *testing.T) {
-			ev := stripe.Event{Type: scenario.EventType}
-			payload, err := json.Marshal(ev)
-			require.NoError(t, err)
-
-			req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
+			payload := payloadForStripeEvent(t, scenario.EventType)
+			req, err := http.NewRequest(http.MethodPost, url, payload)
 			require.NoError(t, err)
 
 			resp, err := http.DefaultClient.Do(req)
@@ -114,4 +108,22 @@ func baseServerWithStripeWebhook(t *testing.T) *baseserver.Server {
 	srv.HTTPMux().Handle("/webhook", NewStripeWebhookHandler())
 
 	return srv
+}
+
+func payloadForStripeEvent(t *testing.T, eventType string) io.Reader {
+	t.Helper()
+
+	if eventType != invoiceFinalizedEventType {
+		return strings.NewReader(`{}`)
+	}
+	return strings.NewReader(`
+{
+  "data": {
+    "object": {
+      "id": "in_1LUQi7GadRXm50o36jWK7ehs"
+    }
+  },
+  "type": "invoice.finalized"
+}
+`)
 }
