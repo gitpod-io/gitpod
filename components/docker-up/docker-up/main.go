@@ -468,7 +468,7 @@ func needInstallRunc() bool {
 		return true
 	}
 
-	return major < 1 || major == 1 && minor < 1
+	return major < 1 || major == 1 && minor < 3
 }
 
 func detectRuncVersion(output string) (major, minor int, err error) {

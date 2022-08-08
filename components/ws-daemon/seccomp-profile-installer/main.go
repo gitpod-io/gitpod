@@ -31,6 +31,7 @@ func main() {
 		specs.LinuxSyscall{
 			Names: []string{
 				"clone",
+				"clone3",
 				"mount",
 				"umount2",
 				"chroot",
