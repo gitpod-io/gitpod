@@ -17,11 +17,6 @@ let config: WorkspaceClassesConfig = [
         description: "Up to 4 vCPU, 8 GB memory, 30GB storage",
         powerups: 1,
         deprecated: false,
-        resources: {
-            cpu: 4,
-            memory: 8,
-            storage: 30,
-        },
     },
 ];
 
@@ -36,11 +31,6 @@ config.push({
     marker: {
         moreResources: true,
     },
-    resources: {
-        cpu: 8,
-        memory: 16,
-        storage: 50,
-    },
 });
 
 config.push({
@@ -51,37 +41,50 @@ config.push({
     description: "Up to 8 vCPU, 16 GB memory, 50GB storage",
     powerups: 2,
     deprecated: true,
-    resources: {
-        cpu: 8,
-        memory: 16,
-        storage: 50,
+    marker: {
+        moreResources: true,
     },
 });
 
 describe("workspace-classes", function () {
     describe("can substitute", function () {
         it("classes are the same", function () {
-            const classId = WorkspaceClasses.canSubstitute("g1-large", "g1-large", config);
+            const classId = WorkspaceClasses.selectClassForRegular("g1-large", "g1-large", config);
             expect(classId).to.be.equal("g1-large");
         });
 
-        it("substitute is acceptable", function () {
-            const classId = WorkspaceClasses.canSubstitute("g1-standard", "g1-large", config);
+        it("prebuild has more resources, substitute has not", function () {
+            const classId = WorkspaceClasses.selectClassForRegular("g1-large", "g1-standard", config);
             expect(classId).to.be.equal("g1-large");
         });
 
-        it("substitute is deprecated", function () {
-            const classId = WorkspaceClasses.canSubstitute("g1-standard", "g1-deprecated", config);
+        it("prebuild has more resources, substitute also has more resources", function () {
+            const classId = WorkspaceClasses.selectClassForRegular("g1-large", "g1-large", config);
             expect(classId).to.be.equal("g1-large");
         });
 
-        it("current is deprecated, substitute not acceptable", function () {
-            const classId = WorkspaceClasses.canSubstitute("g1-deprecated", "g1-standard", config);
+        it("prebuild has more resources, substitute has not, prebuild is deprecated", function () {
+            const classId = WorkspaceClasses.selectClassForRegular("g1-deprecated", "g1-standard", config);
             expect(classId).to.be.equal("g1-large");
+        });
+
+        it("prebuild has more resources, substitute has not, prebuild not deprecated", function () {
+            const classId = WorkspaceClasses.selectClassForRegular("g1-large", "g1-standard", config);
+            expect(classId).to.be.equal("g1-large");
+        });
+
+        it("prebuild does not have more resources, return substitute", function () {
+            const classId = WorkspaceClasses.selectClassForRegular("g1-standard", "g1-large", config);
+            expect(classId).to.be.equal("g1-large");
+        });
+
+        it("prebuild does not have more resources, substitute unknown", function () {
+            const classId = WorkspaceClasses.selectClassForRegular("g1-standard", "g1-unknown", config);
+            expect(classId).to.be.equal("g1-standard");
         });
 
         it("substitute is not acceptable", function () {
-            const classId = WorkspaceClasses.canSubstitute("g1-large", "g1-standard", config);
+            const classId = WorkspaceClasses.selectClassForRegular("g1-large", "g1-standard", config);
             expect(classId).to.be.equal("g1-large");
         });
     });
