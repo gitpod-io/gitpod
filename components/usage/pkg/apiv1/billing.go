@@ -48,6 +48,12 @@ func (s *BillingService) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoic
 	return &v1.UpdateInvoicesResponse{}, nil
 }
 
+func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInvoiceRequest) (*v1.FinalizeInvoiceResponse, error) {
+	log.Infof("Finalizing invoice for invoice %q", in.GetInvoiceId())
+
+	return &v1.FinalizeInvoiceResponse{}, nil
+}
+
 func (s *BillingService) creditSummaryForTeams(sessions []*v1.BilledSession) (map[string]int64, error) {
 	creditsPerTeamID := map[string]float64{}
 
