@@ -34,8 +34,13 @@ jobs:
           headCommit=$(curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/gp-code/main)
           cd components/ide/code
           leeway build -Dversion=nightly -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DcodeCommit=$headCommit -DcodeQuality=insider .:docker
+      - name: Get previous job's status
+        id: lastrun
+        uses: filiptronicek/get-last-job-status@main
+        with:
+          workflow-id: 15751907
       - name: Slack Notification
-        if: always()
+        if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}

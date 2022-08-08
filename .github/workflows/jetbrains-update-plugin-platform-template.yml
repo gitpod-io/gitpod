@@ -120,10 +120,15 @@ jobs:
                   branch: "jetbrains/${{ inputs.pluginId }}-platform"
                   labels: "team: IDE"
                   team-reviewers: "engineering-ide"
+            - name: Get previous job's status
+              id: lastrun
+              uses: filiptronicek/get-last-job-status@main
+              with:
+                workflow-id: 31174155
             - name: Slack Notification
-              if: always()
+              if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
               uses: rtCamp/action-slack-notify@v2
               env:
-                  SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
-                  SLACK_COLOR: ${{ job.status }}
-                  SLACK_TITLE: ${{ inputs.productName }}
+                SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
+                SLACK_COLOR: ${{ job.status }}
+                SLACK_TITLE: ${{ inputs.productName }}
