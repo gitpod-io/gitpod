@@ -806,6 +806,11 @@ export class WorkspaceStarter {
                 }
 
                 featureFlags = featureFlags.concat(["workspace_class_limiting"]);
+            } else {
+                workspaceClass = "default";
+                if (await this.entitlementService.userGetsMoreResources(user)) {
+                    workspaceClass = "gitpodio-internal-xl";
+                }
             }
 
             if (!!featureFlags) {
@@ -1405,22 +1410,6 @@ export class WorkspaceStarter {
             ideImage = ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image;
         }
 
-        const userTeams = await this.teamDB.findTeamsByUser(user.id);
-        let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
-            user: user,
-            teams: userTeams,
-        });
-        let workspaceClass;
-        if (!classesEnabled) {
-            // This is branch is not relevant once we roll out WorkspaceClasses, so we don't try to integrate these old classes into our model
-            workspaceClass = "default";
-            if (await this.entitlementService.userGetsMoreResources(user)) {
-                workspaceClass = "gitpodio-internal-xl";
-            }
-        } else {
-            workspaceClass = instance.workspaceClass!;
-        }
-
         const spec = new StartWorkspaceSpec();
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
@@ -1436,7 +1425,7 @@ export class WorkspaceStarter {
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || checkoutLocation);
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
-        spec.setClass(workspaceClass);
+        spec.setClass(instance.workspaceClass!);
         if (workspace.type === "regular") {
             spec.setTimeout(this.userService.workspaceTimeoutToDuration(await userTimeoutPromise));
         }
