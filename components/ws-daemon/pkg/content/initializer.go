@@ -192,7 +192,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		Destination: "/dst",
 		Source:      destination,
 		Type:        "bind",
-		Options:     []string{"bind", "rprivate"},
+		Options:     []string{"rbind", "rprivate"},
 	})
 
 	spec.Hostname = "content-init"
