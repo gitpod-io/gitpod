@@ -11,7 +11,6 @@ package kubernetes
 
 import (
 	"context"
-	"fmt"
 	"math"
 
 	"github.com/sirupsen/logrus"
@@ -71,11 +70,6 @@ const (
 	// workspaceCpuBurstLimit denotes the cpu burst limit of a workspace
 	WorkspaceCpuBurstLimitAnnotation = "gitpod.io/cpuBurstLimit"
 )
-
-// WorkspaceSupervisorEndpoint produces the supervisor endpoint of a workspace.
-func WorkspaceSupervisorEndpoint(workspaceID, kubernetesNamespace string) string {
-	return fmt.Sprintf("ws-%s-theia.%s.svc:22999", workspaceID, kubernetesNamespace)
-}
 
 // GetOWIFromObject finds the owner, workspace and instance information on a Kubernetes object using labels
 func GetOWIFromObject(pod *metav1.ObjectMeta) logrus.Fields {
