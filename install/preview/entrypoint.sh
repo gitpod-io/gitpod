@@ -185,16 +185,6 @@ yq e -i '.workspace.runtime.containerdSocket = "/run/k3s/containerd/containerd.s
 yq e -i '.workspace.runtime.containerdRuntimeDir = "/var/lib/rancher/k3s/agent/containerd/io.containerd.runtime.v2.task/k8s.io/"' config.yaml
 yq e -i '.experimental.telemetry.data.platform = "local-preview"' config.yaml
 
-echo "extracting images to download ahead..."
-/gitpod-installer render --use-experimental-config --config config.yaml | grep 'image:' | sed 's/ *//g' | sed 's/image://g' | sed 's/\"//g' | sed 's/^-//g' | sort | uniq > /gitpod-images.txt
-echo "downloading images..."
-while read -r image "$(cat /gitpod-images.txt)"; do
-   # shellcheck disable=SC2154
-   ctr images pull "$image" >/dev/null &
-done
-
-ctr images pull "docker.io/gitpod/workspace-full:latest" >/dev/null &
-
 /gitpod-installer render --use-experimental-config --config config.yaml --output-split-files /var/lib/rancher/k3s/server/manifests/gitpod
 
 # store files in `gitpod.debug` for debugging purposes
