@@ -428,11 +428,6 @@ class WorkspaceClassTestBuilder {
                 description: "Up to 4 vCPU, 8 GB memory, 30GB storage",
                 powerups: 1,
                 deprecated: false,
-                resources: {
-                    cpu: 4,
-                    memory: 8,
-                    storage: 30,
-                },
             },
         ];
 
@@ -447,11 +442,6 @@ class WorkspaceClassTestBuilder {
             marker: {
                 moreResources: this.hasMoreResources,
             },
-            resources: {
-                cpu: 8,
-                memory: 16,
-                storage: 50,
-            },
         });
 
         config.push({
@@ -462,11 +452,6 @@ class WorkspaceClassTestBuilder {
             description: "Up to 8 vCPU, 16 GB memory, 50GB storage",
             powerups: 2,
             deprecated: true,
-            resources: {
-                cpu: 8,
-                memory: 16,
-                storage: 50,
-            },
         });
 
         const workspaceDb = new MockWorkspaceDb(!!this.basedOnPrebuild);

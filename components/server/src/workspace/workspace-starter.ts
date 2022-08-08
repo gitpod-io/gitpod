@@ -210,7 +210,7 @@ export async function getWorkspaceClassForInstance(
                         config,
                         entitlementService,
                     );
-                    workspaceClass = WorkspaceClasses.canSubstitute(prebuildClass, userClass, config);
+                    workspaceClass = WorkspaceClasses.selectClassForRegular(prebuildClass, userClass, config);
                 } else if (user.additionalData?.workspaceClasses?.regular) {
                     workspaceClass = user.additionalData?.workspaceClasses?.regular;
                 }

@@ -41,18 +41,6 @@ export interface WorkspaceClassConfig {
         // Marks this class as the one that users marked with "GetMoreResources" receive
         moreResources: boolean;
     };
-
-    // The resources that this class provides
-    resources: WorkspaceClassResources;
-}
-
-export interface WorkspaceClassResources {
-    // Storage in gigabyte
-    storage: number;
-    // Number of cpus
-    cpu: number;
-    // Memory in gigabyte
-    memory: number;
 }
 
 export namespace WorkspaceClasses {
@@ -153,7 +141,7 @@ export namespace WorkspaceClasses {
             }
 
             const buildWorkspaceInstance = await db.findCurrentInstance(prebuild.buildWorkspaceId);
-            return buildWorkspaceInstance?.id;
+            return buildWorkspaceInstance?.workspaceClass;
         } finally {
             span.finish();
         }
@@ -182,19 +170,11 @@ export namespace WorkspaceClasses {
     }
 
     /**
-     * Checks if the current class can be replaced by another class
-     * - If both classes are the same the current class will be returned
-     * - If the proposed substitute class has at least as much resources as the current class replace it
-     * - If the substitute does not provide sufficient resources
-     *   - If current class is deprecated
-     *     - Try to find another class that provides at least as much resources as the deprecated one
-     *     - If this also fails, return default class
-     *   - If current class is not deprecated return current class
      * @param currentClassId
      * @param substituteClassId
      * @param classes
      */
-    export function canSubstitute(
+    export function selectClassForRegular(
         currentClassId: string,
         substituteClassId: string | undefined,
         classes: WorkspaceClassesConfig,
@@ -206,50 +186,22 @@ export namespace WorkspaceClasses {
         const current = classes.find((c) => c.id === currentClassId);
         let substitute = classes.find((c) => c.id === substituteClassId);
 
-        if (!current) {
-            throw new Error("class not defined: " + currentClassId);
-        }
-
-        if (!substitute) {
-            throw new Error("class not defined: " + substituteClassId);
-        }
-
-        if (substitute.deprecated) {
-            substitute = findClosestAlternative(substitute, classes);
-        }
-
-        if (substitute && providesMinimalResources(substitute, current)) {
-            return substitute.id;
-        }
-
-        if (current.deprecated) {
-            const alternative = findClosestAlternative(current, classes);
-            if (!alternative) {
-                return getDefaultId(classes);
+        if (current?.marker?.moreResources) {
+            if (substitute?.marker?.moreResources) {
+                return substitute?.id;
             } else {
-                return alternative.id;
+                if (current.deprecated) {
+                    return getMoreResourcesIdOrDefault(classes);
+                } else {
+                    return current.id;
+                }
+            }
+        } else {
+            if (substitute?.id) {
+                return substitute.id;
+            } else {
+                return getDefaultId(classes);
             }
         }
-
-        return current.id;
-    }
-
-    function providesMinimalResources(class1: WorkspaceClassConfig, class2: WorkspaceClassConfig): boolean {
-        return (
-            class1.category === class2.category &&
-            class1.resources.cpu >= class2.resources.cpu &&
-            class1.resources.memory >= class2.resources.memory &&
-            class1.resources.storage >= class2.resources.storage
-        );
-    }
-
-    function findClosestAlternative(
-        current: WorkspaceClassConfig,
-        classes: WorkspaceClassesConfig,
-    ): WorkspaceClassConfig | undefined {
-        return classes
-            .filter((cl) => !cl.deprecated)
-            .sort((a, b) => a.resources.storage - b.resources.storage)
-            .find((cl) => providesMinimalResources(cl, current));
     }
 }
