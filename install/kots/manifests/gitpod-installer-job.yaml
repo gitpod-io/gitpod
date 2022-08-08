@@ -301,9 +301,6 @@ spec:
               echo "Gitpod: ${CONFIG_PATCH_FILE}=${config_patch}"
               yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' "${CONFIG_FILE}" /tmp/patch.yaml
 
-              echo "Gitpod: Escape all keys - this avoids any collisions in the customizations/patch"
-              yq e -i '.' -o json -I 0 "${CONFIG_FILE}"
-
               echo "Gitpod: Generate the Kubernetes objects"
               config=$(cat "${CONFIG_FILE}")
               echo "Gitpod: ${CONFIG_FILE}=${config}"
