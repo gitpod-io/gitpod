@@ -46,7 +46,6 @@ import {
     FindPrebuildsParams,
     TeamMemberRole,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
-    WorkspaceType,
     PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
@@ -72,7 +71,7 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import { BillableSession, BillableSessionRequest, SortOrder } from "@gitpod/gitpod-protocol/lib/usage";
+import { BillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol/lib/usage";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -107,13 +106,13 @@ import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { CachingUsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
-import * as usage from "@gitpod/usage-api/lib/usage/v1/usage_pb";
+import { CachingUsageServiceClientProvider, UsageService } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { EntitlementService } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { BillingService } from "../billing/billing-service";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -160,6 +159,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     @inject(BillingModes) protected readonly billingModes: BillingModes;
+    @inject(BillingService) protected readonly billingService: BillingService;
 
     initialize(
         client: GitpodClient | undefined,
@@ -256,37 +256,20 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     ): Promise<void> {
         await super.mayStartWorkspace(ctx, user, runningInstances);
 
-        // TODO(at) replace the naive implementation based on usage service
-        // with a proper call check against the upcoming invoice.
-        // For now this should just enable the work on fronend.
-        if (await this.isUsageBasedFeatureFlagEnabled(user)) {
-            // dummy implementation to test frontend bits
-            const attributionId = await this.userService.getWorkspaceUsageAttributionId(user);
-            const costCenter = !!attributionId && (await this.costCenterDB.findById(attributionId));
-            if (costCenter) {
-                const allSessions = await this.listBilledUsage(ctx, {
-                    attributionId,
-                    startedTimeOrder: SortOrder.Descending,
-                });
-                const totalUsage = allSessions.map((s) => s.credits).reduce((a, b) => a + b, 0);
-
-                if (totalUsage >= costCenter.spendingLimit) {
-                    throw new ResponseError(
-                        ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
-                        "Increase spending limit and try again.",
-                        {
-                            attributionId: user.usageAttributionId,
-                        },
-                    );
-                }
-            }
-        }
-
         const result = await this.entitlementService.mayStartWorkspace(user, new Date(), runningInstances);
         if (!result.enoughCredits) {
             throw new ResponseError(
                 ErrorCodes.NOT_ENOUGH_CREDIT,
                 `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`,
+            );
+        }
+        if (result.spendingLimitReachedOnCostCenter) {
+            throw new ResponseError(
+                ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
+                "Increase spending limit and try again.",
+                {
+                    attributionId: result.spendingLimitReachedOnCostCenter,
+                },
             );
         }
         if (!!result.hitParallelWorkspaceLimit) {
@@ -2142,24 +2125,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async getNotifications(ctx: TraceContext): Promise<string[]> {
         const result = await super.getNotifications(ctx);
         const user = this.checkAndBlockUser("getNotifications");
-        if (user.usageAttributionId) {
-            // This change doesn't matter much because the listBilledUsage() call
-            // will be removed anyway in https://github.com/gitpod-io/gitpod/issues/11692
-            const request = {
-                attributionId: user.usageAttributionId,
-                startedTimeOrder: SortOrder.Descending,
-            };
-            const allSessions = await this.listBilledUsage(ctx, request);
-            const totalUsage = allSessions.map((s) => s.credits).reduce((a, b) => a + b, 0);
-            const costCenter = await this.costCenterDB.findById(user.usageAttributionId);
+
+        const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
+        if (billingMode.mode === "usage-based") {
+            const limit = await this.billingService.checkSpendingLimitReached(user);
+            const costCenter = await this.costCenterDB.findById(AttributionId.render(limit.attributionId));
             if (costCenter) {
-                if (totalUsage > costCenter.spendingLimit) {
+                if (limit.reached) {
                     result.unshift("The spending limit is reached.");
-                } else if (totalUsage > costCenter.spendingLimit * 0.8) {
+                } else if (limit.almostReached) {
                     result.unshift("The spending limit is almost reached.");
                 }
-            } else {
-                log.warn("No costcenter found.", { userId: user.id, attributionId: user.usageAttributionId });
             }
         }
         return result;
@@ -2188,7 +2164,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             timestampFrom,
             timestampTo,
         );
-        const sessions = response.getSessionsList().map((s) => this.mapBilledSession(s));
+        const sessions = response.getSessionsList().map((s) => UsageService.mapBilledSession(s));
 
         return sessions;
     }
@@ -2227,28 +2203,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         await this.guardAccess({ kind: "costCenter", /*subject: costCenter,*/ owner }, operation);
-    }
-
-    protected mapBilledSession(s: usage.BilledSession): BillableSession {
-        function mandatory<T>(v: T, m: (v: T) => string = (s) => "" + s): string {
-            if (!v) {
-                throw new Error(`Empty value in usage.BilledSession for instanceId '${s.getInstanceId()}'`);
-            }
-            return m(v);
-        }
-        return {
-            attributionId: mandatory(s.getAttributionId()),
-            userId: s.getUserId() || undefined,
-            teamId: s.getTeamId() || undefined,
-            projectId: s.getProjectId() || undefined,
-            workspaceId: mandatory(s.getWorkspaceId()),
-            instanceId: mandatory(s.getInstanceId()),
-            workspaceType: mandatory(s.getWorkspaceType()) as WorkspaceType,
-            workspaceClass: s.getWorkspaceClass(),
-            startTime: mandatory(s.getStartTime(), (t) => t!.toDate().toISOString()),
-            endTime: s.getEndTime()?.toDate().toISOString(),
-            credits: s.getCredits(), // optional
-        };
     }
 
     async getBillingModeForUser(ctx: TraceContextWithSpan): Promise<BillingMode> {
