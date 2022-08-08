@@ -155,10 +155,13 @@ export default function Menu() {
 
         // Refresh billing mode
         refreshUserBillingMode();
-        if (team) {
-            server.getBillingModeForTeam(team.id).then(setTeamBillingMode);
-        }
     }, []);
+
+    useEffect(() => {
+        if (team) {
+            getGitpodService().server.getBillingModeForTeam(team.id).then(setTeamBillingMode);
+        }
+    }, [team]);
 
     const teamOrUserSlug = !!team ? "/t/" + team.slug : "/projects";
     const leftMenu: Entry[] = (() => {

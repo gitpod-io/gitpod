@@ -68,6 +68,10 @@ function renderBillingMenuEntries(billingMode?: BillingMode) {
             ];
         case "usage-based":
             return [
+                {
+                    title: "Billing",
+                    link: [settingsPathBilling],
+                },
                 // We need to allow access to "Team Plans" here, at least for owners.
                 ...(billingMode.hasChargebeeTeamSubscription
                     ? [
@@ -77,10 +81,6 @@ function renderBillingMenuEntries(billingMode?: BillingMode) {
                           },
                       ]
                     : []),
-                {
-                    title: "Billing",
-                    link: [settingsPathBilling],
-                },
             ];
     }
 }
