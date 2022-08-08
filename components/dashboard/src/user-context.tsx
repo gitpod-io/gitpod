@@ -23,9 +23,7 @@ const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>();
     const [billingMode, setBillingMode] = useState<BillingMode>();
     function refreshUserBillingMode() {
-        getGitpodService()
-            .server.getBillingModeForUser()
-            .then((bm) => setBillingMode);
+        getGitpodService().server.getBillingModeForUser().then(setBillingMode);
     }
     return (
         <UserContext.Provider value={{ user, setUser, userBillingMode: billingMode, refreshUserBillingMode }}>
