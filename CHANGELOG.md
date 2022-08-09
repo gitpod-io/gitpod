@@ -1,6 +1,9 @@
 # Change Log
 
 ## August 2022
+- [kots]: fix typo which meant wasn't using the appSlug in config collect ([#11965](https://github.com/gitpod-io/gitpod/pull/11965)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [kots]: collect the user config in support bundles ([#11943](https://github.com/gitpod-io/gitpod/pull/11943)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Update PhpStorm IDE image to version 222.3345.135. ([#11804](https://github.com/gitpod-io/gitpod/pull/11804)) - [@roboquat](https://github.com/roboquat)
 - Add Spending Limit Reached modal on workspace creation. ([#11576](https://github.com/gitpod-io/gitpod/pull/11576)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [kots]: add docker.io to registry allowlist ([#11878](https://github.com/gitpod-io/gitpod/pull/11878)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Migrate AlertBox component instances to Alert component ([#10199](https://github.com/gitpod-io/gitpod/pull/10199)) - [@KevSlashNull](https://github.com/KevSlashNull)
