@@ -20,14 +20,46 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
+resource "aws_security_group_rule" "eks-worker-ingress-self" {
+  description              = "Allow node to communicate with each other"
+  from_port                = 0
+  protocol                 = "-1"
+  security_group_id        = aws_security_group.nodes.id
+  source_security_group_id = aws_security_group.nodes.id
+  to_port                  = 65535
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "eks-worker-ingress-cluster" {
+  description              = "Allow worker Kubelets and pods to receive communication from the cluster control plane"
+  from_port                = 1025
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.nodes.id
+  source_security_group_id = aws_security_group.nodes.id
+  to_port                  = 65535
+  type                     = "ingress"
+}
+
+### Worker Node Access to EKS Master
+resource "aws_security_group_rule" "eks-cluster-ingress-node-https" {
+  description              = "Allow pods to communicate with the cluster API Server"
+  from_port                = 443
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.nodes.id
+  source_security_group_id = aws_security_group.nodes.id
+  to_port                  = 443
+  type                     = "ingress"
+}
+
+
 resource "aws_security_group" "nodes" {
   name   = "nodes-sg-${var.cluster_name}"
   vpc_id = module.vpc.vpc_id
 
   ingress {
     from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    to_port     = 6443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -46,7 +78,8 @@ module "eks" {
   cluster_name    = var.cluster_name
   cluster_version = var.cluster_version
 
-  cluster_endpoint_public_access = true
+  cluster_endpoint_public_access  = true
+  cluster_endpoint_private_access = true
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.public_subnets
@@ -68,6 +101,7 @@ module "eks" {
     ami_id                     = var.image_id
     enable_bootstrap_user_data = true
     vpc_security_group_ids     = [aws_security_group.nodes.id]
+    ebs_optimized              = true
   }
 
   eks_managed_node_groups = {
@@ -77,19 +111,29 @@ module "eks" {
       name                       = "service-${var.cluster_name}"
       subnet_ids                 = module.vpc.public_subnets
       min_size                   = 1
-      max_size                   = 10
-      desired_size               = 1
+      max_size                   = 4
+      desired_size               = 2
       block_device_mappings = [{
         device_name = "/dev/sda1"
 
         ebs = [{
-          volume_size = 150
+          volume_size           = 300
+          volume_type           = "gp3"
+          throughput            = 500
+          iops                  = 6000
+          delete_on_termination = true
         }]
       }]
       labels = {
         "gitpod.io/workload_meta" = true
         "gitpod.io/workload_ide"  = true
       }
+
+      tags = {
+        "k8s.io/cluster-autoscaler/enabled" = true
+        "k8s.io/cluster-autoscaler/gitpod"  = "owned"
+      }
+
       pre_bootstrap_user_data = <<-EOT
         #!/bin/bash
         set -ex
@@ -97,7 +141,7 @@ module "eks" {
         export CONTAINER_RUNTIME="containerd"
         export USE_MAX_PODS=false
         EOF
-        # Source extra environment variables in bootstrap script
+        # Source extra environment 5ariables in bootstrap script
         sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
         EOT
     }
@@ -107,21 +151,27 @@ module "eks" {
       name           = "ws-${var.cluster_name}"
       subnet_ids     = module.vpc.public_subnets
       min_size       = 1
-      max_size       = 10
+      max_size       = 50
       block_device_mappings = [{
         device_name = "/dev/sda1"
 
         ebs = [{
-          volume_size = 150
+          volume_size = 300
         }]
       }]
-      desired_size               = 1
+      desired_size               = 2
       enable_bootstrap_user_data = true
       labels = {
         "gitpod.io/workload_workspace_services" = true
         "gitpod.io/workload_workspace_regular"  = true
         "gitpod.io/workload_workspace_headless" = true
       }
+
+      tags = {
+        "k8s.io/cluster-autoscaler/enabled" = true
+        "k8s.io/cluster-autoscaler/gitpod"  = "owned"
+      }
+
       pre_bootstrap_user_data = <<-EOT
         #!/bin/bash
         set -ex
