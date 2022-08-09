@@ -517,6 +517,11 @@ export function GitIntegrationModal(
     },
 ) {
     const callbackUrl = (host: string) => {
+        // Negative Lookahead (?!\/)
+        // `\/` matches the character `/`
+        // "https://foobar:80".replace(/:(?!\/)/, "_")
+        // => 'https://foobar_80'
+        host = host.replace(/:(?!\/)/, "_");
         const pathname = `/auth/${host}/callback`;
         return gitpodHostUrl.with({ pathname }).toString();
     };
@@ -642,12 +647,6 @@ export function GitIntegrationModal(
             if (host.startsWith("https://")) {
                 newHostValue = host.replace("https://", "");
             }
-
-            // Negative Lookahead (?!\/)
-            // `\/` matches the character `/`
-            // "https://foobar:80".replace(/:(?!\/)/, "_")
-            // => 'https://foobar_80'
-            newHostValue = host.replace(/:(?!\/)/, "_");
 
             setHost(newHostValue);
             setRedirectURL(callbackUrl(newHostValue));
@@ -798,7 +797,7 @@ export function GitIntegrationModal(
                             Provider Host Name
                         </label>
                         <input
-                            name="hostName"
+                            id="hostName"
                             disabled={mode === "edit" || type === "Bitbucket"}
                             type="text"
                             placeholder={getPlaceholderForIntegrationType(type)}
@@ -813,7 +812,7 @@ export function GitIntegrationModal(
                         </label>
                         <div className="w-full relative">
                             <input
-                                name="redirectURL"
+                                id="redirectURL"
                                 disabled={true}
                                 readOnly={true}
                                 type="text"
