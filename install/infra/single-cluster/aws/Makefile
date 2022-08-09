@@ -15,8 +15,12 @@ apply: apply-cluster apply-tools
 .PHONY: destroy
 destroy: destroy-tools destroy-cluster
 
+.PHONY: refresh
+refresh:
+	@terraform refresh
+
 .PHONY: output
-output: output-done-msg output-url output-nameservers output-registry output-database output-storage output-issuer
+output: refresh output-done-msg output-url output-nameservers output-registry output-database output-storage output-issuer
 
 output-done-msg:
 	@echo "=========================="
