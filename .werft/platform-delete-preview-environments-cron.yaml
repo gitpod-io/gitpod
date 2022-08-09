@@ -24,7 +24,7 @@ pod:
         secretName: harvester-vm-ssh-keys
   containers:
     - name: build
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go.18
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-kots-latest-img.2
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       volumeMounts:
