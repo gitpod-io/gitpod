@@ -365,7 +365,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 
 	sess := s.store.Get(req.Id)
 	if sess == nil {
-		return nil, status.Error(codes.NotFound, "cannot find workspace during DisposeWorkspace")
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during DisposeWorkspace", req.Id))
 	}
 
 	// We were asked to do a backup of a session that was never ready. There seems to have been some state drift here - tell the caller.
@@ -758,7 +758,7 @@ func (s *WorkspaceService) WaitForInit(ctx context.Context, req *api.WaitForInit
 
 	session := s.store.Get(req.Id)
 	if session == nil {
-		return nil, status.Error(codes.NotFound, "cannot find workspace during WaitForInit")
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during WaitForInit", req.Id))
 	}
 
 	// the next call will block until the workspace is initialized
@@ -790,7 +790,7 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 
 	sess := s.store.Get(req.Id)
 	if sess == nil {
-		return nil, status.Error(codes.NotFound, "cannot find workspace during TakeSnapshot")
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during TakeSnapshot", req.Id))
 	}
 	if !sess.IsReady() {
 		return nil, status.Error(codes.FailedPrecondition, "workspace is not ready")
@@ -865,7 +865,7 @@ func (s *WorkspaceService) BackupWorkspace(ctx context.Context, req *api.BackupW
 		// i.e. location = /mnt/disks/ssd0/workspaces- + req.Id
 		// It would also need to setup the remote storagej
 		// ... but in the worse case we *could* backup locally and then upload manually
-		return nil, status.Error(codes.NotFound, "cannot find workspace during BackupWorkspace")
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during BackupWorkspace", req.Id))
 	}
 	if sess.RemoteStorageDisabled {
 		return nil, status.Errorf(codes.FailedPrecondition, "workspace has no remote storage")
