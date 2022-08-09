@@ -6,8 +6,14 @@
 init:
 	@terraform init
 
+touch-kubeconfig:
+	@touch kubeconfig
+
+cleanup-kubeconfig:
+	@rm kubeconfig
+
 .PHONY: plan
-plan: plan-cluster plan-cm-edns
+plan: touch-kubeconfig plan-cluster plan-cm-edns cleanup-kubeconfig
 
 .PHONY: apply
 apply: apply-cluster apply-tools
@@ -15,13 +21,22 @@ apply: apply-cluster apply-tools
 .PHONY: destroy
 destroy: destroy-tools destroy-cluster
 
+.PHONY: refresh
+refresh:
+	@echo "Refreshing terraform state"
+	@terraform refresh
+	@echo ""
+	@echo "Done!"
+
 .PHONY: output
-output: output-done-msg output-url output-nameservers output-registry output-database output-storage output-issuer
+output: refresh output-done-msg output-url output-nameservers output-registry output-database output-storage output-issuer
 
 output-done-msg:
+	@echo ""
+	@echo ""
 	@echo "=========================="
 	@echo "🎉🥳🔥🧡🚀"
-	@echo "Your cloud infrastructure is ready to install Gitpod. Please visit"
+	@echo "Your AWS cloud infrastructure is ready to install Gitpod. Please visit"
 	@echo "https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod"
 	@echo "for your next steps."
 	@echo "================="

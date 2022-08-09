@@ -19,13 +19,6 @@ resource "aws_security_group" "rdssg" {
   name   = "dh-sg-${var.cluster_name}"
   vpc_id = module.vpc.vpc_id
 
-  ingress {
-    from_port   = 0
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -34,14 +27,24 @@ resource "aws_security_group" "rdssg" {
   }
 }
 
+resource "aws_security_group_rule" "db-ingress-nodes" {
+  description       = "Allow nodes to communicate with the db"
+  from_port         = 0
+  protocol          = "tcp"
+  cidr_blocks       = [var.vpc_cidr]
+  security_group_id = aws_security_group.rdssg[0].id
+  to_port           = 3306
+  type              = "ingress"
+}
+
 resource "aws_db_instance" "gitpod" {
   count = var.enable_external_database ? 1 : 0
 
-  allocated_storage      = 10
-  max_allocated_storage  = 100
+  allocated_storage      = 20
+  max_allocated_storage  = 120
   engine                 = "mysql"
   engine_version         = "5.7"
-  instance_class         = "db.t3.micro"
+  instance_class         = "db.m5.large"
   vpc_security_group_ids = [aws_security_group.rdssg[0].id]
   identifier             = "db-${var.cluster_name}"
   name                   = "gitpod"
