@@ -6,6 +6,7 @@ package incluster
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
@@ -35,6 +36,9 @@ var Helm = func(apiPort int32, consolePort int32, commonHelmValues []string) com
 							helm.KeyValue("minio.auth.rootPassword", cfg.Values.StorageSecretKey),
 							helm.KeyValue("minio.service.ports.api", fmt.Sprintf("%d", apiPort)),
 							helm.KeyValue("minio.service.ports.console", fmt.Sprintf("%d", consolePort)),
+
+							// Backup the volume
+							helm.KeyValue("minio.podAnnotations.backup\\.velero\\.io/backup-volumes", "data"),
 						},
 						commonHelmValues...,
 					),

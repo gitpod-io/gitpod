@@ -7822,6 +7822,7 @@ spec:
         app.kubernetes.io/managed-by: Helm
       annotations:
         checksum/credentials-secret: 254e39ef7087b8d977946ed0027240eda9a1c7f64ae430fca5644a50b23cece3
+        backup.velero.io/backup-volumes: data
     spec:
       
       serviceAccountName: minio
