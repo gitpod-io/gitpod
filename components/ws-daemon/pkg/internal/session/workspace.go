@@ -204,7 +204,7 @@ func (s *Workspace) Dispose(ctx context.Context) (err error) {
 	// old workspace content we can garbage collect that content later.
 	err = os.Remove(s.persistentStateLocation())
 	if err != nil {
-		return xerrors.Errorf("cannot remove workspace: %w", err)
+		return xerrors.Errorf("cannot remove workspace persistent state location: %w", err)
 	}
 
 	s.stateLock.Lock()
@@ -226,7 +226,7 @@ func (s *Workspace) Dispose(ctx context.Context) (err error) {
 		err = os.RemoveAll(s.Location)
 	}
 	if err != nil {
-		return xerrors.Errorf("cannot remove workspace: %w", err)
+		return xerrors.Errorf("cannot remove workspace all: %w", err)
 	}
 
 	return nil
