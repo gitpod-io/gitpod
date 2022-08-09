@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 )
 
 func TestServerCanReceiveLargeMessages(t *testing.T) {
@@ -23,7 +24,7 @@ func TestServerCanReceiveLargeMessages(t *testing.T) {
 		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
 	)
 
-	v1.RegisterBillingServiceServer(srv.GRPC(), NewBillingService(&stripe.Client{}, time.Time{}))
+	v1.RegisterBillingServiceServer(srv.GRPC(), NewBillingService(&stripe.Client{}, time.Time{}, &gorm.DB{}))
 	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))

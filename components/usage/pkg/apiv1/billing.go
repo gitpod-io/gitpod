@@ -14,18 +14,22 @@ import (
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
-func NewBillingService(stripeClient *stripe.Client, billInstancesAfter time.Time) *BillingService {
+func NewBillingService(stripeClient *stripe.Client, billInstancesAfter time.Time, conn *gorm.DB) *BillingService {
 	return &BillingService{
 		stripeClient:       stripeClient,
 		billInstancesAfter: billInstancesAfter,
+		conn:               conn,
 	}
 }
 
 type BillingService struct {
+	conn               *gorm.DB
 	stripeClient       *stripe.Client
 	billInstancesAfter time.Time
 
@@ -85,4 +89,21 @@ func (s *BillingService) creditSummaryForTeams(sessions []*v1.BilledSession) (ma
 	}
 
 	return rounded, nil
+}
+
+func (s *BillingService) SetBilledSession(ctx context.Context, in *v1.SetBilledSessionRequest) (*v1.SetBilledSessionResponse, error) {
+	var from time.Time
+	if in.From != nil {
+		from = in.From.AsTime()
+	}
+	uuid, err := uuid.Parse(in.InstanceId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to parse instance ID: %s", err)
+	}
+	err = db.SetBilled(ctx, s.conn, uuid, from, in.System)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to set session: %s", err)
+	}
+
+	return nil, nil
 }

@@ -119,7 +119,10 @@ import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceClasses } from "./workspace-classes";
 import { EntitlementService } from "../billing/entitlement-service";
+import { BillingModes } from "../../ee/src/billing/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { CachingBillingServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
+import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -214,6 +217,9 @@ export class WorkspaceStarter {
     @inject(BlockedRepositoryDB) protected readonly blockedRepositoryDB: BlockedRepositoryDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
+    @inject(BillingModes) protected readonly billingModes: BillingModes;
+    @inject(CachingBillingServiceClientProvider)
+    protected readonly billingServiceClientProvider: CachingBillingServiceClientProvider;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -477,6 +483,19 @@ export class WorkspaceStarter {
             increaseSuccessfulInstanceStartCounter(retries);
 
             span.log({ resp: resp });
+
+            if (instance.usageAttributionId) {
+                const creationTime = new Date(instance.creationTime);
+                const timestamped = Timestamp.fromDate(creationTime);
+                const parsedAttributionId = AttributionId.parse(instance.usageAttributionId);
+                if (parsedAttributionId) {
+                    const billingMode = await this.billingModes.getBillingMode(parsedAttributionId, creationTime);
+                    if (billingMode && billingMode.mode === "chargebee") {
+                        const billingClient = this.billingServiceClientProvider.getDefault();
+                        await billingClient.setBilledSession(instance.id, timestamped, "chargebee");
+                    }
+                }
+            }
 
             this.analytics.track({
                 userId: user.id,
@@ -839,6 +858,7 @@ export class WorkspaceStarter {
                 usageAttributionId: usageAttributionId && AttributionId.render(usageAttributionId),
                 workspaceClass,
             };
+
             if (WithReferrerContext.is(workspace.context)) {
                 this.analytics.track({
                     userId: user.id,

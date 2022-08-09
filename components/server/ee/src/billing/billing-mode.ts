@@ -46,7 +46,7 @@ export class BillingModesImpl implements BillingModes {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(UserDB) protected readonly userDB: UserDB;
 
-    async getBillingMode(attributionId: AttributionId, now: Date): Promise<BillingMode> {
+    public async getBillingMode(attributionId: AttributionId, now: Date): Promise<BillingMode> {
         switch (attributionId.kind) {
             case "team":
                 const team = await this.teamDB.findTeamById(attributionId.teamId);

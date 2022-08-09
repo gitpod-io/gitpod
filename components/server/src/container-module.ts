@@ -102,9 +102,12 @@ import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
 import {
     CachingUsageServiceClientProvider,
+    CachingBillingServiceClientProvider,
     UsageServiceClientCallMetrics,
     UsageServiceClientConfig,
     UsageServiceClientProvider,
+    BillingServiceClientCallMetrics,
+    BillingServiceClientConfig,
 } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import { CommunityEntitlementService, EntitlementService } from "./billing/entitlement-service";
 import {
@@ -266,6 +269,13 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(CachingUsageServiceClientProvider).toSelf().inSingletonScope();
     bind(UsageServiceClientProvider).toService(CachingImageBuilderClientProvider);
     bind(UsageServiceClientCallMetrics).toService(IClientCallMetrics);
+
+    bind(CachingBillingServiceClientProvider).toSelf().inSingletonScope();
+    bind(BillingServiceClientCallMetrics).toService(IClientCallMetrics);
+    bind(BillingServiceClientConfig).toDynamicValue((ctx) => {
+        const config = ctx.container.get<Config>(Config);
+        return { address: config.usageServiceAddr };
+    });
 
     bind(EntitlementService).to(CommunityEntitlementService).inSingletonScope();
 

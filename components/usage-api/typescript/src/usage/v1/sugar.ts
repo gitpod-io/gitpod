@@ -10,6 +10,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
 import { BilledSession, ListBilledUsageRequest, ListBilledUsageResponse } from "./usage_pb";
+import { SetBilledSessionRequest, SetBilledSessionResponse } from "./billing_pb";
 import { injectable, inject, optional } from "inversify";
 import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import * as grpc from "@grpc/grpc-js";
@@ -224,6 +225,28 @@ export class PromisifiedBillingServiceClient {
             cs == grpc.connectivityState.IDLE ||
             cs == grpc.connectivityState.READY
         );
+    }
+
+    public async setBilledSession(instanceId: string, instanceCreationTime: Timestamp, system: string) {
+        const req = new SetBilledSessionRequest();
+        req.setInstanceId(instanceId);
+        req.setFrom(instanceCreationTime);
+        req.setSystem(system);
+
+
+        const response = await new Promise<SetBilledSessionResponse>((resolve, reject) => {
+        this.client.setBilledSession(
+            req,
+            (err: grpc.ServiceError | null, response: SetBilledSessionResponse) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve(response);
+        },
+        )}
+        )
+        return response;
     }
 
     public dispose() {
