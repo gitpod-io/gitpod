@@ -17,14 +17,14 @@ This script is intended to be run from the root directory of the installer
 
 ``` sh
 $ go run ./scripts/structdoc.go --version "v1"
-INFO[0000] Generating doc for config version v1         
-INFO[0000] The doc is written to the file pkg/config/v1/config.md 
+INFO[0000] Generating doc for config version v1
+INFO[0000] The doc is written to the file pkg/config/v1/config.md
 
 # Alternatively one can also use the make target
 # to create the doc for current version
 $ make config-doc
 Building doc from Config struct for current version
 go run ./scripts/structdoc.go
-INFO[0000] Generating doc for config version v1         
-INFO[0000] The doc is written to the file pkg/config/v1/config.md 
+INFO[0000] Generating doc for config version v1
+INFO[0000] The doc is written to the file pkg/config/v1/config.md
 ```
