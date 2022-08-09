@@ -86,7 +86,7 @@ spec:
 
               echo "Gitpod: auto-detecting ShiftFS support on host machine"
               kubectl wait job -n {{repl Namespace }} --for=condition=complete -l component=shiftfs-module-loader --timeout=30s || true
-              ENABLE_SHIFTFS=$(kubectl get jobs.batch -n {{repl Namespace }} -l component=shiftfs-module-loader -o jsonpath='{.items[0].status.succeeded}')
+              ENABLE_SHIFTFS=$(kubectl get jobs.batch -n {{repl Namespace }} -l component=shiftfs-module-loader -o jsonpath='{.items[0].status.succeeded}' || echo '')
 
               if [ "${ENABLE_SHIFTFS}" = "1" ]; then
                 echo "Gitpod: enabling ShiftFS support"
