@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 )
 
 func TestCreditSummaryForTeams(t *testing.T) {
@@ -109,7 +110,7 @@ func TestCreditSummaryForTeams(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
-			svc := NewBillingService(&stripe.Client{}, s.BillSessionsAfter)
+			svc := NewBillingService(&stripe.Client{}, s.BillSessionsAfter, &gorm.DB{})
 			actual, err := svc.creditSummaryForTeams(s.Sessions)
 			require.NoError(t, err)
 			require.Equal(t, s.Expected, actual)

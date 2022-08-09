@@ -5,9 +5,11 @@
 package db
 
 import (
-	"time"
-
+	"context"
+	"fmt"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"time"
 )
 
 // BilledSession represents the underlying DB object
@@ -26,4 +28,22 @@ type BilledSession struct {
 // TableName sets the insert table name for this struct type
 func (d *BilledSession) TableName() string {
 	return "d_b_billed_session"
+}
+
+func SetBilled(ctx context.Context, conn *gorm.DB, instanceID uuid.UUID, instanceCreationTime time.Time, system string) error {
+	database := conn.WithContext(ctx)
+
+	billedSession := BilledSession{InstanceID: instanceID, From: NewVarcharTime(instanceCreationTime), System: system}
+	return database.Create(&billedSession).Error
+}
+
+func GetBilled(ctx context.Context, conn *gorm.DB, instanceID uuid.UUID) ([]BilledSession, error) {
+	var billedSessions []BilledSession
+	db := conn.WithContext(ctx).Where("InstanceID = ?", instanceID).Find(&billedSessions)
+
+	if db.Error != nil {
+		return nil, fmt.Errorf("Billed session not found for instance ID: %w", db.Error)
+	}
+
+	return billedSessions, nil
 }
