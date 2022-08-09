@@ -32,7 +32,7 @@
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/ServerEventLoopLagTooHigh.md',
               summary: 'Server accumulated too much "event loop lag". The webapp will become unresponsive if we don\'t act here.',
-              description: 'Server has accumulated {{ printf "%.2f" $value }}ms event loop lag.',
+              description: 'Server has accumulated {{ printf "%.2f" $value }}s event loop lag.',
             },
           },
           {
