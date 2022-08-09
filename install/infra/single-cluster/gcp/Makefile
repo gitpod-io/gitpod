@@ -6,8 +6,14 @@
 init:
 	@terraform init
 
+touch-kubeconfig:
+	@touch kubeconfig
+
+cleanup-kubeconfig:
+	@rm kubeconfig
+
 .PHONY: plan
-plan: plan-cluster plan-cm-edns
+plan: touch-kubeconfig plan-cluster plan-cm-edns cleanup-kubeconfig
 
 .PHONY: apply
 apply: apply-cluster apply-tools
@@ -15,13 +21,61 @@ apply: apply-cluster apply-tools
 .PHONY: destroy
 destroy: destroy-tools destroy-cluster
 
+.PHONY: refresh
+refresh:
+	@echo "Refreshing terraform state"
+	@terraform refresh
+	@echo ""
+	@echo "Done!"
+
 .PHONY: output
-output:
-	@terraform output -json
+output: refresh output-done-msg output-url output-nameservers output-registry output-database output-storage output-issuer
+
+output-done-msg:
+	@echo ""
+	@echo ""
+	@echo "=========================="
+	@echo "🎉🥳🔥🧡🚀"
+	@echo "Your cloud infrastructure is ready to install Gitpod. Please visit"
+	@echo "https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod"
+	@echo "for your next steps."
+	@echo "================="
+	@echo "Config Parameters"
+	@echo "================="
+
+output-url:
+	@echo "\nGitpod domain name:"
+	@echo "================="
+	@terraform output -json url | jq
+
+output-nameservers:
+	@echo "\nNameservers for the domain(to be added as NS records in your domain provider):"
+	@echo "================="
+	@terraform output -json nameservers | jq
+
+output-storage:
+	@echo "\nObject storage:"
+	@echo "=============="
+	@terraform output -json storage | jq
+
+output-registry:
+	@echo "\nGCR registry:"
+	@echo "=================="
+	@terraform output -json registry | jq
+
+output-database:
+	@echo "\nDatabase:"
+	@echo "========"
+	@terraform output -json database | jq
+
+output-issuer:
+	@echo "\nClusterIssuer name:"
+	@echo "================="
+	@terraform output -json cluster_issuer | jq
 
 .PHONY: plan-cluster
 plan-cluster:
-	@terraform plan -target=module.eks
+	@terraform plan -target=module.gke
 
 .PHONY: plan-tools
 plan-tools: plan-cm-edns plan-cluster-issuer
@@ -36,7 +90,7 @@ plan-cluster-issuer:
 
 .PHONY: apply-cluster
 apply-cluster:
-	@terraform apply -target=module.eks --auto-approve
+	@terraform apply -target=module.gke --auto-approve
 
 .PHONY: apply-tools
 apply-tools: install-cm-edns install-cluster-issuer
@@ -47,7 +101,7 @@ install-cm-edns:
 
 .PHONY: install-cluster-issuer
 install-cluster-issuer:
-	@terraform apply -target=module.externaldns  --auto-approve
+	@terraform apply -target=module.cluster-issuer  --auto-approve
 
 .PHONY: destroy-cluster
 destroy-cluster:

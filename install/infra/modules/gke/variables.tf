@@ -26,7 +26,7 @@ variable "cluster_version" {
   default     = "1.22.8-gke.201"
 }
 
-variable "name" {
+variable "cluster_name" {
   type        = string
   description = "The name of the cluster."
   default     = "gitpod"
@@ -64,4 +64,19 @@ variable "credentials" {
 variable "domain_name" {
   description = "Domain name register with Cloud DNS, leave empty if you want to manage it yourself"
   default     = null
+}
+
+variable "enable_external_database" {
+  default     = true
+  description = "Set this to false to avoid creating an RDS database to use with Gitpod instead of inclsuter mysql"
+}
+
+variable "enable_external_storage" {
+  default     = true
+  description = "Set this to false to avoid creating an s3 storage to use with Gitpod instead of incluster minio"
+}
+
+variable "enable_external_registry" {
+  default     = true
+  description = "Set this to false to create an AWS ECR registry to use with Gitpod(Not officially supported)"
 }
