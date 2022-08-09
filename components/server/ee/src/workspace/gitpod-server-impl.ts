@@ -256,14 +256,23 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     ): Promise<void> {
         await super.mayStartWorkspace(ctx, user, runningInstances);
 
-        const result = await this.entitlementService.mayStartWorkspace(user, new Date(), runningInstances);
-        if (!result.enoughCredits) {
+        let result;
+        try {
+            result = await this.entitlementService.mayStartWorkspace(user, new Date(), runningInstances);
+        } catch (error) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, `Error in Entitlement Service.`);
+        }
+        log.info("mayStartWorkspace", { result });
+        if (result.mayStart) {
+            return; // green light from entitlement service
+        }
+        if (!!result.oufOfCredits) {
             throw new ResponseError(
                 ErrorCodes.NOT_ENOUGH_CREDIT,
                 `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`,
             );
         }
-        if (result.spendingLimitReachedOnCostCenter) {
+        if (!!result.spendingLimitReachedOnCostCenter) {
             throw new ResponseError(
                 ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
                 "Increase spending limit and try again.",

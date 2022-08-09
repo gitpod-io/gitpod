@@ -9,7 +9,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillableSession, BillableSessionRequest, SortOrder } from "@gitpod/gitpod-protocol/lib/usage";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { UsageService, UsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
+import { CachingUsageServiceClientProvider, UsageService } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { inject, injectable } from "inversify";
 import { UserService } from "../../../src/user/user-service";
@@ -24,7 +24,8 @@ export interface SpendingLimitReachedResult {
 export class BillingService {
     @inject(UserService) protected readonly userService: UserService;
     @inject(CostCenterDB) protected readonly costCenterDB: CostCenterDB;
-    @inject(UsageServiceClientProvider) protected readonly usageServiceClientProvider: UsageServiceClientProvider;
+    @inject(CachingUsageServiceClientProvider)
+    protected readonly usageServiceClientProvider: CachingUsageServiceClientProvider;
 
     async checkSpendingLimitReached(user: User): Promise<SpendingLimitReachedResult> {
         const attributionId = await this.userService.getWorkspaceUsageAttributionId(user);
