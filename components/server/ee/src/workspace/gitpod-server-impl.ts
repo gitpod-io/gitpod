@@ -2044,8 +2044,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async findStripeSubscriptionIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
         this.checkAndBlockUser("findStripeSubscriptionIdForTeam");
-        const team = await this.guardTeamOperation(teamId, "get");
-        await this.ensureStripeApiIsAllowed({ team });
+        await this.guardTeamOperation(teamId, "get");
         try {
             const customer = await this.stripeService.findCustomerByTeamId(teamId);
             if (!customer?.id) {
