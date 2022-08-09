@@ -298,6 +298,7 @@ func (s *Server) initializeGRPC() error {
 		opts = append(opts, grpc.Creds(credentials.NewTLS(tlsConfig)))
 	}
 
+	opts = append(opts, grpc.MaxRecvMsgSize(100*1024*1024))
 	s.grpc = grpc.NewServer(opts...)
 
 	reflection.Register(s.grpc)
