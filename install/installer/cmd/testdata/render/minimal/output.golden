@@ -7111,6 +7111,10 @@ spec:
     metadata:
       annotations:
         checksum/configuration: f96f510015050d9b0165d12f144f5eca5641c065ccbe9c75e64f58e81a9b3d8c
+        backup.velero.io/backup-volumes: backup
+        pre.hook.backup.velero.io/command: |
+          ["/bin/bash", "-c", "mysqldump -u root -p$MYSQL_ROOT_PASSWORD --databases $MYSQL_DATABASE gitpod-sessions -h 127.0.0.1 > /backup/mysqldump.sql"]
+        pre.hook.backup.velero.io/timeout: 5m
       labels:
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.1.2
@@ -7220,6 +7224,8 @@ spec:
             - name: config
               mountPath: /opt/bitnami/mysql/conf/my.cnf
               subPath: my.cnf
+            - mountPath: /backup
+              name: backup
       volumes:
         - name: config
           configMap:
@@ -7227,6 +7233,8 @@ spec:
         - name: custom-init-scripts
           configMap:
             name: db-init-scripts
+        - emptyDir: {}
+          name: backup
   volumeClaimTemplates:
     - metadata:
         name: data
