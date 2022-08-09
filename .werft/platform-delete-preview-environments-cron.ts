@@ -9,7 +9,7 @@ import * as VM from "./vm/vm";
 
 // for testing purposes
 // if set to 'true' it shows only previews that would be deleted
-const DRY_RUN = true;
+const DRY_RUN = false;
 
 const SLICES = {
     CONFIGURE_ACCESS: "Configuring access to relevant resources",
