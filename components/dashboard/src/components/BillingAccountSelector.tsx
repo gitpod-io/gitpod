@@ -47,6 +47,14 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
             props.onSelected();
         }
     };
+
+    let selectedAttributionId = user?.usageAttributionId;
+    if (!selectedAttributionId && teamsWithBillingEnabled?.length === 1) {
+        // When the user hasn't selected a billing account, but there is only one possible billing account,
+        // we auto-select that one.
+        selectedAttributionId = AttributionId.render({ kind: "team", teamId: teamsWithBillingEnabled[0].id });
+    }
+
     return (
         <>
             {teamsWithBillingEnabled === undefined && <Spinner className="m-2 h-5 w-5 animate-spin" />}
@@ -58,11 +66,8 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                             className="w-36 h-32"
                             title="(myself)"
                             selected={
-                                !teamsWithBillingEnabled.find(
-                                    (t) =>
-                                        AttributionId.render({ kind: "team", teamId: t.id }) ===
-                                        user?.usageAttributionId,
-                                )?.name
+                                !!user &&
+                                selectedAttributionId === AttributionId.render({ kind: "user", userId: user.id })
                             }
                             onClick={() => setUsageAttributionTeam(undefined)}
                         >
@@ -73,11 +78,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                                 className="w-36 h-32"
                                 title={t.name}
                                 selected={
-                                    !!teamsWithBillingEnabled.find(
-                                        (t) =>
-                                            AttributionId.render({ kind: "team", teamId: t.id }) ===
-                                            user?.usageAttributionId,
-                                    )?.name
+                                    selectedAttributionId === AttributionId.render({ kind: "team", teamId: t.id })
                                 }
                                 onClick={() => setUsageAttributionTeam(t)}
                             >
