@@ -21,7 +21,7 @@ pod:
       secretName: sh-playground-dns-perm
   containers:
   - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go.18
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-kots-latest-img.2
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:

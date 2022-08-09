@@ -248,8 +248,9 @@ RUN curl -fsSLO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJS
     rm -f gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz
 
 # Install Replicated and KOTS
-RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/v0.38.0/install.sh | sudo bash && \
-    curl https://kots.io/install/1.65.0 | bash
+RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/$(curl -s https://api.github.com/repos/replicatedhq/replicated/releases/latest | jq -r '.name')/install.sh | sudo bash && \
+    curl https://kots.io/install | bash && \
+    bash -c "echo . \<\(kubectl kots completion bash\) >> ~/.bashrc"
 
 # Copy our own tools
 ENV NEW_KUBECDL=1
