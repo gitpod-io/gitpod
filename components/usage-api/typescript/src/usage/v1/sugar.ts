@@ -5,6 +5,7 @@
  */
 
 import { UsageServiceClient } from "./usage_grpc_pb";
+import { BillingServiceClient } from "./billing_grpc_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
@@ -15,10 +16,14 @@ import * as grpc from "@grpc/grpc-js";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 
 export const UsageServiceClientProvider = Symbol("UsageServiceClientProvider");
+export const BillingServiceClientProvider = Symbol("BillingServiceClientProvider");
 
 // UsageServiceClientProvider caches connections to UsageService
 export interface UsageServiceClientProvider {
     getDefault(): PromisifiedUsageServiceClient;
+}
+export interface BillingServiceClientProvider {
+    getDefault(): PromisifiedBillingServiceClient;
 }
 
 function withTracing(ctx: TraceContext): Metadata {
@@ -34,10 +39,17 @@ function withTracing(ctx: TraceContext): Metadata {
 }
 
 export const UsageServiceClientConfig = Symbol("UsageServiceClientConfig");
+export const BillingServiceClientConfig = Symbol("BillingServiceClientConfig");
+
 export const UsageServiceClientCallMetrics = Symbol("UsageServiceClientCallMetrics");
+export const BillingServiceClientCallMetrics = Symbol("BillingServiceClientCallMetrics");
 
 // UsageServiceClientConfig configures the access to the UsageService
 export interface UsageServiceClientConfig {
+    address: string;
+}
+
+export interface BillingServiceClientConfig {
     address: string;
 }
 
@@ -62,6 +74,42 @@ export class CachingUsageServiceClientProvider implements UsageServiceClientProv
         const createClient = () => {
             return new PromisifiedUsageServiceClient(
                 new UsageServiceClient(this.clientConfig.address, grpc.credentials.createInsecure()),
+                interceptors,
+            );
+        };
+        let connection = this.connectionCache;
+        if (!connection) {
+            connection = createClient();
+        } else if (!connection.isConnectionAlive()) {
+            connection.dispose();
+
+            connection = createClient();
+        }
+
+        this.connectionCache = connection;
+        return connection;
+    }
+}
+
+@injectable()
+export class CachingBillingServiceClientProvider implements BillingServiceClientProvider {
+    @inject(BillingServiceClientConfig) protected readonly billingClientConfig: BillingServiceClientConfig;
+
+    @inject(BillingServiceClientCallMetrics)
+    @optional()
+    protected readonly billingClientCallMetrics: IClientCallMetrics;
+
+    protected connectionCache: PromisifiedBillingServiceClient | undefined;
+
+    getDefault() {
+        let interceptors: grpc.Interceptor[] = [];
+        if (this.billingClientCallMetrics) {
+            interceptors = [createClientCallMetricsInterceptor(this.billingClientCallMetrics)];
+        }
+
+        const createClient = () => {
+            return new PromisifiedBillingServiceClient(
+                new BillingServiceClient(this.billingClientConfig.address, grpc.credentials.createInsecure()),
                 interceptors,
             );
         };
@@ -121,6 +169,29 @@ export class PromisifiedUsageServiceClient {
         } finally {
             ctx.span.finish();
         }
+    }
+
+    public dispose() {
+        this.client.close();
+    }
+
+    protected getDefaultUnaryOptions(): Partial<grpc.CallOptions> {
+        return {
+            interceptors: this.interceptor,
+        };
+    }
+}
+
+export class PromisifiedBillingServiceClient {
+    constructor(public readonly client: BillingServiceClient, protected readonly interceptor: grpc.Interceptor[]) {}
+
+    public isConnectionAlive() {
+        const cs = this.client.getChannel().getConnectivityState(false);
+        return (
+            cs == grpc.connectivityState.CONNECTING ||
+            cs == grpc.connectivityState.IDLE ||
+            cs == grpc.connectivityState.READY
+        );
     }
 
     public dispose() {
