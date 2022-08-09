@@ -1047,7 +1047,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // make sure we've checked that the user has enough credit before consuming any resources.
             // Be sure to check this before prebuilds and create workspace, too!
             let context = await contextPromise;
-            await Promise.all([this.mayStartWorkspace(ctx, user, runningInstancesPromise)]);
+            await this.mayStartWorkspace(ctx, user, runningInstancesPromise);
 
             if (SnapshotContext.is(context)) {
                 // TODO(janx): Remove snapshot access tracking once we're certain that enforcing repository read access doesn't disrupt the snapshot UX.

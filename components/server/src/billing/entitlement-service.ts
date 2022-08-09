@@ -14,8 +14,11 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { injectable } from "inversify";
 
 export interface MayStartWorkspaceResult {
+    mayStart: boolean;
+
     hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
-    enoughCredits?: boolean;
+
+    oufOfCredits?: boolean;
 
     /** Usage-Based Pricing: AttributionId of the CostCenter that reached it's spending limit */
     spendingLimitReachedOnCostCenter?: AttributionId;
@@ -72,7 +75,7 @@ export class CommunityEntitlementService implements EntitlementService {
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
-        return { enoughCredits: true };
+        return { mayStart: true };
     }
 
     async maySetTimeout(user: User, date: Date): Promise<boolean> {

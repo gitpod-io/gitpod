@@ -57,8 +57,13 @@ export class EntitlementServiceChargebee implements EntitlementService {
             hasHitParallelWorkspaceLimit(),
         ]);
 
+        const result = enoughCredits && !hitParallelWorkspaceLimit;
+
+        console.log("mayStartWorkspace > hitParallelWorkspaceLimit " + hitParallelWorkspaceLimit);
+
         return {
-            enoughCredits: !!enoughCredits,
+            mayStart: result,
+            oufOfCredits: !enoughCredits,
             hitParallelWorkspaceLimit,
         };
     }
@@ -82,6 +87,7 @@ export class EntitlementServiceChargebee implements EntitlementService {
         const cachedAccountStatement = this.accountStatementProvider.getCachedStatement();
         const lowerBound = this.getRemainingUsageHoursLowerBound(cachedAccountStatement, date.toISOString());
         if (lowerBound && (lowerBound === "unlimited" || lowerBound > Accounting.MINIMUM_CREDIT_FOR_OPEN_IN_HOURS)) {
+            console.log("checkEnoughCreditForWorkspaceStart > unlimited");
             return true;
         }
 
@@ -90,6 +96,7 @@ export class EntitlementServiceChargebee implements EntitlementService {
             date.toISOString(),
             runningInstances,
         );
+        console.log("checkEnoughCreditForWorkspaceStart > remainingUsageHours " + remainingUsageHours);
         return remainingUsageHours > Accounting.MINIMUM_CREDIT_FOR_OPEN_IN_HOURS;
     }
 

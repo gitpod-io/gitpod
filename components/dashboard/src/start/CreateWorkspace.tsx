@@ -372,8 +372,7 @@ function SpendingLimitReachedModal(p: { hints: any }) {
     const [attributedTeam, setAttributedTeam] = useState<Team | undefined>();
 
     useEffect(() => {
-        const attributionId: AttributionId | undefined =
-            p.hints && p.hints.attributionId && AttributionId.parse(p.hints.attributionId);
+        const attributionId: AttributionId | undefined = p.hints && p.hints.attributionId;
         if (attributionId) {
             // setAttributionId(attributionId);
             if (attributionId.kind === "team") {

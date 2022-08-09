@@ -20,11 +20,9 @@ import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/account
 import { OssAllowListDB } from "@gitpod/gitpod-db/lib/oss-allowlist-db";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { Config } from "../../../src/config";
-import { EntitlementService } from "../../../src/billing/entitlement-service";
 
 export class UserServiceEE extends UserService {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
-    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
     @inject(OssAllowListDB) protected readonly OssAllowListDb: OssAllowListDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
