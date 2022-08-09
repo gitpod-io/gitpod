@@ -50,8 +50,6 @@ jobs:
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
-        with:
-          workflow-id: 18268462
       - name: Slack Notification
         if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
         uses: rtCamp/action-slack-notify@v2
