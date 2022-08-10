@@ -5,7 +5,7 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { Redirect, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import {
@@ -71,9 +71,14 @@ function TeamUsage() {
         })();
     }, [team, startDateOfBillMonth, endDateOfBillMonth, isStartedTimeDescending]);
 
-    if (!BillingMode.showUsageBasedBilling(teamBillingMode)) {
-        return <Redirect to="/" />;
-    }
+    useEffect(() => {
+        if (!teamBillingMode) {
+            return;
+        }
+        if (!BillingMode.showUsageBasedBilling(teamBillingMode)) {
+            window.location.href = gitpodHostUrl.asDashboard().toString();
+        }
+    }, [teamBillingMode]);
 
     const getType = (type: BillableWorkspaceType) => {
         if (type === "regular") {
