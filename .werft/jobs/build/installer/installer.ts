@@ -75,6 +75,15 @@ export class Installer {
             this.configureUsage(slice);
             this.configureConfigCat(slice);
 
+            // change host to your workspace and then run
+            // werft run github -s .werft/jobs/build/installer/installer.ts -a with-preview=true -f
+            // go to http://werft.gitpod-dev.com/ to find your job
+            // if you commit something, don't forget to cancel previous job with
+            // kubectl --context=dev -n werft delete pod <your-branch-previous-job>
+            exec(`yq w -i ${this.options.installerConfigPath} openVSX.url "https://8080-gitpodio-openvsx-m46zyxu5wwg.ws-us59.gitpod.io"`, {
+                slice: slice,
+            });
+
             this.configureDefaultTemplate(slice);
 
             if (this.options.analytics) {
