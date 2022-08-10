@@ -215,7 +215,7 @@ func ImportTemplate(chart *charts.Chart, templateCfg TemplateConfig, pkgConfig P
 
 // CustomizeAnnotation check for customized annotations and output in Helm format
 func CustomizeAnnotation(registryValues []string, prefix string, ctx *common.RenderContext, component string, typeMeta metav1.TypeMeta, existingAnnotations ...func() map[string]string) []string {
-	annotations := common.CustomizeAnnotation(ctx, component, common.TypeMetaDeployment, existingAnnotations...)
+	annotations := common.CustomizeAnnotation(ctx, component, typeMeta, existingAnnotations...)
 	if len(annotations) > 0 {
 		for k, v := range annotations {
 			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, k), v))
@@ -227,7 +227,7 @@ func CustomizeAnnotation(registryValues []string, prefix string, ctx *common.Ren
 
 // CustomizeLabel check for customized labels and output in Helm format - also removes the default labels, which conflict with Helm
 func CustomizeLabel(registryValues []string, prefix string, ctx *common.RenderContext, component string, typeMeta metav1.TypeMeta, existingLabels ...func() map[string]string) []string {
-	labels := common.CustomizeLabel(ctx, component, common.TypeMetaDeployment, existingLabels...)
+	labels := common.CustomizeLabel(ctx, component, typeMeta, existingLabels...)
 
 	// Remove the default labels
 	for k := range common.DefaultLabels(component) {
