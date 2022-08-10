@@ -148,6 +148,9 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                         <Property name="Node">
                             <div className="overflow-scroll">{workspace.status.nodeName ?? "not assigned"}</div>
                         </Property>
+                        <Property name="Class">
+                            <div>{workspace.workspaceClass ?? "unknown"}</div>
+                        </Property>
                     </div>
                     <div className="flex w-full mt-6">{[0, 1, 2].map(adminLink)}</div>
                     <div className="flex w-full mt-6">{[3, 4, 5].map(adminLink)}</div>
