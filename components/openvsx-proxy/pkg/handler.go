@@ -49,7 +49,7 @@ func (o *OpenVSXProxy) Handler(p *httputil.ReverseProxy) func(http.ResponseWrite
 		key, err := o.key(r)
 		if err != nil {
 			log.WithFields(logFields).WithError(err).Error("cannot create cache key")
-			r.Host = o.upstreamURL.Host
+			// r.Host = o.upstreamURL.Host
 			p.ServeHTTP(rw, r)
 			o.finishLog(logFields, start, hitCacheRegular, hitCacheBackup)
 			o.metrics.DurationRequestProcessingHistogram.Observe(time.Since(start).Seconds())
@@ -105,7 +105,7 @@ func (o *OpenVSXProxy) Handler(p *httputil.ReverseProxy) func(http.ResponseWrite
 		log.WithFields(logFields).WithFields(o.DurationLogFields(duration)).Info("processing request finished")
 		o.metrics.DurationRequestProcessingHistogram.Observe(duration.Seconds())
 
-		r.Host = o.upstreamURL.Host
+		// r.Host = o.upstreamURL.Host
 		p.ServeHTTP(rw, r)
 		o.finishLog(logFields, start, hitCacheRegular, hitCacheBackup)
 	}
