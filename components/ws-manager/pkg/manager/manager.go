@@ -313,7 +313,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 		err = m.Clientset.Create(ctx, secret)
 		if err != nil && !k8serr.IsAlreadyExists(err) {
-			return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
+			return nil, xerrors.Errorf("cannot create secret for workspace pod %s: %w", pod.Name, err)
 		}
 	}
 
@@ -324,7 +324,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 
 		if k8serr.IsAlreadyExists(err) {
 			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace which already exists")
-			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
+			return nil, status.Error(codes.AlreadyExists, fmt.Sprintf("workspace instance %s already exists", req.Id))
 		}
 
 		clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace")
@@ -340,7 +340,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			delErr := deleteWorkspacePodForce(m.Clientset, pod.Name, pod.Namespace)
 			if delErr != nil {
 				clog.WithError(delErr).WithField("req", req).WithField("pod", pod.Name).Warn("was unable to delete workspace pod")
-				return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
+				return nil, xerrors.Errorf("workspace pod %s never reached Running state: %w", pod.Name, err)
 			}
 
 			// invoke StartWorkspace passing the remaining execution time in the context
@@ -350,7 +350,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			return m.StartWorkspace(ctx, req)
 		}
 
-		return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
+		return nil, xerrors.Errorf("workspace pod %s never reached Running state: %w", pod.Name, err)
 	}
 
 	// we only calculate the time that PVC restoring from VolumeSnapshot
