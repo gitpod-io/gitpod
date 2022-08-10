@@ -20,7 +20,7 @@
               summary: 'Prometheus failed to scrape {{ $labels.job }}',
               description: 'Prometheus couldn\'t scrape {{ printf "%.4g" $value }}% of the {{ $labels.job }} targets. Components could be unnavailable or we have some scraping misconfiguration.',
             },
-            expr: '100 * (count(up{container!="workspace"} == 0) BY (job) / count(up{container!="workspace"}) BY (job)) > 0',
+            expr: '100 * (count(up{container!="workspace"} == 0) BY (job) / count(up{container!="workspace"}) BY (job)) > 10',
           },
         ],
       },
