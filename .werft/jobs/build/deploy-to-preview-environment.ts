@@ -216,6 +216,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         previewName: previewNameFromBranchName(jobConfig.repository.branch),
         stackdriverServiceAccount: STACKDRIVER_SERVICEACCOUNT,
         werft: werft,
+        installationMethod: jobConfig.observability.installationMethod,
     });
     const sliceID = "observability";
     monitoringSatelliteInstaller
@@ -235,13 +236,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         .finally(() => werft.done(sliceID));
 
     werft.phase(phases.DEPLOY, "deploying to dev with Installer");
-    await deployToDevWithInstaller(
-        werft,
-        jobConfig,
-        deploymentConfig,
-        workspaceFeatureFlags,
-        storage
-    );
+    await deployToDevWithInstaller(werft, jobConfig, deploymentConfig, workspaceFeatureFlags, storage);
 }
 
 /*
@@ -514,7 +509,7 @@ export async function issueMetaCerts(
     metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
     metaClusterCertParams.certName = certName;
     metaClusterCertParams.certNamespace = certsNamespace;
-    metaClusterCertParams.previewName = previewNameFromBranchName(branch)
+    metaClusterCertParams.previewName = previewNameFromBranchName(branch);
     metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
     metaClusterCertParams.domain = domain;
     metaClusterCertParams.ip = getCoreDevIngressIP();
