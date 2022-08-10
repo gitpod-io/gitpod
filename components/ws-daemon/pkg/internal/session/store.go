@@ -99,6 +99,10 @@ type WorkspaceFactory func(ctx context.Context, location string) (*Workspace, er
 // NewWorkspace creates a new workspace in this store.
 // CheckoutLocation is relative to location.
 func (s *Store) NewWorkspace(ctx context.Context, instanceID, location string, create WorkspaceFactory) (res *Workspace, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Store.NewWorkspace")
+	tracing.ApplyOWI(span, log.OWI("", "", instanceID))
+	defer tracing.FinishSpan(span, &err)
+
 	s.workspacesLock.Lock()
 	defer s.workspacesLock.Unlock()
 
