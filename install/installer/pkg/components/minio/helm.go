@@ -18,6 +18,7 @@ import (
 var Helm = common.CompositeHelmFunc(
 	func(cfg *common.RenderContext) ([]string, error) {
 		commonHelmValues := []string{
+			helm.KeyValue("minio.podAnnotations.hello", "world"),
 			helm.ImagePullSecrets("minio.image.pullSecrets", cfg),
 			helm.KeyValue("minio.image.registry", ""),
 			helm.KeyValue("minio.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/minio")),
