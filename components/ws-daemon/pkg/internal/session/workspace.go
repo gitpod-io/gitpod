@@ -204,7 +204,12 @@ func (s *Workspace) Dispose(ctx context.Context) (err error) {
 	// old workspace content we can garbage collect that content later.
 	err = os.Remove(s.persistentStateLocation())
 	if err != nil {
-		return xerrors.Errorf("cannot remove workspace persistent state location: %w", err)
+		if os.IsNotExist(err) {
+			log.WithError(err).Warn("workspace persistent state location not exist")
+			err = nil
+		} else {
+			return xerrors.Errorf("cannot remove workspace persistent state location: %w", err)
+		}
 	}
 
 	s.stateLock.Lock()
