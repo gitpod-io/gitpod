@@ -50,6 +50,12 @@ function TeamUsage() {
             const teamBillingMode = await getGitpodService().server.getBillingModeForTeam(team.id);
             setTeamBillingMode(teamBillingMode);
         })();
+    }, [team]);
+
+    useEffect(() => {
+        if (!team) {
+            return;
+        }
         (async () => {
             const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
             const request: BillableSessionRequest = {
