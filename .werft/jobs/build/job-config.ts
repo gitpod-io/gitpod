@@ -45,9 +45,13 @@ export interface Repository {
     branch: string;
 }
 
+export type ObservabilityInstallationMethod = "jsonnet" | "observability-installer";
+
 export interface Observability {
     // The branch of gitpod-io/observability to use
     branch: string;
+    // What tool to use to install monitoring-satellite from gitpod-io/observability
+    installationMethod: ObservabilityInstallationMethod;
 }
 
 export function jobConfig(werft: Werft, context: any): JobConfig {
@@ -111,6 +115,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
 
     const observability: Observability = {
         branch: context.Annotations.withObservabilityBranch || "main",
+        installationMethod: context.Annotations.observabilityInstallationMethod || "jsonnet",
     };
 
     const jobConfig = {
