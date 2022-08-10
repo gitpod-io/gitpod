@@ -59,7 +59,7 @@ func (o *OpenVSXProxy) Start() (shutdown func(context.Context) error, err error)
 			return nil, err
 		}
 	}
-	proxy := httputil.NewSingleHostReverseProxy(o.upstreamURL)
+	proxy := newSingleHostReverseProxy(o.upstreamURL)
 	proxy.ErrorHandler = o.ErrorHandler
 	proxy.ModifyResponse = o.ModifyResponse
 	proxy.Transport = &DurationTrackingTransport{o: o}
@@ -149,7 +149,7 @@ func joinURLPath(a, b *url.URL) (path, rawpath string) {
 	return a.Path + b.Path, apath + bpath
 }
 
-func NewSingleHostReverseProxy(target *url.URL) *httputil.ReverseProxy {
+func newSingleHostReverseProxy(target *url.URL) *httputil.ReverseProxy {
 	targetQuery := target.RawQuery
 	director := func(req *http.Request) {
 		req.URL.Scheme = target.Scheme
