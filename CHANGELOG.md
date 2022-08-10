@@ -1,6 +1,13 @@
 # Change Log
 
 ## August 2022
+- All open ports from the workspace are automatically forwarded when using Latest JetBrains IDEs. ([#11081](https://github.com/gitpod-io/gitpod/pull/11081)) - [@felladrin](https://github.com/felladrin)
+- Fixes entering of colons in host on Git Integration page. ([#11993](https://github.com/gitpod-io/gitpod/pull/11993)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Update GoLand IDE image to version 222.3345.146. ([#11994](https://github.com/gitpod-io/gitpod/pull/11994)) - [@roboquat](https://github.com/roboquat)
+- [installer]: refactor yq to run against arbitrary strings ([#11973](https://github.com/gitpod-io/gitpod/pull/11973)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [installer]: remove the custom labels from the selector labels ([#11954](https://github.com/gitpod-io/gitpod/pull/11954)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- N/A ([#11980](https://github.com/gitpod-io/gitpod/pull/11980)) - [@jenting](https://github.com/jenting)
+- N/A ([#11983](https://github.com/gitpod-io/gitpod/pull/11983)) - [@jenting](https://github.com/jenting)
 - [kots]: fix typo which meant wasn't using the appSlug in config collect ([#11965](https://github.com/gitpod-io/gitpod/pull/11965)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [kots]: collect the user config in support bundles ([#11943](https://github.com/gitpod-io/gitpod/pull/11943)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Update PhpStorm IDE image to version 222.3345.135. ([#11804](https://github.com/gitpod-io/gitpod/pull/11804)) - [@roboquat](https://github.com/roboquat)
