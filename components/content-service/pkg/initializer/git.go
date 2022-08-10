@@ -148,35 +148,43 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 	span.SetTag("targetMode", ws.TargetMode)
 	defer tracing.FinishSpan(span, &err)
 
+	defer func() error {
+		err = checkGitStatus(err)
+		return err
+	}()
+
 	// checkout branch
-	if ws.TargetMode == RemoteBranch {
+	switch ws.TargetMode {
+	case RemoteBranch:
+		// check remote branch exists before git checkout
+		gitout, err := ws.Client.GitWithOutput(ctx, nil, "ls-remote", "origin", ws.CloneTarget)
+		if err != nil || len(gitout) == 0 {
+			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Remote branch doesn't exist.")
+			return err
+		}
 		// create local branch based on specific remote branch
 		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
-			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Remote branch doesn't exist.")
-			err = checkGitStatus(err)
+			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot checkout remote branch.")
 			return err
 		}
-	} else if ws.TargetMode == LocalBranch {
+	case LocalBranch:
 		// checkout local branch based on remote HEAD
 		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/HEAD", "--no-track"); err != nil {
-			err = checkGitStatus(err)
 			return err
 		}
-	} else if ws.TargetMode == RemoteCommit {
+	case RemoteCommit:
 		// We did a shallow clone before, hence need to fetch the commit we are about to check out.
 		// Because we don't want to make the "git fetch" mechanism in supervisor more complicated,
 		// we'll just fetch the 20 commits right away.
 		if err := ws.Git(ctx, "fetch", "origin", ws.CloneTarget, "--depth=20"); err != nil {
-			err = checkGitStatus(err)
 			return err
 		}
 
 		// checkout specific commit
 		if err := ws.Git(ctx, "checkout", ws.CloneTarget); err != nil {
-			err = checkGitStatus(err)
 			return err
 		}
-	} else {
+	default:
 		// update to remote HEAD
 		if _, err := ws.GitWithOutput(ctx, nil, "reset", "--hard", "origin/HEAD"); err != nil {
 			var giterr git.OpFailedError
