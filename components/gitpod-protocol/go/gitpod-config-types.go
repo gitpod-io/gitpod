@@ -52,6 +52,9 @@ type GitpodConfig struct {
 	// Configures Gitpod's GitHub app
 	Github *Github `yaml:"github,omitempty"`
 
+	// Host requiements for the workspace
+	HostRequirements *HostRequirements `yaml:"hostRequirements,omitempty"`
+
 	// The Docker image to run your workspace in.
 	Image interface{} `yaml:"image,omitempty"`
 
@@ -72,6 +75,19 @@ type GitpodConfig struct {
 
 	// Path to where the IDE's workspace should be opened. Supports vscode's `*.code-workspace` files.
 	WorkspaceLocation string `yaml:"workspaceLocation,omitempty"`
+}
+
+// HostRequirements Host requiements for the workspace
+type HostRequirements struct {
+
+	// The minimum required number of CPUs
+	Cpus float64 `yaml:"cpus,omitempty"`
+
+	// The minimum memory requirements with a kb, mb, gb or tb suffix
+	Memory string `yaml:"memory,omitempty"`
+
+	// The minimum storage requirements with a kb, mb, gb or tb suffix
+	Storage string `yaml:"storage,omitempty"`
 }
 
 // Image_object The Docker image to run your workspace in.
@@ -367,6 +383,17 @@ func (strct *GitpodConfig) MarshalJSON() ([]byte, error) {
 		buf.Write(tmp)
 	}
 	comma = true
+	// Marshal the "hostRequirements" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"hostRequirements\": ")
+	if tmp, err := json.Marshal(strct.HostRequirements); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
 	// Marshal the "image" field
 	if comma {
 		buf.WriteString(",")
@@ -476,6 +503,10 @@ func (strct *GitpodConfig) UnmarshalJSON(b []byte) error {
 			}
 		case "github":
 			if err := json.Unmarshal([]byte(v), &strct.Github); err != nil {
+				return err
+			}
+		case "hostRequirements":
+			if err := json.Unmarshal([]byte(v), &strct.HostRequirements); err != nil {
 				return err
 			}
 		case "image":

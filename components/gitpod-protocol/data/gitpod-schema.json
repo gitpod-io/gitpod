@@ -282,6 +282,25 @@
             "type": "boolean",
             "deprecationMessage": "The 'experimentalNetwork' property is deprecated.",
             "description": "Experimental network configuration in workspaces (deprecated). Enabled by default"
+        },
+        "hostRequirements": {
+            "description": "Host requiements for the workspace",
+            "properties": {
+                "cpus": {
+                    "type": "number",
+                    "description": "The minimum required number of CPUs"
+                },
+                "memory": {
+                    "type": "string",
+                    "pattern": "^\\d+(kb|mb|gb|tb)$",
+                    "description": "The minimum memory requirements with a kb, mb, gb or tb suffix"
+                },
+                "storage":  {
+                    "type": "string",
+                    "pattern": "^\\d+(kb|mb|gb|tb)$",
+                    "description": "The minimum storage requirements with a kb, mb, gb or tb suffix"
+                }
+            }
         }
     },
     "additionalProperties": false,
