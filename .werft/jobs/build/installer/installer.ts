@@ -80,7 +80,7 @@ export class Installer {
             // go to http://werft.gitpod-dev.com/ to find your job
             // if you commit something, don't forget to cancel previous job with
             // kubectl --context=dev -n werft delete pod <your-branch-previous-job>
-            exec(`yq w -i ${this.options.installerConfigPath} openVSX.url "https://8080-gitpodio-openvsx-m46zyxu5wwg.ws-us59.gitpod.io"`, {
+            exec(`yq w -i ${this.options.installerConfigPath} openVSX.url "https://9091-gitpodio-openvsx-m46zyxu5wwg.ws-us59.gitpod.io"`, {
                 slice: slice,
             });
 
