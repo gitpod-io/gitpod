@@ -365,4 +365,31 @@ class GitpodManager : Disposable {
             }
         }
     }
+
+    var resourceStatus: Status.ResourcesStatusResponse? = null
+
+    private val metricsJob = GlobalScope.launch {
+        if (application.isHeadlessEnvironment) {
+            return@launch
+        }
+        val status = StatusServiceGrpc.newFutureStub(supervisorChannel)
+        while (isActive) {
+            try {
+                val f = status.resourcesStatus(Status.ResourcesStatuRequest.getDefaultInstance())
+                resourceStatus = f.asDeferred().await()
+            } catch (t: Throwable) {
+                if (t is CancellationException) {
+                    throw t
+                }
+                thisLogger().error("gitpod: failed to retrieve resource status: ", t)
+            }
+            delay(1000L)
+        }
+    }
+    init {
+        lifetime.onTerminationOrNow {
+            metricsJob.cancel()
+        }
+    }
+
 }
