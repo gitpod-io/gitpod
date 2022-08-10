@@ -2215,6 +2215,15 @@ data:
       name: content-service
       namespace: default
     ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: content-service
+      name: default-content-service-rb-kube-rbac-proxy
+    ---
     apiVersion: v1
     kind: Service
     metadata:
@@ -5170,6 +5179,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: blobserve
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-content-service-rb-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: content-service
+  name: default-content-service-rb-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: content-service
   namespace: default
 ---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ide-metrics-kube-rbac-proxy
