@@ -65,7 +65,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PriorityClassName: common.SystemNodeCritical,
 		Affinity:          common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
 		TopologySpreadConstraints: []corev1.TopologySpreadConstraint{
-			corev1.TopologySpreadConstraint{
+			{
 				LabelSelector:     &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 				MaxSkew:           1,
 				TopologyKey:       "kubernetes.io/hostname",
