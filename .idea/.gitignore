@@ -3,3 +3,4 @@
 # Except these files
 !.gitignore
 !gradle.xml
+!misc.xml
