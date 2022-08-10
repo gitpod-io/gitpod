@@ -29,8 +29,7 @@
                 "gitpod/never-ready": "true",
                 "gitpod/ownerToken": "%7J'[Of/8NDiWE+9F,I6^Jcj_1\u0026}-F8p",
                 "gitpod/servicePrefix": "foobarservice",
-                "gitpod/url": "test-foobarservice-gitpod.io",
-                "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace-default"
+                "gitpod/url": "test-foobarservice-gitpod.io"
             },
             "finalizers": [
                 "gitpod.io/finalizer"
@@ -208,7 +207,12 @@
             "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
-            "securityContext": {},
+            "securityContext": {
+                "seccompProfile": {
+                    "type": "Localhost",
+                    "localhostProfile": "localhost/workspace-default"
+                }
+            },
             "hostname": "foobar",
             "affinity": {
                 "nodeAffinity": {
