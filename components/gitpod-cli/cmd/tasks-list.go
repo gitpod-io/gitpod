@@ -14,6 +14,7 @@ import (
 	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/spf13/cobra"
 
 	"github.com/olekukonko/tablewriter"
@@ -48,11 +49,36 @@ var listTasksCmd = &cobra.Command{
 			2: tablewriter.FgHiBlackColor,
 		}
 
+		mapCurrentToColor := map[bool]int{
+			false: tablewriter.FgWhiteColor,
+			true:  tablewriter.FgHiGreenColor,
+		}
+
+		ppid := int64(os.Getppid())
+
 		for _, task := range tasks {
 			colors := []tablewriter.Colors{}
 
+			isCurrent := false
+
+			if task.State == api.TaskState_running {
+				terminalClient, err := supervisor_helper.GetTerminalServiceClient(context.Background())
+				if err != nil {
+					log.Fatalf("cannot get terminal service: %s", err)
+				}
+
+				terminal, err := terminalClient.Get(context.Background(), &supervisor.GetTerminalRequest{Alias: task.Terminal})
+				if err != nil {
+					panic(err)
+				}
+
+				if ppid == terminal.Pid {
+					isCurrent = true
+				}
+			}
+
 			if !noColor && utils.ColorsEnabled() {
-				colors = []tablewriter.Colors{{}, {}, {mapStatusToColor[task.State]}}
+				colors = []tablewriter.Colors{{mapCurrentToColor[isCurrent]}, {}, {mapStatusToColor[task.State]}}
 			}
 
 			table.Rich([]string{task.Terminal, task.Presentation.Name, task.State.String()}, colors)
