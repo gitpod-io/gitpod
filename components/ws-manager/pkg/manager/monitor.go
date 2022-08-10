@@ -1090,18 +1090,6 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			return true, nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 		}
 
-		// only build prebuild snapshots of initialized/ready workspaces.
-		if tpe == api.WorkspaceType_PREBUILD {
-			_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
-			if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.FailedPrecondition &&
-				(st.Message() == "workspace is not initializing or ready" || st.Message() == "workspace is not ready") {
-				log.Warn("skipping snapshot creation because content-initializer never finished or the workspace reached a ready state")
-				doSnapshot = false
-			}
-		}
-
-		ctx, cancelReq := context.WithTimeout(ctx, time.Duration(m.manager.Config.Timeouts.ContentFinalization))
-		m.finalizerMap.Store(workspaceID, cancelReq)
 		defer func() {
 			// we're done disposing - remove from the finalizerMap
 			val, ok := m.finalizerMap.LoadAndDelete(workspaceID)
@@ -1112,6 +1100,26 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			cancelReq := val.(context.CancelFunc)
 			cancelReq()
 		}()
+
+		// only build prebuild snapshots of initialized/ready workspaces.
+		if tpe == api.WorkspaceType_PREBUILD {
+			_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
+			if st, ok := grpc_status.FromError(err); ok {
+				if st.Code() == codes.FailedPrecondition &&
+					(st.Message() == "workspace is not initializing or ready" || st.Message() == "workspace is not ready") {
+					log.Warn("skipping snapshot creation because content-initializer never finished or the workspace reached a ready state")
+					doSnapshot = false
+				} else if st.Code() == codes.NotFound {
+					// the workspace has gone some reason
+					// e.g. since it was a retry, it already succeeded the first time.
+					log.WithError(err).Warnf("skipping snapshot and disposing because the workspace has already gone")
+					return false, &csapi.GitStatus{}, nil
+				}
+			}
+		}
+
+		ctx, cancelReq := context.WithTimeout(ctx, time.Duration(m.manager.Config.Timeouts.ContentFinalization))
+		m.finalizerMap.Store(workspaceID, cancelReq)
 
 		err = m.manager.markWorkspace(ctx, workspaceID, addMark(startedDisposalAnnotation, util.BooleanTrueString))
 		if err != nil {
