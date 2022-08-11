@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "gitpod" {
-  count = var.enable_external_registry ? 1 : 0
+  count = var.create_external_registry ? 1 : 0
 
   name                 = "registry-${var.cluster_name}"
   image_tag_mutability = "MUTABLE"
@@ -10,6 +10,6 @@ resource "aws_ecr_repository" "gitpod" {
 }
 
 data "aws_ecr_authorization_token" "gitpod" {
-  count       = var.enable_external_registry ? 1 : 0
+  count       = var.create_external_registry ? 1 : 0
   registry_id = aws_ecr_repository.gitpod[0].registry_id
 }
