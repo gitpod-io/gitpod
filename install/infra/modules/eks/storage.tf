@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "s3_policy" {
 resource "aws_iam_policy" "policy" {
   count       = var.enable_external_storage ? 1 : 0
   name        = "spolicy-${var.cluster_name}"
-  description = "s3 storage bucket policy"
+  description = "Gitpod ${var.cluster_name} object storage bucket policy"
   policy      = data.aws_iam_policy_document.s3_policy[0].json
 }
 
