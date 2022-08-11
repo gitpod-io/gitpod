@@ -6,6 +6,7 @@ package pkg
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -94,12 +95,15 @@ type DurationTrackingTransport struct {
 
 func (t *DurationTrackingTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	reqid := r.Context().Value(REQUEST_ID_CTX).(string)
-	key := r.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
+	// key := r.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
+
+	dumpReq, _ := httputil.DumpRequest(r, false)
 
 	logFields := logrus.Fields{
 		LOG_FIELD_FUNC:       "transport_roundtrip",
 		LOG_FIELD_REQUEST_ID: reqid,
-		LOG_FIELD_REQUEST:    key,
+		// LOG_FIELD_REQUEST:    key,
+		LOG_FIELD_REQUEST: fmt.Sprintf("%q", dumpReq),
 	}
 
 	start := time.Now()
