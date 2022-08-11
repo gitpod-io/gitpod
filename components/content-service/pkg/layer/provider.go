@@ -178,7 +178,7 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 		return s.getSnapshotContentLayer(ctx, gis)
 	}
 	if pis := initializer.GetPrebuild(); pis != nil {
-		l, manifest, err = s.getPrebuildContentLayer(ctx, pis)
+		l, manifest, err = s.getPrebuildContentLayer(ctx, pis, false)
 		if err != nil {
 			log.WithError(err).WithFields(log.OWI(owner, workspaceID, "")).Warn("cannot initialize from prebuild - falling back to Git")
 			span.LogKV("fallback-to-git", err.Error())
@@ -303,7 +303,7 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 			l = []Layer{*layer}
 			return l, manifest, nil
 		}
-		l, manifest, err = s.getPrebuildContentLayer(ctx, pis)
+		l, manifest, err = s.getPrebuildContentLayer(ctx, pis, true)
 		if err != nil {
 			log.WithError(err).WithFields(log.OWI(owner, workspaceID, "")).Warn("cannot initialize from prebuild - falling back to Git")
 			span.LogKV("fallback-to-git", err.Error())
@@ -394,9 +394,10 @@ func (s *Provider) getSnapshotContentLayer(ctx context.Context, sp *csapi.Snapsh
 	return l, manifest, nil
 }
 
-func (s *Provider) getPrebuildContentLayer(ctx context.Context, pb *csapi.PrebuildInitializer) (l []Layer, manifest *csapi.WorkspaceContentManifest, err error) {
+func (s *Provider) getPrebuildContentLayer(ctx context.Context, pb *csapi.PrebuildInitializer, isPVC bool) (l []Layer, manifest *csapi.WorkspaceContentManifest, err error) {
 	span, ctx := tracing.FromContext(ctx, "getPrebuildContentLayer")
 	defer tracing.FinishSpan(span, &err)
+	span.LogKV("isPVC", isPVC)
 
 	segs := strings.Split(pb.Prebuild.Snapshot, "@")
 	if len(segs) != 2 {
@@ -447,7 +448,12 @@ func (s *Provider) getPrebuildContentLayer(ctx context.Context, pb *csapi.Prebui
 		}
 	}
 
-	layer, err := contentDescriptorToLayer(cdesc)
+	var layer *Layer
+	if isPVC {
+		layer, err = contentDescriptorToLayerPVC(cdesc)
+	} else {
+		layer, err = contentDescriptorToLayer(cdesc)
+	}
 	if err != nil {
 		return nil, nil, err
 	}
