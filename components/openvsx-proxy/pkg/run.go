@@ -152,7 +152,7 @@ func joinURLPath(a, b *url.URL) (path, rawpath string) {
 func newSingleHostReverseProxy(target *url.URL) *httputil.ReverseProxy {
 	targetQuery := target.RawQuery
 	director := func(req *http.Request) {
-		originalHost := req.Host
+		// originalHost := req.Host
 
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
@@ -169,13 +169,13 @@ func newSingleHostReverseProxy(target *url.URL) *httputil.ReverseProxy {
 			req.Header.Set("User-Agent", "")
 		}
 
-		req.Header.Del("X-Forwarded-For")
-		req.Header.Set("X-Forwarded-Host", originalHost)
-		if req.TLS == nil {
-			req.Header.Set("X-Forwarded-Proto", "http")
-		} else {
-			req.Header.Set("X-Forwarded-Proto", "https")
-		}
+		// req.Header.Del("X-Forwarded-For")
+		// req.Header.Set("X-Forwarded-Host", originalHost)
+		// if req.TLS == nil {
+		// 	req.Header.Set("X-Forwarded-Proto", "http")
+		// } else {
+		// 	req.Header.Set("X-Forwarded-Proto", "https")
+		// }
 	}
 	return &httputil.ReverseProxy{Director: director}
 }
