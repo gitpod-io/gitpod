@@ -48,5 +48,5 @@ output "storage" {
     region      = var.region
     project     = var.project
     credentials = "Upload the JSON file corresponding the service account credentials"
-  }, "No s3 bucket created for object storage")
+  }, "No GCS bucket created for object storage")
 }
