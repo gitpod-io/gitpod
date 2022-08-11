@@ -69,7 +69,7 @@ enable_external_registry                     = true
 ```
 
 The corresponding resources will be created by the terraform script which
-inclustes an `CloudSQL` mysql database, and access credentials to the GCS storage and GCR registry.
+creates an `CloudSQL` mysql database, and access credentials to the GCS storage and GCR registry.
 
 The expectation is that you can use the credentials to these setups(provided later
 as terraform outputs) during the setup of Gitpod via UI later in the process.
