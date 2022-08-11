@@ -1,9 +1,9 @@
 
 # the cluster_name should be of length less than 16 characters
-cluster_name = "nan-cluster"
+cluster_name = "nan"
 
 # a route53 zone and certificate request will be created for this domain
-domain_name = "nan-cluster.gitpod-self-hosted.com"
+domain_name = "nan-cluster.doptig.com"
 
 region = "eu-west-1"
 
@@ -18,9 +18,9 @@ vpc_availability_zones = ["eu-west-1c", "eu-west-1b"]
 cluster_version = "1.22"
 image_id = "ami-0793b4124359a6ad7"
 
-enable_external_database = true
-enable_external_storage  = true
+create_external_database = true
+create_external_storage  = true
 
 # if you want to create a separate s3 bucket to use as registry backend,
 # set the following to true. You can re-use the above bucket or incluster registry otherwise.
-enable_external_storage_for_registry_backend  = false
+create_external_storage_for_registry_backend  = false

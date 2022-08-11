@@ -1,5 +1,5 @@
 resource "random_password" "password" {
-  count = var.enable_external_database ? 1 : 0
+  count = var.create_external_database ? 1 : 0
 
   length           = 16
   special          = true
@@ -7,24 +7,17 @@ resource "random_password" "password" {
 }
 
 resource "aws_db_subnet_group" "gitpod_subnets" {
-  count = var.enable_external_database ? 1 : 0
+  count = var.create_external_database ? 1 : 0
 
   name       = "db-sg-${var.cluster_name}"
   subnet_ids = [module.vpc.public_subnets[2], module.vpc.public_subnets[3]]
 }
 
 resource "aws_security_group" "rdssg" {
-  count = var.enable_external_database ? 1 : 0
+  count = var.create_external_database ? 1 : 0
 
   name   = "dh-sg-${var.cluster_name}"
   vpc_id = module.vpc.vpc_id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 }
 
 resource "aws_security_group_rule" "db-ingress-nodes" {
@@ -38,7 +31,7 @@ resource "aws_security_group_rule" "db-ingress-nodes" {
 }
 
 resource "aws_db_instance" "gitpod" {
-  count = var.enable_external_database ? 1 : 0
+  count = var.create_external_database ? 1 : 0
 
   allocated_storage      = 20
   max_allocated_storage  = 120
@@ -53,5 +46,5 @@ resource "aws_db_instance" "gitpod" {
   parameter_group_name   = "default.mysql5.7"
   db_subnet_group_name   = aws_db_subnet_group.gitpod_subnets[0].name
   skip_final_snapshot    = true
-  publicly_accessible    = true
+  publicly_accessible    = false
 }
