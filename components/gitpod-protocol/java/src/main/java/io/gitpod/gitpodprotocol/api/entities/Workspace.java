@@ -14,6 +14,8 @@ public class Workspace {
 
     private String creationTime;
 
+    private String type;
+
     public String getId() {
         return id;
     }
@@ -44,5 +46,13 @@ public class Workspace {
 
     public void setCreationTime(String creationTime) {
         this.creationTime = creationTime;
+    }
+
+    public WorkspaceType getType() {
+        return WorkspaceType.valueOf(type);
+    }
+
+    public void setType(WorkspaceType type) {
+        this.type = type.toString();
     }
 }

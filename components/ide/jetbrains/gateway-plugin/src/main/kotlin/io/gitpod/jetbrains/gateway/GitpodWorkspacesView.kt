@@ -28,6 +28,7 @@ import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.isNotAlive
 import io.gitpod.gitpodprotocol.api.entities.GetWorkspacesOptions
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
+import io.gitpod.gitpodprotocol.api.entities.WorkspaceType
 import io.gitpod.jetbrains.auth.GitpodAuthService
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.GlobalScope
@@ -247,7 +248,7 @@ class GitpodWorkspacesView(
                             }
                         }
                     for (info in sortedInfos) {
-                        if (info.latestInstance == null) {
+                        if (info.latestInstance == null || info.workspace.type != WorkspaceType.regular) {
                             continue
                         }
                         indent {
@@ -341,7 +342,9 @@ class GitpodWorkspacesView(
                         thisLogger().error("$gitpodHost: ${update.workspaceId}: failed to sync", t)
                         continue
                     }
-                    workspacesMap[update.workspaceId] = info
+                    if (info.workspace.type == WorkspaceType.regular) {
+                        workspacesMap[update.workspaceId] = info
+                    }
                 } else if (WorkspaceInstance.isUpToDate(info.latestInstance, update)) {
                     continue
                 } else {
