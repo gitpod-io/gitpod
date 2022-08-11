@@ -1,3 +1,8 @@
+#
+# During development side-load the bash script:
+#
+#  werft job run github -j .werft/workspace-run-integration-tests.yaml -s .werft/workspace-run-integration-tests.sh
+#
 pod:
   serviceAccount: werft
   nodeSelector:
@@ -61,5 +66,7 @@ pod:
       command:
         - bash
         - .werft/workspace-run-integration-tests.sh
+        - "{{ .Name }}"
+        - "{{ .Repository.Repo }}"
 plugins:
   cron: "@midnight"

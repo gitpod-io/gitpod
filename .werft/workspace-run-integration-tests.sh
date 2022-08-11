@@ -7,11 +7,12 @@ FAILURE_COUNT=0
 RUN_COUNT=0
 declare -A FAILURE_TESTS
 
+context_name=$1
+context_repo=$2
+
 function cleanup ()
 {
   werft log phase "slack notification" "slack notification"
-  context_name="{{ .Name }}"
-  context_repo="{{ .Repository.Repo }}"
   werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
 
   if [ "${RUN_COUNT}" -eq "0" ]; then
@@ -49,7 +50,6 @@ function cleanup ()
   werft log slice "clean up" --done
 }
 
-echo "preparing config." | werft log slice prepare
 sudo chown -R gitpod:gitpod /workspace
 gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
 export GOOGLE_APPLICATION_CREDENTIALS="/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json"
@@ -59,12 +59,17 @@ git config --global user.email roboquat@gitpod.io
 git remote set-url origin https://oauth2:"${ROBOQUAT_TOKEN}"@github.com/gitpod-io/gitpod.git
 
 werft log phase "build preview environment" "build preview environment"
-echo integration test >> README.md
-git checkout -B "${BRANCH}"
-git add README.md
-git commit -m "integration test"
-git push --set-upstream origin "${BRANCH}"
-werft run github -a with-preview=true
+
+# Create branch off main and ask Werft to create a preview environment for it
+( \
+    git checkout -B "${BRANCH}" && \
+    echo "integration test" >> README.md && \
+    git add README.md && \
+    git commit -m "integration test"  && \
+    git push --set-upstream origin "${BRANCH}" && \
+    werft run github -a with-preview=true
+) | werft log slice "build preview environment"
+
 trap cleanup SIGINT SIGTERM EXIT
 
 BUILD_ID=$(werft job list repo.ref==refs/heads/"${BRANCH}" -o yaml | yq4 '.result[] | select(.metadata.annotations[].key == "with-preview") | .name' | head -1)
@@ -73,14 +78,28 @@ do
     sleep 1
     BUILD_ID=$(werft job list repo.ref==refs/heads/"${BRANCH}" -o yaml | yq4 '.result[] | select(.metadata.annotations[].key == "with-preview") | .name' | head -1)
 done
-echo "start build preview environment, job name: ${BUILD_ID}, this will take long time" | werft log slice "build preview environment"
-werft log result -d "build job" url "https://werft.gitpod-dev.com/job/${BUILD_ID}"
 
-if ! werft job logs "${BUILD_ID}" | werft log slice "build preview environment";
-then
+job_url="https://werft.gitpod-dev.com/job/${BUILD_ID}"
+echo "start build preview environment, job name: ${BUILD_ID}, job url: ${job_url}, this will take long time" | werft log slice "build preview environment"
+werft log result -d "Build job for integration test branch" url "${job_url}"
+
+while true; do
+    job_phase=$(werft job get "${BUILD_ID}" -o json | jq --raw-output '.phase')
+    if [[ ${job_phase} != "PHASE_DONE" ]]; then
+        echo "Waiting for ${BUILD_ID} to finish running. Current phase: ${job_phase}. Sleeping 10 seconds." | werft log slice "build preview environment";
+        sleep 10
+    else
+        echo "Phase reached ${job_phase}. continuing." | werft log slice "build preview environment";
+        break
+    fi
+done
+
+job_success="$(werft job get "${BUILD_ID}"  -o json | jq --raw-output '.conditions.success')"
+if [[ ${job_success} == "null" ]]; then
     echo "build failed" | werft log slice "build preview environment"
     exit 1
 fi
+
 echo "build success" | werft log slice "build preview environment"
 werft log slice "build preview environment" --done
 
