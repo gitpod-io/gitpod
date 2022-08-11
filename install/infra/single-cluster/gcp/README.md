@@ -83,8 +83,9 @@ variable `cluster_version`. We officially support kubernetes versions >= `1.20`.
 
 ### Domain name configuration
 
-If you are already sure of the domain name under which you want to setup Gitpod,
-we recommend highly to provide the value as `domain_name`. This will save a lot
+If you do not yet have a DNS zone created for Gitpod or plan on using cert-manager
+to generate TLS certificates for gitpod, we strongly recommend setting `domain_name`
+to a domain for use with Gitpod. This will save a lot
 of hassle in setting up `Cloud DNS` records to point to the cluster and
 corresponding TLS certificate requests.
 
