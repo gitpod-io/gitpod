@@ -36,10 +36,12 @@ func (o *OpenVSXProxy) Handler(p *httputil.ReverseProxy) func(http.ResponseWrite
 			reqid = uuid.String()
 		}
 
+		dumpReq, _ := httputil.DumpRequest(r, false)
+
 		logFields := logrus.Fields{
 			LOG_FIELD_FUNC:           "request_handler",
 			LOG_FIELD_REQUEST_ID:     reqid,
-			LOG_FIELD_REQUEST:        fmt.Sprintf("%s %s", r.Method, r.URL),
+			LOG_FIELD_REQUEST:        fmt.Sprintf("%q", dumpReq),
 			"request_content_length": strconv.FormatInt(r.ContentLength, 10),
 		}
 
