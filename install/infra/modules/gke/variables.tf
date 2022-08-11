@@ -68,7 +68,7 @@ variable "domain_name" {
 
 variable "enable_external_database" {
   default     = true
-  description = "Set this to false to avoid creating an RDS database to use with Gitpod instead of inclsuter mysql"
+  description = "Set this to false to avoid creating an RDS database to use with Gitpod instead of incluster mysql"
 }
 
 variable "enable_external_storage" {
