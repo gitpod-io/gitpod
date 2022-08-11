@@ -346,6 +346,15 @@ export class WorkspaceManagerBridge implements Disposable {
                     }
 
                     instance.status.phase = "running";
+                    // let's check if the state is inconsistent and be loud if it is.
+                    if (instance.stoppedTime || instance.stoppingTime) {
+                        log.error("Resetting already stopped workspace to running.", {
+                            instanceId: instance.id,
+                            stoppedTime: instance.stoppedTime,
+                        });
+                        instance.stoppedTime = undefined;
+                        instance.stoppingTime = undefined;
+                    }
                     break;
                 case WorkspacePhase.INTERRUPTED:
                     instance.status.phase = "interrupted";

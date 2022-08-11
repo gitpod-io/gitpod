@@ -522,12 +522,15 @@ export class WorkspaceStarter {
                 }
             } catch (err) {
                 increaseFailedInstanceStartCounter("startOnClusterFailed");
+                await this.failInstanceStart({ span }, err, workspace, instance);
                 throw err;
             }
 
             if (!resp) {
                 increaseFailedInstanceStartCounter("clusterSelectionFailed");
-                throw new Error("cannot start a workspace because no workspace clusters are available");
+                const err = new Error("cannot start a workspace because no workspace clusters are available");
+                await this.failInstanceStart({ span }, err, workspace, instance);
+                throw err;
             }
             increaseSuccessfulInstanceStartCounter(retries);
 
@@ -570,9 +573,6 @@ export class WorkspaceStarter {
 
             return { instanceID: instance.id, workspaceURL: resp.url };
         } catch (err) {
-            TraceContext.setError({ span }, err);
-            await this.failInstanceStart({ span }, err, workspace, instance);
-
             if (rethrow) {
                 throw err;
             } else {
