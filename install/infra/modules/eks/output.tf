@@ -77,7 +77,7 @@ output "registry_backend" {
     region            = aws_s3_bucket.gitpod-registry-backend[0].region
     endpoint          = "s3.${aws_s3_bucket.gitpod-registry-backend[0].region}.amazonaws.com"
     bucket_name       = aws_s3_bucket.gitpod-registry-backend[0].id
-    access_key_id     = aws_iam_access_key.bucket_storage_user[0].id
-    secret_access_key = aws_iam_access_key.bucket_storage_user[0].secret
+    access_key_id     = aws_iam_access_key.bucket_registry_user[0].id
+    secret_access_key = aws_iam_access_key.bucket_registry_user[0].secret
   }, "No s3 bucket created for registry backend.")
 }

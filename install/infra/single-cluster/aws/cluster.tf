@@ -8,10 +8,10 @@ module "eks" {
   image_id                 = var.image_id
   cluster_version          = var.cluster_version
   kubeconfig               = var.kubeconfig
-  enable_external_database = var.enable_external_database
-  enable_external_storage  = var.enable_external_storage
+  create_external_database = var.create_external_database
+  create_external_storage  = var.create_external_storage
   service_machine_type     = "m6i.xlarge"
   workspace_machine_type   = "m6i.2xlarge"
 
-  enable_external_storage_for_registry_backend = var.enable_external_storage_for_registry_backend
+  create_external_storage_for_registry_backend = var.create_external_storage_for_registry_backend
 }

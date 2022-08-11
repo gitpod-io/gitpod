@@ -51,22 +51,22 @@ variable "vpc_cidr" {
   default = "10.100.0.0/16"
 }
 
-variable "enable_external_database" {
+variable "create_external_database" {
   default     = true
-  description = "Set this to false to avoid creating an RDS database to use with Gitpod instead of inclsuter mysql"
+  description = "Create a mysql RDS database"
 }
 
-variable "enable_external_storage" {
+variable "create_external_storage" {
   default     = true
-  description = "Set this to false to avoid creating an s3 storage to use with Gitpod instead of incluster minio"
+  description = "Create an S3 bucket"
 }
 
-variable "enable_external_storage_for_registry_backend" {
+variable "create_external_storage_for_registry_backend" {
   default     = false
-  description = "Set this to true to create a separate s3 storage to use with Gitpod as registry backend"
+  description = "Create an S3 bucket for registry backend"
 }
 
-variable "enable_external_registry" {
+variable "create_external_registry" {
   default     = false
-  description = "Set this to true to create an AWS ECR registry to use with Gitpod(Not officially supported)"
+  description = "Create an EKS registry(Not officially supported)"
 }
