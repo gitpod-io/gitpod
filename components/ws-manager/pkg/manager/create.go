@@ -93,19 +93,21 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 
-	// ammend nodeSelector using details requiredDuringSchedulingIgnoredDuringExecution from the templates
-	// to add gitpod.io/workspace-class
-	if podTemplate != nil && podTemplate.Spec.Affinity != nil && podTemplate.Spec.Affinity.NodeAffinity != nil && podTemplate.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
-		for _, selector := range podTemplate.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
-			for _, matchExpressions := range selector.MatchExpressions {
-				if matchExpressions.Key != "gitpod.io/workspace-class" {
-					continue
-				}
+	/*
+		// ammend nodeSelector using details requiredDuringSchedulingIgnoredDuringExecution from the templates
+		// to add gitpod.io/workspace-class
+		if podTemplate != nil && podTemplate.Spec.Affinity != nil && podTemplate.Spec.Affinity.NodeAffinity != nil && podTemplate.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
+			for _, selector := range podTemplate.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
+				for _, matchExpressions := range selector.MatchExpressions {
+					if matchExpressions.Key != "gitpod.io/workspace-class" {
+						continue
+					}
 
-				pod.Spec.NodeSelector[matchExpressions.Key] = matchExpressions.Values[0]
+					pod.Spec.NodeSelector[matchExpressions.Key] = matchExpressions.Values[0]
+				}
 			}
 		}
-	}
+	*/
 
 	return pod, nil
 }
@@ -505,14 +507,14 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			},
 		},
 	}
-
-	// "gitpod.io/workload_workspace_regular=true" "gitpod.io/workspace-class=default"
-	nodeSelector := map[string]string{
-		"gitpod.io/workload_workspace_" + workloadType:             "true",
-		"gitpod.io/ws-daemon_ready_ns_" + m.Config.Namespace:       "true",
-		"gitpod.io/registry-facade_ready_ns_" + m.Config.Namespace: "true",
-	}
-
+	/*
+		// "gitpod.io/workload_workspace_regular=true" "gitpod.io/workspace-class=default"
+		nodeSelector := map[string]string{
+			"gitpod.io/workload_workspace_" + workloadType:             "true",
+			"gitpod.io/ws-daemon_ready_ns_" + m.Config.Namespace:       "true",
+			"gitpod.io/registry-facade_ready_ns_" + m.Config.Namespace: "true",
+		}
+	*/
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        podName(req),
@@ -528,7 +530,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
 			Affinity:                     affinity,
-			NodeSelector:                 nodeSelector,
 			SecurityContext:              &corev1.PodSecurityContext{},
 			Containers: []corev1.Container{
 				*workspaceContainer,
