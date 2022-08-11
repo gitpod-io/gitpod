@@ -1,6 +1,8 @@
 # Change Log
 
 ## August 2022
+- [installer]: escape inline yaml keys for labels/annotations in Helm ([#12037](https://github.com/gitpod-io/gitpod/pull/12037)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [installer]: use typemeta declaration in the helm customisations ([#12031](https://github.com/gitpod-io/gitpod/pull/12031)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - All open ports from the workspace are automatically forwarded when using Latest JetBrains IDEs. ([#11081](https://github.com/gitpod-io/gitpod/pull/11081)) - [@felladrin](https://github.com/felladrin)
 - Fixes entering of colons in host on Git Integration page. ([#11993](https://github.com/gitpod-io/gitpod/pull/11993)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Update GoLand IDE image to version 222.3345.146. ([#11994](https://github.com/gitpod-io/gitpod/pull/11994)) - [@roboquat](https://github.com/roboquat)
