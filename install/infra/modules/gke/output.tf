@@ -39,7 +39,7 @@ output "registry" {
     server   = regex("[^/?#]*", data.google_container_registry_repository.gitpod[0].repository_url)
     username = "_json_key"
     password = "Copy paste the content of the service account credentials JSON file"
-  }, "No EKS registry created")
+  }, "No container registry created")
 }
 
 output "storage" {
