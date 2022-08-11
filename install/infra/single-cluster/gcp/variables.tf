@@ -40,15 +40,15 @@ variable "cluster_version" {
 
 variable "enable_external_database" {
   default     = true
-  description = "Set this to false to avoid creating an RDS database to use with Gitpod instead of inclsuter mysql"
+  description = "Create an external Cloud DNS instance for Gitpod"
 }
 
 variable "enable_external_storage" {
   default     = true
-  description = "Set this to false to avoid creating an s3 storage to use with Gitpod instead of incluster minio"
+  description = "Create a GCS bucket for Gitpod object storage"
 }
 
 variable "enable_external_registry" {
   default     = true
-  description = "Set this to false to create an AWS ECR registry to use with Gitpod(Not officially supported)"
+  description = "Create a Google Container Registry for Gitpod workspace images"
 }

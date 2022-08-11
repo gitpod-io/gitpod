@@ -193,7 +193,7 @@ NAME                     READY   STATUS    RESTARTS   AGE
 proxy-5998488f4c-t8vkh   0/1     Init 0/1  0          5m
 ```
 
-The most likely reason is that the DNS01 challenge has yet to resolve. To fix this, make sure you have added the NS records corresponding to the `cloudDNS` zone of the `domain_name` added to your domain provider.
+The most likely reason is that the DNS01 challenge cannot be completed, typically because DNS zone delegation hasn't been set up from the parent domain to the subdomain that Gitpod is managing (specified by the `domain_name` variable). To fix this, make sure that NS records for `domain_name` in the parent zone are created and point to the nameservers of the Gitpod managed zone. See the [Google Cloud DNS documentation](https://cloud.google.com/dns/docs/dns-overview#delegated_subzone) for more information on zone delegation.
 
 Once the DNS record has been updated, you will need to delete all Cert Manager pods to retrigger the certificate request
 
@@ -214,6 +214,8 @@ https-certificates          True    https-certificates          5m
 There is a chance that your kubeconfig has gotten expired after a specific amount of time. You can reconnect to the cluster by using:
 
 ``` sh
+# make sure you are authenticated using the service account you used to create the cluster
+gcloud auth activate-service-account --key-file=/path/to/account/key.json
 gcloud container clusters get-credentials <cluster_name> --region <region> --zone <zone> --project <project>
 ```
 
