@@ -209,6 +209,11 @@
                 }
             ],
             "restartPolicy": "Never",
+            "nodeSelector": {
+                "gitpod.io/registry-facade_ready_ns_default": "true",
+                "gitpod.io/workload_workspace_regular": "true",
+                "gitpod.io/ws-daemon_ready_ns_default": "true"
+            },
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
             "securityContext": {},
@@ -221,14 +226,6 @@
                                 "matchExpressions": [
                                     {
                                         "key": "gitpod.io/workload_workspace_regular",
-                                        "operator": "Exists"
-                                    },
-                                    {
-                                        "key": "gitpod.io/ws-daemon_ready_ns_default",
-                                        "operator": "Exists"
-                                    },
-                                    {
-                                        "key": "gitpod.io/registry-facade_ready_ns_default",
                                         "operator": "Exists"
                                     }
                                 ]

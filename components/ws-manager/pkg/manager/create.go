@@ -95,7 +95,7 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 
 	// ammend nodeSelector using details requiredDuringSchedulingIgnoredDuringExecution from the templates
 	// to add gitpod.io/workspace-class
-	if podTemplate.Spec.Affinity != nil && podTemplate.Spec.Affinity.NodeAffinity != nil && podTemplate.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
+	if podTemplate != nil && podTemplate.Spec.Affinity != nil && podTemplate.Spec.Affinity.NodeAffinity != nil && podTemplate.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
 		for _, selector := range podTemplate.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
 			for _, matchExpressions := range selector.MatchExpressions {
 				if matchExpressions.Key != "gitpod.io/workspace-class" {
