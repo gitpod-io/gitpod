@@ -1423,11 +1423,11 @@ export class WorkspaceStarter {
             }
         }
 
-        let volumeSnapshotId = lastValidWorkspaceInstanceId;
-        // if this is snapshot or prebuild context, then try to find volume snapshot id in it
-        if (SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) {
-            volumeSnapshotId = workspace.context.snapshotBucketId;
-        }
+        const volumeSnapshotId =
+            SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)
+                ? workspace.context.snapshotBucketId
+                : lastValidWorkspaceInstanceId;
+
         let volumeSnapshotInfo = new VolumeSnapshotInfo();
         const volumeSnapshots = await this.workspaceDb.trace(traceCtx).findVolumeSnapshotById(volumeSnapshotId);
         if (volumeSnapshots !== undefined) {
