@@ -6,19 +6,20 @@ package common_test
 import (
 	"testing"
 
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	content_service "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	content_service "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
 func TestCompositeRenderFunc_NilObjectsNilError(t *testing.T) {

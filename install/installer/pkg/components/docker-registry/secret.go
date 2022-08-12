@@ -5,9 +5,11 @@
 package dockerregistry
 
 import (
+	//nolint:typecheck
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

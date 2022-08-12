@@ -7,14 +7,15 @@ import (
 	"encoding/json"
 	"testing"
 
-	csconfig "github.com/gitpod-io/gitpod/content-service/api/config"
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
+
+	csconfig "github.com/gitpod-io/gitpod/content-service/api/config"
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
 func TestConfigMap_CanConfigureUsageReportBucketName(t *testing.T) {
