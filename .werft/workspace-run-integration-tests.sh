@@ -6,13 +6,15 @@ BRANCH="wk-inte-test/"$(date +%Y%m%d%H%M%S)
 FAILURE_COUNT=0
 RUN_COUNT=0
 declare -A FAILURE_TESTS
+declare SIGNAL # used to record signal caught by trap
 
 context_name=$1
 context_repo=$2
 
 function cleanup ()
 {
-  werft log phase "slack notification" "slack notification"
+  werft log phase "slack notification and cleanup $SIGNAL" "Slack notification and cleanup: $SIGNAL"
+
   werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
 
   if [ "${RUN_COUNT}" -eq "0" ]; then
@@ -39,14 +41,17 @@ function cleanup ()
     BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}}]}"
   fi
 
+  echo "Sending Slack notificaition" | werft log slice "slack notification"
   curl -X POST \
     -H 'Content-type: application/json' \
     -d "${BODY}" \
     "https://hooks.slack.com/${SLACK_NOTIFICATION_PATH}"
   werft log result "slack notification" "${PIPESTATUS[0]}"
+  werft log slice "slack notification" --done
 
-  werft log phase "clean up" "clean up"
   git push origin :"${BRANCH}" | werft log slice "clean up"
+
+  echo "Finished cleaning up based on signal $SIGNAL" | werft log slice "clean up"
   werft log slice "clean up" --done
 }
 
@@ -70,7 +75,11 @@ werft log phase "build preview environment" "build preview environment"
     werft run github -a with-preview=true
 ) | werft log slice "build preview environment"
 
-trap cleanup SIGINT SIGTERM EXIT
+for signal in SIGINT SIGTERM EXIT; do
+  # shellcheck disable=SC2064
+  # We intentionally want the expansion to happen here as that's how we pass the signal to the function.
+  trap "SIGNAL=${signal};cleanup" $signal
+done
 
 # Our current approach will start two Werft jobs. One triggered by Werft by the push to the branch and one
 # due to the `werft run` invocation above - the manual invocation is needed as we don't enable preview
