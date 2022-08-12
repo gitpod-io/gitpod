@@ -29,6 +29,7 @@ import { isGitpodIo } from "../utils";
 import { BillingAccountSelector } from "../components/BillingAccountSelector";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { TeamsContext } from "../teams/teams-context";
+import Alert from "../components/Alert";
 
 export interface CreateWorkspaceProps {
     contextUrl: string;
@@ -382,23 +383,30 @@ function SpendingLimitReachedModal(p: { hints: any }) {
         }
     }, []);
 
+    const attributedTeamName = attributedTeam?.name;
     return (
         <Modal visible={true} closeable={false} onClose={() => {}}>
             <h3 className="flex">
-                <span className="flex-grow">Spending Limit Reached</span>
+                <span className="flex-grow">Usage Limit Reached</span>
             </h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
-                <p className="mt-1 mb-2 text-base dark:text-gray-400">Please increase the spending limit and retry.</p>
+            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-6">
+                <Alert type="error" className="app-container rounded-md">
+                    You have reached the <strong>spending limit</strong> of your billing account.
+                </Alert>
+                <p className="mt-3 text-base text-gray-600 dark:text-gray-300">
+                    {"Contact a team owner "}
+                    {attributedTeamName && (
+                        <>
+                            of <strong>{attributedTeamName} </strong>
+                        </>
+                    )}
+                    to increase the spending limit, or change your <a href="/billing">billing settings</a>.
+                </p>
             </div>
             <div className="flex justify-end mt-6 space-x-2">
-                <a href={gitpodHostUrl.with({ pathname: "billing" }).toString()}>
-                    <button>Billing Settings</button>
+                <a href={gitpodHostUrl.asDashboard().toString()}>
+                    <button className="secondary">Go to Dashboard</button>
                 </a>
-                {attributedTeam && (
-                    <a href={gitpodHostUrl.with({ pathname: `t/${attributedTeam?.slug}/billing` }).toString()}>
-                        <button>Team Billing</button>
-                    </a>
-                )}
             </div>
         </Modal>
     );
