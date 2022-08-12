@@ -136,13 +136,13 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
   podSelector:
     matchLabels:
       app.kubernetes.io/name: rabbitmq
-      app.kubernetes.io/instance: RabbitMQ
+      app.kubernetes.io/instance: rabbitmq
   ingress:
     # Allow inbound connections
     - ports:
@@ -673,14 +673,14 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
   maxUnavailable: 1
   selector:
     matchLabels: 
       app.kubernetes.io/name: rabbitmq
-      app.kubernetes.io/instance: RabbitMQ
+      app.kubernetes.io/instance: rabbitmq
 ---
 # v1/ServiceAccount agent-smith
 apiVersion: v1
@@ -879,7 +879,7 @@ metadata:
   labels:
     app.kubernetes.io/name: minio
     helm.sh/chart: minio-11.6.3
-    app.kubernetes.io/instance: Minio
+    app.kubernetes.io/instance: minio
     app.kubernetes.io/managed-by: Helm
 automountServiceAccountToken: true
 secrets:
@@ -946,7 +946,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 automountServiceAccountToken: true
 secrets:
@@ -1111,7 +1111,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 stringData:
@@ -1127,7 +1127,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
@@ -1158,7 +1158,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
@@ -1188,7 +1188,7 @@ metadata:
   labels:
     app.kubernetes.io/name: minio
     helm.sh/chart: minio-11.6.3
-    app.kubernetes.io/instance: Minio
+    app.kubernetes.io/instance: minio
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
@@ -1224,7 +1224,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 stringData:
@@ -3515,7 +3515,7 @@ data:
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: primary
-        app.kubernetes.io/instance: MySQL
+        app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.1.2
@@ -3528,7 +3528,7 @@ data:
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: primary
-        app.kubernetes.io/instance: MySQL
+        app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.1.2
@@ -3541,7 +3541,7 @@ data:
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: primary
-        app.kubernetes.io/instance: MySQL
+        app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.1.2
@@ -3554,7 +3554,7 @@ data:
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: primary
-        app.kubernetes.io/instance: MySQL
+        app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.1.2
@@ -3566,7 +3566,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: Minio
+        app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: minio
         helm.sh/chart: minio-11.6.3
@@ -3578,7 +3578,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: Minio
+        app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: minio
         helm.sh/chart: minio-11.6.3
@@ -3590,7 +3590,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: Minio
+        app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: minio
         helm.sh/chart: minio-11.6.3
@@ -3602,7 +3602,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: Minio
+        app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: minio
         helm.sh/chart: minio-11.6.3
@@ -3614,7 +3614,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: Minio
+        app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: minio
         helm.sh/chart: minio-11.6.3
@@ -3626,7 +3626,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3638,7 +3638,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3650,7 +3650,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3662,7 +3662,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3674,7 +3674,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3686,7 +3686,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3698,7 +3698,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3710,7 +3710,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3722,7 +3722,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3734,7 +3734,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3746,7 +3746,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3758,7 +3758,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3908,7 +3908,7 @@ metadata:
   labels:
     app.kubernetes.io/name: mysql
     helm.sh/chart: mysql-9.1.2
-    app.kubernetes.io/instance: MySQL
+    app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
 data:
@@ -4791,7 +4791,7 @@ metadata:
   labels:
     app.kubernetes.io/name: minio
     helm.sh/chart: minio-11.6.3
-    app.kubernetes.io/instance: Minio
+    app.kubernetes.io/instance: minio
     app.kubernetes.io/managed-by: Helm
 spec:
   accessModes:
@@ -5265,7 +5265,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 rules:
   - apiGroups: [""]
@@ -5590,7 +5590,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 subjects:
   - kind: ServiceAccount
@@ -6048,7 +6048,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
   type: ClusterIP
@@ -6080,7 +6080,7 @@ spec:
       nodePort: null
   selector: 
     app.kubernetes.io/name: rabbitmq
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
 ---
 # v1/Service messagebus-headless
 # Source: rabbitmq/charts/rabbitmq/templates/svc-headless.yaml
@@ -6092,7 +6092,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
   clusterIP: None
@@ -6114,7 +6114,7 @@ spec:
       targetPort: stats
   selector: 
     app.kubernetes.io/name: rabbitmq
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
   publishNotReadyAddresses: true
 ---
 # v1/Service minio
@@ -6127,7 +6127,7 @@ metadata:
   labels:
     app.kubernetes.io/name: minio
     helm.sh/chart: minio-11.6.3
-    app.kubernetes.io/instance: Minio
+    app.kubernetes.io/instance: minio
     app.kubernetes.io/managed-by: Helm
 spec:
   type: ClusterIP
@@ -6142,7 +6142,7 @@ spec:
       nodePort: null
   selector:
     app.kubernetes.io/name: minio
-    app.kubernetes.io/instance: Minio
+    app.kubernetes.io/instance: minio
 ---
 # v1/Service mysql
 # Source: mysql/charts/mysql/templates/primary/svc.yaml
@@ -6154,7 +6154,7 @@ metadata:
   labels:
     app.kubernetes.io/name: mysql
     helm.sh/chart: mysql-9.1.2
-    app.kubernetes.io/instance: MySQL
+    app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
   annotations:
@@ -6169,7 +6169,7 @@ spec:
       nodePort: null
   selector: 
     app.kubernetes.io/name: mysql
-    app.kubernetes.io/instance: MySQL
+    app.kubernetes.io/instance: mysql
     app.kubernetes.io/component: primary
 ---
 # v1/Service mysql-headless
@@ -6182,7 +6182,7 @@ metadata:
   labels:
     app.kubernetes.io/name: mysql
     helm.sh/chart: mysql-9.1.2
-    app.kubernetes.io/instance: MySQL
+    app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
   annotations:
@@ -6196,7 +6196,7 @@ spec:
       targetPort: mysql
   selector: 
     app.kubernetes.io/name: mysql
-    app.kubernetes.io/instance: MySQL
+    app.kubernetes.io/instance: mysql
     app.kubernetes.io/component: primary
 ---
 # v1/Service openvsx-proxy
@@ -7100,7 +7100,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
   serviceName: messagebus-headless
@@ -7111,17 +7111,17 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: rabbitmq
-      app.kubernetes.io/instance: RabbitMQ
+      app.kubernetes.io/instance: rabbitmq
   template:
     metadata:
       labels:
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
       annotations:
-        checksum/config: 57b71edd6161d27a16d419d0a972455d13b77c3e31b641c4f484619042487094
-        checksum/secret: 773b338bdf00459126d415b35270b6bef1889b16ccc4d4d11c3999afa781ccc8
+        checksum/config: 2ca9db593e4ca6cdd01f7a65cce1ae90d0d45ecdf0049edfaa4ec72302fcbe8f
+        checksum/secret: c231bbb08185305defa8c4da0f3ee0f5e7a16795362a2133f74e53eb9a40453d
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
@@ -7297,7 +7297,7 @@ metadata:
   labels:
     app.kubernetes.io/name: mysql
     helm.sh/chart: mysql-9.1.2
-    app.kubernetes.io/instance: MySQL
+    app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
 spec:
@@ -7306,7 +7306,7 @@ spec:
   selector:
     matchLabels: 
       app.kubernetes.io/name: mysql
-      app.kubernetes.io/instance: MySQL
+      app.kubernetes.io/instance: mysql
       app.kubernetes.io/component: primary
   serviceName: mysql
   updateStrategy:
@@ -7314,11 +7314,11 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configuration: f96f510015050d9b0165d12f144f5eca5641c065ccbe9c75e64f58e81a9b3d8c
+        checksum/configuration: 11b8361c0fbf695cec6ec7f47ed4118ad3c7d71a391ca246df129803d3e205a5
       labels:
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.1.2
-        app.kubernetes.io/instance: MySQL
+        app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: primary
     spec:
@@ -7436,7 +7436,7 @@ spec:
         name: data
         labels: 
           app.kubernetes.io/name: mysql
-          app.kubernetes.io/instance: MySQL
+          app.kubernetes.io/instance: mysql
           app.kubernetes.io/component: primary
         annotations:
       spec:
@@ -8346,13 +8346,13 @@ metadata:
   labels:
     app.kubernetes.io/name: minio
     helm.sh/chart: minio-11.6.3
-    app.kubernetes.io/instance: Minio
+    app.kubernetes.io/instance: minio
     app.kubernetes.io/managed-by: Helm
 spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: minio
-      app.kubernetes.io/instance: Minio
+      app.kubernetes.io/instance: minio
   strategy:
     type: Recreate
   template:
@@ -8360,10 +8360,10 @@ spec:
       labels:
         app.kubernetes.io/name: minio
         helm.sh/chart: minio-11.6.3
-        app.kubernetes.io/instance: Minio
+        app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
       annotations:
-        checksum/credentials-secret: 254e39ef7087b8d977946ed0027240eda9a1c7f64ae430fca5644a50b23cece3
+        checksum/credentials-secret: 0a5790906818b3f8eeee0bd3b3e990b3ad02d79bb23c62c0d91a4ca010fb5579
     spec:
       
       serviceAccountName: minio
