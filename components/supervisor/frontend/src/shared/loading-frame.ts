@@ -9,7 +9,14 @@ import { WindowMessageReader, WindowMessageWriter } from "@gitpod/gitpod-protoco
 import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
 import { createMessageConnection } from 'vscode-jsonrpc/lib/main';
 import { ConsoleLogger } from 'vscode-ws-jsonrpc';
+import { isSaaSServerGreaterThan } from '../ide/gitpod-server-compatibility';
 import { startUrl } from './urls';
+
+let openDesktopLinkSupported = false;
+// TODO(ak) remove after 15.09.2022
+isSaaSServerGreaterThan("main.4275").then(r =>
+    openDesktopLinkSupported = r
+)
 
 const serverOrigin = startUrl.url.origin;
 const relocateListener = (event: MessageEvent) => {
@@ -36,6 +43,7 @@ export function load({ gitpodService }: {
     frame: HTMLIFrameElement
     sessionId: Promise<string>
     setState: (state: object) => void
+    openDesktopLink: (link: string) => void
 }> {
     return new Promise(resolve => {
         const frame = document.createElement('iframe');
@@ -56,7 +64,27 @@ export function load({ gitpodService }: {
             const setState = (state: object) => {
                 frameWindow.postMessage({ type: 'setState', state }, serverOrigin);
             }
-            resolve({ frame, sessionId, setState });
+            const openDesktopLink = (link: string) => {
+                if (openDesktopLinkSupported) {
+                    frameWindow.postMessage({ type: '$openDesktopLink', link }, serverOrigin);
+                } else {
+                    let redirect = false;
+                    try {
+                        const desktopLink = new URL(link);
+                        redirect = desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
+                    } catch (e) {
+                        console.error("invalid desktop link:", e);
+                    }
+                    // redirect only if points to desktop application
+                    // don't navigate browser to another page
+                    if (redirect) {
+                        window.location.href = link;
+                    } else {
+                        window.open(link, "_blank", "noopener");
+                    }
+                }
+            }
+            resolve({ frame, sessionId, setState, openDesktopLink });
         };
     });
 }
