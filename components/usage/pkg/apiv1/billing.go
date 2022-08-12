@@ -105,5 +105,5 @@ func (s *BillingService) SetBilledSession(ctx context.Context, in *v1.SetBilledS
 		return nil, status.Errorf(codes.Internal, "failed to set session: %s", err)
 	}
 
-	return nil, nil
+	return &v1.SetBilledSessionResponse{}, nil
 }
