@@ -28,8 +28,7 @@
         "gitpod/servicePrefix": "d6427c17-62b8-4bb5-a974-f97f77b370dc",
         "gitpod/url": "https://d6427c17-62b8-4bb5-a974-f97f77b370dc.ws-eu01.gitpod.io",
         "gitpod/exposedPorts": "CgUIkD8YAQ==",
-        "kubernetes.io/psp": "default-ns-workspace",
-        "seccomp.security.alpha.kubernetes.io/pod": "docker/default"
+        "kubernetes.io/psp": "default-ns-workspace"
       }
     },
     "spec": {

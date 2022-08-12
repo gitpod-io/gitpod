@@ -31,8 +31,7 @@
         "gitpod/servicePrefix": "ba826db9-9d93-4f3b-a10e-8bc08bbb99f1",
         "gitpod/traceid": "AAAAAAAAAAAIuijPmzFhvQa1VjCvXSjXQDcRV3oeudEBAAAAAA==",
         "gitpod/url": "https://ba826db9-9d93-4f3b-a10e-8bc08bbb99f1.ws-dev.cw-debug-registry-facade.staging.gitpod-dev.com",
-        "kubernetes.io/psp": "staging-cw-debug-registry-facade-ns-workspace",
-        "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
+        "kubernetes.io/psp": "staging-cw-debug-registry-facade-ns-workspace"
       }
     },
     "spec": {

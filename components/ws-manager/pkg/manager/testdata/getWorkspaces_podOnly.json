@@ -14,8 +14,7 @@
           "gitpod/url": "https://be07f480-150a-40db-a699-7c8afc8a7122.ws-eu01.gitpod-staging.com",
           "gitpod/ownerToken": "%7J'[Of/8NDiWE+9F,I6^Jcj_1\u0026}-F8p",
           "gitpod/admission": "admit_everyone",
-          "kubernetes.io/psp": "default-ns-workspace",
-          "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
+          "kubernetes.io/psp": "default-ns-workspace"
         },
         "creationTimestamp": "2019-11-18T08:35:13Z",
         "labels": {

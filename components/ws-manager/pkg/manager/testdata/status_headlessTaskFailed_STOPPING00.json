@@ -35,8 +35,7 @@
         "gitpod/servicePrefix": "sapphire-alligator-jakcgz44",
         "gitpod/traceid": "AAAAAAAAAACM7yugXD1iBw82TVMeQGhTGJ1evGDyusIBAAAAAA==",
         "gitpod/url": "https://sapphire-alligator-jakcgz44.ws-dev.csweichel-don-t-abort-prebuild-4964.staging.gitpod-dev.com",
-        "kubernetes.io/psp": "staging-csweichel-don-t-abort-prebuild-4964-ns-workspace",
-        "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_csweichel-don-t-abort-prebuild-4964.0.json"
+        "kubernetes.io/psp": "staging-csweichel-don-t-abort-prebuild-4964-ns-workspace"
       },
       "managedFields": [
         {

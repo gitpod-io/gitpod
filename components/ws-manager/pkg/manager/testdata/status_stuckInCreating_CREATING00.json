@@ -28,8 +28,7 @@
         "gitpod/servicePrefix": "afccd13d-fc9c-4fd2-a27e-3bd8f4e138f6",
         "gitpod/timedout": "workspace timed out after I've meddled with this test data set",
         "gitpod/url": "https://afccd13d-fc9c-4fd2-a27e-3bd8f4e138f6.ws-eu01.gitpod.io",
-        "kubernetes.io/psp": "default-ns-workspace",
-        "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
+        "kubernetes.io/psp": "default-ns-workspace"
       }
     },
     "spec": {

@@ -29,8 +29,7 @@
         "gitpod/servicePrefix": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
         "gitpod/url": "https://c372bd58-ef61-4fc0-9083-bd61ef96ad9f.ws-eu01.gitpod-staging.com",
         "gitpod/exposedPorts": "CgUIuQoYAQoFCLgXGAEKBQi5FxgBCgUIoB8YAQoFCI1IGAEKBQiMLhgBCgUIwC8YAQoFCI9OGAEKBQjJZRgBCgUI4TwYAQoFCIRpGAE=",
-        "kubernetes.io/psp": "default-ns-privileged-unconfined",
-        "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
+        "kubernetes.io/psp": "default-ns-privileged-unconfined"
       }
     },
     "spec": {

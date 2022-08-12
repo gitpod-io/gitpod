@@ -41,8 +41,7 @@
         "gitpod/url": "https://gitpodio-templategolang-cdhvbek9fyg.ws.to-failed-ws-start.preview.gitpod-dev.com",
         "prometheus.io/path": "/metrics",
         "prometheus.io/port": "23000",
-        "prometheus.io/scrape": "true",
-        "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_to-failed-ws-start.8.json"
+        "prometheus.io/scrape": "true"
       },
       "finalizers": [
         "gitpod.io/finalizer"

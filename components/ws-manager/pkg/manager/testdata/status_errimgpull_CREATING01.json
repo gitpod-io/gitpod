@@ -32,8 +32,7 @@
         "gitpod/traceid": "AAAAAAAAAAB0V4wSNnJHOjkl6czHeTjCexRucBZwnE4BAAAAAA==",
         "gitpod/url": "http://f29012c4-c6b9-4bd1-9c48-151bdeec6940.ws-dev.cw-registry.staging.gitpod-dev.com",
         "gitpod/never-ready": "true",
-        "kubernetes.io/psp": "staging-cw-registry-ns-workspace",
-        "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
+        "kubernetes.io/psp": "staging-cw-registry-ns-workspace"
       }
     },
     "spec": {

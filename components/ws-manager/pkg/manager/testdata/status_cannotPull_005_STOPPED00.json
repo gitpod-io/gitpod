@@ -15,7 +15,6 @@
         "gitpod/exposedPorts": "CjwIuBciN2h0dHBzOi8vMzAwMC1zaWx2ZXItZG9ybW91c2UtaXM3MzNwcmcud3MtdXMxNC5naXRwb2QuaW8=",
         "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
         "gitpod/url": "https://silver-dormouse-is733prg.ws-us14.gitpod.io",
-        "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_main.1254.json",
         "cni.projectcalico.org/podIPs": "10.4.35.173/32",
         "cni.projectcalico.org/podIP": "10.4.35.173/32",
         "gitpod/never-ready": "true",

@@ -982,7 +982,6 @@
                 "gitpod/contentInitializer": "[redacted]",
                 "gitpod/traceid": "AAAAAAAAAABd9CSEJWTMBwf1zKjyomA/fduUhMUrUFIBAAAAAA==",
                 "cni.projectcalico.org/podIP": "10.4.12.227/32",
-                "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_main.1254.json",
                 "cni.projectcalico.org/podIPs": "10.4.12.227/32",
                 "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
                 "kubernetes.io/psp": "default-ns-workspace",

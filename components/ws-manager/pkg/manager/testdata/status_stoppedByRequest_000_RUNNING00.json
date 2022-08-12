@@ -37,8 +37,7 @@
         "gitpod/ownerToken": "Tx5RtJ5f4LWUWvrGJ_-.AJmcTd5MB_8e",
         "gitpod/servicePrefix": "lime-opossum-3jftf65i",
         "gitpod/url": "https://lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com",
-        "kubernetes.io/psp": "staging-cw-fix-6213-ns-workspace",
-        "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_cw-fix-6213.1.json"
+        "kubernetes.io/psp": "staging-cw-fix-6213-ns-workspace"
       },
       "finalizers": [
         "gitpod.io/finalizer"
