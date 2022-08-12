@@ -32,8 +32,7 @@
         "gitpod/ownerToken": "y5-JYhqDzGGprABkr36-fTas8PCeA4sZ",
         "gitpod/servicePrefix": "gray-lemming-0wlyvzy5",
         "gitpod/url": "https://gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com",
-        "kubernetes.io/psp": "staging-gpl-headless-log-wsman-ns-workspace",
-        "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_gpl-headless-log-wsman.25.json"
+        "kubernetes.io/psp": "staging-gpl-headless-log-wsman-ns-workspace"
       },
       "finalizers": [
         "gitpod.io/finalizer"

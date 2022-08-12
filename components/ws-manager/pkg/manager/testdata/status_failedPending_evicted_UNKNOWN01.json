@@ -28,8 +28,7 @@
         "gitpod/traceid": "AAAAAAAAAAAM301AkX9Ux31i87+V14iHERCWZtjrhxYBAAAAAA==",
         "gitpod/url": "https://ab451d8b-7a3a-42ec-b173-20a0e49773d4.ws-eu01.gitpod.io",
         "gitpod/never-ready": "true",
-        "kubernetes.io/psp": "default-ns-workspace",
-        "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
+        "kubernetes.io/psp": "default-ns-workspace"
       }
     },
     "spec": {

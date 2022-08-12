@@ -188,7 +188,6 @@
         "gitpod/customTimeout": "30m",
         "gitpod/id": "5031df46-db5e-43ae-91bd-1448305c001d",
         "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
-        "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_main.1254.json",
         "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
         "kubernetes.io/psp": "default-ns-workspace",
         "cni.projectcalico.org/podIP": "10.4.35.173/32",

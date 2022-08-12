@@ -40,8 +40,7 @@
         "gitpod/servicePrefix": "giaa0502-ddos-kd27l9j4i3c",
         "gitpod/url": "https://giaa0502-ddos-kd27l9j4i3c.ws-us58.gitpod.io",
         "kubernetes.io/egress-bandwidth": "300M",
-        "kubernetes.io/ingress-bandwidth": "300M",
-        "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_main.4085.json"
+        "kubernetes.io/ingress-bandwidth": "300M"
       },
       "finalizers": [
         "gitpod.io/finalizer"

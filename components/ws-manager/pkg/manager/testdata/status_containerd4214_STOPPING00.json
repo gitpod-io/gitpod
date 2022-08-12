@@ -36,8 +36,7 @@
         "gitpod/ownerToken": "{pKaZ75.$$hIiW2z2!-h#HcmldG#U?Dl",
         "gitpod/servicePrefix": "amber-swallow-sbhsd9w0",
         "gitpod/url": "https://amber-swallow-sbhsd9w0.ws-dev.cw-wsdaemon-patch.staging.gitpod-dev.com",
-        "kubernetes.io/psp": "staging-cw-wsdaemon-patch-ns-workspace",
-        "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_cw-wsdaemon-patch.0.json"
+        "kubernetes.io/psp": "staging-cw-wsdaemon-patch-ns-workspace"
       },
       "finalizers": [
         "gitpod.io/finalizer"

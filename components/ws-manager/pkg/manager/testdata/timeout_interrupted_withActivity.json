@@ -29,8 +29,7 @@
           "gitpod/ready": "true",
           "gitpod/servicePrefix": "b246b28e-4776-47d5-961d-10548ffac9a8",
           "gitpod/url": "https://b246b28e-4776-47d5-961d-10548ffac9a8.ws-eu0.gitpod-staging.com",
-          "kubernetes.io/psp": "workspace",
-          "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
+          "kubernetes.io/psp": "workspace"
         }
       },
       "spec": {

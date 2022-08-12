@@ -4891,7 +4891,7 @@ data:
       "manager": {
         "namespace": "default",
         "schedulerName": "",
-        "seccompProfile": "localhost/workspace_default_pd-ide-metrics.23.json",
+        "seccompProfile": "workspace_default_pd-ide-metrics.23.json",
         "timeouts": {
           "startup": "1h0m0s",
           "initialization": "30m0s",
@@ -9453,7 +9453,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: da5601e77e4e234e0c703f69af0dbfee96895c9bc56d18324b3553ae362c47e0
+        gitpod.io/checksum_config: 0eb43682b01551c8f0754c04ce1f393177d178a05a4a7758e5c3a5bff96eb446
         hello: world
       creationTimestamp: null
       labels:

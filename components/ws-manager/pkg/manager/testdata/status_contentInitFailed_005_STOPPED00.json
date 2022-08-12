@@ -19,7 +19,6 @@
         "kubernetes.io/psp": "default-ns-workspace",
         "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
         "gitpod/traceid": "AAAAAAAAAACgL/SjWAHnMwkiok9sdGz/HxJqy3dLJkoBAAAAAA==",
-        "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_main.1260.json",
         "gitpod/explicitFail": "cannot initialize workspace: cannot initialize workspace: content initializer failed",
         "gitpod/ownerToken": "jRA_Te5snD4sq5C2Bfh-OeZ6BCh4YA4X",
         "gitpod/never-ready": "true",

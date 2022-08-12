@@ -30,8 +30,7 @@
         "gitpod/exposedPorts": "CgUIuQoYAQoFCLgXGAEKBQi5FxgBCgUIoB8YAQoFCI1IGAEKBQiMLhgBCgUIwC8YAQoFCI9OGAEKBQjJZRgBCgUI4TwYAQoFCIRpGAE=",
         "gitpod/ownerToken": "hello world",
         "gitpod/admission": "admit_everyone",
-        "kubernetes.io/psp": "default-ns-privileged-unconfined",
-        "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
+        "kubernetes.io/psp": "default-ns-privileged-unconfined"
       }
     },
     "spec": {
