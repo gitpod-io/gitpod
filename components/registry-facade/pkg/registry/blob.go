@@ -123,8 +123,9 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		var srcs []BlobSource
 
+		ipfsSrc := ipfsBlobSource{source: bh.IPFS}
 		if bh.IPFS != nil {
-			srcs = append(srcs, ipfsBlobSource{source: bh.IPFS})
+			srcs = append(srcs, ipfsSrc)
 		}
 
 		srcs = append(srcs, storeBlobSource{Store: bh.Store})
@@ -173,6 +174,11 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		bh.Metrics.BlobDownloadSpeedHist.Observe(float64(n) / time.Since(t0).Seconds())
 
 		if dontCache {
+			return nil
+		}
+
+		// do not duplicate content in IPFS
+		if src == ipfsSrc {
 			return nil
 		}
 
