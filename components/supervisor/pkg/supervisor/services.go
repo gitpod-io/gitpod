@@ -97,6 +97,7 @@ type statusService struct {
 	Tasks           *tasksManager
 	ideReady        *ideReadyState
 	desktopIdeReady *ideReadyState
+	topService      *TopService
 
 	api.UnimplementedStatusServiceServer
 }
@@ -933,5 +934,5 @@ func (s *portService) RetryAutoExpose(ctx context.Context, req *api.RetryAutoExp
 
 // ResourcesStatus provides workspace resources status information.
 func (s *statusService) ResourcesStatus(ctx context.Context, in *api.ResourcesStatuRequest) (*api.ResourcesStatusResponse, error) {
-	return Top(ctx)
+	return s.topService.data, nil
 }

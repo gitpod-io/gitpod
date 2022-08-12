@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/xerrors"
@@ -17,9 +18,62 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	linuxproc "github.com/c9s/goprocinfo/linux"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 )
+
+type TopService struct {
+	data      *api.ResourcesStatusResponse
+	ready     chan struct{}
+	readyOnce sync.Once
+	top       func(ctx context.Context) (*api.ResourcesStatusResponse, error)
+}
+
+func NewTopService() *TopService {
+	log.Debug("gitpod top service: initialized")
+	return &TopService{
+		top: Top,
+	}
+}
+
+// Observe starts observing the resource status
+func (t *TopService) Observe(ctx context.Context) {
+	var (
+		delay                       = 1 * time.Second
+		reconnectionDelayGrowFactor = 1.5
+		minReconnectionDelay        = 1 * time.Second
+		maxReconnectionDelay        = 30 * time.Second
+	)
+
+	t.ready = make(chan struct{})
+
+	go func() {
+		for {
+			data, err := t.top(ctx)
+			if err != nil {
+				log.WithField("error", err).Errorf("failed to retrieve resource status from upstream, trying again in %d seconds...", uint32(delay.Seconds()))
+			} else {
+				delay = minReconnectionDelay
+				t.data = data
+
+				t.readyOnce.Do(func() {
+					close(t.ready)
+				})
+			}
+			select {
+			case <-ctx.Done():
+				log.Info("Resource Status observer stopped")
+				return
+			case <-time.After(delay):
+				delay = time.Duration(float64(delay) * reconnectionDelayGrowFactor)
+				if delay > maxReconnectionDelay {
+					delay = maxReconnectionDelay
+				}
+			}
+		}
+	}()
+}
 
 // Top provides workspace resources status information.
 func Top(ctx context.Context) (*api.ResourcesStatusResponse, error) {

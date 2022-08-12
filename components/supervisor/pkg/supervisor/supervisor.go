@@ -257,6 +257,9 @@ func Run(options ...RunOption) {
 		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService, gitpodService)
 	}
 
+	topService := NewTopService()
+	topService.Observe(ctx)
+
 	termMux := terminal.NewMux()
 	termMuxSrv := terminal.NewMuxTerminalService(termMux)
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
@@ -287,6 +290,7 @@ func Run(options ...RunOption) {
 			Tasks:           taskManager,
 			ideReady:        ideReady,
 			desktopIdeReady: desktopIdeReady,
+			topService:      topService,
 		},
 		termMuxSrv,
 		RegistrableTokenService{Service: tokenService},
