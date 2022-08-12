@@ -140,6 +140,9 @@ function publishKots(werft: Werft, jobConfig: JobConfig) {
         `yq w -i ${REPLICATED_YAML_DIR}/gitpod-installation-status.yaml ${INSTALLER_JOB_IMAGE} ${image}:${jobConfig.version}`,
         { slice: phases.PUBLISH_KOTS },
     );
+    exec(`yq w -i ${REPLICATED_YAML_DIR}/kots-preflight.yaml ${INSTALLER_JOB_IMAGE} ${image}:${jobConfig.version}`, {
+        slice: phases.PUBLISH_KOTS,
+    });
 
     // Set the ShiftFS Module Loader tag to version defined in Installer
     const shiftFsImageAndTag = exec(
