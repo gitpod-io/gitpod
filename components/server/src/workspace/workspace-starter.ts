@@ -1424,7 +1424,7 @@ export class WorkspaceStarter {
         }
 
         const volumeSnapshotId =
-            SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)
+            ((SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) && workspace.context.snapshotBucketId !== undefined && workspace.context.snapshotBucketId != "")
                 ? workspace.context.snapshotBucketId
                 : lastValidWorkspaceInstanceId;
 
