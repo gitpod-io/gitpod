@@ -9,6 +9,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/sirupsen/logrus"
 )
 
 type Option func(opts *httpOpts)
@@ -35,7 +36,7 @@ func NewRetryableHTTPClient(options ...Option) *http.Client {
 func defaultOptions() httpOpts {
 	return httpOpts{
 		RetryMax: 5,
-		Logger:   log.Log,
+		Logger:   retryablehttp.LeveledLogger(&leveledLogrus{log.Log}),
 
 		RequestLogHook: func(logger retryablehttp.Logger, req *http.Request, attempt int) {
 			if attempt > 0 {
@@ -47,7 +48,7 @@ func defaultOptions() httpOpts {
 
 type httpOpts struct {
 	HTTPClient *http.Client
-	Logger     interface{}
+	Logger     retryablehttp.LeveledLogger
 
 	RetryMax int
 
@@ -81,4 +82,34 @@ func WithHTTPClient(client *http.Client) Option {
 	return func(opts *httpOpts) {
 		opts.HTTPClient = client
 	}
+}
+
+type leveledLogrus struct {
+	*logrus.Entry
+}
+
+func (l *leveledLogrus) fields(keysAndValues ...interface{}) map[string]interface{} {
+	fields := make(map[string]interface{})
+
+	for i := 0; i < len(keysAndValues)-1; i += 2 {
+		fields[keysAndValues[i].(string)] = keysAndValues[i+1]
+	}
+
+	return fields
+}
+
+func (l *leveledLogrus) Error(msg string, keysAndValues ...interface{}) {
+	l.WithFields(l.fields(keysAndValues...)).Error(msg)
+}
+
+func (l *leveledLogrus) Info(msg string, keysAndValues ...interface{}) {
+	l.WithFields(l.fields(keysAndValues...)).Info(msg)
+}
+
+func (l *leveledLogrus) Debug(msg string, keysAndValues ...interface{}) {
+	l.WithFields(l.fields(keysAndValues...)).Debug(msg)
+}
+
+func (l *leveledLogrus) Warn(msg string, keysAndValues ...interface{}) {
+	l.WithFields(l.fields(keysAndValues...)).Warn(msg)
 }
