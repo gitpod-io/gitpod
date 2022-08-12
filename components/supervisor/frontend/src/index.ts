@@ -158,16 +158,7 @@ const toStop = new DisposableCollection();
                         });
                         if (!desktopRedirected) {
                             desktopRedirected = true;
-                            try {
-                                const desktopLink = new URL(ideStatus.desktop.link)
-                                // redirect only if points to desktop application
-                                // don't navigate browser to another page
-                                if (desktopLink.protocol != 'http:' && desktopLink.protocol != 'https:') {
-                                    window.location.href = ideStatus.desktop.link;
-                                }
-                            } catch (e) {
-                                console.error('invalid desktop link:', e)
-                            }
+                            loading.openDesktopLink(ideStatus.desktop.link)
                         }
                         return loading.frame;
                     }

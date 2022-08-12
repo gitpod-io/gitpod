@@ -19,7 +19,7 @@ export const track = (w: Window) => {
 }
 
 let pageCloseCompatibile: boolean = false
-
+// TODO(ak) remove
 isSaaSServerGreaterThan("main.4124").then((r) => {
     pageCloseCompatibile = r
 })
