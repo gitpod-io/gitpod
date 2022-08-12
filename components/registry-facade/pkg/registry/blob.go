@@ -177,11 +177,6 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 			return nil
 		}
 
-		// do not duplicate content in IPFS
-		if src == ipfsSrc {
-			return nil
-		}
-
 		go func() {
 			// we can do this only after the io.Copy above. Otherwise we might expect the blob
 			// to be in the blobstore when in reality it isn't.
