@@ -208,27 +208,27 @@ public final class StatusServiceGrpc {
     return getTasksStatusMethod;
   }
 
-  private static volatile io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Status.ResourcesStatuRequest,
+  private static volatile io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Status.ResourcesStatusRequest,
       io.gitpod.supervisor.api.Status.ResourcesStatusResponse> getResourcesStatusMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
       fullMethodName = SERVICE_NAME + '/' + "ResourcesStatus",
-      requestType = io.gitpod.supervisor.api.Status.ResourcesStatuRequest.class,
+      requestType = io.gitpod.supervisor.api.Status.ResourcesStatusRequest.class,
       responseType = io.gitpod.supervisor.api.Status.ResourcesStatusResponse.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Status.ResourcesStatuRequest,
+  public static io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Status.ResourcesStatusRequest,
       io.gitpod.supervisor.api.Status.ResourcesStatusResponse> getResourcesStatusMethod() {
-    io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Status.ResourcesStatuRequest, io.gitpod.supervisor.api.Status.ResourcesStatusResponse> getResourcesStatusMethod;
+    io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Status.ResourcesStatusRequest, io.gitpod.supervisor.api.Status.ResourcesStatusResponse> getResourcesStatusMethod;
     if ((getResourcesStatusMethod = StatusServiceGrpc.getResourcesStatusMethod) == null) {
       synchronized (StatusServiceGrpc.class) {
         if ((getResourcesStatusMethod = StatusServiceGrpc.getResourcesStatusMethod) == null) {
           StatusServiceGrpc.getResourcesStatusMethod = getResourcesStatusMethod =
-              io.grpc.MethodDescriptor.<io.gitpod.supervisor.api.Status.ResourcesStatuRequest, io.gitpod.supervisor.api.Status.ResourcesStatusResponse>newBuilder()
+              io.grpc.MethodDescriptor.<io.gitpod.supervisor.api.Status.ResourcesStatusRequest, io.gitpod.supervisor.api.Status.ResourcesStatusResponse>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ResourcesStatus"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  io.gitpod.supervisor.api.Status.ResourcesStatuRequest.getDefaultInstance()))
+                  io.gitpod.supervisor.api.Status.ResourcesStatusRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   io.gitpod.supervisor.api.Status.ResourcesStatusResponse.getDefaultInstance()))
               .setSchemaDescriptor(new StatusServiceMethodDescriptorSupplier("ResourcesStatus"))
@@ -358,7 +358,7 @@ public final class StatusServiceGrpc {
      * ResourcesStatus provides workspace resources status information.
      * </pre>
      */
-    public void resourcesStatus(io.gitpod.supervisor.api.Status.ResourcesStatuRequest request,
+    public void resourcesStatus(io.gitpod.supervisor.api.Status.ResourcesStatusRequest request,
         io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Status.ResourcesStatusResponse> responseObserver) {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getResourcesStatusMethod(), responseObserver);
     }
@@ -411,7 +411,7 @@ public final class StatusServiceGrpc {
             getResourcesStatusMethod(),
             io.grpc.stub.ServerCalls.asyncUnaryCall(
               new MethodHandlers<
-                io.gitpod.supervisor.api.Status.ResourcesStatuRequest,
+                io.gitpod.supervisor.api.Status.ResourcesStatusRequest,
                 io.gitpod.supervisor.api.Status.ResourcesStatusResponse>(
                   this, METHODID_RESOURCES_STATUS)))
           .build();
@@ -509,7 +509,7 @@ public final class StatusServiceGrpc {
      * ResourcesStatus provides workspace resources status information.
      * </pre>
      */
-    public void resourcesStatus(io.gitpod.supervisor.api.Status.ResourcesStatuRequest request,
+    public void resourcesStatus(io.gitpod.supervisor.api.Status.ResourcesStatusRequest request,
         io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Status.ResourcesStatusResponse> responseObserver) {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getResourcesStatusMethod(), getCallOptions()), request, responseObserver);
@@ -603,7 +603,7 @@ public final class StatusServiceGrpc {
      * ResourcesStatus provides workspace resources status information.
      * </pre>
      */
-    public io.gitpod.supervisor.api.Status.ResourcesStatusResponse resourcesStatus(io.gitpod.supervisor.api.Status.ResourcesStatuRequest request) {
+    public io.gitpod.supervisor.api.Status.ResourcesStatusResponse resourcesStatus(io.gitpod.supervisor.api.Status.ResourcesStatusRequest request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getResourcesStatusMethod(), getCallOptions(), request);
     }
@@ -679,7 +679,7 @@ public final class StatusServiceGrpc {
      * </pre>
      */
     public com.google.common.util.concurrent.ListenableFuture<io.gitpod.supervisor.api.Status.ResourcesStatusResponse> resourcesStatus(
-        io.gitpod.supervisor.api.Status.ResourcesStatuRequest request) {
+        io.gitpod.supervisor.api.Status.ResourcesStatusRequest request) {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getResourcesStatusMethod(), getCallOptions()), request);
     }
@@ -735,7 +735,7 @@ public final class StatusServiceGrpc {
               (io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Status.TasksStatusResponse>) responseObserver);
           break;
         case METHODID_RESOURCES_STATUS:
-          serviceImpl.resourcesStatus((io.gitpod.supervisor.api.Status.ResourcesStatuRequest) request,
+          serviceImpl.resourcesStatus((io.gitpod.supervisor.api.Status.ResourcesStatusRequest) request,
               (io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Status.ResourcesStatusResponse>) responseObserver);
           break;
         default:

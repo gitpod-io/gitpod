@@ -16,7 +16,7 @@ func GetWorkspaceResources(ctx context.Context) (*supervisor.ResourcesStatusResp
 		return nil, err
 	}
 	client := supervisor.NewStatusServiceClient(conn)
-	workspaceResources, workspaceResourcesError := client.ResourcesStatus(ctx, &supervisor.ResourcesStatuRequest{})
+	workspaceResources, workspaceResourcesError := client.ResourcesStatus(ctx, &supervisor.ResourcesStatusRequest{})
 
 	if workspaceResourcesError != nil {
 		return nil, workspaceResourcesError

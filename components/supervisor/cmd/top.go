@@ -39,7 +39,7 @@ var topCmd = &cobra.Command{
 			status, err = supervisor.Top(ctx)
 		} else {
 			client := api.NewStatusServiceClient(dialSupervisor())
-			status, err = client.ResourcesStatus(ctx, &api.ResourcesStatuRequest{})
+			status, err = client.ResourcesStatus(ctx, &api.ResourcesStatusRequest{})
 		}
 		if err != nil {
 			log.WithError(err).Fatal("failed to resolve")

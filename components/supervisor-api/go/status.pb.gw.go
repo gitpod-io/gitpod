@@ -372,7 +372,7 @@ func request_StatusService_TasksStatus_1(ctx context.Context, marshaler runtime.
 }
 
 func request_StatusService_ResourcesStatus_0(ctx context.Context, marshaler runtime.Marshaler, client StatusServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ResourcesStatuRequest
+	var protoReq ResourcesStatusRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := client.ResourcesStatus(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -381,7 +381,7 @@ func request_StatusService_ResourcesStatus_0(ctx context.Context, marshaler runt
 }
 
 func local_request_StatusService_ResourcesStatus_0(ctx context.Context, marshaler runtime.Marshaler, server StatusServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ResourcesStatuRequest
+	var protoReq ResourcesStatusRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := server.ResourcesStatus(ctx, &protoReq)

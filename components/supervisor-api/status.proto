@@ -73,7 +73,7 @@ service StatusService {
     }
 
     // ResourcesStatus provides workspace resources status information.
-    rpc ResourcesStatus(ResourcesStatuRequest) returns (ResourcesStatusResponse) {
+    rpc ResourcesStatus(ResourcesStatusRequest) returns (ResourcesStatusResponse) {
         option (google.api.http) = {
             get: "/v1/status/resources"
         };
@@ -139,8 +139,8 @@ message PortsStatusResponse {
 }
 
 enum PortVisibility {
-    private = 0;
-    public = 1;
+    private_visibility = 0;
+    public_visibility = 1;
 }
 enum OnPortExposedAction {
     ignore = 0;
@@ -228,7 +228,7 @@ message TaskPresentation {
     string open_mode = 3;
 }
 
-message ResourcesStatuRequest {
+message ResourcesStatusRequest {
 
 }
 message ResourcesStatusResponse {

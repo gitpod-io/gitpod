@@ -13986,30 +13986,30 @@ public final class Status {
 
   }
 
-  public interface ResourcesStatuRequestOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:supervisor.ResourcesStatuRequest)
+  public interface ResourcesStatusRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.ResourcesStatusRequest)
       com.google.protobuf.MessageOrBuilder {
   }
   /**
-   * Protobuf type {@code supervisor.ResourcesStatuRequest}
+   * Protobuf type {@code supervisor.ResourcesStatusRequest}
    */
-  public static final class ResourcesStatuRequest extends
+  public static final class ResourcesStatusRequest extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:supervisor.ResourcesStatuRequest)
-      ResourcesStatuRequestOrBuilder {
+      // @@protoc_insertion_point(message_implements:supervisor.ResourcesStatusRequest)
+      ResourcesStatusRequestOrBuilder {
   private static final long serialVersionUID = 0L;
-    // Use ResourcesStatuRequest.newBuilder() to construct.
-    private ResourcesStatuRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+    // Use ResourcesStatusRequest.newBuilder() to construct.
+    private ResourcesStatusRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
-    private ResourcesStatuRequest() {
+    private ResourcesStatusRequest() {
     }
 
     @java.lang.Override
     @SuppressWarnings({"unused"})
     protected java.lang.Object newInstance(
         UnusedPrivateParameter unused) {
-      return new ResourcesStatuRequest();
+      return new ResourcesStatusRequest();
     }
 
     @java.lang.Override
@@ -14017,7 +14017,7 @@ public final class Status {
     getUnknownFields() {
       return this.unknownFields;
     }
-    private ResourcesStatuRequest(
+    private ResourcesStatusRequest(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -14058,15 +14058,15 @@ public final class Status {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatuRequest_descriptor;
+      return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatusRequest_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatuRequest_fieldAccessorTable
+      return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatusRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              io.gitpod.supervisor.api.Status.ResourcesStatuRequest.class, io.gitpod.supervisor.api.Status.ResourcesStatuRequest.Builder.class);
+              io.gitpod.supervisor.api.Status.ResourcesStatusRequest.class, io.gitpod.supervisor.api.Status.ResourcesStatusRequest.Builder.class);
     }
 
     private byte memoizedIsInitialized = -1;
@@ -14102,10 +14102,10 @@ public final class Status {
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof io.gitpod.supervisor.api.Status.ResourcesStatuRequest)) {
+      if (!(obj instanceof io.gitpod.supervisor.api.Status.ResourcesStatusRequest)) {
         return super.equals(obj);
       }
-      io.gitpod.supervisor.api.Status.ResourcesStatuRequest other = (io.gitpod.supervisor.api.Status.ResourcesStatuRequest) obj;
+      io.gitpod.supervisor.api.Status.ResourcesStatusRequest other = (io.gitpod.supervisor.api.Status.ResourcesStatusRequest) obj;
 
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
@@ -14123,69 +14123,69 @@ public final class Status {
       return hash;
     }
 
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(byte[] data)
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(java.io.InputStream input)
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseDelimitedFrom(java.io.InputStream input)
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseDelimitedFrom(
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest parseFrom(
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -14198,7 +14198,7 @@ public final class Status {
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(io.gitpod.supervisor.api.Status.ResourcesStatuRequest prototype) {
+    public static Builder newBuilder(io.gitpod.supervisor.api.Status.ResourcesStatusRequest prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @java.lang.Override
@@ -14214,26 +14214,26 @@ public final class Status {
       return builder;
     }
     /**
-     * Protobuf type {@code supervisor.ResourcesStatuRequest}
+     * Protobuf type {@code supervisor.ResourcesStatusRequest}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:supervisor.ResourcesStatuRequest)
-        io.gitpod.supervisor.api.Status.ResourcesStatuRequestOrBuilder {
+        // @@protoc_insertion_point(builder_implements:supervisor.ResourcesStatusRequest)
+        io.gitpod.supervisor.api.Status.ResourcesStatusRequestOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatuRequest_descriptor;
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatusRequest_descriptor;
       }
 
       @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatuRequest_fieldAccessorTable
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatusRequest_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                io.gitpod.supervisor.api.Status.ResourcesStatuRequest.class, io.gitpod.supervisor.api.Status.ResourcesStatuRequest.Builder.class);
+                io.gitpod.supervisor.api.Status.ResourcesStatusRequest.class, io.gitpod.supervisor.api.Status.ResourcesStatusRequest.Builder.class);
       }
 
-      // Construct using io.gitpod.supervisor.api.Status.ResourcesStatuRequest.newBuilder()
+      // Construct using io.gitpod.supervisor.api.Status.ResourcesStatusRequest.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -14257,17 +14257,17 @@ public final class Status {
       @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatuRequest_descriptor;
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_ResourcesStatusRequest_descriptor;
       }
 
       @java.lang.Override
-      public io.gitpod.supervisor.api.Status.ResourcesStatuRequest getDefaultInstanceForType() {
-        return io.gitpod.supervisor.api.Status.ResourcesStatuRequest.getDefaultInstance();
+      public io.gitpod.supervisor.api.Status.ResourcesStatusRequest getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Status.ResourcesStatusRequest.getDefaultInstance();
       }
 
       @java.lang.Override
-      public io.gitpod.supervisor.api.Status.ResourcesStatuRequest build() {
-        io.gitpod.supervisor.api.Status.ResourcesStatuRequest result = buildPartial();
+      public io.gitpod.supervisor.api.Status.ResourcesStatusRequest build() {
+        io.gitpod.supervisor.api.Status.ResourcesStatusRequest result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -14275,8 +14275,8 @@ public final class Status {
       }
 
       @java.lang.Override
-      public io.gitpod.supervisor.api.Status.ResourcesStatuRequest buildPartial() {
-        io.gitpod.supervisor.api.Status.ResourcesStatuRequest result = new io.gitpod.supervisor.api.Status.ResourcesStatuRequest(this);
+      public io.gitpod.supervisor.api.Status.ResourcesStatusRequest buildPartial() {
+        io.gitpod.supervisor.api.Status.ResourcesStatusRequest result = new io.gitpod.supervisor.api.Status.ResourcesStatusRequest(this);
         onBuilt();
         return result;
       }
@@ -14315,16 +14315,16 @@ public final class Status {
       }
       @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof io.gitpod.supervisor.api.Status.ResourcesStatuRequest) {
-          return mergeFrom((io.gitpod.supervisor.api.Status.ResourcesStatuRequest)other);
+        if (other instanceof io.gitpod.supervisor.api.Status.ResourcesStatusRequest) {
+          return mergeFrom((io.gitpod.supervisor.api.Status.ResourcesStatusRequest)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(io.gitpod.supervisor.api.Status.ResourcesStatuRequest other) {
-        if (other == io.gitpod.supervisor.api.Status.ResourcesStatuRequest.getDefaultInstance()) return this;
+      public Builder mergeFrom(io.gitpod.supervisor.api.Status.ResourcesStatusRequest other) {
+        if (other == io.gitpod.supervisor.api.Status.ResourcesStatusRequest.getDefaultInstance()) return this;
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
@@ -14340,11 +14340,11 @@ public final class Status {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        io.gitpod.supervisor.api.Status.ResourcesStatuRequest parsedMessage = null;
+        io.gitpod.supervisor.api.Status.ResourcesStatusRequest parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (io.gitpod.supervisor.api.Status.ResourcesStatuRequest) e.getUnfinishedMessage();
+          parsedMessage = (io.gitpod.supervisor.api.Status.ResourcesStatusRequest) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -14366,41 +14366,41 @@ public final class Status {
       }
 
 
-      // @@protoc_insertion_point(builder_scope:supervisor.ResourcesStatuRequest)
+      // @@protoc_insertion_point(builder_scope:supervisor.ResourcesStatusRequest)
     }
 
-    // @@protoc_insertion_point(class_scope:supervisor.ResourcesStatuRequest)
-    private static final io.gitpod.supervisor.api.Status.ResourcesStatuRequest DEFAULT_INSTANCE;
+    // @@protoc_insertion_point(class_scope:supervisor.ResourcesStatusRequest)
+    private static final io.gitpod.supervisor.api.Status.ResourcesStatusRequest DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Status.ResourcesStatuRequest();
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Status.ResourcesStatusRequest();
     }
 
-    public static io.gitpod.supervisor.api.Status.ResourcesStatuRequest getDefaultInstance() {
+    public static io.gitpod.supervisor.api.Status.ResourcesStatusRequest getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
-    private static final com.google.protobuf.Parser<ResourcesStatuRequest>
-        PARSER = new com.google.protobuf.AbstractParser<ResourcesStatuRequest>() {
+    private static final com.google.protobuf.Parser<ResourcesStatusRequest>
+        PARSER = new com.google.protobuf.AbstractParser<ResourcesStatusRequest>() {
       @java.lang.Override
-      public ResourcesStatuRequest parsePartialFrom(
+      public ResourcesStatusRequest parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ResourcesStatuRequest(input, extensionRegistry);
+        return new ResourcesStatusRequest(input, extensionRegistry);
       }
     };
 
-    public static com.google.protobuf.Parser<ResourcesStatuRequest> parser() {
+    public static com.google.protobuf.Parser<ResourcesStatusRequest> parser() {
       return PARSER;
     }
 
     @java.lang.Override
-    public com.google.protobuf.Parser<ResourcesStatuRequest> getParserForType() {
+    public com.google.protobuf.Parser<ResourcesStatusRequest> getParserForType() {
       return PARSER;
     }
 
     @java.lang.Override
-    public io.gitpod.supervisor.api.Status.ResourcesStatuRequest getDefaultInstanceForType() {
+    public io.gitpod.supervisor.api.Status.ResourcesStatusRequest getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -16010,10 +16010,10 @@ public final class Status {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_TaskPresentation_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_supervisor_ResourcesStatuRequest_descriptor;
+    internal_static_supervisor_ResourcesStatusRequest_descriptor;
   private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_supervisor_ResourcesStatuRequest_fieldAccessorTable;
+      internal_static_supervisor_ResourcesStatusRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ResourcesStatusResponse_descriptor;
   private static final
@@ -16071,46 +16071,46 @@ public final class Status {
       "\0222\n\014presentation\030\004 \001(\0132\034.supervisor.Task" +
       "Presentation\"D\n\020TaskPresentation\022\014\n\004name" +
       "\030\001 \001(\t\022\017\n\007open_in\030\002 \001(\t\022\021\n\topen_mode\030\003 \001" +
-      "(\t\"\027\n\025ResourcesStatuRequest\"n\n\027Resources" +
-      "StatusResponse\022*\n\006memory\030\001 \001(\0132\032.supervi" +
-      "sor.ResourceStatus\022\'\n\003cpu\030\002 \001(\0132\032.superv" +
-      "isor.ResourceStatus\"-\n\016ResourceStatus\022\014\n" +
-      "\004used\030\001 \001(\003\022\r\n\005limit\030\002 \001(\003*C\n\rContentSou" +
-      "rce\022\016\n\nfrom_other\020\000\022\017\n\013from_backup\020\001\022\021\n\r" +
-      "from_prebuild\020\002*?\n\016PortVisibility\022\026\n\022pri" +
-      "vate_visibility\020\000\022\025\n\021public_visibility\020\001" +
-      "*e\n\023OnPortExposedAction\022\n\n\006ignore\020\000\022\020\n\014o" +
-      "pen_browser\020\001\022\020\n\014open_preview\020\002\022\n\n\006notif" +
-      "y\020\003\022\022\n\016notify_private\020\004*9\n\020PortAutoExpos" +
-      "ure\022\n\n\006trying\020\000\022\r\n\tsucceeded\020\001\022\n\n\006failed" +
-      "\020\002*1\n\tTaskState\022\013\n\007opening\020\000\022\013\n\007running\020" +
-      "\001\022\n\n\006closed\020\0022\304\007\n\rStatusService\022|\n\020Super" +
-      "visorStatus\022#.supervisor.SupervisorStatu" +
-      "sRequest\032$.supervisor.SupervisorStatusRe" +
-      "sponse\"\035\202\323\344\223\002\027\022\025/v1/status/supervisor\022\203\001" +
-      "\n\tIDEStatus\022\034.supervisor.IDEStatusReques" +
-      "t\032\035.supervisor.IDEStatusResponse\"9\202\323\344\223\0023" +
-      "\022\016/v1/status/ideZ!\022\037/v1/status/ide/wait/" +
-      "{wait=true}\022\227\001\n\rContentStatus\022 .supervis" +
-      "or.ContentStatusRequest\032!.supervisor.Con" +
-      "tentStatusResponse\"A\202\323\344\223\002;\022\022/v1/status/c" +
-      "ontentZ%\022#/v1/status/content/wait/{wait=" +
-      "true}\022l\n\014BackupStatus\022\037.supervisor.Backu" +
-      "pStatusRequest\032 .supervisor.BackupStatus" +
-      "Response\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022\225\001\n\013" +
-      "PortsStatus\022\036.supervisor.PortsStatusRequ" +
-      "est\032\037.supervisor.PortsStatusResponse\"C\202\323" +
-      "\344\223\002=\022\020/v1/status/portsZ)\022\'/v1/status/por" +
-      "ts/observe/{observe=true}0\001\022\225\001\n\013TasksSta" +
-      "tus\022\036.supervisor.TasksStatusRequest\032\037.su" +
-      "pervisor.TasksStatusResponse\"C\202\323\344\223\002=\022\020/v" +
-      "1/status/tasksZ)\022\'/v1/status/tasks/obser" +
-      "ve/{observe=true}0\001\022w\n\017ResourcesStatus\022!" +
-      ".supervisor.ResourcesStatuRequest\032#.supe" +
-      "rvisor.ResourcesStatusResponse\"\034\202\323\344\223\002\026\022\024" +
-      "/v1/status/resourcesBF\n\030io.gitpod.superv" +
-      "isor.apiZ*github.com/gitpod-io/gitpod/su" +
-      "pervisor/apib\006proto3"
+      "(\t\"\030\n\026ResourcesStatusRequest\"n\n\027Resource" +
+      "sStatusResponse\022*\n\006memory\030\001 \001(\0132\032.superv" +
+      "isor.ResourceStatus\022\'\n\003cpu\030\002 \001(\0132\032.super" +
+      "visor.ResourceStatus\"-\n\016ResourceStatus\022\014" +
+      "\n\004used\030\001 \001(\003\022\r\n\005limit\030\002 \001(\003*C\n\rContentSo" +
+      "urce\022\016\n\nfrom_other\020\000\022\017\n\013from_backup\020\001\022\021\n" +
+      "\rfrom_prebuild\020\002*?\n\016PortVisibility\022\026\n\022pr" +
+      "ivate_visibility\020\000\022\025\n\021public_visibility\020" +
+      "\001*e\n\023OnPortExposedAction\022\n\n\006ignore\020\000\022\020\n\014" +
+      "open_browser\020\001\022\020\n\014open_preview\020\002\022\n\n\006noti" +
+      "fy\020\003\022\022\n\016notify_private\020\004*9\n\020PortAutoExpo" +
+      "sure\022\n\n\006trying\020\000\022\r\n\tsucceeded\020\001\022\n\n\006faile" +
+      "d\020\002*1\n\tTaskState\022\013\n\007opening\020\000\022\013\n\007running" +
+      "\020\001\022\n\n\006closed\020\0022\305\007\n\rStatusService\022|\n\020Supe" +
+      "rvisorStatus\022#.supervisor.SupervisorStat" +
+      "usRequest\032$.supervisor.SupervisorStatusR" +
+      "esponse\"\035\202\323\344\223\002\027\022\025/v1/status/supervisor\022\203" +
+      "\001\n\tIDEStatus\022\034.supervisor.IDEStatusReque" +
+      "st\032\035.supervisor.IDEStatusResponse\"9\202\323\344\223\002" +
+      "3\022\016/v1/status/ideZ!\022\037/v1/status/ide/wait" +
+      "/{wait=true}\022\227\001\n\rContentStatus\022 .supervi" +
+      "sor.ContentStatusRequest\032!.supervisor.Co" +
+      "ntentStatusResponse\"A\202\323\344\223\002;\022\022/v1/status/" +
+      "contentZ%\022#/v1/status/content/wait/{wait" +
+      "=true}\022l\n\014BackupStatus\022\037.supervisor.Back" +
+      "upStatusRequest\032 .supervisor.BackupStatu" +
+      "sResponse\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022\225\001\n" +
+      "\013PortsStatus\022\036.supervisor.PortsStatusReq" +
+      "uest\032\037.supervisor.PortsStatusResponse\"C\202" +
+      "\323\344\223\002=\022\020/v1/status/portsZ)\022\'/v1/status/po" +
+      "rts/observe/{observe=true}0\001\022\225\001\n\013TasksSt" +
+      "atus\022\036.supervisor.TasksStatusRequest\032\037.s" +
+      "upervisor.TasksStatusResponse\"C\202\323\344\223\002=\022\020/" +
+      "v1/status/tasksZ)\022\'/v1/status/tasks/obse" +
+      "rve/{observe=true}0\001\022x\n\017ResourcesStatus\022" +
+      "\".supervisor.ResourcesStatusRequest\032#.su" +
+      "pervisor.ResourcesStatusResponse\"\034\202\323\344\223\002\026" +
+      "\022\024/v1/status/resourcesBF\n\030io.gitpod.supe" +
+      "rvisor.apiZ*github.com/gitpod-io/gitpod/" +
+      "supervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -16232,11 +16232,11 @@ public final class Status {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_TaskPresentation_descriptor,
         new java.lang.String[] { "Name", "OpenIn", "OpenMode", });
-    internal_static_supervisor_ResourcesStatuRequest_descriptor =
+    internal_static_supervisor_ResourcesStatusRequest_descriptor =
       getDescriptor().getMessageTypes().get(17);
-    internal_static_supervisor_ResourcesStatuRequest_fieldAccessorTable = new
+    internal_static_supervisor_ResourcesStatusRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_supervisor_ResourcesStatuRequest_descriptor,
+        internal_static_supervisor_ResourcesStatusRequest_descriptor,
         new java.lang.String[] { });
     internal_static_supervisor_ResourcesStatusResponse_descriptor =
       getDescriptor().getMessageTypes().get(18);
