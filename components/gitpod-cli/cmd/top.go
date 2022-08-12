@@ -45,11 +45,12 @@ func outputTable(workspaceResources *supervisor.ResourcesStatusResponse) {
 	table.Render()
 }
 
+// TODO: retrieve thresholds from supervisor once we implement this: https://github.com/gitpod-io/gitpod/issues/12075
 func getColor(value int64) int {
 	switch {
-	case value >= 85:
+	case value >= 95:
 		return tablewriter.FgRedColor
-	case value >= 65:
+	case value >= 80:
 		return tablewriter.FgYellowColor
 	default:
 		return tablewriter.FgHiGreenColor
