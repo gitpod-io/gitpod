@@ -124,6 +124,13 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                         this.setState({ desktopIde: { link: event.data.state.desktopIdeLink, label, clientID } });
                     }
                 }
+                if (
+                    event.data.type === "$openDesktopLink" &&
+                    "link" in event.data &&
+                    typeof event.data["link"] === "string"
+                ) {
+                    this.openDesktopLink(event.data["link"] as string);
+                }
             };
             window.addEventListener("message", setStateEventListener, false);
             this.toDispose.push({
@@ -390,6 +397,23 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
     }
 
+    private openDesktopLink(link: string) {
+        let redirect = false;
+        try {
+            const desktopLink = new URL(link);
+            redirect = desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
+        } catch (e) {
+            console.error("invalid desktop link:", e);
+        }
+        // redirect only if points to desktop application
+        // don't navigate browser to another page
+        if (redirect) {
+            window.location.href = link;
+        } else {
+            window.open(link, "_blank", "noopener");
+        }
+    }
+
     render() {
         const { error } = this.state;
         const isPrebuild = this.state.workspace?.type === "prebuild";
@@ -522,23 +546,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         <Arrow direction={"down"} />
                                     </button>
                                 </ContextMenu>
-                                <button
-                                    onClick={() => {
-                                        let redirect = false;
-                                        try {
-                                            const desktopLink = new URL(openLink);
-                                            redirect =
-                                                desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
-                                        } catch {}
-                                        if (redirect) {
-                                            window.location.href = openLink;
-                                        } else {
-                                            window.open(openLink, "_blank", "noopener");
-                                        }
-                                    }}
-                                >
-                                    {openLinkLabel}
-                                </button>
+                                <button onClick={() => this.openDesktopLink(openLink)}>{openLinkLabel}</button>
                             </div>
                             {!useLatest && (
                                 <Alert type="info" className="mt-4 w-96">
