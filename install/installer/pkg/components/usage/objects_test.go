@@ -4,12 +4,14 @@
 package usage
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestObjects_NotRenderedByDefault(t *testing.T) {

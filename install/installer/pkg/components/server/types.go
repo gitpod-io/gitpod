@@ -6,7 +6,7 @@ package server
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/util"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 )
 
 // These types are from TypeScript files

@@ -9,13 +9,13 @@ import (
 	"strings"
 
 	"github.com/docker/distribution/reference"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
-
 	"helm.sh/helm/v3/pkg/cli/values"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
+
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
 // Renderable turns the config into a set of Kubernetes runtime objects

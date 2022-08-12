@@ -26,6 +26,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	hasOpenVSXProxy := true
 
 	// todo(sje): find this value
+	//nolint:typecheck
 	openVSXProxyUrl := "vsx-proxy-host"
 	if hasOpenVSXProxy {
 		openVSXProxyUrl = fmt.Sprintf("open-vsx.%s", ctx.Config.Domain)

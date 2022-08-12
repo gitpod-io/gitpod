@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/gitpod-io/gitpod/installer/pkg/config"
-	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	kots "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/config"
+	//nolint:typecheck
+	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 )
 
 var mirrorKotsOpts struct {

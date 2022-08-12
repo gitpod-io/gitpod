@@ -8,16 +8,15 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
-	wsmancfg "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
+	wsmancfg "github.com/gitpod-io/gitpod/ws-manager/api/config"
 )
 
 func TestBuildWorkspaceTemplates(t *testing.T) {
@@ -28,8 +27,8 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 	tests := []struct {
 		Name              string
 		ClassName         string
-		Config            *configv1.WorkspaceTemplates
-		ContainerRegistry *configv1.ContainerRegistry
+		Config            *config.WorkspaceTemplates
+		ContainerRegistry *config.ContainerRegistry
 		Expectation       Expectation
 	}{
 		{
@@ -40,13 +39,13 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 		{
 			Name:        "empty templates",
 			ClassName:   "",
-			Config:      &configv1.WorkspaceTemplates{},
+			Config:      &config.WorkspaceTemplates{},
 			Expectation: Expectation{},
 		},
 		{
 			Name:      "default tpl",
 			ClassName: "",
-			Config: &configv1.WorkspaceTemplates{
+			Config: &config.WorkspaceTemplates{
 				Default: &corev1.Pod{},
 			},
 			Expectation: Expectation{
@@ -57,7 +56,7 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 		{
 			Name:      "regular tpl",
 			ClassName: "",
-			Config: &configv1.WorkspaceTemplates{
+			Config: &config.WorkspaceTemplates{
 				Regular: &corev1.Pod{},
 			},
 			Expectation: Expectation{
@@ -72,7 +71,7 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 		{
 			Name:      "prebuild tpl",
 			ClassName: "",
-			Config: &configv1.WorkspaceTemplates{
+			Config: &config.WorkspaceTemplates{
 				Prebuild: &corev1.Pod{},
 			},
 			Expectation: Expectation{
@@ -87,7 +86,7 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 		{
 			Name:      "imgbuild tpl",
 			ClassName: "",
-			Config: &configv1.WorkspaceTemplates{
+			Config: &config.WorkspaceTemplates{
 				ImageBuild: &corev1.Pod{},
 			},
 			Expectation: Expectation{
@@ -102,7 +101,7 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 		{
 			Name:      "regular class tpl",
 			ClassName: "awesome-class",
-			Config: &configv1.WorkspaceTemplates{
+			Config: &config.WorkspaceTemplates{
 				Regular: &corev1.Pod{},
 			},
 			Expectation: Expectation{
@@ -125,10 +124,10 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 			)
 
 			if test.ContainerRegistry == nil {
-				test.ContainerRegistry = &configv1.ContainerRegistry{InCluster: pointer.Bool(true)}
+				test.ContainerRegistry = &config.ContainerRegistry{InCluster: pointer.Bool(true)}
 			}
 
-			act.TplConfig, tpls, err = buildWorkspaceTemplates(&common.RenderContext{Config: configv1.Config{
+			act.TplConfig, tpls, err = buildWorkspaceTemplates(&common.RenderContext{Config: config.Config{
 				ContainerRegistry: *test.ContainerRegistry,
 			}}, test.Config, test.ClassName)
 			if err != nil {
@@ -175,7 +174,7 @@ func TestWorkspaceURLTemplates(t *testing.T) {
 		{
 			Name:                             "With old default installation shortname for existing self-hosted installations",
 			Domain:                           "example.com",
-			InstallationShortname:            configv1.InstallationShortNameOldDefault,
+			InstallationShortname:            config.InstallationShortNameOldDefault,
 			ExpectedWorkspaceUrlTemplate:     "https://{{ .Prefix }}.ws.example.com",
 			ExpectedWorkspacePortURLTemplate: "https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.example.com",
 		},
@@ -185,10 +184,10 @@ func TestWorkspaceURLTemplates(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx, err := common.NewRenderContext(config.Config{
 				Domain: test.Domain,
-				Metadata: configv1.Metadata{
+				Metadata: config.Metadata{
 					InstallationShortname: test.InstallationShortname,
 				},
-				ObjectStorage: configv1.ObjectStorage{
+				ObjectStorage: config.ObjectStorage{
 					InCluster: pointer.Bool(true),
 				},
 			}, versions.Manifest{}, "test_namespace")
