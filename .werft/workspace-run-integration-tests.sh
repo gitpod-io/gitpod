@@ -60,7 +60,7 @@ git remote set-url origin https://oauth2:"${ROBOQUAT_TOKEN}"@github.com/gitpod-i
 
 werft log phase "build preview environment" "build preview environment"
 
-# Create branch off main and ask Werft to create a preview environment for it
+# Create a new branch and asks Werft to create a preview environment for it
 ( \
     git checkout -B "${BRANCH}" && \
     echo "integration test" >> README.md && \
@@ -72,6 +72,12 @@ werft log phase "build preview environment" "build preview environment"
 
 trap cleanup SIGINT SIGTERM EXIT
 
+# Our current approach will start two Werft jobs. One triggered by Werft by the push to the branch and one
+# due to the `werft run` invocation above - the manual invocation is needed as we don't enable preview
+# environments by default.
+#
+# Below we find the job id of the the build that has 'with-preview' set. We don't care about the other job.
+#
 BUILD_ID=$(werft job list repo.ref==refs/heads/"${BRANCH}" -o yaml | yq4 '.result[] | select(.metadata.annotations[].key == "with-preview") | .name' | head -1)
 until [ "$BUILD_ID" != "" ]
 do
@@ -96,7 +102,17 @@ done
 
 job_success="$(werft job get "${BUILD_ID}"  -o json | jq --raw-output '.conditions.success')"
 if [[ ${job_success} == "null" ]]; then
-    echo "build failed" | werft log slice "build preview environment"
+    (
+      echo "The build job for the preview environment failed." && \
+      echo ""  && \
+      echo "See the logs for the job here for details on why: ${job_url}" && \
+      echo ""  && \
+      echo "While this error is unrelated to our integration tests it does mean we can't continue as we don't have a target to run integration tests against without a working preview environment."  && \
+      echo ""  && \
+      echo "Marking this job as failed. Please retry the integration test job." && \
+      echo "" \
+    ) | werft log slice "build preview environment"
+    werft log slice "build preview environment" --fail "Build job for preview environment failed"
     exit 1
 fi
 
