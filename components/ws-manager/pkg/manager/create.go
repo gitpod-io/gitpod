@@ -26,6 +26,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -367,9 +368,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		attemptingToCreatePodAnnotation:         "true",
 		// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 		"container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
-		// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
-		// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
-		"seccomp.security.alpha.kubernetes.io/pod": m.Config.SeccompProfile,
 		// prevent cluster-autoscaler from removing a node
 		// https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-types-of-pods-can-prevent-ca-from-removing-a-node
 		"cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
@@ -514,7 +512,14 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
 			Affinity:                     affinity,
-			SecurityContext:              &corev1.PodSecurityContext{},
+			SecurityContext: &corev1.PodSecurityContext{
+				// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
+				// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
+				SeccompProfile: &corev1.SeccompProfile{
+					Type:             corev1.SeccompProfileTypeLocalhost,
+					LocalhostProfile: pointer.String(m.Config.SeccompProfile),
+				},
+			},
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},

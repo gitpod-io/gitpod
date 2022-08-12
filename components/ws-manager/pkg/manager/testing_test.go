@@ -33,7 +33,7 @@ import (
 func forTestingOnlyManagerConfig() config.Configuration {
 	return config.Configuration{
 		Namespace:                "default",
-		SeccompProfile:           "localhost/workspace-default",
+		SeccompProfile:           "workspace-default",
 		HeartbeatInterval:        util.Duration(30 * time.Second),
 		WorkspaceHostPath:        "/tmp/workspaces",
 		GitpodHostURL:            "gitpod.io",
