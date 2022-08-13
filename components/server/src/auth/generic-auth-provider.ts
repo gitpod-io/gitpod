@@ -438,8 +438,7 @@ export class GenericAuthProvider implements AuthProvider {
                 ...defaultLogPayload,
                 err,
             });
-            response.redirect(this.getSorryUrl(message));
-            return;
+            return this.sendCompletionRedirectWithError(response, { error: `${message} ${err.message}` });
         }
 
         if (flowContext) {
