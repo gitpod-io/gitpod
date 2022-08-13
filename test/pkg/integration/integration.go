@@ -294,7 +294,7 @@ func buildAgent(name string) (loc string, err error) {
 	}
 	f.Close()
 
-	cmd := exec.Command("go", "build", "-trimpath", "-ldflags='-buildid= -w -s'", "-o", f.Name(), src)
+	cmd := exec.Command("go", "build", "-trimpath", "-ldflags", "-buildid= -w -s", "-o", f.Name(), src)
 	cmd.Env = append(os.Environ(),
 		"CGO_ENABLED=0",
 	)
