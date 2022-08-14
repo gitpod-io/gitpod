@@ -16,7 +16,6 @@ import {
 } from "@gitpod/gitpod-protocol/lib/usage";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
-import moment from "moment";
 import Pagination from "../Pagination/Pagination";
 import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -139,6 +138,17 @@ function TeamUsage() {
         return rows;
     };
 
+    const displayTime = (time: string) => {
+        const options: Intl.DateTimeFormatOptions = {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+        };
+        return new Date(time).toLocaleDateString(undefined, options).replace("at ", "");
+    };
+
     const lastResultOnCurrentPage = currentPage * resultsPerPage;
     const firstResultOnCurrentPage = lastResultOnCurrentPage - resultsPerPage;
     const totalNumberOfPages = Math.ceil(billedUsage.length / resultsPerPage);
@@ -250,7 +260,7 @@ function TeamUsage() {
                                                 </div>
                                                 <div className="my-auto">
                                                     <span className="text-gray-400">
-                                                        {moment(new Date(usage.startTime).toDateString()).fromNow()}
+                                                        {displayTime(usage.startTime)}
                                                     </span>
                                                 </div>
                                             </div>
