@@ -31,7 +31,7 @@ function TeamUsage() {
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [billedUsage, setBilledUsage] = useState<BillableSession[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [resultsPerPage] = useState(15);
+    const [resultsPerPage] = useState(50);
     const [errorMessage, setErrorMessage] = useState("");
     const today = new Date();
     const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
