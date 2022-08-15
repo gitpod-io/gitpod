@@ -3216,6 +3216,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async listBilledUsage(ctx: TraceContext, req: BillableSessionRequest): Promise<BillableSession[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+
     async getSpendingLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }

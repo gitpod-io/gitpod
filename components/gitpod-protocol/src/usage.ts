@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceType } from "./protocol";
+import { User, WorkspaceType } from "./protocol";
 
 export interface BillableSession {
     // The id of the one paying the bill
@@ -33,6 +33,11 @@ export interface BillableSession {
 
     // TODO - maybe
     projectId?: string;
+}
+
+export interface ExtendedBillableSession extends BillableSession {
+    contextURL?: string;
+    user?: User;
 }
 
 export interface BillableSessionRequest {
