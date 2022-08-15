@@ -1226,8 +1226,12 @@ export class WorkspaceStarter {
                 message = err.message;
             }
 
+            // This instance's image build "failed" as well, so mark it as such.
+            const now = new Date().toISOString();
             instance = await this.workspaceDb.trace({ span }).updateInstancePartial(instance.id, {
-                status: { ...instance.status, phase: "building", conditions: { failed: message }, message },
+                status: { ...instance.status, phase: "stopped", conditions: { failed: message }, message },
+                stoppedTime: now,
+                stoppingTime: now,
             });
             await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
 
