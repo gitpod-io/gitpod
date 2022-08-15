@@ -9,9 +9,9 @@ import { useLocation } from "react-router";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import {
-    BillableSession,
     BillableSessionRequest,
     BillableWorkspaceType,
+    ExtendedBillableSession,
     SortOrder,
 } from "@gitpod/gitpod-protocol/lib/usage";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
@@ -22,14 +22,16 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ReactComponent as CreditsSvg } from "../images/credits.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as SortArrow } from "../images/sort-arrow.svg";
+import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { toRemoteURL } from "../projects/render-utils";
 
 function TeamUsage() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
-    const [billedUsage, setBilledUsage] = useState<BillableSession[]>([]);
+    const [billedUsage, setBilledUsage] = useState<ExtendedBillableSession[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [resultsPerPage] = useState(50);
     const [errorMessage, setErrorMessage] = useState("");
@@ -55,6 +57,9 @@ function TeamUsage() {
         if (!team) {
             return;
         }
+        if (billedUsage.length === 0) {
+            setIsLoading(true);
+        }
         (async () => {
             const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
             const request: BillableSessionRequest = {
@@ -64,7 +69,8 @@ function TeamUsage() {
                 to: endDateOfBillMonth,
             };
             try {
-                const billedUsageResult = await getGitpodService().server.listBilledUsage(request);
+                const { server } = getGitpodService();
+                const billedUsageResult = await server.listBilledUsage(request);
                 setBilledUsage(billedUsageResult);
             } catch (error) {
                 if (error.code === ErrorCodes.PERMISSION_DENIED) {
@@ -92,7 +98,7 @@ function TeamUsage() {
         return "Prebuild";
     };
 
-    const getMinutes = (usage: BillableSession) => {
+    const getMinutes = (usage: ExtendedBillableSession) => {
         let end;
         if (!usage.endTime) {
             end = new Date(Date.now()).getTime();
@@ -141,7 +147,7 @@ function TeamUsage() {
     const displayTime = (time: string) => {
         const options: Intl.DateTimeFormatOptions = {
             day: "numeric",
-            month: "long",
+            month: "short",
             year: "numeric",
             hour: "numeric",
             minute: "numeric",
@@ -184,7 +190,7 @@ function TeamUsage() {
                                 </div>
                             </div>
                         </div>
-                        {billedUsage.length === 0 && !errorMessage && !isLoading && (
+                        {!isLoading && billedUsage.length === 0 && !errorMessage && (
                             <div className="flex flex-col w-full mb-8">
                                 <h3 className="text-center text-gray-500 mt-8">No sessions found.</h3>
                                 <p className="text-center text-gray-500 mt-1">
@@ -212,26 +218,23 @@ function TeamUsage() {
                         {billedUsage.length > 0 && !isLoading && (
                             <div className="flex flex-col w-full mb-8">
                                 <ItemsList className="mt-2 text-gray-500">
-                                    <Item header={false} className="grid grid-cols-5 bg-gray-100 mb-5">
-                                        <ItemField className="my-auto">
+                                    <Item header={false} className="grid grid-cols-12 gap-x-3 bg-gray-100 mb-5">
+                                        <ItemField className="col-span-2 my-auto">
                                             <span>Type</span>
                                         </ItemField>
-                                        <ItemField className="my-auto">
-                                            <span>Class</span>
+                                        <ItemField className="col-span-5 my-auto">
+                                            <span>ID</span>
                                         </ItemField>
                                         <ItemField className="my-auto">
-                                            <span>Usage</span>
-                                        </ItemField>
-                                        <ItemField className="flex my-auto">
-                                            <CreditsSvg className="my-auto mr-1" />
                                             <span>Credits</span>
                                         </ItemField>
-                                        <ItemField className="my-auto cursor-pointer">
+                                        <ItemField className="my-auto" />
+                                        <ItemField className="col-span-3 my-auto cursor-pointer">
                                             <span
                                                 className="flex my-auto"
                                                 onClick={() => setIsStartedTimeDescending(!isStartedTimeDescending)}
                                             >
-                                                Started
+                                                Timestamp
                                                 <SortArrow
                                                     className={`h-4 w-4 my-auto ${
                                                         isStartedTimeDescending ? "" : " transform rotate-180"
@@ -241,30 +244,66 @@ function TeamUsage() {
                                         </ItemField>
                                     </Item>
                                     {currentPaginatedResults &&
-                                        currentPaginatedResults.map((usage) => (
-                                            <div
-                                                key={usage.instanceId}
-                                                className="flex p-3 grid grid-cols-5 justify-between transition ease-in-out rounded-xl focus:bg-gitpod-kumquat-light"
-                                            >
-                                                <div className="my-auto">
-                                                    <span>{getType(usage.workspaceType)}</span>
+                                        currentPaginatedResults.map((usage) => {
+                                            return (
+                                                <div
+                                                    key={usage.instanceId}
+                                                    className="flex p-3 grid grid-cols-12 gap-x-3 justify-between transition ease-in-out rounded-xl focus:bg-gitpod-kumquat-light"
+                                                >
+                                                    <div className="flex flex-col col-span-2 my-auto">
+                                                        <span className="text-gray-700 dark:text-gray-400">
+                                                            {getType(usage.workspaceType)}
+                                                        </span>
+                                                        <span className="text-sm text-gray-400 dark:text-gray-600">
+                                                            {usage.workspaceClass}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col col-span-5 my-auto">
+                                                        <span className="truncate text-gray-700 dark:text-gray-400">
+                                                            {usage.workspaceId}
+                                                        </span>
+                                                        <span className="text-sm truncate text-gray-400 dark:text-gray-600">
+                                                            {usage.contextURL && toRemoteURL(usage.contextURL)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col my-auto">
+                                                        <span className="text-right text-gray-700 dark:text-gray-400">
+                                                            {usage.credits.toFixed(1)}
+                                                        </span>
+                                                        <span className="text-right truncate text-sm text-gray-400 dark:text-gray-600">
+                                                            {getMinutes(usage)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="my-auto" />
+                                                    <div className="flex flex-col col-span-3 my-auto">
+                                                        <span className="text-gray-400 truncate">
+                                                            {displayTime(usage.startTime)}
+                                                        </span>
+                                                        <div className="flex">
+                                                            {usage.workspaceType === "prebuild" ? (
+                                                                <UsageIcon className="my-auto" />
+                                                            ) : (
+                                                                ""
+                                                            )}
+                                                            {usage.workspaceType === "prebuild" ? (
+                                                                <span className="text-sm text-gray-400">Gitpod</span>
+                                                            ) : (
+                                                                <div className="flex">
+                                                                    <img
+                                                                        className="my-auto rounded-full w-4 h-4 inline-block align-text-bottom mr-2 overflow-hidden"
+                                                                        src={usage.user?.avatarUrl || ""}
+                                                                        alt="user avatar"
+                                                                    />
+                                                                    <span className="text-sm text-gray-400">
+                                                                        {usage.user?.name}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="my-auto">
-                                                    <span className="text-gray-400">{usage.workspaceClass}</span>
-                                                </div>
-                                                <div className="my-auto">
-                                                    <span className="text-gray-700">{getMinutes(usage)}</span>
-                                                </div>
-                                                <div className="my-auto">
-                                                    <span className="text-gray-700">{usage.credits.toFixed(1)}</span>
-                                                </div>
-                                                <div className="my-auto">
-                                                    <span className="text-gray-400">
-                                                        {displayTime(usage.startTime)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                 </ItemsList>
                                 {billedUsage.length > resultsPerPage && (
                                     <Pagination

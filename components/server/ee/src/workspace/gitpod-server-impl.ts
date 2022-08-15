@@ -71,7 +71,7 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import { BillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol/lib/usage";
+import { ExtendedBillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol/lib/usage";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -2147,7 +2147,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return result;
     }
 
-    async listBilledUsage(ctx: TraceContext, req: BillableSessionRequest): Promise<BillableSession[]> {
+    async listBilledUsage(ctx: TraceContext, req: BillableSessionRequest): Promise<ExtendedBillableSession[]> {
         const { attributionId, startedTimeOrder, from, to } = req;
         traceAPIParams(ctx, { attributionId });
         let timestampFrom;
@@ -2171,8 +2171,18 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             timestampTo,
         );
         const sessions = response.getSessionsList().map((s) => UsageService.mapBilledSession(s));
-
-        return sessions;
+        const extendedSessions = await Promise.all(
+            sessions.map(async (session) => {
+                let user;
+                const ws = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(session.workspaceId);
+                if (session.workspaceType === "regular" && session.userId) {
+                    user = await this.userDB.findUserById(session.userId);
+                    return Object.assign(session, { contextURL: ws?.contextURL, user: user });
+                }
+                return Object.assign(session, { contextURL: ws?.contextURL });
+            }),
+        );
+        return extendedSessions;
     }
 
     protected async guardCostCenterAccess(
