@@ -8,7 +8,10 @@ You can find a short explanation of this tool in this [loom video](https://www.l
 
 ## How to run a benchmark
 - Ensure your kubeconfig has the configuration for the cluster you want to benchmark. You can use kubecdl to update your kubeconfig with the cluster information
-`kubecdl -p workspace-clusters [cluster-name]`
+```console
+$ kubecdl -p workspace-clusters [cluster-name]
+$ kubectx [cluster-name]
+```
 - Fetch the TLS config from ws-manager
 `gpctl clusters get-tls-config`
 - Port-forward ws-manager
