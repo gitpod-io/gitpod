@@ -415,6 +415,18 @@ class BillingModeSpec {
                     canUpgradeToUBB: true,
                 },
             },
+            {
+                name: "team: chargbee paid (old TeamSubscription, cancelled)",
+                subject: team(),
+                config: {
+                    enablePayment: true,
+                    usageBasedPricingEnabled: true,
+                    subscriptions: [teamSubscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, endDate)],
+                },
+                expectation: {
+                    mode: "usage-based",
+                },
+            },
             // team: usage-based
             {
                 name: "team: usage-based free",
