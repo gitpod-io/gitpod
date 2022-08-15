@@ -108,8 +108,9 @@ class BillingModeSpec {
             };
         }
 
-        function subscription(plan: Plan, cancellationDate?: string, endDate?: string): Subscription {
-            return Subscription.create({
+        type TestSubscription = Subscription & { type: "personal" | "team-old" | "team2" };
+        function subscription(plan: Plan, cancellationDate?: string, endDate?: string): TestSubscription {
+            const s = Subscription.create({
                 startDate: creationDate,
                 userId,
                 planId: plan.chargebeeId,
@@ -117,13 +118,38 @@ class BillingModeSpec {
                 cancellationDate,
                 endDate: endDate || cancellationDate,
             });
+            return {
+                ...s,
+                type: "personal",
+            };
+        }
+        function teamSubscription(plan: Plan, cancellationDate?: string, endDate?: string): TestSubscription {
+            const s = subscription(plan, cancellationDate, endDate);
+            return {
+                ...s,
+                type: "team-old",
+            };
+        }
+        function teamSubscription2(plan: Plan, cancellationDate?: string, endDate?: string): TestSubscription {
+            const s = teamSubscription(plan, cancellationDate, endDate);
+            return {
+                ...s,
+                type: "team2",
+            };
         }
 
-        function stripeSubscription(team: boolean = false) {
+        function stripeSubscription() {
             return {
                 id: "stripe-123",
-                customer: team ? stripeTeamCustomerId : stripeCustomerId,
-                isTeam: team,
+                customer: stripeCustomerId,
+            };
+        }
+
+        function stripeTeamSubscription() {
+            return {
+                id: "stripe-123",
+                customer: stripeTeamCustomerId,
+                isTeam: true,
             };
         }
 
@@ -133,8 +159,8 @@ class BillingModeSpec {
             config: {
                 enablePayment: boolean;
                 usageBasedPricingEnabled: boolean;
-                subscriptions?: Subscription[];
-                stripeSubscription?: StripeSubscription & { isTeam: boolean };
+                subscriptions?: TestSubscription[];
+                stripeSubscription?: StripeSubscription & { isTeam?: boolean };
             };
             expectation: BillingMode;
             only?: true;
@@ -193,7 +219,7 @@ class BillingModeSpec {
                 config: {
                     enablePayment: true,
                     usageBasedPricingEnabled: false,
-                    subscriptions: [subscription(Plans.TEAM_PROFESSIONAL_EUR)],
+                    subscriptions: [teamSubscription(Plans.TEAM_PROFESSIONAL_EUR)],
                 },
                 expectation: {
                     mode: "chargebee",
@@ -205,7 +231,7 @@ class BillingModeSpec {
                 config: {
                     enablePayment: true,
                     usageBasedPricingEnabled: false,
-                    subscriptions: [subscription(Plans.PERSONAL_EUR), subscription(Plans.TEAM_PROFESSIONAL_EUR)],
+                    subscriptions: [subscription(Plans.PERSONAL_EUR), teamSubscription(Plans.TEAM_PROFESSIONAL_EUR)],
                 },
                 expectation: {
                     mode: "chargebee",
@@ -220,7 +246,7 @@ class BillingModeSpec {
                     usageBasedPricingEnabled: true,
                     subscriptions: [
                         subscription(Plans.PERSONAL_EUR, cancellationDate, endDate),
-                        subscription(Plans.TEAM_PROFESSIONAL_EUR),
+                        teamSubscription(Plans.TEAM_PROFESSIONAL_EUR),
                     ],
                 },
                 expectation: {
@@ -236,7 +262,7 @@ class BillingModeSpec {
                     usageBasedPricingEnabled: true,
                     subscriptions: [
                         subscription(Plans.PERSONAL_EUR, cancellationDate, endDate),
-                        subscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, endDate),
+                        teamSubscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, endDate),
                     ],
                 },
                 expectation: {
@@ -252,9 +278,9 @@ class BillingModeSpec {
                     usageBasedPricingEnabled: true,
                     subscriptions: [
                         subscription(Plans.PERSONAL_EUR, cancellationDate, endDate),
-                        subscription(Plans.TEAM_PROFESSIONAL_EUR),
+                        teamSubscription(Plans.TEAM_PROFESSIONAL_EUR),
                     ],
-                    stripeSubscription: stripeSubscription(true),
+                    stripeSubscription: stripeTeamSubscription(),
                 },
                 expectation: {
                     mode: "usage-based",
@@ -270,7 +296,7 @@ class BillingModeSpec {
                     usageBasedPricingEnabled: true,
                     subscriptions: [
                         subscription(Plans.PERSONAL_EUR, cancellationDate, cancellationDate),
-                        subscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate),
+                        teamSubscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate),
                     ],
                 },
                 expectation: {
@@ -285,7 +311,7 @@ class BillingModeSpec {
                     usageBasedPricingEnabled: true,
                     subscriptions: [
                         subscription(Plans.PERSONAL_EUR, cancellationDate, cancellationDate),
-                        subscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate),
+                        teamSubscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate),
                     ],
                     stripeSubscription: stripeSubscription(),
                 },
@@ -357,7 +383,7 @@ class BillingModeSpec {
                 config: {
                     enablePayment: true,
                     usageBasedPricingEnabled: false,
-                    subscriptions: [subscription(Plans.TEAM_PROFESSIONAL_EUR)],
+                    subscriptions: [teamSubscription2(Plans.TEAM_PROFESSIONAL_EUR)],
                 },
                 expectation: {
                     mode: "chargebee",
@@ -369,7 +395,7 @@ class BillingModeSpec {
                 config: {
                     enablePayment: true,
                     usageBasedPricingEnabled: true,
-                    subscriptions: [subscription(Plans.TEAM_PROFESSIONAL_EUR)],
+                    subscriptions: [teamSubscription2(Plans.TEAM_PROFESSIONAL_EUR)],
                 },
                 expectation: {
                     mode: "chargebee",
@@ -377,12 +403,12 @@ class BillingModeSpec {
             },
             // team: transition chargebee -> UBB
             {
-                name: "team: chargbee paid (cancelled)",
+                name: "team: chargbee paid (TeamSubscription2, cancelled)",
                 subject: team(),
                 config: {
                     enablePayment: true,
                     usageBasedPricingEnabled: true,
-                    subscriptions: [subscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, endDate)],
+                    subscriptions: [teamSubscription2(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, endDate)],
                 },
                 expectation: {
                     mode: "chargebee",
@@ -407,7 +433,7 @@ class BillingModeSpec {
                 config: {
                     enablePayment: true,
                     usageBasedPricingEnabled: true,
-                    subscriptions: [subscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate)],
+                    subscriptions: [teamSubscription2(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate)],
                 },
                 expectation: {
                     mode: "usage-based",
@@ -419,7 +445,7 @@ class BillingModeSpec {
                 config: {
                     enablePayment: true,
                     usageBasedPricingEnabled: true,
-                    subscriptions: [subscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate)],
+                    subscriptions: [teamSubscription2(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate)],
                     stripeSubscription: stripeSubscription(),
                 },
                 expectation: {
@@ -498,9 +524,9 @@ class BillingModeSpec {
                     throw new Error(`${test.name}: Invalid test data: expected membership for team to exist!`);
                 }
                 teamMembershipId = membership.id;
+                teamId = team.id;
                 if (isTeam) {
                     attributionId = { kind: "team", teamId: team.id };
-                    teamId = team.id;
                 }
             }
             if (!attributionId) {
@@ -509,7 +535,10 @@ class BillingModeSpec {
             for (const sub of test.config.subscriptions || []) {
                 const plan = Plans.getById(sub.planId!);
                 if (plan?.team) {
-                    if (teamId) {
+                    if (sub.type === "team2") {
+                        if (!teamId) {
+                            throw new Error("Cannot create TeamSubscription2 without teamId!");
+                        }
                         // TeamSubscription2 - only relevant for teams (for BillingMode)
                         const ts2 = TeamSubscription2.create({
                             teamId,
@@ -524,7 +553,7 @@ class BillingModeSpec {
                         await teamSubscription2DB.storeEntry(ts2);
                         sub.teamMembershipId = teamMembershipId;
                         await accountingDB.storeSubscription(sub);
-                    } else {
+                    } else if (sub.type === "team-old") {
                         // TeamSubscription - only relevant for users (for BillingMode)
                         const ts = TeamSubscription.create({
                             userId,
@@ -546,6 +575,8 @@ class BillingModeSpec {
                         await teamSubscriptionDB.storeSlot(slot);
                         sub.teamSubscriptionSlotId = slot.id;
                         await accountingDB.storeSubscription(sub);
+                    } else {
+                        throw new Error("Bad test data: team plan of wrong type!");
                     }
                 } else {
                     await accountingDB.storeSubscription(sub);

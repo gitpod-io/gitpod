@@ -28,7 +28,7 @@ import { UserContext } from "../user-context";
 type PendingPlan = Plan & { pendingSince: number };
 
 export default function TeamBilling() {
-    const { user } = useContext(UserContext);
+    const { user, userBillingMode } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
@@ -151,163 +151,172 @@ export default function TeamBilling() {
         return <Redirect to={team ? `/t/${team.slug}` : "/"} />;
     }
 
+    function renderTeamBilling(): JSX.Element {
+        return (
+            <>
+                <h3>{!teamPlan ? "Select Team Plan" : "Team Plan"}</h3>
+                <h2 className="text-gray-500">
+                    {!teamPlan ? (
+                        <div className="flex space-x-1">
+                            <span>Currency:</span>
+                            <DropDown
+                                customClasses="w-32"
+                                renderAsLink={true}
+                                activeEntry={currency}
+                                entries={[
+                                    {
+                                        title: "EUR",
+                                        onClick: () => setCurrency("EUR"),
+                                    },
+                                    {
+                                        title: "USD",
+                                        onClick: () => setCurrency("USD"),
+                                    },
+                                ]}
+                            />
+                        </div>
+                    ) : (
+                        <span>
+                            This team is currently on the <strong>{teamPlan.name}</strong> plan.
+                        </span>
+                    )}
+                </h2>
+                <div className="mt-4 space-x-4 flex">
+                    {isLoading && (
+                        <>
+                            <SolidCard className="w-72 h-64">
+                                <div className="w-full h-full flex flex-col items-center justify-center">
+                                    <Spinner className="h-5 w-5 animate-spin" />
+                                </div>
+                            </SolidCard>
+                            <SolidCard className="w-72 h-64">
+                                <div className="w-full h-full flex flex-col items-center justify-center">
+                                    <Spinner className="h-5 w-5 animate-spin" />
+                                </div>
+                            </SolidCard>
+                        </>
+                    )}
+                    {!isLoading && !teamPlan && (
+                        <>
+                            {availableTeamPlans.map((tp) => (
+                                <>
+                                    <SolidCard className="w-72 h-72">
+                                        <div className="px-2 py-5 flex-grow flex flex-col">
+                                            <div className="font-semibold text-gray-800 dark:text-gray-100 text-lg">
+                                                {tp.name}
+                                            </div>
+                                            <div className="font-semibold text-gray-400 dark:text-gray-600 text-sm">
+                                                Unlimited hours
+                                            </div>
+                                            <div className="mt-2">
+                                                <PillLabel type="warn" className="font-semibold normal-case text-sm">
+                                                    {members.length} x {Currency.getSymbol(tp.currency)}
+                                                    {tp.pricePerMonth} = {Currency.getSymbol(tp.currency)}
+                                                    {members.length * tp.pricePerMonth} per month
+                                                </PillLabel>
+                                            </div>
+                                            <div className="mt-4 font-semibold text-sm">Includes:</div>
+                                            <div className="flex flex-col items-start text-sm">
+                                                {(featuresByPlanType[tp.type] || []).map((f) => (
+                                                    <span className="inline-flex space-x-1">
+                                                        <CheckSvg fill="currentColor" className="self-center mt-1" />
+                                                        {f}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            <div className="flex-grow flex flex-col items-stretch justify-end">
+                                                <button className="m-0" onClick={() => checkout(tp)}>
+                                                    Select {tp.name}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </SolidCard>
+                                </>
+                            ))}
+                        </>
+                    )}
+                    {!isLoading && teamPlan && (
+                        <>
+                            <Card className="w-72 h-64">
+                                <div className="px-2 py-5 flex-grow flex flex-col">
+                                    <div className="font-semibold text-gray-100 dark:text-gray-800 text-lg">
+                                        {teamPlan.name}
+                                    </div>
+                                    <div className="font-semibold text-gray-400 dark:text-gray-600 text-sm">
+                                        Unlimited hours
+                                    </div>
+                                    <div className="mt-8 font-semibold text-sm">Includes:</div>
+                                    <div className="flex flex-col items-start text-sm">
+                                        {(featuresByPlanType[teamPlan.type] || []).map((f) => (
+                                            <span className="inline-flex space-x-1">
+                                                <CheckSvg fill="currentColor" className="self-center mt-1" />
+                                                {f}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <div className="flex-grow flex flex-col items-stretch justify-end"></div>
+                                </div>
+                            </Card>
+                            {!teamSubscription ? (
+                                <SolidCard className="w-72 h-64">
+                                    <div className="w-full h-full flex flex-col items-center justify-center">
+                                        <Spinner className="h-5 w-5 animate-spin" />
+                                    </div>
+                                </SolidCard>
+                            ) : (
+                                <SolidCard className="w-72 h-64">
+                                    <div className="px-2 py-5 flex-grow flex flex-col">
+                                        <div className="font-medium text-base text-gray-400 dark:text-gray-600">
+                                            Members
+                                        </div>
+                                        <div className="font-semibold text-base text-gray-600 dark:text-gray-400">
+                                            {members.length}
+                                        </div>
+                                        <div className="mt-4 font-medium text-base text-gray-400 dark:text-gray-600">
+                                            Next invoice on
+                                        </div>
+                                        <div className="font-semibold text-base text-gray-600 dark:text-gray-400">
+                                            {guessNextInvoiceDate(teamSubscription.startDate).toDateString()}
+                                        </div>
+                                        <div className="flex-grow flex flex-col items-stretch justify-end">
+                                            <button
+                                                onClick={() => {
+                                                    if (team) {
+                                                        ChargebeeClient.getOrCreate(team.id).then((chargebeeClient) =>
+                                                            chargebeeClient.openPortal(),
+                                                        );
+                                                    }
+                                                }}
+                                                className="m-0"
+                                            >
+                                                Manage Billing or Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </SolidCard>
+                            )}
+                        </>
+                    )}
+                </div>
+                <div className="mt-4 text-gray-500">
+                    Team Billing automatically adds all members to the plan.{" "}
+                    <a href="https://www.gitpod.io/docs/team-billing" rel="noopener" className="gp-link">
+                        Learn more
+                    </a>
+                </div>
+            </>
+        );
+    }
+
+    const showUBP = BillingMode.showUsageBasedBilling(userBillingMode);
     return (
         <PageWithSubMenu
             subMenu={getTeamSettingsMenu({ team, billingMode: teamBillingMode })}
             title="Billing"
             subtitle="Manage team billing and plans."
         >
-            <TeamUsageBasedBilling />
-            <h3>{!teamPlan ? "Select Team Plan" : "Team Plan"}</h3>
-            <h2 className="text-gray-500">
-                {!teamPlan ? (
-                    <div className="flex space-x-1">
-                        <span>Currency:</span>
-                        <DropDown
-                            customClasses="w-32"
-                            renderAsLink={true}
-                            activeEntry={currency}
-                            entries={[
-                                {
-                                    title: "EUR",
-                                    onClick: () => setCurrency("EUR"),
-                                },
-                                {
-                                    title: "USD",
-                                    onClick: () => setCurrency("USD"),
-                                },
-                            ]}
-                        />
-                    </div>
-                ) : (
-                    <span>
-                        This team is currently on the <strong>{teamPlan.name}</strong> plan.
-                    </span>
-                )}
-            </h2>
-            <div className="mt-4 space-x-4 flex">
-                {isLoading && (
-                    <>
-                        <SolidCard className="w-72 h-64">
-                            <div className="w-full h-full flex flex-col items-center justify-center">
-                                <Spinner className="h-5 w-5 animate-spin" />
-                            </div>
-                        </SolidCard>
-                        <SolidCard className="w-72 h-64">
-                            <div className="w-full h-full flex flex-col items-center justify-center">
-                                <Spinner className="h-5 w-5 animate-spin" />
-                            </div>
-                        </SolidCard>
-                    </>
-                )}
-                {!isLoading && !teamPlan && (
-                    <>
-                        {availableTeamPlans.map((tp) => (
-                            <>
-                                <SolidCard className="w-72 h-72">
-                                    <div className="px-2 py-5 flex-grow flex flex-col">
-                                        <div className="font-semibold text-gray-800 dark:text-gray-100 text-lg">
-                                            {tp.name}
-                                        </div>
-                                        <div className="font-semibold text-gray-400 dark:text-gray-600 text-sm">
-                                            Unlimited hours
-                                        </div>
-                                        <div className="mt-2">
-                                            <PillLabel type="warn" className="font-semibold normal-case text-sm">
-                                                {members.length} x {Currency.getSymbol(tp.currency)}
-                                                {tp.pricePerMonth} = {Currency.getSymbol(tp.currency)}
-                                                {members.length * tp.pricePerMonth} per month
-                                            </PillLabel>
-                                        </div>
-                                        <div className="mt-4 font-semibold text-sm">Includes:</div>
-                                        <div className="flex flex-col items-start text-sm">
-                                            {(featuresByPlanType[tp.type] || []).map((f) => (
-                                                <span className="inline-flex space-x-1">
-                                                    <CheckSvg fill="currentColor" className="self-center mt-1" />
-                                                    {f}
-                                                </span>
-                                            ))}
-                                        </div>
-                                        <div className="flex-grow flex flex-col items-stretch justify-end">
-                                            <button className="m-0" onClick={() => checkout(tp)}>
-                                                Select {tp.name}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </SolidCard>
-                            </>
-                        ))}
-                    </>
-                )}
-                {!isLoading && teamPlan && (
-                    <>
-                        <Card className="w-72 h-64">
-                            <div className="px-2 py-5 flex-grow flex flex-col">
-                                <div className="font-semibold text-gray-100 dark:text-gray-800 text-lg">
-                                    {teamPlan.name}
-                                </div>
-                                <div className="font-semibold text-gray-400 dark:text-gray-600 text-sm">
-                                    Unlimited hours
-                                </div>
-                                <div className="mt-8 font-semibold text-sm">Includes:</div>
-                                <div className="flex flex-col items-start text-sm">
-                                    {(featuresByPlanType[teamPlan.type] || []).map((f) => (
-                                        <span className="inline-flex space-x-1">
-                                            <CheckSvg fill="currentColor" className="self-center mt-1" />
-                                            {f}
-                                        </span>
-                                    ))}
-                                </div>
-                                <div className="flex-grow flex flex-col items-stretch justify-end"></div>
-                            </div>
-                        </Card>
-                        {!teamSubscription ? (
-                            <SolidCard className="w-72 h-64">
-                                <div className="w-full h-full flex flex-col items-center justify-center">
-                                    <Spinner className="h-5 w-5 animate-spin" />
-                                </div>
-                            </SolidCard>
-                        ) : (
-                            <SolidCard className="w-72 h-64">
-                                <div className="px-2 py-5 flex-grow flex flex-col">
-                                    <div className="font-medium text-base text-gray-400 dark:text-gray-600">
-                                        Members
-                                    </div>
-                                    <div className="font-semibold text-base text-gray-600 dark:text-gray-400">
-                                        {members.length}
-                                    </div>
-                                    <div className="mt-4 font-medium text-base text-gray-400 dark:text-gray-600">
-                                        Next invoice on
-                                    </div>
-                                    <div className="font-semibold text-base text-gray-600 dark:text-gray-400">
-                                        {guessNextInvoiceDate(teamSubscription.startDate).toDateString()}
-                                    </div>
-                                    <div className="flex-grow flex flex-col items-stretch justify-end">
-                                        <button
-                                            onClick={() => {
-                                                if (team) {
-                                                    ChargebeeClient.getOrCreate(team.id).then((chargebeeClient) =>
-                                                        chargebeeClient.openPortal(),
-                                                    );
-                                                }
-                                            }}
-                                            className="m-0"
-                                        >
-                                            Manage Billing or Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            </SolidCard>
-                        )}
-                    </>
-                )}
-            </div>
-            <div className="mt-4 text-gray-500">
-                Team Billing automatically adds all members to the plan.{" "}
-                <a href="https://www.gitpod.io/docs/team-billing" rel="noopener" className="gp-link">
-                    Learn more
-                </a>
-            </div>
+            {showUBP && <TeamUsageBasedBilling />}
+            {!showUBP && renderTeamBilling()}
         </PageWithSubMenu>
     );
 }
