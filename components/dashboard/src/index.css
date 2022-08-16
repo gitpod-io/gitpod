@@ -79,6 +79,7 @@
 
     textarea,
     input[type="text"],
+    input[type="number"],
     input[type="search"],
     input[type="password"],
     select {
@@ -86,11 +87,14 @@
     }
     textarea::placeholder,
     input[type="text"]::placeholder,
+    input[type="number"]::placeholder,
     input[type="search"]::placeholder,
     input[type="password"]::placeholder {
         @apply text-gray-400 dark:text-gray-500;
     }
     input[type="text"].error,
+    input[type="number"].error,
+    input[type="search"].error,
     input[type="password"].error,
     select.error {
         @apply border-gitpod-red dark:border-gitpod-red focus:border-gitpod-red dark:focus:border-gitpod-red;
