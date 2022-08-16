@@ -4,6 +4,7 @@ packages:
     srcs:
       - go.mod
       - go.sum
+      - patch_from_config.sh
       - "**/*.go"
       - "**/testdata/**/*"
       - "cmd/versions.yaml"
