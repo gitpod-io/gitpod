@@ -128,7 +128,7 @@ export interface StartWorkspaceOptions {
     rethrow?: boolean;
     forceDefaultImage?: boolean;
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
-    forcePVC?: boolean;
+    pvcEnabledForPrebuilds?: boolean;
 }
 
 const MAX_INSTANCE_START_RETRIES = 2;
@@ -352,7 +352,7 @@ export class WorkspaceStarter {
                         user,
                         options.excludeFeatureFlags || [],
                         ideConfig,
-                        options.forcePVC || false,
+                        options.pvcEnabledForPrebuilds || false,
                     ),
                 );
             span.log({ newInstance: instance.id });
@@ -743,7 +743,7 @@ export class WorkspaceStarter {
         user: User,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
-        forcePVC: boolean,
+        pvcEnabledForPrebuilds: boolean,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
         //#endregion IDE resolution TODO(ak) move to IDE service
@@ -828,8 +828,15 @@ export class WorkspaceStarter {
 
             featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
 
-            if (forcePVC === true) {
-                featureFlags = featureFlags.concat(["persistent_volume_claim"]);
+            if (workspace.type === "prebuild") {
+                if (pvcEnabledForPrebuilds === true) {
+                    featureFlags = featureFlags.concat(["persistent_volume_claim"]);
+                } else {
+                    // If PVC is disabled for prebuilds, we need to remove the PVC feature flag.
+                    // This is necessary to ensure if user has PVC enabled on their account, that they
+                    // will not hijack prebuild with PVC and make everyone who use this prebuild to auto enroll into PVC feature.
+                    featureFlags = featureFlags.filter((f) => f !== "persistent_volume_claim");
+                }
             }
 
             let workspaceClass = "";
@@ -1428,7 +1435,8 @@ export class WorkspaceStarter {
         }
 
         const volumeSnapshotId =
-((SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) && !!workspace.context.snapshotBucketId)
+            (SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) &&
+            !!workspace.context.snapshotBucketId
                 ? workspace.context.snapshotBucketId
                 : lastValidWorkspaceInstanceId;
 

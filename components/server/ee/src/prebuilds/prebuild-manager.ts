@@ -238,7 +238,7 @@ export class PrebuildManager {
                 const usePVC = this.shouldUsePersistentVolumeClaim(project);
                 await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {
                     excludeFeatureFlags: ["full_workspace_backup"],
-                    forcePVC: usePVC,
+                    pvcEnabledForPrebuilds: usePVC,
                 });
             }
 
