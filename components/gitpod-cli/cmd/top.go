@@ -12,6 +12,7 @@ import (
 	"time"
 
 	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
@@ -35,8 +36,8 @@ func outputTable(workspaceResources *supervisor.ResourcesStatusResponse) {
 	colors := []tablewriter.Colors{}
 
 	if !noColor && utils.ColorsEnabled() {
-		cpuColor := getColor(cpuFraction)
-		memoryColor := getColor(memFraction)
+		cpuColor := getColor(workspaceResources.Cpu.Severity)
+		memoryColor := getColor(workspaceResources.Memory.Severity)
 		colors = []tablewriter.Colors{{cpuColor}, {memoryColor}}
 	}
 
@@ -45,12 +46,11 @@ func outputTable(workspaceResources *supervisor.ResourcesStatusResponse) {
 	table.Render()
 }
 
-// TODO: retrieve thresholds from supervisor once we implement this: https://github.com/gitpod-io/gitpod/issues/12075
-func getColor(value int64) int {
-	switch {
-	case value >= 95:
+func getColor(severity api.ResourceStatusSeverity) int {
+	switch severity {
+	case api.ResourceStatusSeverity_danger:
 		return tablewriter.FgRedColor
-	case value >= 80:
+	case api.ResourceStatusSeverity_warning:
 		return tablewriter.FgYellowColor
 	default:
 		return tablewriter.FgHiGreenColor

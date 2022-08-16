@@ -75,6 +75,17 @@ func (t *TopService) Observe(ctx context.Context) {
 	}()
 }
 
+func calcSeverity(value int64) api.ResourceStatusSeverity {
+	switch {
+	case value >= 95:
+		return api.ResourceStatusSeverity_danger
+	case value >= 80:
+		return api.ResourceStatusSeverity_warning
+	default:
+		return api.ResourceStatusSeverity_normal
+	}
+}
+
 // Top provides workspace resources status information.
 func Top(ctx context.Context) (*api.ResourcesStatusResponse, error) {
 	const socketFN = "/.supervisor/info.sock"
@@ -88,6 +99,13 @@ func Top(ctx context.Context) (*api.ResourcesStatusResponse, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		cpuPercentage := int64((float64(cpu.Used) / float64(cpu.Limit)) * 100)
+		memoryPercentage := int64((float64(memory.Used) / float64(memory.Limit)) * 100)
+
+		cpu.Severity = calcSeverity(cpuPercentage)
+		memory.Severity = calcSeverity(memoryPercentage)
+
 		return &api.ResourcesStatusResponse{
 			Memory: memory,
 			Cpu:    cpu,
@@ -104,14 +122,19 @@ func Top(ctx context.Context) (*api.ResourcesStatusResponse, error) {
 			return nil, xerrors.Errorf("could not retrieve workspace info: %w", err)
 		}
 
+		cpuPercentage := int64((float64(resp.Resources.Cpu.Used) / float64(resp.Resources.Cpu.Limit)) * 100)
+		memoryPercentage := int64((float64(resp.Resources.Memory.Used) / float64(resp.Resources.Memory.Limit)) * 100)
+
 		return &api.ResourcesStatusResponse{
 			Memory: &api.ResourceStatus{
-				Limit: resp.Resources.Memory.Limit,
-				Used:  resp.Resources.Memory.Used,
+				Limit:    resp.Resources.Memory.Limit,
+				Used:     resp.Resources.Memory.Used,
+				Severity: calcSeverity(memoryPercentage),
 			},
 			Cpu: &api.ResourceStatus{
-				Limit: resp.Resources.Cpu.Limit,
-				Used:  resp.Resources.Cpu.Used,
+				Limit:    resp.Resources.Cpu.Limit,
+				Used:     resp.Resources.Cpu.Used,
+				Severity: calcSeverity(cpuPercentage),
 			},
 		}, nil
 	}

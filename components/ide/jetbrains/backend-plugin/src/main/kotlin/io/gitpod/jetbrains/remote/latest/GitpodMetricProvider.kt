@@ -10,6 +10,7 @@ import com.jetbrains.rd.platform.codeWithMe.unattendedHost.metrics.MetricType
 import com.jetbrains.rd.platform.codeWithMe.unattendedHost.metrics.MetricsStatus
 import com.jetbrains.rd.platform.codeWithMe.unattendedHost.metrics.providers.MetricProvider
 import io.gitpod.jetbrains.remote.GitpodManager
+import io.gitpod.supervisor.api.Status.ResourceStatusSeverity
 import kotlin.math.roundToInt
 
 class GitpodMetricProvider: MetricProvider {
@@ -21,29 +22,15 @@ class GitpodMetricProvider: MetricProvider {
 
         val cpuUsed = resourceStatus?.cpu?.used?.toDouble() ?: 0.0
         val cpuTotal = resourceStatus?.cpu?.limit?.toDouble() ?: 0.0
+        val cpuSeverity = resourceStatus?.cpu?.severity ?: ResourceStatusSeverity.normal
         val cpuPercentage = (cpuUsed / cpuTotal) * 100
-
-        // TODO: retrieve thresholds from supervisor once we implement this: https://github.com/gitpod-io/gitpod/issues/12075
-        val cpuStatus = if (cpuPercentage >= 95) {
-            MetricsStatus.DANGER
-        } else if (cpuPercentage >= 80) {
-            MetricsStatus.WARNING
-        } else {
-            MetricsStatus.NORMAL
-        }
+        val cpuStatus = getSeverityStatus(cpuSeverity)
 
         val memoryUsed = convertBytesToGB(resourceStatus?.memory?.used ?: 0)
         val memoryTotal = convertBytesToGB(resourceStatus?.memory?.limit ?: 0)
+        val memorySeverity = resourceStatus?.memory?.severity ?:ResourceStatusSeverity.normal
         val memoryPercentage = (memoryUsed / memoryTotal) * 100
-
-        // TODO: retrieve thresholds from supervisor once we implement this: https://github.com/gitpod-io/gitpod/issues/12075
-        val memoryStatus = if (memoryPercentage >= 95) {
-            MetricsStatus.DANGER
-        } else if (memoryPercentage >= 80) {
-            MetricsStatus.WARNING
-        } else {
-            MetricsStatus.NORMAL
-        }
+        val memoryStatus = getSeverityStatus(memorySeverity)
 
         return mapOf(
                 "gitpod_workspace_cpu_used" to Metric(MetricType.PERFORMANCE, MetricsStatus.NORMAL, roundTo(cpuUsed, 0)),
@@ -61,5 +48,15 @@ class GitpodMetricProvider: MetricProvider {
 
     private fun roundTo(number: Double, decimals: Int) : String {
         return String.format("%.${decimals}f", number)
+    }
+
+    private fun getSeverityStatus(severity: ResourceStatusSeverity) : MetricsStatus {
+        return if (severity == ResourceStatusSeverity.danger) {
+            MetricsStatus.DANGER
+        } else if (severity == ResourceStatusSeverity.warning) {
+            MetricsStatus.WARNING
+        } else {
+            MetricsStatus.NORMAL
+        }
     }
 }

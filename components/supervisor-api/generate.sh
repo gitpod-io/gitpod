@@ -53,7 +53,7 @@ local_java_protoc() {
         --java_out=java/src/main/java \
         ./*.proto
     # remove trailing spaces
-    find components/supervisor-api/java/src/main/java/io/gitpod/supervisor/api -maxdepth 1 -name "*.java" -exec sed -i -e "s/[[:space:]]*$//" {} \;
+    find "${COMPONENTS_DIR}"/supervisor-api/java/src/main/java/io/gitpod/supervisor/api -maxdepth 1 -name "*.java" -exec sed -i -e "s/[[:space:]]*$//" {} \;
     # revert Java reserved keywords
     sed -i 's/private_visibility = 0;/private = 0;/g' status.proto
     sed -i 's/public_visibility = 1;/public = 1;/g' status.proto
