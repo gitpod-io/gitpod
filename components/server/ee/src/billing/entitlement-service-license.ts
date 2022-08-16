@@ -53,4 +53,12 @@ export class EntitlementServiceLicense implements EntitlementService {
         // TODO(gpl) Not sure this makes sense, but it's the way it was before
         return false;
     }
+
+    /**
+     * Returns true if network connections should be limited
+     * @param user
+     */
+    async limitNetworkConnections(user: User, date: Date): Promise<boolean> {
+        return false;
+    }
 }

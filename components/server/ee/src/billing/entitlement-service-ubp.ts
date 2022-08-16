@@ -97,6 +97,14 @@ export class EntitlementServiceUBP implements EntitlementService {
         return this.hasPaidSubscription(user, date);
     }
 
+    /**
+     * Returns true if network connections should be limited
+     * @param user
+     */
+    async limitNetworkConnections(user: User, date: Date): Promise<boolean> {
+        return !this.hasPaidSubscription(user, date);
+    }
+
     protected async hasPaidSubscription(user: User, date: Date): Promise<boolean> {
         // TODO(gpl) UBP personal: implement!
         return true;

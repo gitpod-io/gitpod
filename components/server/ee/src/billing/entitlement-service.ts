@@ -110,4 +110,25 @@ export class EntitlementServiceImpl implements EntitlementService {
             return true;
         }
     }
+
+    /**
+     * Returns true if network connections should be limited
+     * @param user
+     */
+    async limitNetworkConnections(user: User, date: Date): Promise<boolean> {
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.limitNetworkConnections(user, date);
+                case "chargebee":
+                    return this.chargebee.limitNetworkConnections(user, date);
+                case "usage-based":
+                    return this.ubp.limitNetworkConnections(user, date);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: limitNetworkConnections", err);
+            return false;
+        }
+    }
 }
