@@ -56,6 +56,9 @@ interface Chargebee {
 interface UsageBased {
     mode: "usage-based";
 
+    /** True iff this is a team, and is based on a paid plan. Currently only set for teams! */
+    paid?: boolean;
+
     /** User is already converted, but is member with at least one Chargebee-based "Team Plan" */
     hasChargebeeTeamPlan?: boolean;
 
