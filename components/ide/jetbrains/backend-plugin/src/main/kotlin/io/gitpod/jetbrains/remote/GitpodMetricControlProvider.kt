@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.remote.latest
+package io.gitpod.jetbrains.remote
 
 import com.jetbrains.ide.model.uiautomation.BeControl
 import com.jetbrains.rd.ui.bedsl.dsl.VerticalGridBuilder
