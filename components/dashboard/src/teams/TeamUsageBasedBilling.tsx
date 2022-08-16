@@ -235,7 +235,9 @@ function UpdateLimitModal(props: {
     onClose: () => void;
     onUpdate: (newLimit: number) => {};
 }) {
-    const [newLimit, setNewLimit] = useState<number | undefined>(props.currentValue);
+    const [newLimit, setNewLimit] = useState<string | undefined>(
+        props.currentValue ? String(props.currentValue) : undefined,
+    );
 
     return (
         <Modal visible={true} onClose={props.onClose}>
@@ -253,7 +255,7 @@ function UpdateLimitModal(props: {
                         min={0}
                         value={newLimit}
                         className="rounded-md w-full truncate overflow-x-scroll pr-8"
-                        onChange={(e) => setNewLimit(parseInt(e.target.value || "1", 10))}
+                        onChange={(e) => setNewLimit(e.target.value)}
                     />
                 </div>
             </div>
@@ -261,9 +263,14 @@ function UpdateLimitModal(props: {
                 <button
                     className="secondary"
                     onClick={() => {
-                        if (typeof newLimit === "number") {
-                            props.onUpdate(newLimit);
+                        if (!newLimit) {
+                            return;
                         }
+                        const n = parseInt(newLimit, 10);
+                        if (typeof n !== "number") {
+                            return;
+                        }
+                        props.onUpdate(n);
                     }}
                 >
                     Update
