@@ -265,7 +265,9 @@ export class ClusterService implements IClusterServiceServer {
                     });
                     throw new GRPCError(
                         grpc.status.FAILED_PRECONDITION,
-                        `cluster is not empty (${relevantInstances.length} instances remaining)`,
+                        `cluster is not empty (${relevantInstances.length} instances remaining)[${relevantInstances
+                            .map((i) => i.id)
+                            .join(",")}]`,
                     );
                 }
 
