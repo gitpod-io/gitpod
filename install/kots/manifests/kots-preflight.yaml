@@ -290,6 +290,15 @@ spec:
                 # Apply the customization property - if something else is set, this will be ignored
                 yq e -i ".customization = $(echo "${CUSTOMIZATION}" | base64 -d | yq e -o json '.customization' - | jq -rc) // []" "${CONFIG_FILE}"
               fi
+
+              if [ '{{repl ConfigOptionNotEquals "config_patch" "" }}' = "true" ];
+              then
+                echo "Gitpod: Patch Gitpod config"
+                export CONFIG_PATCH_FILE="./config_patch.yaml"
+                config_patch='{{repl ConfigOptionData "config_patch" | Base64Encode }}'
+                (echo "${config_patch}" | base64 -d) > $CONFIG_PATCH_FILE
+                yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' "${CONFIG_FILE}" "${CONFIG_PATCH_FILE}"
+              fi
             else
               echo "Gitpod: No advanced configuration applied"
             fi
@@ -313,17 +322,6 @@ spec:
               uri: https://kubernetes.io
           - pass:
               message: Your cluster meets the recommended and required versions of Kubernetes.
-    - textAnalyze:
-        checkName: Kernel version is 5.4.0 or above
-        fileName: config-validation/config-validation.log
-        regex: invalid
-        outcomes:
-          - pass:
-              when: "false"
-              message: Kernel version valid
-          - fail:
-              when: "true"
-              message: Kernel must be 5.4.0 or above
     - textAnalyze:
         checkName: Kernel version is 5.4.0 or above
         fileName: kernel/kernel.log
