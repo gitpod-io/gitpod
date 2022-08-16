@@ -63,6 +63,12 @@ export interface EntitlementService {
      * compared to the default case.
      */
     userGetsMoreResources(user: User): Promise<boolean>;
+
+    /**
+     * Returns true if network connections should be limited
+     * @param user
+     */
+    limitNetworkConnections(user: User, date: Date): Promise<boolean>;
 }
 
 /**
@@ -87,6 +93,10 @@ export class CommunityEntitlementService implements EntitlementService {
     }
 
     async userGetsMoreResources(user: User): Promise<boolean> {
+        return false;
+    }
+
+    async limitNetworkConnections(user: User): Promise<boolean> {
         return false;
     }
 }
