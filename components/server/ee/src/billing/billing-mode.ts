@@ -135,12 +135,12 @@ export class BillingModesImpl implements BillingModes {
         // 3. Check team memberships/plans
         // UBB overrides wins if there is _any_. But if there is none, use the existing Chargebee subscription.
         const teamsModes = await Promise.all(teams.map((t) => this.getBillingModeForTeam(t, now)));
-        const hasUbbTeam = teamsModes.some((tm) => tm.mode === "usage-based");
+        const hasUbbPaidTeamSeat = teamsModes.some((tm) => tm.mode === "usage-based" && !!tm.paid);
         const hasCbTeam = teamsModes.some((tm) => tm.mode === "chargebee");
         const hasCbTeamSeat = cbTeamSubscriptions.length > 0;
 
-        if (hasUbbTeam || hasUbbPersonal) {
-            // UBB is gready: once a user has at least a team seat, they should benefit from it!
+        if (hasUbbPaidTeamSeat || hasUbbPersonal) {
+            // UBB is greedy: once a user has at least a team seat, they should benefit from it!
             const result: BillingMode = { mode: "usage-based" };
             if (hasCbTeam) {
                 result.hasChargebeeTeamPlan = true;
@@ -196,7 +196,15 @@ export class BillingModesImpl implements BillingModes {
             return { mode: "chargebee" };
         }
 
-        // 3. If not: we don't even have to check for a team subscription
-        return { mode: "usage-based" };
+        // 3. Now we're usage-based. We only have to figure out whether we have a plan yet or not.
+        const result: BillingMode = { mode: "usage-based" };
+        const customer = await this.stripeSvc.findCustomerByUserId(team.id);
+        if (customer) {
+            const subscription = await this.stripeSvc.findUncancelledSubscriptionByCustomer(customer.id);
+            if (subscription) {
+                result.paid = true;
+            }
+        }
+        return result;
     }
 }

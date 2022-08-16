@@ -202,7 +202,7 @@ class BillingModeSpec {
             },
             // user: chargebee
             {
-                name: "user: chargbee paid personal",
+                name: "user: chargebee paid personal",
                 subject: user(),
                 config: {
                     enablePayment: true,
@@ -214,7 +214,7 @@ class BillingModeSpec {
                 },
             },
             {
-                name: "user: chargbee paid team seat",
+                name: "user: chargebee paid team seat",
                 subject: user(),
                 config: {
                     enablePayment: true,
@@ -226,7 +226,7 @@ class BillingModeSpec {
                 },
             },
             {
-                name: "user: chargbee paid personal + team seat",
+                name: "user: chargebee paid personal + team seat",
                 subject: user(),
                 config: {
                     enablePayment: true,
@@ -239,7 +239,7 @@ class BillingModeSpec {
             },
             // user: transition chargebee -> UBB
             {
-                name: "user: chargbee paid personal (cancelled) + team seat",
+                name: "user: chargebee paid personal (cancelled) + team seat",
                 subject: user(),
                 config: {
                     enablePayment: true,
@@ -255,7 +255,7 @@ class BillingModeSpec {
                 },
             },
             {
-                name: "user: chargbee paid personal (cancelled) + team seat (cancelled)",
+                name: "user: chargebee paid personal (cancelled) + team seat (cancelled)",
                 subject: user(),
                 config: {
                     enablePayment: true,
@@ -271,7 +271,7 @@ class BillingModeSpec {
                 },
             },
             {
-                name: "user: chargbee paid personal (cancelled) + team seat (active) + stripe",
+                name: "user: chargebee paid personal (cancelled) + team seat (active) + stripe",
                 subject: user(),
                 config: {
                     enablePayment: true,
@@ -289,7 +289,7 @@ class BillingModeSpec {
             },
             // user: usage-based
             {
-                name: "user: stripe free, chargbee paid personal (inactive) + team seat (inactive)",
+                name: "user: stripe free, chargebee paid personal (inactive) + team seat (inactive)",
                 subject: user(),
                 config: {
                     enablePayment: true,
@@ -304,7 +304,7 @@ class BillingModeSpec {
                 },
             },
             {
-                name: "user: stripe paid, chargbee paid personal (inactive) + team seat (inactive)",
+                name: "user: stripe paid, chargebee paid personal (inactive) + team seat (inactive)",
                 subject: user(),
                 config: {
                     enablePayment: true,
@@ -378,7 +378,7 @@ class BillingModeSpec {
             },
             // team: chargebee
             {
-                name: "team: chargbee paid",
+                name: "team: chargebee paid",
                 subject: team(),
                 config: {
                     enablePayment: true,
@@ -390,7 +390,7 @@ class BillingModeSpec {
                 },
             },
             {
-                name: "team: chargbee paid (UBB)",
+                name: "team: chargebee paid (UBB)",
                 subject: team(),
                 config: {
                     enablePayment: true,
@@ -403,7 +403,7 @@ class BillingModeSpec {
             },
             // team: transition chargebee -> UBB
             {
-                name: "team: chargbee paid (TeamSubscription2, cancelled)",
+                name: "team: chargebee paid (TeamSubscription2, cancelled)",
                 subject: team(),
                 config: {
                     enablePayment: true,
@@ -416,7 +416,7 @@ class BillingModeSpec {
                 },
             },
             {
-                name: "team: chargbee paid (old TeamSubscription, cancelled)",
+                name: "team: chargebee paid (old TeamSubscription, cancelled)",
                 subject: team(),
                 config: {
                     enablePayment: true,
@@ -440,7 +440,7 @@ class BillingModeSpec {
                 },
             },
             {
-                name: "team: stripe free, chargbee (inactive)",
+                name: "team: stripe free, chargebee (inactive)",
                 subject: team(),
                 config: {
                     enablePayment: true,
@@ -452,7 +452,7 @@ class BillingModeSpec {
                 },
             },
             {
-                name: "team: stripe paid, chargbee (inactive)",
+                name: "team: stripe paid, chargebee (inactive)",
                 subject: team(),
                 config: {
                     enablePayment: true,
@@ -462,6 +462,7 @@ class BillingModeSpec {
                 },
                 expectation: {
                     mode: "usage-based",
+                    paid: true,
                 },
             },
             {
@@ -474,6 +475,7 @@ class BillingModeSpec {
                 },
                 expectation: {
                     mode: "usage-based",
+                    paid: true,
                 },
             },
         ];
