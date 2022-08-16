@@ -203,9 +203,12 @@ export class UserService {
         return subscription?.id;
     }
 
-    protected async validateUsageAttributionId(user: User, usageAttributionId: string): Promise<void> {
+    protected async validateUsageAttributionId(user: User, usageAttributionId: string): Promise<AttributionId> {
         const attribution = AttributionId.parse(usageAttributionId);
-        if (attribution?.kind === "team") {
+        if (!attribution) {
+            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "The billing team id configured is invalid.");
+        }
+        if (attribution.kind === "team") {
             const team = await this.teamDB.findTeamById(attribution.teamId);
             if (!team) {
                 throw new ResponseError(
@@ -228,6 +231,7 @@ export class UserService {
                 );
             }
         }
+        return attribution;
     }
 
     protected async findSingleTeamWithUsageBasedBilling(user: User): Promise<Team | undefined> {
@@ -268,14 +272,14 @@ export class UserService {
      *
      * @param user
      * @param projectId
+     * @returns The validated AttributionId
      */
-    async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<AttributionId | undefined> {
+    async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<AttributionId> {
         // A. Billing-based attribution
         if (this.config.enablePayment) {
             if (user.usageAttributionId) {
-                await this.validateUsageAttributionId(user, user.usageAttributionId);
                 // Return the user's explicit attribution ID.
-                return AttributionId.parse(user.usageAttributionId);
+                return await this.validateUsageAttributionId(user, user.usageAttributionId);
             }
             const billingTeam = await this.findSingleTeamWithUsageBasedBilling(user);
             if (billingTeam) {

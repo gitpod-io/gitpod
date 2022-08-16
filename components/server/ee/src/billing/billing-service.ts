@@ -29,11 +29,15 @@ export class BillingService {
 
     async checkSpendingLimitReached(user: User): Promise<SpendingLimitReachedResult> {
         const attributionId = await this.userService.getWorkspaceUsageAttributionId(user);
-        const costCenter = !!attributionId && (await this.costCenterDB.findById(AttributionId.render(attributionId)));
+        const costCenter = await this.costCenterDB.findById(AttributionId.render(attributionId));
         if (!costCenter) {
             const err = new Error("No CostCenter found");
             log.error({ userId: user.id }, err.message, err, { attributionId });
-            throw err;
+            // Technially we do not have any spending limit set, yet. But sending users down the "reached" path will fix this issues as well.
+            return {
+                reached: true,
+                attributionId,
+            };
         }
 
         const allSessions = await this.listBilledUsage({
