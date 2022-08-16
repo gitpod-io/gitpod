@@ -1,0 +1,140 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitpod-kots-config
+  labels:
+    app: gitpod
+    component: gitpod-installer
+data:
+  gitpod-config-patch.yaml: '{{repl if and (ConfigOptionEquals "advanced_mode_enabled" "1") (ConfigOptionNotEquals "config_patch" "") }}{{repl ConfigOption "config_patch" }}{{repl else }}{{repl printf "{}" | Base64Encode }}{{repl end }}'
+  config.yaml: |
+    domain: {{repl ConfigOption "domain" | quote }}
+
+    license:
+      kind: secret
+      name: gitpod-license
+
+    {{repl if (ConfigOptionEquals "db_incluster" "0") }}
+    database:
+      inCluster: false
+      {{repl if (ConfigOptionEquals "db_cloudsql_enabled" "1") }}
+      cloudSQL:
+        instance: {{repl ConfigOption "db_cloudsql_instance" | quote }}
+        serviceAccount:
+          kind: secret
+          name: cloudsql
+      {{repl else }}
+      external:
+        certificate:
+          kind: secret
+          name: database
+      {{repl end }}
+    {{repl end }}
+
+    {{repl if (HasLocalRegistry) }}
+    dropImageRepo: true
+    repository: {{repl LocalRegistryAddress | quote }}
+    imagePullSecrets:
+      - kind: secret
+        name: {{repl ImagePullSecretName | quote }}
+    containerRegistry:
+      privateBaseImageAllowList:
+        - {{repl LocalRegistryHost | quote }}
+        - docker.io
+    {{repl end }}
+
+    {{repl if (ConfigOptionNotEquals "openVsxUrl" "") }}
+    openVSX:
+      url: {{repl ConfigOption "openVsxUrl" | quote }}
+    {{repl end }}
+
+    {{repl if (ConfigOptionEquals "reg_incluster" "0") }}
+    containerRegistry:
+      inCluster: false
+      external:
+        url: {{repl ConfigOption "reg_url" | quote }}
+        certificate:
+          kind: secret
+          name: container-registry
+    {{repl else if (ConfigOptionEquals "reg_incluster_storage" "s3") }}
+    containerRegistry:
+      inCluster: true
+      s3storage:
+        region: {{repl ConfigOption "reg_incluster_storage_s3_region" | quote }}
+        endpoint: {{repl ConfigOption "reg_incluster_storage_s3_endpoint" | quote }}
+        bucket: {{repl ConfigOption "reg_incluster_storage_s3_bucketname" | quote }}
+        certificate:
+          kind: secret
+          name: container-registry-s3-backend
+    {{repl end }}
+
+    {{repl if (ConfigOptionNotEquals "store_provider" "incluster") }}
+    metadata:
+      region: {{repl ConfigOption "store_region" | quote }}
+    objectStorage:
+      inCluster: false
+      {{repl if (ConfigOptionEquals "store_provider" "azure") }}
+      azure:
+        credentials:
+          kind: secret
+          name: storage-azure
+      {{repl else if (ConfigOptionEquals "store_provider" "gcp") }}
+      cloudStorage:
+        project: {{repl ConfigOption "store_gcp_project" | quote }}
+        serviceAccount:
+          kind: secret
+          name: storage-gcp
+      {{repl else if ConfigOptionEquals "store_provider" "s3" }}
+      s3:
+        endpoint: {{repl ConfigOption "store_s3_endpoint" | quote }}
+        bucket: {{repl ConfigOption "store_s3_bucket" | quote }}
+        credentials:
+          kind: secret
+          name: storage-s3
+      {{repl end }}
+    {{repl end }}
+
+    {{repl if (ConfigOptionEquals "ssh_gateway" "1") }}
+    sshGatewayHostKey:
+      kind: secret
+      name: ssh-gateway-host-key
+    {{repl end }}
+
+    {{repl if (ConfigOptionEquals "tls_self_signed_enabled" "1") }}
+    customCACert:
+      kind: secret
+      name: ca-issuer-ca
+    {{repl else if and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") (ConfigOptionNotEquals "tls_ca_crt" "") }}
+    customCACert:
+      kind: secret
+      name: ca-certificate
+    {{repl end }}
+
+    {{repl if (ConfigOptionEquals "user_management_block_enabled" "1") }}
+    blockNewUsers:
+      enabled: true
+      {{repl if ne (ConfigOption "user_management_block_passlist" | TrimSpace) "" }}
+      passlist:
+        {{repl range $i, $v := (splitList " " (ConfigOption "user_management_block_passlist")) }}
+        - {{repl $v }}
+        {{repl end}}
+      {{repl end}}
+    {{repl end }}
+
+    {{repl if (ConfigOptionEquals "advanced_mode_enabled" "1") }}
+    components:
+      proxy:
+        service: {
+          {{repl if (ConfigOptionNotEquals "component_proxy_service_serviceType" "") }}
+            serviceType: {{repl ConfigOption "component_proxy_service_serviceType" | quote }}
+          {{repl end }}
+        }
+    {{repl end }}
+
+    experimental:
+      telemetry:
+        data:
+          platform: {{repl Distribution | quote }}
