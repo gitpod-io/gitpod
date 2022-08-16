@@ -5,9 +5,6 @@
 -->
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.latest.GitpodTerminalService" client="guest" preload="true"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.latest.GitpodPortForwardingService" preload="true"/>
-        <gateway.customization.performance id="gitpodMetricsControl" order="before cpuControl" implementation="io.gitpod.jetbrains.remote.latest.GitpodMetricControlProvider"/>
-        <gateway.customization.metrics id="gitpodMetricsProvider" implementation="io.gitpod.jetbrains.remote.latest.GitpodMetricProvider" />
     </extensions>
 </idea-plugin>

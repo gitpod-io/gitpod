@@ -5,6 +5,5 @@
 -->
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodTerminalService" preload="true"/>
     </extensions>
 </idea-plugin>
