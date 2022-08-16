@@ -62,7 +62,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                 <div>
                     <p>Bill all my usage to:</p>
                     <div className="mt-4 flex space-x-3">
-                        <SelectableCardSolid
+                        {/* <SelectableCardSolid
                             className="w-36 h-32"
                             title="(myself)"
                             selected={
@@ -72,7 +72,13 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                             onClick={() => setUsageAttributionTeam(undefined)}
                         >
                             <div className="flex-grow flex items-end p-1"></div>
-                        </SelectableCardSolid>
+                        </SelectableCardSolid> */}
+                        {teamsWithBillingEnabled.length === 0 && (
+                            <span>
+                                Please enable billing for one of your teams, or create a new team and enable billing for
+                                it.
+                            </span>
+                        )}
                         {teamsWithBillingEnabled.map((t) => (
                             <SelectableCardSolid
                                 className="w-36 h-32"
