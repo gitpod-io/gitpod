@@ -73,7 +73,6 @@ vscode:
     - matthewpi.caddyfile-support
     - heptio.jsonnet
     - timonwong.shellcheck
-    - vscjava.vscode-java-pack
     - fwcd.kotlin
     - dbaeumer.vscode-eslint
     - esbenp.prettier-vscode
