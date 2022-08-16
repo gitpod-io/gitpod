@@ -5,8 +5,9 @@
  */
 
 import React, { useContext, useEffect, useState } from "react";
-import { useLocation } from "react-router";
+import { Redirect, useLocation } from "react-router";
 import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { Currency, Plan, Plans, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { ChargebeeClient } from "../chargebee/chargebee-client";
@@ -22,15 +23,17 @@ import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getTeamSettingsMenu } from "./TeamSettings";
 import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { UserContext } from "../user-context";
 
 type PendingPlan = Plan & { pendingSince: number };
 
 export default function TeamBilling() {
+    const { user } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [members, setMembers] = useState<TeamMemberInfo[]>([]);
+    const [isUserOwner, setIsUserOwner] = useState(true);
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
     const { currency, setCurrency } = useContext(PaymentContext);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
@@ -48,6 +51,8 @@ export default function TeamBilling() {
                 getGitpodService().server.getBillingModeForTeam(team.id),
             ]);
             setMembers(memberInfos);
+            const currentUserInTeam = memberInfos.find((member: TeamMemberInfo) => member.userId === user?.id);
+            setIsUserOwner(currentUserInTeam?.role === "owner");
             setTeamSubscription(subscription);
             setTeamBillingMode(teamBillingMode);
         })();
@@ -141,6 +146,10 @@ export default function TeamBilling() {
             <span>3 hr Timeout Boost</span>,
         ],
     };
+
+    if (!isUserOwner) {
+        return <Redirect to={team ? `/t/${team.slug}` : "/"} />;
+    }
 
     return (
         <PageWithSubMenu
