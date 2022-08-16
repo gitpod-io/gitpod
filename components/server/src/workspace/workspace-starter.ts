@@ -123,6 +123,7 @@ import { BillingModes } from "../../ee/src/billing/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CachingBillingServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -838,8 +839,10 @@ export class WorkspaceStarter {
                 user: user,
                 teams: userTeams,
             });
+            const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
+            const billingMode = await this.billingModes.getBillingMode(usageAttributionId, new Date());
 
-            if (classesEnabled) {
+            if (classesEnabled || BillingMode.canSetWorkspaceClass(billingMode)) {
                 // this is either the first time we start the workspace or the workspace was started
                 // before workspace classes and does not have a class yet
                 workspaceClass = await getWorkspaceClassForInstance(
@@ -871,8 +874,6 @@ export class WorkspaceStarter {
                 // few bytes of JSON in the database for no good reason.
                 configuration.featureFlags = featureFlags;
             }
-
-            const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
 
             const now = new Date().toISOString();
             const instance: WorkspaceInstance = {
@@ -1428,7 +1429,8 @@ export class WorkspaceStarter {
         }
 
         const volumeSnapshotId =
-((SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) && !!workspace.context.snapshotBucketId)
+            (SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) &&
+            !!workspace.context.snapshotBucketId
                 ? workspace.context.snapshotBucketId
                 : lastValidWorkspaceInstanceId;
 
