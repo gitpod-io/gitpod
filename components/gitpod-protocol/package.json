@@ -64,6 +64,6 @@
         "vscode-uri": "^3.0.3",
         "vscode-ws-jsonrpc": "^0.2.0",
         "ws": "^7.4.6",
-        "google-protobuf": "^3.18.0-rc.2"
+        "google-protobuf": "^3.19.1"
     }
 }

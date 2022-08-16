@@ -2781,7 +2781,7 @@
     "@types/minimatch" "*"
     "@types/node" "*"
 
-"@types/google-protobuf@^3.15.5", "@types/google-protobuf@^3.7.4":
+"@types/google-protobuf@^3.15.5":
   version "3.15.5"
   resolved "https://registry.npmjs.org/@types/google-protobuf/-/google-protobuf-3.15.5.tgz"
   integrity sha512-6bgv24B+A2bo9AfzReeg5StdiijKzwwnRflA8RLd1V4Yv995LeTmo0z69/MPbBDFSiZWdZHQygLo/ccXhMEDgw==
@@ -8853,7 +8853,7 @@ google-protobuf@3.15.8:
   resolved "https://registry.npmjs.org/google-protobuf/-/google-protobuf-3.15.8.tgz"
   integrity sha512-2jtfdqTaSxk0cuBJBtTTWsot4WtR9RVr2rXg7x7OoqiuOKopPrwXpM1G4dXIkLcUNRh3RKzz76C8IOkksZSeOw==
 
-google-protobuf@^3.18.0-rc.2, google-protobuf@^3.19.1, google-protobuf@^3.6.1:
+google-protobuf@^3.19.1, google-protobuf@^3.6.1:
   version "3.19.1"
   resolved "https://registry.npmjs.org/google-protobuf/-/google-protobuf-3.19.1.tgz"
   integrity sha512-Isv1RlNC+IzZzilcxnlVSf+JvuhxmY7DaxYCBy+zPS9XVuJRtlTTIXR9hnZ1YL1MMusJn/7eSy2swCzZIomQSg==
