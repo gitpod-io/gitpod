@@ -612,6 +612,123 @@ public final class Status {
     // @@protoc_insertion_point(enum_scope:supervisor.TaskState)
   }
 
+  /**
+   * Protobuf enum {@code supervisor.ResourceStatusSeverity}
+   */
+  public enum ResourceStatusSeverity
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>normal = 0;</code>
+     */
+    normal(0),
+    /**
+     * <code>warning = 1;</code>
+     */
+    warning(1),
+    /**
+     * <code>danger = 2;</code>
+     */
+    danger(2),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>normal = 0;</code>
+     */
+    public static final int normal_VALUE = 0;
+    /**
+     * <code>warning = 1;</code>
+     */
+    public static final int warning_VALUE = 1;
+    /**
+     * <code>danger = 2;</code>
+     */
+    public static final int danger_VALUE = 2;
+
+
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static ResourceStatusSeverity valueOf(int value) {
+      return forNumber(value);
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     */
+    public static ResourceStatusSeverity forNumber(int value) {
+      switch (value) {
+        case 0: return normal;
+        case 1: return warning;
+        case 2: return danger;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<ResourceStatusSeverity>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        ResourceStatusSeverity> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<ResourceStatusSeverity>() {
+            public ResourceStatusSeverity findValueByNumber(int number) {
+              return ResourceStatusSeverity.forNumber(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalStateException(
+            "Can't get the descriptor of an unrecognized enum value.");
+      }
+      return getDescriptor().getValues().get(ordinal());
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Status.getDescriptor().getEnumTypes().get(5);
+    }
+
+    private static final ResourceStatusSeverity[] VALUES = values();
+
+    public static ResourceStatusSeverity valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      if (desc.getIndex() == -1) {
+        return UNRECOGNIZED;
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int value;
+
+    private ResourceStatusSeverity(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:supervisor.ResourceStatusSeverity)
+  }
+
   public interface SupervisorStatusRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:supervisor.SupervisorStatusRequest)
       com.google.protobuf.MessageOrBuilder {
@@ -15367,6 +15484,17 @@ public final class Status {
      * @return The limit.
      */
     long getLimit();
+
+    /**
+     * <code>.supervisor.ResourceStatusSeverity severity = 3;</code>
+     * @return The enum numeric value on the wire for severity.
+     */
+    int getSeverityValue();
+    /**
+     * <code>.supervisor.ResourceStatusSeverity severity = 3;</code>
+     * @return The severity.
+     */
+    io.gitpod.supervisor.api.Status.ResourceStatusSeverity getSeverity();
   }
   /**
    * Protobuf type {@code supervisor.ResourceStatus}
@@ -15381,6 +15509,7 @@ public final class Status {
       super(builder);
     }
     private ResourceStatus() {
+      severity_ = 0;
     }
 
     @java.lang.Override
@@ -15421,6 +15550,12 @@ public final class Status {
             case 16: {
 
               limit_ = input.readInt64();
+              break;
+            }
+            case 24: {
+              int rawValue = input.readEnum();
+
+              severity_ = rawValue;
               break;
             }
             default: {
@@ -15479,6 +15614,25 @@ public final class Status {
       return limit_;
     }
 
+    public static final int SEVERITY_FIELD_NUMBER = 3;
+    private int severity_;
+    /**
+     * <code>.supervisor.ResourceStatusSeverity severity = 3;</code>
+     * @return The enum numeric value on the wire for severity.
+     */
+    @java.lang.Override public int getSeverityValue() {
+      return severity_;
+    }
+    /**
+     * <code>.supervisor.ResourceStatusSeverity severity = 3;</code>
+     * @return The severity.
+     */
+    @java.lang.Override public io.gitpod.supervisor.api.Status.ResourceStatusSeverity getSeverity() {
+      @SuppressWarnings("deprecation")
+      io.gitpod.supervisor.api.Status.ResourceStatusSeverity result = io.gitpod.supervisor.api.Status.ResourceStatusSeverity.valueOf(severity_);
+      return result == null ? io.gitpod.supervisor.api.Status.ResourceStatusSeverity.UNRECOGNIZED : result;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -15499,6 +15653,9 @@ public final class Status {
       if (limit_ != 0L) {
         output.writeInt64(2, limit_);
       }
+      if (severity_ != io.gitpod.supervisor.api.Status.ResourceStatusSeverity.normal.getNumber()) {
+        output.writeEnum(3, severity_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -15515,6 +15672,10 @@ public final class Status {
       if (limit_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(2, limit_);
+      }
+      if (severity_ != io.gitpod.supervisor.api.Status.ResourceStatusSeverity.normal.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(3, severity_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -15535,6 +15696,7 @@ public final class Status {
           != other.getUsed()) return false;
       if (getLimit()
           != other.getLimit()) return false;
+      if (severity_ != other.severity_) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -15552,6 +15714,8 @@ public final class Status {
       hash = (37 * hash) + LIMIT_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getLimit());
+      hash = (37 * hash) + SEVERITY_FIELD_NUMBER;
+      hash = (53 * hash) + severity_;
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -15689,6 +15853,8 @@ public final class Status {
 
         limit_ = 0L;
 
+        severity_ = 0;
+
         return this;
       }
 
@@ -15717,6 +15883,7 @@ public final class Status {
         io.gitpod.supervisor.api.Status.ResourceStatus result = new io.gitpod.supervisor.api.Status.ResourceStatus(this);
         result.used_ = used_;
         result.limit_ = limit_;
+        result.severity_ = severity_;
         onBuilt();
         return result;
       }
@@ -15770,6 +15937,9 @@ public final class Status {
         }
         if (other.getLimit() != 0L) {
           setLimit(other.getLimit());
+        }
+        if (other.severity_ != 0) {
+          setSeverityValue(other.getSeverityValue());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -15858,6 +16028,60 @@ public final class Status {
       public Builder clearLimit() {
 
         limit_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int severity_ = 0;
+      /**
+       * <code>.supervisor.ResourceStatusSeverity severity = 3;</code>
+       * @return The enum numeric value on the wire for severity.
+       */
+      @java.lang.Override public int getSeverityValue() {
+        return severity_;
+      }
+      /**
+       * <code>.supervisor.ResourceStatusSeverity severity = 3;</code>
+       * @param value The enum numeric value on the wire for severity to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSeverityValue(int value) {
+
+        severity_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.supervisor.ResourceStatusSeverity severity = 3;</code>
+       * @return The severity.
+       */
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.ResourceStatusSeverity getSeverity() {
+        @SuppressWarnings("deprecation")
+        io.gitpod.supervisor.api.Status.ResourceStatusSeverity result = io.gitpod.supervisor.api.Status.ResourceStatusSeverity.valueOf(severity_);
+        return result == null ? io.gitpod.supervisor.api.Status.ResourceStatusSeverity.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.supervisor.ResourceStatusSeverity severity = 3;</code>
+       * @param value The severity to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSeverity(io.gitpod.supervisor.api.Status.ResourceStatusSeverity value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+
+        severity_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.supervisor.ResourceStatusSeverity severity = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSeverity() {
+
+        severity_ = 0;
         onChanged();
         return this;
       }
@@ -16074,43 +16298,46 @@ public final class Status {
       "(\t\"\027\n\025ResourcesStatuRequest\"n\n\027Resources" +
       "StatusResponse\022*\n\006memory\030\001 \001(\0132\032.supervi" +
       "sor.ResourceStatus\022\'\n\003cpu\030\002 \001(\0132\032.superv" +
-      "isor.ResourceStatus\"-\n\016ResourceStatus\022\014\n" +
-      "\004used\030\001 \001(\003\022\r\n\005limit\030\002 \001(\003*C\n\rContentSou" +
-      "rce\022\016\n\nfrom_other\020\000\022\017\n\013from_backup\020\001\022\021\n\r" +
-      "from_prebuild\020\002*?\n\016PortVisibility\022\026\n\022pri" +
-      "vate_visibility\020\000\022\025\n\021public_visibility\020\001" +
-      "*e\n\023OnPortExposedAction\022\n\n\006ignore\020\000\022\020\n\014o" +
-      "pen_browser\020\001\022\020\n\014open_preview\020\002\022\n\n\006notif" +
-      "y\020\003\022\022\n\016notify_private\020\004*9\n\020PortAutoExpos" +
-      "ure\022\n\n\006trying\020\000\022\r\n\tsucceeded\020\001\022\n\n\006failed" +
-      "\020\002*1\n\tTaskState\022\013\n\007opening\020\000\022\013\n\007running\020" +
-      "\001\022\n\n\006closed\020\0022\304\007\n\rStatusService\022|\n\020Super" +
-      "visorStatus\022#.supervisor.SupervisorStatu" +
-      "sRequest\032$.supervisor.SupervisorStatusRe" +
-      "sponse\"\035\202\323\344\223\002\027\022\025/v1/status/supervisor\022\203\001" +
-      "\n\tIDEStatus\022\034.supervisor.IDEStatusReques" +
-      "t\032\035.supervisor.IDEStatusResponse\"9\202\323\344\223\0023" +
-      "\022\016/v1/status/ideZ!\022\037/v1/status/ide/wait/" +
-      "{wait=true}\022\227\001\n\rContentStatus\022 .supervis" +
-      "or.ContentStatusRequest\032!.supervisor.Con" +
-      "tentStatusResponse\"A\202\323\344\223\002;\022\022/v1/status/c" +
-      "ontentZ%\022#/v1/status/content/wait/{wait=" +
-      "true}\022l\n\014BackupStatus\022\037.supervisor.Backu" +
-      "pStatusRequest\032 .supervisor.BackupStatus" +
-      "Response\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022\225\001\n\013" +
-      "PortsStatus\022\036.supervisor.PortsStatusRequ" +
-      "est\032\037.supervisor.PortsStatusResponse\"C\202\323" +
-      "\344\223\002=\022\020/v1/status/portsZ)\022\'/v1/status/por" +
-      "ts/observe/{observe=true}0\001\022\225\001\n\013TasksSta" +
-      "tus\022\036.supervisor.TasksStatusRequest\032\037.su" +
-      "pervisor.TasksStatusResponse\"C\202\323\344\223\002=\022\020/v" +
-      "1/status/tasksZ)\022\'/v1/status/tasks/obser" +
-      "ve/{observe=true}0\001\022w\n\017ResourcesStatus\022!" +
-      ".supervisor.ResourcesStatuRequest\032#.supe" +
-      "rvisor.ResourcesStatusResponse\"\034\202\323\344\223\002\026\022\024" +
-      "/v1/status/resourcesBF\n\030io.gitpod.superv" +
-      "isor.apiZ*github.com/gitpod-io/gitpod/su" +
-      "pervisor/apib\006proto3"
+      "isor.ResourceStatus\"c\n\016ResourceStatus\022\014\n" +
+      "\004used\030\001 \001(\003\022\r\n\005limit\030\002 \001(\003\0224\n\010severity\030\003" +
+      " \001(\0162\".supervisor.ResourceStatusSeverity" +
+      "*C\n\rContentSource\022\016\n\nfrom_other\020\000\022\017\n\013fro" +
+      "m_backup\020\001\022\021\n\rfrom_prebuild\020\002*?\n\016PortVis" +
+      "ibility\022\026\n\022private_visibility\020\000\022\025\n\021publi" +
+      "c_visibility\020\001*e\n\023OnPortExposedAction\022\n\n" +
+      "\006ignore\020\000\022\020\n\014open_browser\020\001\022\020\n\014open_prev" +
+      "iew\020\002\022\n\n\006notify\020\003\022\022\n\016notify_private\020\004*9\n" +
+      "\020PortAutoExposure\022\n\n\006trying\020\000\022\r\n\tsucceed" +
+      "ed\020\001\022\n\n\006failed\020\002*1\n\tTaskState\022\013\n\007opening" +
+      "\020\000\022\013\n\007running\020\001\022\n\n\006closed\020\002*=\n\026ResourceS" +
+      "tatusSeverity\022\n\n\006normal\020\000\022\013\n\007warning\020\001\022\n" +
+      "\n\006danger\020\0022\304\007\n\rStatusService\022|\n\020Supervis" +
+      "orStatus\022#.supervisor.SupervisorStatusRe" +
+      "quest\032$.supervisor.SupervisorStatusRespo" +
+      "nse\"\035\202\323\344\223\002\027\022\025/v1/status/supervisor\022\203\001\n\tI" +
+      "DEStatus\022\034.supervisor.IDEStatusRequest\032\035" +
+      ".supervisor.IDEStatusResponse\"9\202\323\344\223\0023\022\016/" +
+      "v1/status/ideZ!\022\037/v1/status/ide/wait/{wa" +
+      "it=true}\022\227\001\n\rContentStatus\022 .supervisor." +
+      "ContentStatusRequest\032!.supervisor.Conten" +
+      "tStatusResponse\"A\202\323\344\223\002;\022\022/v1/status/cont" +
+      "entZ%\022#/v1/status/content/wait/{wait=tru" +
+      "e}\022l\n\014BackupStatus\022\037.supervisor.BackupSt" +
+      "atusRequest\032 .supervisor.BackupStatusRes" +
+      "ponse\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022\225\001\n\013Por" +
+      "tsStatus\022\036.supervisor.PortsStatusRequest" +
+      "\032\037.supervisor.PortsStatusResponse\"C\202\323\344\223\002" +
+      "=\022\020/v1/status/portsZ)\022\'/v1/status/ports/" +
+      "observe/{observe=true}0\001\022\225\001\n\013TasksStatus" +
+      "\022\036.supervisor.TasksStatusRequest\032\037.super" +
+      "visor.TasksStatusResponse\"C\202\323\344\223\002=\022\020/v1/s" +
+      "tatus/tasksZ)\022\'/v1/status/tasks/observe/" +
+      "{observe=true}0\001\022w\n\017ResourcesStatus\022!.su" +
+      "pervisor.ResourcesStatuRequest\032#.supervi" +
+      "sor.ResourcesStatusResponse\"\034\202\323\344\223\002\026\022\024/v1" +
+      "/status/resourcesBF\n\030io.gitpod.superviso" +
+      "r.apiZ*github.com/gitpod-io/gitpod/super" +
+      "visor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -16249,7 +16476,7 @@ public final class Status {
     internal_static_supervisor_ResourceStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_ResourceStatus_descriptor,
-        new java.lang.String[] { "Used", "Limit", });
+        new java.lang.String[] { "Used", "Limit", "Severity", });
     com.google.protobuf.ExtensionRegistry registry =
         com.google.protobuf.ExtensionRegistry.newInstance();
     registry.add(com.google.api.AnnotationsProto.http);

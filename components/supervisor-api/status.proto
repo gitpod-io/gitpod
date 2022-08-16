@@ -240,4 +240,10 @@ message ResourcesStatusResponse {
 message ResourceStatus {
     int64 used = 1;
     int64 limit = 2;
+    ResourceStatusSeverity severity = 3;
+}
+enum ResourceStatusSeverity {
+    normal = 0;
+    warning = 1;
+    danger = 2;
 }
