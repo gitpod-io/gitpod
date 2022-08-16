@@ -177,11 +177,7 @@ func (m *Manager) markDisposalStatus(ctx context.Context, workspaceID string, di
 		return err
 	}
 
-	err = m.markWorkspace(ctx, workspaceID, addMark(disposalStatusAnnotation, string(b)))
-	if err != nil {
-		return err
-	}
-	return nil
+	return m.markWorkspace(ctx, workspaceID, addMark(disposalStatusAnnotation, string(b)))
 }
 
 type DisposalStatus string

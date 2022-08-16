@@ -514,9 +514,11 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 				}
 				return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
 			} else {
-				// We start finalizing the workspace content only after the container is gone. This way we ensure there's
-				// no process modifying the workspace content as we create the backup.
-				go m.finalizeWorkspaceContent(ctx, wso)
+				if ds == nil || ds.Status != DisposalFinished {
+					// We start finalizing the workspace content only after the container is gone. This way we ensure there's
+					// no process modifying the workspace content as we create the backup.
+					go m.finalizeWorkspaceContent(ctx, wso)
+				}
 			}
 		}
 
