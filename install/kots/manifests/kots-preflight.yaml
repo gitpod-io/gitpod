@@ -297,12 +297,6 @@ spec:
             echo "Gitpod: Update platform telemetry value"
             yq eval-all --inplace '.experimental.telemetry.data.platform = "{{repl Distribution }}"' "${CONFIG_FILE}"
 
-            echo "Gitpod: Patch Gitpod config"
-            base64 -d "${CONFIG_PATCH_FILE}" > /tmp/patch.yaml
-            config_patch=$(cat /tmp/patch.yaml)
-            echo "Gitpod: ${CONFIG_PATCH_FILE}=${config_patch}"
-            yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' "${CONFIG_FILE}" /tmp/patch.yaml
-
             echo "Gitpod: render Kubernetes manifests"
             echo $(cat ${CONFIG_FILE})
             echo $(/app/installer validate config --config "${CONFIG_FILE}")
