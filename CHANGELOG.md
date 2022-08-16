@@ -1,6 +1,9 @@
 # Change Log
 
 ## August 2022
+- Enable allowing redirect to Desktop IDEs for all workspaces. ([#12082](https://github.com/gitpod-io/gitpod/pull/12082)) - [@akosyakov](https://github.com/akosyakov)
+- Gitpod CLI: Highlight current task in gp tasks list ([#12052](https://github.com/gitpod-io/gitpod/pull/12052)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- JetBrains: Display Workspace CPU/Memory usage in Backend Control Center ([#12053](https://github.com/gitpod-io/gitpod/pull/12053)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - [installer]: escape inline yaml keys for labels/annotations in Helm ([#12037](https://github.com/gitpod-io/gitpod/pull/12037)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [installer]: use typemeta declaration in the helm customisations ([#12031](https://github.com/gitpod-io/gitpod/pull/12031)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - All open ports from the workspace are automatically forwarded when using Latest JetBrains IDEs. ([#11081](https://github.com/gitpod-io/gitpod/pull/11081)) - [@felladrin](https://github.com/felladrin)
