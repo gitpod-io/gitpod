@@ -47,6 +47,10 @@ export class GitLabApp {
             const secretToken = req.header("X-Gitlab-Token");
             const context = req.body as GitLabPushHook;
 
+            // trim commits to avoid DB pollution
+            // https://github.com/gitpod-io/gitpod/issues/11578
+            context.commits = [];
+
             const event = await this.webhookEvents.createEvent({
                 type: "push",
                 status: "received",
@@ -274,6 +278,21 @@ interface GitLabPushHook {
     user_name: string;
     project: GitLabProject;
     repository: GitLabRepository;
+    commits: GitLabCommit[];
+}
+
+interface GitLabCommit {
+    id: string;
+    title: string;
+    message: string;
+    url: string;
+    author: {
+        name: string;
+        email: string;
+    };
+    // modified
+    // added
+    // removed
 }
 
 interface GitLabRepository {

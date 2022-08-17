@@ -240,6 +240,10 @@ export class GithubApp {
         const span = TraceContext.startSpan("GithubApp.handlePushEvent", {});
         span.setTag("request", ctx.id);
 
+        // trim commits to avoid DB pollution
+        // https://github.com/gitpod-io/gitpod/issues/11578
+        ctx.payload.head_commit = null;
+
         const event = await this.webhookEvents.createEvent({
             type: "push",
             status: "received",
