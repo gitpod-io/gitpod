@@ -5,8 +5,6 @@
 package agentsmith
 
 import (
-	"fmt"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -23,12 +21,6 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Labels:    common.DefaultLabels(Component),
 		},
 		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups:     []string{"policy"},
-				Resources:     []string{"podsecuritypolicies"},
-				Verbs:         []string{"use"},
-				ResourceNames: []string{fmt.Sprintf("%s-ns-privileged-unconfined", ctx.Namespace)},
-			},
 			{
 				APIGroups: []string{""},
 				Resources: []string{"pods"},

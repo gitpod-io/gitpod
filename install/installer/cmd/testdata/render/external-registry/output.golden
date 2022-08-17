@@ -1533,24 +1533,6 @@ data:
       creationTimestamp: null
       name: default-kube-rbac-proxy
     ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:privileged
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:restricted-root-user
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:unprivileged
-    ---
     apiVersion: v1
     kind: ResourceQuota
     metadata:
@@ -2498,16 +2480,6 @@ data:
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: workspace
-      name: workspace
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
       creationTimestamp: null
@@ -2843,15 +2815,6 @@ data:
         component: ws-proxy
       name: ws-proxy
       namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: image-builder-mk3
-      name: default-ns-image-builder-mk3
     ---
     apiVersion: v1
     kind: ConfigMap
@@ -4115,73 +4078,6 @@ rules:
   verbs:
   - create
 ---
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-image-builder-mk3
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: image-builder-mk3
-  name: default-ns-image-builder-mk3
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:privileged
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:privileged
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:restricted-root-user
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:restricted-root-user
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-restricted-root-user
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:unprivileged
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:unprivileged
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-unprivileged
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
 # rbac.authorization.k8s.io/v1/ClusterRole default-ns-registry-facade
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -4192,14 +4088,6 @@ metadata:
     component: registry-facade
   name: default-ns-registry-facade
 rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-registry-facade
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 - apiGroups:
   - ""
   resources:
@@ -4220,14 +4108,6 @@ metadata:
     component: ws-daemon
   name: default-ns-ws-daemon
 rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 - apiGroups:
   - ""
   resources:
@@ -4607,14 +4487,6 @@ metadata:
   namespace: default
 rules:
 - apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
-- apiGroups:
   - ""
   resources:
   - pods
@@ -4676,26 +4548,6 @@ rules:
   - update
   - patch
   - watch
----
-# rbac.authorization.k8s.io/v1/Role workspace
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: workspace
-  name: workspace
-  namespace: default
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-workspace
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 ---
 # rbac.authorization.k8s.io/v1/Role ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
