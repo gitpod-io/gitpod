@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
+	"golang.org/x/exp/slices"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
@@ -100,15 +100,16 @@ func TestCgroupV2(t *testing.T) {
 				"cpu",
 				"io",
 				"memory",
-				"hugetlb",
 				"pids",
-				"rdma",
 			}
 			sort.Strings(expect)
 			act := strings.Split(strings.TrimSuffix(respCheckControllers.Stdout, "\n"), " ")
 			sort.Strings(act)
-			if diff := cmp.Diff(act, expect); len(diff) != 0 {
-				t.Errorf("cgroup v2 controllers mismatch (-want +got):\n%s", diff)
+
+			for _, resouce := range expect {
+				if !slices.Contains(act, resouce) {
+					t.Errorf("cgroup v2 controllers doesn't have %s", resouce)
+				}
 			}
 
 			return ctx
