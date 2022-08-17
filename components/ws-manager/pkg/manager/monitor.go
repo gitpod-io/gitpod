@@ -86,7 +86,8 @@ type Monitor struct {
 
 	OnError func(error)
 
-	notifyPod map[string]chan string
+	notifyPod        map[string]chan string
+	notifyPodMapLock sync.Mutex
 
 	eventRecorder record.EventRecorder
 }
@@ -201,9 +202,11 @@ func (m *Monitor) onVolumesnapshotEvent(evt watch.Event) error {
 		m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is ready to use", vs.Name)
 	}
 
+	m.notifyPodMapLock.Lock()
 	if m.notifyPod[podName] == nil {
 		m.notifyPod[podName] = make(chan string)
 	}
+	m.notifyPodMapLock.Unlock()
 	m.notifyPod[podName] <- vsc
 
 	return nil
@@ -1154,9 +1157,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				volumeSnapshotTime = time.Now()
 			}
 			if createdVolumeSnapshot {
+				m.notifyPodMapLock.Lock()
 				if m.notifyPod[wso.Pod.Name] == nil {
 					m.notifyPod[wso.Pod.Name] = make(chan string)
 				}
+				m.notifyPodMapLock.Unlock()
 
 				select {
 				case pvcVolumeSnapshotContentName = <-m.notifyPod[wso.Pod.Name]:
