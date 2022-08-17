@@ -11,6 +11,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func initFunc() ([]byte, error) {
+	cfg, err := config.NewDefaultConfig()
+	if err != nil {
+		return nil, err
+	}
+	fc, err := config.Marshal(config.CurrentVersion, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return fc, nil
+}
+
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
@@ -21,17 +34,14 @@ This file contains all the credentials to install a Gitpod instance and
 be saved to a repository.`,
 	Example: `  # Save config to config.yaml.
   gitpod-installer init > config.yaml`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfg, err := config.NewDefaultConfig()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		fc, err := initFunc()
 		if err != nil {
-			panic(err)
-		}
-		fc, err := config.Marshal(config.CurrentVersion, cfg)
-		if err != nil {
-			panic(err)
+			return err
 		}
 
-		fmt.Print(string(fc))
+		fmt.Println(string(fc))
+		return nil
 	},
 }
 
