@@ -1,6 +1,10 @@
 # Change Log
 
 ## August 2022
+- Fixed a rare case in which prebuild was terminating successfully but failing ([#12028](https://github.com/gitpod-io/gitpod/pull/12028)) - [@utam0k](https://github.com/utam0k)
+- [kots]: allow for backup of resources in KOTS ([#11971](https://github.com/gitpod-io/gitpod/pull/11971)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Mark workspace's whose image builds failed as `stopped` ([#12139](https://github.com/gitpod-io/gitpod/pull/12139)) - [@geropl](https://github.com/geropl)
+- [kots]: add useful links to the KOTS dashboard ([#12043](https://github.com/gitpod-io/gitpod/pull/12043)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Enable allowing redirect to Desktop IDEs for all workspaces. ([#12082](https://github.com/gitpod-io/gitpod/pull/12082)) - [@akosyakov](https://github.com/akosyakov)
 - Gitpod CLI: Highlight current task in gp tasks list ([#12052](https://github.com/gitpod-io/gitpod/pull/12052)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - JetBrains: Display Workspace CPU/Memory usage in Backend Control Center ([#12053](https://github.com/gitpod-io/gitpod/pull/12053)) - [@andreafalzetti](https://github.com/andreafalzetti)
