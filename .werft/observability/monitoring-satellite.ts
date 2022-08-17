@@ -63,7 +63,7 @@ export class MonitoringSatelliteInstaller {
         if (installationMethod == "observability-installer") {
             // As YAML is indentation sensitive we're using json instead so we don't have to worry about
             // getting the indentation right when formatting the code in TypeScript.
-            const observabilityInstallerRenderCmd = `cd observability/installer && echo '
+            const observabilityInstallerRenderCmd = `cd observability && make generate && ./hack/deploy-crds.sh --kubeconfig ${this.options.kubeconfigPath} && cd installer && echo '
             {
                 "alerting": {
                     "config": {}
