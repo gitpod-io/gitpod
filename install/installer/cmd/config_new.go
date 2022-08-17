@@ -5,37 +5,39 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/spf13/cobra"
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:        "init",
-	Deprecated: `use "config new"`,
-	Short:      "Create a base config file",
+// configNewCmd represents the validate command
+var configNewCmd = &cobra.Command{
+	Use:   "new",
+	Short: "Create a base config file",
 	Long: `Create a base config file
 
 This file contains all the credentials to install a Gitpod instance and
 be saved to a repository.`,
 	Example: `  # Save config to config.yaml.
-  gitpod-installer init > config.yaml`,
-	Run: func(cmd *cobra.Command, args []string) {
+  gitpod-installer config new config.yaml`,
+	Args: cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		configPath := args[0]
+
 		cfg, err := config.NewDefaultConfig()
 		if err != nil {
-			panic(err)
+			return err
 		}
 		fc, err := config.Marshal(config.CurrentVersion, cfg)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
-		fmt.Print(string(fc))
+		return os.WriteFile(configPath, fc, 0644)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
+	configCmd.AddCommand(configNewCmd)
 }
