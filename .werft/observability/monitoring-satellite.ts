@@ -63,7 +63,11 @@ export class MonitoringSatelliteInstaller {
         if (installationMethod == "observability-installer") {
             // As YAML is indentation sensitive we're using json instead so we don't have to worry about
             // getting the indentation right when formatting the code in TypeScript.
-            const observabilityInstallerRenderCmd = `cd observability && make generate && ./hack/deploy-crds.sh --kubeconfig ${this.options.kubeconfigPath} && cd installer && echo '
+            const observabilityInstallerRenderCmd = `cd observability && \
+            make generate && \
+            ./hack/deploy-crds.sh --kubeconfig ${this.options.kubeconfigPath} && \
+            kubectl create ns monitoring-satellite --kubeconfig ${this.options.kubeconfigPath} || true && \
+            cd installer && echo '
             {
                 "alerting": {
                     "config": {}
@@ -88,7 +92,7 @@ export class MonitoringSatelliteInstaller {
                     "enableFeatures": []
                 }
             }' | go run main.go render --config - | kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f -`;
-            const renderingResult = exec(observabilityInstallerRenderCmd, { silent: true, dontCheckRc: true});
+            const renderingResult = exec(observabilityInstallerRenderCmd, { silent: false, dontCheckRc: true});
             if (renderingResult.code > 0) {
                 const err = new Error(`Failed rendering YAML with exit code ${renderingResult.code}`)
                 renderingResult.stderr.split('\n').forEach(stderrLine => werft.log(sliceName, stderrLine))
