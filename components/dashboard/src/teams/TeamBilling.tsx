@@ -28,7 +28,7 @@ import { UserContext } from "../user-context";
 type PendingPlan = Plan & { pendingSince: number };
 
 export default function TeamBilling() {
-    const { user, userBillingMode } = useContext(UserContext);
+    const { user } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
@@ -308,15 +308,23 @@ export default function TeamBilling() {
         );
     }
 
-    const showUBP = BillingMode.showUsageBasedBilling(userBillingMode);
+    const showUBP = BillingMode.showUsageBasedBilling(teamBillingMode);
     return (
         <PageWithSubMenu
             subMenu={getTeamSettingsMenu({ team, billingMode: teamBillingMode })}
             title="Billing"
             subtitle="Manage team billing and plans."
         >
-            {showUBP && <TeamUsageBasedBilling />}
-            {!showUBP && renderTeamBilling()}
+            {teamBillingMode === undefined ? (
+                <div className="p-20">
+                    <Spinner className="h-5 w-5 animate-spin" />
+                </div>
+            ) : (
+                <>
+                    {showUBP && <TeamUsageBasedBilling />}
+                    {!showUBP && renderTeamBilling()}
+                </>
+            )}
         </PageWithSubMenu>
     );
 }
