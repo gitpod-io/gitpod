@@ -196,8 +196,7 @@ export class EntitlementServiceChargebee implements EntitlementService {
      */
     async limitNetworkConnections(user: User, date: Date = new Date()): Promise<boolean> {
         const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, date.toISOString());
-        const freePlans = [Plans.FREE, Plans.FREE_50].map((p) => p.chargebeeId);
-
-        return subscriptions.filter((s) => !freePlans.includes(s.planId!)).length > 0;
+        const hasPaidPlan = subscriptions.some((s) => !Plans.isFreeTier(s.planId));
+        return !hasPaidPlan;
     }
 }

@@ -102,7 +102,8 @@ export class EntitlementServiceUBP implements EntitlementService {
      * @param user
      */
     async limitNetworkConnections(user: User, date: Date): Promise<boolean> {
-        return !this.hasPaidSubscription(user, date);
+        const hasPaidPlan = await this.hasPaidSubscription(user, date);
+        return !hasPaidPlan;
     }
 
     protected async hasPaidSubscription(user: User, date: Date): Promise<boolean> {
