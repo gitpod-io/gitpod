@@ -7,10 +7,13 @@ package apiv1
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
-	"time"
 )
 
 type InvalidSession struct {
@@ -44,11 +47,21 @@ type ReportGenerator struct {
 	nowFunc func() time.Time
 }
 
-func (g *ReportGenerator) GenerateUsageReport(ctx context.Context, from, to time.Time) (UsageReport, error) {
+func (g *ReportGenerator) GenerateUsageReport(ctx context.Context, from, to time.Time) (*UsageReport, error) {
 	now := g.nowFunc().UTC()
-	log.Infof("Gathering usage data from %s to %s", from, to)
 
-	report := UsageReport{
+	// Sanity check: from <= now
+	if now.Before(from) {
+		return nil, status.Errorf(codes.InvalidArgument, "Now must be before from")
+	}
+
+	// Enforce: to <= now
+	if now.Before(to) {
+		to = now
+	}
+	log.Infof("Gathering usage data from %s to %s (%s)", from, to, now)
+
+	report := &UsageReport{
 		GenerationTime: now,
 		From:           from,
 		To:             to,
@@ -70,7 +83,7 @@ func (g *ReportGenerator) GenerateUsageReport(ctx context.Context, from, to time
 
 	trimmed := trimStartStopTime(valid, from, to)
 
-	report.UsageRecords = instancesToUsageRecords(trimmed, g.pricer, now)
+	report.UsageRecords = instancesToUsageRecords(trimmed, g.pricer, to)
 	return report, nil
 }
 
