@@ -23,7 +23,7 @@ spec:
 
     - name: container_registry
       title: Container registry
-      description: Gitpod requires a container registry to store container images. This can either be an in-cluster or external container registry.
+      description: Gitpod [requires a container registry](https://www.gitpod.io/docs/self-hosted/latest/reference-architecture/single-cluster-ref-arch#oci-image-registry) to push and store workspace images. This can either be an in-cluster or external container registry.
       items:
         - name: reg_incluster
           title: Use in-cluster container registry
@@ -107,6 +107,19 @@ spec:
           when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
           required: true
           help_text: The password for your container registry.
+
+        - name: reg_docker_config_enable
+          title: Configure additional registry credentials for pulling workspace images
+          type: bool
+          default: "0"
+          help_text: This is useful when you have base workspace images in private registries other than the above configured ones.
+
+        - name: reg_docker_config
+          title: Registry credentials
+          when: '{{repl ConfigOptionEquals "reg_docker_config_enable" "1" }}'
+          type: file
+          required: true
+          help_text: Docker [config JSON file](https://docs.docker.com/engine/reference/commandline/cli/#sample-configuration-file) with auth credentials used to access private registries, for workspace images.
 
     - name: database
       title: Database

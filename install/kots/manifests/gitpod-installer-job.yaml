@@ -78,6 +78,17 @@ spec:
                 fi
               fi
 
+              echo "Gitpod: Create a Helm template directory"
+              rm -Rf "${GITPOD_OBJECTS}"
+              mkdir -p "${GITPOD_OBJECTS}/templates"
+              cat <<EOF >> "${GITPOD_OBJECTS}/Chart.yaml"
+              apiVersion: v2
+              name: gitpod-kots
+              description: Always ready-to-code
+              version: "1.0.0"
+              appVersion: "$(/app/installer version | yq e '.version' -)"
+              EOF
+
               echo "Gitpod: Generate the base Installer config"
               /app/installer init > "${CONFIG_FILE}"
 
@@ -174,8 +185,7 @@ spec:
                 kubectl create secret docker-registry container-registry \
                   --namespace "{{repl Namespace }}" \
                   --from-file=.dockerconfigjson=/tmp/container-registry-secret \
-                  -o yaml --dry-run=client | \
-                  kubectl replace --namespace "{{repl Namespace }}" --force -f -
+                  -o yaml --dry-run=client >  "${GITPOD_OBJECTS}/templates/gitpod.yaml"
 
                 yq e -i ".containerRegistry.inCluster = false" "${CONFIG_FILE}"
                 yq e -i ".containerRegistry.external.url = \"{{repl ConfigOption "reg_url" }}\"" "${CONFIG_FILE}"
@@ -298,19 +308,8 @@ spec:
               config=$(cat "${CONFIG_FILE}")
               echo "Gitpod: ${CONFIG_FILE}=${config}"
 
-              echo "Gitpod: Create a Helm template directory"
-              rm -Rf "${GITPOD_OBJECTS}"
-              mkdir -p "${GITPOD_OBJECTS}/templates"
-              cat <<EOF >> "${GITPOD_OBJECTS}/Chart.yaml"
-              apiVersion: v2
-              name: gitpod-kots
-              description: Always ready-to-code
-              version: "1.0.0"
-              appVersion: "$(/app/installer version | yq e '.version' -)"
-              EOF
-
               echo "Gitpod: render Kubernetes manifests"
-              /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} --use-experimental-config > "${GITPOD_OBJECTS}/templates/gitpod.yaml"
+              /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} --use-experimental-config >> "${GITPOD_OBJECTS}/templates/gitpod.yaml"
 
               if [ '{{repl ConfigOptionEquals "reg_incluster" "1" }}' = "true" ];
               then
@@ -326,6 +325,33 @@ spec:
 
                 echo "Gitpod: update the in-cluster registry secret"
                 yq eval-all --inplace '(select(.kind == "Secret" and .metadata.name == "builtin-registry-auth") | .data.".dockerconfigjson") |= env(REGISTRY_SECRET)' \
+                  "${GITPOD_OBJECTS}/templates/gitpod.yaml"
+              fi
+
+              # figure out the secret to use
+              if [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
+              then
+                export REGISTRY_SECRET_NAME="container-registry"
+              else
+                export REGISTRY_SECRET_NAME="builtin-registry-auth"
+              fi
+
+              if [ '{{repl ConfigOptionNotEquals "reg_docker_config" "" }}' = "true" ];
+              then
+                echo "Gitpod: Add given extra docker config json file to ${REGISTRY_SECRET_NAME}"
+
+                yq eval-all '(select(.kind == "Secret" and .metadata.name == env(REGISTRY_SECRET_NAME)) | .data.".dockerconfigjson")' \
+                  "${GITPOD_OBJECTS}/templates/gitpod.yaml" \
+                  | base64 -d \
+                  > /tmp/currentconfig.json
+
+                DOCKER_CONFIG='{{repl ConfigOptionData "reg_docker_config" | Base64Encode }}'
+                echo "${DOCKER_CONFIG}" | base64 -d  > /tmp/userconfig.json
+
+                export REGISTRY_SECRET=$(jq -s '.[0] * .[1]' /tmp/userconfig.json /tmp/currentconfig.json | base64 -w 0)
+
+                echo "Gitpod: update the in-cluster registry secret"
+                yq eval-all --inplace '(select(.kind == "Secret" and .metadata.name == env(REGISTRY_SECRET_NAME)) | .data.".dockerconfigjson") |= env(REGISTRY_SECRET)' \
                   "${GITPOD_OBJECTS}/templates/gitpod.yaml"
               fi
 
