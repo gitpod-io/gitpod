@@ -5,7 +5,7 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { Team } from "@gitpod/gitpod-protocol";
+import { Team, TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { getGitpodService } from "../service/service";
 import { TeamsContext } from "../teams/teams-context";
@@ -17,6 +17,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
     const { user, setUser } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const [teamsWithBillingEnabled, setTeamsWithBillingEnabled] = useState<Team[] | undefined>();
+    const [membersByTeam, setMembersByTeam] = useState<Record<string, TeamMemberInfo[]>>({});
 
     useEffect(() => {
         if (!teams) {
@@ -31,8 +32,27 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                     teamsWithBilling.push(t);
                 }
             }),
-        ).then(() => setTeamsWithBillingEnabled(teamsWithBilling));
+        ).then(() => setTeamsWithBillingEnabled(teamsWithBilling.sort((a, b) => (a.name > b.name ? 1 : -1))));
     }, [teams]);
+
+    useEffect(() => {
+        if (!teamsWithBillingEnabled) {
+            return;
+        }
+        (async () => {
+            const members: Record<string, TeamMemberInfo[]> = {};
+            await Promise.all(
+                teamsWithBillingEnabled.map(async (team) => {
+                    try {
+                        members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
+                    } catch (error) {
+                        console.error("Could not get members of team", team, error);
+                    }
+                }),
+            );
+            setMembersByTeam(members);
+        })();
+    }, [teamsWithBillingEnabled]);
 
     const setUsageAttributionTeam = async (team?: Team) => {
         if (!user) {
@@ -60,10 +80,10 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
             {teamsWithBillingEnabled === undefined && <Spinner className="m-2 h-5 w-5 animate-spin" />}
             {teamsWithBillingEnabled && (
                 <div>
-                    <p>Bill all my usage to:</p>
-                    <div className="mt-4 flex space-x-3">
+                    <p>Associate all my usage with the billing account below.</p>
+                    <div className="mt-4 max-w-2xl grid grid-cols-3 gap-3">
                         {/* <SelectableCardSolid
-                            className="w-36 h-32"
+                            className="h-18"
                             title="(myself)"
                             selected={
                                 !!user &&
@@ -71,24 +91,34 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                             }
                             onClick={() => setUsageAttributionTeam(undefined)}
                         >
-                            <div className="flex-grow flex items-end p-1"></div>
+                            <div className="flex-grow flex items-end px-1">
+                                <span className="text-sm text-gray-400">Personal Account</span>
+                            </div>
                         </SelectableCardSolid> */}
                         {teamsWithBillingEnabled.length === 0 && (
-                            <span>
+                            <span className="col-span-3">
                                 Please enable billing for one of your teams, or create a new team and enable billing for
                                 it.
                             </span>
                         )}
                         {teamsWithBillingEnabled.map((t) => (
                             <SelectableCardSolid
-                                className="w-36 h-32"
+                                className="h-18"
                                 title={t.name}
                                 selected={
                                     selectedAttributionId === AttributionId.render({ kind: "team", teamId: t.id })
                                 }
                                 onClick={() => setUsageAttributionTeam(t)}
                             >
-                                <div className="flex-grow flex items-end p-1"></div>
+                                <div className="flex-grow flex items-end px-1">
+                                    <span className="text-sm text-gray-400">
+                                        {!!membersByTeam[t.id]
+                                            ? `${membersByTeam[t.id].length} member${
+                                                  membersByTeam[t.id].length === 1 ? "" : "s"
+                                              }`
+                                            : "..."}
+                                    </span>
+                                </div>
                             </SelectableCardSolid>
                         ))}
                     </div>
