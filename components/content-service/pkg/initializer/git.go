@@ -163,13 +163,13 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 			return err
 		}
 		// create local branch based on specific remote branch
-		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
+		if err := ws.Git(ctx, "-c", "core.hooksPath=/dev/null", "checkout", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
 			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot checkout remote branch.")
 			return err
 		}
 	case LocalBranch:
 		// checkout local branch based on remote HEAD
-		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/HEAD", "--no-track"); err != nil {
+		if err := ws.Git(ctx, "-c", "core.hooksPath=/dev/null", "checkout", "-B", ws.CloneTarget, "origin/HEAD", "--no-track"); err != nil {
 			return err
 		}
 	case RemoteCommit:
@@ -181,7 +181,7 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		}
 
 		// checkout specific commit
-		if err := ws.Git(ctx, "checkout", ws.CloneTarget); err != nil {
+		if err := ws.Git(ctx, "-c", "core.hooksPath=/dev/null", "checkout", ws.CloneTarget); err != nil {
 			return err
 		}
 	default:
