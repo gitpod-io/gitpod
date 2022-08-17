@@ -1435,14 +1435,17 @@ export class WorkspaceStarter {
             }
         }
 
-        const volumeSnapshotId =
-            (SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) &&
-            !!workspace.context.snapshotBucketId
-                ? workspace.context.snapshotBucketId
-                : lastValidWorkspaceInstanceId;
+        let volumeSnapshotId = ""
+        // always pick lastValidWorkspaceInstanceId if it is valid, otherwise workspace will be restored from prebuild
+        // even if there was workspace backup available
+        if (lastValidWorkspaceInstanceId != "") {
+            volumeSnapshotId = lastValidWorkspaceInstanceId
+        } else if ((SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) && !!workspace.context.snapshotBucketId) {
+            volumeSnapshotId = workspace.context.snapshotBucketId
+        }
 
         let volumeSnapshotInfo = new VolumeSnapshotInfo();
-        const volumeSnapshots = await this.workspaceDb.trace(traceCtx).findVolumeSnapshotById(volumeSnapshotId);
+        const volumeSnapshots = volumeSnapshotId != "" ? await this.workspaceDb.trace(traceCtx).findVolumeSnapshotById(volumeSnapshotId) : undefined;
         if (volumeSnapshots !== undefined) {
             log.info("starting workspace with volume snapshot info", {
                 lastInstanceId: lastValidWorkspaceInstanceId,
