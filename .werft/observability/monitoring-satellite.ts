@@ -75,22 +75,41 @@ export class MonitoringSatelliteInstaller {
                 "gitpod": {
                     "installServiceMonitors": true
                 },
-                "namespace": "${satelliteNamespace}",
                 "prober": {
-                    "install": false
+                    "install": true
+                },
+                "kubescape": {
+                    "install": true
                 },
                 "pyrra": {
-                    "install": false
+                    "install": true
                 },
-                "tracing": {
-                    "install": false
-                },
-                "werft": {
-                    "installServiceMonitors": false
+                "grafana": {
+                    "install": true
                 },
                 "prometheus": {
-                    "enableFeatures": []
-                }
+                    "externalLabels": {
+                        "cluster": "${previewName}",
+                        "environment": "preview-environments",
+                    },
+                    "resources": {
+                        "requests": {
+                            "memory": "200Mi",
+                            "cpu": "50m",
+                        },
+                    },
+                    "remoteWrite": [{
+                        "username": "${process.env.PROM_REMOTE_WRITE_USER}",
+                        "password": "${process.env.PROM_REMOTE_WRITE_PASSWORD}",
+                        "url": "https://victoriametrics.gitpod.io/api/v1/write",
+                        "writeRelabelConfigs": [{
+                            "sourceLabels": ["__name__", "job"],
+                            "separator": ";",
+                            "regex": "rest_client_requests_total.*|http_prober_.*",
+                            "action": "keep",
+                        }],
+                    }],
+                },
             }' | go run main.go render --config - | kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f -`;
             const renderingResult = exec(observabilityInstallerRenderCmd, { silent: false, dontCheckRc: true});
             if (renderingResult.code > 0) {
