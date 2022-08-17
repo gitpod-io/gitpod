@@ -482,6 +482,10 @@ export namespace Plans {
         );
     }
 
+    export function isFreeTier(chargebeeId: string | undefined): boolean {
+        return chargebeeId === Plans.FREE.chargebeeId || chargebeeId === Plans.FREE_50.chargebeeId;
+    }
+
     export function isFreeNonTransientPlan(chargebeeId: string | undefined): boolean {
         return chargebeeId === Plans.FREE_OPEN_SOURCE.chargebeeId;
     }
