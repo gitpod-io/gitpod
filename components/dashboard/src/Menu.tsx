@@ -152,9 +152,6 @@ export default function Menu() {
             server.isStudent().then((v) => () => setIsStudent(v)),
             server.isChargebeeCustomer().then((v) => () => setIsChargebeeCustomer(v)),
         ]).then((setters) => setters.forEach((s) => s()));
-
-        // Refresh billing mode
-        refreshUserBillingMode();
     }, []);
 
     useEffect(() => {
@@ -162,6 +159,11 @@ export default function Menu() {
             getGitpodService().server.getBillingModeForTeam(team.id).then(setTeamBillingMode);
         }
     }, [team]);
+
+    useEffect(() => {
+        // Refresh billing mode
+        refreshUserBillingMode();
+    }, [teams]);
 
     const teamOrUserSlug = !!team ? "/t/" + team.slug : "/projects";
     const leftMenu: Entry[] = (() => {
