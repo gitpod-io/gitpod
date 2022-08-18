@@ -8,11 +8,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
-	"strings"
-	"time"
 )
 
 type WorkspaceInstance struct {
@@ -67,14 +68,16 @@ func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to 
 			"ws.type as workspaceType, "+
 			"wsi.workspaceClass as workspaceClass, "+
 			"wsi.usageAttributionId as usageAttributionId, "+
-			"wsi.stoppedTime as stoppedTime, "+
 			"wsi.creationTime as creationTime, "+
+			"wsi.startedTime as startedTime, "+
+			"wsi.stoppingTime as stoppingTime, "+
+			"wsi.stoppedTime as stoppedTime, "+
 			"ws.ownerId as ownerId, "+
 			"ws.id as workspaceId",
 		).
 		Joins(fmt.Sprintf("LEFT JOIN %s AS ws ON wsi.workspaceId = ws.id", (&Workspace{}).TableName())).
 		Where(
-			conn.Where("wsi.stoppedTime >= ?", TimeToISO8601(from)).Or("wsi.stoppedTime = ?", ""),
+			conn.Where("wsi.stoppingTime >= ?", TimeToISO8601(from)).Or("wsi.stoppingTime = ?", ""),
 		).
 		Where("wsi.creationTime < ?", TimeToISO8601(to)).
 		Where("wsi.startedTime != ?", "").
@@ -150,18 +153,20 @@ type WorkspaceInstanceForUsage struct {
 	UsageAttributionID AttributionID  `gorm:"column:usageAttributionId;type:varchar;size:60;" json:"usageAttributionId"`
 
 	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	StartedTime  VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
+	StoppingTime VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
 	StoppedTime  VarcharTime `gorm:"column:stoppedTime;type:varchar;size:255;" json:"stoppedTime"`
 }
 
 // WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.
-// If the instance is still running (no stop time set), maxStopTime is used to to compute the duration - this is an upper bound on stop
+// If the instance is still running (no stopping time set), maxStopTime is used to to compute the duration - this is an upper bound on stop
 func (i *WorkspaceInstanceForUsage) WorkspaceRuntimeSeconds(maxStopTime time.Time) int64 {
-	start := i.CreationTime.Time()
+	start := i.StartedTime.Time()
 	stop := maxStopTime
 
-	if i.StoppedTime.IsSet() {
-		if i.StoppedTime.Time().Before(maxStopTime) {
-			stop = i.StoppedTime.Time()
+	if i.StoppingTime.IsSet() {
+		if i.StoppingTime.Time().Before(maxStopTime) {
+			stop = i.StoppingTime.Time()
 		}
 	}
 

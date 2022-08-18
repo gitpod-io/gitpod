@@ -104,8 +104,8 @@ func validateInstances(instances []db.WorkspaceInstanceForUsage) (valid []db.Wor
 		start := instance.CreationTime.Time()
 
 		// Currently running instances do not have a stopped time set, so we ignore these.
-		if instance.StoppedTime.IsSet() {
-			stop := instance.StoppedTime.Time()
+		if instance.StoppingTime.IsSet() {
+			stop := instance.StoppingTime.Time()
 			if stop.Before(start) {
 				invalid = append(invalid, InvalidSession{
 					Reason:  "stop time is before start time",
@@ -125,12 +125,12 @@ func trimStartStopTime(instances []db.WorkspaceInstanceForUsage, maximumStart, m
 	var updated []db.WorkspaceInstanceForUsage
 
 	for _, instance := range instances {
-		if instance.CreationTime.Time().Before(maximumStart) {
-			instance.CreationTime = db.NewVarcharTime(maximumStart)
+		if instance.StartedTime.Time().Before(maximumStart) {
+			instance.StartedTime = db.NewVarcharTime(maximumStart)
 		}
 
-		if instance.StoppedTime.Time().After(minimumStop) {
-			instance.StoppedTime = db.NewVarcharTime(minimumStop)
+		if instance.StoppingTime.Time().After(minimumStop) {
+			instance.StoppingTime = db.NewVarcharTime(minimumStop)
 		}
 
 		updated = append(updated, instance)

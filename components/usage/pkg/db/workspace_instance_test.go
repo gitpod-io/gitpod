@@ -8,12 +8,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 var (
@@ -32,6 +33,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}),
 		// Start of May
@@ -40,6 +42,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)),
 		}),
 		// End of May
@@ -48,6 +51,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 59, 59, 999999, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 59, 59, 999999, time.UTC)),
 		}),
 		// Started in April, but continued into May
@@ -56,6 +60,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 1, 0, 0, 0, 0, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 0, 0, 0, 0, time.UTC)),
 		}),
 		// Started in May, but continued into June
@@ -64,6 +69,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 		}),
 		// Started in April, but continued into June (ran for all of May)
@@ -72,14 +78,16 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 		}),
 		// Stopped in May, no creation time, should be retrieved but this is a poor data quality record.
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			ID:          uuid.New(),
-			WorkspaceID: workspace.ID,
-			StartedTime: db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
-			StoppedTime: db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
+			ID:           uuid.New(),
+			WorkspaceID:  workspace.ID,
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
+			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
 		}),
 		// Started in April, no stop time, still running
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
@@ -96,6 +104,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 06, 1, 00, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 00, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 		}),
 	}
@@ -122,6 +131,7 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}))[0]
 
@@ -138,6 +148,8 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 			Type:               workspace.Type,
 			UsageAttributionID: instance.UsageAttributionID,
 			CreationTime:       instance.CreationTime,
+			StartedTime:        instance.StartedTime,
+			StoppingTime:       instance.StoppingTime,
 			StoppedTime:        instance.StoppedTime,
 		}, retrieved[0])
 	})
@@ -155,6 +167,7 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 			WorkspaceID:  workspace.ID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}))[0]
 
@@ -174,6 +187,8 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 			Type:               workspace.Type,
 			UsageAttributionID: instance.UsageAttributionID,
 			CreationTime:       instance.CreationTime,
+			StartedTime:        instance.StartedTime,
+			StoppingTime:       instance.StoppingTime,
 			StoppedTime:        instance.StoppedTime,
 		}, retrieved[0])
 	})
@@ -191,6 +206,7 @@ func TestListWorkspaceInstancesInRange_InBatches(t *testing.T) {
 			WorkspaceID:  workspaceID,
 			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}))
 

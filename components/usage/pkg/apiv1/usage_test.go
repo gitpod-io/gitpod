@@ -177,6 +177,8 @@ func TestInstanceToUsageRecords(t *testing.T) {
 	teamAttributionID := db.NewTeamAttributionID(teamID)
 	instanceId := uuid.New()
 	creationTime := db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC))
+	startedTime := db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC))
+	stoppingTime := db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC))
 	stoppedTime := db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC))
 
 	scenarios := []struct {
@@ -196,6 +198,8 @@ func TestInstanceToUsageRecords(t *testing.T) {
 					Type:               db.WorkspaceType_Prebuild,
 					UsageAttributionID: teamAttributionID,
 					CreationTime:       creationTime,
+					StartedTime:        startedTime,
+					StoppingTime:       stoppingTime,
 					StoppedTime:        stoppedTime,
 				},
 			},
@@ -208,8 +212,8 @@ func TestInstanceToUsageRecords(t *testing.T) {
 				WorkspaceType:  db.WorkspaceType_Prebuild,
 				WorkspaceClass: defaultWorkspaceClass,
 				CreditsUsed:    470,
-				StartedAt:      creationTime.Time(),
-				StoppedAt:      sql.NullTime{Time: stoppedTime.Time(), Valid: true},
+				StartedAt:      startedTime.Time(),
+				StoppedAt:      sql.NullTime{Time: stoppingTime.Time(), Valid: true},
 				GenerationID:   0,
 				Deleted:        false,
 			}},
@@ -226,6 +230,8 @@ func TestInstanceToUsageRecords(t *testing.T) {
 					WorkspaceID:        workspaceID,
 					UsageAttributionID: teamAttributionID,
 					CreationTime:       creationTime,
+					StartedTime:        startedTime,
+					StoppingTime:       db.VarcharTime{},
 					StoppedTime:        db.VarcharTime{},
 				},
 			},
@@ -266,6 +272,7 @@ func TestReportGenerator_GenerateUsageReport(t *testing.T) {
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
 			CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 1, 00, 00, 00, 00, time.UTC)),
 			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 1, 00, 00, 00, 00, time.UTC)),
+			StoppingTime:       db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 			StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 		}),
 		// Still running
@@ -280,6 +287,7 @@ func TestReportGenerator_GenerateUsageReport(t *testing.T) {
 			ID:                 uuid.New(),
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
 			StartedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+			StoppingTime:       db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 			StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 		}),
 	}
@@ -333,7 +341,7 @@ func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
 	}
 	tests := []TestCase{
 		{
-			name:    "real example taken from DB: runtime _before_ instance.creationTime",
+			name:    "real example taken from DB: runtime _before_ instance.startedTime",
 			from:    time.Date(2022, 8, 1, 0, 00, 00, 00, time.UTC),
 			to:      time.Date(2022, 9, 1, 0, 00, 00, 00, time.UTC),
 			runtime: Timestamp("2022-08-17T09:38:28Z").Time(),
@@ -343,6 +351,7 @@ func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
 					UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
 					CreationTime:       Timestamp("2022-08-17T09:40:47.316Z"),
 					StartedTime:        Timestamp("2022-08-17T09:40:53.115Z"),
+					StoppingTime:       Timestamp("2022-08-17T09:42:36.292Z"),
 					StoppedTime:        Timestamp("2022-08-17T09:43:04.874Z"),
 				}),
 			},
@@ -361,7 +370,7 @@ func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
 			},
 		},
 		{
-			name:    "same as above, but with runtime _after_ creationTime",
+			name:    "same as above, but with runtime _after_ startedTime",
 			from:    time.Date(2022, 8, 1, 0, 00, 00, 00, time.UTC),
 			to:      time.Date(2022, 9, 1, 0, 00, 00, 00, time.UTC),
 			runtime: Timestamp("2022-08-17T09:41:00Z").Time(),
@@ -371,6 +380,7 @@ func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
 					UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
 					CreationTime:       Timestamp("2022-08-17T09:40:47.316Z"),
 					StartedTime:        Timestamp("2022-08-17T09:40:53.115Z"),
+					StoppingTime:       Timestamp("2022-08-17T09:42:36.292Z"),
 					StoppedTime:        Timestamp("2022-08-17T09:43:04.874Z"),
 				}),
 			},
@@ -379,10 +389,10 @@ func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
 					{
 						InstanceID:     instanceID,
 						AttributionID:  db.NewTeamAttributionID(teamID.String()),
-						StartedAt:      Timestamp("2022-08-17T09:40:47.316Z").Time(),
+						StartedAt:      Timestamp("2022-08-17T09:40:53.115Z").Time(),
 						StoppedAt:      sql.NullTime{Time: Timestamp("2022-08-17T09:41:00Z").Time(), Valid: true},
 						WorkspaceClass: "default",
-						CreditsUsed:    0.03611111111111111,
+						CreditsUsed:    0.019444444444444445,
 					},
 				},
 			},
