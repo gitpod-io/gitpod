@@ -28,7 +28,7 @@
         <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false" />
         <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodClientProjectSessionTracker" client="guest" preload="true"/>
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodProjectManager" preload="true"/>
+        <!--projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodProjectManager" preload="true"/-->
         <gateway.customization.name implementation="io.gitpod.jetbrains.remote.GitpodGatewayClientCustomizationProvider"/>
     </extensions>
 
