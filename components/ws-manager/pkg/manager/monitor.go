@@ -321,7 +321,8 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		if status.Conditions.Timeout != "" && strings.Contains(status.Conditions.Timeout, string(activityBackup)) {
 			span.LogKV("event", "timeout during backup")
 			ds := &workspaceDisposalStatus{Status: DisposalFinished, BackupComplete: true, BackupFailure: status.Conditions.Timeout}
-			if manager.markDisposalStatus(ctx, workspaceID, ds) != nil {
+			err = manager.markDisposalStatus(ctx, workspaceID, ds)
+			if err != nil {
 				log.WithError(err).Error("was unable to update pod's disposal state - this will break someone's experience")
 			}
 		}
@@ -514,7 +515,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 				}
 				return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
 			} else {
-				if ds == nil || ds.Status != DisposalFinished {
+				if ds.Status != DisposalFinished {
 					// We start finalizing the workspace content only after the container is gone. This way we ensure there's
 					// no process modifying the workspace content as we create the backup.
 					go m.finalizeWorkspaceContent(ctx, wso)
@@ -1008,10 +1009,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		return
 	}
 
-	var disposalStatus *workspaceDisposalStatus
+	disposalStatus := &workspaceDisposalStatus{}
 	defer func() {
-		if disposalStatus == nil {
-			span.LogKV("disposalStatus", "nil")
+		if disposalStatus.Status == DisposalEmpty {
+			span.LogKV("disposalStatus", "empty")
 			return
 		}
 
