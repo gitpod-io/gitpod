@@ -32,9 +32,14 @@ export class GarbageCollectedCache<T> {
         });
     }
 
-    public get(key: string): T | undefined {
+    public get(key: string, now: Date = new Date()): T | undefined {
         const entry = this.store.get(key);
         if (!entry) {
+            return undefined;
+        }
+        // Still valid?
+        if (entry.expiryDate < now.getTime()) {
+            this.store.delete(entry.key);
             return undefined;
         }
         return entry.value;

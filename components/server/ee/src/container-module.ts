@@ -66,6 +66,7 @@ import { EntitlementServiceLicense } from "./billing/entitlement-service-license
 import { EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
 import { BillingService } from "./billing/billing-service";
+import { CachedBillingModes } from "./billing/billing-modes-cache";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -132,7 +133,13 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(EntitlementServiceUBP).toSelf().inSingletonScope();
     bind(EntitlementServiceImpl).toSelf().inSingletonScope();
     rebind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
-    bind(BillingModes).to(BillingModesImpl).inSingletonScope();
+    bind(BillingModesImpl).toSelf().inSingletonScope();
+    bind(BillingModes)
+        .toDynamicValue((ctx) => {
+            const impl = ctx.container.get<BillingModesImpl>(BillingModesImpl);
+            return new CachedBillingModes(impl);
+        })
+        .inSingletonScope();
 
     bind(BillingService).toSelf().inSingletonScope();
 });
