@@ -52,7 +52,7 @@ func (g *ReportGenerator) GenerateUsageReport(ctx context.Context, from, to time
 
 	// Sanity check: from <= now
 	if now.Before(from) {
-		return nil, status.Errorf(codes.InvalidArgument, "Now must be before from")
+		return nil, status.Errorf(codes.InvalidArgument, "Now must be after (or be equal to) from")
 	}
 
 	// Enforce: to <= now

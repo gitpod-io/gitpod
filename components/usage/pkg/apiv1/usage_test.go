@@ -347,6 +347,7 @@ func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
 				}),
 			},
 			expectation: Expectation{
+				usageRecords: nil,
 				// usageRecords: []db.WorkspaceInstanceUsage{
 				// 	{
 				// 		InstanceID: instanceID,
