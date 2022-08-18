@@ -389,11 +389,6 @@ spec:
             [advanced documentation](https://www.gitpod.io/docs/self-hosted/latest/advanced/customization) for
             more details and the format.
 
-            Labels are an immutable property in Kubernetes, so you may need to uninstall your Gitpod instance
-            before applying - run `helm uninstall -n {{repl Namespace }} gitpod`.
-
-            **WARNING** this should not be run if using in-cluster database and/or object storage.
-
         - name: config_patch
           title: Gitpod config patch (YAML file)
           type: file
