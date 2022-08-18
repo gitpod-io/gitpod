@@ -2,7 +2,7 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 apiVersion: v1
-domain: statefulset-customization-test.gitpod.com
+domain: gitpod.example.com
 customization:
   - apiVersion: apps/v1
     kind: StatefulSet
