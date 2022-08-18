@@ -205,51 +205,51 @@ const TESTS: { [name: string]: InfraConfig } = {
     WORKSPACE_TEST: {
         phase: "run-workspace-tests",
         makeTarget: "run-workspace-tests",
-        description: "Run the workspace tests test/tests/workspace",
+        description: "Workspace integration tests",
         slackhook: slackHook.get("workspace-jobs"),
     },
     VSCODE_IDE_TEST: {
         phase: "run-vscode-ide-tests",
         makeTarget: "run-vscode-ide-tests",
-        description: "Run the vscode IDE tests test/tests/ide/vscode",
+        description: "vscode IDE tests",
         slackhook: slackHook.get("ide-jobs"),
     },
     JB_IDE_TEST: {
         phase: "run-jb-ide-tests",
         makeTarget: "run-jb-ide-tests",
-        description: "Run the jetbrains IDE tests test/tests/ide/jetbrains",
+        description: "jetbrains IDE tests",
         slackhook: slackHook.get("ide-jobs"),
     },
     CONTENTSERVICE_TEST: {
         phase: "run-cs-component-tests",
         makeTarget: "run-cs-component-tests",
-        description: "Run the content-service tests test/tests/components/content-service",
+        description: "content-service tests",
     },
     DB_TEST: {
         phase: "run-db-component-tests",
         makeTarget: "run-db-component-tests",
-        description: "Run the database tests test/tests/components/database",
+        description: "database integration tests",
     },
     IMAGEBUILDER_TEST: {
         phase: "run-ib-component-tests",
         makeTarget: "run-ib-component-tests",
-        description: "Run the image-builder tests test/tests/components/image-builder",
+        description: "image-builder tests",
     },
     SERVER_TEST: {
         phase: "run-server-component-tests",
         makeTarget: "run-server-component-tests",
-        description: "Run the server tests test/tests/components/server",
+        description: "server integration tests",
     },
     WS_DAEMON_TEST: {
         phase: "run-wsd-component-tests",
         makeTarget: "run-wsd-component-tests",
-        description: "Run the ws-daemon tests test/tests/components/ws-daemon",
+        description: "ws-daemon integration tests",
         slackhook: slackHook.get("workspace-jobs"),
     },
     WS_MNGR_TEST: {
         phase: "run-wsm-component-tests",
         makeTarget: "run-wsm-component-tests",
-        description: "Run the ws-manager tests test/tests/components/ws-manager",
+        description: "ws-manager integration tests",
         slackhook: slackHook.get("workspace-jobs"),
     },
 }
@@ -345,6 +345,7 @@ export async function installerTests(config: TestConfig) {
 
 function runIntegrationTests() {
     werft.phase("run-integration-tests", "Run all existing integration tests");
+    const slackAlerts = new Map<string, string>([])
     for (let test in TESTS) {
         const testPhase = TESTS[test];
         const ret = callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
@@ -353,9 +354,15 @@ function runIntegrationTests() {
                 `werft log result -d "failed test" url "${testPhase.description}(Phase ${testPhase.phase}) failed. Please refer logs."`,
             );
 
-            sendFailureSlackAlert(testPhase.description, new Error("Integration test failed"), testPhase.slackhook)
+            const msg: string = slackAlerts.get(testPhase.slackhook) || ""
+            slackAlerts.set(testPhase.slackhook, `${msg}\n${testPhase.description}`)
+
         }
     }
+
+    slackAlerts.forEach((msg: string, channel: string) => {
+        sendFailureSlackAlert(msg, new Error("Integration tests failed"), channel)
+    });
 
     werft.done("run-integration-tests");
 }
@@ -411,7 +418,7 @@ function randK8sVersion(config: string): string {
             break;
         }
         case "STANDARD_EKS_TEST": {
-            options = ["1.21", "1.22"]
+            options = ["1.21", "1.22", "1.23"]
             break;
         }
         case "STANDARD_K3S_TEST": {
