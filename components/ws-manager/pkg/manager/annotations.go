@@ -183,13 +183,14 @@ func (m *Manager) markDisposalStatus(ctx context.Context, workspaceID string, di
 type DisposalStatus string
 
 const (
+	DisposalEmpty    DisposalStatus = ""
 	DisposalStarted  DisposalStatus = "started"
 	DisposalRetrying DisposalStatus = "retrying"
 	DisposalFinished DisposalStatus = "finished"
 )
 
 func (ds DisposalStatus) IsDisposing() bool {
-	return !(ds == "" || ds == DisposalFinished)
+	return !(ds == DisposalEmpty || ds == DisposalFinished)
 }
 
 // workspaceVolumeSnapshotStatus stores the status of volume snapshot
