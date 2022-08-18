@@ -2007,8 +2007,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async getStripePublishableKey(ctx: TraceContext): Promise<string> {
-        const user = this.checkAndBlockUser("getStripePublishableKey");
-        await this.ensureStripeApiIsAllowed({ user });
+        this.checkAndBlockUser("getStripePublishableKey");
         const publishableKey = this.config.stripeSecrets?.publishableKey;
         if (!publishableKey) {
             throw new ResponseError(
@@ -2020,8 +2019,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string> {
-        const user = this.checkAndBlockUser("getStripeSetupIntentClientSecret");
-        await this.ensureStripeApiIsAllowed({ user });
+        this.checkAndBlockUser("getStripeSetupIntentClientSecret");
         try {
             const setupIntent = await this.stripeService.createSetupIntent();
             if (!setupIntent.client_secret) {
