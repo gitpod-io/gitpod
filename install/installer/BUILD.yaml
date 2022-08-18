@@ -12,6 +12,7 @@ packages:
       - "pkg/components/**/*.key"
       - "pkg/components/**/*.pem"
       - "pkg/components/**/*.sql"
+      - "scripts/*.sh"
       - "third_party/**/*"
     deps:
       - components/blobserve:lib
@@ -51,6 +52,8 @@ packages:
         - ["objcopy", "--add-section", "versionManifest=components--all-docker/versions.yaml", "install-installer--raw-app/installer", "installer"]
   - name: docker
     type: docker
+    srcs:
+      - "scripts/*.sh"
     deps:
       - :app
     argdeps:
