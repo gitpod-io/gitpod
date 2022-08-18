@@ -8,9 +8,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
-	"time"
 
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
@@ -167,8 +168,8 @@ func instancesToUsageRecords(instances []db.WorkspaceInstanceForUsage, pricer *W
 
 	for _, instance := range instances {
 		var stoppedAt sql.NullTime
-		if instance.StoppedTime.IsSet() {
-			stoppedAt = sql.NullTime{Time: instance.StoppedTime.Time(), Valid: true}
+		if instance.StoppingTime.IsSet() {
+			stoppedAt = sql.NullTime{Time: instance.StoppingTime.Time(), Valid: true}
 		}
 
 		projectID := ""
@@ -184,7 +185,7 @@ func instancesToUsageRecords(instances []db.WorkspaceInstanceForUsage, pricer *W
 			UserID:         instance.OwnerID,
 			WorkspaceType:  instance.Type,
 			WorkspaceClass: instance.WorkspaceClass,
-			StartedAt:      instance.CreationTime.Time(),
+			StartedAt:      instance.StartedTime.Time(),
 			StoppedAt:      stoppedAt,
 			CreditsUsed:    pricer.CreditsUsedByInstance(&instance, now),
 			GenerationID:   0,
