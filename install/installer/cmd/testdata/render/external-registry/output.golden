@@ -512,7 +512,7 @@ metadata:
   namespace: default
 spec:
   dnsNames:
-  - reg.minimal-test.gitpod.com
+  - reg.gitpod.example.com
   duration: 2160h0m0s
   issuerRef:
     group: cert-manager.io
@@ -1301,7 +1301,7 @@ data:
   config.json: |-
     {
       "gitpodAPI": {
-        "hostURL": "https://minimal-test.gitpod.com",
+        "hostURL": "https://gitpod.example.com",
         "apiToken": ""
       },
       "enforcement": {},
@@ -1336,32 +1336,32 @@ data:
               {
                 "path": "/ide/out/vs/workbench/workbench.web.api.js",
                 "search": "vscode-cdn.net",
-                "replacement": "minimal-test.gitpod.com"
+                "replacement": "gitpod.example.com"
               },
               {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
                 "search": "vscode-cdn.net",
-                "replacement": "minimal-test.gitpod.com"
+                "replacement": "gitpod.example.com"
               },
               {
                 "path": "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
                 "search": "vscode-cdn.net",
-                "replacement": "minimal-test.gitpod.com"
+                "replacement": "gitpod.example.com"
               },
               {
                 "path": "/ide/out/vs/workbench/workbench.web.api.js",
                 "search": "open-vsx.org",
-                "replacement": "open-vsx.minimal-test.gitpod.com"
+                "replacement": "open-vsx.gitpod.example.com"
               },
               {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
                 "search": "open-vsx.org",
-                "replacement": "open-vsx.minimal-test.gitpod.com"
+                "replacement": "open-vsx.gitpod.example.com"
               },
               {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
                 "search": "ide.gitpod.io/code/markeplace.json",
-                "replacement": "ide.minimal-test.gitpod.com/code/marketplace.json"
+                "replacement": "ide.gitpod.example.com/code/marketplace.json"
               }
             ],
             "inlineStatic": [
@@ -1529,7 +1529,7 @@ data:
     database:
       inCluster: true
     disableDefinitelyGp: true
-    domain: minimal-test.gitpod.com
+    domain: gitpod.example.com
     kind: Full
     metadata:
       region: local
@@ -2400,7 +2400,7 @@ data:
     metadata:
       annotations:
         cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
-        external-dns.alpha.kubernetes.io/hostname: minimal-test.gitpod.com,*.minimal-test.gitpod.com,*.ws.minimal-test.gitpod.com
+        external-dns.alpha.kubernetes.io/hostname: gitpod.example.com,*.gitpod.example.com,*.ws.gitpod.example.com
       creationTimestamp: null
       labels:
         app: gitpod
@@ -2612,7 +2612,7 @@ data:
     kind: DaemonSet
     metadata:
       annotations:
-        gitpod.io/checksum_config: 6953509cf3cc9e054d55384d788fb0de0bd798b969d752d7e1c40b75de4b4a62
+        gitpod.io/checksum_config: e5f1dd2a1327394b4bef4172c43487842026ef965fe8cec2475f00b1588de01f
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3643,7 +3643,7 @@ data:
       "cache_duration_regular": "5m0s",
       "cache_duration_backup": "72h0m0s",
       "url_upstream": "https://open-vsx.org",
-      "url_local": "https://open-vsx.minimal-test.gitpod.com",
+      "url_local": "https://open-vsx.gitpod.example.com",
       "max_idle_conns": 1000,
       "max_idle_conns_per_host": 1000,
       "redis_addr": "localhost:6379",
@@ -3664,7 +3664,7 @@ apiVersion: v1
 data:
   vhost.empty: '# Placeholder to avoid errors loading files using a glob pattern'
   vhost.ide-proxy: |
-    https://ide.minimal-test.gitpod.com {
+    https://ide.gitpod.example.com {
         import enable_log_debug
         import remove_server_header
         import ssl_configuration
@@ -3674,7 +3674,7 @@ data:
         }
     }
   vhost.minio: |-
-    https://minio.minimal-test.gitpod.com {
+    https://minio.gitpod.example.com {
         import enable_log
         import remove_server_header
         import ssl_configuration
@@ -3684,7 +3684,7 @@ data:
         }
     }
   vhost.open-vsx: |-
-    https://open-vsx.minimal-test.gitpod.com {
+    https://open-vsx.gitpod.example.com {
         import enable_log_debug
         import remove_server_header
         import ssl_configuration
@@ -3694,7 +3694,7 @@ data:
         }
     }
   vhost.payment-endpoint: |
-    https://payment.minimal-test.gitpod.com {
+    https://payment.gitpod.example.com {
         import enable_log
         import remove_server_header
         import ssl_configuration
@@ -3784,7 +3784,7 @@ data:
   config.json: |-
     {
       "version": "pd-ide-metrics.23",
-      "hostUrl": "https://minimal-test.gitpod.com",
+      "hostUrl": "https://gitpod.example.com",
       "installationShortname": "default",
       "devBranch": "",
       "insecureNoDomain": false,
@@ -3801,7 +3801,7 @@ data:
       "contentServiceAddr": "content-service:8080",
       "imageBuilderAddr": "image-builder-mk3:8080",
       "usageServiceAddr": "usage:9001",
-      "vsxRegistryUrl": "https://open-vsx.minimal-test.gitpod.com",
+      "vsxRegistryUrl": "https://open-vsx.gitpod.example.com",
       "chargebeeProviderOptionsFile": "/chargebee/providerOptions",
       "stripeSecretsFile": "/stripe-secret/apikeys",
       "stripeConfigFile": "/stripe-config/config",
@@ -3919,7 +3919,7 @@ data:
             "orderKey": "00",
             "title": "VS Code",
             "type": "browser",
-            "logo": "https://ide.minimal-test.gitpod.com/image/ide-logo/vscode.svg",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-034e1ea1e89e0b6a6be50de20bf67509111efa65",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
@@ -3928,7 +3928,7 @@ data:
             "orderKey": "02",
             "title": "VS Code",
             "type": "desktop",
-            "logo": "https://ide.minimal-test.gitpod.com/image/ide-logo/vscode.svg",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:test"
           },
@@ -3936,7 +3936,7 @@ data:
             "orderKey": "05",
             "title": "GoLand",
             "type": "desktop",
-            "logo": "https://ide.minimal-test.gitpod.com/image/ide-logo/golandLogo.svg",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/golandLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/goland:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:latest"
           },
@@ -3944,7 +3944,7 @@ data:
             "orderKey": "04",
             "title": "IntelliJ IDEA",
             "type": "desktop",
-            "logo": "https://ide.minimal-test.gitpod.com/image/ide-logo/intellijIdeaLogo.svg",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/intellijIdeaLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest"
           },
@@ -3952,7 +3952,7 @@ data:
             "orderKey": "07",
             "title": "PhpStorm",
             "type": "desktop",
-            "logo": "https://ide.minimal-test.gitpod.com/image/ide-logo/phpstormLogo.svg",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/phpstormLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:latest"
           },
@@ -3960,7 +3960,7 @@ data:
             "orderKey": "06",
             "title": "PyCharm",
             "type": "desktop",
-            "logo": "https://ide.minimal-test.gitpod.com/image/ide-logo/pycharmLogo.svg",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/pycharmLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest"
           }
@@ -4114,7 +4114,7 @@ data:
             "registryFacade": [
               {
                 "addr": "127.0.0.1",
-                "name": "reg.minimal-test.gitpod.com"
+                "name": "reg.gitpod.example.com"
               }
             ]
           }
@@ -4171,11 +4171,11 @@ data:
         "initProbe": {
           "timeout": "1s"
         },
-        "urlTemplate": "https://{{ .Prefix }}.ws.minimal-test.gitpod.com",
-        "portUrlTemplate": "https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.minimal-test.gitpod.com",
+        "urlTemplate": "https://{{ .Prefix }}.ws.gitpod.example.com",
+        "portUrlTemplate": "https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.gitpod.example.com",
         "workspaceHostPath": "/var/gitpod/workspaces",
         "heartbeatInterval": "30s",
-        "hostURL": "https://minimal-test.gitpod.com",
+        "hostURL": "https://gitpod.example.com",
         "reconnectionInterval": "30s",
         "wsdaemon": {
           "port": 8080,
@@ -4185,8 +4185,8 @@ data:
             "key": "/ws-daemon-tls-certs/tls.key"
           }
         },
-        "registryFacadeHost": "reg.minimal-test.gitpod.com:20000",
-        "workspaceClusterHost": "ws.minimal-test.gitpod.com",
+        "registryFacadeHost": "reg.gitpod.example.com:20000",
+        "workspaceClusterHost": "ws.gitpod.example.com",
         "workspaceClass": {
           "default": {
             "name": "default",
@@ -4332,14 +4332,14 @@ data:
         },
         "blobServer": {
           "scheme": "https",
-          "host": "ide.minimal-test.gitpod.com",
+          "host": "ide.gitpod.example.com",
           "pathPrefix": "/blobserve"
         },
         "gitpodInstallation": {
           "scheme": "https",
-          "hostName": "minimal-test.gitpod.com",
-          "workspaceHostSuffix": ".ws.minimal-test.gitpod.com",
-          "workspaceHostSuffixRegex": "\\.ws[^\\.]*\\.minimal-test.gitpod.com"
+          "hostName": "gitpod.example.com",
+          "workspaceHostSuffix": ".ws.gitpod.example.com",
+          "workspaceHostSuffixRegex": "\\.ws[^\\.]*\\.gitpod.example.com"
         },
         "workspacePodConfig": {
           "theiaPort": 23000,
@@ -5863,7 +5863,7 @@ kind: Service
 metadata:
   annotations:
     cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
-    external-dns.alpha.kubernetes.io/hostname: minimal-test.gitpod.com,*.minimal-test.gitpod.com,*.ws.minimal-test.gitpod.com
+    external-dns.alpha.kubernetes.io/hostname: gitpod.example.com,*.gitpod.example.com,*.ws.gitpod.example.com
   creationTimestamp: null
   labels:
     app: gitpod
@@ -6041,7 +6041,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   annotations:
-    gitpod.io/checksum_config: 6953509cf3cc9e054d55384d788fb0de0bd798b969d752d7e1c40b75de4b4a62
+    gitpod.io/checksum_config: e5f1dd2a1327394b4bef4172c43487842026ef965fe8cec2475f00b1588de01f
   creationTimestamp: null
   labels:
     app: gitpod
@@ -6078,13 +6078,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -6193,13 +6193,13 @@ spec:
         - /mnt/config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -6374,7 +6374,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 7b3c26f99bf554df16b50f731d661892d434d46344675d315726d6782b518ec6
+        gitpod.io/checksum_config: f23d3442050785945a5c6109bc25a11f48414e6b0ba3734f499e40def0ce8a6d
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -6398,13 +6398,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -7009,7 +7009,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 241a200000160fb1de7b54c3b4b8f84deda8a1aeec7b002a62e713da8e141a33
+        gitpod.io/checksum_config: 7c868f444d805d107d758063ca5d27eb27acce6de2e5a5d917d0a5bb46cc13b6
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7029,13 +7029,13 @@ spec:
             - /config/config.json
           env:
             - name: GITPOD_DOMAIN
-              value: minimal-test.gitpod.com
+              value: gitpod.example.com
             - name: GITPOD_INSTALLATION_SHORTNAME
               value: default
             - name: GITPOD_REGION
               value: local
             - name: HOST_URL
-              value: https://minimal-test.gitpod.com
+              value: https://gitpod.example.com
             - name: KUBE_NAMESPACE
               valueFrom:
                 fieldRef:
@@ -7156,7 +7156,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 262835c16ef5b84c2a90ab17cc4232ca5dbd48408c36a3452d3a74e23f1aec84
+        gitpod.io/checksum_config: 852534778d4ef3fe1d87dd19fa8290cf02561d3b98c11493053ee39ea8a627b4
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7177,13 +7177,13 @@ spec:
         - /mnt/config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -7316,13 +7316,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -7428,13 +7428,13 @@ spec:
       containers:
       - env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -7514,13 +7514,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -7625,13 +7625,13 @@ spec:
       containers:
       - env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -7713,13 +7713,13 @@ spec:
         - /config/image-builder.json
         env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -7948,7 +7948,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 58f3f5c52d162ce5a98c0323a1b089b258f70721e9b3bb3b1d152af6896ab619
+        gitpod.io/checksum_config: e6eea49478778c68ec71eee2aa5d2be8b67ebcfda86107a44d2cc80b88c1ecfe
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7991,13 +7991,13 @@ spec:
           runAsUser: 65532
       - env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -8007,7 +8007,7 @@ spec:
         - name: LOG_LEVEL
           value: info
         - name: PROXY_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         image: eu.gcr.io/gitpod-core-dev/build/proxy:test
         imagePullPolicy: IfNotPresent
         name: proxy
@@ -8094,7 +8094,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 03ddfd9ca77e5d762d5752ef22be533b7cbe0ccaf9013470f435b3959224727b
+        gitpod.io/checksum_config: 0bc76c867af13d6037264732e25991af8de7c19a2f2e91d1fb1e64df1a9833db
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8112,13 +8112,13 @@ spec:
       containers:
       - env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -8355,7 +8355,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 91334333afc36abcdd564e6271c0d52cc9aa33f735cb966f3eec38e64b625673
+        gitpod.io/checksum_config: 4ac62854eccd472efc91ccb1041633960da4448fe1534555abb4ac94fe22861d
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8377,13 +8377,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -8506,13 +8506,13 @@ spec:
       containers:
       - env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -8728,7 +8728,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 877efb2e41ba2a82e0d19c011804fa2bff310f5a5a9cbba236a49bb4cf9ff176
+        gitpod.io/checksum_config: dcbc53af67e4007a4affc029e880c338b93e4484010727f4bf0a08ad7c93a112
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8749,13 +8749,13 @@ spec:
         - /config/config.json
         env:
         - name: GITPOD_DOMAIN
-          value: minimal-test.gitpod.com
+          value: gitpod.example.com
         - name: GITPOD_INSTALLATION_SHORTNAME
           value: default
         - name: GITPOD_REGION
           value: local
         - name: HOST_URL
-          value: https://minimal-test.gitpod.com
+          value: https://gitpod.example.com
         - name: KUBE_NAMESPACE
           valueFrom:
             fieldRef:
