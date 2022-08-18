@@ -6,6 +6,7 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -63,10 +64,6 @@ const (
 
 	// pvcWorkspaceVolumeSnapshotAnnotation stores volume snapshot name when snapshot was created from pvc
 	pvcWorkspaceVolumeSnapshotAnnotation = "gitpod.io/volumeSnapshotName"
-
-	// startedDisposalAnnotation sets to true when finalizeWorkspaceContent is called to prevent finalize from
-	// being called more then once, which can happen due to race between disposalStatusAnnotation update and actOnPodEvent
-	startedDisposalAnnotation = "gitpod.io/startedDisposal"
 
 	// gitpodFinalizerName is the name of the Gitpod finalizer we use to clean up a workspace
 	gitpodFinalizerName = "gitpod.io/finalizer"
@@ -171,6 +168,32 @@ type workspaceDisposalStatus struct {
 	BackupComplete bool             `json:"backupComplete,omitempty"`
 	BackupFailure  string           `json:"backupFailure,omitempty"`
 	GitStatus      *csapi.GitStatus `json:"gitStatus,omitempty"`
+	Status         DisposalStatus   `json:"status,omitempty"`
+}
+
+func (m *Manager) markDisposalStatus(ctx context.Context, workspaceID string, disposalStatus *workspaceDisposalStatus) error {
+	b, err := json.Marshal(disposalStatus)
+	if err != nil {
+		return err
+	}
+
+	err = m.markWorkspace(ctx, workspaceID, addMark(disposalStatusAnnotation, string(b)))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type DisposalStatus string
+
+const (
+	DisposalStarted  DisposalStatus = "started"
+	DisposalRetrying DisposalStatus = "retrying"
+	DisposalFinished DisposalStatus = "finished"
+)
+
+func (ds DisposalStatus) IsDisposing() bool {
+	return !(ds == "" || ds == DisposalFinished)
 }
 
 // workspaceVolumeSnapshotStatus stores the status of volume snapshot
