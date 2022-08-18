@@ -9,7 +9,7 @@ defaultArgs:
   localAppVersion: unknown
   codeCommit: eaff362e0457bfb4197c92c9b4fe59ed9dcc187e
   codeQuality: stable
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.2.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.2.1.tar.gz"
   golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.2.1.tar.gz"
   pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2022.2.tar.gz"
   phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2022.2.tar.gz"
