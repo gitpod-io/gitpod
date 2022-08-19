@@ -1340,6 +1340,8 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 			return
 		}
 
+		log.Infof("%s does not exist, going to wait for %s", fn, fnReady)
+
 		// If there is no content descriptor the content must have come from somewhere (i.e. a layer or ws-daemon).
 		// Let's wait for that to happen.
 		// TODO: rewrite using fsnotify
@@ -1372,6 +1374,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	defer contentFile.Close()
 
+	log.Info("supervisor: running content service executor with content descriptor")
 	var src csapi.WorkspaceInitSource
 	src, err = executor.Execute(ctx, "/workspace", contentFile, true)
 	if err != nil {
