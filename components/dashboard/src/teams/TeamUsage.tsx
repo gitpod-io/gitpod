@@ -217,9 +217,12 @@ function TeamUsage() {
                         )}
                         {billedUsage.length > 0 && !isLoading && (
                             <div className="flex flex-col w-full mb-8">
-                                <ItemsList className="mt-2 text-gray-500">
-                                    <Item header={false} className="grid grid-cols-12 gap-x-3 bg-gray-100 mb-5">
-                                        <ItemField className="col-span-2 my-auto">
+                                <ItemsList className="mt-2 text-gray-400 dark:text-gray-500">
+                                    <Item
+                                        header={false}
+                                        className="grid grid-cols-12 gap-x-3 bg-gray-100 dark:bg-gray-800"
+                                    >
+                                        <ItemField className="col-span-2 my-auto ">
                                             <span>Type</span>
                                         </ItemField>
                                         <ItemField className="col-span-5 my-auto">
@@ -236,7 +239,7 @@ function TeamUsage() {
                                             >
                                                 Timestamp
                                                 <SortArrow
-                                                    className={`h-4 w-4 my-auto ${
+                                                    className={`ml-2 h-4 w-4 my-auto ${
                                                         isStartedTimeDescending ? "" : " transform rotate-180"
                                                     }`}
                                                 />
@@ -248,53 +251,55 @@ function TeamUsage() {
                                             return (
                                                 <div
                                                     key={usage.instanceId}
-                                                    className="flex p-3 grid grid-cols-12 gap-x-3 justify-between transition ease-in-out rounded-xl focus:bg-gitpod-kumquat-light"
+                                                    className="flex p-3 grid grid-cols-12 gap-x-3 justify-between transition ease-in-out rounded-xl"
                                                 >
                                                     <div className="flex flex-col col-span-2 my-auto">
-                                                        <span className="text-gray-700 dark:text-gray-400">
+                                                        <span className="text-gray-600 dark:text-gray-100 text-md font-medium">
                                                             {getType(usage.workspaceType)}
                                                         </span>
-                                                        <span className="text-sm text-gray-400 dark:text-gray-600">
+                                                        <span className="text-sm text-gray-400 dark:text-gray-500">
                                                             {usage.workspaceClass}
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-col col-span-5 my-auto">
-                                                        <span className="truncate text-gray-700 dark:text-gray-400">
+                                                        <span className="truncate text-gray-600 dark:text-gray-100 text-md font-medium">
                                                             {usage.workspaceId}
                                                         </span>
-                                                        <span className="text-sm truncate text-gray-400 dark:text-gray-600">
+                                                        <span className="text-sm truncate text-gray-400 dark:text-gray-500">
                                                             {usage.contextURL && toRemoteURL(usage.contextURL)}
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-col my-auto">
-                                                        <span className="text-right text-gray-700 dark:text-gray-400">
+                                                        <span className="text-right text-gray-500 dark:text-gray-400 font-medium">
                                                             {usage.credits.toFixed(1)}
                                                         </span>
-                                                        <span className="text-right truncate text-sm text-gray-400 dark:text-gray-600">
+                                                        <span className="text-right truncate text-sm text-gray-400 dark:text-gray-500">
                                                             {getMinutes(usage)}
                                                         </span>
                                                     </div>
                                                     <div className="my-auto" />
                                                     <div className="flex flex-col col-span-3 my-auto">
-                                                        <span className="text-gray-400 truncate">
+                                                        <span className="text-gray-400 dark:text-gray-500 truncate font-medium">
                                                             {displayTime(usage.startTime)}
                                                         </span>
                                                         <div className="flex">
                                                             {usage.workspaceType === "prebuild" ? (
-                                                                <UsageIcon className="my-auto" />
+                                                                <UsageIcon className="my-auto w-4 h-4 mr-1" />
                                                             ) : (
                                                                 ""
                                                             )}
                                                             {usage.workspaceType === "prebuild" ? (
-                                                                <span className="text-sm text-gray-400">Gitpod</span>
+                                                                <span className="text-sm text-gray-400 dark:text-gray-500">
+                                                                    Gitpod
+                                                                </span>
                                                             ) : (
                                                                 <div className="flex">
                                                                     <img
-                                                                        className="my-auto rounded-full w-4 h-4 inline-block align-text-bottom mr-2 overflow-hidden"
-                                                                        src={usage.user?.avatarUrl || ""}
+                                                                        className="my-auto rounded-full w-4 h-4 inline-block align-text-bottom mr-1 overflow-hidden"
+                                                                        src={usage.user?.avatarURL || ""}
                                                                         alt="user avatar"
                                                                     />
-                                                                    <span className="text-sm text-gray-400">
+                                                                    <span className="text-sm text-gray-400 dark:text-gray-500">
                                                                         {usage.user?.name}
                                                                     </span>
                                                                 </div>
