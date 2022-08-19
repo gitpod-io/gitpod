@@ -177,9 +177,9 @@ func TestInstanceToUsageRecords(t *testing.T) {
 	teamAttributionID := db.NewTeamAttributionID(teamID)
 	instanceId := uuid.New()
 	creationTime := db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC))
-	startedTime := db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC))
+	startedTime := db.NewVarcharTime(time.Date(2022, 05, 30, 00, 01, 00, 00, time.UTC))
 	stoppingTime := db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC))
-	stoppedTime := db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC))
+	stoppedTime := db.NewVarcharTime(time.Date(2022, 06, 1, 1, 1, 0, 0, time.UTC))
 
 	scenarios := []struct {
 		Name     string
@@ -211,7 +211,7 @@ func TestInstanceToUsageRecords(t *testing.T) {
 				ProjectID:      "",
 				WorkspaceType:  db.WorkspaceType_Prebuild,
 				WorkspaceClass: defaultWorkspaceClass,
-				CreditsUsed:    470,
+				CreditsUsed:    469.8333333333333,
 				StartedAt:      startedTime.Time(),
 				StoppedAt:      sql.NullTime{Time: stoppingTime.Time(), Valid: true},
 				GenerationID:   0,
@@ -242,10 +242,10 @@ func TestInstanceToUsageRecords(t *testing.T) {
 				ProjectID:      projectID.String(),
 				WorkspaceID:    workspaceID,
 				WorkspaceType:  db.WorkspaceType_Regular,
-				StartedAt:      creationTime.Time(),
+				StartedAt:      startedTime.Time(),
 				StoppedAt:      sql.NullTime{},
 				WorkspaceClass: defaultWorkspaceClass,
-				CreditsUsed:    470,
+				CreditsUsed:    469.8333333333333,
 			}},
 		},
 	}
@@ -271,24 +271,24 @@ func TestReportGenerator_GenerateUsageReport(t *testing.T) {
 			ID:                 uuid.New(),
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
 			CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 1, 00, 00, 00, 00, time.UTC)),
-			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 1, 00, 00, 00, 00, time.UTC)),
+			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 1, 00, 01, 00, 00, time.UTC)),
 			StoppingTime:       db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-			StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+			StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 1, 0, 0, time.UTC)),
 		}),
 		// Still running
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:                 uuid.New(),
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
 			CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
-			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
+			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 30, 00, 01, 00, 00, time.UTC)),
 		}),
 		// No creation time, invalid record
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:                 uuid.New(),
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
-			StartedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+			StartedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 1, 0, 0, time.UTC)),
 			StoppingTime:       db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-			StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+			StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 1, 0, 0, time.UTC)),
 		}),
 	}
 
