@@ -4,31 +4,40 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { MetricsServicePromiseClient } from '@gitpod/ide-metrics-api-grpcweb/lib/idemetrics_grpc_web_pb'
-import { AddCounterRequest, AddCounterResponse } from '@gitpod/ide-metrics-api-grpcweb/lib/idemetrics_pb'
 import { serverUrl } from '../shared/urls';
-
-const client = new MetricsServicePromiseClient(serverUrl.asIDEMetrics().toString())
 
 export enum MetricsName {
     SupervisorFrontendClientTotal = "gitpod_supervisor_frontend_client_total",
     SupervisorFrontendErrorTotal = "gitpod_supervisor_frontend_error_total"
 }
 
+const MetricsUrl = serverUrl.asIDEMetrics().toString();
+
+interface AddCounterParam {
+    value?: number;
+    labels?: Record<string, string>;
+}
+
 export class IDEMetricsServiceClient {
 
-    static async addCounter(metricsName: string, labels?: Map<string, string>, value?: number) : Promise<AddCounterResponse> {
-        const req = new AddCounterRequest()
-        req.setName(metricsName)
-        if (value) {
-            req.setValue(value)
-        }
-        if (labels) {
-            const m = req.getLabelsMap()
-            for (const [name, value] of labels) {
-                m.set(name, value)
+    static async addCounter(metricsName: MetricsName, labels?: Record<string, string>, value?: number) : Promise<boolean> {
+        const url = `${MetricsUrl}/metrics/counter/add/${metricsName}`
+        const params: AddCounterParam = { value, labels }
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                body: JSON.stringify(params),
+                credentials: "omit",
+            })
+            if (!response.ok) {
+                const data = await response.json() // { code: number; message: string; }
+                console.error(`Cannot report metrics with addCounter: ${response.status} ${response.statusText}`, data)
+                return false
             }
+            return true
+        } catch (err) {
+            console.error("Cannot report metrics with addCounter, error:", err)
+            return false
         }
-        return client.addCounter(req)
     }
 }
