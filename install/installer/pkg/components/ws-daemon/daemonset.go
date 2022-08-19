@@ -10,6 +10,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/shiftfs"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -95,16 +96,7 @@ fi
 	}
 
 	if cfg.Workspace.Runtime.FSShiftMethod == config.FSShiftShiftFS {
-		initContainers = append(initContainers, corev1.Container{
-			Name:  "shiftfs-module-loader",
-			Image: ctx.ImageName(cfg.Repository, "shiftfs-module-loader", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.ShiftFSModuleLoader.Version),
-			VolumeMounts: []corev1.VolumeMount{{
-				Name:      "node-linux-src",
-				ReadOnly:  true,
-				MountPath: "/usr/src_node",
-			}},
-			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
-		})
+		initContainers = append(initContainers, shiftfs.Container(ctx))
 	}
 
 	podSpec := corev1.PodSpec{
