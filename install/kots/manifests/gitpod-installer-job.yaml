@@ -23,6 +23,17 @@ spec:
         component: gitpod-installer
         cursor: "{{repl Cursor }}"
     spec:
+      affinity:
+        nodeAffinity:
+          # Same affinity as ws-daemon as detecting the containerd location
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: gitpod.io/workload_workspace_regular
+                  operator: Exists
+              - matchExpressions:
+                - key: gitpod.io/workload_workspace_headless
+                  operator: Exists
       serviceAccountName: installer
       restartPolicy: OnFailure
       containers:
