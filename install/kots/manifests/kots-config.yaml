@@ -49,7 +49,7 @@ spec:
           title: Storage region
           type: text
           required: true
-          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          when: '{{repl and (ConfigOptionEquals "reg_incluster" "1") (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
           help_text: ID of the region where your storage exists, such as `eu-west-2`.
 
         - name: reg_incluster_storage_s3_endpoint
@@ -57,27 +57,27 @@ spec:
           type: text
           required: true
           value: s3.amazonaws.com
-          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          when: '{{repl and (ConfigOptionEquals "reg_incluster" "1") (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
           help_text: The endpoint used to connect to the S3 storage.
 
         - name: reg_incluster_storage_s3_bucketname
           title: S3 bucket name
           type: text
           required: true
-          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          when: '{{repl and (ConfigOptionEquals "reg_incluster" "1") (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
           help_text: The name of the bucket to act as your S3 storage backend.
 
         - name: reg_incluster_storage_s3_accesskey
           title: S3 access key
           type: text
           required: true
-          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          when: '{{repl and (ConfigOptionEquals "reg_incluster" "1") (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
           help_text: The access key to use for authentication of your S3 storage backend.
 
         - name: reg_incluster_storage_s3_secretkey
           title: S3 secret key
           type: password
-          when: '{{repl (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
+          when: '{{repl and (ConfigOptionEquals "reg_incluster" "1") (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
           required: true
           help_text: The secret key to use for authentication of your S3 storage backend.
 
