@@ -67,3 +67,33 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
         }
     }
 }
+
+export async function triggerSelfHostedPreview(werft: Werft, config: JobConfig, username: string) {
+    const replicatedChannel =  config.replicatedChannel || config.repository.branch;
+    const cluster =  config.cluster || "k3s";
+
+    exec(`git config --global user.name "${username}"`);
+    var annotation = `-a channel=${replicatedChannel} -a preview=true -a skipTests=true -a deps=external`;
+
+    werft.phase("self-hosted-preview", `Create self-hosted preview in ${cluster}`);
+
+    annotation = `${annotation} -a cluster=${cluster} -a updateGitHubStatus=gitpod-io/gitpod`
+
+    const testFile: string = ".werft/self-hosted-installer-tests.yaml";
+
+    try {
+        exec(
+            `werft run --remote-job-path ${testFile} ${annotation} github`,
+            {
+                slice: "self-hosted-preview"
+            },
+        ).trim();
+
+        werft.done("self-hosted-preview");
+    } catch (err) {
+        if (!config.mainBuild) {
+            werft.fail("self-hosted-preview", err);
+        }
+        exec("exit 0");
+    }
+}
