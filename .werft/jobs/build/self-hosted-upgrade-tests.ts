@@ -72,7 +72,28 @@ export async function triggerSelfHostedPreview(werft: Werft, config: JobConfig, 
     const replicatedChannel =  config.replicatedChannel || config.repository.branch;
     const cluster =  config.cluster || "k3s";
 
+    var licenseFlag: string = ""
+
+    if(!["stable", "unstable", "beta"].includes(replicatedChannel.toLowerCase())){
+        werft.phase("get-replicated-license", `Create and download replicated license for ${replicatedChannel}`);
+
+        exec(`replicated customer create --channel ${replicatedChannel} --name ${replicatedChannel}`,
+            { slice: "get-replicated-license"})
+
+        exec(`replicated customer download-license --customer ${replicatedChannel} > license.yaml`,
+            { slice: "get-replicated-license", dontCheckRc: true})
+
+        exec(`install -D license.yaml install/licenses/${replicatedChannel}.yaml`,
+            { slice: "get-replicated-license"},
+        )
+        werft.done("get-replicated-license");
+
+        licenseFlag = `-s install/licenses/${replicatedChannel}.yaml`
+    }
+
+
     exec(`git config --global user.name "${username}"`);
+
     var annotation = `-a channel=${replicatedChannel} -a preview=true -a skipTests=true -a deps=external`;
 
     werft.phase("self-hosted-preview", `Create self-hosted preview in ${cluster}`);
@@ -83,7 +104,7 @@ export async function triggerSelfHostedPreview(werft: Werft, config: JobConfig, 
 
     try {
         exec(
-            `werft run --remote-job-path ${testFile} ${annotation} github`,
+            `werft run --remote-job-path ${testFile} ${annotation} github ${licenseFlag}`,
             {
                 slice: "self-hosted-preview"
             },
