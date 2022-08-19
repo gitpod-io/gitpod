@@ -77,7 +77,7 @@ export default function () {
                         {envVars.map((variable) => {
                             return (
                                 <Item className="grid grid-cols-3 items-center">
-                                    <ItemField>{variable.name}</ItemField>
+                                    <ItemField className="truncate">{variable.name}</ItemField>
                                     <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
                                     <ItemField className="flex justify-end">
                                         <ItemFieldContextMenu
