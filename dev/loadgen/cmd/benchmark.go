@@ -74,7 +74,7 @@ var benchmarkCommand = &cobra.Command{
 					Email:    "test@gitpod.io",
 					Username: "foobar",
 				},
-				FeatureFlags:      []api.WorkspaceFeatureFlag{},
+				FeatureFlags:      scenario.FeatureFlags,
 				Timeout:           "5m",
 				WorkspaceImage:    "will-be-overriden",
 				WorkspaceLocation: "workspace-stress",
@@ -197,6 +197,7 @@ type BenchmarkScenario struct {
 	StoppingTimeout string                     `json:"waitForStopping"`
 	SuccessRate     float32                    `json:"successRate"`
 	WorkspaceClass  string                     `json:"workspaceClass"`
+	FeatureFlags    []api.WorkspaceFeatureFlag `json:"featureFlags"`
 }
 
 func handleWorkspaceDeletion(timeout string, executor loadgen.Executor, canceled bool) error {
