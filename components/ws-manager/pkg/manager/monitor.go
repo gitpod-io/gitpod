@@ -77,10 +77,8 @@ type Monitor struct {
 	probeMap     map[string]context.CancelFunc
 	probeMapLock sync.Mutex
 
-	initializerMap     map[string]struct{}
-	initializerMapLock sync.Mutex
-
-	finalizerMap sync.Map
+	initializerMap sync.Map
+	finalizerMap   sync.Map
 
 	act actingManager
 
@@ -101,10 +99,9 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 
 	log.WithField("interval", monitorInterval).Info("starting workspace monitor")
 	res := Monitor{
-		manager:        m,
-		ticker:         time.NewTicker(monitorInterval),
-		probeMap:       make(map[string]context.CancelFunc),
-		initializerMap: make(map[string]struct{}),
+		manager:  m,
+		ticker:   time.NewTicker(monitorInterval),
+		probeMap: make(map[string]context.CancelFunc),
 
 		OnError: func(err error) {
 			log.WithError(err).Error("workspace monitor error")
@@ -543,9 +540,7 @@ type actingManager interface {
 }
 
 func (m *Monitor) clearInitializerFromMap(podName string) {
-	m.initializerMapLock.Lock()
-	delete(m.initializerMap, podName)
-	m.initializerMapLock.Unlock()
+	m.initializerMap.Delete(podName)
 }
 
 // doHouskeeping is called regularly by the monitor and removes timed out or dangling workspaces/services
@@ -692,13 +687,11 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 				// Looks like we have missed the CREATING phase in which we'd otherwise start the workspace content initialization.
 				// Let's see if we're initializing already. If so, there's something very wrong because ws-daemon does not know about
 				// this workspace yet. In that case we'll run another desperate attempt to initialize the workspace.
-				m.initializerMapLock.Lock()
-				if _, alreadyInitializing := m.initializerMap[pod.Name]; alreadyInitializing {
+				if _, alreadyInitializing := m.initializerMap.Load(pod.Name); alreadyInitializing {
 					// we're already initializing but wsdaemon does not know about this workspace. That's very bad.
 					log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wsdaemon does not know about this workspace (bug in ws-daemon?). Trying again!")
-					delete(m.initializerMap, pod.Name)
+					m.initializerMap.Delete(pod.Name)
 				}
-				m.initializerMapLock.Unlock()
 
 				// It's ok - maybe we were restarting in that time. Instead of waiting for things to finish, we'll just start the
 				// initialization now.
@@ -713,9 +706,7 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 	if err != nil {
 		return xerrors.Errorf("cannot wait for workspace to initialize: %w", err)
 	}
-	m.initializerMapLock.Lock()
-	delete(m.initializerMap, pod.Name)
-	m.initializerMapLock.Unlock()
+	m.clearInitializerFromMap(pod.Name)
 	span.LogKV("event", "contentInitDone")
 
 	// workspace is ready - mark it as such
@@ -824,10 +815,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	// The function below deliniates the initializer lock. It's just there so that we can
 	// defer the unlock call, thus making sure we actually call it.
 	err = func() error {
-		m.initializerMapLock.Lock()
-		defer m.initializerMapLock.Unlock()
-
-		_, alreadyInitializing := m.initializerMap[pod.Name]
+		_, alreadyInitializing := m.initializerMap.Load(pod.Name)
 		if alreadyInitializing {
 			return nil
 		}
@@ -883,7 +871,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		}
 
 		// mark that we're already initialising this workspace
-		m.initializerMap[pod.Name] = struct{}{}
+		m.initializerMap.Store(pod.Name, struct{}{})
 
 		return nil
 	}()
