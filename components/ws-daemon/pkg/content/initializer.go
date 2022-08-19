@@ -329,12 +329,13 @@ func RunInitializerChild() (err error) {
 
 	rs := &remoteContentStorage{RemoteContent: initmsg.RemoteContent}
 
-	initializer, err := wsinit.NewFromRequest(ctx, "/dst", rs, &req, wsinit.NewFromRequestOpts{ForceGitpodUserForGit: false})
+	dst := initmsg.Destination
+	initializer, err := wsinit.NewFromRequest(ctx, dst, rs, &req, wsinit.NewFromRequestOpts{ForceGitpodUserForGit: false})
 	if err != nil {
 		return err
 	}
 
-	initSource, err := wsinit.InitializeWorkspace(ctx, "/dst", rs,
+	initSource, err := wsinit.InitializeWorkspace(ctx, dst, rs,
 		wsinit.WithInitializer(initializer),
 		wsinit.WithMappings(initmsg.IDMappings),
 		wsinit.WithChown(initmsg.UID, initmsg.GID),
@@ -346,13 +347,13 @@ func RunInitializerChild() (err error) {
 
 	// some workspace content may have a `/dst/.gitpod` file or directory. That would break
 	// the workspace ready file placement (see https://github.com/gitpod-io/gitpod/issues/7694).
-	err = wsinit.EnsureCleanDotGitpodDirectory(ctx, "/dst")
+	err = wsinit.EnsureCleanDotGitpodDirectory(ctx, dst)
 	if err != nil {
 		return err
 	}
 
 	// Place the ready file to make Theia "open its gates"
-	err = wsinit.PlaceWorkspaceReadyFile(ctx, "/dst", initSource, initmsg.UID, initmsg.GID)
+	err = wsinit.PlaceWorkspaceReadyFile(ctx, dst, initSource, initmsg.UID, initmsg.GID)
 	if err != nil {
 		return err
 	}
