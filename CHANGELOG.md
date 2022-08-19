@@ -1,6 +1,10 @@
 # Change Log
 
 ## August 2022
+- [kots]: remove help text documenting the limitation on custom labels ([#12211](https://github.com/gitpod-io/gitpod/pull/12211)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Update GoLand IDE image to version 222.3739.57. ([#12188](https://github.com/gitpod-io/gitpod/pull/12188)) - [@akosyakov](https://github.com/akosyakov)
+- Update PyCharm IDE image to version 222.3739.56. ([#12187](https://github.com/gitpod-io/gitpod/pull/12187)) - [@akosyakov](https://github.com/akosyakov)
+- Update IntelliJ IDEA IDE image to version 222.3739.54. ([#12189](https://github.com/gitpod-io/gitpod/pull/12189)) - [@akosyakov](https://github.com/akosyakov)
 - Fixed a rare case in which prebuild was terminating successfully but failing ([#12028](https://github.com/gitpod-io/gitpod/pull/12028)) - [@utam0k](https://github.com/utam0k)
 - [kots]: allow for backup of resources in KOTS ([#11971](https://github.com/gitpod-io/gitpod/pull/11971)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Mark workspace's whose image builds failed as `stopped` ([#12139](https://github.com/gitpod-io/gitpod/pull/12139)) - [@geropl](https://github.com/geropl)
