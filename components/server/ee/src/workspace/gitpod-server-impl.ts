@@ -2173,13 +2173,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const sessions = response.getSessionsList().map((s) => UsageService.mapBilledSession(s));
         const extendedSessions = await Promise.all(
             sessions.map(async (session) => {
-                let user;
                 const ws = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(session.workspaceId);
+                let profile: User.Profile | undefined = undefined;
                 if (session.workspaceType === "regular" && session.userId) {
-                    user = await this.userDB.findUserById(session.userId);
-                    return Object.assign(session, { contextURL: ws?.contextURL, user: user });
+                    const user = await this.userDB.findUserById(session.userId);
+                    if (user) {
+                        profile = User.getProfile(user);
+                    }
                 }
-                return Object.assign(session, { contextURL: ws?.contextURL });
+                return {
+                    ...session,
+                    contextURL: ws?.contextURL,
+                    user: profile ? <User.Profile>{ name: profile.name, avatarURL: profile.avatarURL } : undefined,
+                };
             }),
         );
         return extendedSessions;

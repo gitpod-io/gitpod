@@ -37,7 +37,7 @@ export interface BillableSession {
 
 export interface ExtendedBillableSession extends BillableSession {
     contextURL?: string;
-    user?: User;
+    user?: Pick<User.Profile, "name" | "avatarURL">;
 }
 
 export interface BillableSessionRequest {
