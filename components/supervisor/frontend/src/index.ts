@@ -10,9 +10,29 @@
  */
 import { IDEMetricsServiceClient, MetricsName } from "./ide/ide-metrics-service-client";
 IDEMetricsServiceClient.addCounter(MetricsName.SupervisorFrontendClientTotal).catch(() => {})
-window.addEventListener('error', () => {
-    IDEMetricsServiceClient.addCounter(MetricsName.SupervisorFrontendErrorTotal).catch(() => {})
-})
+
+//#region supervisor frontend error capture
+function isElement(obj: any): obj is Element {
+    return typeof obj.getAttribute === 'function'
+}
+
+window.addEventListener('error', (event) => {
+    const labels: Record<string, string> = {};
+    if (isElement(event.target)) {
+        // We take a look at what is the resource that was attempted to load;
+        const resourceSource = event.target.getAttribute('src') || event.target.getAttribute('href')
+        // If the event has a `target`, it means that it wasn't a script error
+        if (resourceSource) {
+            if (resourceSource.match(new RegExp(/\/build\/ide\/code:.+\/__files__\//g))) {
+                labels['resource'] = 'vscode-web-workbench';
+            }
+            labels['error'] = 'LoadError';
+        }
+    }
+    IDEMetricsServiceClient.addCounter(MetricsName.SupervisorFrontendErrorTotal, labels).catch(() => {});
+});
+//#endregion
+
 require('../src/shared/index.css');
 
 import { createGitpodService, WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
