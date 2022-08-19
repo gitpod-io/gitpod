@@ -114,7 +114,7 @@ function TeamUsage() {
     const calculateTotalUsage = () => {
         let totalCredits = 0;
         billedUsage.forEach((session) => (totalCredits += session.credits));
-        return totalCredits.toFixed(2);
+        return totalCredits.toLocaleString(undefined, { maximumFractionDigits: 2 });
     };
 
     const handleMonthClick = (start: any, end: any) => {
