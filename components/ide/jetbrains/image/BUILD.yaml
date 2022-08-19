@@ -50,7 +50,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.intellijLatest
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=IIU"
+        JETBRAINS_BACKEND_URL: "https://download-cdn.jetbrains.com/idea/gateway/idea_tmp/ideaIU-223.2931.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:

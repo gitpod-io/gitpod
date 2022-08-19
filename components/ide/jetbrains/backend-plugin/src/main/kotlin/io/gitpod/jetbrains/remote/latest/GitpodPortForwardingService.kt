@@ -9,12 +9,11 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
-import com.jetbrains.codeWithMe.model.RdPortType
+import com.jetbrains.rd.platform.codeWithMe.portForwarding.PortType
 import com.jetbrains.rd.platform.util.lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeStatus
-import com.jetbrains.rdserver.portForwarding.ForwardedPortInfo
-import com.jetbrains.rdserver.portForwarding.PortForwardingManager
-import com.jetbrains.rdserver.portForwarding.remoteDev.PortEventsProcessor
+import com.jetbrains.rdserver.portForwarding.*
+import com.jetbrains.rdserver.portForwarding.remoteDev.ControllerPortsInformationProvider
 import io.gitpod.jetbrains.remote.GitpodManager
 import io.gitpod.jetbrains.remote.GitpodPortsService
 import io.gitpod.supervisor.api.Status
@@ -32,6 +31,7 @@ class GitpodPortForwardingService(private val project: Project) {
     }
 
     private val portsService = service<GitpodPortsService>()
+    private val controllerPortsInformationProvider = service<ControllerPortsInformationProvider>()
 
     init { start() }
 
@@ -85,44 +85,51 @@ class GitpodPortForwardingService(private val project: Project) {
     }
 
     private fun updateForwardedPortsList(response: Status.PortsStatusResponse) {
-        val portForwardingManager = PortForwardingManager.getInstance(project)
-        val forwardedPortsList = portForwardingManager.getForwardedPortsWithLabel(FORWARDED_PORT_LABEL)
+        val portForwardingManager = PortForwardingManager.getInstance()
+        val forwardedPorts = portForwardingManager.getPortsWithLabel(FORWARDED_PORT_LABEL)
 
         for (port in response.portsList) {
             val hostPort = port.localPort
             val isServed = port.served
+            val existingForwardedPort = forwardedPorts.find { it.hostPortNumber == hostPort }
 
-            if (isServed && !forwardedPortsList.containsKey(hostPort)) {
-                val portEventsProcessor = object : PortEventsProcessor {
-                    override fun onPortForwarded(hostPort: Int, clientPort: Int) {
-                        portsService.setForwardedPort(hostPort, clientPort)
-                        thisLogger().info("gitpod: Forwarded port $hostPort to client's port $clientPort.")
+            if (isServed && existingForwardedPort == null) {
+                portForwardingManager.addPort(Port.ExposedPort(
+                        hostPort,
+                        PortIdentity.MutableNameAndDescription(port.name, port.description),
+                        setOf(FORWARDED_PORT_LABEL),
+                        Property(port.exposed.url),
+                        Property(PortVisibility.PrivatePort())
+                ))
+
+                portForwardingManager.addPort(Port.ForwardedPort(
+                        hostPort,
+                        PortType.HTTP,
+                        PortIdentity.MutableNameAndDescription(port.name, port.description),
+                        setOf(FORWARDED_PORT_LABEL)
+                ))
+
+                // Note: The code below won't work because the addittion of a port takes some time in background, so it's
+                // to early to try caching them at this moment.
+                when (val clientPortState = controllerPortsInformationProvider.getForwardedClientPortState(hostPort)) {
+                    is ClientPortState.Assigned -> {
+                        thisLogger().warn("gitpod: Started forwarding host port $hostPort to client port ${clientPortState.clientPort}.")
+                        portsService.setForwardedPort(hostPort, clientPortState.clientPort)
                     }
-
-                    override fun onPortForwardingEnded(hostPort: Int) {
-                        thisLogger().info("gitpod: Finished forwarding port $hostPort.")
+                    is ClientPortState.FailedToAssign -> {
+                        thisLogger().warn("gitpod: Detected that host port $hostPort failed to be assigned to a client port.")
                     }
-
-                    override fun onPortForwardingFailed(hostPort: Int, reason: String) {
-                        thisLogger().error("gitpod: Failed to forward port $hostPort: $reason")
+                    else -> {
+                        thisLogger().warn("gitpod: Detected that host port $hostPort is not assigned to any client port.")
                     }
                 }
-
-                val portInfo = ForwardedPortInfo(
-                        hostPort,
-                        RdPortType.HTTP,
-                        FORWARDED_PORT_LABEL,
-                        emptyList(),
-                        portEventsProcessor
-                )
-
-                portForwardingManager.forwardPort(portInfo)
             }
 
-            if (!isServed && forwardedPortsList.containsKey(hostPort)) {
-                portForwardingManager.removePort(hostPort)
+            if (!isServed && existingForwardedPort != null) {
+                thisLogger().warn("hostPort $hostPort stopped being")
+                portForwardingManager.removePort(existingForwardedPort)
                 portsService.removeForwardedPort(hostPort)
-                thisLogger().info("gitpod: Stopped forwarding port $hostPort.")
+                thisLogger().warn("gitpod: Stopped forwarding port $hostPort.")
             }
         }
     }

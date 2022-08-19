@@ -6,10 +6,11 @@
 set -e
 set -o pipefail
 
-TEST_BACKEND_DIR=/workspace/ide-backend
+TEST_BACKEND_DIR=$(cat gradle-latest.properties | grep localPath= | sed 's/localPath=//')
 if [ ! -d "$TEST_BACKEND_DIR" ]; then
   mkdir -p $TEST_BACKEND_DIR
-  cp -r /ide-desktop/backend/* $TEST_BACKEND_DIR
+  SNAPSHOT_VERSION=$(cat gradle-latest.properties | grep platformVersion= | sed 's/platformVersion=//')
+  (cd $TEST_BACKEND_DIR && wget https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/${SNAPSHOT_VERSION}/ideaIU-${SNAPSHOT_VERSION}.zip && unzip ideaIU-${SNAPSHOT_VERSION}.zip && rm ideaIU-${SNAPSHOT_VERSION}.zip)
 fi
 
 TEST_PLUGINS_DIR="$TEST_BACKEND_DIR/plugins"
@@ -40,7 +41,7 @@ export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains
 export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
 
 # Build and move idea-cli, then overwrite environment variables initially defined by `components/ide/jetbrains/image/leeway.Dockerfile`
-IDEA_CLI_DEV_PATH=/ide-desktop/bin/idea-cli-dev
+IDEA_CLI_DEV_PATH=$TEST_BACKEND_DIR/bin/idea-cli-dev
 (cd ../cli && go build -o $IDEA_CLI_DEV_PATH)
 export EDITOR="$IDEA_CLI_DEV_PATH open"
 export VISUAL="$EDITOR"

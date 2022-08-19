@@ -67,7 +67,11 @@ dependencies {
 // Read more: https://github.com/JetBrains/gradle-intellij-plugin
 intellij {
     pluginName.set(properties("pluginName"))
-    version.set(properties("platformVersion"))
+    if (File(properties("localPath")).let { it.exists() && it.isDirectory }) {
+        localPath.set(properties("localPath"))
+    } else {
+        version.set(properties("platformVersion"))
+    }
     type.set(properties("platformType"))
     instrumentCode.set(false)
     downloadSources.set(properties("platformDownloadSources").toBoolean())
@@ -115,6 +119,7 @@ tasks {
     }
 
     runPluginVerifier {
+        enabled = false // TODO: Re-enable it when there's a 2022.3 ide version released.
         ideVersions.set(properties("pluginVerifierIdeVersions").split(',').map(String::trim).filter(String::isNotEmpty))
     }
 }

@@ -6,7 +6,7 @@ package io.gitpod.jetbrains.remote
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.BrowserUtil
-import com.intellij.idea.StartupUtil
+import com.intellij.idea.getServerFutureAsync
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
@@ -120,7 +120,7 @@ class GitpodClientProjectSessionTracker(
 
         // Ignore ports that aren't actually used by the user (e.g. ports used internally by JetBrains IDEs)
         val backendPort = BuiltInServerManager.getInstance().waitForStart().port
-        val serverPort = StartupUtil.getServerFuture().await().port
+        val serverPort = getServerFutureAsync().await()?.port
         val ignorePorts = listOf(backendPort, serverPort, 5990)
         val portsStatus = hashMapOf<Int, PortsStatus>()
 
