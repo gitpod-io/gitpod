@@ -1,7 +1,7 @@
 # the cluster_name should be of length less than 15 characters and surrounded by double quotes
 cluster_name =
 
-# a route53 zone and certificate request will be created for this domain and surrounded by double quotes
+# a route53 zone and certificate request will be created for this domain; surround the domain name within double quotes
 domain_name =
 
 region = "eu-west-1"

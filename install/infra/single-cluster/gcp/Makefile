@@ -44,32 +44,38 @@ output-done-msg:
 	@echo "================="
 
 output-url:
-	@echo "\nGitpod domain name:"
+	@echo ""
+	@echo "Gitpod domain name:"
 	@echo "================="
 	@terraform output -json url | jq
 
 output-nameservers:
-	@echo "\nNameservers for the domain(to be added as NS records in your domain provider):"
+	@echo ""
+	@echo "Nameservers for the domain(to be added as NS records in your domain provider):"
 	@echo "================="
 	@terraform output -json nameservers | jq
 
 output-storage:
-	@echo "\nObject storage:"
+	@echo ""
+	@echo "Object storage:"
 	@echo "=============="
 	@terraform output -json storage | jq
 
 output-registry:
-	@echo "\nGCR registry:"
+	@echo ""
+	@echo "GCR registry:"
 	@echo "=================="
 	@terraform output -json registry | jq
 
 output-database:
-	@echo "\nDatabase:"
+	@echo ""
+	@echo "Database:"
 	@echo "========"
 	@terraform output -json database | jq
 
 output-issuer:
-	@echo "\nClusterIssuer name:"
+	@echo ""
+	@echo "ClusterIssuer name:"
 	@echo "================="
 	@terraform output -json cluster_issuer | jq
 
@@ -116,6 +122,6 @@ destroy-cm-edns:
 
 .PHONY: destroy-cluster-issuer
 destroy-cluster-issuer:
-	@terraform destroy -target=module.cluster-issuer  --auto-approve
+	@terraform destroy -target=module.cluster-issuer  --auto-approve || echo "Could not remove cluster-issuer"
 
 # end
