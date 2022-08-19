@@ -1325,9 +1325,11 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	fn := "/workspace/.gitpod/content.json"
 	fnReady := "/workspace/.gitpod/ready"
+	doChown := true
 	if _, err := os.Stat("/.workspace/.gitpod/content.json"); !os.IsNotExist(err) {
 		fn = "/.workspace/.gitpod/content.json"
 		fnReady = "/.workspace/.gitpod/ready"
+		doChown = false // cannot chown when using PVC as it is owned by 133332 user
 		log.Info("Detected content.json in /.workspace folder, assuming PVC feature enabled")
 	}
 
@@ -1376,7 +1378,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	log.Info("supervisor: running content service executor with content descriptor")
 	var src csapi.WorkspaceInitSource
-	src, err = executor.Execute(ctx, "/workspace", contentFile, true)
+	src, err = executor.Execute(ctx, "/workspace", contentFile, doChown)
 	if err != nil {
 		return
 	}
