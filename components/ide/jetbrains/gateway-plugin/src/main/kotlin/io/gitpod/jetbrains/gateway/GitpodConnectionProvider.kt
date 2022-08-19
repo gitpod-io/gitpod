@@ -12,6 +12,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.remote.RemoteCredentialsHolder
 import com.intellij.ssh.AskAboutHostKey
 import com.intellij.ssh.OpenSshLikeHostKeyVerifier
@@ -30,8 +31,10 @@ import com.jetbrains.gateway.api.*
 import com.jetbrains.gateway.ssh.ClientOverSshTunnelConnector
 import com.jetbrains.gateway.ssh.SshHostTunnelConnector
 import com.jetbrains.gateway.thinClientLink.ThinClientHandle
+import com.jetbrains.rd.util.ConcurrentHashMap
 import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
@@ -49,7 +52,7 @@ import kotlin.coroutines.coroutineContext
 
 @Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 class GitpodConnectionProvider : GatewayConnectionProvider {
-
+    private val activeConnections = ConcurrentHashMap<String, LifetimeDefinition>()
     private val gitpod = service<GitpodConnectionService>()
 
     private val httpClient = HttpClient.newBuilder()
@@ -74,8 +77,34 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             parameters["workspaceId"]!!,
             parameters["backendPort"]
         )
+
+        val connectionKeyId = "${connectParams.gitpodHost}-${connectParams.workspaceId}-${connectParams.backendPort}"
+
+        var found = true
+        val connectionLifetime = activeConnections.computeIfAbsent(connectionKeyId) {
+            found = false
+            Lifetime.Eternal.createNested()
+        }
+
+        if (found) {
+            val message =
+                "You are trying to connect to a workspace that has a client already open. Check for opened JetBrains clients on your machine"
+            val title = "${connectParams.workspaceId} (${connectParams.gitpodHost})"
+            val okButton = Messages.getOkButton()
+            val options = arrayOf(okButton)
+            val defaultIndex = 0
+            val icon = Messages.getWarningIcon()
+            Messages.showDialog(message, title, options, defaultIndex, icon)
+
+            val errMessage = "A connection to the same workspace already exists: $connectionKeyId"
+            throw IllegalStateException(errMessage)
+        } else {
+            connectionLifetime.onTermination {
+                activeConnections.remove(connectionKeyId)
+            }
+        }
+
         val client = gitpod.obtainClient(connectParams.gitpodHost)
-        val connectionLifetime = Lifetime.Eternal.createNested()
         val updates = client.listenToWorkspace(connectionLifetime, connectParams.workspaceId)
         val workspace = client.syncWorkspace(connectParams.workspaceId).workspace
 
@@ -216,7 +245,8 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                             thinClientJob = launch {
                                 try {
                                     val updatedIdeUrl = URL(update.ideUrl);
-                                    val sshHostUrl = URL(update.ideUrl.replace(update.workspaceId, "${update.workspaceId}.ssh"));
+                                    val sshHostUrl =
+                                        URL(update.ideUrl.replace(update.workspaceId, "${update.workspaceId}.ssh"));
                                     val hostKeys = resolveHostKeys(updatedIdeUrl, connectParams)
                                     if (hostKeys.isNullOrEmpty()) {
                                         setErrorMessage("${connectParams.gitpodHost} installation does not allow SSH access, public keys cannot be found")
