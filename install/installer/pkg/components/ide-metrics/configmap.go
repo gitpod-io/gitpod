@@ -20,6 +20,23 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		{
 			Name: "gitpod_supervisor_frontend_error_total",
 			Help: "Total count of supervisor frontend client errors",
+			Labels: []config.LabelAllowList{
+				{
+					Name: "resource",
+					AllowValues: []string{
+						"vscode-web-workbench",
+					},
+					DefaultValue: "unknown",
+				},
+				{
+					Name: "error",
+					AllowValues: []string{
+						"LoadError", // js script style of errors
+						"Unknown",
+					},
+					DefaultValue: "Unknown",
+				},
+			},
 		},
 		{
 			Name: "gitpod_supervisor_frontend_client_total",
