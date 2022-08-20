@@ -239,7 +239,7 @@ function TeamUsage() {
                                             >
                                                 Timestamp
                                                 <SortArrow
-                                                    className={`ml-2 h-4 w-4 my-auto ${
+                                                    className={`ml-1 h-4 w-4 my-auto ${
                                                         isStartedTimeDescending ? "" : " transform rotate-180"
                                                     }`}
                                                 />
