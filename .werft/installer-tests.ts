@@ -3,6 +3,7 @@ import * as https from "https";
 import { join } from "path";
 import { exec } from "./util/shell";
 import { Werft } from "./util/werft";
+import { deleteReplicatedLicense } from "./jobs/build/self-hosted-upgrade-tests";
 
 const context: any = JSON.parse(fs.readFileSync("context.json").toString());
 
@@ -13,6 +14,7 @@ const testConfig: string = process.argv.length > 2 ? process.argv[2] : "STANDARD
 const channel: string = annotations.channel || "unstable";
 const version: string = annotations.version || "-";
 const preview: string = annotations.preview || "false"; // setting to true will not destroy the setup
+const customerID: string = annotations.customerID || "";
 const upgrade: string = annotations.upgrade || "false"; // setting to true will not KOTS upgrade to the latest version. Set the channel to beta or stable in this case.
 const skipTests: string = annotations.skipTests || "false"; // setting to true skips the integration tests
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
@@ -261,6 +263,7 @@ if (config === undefined) {
 
 installerTests(TEST_CONFIGURATIONS[testConfig]).catch((err) => {
     cleanup();
+    deleteReplicatedLicense(werft, customerID);
     console.error(err);
     process.exit(1);
 });
@@ -341,6 +344,9 @@ export async function installerTests(config: TestConfig) {
         // if we are not doing preview, we delete the infrastructure
         cleanup();
     }
+
+    deleteReplicatedLicense(werft, customerID)
+
 }
 
 function runIntegrationTests() {
