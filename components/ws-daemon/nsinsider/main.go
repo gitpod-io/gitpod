@@ -613,7 +613,7 @@ func main() {
 							},
 							// drop
 							&expr.Verdict{
-								Kind: expr.VerdictDrop,
+								Kind: expr.VerdictAccept,
 							},
 						},
 					})
