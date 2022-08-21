@@ -22,6 +22,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,6 +48,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var ioLimitConfig daemon.IOLimitConfig
 
 	var procLimit int64
+	networkLimitConfig := netlimit.Config{
+		Enabled:              false,
+		ConnectionsPerMinute: 3000,
+		BucketSize:           1000,
+	}
 
 	runtimeMapping := make(map[string]string)
 	// default runtime mapping
@@ -66,6 +72,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ioLimitConfig.ReadBWPerSecond = ucfg.Workspace.IOLimits.ReadBWPerSecond
 		ioLimitConfig.WriteIOPS = ucfg.Workspace.IOLimits.WriteIOPS
 		ioLimitConfig.ReadIOPS = ucfg.Workspace.IOLimits.ReadIOPS
+
+		networkLimitConfig.Enabled = ucfg.Workspace.NetworkLimits.Enabled
+		networkLimitConfig.ConnectionsPerMinute = ucfg.Workspace.NetworkLimits.ConnectionsPerMinute
+		networkLimitConfig.BucketSize = ucfg.Workspace.NetworkLimits.BucketSize
 
 		if len(ucfg.Workspace.WSDaemon.Runtime.NodeToContainerMapping) > 0 {
 			// reset map
