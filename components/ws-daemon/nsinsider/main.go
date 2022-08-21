@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 	"unsafe"
 
 	cli "github.com/urfave/cli/v2"
@@ -21,6 +22,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	_ "github.com/gitpod-io/gitpod/common-go/nsenter"
 	"github.com/google/nftables"
+	"github.com/google/nftables/binaryutil"
 	"github.com/google/nftables/expr"
 	"github.com/vishvananda/netlink"
 )
@@ -474,6 +476,153 @@ func main() {
 				Usage: "enable IPv4 forwarding",
 				Action: func(c *cli.Context) error {
 					return os.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1"), 0644)
+				},
+			},
+			{
+				Name:  "setup-connection-limit",
+				Usage: "set up network connection rate limiting",
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:     "limit",
+						Required: true,
+					},
+					&cli.IntFlag{
+						Name:     "bucketsize",
+						Required: false,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					const drop_stats = "ws-connection-drop-stats"
+					nftcon := nftables.Conn{}
+
+					connLimit := c.Int("limit")
+					bucketSize := c.Int("bucketsize")
+					if bucketSize == 0 {
+						bucketSize = 1000
+					}
+
+					// nft add table ip gitpod
+					gitpodTable := nftcon.AddTable(&nftables.Table{
+						Family: nftables.TableFamilyIPv4,
+						Name:   "gitpod",
+					})
+
+					// nft add chain ip gitpod ratelimit { type filter hook postrouting priority 0 \; }
+					ratelimit := nftcon.AddChain(&nftables.Chain{
+						Table:    gitpodTable,
+						Name:     "ratelimit",
+						Type:     nftables.ChainTypeFilter,
+						Hooknum:  nftables.ChainHookPostrouting,
+						Priority: nftables.ChainPriorityFilter,
+					})
+
+					// nft add counter gitpod connection_drop_stats
+					nftcon.AddObject(&nftables.CounterObj{
+						Table: gitpodTable,
+						Name:  drop_stats,
+					})
+
+					// nft add set gitpod ws-connections { type ipv4_addr; flags timeout, dynamic; }
+					set := &nftables.Set{
+						Table:      gitpodTable,
+						Name:       "ws-connections",
+						KeyType:    nftables.TypeIPAddr,
+						Dynamic:    true,
+						HasTimeout: true,
+					}
+					if err := nftcon.AddSet(set, nil); err != nil {
+						return err
+					}
+
+					// nft add rule ip gitpod ratelimit ip protocol tcp ct state new meter ws-connections
+					// '{ ip daddr & 0.0.0.0 timeout 1m limit rate over 3000/minute burst 1000 packets }' counter name ws-connection-drop-stats drop
+					nftcon.AddRule(&nftables.Rule{
+						// ip gitpod ratelimit
+						Table: gitpodTable,
+						Chain: ratelimit,
+
+						Exprs: []expr.Any{
+							// ip protocol tcp
+							// get offset into network header and check if tcp
+							&expr.Payload{
+								DestRegister: 1,
+								Base:         expr.PayloadBaseNetworkHeader,
+								Offset:       uint32(9),
+								Len:          uint32(1),
+							},
+							&expr.Cmp{
+								Register: 1,
+								Op:       expr.CmpOpEq,
+								Data:     []byte{unix.IPPROTO_TCP},
+							},
+							// ct state new
+							// get state from conntrack entry and check for 'new' (0x00000008)
+							&expr.Ct{
+								Key:            expr.CtKeySTATE,
+								Register:       1,
+								SourceRegister: false,
+							},
+							&expr.Bitwise{
+								DestRegister:   1,
+								SourceRegister: 1,
+								Len:            4,
+								Mask:           binaryutil.NativeEndian.PutUint32(expr.CtStateBitNEW),
+								Xor:            binaryutil.NativeEndian.PutUint32(0),
+							},
+							&expr.Cmp{
+								Register: 1,
+								Op:       expr.CmpOpNeq,
+								Data:     []byte{0, 0, 0, 0},
+							},
+							// ip daddr & 0.0.0.0
+							// get the destination address and AND every address with zero
+							// to ensure that every address is placed into the same bucket
+							&expr.Payload{
+								DestRegister: 1,
+								Base:         expr.PayloadBaseNetworkHeader,
+								Offset:       uint32(16),
+								Len:          uint32(4),
+							},
+							&expr.Bitwise{
+								DestRegister:   1,
+								SourceRegister: 1,
+								Len:            1,
+								Mask:           []byte{0x00},
+								Xor:            []byte{0x00},
+							},
+							// timeout 1m limit rate over 3000/minute burst 1000 packets
+							&expr.Dynset{
+								SrcRegKey: 1,
+								SetName:   set.Name,
+								Operation: uint32(unix.NFT_DYNSET_OP_ADD),
+								Timeout:   time.Duration(60 * time.Second),
+								Exprs: []expr.Any{
+									&expr.Limit{
+										Type:  expr.LimitTypePkts,
+										Rate:  uint64(connLimit),
+										Unit:  expr.LimitTimeMinute,
+										Burst: uint32(bucketSize),
+										Over:  true,
+									},
+								},
+							},
+							// counter name "ws-connection-drop-stats"
+							&expr.Objref{
+								Type: 1,
+								Name: drop_stats,
+							},
+							// drop
+							&expr.Verdict{
+								Kind: expr.VerdictDrop,
+							},
+						},
+					})
+
+					if err := nftcon.Flush(); err != nil {
+						return xerrors.Errorf("failed to apply connection limit: %v", err)
+					}
+
+					return nil
 				},
 			},
 		},
