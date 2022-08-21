@@ -5,7 +5,6 @@
 package iws
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -40,6 +39,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
+	nsi "github.com/gitpod-io/gitpod/ws-daemon/pkg/nsinsider"
 )
 
 //
@@ -239,7 +239,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 	// Development leading up to this point:
 	//   - https://lists.linuxcontainers.org/pipermail/lxc-devel/2014-July/009797.html
 	//   - https://lists.linuxcontainers.org/pipermail/lxc-users/2014-October/007948.html
-	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "prepare-dev", "--uid", strconv.Itoa(wsinit.GitpodUID), "--gid", strconv.Itoa(wsinit.GitpodGID))
 	})
 	if err != nil {
@@ -255,7 +255,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 
 	if wbs.FSShift == api.FSShiftMethod_FUSE || wbs.Session.FullWorkspaceBackup {
-		err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+		err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 			// In case of any change in the user mapping, the next line must be updated.
 			mappings := fmt.Sprintf("0:%v:1:1:100000:65534", wsinit.GitpodUID)
 			c.Args = append(c.Args, "mount-fusefs-mark",
@@ -286,7 +286,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
 	// That's why we resort to exec'ing "nsenter ... mount ...".
-	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "make-shared", "--target", "/")
 	})
 	if err != nil {
@@ -294,7 +294,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
 	}
 
-	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-shiftfs-mark", "--source", rootfs, "--target", mountpoint)
 	})
 	if err != nil {
@@ -362,9 +362,9 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 		return nil, status.Errorf(codes.Internal, "cannnot setup a pair of veths")
 	}
 
-	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "setup-pair-veths", "--target-pid", strconv.Itoa(int(req.Pid)))
-	}, enterMountNS(true), enterPidNS(true), enterNetNS(true))
+	}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot setup a pair of veths")
 		return nil, status.Errorf(codes.Internal, "cannot setup a pair of veths")
@@ -374,17 +374,17 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 	if err != nil {
 		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
-	err = nsinsider(wbs.Session.InstanceID, int(pid), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(pid), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "setup-peer-veth")
-	}, enterMountNS(true), enterPidNS(true), enterNetNS(true))
+	}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot setup a peer veths")
 		return nil, status.Errorf(codes.Internal, "cannot setup a peer veths")
 	}
 
-	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "enable-ip-forward")
-	}, enterNetNS(true), enterMountNSPid(1))
+	}, nsi.EnterNetNS(true), nsi.EnterMountNSPid(1))
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot enable IP forwarding")
 		return nil, status.Errorf(codes.Internal, "cannot enable IP forwarding")
@@ -471,9 +471,9 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 	if err != nil {
 		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
 	}
-	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-proc", "--target", nodeStaging)
-	}, enterMountNS(false), enterPidNS(true), enterNetNS(true))
+	}, nsi.EnterMountNS(false), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
 	if err != nil {
 		return nil, xerrors.Errorf("mount new proc at %s: %w", nodeStaging, err)
 	}
@@ -624,7 +624,7 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 		return nil, err
 	}
 
-	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "open-tree", "--target", req.Target, "--pipe-fd", "3")
 		c.ExtraFiles = append(c.ExtraFiles, connFD)
 	})
@@ -697,9 +697,9 @@ func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.Mo
 	if err != nil {
 		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
 	}
-	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-sysfs", "--target", nodeStaging)
-	}, enterMountNS(false), enterNetNS(true))
+	}, nsi.EnterMountNS(false), nsi.EnterNetNS(true))
 	if err != nil {
 		return nil, xerrors.Errorf("mount new sysfs at %s: %w", nodeStaging, err)
 	}
@@ -731,10 +731,10 @@ func moveMount(instanceID string, targetPid int, source, target string) error {
 
 	// Note(cw): we also need to enter the target PID namespace because the mount target
 	// 			 might refer to proc.
-	err = nsinsider(instanceID, targetPid, func(c *exec.Cmd) {
+	err = nsi.Nsinsider(instanceID, targetPid, func(c *exec.Cmd) {
 		c.Args = append(c.Args, "move-mount", "--target", target, "--pipe-fd", "3")
 		c.ExtraFiles = append(c.ExtraFiles, mntf)
-	}, enterPidNS(true))
+	}, nsi.EnterPidNS(true))
 	if err != nil {
 		return xerrors.Errorf("cannot move mount: %w", err)
 	}
@@ -775,115 +775,6 @@ func cleanupMaskedMount(owi map[string]interface{}, base string, paths []string)
 		log.WithError(err).WithField("fn", base).WithFields(owi).Warn("cannot remove dangling base mount")
 		return
 	}
-}
-
-type nsinsiderOpts struct {
-	MountNS    bool
-	PidNS      bool
-	NetNS      bool
-	MountNSPid int
-}
-
-func enterMountNS(enter bool) nsinsiderOpt {
-	return func(o *nsinsiderOpts) {
-		o.MountNS = enter
-	}
-}
-
-func enterPidNS(enter bool) nsinsiderOpt {
-	return func(o *nsinsiderOpts) {
-		o.PidNS = enter
-	}
-}
-
-func enterNetNS(enter bool) nsinsiderOpt {
-	return func(o *nsinsiderOpts) {
-		o.NetNS = enter
-	}
-}
-
-func enterMountNSPid(pid int) nsinsiderOpt {
-	return func(o *nsinsiderOpts) {
-		o.MountNS = true
-		o.MountNSPid = pid
-	}
-}
-
-type nsinsiderOpt func(*nsinsiderOpts)
-
-func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...nsinsiderOpt) error {
-	cfg := nsinsiderOpts{
-		MountNS: true,
-	}
-	for _, o := range opts {
-		o(&cfg)
-	}
-
-	base, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	type mnt struct {
-		Env    string
-		Source string
-		Flags  int
-	}
-	var nss []mnt
-	if cfg.MountNS {
-		tpid := targetPid
-		if cfg.MountNSPid != 0 {
-			tpid = cfg.MountNSPid
-		}
-		nss = append(nss,
-			mnt{"_LIBNSENTER_ROOTFD", fmt.Sprintf("/proc/%d/root", tpid), unix.O_PATH},
-			mnt{"_LIBNSENTER_CWDFD", fmt.Sprintf("/proc/%d/cwd", tpid), unix.O_PATH},
-			mnt{"_LIBNSENTER_MNTNSFD", fmt.Sprintf("/proc/%d/ns/mnt", tpid), os.O_RDONLY},
-		)
-	}
-	if cfg.PidNS {
-		nss = append(nss, mnt{"_LIBNSENTER_PIDNSFD", fmt.Sprintf("/proc/%d/ns/pid", targetPid), os.O_RDONLY})
-	}
-	if cfg.NetNS {
-		nss = append(nss, mnt{"_LIBNSENTER_NETNSFD", fmt.Sprintf("/proc/%d/ns/net", targetPid), os.O_RDONLY})
-	}
-
-	stdioFdCount := 3
-	cmd := exec.Command(filepath.Join(filepath.Dir(base), "nsinsider"))
-	mod(cmd)
-	cmd.Env = append(cmd.Env, "_LIBNSENTER_INIT=1", "GITPOD_INSTANCE_ID="+instanceID)
-	for _, ns := range nss {
-		f, err := os.OpenFile(ns.Source, ns.Flags, 0)
-		if err != nil {
-			return xerrors.Errorf("cannot open %s: %w", ns.Source, err)
-		}
-		defer f.Close()
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", ns.Env, stdioFdCount+len(cmd.ExtraFiles)))
-		cmd.ExtraFiles = append(cmd.ExtraFiles, f)
-	}
-
-	var cmdOut bytes.Buffer
-	cmd.Stdout = &cmdOut
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	err = cmd.Run()
-	log.FromBuffer(&cmdOut, log.WithFields(log.OWI("", "", instanceID)))
-	if err != nil {
-		out, oErr := cmd.CombinedOutput()
-		if oErr != nil {
-			return xerrors.Errorf("run nsinsider (%v) \n%v\n output error: %v",
-				cmd.Args,
-				err,
-				oErr,
-			)
-		}
-		return xerrors.Errorf("run nsinsider (%v) failed: %q\n%v",
-			cmd.Args,
-			string(out),
-			err,
-		)
-	}
-	return nil
 }
 
 // maskPath masks the top of the specified path inside a container to avoid
@@ -1006,7 +897,7 @@ func (wbs *InWorkspaceServiceServer) Teardown(ctx context.Context, req *api.Tear
 
 func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
-	err := nsinsider(wbs.Session.InstanceID, 1, func(c *exec.Cmd) {
+	err := nsi.Nsinsider(wbs.Session.InstanceID, 1, func(c *exec.Cmd) {
 		c.Args = append(c.Args, "unmount", "--target", mountpoint)
 	})
 	if err != nil {
