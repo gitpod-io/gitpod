@@ -1266,6 +1266,7 @@ export enum WorkspaceFeatureFlag {
     PERSISTENT_VOLUME_CLAIM = 7,
     PROTECTED_SECRETS = 8,
     WORKSPACE_CLASS_LIMITING = 9,
+    WORKSPACE_CONNECTION_LIMITING = 10,
 }
 
 export enum WorkspaceType {
