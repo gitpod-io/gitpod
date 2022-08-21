@@ -1,6 +1,12 @@
 # Change Log
 
 ## August 2022
+- Update spending limit modal on workspace start ([#12096](https://github.com/gitpod-io/gitpod/pull/12096)) - [@gtsiolis](https://github.com/gtsiolis)
+- [kots] Allow users to upload a `.docker/config.json` file ([#12174](https://github.com/gitpod-io/gitpod/pull/12174)) - [@Pothulapati](https://github.com/Pothulapati)
+- Update PhpStorm IDE image to version 222.3739.61. ([#12228](https://github.com/gitpod-io/gitpod/pull/12228)) - [@roboquat](https://github.com/roboquat)
+- [kots] show `registry_s3` options only when `incluster` is enabled ([#12218](https://github.com/gitpod-io/gitpod/pull/12218)) - [@Pothulapati](https://github.com/Pothulapati)
+- JetBrains: Display Workspace CPU/Memory usage in Backend Control Center. ([#12159](https://github.com/gitpod-io/gitpod/pull/12159)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- JetBrains: Workspaces created from repositories with tasks defined on .gitpod.yml will start with one terminal opened for each task. ([#12159](https://github.com/gitpod-io/gitpod/pull/12159)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - [kots]: remove help text documenting the limitation on custom labels ([#12211](https://github.com/gitpod-io/gitpod/pull/12211)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Update GoLand IDE image to version 222.3739.57. ([#12188](https://github.com/gitpod-io/gitpod/pull/12188)) - [@akosyakov](https://github.com/akosyakov)
 - Update PyCharm IDE image to version 222.3739.56. ([#12187](https://github.com/gitpod-io/gitpod/pull/12187)) - [@akosyakov](https://github.com/akosyakov)
