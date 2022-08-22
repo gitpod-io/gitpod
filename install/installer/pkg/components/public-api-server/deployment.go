@@ -5,6 +5,7 @@ package public_api_server
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 
@@ -30,6 +31,38 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	volumes := []corev1.Volume{
+		{
+			Name: configmapVolume,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: Component,
+					},
+				},
+			},
+		},
+	}
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      configmapVolume,
+			ReadOnly:  true,
+			MountPath: configMountPath,
+			SubPath:   configJSONFilename,
+		},
+	}
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		volume, mount, _, ok := getStripeConfig(cfg)
+		if !ok {
+			return nil
+		}
+
+		volumes = append(volumes, volume)
+		volumeMounts = append(volumeMounts, mount)
+		return nil
+	})
 
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 	return []runtime.Object{
@@ -115,29 +148,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									SuccessThreshold: 1,
 									TimeoutSeconds:   1,
 								},
-								VolumeMounts: []corev1.VolumeMount{
-									{
-										Name:      configmapVolume,
-										ReadOnly:  true,
-										MountPath: configMountPath,
-										SubPath:   configJSONFilename,
-									},
-								},
+								VolumeMounts: volumeMounts,
 							},
 							*common.KubeRBACProxyContainerWithConfig(ctx),
 						},
-						Volumes: []corev1.Volume{
-							{
-								Name: configmapVolume,
-								VolumeSource: corev1.VolumeSource{
-									ConfigMap: &corev1.ConfigMapVolumeSource{
-										LocalObjectReference: corev1.LocalObjectReference{
-											Name: Component,
-										},
-									},
-								},
-							},
-						},
+						Volumes: volumes,
 					},
 				},
 			},

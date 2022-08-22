@@ -231,6 +231,8 @@ type ProxyConfig struct {
 
 type PublicAPIConfig struct {
 	Enabled bool `json:"enabled"`
+	// Name of the kubernetes secret to use for Stripe secrets
+	StripeSecretName string `json:"stripeSecretName"`
 }
 
 type UsageConfig struct {

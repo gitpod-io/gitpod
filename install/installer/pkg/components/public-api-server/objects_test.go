@@ -36,7 +36,10 @@ func renderContextWithPublicAPIEnabled(t *testing.T) *common.RenderContext {
 		Domain: "test.domain.everything.awesome.is",
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
-				PublicAPI: &experimental.PublicAPIConfig{Enabled: true},
+				PublicAPI: &experimental.PublicAPIConfig{
+					Enabled:          true,
+					StripeSecretName: "stripe-webhook-secret",
+				},
 			},
 		},
 	}, versions.Manifest{

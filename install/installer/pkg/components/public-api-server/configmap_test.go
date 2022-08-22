@@ -5,6 +5,7 @@ package public_api_server
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"testing"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -22,9 +23,16 @@ func TestConfigMap(t *testing.T) {
 
 	require.Len(t, objs, 1, "must only render one configmap")
 
+	var stripeSecretPath string
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		_, _, stripeSecretPath, _ = getStripeConfig(ucfg)
+		return nil
+	})
+
 	expectedConfiguration := config.Configuration{
-		GitpodServiceURL:      "wss://test.domain.everything.awesome.is/api/v1",
-		BillingServiceAddress: "usage:9001",
+		GitpodServiceURL:               "wss://test.domain.everything.awesome.is/api/v1",
+		BillingServiceAddress:          "usage:9001",
+		StripeWebhookSigningSecretPath: stripeSecretPath,
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
