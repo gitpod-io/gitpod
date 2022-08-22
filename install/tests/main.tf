@@ -95,6 +95,8 @@ module "eks" {
   create_external_registry = true
   create_external_database = true
   create_external_storage  = true
+  # we test against a separate bucket for registry backend
+  create_external_storage_for_registry_backend = true
 }
 
 module "certmanager" {

@@ -13,6 +13,11 @@ output "aws_database" {
     value = try(module.eks.database, null)
 }
 
+output "aws_s3_registry_backend" {
+    sensitive = true
+    value = try(module.eks.registry_backend, null)
+}
+
 output "azure_database" {
     sensitive = true
     value = try(module.aks.database, null)
