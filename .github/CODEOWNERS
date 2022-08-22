@@ -94,6 +94,8 @@
 /.werft/webapp-* @gitpod-io/engineering-webapp
 /.werft/workspace-* @gitpod-io/engineering-workspace
 /.werft/self-hosted-* @gitpod-io/engineering-self-hosted
+/.werft/*installer-tests* @gitpod-io/engineering-self-hosted
+/.werft/jobs/build/self-hosted-* @gitpod-io/engineering-self-hosted
 
 #
 # Automation
