@@ -10,18 +10,18 @@ output "external_dns_settings" {
     },
     {
       "name"  = "aws.credentials.secretKey",
-      "value" = aws_iam_access_key.edns.secret
+      "value" = aws_iam_access_key.edns[0].secret
     },
     {
       "name"  = "aws.credentials.accessKey",
-      "value" = aws_iam_access_key.edns.id
+      "value" = aws_iam_access_key.edns[0].id
     }
   ]
 }
 
 output "secretAccessKey" {
   sensitive = true
-  value     = try("${aws_iam_access_key.edns.secret}", "")
+  value     = try("${aws_iam_access_key.edns[0].secret}", "")
 }
 
 output "cert_manager_issuer" {
@@ -32,13 +32,13 @@ output "cert_manager_issuer" {
       key  = "secret-access-key"
     }
 
-    hostedZoneID = aws_route53_zone.gitpod.zone_id
-    accessKeyID  = aws_iam_access_key.edns.id
+    hostedZoneID = aws_route53_zone.gitpod[0].zone_id
+    accessKeyID  = aws_iam_access_key.edns[0].id
   }, {})
 }
 
 output "domain_nameservers" {
-  value = formatlist("%s.", resource.aws_route53_zone.gitpod.name_servers)
+  value = formatlist("%s.", resource.aws_route53_zone.gitpod[0].name_servers)
 }
 
 output "database" {

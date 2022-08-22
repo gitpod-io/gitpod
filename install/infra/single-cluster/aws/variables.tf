@@ -34,7 +34,7 @@ variable "vpc_cidr" {
 }
 
 variable "domain_name" {
-  description = "Domain name to associate with the Gitpod installation"
+  description = "Domain name to associate with the Gitpod installation, provide empty string to avoid creating route53 zone"
 }
 
 variable "create_external_database" {
