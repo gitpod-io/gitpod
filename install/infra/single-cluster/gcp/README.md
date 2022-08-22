@@ -38,6 +38,10 @@ Before starting the installation process, you need:
 * Create and configure GCS bucket for terraform backend
   * Create a [GCS bucket](https://cloud.google.com/storage) to store the terraform backend state
   * Replace the name of the bucket in [`main.tf`](./main.tf) - currently it is set as `gitpod-tf`
+  * Provide [credentials to access the bucket](https://www.terraform.io/language/settings/backends/gcs#credentials) for terraform by running:
+    ```
+    export GOOGLE_BACKEND_CREDENTIALS=/path/to/the/account/key.json
+    ```
 
 ## Update the `terraform.tfvars` file with appropriate values
 
