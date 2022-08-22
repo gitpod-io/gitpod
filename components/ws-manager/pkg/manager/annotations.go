@@ -189,8 +189,8 @@ const (
 	DisposalFinished DisposalStatus = "finished"
 )
 
-func (ds DisposalStatus) IsDisposing() bool {
-	return !(ds == DisposalEmpty || ds == DisposalFinished)
+func (ds DisposalStatus) IsDisposed() bool {
+	return ds == DisposalFinished
 }
 
 // workspaceVolumeSnapshotStatus stores the status of volume snapshot
