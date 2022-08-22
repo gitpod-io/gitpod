@@ -494,7 +494,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		}
 
 		span.LogKV("disposalStatusAnnotation", ds)
-		if terminated && !ds.Status.IsDisposing() {
+		if terminated && !ds.Status.IsDisposed() {
 			if wso.Pod.Annotations[workspaceFailedBeforeStoppingAnnotation] == util.BooleanTrueString && wso.Pod.Annotations[workspaceNeverReadyAnnotation] == util.BooleanTrueString {
 				// The workspace is never ready, so there is no need for a finalizer.
 				if _, ok := pod.Annotations[workspaceExplicitFailAnnotation]; !ok {
@@ -515,11 +515,9 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 				}
 				return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
 			} else {
-				if ds.Status != DisposalFinished {
-					// We start finalizing the workspace content only after the container is gone. This way we ensure there's
-					// no process modifying the workspace content as we create the backup.
-					go m.finalizeWorkspaceContent(ctx, wso)
-				}
+				// We start finalizing the workspace content only after the container is gone. This way we ensure there's
+				// no process modifying the workspace content as we create the backup.
+				go m.finalizeWorkspaceContent(ctx, wso)
 			}
 		}
 
