@@ -909,15 +909,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: agent-smith
-    gitpod.io: hello
-    hello: world
   name: agent-smith
   namespace: default
 ---
@@ -926,15 +921,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: blobserve
-    gitpod.io: hello
-    hello: world
   name: blobserve
   namespace: default
 ---
@@ -943,15 +933,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: content-service
-    gitpod.io: hello
-    hello: world
   name: content-service
   namespace: default
 ---
@@ -960,15 +945,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: dashboard
-    gitpod.io: hello
-    hello: world
   name: dashboard
   namespace: default
 ---
@@ -977,15 +957,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: db
-    gitpod.io: hello
-    hello: world
   name: db
   namespace: default
 ---
@@ -994,15 +969,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: docker-registry
-    gitpod.io: hello
-    hello: world
   name: docker-registry
   namespace: default
 ---
@@ -1011,15 +981,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: gitpod
-    gitpod.io: hello
-    hello: world
   name: gitpod
   namespace: default
 ---
@@ -1028,15 +993,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-metrics
-    gitpod.io: hello
-    hello: world
   name: ide-metrics
   namespace: default
 ---
@@ -1045,15 +1005,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-proxy
-    gitpod.io: hello
-    hello: world
   name: ide-proxy
   namespace: default
 ---
@@ -1062,15 +1017,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: image-builder-mk3
-    gitpod.io: hello
-    hello: world
   name: image-builder-mk3
   namespace: default
 ---
@@ -1079,15 +1029,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: migrations
-    gitpod.io: hello
-    hello: world
   name: migrations
   namespace: default
 ---
@@ -1112,15 +1057,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: nobody
-    gitpod.io: hello
-    hello: world
   name: nobody
   namespace: default
 ---
@@ -1129,15 +1069,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: openvsx-proxy
-    gitpod.io: hello
-    hello: world
   name: openvsx-proxy
   namespace: default
 ---
@@ -1146,15 +1081,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: proxy
-    gitpod.io: hello
-    hello: world
   name: proxy
   namespace: default
 ---
@@ -1179,15 +1109,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: registry-facade
-    gitpod.io: hello
-    hello: world
   name: registry-facade
   namespace: default
 ---
@@ -1196,15 +1121,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: server
-    gitpod.io: hello
-    hello: world
   name: server
   namespace: default
 ---
@@ -1213,15 +1133,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: workspace
-    gitpod.io: hello
-    hello: world
   name: workspace
   namespace: default
 ---
@@ -1230,15 +1145,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-daemon
-    gitpod.io: hello
-    hello: world
   name: ws-daemon
   namespace: default
 ---
@@ -1247,15 +1157,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager
-    gitpod.io: hello
-    hello: world
   name: ws-manager
   namespace: default
 ---
@@ -1264,15 +1169,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager-bridge
-    gitpod.io: hello
-    hello: world
   name: ws-manager-bridge
   namespace: default
 ---
@@ -1281,15 +1181,10 @@ apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-proxy
-    gitpod.io: hello
-    hello: world
   name: ws-proxy
   namespace: default
 ---
@@ -1490,15 +1385,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: agent-smith
-    gitpod.io: hello
-    hello: world
   name: agent-smith
   namespace: default
 ---
@@ -1585,15 +1475,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: blobserve
-    gitpod.io: hello
-    hello: world
   name: blobserve
   namespace: default
 ---
@@ -1630,15 +1515,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: content-service
-    gitpod.io: hello
-    hello: world
   name: content-service
   namespace: default
 ---
@@ -1690,15 +1570,10 @@ data:
   tuneMysql.sql: SET GLOBAL innodb_lru_scan_depth=256;
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: db
-    gitpod.io: hello
-    hello: world
   name: db-init-scripts
   namespace: default
 ---
@@ -1717,20 +1592,6 @@ data:
     containerRegistry:
       inCluster: true
       privateBaseImageAllowList: []
-    customization:
-    - apiVersion: '*'
-      kind: '*'
-      metadata:
-        annotations:
-          gitpod.io: hello
-          hello: world
-        creationTimestamp: null
-        labels:
-          gitpod.io: hello
-          hello: world
-        name: '*'
-      spec:
-        env: null
     database:
       inCluster: true
     disableDefinitelyGp: true
@@ -1756,9 +1617,12 @@ data:
         snapshotClass: ""
         storageClass: ""
       resources:
+        limits:
+          cpu: "84"
+          memory: 84Gi
         requests:
-          cpu: "1"
-          memory: 2Gi
+          cpu: "42"
+          memory: 42Gi
       runtime:
         containerdRuntimeDir: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
         containerdSocket: /run/containerd/containerd.sock
@@ -1949,15 +1813,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: docker-registry
-        gitpod.io: hello
-        hello: world
       name: docker-registry
       namespace: default
     ---
@@ -2080,15 +1939,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: nobody
-        gitpod.io: hello
-        hello: world
       name: nobody
       namespace: default
     ---
@@ -2115,15 +1969,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: gitpod
-        gitpod.io: hello
-        hello: world
       name: gitpod
       namespace: default
     ---
@@ -2140,30 +1989,20 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: blobserve
-        gitpod.io: hello
-        hello: world
       name: blobserve
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: blobserve
-        gitpod.io: hello
-        hello: world
       name: blobserve
       namespace: default
     ---
@@ -2199,15 +2038,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: blobserve
-        gitpod.io: hello
-        hello: world
         kind: service
       name: blobserve
       namespace: default
@@ -2215,45 +2049,30 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: blobserve
-        gitpod.io: hello
-        hello: world
       name: blobserve
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: content-service
-        gitpod.io: hello
-        hello: world
       name: content-service
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: content-service
-        gitpod.io: hello
-        hello: world
       name: content-service
       namespace: default
     ---
@@ -2289,15 +2108,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: content-service
-        gitpod.io: hello
-        hello: world
         kind: service
       name: content-service
       namespace: default
@@ -2305,30 +2119,20 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: content-service
-        gitpod.io: hello
-        hello: world
       name: content-service
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: dashboard
-        gitpod.io: hello
-        hello: world
       name: dashboard
       namespace: default
     ---
@@ -2355,15 +2159,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: dashboard
-        gitpod.io: hello
-        hello: world
         kind: service
       name: dashboard
       namespace: default
@@ -2371,30 +2170,20 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: dashboard
-        gitpod.io: hello
-        hello: world
       name: dashboard
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: db
-        gitpod.io: hello
-        hello: world
       name: db-init-scripts
       namespace: default
     ---
@@ -2431,60 +2220,40 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: db
-        gitpod.io: hello
-        hello: world
       name: db
       namespace: default
     ---
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: db
-        gitpod.io: hello
-        hello: world
       name: db
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-metrics
-        gitpod.io: hello
-        hello: world
       name: ide-metrics
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-metrics
-        gitpod.io: hello
-        hello: world
       name: ide-metrics
       namespace: default
     ---
@@ -2519,15 +2288,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-metrics
-        gitpod.io: hello
-        hello: world
         kind: service
       name: ide-metrics
       namespace: default
@@ -2535,30 +2299,20 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-metrics
-        gitpod.io: hello
-        hello: world
       name: ide-metrics
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-proxy
-        gitpod.io: hello
-        hello: world
       name: ide-proxy
       namespace: default
     ---
@@ -2575,15 +2329,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-proxy
-        gitpod.io: hello
-        hello: world
         kind: service
       name: ide-proxy
       namespace: default
@@ -2591,15 +2340,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-proxy
-        gitpod.io: hello
-        hello: world
       name: ide-proxy
       namespace: default
     ---
@@ -2616,15 +2360,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: migrations
-        gitpod.io: hello
-        hello: world
       name: migrations
       namespace: default
     ---
@@ -2641,15 +2380,10 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: openvsx-proxy
-        gitpod.io: hello
-        hello: world
       name: openvsx-proxy-config
       namespace: default
     ---
@@ -2685,30 +2419,20 @@ data:
     apiVersion: apps/v1
     kind: StatefulSet
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: openvsx-proxy
-        gitpod.io: hello
-        hello: world
       name: openvsx-proxy
       namespace: default
     ---
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: openvsx-proxy
-        gitpod.io: hello
-        hello: world
         kind: service
       name: openvsx-proxy
       namespace: default
@@ -2716,45 +2440,30 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: openvsx-proxy
-        gitpod.io: hello
-        hello: world
       name: openvsx-proxy
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: proxy
-        gitpod.io: hello
-        hello: world
       name: proxy-config
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: proxy
-        gitpod.io: hello
-        hello: world
       name: proxy
       namespace: default
     ---
@@ -2793,14 +2502,10 @@ data:
       annotations:
         cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
         external-dns.alpha.kubernetes.io/hostname: gitpod.example.com,*.gitpod.example.com,*.ws.gitpod.example.com
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: proxy
-        gitpod.io: hello
-        hello: world
         kind: service
       name: proxy
       namespace: default
@@ -2808,15 +2513,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: proxy
-        gitpod.io: hello
-        hello: world
       name: proxy
       namespace: default
     ---
@@ -2853,45 +2553,30 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        gitpod.io: hello
-        hello: world
       name: server-config
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        gitpod.io: hello
-        hello: world
       name: server
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        gitpod.io: hello
-        hello: world
       name: server-ide-config
       namespace: default
     ---
@@ -2947,15 +2632,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        gitpod.io: hello
-        hello: world
         kind: service
       name: server
       namespace: default
@@ -2963,45 +2643,30 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        gitpod.io: hello
-        hello: world
       name: server
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager-bridge
-        gitpod.io: hello
-        hello: world
       name: ws-manager-bridge-config
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager-bridge
-        gitpod.io: hello
-        hello: world
       name: ws-manager-bridge
       namespace: default
     ---
@@ -3027,30 +2692,20 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager-bridge
-        gitpod.io: hello
-        hello: world
       name: ws-manager-bridge
       namespace: default
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: agent-smith
-        gitpod.io: hello
-        hello: world
       name: agent-smith
       namespace: default
     ---
@@ -3058,15 +2713,11 @@ data:
     kind: DaemonSet
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: 9b9fb6639d78350728d0748fdd5b109337da7648e8558f3fea4171e037ae3e20
-        hello: world
+        gitpod.io/checksum_config: e5f1dd2a1327394b4bef4172c43487842026ef965fe8cec2475f00b1588de01f
       creationTimestamp: null
       labels:
         app: gitpod
         component: agent-smith
-        gitpod.io: hello
-        hello: world
       name: agent-smith
       namespace: default
     ---
@@ -3112,15 +2763,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: agent-smith
-        gitpod.io: hello
-        hello: world
       name: agent-smith
       namespace: default
     ---
@@ -3136,30 +2782,20 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: registry-facade
-        gitpod.io: hello
-        hello: world
       name: registry-facade
       namespace: default
     ---
     apiVersion: apps/v1
     kind: DaemonSet
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: registry-facade
-        gitpod.io: hello
-        hello: world
       name: registry-facade
       namespace: default
     ---
@@ -3218,15 +2854,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: registry-facade
-        gitpod.io: hello
-        hello: world
         kind: service
       name: registry-facade
       namespace: default
@@ -3234,15 +2865,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: registry-facade
-        gitpod.io: hello
-        hello: world
       name: registry-facade
       namespace: default
     ---
@@ -3291,15 +2917,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: workspace
-        gitpod.io: hello
-        hello: world
       name: workspace
       namespace: default
     ---
@@ -3315,45 +2936,30 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-daemon
-        gitpod.io: hello
-        hello: world
       name: ws-daemon
       namespace: default
     ---
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-daemon
-        gitpod.io: hello
-        hello: world
       name: ws-daemon
       namespace: default
     ---
     apiVersion: apps/v1
     kind: DaemonSet
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-daemon
-        gitpod.io: hello
-        hello: world
       name: ws-daemon
       namespace: default
     ---
@@ -3388,15 +2994,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-daemon
-        gitpod.io: hello
-        hello: world
         kind: service
       name: ws-daemon
       namespace: default
@@ -3414,15 +3015,10 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager
-        gitpod.io: hello
-        hello: world
       name: ws-manager
       namespace: default
     ---
@@ -3439,15 +3035,10 @@ data:
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager
-        gitpod.io: hello
-        hello: world
       name: ws-manager
       namespace: default
     ---
@@ -3512,30 +3103,20 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager
-        gitpod.io: hello
-        hello: world
       name: ws-manager
       namespace: default
     ---
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager
-        gitpod.io: hello
-        hello: world
         kind: service
       name: ws-manager
       namespace: default
@@ -3573,30 +3154,20 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-proxy
-        gitpod.io: hello
-        hello: world
       name: ws-proxy
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-proxy
-        gitpod.io: hello
-        hello: world
       name: ws-proxy
       namespace: default
     ---
@@ -3652,15 +3223,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-proxy
-        gitpod.io: hello
-        hello: world
         kind: service
       name: ws-proxy
       namespace: default
@@ -3668,15 +3234,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-proxy
-        gitpod.io: hello
-        hello: world
       name: ws-proxy
       namespace: default
     ---
@@ -3692,30 +3253,20 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: image-builder-mk3
-        gitpod.io: hello
-        hello: world
       name: image-builder-mk3-config
       namespace: default
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: image-builder-mk3
-        gitpod.io: hello
-        hello: world
       name: image-builder-mk3
       namespace: default
     ---
@@ -3751,15 +3302,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: image-builder-mk3
-        gitpod.io: hello
-        hello: world
         kind: service
       name: image-builder-mk3
       namespace: default
@@ -3767,15 +3313,10 @@ data:
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: image-builder-mk3
-        gitpod.io: hello
-        hello: world
       name: image-builder-mk3
       namespace: default
     ---
@@ -3818,9 +3359,6 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: docker-registry
@@ -4101,28 +3639,18 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: gitpod-app
-        gitpod.io: hello
-        hello: world
       name: gitpod-app
       namespace: default
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: gitpod-app
-    gitpod.io: hello
-    hello: world
   name: gitpod-app
   namespace: default
 
@@ -4159,15 +3687,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-metrics
-    gitpod.io: hello
-    hello: world
   name: ide-metrics
   namespace: default
 ---
@@ -4219,15 +3742,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: image-builder-mk3
-    gitpod.io: hello
-    hello: world
   name: image-builder-mk3-config
   namespace: default
 ---
@@ -4295,15 +3813,10 @@ data:
   redis.conf: "\nmaxmemory 100mb\nmaxmemory-policy allkeys-lfu\n\t"
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: openvsx-proxy
-    gitpod.io: hello
-    hello: world
   name: openvsx-proxy-config
   namespace: default
 ---
@@ -4384,15 +3897,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: proxy
-    gitpod.io: hello
-    hello: world
   name: proxy-config
   namespace: default
 ---
@@ -4478,15 +3986,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: registry-facade
-    gitpod.io: hello
-    hello: world
   name: registry-facade
   namespace: default
 ---
@@ -4612,15 +4115,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: server
-    gitpod.io: hello
-    hello: world
   name: server-config
   namespace: default
 ---
@@ -4720,15 +4218,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: server
-    gitpod.io: hello
-    hello: world
   name: server-ide-config
   namespace: default
 ---
@@ -4863,15 +4356,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-daemon
-    gitpod.io: hello
-    hello: world
   name: ws-daemon
   namespace: default
 ---
@@ -4919,16 +4407,16 @@ data:
             "name": "default",
             "container": {
               "requests": {
-                "cpu": "1",
-                "memory": "2Gi",
+                "cpu": "42",
+                "memory": "42Gi",
                 "ephemeral-storage": ""
               },
               "limits": {
                 "cpu": {
-                  "min": "",
-                  "burst": ""
+                  "min": "84",
+                  "burst": "84"
                 },
-                "memory": "",
+                "memory": "84Gi",
                 "ephemeral-storage": ""
               }
             },
@@ -4983,15 +4471,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager
-    gitpod.io: hello
-    hello: world
   name: ws-manager
   namespace: default
 ---
@@ -5034,15 +4517,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager-bridge
-    gitpod.io: hello
-    hello: world
   name: ws-manager-bridge-config
   namespace: default
 ---
@@ -5102,15 +4580,10 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-proxy
-    gitpod.io: hello
-    hello: world
   name: ws-proxy
   namespace: default
 ---
@@ -6282,15 +5755,10 @@ subjects:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: blobserve
-    gitpod.io: hello
-    hello: world
     kind: service
   name: blobserve
   namespace: default
@@ -6311,15 +5779,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: content-service
-    gitpod.io: hello
-    hello: world
     kind: service
   name: content-service
   namespace: default
@@ -6344,15 +5807,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: dashboard
-    gitpod.io: hello
-    hello: world
     kind: service
   name: dashboard
   namespace: default
@@ -6373,15 +5831,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: db
-    gitpod.io: hello
-    hello: world
   name: db
   namespace: default
 spec:
@@ -6399,15 +5852,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-metrics
-    gitpod.io: hello
-    hello: world
     kind: service
   name: ide-metrics
   namespace: default
@@ -6428,15 +5876,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-proxy
-    gitpod.io: hello
-    hello: world
     kind: service
   name: ide-proxy
   namespace: default
@@ -6457,15 +5900,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: image-builder-mk3
-    gitpod.io: hello
-    hello: world
     kind: service
   name: image-builder-mk3
   namespace: default
@@ -6647,15 +6085,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: openvsx-proxy
-    gitpod.io: hello
-    hello: world
     kind: service
   name: openvsx-proxy
   namespace: default
@@ -6683,14 +6116,10 @@ metadata:
   annotations:
     cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
     external-dns.alpha.kubernetes.io/hostname: gitpod.example.com,*.gitpod.example.com,*.ws.gitpod.example.com
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: proxy
-    gitpod.io: hello
-    hello: world
     kind: service
   name: proxy
   namespace: default
@@ -6727,9 +6156,6 @@ metadata:
     chart: docker-registry-1.16.0
     release: docker-registry
     heritage: Helm
-  annotations:
-    gitpod.io: hello
-    hello: world
 spec:
   type: ClusterIP
   ports:
@@ -6745,15 +6171,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: registry-facade
-    gitpod.io: hello
-    hello: world
     kind: service
   name: registry-facade
   namespace: default
@@ -6774,15 +6195,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: server
-    gitpod.io: hello
-    hello: world
     kind: service
   name: server
   namespace: default
@@ -6819,15 +6235,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-daemon
-    gitpod.io: hello
-    hello: world
     kind: service
   name: ws-daemon
   namespace: default
@@ -6844,15 +6255,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager
-    gitpod.io: hello
-    hello: world
     kind: service
   name: ws-manager
   namespace: default
@@ -6873,15 +6279,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-proxy
-    gitpod.io: hello
-    hello: world
     kind: service
   name: ws-proxy
   namespace: default
@@ -6915,15 +6316,11 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   annotations:
-    gitpod.io: hello
-    gitpod.io/checksum_config: 9b9fb6639d78350728d0748fdd5b109337da7648e8558f3fea4171e037ae3e20
-    hello: world
+    gitpod.io/checksum_config: e5f1dd2a1327394b4bef4172c43487842026ef965fe8cec2475f00b1588de01f
   creationTimestamp: null
   labels:
     app: gitpod
     component: agent-smith
-    gitpod.io: hello
-    hello: world
   name: agent-smith
   namespace: default
 spec:
@@ -6933,15 +6330,10 @@ spec:
       component: agent-smith
   template:
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: agent-smith
-        gitpod.io: hello
-        hello: world
       name: agent-smith
     spec:
       affinity:
@@ -7039,15 +6431,10 @@ status:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: registry-facade
-    gitpod.io: hello
-    hello: world
   name: registry-facade
   namespace: default
 spec:
@@ -7058,15 +6445,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: 9e5f1a3b0ad0175c34b4be5f0d0a1f0b8c2727eab17bd9548976255a54916e64
-        hello: world
+        gitpod.io/checksum_config: 1568539df3f78cad79c3dd7b7e3ae3f5cf4fa74ad7263936762f004a8a6af77c
       creationTimestamp: null
       labels:
         app: gitpod
         component: registry-facade
-        gitpod.io: hello
-        hello: world
       name: registry-facade
     spec:
       affinity:
@@ -7252,15 +6635,10 @@ status:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-daemon
-    gitpod.io: hello
-    hello: world
   name: ws-daemon
   namespace: default
 spec:
@@ -7271,16 +6649,12 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: a112f51a51ede1e9f2d6202871301fac2ea3622de94b33038c10a11c62fcf049
-        hello: world
+        gitpod.io/checksum_config: f23d3442050785945a5c6109bc25a11f48414e6b0ba3734f499e40def0ce8a6d
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-daemon
-        gitpod.io: hello
-        hello: world
     spec:
       affinity:
         nodeAffinity:
@@ -7894,15 +7268,10 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: openvsx-proxy
-    gitpod.io: hello
-    hello: world
   name: openvsx-proxy
   namespace: default
 spec:
@@ -7915,15 +7284,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: f8f0312e31202b20aca17accffa9ba2cc361ecd01ef6c1a21252ce9b85e22b7f
-        hello: world
+        gitpod.io/checksum_config: 7c868f444d805d107d758063ca5d27eb27acce6de2e5a5d917d0a5bb46cc13b6
       creationTimestamp: null
       labels:
         app: gitpod
         component: openvsx-proxy
-        gitpod.io: hello
-        hello: world
       name: openvsx-proxy
       namespace: default
     spec:
@@ -8046,15 +7411,10 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: blobserve
-    gitpod.io: hello
-    hello: world
   name: blobserve
   namespace: default
 spec:
@@ -8071,15 +7431,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: 8c04c7c1329d7427dcba1dc471c9a3323aa4d5de5578c302bbbc34fd013ca3d4
-        hello: world
+        gitpod.io/checksum_config: 9a515b004a89b33642ea51cf15082f48f0912d8ca3d54c20bfc2f032e550931c
       creationTimestamp: null
       labels:
         app: gitpod
         component: blobserve
-        gitpod.io: hello
-        hello: world
       name: blobserve
       namespace: default
     spec:
@@ -8193,15 +7549,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: content-service
-    gitpod.io: hello
-    hello: world
   name: content-service
   namespace: default
 spec:
@@ -8218,15 +7569,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: cb18d1100d11de0609bf9d7961693a7ebbc982d589014e1031bf921573afe08f
-        hello: world
+        gitpod.io/checksum_config: 94e6e4829aa089a570ba9f479575cdd42a6c273877223830c790397aa40dcd99
       creationTimestamp: null
       labels:
         app: gitpod
         component: content-service
-        gitpod.io: hello
-        hello: world
       name: content-service
       namespace: default
     spec:
@@ -8320,15 +7667,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: dashboard
-    gitpod.io: hello
-    hello: world
   name: dashboard
   namespace: default
 spec:
@@ -8344,15 +7686,10 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: dashboard
-        gitpod.io: hello
-        hello: world
       name: dashboard
       namespace: default
     spec:
@@ -8412,15 +7749,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-metrics
-    gitpod.io: hello
-    hello: world
   name: ide-metrics
   namespace: default
 spec:
@@ -8436,15 +7768,10 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-metrics
-        gitpod.io: hello
-        hello: world
       name: ide-metrics
       namespace: default
     spec:
@@ -8537,15 +7864,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ide-proxy
-    gitpod.io: hello
-    hello: world
   name: ide-proxy
   namespace: default
 spec:
@@ -8561,15 +7883,10 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: ide-proxy
-        gitpod.io: hello
-        hello: world
       name: ide-proxy
       namespace: default
     spec:
@@ -8629,15 +7946,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: image-builder-mk3
-    gitpod.io: hello
-    hello: world
   name: image-builder-mk3
   namespace: default
 spec:
@@ -8654,15 +7966,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: ecd350f0d685aba1d7fb6e36ab8eed6fc4fa34f2729563a482c5685f4abce748
-        hello: world
+        gitpod.io/checksum_config: 5a02760487dc021fb50bdfc0d92a3a453348b226fb74729cd57a33927d5b6e08
       creationTimestamp: null
       labels:
         app: gitpod
         component: image-builder-mk3
-        gitpod.io: hello
-        hello: world
       name: image-builder-mk3
       namespace: default
     spec:
@@ -8895,15 +8203,10 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: proxy
-    gitpod.io: hello
-    hello: world
   name: proxy
   namespace: default
 spec:
@@ -8920,15 +8223,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: 0f81d4cad6198e5d0222f29f92143d4db7e502feae211f06ed3a71978d5be7e6
-        hello: world
+        gitpod.io/checksum_config: c52c73e63eaa95613a8f4fe77167c754cd48eaf757dd69c2048400311a5ae0a6
       creationTimestamp: null
       labels:
         app: gitpod
         component: proxy
-        gitpod.io: hello
-        hello: world
       name: proxy
       namespace: default
     spec:
@@ -9080,13 +8379,9 @@ spec:
       labels:
         app: docker-registry
         release: docker-registry
-        gitpod.io: hello
-        hello: world
       annotations:
         checksum/config: 1d22b82e19bbc654e029029c4fb86ad02dc13422dc3ac52f8175ad190e52a0bb
-        gitpod.io: hello
         gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
-        hello: world
     spec:
       serviceAccountName: docker-registry
       securityContext:
@@ -9149,15 +8444,10 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: server
-    gitpod.io: hello
-    hello: world
   name: server
   namespace: default
 spec:
@@ -9174,15 +8464,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: abcabbe0f0755c297b38713fd5dcbdf5613cca1ecc2f5180b4c66ae59b189df5
-        hello: world
+        gitpod.io/checksum_config: 0bc76c867af13d6037264732e25991af8de7c19a2f2e91d1fb1e64df1a9833db
       creationTimestamp: null
       labels:
         app: gitpod
         component: server
-        gitpod.io: hello
-        hello: world
       name: server
       namespace: default
     spec:
@@ -9419,15 +8705,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager
-    gitpod.io: hello
-    hello: world
   name: ws-manager
   namespace: default
 spec:
@@ -9444,15 +8725,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: 482447a616ea373c4ed547cc8cc8ab2b2c90ec1b51610d304792ec8c9f180c70
-        hello: world
+        gitpod.io/checksum_config: 8382c106b9317df4712ae65f863b79732c33401cd56764a3c108f974a30f6583
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager
-        gitpod.io: hello
-        hello: world
       name: ws-manager
       namespace: default
     spec:
@@ -9561,15 +8838,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-manager-bridge
-    gitpod.io: hello
-    hello: world
   name: ws-manager-bridge
   namespace: default
 spec:
@@ -9586,15 +8858,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: fdb0c0adb6ea187bd587fb7c286084b4853439fdfafa7f32bbdcacee744e5c3e
-        hello: world
+        gitpod.io/checksum_config: bacace964780fd56bdd04b997df0017c24563c2aac6bffd10962c297b54c91ba
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-manager-bridge
-        gitpod.io: hello
-        hello: world
       name: ws-manager-bridge
       namespace: default
     spec:
@@ -9810,15 +9078,10 @@ status: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: ws-proxy
-    gitpod.io: hello
-    hello: world
   name: ws-proxy
   namespace: default
 spec:
@@ -9835,15 +9098,11 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io: hello
-        gitpod.io/checksum_config: a215d15f9dc39f54db7c2553b752027cd4c905b7f30c07c0fbe0193cbf1c1df1
-        hello: world
+        gitpod.io/checksum_config: dcbc53af67e4007a4affc029e880c338b93e4484010727f4bf0a08ad7c93a112
       creationTimestamp: null
       labels:
         app: gitpod
         component: ws-proxy
-        gitpod.io: hello
-        hello: world
       name: ws-proxy
       namespace: default
     spec:
@@ -9970,29 +9229,19 @@ status: {}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
   creationTimestamp: null
   labels:
     app: gitpod
     component: migrations
-    gitpod.io: hello
-    hello: world
   name: migrations
   namespace: default
 spec:
   template:
     metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
       creationTimestamp: null
       labels:
         app: gitpod
         component: migrations
-        gitpod.io: hello
-        hello: world
       name: migrations
       namespace: default
     spec:

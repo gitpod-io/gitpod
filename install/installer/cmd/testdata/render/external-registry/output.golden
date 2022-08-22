@@ -1551,14 +1551,6 @@ data:
         snapshotClass: ""
         storageClass: ""
       resources:
-        limits:
-          cpu:
-            buckets: null
-            burst: ""
-            min: ""
-          ephemeral-storage: ""
-          memory: ""
-          storage: ""
         requests:
           cpu: "1"
           memory: 2Gi
