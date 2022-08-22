@@ -64,12 +64,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				Limits: &config.ResourceLimitConfiguration{
 					CPU: &config.CpuResourceLimit{
-						MinLimit:   ctx.Config.Workspace.Resources.Limits.Cpu.MinLimit,
-						BurstLimit: ctx.Config.Workspace.Resources.Limits.Cpu.BurstLimit,
+						MinLimit:   quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceCPU),
+						BurstLimit: quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceCPU),
 					},
-					Memory:           ctx.Config.Workspace.Resources.Limits.Memory,
-					EphemeralStorage: ctx.Config.Workspace.Resources.Limits.EphemeralStorage,
-					Storage:          ctx.Config.Workspace.Resources.Limits.Storage,
+					Memory:           quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceMemory),
+					EphemeralStorage: quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceEphemeralStorage),
+					Storage:          quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceStorage),
 				},
 			},
 			Templates: templatesCfg,
