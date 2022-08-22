@@ -80,6 +80,9 @@ const (
 	// stoppedByRequestAnnotation is set on a pod when it was requested to stop using a StopWorkspace call
 	stoppedByRequestAnnotation = "gitpod.io/stoppedByRequest"
 
+	// abortRequestAnnotation is set if StopWorkspace was called with ABORT StopWorkspacePolicy
+	abortRequestAnnotation = "gitpod.io/abortRequest"
+
 	// attemptingToCreatePodAnnotation is set when ws-manager is trying to create pod and is removed when pod is successfully scheduled on the node
 	attemptingToCreatePodAnnotation = "gitpod.io/attemptingToCreate"
 )

@@ -265,6 +265,8 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 			reason = "tab-closed"
 		} else if strings.Contains(status.Message, "workspace timed out") {
 			reason = "timeout"
+		} else if status.Conditions.Aborted == api.WorkspaceConditionBool_TRUE {
+			reason = "aborted"
 		} else if status.Conditions.Failed != "" {
 			reason = "failed"
 		} else {

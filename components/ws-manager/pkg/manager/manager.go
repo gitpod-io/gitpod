@@ -43,6 +43,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
@@ -733,6 +734,12 @@ func (m *Manager) StopWorkspace(ctx context.Context, req *api.StopWorkspaceReque
 	gracePeriod := stopWorkspaceNormallyGracePeriod
 	if req.Policy == api.StopWorkspacePolicy_IMMEDIATELY {
 		gracePeriod = stopWorkspaceImmediatelyGracePeriod
+	} else if req.Policy == api.StopWorkspacePolicy_ABORT {
+		gracePeriod = stopWorkspaceImmediatelyGracePeriod
+		err = m.markWorkspace(ctx, req.Id, addMark(abortRequestAnnotation, util.BooleanTrueString))
+		if err != nil {
+			clog.WithError(err).Error("failed to mark workspace for abort")
+		}
 	}
 
 	err = m.markWorkspace(ctx, req.Id, addMark(stoppedByRequestAnnotation, gracePeriod.String()))

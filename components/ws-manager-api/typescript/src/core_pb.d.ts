@@ -840,6 +840,8 @@ export class WorkspaceConditions extends jspb.Message {
     clearVolumeSnapshot(): void;
     getVolumeSnapshot(): VolumeSnapshotInfo | undefined;
     setVolumeSnapshot(value?: VolumeSnapshotInfo): WorkspaceConditions;
+    getAborted(): WorkspaceConditionBool;
+    setAborted(value: WorkspaceConditionBool): WorkspaceConditions;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceConditions.AsObject;
@@ -864,6 +866,7 @@ export namespace WorkspaceConditions {
         headlessTaskFailed: string,
         stoppedByRequest: WorkspaceConditionBool,
         volumeSnapshot?: VolumeSnapshotInfo.AsObject,
+        aborted: WorkspaceConditionBool,
     }
 }
 
@@ -1227,6 +1230,7 @@ export namespace WorkspaceClass {
 export enum StopWorkspacePolicy {
     NORMALLY = 0,
     IMMEDIATELY = 1,
+    ABORT = 2,
 }
 
 export enum AdmissionLevel {
