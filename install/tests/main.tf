@@ -13,7 +13,9 @@ variable "project" { default = "sh-automated-tests" }
 variable "sa_creds" { default = null }
 variable "dns_sa_creds" { default = null }
 
-variable "eks_node_image_id" {}
+variable "eks_node_image_id" {
+  default = null
+}
 
 variable "k3s_node_image_id" {
   default = null
