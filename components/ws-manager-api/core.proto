@@ -121,6 +121,7 @@ message StopWorkspaceRequest {
 enum StopWorkspacePolicy {
     NORMALLY = 0;
     IMMEDIATELY = 1;
+    ABORT = 2;
 }
 
 // StopWorkspaceResponse is the answer to a stop workspace request
@@ -423,6 +424,9 @@ message WorkspaceConditions {
 
     // volume_snapshot contains info about volume snapshot that was used to save persistent volume
     VolumeSnapshotInfo volume_snapshot = 12;
+
+    // aborted is true if StopWorkspace was called with StopWorkspacePolicy set to ABORT
+    WorkspaceConditionBool aborted = 13;
 }
 
 // WorkspaceConditionBool is a trinary bool: true/false/empty

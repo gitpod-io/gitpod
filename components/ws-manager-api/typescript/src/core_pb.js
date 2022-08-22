@@ -6666,7 +6666,8 @@ proto.wsman.WorkspaceConditions.toObject = function(includeInstance, msg) {
     firstUserActivity: (f = msg.getFirstUserActivity()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
     headlessTaskFailed: jspb.Message.getFieldWithDefault(msg, 10, ""),
     stoppedByRequest: jspb.Message.getFieldWithDefault(msg, 11, 0),
-    volumeSnapshot: (f = msg.getVolumeSnapshot()) && proto.wsman.VolumeSnapshotInfo.toObject(includeInstance, f)
+    volumeSnapshot: (f = msg.getVolumeSnapshot()) && proto.wsman.VolumeSnapshotInfo.toObject(includeInstance, f),
+    aborted: jspb.Message.getFieldWithDefault(msg, 13, 0)
   };
 
   if (includeInstance) {
@@ -6748,6 +6749,10 @@ proto.wsman.WorkspaceConditions.deserializeBinaryFromReader = function(msg, read
       var value = new proto.wsman.VolumeSnapshotInfo;
       reader.readMessage(value,proto.wsman.VolumeSnapshotInfo.deserializeBinaryFromReader);
       msg.setVolumeSnapshot(value);
+      break;
+    case 13:
+      var value = /** @type {!proto.wsman.WorkspaceConditionBool} */ (reader.readEnum());
+      msg.setAborted(value);
       break;
     default:
       reader.skipField();
@@ -6855,6 +6860,13 @@ proto.wsman.WorkspaceConditions.serializeBinaryToWriter = function(message, writ
       12,
       f,
       proto.wsman.VolumeSnapshotInfo.serializeBinaryToWriter
+    );
+  }
+  f = message.getAborted();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      13,
+      f
     );
   }
 };
@@ -7093,6 +7105,24 @@ proto.wsman.WorkspaceConditions.prototype.clearVolumeSnapshot = function() {
  */
 proto.wsman.WorkspaceConditions.prototype.hasVolumeSnapshot = function() {
   return jspb.Message.getField(this, 12) != null;
+};
+
+
+/**
+ * optional WorkspaceConditionBool aborted = 13;
+ * @return {!proto.wsman.WorkspaceConditionBool}
+ */
+proto.wsman.WorkspaceConditions.prototype.getAborted = function() {
+  return /** @type {!proto.wsman.WorkspaceConditionBool} */ (jspb.Message.getFieldWithDefault(this, 13, 0));
+};
+
+
+/**
+ * @param {!proto.wsman.WorkspaceConditionBool} value
+ * @return {!proto.wsman.WorkspaceConditions} returns this
+ */
+proto.wsman.WorkspaceConditions.prototype.setAborted = function(value) {
+  return jspb.Message.setProto3EnumField(this, 13, value);
 };
 
 
@@ -9756,7 +9786,8 @@ proto.wsman.WorkspaceClass.prototype.setDisplayname = function(value) {
  */
 proto.wsman.StopWorkspacePolicy = {
   NORMALLY: 0,
-  IMMEDIATELY: 1
+  IMMEDIATELY: 1,
+  ABORT: 2
 };
 
 /**
