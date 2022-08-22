@@ -68,17 +68,12 @@ gke-standard-cluster: check-env-cluster-version
 	terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done creating GKE cluster"
 
-ami_id_120 := "ami-0ecb917eb4fbf4387"
 
 ami_id_121 := "ami-0d57fb01036fac543"
 
 ami_id_122 := "ami-0b306cb7e98db98e4"
 
-ami_id_120 := "ami-0ecb917eb4fbf4387"
-
-ami_id_121 := "ami-0d57fb01036fac543"
-
-ami_id_122 := "ami-0b306cb7e98db98e4"
+ami_id_123 := "ami-0eba9c07a41b01c3b" # since there is no official ubuntu image, we do not support this
 
 .PHONY:
 ## eks-standard-cluster: Creates an EKS cluster
@@ -230,6 +225,15 @@ storage-config-aws:
 	envsubst < ./manifests/kots-config-aws-storage.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
 
+s3-registry-backend-config-aws: # this registry config involves using s3 backend for incluster registry
+	export REGION=$$(terraform output -json aws_s3_registry_backend | yq r - 'region') && \
+	export ENDPOINT=$$(terraform output -json aws_s3_registry_backend | yq r - 'endpoint') && \
+	export BUCKET=$$(terraform output -json aws_s3_registry_backend | yq r - 'bucket_name') && \
+	export S3_ACCESS_KEY_ID=$$(terraform output -json aws_s3_registry_backend | yq r - 'access_key_id') && \
+	export S3_SECRET_ACCESS_KEY=$$(terraform output -json aws_s3_registry_backend | yq r - 'secret_access_key') && \
+	envsubst < ./manifests/kots-config-aws-s3-backend.yaml > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
 registry-config-aws:
 	export SERVER=$$(terraform output -json aws_registry | yq r - 'server' | cut -d / -f 1) && \
 	export PASSWORD=$$(terraform output -json aws_registry | yq r - 'password') && \
@@ -244,9 +248,13 @@ db-config-incluster:
 	@echo "Nothing to do"
 
 registry-config-incluster:
+ifeq ($(cloud), aws)
+	$(MAKE) s3-registry-backend-config-aws
+else
 	@echo "Nothing to do"
+endif
 
-torage ?= incluster
+storage ?= incluster
 registry ?= incluster
 db ?= incluster
 .PHONY:

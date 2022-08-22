@@ -418,7 +418,7 @@ function randK8sVersion(config: string): string {
             break;
         }
         case "STANDARD_EKS_TEST": {
-            options = ["1.21", "1.22", "1.23"]
+            options = ["1.21", "1.22"] // we will start 1.23 when official Ubuntu image is out
             break;
         }
         case "STANDARD_K3S_TEST": {
