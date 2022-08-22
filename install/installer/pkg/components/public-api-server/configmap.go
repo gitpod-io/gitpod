@@ -6,7 +6,10 @@ package public_api_server
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"k8s.io/utils/pointer"
 	"net"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -24,9 +27,17 @@ const (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	var stripeSecretPath string
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		_, _, stripeSecretPath, _ = getStripeConfig(cfg)
+		return nil
+	})
+
 	cfg := config.Configuration{
-		GitpodServiceURL:      fmt.Sprintf("wss://%s/api/v1", ctx.Config.Domain),
-		BillingServiceAddress: net.JoinHostPort(usage.Component, strconv.Itoa(usage.GRPCServicePort)),
+		GitpodServiceURL:               fmt.Sprintf("wss://%s/api/v1", ctx.Config.Domain),
+		StripeWebhookSigningSecretPath: stripeSecretPath,
+		BillingServiceAddress:          net.JoinHostPort(usage.Component, strconv.Itoa(usage.GRPCServicePort)),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
@@ -58,4 +69,36 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 	}, nil
+}
+
+func getStripeConfig(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMount, string, bool) {
+	var volume corev1.Volume
+	var mount corev1.VolumeMount
+	var path string
+
+	if cfg == nil || cfg.WebApp == nil || cfg.WebApp.PublicAPI == nil || cfg.WebApp.PublicAPI.StripeSecretName == "" {
+		return volume, mount, path, false
+	}
+
+	stripeSecret := cfg.WebApp.PublicAPI.StripeSecretName
+
+	volume = corev1.Volume{
+		Name: "stripe-secret",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: stripeSecret,
+				Optional:   pointer.Bool(true),
+			},
+		},
+	}
+
+	mount = corev1.VolumeMount{
+		Name:      "stripe-secret",
+		MountPath: stripeSecretMountPath,
+		ReadOnly:  true,
+	}
+
+	path = filepath.Join(secretsDirectory, stripeSecretMountPath)
+
+	return volume, mount, path, true
 }

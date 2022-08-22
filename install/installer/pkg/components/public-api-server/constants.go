@@ -13,4 +13,7 @@ const (
 	HTTPContainerPort = 9002
 	HTTPServicePort   = 9002
 	HTTPPortName      = "http"
+
+	secretsDirectory      = "secrets"
+	stripeSecretMountPath = "stripe-secret"
 )
