@@ -59,28 +59,11 @@ resource "google_container_cluster" "gitpod-cluster" {
   }
 
   min_master_version = var.cluster_version
-  # the default nodepool is used as the services nodepool
-  remove_default_node_pool = false
-  node_config {
-    oauth_scopes = [
-      "https://www.googleapis.com/auth/cloud-platform"
-    ]
 
-    labels = {
-      "gitpod.io/workload_meta" = true
-      "gitpod.io/workload_ide"  = true
-    }
+  remove_default_node_pool = true
 
-    preemptible  = false
-    image_type   = "COS_CONTAINERD"
-    disk_type    = "pd-standard"
-    disk_size_gb = var.disk_size_gb
-    machine_type = var.services_machine_type
-    tags         = ["gke-node", "${var.project}-gke"]
-    metadata = {
-      disable-legacy-endpoints = "true"
-    }
-  }
+  network    = google_compute_network.vpc.name
+  subnetwork = google_compute_subnetwork.subnet.name
 
   initial_node_count = 1
   release_channel {
@@ -106,9 +89,46 @@ resource "google_container_cluster" "gitpod-cluster" {
       disabled = false
     }
   }
+}
 
-  network    = google_compute_network.vpc.name
-  subnetwork = google_compute_subnetwork.subnet.name
+resource "google_container_node_pool" "services" {
+  name               = "services-${var.cluster_name}"
+  location           = google_container_cluster.gitpod-cluster.location
+  cluster            = google_container_cluster.gitpod-cluster.name
+  version            = var.cluster_version // kubernetes version
+  initial_node_count = 1
+  max_pods_per_node  = 110
+
+  node_config {
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+
+    labels = {
+      "gitpod.io/workload_meta" = true
+      "gitpod.io/workload_ide"  = true
+    }
+
+    preemptible  = false
+    image_type   = "UBUNTU_CONTAINERD"
+    disk_type    = "pd-ssd"
+    disk_size_gb = var.disk_size_gb
+    machine_type = var.services_machine_type
+    tags         = ["gke-node", "${var.project}-gke"]
+    metadata = {
+      disable-legacy-endpoints = "true"
+    }
+  }
+
+  autoscaling {
+    min_node_count = 1
+    max_node_count = var.max_node_count_services
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = false
+  }
 }
 
 resource "google_container_node_pool" "workspaces" {
@@ -132,7 +152,7 @@ resource "google_container_node_pool" "workspaces" {
 
     preemptible  = false
     image_type   = "UBUNTU_CONTAINERD"
-    disk_type    = "pd-standard"
+    disk_type    = "pd-ssd"
     disk_size_gb = var.disk_size_gb
     machine_type = var.workspaces_machine_type
     tags         = ["gke-node", "${var.project}-gke"]
@@ -143,7 +163,7 @@ resource "google_container_node_pool" "workspaces" {
 
   autoscaling {
     min_node_count = 1
-    max_node_count = var.max_count
+    max_node_count = var.max_node_count_workspaces
   }
 
   management {
