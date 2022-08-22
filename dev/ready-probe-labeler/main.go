@@ -171,21 +171,21 @@ func waitForURLToBeReachable(probeURL string, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	tick := 500 * time.Millisecond
-
-	ticker := time.NewTicker(tick)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
-
-	client := &http.Client{
-		Timeout: tick,
-	}
 
 	for {
 		select {
 		case <-ctx.Done():
 			return xerrors.Errorf("URL %v never returned status code 200", probeURL)
 		case <-ticker.C:
-			resp, err := client.Get(probeURL)
+			req, err := http.NewRequestWithContext(ctx, "GET", probeURL, nil)
+			if err != nil {
+				continue
+			}
+
+			client := &http.Client{}
+			resp, err := client.Do(req)
 			if err != nil {
 				continue
 			}
