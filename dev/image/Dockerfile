@@ -180,15 +180,13 @@ ENV DB_HOST=localhost
 ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
 ENV LEEWAY_REMOTE_CACHE_BUCKET=gitpod-core-leeway-cache-branch
 
-### AWS Cli ###
-RUN sudo python3 -m pip install --no-cache-dir awscli
-
-# Install aws-iam-authenticator
-RUN sudo curl -fsSL -o aws-iam-authenticator "https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator" \
-    && sudo chmod +x ./aws-iam-authenticator \
-    && sudo mkdir -p $HOME/.aws-iam \
-    && sudo mv ./aws-iam-authenticator $HOME/.aws-iam/aws-iam-authenticator \
-    && sudo chown -R gitpod:gitpod $HOME/.aws-iam
+# awscliv2
+# See also: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-version.html
+# See also: https://github.com/aws/aws-cli/blob/v2/CHANGELOG.rst
+RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.7.25.zip" -o "awscliv2.zip" \
+    && unzip awscliv2.zip \
+    && sudo ./aws/install \
+    && rm -f awscliv2.zip
 
 # Install Terraform
 ARG RELEASE_URL="https://releases.hashicorp.com/terraform/1.1.7/terraform_1.1.7_linux_amd64.zip"
