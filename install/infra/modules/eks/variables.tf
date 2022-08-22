@@ -45,6 +45,8 @@ variable "vpc_availability_zones" {
 }
 
 variable "domain_name" {
+  default = ""
+  description = "Domain name to associate with the route53 zone"
 }
 
 variable "vpc_cidr" {
@@ -69,4 +71,9 @@ variable "create_external_storage_for_registry_backend" {
 variable "create_external_registry" {
   default     = false
   description = "Create an EKS registry(Not officially supported)"
+}
+
+variable "use_aws_cert_manager" {
+  default     = false
+  description = "Create an AWS Cert manager entry for all necessary sub domains"
 }
