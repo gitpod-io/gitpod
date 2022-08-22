@@ -94,6 +94,40 @@ func TestGitLabContexts(t *testing.T) {
 	runContextTests(t, tests)
 }
 
+func TestPrivateRepositoryWorkspaceLaunch(t *testing.T) {
+	userToken, _ := os.LookupEnv("USER_TOKEN")
+	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+
+	f := features.New("GitHubPrivateRepository").
+		WithLabel("component", "server").
+		Assess("it can open a private repository workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
+
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			t.Cleanup(func() {
+				api.Done(t)
+			})
+
+			_, err := api.CreateUser(username, userToken)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "https://github.com/gitpod-io/template-scala-old", username, api)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stopWs(true)
+
+			return ctx
+		}).
+		Feature()
+
+	testEnv.Test(t, f)
+}
+
 func runContextTests(t *testing.T, tests []ContextTest) {
 	userToken, _ := os.LookupEnv("USER_TOKEN")
 	integration.SkipWithoutUsername(t, username)
