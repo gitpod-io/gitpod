@@ -354,7 +354,7 @@ type PersistentVolumeClaim struct {
 
 type Workspace struct {
 	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
-	Resources WorkspaceResources  `json:"resources" validate:"required"`
+	Resources Resources           `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`
 
 	// PVC is the struct that describes how to setup persistent volume claim for workspace
