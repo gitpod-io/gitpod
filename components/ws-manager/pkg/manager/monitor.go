@@ -815,7 +815,13 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	// The function below deliniates the initializer lock. It's just there so that we can
 	// defer the unlock call, thus making sure we actually call it.
 	err = func() error {
-		_, alreadyInitializing := m.initializerMap.Load(pod.Name)
+		_, alreadyInitializing := m.initializerMap.LoadOrStore(pod.Name, struct{}{})
+		defer func() {
+			if err != nil {
+				m.initializerMap.Delete(pod.Name)
+			}
+		}()
+
 		if alreadyInitializing {
 			return nil
 		}
@@ -869,9 +875,6 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		if err != nil {
 			return err
 		}
-
-		// mark that we're already initialising this workspace
-		m.initializerMap.Store(pod.Name, struct{}{})
 
 		return nil
 	}()
