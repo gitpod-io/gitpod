@@ -31,26 +31,11 @@ spec:
         - name: installation-status
           # This will normally be the release tag
           image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-move-kots-bash-script.28"
+          envFrom:
+            - configMapRef:
+                name: gitpod-kots-config
           command:
-            - /bin/sh
-            - -c
-          args:
-            - |
-              set -e
-
-              while true
-              do
-                echo "Checking installation status"
-
-                if [ "$(helm status -n {{repl Namespace }} gitpod -o json | jq '.info.status == "deployed"')" != "true" ];
-                then
-                  echo "Gitpod: Installation not complete"
-                  exit 1
-                fi
-
-                echo "Sleeping for 10 seconds"
-                sleep 10
-              done
+            - /app/scripts/kots-installation-status.sh
           resources:
             limits:
               memory: "128Mi"
