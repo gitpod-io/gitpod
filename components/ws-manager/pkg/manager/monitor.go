@@ -1109,6 +1109,9 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					return false, &csapi.GitStatus{}, nil
 				}
 			}
+			if err != nil {
+				log.WithError(err).Warn("WaitForInit returned an error")
+			}
 		}
 
 		ctx, cancelReq := context.WithTimeout(ctx, time.Duration(m.manager.Config.Timeouts.ContentFinalization))
@@ -1271,6 +1274,9 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		if resp != nil {
 			gitStatus = resp.GitStatus
 		}
+		if err != nil {
+			log.WithError(err).Error("DisposeWorkspace failed")
+		}
 		return true, gitStatus, err
 	}
 
@@ -1292,6 +1298,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		span.LogKV("attempt", i)
 		didSometing, gs, err := doFinalize()
+		if err != nil {
+			tracing.LogError(span, err)
+			log.WithError(err).Error("doFinalize failed")
+		}
 		if !didSometing {
 			// someone else is managing finalization process ... we don't have to bother
 			span.LogKV("did-nothing", true)
