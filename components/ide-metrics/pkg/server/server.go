@@ -37,44 +37,67 @@ type IDEMetricsServer struct {
 }
 
 type allowListCollector struct {
-	Collector        prometheus.Collector
-	Labels           []string
-	AllowLabelValues map[string][]string
+	Collector               prometheus.Collector
+	Labels                  []string
+	AllowLabelValues        map[string][]string
+	AllowLabelDefaultValues map[string]string
 }
 
-func (c *allowListCollector) Check(labels map[string]string) bool {
-	if len(c.Labels) != len(labels) {
-		return false
-	}
+const UnknownValue = "unknown"
+
+func (c *allowListCollector) Reconcile(labels map[string]string) map[string]string {
+	reconcile := make(map[string]string)
+
 	for label, value := range labels {
 		allowValues, ok := c.AllowLabelValues[label]
 		if !ok {
-			return false
+			continue
 		}
 		found := false
 		for _, v := range allowValues {
 			if v == value {
 				found = true
+				reconcile[label] = v
 				break
 			}
 		}
 		if !found {
-			return false
+			if defaultValue, ok := c.AllowLabelDefaultValues[label]; ok {
+				reconcile[label] = defaultValue
+			} else {
+				reconcile[label] = UnknownValue
+			}
 		}
 	}
-	return true
+	if len(reconcile) == len(c.Labels) {
+		return reconcile
+	}
+	for _, label := range c.Labels {
+		if _, ok := reconcile[label]; ok {
+			continue
+		}
+		if defaultValue, ok := c.AllowLabelDefaultValues[label]; ok {
+			reconcile[label] = defaultValue
+		} else {
+			reconcile[label] = UnknownValue
+		}
+	}
+	return reconcile
 }
 
 func newAllowListCollector(allowList []config.LabelAllowList) *allowListCollector {
 	labels := make([]string, 0, len(allowList))
 	allowLabelValues := make(map[string][]string)
+	allowLabelDefaultValues := make(map[string]string)
 	for _, l := range allowList {
 		labels = append(labels, l.Name)
 		allowLabelValues[l.Name] = l.AllowValues
+		allowLabelDefaultValues[l.Name] = l.DefaultValue
 	}
 	return &allowListCollector{
-		Labels:           labels,
-		AllowLabelValues: allowLabelValues,
+		Labels:                  labels,
+		AllowLabelValues:        allowLabelValues,
+		AllowLabelDefaultValues: allowLabelDefaultValues,
 	}
 }
 
@@ -83,11 +106,9 @@ func (s *IDEMetricsServer) AddCounter(ctx context.Context, req *api.AddCounterRe
 	if !ok {
 		return nil, errors.New("metric not found")
 	}
-	if !c.Check(req.Labels) {
-		return nil, errors.New("label not allow")
-	}
+	newLabels := c.Reconcile(req.Labels)
 	counterVec := c.Collector.(*prometheus.CounterVec)
-	counter, err := counterVec.GetMetricWith(req.Labels)
+	counter, err := counterVec.GetMetricWith(newLabels)
 	if err != nil {
 		return nil, err
 	}
@@ -103,11 +124,9 @@ func (s *IDEMetricsServer) ObserveHistogram(ctx context.Context, req *api.Observ
 	if !ok {
 		return nil, errors.New("metric not found")
 	}
-	if !c.Check(req.Labels) {
-		return nil, errors.New("label not allow")
-	}
+	newLabels := c.Reconcile(req.Labels)
 	histogramVec := c.Collector.(*prometheus.HistogramVec)
-	histogram, err := histogramVec.GetMetricWith(req.Labels)
+	histogram, err := histogramVec.GetMetricWith(newLabels)
 	if err != nil {
 		return nil, err
 	}
