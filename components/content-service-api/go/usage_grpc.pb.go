@@ -28,6 +28,8 @@ const _ = grpc.SupportPackageIsVersion7
 type UsageReportServiceClient interface {
 	// UploadURL provides a URL to which clients can upload the content via HTTP PUT.
 	UploadURL(ctx context.Context, in *UsageReportUploadURLRequest, opts ...grpc.CallOption) (*UsageReportUploadURLResponse, error)
+	// DownloadURL retrieves a URL which can be used to download a Usage Report.
+	DownloadURL(ctx context.Context, in *UsageReportDownloadURLRequest, opts ...grpc.CallOption) (*UsageReportDownloadURLResponse, error)
 }
 
 type usageReportServiceClient struct {
@@ -47,12 +49,23 @@ func (c *usageReportServiceClient) UploadURL(ctx context.Context, in *UsageRepor
 	return out, nil
 }
 
+func (c *usageReportServiceClient) DownloadURL(ctx context.Context, in *UsageReportDownloadURLRequest, opts ...grpc.CallOption) (*UsageReportDownloadURLResponse, error) {
+	out := new(UsageReportDownloadURLResponse)
+	err := c.cc.Invoke(ctx, "/contentservice.UsageReportService/DownloadURL", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsageReportServiceServer is the server API for UsageReportService service.
 // All implementations must embed UnimplementedUsageReportServiceServer
 // for forward compatibility
 type UsageReportServiceServer interface {
 	// UploadURL provides a URL to which clients can upload the content via HTTP PUT.
 	UploadURL(context.Context, *UsageReportUploadURLRequest) (*UsageReportUploadURLResponse, error)
+	// DownloadURL retrieves a URL which can be used to download a Usage Report.
+	DownloadURL(context.Context, *UsageReportDownloadURLRequest) (*UsageReportDownloadURLResponse, error)
 	mustEmbedUnimplementedUsageReportServiceServer()
 }
 
@@ -62,6 +75,9 @@ type UnimplementedUsageReportServiceServer struct {
 
 func (UnimplementedUsageReportServiceServer) UploadURL(context.Context, *UsageReportUploadURLRequest) (*UsageReportUploadURLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadURL not implemented")
+}
+func (UnimplementedUsageReportServiceServer) DownloadURL(context.Context, *UsageReportDownloadURLRequest) (*UsageReportDownloadURLResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DownloadURL not implemented")
 }
 func (UnimplementedUsageReportServiceServer) mustEmbedUnimplementedUsageReportServiceServer() {}
 
@@ -94,6 +110,24 @@ func _UsageReportService_UploadURL_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageReportService_DownloadURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UsageReportDownloadURLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageReportServiceServer).DownloadURL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/contentservice.UsageReportService/DownloadURL",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageReportServiceServer).DownloadURL(ctx, req.(*UsageReportDownloadURLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UsageReportService_ServiceDesc is the grpc.ServiceDesc for UsageReportService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -104,6 +138,10 @@ var UsageReportService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UploadURL",
 			Handler:    _UsageReportService_UploadURL_Handler,
+		},
+		{
+			MethodName: "DownloadURL",
+			Handler:    _UsageReportService_DownloadURL_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

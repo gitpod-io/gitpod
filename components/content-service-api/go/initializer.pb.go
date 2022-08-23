@@ -142,6 +142,7 @@ type WorkspaceInitializer struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Spec:
+	//
 	//	*WorkspaceInitializer_Empty
 	//	*WorkspaceInitializer_Git
 	//	*WorkspaceInitializer_Snapshot
