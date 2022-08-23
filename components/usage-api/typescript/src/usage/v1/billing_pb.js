@@ -32,6 +32,7 @@ goog.exportSymbol('proto.usage.v1.GetLatestInvoiceRequest.IdentifierCase', null,
 goog.exportSymbol('proto.usage.v1.GetLatestInvoiceResponse', null, global);
 goog.exportSymbol('proto.usage.v1.SetBilledSessionRequest', null, global);
 goog.exportSymbol('proto.usage.v1.SetBilledSessionResponse', null, global);
+goog.exportSymbol('proto.usage.v1.System', null, global);
 goog.exportSymbol('proto.usage.v1.UpdateInvoicesRequest', null, global);
 goog.exportSymbol('proto.usage.v1.UpdateInvoicesResponse', null, global);
 /**
@@ -1242,7 +1243,7 @@ proto.usage.v1.SetBilledSessionRequest.toObject = function(includeInstance, msg)
   var f, obj = {
     instanceId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     from: (f = msg.getFrom()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-    system: jspb.Message.getFieldWithDefault(msg, 3, "")
+    system: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -1289,7 +1290,7 @@ proto.usage.v1.SetBilledSessionRequest.deserializeBinaryFromReader = function(ms
       msg.setFrom(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {!proto.usage.v1.System} */ (reader.readEnum());
       msg.setSystem(value);
       break;
     default:
@@ -1337,8 +1338,8 @@ proto.usage.v1.SetBilledSessionRequest.serializeBinaryToWriter = function(messag
     );
   }
   f = message.getSystem();
-  if (f.length > 0) {
-    writer.writeString(
+  if (f !== 0.0) {
+    writer.writeEnum(
       3,
       f
     );
@@ -1402,20 +1403,20 @@ proto.usage.v1.SetBilledSessionRequest.prototype.hasFrom = function() {
 
 
 /**
- * optional string system = 3;
- * @return {string}
+ * optional System system = 3;
+ * @return {!proto.usage.v1.System}
  */
 proto.usage.v1.SetBilledSessionRequest.prototype.getSystem = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+  return /** @type {!proto.usage.v1.System} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
 };
 
 
 /**
- * @param {string} value
+ * @param {!proto.usage.v1.System} value
  * @return {!proto.usage.v1.SetBilledSessionRequest} returns this
  */
 proto.usage.v1.SetBilledSessionRequest.prototype.setSystem = function(value) {
-  return jspb.Message.setProto3StringField(this, 3, value);
+  return jspb.Message.setProto3EnumField(this, 3, value);
 };
 
 
@@ -1519,5 +1520,14 @@ proto.usage.v1.SetBilledSessionResponse.serializeBinaryToWriter = function(messa
   var f = undefined;
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.usage.v1.System = {
+  SYSTEM_UNKNOWN: 0,
+  SYSTEM_CHARGEBEE: 1,
+  SYSTEM_STRIPE: 2
+};
 
 goog.object.extend(exports, proto.usage.v1);

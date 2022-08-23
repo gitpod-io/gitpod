@@ -55,9 +55,9 @@ message FinalizeInvoiceResponse {
 }
 
 enum System {
-  UNKNOWN = 0;
-  CHARGEBEE = 1;
-  STRIPE = 2;
+  SYSTEM_UNKNOWN = 0;
+  SYSTEM_CHARGEBEE = 1;
+  SYSTEM_STRIPE = 2;
 }
 
 // If there are two billable sessions for this instance ID,
