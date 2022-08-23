@@ -4,8 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { UserDB } from "@gitpod/gitpod-db/lib";
+import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import {
+    Team,
     User,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
@@ -20,6 +21,7 @@ import {
     MayStartWorkspaceResult,
 } from "../../../src/billing/entitlement-service";
 import { Config } from "../../../src/config";
+import { StripeService } from "../user/stripe-service";
 import { BillingModes } from "./billing-mode";
 import { BillingService } from "./billing-service";
 
@@ -35,6 +37,8 @@ export class EntitlementServiceUBP implements EntitlementService {
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(BillingModes) protected readonly billingModes: BillingModes;
     @inject(BillingService) protected readonly billingService: BillingService;
+    @inject(StripeService) protected readonly stripeService: StripeService;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     async mayStartWorkspace(
         user: User,
@@ -105,7 +109,40 @@ export class EntitlementServiceUBP implements EntitlementService {
     }
 
     protected async hasPaidSubscription(user: User, date: Date): Promise<boolean> {
-        // TODO(gpl) UBP personal: implement!
-        return true;
+        // Paid user?
+        const customer = await this.stripeService.findCustomerByUserId(user.id);
+        if (customer) {
+            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByCustomer(customer.id);
+            if (subscriptionId) {
+                return true;
+            }
+        }
+        // Member of paid team?
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        const isTeamSubscribedPromises = teams.map(async (team: Team) => {
+            const customer = await this.stripeService.findCustomerByTeamId(team.id);
+            if (!customer) {
+                return false;
+            }
+            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByCustomer(customer.id);
+            return !!subscriptionId;
+        });
+        // Return the first truthy promise, or false if all the promises were falsy.
+        // Source: https://gist.github.com/jbreckmckye/66364021ebaa0785e426deec0410a235
+        return new Promise((resolve, reject) => {
+            // If any promise returns true, immediately resolve with true
+            isTeamSubscribedPromises.forEach(async (isTeamSubscribedPromise: Promise<boolean>) => {
+                const isTeamSubscribed = await isTeamSubscribedPromise;
+                if (isTeamSubscribed) resolve(true);
+            });
+
+            // If neither of the above fires, resolve with false
+            // Check truthiness just in case callbacks fire out-of-band
+            Promise.all(isTeamSubscribedPromises)
+                .then((areTeamsSubscribed) => {
+                    resolve(!!areTeamsSubscribed.find((isTeamSubscribed: boolean) => !!isTeamSubscribed));
+                })
+                .catch(reject);
+        });
     }
 }
