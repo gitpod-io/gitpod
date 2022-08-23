@@ -245,7 +245,7 @@ function UpdateLimitModal(props: {
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="flex">Update Spending Limit</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
-                <p className="pb-4 text-gray-500 text-base">Set up a spending limit on a monthly basis.</p>
+                <p className="pb-4 text-gray-500 text-base">Set spending limit in total credits per month.</p>
 
                 <label className="font-medium">
                     Credits
