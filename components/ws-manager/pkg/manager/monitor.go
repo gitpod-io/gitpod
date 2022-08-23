@@ -955,12 +955,8 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 
 // retryIfUnavailable makes multiple attempts to execute op if op returns an UNAVAILABLE gRPC status code
 func retryIfUnavailable(ctx context.Context, op func(ctx context.Context) error) (err error) {
-	span, ctx := tracing.FromContext(ctx, "retryIfUnavailable")
-	defer tracing.FinishSpan(span, &err)
-
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		err := op(ctx)
-		span.LogKV("attempt", i)
 
 		if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.Unavailable {
 			// service is unavailable - try again after some time
