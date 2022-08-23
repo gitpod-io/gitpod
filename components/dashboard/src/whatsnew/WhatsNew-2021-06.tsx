@@ -7,7 +7,6 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { WhatsNewEntry } from "./WhatsNew";
 import { switchToVSCodeAction } from "./WhatsNew-2021-04";
-import CodeText from "../components/CodeText";
 import PillLabel from "../components/PillLabel";
 
 export const WhatsNewEntry202106: WhatsNewEntry = {
@@ -24,8 +23,8 @@ export const WhatsNewEntry202106: WhatsNewEntry = {
                     </p>
                     <p className="pb-2 text-gray-500 dark:text-gray-400 text-sm">
                         Exposing ports are now private by default. You can still change port visibility through the
-                        editor or even configure this with the <CodeText>visibility</CodeText> property in{" "}
-                        <CodeText>.gitpod.yml</CodeText>.
+                        editor or even configure this with the <code>visibility</code> property in{" "}
+                        <code>.gitpod.yml</code>.
                     </p>
                 </div>
                 {user.additionalData?.ideSettings?.defaultIde !== "code" && (

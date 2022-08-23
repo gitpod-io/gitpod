@@ -8,7 +8,6 @@ import { User } from "@gitpod/gitpod-protocol";
 import { hoursBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import React, { useContext, useState } from "react";
 import Alert from "../components/Alert";
-import CodeText from "../components/CodeText";
 import Modal from "../components/Modal";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
@@ -118,9 +117,8 @@ export default function ProfileInformation(props: {
         <div>
             <p className="text-base text-gray-500 pb-4 max-w-xl">
                 The following information will be used to set up Git configuration. You can override Git author name and
-                email per project by using the default environment variables <CodeText>GIT_AUTHOR_NAME</CodeText>,{" "}
-                <CodeText>GIT_COMMITTER_NAME</CodeText>, <CodeText>GIT_AUTHOR_EMAIL</CodeText> and{" "}
-                <CodeText>GIT_COMMITTER_EMAIL</CodeText>.
+                email per project by using the default environment variables <code>GIT_AUTHOR_NAME</code>,{" "}
+                <code>GIT_COMMITTER_NAME</code>, <code>GIT_AUTHOR_EMAIL</code> and <code>GIT_COMMITTER_EMAIL</code>.
             </p>
             {props.errorMessage.length > 0 && (
                 <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">

@@ -8,7 +8,6 @@ import { Team } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
-import CodeText from "../components/CodeText";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
@@ -110,7 +109,7 @@ export default function TeamSettings() {
                     </li>
                 </ol>
                 <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">
-                    Type <CodeText>{team?.slug}</CodeText> to confirm
+                    Type <code>{team?.slug}</code> to confirm
                 </p>
                 <input autoFocus className="w-full" type="text" onChange={(e) => setTeamSlug(e.target.value)}></input>
             </ConfirmationModal>

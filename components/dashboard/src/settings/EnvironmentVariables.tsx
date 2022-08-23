@@ -10,7 +10,6 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
 import Modal from "../components/Modal";
 import { getGitpodService } from "../service/service";
-import CodeText from "../components/CodeText";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 interface EnvVarModalProps {
@@ -95,8 +94,8 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                 </div>
                 <div className="mt-1">
                     <p className="text-gray-500">
-                        You can pass a variable for a specific project or use wildcard character (
-                        <CodeText>*/*</CodeText>) to make it available in more projects.
+                        You can pass a variable for a specific project or use wildcard character (<code>*/*</code>) to
+                        make it available in more projects.
                     </p>
                 </div>
             </div>
