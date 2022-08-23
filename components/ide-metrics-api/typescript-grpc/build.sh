@@ -9,6 +9,12 @@ mkdir -p lib
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 
+THIRD_PARTY_INCLUDES="${PROTOLOC:-..}"
+if [ ! -d "$THIRD_PARTY_INCLUDES"/third_party/google/api ]; then
+    echo "missing $THIRD_PARTY_INCLUDES/third_party/google/api"
+    exit 1
+fi
+
 protoc \
     -I"$THIRD_PARTY_INCLUDES"/third_party -I/usr/lib/protoc/include \
     -I"${PROTOLOC:-..}" \
@@ -23,3 +29,8 @@ protoc \
     --plugin=protoc-gen-ts="$DIR"/node_modules/.bin/protoc-gen-ts \
     --ts_out=grpc_js:lib \
     "${PROTOLOC:-..}"/*.proto
+
+# shellcheck disable=SC2038
+find lib -iname '*.js' -or -iname '*.ts' | xargs sed -i '\/google\/api\/annotations_pb/d'
+# shellcheck disable=SC2038
+find lib -iname '*.js' -or -iname '*.ts' | xargs sed -i '/google_api_annotations_pb/d'
