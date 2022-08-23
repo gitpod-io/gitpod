@@ -77,7 +77,7 @@ gitpod-installer version
 ## Generate the base config
 
 ```shell
-gitpod-installer init > gitpod.config.yaml
+gitpod-installer config init -c gitpod.config.yaml
 ```
 
 ## Customise your config
