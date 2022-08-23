@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
+	stripesdk "github.com/stripe/stripe-go/v72"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -62,14 +63,19 @@ func (s *BillingService) GetUpcomingInvoice(ctx context.Context, in *v1.GetUpcom
 	if in.GetTeamId() == "" && in.GetUserId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "teamId or userId is required")
 	}
-	var customerKind = "user"
-	var metaId = in.GetUserId()
-	if in.GetTeamId() != "" {
-		customerKind = "team"
-		metaId = in.GetTeamId()
+
+	var customer *stripesdk.Customer
+	var err error
+	if teamID := in.GetTeamId(); teamID != "" {
+		customer, err = s.stripeClient.GetCustomerByTeamID(ctx, teamID)
+	} else {
+		customer, err = s.stripeClient.GetCustomerByUserID(ctx, in.GetUserId())
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to find customer")
 	}
 
-	invoice, err := s.stripeClient.GetUpcomingInvoice(ctx, stripe.CustomerKind(customerKind), metaId)
+	invoice, err := s.stripeClient.GetUpcomingInvoice(ctx, customer.ID)
 	if err != nil {
 		log.Log.WithError(err).Errorf("Failed to fetch upcoming invoice from stripe.")
 		return nil, status.Errorf(codes.Internal, "failed to fetcht upcoming invoice from stripe")
