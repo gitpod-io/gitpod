@@ -71,3 +71,11 @@ func checkKubeConfig(kube *kubeConfig) error {
 
 	return nil
 }
+
+// getEnvvar gets an envvar and allows a default value
+func getEnvvar(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
