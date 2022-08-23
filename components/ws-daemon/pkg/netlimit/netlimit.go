@@ -25,7 +25,7 @@ import (
 
 type ConnLimiter struct {
 	mu             sync.RWMutex
-	limited        map[string]bool
+	limited        map[string]struct{}
 	droppedBytes   *prometheus.GaugeVec
 	droppedPackets *prometheus.GaugeVec
 	config         Config
@@ -42,7 +42,7 @@ func NewConnLimiter(config Config, prom prometheus.Registerer) *ConnLimiter {
 			Name: "netlimit_connections_dropped_packets",
 			Help: "Number of packets dropped due to connection limiting",
 		}, []string{"workspace"}),
-		limited: map[string]bool{},
+		limited: map[string]struct{}{},
 	}
 
 	s.config = config
@@ -140,7 +140,7 @@ func (c *ConnLimiter) limitWorkspace(ctx context.Context, ws *dispatch.Workspace
 		log.WithError(err).WithFields(ws.OWI()).Error("cannot enable connection limiting")
 		return err
 	}
-	c.limited[ws.InstanceID] = true
+	c.limited[ws.InstanceID] = struct{}{}
 
 	go func(*dispatch.Workspace) {
 		ticker := time.NewTicker(30 * time.Second)
