@@ -136,13 +136,13 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
   podSelector:
     matchLabels:
       app.kubernetes.io/name: rabbitmq
-      app.kubernetes.io/instance: RabbitMQ
+      app.kubernetes.io/instance: rabbitmq
   ingress:
     # Allow inbound connections
     - ports:
@@ -673,14 +673,14 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
   maxUnavailable: 1
   selector:
     matchLabels: 
       app.kubernetes.io/name: rabbitmq
-      app.kubernetes.io/instance: RabbitMQ
+      app.kubernetes.io/instance: rabbitmq
 ---
 # v1/ServiceAccount agent-smith
 apiVersion: v1
@@ -860,7 +860,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 automountServiceAccountToken: true
 secrets:
@@ -976,7 +976,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 stringData:
@@ -992,7 +992,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
@@ -1023,7 +1023,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
@@ -1053,7 +1053,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 stringData:
@@ -2936,7 +2936,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -2948,7 +2948,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -2960,7 +2960,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -2972,7 +2972,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -2984,7 +2984,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -2996,7 +2996,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3008,7 +3008,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3020,7 +3020,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3032,7 +3032,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3044,7 +3044,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3056,7 +3056,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -3068,7 +3068,7 @@ data:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
@@ -4430,7 +4430,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 rules:
   - apiGroups: [""]
@@ -4755,7 +4755,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 subjects:
   - kind: ServiceAccount
@@ -5157,7 +5157,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
   type: ClusterIP
@@ -5189,7 +5189,7 @@ spec:
       nodePort: null
   selector: 
     app.kubernetes.io/name: rabbitmq
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
 ---
 # v1/Service messagebus-headless
 # Source: rabbitmq/charts/rabbitmq/templates/svc-headless.yaml
@@ -5201,7 +5201,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
   clusterIP: None
@@ -5223,7 +5223,7 @@ spec:
       targetPort: stats
   selector: 
     app.kubernetes.io/name: rabbitmq
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
   publishNotReadyAddresses: true
 ---
 # v1/Service openvsx-proxy
@@ -6069,7 +6069,7 @@ metadata:
   labels:
     app.kubernetes.io/name: rabbitmq
     helm.sh/chart: rabbitmq-10.1.1
-    app.kubernetes.io/instance: RabbitMQ
+    app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
   serviceName: messagebus-headless
@@ -6080,17 +6080,17 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: rabbitmq
-      app.kubernetes.io/instance: RabbitMQ
+      app.kubernetes.io/instance: rabbitmq
   template:
     metadata:
       labels:
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-10.1.1
-        app.kubernetes.io/instance: RabbitMQ
+        app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
       annotations:
-        checksum/config: 57b71edd6161d27a16d419d0a972455d13b77c3e31b641c4f484619042487094
-        checksum/secret: 773b338bdf00459126d415b35270b6bef1889b16ccc4d4d11c3999afa781ccc8
+        checksum/config: 2ca9db593e4ca6cdd01f7a65cce1ae90d0d45ecdf0049edfaa4ec72302fcbe8f
+        checksum/secret: c231bbb08185305defa8c4da0f3ee0f5e7a16795362a2133f74e53eb9a40453d
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
