@@ -14,8 +14,9 @@ import (
 )
 
 type LabelAllowList struct {
-	Name        string   `json:"name"`
-	AllowValues []string `json:"allowValues"`
+	Name         string   `json:"name"`
+	AllowValues  []string `json:"allowValues"`
+	DefaultValue string   `json:"defaultValue"`
 }
 
 type MetricsServerConfiguration struct {

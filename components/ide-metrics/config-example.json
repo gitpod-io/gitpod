@@ -8,7 +8,8 @@
         "labels": [
           {
             "name": "ide",
-            "allowValues": ["vscode", "idea", "goland", "pycharm"]
+            "allowValues": ["vscode", "idea", "goland", "pycharm"],
+            "defaultValue": "intellij"
           }
         ]
       }
