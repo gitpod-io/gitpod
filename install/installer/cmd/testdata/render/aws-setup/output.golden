@@ -6766,6 +6766,8 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations:
+        gitpod.io/checksum_config: 429b9479c206dc66164883793af80586bca4017bb59e108fa7501a530d24ef57
       creationTimestamp: null
       labels:
         app: gitpod

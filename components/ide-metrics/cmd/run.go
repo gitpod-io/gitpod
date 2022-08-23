@@ -5,11 +5,9 @@
 package cmd
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/watch"
 	"github.com/gitpod-io/gitpod/ide-metrics-api/config"
 	"github.com/gitpod-io/gitpod/ide-metrics/pkg/server"
 	"github.com/prometheus/client_golang/prometheus"
@@ -44,20 +42,6 @@ var runCommand = &cobra.Command{
 		}()
 		log.WithField("addr", cfg.Prometheus.Addr).Info("started prometheus metrics server")
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		err = watch.File(ctx, rootOpts.CfgFile, func() {
-			cfg, err := config.Read(rootOpts.CfgFile)
-			if err != nil {
-				log.WithError(err).Warn("cannot read configuration")
-				return
-			}
-			s.ReloadConfig(cfg)
-		})
-		if err != nil {
-			log.WithError(err).Fatal("cannot start watch of configuration file")
-		}
 		if err := s.Start(); err != nil {
 			log.WithError(err).Fatal("cannot start server")
 		}
