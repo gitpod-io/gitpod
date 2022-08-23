@@ -43,7 +43,7 @@ func (c *Cpu) Max() (quota uint64, period uint64, err error) {
 	path := filepath.Join(c.path, "cpu.max")
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return 0, 0, nil
+		return 0, 0, err
 	}
 
 	values := strings.Split(strings.TrimSpace(string(content)), " ")
