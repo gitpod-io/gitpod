@@ -29,6 +29,8 @@ export class UpdateInvoicesRequest extends jspb.Message {
     getSessionsList(): Array<usage_v1_usage_pb.BilledSession>;
     setSessionsList(value: Array<usage_v1_usage_pb.BilledSession>): UpdateInvoicesRequest;
     addSessions(value?: usage_v1_usage_pb.BilledSession, index?: number): usage_v1_usage_pb.BilledSession;
+    getReportId(): string;
+    setReportId(value: string): UpdateInvoicesRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): UpdateInvoicesRequest.AsObject;
@@ -45,6 +47,7 @@ export namespace UpdateInvoicesRequest {
         startTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         endTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         sessionsList: Array<usage_v1_usage_pb.BilledSession.AsObject>,
+        reportId: string,
     }
 }
 

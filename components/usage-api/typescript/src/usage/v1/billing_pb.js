@@ -245,7 +245,8 @@ proto.usage.v1.UpdateInvoicesRequest.toObject = function(includeInstance, msg) {
     startTime: (f = msg.getStartTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
     endTime: (f = msg.getEndTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
     sessionsList: jspb.Message.toObjectList(msg.getSessionsList(),
-    usage_v1_usage_pb.BilledSession.toObject, includeInstance)
+    usage_v1_usage_pb.BilledSession.toObject, includeInstance),
+    reportId: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -296,6 +297,10 @@ proto.usage.v1.UpdateInvoicesRequest.deserializeBinaryFromReader = function(msg,
       var value = new usage_v1_usage_pb.BilledSession;
       reader.readMessage(value,usage_v1_usage_pb.BilledSession.deserializeBinaryFromReader);
       msg.addSessions(value);
+      break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setReportId(value);
       break;
     default:
       reader.skipField();
@@ -348,6 +353,13 @@ proto.usage.v1.UpdateInvoicesRequest.serializeBinaryToWriter = function(message,
       3,
       f,
       usage_v1_usage_pb.BilledSession.serializeBinaryToWriter
+    );
+  }
+  f = message.getReportId();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
     );
   }
 };
@@ -462,6 +474,24 @@ proto.usage.v1.UpdateInvoicesRequest.prototype.addSessions = function(opt_value,
  */
 proto.usage.v1.UpdateInvoicesRequest.prototype.clearSessionsList = function() {
   return this.setSessionsList([]);
+};
+
+
+/**
+ * optional string report_id = 4;
+ * @return {string}
+ */
+proto.usage.v1.UpdateInvoicesRequest.prototype.getReportId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.usage.v1.UpdateInvoicesRequest} returns this
+ */
+proto.usage.v1.UpdateInvoicesRequest.prototype.setReportId = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 
