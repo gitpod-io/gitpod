@@ -150,6 +150,8 @@ github.com/getsentry/raven-go v0.2.0/go.mod h1:KungGk8q33+aIAZUIVWZDr2OfAEBsO49P
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/gitpod-io/golang-crypto v0.0.0-20220616163018-a0e3d8407552 h1:11beloYl4JFQZAj6VfJwZcPtrBqulK5Wzrs624m8qHI=
 github.com/gitpod-io/golang-crypto v0.0.0-20220616163018-a0e3d8407552/go.mod h1:tJgr4p01k+N5SV9KHeHLPsEYMCEpc0dTSNGPif2ZWac=
+github.com/gitpod-io/golang-crypto v0.0.0-20220823040820-b59f56dfbab3 h1:/tzCOhhOZCWxTdJ1rZqYubx+LIEVy+QYbJkTMGegcoo=
+github.com/gitpod-io/golang-crypto v0.0.0-20220823040820-b59f56dfbab3/go.mod h1:tJgr4p01k+N5SV9KHeHLPsEYMCEpc0dTSNGPif2ZWac=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200222043503-6f7a984d4dc4/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=

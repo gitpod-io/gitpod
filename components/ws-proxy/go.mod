@@ -8,7 +8,7 @@ require (
 	github.com/gitpod-io/gitpod/registry-facade/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/golang-crypto v0.0.0-20220616163018-a0e3d8407552
+	github.com/gitpod-io/golang-crypto v0.0.0-20220823040820-b59f56dfbab3
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/google/go-cmp v0.5.7
 	github.com/gorilla/handlers v1.5.1
