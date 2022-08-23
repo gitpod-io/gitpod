@@ -172,8 +172,14 @@ resource "google_dns_record_set" "gitpod-dns-3" {
   rrdatas = [google_compute_instance.k3s_master_instance.network_interface[0].access_config[0].nat_ip]
 }
 
+resource "random_string" "random" {
+  length           = 4
+  upper            = false
+  special          = false
+}
+
 resource "google_sql_database_instance" "gitpod" {
-  name             = "sql-${var.name}"
+  name             = "sql-${var.name}-${random_string.random.result}"
   database_version = "MYSQL_5_7"
   region           = var.gcp_region
   settings {

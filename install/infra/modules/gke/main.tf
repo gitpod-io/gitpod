@@ -154,6 +154,7 @@ resource "google_container_node_pool" "workspaces" {
 
 resource "random_string" "random" {
   length           = 4
+  upper            = false
   special          = false
 }
 
