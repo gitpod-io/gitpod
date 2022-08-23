@@ -8,9 +8,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"strings"
@@ -181,7 +183,7 @@ func TestGetContentLayer(t *testing.T) {
 				}
 			} else {
 				fixc, err := os.ReadFile(fixfn)
-				if os.IsNotExist(err) && !*update {
+				if errors.Is(err, fs.ErrNotExist) && !*update {
 					t.Fatalf("no fixture %s. Run test with -update", fixfn)
 					return
 				}

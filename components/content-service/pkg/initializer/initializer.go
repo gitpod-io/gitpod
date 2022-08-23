@@ -7,8 +7,10 @@ package initializer
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -393,7 +395,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 	//       If the location were removed that might break the filesystem quota we have put in place prior.
 	if cfg.CleanSlate {
 		// 1. Clean out the workspace directory
-		if _, err := os.Stat(location); os.IsNotExist(err) {
+		if _, err := os.Stat(location); errors.Is(err, fs.ErrNotExist) {
 			// in the very unlikely event that the workspace Pod did not mount (and thus create) the workspace directory, create it
 			err = os.Mkdir(location, 0755)
 			if os.IsExist(err) {
@@ -459,7 +461,7 @@ func EnsureCleanDotGitpodDirectory(ctx context.Context, wspath string) error {
 
 	dotGitpod := filepath.Join(wspath, ".gitpod")
 	stat, err := os.Stat(dotGitpod)
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		return nil
 	}
 	if stat.IsDir() {

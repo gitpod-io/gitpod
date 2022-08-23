@@ -7,8 +7,10 @@ package iws
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"math"
 	"net"
 	"os"
@@ -892,7 +894,7 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 //
 // Blatant copy from runc: https://github.com/opencontainers/runc/blob/master/libcontainer/rootfs_linux.go#L946-L959
 func maskPath(path string) error {
-	if err := unix.Mount("/dev/null", path, "", unix.MS_BIND, ""); err != nil && !os.IsNotExist(err) {
+	if err := unix.Mount("/dev/null", path, "", unix.MS_BIND, ""); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		if err == unix.ENOTDIR {
 			return unix.Mount("tmpfs", path, "tmpfs", unix.MS_RDONLY, "")
 		}
@@ -906,7 +908,7 @@ func maskPath(path string) error {
 // Blatant copy from runc: https://github.com/opencontainers/runc/blob/master/libcontainer/rootfs_linux.go#L907-L916
 func readonlyPath(path string) error {
 	if err := unix.Mount(path, path, "", unix.MS_BIND|unix.MS_REC, ""); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
 		return err

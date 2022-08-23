@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"net"
 	"os"
@@ -562,7 +563,7 @@ var ring1Cmd = &cobra.Command{
 		}()
 
 		socketPath := filepath.Join(ring2Root, ".supervisor")
-		if _, err = os.Stat(socketPath); os.IsNotExist(err) {
+		if _, err = os.Stat(socketPath); errors.Is(err, fs.ErrNotExist) {
 			if err := os.MkdirAll(socketPath, 0644); err != nil {
 				log.Errorf("failed to create dir %v", err)
 			}
@@ -578,7 +579,7 @@ var ring1Cmd = &cobra.Command{
 		// run prestophook when ring1 exits. This is more reliable way of running this script then
 		// using PreStop Lifecycle Handler of the pod (it would not execute for prebuilds for example)
 		prestophookFunc := func() {
-			if _, err := os.Stat("/.supervisor/prestophook.sh"); os.IsNotExist(err) {
+			if _, err := os.Stat("/.supervisor/prestophook.sh"); errors.Is(err, fs.ErrNotExist) {
 				return
 			}
 			cmd := exec.Command("/.supervisor/prestophook.sh")
@@ -975,7 +976,7 @@ func connectToInWorkspaceDaemonService(ctx context.Context) (*inWorkspaceService
 	for {
 		if _, err := os.Stat(socketFN); err == nil {
 			break
-		} else if !os.IsNotExist(err) {
+		} else if !errors.Is(err, fs.ErrNotExist) {
 			errs = fmt.Errorf("%v: %w", errs, err)
 		}
 

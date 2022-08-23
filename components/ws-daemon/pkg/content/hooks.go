@@ -6,6 +6,8 @@ package content
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"os"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -77,7 +79,7 @@ func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) erro
 	location := ws.Location
 
 	// 1. Clean out the workspace directory
-	if _, err := os.Stat(location); os.IsNotExist(err) {
+	if _, err := os.Stat(location); errors.Is(err, fs.ErrNotExist) {
 		// in the very unlikely event that the workspace Pod did not mount (and thus create) the workspace directory, create it
 		err = os.Mkdir(location, 0755)
 		if os.IsExist(err) {

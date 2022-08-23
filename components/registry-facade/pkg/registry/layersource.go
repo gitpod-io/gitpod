@@ -9,6 +9,7 @@ import (
 	"compress/gzip"
 	"context"
 	"io"
+	"io/fs"
 	"os"
 	"strconv"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/pkg/errors"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -94,7 +96,7 @@ func (s FileLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst 
 	}
 
 	f, err := os.OpenFile(src.Filename, os.O_RDONLY, 0)
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		err = errdefs.ErrNotFound
 		return
 	}

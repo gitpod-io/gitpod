@@ -7,7 +7,9 @@ package session
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sync"
@@ -204,7 +206,7 @@ func (s *Workspace) Dispose(ctx context.Context) (err error) {
 	// old workspace content we can garbage collect that content later.
 	err = os.Remove(s.persistentStateLocation())
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			log.WithError(err).Warn("workspace persistent state location not exist")
 			err = nil
 		} else {

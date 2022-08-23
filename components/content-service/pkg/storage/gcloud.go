@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -252,7 +253,7 @@ func (rs *DirectGCPStorage) fixLegacyFilenames(ctx context.Context, destination 
 	defer tracing.FinishSpan(span, &err)
 
 	legacyPath := filepath.Join(destination, rs.WorkspaceName)
-	if fi, err := os.Stat(legacyPath); os.IsNotExist(err) {
+	if fi, err := os.Stat(legacyPath); errors.Is(err, fs.ErrNotExist) {
 		// legacy path does not exist, nothing to do here
 		return nil
 	} else if fi.IsDir() {
