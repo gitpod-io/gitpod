@@ -201,7 +201,9 @@ export default function TeamUsageBasedBilling() {
                             </a>
                         </div>
                         <div className="flex flex-col w-72 mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
-                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Spending Limit</div>
+                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">
+                                Spending Limit (Credits)
+                            </div>
                             <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
                                 {spendingLimit || "–"}
                             </div>
@@ -241,23 +243,22 @@ function UpdateLimitModal(props: {
 
     return (
         <Modal visible={true} onClose={props.onClose}>
-            <h3 className="flex">Update Limit</h3>
+            <h3 className="flex">Update Spending Limit</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
                 <p className="pb-4 text-gray-500 text-base">Set up a spending limit on a monthly basis.</p>
 
-                <label htmlFor="newLimit" className="font-medium">
-                    Limit
+                <label className="font-medium">
+                    Credits
+                    <div className="w-full">
+                        <input
+                            type="number"
+                            min={0}
+                            value={newLimit}
+                            className="rounded-md w-full truncate overflow-x-scroll pr-8"
+                            onChange={(e) => setNewLimit(e.target.value)}
+                        />
+                    </div>
                 </label>
-                <div className="w-full">
-                    <input
-                        name="newLimit"
-                        type="number"
-                        min={0}
-                        value={newLimit}
-                        className="rounded-md w-full truncate overflow-x-scroll pr-8"
-                        onChange={(e) => setNewLimit(e.target.value)}
-                    />
-                </div>
             </div>
             <div className="flex justify-end mt-6 space-x-2">
                 <button
