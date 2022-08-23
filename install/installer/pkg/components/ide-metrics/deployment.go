@@ -20,6 +20,11 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
+	configHash, err := common.ObjectHash(configmap(ctx))
+	if err != nil {
+		return nil, err
+	}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -35,10 +40,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        Component,
-						Namespace:   ctx.Namespace,
-						Labels:      labels,
-						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
+						Name:      Component,
+						Namespace: ctx.Namespace,
+						Labels:    labels,
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+							return map[string]string{
+								common.AnnotationConfigChecksum: configHash,
+							}
+						}),
 					},
 					Spec: corev1.PodSpec{
 						Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),

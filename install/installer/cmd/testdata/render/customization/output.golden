@@ -8438,6 +8438,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
+        gitpod.io/checksum_config: 0168f083c528ac1a13770cc46ed4b75a93ec76139c1f5fdfc7d4038b5d32985a
         hello: world
       creationTimestamp: null
       labels:
