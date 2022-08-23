@@ -23,7 +23,6 @@ import { openAuthorizeWindow } from "../provider-utils";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
 import PrebuildLogs from "../components/PrebuildLogs";
-import CodeText from "../components/CodeText";
 import FeedbackComponent from "../feedback-form/FeedbackComponent";
 import { isGitpodIo } from "../utils";
 import { BillingAccountSelector } from "../components/BillingAccountSelector";
@@ -480,7 +479,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
                     <div className="mt-2 flex flex-col space-y-8">
                         <p className="text-base text-gray-400 w-96">
                             Permission to access private repositories has been granted. If you are a member of{" "}
-                            <CodeText>{owner}</CodeText>, please try to request access for Gitpod.
+                            <code>{owner}</code>, please try to request access for Gitpod.
                         </p>
                         <a className="mx-auto" href={authorizeURL}>
                             <button>Request Access for Gitpod</button>
@@ -494,7 +493,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
                 <div className="mt-2 flex flex-col space-y-8">
                     <p className="text-base text-gray-400 w-96">
                         Your access token was updated recently. Please try again if the repository exists and Gitpod was
-                        approved for <CodeText>{owner}</CodeText>.
+                        approved for <code>{owner}</code>.
                     </p>
                     <a className="mx-auto" href={authorizeURL}>
                         <button>Try Again</button>
@@ -507,7 +506,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
     return (
         <StartPage phase={StartPhase.Checking} error={p.error}>
             <p className="text-base text-gray-400 mt-2">
-                <CodeText>{repoFullName}</CodeText>
+                <code>{repoFullName}</code>
             </p>
             {statusMessage}
             {p.error && isGitpodIo() && (
