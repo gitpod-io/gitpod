@@ -71,7 +71,7 @@ const (
 	WorkspaceCpuBurstLimitAnnotation = "gitpod.io/cpuBurstLimit"
 
 	// workspaceNetConnLimit denotes the maximum number of connections a workspace can make per minute
-	WorkspaceNetConnLimitAnnotation = "gitpod.io/netConnLimit"
+	WorkspaceNetConnLimitAnnotation = "gitpod.io/netConnLimitPerMinute"
 )
 
 // GetOWIFromObject finds the owner, workspace and instance information on a Kubernetes object using labels
