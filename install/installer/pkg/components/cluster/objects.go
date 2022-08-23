@@ -12,6 +12,7 @@ import "github.com/gitpod-io/gitpod/installer/pkg/common"
 var Objects = common.CompositeRenderFunc(
 	certmanager,
 	clusterrole,
+	podsecuritypolicies,
 	resourcequota,
 	rolebinding,
 	common.DefaultServiceAccount(NobodyComponent),
