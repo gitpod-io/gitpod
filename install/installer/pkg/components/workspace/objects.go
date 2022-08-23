@@ -8,6 +8,7 @@ import "github.com/gitpod-io/gitpod/installer/pkg/common"
 
 var Objects = common.CompositeRenderFunc(
 	networkpolicy,
+	role,
 	rolebinding,
 	common.DefaultServiceAccount(Component),
 )

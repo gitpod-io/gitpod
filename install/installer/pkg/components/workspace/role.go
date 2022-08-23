@@ -2,11 +2,10 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package agentsmith
+package workspace
 
 import (
 	"fmt"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -27,12 +26,7 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 				APIGroups:     []string{"policy"},
 				Resources:     []string{"podsecuritypolicies"},
 				Verbs:         []string{"use"},
-				ResourceNames: []string{fmt.Sprintf("%s-ns-privileged-unconfined", ctx.Namespace)},
-			},
-			{
-				APIGroups: []string{""},
-				Resources: []string{"pods"},
-				Verbs:     []string{"get", "update"},
+				ResourceNames: []string{fmt.Sprintf("%s-ns-workspace", ctx.Namespace)},
 			},
 		},
 	}}, nil
