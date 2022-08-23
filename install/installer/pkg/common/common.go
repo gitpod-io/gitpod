@@ -541,6 +541,10 @@ var (
 		APIVersion: "v1",
 		Kind:       "Secret",
 	}
+	TypeMetaPodSecurityPolicy = metav1.TypeMeta{
+		APIVersion: "policy/v1beta1",
+		Kind:       "PodSecurityPolicy",
+	}
 	TypeMetaResourceQuota = metav1.TypeMeta{
 		APIVersion: "v1",
 		Kind:       "ResourceQuota",

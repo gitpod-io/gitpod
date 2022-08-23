@@ -13,6 +13,7 @@ var Objects = common.CompositeRenderFunc(
 	configmap,
 	daemonset,
 	networkpolicy,
+	podsecuritypolicy,
 	rolebinding,
 	certificate,
 	common.GenerateService(Component, []common.ServicePort{
