@@ -12,6 +12,10 @@ args:
   desc: "Replicated channel to use"
   required: false
   default: ""
+- name: replicatedApp
+  desc: "Replicated App to use"
+  required: false
+  default: ""
 - name: version
   desc: "Version of gitpod to install(in the case of upgrade tests, this is the initial install version and will later get upgraded to latest"
   required: false

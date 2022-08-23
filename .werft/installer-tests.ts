@@ -12,12 +12,16 @@ const annotations: any = context.Annotations || {};
 const testConfig: string = process.argv.length > 2 ? process.argv[2] : "STANDARD_K3S_TEST";
 
 const channel: string = annotations.channel || "unstable";
+const kotsApp: string = annotations.replicatedApp || "gitpod";
+
 const version: string = annotations.version || "-";
 const preview: string = annotations.preview || "false"; // setting to true will not destroy the setup
 const customerID: string = annotations.customerID || "";
 const upgrade: string = annotations.upgrade || "false"; // setting to true will not KOTS upgrade to the latest version. Set the channel to beta or stable in this case.
 const skipTests: string = annotations.skipTests || "false"; // setting to true skips the integration tests
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
+
+const baseDomain: string = "tests.gitpod-self-hosted.com"
 
 const slackHook = new Map<string, string>([
     ["self-hosted-jobs", process.env.SH_SLACK_NOTIFICATION_PATH.trim()],
@@ -167,16 +171,16 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     ADD_NS_RECORD: {
         phase: "add-ns-record",
         makeTarget: "add-ns-record",
-        description: "Adds NS record for subdomain under tests.gitpod-self-hosted.com",
+        description: `Adds NS record for subdomain under ${baseDomain}`,
     },
     INSTALL_GITPOD_IGNORE_PREFLIGHTS: {
         phase: "install-gitpod-without-preflights",
-        makeTarget: `kots-install channel=${channel} version=${version} preflights=false`, // this is a bit of a hack, for now we pass params like this
+        makeTarget: `kots-install app=${kotsApp} channel=${channel} version=${version} preflights=false`, // this is a bit of a hack, for now we pass params like this
         description: "Install gitpod using kots community edition without preflights",
     },
     INSTALL_GITPOD: {
         phase: "install-gitpod",
-        makeTarget: `kots-install channel=${channel} version=${version} preflights=true`,
+        makeTarget: `kots-install app=${kotsApp} channel=${channel} version=${version} preflights=true`,
         description: "Install gitpod using kots community edition",
     },
     CHECK_INSTALLATION: {
@@ -323,7 +327,7 @@ export async function installerTests(config: TestConfig) {
         werft.phase("print-output", "Get connection details to self-hosted setup");
 
         exec(
-            `werft log result -d  "self-hosted preview url" url "https://${process.env["TF_VAR_TEST_ID"]}.tests.gitpod-self-hosted.com"`,
+            `werft log result -d  "self-hosted preview url" url "https://${process.env["TF_VAR_TEST_ID"]}.${baseDomain}"`,
         );
 
         if (testConfig == "STANDARD_K3S_TEST") {
@@ -344,8 +348,6 @@ export async function installerTests(config: TestConfig) {
         // if we are not doing preview, we delete the infrastructure
         cleanup();
     }
-
-    deleteReplicatedLicense(werft, customerID)
 
 }
 
@@ -567,7 +569,7 @@ export async function sendPreviewSlackAlert(): Promise<void> {
                 fields: [
                     {
                         type: "mrkdwn",
-                        text: "*URL:*\n<https://" + process.env["TF_VAR_TEST_ID"] + ".tests.gitpod-self-hosted.com|Access preview setup>",
+                        text: "*URL:*\n<https://" + process.env["TF_VAR_TEST_ID"] + `.${baseDomain}|Access preview setup>`,
                     },
                     {
                         type: "mrkdwn",

@@ -13,6 +13,9 @@ variable "project" { default = "sh-automated-tests" }
 variable "sa_creds" { default = null }
 variable "dns_sa_creds" { default = null }
 
+variable "domain" { default = "tests.gitpod-self-hosted.com" }
+variable "gcp_zone" { default = "tests-gitpod-self-hosted-com" }
+
 variable "eks_node_image_id" {
   default = "ami-0793b4124359a6ad7" // this AMI is regional
 }
@@ -48,8 +51,8 @@ module "k3s" {
   kubeconfig       = var.kubeconfig
   dns_sa_creds     = var.dns_sa_creds
   dns_project      = "dns-for-playgrounds"
-  managed_dns_zone = "tests-gitpod-self-hosted-com"
-  domain_name      = "${var.TEST_ID}.tests.gitpod-self-hosted.com"
+  managed_dns_zone = var.gcp_zone
+  domain_name      = "${var.TEST_ID}.${var.domain}"
   cluster_version  = var.cluster_version
   image_id         = var.k3s_node_image_id
 }
@@ -72,7 +75,7 @@ module "aks" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/aks?ref=main" # we can later use tags here
   source = "../infra/modules/aks"
 
-  domain_name              = "${var.TEST_ID}.tests.gitpod-self-hosted.com"
+  domain_name              = "${var.TEST_ID}.${var.domain}"
   enable_airgapped         = false
   enable_external_database = true
   enable_external_registry = true
@@ -85,7 +88,7 @@ module "aks" {
 
 module "eks" {
   source                 = "../infra/modules/eks"
-  domain_name            = "${var.TEST_ID}.tests.gitpod-self-hosted.com"
+  domain_name            = "${var.TEST_ID}.${var.domain}"
   cluster_name           = var.TEST_ID
   region                 = "eu-west-1"
   vpc_availability_zones = ["eu-west-1c", "eu-west-1b"]
@@ -116,7 +119,7 @@ module "azure-externaldns" {
   source       = "../infra/modules/tools/external-dns"
   kubeconfig   = var.kubeconfig
   settings     = module.aks.external_dns_settings
-  domain_name  = "${var.TEST_ID}.tests.gitpod-self-hosted.com"
+  domain_name  = "${var.TEST_ID}.${var.domain}"
   txt_owner_id = var.TEST_ID
 }
 
@@ -124,7 +127,7 @@ module "aws-externaldns" {
   source       = "../infra/modules/tools/external-dns"
   kubeconfig   = var.kubeconfig
   settings     = module.eks.external_dns_settings
-  domain_name  = "${var.TEST_ID}.tests.gitpod-self-hosted.com"
+  domain_name  = "${var.TEST_ID}.${var.domain}"
   txt_owner_id = var.TEST_ID
 }
 
@@ -148,8 +151,8 @@ module "azure-add-dns-record" {
   credentials      = var.dns_sa_creds
   nameservers      = module.aks.domain_nameservers
   dns_project      = "dns-for-playgrounds"
-  managed_dns_zone = "tests-gitpod-self-hosted-com"
-  domain_name      = "${var.TEST_ID}.tests.gitpod-self-hosted.com"
+  managed_dns_zone = var.gcp_zone
+  domain_name      = "${var.TEST_ID}.${var.domain}"
 }
 
 module "aws-add-dns-record" {
@@ -157,6 +160,6 @@ module "aws-add-dns-record" {
   credentials      = var.dns_sa_creds
   nameservers      = module.eks.domain_nameservers
   dns_project      = "dns-for-playgrounds"
-  managed_dns_zone = "tests-gitpod-self-hosted-com"
-  domain_name      = "${var.TEST_ID}.tests.gitpod-self-hosted.com"
+  managed_dns_zone = var.gcp_zone
+  domain_name      = "${var.TEST_ID}.${var.domain}"
 }
