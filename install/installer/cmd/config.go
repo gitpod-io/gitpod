@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -33,6 +34,19 @@ func configFileExists() (*bool, error) {
 	} else {
 		return nil, err
 	}
+}
+
+// configFileExistsAndInit checks if the config file exists, if not it returns a "run config init" error
+func configFileExistsAndInit() (*bool, error) {
+	// Check file is present
+	exists, err := configFileExists()
+	if err != nil {
+		return nil, err
+	}
+	if !*exists {
+		return nil, fmt.Errorf(`file %s does not exist - please run "config init"`, configOpts.ConfigFile)
+	}
+	return exists, nil
 }
 
 // saveConfigFile converts the config to YAML and saves to disk
