@@ -20,16 +20,16 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/image/download:intellij
       - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
-      - intellijDownloadUrl
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.desktopIdeImages.intellij
       buildArgs:
-        JETBRAINS_BACKEND_URL: ${intellijDownloadUrl}
+        JETBRAINS_DOWNLOAD_QUALIFIER: intellij
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
         JETBRAINS_BACKEND_QUALIFIER: stable
       image:
@@ -42,6 +42,7 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/image/download:intellij-latest
       - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
@@ -50,7 +51,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.intellijLatest
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=IIU"
+        JETBRAINS_DOWNLOAD_QUALIFIER: intellij-latest
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
@@ -64,16 +65,16 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/image/download:goland
       - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
-      - golandDownloadUrl
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.desktopIdeImages.goland
       buildArgs:
-        JETBRAINS_BACKEND_URL: ${golandDownloadUrl}
+        JETBRAINS_DOWNLOAD_QUALIFIER: goland
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
         JETBRAINS_BACKEND_QUALIFIER: stable
       image:
@@ -86,6 +87,7 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/image/download:goland-latest
       - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
@@ -94,7 +96,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.golandLatest
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=GO"
+        JETBRAINS_DOWNLOAD_QUALIFIER: goland-latest
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
@@ -108,16 +110,16 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/image/download:pycharm
       - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
-      - pycharmDownloadUrl
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.desktopIdeImages.pycharm
       buildArgs:
-        JETBRAINS_BACKEND_URL: ${pycharmDownloadUrl}
+        JETBRAINS_DOWNLOAD_QUALIFIER: pycharm
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_pycharm.json
         JETBRAINS_BACKEND_QUALIFIER: stable
       image:
@@ -130,6 +132,7 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/image/download:pycharm-latest
       - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
@@ -138,7 +141,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.pycharmLatest
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=PCP"
+        JETBRAINS_DOWNLOAD_QUALIFIER: pycharm-latest
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_pycharm.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
@@ -152,16 +155,16 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/image/download:phpstorm
       - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
-      - phpstormDownloadUrl
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.desktopIdeImages.phpstorm
       buildArgs:
-        JETBRAINS_BACKEND_URL: ${phpstormDownloadUrl}
+        JETBRAINS_DOWNLOAD_QUALIFIER: phpstorm
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
         JETBRAINS_BACKEND_QUALIFIER: stable
       image:
@@ -174,6 +177,7 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/image/download:phpstorm-latest
       - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
@@ -182,7 +186,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.phpstormLatest
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=PS"
+        JETBRAINS_DOWNLOAD_QUALIFIER: phpstorm-latest
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
