@@ -24,23 +24,26 @@ func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:   fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
 				Labels: labels,
 			},
-			Rules: []rbacv1.PolicyRule{
-				{
-					APIGroups: []string{""},
-					Resources: []string{"nodes"},
-					Verbs:     []string{"get", "list", "update", "patch"},
+			Rules: []rbacv1.PolicyRule{{
+				APIGroups: []string{"policy"},
+				Resources: []string{"podsecuritypolicies"},
+				Verbs:     []string{"use"},
+				ResourceNames: []string{
+					fmt.Sprintf("%s-ns-privileged-unconfined", ctx.Namespace),
 				},
-				{
-					APIGroups: []string{""},
-					Resources: []string{"pods", "services"},
-					Verbs:     []string{"get", "list", "watch"},
-				},
-				{
-					APIGroups: []string{""},
-					Resources: []string{"pods"},
-					Verbs:     []string{"delete", "update", "patch"},
-				},
-			},
+			}, {
+				APIGroups: []string{""},
+				Resources: []string{"nodes"},
+				Verbs:     []string{"get", "list", "update", "patch"},
+			}, {
+				APIGroups: []string{""},
+				Resources: []string{"pods", "services"},
+				Verbs:     []string{"get", "list", "watch"},
+			}, {
+				APIGroups: []string{""},
+				Resources: []string{"pods"},
+				Verbs:     []string{"delete", "update", "patch"},
+			}},
 		},
 	}, nil
 }

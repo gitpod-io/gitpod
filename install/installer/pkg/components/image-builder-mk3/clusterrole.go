@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package registryfacade
+package image_builder_mk3
 
 import (
 	"fmt"
@@ -27,11 +27,7 @@ func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 					APIGroups:     []string{"policy"},
 					Resources:     []string{"podsecuritypolicies"},
 					Verbs:         []string{"use"},
-					ResourceNames: []string{fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component)},
-				}, {
-					APIGroups: []string{""},
-					Resources: []string{"nodes"},
-					Verbs:     []string{"get", "list", "update", "patch"},
+					ResourceNames: []string{fmt.Sprintf("%s-ns-privileged-unconfined", ctx.Namespace)},
 				},
 			},
 		},
