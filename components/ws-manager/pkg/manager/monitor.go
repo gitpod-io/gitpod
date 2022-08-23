@@ -690,7 +690,7 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 				if _, alreadyInitializing := m.initializerMap.Load(pod.Name); alreadyInitializing {
 					// we're already initializing but wsdaemon does not know about this workspace. That's very bad.
 					log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wsdaemon does not know about this workspace (bug in ws-daemon?). Trying again!")
-					m.initializerMap.Delete(pod.Name)
+					m.clearInitializerFromMap(pod.Name)
 				}
 
 				// It's ok - maybe we were restarting in that time. Instead of waiting for things to finish, we'll just start the
@@ -818,7 +818,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		_, alreadyInitializing := m.initializerMap.LoadOrStore(pod.Name, struct{}{})
 		defer func() {
 			if err != nil {
-				m.initializerMap.Delete(pod.Name)
+				m.clearInitializerFromMap(pod.Name)
 			}
 		}()
 
