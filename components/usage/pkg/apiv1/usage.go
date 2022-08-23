@@ -7,6 +7,7 @@ package apiv1
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -134,6 +135,36 @@ func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsag
 		ReportId: filename,
 	}, nil
 
+}
+
+func (s *UsageService) GetCostCenter(ctx context.Context, in *v1.GetCostCenterRequest) (*v1.GetCostCenterResponse, error) {
+	var attributionIdReq string
+
+	if in.AttributionId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Empty attributionId")
+	}
+
+	attributionIdReq = in.AttributionId
+
+	attributionId, err := db.ParseAttributionID(attributionIdReq)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to parse attribution ID: %s", err.Error())
+	}
+
+	result, err := db.GetCostCenter(ctx, s.conn, db.AttributionID(attributionIdReq))
+	if err != nil {
+		if errors.Is(err, db.CostCenterNotFound) {
+			return nil, status.Errorf(codes.NotFound, "Cost center not found: %s", err.Error())
+		}
+		return nil, status.Errorf(codes.Internal, "Failed to get cost center %s from DB: %s", in.AttributionId, err.Error())
+	}
+
+	return &v1.GetCostCenterResponse{
+		CostCenter: &v1.CostCenter{
+			AttributionId: string(attributionId),
+			SpendingLimit: result.SpendingLimit,
+		},
+	}, nil
 }
 
 func NewUsageService(conn *gorm.DB, reportGenerator *ReportGenerator, contentSvc contentservice.Interface) *UsageService {
