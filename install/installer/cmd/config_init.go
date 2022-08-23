@@ -42,19 +42,8 @@ gitpod-installer config init -c ./gitpod.config.yaml`,
 		if err != nil {
 			return err
 		}
-		fc, err := config.Marshal(config.CurrentVersion, cfg)
-		if err != nil {
-			return err
-		}
 
-		err = os.WriteFile(configOpts.ConfigFile, fc, 0644)
-		if err != nil {
-			return err
-		}
-
-		log.Infof("File written to %s\n", configOpts.ConfigFile)
-
-		return nil
+		return saveConfigFile(cfg)
 	},
 }
 
@@ -66,6 +55,34 @@ func configFileExists() (*bool, error) {
 	} else {
 		return nil, err
 	}
+}
+
+func configFileExistsAndInit() (*bool, error) {
+	// Check file is present
+	exists, err := configFileExists()
+	if err != nil {
+		return nil, err
+	}
+	if !*exists {
+		return nil, fmt.Errorf(`file %s does not exist - please run "config init"`, configOpts.ConfigFile)
+	}
+	return exists, nil
+}
+
+func saveConfigFile(cfg interface{}) error {
+	fc, err := config.Marshal(config.CurrentVersion, cfg)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(configOpts.ConfigFile, fc, 0644)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("File written to %s\n", configOpts.ConfigFile)
+
+	return nil
 }
 
 func init() {
