@@ -8,32 +8,44 @@ You can find a short explanation of this tool in this [loom video](https://www.l
 
 ## How to run a benchmark
 - Ensure your kubeconfig has the configuration for the cluster you want to benchmark. You can use kubecdl to update your kubeconfig with the cluster information
-```console
-$ kubecdl -p workspace-clusters [cluster-name]
-$ kubectx [cluster-name]
-```
+  ```console
+  $ kubecdl -p workspace-clusters [cluster-name]
+  $ kubectx [cluster-name]
+  ```
 - Fetch the TLS config from ws-manager
-`gpctl clusters get-tls-config`
+  ```console
+  gpctl clusters get-tls-config
+  ```
 - Port-forward ws-manager
-`kubectl port-forward deployment/ws-manager 12001:8080`
-- Now you can start the benchmark with loadgen. If you want to keep the workspaces around after testing, add --interactive. Loadgen will then ask you before taking any destructive action. If you do not specify `--interative` loadgen will wait 2 minutes before workspaces are deleted.
-`loadgen benchmark [config-file] --host localhost:12001 --tls ./wsman-tls --interactive`
+  ```console
+  kubectl port-forward deployment/ws-manager 12001:8080
+  ```
+- Compile loadgen
+  ```console
+  cd ./dev/loadgen
+  go build .
+  ```
+- Now you can start the benchmark with loadgen. If you want to keep the workspaces around after testing, add `--interactive`. Loadgen will then ask you before taking any destructive action. If you do not specify `--interative` loadgen will wait 2 minutes before workspaces are deleted. The config file located at the `./dev/loadgen/configs` folder.
+  ```console
+  ./loadgen benchmark [config-file] --host localhost:12001 --tls ./wsman-tls --interactive
+  ```
 
 In order to configure the benchmark, you can use the configuration file
 
 | Parameter  | Description |
 | ------------- | ------------- |
-| workspaces  | The number of workspaces that will be started during the benchmark  |
+| workspaces  | The number of workspaces that will be started during the benchmark |
 | ideImage  | The image that will be used for the IDE |
 | waitForRunning | How long to wait for workspaces to enter running state |
 | waitForStopping | How long to wait until all workspaces are stopped |
-| successRate | Percentage of started workspaces that should enter running state to count as a successful run
+| successRate | Percentage of started workspaces that should enter running state to count as a successful run |
 | environment | Global environment variables that will be set for all repositories |
-| workspaceClass | The workspace class to use for workspaces. This setting can be overriden for individual repositories.
+| workspaceClass | The workspace class to use for workspaces. This setting can be overriden for individual repositories |
+| featureFlags | The feature flag passed when creating the workspace |
 | repos | The repositories that will be used to create workspaces |
 | repo.cloneURL | The url of the repository |
 | repo.cloneTarget | The branch to clone from |
-| repo.score | The score decides how often a repository is used for the creation of a workspace. |
+| repo.score | The score decides how often a repository is used for the creation of a workspace |
 | repo.workspaceImage | The docker image that will be used for the workspace |
 | repo.environment | Environment variables that will only be set for this repository |
 | repo.workspaceClass | The workspace class to use for the workspace that will be created for this repository |
