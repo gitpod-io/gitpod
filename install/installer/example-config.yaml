@@ -8,6 +8,7 @@ certificate:
   name: https-certificates
 containerRegistry:
   inCluster: true
+  privateBaseImageAllowList: []
 database:
   inCluster: true
 disableDefinitelyGp: true

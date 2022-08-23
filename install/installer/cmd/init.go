@@ -13,8 +13,9 @@ import (
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Create a base config file",
+	Use:        "init",
+	Deprecated: `use "config init" command instead`,
+	Short:      "Create a base config file",
 	Long: `Create a base config file
 
 This file contains all the credentials to install a Gitpod instance and
