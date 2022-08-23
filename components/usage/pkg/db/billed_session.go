@@ -7,9 +7,12 @@ package db
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"time"
+
+	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 )
 
 // BilledSession represents the underlying DB object
@@ -30,10 +33,19 @@ func (d *BilledSession) TableName() string {
 	return "d_b_billed_session"
 }
 
-func SetBilled(ctx context.Context, conn *gorm.DB, instanceID uuid.UUID, instanceCreationTime time.Time, system string) error {
+func SetBilled(ctx context.Context, conn *gorm.DB, instanceID uuid.UUID, instanceCreationTime time.Time, system v1.System) error {
 	database := conn.WithContext(ctx)
 
-	billedSession := BilledSession{InstanceID: instanceID, From: NewVarcharTime(instanceCreationTime), System: system}
+	var sys string
+	switch system {
+	case v1.System_SYSTEM_CHARGEBEE:
+		sys = "chargebee"
+	case v1.System_SYSTEM_STRIPE:
+		sys = "stripe"
+	default:
+		sys = "unknown"
+	}
+	billedSession := BilledSession{InstanceID: instanceID, From: NewVarcharTime(instanceCreationTime), System: sys}
 	return database.Create(&billedSession).Error
 }
 

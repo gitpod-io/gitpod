@@ -124,6 +124,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CachingBillingServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { System } from "@gitpod/usage-api/lib/usage/v1/billing_pb";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -545,7 +546,7 @@ export class WorkspaceStarter {
                     const billingMode = await this.billingModes.getBillingMode(parsedAttributionId, creationTime);
                     if (billingMode && billingMode.mode === "chargebee") {
                         const billingClient = this.billingServiceClientProvider.getDefault();
-                        await billingClient.setBilledSession(instance.id, timestamped, "chargebee");
+                        await billingClient.setBilledSession(instance.id, timestamped, System.SYSTEM_CHARGEBEE);
                     }
                 }
             }
@@ -1435,17 +1436,23 @@ export class WorkspaceStarter {
             }
         }
 
-        let volumeSnapshotId = ""
+        let volumeSnapshotId = "";
         // always pick lastValidWorkspaceInstanceId if it is valid, otherwise workspace will be restored from prebuild
         // even if there was workspace backup available
         if (lastValidWorkspaceInstanceId != "") {
-            volumeSnapshotId = lastValidWorkspaceInstanceId
-        } else if ((SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) && !!workspace.context.snapshotBucketId) {
-            volumeSnapshotId = workspace.context.snapshotBucketId
+            volumeSnapshotId = lastValidWorkspaceInstanceId;
+        } else if (
+            (SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) &&
+            !!workspace.context.snapshotBucketId
+        ) {
+            volumeSnapshotId = workspace.context.snapshotBucketId;
         }
 
         let volumeSnapshotInfo = new VolumeSnapshotInfo();
-        const volumeSnapshots = volumeSnapshotId != "" ? await this.workspaceDb.trace(traceCtx).findVolumeSnapshotById(volumeSnapshotId) : undefined;
+        const volumeSnapshots =
+            volumeSnapshotId != ""
+                ? await this.workspaceDb.trace(traceCtx).findVolumeSnapshotById(volumeSnapshotId)
+                : undefined;
         if (volumeSnapshots !== undefined) {
             log.info("starting workspace with volume snapshot info", {
                 lastInstanceId: lastValidWorkspaceInstanceId,

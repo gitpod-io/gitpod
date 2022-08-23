@@ -174,8 +174,8 @@ export class SetBilledSessionRequest extends jspb.Message {
     clearFrom(): void;
     getFrom(): google_protobuf_timestamp_pb.Timestamp | undefined;
     setFrom(value?: google_protobuf_timestamp_pb.Timestamp): SetBilledSessionRequest;
-    getSystem(): string;
-    setSystem(value: string): SetBilledSessionRequest;
+    getSystem(): System;
+    setSystem(value: System): SetBilledSessionRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SetBilledSessionRequest.AsObject;
@@ -191,7 +191,7 @@ export namespace SetBilledSessionRequest {
     export type AsObject = {
         instanceId: string,
         from?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-        system: string,
+        system: System,
     }
 }
 
@@ -210,4 +210,10 @@ export class SetBilledSessionResponse extends jspb.Message {
 export namespace SetBilledSessionResponse {
     export type AsObject = {
     }
+}
+
+export enum System {
+    SYSTEM_UNKNOWN = 0,
+    SYSTEM_CHARGEBEE = 1,
+    SYSTEM_STRIPE = 2,
 }
