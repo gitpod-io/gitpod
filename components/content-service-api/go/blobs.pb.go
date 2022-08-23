@@ -251,6 +251,7 @@ type DeleteRequest struct {
 
 	OwnerId string `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	// Types that are assignable to Name:
+	//
 	//	*DeleteRequest_Exact
 	//	*DeleteRequest_Prefix
 	Name isDeleteRequest_Name `protobuf_oneof:"name"`
