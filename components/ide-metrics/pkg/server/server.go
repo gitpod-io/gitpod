@@ -10,15 +10,20 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	api "github.com/gitpod-io/gitpod/ide-metrics-api"
 	"github.com/gitpod-io/gitpod/ide-metrics-api/config"
+	"github.com/gorilla/websocket"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type IDEMetricsServer struct {
@@ -182,6 +187,8 @@ func (s *IDEMetricsServer) Start() error {
 	}
 	m := cmux.New(l)
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
+	restMux := grpcruntime.NewServeMux()
+
 	var opts []grpc.ServerOption
 	if s.config.Debug {
 		opts = append(opts,
@@ -190,7 +197,11 @@ func (s *IDEMetricsServer) Start() error {
 		)
 	}
 	grpcServer := grpc.NewServer(opts...)
+	grpcEndpoint := fmt.Sprintf("localhost:%d", s.config.Server.Port)
+
 	s.register(grpcServer)
+	api.RegisterMetricsServiceHandlerFromEndpoint(context.Background(), restMux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+
 	go grpcServer.Serve(grpcMux)
 
 	httpMux := m.Match(cmux.HTTP1Fast())
@@ -201,8 +212,24 @@ func (s *IDEMetricsServer) Start() error {
 		return true
 	}))
 
+	c := cors.New(cors.Options{
+		AllowOriginFunc: func(origin string) bool {
+			return true
+		},
+		AllowedHeaders: []string{"*"},
+		// Enable Debugging for testing, consider disabling in production
+		Debug: true,
+	})
+
 	routes.Handle("/metrics-api/", http.StripPrefix("/metrics-api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		grpcWebServer.ServeHTTP(w, r)
+		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+			c.ServeHTTP(w, r, nil)
+		} else if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") ||
+			websocket.IsWebSocketUpgrade(r) {
+			grpcWebServer.ServeHTTP(w, r)
+		} else {
+			restMux.ServeHTTP(w, r)
+		}
 	})))
 	go http.Serve(httpMux, routes)
 

@@ -3,6 +3,7 @@ packages:
     type: generic
     srcs:
       - "*.proto"
+      - "third_party/**/*.proto"
     config:
       commands:
         - ["echo"]

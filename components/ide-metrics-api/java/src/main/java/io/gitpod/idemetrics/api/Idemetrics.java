@@ -2861,29 +2861,33 @@ java.lang.String defaultValue);
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\020idemetrics.proto\022\017ide_metrics_api\"\256\001\n\021" +
-      "AddCounterRequest\022\014\n\004name\030\001 \001(\t\022>\n\006label" +
-      "s\030\002 \003(\0132..ide_metrics_api.AddCounterRequ" +
-      "est.LabelsEntry\022\022\n\005value\030\003 \001(\005H\000\210\001\001\032-\n\013L" +
-      "abelsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\002" +
-      "8\001B\010\n\006_value\"\024\n\022AddCounterResponse\"\253\001\n\027O" +
-      "bserveHistogramRequest\022\014\n\004name\030\001 \001(\t\022D\n\006" +
-      "labels\030\002 \003(\01324.ide_metrics_api.ObserveHi" +
-      "stogramRequest.LabelsEntry\022\r\n\005value\030\003 \001(" +
-      "\001\032-\n\013LabelsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002" +
-      " \001(\t:\0028\001\"\032\n\030ObserveHistogramResponse2\324\001\n" +
-      "\016MetricsService\022W\n\nAddCounter\022\".ide_metr" +
-      "ics_api.AddCounterRequest\032#.ide_metrics_" +
-      "api.AddCounterResponse\"\000\022i\n\020ObserveHisto" +
-      "gram\022(.ide_metrics_api.ObserveHistogramR" +
-      "equest\032).ide_metrics_api.ObserveHistogra" +
-      "mResponse\"\000BG\n\030io.gitpod.idemetrics.apiZ" +
-      "+github.com/gitpod-io/gitpod/ide-metrics" +
-      "/apib\006proto3"
+      "\n\020idemetrics.proto\022\017ide_metrics_api\032\034goo" +
+      "gle/api/annotations.proto\"\256\001\n\021AddCounter" +
+      "Request\022\014\n\004name\030\001 \001(\t\022>\n\006labels\030\002 \003(\0132.." +
+      "ide_metrics_api.AddCounterRequest.Labels" +
+      "Entry\022\022\n\005value\030\003 \001(\005H\000\210\001\001\032-\n\013LabelsEntry" +
+      "\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001B\010\n\006_val" +
+      "ue\"\024\n\022AddCounterResponse\"\253\001\n\027ObserveHist" +
+      "ogramRequest\022\014\n\004name\030\001 \001(\t\022D\n\006labels\030\002 \003" +
+      "(\01324.ide_metrics_api.ObserveHistogramReq" +
+      "uest.LabelsEntry\022\r\n\005value\030\003 \001(\001\032-\n\013Label" +
+      "sEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\032" +
+      "\n\030ObserveHistogramResponse2\247\002\n\016MetricsSe" +
+      "rvice\022}\n\nAddCounter\022\".ide_metrics_api.Ad" +
+      "dCounterRequest\032#.ide_metrics_api.AddCou" +
+      "nterResponse\"&\202\323\344\223\002 \"\033/metrics/counter/a" +
+      "dd/{name}:\001*\022\225\001\n\020ObserveHistogram\022(.ide_" +
+      "metrics_api.ObserveHistogramRequest\032).id" +
+      "e_metrics_api.ObserveHistogramResponse\"," +
+      "\202\323\344\223\002&\"!/metrics/histogram/observe/{name" +
+      "}:\001*BG\n\030io.gitpod.idemetrics.apiZ+github" +
+      ".com/gitpod-io/gitpod/ide-metrics/apib\006p" +
+      "roto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.google.api.AnnotationsProto.getDescriptor(),
         });
     internal_static_ide_metrics_api_AddCounterRequest_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -2921,6 +2925,12 @@ java.lang.String defaultValue);
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ide_metrics_api_ObserveHistogramResponse_descriptor,
         new java.lang.String[] { });
+    com.google.protobuf.ExtensionRegistry registry =
+        com.google.protobuf.ExtensionRegistry.newInstance();
+    registry.add(com.google.api.AnnotationsProto.http);
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalUpdateFileDescriptor(descriptor, registry);
+    com.google.api.AnnotationsProto.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)
