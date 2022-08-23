@@ -5,6 +5,8 @@
 package container
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -83,7 +85,7 @@ func (mapping PathMapping) Translate(from string) (result string, err error) {
 		}
 		pth := filepath.Join(cp, strings.TrimPrefix(from, np))
 
-		if _, err := os.Stat(pth); os.IsNotExist(err) {
+		if _, err := os.Stat(pth); errors.Is(err, fs.ErrNotExist) {
 			return "", xerrors.Errorf("path does not exist in container at %s", pth)
 		} else if err != nil {
 			return "", err

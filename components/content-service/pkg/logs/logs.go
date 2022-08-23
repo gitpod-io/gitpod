@@ -6,7 +6,9 @@ package logs
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -49,7 +51,7 @@ func ListPrebuildLogFiles(ctx context.Context, location string) (filePaths []str
 	listLogFiles := func(relativeLocation, prefix string) (logFiles []string, errr error) {
 		absDirPath := filepath.Join(location, relativeLocation)
 		files, err := os.ReadDir(absDirPath)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}
 

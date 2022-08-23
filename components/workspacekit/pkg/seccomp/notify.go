@@ -6,8 +6,10 @@ package seccomp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -260,7 +262,7 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 		}
 
 		stat, err := os.Lstat(target)
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			err = os.MkdirAll(target, 0755)
 		}
 		if err != nil {

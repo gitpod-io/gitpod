@@ -6,7 +6,9 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -230,7 +232,7 @@ func (s *Store) doHousekeeping(ctx context.Context) (errs []error) {
 		name = strings.TrimSuffix(name, string(filepath.Separator))
 		name = strings.TrimSuffix(name, "-daemon")
 
-		if _, err := os.Stat(filepath.Join(s.Location, fmt.Sprintf("%s.workspace.json", name))); !os.IsNotExist(err) {
+		if _, err := os.Stat(filepath.Join(s.Location, fmt.Sprintf("%s.workspace.json", name))); !errors.Is(err, fs.ErrNotExist) {
 			continue
 		}
 

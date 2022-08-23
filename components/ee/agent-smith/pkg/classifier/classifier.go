@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"regexp"
 	"strings"
@@ -179,7 +180,7 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	r, err := os.Open(executable)
 	if err != nil {
 		var reason string
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			reason = processMissNotFound
 		} else if errors.Is(err, os.ErrPermission) {
 			reason = processMissPermissionDenied

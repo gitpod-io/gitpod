@@ -7,6 +7,7 @@ package cgroup
 import (
 	"context"
 	"errors"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -51,7 +52,7 @@ func (c *ProcessPriorityV2) Apply(ctx context.Context, basePath, cgroupPath stri
 	fullCgroupPath := filepath.Join(basePath, cgroupPath)
 
 	_, err := os.Stat(fullCgroupPath)
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		return xerrors.Errorf("cannot read cgroup directory %s: %w", fullCgroupPath, err)
 	}
 

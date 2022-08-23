@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"math"
 	"os"
 	"os/exec"
@@ -504,7 +505,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 	}
 
 	err = os.Remove(filepath.Join(sess.Location, wsinit.WorkspaceReadyFile))
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		// We'll still upload the backup, well aware that the UX during restart will be broken.
 		// But it's better to have a backup with all files (albeit one too many), than having no backup at all.
 		log.WithError(err).WithFields(sess.OWI()).Warn("cannot remove workspace ready file")
