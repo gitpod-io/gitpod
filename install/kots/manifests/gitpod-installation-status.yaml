@@ -30,7 +30,7 @@ spec:
       containers:
         - name: installation-status
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-move-kots-bash-script.28"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-installer-config-build.14"
           envFrom:
             - configMapRef:
                 name: gitpod-kots-config

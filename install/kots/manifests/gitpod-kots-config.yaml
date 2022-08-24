@@ -17,6 +17,11 @@ data:
   OPEN_VSX_URL: repl{{ ConfigOption "openVsxUrl" | quote }}
   SSH_GATEWAY: repl{{ ConfigOption "ssh_gateway" | quote }}
 
+  # Secret names
+  HTTP_PROXY_NAME: http-proxy-settings
+  LICENSE_NAME: gitpod-license
+  SSH_GATEWAY_HOST_KEY_NAME: ssh-gateway-host-key
+
   # Database settings
   DB_INCLUSTER_ENABLED: repl{{ ConfigOption "db_incluster" | quote }}
   DB_CLOUDSQL_ENABLED: repl{{ ConfigOption "db_cloudsql_enabled" | quote }}
@@ -26,7 +31,6 @@ data:
   HAS_LOCAL_REGISTRY: repl{{ HasLocalRegistry | quote }}
   LOCAL_REGISTRY_ADDRESS: repl{{ LocalRegistryAddress | quote }}
   LOCAL_REGISTRY_HOST: repl{{ LocalRegistryHost | quote }}
-  LOCAL_REGISTRY_IMAGE_PULL_SECRET: repl{{ LocalRegistryImagePullSecret | quote }}
   IMAGE_PULL_SECRET_NAME: repl{{ ImagePullSecretName | quote }}
 
   # Registry settings
@@ -58,3 +62,7 @@ data:
   ADVANCED_MODE_ENABLED: repl{{ ConfigOption "advanced_mode_enabled" | quote }}
   COMPONENT_PROXY_SERVICE_SERVICETYPE: repl{{ ConfigOption "component_proxy_service_serviceType" | quote }}
   CUSTOMIZATION_PATCH_ENABLED: repl{{ ConfigOptionNotEquals "customization_patch" "" | quote }} # Use comparison not value
+
+  # Customizations
+  CONFIG_PATCH: repl{{ ConfigOptionData "config_patch" | default "" | quote }}
+  CUSTOMIZATION_PATCH: repl{{ ConfigOptionData "customization_patch" | default "" | quote }}
