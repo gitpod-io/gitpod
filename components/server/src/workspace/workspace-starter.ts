@@ -1548,6 +1548,7 @@ export class WorkspaceStarter {
             "function:addSSHPublicKey",
             "function:deleteSSHPublicKey",
             "function:trackEvent",
+            "function:getSupportedWorkspaceClasses",
 
             "resource:" +
                 ScopedResourceGuard.marshalResourceScope({
