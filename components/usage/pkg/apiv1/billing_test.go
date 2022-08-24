@@ -125,3 +125,190 @@ func TestFinalizeInvoice(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+func TestCapUsageToSpendingLimit(t *testing.T) {
+	type ReportSummary struct {
+		// These are the inputs
+		CalculatedUsage int32
+		SpendingLimit   int32
+		// These are the outputs (also depending on the previous run)
+		EffectiveSpendingLimit int32
+		CappedUsage            int32
+	}
+
+	cap := func(v, limit int32) int32 {
+		if v > limit {
+			return limit
+		}
+		return v
+	}
+
+	max := func(a, b int32) int32 {
+		if a >= b {
+			return a
+		} else {
+			return b
+		}
+	}
+
+	min := func(a, b int32) int32 {
+		if a <= b {
+			return a
+		} else {
+			return b
+		}
+	}
+
+	/**
+	 * Takes two ReportSummaries, both from the _same invoice_ (!).
+	 */
+	capUsage := func(previous, current ReportSummary) (cappedUsage int32, effectiveLimit int32) {
+		// idea: if a user reduces spending limit during a billing cycle, we should:
+		//  - allow to reduce that threshold
+		//  - but not below what we currently plan to bill them
+		// This allows us to a) fix reported usage and b) avoids the exploit case.
+		lowerBoundEffectiveSpendingLimit := min(previous.EffectiveSpendingLimit, current.CalculatedUsage)
+		effectiveLimit = max(current.SpendingLimit, lowerBoundEffectiveSpendingLimit)
+		cappedUsage = cap(current.CalculatedUsage, effectiveLimit)
+		return cappedUsage, effectiveLimit
+	}
+
+	type Test struct {
+		Name    string
+		Reports []ReportSummary
+	}
+
+	tests := []Test{
+		{
+			Name: "simple test",
+			Reports: []ReportSummary{{
+				CalculatedUsage:        95,
+				SpendingLimit:          100,
+				EffectiveSpendingLimit: 100,
+				CappedUsage:            100,
+			},
+				{
+					CalculatedUsage:        105,
+					SpendingLimit:          100,
+					EffectiveSpendingLimit: 100,
+					CappedUsage:            100,
+				},
+			},
+		},
+		{
+			Name: "reduced usage, reduced spending limit",
+			Reports: []ReportSummary{{
+				CalculatedUsage:        105,
+				SpendingLimit:          100,
+				EffectiveSpendingLimit: 100,
+				CappedUsage:            100,
+			},
+				{
+					CalculatedUsage:        80, // updated usage due to corrections
+					SpendingLimit:          90,
+					EffectiveSpendingLimit: 90,
+					CappedUsage:            80,
+				},
+			},
+		},
+		{
+			Name: "reduced spending limit (exploit case: reduce spending limit shortly before you're invoiced)",
+			Reports: []ReportSummary{{
+				CalculatedUsage:        105,
+				SpendingLimit:          100,
+				EffectiveSpendingLimit: 100,
+				CappedUsage:            100,
+			},
+				{
+					CalculatedUsage:        120,
+					SpendingLimit:          70, // user suddenly reduces spending limit
+					EffectiveSpendingLimit: 100,
+					CappedUsage:            100,
+				},
+				{
+					CalculatedUsage:        125, // still some more usage
+					SpendingLimit:          70,
+					EffectiveSpendingLimit: 100,
+					CappedUsage:            100,
+				},
+				{
+					CalculatedUsage:        83, // we adjust usage calculation
+					SpendingLimit:          70,
+					EffectiveSpendingLimit: 83,
+					CappedUsage:            83,
+				},
+			},
+		},
+		{
+			Name: "reduced usage, reduced spending limit II",
+			Reports: []ReportSummary{
+				{
+					CalculatedUsage:        106,
+					SpendingLimit:          100,
+					EffectiveSpendingLimit: 100,
+					CappedUsage:            100,
+				},
+				{
+					CalculatedUsage:        104, // updated usage due to corrections
+					SpendingLimit:          1,
+					EffectiveSpendingLimit: 100,
+					CappedUsage:            100,
+				},
+			},
+		},
+		{
+			Name: "Milans example",
+			Reports: []ReportSummary{
+				// 1.User has spending limit 25 (usage: just below at 24)
+				{
+					CalculatedUsage:        24,
+					SpendingLimit:          25,
+					EffectiveSpendingLimit: 25,
+					CappedUsage:            24,
+				},
+				// 2. User reaches spending limit and cannot start a new workspace - they use up 26 units
+				{
+					CalculatedUsage:        26,
+					SpendingLimit:          25,
+					EffectiveSpendingLimit: 25,
+					CappedUsage:            25,
+				},
+				// 3. + 4. + 5.: User cancelled (+ re-subscribes) before instances from previous subscription are marked as billed for (invoice finalization)
+				{
+					CalculatedUsage:        26,
+					SpendingLimit:          25,
+					EffectiveSpendingLimit: 25,
+					CappedUsage:            25,
+				},
+				// 8. + 9.: On next run, we exclude instances from the previous run and identify the user has used up 1 credit. We CAN update the invoice to 1, despite the fact it already had been at 25.
+				{
+					CalculatedUsage:        1,
+					SpendingLimit:          25,
+					EffectiveSpendingLimit: 25,
+					CappedUsage:            1,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+
+			for i, current := range test.Reports {
+				if i < 1 {
+					continue
+				}
+				previous := test.Reports[i-1]
+
+				// validate test data
+				testDataCappedUsage := cap(current.CalculatedUsage, current.EffectiveSpendingLimit)
+				require.Equal(t, testDataCappedUsage, current.CappedUsage, "Bad test data: cappedUsage %d inconsistent, expected %d!", current.CappedUsage, testDataCappedUsage)
+
+				actualCappedUsage, actualEffectiveSpendingLimit := capUsage(previous, current)
+				require.Equal(t, current.CappedUsage, actualCappedUsage, "Expected CappedUsage to be %d, but was %d", current.CappedUsage, actualCappedUsage)
+				require.Equal(t, current.EffectiveSpendingLimit, actualEffectiveSpendingLimit, "Expected EffectiveSpendingLimit to be %d, but was %d", current.EffectiveSpendingLimit, actualEffectiveSpendingLimit)
+
+			}
+		})
+	}
+}
