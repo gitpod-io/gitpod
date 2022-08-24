@@ -71,10 +71,12 @@ repos:
     cloneTarget: master
     score: 20
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:dd3075638ccf424374cc9c681b3d2338908d07115b28e54856cd45604c33768c
+    workspaceClass: "g1-large-pvc"
   - cloneURL: https://github.com/gitpod-io/template-typescript-react
     cloneTarget: main
     score: 20
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:e764b1a602dc4123d9a027358367b5c4a35b62043e3c630731702144b7d37f77
+    workspaceClass: "g1-large-pvc"
   - cloneURL: https://github.com/gitpod-io/template-python-django
     cloneTarget: main
     score: 20
