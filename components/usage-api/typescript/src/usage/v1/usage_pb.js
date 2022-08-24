@@ -1308,7 +1308,8 @@ proto.usage.v1.ReconcileUsageResponse.prototype.toObject = function(opt_includeI
 proto.usage.v1.ReconcileUsageResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
     sessionsList: jspb.Message.toObjectList(msg.getSessionsList(),
-    proto.usage.v1.BilledSession.toObject, includeInstance)
+    proto.usage.v1.BilledSession.toObject, includeInstance),
+    reportId: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -1350,6 +1351,10 @@ proto.usage.v1.ReconcileUsageResponse.deserializeBinaryFromReader = function(msg
       reader.readMessage(value,proto.usage.v1.BilledSession.deserializeBinaryFromReader);
       msg.addSessions(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setReportId(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1385,6 +1390,13 @@ proto.usage.v1.ReconcileUsageResponse.serializeBinaryToWriter = function(message
       1,
       f,
       proto.usage.v1.BilledSession.serializeBinaryToWriter
+    );
+  }
+  f = message.getReportId();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
     );
   }
 };
@@ -1425,6 +1437,24 @@ proto.usage.v1.ReconcileUsageResponse.prototype.addSessions = function(opt_value
  */
 proto.usage.v1.ReconcileUsageResponse.prototype.clearSessionsList = function() {
   return this.setSessionsList([]);
+};
+
+
+/**
+ * optional string report_id = 2;
+ * @return {string}
+ */
+proto.usage.v1.ReconcileUsageResponse.prototype.getReportId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.usage.v1.ReconcileUsageResponse} returns this
+ */
+proto.usage.v1.ReconcileUsageResponse.prototype.setReportId = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
