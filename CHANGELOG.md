@@ -1,6 +1,9 @@
 # Change Log
 
 ## August 2022
+- Revert "[installer]: remove all podsecuritypolicies" #12313 ([#12313](https://github.com/gitpod-io/gitpod/pull/12313)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- JetBrains IDEs will use the default Java SDK version when there's no explicit configuration for it yet. ([#12163](https://github.com/gitpod-io/gitpod/pull/12163)) - [@felladrin](https://github.com/felladrin)
+- [kots]: give installer same node affinity as ws-daemon ([#12227](https://github.com/gitpod-io/gitpod/pull/12227)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Update docker compose to v2.10.0 ([#12280](https://github.com/gitpod-io/gitpod/pull/12280)) - [@aledbf](https://github.com/aledbf)
 - [installer]: add golden files for aws, azure and gcp ([#12267](https://github.com/gitpod-io/gitpod/pull/12267)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [installer]: remove all podsecuritypolicies ([#12173](https://github.com/gitpod-io/gitpod/pull/12173)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
