@@ -131,6 +131,7 @@ func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsag
 
 	return &v1.ReconcileUsageResponse{
 		Sessions: sessions,
+		ReportId: filename,
 	}, nil
 
 }

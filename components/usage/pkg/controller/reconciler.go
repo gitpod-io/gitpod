@@ -60,10 +60,13 @@ func (r *UsageAndBillingReconciler) Reconcile() (err error) {
 	sessions := usageResp.GetSessions()
 	reportSessionsRetrievedTotal(len(sessions))
 
+	reportID := usageResp.GetReportId()
+
 	_, err = r.billingClient.UpdateInvoices(ctx, &v1.UpdateInvoicesRequest{
 		StartTime: timestamppb.New(startOfCurrentMonth),
 		EndTime:   timestamppb.New(startOfNextMonth),
 		Sessions:  sessions,
+		ReportId:  reportID,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update invoices: %w", err)
