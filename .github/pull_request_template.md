@@ -36,3 +36,6 @@ Optional annotations to add to the werft job.
 * with-preview - whether to create a preview environment for this PR
 -->
 - [ ] /werft with-preview
+
+<!-- Remove if you'd like to automatically merge your PR without requiring /unhold as a comment -->
+/hold
