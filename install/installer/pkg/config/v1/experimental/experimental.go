@@ -39,6 +39,7 @@ type TelemetryConfig struct {
 type CommonConfig struct {
 	PodConfig                map[string]*PodConfig `json:"podConfig,omitempty"`
 	StaticMessagebusPassword string                `json:"staticMessagebusPassword"`
+	UsePodSecurityPolicies   bool                  `json:"usePodSecurityPolicies"`
 }
 
 type PodConfig struct {
