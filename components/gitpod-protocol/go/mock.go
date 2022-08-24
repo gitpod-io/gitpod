@@ -464,6 +464,21 @@ func (mr *MockAPIInterfaceMockRecorder) GetSnapshots(ctx, workspaceID interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSnapshots", reflect.TypeOf((*MockAPIInterface)(nil).GetSnapshots), ctx, workspaceID)
 }
 
+// GetSupportedWorkspaceClasses mocks base method.
+func (m *MockAPIInterface) GetSupportedWorkspaceClasses(ctx context.Context) ([]*SupportedWorkspaceClass, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSupportedWorkspaceClasses", ctx)
+	ret0, _ := ret[0].([]*SupportedWorkspaceClass)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSupportedWorkspaceClasses indicates an expected call of GetSupportedWorkspaceClasses.
+func (mr *MockAPIInterfaceMockRecorder) GetSupportedWorkspaceClasses(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSupportedWorkspaceClasses", reflect.TypeOf((*MockAPIInterface)(nil).GetSupportedWorkspaceClasses), ctx)
+}
+
 // GetToken mocks base method.
 func (m *MockAPIInterface) GetToken(ctx context.Context, query *GetTokenSearchOptions) (*Token, error) {
 	m.ctrl.T.Helper()

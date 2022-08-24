@@ -82,6 +82,7 @@ type APIInterface interface {
 	GetLayout(ctx context.Context, workspaceID string) (res string, err error)
 	GuessGitTokenScopes(ctx context.Context, params *GuessGitTokenScopesParams) (res *GuessedGitTokenScopes, err error)
 	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
+	GetSupportedWorkspaceClasses(ctx context.Context) (res []*SupportedWorkspaceClass, err error)
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
 }
@@ -206,6 +207,8 @@ const (
 	FunctionGuessGitTokenScope FunctionName = "guessGitTokenScopes"
 	// FunctionTrackEvent is the name of the trackEvent function
 	FunctionTrackEvent FunctionName = "trackEvent"
+	// FunctionGetSupportedWorkspaceClasses is the name of the getSupportedWorkspaceClasses function
+	FunctionGetSupportedWorkspaceClasses FunctionName = "getSupportedWorkspaceClasses"
 
 	// FunctionOnInstanceUpdate is the name of the onInstanceUpdate callback function
 	FunctionOnInstanceUpdate = "onInstanceUpdate"
@@ -1434,6 +1437,16 @@ func (gp *APIoverJSONRPC) TrackEvent(ctx context.Context, params *RemoteTrackMes
 	return
 }
 
+func (gp *APIoverJSONRPC) GetSupportedWorkspaceClasses(ctx context.Context) (res []*SupportedWorkspaceClass, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{}
+	err = gp.C.Call(ctx, "getSupportedWorkspaceClasses", _params, &res)
+	return
+}
+
 // PermissionName is the name of a permission
 type PermissionName string
 
@@ -1935,6 +1948,16 @@ type GitToken struct {
 type GuessedGitTokenScopes struct {
 	Scopes  []string `json:"scopes,omitempty"`
 	Message string   `json:"message,omitempty"`
+}
+
+// SupportedWorkspaceClass is the GetSupportedWorkspaceClasses message type
+type SupportedWorkspaceClass struct {
+	ID          string `json:"id,omitempty"`
+	Category    string `json:"category,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
+	Description string `json:"description,omitempty"`
+	Powerups    int    `json:"powerups,omitempty"`
+	IsDefault   bool   `json:"isDefault,omitempty"`
 }
 
 type RemoteTrackMessage struct {
