@@ -188,3 +188,69 @@ export namespace ReconcileUsageResponse {
         reportId: string,
     }
 }
+
+export class GetCostCenterRequest extends jspb.Message {
+    getAttributionId(): string;
+    setAttributionId(value: string): GetCostCenterRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetCostCenterRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: GetCostCenterRequest): GetCostCenterRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetCostCenterRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetCostCenterRequest;
+    static deserializeBinaryFromReader(message: GetCostCenterRequest, reader: jspb.BinaryReader): GetCostCenterRequest;
+}
+
+export namespace GetCostCenterRequest {
+    export type AsObject = {
+        attributionId: string,
+    }
+}
+
+export class GetCostCenterResponse extends jspb.Message {
+
+    hasCostCenter(): boolean;
+    clearCostCenter(): void;
+    getCostCenter(): CostCenter | undefined;
+    setCostCenter(value?: CostCenter): GetCostCenterResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetCostCenterResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: GetCostCenterResponse): GetCostCenterResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetCostCenterResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetCostCenterResponse;
+    static deserializeBinaryFromReader(message: GetCostCenterResponse, reader: jspb.BinaryReader): GetCostCenterResponse;
+}
+
+export namespace GetCostCenterResponse {
+    export type AsObject = {
+        costCenter?: CostCenter.AsObject,
+    }
+}
+
+export class CostCenter extends jspb.Message {
+    getAttributionId(): string;
+    setAttributionId(value: string): CostCenter;
+    getSpendingLimit(): number;
+    setSpendingLimit(value: number): CostCenter;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): CostCenter.AsObject;
+    static toObject(includeInstance: boolean, msg: CostCenter): CostCenter.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: CostCenter, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): CostCenter;
+    static deserializeBinaryFromReader(message: CostCenter, reader: jspb.BinaryReader): CostCenter;
+}
+
+export namespace CostCenter {
+    export type AsObject = {
+        attributionId: string,
+        spendingLimit: number,
+    }
+}

@@ -17,6 +17,7 @@ import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/t
 interface IUsageServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     listBilledUsage: IUsageServiceService_IListBilledUsage;
     reconcileUsage: IUsageServiceService_IReconcileUsage;
+    getCostCenter: IUsageServiceService_IGetCostCenter;
 }
 
 interface IUsageServiceService_IListBilledUsage extends grpc.MethodDefinition<usage_v1_usage_pb.ListBilledUsageRequest, usage_v1_usage_pb.ListBilledUsageResponse> {
@@ -37,12 +38,22 @@ interface IUsageServiceService_IReconcileUsage extends grpc.MethodDefinition<usa
     responseSerialize: grpc.serialize<usage_v1_usage_pb.ReconcileUsageResponse>;
     responseDeserialize: grpc.deserialize<usage_v1_usage_pb.ReconcileUsageResponse>;
 }
+interface IUsageServiceService_IGetCostCenter extends grpc.MethodDefinition<usage_v1_usage_pb.GetCostCenterRequest, usage_v1_usage_pb.GetCostCenterResponse> {
+    path: "/usage.v1.UsageService/GetCostCenter";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<usage_v1_usage_pb.GetCostCenterRequest>;
+    requestDeserialize: grpc.deserialize<usage_v1_usage_pb.GetCostCenterRequest>;
+    responseSerialize: grpc.serialize<usage_v1_usage_pb.GetCostCenterResponse>;
+    responseDeserialize: grpc.deserialize<usage_v1_usage_pb.GetCostCenterResponse>;
+}
 
 export const UsageServiceService: IUsageServiceService;
 
 export interface IUsageServiceServer extends grpc.UntypedServiceImplementation {
     listBilledUsage: grpc.handleUnaryCall<usage_v1_usage_pb.ListBilledUsageRequest, usage_v1_usage_pb.ListBilledUsageResponse>;
     reconcileUsage: grpc.handleUnaryCall<usage_v1_usage_pb.ReconcileUsageRequest, usage_v1_usage_pb.ReconcileUsageResponse>;
+    getCostCenter: grpc.handleUnaryCall<usage_v1_usage_pb.GetCostCenterRequest, usage_v1_usage_pb.GetCostCenterResponse>;
 }
 
 export interface IUsageServiceClient {
@@ -52,6 +63,9 @@ export interface IUsageServiceClient {
     reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
     reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
     reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
+    getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
+    getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
+    getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class UsageServiceClient extends grpc.Client implements IUsageServiceClient {
@@ -62,4 +76,7 @@ export class UsageServiceClient extends grpc.Client implements IUsageServiceClie
     public reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
     public reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
     public reconcileUsage(request: usage_v1_usage_pb.ReconcileUsageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageResponse) => void): grpc.ClientUnaryCall;
+    public getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
+    public getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
+    public getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
 }
