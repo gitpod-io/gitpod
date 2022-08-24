@@ -251,6 +251,7 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 }
 
 func connectToBuildkitd(socketPath string) (cl *client.Client, err error) {
+	backoff := 1 * time.Second
 	for i := 0; i < maxConnectionAttempts; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), initialConnectionTimeout)
 
@@ -262,7 +263,8 @@ func connectToBuildkitd(socketPath string) (cl *client.Client, err error) {
 			}
 
 			cancel()
-			time.Sleep(1 * time.Second)
+			time.Sleep(backoff)
+			backoff = 2 * backoff
 			continue
 		}
 
@@ -273,7 +275,8 @@ func connectToBuildkitd(socketPath string) (cl *client.Client, err error) {
 			}
 
 			cancel()
-			time.Sleep(1 * time.Second)
+			time.Sleep(backoff)
+			backoff = 2 * backoff
 			continue
 		}
 
