@@ -30,6 +30,8 @@ type UsageServiceClient interface {
 	ListBilledUsage(ctx context.Context, in *ListBilledUsageRequest, opts ...grpc.CallOption) (*ListBilledUsageResponse, error)
 	// ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
 	ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error)
+	// GetCostCenter retrieves the spending limit with its associated attributionID
+	GetCostCenter(ctx context.Context, in *GetCostCenterRequest, opts ...grpc.CallOption) (*GetCostCenterResponse, error)
 }
 
 type usageServiceClient struct {
@@ -58,6 +60,15 @@ func (c *usageServiceClient) ReconcileUsage(ctx context.Context, in *ReconcileUs
 	return out, nil
 }
 
+func (c *usageServiceClient) GetCostCenter(ctx context.Context, in *GetCostCenterRequest, opts ...grpc.CallOption) (*GetCostCenterResponse, error) {
+	out := new(GetCostCenterResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/GetCostCenter", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsageServiceServer is the server API for UsageService service.
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
@@ -66,6 +77,8 @@ type UsageServiceServer interface {
 	ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error)
 	// ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
 	ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error)
+	// GetCostCenter retrieves the spending limit with its associated attributionID
+	GetCostCenter(context.Context, *GetCostCenterRequest) (*GetCostCenterResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
 }
 
@@ -78,6 +91,9 @@ func (UnimplementedUsageServiceServer) ListBilledUsage(context.Context, *ListBil
 }
 func (UnimplementedUsageServiceServer) ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReconcileUsage not implemented")
+}
+func (UnimplementedUsageServiceServer) GetCostCenter(context.Context, *GetCostCenterRequest) (*GetCostCenterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCostCenter not implemented")
 }
 func (UnimplementedUsageServiceServer) mustEmbedUnimplementedUsageServiceServer() {}
 
@@ -128,6 +144,24 @@ func _UsageService_ReconcileUsage_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageService_GetCostCenter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCostCenterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).GetCostCenter(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/GetCostCenter",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).GetCostCenter(ctx, req.(*GetCostCenterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UsageService_ServiceDesc is the grpc.ServiceDesc for UsageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -142,6 +176,10 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReconcileUsage",
 			Handler:    _UsageService_ReconcileUsage_Handler,
+		},
+		{
+			MethodName: "GetCostCenter",
+			Handler:    _UsageService_GetCostCenter_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

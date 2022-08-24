@@ -12,6 +12,9 @@ service UsageService {
 
     // ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
     rpc ReconcileUsage(ReconcileUsageRequest) returns (ReconcileUsageResponse) {}
+
+    // GetCostCenter retrieves the spending limit with its associated attributionID
+    rpc GetCostCenter(GetCostCenterRequest) returns (GetCostCenterResponse) {}
 }
 
 message ListBilledUsageRequest {
@@ -65,4 +68,17 @@ message ReconcileUsageResponse {
     repeated BilledSession sessions = 1;
     // ID of the UsageReport generated for this reconcile run.
     string report_id = 2;
+}
+
+message GetCostCenterRequest {
+    string attribution_id = 1;
+}
+
+message GetCostCenterResponse {
+    CostCenter cost_center = 1;
+}
+
+message CostCenter {
+    string attribution_id = 1;
+    int32 spending_limit = 2;
 }
