@@ -638,228 +638,6 @@ spec:
       component: ws-manager
 status: {}
 ---
-# policy/v1beta1/PodSecurityPolicy default-ns-privileged
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-privileged
-  namespace: default
-spec:
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - '*'
-  fsGroup:
-    rule: RunAsAny
-  hostIPC: true
-  hostNetwork: true
-  hostPID: true
-  hostPorts:
-  - max: 65535
-    min: 0
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    rule: RunAsAny
-  volumes:
-  - '*'
----
-# policy/v1beta1/PodSecurityPolicy default-ns-privileged-unconfined
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: unconfined
-    apparmor.security.beta.kubernetes.io/defaultProfileName: unconfined
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-privileged-unconfined
-  namespace: default
-spec:
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - '*'
-  fsGroup:
-    rule: RunAsAny
-  hostPID: true
-  hostPorts:
-  - max: 65535
-    min: 0
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    rule: RunAsAny
-  volumes:
-  - '*'
----
-# policy/v1beta1/PodSecurityPolicy default-ns-registry-facade
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: registry-facade
-  name: default-ns-registry-facade
-spec:
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  hostNetwork: true
-  hostPorts:
-  - max: 20000
-    min: 20000
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - secret
-  - emptyDir
-  - hostPath
----
-# policy/v1beta1/PodSecurityPolicy default-ns-restricted-root-user
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-restricted-root-user
-  namespace: default
-spec:
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  hostNetwork: true
-  hostPorts:
-  - max: 33000
-    min: 30000
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - projected
-  - secret
-  - emptyDir
-  - persistentVolumeClaim
-  - hostPath
----
-# policy/v1beta1/PodSecurityPolicy default-ns-unprivileged
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-unprivileged
-  namespace: default
-spec:
-  allowPrivilegeEscalation: false
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  requiredDropCapabilities:
-  - ALL
-  runAsUser:
-    rule: MustRunAsNonRoot
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - emptyDir
-  - projected
-  - secret
-  - persistentVolumeClaim
----
-# policy/v1beta1/PodSecurityPolicy default-ns-workspace
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-workspace
-  namespace: default
-spec:
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - AUDIT_WRITE
-  - FSETID
-  - KILL
-  - NET_BIND_SERVICE
-  - SYS_PTRACE
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - projected
-  - secret
-  - hostPath
----
 # policy/v1/PodDisruptionBudget messagebus
 # Source: rabbitmq/charts/rabbitmq/templates/pdb.yaml
 apiVersion: policy/v1
@@ -1746,72 +1524,6 @@ data:
     metadata:
       creationTimestamp: null
       name: default-kube-rbac-proxy
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:privileged
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:restricted-root-user
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:unprivileged
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-privileged
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: unconfined
-        apparmor.security.beta.kubernetes.io/defaultProfileName: unconfined
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-privileged-unconfined
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-restricted-root-user
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-unprivileged
-      namespace: default
     ---
     apiVersion: v1
     kind: ResourceQuota
@@ -2700,20 +2412,6 @@ data:
       name: registry-facade
       namespace: default
     ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: registry-facade
-      name: default-ns-registry-facade
-    ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -2771,28 +2469,6 @@ data:
         app: gitpod
         component: workspace
       name: workspace-default
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-workspace
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: workspace
-      name: workspace
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
@@ -3131,15 +2807,6 @@ data:
         component: ws-proxy
       name: ws-proxy
       namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: image-builder-mk3
-      name: default-ns-image-builder-mk3
     ---
     apiVersion: v1
     kind: ConfigMap
@@ -4403,73 +4070,6 @@ rules:
   verbs:
   - create
 ---
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-image-builder-mk3
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: image-builder-mk3
-  name: default-ns-image-builder-mk3
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:privileged
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:privileged
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:restricted-root-user
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:restricted-root-user
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-restricted-root-user
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:unprivileged
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:unprivileged
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-unprivileged
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
 # rbac.authorization.k8s.io/v1/ClusterRole default-ns-registry-facade
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -4480,14 +4080,6 @@ metadata:
     component: registry-facade
   name: default-ns-registry-facade
 rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-registry-facade
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 - apiGroups:
   - ""
   resources:
@@ -4508,14 +4100,6 @@ metadata:
     component: ws-daemon
   name: default-ns-ws-daemon
 rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 - apiGroups:
   - ""
   resources:
@@ -4895,14 +4479,6 @@ metadata:
   namespace: default
 rules:
 - apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
-- apiGroups:
   - ""
   resources:
   - pods
@@ -4964,26 +4540,6 @@ rules:
   - update
   - patch
   - watch
----
-# rbac.authorization.k8s.io/v1/Role workspace
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: workspace
-  name: workspace
-  namespace: default
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-workspace
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 ---
 # rbac.authorization.k8s.io/v1/Role ws-manager
 apiVersion: rbac.authorization.k8s.io/v1

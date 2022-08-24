@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +18,22 @@ import (
 func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
+	var rules []rbacv1.PolicyRule
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Common != nil && cfg.Common.UsePodSecurityPolicies {
+			rules = append(rules, rbacv1.PolicyRule{
+				APIGroups: []string{"policy"},
+				Resources: []string{"podsecuritypolicies"},
+				Verbs:     []string{"use"},
+				ResourceNames: []string{
+					fmt.Sprintf("%s-ns-privileged-unconfined", ctx.Namespace),
+				},
+			})
+		}
+		return nil
+	})
+
 	return []runtime.Object{
 		&rbacv1.ClusterRole{
 			TypeMeta: common.TypeMetaClusterRole,
@@ -24,26 +41,23 @@ func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:   fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
 				Labels: labels,
 			},
-			Rules: []rbacv1.PolicyRule{{
-				APIGroups: []string{"policy"},
-				Resources: []string{"podsecuritypolicies"},
-				Verbs:     []string{"use"},
-				ResourceNames: []string{
-					fmt.Sprintf("%s-ns-privileged-unconfined", ctx.Namespace),
+			Rules: append(rules,
+				rbacv1.PolicyRule{
+					APIGroups: []string{""},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"get", "list", "update", "patch"},
 				},
-			}, {
-				APIGroups: []string{""},
-				Resources: []string{"nodes"},
-				Verbs:     []string{"get", "list", "update", "patch"},
-			}, {
-				APIGroups: []string{""},
-				Resources: []string{"pods", "services"},
-				Verbs:     []string{"get", "list", "watch"},
-			}, {
-				APIGroups: []string{""},
-				Resources: []string{"pods"},
-				Verbs:     []string{"delete", "update", "patch"},
-			}},
+				rbacv1.PolicyRule{
+					APIGroups: []string{""},
+					Resources: []string{"pods", "services"},
+					Verbs:     []string{"get", "list", "watch"},
+				},
+				rbacv1.PolicyRule{
+					APIGroups: []string{""},
+					Resources: []string{"pods"},
+					Verbs:     []string{"delete", "update", "patch"},
+				},
+			),
 		},
 	}, nil
 }

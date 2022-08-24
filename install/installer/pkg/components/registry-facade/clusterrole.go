@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +16,20 @@ import (
 )
 
 func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
+	var rules []rbacv1.PolicyRule
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Common != nil && cfg.Common.UsePodSecurityPolicies {
+			rules = append(rules, rbacv1.PolicyRule{
+				APIGroups:     []string{"policy"},
+				Resources:     []string{"podsecuritypolicies"},
+				Verbs:         []string{"use"},
+				ResourceNames: []string{fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component)},
+			})
+		}
+		return nil
+	})
+
 	return []runtime.Object{
 		&rbacv1.ClusterRole{
 			TypeMeta: common.TypeMetaClusterRole,
@@ -22,18 +37,12 @@ func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:   fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
 				Labels: common.DefaultLabels(Component),
 			},
-			Rules: []rbacv1.PolicyRule{
-				{
-					APIGroups:     []string{"policy"},
-					Resources:     []string{"podsecuritypolicies"},
-					Verbs:         []string{"use"},
-					ResourceNames: []string{fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component)},
-				}, {
-					APIGroups: []string{""},
-					Resources: []string{"nodes"},
-					Verbs:     []string{"get", "list", "update", "patch"},
-				},
+			Rules: append(rules, rbacv1.PolicyRule{
+				APIGroups: []string{""},
+				Resources: []string{"nodes"},
+				Verbs:     []string{"get", "list", "update", "patch"},
 			},
+			),
 		},
 	}, nil
 }
