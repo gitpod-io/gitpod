@@ -79,50 +79,56 @@ func (v version) CheckDeprecated(rawCfg interface{}) (map[string]interface{}, []
 	conflicts := make([]string, 0)
 	cfg := rawCfg.(*Config)
 
-	if cfg.Experimental != nil && cfg.Experimental.WebApp != nil {
-		// service type of proxy is now configurable from main config
-		if cfg.Experimental.WebApp.ProxyConfig != nil && cfg.Experimental.WebApp.ProxyConfig.ServiceType != nil {
-			warnings["experimental.webapp.proxy.serviceType"] = *cfg.Experimental.WebApp.ProxyConfig.ServiceType
-
-			if cfg.Components != nil && cfg.Components.Proxy != nil && cfg.Components.Proxy.Service != nil && cfg.Components.Proxy.Service.ServiceType != nil {
-				conflicts = append(conflicts, "Cannot set proxy service type in both components and experimental")
-			} else {
-				// Promote the experimental value to the components
-				if cfg.Components == nil {
-					cfg.Components = &Components{}
-				}
-				if cfg.Components.Proxy == nil {
-					cfg.Components.Proxy = &ProxyComponent{}
-				}
-				if cfg.Components.Proxy.Service == nil {
-					cfg.Components.Proxy.Service = &ComponentTypeService{}
-				}
-				cfg.Components.Proxy.Service.ServiceType = cfg.Experimental.WebApp.ProxyConfig.ServiceType
-			}
+	if cfg.Experimental != nil {
+		if cfg.Experimental.Common != nil && cfg.Experimental.Common.UsePodSecurityPolicies {
+			warnings["experimental.common.usePodSecurityPolicies"] = "true"
 		}
 
-		// default workspace base image is now configurable from main config
-		if cfg.Experimental.WebApp.Server != nil {
+		if cfg.Experimental.WebApp != nil {
+			// service type of proxy is now configurable from main config
+			if cfg.Experimental.WebApp.ProxyConfig != nil && cfg.Experimental.WebApp.ProxyConfig.ServiceType != nil {
+				warnings["experimental.webapp.proxy.serviceType"] = *cfg.Experimental.WebApp.ProxyConfig.ServiceType
 
-			workspaceImage := cfg.Experimental.WebApp.Server.WorkspaceDefaults.WorkspaceImage
-			if workspaceImage != "" {
-				warnings["experimental.webapp.server.workspaceDefaults.workspaceImage"] = workspaceImage
-
-				if cfg.Workspace.WorkspaceImage != "" {
-					conflicts = append(conflicts, "Cannot set default workspace image in both workspaces and experimental")
+				if cfg.Components != nil && cfg.Components.Proxy != nil && cfg.Components.Proxy.Service != nil && cfg.Components.Proxy.Service.ServiceType != nil {
+					conflicts = append(conflicts, "Cannot set proxy service type in both components and experimental")
 				} else {
-					cfg.Workspace.WorkspaceImage = workspaceImage
+					// Promote the experimental value to the components
+					if cfg.Components == nil {
+						cfg.Components = &Components{}
+					}
+					if cfg.Components.Proxy == nil {
+						cfg.Components.Proxy = &ProxyComponent{}
+					}
+					if cfg.Components.Proxy.Service == nil {
+						cfg.Components.Proxy.Service = &ComponentTypeService{}
+					}
+					cfg.Components.Proxy.Service.ServiceType = cfg.Experimental.WebApp.ProxyConfig.ServiceType
 				}
 			}
 
-			registryAllowList := cfg.Experimental.WebApp.Server.DefaultBaseImageRegistryWhiteList
-			if registryAllowList != nil {
-				warnings["experimental.webapp.server.defaultBaseImageRegistryWhitelist"] = registryAllowList
+			// default workspace base image is now configurable from main config
+			if cfg.Experimental.WebApp.Server != nil {
 
-				if len(cfg.ContainerRegistry.PrivateBaseImageAllowList) > 0 {
-					conflicts = append(conflicts, "Cannot set allow list for private base image in both containerRegistry and experimental")
-				} else {
-					cfg.ContainerRegistry.PrivateBaseImageAllowList = registryAllowList
+				workspaceImage := cfg.Experimental.WebApp.Server.WorkspaceDefaults.WorkspaceImage
+				if workspaceImage != "" {
+					warnings["experimental.webapp.server.workspaceDefaults.workspaceImage"] = workspaceImage
+
+					if cfg.Workspace.WorkspaceImage != "" {
+						conflicts = append(conflicts, "Cannot set default workspace image in both workspaces and experimental")
+					} else {
+						cfg.Workspace.WorkspaceImage = workspaceImage
+					}
+				}
+
+				registryAllowList := cfg.Experimental.WebApp.Server.DefaultBaseImageRegistryWhiteList
+				if registryAllowList != nil {
+					warnings["experimental.webapp.server.defaultBaseImageRegistryWhitelist"] = registryAllowList
+
+					if len(cfg.ContainerRegistry.PrivateBaseImageAllowList) > 0 {
+						conflicts = append(conflicts, "Cannot set allow list for private base image in both containerRegistry and experimental")
+					} else {
+						cfg.ContainerRegistry.PrivateBaseImageAllowList = registryAllowList
+					}
 				}
 			}
 		}
