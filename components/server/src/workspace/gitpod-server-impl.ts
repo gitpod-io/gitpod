@@ -1583,31 +1583,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const logInfo = instance.imageBuildInfo?.log;
         if (!logInfo) {
-            const teams = await this.teamDB.findTeamsByUser(user.id);
-            const isOldImageBuildLogsMechanismDeprecated = await getExperimentsClientForBackend().getValueAsync(
-                "deprecateOldImageLogsMechanism",
-                false,
-                {
-                    user,
-                    projectId: workspace.projectId,
-                    teams,
-                },
+            log.error(logCtx, "cannot watch imagebuild logs for workspaceId: no image build info available");
+            throw new ResponseError(
+                ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
+                "cannot watch imagebuild logs for workspaceId",
             );
-            if (isOldImageBuildLogsMechanismDeprecated) {
-                log.error(logCtx, "cannot watch imagebuild logs for workspaceId: no image build info available");
-                throw new ResponseError(
-                    ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
-                    "cannot watch imagebuild logs for workspaceId",
-                );
-            }
-
-            // during roll-out this is our fall-back case.
-            // Afterwards we might want to do some spinning-lock and re-check for a certain period (30s?) to give db-sync
-            // a change to move the imageBuildLogInfo across the globe.
-            log.warn(logCtx, "imageBuild logs: fallback!");
-            ctx.span?.setTag("workspace.imageBuild.logs.fallback", true);
-            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, user, workspace);
-            return;
         }
 
         const aborted = new Deferred<boolean>();
