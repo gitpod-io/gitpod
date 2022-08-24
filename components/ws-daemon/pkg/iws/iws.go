@@ -1106,13 +1106,16 @@ func getCpuResourceInfoV2(mountPoint, cgroupPath string) (*api.Cpu, error) {
 	used := cpuUsage / totalTime * 1000
 
 	quota, period, err := cpu.Max()
-	if err != nil {
+	if errors.Is(err, os.ErrNotExist) {
+		quota = math.MaxUint64
+	} else if err != nil {
 		return nil, err
 	}
 
 	// if no cpu limit has been specified, use the number of cores
 	var limit uint64
 	if quota == math.MaxUint64 {
+		// TODO(toru): we have to check a parent cgroup instead of a host resources
 		cpuInfo, err := linuxproc.ReadCPUInfo("/proc/cpuinfo")
 		if err != nil {
 			return nil, err
