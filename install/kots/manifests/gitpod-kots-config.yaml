@@ -26,7 +26,6 @@ data:
   HAS_LOCAL_REGISTRY: repl{{ HasLocalRegistry | quote }}
   LOCAL_REGISTRY_ADDRESS: repl{{ LocalRegistryAddress | quote }}
   LOCAL_REGISTRY_HOST: repl{{ LocalRegistryHost | quote }}
-  LOCAL_REGISTRY_IMAGE_PULL_SECRET: repl{{ LocalRegistryImagePullSecret | quote }}
   IMAGE_PULL_SECRET_NAME: repl{{ ImagePullSecretName | quote }}
 
   # Registry settings
@@ -58,3 +57,7 @@ data:
   ADVANCED_MODE_ENABLED: repl{{ ConfigOption "advanced_mode_enabled" | quote }}
   COMPONENT_PROXY_SERVICE_SERVICETYPE: repl{{ ConfigOption "component_proxy_service_serviceType" | quote }}
   CUSTOMIZATION_PATCH_ENABLED: repl{{ ConfigOptionNotEquals "customization_patch" "" | quote }} # Use comparison not value
+
+  # Customizations
+  CONFIG_PATCH: repl{{ ConfigOptionData "config_patch" | default "" | quote }}
+  CUSTOMIZATION_PATCH: repl{{ ConfigOptionData "customization_patch" | default "" | quote }}

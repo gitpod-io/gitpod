@@ -39,31 +39,18 @@ spec:
       containers:
         - name: installer
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-move-kots-bash-script.28"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-installer-config-build.7"
           volumeMounts:
-            - mountPath: /config-patch
-              name: config-patch
-              readOnly: true
             - mountPath: /mnt/node0
               name: node-fs0
               readOnly: true
           env:
             - name: CONFIG_FILE
               value: /tmp/gitpod-config.yaml
-            - name: CONFIG_PATCH_FILE
-              value: /config-patch/gitpod-config-patch.yaml
-            - name: CUSTOMIZATION_PATCH_FILE
-              value: /config-patch/customization-patch.yaml
-            - name: CONTAINERD_DIR_K3S
-              value: /run/k3s/containerd/io.containerd.runtime.v2.task/k8s.io
-            - name: CONTAINERD_SOCKET_K3S
-              value: /run/k3s/containerd/containerd.sock
-            - name: CONTAINERD_DIR_AL
-              value: /run/containerd/io.containerd.runtime.v2.task/k8s.io
-            - name: CONTAINERD_SOCKET_AL
-              value: /run/containerd/containerd.sock
             - name: GITPOD_OBJECTS
               value: /tmp/gitpod
+            - name: MOUNT_PATH
+              value: /mnt/node0
             - name: REG_DOCKER_CONFIG_JSON
               valueFrom:
                 secretKeyRef:
@@ -73,7 +60,7 @@ spec:
             - name: LOCAL_REGISTRY_IMAGE_PULL_DOCKER_CONFIG_JSON
               valueFrom:
                 secretKeyRef:
-                  name: repl{{ LocalRegistryImagePullSecret | quote }}
+                  name: repl{{ ImagePullSecretName | quote }}
                   key: .dockerconfigjson
                   optional: true
           envFrom:
@@ -82,9 +69,6 @@ spec:
           command:
             - /app/scripts/kots-install.sh
       volumes:
-        - name: config-patch
-          configMap:
-            name: gitpod-config-patch
         - name: node-fs0
           hostPath:
             path: /
