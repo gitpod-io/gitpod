@@ -153,19 +153,6 @@ function publishKots(werft: Werft, jobConfig: JobConfig) {
         { slice: phases.PUBLISH_KOTS },
     );
 
-    // Set the ShiftFS Module Loader tag to version defined in Installer
-    const shiftFsImageAndTag = exec(
-        `yq r ${REPLICATED_YAML_DIR}/gitpod-shiftfs-module-loader.yaml ${INSTALLER_JOB_IMAGE}`,
-    );
-    const [shiftFsImage] = shiftFsImageAndTag.split(":");
-    const shiftfsModuleLoaderVersion = exec(
-        `/tmp/installer version | yq r - 'components.wsDaemon.userNamespaces.shiftfsModuleLoader.version'`,
-    );
-    exec(
-        `yq w -i ${REPLICATED_YAML_DIR}/gitpod-shiftfs-module-loader.yaml ${INSTALLER_JOB_IMAGE} ${shiftFsImage}:${shiftfsModuleLoaderVersion}`,
-        { slice: phases.PUBLISH_KOTS },
-    );
-
     // Generate the logo and pull any Helm charts
     exec(`make logo helm -C ${REPLICATED_DIR}`, { slice: phases.PUBLISH_KOTS });
 
