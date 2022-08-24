@@ -122,7 +122,8 @@ func (s *Workspace) WaitForInit(ctx context.Context) (ready bool) {
 
 	s.operatingCondition.L.Lock()
 	s.operatingCondition.Wait()
-	ready = true
+	// make sure that state is indeed ready when done waiting
+	ready = s.state == WorkspaceReady
 	s.operatingCondition.L.Unlock()
 	return
 }
