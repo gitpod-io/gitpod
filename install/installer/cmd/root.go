@@ -12,7 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -30,13 +32,24 @@ var rootOpts struct {
 	VersionMF         string
 	StrictConfigParse bool
 	SeedValue         int64
+	LogLevel          string
 }
 
 func init() {
-	cobra.OnInitialize(setSeed)
+	cobra.OnInitialize(setSeed, setLogLevel)
 	rootCmd.PersistentFlags().StringVar(&rootOpts.VersionMF, "debug-version-file", "", "path to a version manifest - not intended for production use")
 	rootCmd.PersistentFlags().Int64Var(&rootOpts.SeedValue, "seed", 0, "specify the seed value for randomization - if 0 it is kept as the default")
 	rootCmd.PersistentFlags().BoolVar(&rootOpts.StrictConfigParse, "strict-parse", true, "toggle strict configuration parsing")
+	rootCmd.PersistentFlags().StringVar(&rootOpts.LogLevel, "log-level", "info", "set the log level")
+}
+
+func setLogLevel() {
+	newLevel, err := logrus.ParseLevel(rootOpts.LogLevel)
+	if err != nil {
+		log.WithError(err).Errorf("cannot change log level to '%v'", rootOpts.LogLevel)
+		return
+	}
+	log.Log.Logger.SetLevel(newLevel)
 }
 
 func setSeed() {
