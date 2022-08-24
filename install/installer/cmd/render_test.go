@@ -52,6 +52,9 @@ func TestRender(t *testing.T) {
 			renderOpts.ConfigFN = "testdata/render/" + testCase.Name + "/config.yaml"
 			goldenPath := "testdata/render/" + testCase.Name + "/output.golden"
 
+			// Enable experimental config
+			renderOpts.UseExperimentalConfig = true
+
 			// Generate the YAML from the render function
 			yaml, err := renderFn()
 			require.NoError(t, err)
