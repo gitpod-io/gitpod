@@ -236,8 +236,6 @@ func (s *IDEMetricsServer) Start() error {
 			return true
 		},
 		AllowedHeaders: []string{"*"},
-		// Enable Debugging for testing, consider disabling in production
-		Debug: true,
 	})
 
 	routes.Handle("/metrics-api/", http.StripPrefix("/metrics-api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -247,7 +245,8 @@ func (s *IDEMetricsServer) Start() error {
 			websocket.IsWebSocketUpgrade(r) {
 			grpcWebServer.ServeHTTP(w, r)
 		} else {
-			restMux.ServeHTTP(w, r)
+			x := c.Handler(restMux)
+			x.ServeHTTP(w, r)
 		}
 	})))
 	go http.Serve(httpMux, routes)
