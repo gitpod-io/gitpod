@@ -63,4 +63,6 @@ message ReconcileUsageRequest {
 
 message ReconcileUsageResponse {
     repeated BilledSession sessions = 1;
+    // ID of the UsageReport generated for this reconcile run.
+    string report_id = 2;
 }

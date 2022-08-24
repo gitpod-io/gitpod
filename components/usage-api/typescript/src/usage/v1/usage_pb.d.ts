@@ -169,6 +169,8 @@ export class ReconcileUsageResponse extends jspb.Message {
     getSessionsList(): Array<BilledSession>;
     setSessionsList(value: Array<BilledSession>): ReconcileUsageResponse;
     addSessions(value?: BilledSession, index?: number): BilledSession;
+    getReportId(): string;
+    setReportId(value: string): ReconcileUsageResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ReconcileUsageResponse.AsObject;
@@ -183,5 +185,6 @@ export class ReconcileUsageResponse extends jspb.Message {
 export namespace ReconcileUsageResponse {
     export type AsObject = {
         sessionsList: Array<BilledSession.AsObject>,
+        reportId: string,
     }
 }
