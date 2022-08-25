@@ -189,10 +189,17 @@ resource "google_sql_database" "database" {
   collation = "utf8_general_ci"
 }
 
+resource "random_password" "password" {
+
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
 resource "google_sql_user" "users" {
   name     = "gitpod"
   instance = google_sql_database_instance.gitpod.name
-  password = "gitpod"
+  password = random_password.password.result
 }
 
 data "local_file" "kubeconfig" {

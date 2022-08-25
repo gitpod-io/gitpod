@@ -186,6 +186,10 @@ registry-config-gcp:
 
 db-config-gcp:
 	export BASE64_GCP_KEY=$$(cat $$TF_VAR_sa_creds | tr -d '\n' | base64 -w 0) && \
+	export DB_OUTPUT=$$(terraform output -json k3s_database || terraform output -json gke_database) && \
+	export DB_INSTANCE=$$(echo $$DB_OUTPUT | yq r - 'instance') && \
+	export DB_PASSWORD=$$(echo $$DB_OUTPUT | yq r - 'password') && \
+	export DB_USER=$$(echo $$DB_OUTPUT | yq r - 'username') && \
 	envsubst < ./manifests/kots-config-gcp-db.yaml > tmp_4_config.yml
 	envsubst < tmp_4_config.yml > tmp_5_config.yml
 	yq m -i tmp_config.yml tmp_5_config.yml
