@@ -172,9 +172,15 @@ resource "google_container_node_pool" "workspaces" {
   }
 }
 
+resource "random_string" "random" {
+  length           = 4
+  upper            = false
+  special          = false
+}
+
 resource "google_sql_database_instance" "gitpod" {
   count            = var.enable_external_database ? 1 : 0
-  name             = "sql-${var.cluster_name}"
+  name             = "sql-${var.cluster_name}-${random_string.random.result}" // we cannot reuse the same name for 1 week
   database_version = "MYSQL_5_7"
   region           = var.region
   settings {

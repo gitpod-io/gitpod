@@ -15,7 +15,7 @@ resource "azurerm_role_assignment" "k8s_reader" {
 }
 
 resource "azurerm_kubernetes_cluster" "k8s" {
-  name                            = format(local.name_format, local.location, "primary")
+  name                            = format(local.name_format, "cluster")
   location                        = azurerm_resource_group.gitpod.location
   resource_group_name             = azurerm_resource_group.gitpod.name
   dns_prefix                      = "gitpod"

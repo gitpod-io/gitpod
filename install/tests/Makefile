@@ -53,8 +53,8 @@ gcp-kubeconfig:
 ## azure-kubeconfig: Get the kubeconfig configuration for Azure AKS
 azure-kubeconfig:
 	export KUBECONFIG=${KUBECONFIG} && \
-	export resource=$$(echo "$$TF_VAR_TEST_ID" | sed "s/[\\W\\-]//") && \
-	az aks get-credentials --name gitpod-test-nor-primary-$$resource --resource-group gitpod-test-nor-$$resource --file ${KUBECONFIG} || echo "No cluster present"
+	export resource=$$(echo "$$TF_VAR_TEST_ID" | sed "s/[\\W\\-]//g") && \
+	az aks get-credentials --name test-cluster-$$resource --resource-group sh-test-$$resource --file ${KUBECONFIG} || echo "No cluster present"
 
 ## aws-kubeconfig: Get the kubeconfig configuration for AWS EKS
 aws-kubeconfig:
@@ -67,7 +67,9 @@ aws-kubeconfig:
 gke-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
-	terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
+	rm -f ${KUBECONFIG} && \
+	$(MAKE) get-kubeconfig && \
+	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done creating GKE cluster"
 
 ami_id_121 := "ami-060637af2651bc8bb"
@@ -82,7 +84,9 @@ eks-standard-cluster: ami_id = $(if $(ami_id_${TF_VAR_cluster_version//.}),$(ami
 eks-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
-	terraform apply -target=module.eks -var kubeconfig=${KUBECONFIG} -var eks_node_image_id=${ami_id} --auto-approve
+	rm -f ${KUBECONFIG} && \
+	$(MAKE) get-kubeconfig && \
+	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.eks -var kubeconfig=${KUBECONFIG} -var eks_node_image_id=${ami_id} --auto-approve
 	@echo "Done creating EKS cluster"
 
 .PHONY:
@@ -90,7 +94,9 @@ eks-standard-cluster: check-env-cluster-version
 aks-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
-	terraform apply -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
+	rm -f ${KUBECONFIG} && \
+	$(MAKE) get-kubeconfig && \
+	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done creating AKS cluster"
 
 .PHONY:
@@ -122,7 +128,9 @@ k3s-standard-cluster: image_id = $(if $(image_id_$(os_version)),$(image_id_$(os_
 k3s-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
-	terraform apply -target=module.k3s -var kubeconfig=${KUBECONFIG} -var k3s_node_image_id=${image_id} --auto-approve && \
+	rm -f ${KUBECONFIG} && \
+	$(MAKE) get-kubeconfig && \
+	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.k3s -var kubeconfig=${KUBECONFIG} -var k3s_node_image_id=${image_id} --auto-approve && \
 	$(MAKE) upload-kubeconfig-to-gcp # we upload the file to GCP since we cannot retrieve the file against without SSHing to the master
 	@echo "Done creating k3s cluster"
 

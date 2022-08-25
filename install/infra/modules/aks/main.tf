@@ -14,6 +14,6 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_resource_group" "gitpod" {
-  name     = format(local.name_format_global, local.location)
+  name     = local.name_format_global
   location = var.location
 }
