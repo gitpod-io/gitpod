@@ -69,22 +69,10 @@ export class MonitoringSatelliteInstaller {
             kubectl create ns monitoring-satellite --kubeconfig ${this.options.kubeconfigPath} || true && \
             cd installer && echo '
             {
-                "alerting": {
-                    "config": {}
-                },
                 "gitpod": {
                     "installServiceMonitors": true
                 },
-                "prober": {
-                    "install": true
-                },
-                "kubescape": {
-                    "install": true
-                },
                 "pyrra": {
-                    "install": true
-                },
-                "grafana": {
                     "install": true
                 },
                 "prometheus": {
@@ -108,6 +96,24 @@ export class MonitoringSatelliteInstaller {
                             "regex": "rest_client_requests_total.*|http_prober_.*",
                             "action": "keep",
                         }],
+                    }],
+                },
+                "imports": {
+                    "yaml": [{
+                            "gitURL": "https://github.com/gitpod-io/observability",
+                            "path": "monitoring-satellite/manifests/kube-prometheus-rules",
+                        },
+                        {
+                            "gitURL": "https://github.com/gitpod-io/observability",
+                            "path": "monitoring-satellite/manifests/kubescape",
+                        },
+                        {
+                            "gitURL": "https://github.com/gitpod-io/observability",
+                            "path": "monitoring-satellite/manifests/grafana",
+                        },
+                        {
+                            "gitURL": "https://github.com/gitpod-io/observability",
+                            "path": "monitoring-satellite/manifests/probers",
                     }],
                 },
             }' | go run main.go render --config - | kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f -`;
