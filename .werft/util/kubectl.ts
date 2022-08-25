@@ -394,7 +394,7 @@ export async function waitUntilAllPodsAreReady(namespace: string, kubeconfig: st
 
         await sleep(3 * 1000);
     }
-    exec(`kubectl --kubeconfig ${kubeconfig} get pods -n ${namespace}`, { ...shellOpts, async: false });
+    exec(`kubectl --kubeconfig ${kubeconfig} describe pods -n ${namespace}`, { ...shellOpts, async: false });
     throw new Error(
         `Not all pods in namespace ${namespace} transitioned to 'Running' or 'Succeeded/Completed' during the expected time.`,
     );
