@@ -3,6 +3,7 @@ import * as https from "https";
 import { join } from "path";
 import { exec } from "./util/shell";
 import { Werft } from "./util/werft";
+import { deleteReplicatedLicense } from "./jobs/build/self-hosted-upgrade-tests";
 
 const context: any = JSON.parse(fs.readFileSync("context.json").toString());
 
@@ -475,6 +476,8 @@ function cleanup() {
     }
 
     werft.done(phase.phase);
+
+    deleteReplicatedLicense(werft, process.env["TF_VAR_TEST_ID"]);
 
     return ret;
 }
