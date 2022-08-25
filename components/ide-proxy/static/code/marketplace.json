@@ -59,6 +59,13 @@
               "displayName": "Prettier - Code formatter"
           }
       },
+      "silvenon.mdx": {
+        "disallowInstall": true,
+        "extension": {
+            "id": "unifiedjs.vscode-mdx",
+            "displayName": "VSCode MDX"
+        }
+      },
       "CoenraadS.bracket-pair-colorizer-2": {
           "settings": [
               "editor.bracketPairColorization.enabled",
