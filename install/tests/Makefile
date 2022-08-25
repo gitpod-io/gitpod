@@ -68,17 +68,11 @@ gke-standard-cluster: check-env-cluster-version
 	terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done creating GKE cluster"
 
-ami_id_120 := "ami-0ecb917eb4fbf4387"
-
 ami_id_121 := "ami-0d57fb01036fac543"
 
 ami_id_122 := "ami-0b306cb7e98db98e4"
 
-ami_id_120 := "ami-0ecb917eb4fbf4387"
-
-ami_id_121 := "ami-0d57fb01036fac543"
-
-ami_id_122 := "ami-0b306cb7e98db98e4"
+ami_id_123 := "ami-05ec8881b9c2740d4"
 
 .PHONY:
 ## eks-standard-cluster: Creates an EKS cluster
@@ -242,7 +236,7 @@ db-config-incluster:
 registry-config-incluster:
 	@echo "Nothing to do"
 
-torage ?= incluster
+storage ?= incluster
 registry ?= incluster
 db ?= incluster
 .PHONY:
