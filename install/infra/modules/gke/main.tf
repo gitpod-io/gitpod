@@ -201,7 +201,7 @@ resource "google_sql_database" "database" {
 
 resource "google_sql_user" "users" {
   count    = var.enable_external_database ? 1 : 0
-  name     = "dbuser-${var.cluster_name}-${count.index}"
+  name     = "gitpod"
   instance = google_sql_database_instance.gitpod[count.index].name
   password = random_password.password[count.index].result
 }
