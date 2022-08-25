@@ -6,6 +6,7 @@ export interface JobConfig {
     analytics: string;
     buildConfig: any;
     cleanSlateDeployment: boolean;
+    cluster: string;
     coverageOutput: string;
     dontTest: boolean;
     fromVersion: string;
@@ -24,6 +25,7 @@ export interface JobConfig {
     withContrib: boolean;
     withIntegrationTests: boolean;
     withUpgradeTests: boolean;
+    withSelfHostedPreview: boolean;
     withObservability: boolean;
     withPayment: boolean;
     workspaceFeatureFlags: string[];
@@ -83,10 +85,12 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withIntegrationTests = "with-integration-tests" in buildConfig && !mainBuild;
     const withUpgradeTests = "with-upgrade-tests" in buildConfig && !mainBuild;
     const fromVersion = withUpgradeTests ? buildConfig["from-version"] : "";
-    const replicatedChannel = withUpgradeTests ? buildConfig["channel"] : "";
+    const replicatedChannel = buildConfig["channel"];
+    const cluster = buildConfig["cluster"];
+    const withSelfHostedPreview = "with-sh-preview" in buildConfig;
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
-    const publishToKots = "publish-to-kots" in buildConfig || mainBuild;
+    const publishToKots = "publish-to-kots" in buildConfig || withSelfHostedPreview || mainBuild;
     const analytics = buildConfig["analytics"];
     const localAppVersion = mainBuild || "with-localapp-version" in buildConfig ? version : "unknown";
     const retag = "with-retag" in buildConfig ? "" : "--dont-retag";
@@ -122,6 +126,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         analytics,
         buildConfig,
         cleanSlateDeployment,
+        cluster,
         coverageOutput,
         dontTest,
         fromVersion,
@@ -145,6 +150,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withObservability,
         withPayment,
         withUpgradeTests,
+        withSelfHostedPreview,
         workspaceFeatureFlags,
         withLargeVM,
     };

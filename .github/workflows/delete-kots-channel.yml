@@ -16,6 +16,17 @@ jobs:
           tar xf replicated.tar.gz replicated && rm replicated.tar.gz
           mv replicated /usr/local/bin/replicated
 
+      - name: Delete replicated license
+        run: |
+          CUSTOMER_ID=$(replicated customer ls | grep ${{ github.event.ref }} | awk '{print $1}')
+          if [ "${CUSTOMER_ID}" = "" ]; then
+            echo "No license found"
+            exit 0
+          fi
+          curl --request POST \
+              --url https://api.replicated.com/vendor/v3/customer/${CUSTOMER_ID}/archive \
+              --header 'Authorization: ${{ env.REPLICATED_API_TOKEN }}'
+
       - name: Delete Replicated channel
         run: |
           CHANNEL_ID=$(replicated channel inspect ${{ github.event.ref }} \

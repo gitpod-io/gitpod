@@ -9,7 +9,7 @@ import { validateChanges } from "./jobs/build/validate-changes";
 import { prepare } from "./jobs/build/prepare";
 import { deployToPreviewEnvironment } from "./jobs/build/deploy-to-preview-environment";
 import { triggerIntegrationTests } from "./jobs/build/trigger-integration-tests";
-import { triggerUpgradeTests } from "./jobs/build/self-hosted-upgrade-tests";
+import { triggerSelfHostedPreview, triggerUpgradeTests } from "./jobs/build/self-hosted-upgrade-tests";
 import { jobConfig } from "./jobs/build/job-config";
 import { typecheckWerftJobs } from "./jobs/build/typecheck-werft-jobs";
 
@@ -59,6 +59,11 @@ async function run(context: any) {
     }
     await typecheckWerftJobs(werft);
     await buildAndPublish(werft, config);
+
+    if (config.withSelfHostedPreview) {
+        await triggerSelfHostedPreview(werft, config, context.Owner);
+        return
+    }
 
     if (!config.withPreview || config.publishRelease) {
         werft.phase("deploy", "not deploying");

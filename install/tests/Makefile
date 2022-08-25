@@ -295,6 +295,7 @@ kots-install: install-kots-cli
 	kubectl kots remove ${app} -n gitpod --force --kubeconfig=${KUBECONFIG} || echo "No kots app existing, Installing"
 	kubectl kots install ${app}/${channel} \
 	--skip-rbac-check ${version-flag} ${preflight-flag} \
+					--wait-duration "10m" \
 					--namespace gitpod --kubeconfig=${KUBECONFIG} \
                     --name gitpod --shared-password gitpod \
 					--license-file ${license-file} \
@@ -304,9 +305,13 @@ kots-install: install-kots-cli
 time_to_sleep_azure := 600 # azure seem to take more time to fullfil DNS propogation
 time_to_sleep := 300
 
+wait_time := 180
+wait_time_azure := 180
+
 delete-cm-setup: sleeptime=$(if $(time_to_sleep_$(cloud)),$(time_to_sleep_$(cloud)),${time_to_sleep})
+delete-cm-setup: waittime=$(if $(wait_time_$(cloud)),$(wait_time_$(cloud)),${wait_time})
 delete-cm-setup:
-	sleep 180 && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep ${sleeptime};
+	sleep ${waittime} && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep ${sleeptime};
 
 gitpod-debug-info:
 	@echo "Gitpod is not ready"
