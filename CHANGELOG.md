@@ -1,6 +1,11 @@
 # Change Log
 
 ## August 2022
+- [installer]: show deprecation warning if using podsecuritypolicies ([#12340](https://github.com/gitpod-io/gitpod/pull/12340)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Limit the rate at which network connections can be made by a workspace ([#11255](https://github.com/gitpod-io/gitpod/pull/11255)) - [@Furisto](https://github.com/Furisto)
+- [installer]: conditionally remove pod security policies ([#12336](https://github.com/gitpod-io/gitpod/pull/12336)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Prevent divide by zero error in workspace info service ([#12315](https://github.com/gitpod-io/gitpod/pull/12315)) - [@Furisto](https://github.com/Furisto), [@utam0k](https://github.com/utam0k)
+- [ssh-gateway] support rsa sha256/sha512 algorithm ([#12288](https://github.com/gitpod-io/gitpod/pull/12288)) - [@iQQBot](https://github.com/iQQBot)
 - Revert "[installer]: remove all podsecuritypolicies" #12313 ([#12313](https://github.com/gitpod-io/gitpod/pull/12313)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - JetBrains IDEs will use the default Java SDK version when there's no explicit configuration for it yet. ([#12163](https://github.com/gitpod-io/gitpod/pull/12163)) - [@felladrin](https://github.com/felladrin)
 - [kots]: give installer same node affinity as ws-daemon ([#12227](https://github.com/gitpod-io/gitpod/pull/12227)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
