@@ -112,7 +112,7 @@ resource "google_container_node_pool" "services" {
     preemptible  = false
     image_type   = "UBUNTU_CONTAINERD"
     disk_type    = "pd-ssd"
-    disk_size_gb = var.disk_size_gb
+    disk_size_gb = var.services_disk_size_gb
     machine_type = var.services_machine_type
     tags         = ["gke-node", "${var.project}-gke"]
     metadata = {
@@ -153,7 +153,7 @@ resource "google_container_node_pool" "workspaces" {
     preemptible  = false
     image_type   = "UBUNTU_CONTAINERD"
     disk_type    = "pd-ssd"
-    disk_size_gb = var.disk_size_gb
+    disk_size_gb = var.workspaces_disk_size_gb
     machine_type = var.workspaces_machine_type
     tags         = ["gke-node", "${var.project}-gke"]
     metadata = {
