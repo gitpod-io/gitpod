@@ -1,8 +1,8 @@
 # the cluster_name should be of length less than 15 characters and surrounded by double quotes
-cluster_name =
+cluster_name = "gitpod"
 
 # a cloudDNS zone and certificate request will be created for this domain; surround the domain name within double quotes
-domain_name =
+domain_name = "your_domain_here.com"
 
 region      = "europe-west1"
 zone        = "europe-west1-d"
