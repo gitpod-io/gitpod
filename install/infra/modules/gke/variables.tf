@@ -56,10 +56,16 @@ variable "max_node_count_services" {
   default     = 4
 }
 
-variable "disk_size_gb" {
+variable "services_disk_size_gb" {
   type        = number
-  description = "Size of the node's disk."
+  description = "Size of the services node's disk."
   default     = 100
+}
+
+variable "workspaces_disk_size_gb" {
+  type        = number
+  description = "Size of the workspace node's disk."
+  default     = 360
 }
 
 variable "credentials" {
