@@ -6,15 +6,16 @@
 
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
+import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 type PendingStripeSubscription = { pendingSince: number };
 
@@ -22,7 +23,6 @@ export default function TeamUsageBasedBilling() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const { currency } = useContext(PaymentContext);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -87,7 +87,7 @@ export default function TeamUsageBasedBilling() {
                 JSON.stringify(pendingSubscription),
             );
             try {
-                await getGitpodService().server.subscribeTeamToStripe(team.id, setupIntentId, currency);
+                await getGitpodService().server.subscribeTeamToStripe(team.id, setupIntentId);
             } catch (error) {
                 console.error("Could not subscribe team to Stripe", error);
                 window.localStorage.removeItem(`pendingStripeSubscriptionForTeam${team.id}`);
@@ -214,7 +214,9 @@ export default function TeamUsageBasedBilling() {
                     </div>
                 )}
             </div>
-            {showBillingSetupModal && <BillingSetupModal onClose={() => setShowBillingSetupModal(false)} />}
+            {showBillingSetupModal && (
+                <BillingSetupModal teamId={team?.id || ""} onClose={() => setShowBillingSetupModal(false)} />
+            )}
             {showUpdateLimitModal && (
                 <UpdateLimitModal
                     currentValue={spendingLimit}
@@ -281,7 +283,7 @@ function UpdateLimitModal(props: {
     );
 }
 
-function BillingSetupModal(props: { onClose: () => void }) {
+function BillingSetupModal(props: { teamId: string; onClose: () => void }) {
     const { isDark } = useContext(ThemeContext);
     const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | undefined>();
     const [stripeSetupIntentClientSecret, setStripeSetupIntentClientSecret] = useState<string | undefined>();
@@ -311,7 +313,7 @@ function BillingSetupModal(props: { onClose: () => void }) {
                             clientSecret: stripeSetupIntentClientSecret,
                         }}
                     >
-                        <CreditCardInputForm />
+                        <CreditCardInputForm teamId={props.teamId} />
                     </Elements>
                 )}
             </div>
@@ -319,9 +321,10 @@ function BillingSetupModal(props: { onClose: () => void }) {
     );
 }
 
-function CreditCardInputForm() {
+function CreditCardInputForm(props: { teamId: string }) {
     const stripe = useStripe();
     const elements = useElements();
+    const { currency, setCurrency } = useContext(PaymentContext);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handleSubmit = async (event: React.FormEvent) => {
@@ -331,6 +334,8 @@ function CreditCardInputForm() {
         }
         setIsLoading(true);
         try {
+            // Create Stripe customer for team & currency (or update currency)
+            await getGitpodService().server.createOrUpdateStripeCustomerForTeam(props.teamId, currency);
             const result = await stripe.confirmSetup({
                 elements,
                 confirmParams: {
@@ -356,7 +361,25 @@ function CreditCardInputForm() {
     return (
         <form className="mt-4 flex-grow flex flex-col" onSubmit={handleSubmit}>
             <PaymentElement />
-            <div className="mt-4 flex-grow flex flex-col justify-end items-end">
+            <div className="mt-4 flex-grow flex justify-end items-end">
+                <div className="flex-grow flex space-x-1">
+                    <span>Currency:</span>
+                    <DropDown
+                        customClasses="w-32"
+                        renderAsLink={true}
+                        activeEntry={currency}
+                        entries={[
+                            {
+                                title: "EUR",
+                                onClick: () => setCurrency("EUR"),
+                            },
+                            {
+                                title: "USD",
+                                onClick: () => setCurrency("USD"),
+                            },
+                        ]}
+                    />
+                </div>
                 <button className="my-0 flex items-center space-x-2" disabled={!stripe || isLoading}>
                     <span>Add Payment Method</span>
                     {isLoading && <Spinner className="h-5 w-5 animate-spin filter brightness-150" />}

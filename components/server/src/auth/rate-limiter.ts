@@ -215,6 +215,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         getStripePublishableKey: { group: "default", points: 1 },
         getStripeSetupIntentClientSecret: { group: "default", points: 1 },
         findStripeSubscriptionIdForTeam: { group: "default", points: 1 },
+        createOrUpdateStripeCustomerForTeam: { group: "default", points: 1 },
         subscribeTeamToStripe: { group: "default", points: 1 },
         getStripePortalUrlForTeam: { group: "default", points: 1 },
         listBilledUsage: { group: "default", points: 1 },
