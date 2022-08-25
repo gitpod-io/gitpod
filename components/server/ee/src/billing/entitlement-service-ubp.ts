@@ -95,8 +95,12 @@ export class EntitlementServiceUBP implements EntitlementService {
         }
     }
 
+    /**
+     * DEPRECATED: With usage-based billing, users can choose exactly how many resources they want to get.
+     * Thus, we no longer need to "force" extra resources via the `userGetsMoreResources` mechanism.
+     */
     async userGetsMoreResources(user: User, date: Date = new Date()): Promise<boolean> {
-        return this.hasPaidSubscription(user, date);
+        return false;
     }
 
     /**
