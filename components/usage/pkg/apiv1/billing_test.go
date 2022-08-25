@@ -5,33 +5,63 @@
 package apiv1
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
 func TestCreditSummaryForTeams(t *testing.T) {
+	ctx := context.Background()
+	dbconn := dbtest.ConnectForTests(t)
+	srv := baseserver.NewForTests(t,
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
+	generator := NewReportGenerator(dbconn, DefaultWorkspacePricer)
+	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, generator, nil))
+	baseserver.StartServerForTests(t, srv)
+
+	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+
+	usageClient := v1.NewUsageServiceClient(conn)
+
 	teamID_A, teamID_B := uuid.New().String(), uuid.New().String()
 	teamAttributionID_A, teamAttributionID_B := db.NewTeamAttributionID(teamID_A), db.NewTeamAttributionID(teamID_B)
 
+	costCenter := &db.CostCenter{
+		ID:            teamAttributionID_A,
+		SpendingLimit: 100,
+	}
+	require.NoError(t, dbconn.Create(costCenter).Error)
+	read := &db.CostCenter{ID: costCenter.ID}
+	tx := dbconn.First(read)
+	require.NoError(t, tx.Error)
+
+	// "creditsUsed" is the only relevant value at the moment for the test scenarios below
+	// "spendingLimit" and "upcomingInvoice" will be relevant for the usage-capping
 	scenarios := []struct {
 		Name              string
 		Sessions          []*v1.BilledSession
 		BillSessionsAfter time.Time
-		Expected          map[string]int64
+		Expected          map[string]map[string]float64
 	}{
 		{
 			Name:              "no instances in report, no summary",
 			BillSessionsAfter: time.Time{},
 			Sessions:          []*v1.BilledSession{},
-			Expected:          map[string]int64{},
+			Expected:          map[string]map[string]float64{},
 		},
 		{
 			Name:              "skips user attributions",
@@ -41,7 +71,7 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					AttributionId: string(db.NewUserAttributionID(uuid.New().String())),
 				},
 			},
-			Expected: map[string]int64{},
+			Expected: map[string]map[string]float64{},
 		},
 		{
 			Name:              "two workspace instances",
@@ -58,9 +88,13 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					Credits:       10,
 				},
 			},
-			Expected: map[string]int64{
+			Expected: map[string]map[string]float64{
 				// total of 2 days runtime, at 10 credits per hour, that's 480 credits
-				teamID_A: 480,
+				teamID_A: {
+					"creditsUsed":     480,
+					"spendingLimit":   float64(read.SpendingLimit),
+					"upcomingInvoice": 500,
+				},
 			},
 		},
 		{
@@ -78,10 +112,18 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					Credits:       (24) * 10,
 				},
 			},
-			Expected: map[string]int64{
+			Expected: map[string]map[string]float64{
 				// total of 2 days runtime, at 10 credits per hour, that's 480 credits
-				teamID_A: 120,
-				teamID_B: 240,
+				teamID_A: {
+					"creditsUsed":     120,
+					"spendingLimit":   float64(read.SpendingLimit),
+					"upcomingInvoice": 120,
+				},
+				teamID_B: {
+					"creditsUsed":     240,
+					"spendingLimit":   float64(read.SpendingLimit),
+					"upcomingInvoice": 240,
+				},
 			},
 		},
 		{
@@ -101,18 +143,25 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					StartTime:     timestamppb.New(time.Now().AddDate(0, 0, -3)),
 				},
 			},
-			Expected: map[string]int64{
-				teamID_A: 120,
+			Expected: map[string]map[string]float64{
+				teamID_A: {
+					"creditsUsed":     120,
+					"spendingLimit":   float64(read.SpendingLimit),
+					"upcomingInvoice": 130,
+				},
 			},
 		},
 	}
 
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
-			svc := NewBillingService(&stripe.Client{}, s.BillSessionsAfter, &gorm.DB{})
-			actual, err := svc.creditSummaryForTeams(s.Sessions)
+			svc := NewBillingService(&stripe.Client{}, s.BillSessionsAfter, &gorm.DB{}, usageClient)
+			actual, err := svc.creditSummaryForTeams(ctx, s.Sessions)
 			require.NoError(t, err)
-			require.Equal(t, s.Expected, actual)
+			require.Equal(t, s.Expected["creditsUsed"], actual["creditsUsed"])
 		})
 	}
+	t.Cleanup(func() {
+		dbconn.Model(&db.CostCenter{}).Delete(costCenter)
+	})
 }

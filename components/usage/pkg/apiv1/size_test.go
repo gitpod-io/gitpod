@@ -23,12 +23,13 @@ func TestServerCanReceiveLargeMessages(t *testing.T) {
 	srv := baseserver.NewForTests(t,
 		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
 	)
-
-	v1.RegisterBillingServiceServer(srv.GRPC(), NewBillingService(&stripe.Client{}, time.Time{}, &gorm.DB{}))
-	baseserver.StartServerForTests(t, srv)
-
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
+
+	usageClient := v1.NewUsageServiceClient(conn)
+
+	v1.RegisterBillingServiceServer(srv.GRPC(), NewBillingService(&stripe.Client{}, time.Time{}, &gorm.DB{}, usageClient))
+	baseserver.StartServerForTests(t, srv)
 
 	client := v1.NewBillingServiceClient(conn)
 

@@ -7,6 +7,7 @@ package stripe
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -60,7 +61,7 @@ type Invoice struct {
 
 // UpdateUsage updates teams' Stripe subscriptions with usage data
 // `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
-func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]int64) error {
+func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]map[string]float64) error {
 	teamIds := make([]string, 0, len(creditsPerTeam))
 	for k := range creditsPerTeam {
 		teamIds = append(teamIds, k)
@@ -79,7 +80,7 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]int6
 			teamID := customer.Metadata["teamId"]
 			log.Infof("Found customer %q for teamId %q", customer.Name, teamID)
 
-			_, err := c.updateUsageForCustomer(ctx, customer, creditsPerTeam[teamID])
+			_, err := c.updateUsageForCustomer(ctx, customer, creditsPerTeam[teamID]["creditsUsed"])
 			if err != nil {
 				log.WithField("customer_id", customer.ID).
 					WithField("customer_name", customer.Name).
@@ -136,7 +137,7 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 			Context: ctx,
 		},
 		SubscriptionItem: stripe.String(subscriptionItemId),
-		Quantity:         stripe.Int64(credits),
+		Quantity:         stripe.Int64(int64(credits)),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to register usage for customer %q on subscription item %s", customer.Name, subscriptionItemId)
@@ -144,7 +145,7 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 
 	return &UsageRecord{
 		SubscriptionItemID: subscriptionItemId,
-		Quantity:           credits,
+		Quantity:           int64(credits),
 	}, nil
 }
 
