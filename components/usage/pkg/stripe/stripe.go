@@ -7,6 +7,7 @@ package stripe
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -49,6 +50,26 @@ type UsageRecord struct {
 	SubscriptionItemID string
 	Quantity           int64
 }
+
+type StripeInvoice struct {
+	ID             string
+	SubscriptionID string
+	Amount         int64
+	Currency       string
+	Credits        int64
+}
+
+type CustomerKind string
+
+const (
+	User CustomerKind = "user"
+	Team              = "team"
+)
+
+var (
+	// ErrorCustomerNotFound is returned when no stripe customer is found for a given user account
+	ErrorCustomerNotFound = errors.New("invalid size")
+)
 
 // UpdateUsage updates teams' Stripe subscriptions with usage data
 // `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
@@ -119,6 +140,44 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 	return &UsageRecord{
 		SubscriptionItemID: subscriptionItemId,
 		Quantity:           credits,
+	}, nil
+}
+
+// GetUpcomingInvoice fetches the upcoming invoice for the given team or user id.
+func (c *Client) GetUpcomingInvoice(ctx context.Context, kind CustomerKind, id string) (*StripeInvoice, error) {
+	query := fmt.Sprintf("metadata['%sId']:'%s'", kind, id)
+	searchParams := &stripe.CustomerSearchParams{
+		SearchParams: stripe.SearchParams{
+			Query:   query,
+			Expand:  []*string{stripe.String("data.subscriptions")},
+			Context: ctx,
+		},
+	}
+	iter := c.sc.Customers.Search(searchParams)
+	if iter.Err() != nil && !iter.Next() {
+		return nil, ErrorCustomerNotFound
+	}
+	customer := iter.Customer()
+	if iter.Next() {
+		return nil, fmt.Errorf("found more than one customer for query %s", query)
+	}
+	invoiceParams := &stripe.InvoiceParams{
+		Customer: stripe.String(customer.ID),
+	}
+	invoice, err := c.sc.Invoices.GetNext(invoiceParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch the upcoming invoice for customer %s", customer.ID)
+	}
+	if len(invoice.Lines.Data) < 1 {
+		return nil, fmt.Errorf("no line items on invoice %s", invoice.ID)
+	}
+
+	return &StripeInvoice{
+		ID:             invoice.ID,
+		SubscriptionID: invoice.Subscription.ID,
+		Amount:         invoice.AmountRemaining,
+		Currency:       string(invoice.Currency),
+		Credits:        invoice.Lines.Data[0].Quantity,
 	}, nil
 }
 

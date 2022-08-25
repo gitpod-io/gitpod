@@ -10,13 +10,20 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
 import { BilledSession, ListBilledUsageRequest, ListBilledUsageResponse } from "./usage_pb";
-import { SetBilledSessionRequest, SetBilledSessionResponse, System } from "./billing_pb";
+import {
+    GetUpcomingInvoiceRequest,
+    GetUpcomingInvoiceResponse,
+    SetBilledSessionRequest,
+    SetBilledSessionResponse,
+    System,
+} from "./billing_pb";
 import { injectable, inject, optional } from "inversify";
 import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import * as grpc from "@grpc/grpc-js";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { BillableSession } from "@gitpod/gitpod-protocol/lib/usage";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 export const UsageServiceClientProvider = Symbol("UsageServiceClientProvider");
 export const BillingServiceClientProvider = Symbol("BillingServiceClientProvider");
@@ -253,5 +260,29 @@ export class PromisifiedBillingServiceClient {
         return {
             interceptors: this.interceptor,
         };
+    }
+
+    public async getUpcomingInvoice(attributionId: AttributionId) {
+        const req = new GetUpcomingInvoiceRequest();
+        if (attributionId.kind === "team") {
+            req.setTeamId(attributionId.teamId);
+        }
+        if (attributionId.kind === "user") {
+            req.setUserId(attributionId.userId);
+        }
+
+        const response = await new Promise<GetUpcomingInvoiceResponse>((resolve, reject) => {
+            this.client.getUpcomingInvoice(
+                req,
+                (err: grpc.ServiceError | null, response: GetUpcomingInvoiceResponse) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve(response);
+                },
+            );
+        });
+        return response;
     }
 }

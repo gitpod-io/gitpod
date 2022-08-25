@@ -68,31 +68,31 @@ export namespace UpdateInvoicesResponse {
     }
 }
 
-export class GetLatestInvoiceRequest extends jspb.Message {
+export class GetUpcomingInvoiceRequest extends jspb.Message {
 
     hasTeamId(): boolean;
     clearTeamId(): void;
     getTeamId(): string;
-    setTeamId(value: string): GetLatestInvoiceRequest;
+    setTeamId(value: string): GetUpcomingInvoiceRequest;
 
     hasUserId(): boolean;
     clearUserId(): void;
     getUserId(): string;
-    setUserId(value: string): GetLatestInvoiceRequest;
+    setUserId(value: string): GetUpcomingInvoiceRequest;
 
-    getIdentifierCase(): GetLatestInvoiceRequest.IdentifierCase;
+    getIdentifierCase(): GetUpcomingInvoiceRequest.IdentifierCase;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): GetLatestInvoiceRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: GetLatestInvoiceRequest): GetLatestInvoiceRequest.AsObject;
+    toObject(includeInstance?: boolean): GetUpcomingInvoiceRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: GetUpcomingInvoiceRequest): GetUpcomingInvoiceRequest.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: GetLatestInvoiceRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): GetLatestInvoiceRequest;
-    static deserializeBinaryFromReader(message: GetLatestInvoiceRequest, reader: jspb.BinaryReader): GetLatestInvoiceRequest;
+    static serializeBinaryToWriter(message: GetUpcomingInvoiceRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetUpcomingInvoiceRequest;
+    static deserializeBinaryFromReader(message: GetUpcomingInvoiceRequest, reader: jspb.BinaryReader): GetUpcomingInvoiceRequest;
 }
 
-export namespace GetLatestInvoiceRequest {
+export namespace GetUpcomingInvoiceRequest {
     export type AsObject = {
         teamId: string,
         userId: string,
@@ -106,29 +106,32 @@ export namespace GetLatestInvoiceRequest {
 
 }
 
-export class GetLatestInvoiceResponse extends jspb.Message {
+export class GetUpcomingInvoiceResponse extends jspb.Message {
     getInvoiceId(): string;
-    setInvoiceId(value: string): GetLatestInvoiceResponse;
+    setInvoiceId(value: string): GetUpcomingInvoiceResponse;
     getCurrency(): string;
-    setCurrency(value: string): GetLatestInvoiceResponse;
+    setCurrency(value: string): GetUpcomingInvoiceResponse;
     getAmount(): number;
-    setAmount(value: number): GetLatestInvoiceResponse;
+    setAmount(value: number): GetUpcomingInvoiceResponse;
+    getCredits(): number;
+    setCredits(value: number): GetUpcomingInvoiceResponse;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): GetLatestInvoiceResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: GetLatestInvoiceResponse): GetLatestInvoiceResponse.AsObject;
+    toObject(includeInstance?: boolean): GetUpcomingInvoiceResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: GetUpcomingInvoiceResponse): GetUpcomingInvoiceResponse.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: GetLatestInvoiceResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): GetLatestInvoiceResponse;
-    static deserializeBinaryFromReader(message: GetLatestInvoiceResponse, reader: jspb.BinaryReader): GetLatestInvoiceResponse;
+    static serializeBinaryToWriter(message: GetUpcomingInvoiceResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetUpcomingInvoiceResponse;
+    static deserializeBinaryFromReader(message: GetUpcomingInvoiceResponse, reader: jspb.BinaryReader): GetUpcomingInvoiceResponse;
 }
 
-export namespace GetLatestInvoiceResponse {
+export namespace GetUpcomingInvoiceResponse {
     export type AsObject = {
         invoiceId: string,
         currency: string,
         amount: number,
+        credits: number,
     }
 }
 

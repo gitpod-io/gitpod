@@ -6,10 +6,11 @@ package server
 
 import (
 	"fmt"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"net"
 	"os"
 	"time"
+
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

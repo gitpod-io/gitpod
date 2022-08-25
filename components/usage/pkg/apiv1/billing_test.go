@@ -5,7 +5,6 @@
 package apiv1
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -116,12 +115,4 @@ func TestCreditSummaryForTeams(t *testing.T) {
 			require.Equal(t, s.Expected, actual)
 		})
 	}
-}
-
-func TestFinalizeInvoice(t *testing.T) {
-	b := BillingService{}
-
-	_, err := b.FinalizeInvoice(context.Background(), &v1.FinalizeInvoiceRequest{})
-
-	require.NoError(t, err)
 }
