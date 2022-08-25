@@ -112,14 +112,14 @@ spec:
           title: Configure additional registry credentials for pulling workspace images
           type: bool
           default: "0"
-          help_text: This is useful when you have base workspace images in private registries other than the above configured ones.
+          help_text: This is useful when you want to use base workspace images in private registries other than the above configured ones or the [default base workspace images stored on Docker Hub](https://github.com/gitpod-io/workspace-images).
 
         - name: reg_docker_config
-          title: Registry credentials
+          title: Private base image registry credentials
           when: '{{repl ConfigOptionEquals "reg_docker_config_enable" "1" }}'
           type: file
           required: true
-          help_text: Docker [config JSON file](https://docs.docker.com/engine/reference/commandline/cli/#sample-configuration-file) with auth credentials used to access private registries, for workspace images.
+          help_text: Docker [config JSON file](https://docs.docker.com/engine/reference/commandline/cli/#sample-configuration-file) with auth credentials used to access private registries used for pulling base workspace images.
 
     - name: database
       title: Database
