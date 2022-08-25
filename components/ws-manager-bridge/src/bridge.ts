@@ -285,11 +285,18 @@ export class WorkspaceManagerBridge implements Disposable {
                 // Do not override!
                 log.error(logContext, 'We received an empty "failed" condition overriding an existing one!', {
                     current: instance.status.conditions.failed,
+                    status,
                 });
-
-                // TODO(gpl) To make ensure we do not break anything big time we keep the unconditional override for now, and observe for some time.
-                instance.status.conditions.failed = status.conditions.failed;
             } else {
+                if (
+                    !!instance.status.conditions.failed &&
+                    instance.status.conditions.failed !== status.conditions.failed
+                ) {
+                    log.info(logContext, 'Overriding previous "failed" condition!', {
+                        previous: instance.status.conditions.failed,
+                        status,
+                    });
+                }
                 instance.status.conditions.failed = status.conditions.failed;
             }
             instance.status.conditions.pullingImages = toBool(status.conditions.pullingImages!);
