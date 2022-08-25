@@ -178,6 +178,15 @@ spec:
                 yq e -i ".containerRegistry.privateBaseImageAllowList += \"docker.io\"" "${CONFIG_FILE}"
               fi
 
+              if [ '{{repl ConfigOptionNotEquals "reg_docker_config" "" }}' = "true" ];
+              then
+                DOCKER_CONFIG='{{repl ConfigOptionData "reg_docker_config" | Base64Encode }}'
+                echo "${DOCKER_CONFIG}" | base64 -d  > /tmp/userconfig.json
+                # Add the registries to the server allowlist
+                yq e -i ".containerRegistry.privateBaseImageAllowList += $(cat /tmp/userconfig.json | jq '.auths' | jq -rc 'keys')" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.privateBaseImageAllowList += \"docker.io\"" "${CONFIG_FILE}"
+              fi
+
               # Output the local registry secret - this is proxy.replicated.com if user hasn't set their own
               echo "{{repl LocalRegistryImagePullSecret }}" | base64 -d > /tmp/kotsregistry.json
 
@@ -355,9 +364,6 @@ spec:
                   "${GITPOD_OBJECTS}/templates/gitpod.yaml" \
                   | base64 -d \
                   > /tmp/currentconfig.json
-
-                DOCKER_CONFIG='{{repl ConfigOptionData "reg_docker_config" | Base64Encode }}'
-                echo "${DOCKER_CONFIG}" | base64 -d  > /tmp/userconfig.json
 
                 export REGISTRY_SECRET=$(jq -s '.[0] * .[1]' /tmp/userconfig.json /tmp/currentconfig.json | base64 -w 0)
 
