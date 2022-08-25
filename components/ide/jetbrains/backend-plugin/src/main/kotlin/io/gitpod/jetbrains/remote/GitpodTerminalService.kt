@@ -7,18 +7,21 @@ package io.gitpod.jetbrains.remote
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.application
+import com.jediterm.terminal.ui.TerminalWidget
+import com.jediterm.terminal.ui.TerminalWidgetListener
 import com.jetbrains.rdserver.terminal.BackendTerminalManager
-import io.gitpod.jetbrains.remote.GitpodManager
 import io.gitpod.supervisor.api.Status
 import io.gitpod.supervisor.api.StatusServiceGrpc
 import io.gitpod.supervisor.api.TerminalOuterClass
 import io.gitpod.supervisor.api.TerminalServiceGrpc
+import io.grpc.StatusRuntimeException
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.TerminalView
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 @Suppress("UnstableApiUsage")
@@ -30,9 +33,12 @@ class GitpodTerminalService(session: ClientProjectSession) {
     private val terminalView = TerminalView.getInstance(session.project)
     private val backendTerminalManager = BackendTerminalManager.getInstance(session.project)
     private val terminalServiceFutureStub = TerminalServiceGrpc.newFutureStub(GitpodManager.supervisorChannel)
+    private val terminalServiceStub = TerminalServiceGrpc.newStub(GitpodManager.supervisorChannel)
     private val statusServiceStub = StatusServiceGrpc.newStub(GitpodManager.supervisorChannel)
 
-    init { start() }
+    init {
+        start()
+    }
 
     private fun start() {
         if (application.isHeadlessEnvironment || hasStarted) return
@@ -49,7 +55,7 @@ class GitpodTerminalService(session: ClientProjectSession) {
         }
     }
 
-    private fun createSharedTerminalAndExecuteCommand(title: String, command: String) {
+    private fun createSharedTerminalAndExecuteCommand(title: String, command: String): ShellTerminalWidget? {
         val registeredTerminals = terminalView.widgets.toMutableList()
 
         backendTerminalManager.createNewSharedTerminal(UUID.randomUUID().toString(), title)
@@ -59,13 +65,19 @@ class GitpodTerminalService(session: ClientProjectSession) {
 
             widget.terminalTitle.change { applicationTitle = title }
 
-            (widget as ShellTerminalWidget).executeCommand(command)
+            val shellTerminalWidget = widget as ShellTerminalWidget
+
+            shellTerminalWidget.executeCommand(command)
+
+            return shellTerminalWidget
         }
+
+        return null
     }
 
     private fun createTerminalsAttachedToTasks(
-        terminals: List<TerminalOuterClass.Terminal>,
-        tasks: List<Status.TaskStatus>
+            terminals: List<TerminalOuterClass.Terminal>,
+            tasks: List<Status.TaskStatus>
     ) {
         if (tasks.isEmpty()) return
 
@@ -93,7 +105,7 @@ class GitpodTerminalService(session: ClientProjectSession) {
             val taskStatusRequest = Status.TasksStatusRequest.newBuilder().setObserve(true).build()
 
             val taskStatusResponseObserver = object :
-                ClientResponseObserver<Status.TasksStatusRequest, Status.TasksStatusResponse> {
+                    ClientResponseObserver<Status.TasksStatusRequest, Status.TasksStatusResponse> {
                 override fun beforeStart(request: ClientCallStreamObserver<Status.TasksStatusRequest>) = Unit
 
                 override fun onNext(response: Status.TasksStatusResponse) {
@@ -120,8 +132,9 @@ class GitpodTerminalService(session: ClientProjectSession) {
             }
 
             thisLogger().error(
-                "gitpod: Got an error while trying to get tasks list from Supervisor. Trying again in on second.",
-                throwable
+                    "gitpod: Got an error while trying to get tasks list from Supervisor. " +
+                            "Trying again in one second.",
+                    throwable
             )
         }
 
@@ -150,8 +163,9 @@ class GitpodTerminalService(session: ClientProjectSession) {
             }
 
             thisLogger().error(
-                "gitpod: Got an error while trying to get terminals list from Supervisor. Trying again in on second.",
-                throwable
+                    "gitpod: Got an error while trying to get terminals list from Supervisor. " +
+                            "Trying again in one second.",
+                    throwable
             )
         }
 
@@ -164,9 +178,105 @@ class GitpodTerminalService(session: ClientProjectSession) {
     }
 
     private fun createAttachedSharedTerminal(supervisorTerminal: TerminalOuterClass.Terminal) {
-        createSharedTerminalAndExecuteCommand(
-            supervisorTerminal.title,
-            "gp tasks attach ${supervisorTerminal.alias}"
-        )
+        val shellTerminalWidget = createSharedTerminalAndExecuteCommand(
+                supervisorTerminal.title,
+                "gp tasks attach ${supervisorTerminal.alias}"
+        ) ?: return
+
+        exitTaskWhenTerminalWidgetGetsClosed(supervisorTerminal, shellTerminalWidget)
+
+        listenForTaskTerminationAndTitleChanges(supervisorTerminal, shellTerminalWidget)
+    }
+
+    private fun listenForTaskTerminationAndTitleChanges(
+            supervisorTerminal: TerminalOuterClass.Terminal,
+            shellTerminalWidget: ShellTerminalWidget
+    ) = application.executeOnPooledThread {
+        var hasOpenSessions = true
+
+        while (hasOpenSessions) {
+            val completableFuture = CompletableFuture<Void>()
+
+            val listenTerminalRequest = TerminalOuterClass.ListenTerminalRequest.newBuilder()
+                    .setAlias(supervisorTerminal.alias)
+                    .build()
+
+            val listenTerminalResponseObserver =
+                    object : ClientResponseObserver<
+                            TerminalOuterClass.ListenTerminalRequest,
+                            TerminalOuterClass.ListenTerminalResponse
+                            > {
+                        override fun beforeStart(
+                                request: ClientCallStreamObserver<TerminalOuterClass.ListenTerminalRequest>
+                        ) {
+                            @Suppress("ObjectLiteralToLambda")
+                            shellTerminalWidget.addListener(object : TerminalWidgetListener {
+                                override fun allSessionsClosed(widget: TerminalWidget) {
+                                    hasOpenSessions = false
+                                    request.cancel("gitpod: Terminal closed on the client.", null)
+                                }
+                            })
+                        }
+
+                        override fun onNext(response: TerminalOuterClass.ListenTerminalResponse) {
+                            when {
+                                response.hasTitle() -> application.invokeLater {
+                                    shellTerminalWidget.terminalTitle.change {
+                                        applicationTitle = response.title
+                                    }
+                                }
+
+                                response.hasExitCode() -> application.invokeLater {
+                                    shellTerminalWidget.close()
+                                }
+                            }
+                        }
+
+                        override fun onCompleted() = Unit
+
+                        override fun onError(throwable: Throwable) {
+                            completableFuture.completeExceptionally(throwable)
+                        }
+                    }
+
+            terminalServiceStub.listen(listenTerminalRequest, listenTerminalResponseObserver)
+
+            try {
+                completableFuture.get()
+            } catch (throwable: Throwable) {
+                if (
+                        throwable is StatusRuntimeException ||
+                        throwable is ExecutionException ||
+                        throwable is InterruptedException
+                ) {
+                    shellTerminalWidget.close()
+                    thisLogger().info("gitpod: Stopped listening to " +
+                            "'${supervisorTerminal.title}' terminal due to an expected exception.")
+                    break
+                }
+
+                thisLogger()
+                        .error("gitpod: Got an error while listening to " +
+                                "'${supervisorTerminal.title}' terminal. Trying again in one second.", throwable)
+            }
+
+            TimeUnit.SECONDS.sleep(1)
+        }
+    }
+
+    private fun exitTaskWhenTerminalWidgetGetsClosed(
+            supervisorTerminal: TerminalOuterClass.Terminal,
+            shellTerminalWidget: ShellTerminalWidget
+    ) {
+        @Suppress("ObjectLiteralToLambda")
+        shellTerminalWidget.addListener(object : TerminalWidgetListener {
+            override fun allSessionsClosed(widget: TerminalWidget) {
+                terminalServiceFutureStub.shutdown(
+                        TerminalOuterClass.ShutdownTerminalRequest.newBuilder()
+                                .setAlias(supervisorTerminal.alias)
+                                .build()
+                )
+            }
+        })
     }
 }
