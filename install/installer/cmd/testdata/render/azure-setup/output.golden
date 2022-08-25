@@ -5264,6 +5264,10 @@ spec:
     port: 8080
     protocol: TCP
     targetPort: 8080
+  - name: metrics
+    port: 9500
+    protocol: TCP
+    targetPort: 9500
   selector:
     app: gitpod
     component: ws-manager
