@@ -1,4 +1,36 @@
 # debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/eks-installer-tests.yaml -a debug=true`
+args:
+- name: subdomain
+  desc: "Subdomain to use. A terraform workspace of same name will be used"
+  required: false
+  default: ""
+- name: channel
+  desc: "Replicated channel to use"
+  required: false
+  default: ""
+- name: replicatedApp
+  desc: "Replicated App to use"
+  required: false
+  default: ""
+- name: version
+  desc: "Version of gitpod to install(in the case of upgrade tests, this is the initial install version and will later get upgraded to latest"
+  required: false
+  default: ""
+- name: skipTests
+  desc: "Set this to true to skip integration tests"
+  required: false
+  default: false
+- name: upgrade
+  desc: "Set this to true to run KOTS upgrade from the specified version to the latest version"
+  required: false
+  default: false
+- name: preview
+  desc: "Setting preview to true creates a self-hosted preview for you to consume"
+  required: false
+  default: true
+- name: deps
+  desc: "Specify if the dependencies(storage, db, registry) should be external or incluster. If unset, a random combination will be chosen. options:[external, incluster]"
+  required: false
 pod:
   serviceAccount: werft
   affinity:
@@ -68,6 +100,16 @@ pod:
         secretKeyRef:
           name: slack-webhook-urls
           key: self_hosted_jobs
+    - name: REPLICATED_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: replicated
+          key: token
+    - name: REPLICATED_APP
+      valueFrom:
+        secretKeyRef:
+          name: replicated
+          key: app
     command:
       - bash
       - -c
@@ -78,7 +120,14 @@ pod:
           sudo chown -R gitpod:gitpod /workspace
           sudo apt update && apt install gettext-base
 
-          export TF_VAR_TEST_ID="$(echo $RANDOM | md5sum | head -c 5; echo)-aws"
+
+          export domain="{{ .Annotations.subdomain }}"
+
+          if [[ "$domain" == "<no value>" ]]; then
+            export TF_VAR_TEST_ID="$(echo $RANDOM | md5sum | head -c 5; echo)-aws"
+          else
+            export TF_VAR_TEST_ID="$domain"
+          fi
 
           (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
           printf '{{ toJson . }}' > context.json
