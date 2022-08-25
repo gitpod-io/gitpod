@@ -25,7 +25,7 @@
       "annotations": {
         "cni.projectcalico.org/podIP": "10.60.9.16/32",
         "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
-        "gitpod.io/disposalStatus": "{\"backupComplete\":true,\"gitStatus\":{\"branch\":\"master\",\"latest_commit\":\"82457ccee52cfec99c3d491063f9fadfdd78607d\"}}",
+        "gitpod.io/disposalStatus": "{\"status\":\"finished\",\"gitStatus\":{\"branch\":\"master\",\"latest_commit\":\"82457ccee52cfec99c3d491063f9fadfdd78607d\"}}",
         "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
         "gitpod/admission": "admit_owner_only",
         "gitpod/contentInitializer": "[redacted]",
