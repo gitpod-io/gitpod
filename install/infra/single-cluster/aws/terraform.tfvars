@@ -16,7 +16,8 @@ vpc_availability_zones = ["eu-west-1c", "eu-west-1b"]
 # You can find the list of UBUNTU AMIs here corresponding to the k8s version and your region via
 # https://cloud-images.ubuntu.com/docs/aws/eks/
 cluster_version = "1.22"
-image_id = "ami-0793b4124359a6ad7"
+
+image_id =
 
 create_external_database = true
 create_external_storage  = true
