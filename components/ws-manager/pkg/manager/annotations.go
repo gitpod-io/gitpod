@@ -168,10 +168,9 @@ func (a *annotation) Apply(dst map[string]string) (needsUpdate bool) {
 
 // workspaceDisposalStatus indicates the status of the workspace diposal
 type workspaceDisposalStatus struct {
-	BackupComplete bool             `json:"backupComplete,omitempty"`
-	BackupFailure  string           `json:"backupFailure,omitempty"`
-	GitStatus      *csapi.GitStatus `json:"gitStatus,omitempty"`
-	Status         DisposalStatus   `json:"status,omitempty"`
+	BackupFailure string           `json:"backupFailure,omitempty"`
+	GitStatus     *csapi.GitStatus `json:"gitStatus,omitempty"`
+	Status        DisposalStatus   `json:"status,omitempty"`
 }
 
 func (m *Manager) markDisposalStatus(ctx context.Context, workspaceID string, disposalStatus *workspaceDisposalStatus) error {

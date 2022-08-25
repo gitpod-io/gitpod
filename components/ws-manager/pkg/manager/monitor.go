@@ -317,7 +317,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		//               to update the disposal status to reflect this timeout situation.
 		if status.Conditions.Timeout != "" && strings.Contains(status.Conditions.Timeout, string(activityBackup)) {
 			span.LogKV("event", "timeout during backup")
-			ds := &workspaceDisposalStatus{Status: DisposalFinished, BackupComplete: true, BackupFailure: status.Conditions.Timeout}
+			ds := &workspaceDisposalStatus{Status: DisposalFinished, BackupFailure: status.Conditions.Timeout}
 			err = manager.markDisposalStatus(ctx, workspaceID, ds)
 			if err != nil {
 				log.WithError(err).Error("was unable to update pod's disposal state - this will break someone's experience")
@@ -1361,9 +1361,8 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 
 	disposalStatus = &workspaceDisposalStatus{
-		Status:         DisposalFinished,
-		BackupComplete: true,
-		GitStatus:      gitStatus,
+		Status:    DisposalFinished,
+		GitStatus: gitStatus,
 	}
 
 	if doBackup || doSnapshot {

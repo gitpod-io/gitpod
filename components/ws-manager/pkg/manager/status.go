@@ -373,8 +373,10 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 				return err
 			}
 
-			if ds.BackupComplete {
-				result.Conditions.FinalBackupComplete = api.WorkspaceConditionBool_TRUE
+			if ds.Status.IsDisposed() {
+				if ds.BackupFailure == "" {
+					result.Conditions.FinalBackupComplete = api.WorkspaceConditionBool_TRUE
+				}
 
 				// Finalizer or not - once the backup is complete we consider the pod stopped.
 				// Once the finalizer is removed, there's no guarantee we see the pod again, because it might be
