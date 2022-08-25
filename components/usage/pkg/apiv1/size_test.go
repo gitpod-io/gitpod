@@ -24,7 +24,7 @@ func TestServerCanReceiveLargeMessages(t *testing.T) {
 		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
 	)
 
-	v1.RegisterBillingServiceServer(srv.GRPC(), NewBillingService(&stripe.Client{}, time.Time{}, &gorm.DB{}))
+	v1.RegisterBillingServiceServer(srv.GRPC(), NewBillingService(&stripe.Client{}, time.Time{}, &gorm.DB{}, v1.NewUsageServiceClient(&grpc.ClientConn{})))
 	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
