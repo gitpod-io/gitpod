@@ -68,12 +68,11 @@ gke-standard-cluster: check-env-cluster-version
 	terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done creating GKE cluster"
 
+ami_id_121 := "ami-060637af2651bc8bb"
 
-ami_id_121 := "ami-0d57fb01036fac543"
+ami_id_122 := "ami-0733d755ed2c97a4d"
 
-ami_id_122 := "ami-0b306cb7e98db98e4"
-
-ami_id_123 := "ami-0eba9c07a41b01c3b" # since there is no official ubuntu image, we do not support this
+ami_id_123 := "ami-05ec8881b9c2740d4"
 
 .PHONY:
 ## eks-standard-cluster: Creates an EKS cluster

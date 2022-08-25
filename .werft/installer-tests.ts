@@ -414,7 +414,7 @@ function randK8sVersion(config: string): string {
             break;
         }
         case "STANDARD_AKS_TEST": {
-            options = ["1.21", "1.22", "1.23"]
+            options = ["1.22", "1.23", "1.24"]
             break;
         }
         case "STANDARD_EKS_TEST": {
