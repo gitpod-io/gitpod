@@ -8,14 +8,12 @@ locals {
   })
   dns_enabled = var.domain_name != null
   name_format = join("-", [
-    "gitpod-test",
-    "%s", # region
+    "test",
     "%s", # name
     local.workspace_name
   ])
   name_format_global = join("-", [
-    "gitpod-test",
-    "%s", # name
+    "sh-test",
     local.workspace_name
   ])
   workspace_name = replace(terraform.workspace, "/[\\W\\-]/", "") # alphanumeric workspace name

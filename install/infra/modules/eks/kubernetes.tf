@@ -64,6 +64,13 @@ resource "aws_security_group" "nodes" {
   }
 }
 
+resource "random_string" "ng_role_suffix" {
+  upper   = false
+  lower   = true
+  special = false
+  length  = 4
+}
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "18.8.1"
@@ -91,6 +98,7 @@ module "eks" {
   eks_managed_node_group_defaults = {
     ami_type                   = "CUSTOM"
     iam_role_attach_cni_policy = true
+    iam_role_use_name_prefix   = false
     ami_id                     = var.image_id
     enable_bootstrap_user_data = true
     vpc_security_group_ids     = [aws_security_group.nodes.id]
@@ -102,6 +110,7 @@ module "eks" {
       enable_bootstrap_user_data = true
       instance_types             = [var.service_machine_type]
       name                       = "service-${var.cluster_name}"
+      iam_role_name              = format("%s-%s", substr("${var.cluster_name}-svc-ng", 0, 58), random_string.ng_role_suffix.result)
       subnet_ids                 = module.vpc.public_subnets
       min_size                   = 1
       max_size                   = 4
@@ -142,6 +151,7 @@ module "eks" {
     Workspaces = {
       instance_types = [var.workspace_machine_type]
       name           = "ws-${var.cluster_name}"
+      iam_role_name  = format("%s-%s", substr("${var.cluster_name}-ws-ng", 0, 58), random_string.ng_role_suffix.result)
       subnet_ids     = module.vpc.public_subnets
       min_size       = 1
       max_size       = 50
