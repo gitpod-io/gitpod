@@ -48,7 +48,7 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
 
         annotation = `${annotation} -a cluster=${phase} -a updateGitHubStatus=gitpod-io/gitpod`
 
-        const testFile: string = ".werft/self-hosted-installer-tests.yaml";
+        const testFile: string = `.werft/${phase}-installer-tests.yaml`;
 
         try {
             exec(
