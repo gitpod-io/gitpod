@@ -149,7 +149,11 @@ module "eks" {
         device_name = "/dev/sda1"
 
         ebs = [{
-          volume_size = 300
+          volume_size           = 360
+          volume_type           = "gp3"
+          throughput            = 1000
+          iops                  = 16000
+          delete_on_termination = true
         }]
       }]
       desired_size               = 2
