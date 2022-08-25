@@ -7,7 +7,6 @@
 import { inject, injectable } from "inversify";
 import Stripe from "stripe";
 import { Team, User } from "@gitpod/gitpod-protocol";
-import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 import { Config } from "../../../src/config";
 
 @injectable()
@@ -50,13 +49,9 @@ export class StripeService {
         return result.data[0];
     }
 
-    async createCustomerForUser(user: User, setupIntentId: string): Promise<Stripe.Customer> {
+    async createCustomerForUser(user: User): Promise<Stripe.Customer> {
         if (await this.findCustomerByUserId(user.id)) {
             throw new Error(`A Stripe customer already exists for user '${user.id}'`);
-        }
-        const setupIntent = await this.getStripe().setupIntents.retrieve(setupIntentId);
-        if (typeof setupIntent.payment_method !== "string") {
-            throw new Error("The provided Stripe SetupIntent does not have a valid payment method attached");
         }
         // Create the customer in Stripe
         const customer = await this.getStripe().customers.create({
@@ -66,23 +61,12 @@ export class StripeService {
                 userId: user.id,
             },
         });
-        // Attach the provided payment method to the customer
-        await this.getStripe().paymentMethods.attach(setupIntent.payment_method, {
-            customer: customer.id,
-        });
-        await this.getStripe().customers.update(customer.id, {
-            invoice_settings: { default_payment_method: setupIntent.payment_method },
-        });
         return customer;
     }
 
-    async createCustomerForTeam(user: User, team: Team, setupIntentId: string): Promise<Stripe.Customer> {
+    async createCustomerForTeam(user: User, team: Team): Promise<Stripe.Customer> {
         if (await this.findCustomerByTeamId(team.id)) {
             throw new Error(`A Stripe customer already exists for team '${team.id}'`);
-        }
-        const setupIntent = await this.getStripe().setupIntents.retrieve(setupIntentId);
-        if (typeof setupIntent.payment_method !== "string") {
-            throw new Error("The provided Stripe SetupIntent does not have a valid payment method attached");
         }
         // Create the customer in Stripe
         const userName = User.getName(user);
@@ -93,6 +77,18 @@ export class StripeService {
                 teamId: team.id,
             },
         });
+        return customer;
+    }
+
+    async setPreferredCurrencyForCustomer(customer: Stripe.Customer, currency: string): Promise<void> {
+        await this.getStripe().customers.update(customer.id, { metadata: { preferredCurrency: currency } });
+    }
+
+    async setDefaultPaymentMethodForCustomer(customer: Stripe.Customer, setupIntentId: string): Promise<void> {
+        const setupIntent = await this.getStripe().setupIntents.retrieve(setupIntentId);
+        if (typeof setupIntent.payment_method !== "string") {
+            throw new Error("The provided Stripe SetupIntent does not have a valid payment method attached");
+        }
         // Attach the provided payment method to the customer
         await this.getStripe().paymentMethods.attach(setupIntent.payment_method, {
             customer: customer.id,
@@ -100,7 +96,6 @@ export class StripeService {
         await this.getStripe().customers.update(customer.id, {
             invoice_settings: { default_payment_method: setupIntent.payment_method },
         });
-        return customer;
     }
 
     async getPortalUrlForTeam(team: Team): Promise<string> {
@@ -129,7 +124,8 @@ export class StripeService {
         await this.getStripe().subscriptions.del(subscriptionId);
     }
 
-    async createSubscriptionForCustomer(customerId: string, currency: Currency): Promise<void> {
+    async createSubscriptionForCustomer(customer: Stripe.Customer): Promise<void> {
+        const currency = customer.metadata.preferredCurrency || "USD";
         const priceId = this.config?.stripeConfig?.usageProductPriceIds[currency];
         if (!priceId) {
             throw new Error(`No Stripe Price ID configured for currency '${currency}'`);
@@ -137,7 +133,7 @@ export class StripeService {
         const startOfNextMonth = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month (YYYY-MM-01)
         startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1); // Add one month
         await this.getStripe().subscriptions.create({
-            customer: customerId,
+            customer: customer.id,
             items: [{ price: priceId }],
             billing_cycle_anchor: Math.round(startOfNextMonth.getTime() / 1000),
         });

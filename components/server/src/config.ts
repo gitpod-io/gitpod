@@ -27,7 +27,7 @@ export type Config = Omit<
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
     stripeSecrets?: { publishableKey: string; secretKey: string };
-    stripeConfig?: { usageProductPriceIds: { EUR: string; USD: string } };
+    stripeConfig?: { usageProductPriceIds: { [currency: string]: string } };
     builtinAuthProvidersConfigured: boolean;
     inactivityPeriodForRepos?: number;
 };

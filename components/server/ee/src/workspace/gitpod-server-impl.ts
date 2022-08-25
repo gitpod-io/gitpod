@@ -80,7 +80,7 @@ import {
     TeamSubscriptionSlot,
     TeamSubscriptionSlotResolved,
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import { Currency, Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import * as pThrottle from "p-throttle";
 import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
 import { FindUserByIdentityStrResult, UserService } from "../../../src/user/user-service";
@@ -2054,22 +2054,37 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    protected defaultSpendingLimit = 100;
-    async subscribeTeamToStripe(
-        ctx: TraceContext,
-        teamId: string,
-        setupIntentId: string,
-        currency: Currency,
-    ): Promise<void> {
-        const user = this.checkAndBlockUser("subscribeUserToStripe");
+    async createOrUpdateStripeCustomerForTeam(ctx: TraceContext, teamId: string, currency: string): Promise<void> {
+        const user = this.checkAndBlockUser("createOrUpdateStripeCustomerForTeam");
         const team = await this.guardTeamOperation(teamId, "update");
         await this.ensureStripeApiIsAllowed({ team });
         try {
             let customer = await this.stripeService.findCustomerByTeamId(team!.id);
             if (!customer) {
-                customer = await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
+                customer = await this.stripeService.createCustomerForTeam(user, team!);
             }
-            await this.stripeService.createSubscriptionForCustomer(customer.id, currency);
+            await this.stripeService.setPreferredCurrencyForCustomer(customer, currency);
+        } catch (error) {
+            log.error(`Failed to update Stripe customer profile for team '${teamId}'`, error);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to update Stripe customer profile for team '${teamId}'`,
+            );
+        }
+    }
+
+    protected defaultSpendingLimit = 100;
+    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
+        this.checkAndBlockUser("subscribeUserToStripe");
+        const team = await this.guardTeamOperation(teamId, "update");
+        await this.ensureStripeApiIsAllowed({ team });
+        try {
+            let customer = await this.stripeService.findCustomerByTeamId(team!.id);
+            if (!customer) {
+                throw new Error(`No Stripe customer profile for team '${team.id}'`);
+            }
+            await this.stripeService.setDefaultPaymentMethodForCustomer(customer, setupIntentId);
+            await this.stripeService.createSubscriptionForCustomer(customer);
 
             const attributionId = AttributionId.render({ kind: "team", teamId });
 
