@@ -49,7 +49,7 @@ func (s *BillingService) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoic
 		return nil, status.Errorf(codes.Internal, "Failed to download usage report with ID: %s", in.GetReportId())
 	}
 
-	credits, err := s.creditSummaryForTeams(report)
+	credits, err := s.creditSummaryForTeams(report, in.GetReportId())
 	if err != nil {
 		log.Log.WithError(err).Errorf("Failed to compute credit summary.")
 		return nil, status.Errorf(codes.InvalidArgument, "failed to compute credit summary")
@@ -100,7 +100,7 @@ func (s *BillingService) GetUpcomingInvoice(ctx context.Context, in *v1.GetUpcom
 	}, nil
 }
 
-func (s *BillingService) creditSummaryForTeams(sessions db.UsageReport) (map[string]int64, error) {
+func (s *BillingService) creditSummaryForTeams(sessions db.UsageReport, reportID string) (map[string]stripe.CreditSummary, error) {
 	creditsPerTeamID := map[string]float64{}
 
 	for _, session := range sessions {
@@ -120,9 +120,12 @@ func (s *BillingService) creditSummaryForTeams(sessions db.UsageReport) (map[str
 		creditsPerTeamID[id] += session.CreditsUsed
 	}
 
-	rounded := map[string]int64{}
+	rounded := map[string]stripe.CreditSummary{}
 	for teamID, credits := range creditsPerTeamID {
-		rounded[teamID] = int64(math.Ceil(credits))
+		rounded[teamID] = stripe.CreditSummary{
+			Credits:  int64(math.Ceil(credits)),
+			ReportID: reportID,
+		}
 	}
 
 	return rounded, nil

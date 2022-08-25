@@ -18,18 +18,19 @@ import (
 func TestCreditSummaryForTeams(t *testing.T) {
 	teamID_A, teamID_B := uuid.New().String(), uuid.New().String()
 	teamAttributionID_A, teamAttributionID_B := db.NewTeamAttributionID(teamID_A), db.NewTeamAttributionID(teamID_B)
+	reportID := "report_id_1"
 
 	scenarios := []struct {
 		Name              string
 		Sessions          db.UsageReport
 		BillSessionsAfter time.Time
-		Expected          map[string]int64
+		Expected          map[string]stripe.CreditSummary
 	}{
 		{
 			Name:              "no instances in report, no summary",
 			BillSessionsAfter: time.Time{},
 			Sessions:          nil,
-			Expected:          map[string]int64{},
+			Expected:          map[string]stripe.CreditSummary{},
 		},
 		{
 			Name:              "skips user attributions",
@@ -39,7 +40,7 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					AttributionID: db.NewUserAttributionID(uuid.New().String()),
 				},
 			},
-			Expected: map[string]int64{},
+			Expected: map[string]stripe.CreditSummary{},
 		},
 		{
 			Name:              "two workspace instances",
@@ -56,9 +57,12 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					CreditsUsed:   10,
 				},
 			},
-			Expected: map[string]int64{
+			Expected: map[string]stripe.CreditSummary{
 				// total of 2 days runtime, at 10 credits per hour, that's 480 credits
-				teamID_A: 480,
+				teamID_A: {
+					Credits:  480,
+					ReportID: reportID,
+				},
 			},
 		},
 		{
@@ -76,10 +80,16 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					CreditsUsed:   (24) * 10,
 				},
 			},
-			Expected: map[string]int64{
+			Expected: map[string]stripe.CreditSummary{
 				// total of 2 days runtime, at 10 credits per hour, that's 480 credits
-				teamID_A: 120,
-				teamID_B: 240,
+				teamID_A: {
+					Credits:  120,
+					ReportID: reportID,
+				},
+				teamID_B: {
+					Credits:  240,
+					ReportID: reportID,
+				},
 			},
 		},
 		{
@@ -99,8 +109,11 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					StartedAt:     time.Now().AddDate(0, 0, -3),
 				},
 			},
-			Expected: map[string]int64{
-				teamID_A: 120,
+			Expected: map[string]stripe.CreditSummary{
+				teamID_A: {
+					Credits:  120,
+					ReportID: reportID,
+				},
 			},
 		},
 	}
@@ -108,7 +121,7 @@ func TestCreditSummaryForTeams(t *testing.T) {
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
 			svc := NewBillingService(&stripe.Client{}, s.BillSessionsAfter, &gorm.DB{})
-			actual, err := svc.creditSummaryForTeams(s.Sessions)
+			actual, err := svc.creditSummaryForTeams(s.Sessions, reportID)
 			require.NoError(t, err)
 			require.Equal(t, s.Expected, actual)
 		})
