@@ -39,7 +39,7 @@ spec:
       containers:
         - name: installer
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-conditional-psp-removal.4"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:release-2022.08.0.0"
           volumeMounts:
             - mountPath: /config-patch
               name: config-patch
@@ -301,6 +301,10 @@ spec:
 
                   # Apply the customization property - if something else is set, this will be ignored
                   yq e -i ".customization = $(echo "${CUSTOMIZATION}" | base64 -d | yq e -o json '.customization' - | jq -rc) // []" "${CONFIG_FILE}"
+
+                  # Delete any old resources
+                  echo "Gitpod: Deleting old Gitpod resources"
+                  kubectl delete all -n {{repl Namespace }} -l app=gitpod,component!=gitpod-installer,component!=gitpod-installer-status --wait || true
                 fi
               else
                 echo "Gitpod: No advanced configuration applied"
@@ -369,9 +373,23 @@ spec:
               echo "Gitpod: Escape any Golang template values"
               sed -i -r 's/(.*\{\{.*)/{{`\1`}}/' "${GITPOD_OBJECTS}/templates/gitpod.yaml"
 
+              # This is to overcome upgrade problems with PodSecurityPolicy removal
+              echo "Gitpod: Delete Minio deployment"
+              kubectl delete deployments.apps --wait -n {{repl Namespace }} minio || true
+
+              echo "Gitpod: Delete RabbitMQ statefulset"
+              kubectl delete statefulsets.apps --wait -n {{repl Namespace }} messagebus || true
+
+              echo "Gitpod: Delete MySQL statefulset"
+              kubectl delete statefulsets.apps --wait -n {{repl Namespace }} mysql || true
+
+              echo "Gitpod: Delete container-registry secret"
+              kubectl delete secret --wait -n {{repl Namespace }} container-registry || true
+              # End of PSP removal fixes
+
               # If certificate secret already exists, set the timeout to 5m
               CERT_SECRET=$(kubectl get secrets -n {{repl Namespace }} https-certificates -o jsonpath='{.metadata.name}' || echo '')
-              HELM_TIMEOUT="5m"
+              HELM_TIMEOUT="10m"
               if [ "${CERT_SECRET}" = "" ]; then
                 HELM_TIMEOUT="1h"
               fi
