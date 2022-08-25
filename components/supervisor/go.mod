@@ -3,7 +3,7 @@ module github.com/gitpod-io/gitpod/supervisor
 go 1.18
 
 require (
-	github.com/Netflix/go-env v0.0.0-20200908232752-3e802f601e28
+	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/creack/pty v1.1.11
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/fsnotify/fsnotify v1.4.9

@@ -78,4 +78,17 @@ message WorkspaceInfoResponse {
 
     // ide_port is the port on which the IDE is to be run
     uint32 ide_port = 14;
+
+    message WorkspaceClass {
+        // id is the id of the workspace class
+        string id = 1;
+
+        // display_name is the display_name of the workspace class
+        string display_name = 2;
+
+        // description is the description of the workspace class
+        string description = 3;
+    }
+    // workspace_class denotes the class of the workspace
+    WorkspaceClass workspace_class = 15;
 }

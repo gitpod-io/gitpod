@@ -744,6 +744,33 @@ public final class Info {
      */
     int getIdePort();
 
+    /**
+     * <pre>
+     * workspace_class denotes the class of the workspace
+     * </pre>
+     *
+     * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+     * @return Whether the workspaceClass field is set.
+     */
+    boolean hasWorkspaceClass();
+    /**
+     * <pre>
+     * workspace_class denotes the class of the workspace
+     * </pre>
+     *
+     * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+     * @return The workspaceClass.
+     */
+    io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass getWorkspaceClass();
+    /**
+     * <pre>
+     * workspace_class denotes the class of the workspace
+     * </pre>
+     *
+     * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+     */
+    io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClassOrBuilder getWorkspaceClassOrBuilder();
+
     public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceLocationCase getWorkspaceLocationCase();
   }
   /**
@@ -895,6 +922,19 @@ public final class Info {
             case 112: {
 
               idePort_ = input.readUInt32();
+              break;
+            }
+            case 122: {
+              io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.Builder subBuilder = null;
+              if (workspaceClass_ != null) {
+                subBuilder = workspaceClass_.toBuilder();
+              }
+              workspaceClass_ = input.readMessage(io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(workspaceClass_);
+                workspaceClass_ = subBuilder.buildPartial();
+              }
+
               break;
             }
             default: {
@@ -2515,6 +2555,984 @@ public final class Info {
 
     }
 
+    public interface WorkspaceClassOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:supervisor.WorkspaceInfoResponse.WorkspaceClass)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <pre>
+       * id is the id of the workspace class
+       * </pre>
+       *
+       * <code>string id = 1;</code>
+       * @return The id.
+       */
+      java.lang.String getId();
+      /**
+       * <pre>
+       * id is the id of the workspace class
+       * </pre>
+       *
+       * <code>string id = 1;</code>
+       * @return The bytes for id.
+       */
+      com.google.protobuf.ByteString
+          getIdBytes();
+
+      /**
+       * <pre>
+       * display_name is the display_name of the workspace class
+       * </pre>
+       *
+       * <code>string display_name = 2;</code>
+       * @return The displayName.
+       */
+      java.lang.String getDisplayName();
+      /**
+       * <pre>
+       * display_name is the display_name of the workspace class
+       * </pre>
+       *
+       * <code>string display_name = 2;</code>
+       * @return The bytes for displayName.
+       */
+      com.google.protobuf.ByteString
+          getDisplayNameBytes();
+
+      /**
+       * <pre>
+       * description is the description of the workspace class
+       * </pre>
+       *
+       * <code>string description = 3;</code>
+       * @return The description.
+       */
+      java.lang.String getDescription();
+      /**
+       * <pre>
+       * description is the description of the workspace class
+       * </pre>
+       *
+       * <code>string description = 3;</code>
+       * @return The bytes for description.
+       */
+      com.google.protobuf.ByteString
+          getDescriptionBytes();
+    }
+    /**
+     * Protobuf type {@code supervisor.WorkspaceInfoResponse.WorkspaceClass}
+     */
+    public static final class WorkspaceClass extends
+        com.google.protobuf.GeneratedMessageV3 implements
+        // @@protoc_insertion_point(message_implements:supervisor.WorkspaceInfoResponse.WorkspaceClass)
+        WorkspaceClassOrBuilder {
+    private static final long serialVersionUID = 0L;
+      // Use WorkspaceClass.newBuilder() to construct.
+      private WorkspaceClass(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+        super(builder);
+      }
+      private WorkspaceClass() {
+        id_ = "";
+        displayName_ = "";
+        description_ = "";
+      }
+
+      @java.lang.Override
+      @SuppressWarnings({"unused"})
+      protected java.lang.Object newInstance(
+          UnusedPrivateParameter unused) {
+        return new WorkspaceClass();
+      }
+
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+        return this.unknownFields;
+      }
+      private WorkspaceClass(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        this();
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+            com.google.protobuf.UnknownFieldSet.newBuilder();
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                java.lang.String s = input.readStringRequireUtf8();
+
+                id_ = s;
+                break;
+              }
+              case 18: {
+                java.lang.String s = input.readStringRequireUtf8();
+
+                displayName_ = s;
+                break;
+              }
+              case 26: {
+                java.lang.String s = input.readStringRequireUtf8();
+
+                description_ = s;
+                break;
+              }
+              default: {
+                if (!parseUnknownField(
+                    input, unknownFields, extensionRegistry, tag)) {
+                  done = true;
+                }
+                break;
+              }
+            }
+          }
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(this);
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(
+              e).setUnfinishedMessage(this);
+        } finally {
+          this.unknownFields = unknownFields.build();
+          makeExtensionsImmutable();
+        }
+      }
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Info.internal_static_supervisor_WorkspaceInfoResponse_WorkspaceClass_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Info.internal_static_supervisor_WorkspaceInfoResponse_WorkspaceClass_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.class, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.Builder.class);
+      }
+
+      public static final int ID_FIELD_NUMBER = 1;
+      private volatile java.lang.Object id_;
+      /**
+       * <pre>
+       * id is the id of the workspace class
+       * </pre>
+       *
+       * <code>string id = 1;</code>
+       * @return The id.
+       */
+      @java.lang.Override
+      public java.lang.String getId() {
+        java.lang.Object ref = id_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          id_ = s;
+          return s;
+        }
+      }
+      /**
+       * <pre>
+       * id is the id of the workspace class
+       * </pre>
+       *
+       * <code>string id = 1;</code>
+       * @return The bytes for id.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getIdBytes() {
+        java.lang.Object ref = id_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          id_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int DISPLAY_NAME_FIELD_NUMBER = 2;
+      private volatile java.lang.Object displayName_;
+      /**
+       * <pre>
+       * display_name is the display_name of the workspace class
+       * </pre>
+       *
+       * <code>string display_name = 2;</code>
+       * @return The displayName.
+       */
+      @java.lang.Override
+      public java.lang.String getDisplayName() {
+        java.lang.Object ref = displayName_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          displayName_ = s;
+          return s;
+        }
+      }
+      /**
+       * <pre>
+       * display_name is the display_name of the workspace class
+       * </pre>
+       *
+       * <code>string display_name = 2;</code>
+       * @return The bytes for displayName.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getDisplayNameBytes() {
+        java.lang.Object ref = displayName_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          displayName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int DESCRIPTION_FIELD_NUMBER = 3;
+      private volatile java.lang.Object description_;
+      /**
+       * <pre>
+       * description is the description of the workspace class
+       * </pre>
+       *
+       * <code>string description = 3;</code>
+       * @return The description.
+       */
+      @java.lang.Override
+      public java.lang.String getDescription() {
+        java.lang.Object ref = description_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          description_ = s;
+          return s;
+        }
+      }
+      /**
+       * <pre>
+       * description is the description of the workspace class
+       * </pre>
+       *
+       * <code>string description = 3;</code>
+       * @return The bytes for description.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getDescriptionBytes() {
+        java.lang.Object ref = description_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          description_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(id_)) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 1, id_);
+        }
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(displayName_)) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 2, displayName_);
+        }
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(description_)) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 3, description_);
+        }
+        unknownFields.writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(id_)) {
+          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, id_);
+        }
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(displayName_)) {
+          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, displayName_);
+        }
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(description_)) {
+          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, description_);
+        }
+        size += unknownFields.getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass)) {
+          return super.equals(obj);
+        }
+        io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass other = (io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass) obj;
+
+        if (!getId()
+            .equals(other.getId())) return false;
+        if (!getDisplayName()
+            .equals(other.getDisplayName())) return false;
+        if (!getDescription()
+            .equals(other.getDescription())) return false;
+        if (!unknownFields.equals(other.unknownFields)) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        hash = (37 * hash) + ID_FIELD_NUMBER;
+        hash = (53 * hash) + getId().hashCode();
+        hash = (37 * hash) + DISPLAY_NAME_FIELD_NUMBER;
+        hash = (53 * hash) + getDisplayName().hashCode();
+        hash = (37 * hash) + DESCRIPTION_FIELD_NUMBER;
+        hash = (53 * hash) + getDescription().hashCode();
+        hash = (29 * hash) + unknownFields.hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code supervisor.WorkspaceInfoResponse.WorkspaceClass}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:supervisor.WorkspaceInfoResponse.WorkspaceClass)
+          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClassOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.supervisor.api.Info.internal_static_supervisor_WorkspaceInfoResponse_WorkspaceClass_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.supervisor.api.Info.internal_static_supervisor_WorkspaceInfoResponse_WorkspaceClass_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.class, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.Builder.class);
+        }
+
+        // Construct using io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+          super(parent);
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessageV3
+                  .alwaysUseFieldBuilders) {
+          }
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          id_ = "";
+
+          displayName_ = "";
+
+          description_ = "";
+
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.supervisor.api.Info.internal_static_supervisor_WorkspaceInfoResponse_WorkspaceClass_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass getDefaultInstanceForType() {
+          return io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass build() {
+          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass buildPartial() {
+          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass result = new io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass(this);
+          result.id_ = id_;
+          result.displayName_ = displayName_;
+          result.description_ = description_;
+          onBuilt();
+          return result;
+        }
+
+        @java.lang.Override
+        public Builder clone() {
+          return super.clone();
+        }
+        @java.lang.Override
+        public Builder setField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            java.lang.Object value) {
+          return super.setField(field, value);
+        }
+        @java.lang.Override
+        public Builder clearField(
+            com.google.protobuf.Descriptors.FieldDescriptor field) {
+          return super.clearField(field);
+        }
+        @java.lang.Override
+        public Builder clearOneof(
+            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+          return super.clearOneof(oneof);
+        }
+        @java.lang.Override
+        public Builder setRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            int index, java.lang.Object value) {
+          return super.setRepeatedField(field, index, value);
+        }
+        @java.lang.Override
+        public Builder addRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            java.lang.Object value) {
+          return super.addRepeatedField(field, value);
+        }
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass) {
+            return mergeFrom((io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass other) {
+          if (other == io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.getDefaultInstance()) return this;
+          if (!other.getId().isEmpty()) {
+            id_ = other.id_;
+            onChanged();
+          }
+          if (!other.getDisplayName().isEmpty()) {
+            displayName_ = other.displayName_;
+            onChanged();
+          }
+          if (!other.getDescription().isEmpty()) {
+            description_ = other.description_;
+            onChanged();
+          }
+          this.mergeUnknownFields(other.unknownFields);
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass parsedMessage = null;
+          try {
+            parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            parsedMessage = (io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass) e.getUnfinishedMessage();
+            throw e.unwrapIOException();
+          } finally {
+            if (parsedMessage != null) {
+              mergeFrom(parsedMessage);
+            }
+          }
+          return this;
+        }
+
+        private java.lang.Object id_ = "";
+        /**
+         * <pre>
+         * id is the id of the workspace class
+         * </pre>
+         *
+         * <code>string id = 1;</code>
+         * @return The id.
+         */
+        public java.lang.String getId() {
+          java.lang.Object ref = id_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            id_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <pre>
+         * id is the id of the workspace class
+         * </pre>
+         *
+         * <code>string id = 1;</code>
+         * @return The bytes for id.
+         */
+        public com.google.protobuf.ByteString
+            getIdBytes() {
+          java.lang.Object ref = id_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            id_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <pre>
+         * id is the id of the workspace class
+         * </pre>
+         *
+         * <code>string id = 1;</code>
+         * @param value The id to set.
+         * @return This builder for chaining.
+         */
+        public Builder setId(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+
+          id_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * id is the id of the workspace class
+         * </pre>
+         *
+         * <code>string id = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearId() {
+
+          id_ = getDefaultInstance().getId();
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * id is the id of the workspace class
+         * </pre>
+         *
+         * <code>string id = 1;</code>
+         * @param value The bytes for id to set.
+         * @return This builder for chaining.
+         */
+        public Builder setIdBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+          id_ = value;
+          onChanged();
+          return this;
+        }
+
+        private java.lang.Object displayName_ = "";
+        /**
+         * <pre>
+         * display_name is the display_name of the workspace class
+         * </pre>
+         *
+         * <code>string display_name = 2;</code>
+         * @return The displayName.
+         */
+        public java.lang.String getDisplayName() {
+          java.lang.Object ref = displayName_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            displayName_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <pre>
+         * display_name is the display_name of the workspace class
+         * </pre>
+         *
+         * <code>string display_name = 2;</code>
+         * @return The bytes for displayName.
+         */
+        public com.google.protobuf.ByteString
+            getDisplayNameBytes() {
+          java.lang.Object ref = displayName_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            displayName_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <pre>
+         * display_name is the display_name of the workspace class
+         * </pre>
+         *
+         * <code>string display_name = 2;</code>
+         * @param value The displayName to set.
+         * @return This builder for chaining.
+         */
+        public Builder setDisplayName(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+
+          displayName_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * display_name is the display_name of the workspace class
+         * </pre>
+         *
+         * <code>string display_name = 2;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearDisplayName() {
+
+          displayName_ = getDefaultInstance().getDisplayName();
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * display_name is the display_name of the workspace class
+         * </pre>
+         *
+         * <code>string display_name = 2;</code>
+         * @param value The bytes for displayName to set.
+         * @return This builder for chaining.
+         */
+        public Builder setDisplayNameBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+          displayName_ = value;
+          onChanged();
+          return this;
+        }
+
+        private java.lang.Object description_ = "";
+        /**
+         * <pre>
+         * description is the description of the workspace class
+         * </pre>
+         *
+         * <code>string description = 3;</code>
+         * @return The description.
+         */
+        public java.lang.String getDescription() {
+          java.lang.Object ref = description_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            description_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <pre>
+         * description is the description of the workspace class
+         * </pre>
+         *
+         * <code>string description = 3;</code>
+         * @return The bytes for description.
+         */
+        public com.google.protobuf.ByteString
+            getDescriptionBytes() {
+          java.lang.Object ref = description_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            description_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <pre>
+         * description is the description of the workspace class
+         * </pre>
+         *
+         * <code>string description = 3;</code>
+         * @param value The description to set.
+         * @return This builder for chaining.
+         */
+        public Builder setDescription(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+
+          description_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * description is the description of the workspace class
+         * </pre>
+         *
+         * <code>string description = 3;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearDescription() {
+
+          description_ = getDefaultInstance().getDescription();
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * description is the description of the workspace class
+         * </pre>
+         *
+         * <code>string description = 3;</code>
+         * @param value The bytes for description to set.
+         * @return This builder for chaining.
+         */
+        public Builder setDescriptionBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+          description_ = value;
+          onChanged();
+          return this;
+        }
+        @java.lang.Override
+        public final Builder setUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return super.setUnknownFields(unknownFields);
+        }
+
+        @java.lang.Override
+        public final Builder mergeUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return super.mergeUnknownFields(unknownFields);
+        }
+
+
+        // @@protoc_insertion_point(builder_scope:supervisor.WorkspaceInfoResponse.WorkspaceClass)
+      }
+
+      // @@protoc_insertion_point(class_scope:supervisor.WorkspaceInfoResponse.WorkspaceClass)
+      private static final io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass();
+      }
+
+      public static io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<WorkspaceClass>
+          PARSER = new com.google.protobuf.AbstractParser<WorkspaceClass>() {
+        @java.lang.Override
+        public WorkspaceClass parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return new WorkspaceClass(input, extensionRegistry);
+        }
+      };
+
+      public static com.google.protobuf.Parser<WorkspaceClass> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<WorkspaceClass> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
     private int workspaceLocationCase_ = 0;
     private java.lang.Object workspaceLocation_;
     public enum WorkspaceLocationCase
@@ -3189,6 +4207,44 @@ public final class Info {
       return idePort_;
     }
 
+    public static final int WORKSPACE_CLASS_FIELD_NUMBER = 15;
+    private io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass workspaceClass_;
+    /**
+     * <pre>
+     * workspace_class denotes the class of the workspace
+     * </pre>
+     *
+     * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+     * @return Whether the workspaceClass field is set.
+     */
+    @java.lang.Override
+    public boolean hasWorkspaceClass() {
+      return workspaceClass_ != null;
+    }
+    /**
+     * <pre>
+     * workspace_class denotes the class of the workspace
+     * </pre>
+     *
+     * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+     * @return The workspaceClass.
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass getWorkspaceClass() {
+      return workspaceClass_ == null ? io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.getDefaultInstance() : workspaceClass_;
+    }
+    /**
+     * <pre>
+     * workspace_class denotes the class of the workspace
+     * </pre>
+     *
+     * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClassOrBuilder getWorkspaceClassOrBuilder() {
+      return getWorkspaceClass();
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -3245,6 +4301,9 @@ public final class Info {
       if (idePort_ != 0) {
         output.writeUInt32(14, idePort_);
       }
+      if (workspaceClass_ != null) {
+        output.writeMessage(15, getWorkspaceClass());
+      }
       unknownFields.writeTo(output);
     }
 
@@ -3299,6 +4358,10 @@ public final class Info {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt32Size(14, idePort_);
       }
+      if (workspaceClass_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(15, getWorkspaceClass());
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -3344,6 +4407,11 @@ public final class Info {
           .equals(other.getIdeAlias())) return false;
       if (getIdePort()
           != other.getIdePort()) return false;
+      if (hasWorkspaceClass() != other.hasWorkspaceClass()) return false;
+      if (hasWorkspaceClass()) {
+        if (!getWorkspaceClass()
+            .equals(other.getWorkspaceClass())) return false;
+      }
       if (!getWorkspaceLocationCase().equals(other.getWorkspaceLocationCase())) return false;
       switch (workspaceLocationCase_) {
         case 4:
@@ -3396,6 +4464,10 @@ public final class Info {
       hash = (53 * hash) + getIdeAlias().hashCode();
       hash = (37 * hash) + IDE_PORT_FIELD_NUMBER;
       hash = (53 * hash) + getIdePort();
+      if (hasWorkspaceClass()) {
+        hash = (37 * hash) + WORKSPACE_CLASS_FIELD_NUMBER;
+        hash = (53 * hash) + getWorkspaceClass().hashCode();
+      }
       switch (workspaceLocationCase_) {
         case 4:
           hash = (37 * hash) + WORKSPACE_LOCATION_FILE_FIELD_NUMBER;
@@ -3573,6 +4645,12 @@ public final class Info {
 
         idePort_ = 0;
 
+        if (workspaceClassBuilder_ == null) {
+          workspaceClass_ = null;
+        } else {
+          workspaceClass_ = null;
+          workspaceClassBuilder_ = null;
+        }
         workspaceLocationCase_ = 0;
         workspaceLocation_ = null;
         return this;
@@ -3627,6 +4705,11 @@ public final class Info {
         result.workspaceUrl_ = workspaceUrl_;
         result.ideAlias_ = ideAlias_;
         result.idePort_ = idePort_;
+        if (workspaceClassBuilder_ == null) {
+          result.workspaceClass_ = workspaceClass_;
+        } else {
+          result.workspaceClass_ = workspaceClassBuilder_.build();
+        }
         result.workspaceLocationCase_ = workspaceLocationCase_;
         onBuilt();
         return result;
@@ -3720,6 +4803,9 @@ public final class Info {
         }
         if (other.getIdePort() != 0) {
           setIdePort(other.getIdePort());
+        }
+        if (other.hasWorkspaceClass()) {
+          mergeWorkspaceClass(other.getWorkspaceClass());
         }
         switch (other.getWorkspaceLocationCase()) {
           case WORKSPACE_LOCATION_FILE: {
@@ -5240,6 +6326,161 @@ public final class Info {
         onChanged();
         return this;
       }
+
+      private io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass workspaceClass_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.Builder, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClassOrBuilder> workspaceClassBuilder_;
+      /**
+       * <pre>
+       * workspace_class denotes the class of the workspace
+       * </pre>
+       *
+       * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+       * @return Whether the workspaceClass field is set.
+       */
+      public boolean hasWorkspaceClass() {
+        return workspaceClassBuilder_ != null || workspaceClass_ != null;
+      }
+      /**
+       * <pre>
+       * workspace_class denotes the class of the workspace
+       * </pre>
+       *
+       * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+       * @return The workspaceClass.
+       */
+      public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass getWorkspaceClass() {
+        if (workspaceClassBuilder_ == null) {
+          return workspaceClass_ == null ? io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.getDefaultInstance() : workspaceClass_;
+        } else {
+          return workspaceClassBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * workspace_class denotes the class of the workspace
+       * </pre>
+       *
+       * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+       */
+      public Builder setWorkspaceClass(io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass value) {
+        if (workspaceClassBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          workspaceClass_ = value;
+          onChanged();
+        } else {
+          workspaceClassBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * workspace_class denotes the class of the workspace
+       * </pre>
+       *
+       * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+       */
+      public Builder setWorkspaceClass(
+          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.Builder builderForValue) {
+        if (workspaceClassBuilder_ == null) {
+          workspaceClass_ = builderForValue.build();
+          onChanged();
+        } else {
+          workspaceClassBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * workspace_class denotes the class of the workspace
+       * </pre>
+       *
+       * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+       */
+      public Builder mergeWorkspaceClass(io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass value) {
+        if (workspaceClassBuilder_ == null) {
+          if (workspaceClass_ != null) {
+            workspaceClass_ =
+              io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.newBuilder(workspaceClass_).mergeFrom(value).buildPartial();
+          } else {
+            workspaceClass_ = value;
+          }
+          onChanged();
+        } else {
+          workspaceClassBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * workspace_class denotes the class of the workspace
+       * </pre>
+       *
+       * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+       */
+      public Builder clearWorkspaceClass() {
+        if (workspaceClassBuilder_ == null) {
+          workspaceClass_ = null;
+          onChanged();
+        } else {
+          workspaceClass_ = null;
+          workspaceClassBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * workspace_class denotes the class of the workspace
+       * </pre>
+       *
+       * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+       */
+      public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.Builder getWorkspaceClassBuilder() {
+
+        onChanged();
+        return getWorkspaceClassFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * workspace_class denotes the class of the workspace
+       * </pre>
+       *
+       * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+       */
+      public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClassOrBuilder getWorkspaceClassOrBuilder() {
+        if (workspaceClassBuilder_ != null) {
+          return workspaceClassBuilder_.getMessageOrBuilder();
+        } else {
+          return workspaceClass_ == null ?
+              io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.getDefaultInstance() : workspaceClass_;
+        }
+      }
+      /**
+       * <pre>
+       * workspace_class denotes the class of the workspace
+       * </pre>
+       *
+       * <code>.supervisor.WorkspaceInfoResponse.WorkspaceClass workspace_class = 15;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.Builder, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClassOrBuilder>
+          getWorkspaceClassFieldBuilder() {
+        if (workspaceClassBuilder_ == null) {
+          workspaceClassBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClass.Builder, io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClassOrBuilder>(
+                  getWorkspaceClass(),
+                  getParentForChildren(),
+                  isClean());
+          workspaceClass_ = null;
+        }
+        return workspaceClassBuilder_;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -5313,6 +6554,11 @@ public final class Info {
   private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_WorkspaceInfoResponse_Repository_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_WorkspaceInfoResponse_WorkspaceClass_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_WorkspaceInfoResponse_WorkspaceClass_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -5323,8 +6569,8 @@ public final class Info {
   static {
     java.lang.String[] descriptorData = {
       "\n\ninfo.proto\022\nsupervisor\032\034google/api/ann" +
-      "otations.proto\"\026\n\024WorkspaceInfoRequest\"\271" +
-      "\004\n\025WorkspaceInfoResponse\022\024\n\014workspace_id" +
+      "otations.proto\"\026\n\024WorkspaceInfoRequest\"\315" +
+      "\005\n\025WorkspaceInfoResponse\022\024\n\014workspace_id" +
       "\030\001 \001(\t\022\023\n\013instance_id\030\002 \001(\t\022\031\n\021checkout_" +
       "location\030\003 \001(\t\022!\n\027workspace_location_fil" +
       "e\030\004 \001(\tH\000\022#\n\031workspace_location_folder\030\005" +
@@ -5335,15 +6581,19 @@ public final class Info {
       "(\0132,.supervisor.WorkspaceInfoResponse.Re" +
       "pository\022\036\n\026workspace_cluster_host\030\013 \001(\t" +
       "\022\025\n\rworkspace_url\030\014 \001(\t\022\021\n\tide_alias\030\r \001" +
-      "(\t\022\020\n\010ide_port\030\016 \001(\r\032+\n\tGitpodAPI\022\020\n\010end" +
-      "point\030\001 \001(\t\022\014\n\004host\030\002 \001(\t\032)\n\nRepository\022" +
-      "\r\n\005owner\030\001 \001(\t\022\014\n\004name\030\002 \001(\tB\024\n\022workspac" +
-      "e_location2\177\n\013InfoService\022p\n\rWorkspaceIn" +
-      "fo\022 .supervisor.WorkspaceInfoRequest\032!.s" +
-      "upervisor.WorkspaceInfoResponse\"\032\202\323\344\223\002\024\022" +
-      "\022/v1/info/workspaceBF\n\030io.gitpod.supervi" +
-      "sor.apiZ*github.com/gitpod-io/gitpod/sup" +
-      "ervisor/apib\006proto3"
+      "(\t\022\020\n\010ide_port\030\016 \001(\r\022I\n\017workspace_class\030" +
+      "\017 \001(\01320.supervisor.WorkspaceInfoResponse" +
+      ".WorkspaceClass\032+\n\tGitpodAPI\022\020\n\010endpoint" +
+      "\030\001 \001(\t\022\014\n\004host\030\002 \001(\t\032)\n\nRepository\022\r\n\005ow" +
+      "ner\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\032G\n\016WorkspaceClas" +
+      "s\022\n\n\002id\030\001 \001(\t\022\024\n\014display_name\030\002 \001(\t\022\023\n\013d" +
+      "escription\030\003 \001(\tB\024\n\022workspace_location2\177" +
+      "\n\013InfoService\022p\n\rWorkspaceInfo\022 .supervi" +
+      "sor.WorkspaceInfoRequest\032!.supervisor.Wo" +
+      "rkspaceInfoResponse\"\032\202\323\344\223\002\024\022\022/v1/info/wo" +
+      "rkspaceBF\n\030io.gitpod.supervisor.apiZ*git" +
+      "hub.com/gitpod-io/gitpod/supervisor/apib" +
+      "\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -5361,7 +6611,7 @@ public final class Info {
     internal_static_supervisor_WorkspaceInfoResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_WorkspaceInfoResponse_descriptor,
-        new java.lang.String[] { "WorkspaceId", "InstanceId", "CheckoutLocation", "WorkspaceLocationFile", "WorkspaceLocationFolder", "UserHome", "GitpodApi", "GitpodHost", "WorkspaceContextUrl", "Repository", "WorkspaceClusterHost", "WorkspaceUrl", "IdeAlias", "IdePort", "WorkspaceLocation", });
+        new java.lang.String[] { "WorkspaceId", "InstanceId", "CheckoutLocation", "WorkspaceLocationFile", "WorkspaceLocationFolder", "UserHome", "GitpodApi", "GitpodHost", "WorkspaceContextUrl", "Repository", "WorkspaceClusterHost", "WorkspaceUrl", "IdeAlias", "IdePort", "WorkspaceClass", "WorkspaceLocation", });
     internal_static_supervisor_WorkspaceInfoResponse_GitpodAPI_descriptor =
       internal_static_supervisor_WorkspaceInfoResponse_descriptor.getNestedTypes().get(0);
     internal_static_supervisor_WorkspaceInfoResponse_GitpodAPI_fieldAccessorTable = new
@@ -5374,6 +6624,12 @@ public final class Info {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_WorkspaceInfoResponse_Repository_descriptor,
         new java.lang.String[] { "Owner", "Name", });
+    internal_static_supervisor_WorkspaceInfoResponse_WorkspaceClass_descriptor =
+      internal_static_supervisor_WorkspaceInfoResponse_descriptor.getNestedTypes().get(2);
+    internal_static_supervisor_WorkspaceInfoResponse_WorkspaceClass_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_WorkspaceInfoResponse_WorkspaceClass_descriptor,
+        new java.lang.String[] { "Id", "DisplayName", "Description", });
     com.google.protobuf.ExtensionRegistry registry =
         com.google.protobuf.ExtensionRegistry.newInstance();
     registry.add(com.google.api.AnnotationsProto.http);

@@ -12,6 +12,7 @@
       "envvars": [
           { "name": "GITPOD_WORKSPACE_CONTEXT", "value": "will make it" },
           { "name": "GITPOD_WORKSPACE_CONTEXT_URL", "value": "will make it" },
+          { "name": "GITPOD_WORKSPACE_CLASS_INFO", "value": "will make it" },
           { "name": "GITPOD_TASKS", "value": "will make it" },
           { "name": "GITPOD_RESOLVED_EXTENSIONS", "value": "will make it" },
           { "name": "GITPOD_EXTERNAL_EXTENSIONS", "value": "will make it" },

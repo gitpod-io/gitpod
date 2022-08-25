@@ -139,6 +139,10 @@
                             "value": "will make it"
                         },
                         {
+                            "name": "GITPOD_WORKSPACE_CLASS_INFO",
+                            "value": "will make it"
+                        },
+                        {
                             "name": "GITPOD_TASKS",
                             "value": "will make it"
                         },
