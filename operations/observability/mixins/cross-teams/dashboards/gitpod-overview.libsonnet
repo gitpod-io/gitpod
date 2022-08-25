@@ -189,7 +189,7 @@ local workspacePhasesGraph =
     min=0,
     repeat='cluster',
   )
-  .addTarget(prometheus.target('gitpod_ws_manager_workspace_phase_total{%(clusterLabel)s=~"$cluster", phase!="RUNNING"}' % _config, legendFormat='{{type}} - {{phase}}'))
+  .addTarget(prometheus.target('sum by (type, phase)(gitpod_ws_manager_workspace_phase_total{%(clusterLabel)s=~"$cluster", phase!="RUNNING"})' % _config, legendFormat='{{type}} - {{phase}}'))
   // Regular use different levels of green
   .addSeriesOverride({ alias: 'REGULAR - INITIALIZING', color: '#C8F2C2' })
   .addSeriesOverride({ alias: 'REGULAR - CREATING', color: '#96D98D' })
