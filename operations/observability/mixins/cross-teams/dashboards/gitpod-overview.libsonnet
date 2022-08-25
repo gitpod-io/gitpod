@@ -170,7 +170,7 @@ local workspaceFailuresGraph =
     |||
       sum(
         rate(gitpod_ws_manager_workspace_stops_total{%(clusterLabel)s=~"$cluster", reason="failed"}[5m])
-      ) by (%(clusterLabel)s, type)
+      ) by (%(clusterLabel)s, type) OR on() vector(0)
     ||| % _config, legendFormat='{{type}}'
   ))
   .addSeriesOverride({ alias: 'REGULAR', color: '#73BF69' })
