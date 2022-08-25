@@ -17,9 +17,7 @@ variable "kubeconfig" {
 
 variable "image_id" {
   type        = string
-  description = "AMI Image ID specific to the region"
-  // latest ubuntu image for 1.22 k8s for eu-west-1 region, refer https://cloud-images.ubuntu.com/docs/aws/eks/
-  default = "ami-0793b4124359a6ad7"
+  description = "AMI Image ID specific to the region, refer https://cloud-images.ubuntu.com/docs/aws/eks/"
 }
 
 variable "service_machine_type" {
