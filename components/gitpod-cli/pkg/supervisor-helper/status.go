@@ -8,13 +8,10 @@ import (
 	"context"
 
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	"google.golang.org/grpc"
 )
 
-func GetWorkspaceResources(ctx context.Context) (*supervisor.ResourcesStatusResponse, error) {
-	conn, err := Dial(ctx)
-	if err != nil {
-		return nil, err
-	}
+func GetWorkspaceResources(ctx context.Context, conn *grpc.ClientConn) (*supervisor.ResourcesStatusResponse, error) {
 	client := supervisor.NewStatusServiceClient(conn)
 	workspaceResources, workspaceResourcesError := client.ResourcesStatus(ctx, &supervisor.ResourcesStatuRequest{})
 

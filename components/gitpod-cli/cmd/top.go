@@ -6,9 +6,11 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
@@ -21,6 +23,69 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 )
+
+var topCmdOpts struct {
+	Json bool
+}
+
+type topData struct {
+	Resources      *supervisor.ResourcesStatusResponse              `json:"resources"`
+	WorkspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass `json:"workspace_class"`
+}
+
+var topCmd = &cobra.Command{
+	Use:   "top",
+	Short: "Display usage of workspace resources (CPU and memory)",
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		conn, err := supervisor_helper.Dial(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer conn.Close()
+
+		data := &topData{}
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			workspaceResources, err := supervisor_helper.GetWorkspaceResources(ctx, conn)
+			if err != nil {
+				log.Fatalf("cannot get workspace resources: %s", err)
+			}
+			data.Resources = workspaceResources
+			wg.Done()
+		}()
+
+		go func() {
+			if wsInfo, err := supervisor.NewInfoServiceClient(conn).WorkspaceInfo(ctx, &supervisor.WorkspaceInfoRequest{}); err == nil {
+				data.WorkspaceClass = wsInfo.WorkspaceClass
+			}
+			wg.Done()
+		}()
+
+		wg.Wait()
+
+		if topCmdOpts.Json {
+			content, _ := json.Marshal(data)
+			fmt.Println(string(content))
+			return
+		}
+		outputWorkspaceClass(data.WorkspaceClass)
+		outputTable(data.Resources)
+	},
+}
+
+func outputWorkspaceClass(workspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass) {
+	if workspaceClass == nil || workspaceClass.DisplayName == "" {
+		return
+	}
+	fmt.Printf("%s: %s\n\n", workspaceClass.DisplayName, workspaceClass.Description)
+}
 
 func outputTable(workspaceResources *supervisor.ResourcesStatusResponse) {
 	table := tablewriter.NewWriter(os.Stdout)
@@ -57,23 +122,8 @@ func getColor(severity api.ResourceStatusSeverity) int {
 	}
 }
 
-var topCmd = &cobra.Command{
-	Use:   "top",
-	Short: "Display usage of workspace resources (CPU and memory)",
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		workspaceResources, err := supervisor_helper.GetWorkspaceResources(ctx)
-		if err != nil {
-			log.Fatalf("cannot get workspace resources: %s", err)
-		}
-
-		outputTable(workspaceResources)
-	},
-}
-
 func init() {
 	topCmd.Flags().BoolVarP(&noColor, "no-color", "", false, "Disable output colorization")
+	topCmd.Flags().BoolVarP(&topCmdOpts.Json, "json", "j", false, "Output in JSON format")
 	rootCmd.AddCommand(topCmd)
 }

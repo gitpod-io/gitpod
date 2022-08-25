@@ -1366,6 +1366,14 @@ export class WorkspaceStarter {
         contextEnv.setValue(JSON.stringify(workspace.context));
         envvars.push(contextEnv);
 
+        const info = this.config.workspaceClasses.find((cls) => cls.id === instance.workspaceClass);
+        if (!!info) {
+            const workspaceClassInfoEnv = new EnvironmentVariable();
+            workspaceClassInfoEnv.setName("GITPOD_WORKSPACE_CLASS_INFO");
+            workspaceClassInfoEnv.setValue(JSON.stringify(info));
+            envvars.push(workspaceClassInfoEnv);
+        }
+
         log.debug("Workspace config", workspace.config);
         const tasks = this.ideService.resolveGitpodTasks(workspace);
         if (tasks.length) {
@@ -1529,6 +1537,7 @@ export class WorkspaceStarter {
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || checkoutLocation);
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
         spec.setClass(instance.workspaceClass!);
+
         if (workspace.type === "regular") {
             spec.setTimeout(this.userService.workspaceTimeoutToDuration(await userTimeoutPromise));
         }

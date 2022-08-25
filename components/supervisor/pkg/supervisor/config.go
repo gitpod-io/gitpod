@@ -173,6 +173,29 @@ func (c IDEConfig) Validate() error {
 	return nil
 }
 
+type WorkspaceClassInfo struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
+	Description string `json:"description"`
+}
+
+func (i *WorkspaceClassInfo) UnmarshalEnvironmentValue(data string) error {
+	var tmp WorkspaceClassInfo
+	if err := json.Unmarshal([]byte(data), &tmp); err != nil {
+		return err
+	}
+	*i = tmp
+	return nil
+}
+
+func (i WorkspaceClassInfo) MarshalEnvironmentValue() (string, error) {
+	bytes, err := json.Marshal(i)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
 // WorkspaceConfig is the workspace specific configuration. This config is drawn exclusively
 // from environment variables.
 type WorkspaceConfig struct {
@@ -181,6 +204,12 @@ type WorkspaceConfig struct {
 
 	// WorkspaceUrl is an URL for which workspace is accessed.
 	WorkspaceUrl string `env:"GITPOD_WORKSPACE_URL"`
+
+	// WorkspaceClass denotes the class of the workspace
+	WorkspaceClass string `env:"GITPOD_WORKSPACE_CLASS"`
+
+	// WorkspaceClassInfo denotes the detail of workspace class
+	WorkspaceClassInfo *WorkspaceClassInfo `env:"GITPOD_WORKSPACE_CLASS_INFO"`
 
 	// IDEPort is the port at which the IDE will need to run on. This is not an IDE config
 	// because Gitpod determines this port, not the IDE.

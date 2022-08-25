@@ -799,6 +799,7 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 				"GITPOD_TASKS",
 				"GITPOD_RESOLVED_EXTENSIONS",
 				"GITPOD_EXTERNAL_EXTENSIONS",
+				"GITPOD_WORKSPACE_CLASS_INFO",
 				"GITPOD_IDE_ALIAS":
 				// these variables are allowed - don't skip them
 			default:

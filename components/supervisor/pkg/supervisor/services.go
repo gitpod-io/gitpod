@@ -651,6 +651,11 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		WorkspaceUrl:         is.cfg.WorkspaceUrl,
 		IdeAlias:             is.cfg.IDEAlias,
 		IdePort:              uint32(is.cfg.IDEPort),
+		WorkspaceClass:       &api.WorkspaceInfoResponse_WorkspaceClass{Id: is.cfg.WorkspaceClass},
+	}
+	if is.cfg.WorkspaceClassInfo != nil {
+		resp.WorkspaceClass.DisplayName = is.cfg.WorkspaceClassInfo.DisplayName
+		resp.WorkspaceClass.Description = is.cfg.WorkspaceClassInfo.Description
 	}
 
 	commit, err := is.cfg.getCommit()
