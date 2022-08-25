@@ -151,8 +151,8 @@ module "eks" {
         ebs = [{
           volume_size           = 360
           volume_type           = "gp3"
-          throughput            = 1000
-          iops                  = 16000
+          throughput            = 500
+          iops                  = 6000
           delete_on_termination = true
         }]
       }]
