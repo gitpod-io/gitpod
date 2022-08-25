@@ -145,6 +145,7 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 
 // GetUpcomingInvoice fetches the upcoming invoice for the given team or user id.
 func (c *Client) GetUpcomingInvoice(ctx context.Context, kind CustomerKind, id string) (*StripeInvoice, error) {
+	log.Infof("Fetching upcoming invoice of customer. (%q %q)", kind, id)
 	query := fmt.Sprintf("metadata['%sId']:'%s'", kind, id)
 	searchParams := &stripe.CustomerSearchParams{
 		SearchParams: stripe.SearchParams{
@@ -154,7 +155,7 @@ func (c *Client) GetUpcomingInvoice(ctx context.Context, kind CustomerKind, id s
 		},
 	}
 	iter := c.sc.Customers.Search(searchParams)
-	if iter.Err() != nil && !iter.Next() {
+	if iter.Err() != nil || !iter.Next() {
 		return nil, ErrorCustomerNotFound
 	}
 	customer := iter.Customer()
