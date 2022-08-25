@@ -148,7 +148,8 @@ const instanceStartsFailedTotal = new prometheusClient.Counter({
     registers: [prometheusClient.register],
 });
 
-export function increaseFailedInstanceStartCounter(reason: "clusterSelectionFailed" | "startOnClusterFailed") {
+export type FailedInstanceStartReason = "clusterSelectionFailed" | "startOnClusterFailed" | "other";
+export function increaseFailedInstanceStartCounter(reason: FailedInstanceStartReason) {
     instanceStartsFailedTotal.inc({ reason });
 }
 

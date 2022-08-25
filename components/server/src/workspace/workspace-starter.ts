@@ -112,7 +112,11 @@ import { WithReferrerContext } from "@gitpod/gitpod-protocol/lib/protocol";
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
-import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
+import {
+    FailedInstanceStartReason,
+    increaseFailedInstanceStartCounter,
+    increaseSuccessfulInstanceStartCounter,
+} from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
 import { IDEService } from "../ide-service";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
@@ -241,6 +245,12 @@ export async function getWorkspaceClassForInstance(
         return workspaceClass;
     } finally {
         span.finish();
+    }
+}
+
+class StartInstanceError extends Error {
+    constructor(public readonly reason: FailedInstanceStartReason, public readonly cause: Error) {
+        super("Starting workspace instance failed: " + cause.message);
     }
 }
 
@@ -414,6 +424,11 @@ export class WorkspaceStarter {
                 forceRebuild,
             );
         } catch (e) {
+            let failedReason: FailedInstanceStartReason = "other";
+            if (e instanceof StartInstanceError) {
+                failedReason = e.reason;
+            }
+            increaseFailedInstanceStartCounter(failedReason);
             TraceContext.setError({ span }, e);
             throw e;
         } finally {
@@ -523,16 +538,14 @@ export class WorkspaceStarter {
                     await new Promise((resolve) => setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000));
                 }
             } catch (err) {
-                increaseFailedInstanceStartCounter("startOnClusterFailed");
                 await this.failInstanceStart({ span }, err, workspace, instance);
-                throw err;
+                throw new StartInstanceError("startOnClusterFailed", err);
             }
 
             if (!resp) {
-                increaseFailedInstanceStartCounter("clusterSelectionFailed");
                 const err = new Error("cannot start a workspace because no workspace clusters are available");
                 await this.failInstanceStart({ span }, err, workspace, instance);
-                throw err;
+                throw new StartInstanceError("clusterSelectionFailed", err);
             }
             increaseSuccessfulInstanceStartCounter(retries);
 
@@ -579,6 +592,11 @@ export class WorkspaceStarter {
                 throw err;
             } else {
                 log.error("error starting instance", err, { instanceId: instance.id });
+                let failedReason: FailedInstanceStartReason = "other";
+                if (err instanceof StartInstanceError) {
+                    failedReason = err.reason;
+                }
+                increaseFailedInstanceStartCounter(failedReason);
             }
 
             return { instanceID: instance.id };
