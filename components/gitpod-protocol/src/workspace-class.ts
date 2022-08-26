@@ -10,5 +10,5 @@ export interface SupportedWorkspaceClass {
     displayName: string;
     description: string;
     powerups: number;
-    isDefault: boolean;
+    isSelected: boolean;
 }
