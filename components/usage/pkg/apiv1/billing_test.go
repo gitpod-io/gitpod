@@ -44,7 +44,14 @@ func TestCreditSummaryForTeams(t *testing.T) {
 		ID:            teamAttributionID_A,
 		SpendingLimit: 100,
 	}
+
+	costCenter2 := &db.CostCenter{
+		ID:            teamAttributionID_B,
+		SpendingLimit: 300,
+	}
+
 	require.NoError(t, dbconn.Create(costCenter).Error)
+	require.NoError(t, dbconn.Create(costCenter2).Error)
 	read := &db.CostCenter{ID: costCenter.ID}
 	tx := dbconn.First(read)
 	require.NoError(t, tx.Error)
@@ -81,11 +88,13 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					// has 1 day and 23 hours of usage
 					AttributionId: string(teamAttributionID_A),
 					Credits:       (24 + 23) * 10,
+					TeamId:        string(teamAttributionID_A),
 				},
 				{
 					// has 1 hour of usage
 					AttributionId: string(teamAttributionID_A),
 					Credits:       10,
+					TeamId:        string(teamAttributionID_A),
 				},
 			},
 			Expected: map[string]map[string]float64{
@@ -105,11 +114,13 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					// has 12 hours of usage
 					AttributionId: string(teamAttributionID_A),
 					Credits:       (12) * 10,
+					TeamId:        string(teamAttributionID_A),
 				},
 				{
 					// has 1 day of usage
 					AttributionId: string(teamAttributionID_B),
 					Credits:       (24) * 10,
+					TeamId:        string(teamAttributionID_B),
 				},
 			},
 			Expected: map[string]map[string]float64{
@@ -135,12 +146,14 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					AttributionId: string(teamAttributionID_A),
 					Credits:       (12) * 10,
 					StartTime:     timestamppb.New(time.Now().AddDate(0, 0, -1)),
+					TeamId:        string(teamAttributionID_A),
 				},
 				{
 					// has 1 day of usage, but started three days ago
 					AttributionId: string(teamAttributionID_A),
 					Credits:       (24) * 10,
 					StartTime:     timestamppb.New(time.Now().AddDate(0, 0, -3)),
+					TeamId:        string(teamAttributionID_A),
 				},
 			},
 			Expected: map[string]map[string]float64{
@@ -155,13 +168,30 @@ func TestCreditSummaryForTeams(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
-			svc := NewBillingService(&stripe.Client{}, s.BillSessionsAfter, &gorm.DB{}, usageClient)
+			svc := NewBillingService(&testStripeClient{}, s.BillSessionsAfter, &gorm.DB{}, usageClient)
 			actual, err := svc.creditSummaryForTeams(ctx, s.Sessions)
 			require.NoError(t, err)
 			require.Equal(t, s.Expected["creditsUsed"], actual["creditsUsed"])
 		})
 	}
 	t.Cleanup(func() {
-		dbconn.Model(&db.CostCenter{}).Delete(costCenter)
+		dbconn.Model(&db.CostCenter{}).Delete(costCenter, costCenter2)
 	})
+}
+
+type testStripeClient struct{}
+
+func (c *testStripeClient) GetUpcomingInvoice(ctx context.Context, kind stripe.CustomerKind, id string) (*stripe.StripeInvoice, error) {
+
+	return &stripe.StripeInvoice{
+		ID:             "invoice.ID",
+		SubscriptionID: "invoice.Subscription.ID",
+		Amount:         100,
+		Currency:       "currency",
+		Credits:        350,
+	}, nil
+}
+
+func (c *testStripeClient) UpdateUsage(ctx context.Context, creditsPerTeam map[string]map[string]float64) error {
+	return nil
 }
