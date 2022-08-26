@@ -68,9 +68,7 @@ werft log phase "build preview environment" "build preview environment"
 # Create a new branch and asks Werft to create a preview environment for it
 ( \
     git checkout -B "${BRANCH}" && \
-    echo "integration test" >> README.md && \
-    git add README.md && \
-    git commit -m "integration test"  && \
+    git commit -m "integration test" --allow-empty  && \
     git push --set-upstream origin "${BRANCH}" && \
     werft run github -a with-preview=true
 ) | werft log slice "build preview environment"
