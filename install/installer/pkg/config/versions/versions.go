@@ -44,16 +44,18 @@ type Components struct {
 		Supervisor       Versioned `json:"supervisor"`
 		Workspacekit     Versioned `json:"workspacekit"`
 		DesktopIdeImages struct {
-			CodeDesktopImage         Versioned `json:"codeDesktop"`
-			CodeDesktopImageInsiders Versioned `json:"codeDesktopInsiders"`
-			IntelliJImage            Versioned `json:"intellij"`
-			IntelliJLatestImage      Versioned `json:"intellijLatest"`
-			GoLandImage              Versioned `json:"goland"`
-			GoLandLatestImage        Versioned `json:"golandLatest"`
-			PyCharmImage             Versioned `json:"pycharm"`
-			PyCharmLatestImage       Versioned `json:"pycharmLatest"`
-			PhpStormImage            Versioned `json:"phpstorm"`
-			PhpStormLatestImage      Versioned `json:"phpstormLatest"`
+			CodeDesktopImage                  Versioned `json:"codeDesktop"`
+			CodeDesktopImageInsiders          Versioned `json:"codeDesktopInsiders"`
+			IntelliJImage                     Versioned `json:"intellij"`
+			IntelliJLatestImage               Versioned `json:"intellijLatest"`
+			GoLandImage                       Versioned `json:"goland"`
+			GoLandLatestImage                 Versioned `json:"golandLatest"`
+			PyCharmImage                      Versioned `json:"pycharm"`
+			PyCharmLatestImage                Versioned `json:"pycharmLatest"`
+			PhpStormImage                     Versioned `json:"phpstorm"`
+			PhpStormLatestImage               Versioned `json:"phpstormLatest"`
+			JetBrainsBackendPluginImage       Versioned `json:"jbBackendPlugin"`
+			JetBrainsBackendPluginLatestImage Versioned `json:"jbBackendPluginLatest"`
 		} `json:"desktopIdeImages"`
 	} `json:"workspace"`
 	WSDaemon struct {

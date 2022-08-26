@@ -33,6 +33,8 @@ type IDEOption struct {
 	Image              string   `json:"image"`
 	LatestImage        string   `json:"latestImage,omitempty"`
 	ResolveImageDigest *bool    `json:"resolveImageDigest,omitempty"`
+	PluginImage        string   `json:"pluginImage,omitempty"`
+	PluginLatestImage  string   `json:"pluginLatestImage,omitempty"`
 }
 
 // IDEClient interface from components/gitpod-protocol/src/ide-protocol.ts

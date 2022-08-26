@@ -13,4 +13,5 @@ const (
 	GoLandDesktopIdeImage       = "ide/goland"
 	PyCharmDesktopIdeImage      = "ide/pycharm"
 	PhpStormDesktopIdeImage     = "ide/phpstorm"
+	JetBrainsBackendPluginImage = "ide/jb-backend-plugin"
 )
