@@ -1,6 +1,8 @@
 # Change Log
 
 ## August 2022
+- Gitpod CLI: New command `gp tasks stop` ([#12116](https://github.com/gitpod-io/gitpod/pull/12116)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- More reliably connect to buildkit during image builds ([#12367](https://github.com/gitpod-io/gitpod/pull/12367)) - [@utam0k](https://github.com/utam0k)
 - [installer]: show deprecation warning if using podsecuritypolicies ([#12340](https://github.com/gitpod-io/gitpod/pull/12340)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Limit the rate at which network connections can be made by a workspace ([#11255](https://github.com/gitpod-io/gitpod/pull/11255)) - [@Furisto](https://github.com/Furisto)
 - [installer]: conditionally remove pod security policies ([#12336](https://github.com/gitpod-io/gitpod/pull/12336)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
