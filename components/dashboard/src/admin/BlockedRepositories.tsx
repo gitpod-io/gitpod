@@ -135,7 +135,7 @@ export function BlockedRepositoriesList(props: Props) {
                         </div>
                         <input
                             type="search"
-                            placeholder="Search by URL Regex"
+                            placeholder="Search by URL RegEx"
                             onKeyDown={(ke) => ke.key === "Enter" && search()}
                             onChange={(v) => {
                                 setQueryTerm(v.target.value.trim());
@@ -148,8 +148,10 @@ export function BlockedRepositoriesList(props: Props) {
                 </div>
             </div>
 
-            <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
-                <span>Search entries by their Repositoriy URL regular expression (RegEx).</span>
+            <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
+                <span>
+                    Search entries by their repository URL <abbr title="regular expression">RegEx</abbr>.
+                </span>
             </Alert>
             <div className="flex flex-col space-y-2">
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
@@ -211,7 +213,7 @@ function AddBlockedRepositoryModal(p: AddBlockedRepositoryModalProps) {
         setError("");
     }, [p.blockedRepository]);
 
-    let save = (): boolean => {
+    const save = (): boolean => {
         const v = ref.current;
         const newError = p.validate(v);
         if (!!newError) {
