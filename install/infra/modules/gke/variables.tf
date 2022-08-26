@@ -65,7 +65,7 @@ variable "services_disk_size_gb" {
 variable "workspaces_disk_size_gb" {
   type        = number
   description = "Size of the workspace node's disk."
-  default     = 360
+  default     = 512
 }
 
 variable "credentials" {
