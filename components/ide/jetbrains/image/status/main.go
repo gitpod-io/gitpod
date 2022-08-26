@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"compress/zlib"
 	"context"
 	"encoding/json"
 	"errors"
@@ -75,27 +76,71 @@ func main() {
 		return
 	}
 
-	repoRoot := wsInfo.GetCheckoutLocation()
-	gitpodConfig, err := parseGitpodConfig(repoRoot)
-	if err != nil {
-		log.WithError(err).Error("failed to parse .gitpod.yml")
+	// JB_BACKEND_DEBUG provides endpoint to upload plugin and restart
+	debug := os.Getenv("JB_BACKEND_DEBUG") != "" || os.Getenv("JB_BACKEND_DEBUG_SUSPEND") != ""
+	// JB_BACKEND_DEBUG_SUSPEND blocks start till a plugin is uploaded
+	debugSuspend := os.Getenv("JB_BACKEND_DEBUG_SUSPEND") != ""
+	debugPort := os.Getenv("JB_BACKEND_DEBUG_PORT")
+	if debugPort == "" {
+		debugPort = "0"
 	}
-	version_2022_1, _ := version.NewVersion("2022.1")
-	if version_2022_1.LessThanOrEqual(backendVersion) {
-		err = installPlugins(repoRoot, gitpodConfig, alias)
-		installPluginsCost := time.Now().Local().Sub(startTime).Milliseconds()
-		if err != nil {
-			log.WithError(err).WithField("cost", installPluginsCost).Error("installing repo plugins: done")
-		} else {
-			log.WithField("cost", installPluginsCost).Info("installing repo plugins: done")
-		}
+	debugSuspendCh := make(chan struct{})
+
+	env := os.Environ()
+	if debugSuspend {
+		env = append(env, "JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:"+debugPort)
+	} else if debug {
+		env = append(env, "JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:"+debugPort)
 	}
 
-	err = configureVMOptions(gitpodConfig, alias)
-	if err != nil {
-		log.WithError(err).Error("failed to configure vmoptions")
+	go run(wsInfo, alias, backendVersion, startTime, debugSuspendCh, env)
+
+	if !debugSuspend {
+		close(debugSuspendCh)
 	}
-	go run(wsInfo, alias)
+
+	if debug {
+		http.HandleFunc("/debug/upload", func(w http.ResponseWriter, r *http.Request) {
+			const pluginDirPath = BackendPath + "/plugin/gitpod-remote"
+			err := os.RemoveAll(pluginDirPath)
+			if err != nil {
+				log.WithError(err).Error("failed to upload plugin")
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			pluginDir, err := os.OpenFile(pluginDirPath, os.O_WRONLY|os.O_CREATE, 0700)
+			if err != nil {
+				log.WithError(err).Error("failed to upload plugin")
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer pluginDir.Close()
+
+			pluginArchive, err := zlib.NewReader(r.Body)
+			if err != nil {
+				log.WithError(err).Error("failed to upload plugin")
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer pluginArchive.Close()
+
+			_, err = io.Copy(pluginDir, pluginArchive)
+			if err != nil {
+				log.WithError(err).Error("failed to upload plugin")
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			if debugSuspend {
+				debugSuspend = false
+				close(debugSuspendCh)
+			} else {
+				// restart
+				os.Exit(0)
+			}
+		})
+	}
 
 	http.HandleFunc("/joinLink", func(w http.ResponseWriter, r *http.Request) {
 		backendPort := r.URL.Query().Get("backendPort")
@@ -243,11 +288,34 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoRespons
 	return nil, errors.New("failed with attempt 10 times")
 }
 
-func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string) {
+func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string, backendVersion *version.Version, startTime time.Time, debugSuspend <-chan struct{}, runEnv []string) {
+	<-debugSuspend
+
+	repoRoot := wsInfo.GetCheckoutLocation()
+	gitpodConfig, err := parseGitpodConfig(repoRoot)
+	if err != nil {
+		log.WithError(err).Error("failed to parse .gitpod.yml")
+	}
+	version_2022_1, _ := version.NewVersion("2022.1")
+	if version_2022_1.LessThanOrEqual(backendVersion) {
+		err = installPlugins(repoRoot, gitpodConfig, alias)
+		installPluginsCost := time.Now().Local().Sub(startTime).Milliseconds()
+		if err != nil {
+			log.WithError(err).WithField("cost", installPluginsCost).Error("installing repo plugins: done")
+		} else {
+			log.WithField("cost", installPluginsCost).Info("installing repo plugins: done")
+		}
+	}
+
+	err = configureVMOptions(gitpodConfig, alias)
+	if err != nil {
+		log.WithError(err).Error("failed to configure vmoptions")
+	}
+
 	var args []string
 	args = append(args, "run")
 	args = append(args, wsInfo.GetCheckoutLocation())
-	cmd := remoteDevServerCmd(args)
+	cmd := remoteDevServerCmd(args, runEnv)
 	cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_BACKEND_KIND="+alias)
 	workspaceUrl, err := url.Parse(wsInfo.WorkspaceUrl)
 	if err == nil {
@@ -261,7 +329,7 @@ func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string) {
 	}
 
 	// Nicely handle SIGTERM sinal
-	go handleSignal(wsInfo.GetCheckoutLocation())
+	go handleSignal()
 
 	if err := cmd.Wait(); err != nil {
 		log.WithError(err).Error("failed to wait")
@@ -270,9 +338,9 @@ func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string) {
 	os.Exit(cmd.ProcessState.ExitCode())
 }
 
-func remoteDevServerCmd(args []string) *exec.Cmd {
+func remoteDevServerCmd(args []string, env []string) *exec.Cmd {
 	cmd := exec.Command(BackendPath+"/bin/remote-dev-server.sh", args...)
-	cmd.Env = os.Environ()
+	cmd.Env = env
 
 	// Set default config and system directories under /workspace to preserve between restarts
 	qualifier := os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
@@ -291,7 +359,7 @@ func remoteDevServerCmd(args []string) *exec.Cmd {
 	return cmd
 }
 
-func handleSignal(projectPath string) {
+func handleSignal() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
@@ -445,7 +513,7 @@ func installPlugins(repoRoot string, config *gitpod.GitpodConfig, alias string) 
 	args = append(args, "installPlugins")
 	args = append(args, repoRoot)
 	args = append(args, plugins...)
-	cmd := remoteDevServerCmd(args)
+	cmd := remoteDevServerCmd(args, os.Environ())
 	cmd.Stdout = io.MultiWriter(w, os.Stdout)
 	installErr := cmd.Run()
 

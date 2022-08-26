@@ -13,9 +13,4 @@ trap "jobs -p | xargs -r kill" SIGINT SIGTERM EXIT
 # by default remote dev already set -Xmx2048m, see /ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh
 unset JAVA_TOOL_OPTIONS
 
-# enable remote debuggign if debug mode is enabled
-if [ "${SUPERVISOR_DEBUG_ENABLE+}" = "true" ]; then
-  export JAVA_TOOL_OPTIONS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:0"
-fi
-
 exec /ide-desktop/status "$@"
