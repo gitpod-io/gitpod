@@ -110,7 +110,11 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		return src, xerrors.Errorf("git initializer gitClone: %w", err)
 	}
 
-	if ws.Chown {
+	defer func() {
+		span.SetTag("Chown", ws.Chown)
+		if !ws.Chown {
+			return
+		}
 		// TODO (aledbf): refactor to remove the need of manual chown
 		args := []string{"-R", "-L", "gitpod", ws.Location}
 		cmd := exec.Command("chown", args...)
@@ -124,7 +128,8 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 			}
 			return
 		}
-	}
+	}()
+
 	if err := ws.realizeCloneTarget(ctx); err != nil {
 		return src, xerrors.Errorf("git initializer clone: %w", err)
 	}
