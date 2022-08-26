@@ -27,7 +27,8 @@ import (
 )
 
 type Config struct {
-	// ControllerSchedule determines how frequently to run the Usage/Billing controller
+	// ControllerSchedule determines how frequently to run the Usage/Billing controller.
+	// When ControllerSchedule is empty, the background controller is disabled.
 	ControllerSchedule string `json:"controllerSchedule,omitempty"`
 
 	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass,omitempty"`
@@ -104,9 +105,28 @@ func Start(cfg Config) error {
 		stripeClient = c
 	}
 
-	schedule, err := time.ParseDuration(cfg.ControllerSchedule)
-	if err != nil {
-		return fmt.Errorf("failed to parse schedule duration: %w", err)
+	if cfg.ControllerSchedule != "" {
+		// we do not run the controller if there is no schedule defined.
+		schedule, err := time.ParseDuration(cfg.ControllerSchedule)
+		if err != nil {
+			return fmt.Errorf("failed to parse schedule duration: %w", err)
+		}
+
+		ctrl, err := controller.New(schedule, controller.NewUsageAndBillingReconciler(
+			v1.NewUsageServiceClient(selfConnection),
+			v1.NewBillingServiceClient(selfConnection),
+		))
+		if err != nil {
+			return fmt.Errorf("failed to initialize usage controller: %w", err)
+		}
+
+		err = ctrl.Start()
+		if err != nil {
+			return fmt.Errorf("failed to start usage controller: %w", err)
+		}
+		defer ctrl.Stop()
+	} else {
+		log.Info("No controller schedule specified, controller will be disabled.")
 	}
 
 	var contentService contentservice.Interface = &contentservice.NoOpClient{}
@@ -115,19 +135,6 @@ func Start(cfg Config) error {
 	}
 
 	reportGenerator := apiv1.NewReportGenerator(conn, pricer)
-	ctrl, err := controller.New(schedule, controller.NewUsageAndBillingReconciler(
-		v1.NewUsageServiceClient(selfConnection),
-		v1.NewBillingServiceClient(selfConnection),
-	))
-	if err != nil {
-		return fmt.Errorf("failed to initialize usage controller: %w", err)
-	}
-
-	err = ctrl.Start()
-	if err != nil {
-		return fmt.Errorf("failed to start usage controller: %w", err)
-	}
-	defer ctrl.Stop()
 
 	err = registerGRPCServices(srv, conn, stripeClient, reportGenerator, contentService, *cfg.BillInstancesAfter)
 	if err != nil {
