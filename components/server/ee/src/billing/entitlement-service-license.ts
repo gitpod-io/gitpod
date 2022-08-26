@@ -30,7 +30,7 @@ export class EntitlementServiceLicense implements EntitlementService {
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
         // if payment is not enabled users can start as many parallel workspaces as they want
-        return { mayStart: true };
+        return {};
     }
 
     async maySetTimeout(user: User, date: Date): Promise<boolean> {

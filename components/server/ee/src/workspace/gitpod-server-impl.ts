@@ -108,7 +108,7 @@ import { UserCounter } from "../user/user-counter";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CachingUsageServiceClientProvider, UsageService } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
-import { EntitlementService } from "../../../src/billing/entitlement-service";
+import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
@@ -256,15 +256,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     ): Promise<void> {
         await super.mayStartWorkspace(ctx, user, runningInstances);
 
-        let result;
+        let result: MayStartWorkspaceResult = {};
         try {
             result = await this.entitlementService.mayStartWorkspace(user, new Date(), runningInstances);
-        } catch (error) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, `Error in Entitlement Service.`);
-        }
-        log.info("mayStartWorkspace", { result });
-        if (result.mayStart) {
-            return; // green light from entitlement service
+            TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
+            TraceContext.setError(ctx, err);
+            return; // we don't want to block workspace starts because of internal errors
         }
         if (!!result.needsVerification) {
             throw new ResponseError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
