@@ -7,7 +7,6 @@ package stripe
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -80,7 +79,7 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]map[
 			teamID := customer.Metadata["teamId"]
 			log.Infof("Found customer %q for teamId %q", customer.Name, teamID)
 
-			_, err := c.updateUsageForCustomer(ctx, customer, creditsPerTeam[teamID]["creditsUsed"])
+			_, err := c.updateUsageForCustomer(ctx, customer, int64(creditsPerTeam[teamID]["creditsUsed"]))
 			if err != nil {
 				log.WithField("customer_id", customer.ID).
 					WithField("customer_name", customer.Name).
