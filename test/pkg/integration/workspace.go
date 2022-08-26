@@ -316,47 +316,51 @@ func WaitForWorkspaceStart(ctx context.Context, instanceID string, api *Componen
 	errStatus := make(chan error)
 
 	go func() {
-		var status *wsmanapi.WorkspaceStatus
+		var s *wsmanapi.WorkspaceStatus
 		defer func() {
-			done <- status
+			done <- s
 			close(done)
 		}()
 		for {
 			resp, err := sub.Recv()
 			if err != nil {
+				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+					continue
+				}
 				errStatus <- xerrors.Errorf("workspace update error: %q", err)
 				return
 			}
-			status = resp.GetStatus()
-			if status == nil {
+
+			s = resp.GetStatus()
+			if s == nil {
 				continue
 			}
-			if status.Id != instanceID {
+			if s.Id != instanceID {
 				continue
 			}
 
 			if cfg.CanFail {
-				if status.Phase == wsmanapi.WorkspacePhase_STOPPING {
+				if s.Phase == wsmanapi.WorkspacePhase_STOPPING {
 					return
 				}
-				if status.Phase == wsmanapi.WorkspacePhase_STOPPED {
+				if s.Phase == wsmanapi.WorkspacePhase_STOPPED {
 					return
 				}
 			} else {
-				if status.Conditions.Failed != "" {
-					errStatus <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
+				if s.Conditions.Failed != "" {
+					errStatus <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, s.Conditions.Failed)
 					return
 				}
-				if status.Phase == wsmanapi.WorkspacePhase_STOPPING {
+				if s.Phase == wsmanapi.WorkspacePhase_STOPPING {
 					errStatus <- xerrors.Errorf("workspace instance %s is stopping", instanceID)
 					return
 				}
-				if status.Phase == wsmanapi.WorkspacePhase_STOPPED {
+				if s.Phase == wsmanapi.WorkspacePhase_STOPPED {
 					errStatus <- xerrors.Errorf("workspace instance %s has stopped", instanceID)
 					return
 				}
 			}
-			if status.Phase != wsmanapi.WorkspacePhase_RUNNING {
+			if s.Phase != wsmanapi.WorkspacePhase_RUNNING {
 				// we're still starting
 				continue
 			}

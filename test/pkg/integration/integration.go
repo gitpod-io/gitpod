@@ -230,7 +230,7 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 
 	var res *rpc.Client
 	var lastError error
-	waitErr := wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+	waitErr := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
 		res, lastError = rpc.DialHTTP("tcp", fmt.Sprintf("localhost:%d", localAgentPort))
 		if lastError != nil {
 			return false, nil
