@@ -22,7 +22,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewBillingService(stripeClient *stripe.Client, billInstancesAfter time.Time, conn *gorm.DB, usageClient v1.UsageServiceClient) *BillingService {
+func NewBillingService(stripeClient StripeClient, billInstancesAfter time.Time, conn *gorm.DB, usageClient v1.UsageServiceClient) *BillingService {
 	return &BillingService{
 		stripeClient:       stripeClient,
 		billInstancesAfter: billInstancesAfter,
@@ -31,9 +31,13 @@ func NewBillingService(stripeClient *stripe.Client, billInstancesAfter time.Time
 	}
 }
 
+type StripeClient interface {
+	GetUpcomingInvoice(ctx context.Context, kind stripe.CustomerKind, id string) (*stripe.StripeInvoice, error)
+	UpdateUsage(ctx context.Context, creditsPerTeam map[string]map[string]float64) error
+}
 type BillingService struct {
 	conn               *gorm.DB
-	stripeClient       *stripe.Client
+	stripeClient       StripeClient
 	billInstancesAfter time.Time
 	usageClient        v1.UsageServiceClient
 	ctx                context.Context
