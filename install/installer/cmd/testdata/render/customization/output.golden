@@ -4498,8 +4498,8 @@ data:
         "procLimit": 0,
         "netlimit": {
           "enabled": false,
-          "connectionsPerMinute": 0,
-          "bucketSize": 0
+          "connectionsPerMinute": 3000,
+          "bucketSize": 1000
         },
         "hosts": {
           "enabled": true,
@@ -6833,7 +6833,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 6504b7d23f02369f2f0d5894e4fed21dd5ec7c1fdf535ef288b6a11ff9cec4f2
+        gitpod.io/checksum_config: 4e24adf25fa6c788ea607f2b6e87d4d46c00cdaa8d3891f50feebde06ac6b4c3
         hello: world
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
