@@ -18,7 +18,6 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_intellij.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/image/download:intellij
       - components/ide/jetbrains/cli:app
@@ -40,7 +39,6 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_intellij.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/image/download:intellij-latest
       - components/ide/jetbrains/cli:app
@@ -63,7 +61,6 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_goland.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/image/download:goland
       - components/ide/jetbrains/cli:app
@@ -85,7 +82,6 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_goland.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/image/download:goland-latest
       - components/ide/jetbrains/cli:app
@@ -108,7 +104,6 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_pycharm.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/image/download:pycharm
       - components/ide/jetbrains/cli:app
@@ -130,7 +125,6 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_pycharm.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/image/download:pycharm-latest
       - components/ide/jetbrains/cli:app
@@ -153,7 +147,6 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_phpstorm.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin-stable
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/image/download:phpstorm
       - components/ide/jetbrains/cli:app
@@ -175,7 +168,6 @@ packages:
       - "startup.sh"
       - "supervisor-ide-config_phpstorm.json"
     deps:
-      - components/ide/jetbrains/backend-plugin:plugin-latest
       - components/ide/jetbrains/image/status:app
       - components/ide/jetbrains/image/download:phpstorm-latest
       - components/ide/jetbrains/cli:app

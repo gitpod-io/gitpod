@@ -78,6 +78,10 @@ components:
         version: test
       pycharmLatest:
         version: test
+      jbBackendPlugin:
+        version: test
+      jbBackendPluginLatest:
+        version: test
       version: test
     dockerUp:
       version: test

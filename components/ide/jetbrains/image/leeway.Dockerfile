@@ -11,7 +11,6 @@ ARG SUPERVISOR_IDE_CONFIG
 COPY --chown=33333:33333 ${SUPERVISOR_IDE_CONFIG} /ide-desktop/supervisor-ide-config.json
 COPY --chown=33333:33333 startup.sh /ide-desktop/
 COPY --chown=33333:33333 components-ide-jetbrains-image-download--${JETBRAINS_DOWNLOAD_QUALIFIER}/backend /ide-desktop/backend
-COPY --chown=33333:33333 components-ide-jetbrains-backend-plugin--plugin-${JETBRAINS_BACKEND_QUALIFIER}/build/gitpod-remote /ide-desktop/backend/plugins/gitpod-remote
 COPY --chown=33333:33333 components-ide-jetbrains-image-status--app/status /ide-desktop
 
 ARG JETBRAINS_BACKEND_QUALIFIER

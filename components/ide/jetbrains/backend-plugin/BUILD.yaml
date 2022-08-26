@@ -1,4 +1,40 @@
 packages:
+  - name: docker
+    type: generic
+    argdeps:
+      - version
+    deps:
+      - :stable
+      - :latest
+  - name: stable
+    type: docker
+    deps:
+      - :plugin-stable
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.jbBackendPlugin
+      buildArgs:
+        JETBRAINS_BACKEND_QUALIFIER: stable
+      image:
+        - ${imageRepoBase}/ide/jb-backend-plugin:commit-${__git_commit}
+  - name: latest
+    type: docker
+    deps:
+      - :plugin-latest
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.jbBackendPluginLatest
+      buildArgs:
+        JETBRAINS_BACKEND_QUALIFIER: latest
+      image:
+        - ${imageRepoBase}/ide/jb-backend-plugin:${version}
+        - ${imageRepoBase}/ide/jb-backend-plugin:commit-${__git_commit}-latest
   - name: plugin-stable
     type: generic
     deps:
@@ -18,7 +54,7 @@ packages:
       commands:
         - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=stable", "runPluginVerifier"]
         - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=stable", "buildPlugin"]
-        - ["unzip", "./build/distributions/gitpod-remote-0.0.1.zip", "-d", "./build"]
+        - ["unzip", "./build/distributions/gitpod-remote.zip", "-d", "./build"]
   - name: plugin-latest
     type: generic
     deps:
@@ -38,4 +74,4 @@ packages:
       commands:
         - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=latest", "runPluginVerifier"]
         - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=latest", "buildPlugin"]
-        - ["unzip", "./build/distributions/gitpod-remote-0.0.1.zip", "-d", "./build"]
+        - ["unzip", "./build/distributions/gitpod-remote.zip", "-d", "./build"]

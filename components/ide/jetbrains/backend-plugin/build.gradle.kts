@@ -23,9 +23,12 @@ plugins {
 }
 
 group = properties("pluginGroup")
-version = properties("version")
+var pluginVersion = properties("pluginVersion")
 
 val environmentName = properties("environmentName")
+if (!environmentName.isNullOrBlank()) {
+    pluginVersion += "-" + environmentName
+}
 
 project(":") {
     kotlin {
@@ -116,5 +119,9 @@ tasks {
 
     runPluginVerifier {
         ideVersions.set(properties("pluginVerifierIdeVersions").split(',').map(String::trim).filter(String::isNotEmpty))
+    }
+
+    patchPluginXml {
+        version.set(pluginVersion)
     }
 }
