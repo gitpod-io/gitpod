@@ -318,6 +318,8 @@ message IDEImage {
     string desktop_ref = 2;
     // supervisor_ref is a reference to an OCI image used as supervisor
     string supervisor_ref = 3;
+    // desktop_plugin_ref is an optional reference to an OCI image used for serving desktop IDE plugin
+    string desktop_plugin_ref = 4;
 }
 
 // WorkspaceSpec is the specification of a workspace at runtime

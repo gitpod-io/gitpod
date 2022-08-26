@@ -176,13 +176,16 @@ export const chooseIDE = (
 ) => {
     const defaultIDEOption = ideOptions.options[ideOptions.defaultIde];
     const defaultIdeImage = useLatest ? defaultIDEOption.latestImage ?? defaultIDEOption.image : defaultIDEOption.image;
-    const data: { desktopIdeImage?: string; ideImage: string } = {
+    const data: { desktopIdeImage?: string; desktopIdePluginImage?: string; ideImage: string } = {
         ideImage: defaultIdeImage,
     };
     const chooseOption = ideOptions.options[ideChoice] ?? defaultIDEOption;
     const isDesktopIde = chooseOption.type === "desktop";
     if (isDesktopIde) {
         data.desktopIdeImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
+        data.desktopIdePluginImage = useLatest
+            ? chooseOption?.pluginLatestImage ?? chooseOption?.pluginImage
+            : chooseOption?.pluginImage;
         if (hasIdeSettingPerm) {
             data.desktopIdeImage = data.desktopIdeImage || ideChoice;
         }
@@ -800,6 +803,7 @@ export class WorkspaceStarter {
                 );
                 configuration.ideImage = choose.ideImage;
                 configuration.desktopIdeImage = choose.desktopIdeImage;
+                configuration.desktopIdePluginImage = choose.desktopIdePluginImage;
             }
 
             const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
@@ -807,6 +811,9 @@ export class WorkspaceStarter {
                 configuration.desktopIdeImage = useLatest
                     ? referrerIde.option.latestImage ?? referrerIde.option.image
                     : referrerIde.option.image;
+                configuration.desktopIdePluginImage = useLatest
+                    ? referrerIde.option.pluginLatestImage ?? referrerIde.option.pluginImage
+                    : referrerIde.option.pluginImage;
                 if (!user.additionalData?.ideSettings) {
                     // A user does not have IDE settings configured yet configure it with a referrer ide as default.
                     const additionalData = user?.additionalData || {};
@@ -1514,6 +1521,7 @@ export class WorkspaceStarter {
         const startWorkspaceSpecIDEImage = new IDEImage();
         startWorkspaceSpecIDEImage.setWebRef(ideImage);
         startWorkspaceSpecIDEImage.setDesktopRef(instance.configuration?.desktopIdeImage || "");
+        startWorkspaceSpecIDEImage.setDesktopPluginRef(instance.configuration?.desktopIdePluginImage || "");
         startWorkspaceSpecIDEImage.setSupervisorRef(instance.configuration?.supervisorImage || "");
         spec.setIdeImage(startWorkspaceSpecIDEImage);
         spec.setDeprecatedIdeImage(ideImage);

@@ -162,6 +162,16 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 	}
 	layerSources = append(layerSources, desktopIdeLayerSource)
 
+	// desktop IDE plugin layer
+	desktopIdePluginRefSource := func(s *api.ImageSpec) (ref string, err error) {
+		return s.GetDesktopIdePluginRef(), nil
+	}
+	desktopIdePluginLayerSource, err := NewSpecMappedImageSource(newResolver, desktopIdePluginRefSource)
+	if err != nil {
+		return nil, err
+	}
+	layerSources = append(layerSources, desktopIdePluginLayerSource)
+
 	// supervisor layer
 	supervisorRefSource := func(s *api.ImageSpec) (ref string, err error) {
 		return s.SupervisorRef, nil

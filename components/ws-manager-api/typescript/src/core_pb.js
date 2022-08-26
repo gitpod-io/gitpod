@@ -5697,7 +5697,8 @@ proto.wsman.IDEImage.toObject = function(includeInstance, msg) {
   var f, obj = {
     webRef: jspb.Message.getFieldWithDefault(msg, 1, ""),
     desktopRef: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    supervisorRef: jspb.Message.getFieldWithDefault(msg, 3, "")
+    supervisorRef: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    desktopPluginRef: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -5746,6 +5747,10 @@ proto.wsman.IDEImage.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {string} */ (reader.readString());
       msg.setSupervisorRef(value);
       break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setDesktopPluginRef(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -5793,6 +5798,13 @@ proto.wsman.IDEImage.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       3,
+      f
+    );
+  }
+  f = message.getDesktopPluginRef();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
       f
     );
   }
@@ -5850,6 +5862,24 @@ proto.wsman.IDEImage.prototype.getSupervisorRef = function() {
  */
 proto.wsman.IDEImage.prototype.setSupervisorRef = function(value) {
   return jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+/**
+ * optional string desktop_plugin_ref = 4;
+ * @return {string}
+ */
+proto.wsman.IDEImage.prototype.getDesktopPluginRef = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.IDEImage} returns this
+ */
+proto.wsman.IDEImage.prototype.setDesktopPluginRef = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 
