@@ -210,7 +210,7 @@ func TestMissingBackup(t *testing.T) {
 						return
 					}
 					if testws.LastStatus.Conditions.Failed == "" {
-						t.Error("restarted workspace did not fail despite missing backup")
+						t.Errorf("restarted workspace did not fail despite missing backup, %v", testws)
 					}
 				})
 			}

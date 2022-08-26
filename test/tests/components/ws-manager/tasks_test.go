@@ -56,8 +56,6 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
-					// t.Parallel()
-
 					addInitTask := func(swr *wsmanapi.StartWorkspaceRequest) error {
 						tasks, err := json.Marshal([]gitpod.TasksItems{test.Task})
 						if err != nil {
@@ -76,7 +74,10 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 					}
 
 					t.Cleanup(func() {
-						_ = integration.DeleteWorkspace(ctx, api, nfo.Req.Id)
+						err = integration.DeleteWorkspace(ctx, api, nfo.Req.Id)
+						if err == nil {
+							_, _ = integration.WaitForWorkspaceStop(ctx, api, nfo.Req.Id)
+						}
 					})
 
 					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.Req.Id))
