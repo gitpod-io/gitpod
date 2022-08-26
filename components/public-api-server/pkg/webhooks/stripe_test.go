@@ -5,11 +5,13 @@
 package webhooks
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
-	"io"
+	"github.com/stripe/stripe-go/v72/webhook"
 	"net/http"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
@@ -25,6 +27,10 @@ const (
 	customerCreatedEventType  = "customer.created"
 )
 
+const (
+	testWebhookSecret = "whsec_random_secret"
+)
+
 func TestWebhookAcceptsPostRequests(t *testing.T) {
 	scenarios := []struct {
 		HttpMethod         string
@@ -36,11 +42,11 @@ func TestWebhookAcceptsPostRequests(t *testing.T) {
 		},
 		{
 			HttpMethod:         http.MethodGet,
-			ExpectedStatusCode: http.StatusBadRequest,
+			ExpectedStatusCode: http.StatusMethodNotAllowed,
 		},
 		{
 			HttpMethod:         http.MethodPut,
-			ExpectedStatusCode: http.StatusBadRequest,
+			ExpectedStatusCode: http.StatusMethodNotAllowed,
 		},
 	}
 
@@ -52,8 +58,10 @@ func TestWebhookAcceptsPostRequests(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.HttpMethod, func(t *testing.T) {
-			req, err := http.NewRequest(scenario.HttpMethod, url, payload)
+			req, err := http.NewRequest(scenario.HttpMethod, url, bytes.NewReader(payload))
 			require.NoError(t, err)
+
+			req.Header.Set("Stripe-Signature", generateHeader(payload, testWebhookSecret))
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
@@ -89,8 +97,11 @@ func TestWebhookIgnoresIrrelevantEvents(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.EventType, func(t *testing.T) {
 			payload := payloadForStripeEvent(t, scenario.EventType)
-			req, err := http.NewRequest(http.MethodPost, url, payload)
+
+			req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
 			require.NoError(t, err)
+
+			req.Header.Set("Stripe-Signature", generateHeader(payload, testWebhookSecret))
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
@@ -113,8 +124,10 @@ func TestWebhookInvokesFinalizeInvoiceRPC(t *testing.T) {
 	url := fmt.Sprintf("%s%s", srv.HTTPAddress(), "/webhook")
 
 	payload := payloadForStripeEvent(t, invoiceFinalizedEventType)
-	req, err := http.NewRequest(http.MethodPost, url, payload)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
 	require.NoError(t, err)
+
+	req.Header.Set("Stripe-Signature", generateHeader(payload, testWebhookSecret))
 
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -129,18 +142,18 @@ func baseServerWithStripeWebhook(t *testing.T, billingService billingservice.Int
 	)
 	baseserver.StartServerForTests(t, srv)
 
-	srv.HTTPMux().Handle("/webhook", NewStripeWebhookHandler(billingService))
+	srv.HTTPMux().Handle("/webhook", NewStripeWebhookHandler(billingService, testWebhookSecret))
 
 	return srv
 }
 
-func payloadForStripeEvent(t *testing.T, eventType string) io.Reader {
+func payloadForStripeEvent(t *testing.T, eventType string) []byte {
 	t.Helper()
 
 	if eventType != invoiceFinalizedEventType {
-		return strings.NewReader(`{}`)
+		return []byte(`{}`)
 	}
-	return strings.NewReader(`
+	return []byte(`
 {
   "data": {
     "object": {
@@ -150,4 +163,10 @@ func payloadForStripeEvent(t *testing.T, eventType string) io.Reader {
   "type": "invoice.finalized"
 }
 `)
+}
+
+func generateHeader(payload []byte, secret string) string {
+	now := time.Now()
+	signature := webhook.ComputeSignature(now, payload, secret)
+	return fmt.Sprintf("t=%d,%s=%s", now.Unix(), "v1", hex.EncodeToString(signature))
 }

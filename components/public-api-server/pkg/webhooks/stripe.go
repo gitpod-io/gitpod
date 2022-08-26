@@ -5,40 +5,53 @@
 package webhooks
 
 import (
-	"encoding/json"
-	"net/http"
-
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
-	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/webhook"
+	"io"
+	"net/http"
 )
 
+const maxBodyBytes = int64(65536)
+
 type webhookHandler struct {
-	billingService billingservice.Interface
+	billingService         billingservice.Interface
+	stripeWebhookSignature string
 }
 
-func NewStripeWebhookHandler(billingService billingservice.Interface) *webhookHandler {
-	return &webhookHandler{billingService: billingService}
+func NewStripeWebhookHandler(billingService billingservice.Interface, stripeWebhookSignature string) *webhookHandler {
+	return &webhookHandler{
+		billingService:         billingService,
+		stripeWebhookSignature: stripeWebhookSignature,
+	}
 }
 
 func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	const maxBodyBytes = int64(65536)
-
 	if req.Method != http.MethodPost {
 		log.Errorf("Bad HTTP method: %s", req.Method)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	stripeSignature := req.Header.Get("Stripe-Signature")
+	if stripeSignature == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	// TODO: verify webhook signature.
-	// Conditional on there being a secret configured.
-
 	req.Body = http.MaxBytesReader(w, req.Body, maxBodyBytes)
 
-	event := stripe.Event{}
-	err := json.NewDecoder(req.Body).Decode(&event)
+	payload, err := io.ReadAll(req.Body)
 	if err != nil {
-		log.WithError(err).Error("Stripe webhook error while parsing event payload")
+		log.WithError(err).Error("Failed to read payload body.")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// https://stripe.com/docs/webhooks/signatures#verify-official-libraries
+	event, err := webhook.ConstructEvent(payload, req.Header.Get("Stripe-Signature"), h.stripeWebhookSignature)
+	if err != nil {
+		log.WithError(err).Error("Failed to verify webhook signature.")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
