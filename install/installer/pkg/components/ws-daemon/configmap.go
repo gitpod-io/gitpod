@@ -135,6 +135,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			CPULimit:  cpuLimitConfig,
 			IOLimit:   ioLimitConfig,
 			ProcLimit: procLimit,
+			NetLimit:  networkLimitConfig,
 			Hosts: hosts.Config{
 				Enabled:       true,
 				NodeHostsFile: "/mnt/hosts",
