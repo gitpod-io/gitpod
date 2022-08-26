@@ -32,15 +32,16 @@ func NewBillingService(stripeClient StripeClient, billInstancesAfter time.Time, 
 }
 
 type StripeClient interface {
-	GetUpcomingInvoice(ctx context.Context, kind stripe.CustomerKind, id string) (*stripe.StripeInvoice, error)
+	GetUpcomingInvoice(ctx context.Context, customerID string) (*stripe.Invoice, error)
 	UpdateUsage(ctx context.Context, creditsPerTeam map[string]map[string]float64) error
+	GetCustomerByTeamID(ctx context.Context, teamID string) (*stripesdk.Customer, error)
+	GetCustomerByUserID(ctx context.Context, userID string) (*stripesdk.Customer, error)
 }
 type BillingService struct {
 	conn               *gorm.DB
 	stripeClient       StripeClient
 	billInstancesAfter time.Time
 	usageClient        v1.UsageServiceClient
-	ctx                context.Context
 
 	v1.UnimplementedBillingServiceServer
 }

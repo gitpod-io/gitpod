@@ -16,6 +16,7 @@ import (
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	stripesdk "github.com/stripe/stripe-go/v72"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -181,9 +182,8 @@ func TestCreditSummaryForTeams(t *testing.T) {
 
 type testStripeClient struct{}
 
-func (c *testStripeClient) GetUpcomingInvoice(ctx context.Context, kind stripe.CustomerKind, id string) (*stripe.StripeInvoice, error) {
-
-	return &stripe.StripeInvoice{
+func (c *testStripeClient) GetUpcomingInvoice(ctx context.Context, id string) (*stripe.Invoice, error) {
+	return &stripe.Invoice{
 		ID:             "invoice.ID",
 		SubscriptionID: "invoice.Subscription.ID",
 		Amount:         100,
@@ -194,4 +194,12 @@ func (c *testStripeClient) GetUpcomingInvoice(ctx context.Context, kind stripe.C
 
 func (c *testStripeClient) UpdateUsage(ctx context.Context, creditsPerTeam map[string]map[string]float64) error {
 	return nil
+}
+
+func (c *testStripeClient) GetCustomerByTeamID(ctx context.Context, teamID string) (*stripesdk.Customer, error) {
+	return &stripesdk.Customer{}, nil
+}
+
+func (c *testStripeClient) GetCustomerByUserID(ctx context.Context, userID string) (*stripesdk.Customer, error) {
+	return &stripesdk.Customer{}, nil
 }
