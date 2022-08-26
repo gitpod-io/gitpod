@@ -48,24 +48,19 @@ export class EntitlementServiceImpl implements EntitlementService {
                 };
             }
             const billingMode = await this.billingModes.getBillingModeForUser(user, date);
-            let result;
             switch (billingMode.mode) {
                 case "none":
-                    result = await this.license.mayStartWorkspace(user, date, runningInstances);
-                    break;
+                    return this.license.mayStartWorkspace(user, date, runningInstances);
                 case "chargebee":
-                    result = await this.chargebee.mayStartWorkspace(user, date, runningInstances);
-                    break;
+                    return this.chargebee.mayStartWorkspace(user, date, runningInstances);
                 case "usage-based":
-                    result = await this.ubp.mayStartWorkspace(user, date, runningInstances);
-                    break;
+                    return this.ubp.mayStartWorkspace(user, date, runningInstances);
                 default:
                     throw new Error("Unsupported billing mode: " + (billingMode as any).mode); // safety net
             }
-            return result;
         } catch (err) {
             log.error({ userId: user.id }, "EntitlementService error: mayStartWorkspace", err);
-            throw err;
+            return {}; // When there is an EntitlementService error, we never want to break workspace starts
         }
     }
 

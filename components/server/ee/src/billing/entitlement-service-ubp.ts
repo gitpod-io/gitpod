@@ -57,9 +57,7 @@ export class EntitlementServiceUBP implements EntitlementService {
             this.checkSpendingLimitReached(user, date),
             hasHitParallelWorkspaceLimit(),
         ]);
-        const result = !spendingLimitReachedOnCostCenter && !hitParallelWorkspaceLimit;
         return {
-            mayStart: result,
             spendingLimitReachedOnCostCenter,
             hitParallelWorkspaceLimit,
         };
