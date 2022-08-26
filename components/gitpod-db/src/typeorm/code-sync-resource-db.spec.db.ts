@@ -23,7 +23,7 @@ export class CodeSyncResourceDBSpec {
     }
 
     async after(): Promise<void> {
-        await this.db.delete(this.userId, () => Promise.resolve());
+        await this.db.deleteSettingsSyncResources(this.userId, () => Promise.resolve());
     }
 
     @test()
@@ -120,7 +120,13 @@ export class CodeSyncResourceDBSpec {
     async roundRobinInsert(): Promise<void> {
         const kind = "machines";
         const expectation: string[] = [];
-        const doInsert = async (rev: string, oldRevs: string[]) => {
+        const doInsert = async (newRev: string, oldRevs?: string[]) => {
+            expectation.unshift(newRev);
+
+            if (!oldRevs) {
+                return;
+            }
+
             for (let rev of oldRevs) {
                 await this.db.deleteResource(this.userId, kind, rev, async () => {});
             }
@@ -134,23 +140,23 @@ export class CodeSyncResourceDBSpec {
 
         await assertResources();
 
-        expectation.unshift((await this.db.insert(this.userId, kind, doInsert, { revLimit }))!);
-        expectation.unshift((await this.db.insert(this.userId, kind, doInsert, { revLimit }))!);
-        expectation.unshift((await this.db.insert(this.userId, kind, doInsert, { revLimit }))!);
+        await this.db.insert(this.userId, kind, doInsert, { revLimit, overwrite: true });
+        await this.db.insert(this.userId, kind, doInsert, { revLimit, overwrite: true });
+        await this.db.insert(this.userId, kind, doInsert, { revLimit, overwrite: true });
         await assertResources();
 
-        expectation.unshift((await this.db.insert(this.userId, kind, doInsert, { revLimit }))!);
+        await this.db.insert(this.userId, kind, doInsert, { revLimit, overwrite: true });
         expectation.length = revLimit;
         await assertResources();
 
-        expectation.unshift((await this.db.insert(this.userId, kind, doInsert, { revLimit }))!);
-        expectation.unshift((await this.db.insert(this.userId, kind, doInsert, { revLimit }))!);
+        await this.db.insert(this.userId, kind, doInsert, { revLimit, overwrite: true });
+        await this.db.insert(this.userId, kind, doInsert, { revLimit, overwrite: true });
         expectation.length = revLimit;
         await assertResources();
 
-        expectation.unshift((await this.db.insert(this.userId, kind, doInsert, { revLimit }))!);
-        expectation.unshift((await this.db.insert(this.userId, kind, doInsert, { revLimit }))!);
-        expectation.unshift((await this.db.insert(this.userId, kind, doInsert, { revLimit }))!);
+        await this.db.insert(this.userId, kind, doInsert, { revLimit, overwrite: true });
+        await this.db.insert(this.userId, kind, doInsert, { revLimit, overwrite: true });
+        await this.db.insert(this.userId, kind, doInsert, { revLimit, overwrite: true });
         expectation.length = revLimit;
         await assertResources();
     }

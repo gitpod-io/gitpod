@@ -49,9 +49,16 @@ export type CodeSyncConfig = Partial<{
     };
 }>;
 
-const objectPrefix = "code-sync/";
+function getNamePrefix(resource: ServerResource) {
+    if (resource === "editSessions") {
+        return "edit-sessions/";
+    } else {
+        return "code-sync/";
+    }
+}
+
 function toObjectName(resource: ServerResource, rev: string): string {
-    return objectPrefix + resource + "/" + rev;
+    return getNamePrefix(resource) + resource + "/" + rev;
 }
 
 const fromTheiaRev = "from-theia";
@@ -249,10 +256,11 @@ export class CodeSyncService {
                     resourceKey === "machines"
                         ? 1
                         : config.resources?.[resourceKey]?.revLimit || config?.revLimit || defaultRevLimit;
+                const isEditSessionsResource = resourceKey === "editSessions";
                 const userId = req.user.id;
                 const contentType = req.headers["content-type"] || "*/*";
-                let oldRevList: string[] = [];
-                const rev = await this.db.insert(
+                let oldRevList: string[] | undefined;
+                const newRev = await this.db.insert(
                     userId,
                     resourceKey,
                     async (rev, oldRevs) => {
@@ -282,15 +290,19 @@ export class CodeSyncService {
                         }
                         oldRevList = oldRevs;
                     },
-                    { latestRev, revLimit },
+                    { latestRev, revLimit, overwrite: !isEditSessionsResource },
                 );
-                // sync delete old revs from storage
-                this.deleteObjects(userId, resourceKey, oldRevList).catch((e) => {});
-                if (!rev) {
-                    res.sendStatus(412);
+                if (oldRevList && oldRevList.length > 0) {
+                    // sync delete old revs from storage
+                    Promise.allSettled(oldRevList.map((rev) => this.deleteResource(userId, resourceKey, rev))).catch(
+                        () => {},
+                    );
+                }
+                if (!newRev) {
+                    res.sendStatus(isEditSessionsResource ? 400 : 412);
                     return;
                 }
-                res.setHeader("etag", rev);
+                res.setHeader("etag", newRev);
                 res.sendStatus(200);
                 return;
             },
@@ -300,11 +312,13 @@ export class CodeSyncService {
                 res.sendStatus(204);
                 return;
             }
+
+            // This endpoint is used to delete settings-sync data only
             const userId = req.user.id;
-            await this.db.delete(userId, async () => {
+            await this.db.deleteSettingsSyncResources(userId, async () => {
                 const request = new DeleteRequest();
                 request.setOwnerId(userId);
-                request.setPrefix(objectPrefix);
+                request.setPrefix(getNamePrefix("machines"));
                 try {
                     const blobsClient = this.blobsProvider.getDefault();
                     await util.promisify(blobsClient.delete.bind(blobsClient))(request);
@@ -316,6 +330,24 @@ export class CodeSyncService {
 
             return;
         });
+        router.delete("/v1/resource/:resource/:ref?", async (req, res) => {
+            if (!User.is(req.user)) {
+                res.sendStatus(204);
+                return;
+            }
+
+            // This endpoint is used to delete edit sessions data only
+            const { resource, ref } = req.params;
+            if (resource !== "editSessions") {
+                res.sendStatus(400);
+                return;
+            }
+
+            const userId = req.user.id;
+            await this.deleteResource(userId, resource, ref);
+            res.sendStatus(200);
+        });
+
         return router;
     }
 
@@ -355,32 +387,35 @@ export class CodeSyncService {
         return JSON.stringify(extensions);
     }
 
-    protected async deleteObjects(userId: string, resourceKey: ServerResource, revs: string[]) {
-        const tasks = revs.map((rev) =>
-            this.db
-                .deleteResource(userId, resourceKey, rev, async (rev: string) => {
-                    const obj = toObjectName(resourceKey, rev);
-                    try {
-                        const request = new DeleteRequest();
-                        request.setOwnerId(userId);
-                        request.setExact(obj);
-                        const blobsClient = this.blobsProvider.getDefault();
-                        await util.promisify<DeleteRequest, DeleteResponse>(blobsClient.delete.bind(blobsClient))(
-                            request,
-                        );
-                    } catch (err) {
-                        if (err.code === status.NOT_FOUND) {
-                            return;
-                        }
-                        log.error({ userId }, "code sync: failed to delete obj", err, { object: obj });
-                        throw err;
+    protected async deleteResource(userId: string, resourceKey: ServerResource, rev?: string) {
+        try {
+            await this.db.deleteResource(userId, resourceKey, rev, async (rev?: string) => {
+                try {
+                    const request = new DeleteRequest();
+                    request.setOwnerId(userId);
+                    if (rev) {
+                        request.setExact(toObjectName(resourceKey, rev));
+                    } else {
+                        request.setPrefix(getNamePrefix(resourceKey) + resourceKey);
                     }
-                })
-                .catch((err) => {
-                    log.error({ userId }, "code sync: failed to delete", err);
-                }),
-        );
-        await Promise.allSettled(tasks);
-        return;
+                    const blobsClient = this.blobsProvider.getDefault();
+                    await util.promisify<DeleteRequest, DeleteResponse>(blobsClient.delete.bind(blobsClient))(request);
+                } catch (e) {
+                    if (e.code === status.NOT_FOUND) {
+                        return;
+                    }
+                    throw e;
+                }
+            });
+        } catch (e) {
+            if (rev) {
+                log.error({ userId }, "code sync: failed to delete obj", e, {
+                    object: toObjectName(resourceKey, rev),
+                });
+            } else {
+                log.error({ userId }, "code sync: failed to delete", e);
+            }
+            throw e;
+        }
     }
 }

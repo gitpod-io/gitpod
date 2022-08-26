@@ -13,6 +13,7 @@ import { TypeORM } from "./typeorm";
 export interface CodeSyncInsertOptions {
     latestRev?: string;
     revLimit?: number;
+    overwrite?: boolean;
 }
 
 @injectable()
@@ -58,14 +59,14 @@ export class CodeSyncResourceDB {
         return this.doGetResources(connection.manager, userId, kind);
     }
 
-    async delete(userId: string, doDelete: () => Promise<void>): Promise<void> {
+    async deleteSettingsSyncResources(userId: string, doDelete: () => Promise<void>): Promise<void> {
         const connection = await this.typeORM.getConnection();
         await connection.transaction(async (manager) => {
             await manager
                 .createQueryBuilder()
                 .update(DBCodeSyncResource)
                 .set({ deleted: true })
-                .where("userId = :userId AND deleted = 0", { userId })
+                .where("userId = :userId AND kind != :kind AND deleted = 0", { userId, kind: "editSessions" })
                 .execute();
             await doDelete();
         });
@@ -74,37 +75,53 @@ export class CodeSyncResourceDB {
     async deleteResource(
         userId: string,
         kind: ServerResource,
-        rev: string,
-        doDelete: (rev: string) => Promise<void>,
+        rev: string | undefined,
+        doDelete: (rev?: string) => Promise<void>,
     ): Promise<void> {
         const connection = await this.typeORM.getConnection();
-        await connection.transaction(async (manager) => {
-            await manager
-                .createQueryBuilder()
-                .delete()
-                .from(DBCodeSyncResource)
-                .where("userId = :userId AND kind = :kind AND rev = :rev", { userId, kind, rev: rev })
-                .execute();
-            await doDelete(rev);
-        });
+        if (rev) {
+            await connection.transaction(async (manager) => {
+                await manager
+                    .createQueryBuilder()
+                    .delete()
+                    .from(DBCodeSyncResource)
+                    .where("userId = :userId AND kind = :kind AND rev = :rev", { userId, kind, rev })
+                    .execute();
+                await doDelete(rev);
+            });
+        } else {
+            await connection.transaction(async (manager) => {
+                await manager
+                    .createQueryBuilder()
+                    .update(DBCodeSyncResource)
+                    .set({ deleted: true })
+                    .where("userId = :userId AND kind = :kind", { userId, kind })
+                    .execute();
+                await doDelete();
+            });
+        }
     }
 
     async insert(
         userId: string,
         kind: ServerResource,
-        doInsert: (rev: string, oldRevs: string[]) => Promise<void>,
+        doInsert: (rev: string, oldRevs?: string[]) => Promise<void>,
         params?: CodeSyncInsertOptions,
     ): Promise<string | undefined> {
         const connection = await this.typeORM.getConnection();
         return await connection.transaction(async (manager) => {
             let latest: DBCodeSyncResource | undefined;
-            let toDeleted: DBCodeSyncResource[] = [];
+            let toDeleted: DBCodeSyncResource[] | undefined;
             if (params?.revLimit) {
                 const resources = await this.doGetResources(manager, userId, kind);
                 latest = resources[0];
                 if (resources.length >= params.revLimit) {
-                    // delete + 1 to insert instead of update
-                    toDeleted = resources.splice(params?.revLimit - 1);
+                    if (params.overwrite) {
+                        // delete + 1 to insert instead of update
+                        toDeleted = resources.splice(params?.revLimit - 1);
+                    } else {
+                        return undefined;
+                    }
                 }
             } else {
                 latest = await this.doGetResource(manager, userId, kind, "latest");
@@ -122,7 +139,7 @@ export class CodeSyncResourceDB {
                 .execute();
             await doInsert(
                 rev,
-                toDeleted.map((e) => e.rev),
+                toDeleted?.map((e) => e.rev),
             );
             return rev;
         });

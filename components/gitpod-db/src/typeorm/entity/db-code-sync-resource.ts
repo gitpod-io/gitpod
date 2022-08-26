@@ -40,8 +40,8 @@ export interface IUserDataManifest {
     //readonly ref: string;
 }
 
-export type ServerResource = SyncResource | "machines";
-export const ALL_SERVER_RESOURCES: ServerResource[] = [...ALL_SYNC_RESOURCES, "machines"];
+export type ServerResource = SyncResource | "machines" | "editSessions" | "profiles";
+export const ALL_SERVER_RESOURCES: ServerResource[] = [...ALL_SYNC_RESOURCES, "machines", "editSessions", "profiles"];
 
 @Entity()
 @Index("ind_dbsync", ["created"]) // DBSync
