@@ -15,6 +15,7 @@ import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { Config } from "../config";
 import { clientRepository, createAuthorizationServer } from "./oauth-authorization-server";
+import { inMemoryDatabase } from "./db";
 
 @injectable()
 export class OAuthController {
@@ -173,6 +174,17 @@ export class OAuthController {
                 handleExpressError(e, res);
                 return;
             }
+        });
+
+        router.get("/oauth/inspect", async (req: express.Request, res: express.Response) => {
+            const clientId = req.query.client as string;
+            if (typeof clientId !== "string" || !Object.keys(inMemoryDatabase.clients).includes(clientId)) {
+                return res.sendStatus(400);
+            }
+
+            const client = inMemoryDatabase.clients[clientId];
+            const scopes = client.scopes.map((s) => s.name);
+            return res.send(scopes);
         });
 
         return router;
