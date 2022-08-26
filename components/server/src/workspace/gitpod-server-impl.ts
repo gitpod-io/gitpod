@@ -177,6 +177,8 @@ import { BillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { EntitlementService } from "../billing/entitlement-service";
+import { WorkspaceClasses } from "./workspace-classes";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -246,6 +248,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(IDEConfigService) protected readonly ideConfigService: IDEConfigService;
 
     @inject(VerificationService) protected readonly verificationService: VerificationService;
+    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -3054,6 +3057,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getSupportedWorkspaceClasses(ctx: TraceContext): Promise<SupportedWorkspaceClass[]> {
+        let user = this.checkAndBlockUser("getSupportedWorkspaceClasses");
+        let selectedClass = await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(
+            user,
+            this.config.workspaceClasses,
+            this.entitlementService,
+        );
+
         let classes = this.config.workspaceClasses
             .filter((c) => !c.deprecated)
             .map((c) => ({
@@ -3062,7 +3072,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 displayName: c.displayName,
                 description: c.description,
                 powerups: c.powerups,
-                isDefault: c.isDefault,
+                isSelected: selectedClass === c.id,
             }));
 
         return classes;
