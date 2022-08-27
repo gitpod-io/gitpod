@@ -8,13 +8,13 @@ Provides integrations within a Gitpod workspace.
 ## Development
 
 Please make sure to enable IntelliJ in gitpod.io preferences: https://gitpod.io/preferences
-IntelliJ delivers better experience for development of JetBrains plugins. We should as well use it for dogfooding. If
-you experience any issues with JetBrains remote dev make sure to report
+IntelliJ delivers better experience for development of JetBrains plugins. We should as well use it for dogfooding. If you experience any issues with JetBrains remote dev make sure to report
 issues [here](https://youtrack.jetbrains.com/issues?q=project:%20CWM)
 under remote development subsystem.
 
-Usually you will need to create a preview environments to try your changes, but if your changes don't touch any other
-components beside the backend plugin then you can test against the running workspace:
+### Local
+
+Usually you will need to create a preview environments to try your changes, but if your changes don't touch any other components beside the backend plugin then you can test against the running workspace:
 
 - Launch `./launch-dev-server.sh` from `components/ide/jetbrains/backend-plugin`. It builds the backend plugin, and
   start another JB backend in the remote debug mode with it against sprint-petclinic project and services of a running
@@ -43,3 +43,19 @@ Listening for transport dt_socket at address: 54963
   for now each thin client is accompanied by another window (main) which directly renders UI from backend. Sometimes
   there are bugs when a file will be opened in this window instead of the thin client. It also can be that
   the main window is not visible then try to find it in the left top corner and resize. It looks almost like a line.
+
+### Hot deployment
+
+Run `./hot-deploy.sh (latest|stable)` to build and publish the backend plugin image from your dev workspace and
+update the IDE config map in a preview environment. After that start a new workspace in preview environment
+with corresponding version to try your changes.
+
+### Hot swap
+
+Run `./hot-swap.sh <workspaceURL>` to build a new backend plugin version corresponding to a workspace running in preview environment,
+install a new version in such workspace and restart the JB backend. Reconnect to the restarted JB backend to try new changes.
+
+If you need to change the startup endpoint then run to hot swap it too:
+```bash
+leeway build components/ide/jetbrains/image/status:hot-swap -DworkspaceUrl=<workspaceURL>
+```
