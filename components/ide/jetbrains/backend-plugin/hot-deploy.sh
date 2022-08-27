@@ -7,7 +7,6 @@ set -Eeuo pipefail
 
 # This script builds the backend plugin and updates the IDE config map.
 
-# commit everything check
 qualifier=${1:-latest}
 echo "Plugin Qualifier: $qualifier"
 

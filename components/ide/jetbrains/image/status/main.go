@@ -95,8 +95,29 @@ func main() {
 	if err != nil {
 		log.WithError(err).Error("failed to configure vmoptions")
 	}
+	err = linkRemotePlugin()
+	if err != nil {
+		log.WithError(err).Error("failed to install gitpod-remote plugin")
+	}
 	go run(wsInfo, alias)
 
+	http.HandleFunc("/restart", func(w http.ResponseWriter, r *http.Request) {
+		err := terminateIDE(defaultBackendPort)
+		if err != nil {
+			log.WithError(err).Error("failed to terminate IDE")
+
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(err.Error()))
+
+			os.Exit(1)
+		}
+		log.Info("asked IDE to terminate")
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+
+		os.Exit(0)
+	})
 	http.HandleFunc("/joinLink", func(w http.ResponseWriter, r *http.Request) {
 		backendPort := r.URL.Query().Get("backendPort")
 		if backendPort == "" {
@@ -516,4 +537,13 @@ func getProductConfig(config *gitpod.GitpodConfig, alias string) *gitpod.Jetbrai
 		return nil
 	}
 	return productConfig
+}
+
+func linkRemotePlugin() error {
+	remotePluginDir := BackendPath + "/plugins/gitpod-remote"
+	_, err := os.Stat(remotePluginDir)
+	if err == nil || !errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return os.Symlink("/ide-desktop-plugins/gitpod-remote", remotePluginDir)
 }

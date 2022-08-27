@@ -16,3 +16,14 @@ packages:
     config:
       packaging: app
       buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/jetbrains/status.Version=commit-${__git_commit}'"]
+  - name: hot-swap
+    type: generic
+    deps:
+      - :app
+    argdeps:
+      - workspaceUrl
+    srcs:
+      - "hot-swap.sh"
+    config:
+      commands:
+        - ["./hot-swap.sh", "${workspaceUrl}"]
