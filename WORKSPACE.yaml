@@ -9,6 +9,7 @@ defaultArgs:
   localAppVersion: unknown
   codeCommit: ca48b16256fad72bc239a27bde3dc78a369aafa6
   codeQuality: stable
+  noVerifyJBPlugin: false
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.2.1.tar.gz"
   golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.2.2.tar.gz"
   pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2022.2.1.tar.gz"
