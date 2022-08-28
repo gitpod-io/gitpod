@@ -22,7 +22,7 @@ func TestCreditSummaryForTeams(t *testing.T) {
 
 	scenarios := []struct {
 		Name              string
-		Sessions          db.UsageReport
+		Sessions          []db.WorkspaceInstanceUsage
 		BillSessionsAfter time.Time
 		Expected          map[string]stripe.CreditSummary
 	}{
