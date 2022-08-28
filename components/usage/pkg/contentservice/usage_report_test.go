@@ -7,7 +7,6 @@ package contentservice
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
 	"github.com/google/uuid"
@@ -57,7 +56,35 @@ func TestUsageReport_ToJSON(t *testing.T) {
 	err = json.Unmarshal(b, &actual)
 	require.NoError(t, err)
 
-	fmt.Println(report, actual)
 	require.EqualValues(t, report, actual)
+}
 
+func TestUsageReport_GetUsageRecordsForAttributionID(t *testing.T) {
+	attributionID_A, attributionID_B := db.NewTeamAttributionID(uuid.New().String()), db.NewTeamAttributionID(uuid.New().String())
+
+	report := UsageReport{
+		GenerationTime: time.Now(),
+		From:           time.Now(),
+		To:             time.Now(),
+		UsageRecords: []db.WorkspaceInstanceUsage{
+			dbtest.NewWorkspaceInstanceUsage(t, db.WorkspaceInstanceUsage{
+				AttributionID: attributionID_A,
+			}),
+			dbtest.NewWorkspaceInstanceUsage(t, db.WorkspaceInstanceUsage{
+				AttributionID: attributionID_A,
+			}),
+			dbtest.NewWorkspaceInstanceUsage(t, db.WorkspaceInstanceUsage{
+				AttributionID: attributionID_B,
+			}),
+		},
+	}
+
+	filteredToAttributionA := report.GetUsageRecordsForAttributionID(attributionID_A)
+	require.Equal(t, []db.WorkspaceInstanceUsage{report.UsageRecords[0], report.UsageRecords[1]}, filteredToAttributionA)
+
+	filteredToAttributionB := report.GetUsageRecordsForAttributionID(attributionID_B)
+	require.Equal(t, []db.WorkspaceInstanceUsage{report.UsageRecords[2]}, filteredToAttributionB)
+
+	filteredToAbsentAttribution := report.GetUsageRecordsForAttributionID(db.NewTeamAttributionID(uuid.New().String()))
+	require.Len(t, filteredToAbsentAttribution, 0)
 }

@@ -134,5 +134,3 @@ func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, 
 
 	return listUsageResult, nil
 }
-
-type UsageReport []WorkspaceInstanceUsage

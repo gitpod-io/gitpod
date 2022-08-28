@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	reportIDMetadataKey = "reportId"
+	ReportIDMetadataKey = "reportId"
+	TeamIDMetadataKey   = "teamId"
 )
 
 type Client struct {
@@ -157,7 +158,7 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 	}
 
 	_, err = c.UpdateInvoiceMetadata(ctx, invoice.ID, map[string]string{
-		reportIDMetadataKey: summary.ReportID,
+		ReportIDMetadataKey: summary.ReportID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to udpate invoice %s metadata with report ID: %w", invoice.ID, err)
@@ -240,6 +241,23 @@ func (c *Client) UpdateInvoiceMetadata(ctx context.Context, invoiceID string, me
 	return invoice, nil
 }
 
+func (c *Client) GetInvoice(ctx context.Context, invoiceID string) (*stripe.Invoice, error) {
+	if invoiceID == "" {
+		return nil, fmt.Errorf("no invoice ID specified")
+	}
+
+	invoice, err := c.sc.Invoices.Get(invoiceID, &stripe.InvoiceParams{
+		Params: stripe.Params{
+			Context: ctx,
+			Expand:  []*string{stripe.String("data.subscriptions")},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get invoice %s: %w", invoiceID, err)
+	}
+	return invoice, nil
+}
+
 // queriesForCustomersWithTeamIds constructs Stripe query strings to find the Stripe Customer for each teamId
 // It returns multiple queries, each being a big disjunction of subclauses so that we can process multiple teamIds in one query.
 // `clausesPerQuery` is a limit enforced by the Stripe API.
@@ -251,7 +269,7 @@ func queriesForCustomersWithTeamIds(teamIds []string) []string {
 	for i := 0; i < len(teamIds); i += clausesPerQuery {
 		sb.Reset()
 		for j := 0; j < clausesPerQuery && i+j < len(teamIds); j++ {
-			sb.WriteString(fmt.Sprintf("metadata['teamId']:'%s'", teamIds[i+j]))
+			sb.WriteString(fmt.Sprintf("metadata['%s']:'%s'", TeamIDMetadataKey, teamIds[i+j]))
 			if j < clausesPerQuery-1 && i+j < len(teamIds)-1 {
 				sb.WriteString(" OR ")
 			}

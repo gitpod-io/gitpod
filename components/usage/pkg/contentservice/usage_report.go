@@ -25,3 +25,14 @@ type UsageReport struct {
 
 	UsageRecords []db.WorkspaceInstanceUsage `json:"usageRecords"`
 }
+
+func (r *UsageReport) GetUsageRecordsForAttributionID(attributionID db.AttributionID) []db.WorkspaceInstanceUsage {
+	var sessions []db.WorkspaceInstanceUsage
+	for _, sess := range r.UsageRecords {
+		if sess.AttributionID == attributionID {
+			sessions = append(sessions, sess)
+		}
+	}
+
+	return sessions
+}
