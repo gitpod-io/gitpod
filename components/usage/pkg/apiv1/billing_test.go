@@ -180,6 +180,51 @@ func TestCreditSummaryForTeams(t *testing.T) {
 	})
 }
 
+func TestCalculateAdjustedCreditsUsed(t *testing.T) {
+	srv := baseserver.NewForTests(t,
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
+	baseserver.StartServerForTests(t, srv)
+	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	usageClient := v1.NewUsageServiceClient(conn)
+	svc := NewBillingService(&stripe.Client{}, time.Time{}, &gorm.DB{}, usageClient)
+
+	scenarios := []struct {
+		Name            string
+		UpcomingInvoice float64
+		SpendingLimit   float64
+		Expected        float64
+	}{
+		{
+			Name:            "UpcomingInvoice > SpendingLimit",
+			UpcomingInvoice: float64(500),
+			SpendingLimit:   float64(400),
+			Expected:        float64(500),
+		},
+		{
+			Name:            "UpcomingInvoice < SpendingLimit",
+			UpcomingInvoice: float64(400),
+			SpendingLimit:   float64(500),
+			Expected:        float64(500),
+		},
+		{
+			Name:            "UpcomingInvoice == SpendingLimit",
+			UpcomingInvoice: float64(500),
+			SpendingLimit:   float64(500),
+			Expected:        float64(500),
+		},
+	}
+
+	for _, s := range scenarios {
+		t.Run(s.Name, func(t *testing.T) {
+			result := svc.calculateAdjustedCreditsUsed(s.UpcomingInvoice, s.SpendingLimit)
+			require.NoError(t, err)
+			require.Equal(t, result, s.Expected)
+		})
+	}
+}
+
 type testStripeClient struct{}
 
 func (c *testStripeClient) GetUpcomingInvoice(ctx context.Context, id string) (*stripe.Invoice, error) {

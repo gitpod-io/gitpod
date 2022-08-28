@@ -141,6 +141,10 @@ func (s *BillingService) creditSummaryForTeams(ctx context.Context, sessions []*
 		spendingLimit = float64(result.CostCenter.SpendingLimit)
 		upcomingInvoice = float64(invoiceResult.Credits)
 
+		if creditsPerTeamID[id] > spendingLimit {
+			adjusted := s.calculateAdjustedCreditsUsed(upcomingInvoice, spendingLimit)
+			creditsPerTeamID[id] = adjusted
+		}
 	}
 
 	rounded := map[string]map[string]float64{}
@@ -153,6 +157,13 @@ func (s *BillingService) creditSummaryForTeams(ctx context.Context, sessions []*
 	}
 
 	return rounded, nil
+}
+
+func (*BillingService) calculateAdjustedCreditsUsed(upcomingInvoice float64, spendingLimit float64) float64 {
+	if upcomingInvoice >= spendingLimit {
+		return upcomingInvoice
+	}
+	return spendingLimit
 }
 
 func (s *BillingService) SetBilledSession(ctx context.Context, in *v1.SetBilledSessionRequest) (*v1.SetBilledSessionResponse, error) {
