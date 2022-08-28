@@ -26,7 +26,9 @@ require (
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/configcat/go-sdk/v7 v7.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect

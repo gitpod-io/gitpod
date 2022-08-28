@@ -10,3 +10,7 @@ import "context"
 func IsMyFirstFeatureFlagEnabled(ctx context.Context, client Client, attributes Attributes) bool {
 	return client.GetBoolValue(ctx, "isMyFirstFeatureEnabled", false, attributes)
 }
+
+func IsUsageCappingEnabled(ctx context.Context, client Client, attributes Attributes) bool {
+	return client.GetBoolValue(ctx, "isUsageCappingEnabled", false, attributes)
+}

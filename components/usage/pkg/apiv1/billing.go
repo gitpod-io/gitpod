@@ -11,6 +11,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
@@ -42,12 +43,16 @@ type BillingService struct {
 	stripeClient       StripeClient
 	billInstancesAfter time.Time
 	usageClient        v1.UsageServiceClient
+	experimentsClient  *experiments.Client
 
 	v1.UnimplementedBillingServiceServer
 }
 
-func (s *BillingService) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoicesRequest) (*v1.UpdateInvoicesResponse, error) {
-	credits, err := s.creditSummaryForTeams(ctx, in.GetSessions())
+func (s *BillingService) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoicesRequest, experimentsClient *experiments.Client) (*v1.UpdateInvoicesResponse, error) {
+	attribute := experiments.Attributes{TeamName: "gitpod"} // currently enabled for all in non-prod
+	bool := experiments.IsUsageCappingEnabled(ctx, *experimentsClient, attribute)
+
+	credits, err := s.creditSummaryForTeams(ctx, in.GetSessions(), bool)
 	if err != nil {
 		log.Log.WithError(err).Errorf("Failed to compute credit summary.")
 		return nil, status.Errorf(codes.InvalidArgument, "failed to compute credit summary")
@@ -98,7 +103,7 @@ func (s *BillingService) GetUpcomingInvoice(ctx context.Context, in *v1.GetUpcom
 	}, nil
 }
 
-func (s *BillingService) creditSummaryForTeams(ctx context.Context, sessions []*v1.BilledSession) (map[string]map[string]float64, error) {
+func (s *BillingService) creditSummaryForTeams(ctx context.Context, sessions []*v1.BilledSession, isEnabled bool) (map[string]map[string]float64, error) {
 	creditsPerTeamID := map[string]float64{}
 	var spendingLimit float64
 	var upcomingInvoice float64
@@ -140,7 +145,6 @@ func (s *BillingService) creditSummaryForTeams(ctx context.Context, sessions []*
 
 		spendingLimit = float64(result.CostCenter.SpendingLimit)
 		upcomingInvoice = float64(invoiceResult.Credits)
-
 	}
 
 	rounded := map[string]map[string]float64{}
