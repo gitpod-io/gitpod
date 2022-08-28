@@ -58,17 +58,17 @@ func TestUpdateVMOptions(t *testing.T) {
 		lessFunc := func(a, b string) bool { return a < b }
 
 		t.Run(test.Desc, func(t *testing.T) {
-			actual := updateVMOptions(nil, test.Alias, test.Src)
-			if diff := cmp.Diff(strings.Fields(test.Expectation), strings.Fields(actual), cmpopts.SortSlices(lessFunc)); diff != "" {
+			actual := updateVMOptions(nil, test.Alias, strings.Fields(test.Src))
+			if diff := cmp.Diff(strings.Fields(test.Expectation), actual, cmpopts.SortSlices(lessFunc)); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
 		})
 
 		t.Run("updateVMOptions multiple time should be stable", func(t *testing.T) {
-			actual := test.Src
+			actual := strings.Fields(test.Src)
 			for i := 0; i < 5; i++ {
 				actual = updateVMOptions(nil, test.Alias, actual)
-				if diff := cmp.Diff(strings.Fields(test.Expectation), strings.Fields(actual), cmpopts.SortSlices(lessFunc)); diff != "" {
+				if diff := cmp.Diff(strings.Fields(test.Expectation), actual, cmpopts.SortSlices(lessFunc)); diff != "" {
 					t.Errorf("unexpected output (-want +got):\n%s", diff)
 				}
 			}

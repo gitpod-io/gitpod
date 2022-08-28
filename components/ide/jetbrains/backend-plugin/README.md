@@ -12,6 +12,8 @@ IntelliJ delivers better experience for development of JetBrains plugins. We sho
 issues [here](https://youtrack.jetbrains.com/issues?q=project:%20CWM)
 under remote development subsystem.
 
+<img src="https://user-images.githubusercontent.com/3082655/187091748-c58ce156-90b6-4522-83a7-b4312e36d949.png"/>
+
 ### Local
 
 Usually you will need to create a preview environments to try your changes, but if your changes don't touch any other components beside the backend plugin then you can test against the running workspace:
@@ -50,7 +52,7 @@ Run `./hot-deploy.sh (latest|stable)` to build and publish the backend plugin im
 update the IDE config map in a preview environment. After that start a new workspace in preview environment
 with corresponding version to try your changes.
 
-### Hot swap
+### Hot swapping
 
 Run `./hot-swap.sh <workspaceURL>` to build a new backend plugin version corresponding to a workspace running in preview environment,
 install a new version in such workspace and restart the JB backend. Reconnect to the restarted JB backend to try new changes.
@@ -59,3 +61,9 @@ If you need to change the startup endpoint then run to hot swap it too:
 ```bash
 leeway build components/ide/jetbrains/image/status:hot-swap -DworkspaceUrl=<workspaceURL>
 ```
+
+### Remote debugging
+
+Run `./remote-debug.sh <workspaceURL> (<localPort>)?` to configure remote debugging in a workpace running in preview environment.
+It will configure remote debug port, restart the backend and start port forwarding in your dev workspace.
+Create a new `Remote JVM Debug` launch configuration with the forwarded port and launch it.

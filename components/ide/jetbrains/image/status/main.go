@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,6 +21,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -91,7 +93,14 @@ func main() {
 		}
 	}
 
-	err = configureVMOptions(gitpodConfig, alias)
+	idePrefix := alias
+	if alias == "intellij" {
+		idePrefix = "idea"
+	}
+	// [idea64|goland64|pycharm64|phpstorm64].vmoptions
+	vmOptionsPath := fmt.Sprintf("/ide-desktop/backend/bin/%s64.vmoptions", idePrefix)
+
+	err = configureVMOptions(gitpodConfig, alias, vmOptionsPath)
 	if err != nil {
 		log.WithError(err).Error("failed to configure vmoptions")
 	}
@@ -101,22 +110,56 @@ func main() {
 	}
 	go run(wsInfo, alias)
 
-	http.HandleFunc("/restart", func(w http.ResponseWriter, r *http.Request) {
-		err := terminateIDE(defaultBackendPort)
+	debugAgentPrefix := "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:"
+	http.HandleFunc("/debug", func(w http.ResponseWriter, r *http.Request) {
+		options, err := readVMOptions(vmOptionsPath)
 		if err != nil {
-			log.WithError(err).Error("failed to terminate IDE")
-
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte(err.Error()))
-
-			os.Exit(1)
+			log.WithError(err).Error("failed to configure debug agent")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		log.Info("asked IDE to terminate")
+		debugPort := ""
+		i := len(options) - 1
+		for i >= 0 && debugPort == "" {
+			option := options[i]
+			if strings.HasPrefix(option, debugAgentPrefix) {
+				debugPort = option[len(debugAgentPrefix):]
+				if debugPort == "0" {
+					debugPort = ""
+				}
+			}
+			i--
+		}
 
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
+		if debugPort != "" {
+			fmt.Fprint(w, debugPort)
+			return
+		}
+		netListener, err := net.Listen("tcp", "localhost:0")
+		if err != nil {
+			log.WithError(err).Error("failed to configure debug agent")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		debugPort = strconv.Itoa(netListener.(*net.TCPListener).Addr().(*net.TCPAddr).Port)
+		_ = netListener.Close()
 
-		os.Exit(0)
+		debugOptions := []string{debugAgentPrefix + debugPort}
+		options = deduplicateVMOption(options, debugOptions, func(l, r string) bool {
+			return strings.HasPrefix(l, debugAgentPrefix) && strings.HasPrefix(r, debugAgentPrefix)
+		})
+		err = writeVMOptions(vmOptionsPath, options)
+		if err != nil {
+			log.WithError(err).Error("failed to configure debug agent")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprint(w, debugPort)
+		restart(r)
+	})
+	http.HandleFunc("/restart", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "terminated")
+		restart(r)
 	})
 	http.HandleFunc("/joinLink", func(w http.ResponseWriter, r *http.Request) {
 		backendPort := r.URL.Query().Get("backendPort")
@@ -168,6 +211,19 @@ func main() {
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func restart(r *http.Request) {
+	backendPort := r.URL.Query().Get("backendPort")
+	if backendPort == "" {
+		backendPort = defaultBackendPort
+	}
+	err := terminateIDE(backendPort)
+	if err != nil {
+		log.WithError(err).Error("failed to terminate IDE gracefully")
+		os.Exit(1)
+	}
+	os.Exit(0)
 }
 
 type Projects struct {
@@ -324,19 +380,27 @@ func handleSignal(projectPath string) {
 	log.Info("asked IDE to terminate")
 }
 
-func configureVMOptions(config *gitpod.GitpodConfig, alias string) error {
-	idePrefix := alias
-	if alias == "intellij" {
-		idePrefix = "idea"
-	}
-	// [idea64|goland64|pycharm64|phpstorm64].vmoptions
-	path := fmt.Sprintf("/ide-desktop/backend/bin/%s64.vmoptions", idePrefix)
-	content, err := ioutil.ReadFile(path)
+func configureVMOptions(config *gitpod.GitpodConfig, alias string, vmOptionsPath string) error {
+	options, err := readVMOptions(vmOptionsPath)
 	if err != nil {
 		return err
 	}
-	newContent := updateVMOptions(config, alias, string(content))
-	return ioutil.WriteFile(path, []byte(newContent), 0)
+	newOptions := updateVMOptions(config, alias, options)
+	return writeVMOptions(vmOptionsPath, newOptions)
+}
+
+func readVMOptions(vmOptionsPath string) ([]string, error) {
+	content, err := ioutil.ReadFile(vmOptionsPath)
+	if err != nil {
+		return nil, err
+	}
+	return strings.Fields(string(content)), nil
+}
+
+func writeVMOptions(vmOptionsPath string, vmoptions []string) error {
+	// vmoptions file should end with a newline
+	content := strings.Join(vmoptions, "\n") + "\n"
+	return ioutil.WriteFile(vmOptionsPath, []byte(content), 0)
 }
 
 // deduplicateVMOption append new VMOptions onto old VMOptions and remove any duplicated leftmost options
@@ -357,7 +421,11 @@ func deduplicateVMOption(oldLines []string, newLines []string, predicate func(l,
 	return result
 }
 
-func updateVMOptions(config *gitpod.GitpodConfig, alias string, content string) string {
+func updateVMOptions(
+	config *gitpod.GitpodConfig,
+	alias string,
+	// original vmoptions (inherited from $JETBRAINS_IDE_HOME/bin/idea64.vmoptions)
+	ideaVMOptionsLines []string) []string {
 	// inspired by how intellij platform merge the VMOptions
 	// https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/src/com/intellij/openapi/application/ConfigImportHelper.java#L1115
 	filterFunc := func(l, r string) bool {
@@ -369,8 +437,6 @@ func updateVMOptions(config *gitpod.GitpodConfig, alias string, content string) 
 			strings.Split(l, "=")[0] == strings.Split(r, "=")[0]
 		return isEqual || isXmx || isXms || isXss || isXXOptions
 	}
-	// original vmoptions (inherited from $JETBRAINS_IDE_HOME/bin/idea64.vmoptions)
-	ideaVMOptionsLines := strings.Fields(content)
 	// Gitpod's default customization
 	gitpodVMOptions := []string{"-Dgtw.disable.exit.dialog=true"}
 	vmoptions := deduplicateVMOption(ideaVMOptionsLines, gitpodVMOptions, filterFunc)
@@ -393,8 +459,7 @@ func updateVMOptions(config *gitpod.GitpodConfig, alias string, content string) 
 		}
 	}
 
-	// vmoptions file should end with a newline
-	return strings.Join(vmoptions, "\n") + "\n"
+	return vmoptions
 }
 
 /*
