@@ -18,11 +18,17 @@ if [ "$1" != "logging" ]; then
   exit
 fi
 
+# fail if its arm64
+if [ "$(uname -m)" = 'arm64' ]; then
+    echo "Gitpod local preview does not work on arm64 CPU's (including M1 Mac's)"
+    exit 1
+fi
+
 # check for minimum requirements
 REQUIRED_MEM_KB=$((6 * 1024 * 1024))
 total_mem_kb=$(awk '/MemTotal:/ {print $2}' /proc/meminfo)
 if [ "${total_mem_kb}" -lt "${REQUIRED_MEM_KB}" ]; then
-    echo "Preview installation of Gitpod requires a system with at least 6GB of memory"
+    echo "Gitpod local preview requires a system with at least 6GB of memory"
     exit 1
 else
   set -x
@@ -31,7 +37,7 @@ fi
 REQUIRED_CORES=4
 total_cores=$(nproc)
 if [ "${total_cores}" -lt "${REQUIRED_CORES}" ]; then
-    echo "Preview installation of Gitpod requires a system with at least 4 CPU Cores"
+    echo "Gitpod local preview requires a system with at least 4 CPU Cores"
     exit 1
 fi
 
