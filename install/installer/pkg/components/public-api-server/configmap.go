@@ -9,7 +9,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"k8s.io/utils/pointer"
 	"net"
-	"path/filepath"
 	"strconv"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -81,6 +80,7 @@ func getStripeConfig(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMoun
 	}
 
 	stripeSecret := cfg.WebApp.PublicAPI.StripeSecretName
+	path = stripeSecretMountPath
 
 	volume = corev1.Volume{
 		Name: "stripe-secret",
@@ -97,8 +97,6 @@ func getStripeConfig(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMoun
 		MountPath: stripeSecretMountPath,
 		ReadOnly:  true,
 	}
-
-	path = filepath.Join(secretsDirectory, stripeSecretMountPath)
 
 	return volume, mount, path, true
 }

@@ -16,7 +16,3 @@ type Configuration struct {
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
 }
-
-type StripeSecret struct {
-	WebhookSigningKey string `json:"signingKey"`
-}
