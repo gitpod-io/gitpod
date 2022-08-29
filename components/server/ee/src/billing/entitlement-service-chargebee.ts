@@ -79,7 +79,7 @@ export class EntitlementServiceChargebee implements EntitlementService {
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<boolean> {
         // As retrieving a full AccountStatement is expensive we want to cache it as much as possible.
-        const cachedAccountStatement = this.accountStatementProvider.getCachedStatement();
+        const cachedAccountStatement = this.accountStatementProvider.getCachedStatement(userId);
         const lowerBound = this.getRemainingUsageHoursLowerBound(cachedAccountStatement, date.toISOString());
         if (lowerBound && (lowerBound === "unlimited" || lowerBound > Accounting.MINIMUM_CREDIT_FOR_OPEN_IN_HOURS)) {
             return true;
@@ -108,7 +108,7 @@ export class EntitlementServiceChargebee implements EntitlementService {
             return "unlimited";
         }
 
-        const diffInMillis = new Date(cachedStatement.endDate).getTime() - new Date(date).getTime();
+        const diffInMillis = Math.max(0, new Date(cachedStatement.endDate).getTime() - new Date(date).getTime());
         const maxPossibleUsage = millisecondsToHours(diffInMillis) * MAX_PARALLEL_WORKSPACES;
         return cachedStatement.remainingHours - maxPossibleUsage;
     }
