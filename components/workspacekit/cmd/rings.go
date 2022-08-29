@@ -6,14 +6,11 @@ package cmd
 
 import (
 	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -28,7 +25,6 @@ import (
 	"github.com/rootless-containers/rootlesskit/pkg/msgutil"
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
-	libseccomp "github.com/seccomp/libseccomp-golang"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
@@ -78,21 +74,24 @@ var ring0Cmd = &cobra.Command{
 
 		defer log.Info("ring0 stopped")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-		defer cancel()
+		/*
+			ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+			defer cancel()
 
-		client, err := connectToInWorkspaceDaemonService(ctx)
-		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon from ring0")
-			return
-		}
+			client, err := connectToInWorkspaceDaemonService(ctx)
+			if err != nil {
+				log.WithError(err).Error("cannot connect to daemon from ring0")
+				return
+			}
 
-		prep, err := client.PrepareForUserNS(ctx, &daemonapi.PrepareForUserNSRequest{})
-		if err != nil {
-			log.WithError(err).Fatal("cannot prepare for user namespaces")
-			return
-		}
-		client.Close()
+
+			prep, err := client.PrepareForUserNS(ctx, &daemonapi.PrepareForUserNSRequest{})
+			if err != nil {
+				log.WithError(err).Fatal("cannot prepare for user namespaces")
+				return
+			}
+			client.Close()
+		*/
 
 		defer func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -120,11 +119,13 @@ var ring0Cmd = &cobra.Command{
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Env = append(os.Environ(),
-			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
-			fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
+			"WORKSPACEKIT_FSSHIFT=fuse",
+			"WORKSPACEKIT_NO_WORKSPACE_MOUNT=true",
 		)
 
-		if err := cmd.Start(); err != nil {
+		var err error
+
+		if err = cmd.Start(); err != nil {
 			log.WithError(err).Error("failed to start ring0")
 			return
 		}
@@ -213,29 +214,35 @@ var ring1Cmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		mapping := []*daemonapi.WriteIDMappingRequest_Mapping{
-			{ContainerId: 0, HostId: 33333, Size: 1},
-			{ContainerId: 1, HostId: 100000, Size: 65534},
-		}
-		if !ring1Opts.MappingEstablished {
-			client, err := connectToInWorkspaceDaemonService(ctx)
-			if err != nil {
-				log.WithError(err).Error("cannot connect to daemon from ring1 when mappings not established")
-				return
+		/*
+			mapping := []*daemonapi.WriteIDMappingRequest_Mapping{
+				{ContainerId: 0, HostId: 33333, Size: 1},
+				{ContainerId: 1, HostId: 100000, Size: 65534},
 			}
-			defer client.Close()
+		*/
 
-			_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: false, Mapping: mapping})
-			if err != nil {
-				log.WithError(err).Error("cannot establish UID mapping")
-				return
-			}
-			_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: true, Mapping: mapping})
-			if err != nil {
-				log.WithError(err).Error("cannot establish GID mapping")
-				return
-			}
-			err = syscall.Exec("/proc/self/exe", append(os.Args, "--mapping-established"), os.Environ())
+		if !ring1Opts.MappingEstablished {
+			/*
+				client, err := connectToInWorkspaceDaemonService(ctx)
+				if err != nil {
+					log.WithError(err).Error("cannot connect to daemon from ring1 when mappings not established")
+					return
+				}
+				defer client.Close()
+
+				_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: false, Mapping: mapping})
+				if err != nil {
+					log.WithError(err).Error("cannot establish UID mapping")
+					return
+				}
+				_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: true, Mapping: mapping})
+				if err != nil {
+					log.WithError(err).Error("cannot establish GID mapping")
+					return
+				}
+
+			*/
+			err := syscall.Exec("/proc/self/exe", append(os.Args, "--mapping-established"), os.Environ())
 			if err != nil {
 				log.WithError(err).Error("cannot exec /proc/self/exe")
 				return
@@ -258,112 +265,133 @@ var ring1Cmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot create tempdir")
 		}
 
-		var fsshift api.FSShiftMethod
-		if v, ok := api.FSShiftMethod_value[os.Getenv("WORKSPACEKIT_FSSHIFT")]; !ok {
-			log.WithField("fsshift", os.Getenv("WORKSPACEKIT_FSSHIFT")).Fatal("unknown FS shift method")
-		} else {
-			fsshift = api.FSShiftMethod(v)
-		}
+		/*
+			type mnte struct {
+				Target string
+				Source string
+				FSType string
+				Flags  uintptr
+			}
 
-		type mnte struct {
-			Target string
-			Source string
-			FSType string
-			Flags  uintptr
-		}
+			var mnts []mnte
 
-		var mnts []mnte
-		switch fsshift {
-		case api.FSShiftMethod_FUSE:
-			mnts = append(mnts,
-				mnte{Target: "/", Source: "/.workspace/mark", Flags: unix.MS_BIND | unix.MS_REC},
-			)
-		case api.FSShiftMethod_SHIFTFS:
-			mnts = append(mnts,
-				mnte{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
-			)
-		default:
-			log.WithField("fsshift", fsshift).Fatal("unknown FS shift method")
-		}
+			var fsshift api.FSShiftMethod
+					if v, ok := api.FSShiftMethod_value[os.Getenv("WORKSPACEKIT_FSSHIFT")]; !ok {
+						log.WithField("fsshift", os.Getenv("WORKSPACEKIT_FSSHIFT")).Fatal("unknown FS shift method")
+					} else {
+						fsshift = api.FSShiftMethod(v)
+					}
 
-		procMounts, err := ioutil.ReadFile("/proc/mounts")
-		if err != nil {
-			log.WithError(err).Fatal("cannot read /proc/mounts")
-		}
+					type mnte struct {
+						Target string
+						Source string
+						FSType string
+						Flags  uintptr
+					}
 
-		candidates, err := findBindMountCandidates(bytes.NewReader(procMounts), os.Readlink)
-		if err != nil {
-			log.WithError(err).Fatal("cannot detect mount candidates")
-		}
-		for _, c := range candidates {
-			mnts = append(mnts, mnte{Target: c, Flags: unix.MS_BIND | unix.MS_REC})
-		}
-		mnts = append(mnts, mnte{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"})
+					var mnts []mnte
+					switch fsshift {
+					case api.FSShiftMethod_FUSE:
+						mnts = append(mnts,
+							mnte{Target: "/", Source: "/.workspace/mark", Flags: unix.MS_BIND | unix.MS_REC},
+						)
+					case api.FSShiftMethod_SHIFTFS:
+						mnts = append(mnts,
+							mnte{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
+						)
+					default:
+						log.WithField("fsshift", fsshift).Fatal("unknown FS shift method")
+					}
 
-		// If this is a cgroupv2 machine, we'll want to mount the cgroup2 FS ourselves
-		if _, err := os.Stat("/sys/fs/cgroup/cgroup.controllers"); err == nil {
-			mnts = append(mnts, mnte{Target: "/sys/fs/cgroup", Source: "tmpfs", FSType: "tmpfs"})
-			mnts = append(mnts, mnte{Target: "/sys/fs/cgroup", Source: "cgroup", FSType: "cgroup2"})
-		}
 
-		if adds := os.Getenv("GITPOD_WORKSPACEKIT_BIND_MOUNTS"); adds != "" {
-			var additionalMounts []string
-			err = json.Unmarshal([]byte(adds), &additionalMounts)
+				procMounts, err := ioutil.ReadFile("/proc/mounts")
+				if err != nil {
+					log.WithError(err).Fatal("cannot read /proc/mounts")
+				}
+
+
+					candidates, err := findBindMountCandidates(bytes.NewReader(procMounts), os.Readlink)
+					if err != nil {
+						log.WithError(err).Fatal("cannot detect mount candidates")
+					}
+					for _, c := range candidates {
+						mnts = append(mnts, mnte{Target: c, Flags: unix.MS_BIND | unix.MS_REC})
+					}
+
+					mnts = append(mnts, mnte{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"})
+
+					// If this is a cgroupv2 machine, we'll want to mount the cgroup2 FS ourselves
+					if _, err := os.Stat("/sys/fs/cgroup/cgroup.controllers"); err == nil {
+						mnts = append(mnts, mnte{Target: "/sys/fs/cgroup", Source: "tmpfs", FSType: "tmpfs"})
+						mnts = append(mnts, mnte{Target: "/sys/fs/cgroup", Source: "cgroup", FSType: "cgroup2"})
+					}
+
+					if adds := os.Getenv("GITPOD_WORKSPACEKIT_BIND_MOUNTS"); adds != "" {
+						var additionalMounts []string
+						err = json.Unmarshal([]byte(adds), &additionalMounts)
+						if err != nil {
+							log.WithError(err).Fatal("cannot unmarshal GITPOD_WORKSPACEKIT_BIND_MOUNTS")
+						}
+						for _, c := range additionalMounts {
+							mnts = append(mnts, mnte{Target: c, Flags: unix.MS_BIND | unix.MS_REC})
+						}
+					}
+
+
+			// FWB workspaces do not require mounting /workspace
+			// if that is done, the backup will not contain any change in the directory
+			// same applies to persistent volume claims, we cannot mount /workspace folder when PVC is used
+			if os.Getenv("WORKSPACEKIT_NO_WORKSPACE_MOUNT") != "true" {
+				mnts = append(mnts,
+					mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
+				)
+			}
+
+			for _, m := range mnts {
+				dst := filepath.Join(ring2Root, m.Target)
+				_ = os.MkdirAll(dst, 0644)
+
+				if m.Source == "" {
+					m.Source = m.Target
+				}
+				if m.FSType == "" {
+					m.FSType = "none"
+				}
+
+				log.WithFields(map[string]interface{}{
+					"source": m.Source,
+					"target": dst,
+					"fstype": m.FSType,
+					"flags":  m.Flags,
+				}).Debug("mounting new rootfs")
+				err = unix.Mount(m.Source, dst, m.FSType, m.Flags, "")
+				if err != nil {
+					log.WithError(err).WithField("dest", dst).WithField("fsType", m.FSType).Error("cannot establish mount")
+					return
+				}
+			}
+		*/
+
+		/*
+			// We deliberately do not bind mount `/etc/resolv.conf` and `/etc/hosts`, but instead place a copy
+			// so that users in the workspace can modify the file.
+			copyPaths := []string{"/etc/resolv.conf", "/etc/hosts"}
+			for _, fn := range copyPaths {
+				err = copyRing2Root(ring2Root, fn)
+				if err != nil {
+					log.WithError(err).Warn("cannot copy " + fn)
+				}
+			}
+		*/
+
+		time.Sleep(5 * time.Minute)
+
+		/*
+			err = makeHostnameLocal(ring2Root)
 			if err != nil {
-				log.WithError(err).Fatal("cannot unmarshal GITPOD_WORKSPACEKIT_BIND_MOUNTS")
+				log.WithError(err).Warn("cannot make /etc/hosts hostname local")
 			}
-			for _, c := range additionalMounts {
-				mnts = append(mnts, mnte{Target: c, Flags: unix.MS_BIND | unix.MS_REC})
-			}
-		}
-
-		// FWB workspaces do not require mounting /workspace
-		// if that is done, the backup will not contain any change in the directory
-		// same applies to persistent volume claims, we cannot mount /workspace folder when PVC is used
-		if os.Getenv("WORKSPACEKIT_NO_WORKSPACE_MOUNT") != "true" {
-			mnts = append(mnts,
-				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
-			)
-		}
-
-		for _, m := range mnts {
-			dst := filepath.Join(ring2Root, m.Target)
-			_ = os.MkdirAll(dst, 0644)
-
-			if m.Source == "" {
-				m.Source = m.Target
-			}
-			if m.FSType == "" {
-				m.FSType = "none"
-			}
-
-			log.WithFields(map[string]interface{}{
-				"source": m.Source,
-				"target": dst,
-				"fstype": m.FSType,
-				"flags":  m.Flags,
-			}).Debug("mounting new rootfs")
-			err = unix.Mount(m.Source, dst, m.FSType, m.Flags, "")
-			if err != nil {
-				log.WithError(err).WithField("dest", dst).WithField("fsType", m.FSType).Error("cannot establish mount")
-				return
-			}
-		}
-
-		// We deliberately do not bind mount `/etc/resolv.conf` and `/etc/hosts`, but instead place a copy
-		// so that users in the workspace can modify the file.
-		copyPaths := []string{"/etc/resolv.conf", "/etc/hosts"}
-		for _, fn := range copyPaths {
-			err = copyRing2Root(ring2Root, fn)
-			if err != nil {
-				log.WithError(err).Warn("cannot copy " + fn)
-			}
-		}
-
-		err = makeHostnameLocal(ring2Root)
-		if err != nil {
-			log.WithError(err).Warn("cannot make /etc/hosts hostname local")
-		}
+		*/
 
 		env := make([]string, 0, len(os.Environ()))
 		for _, e := range os.Environ() {
@@ -373,7 +401,7 @@ var ring1Cmd = &cobra.Command{
 			env = append(env, e)
 		}
 
-		env = append(env, "WORKSPACEKIT_WRAP_NETNS=true")
+		//env = append(env, "WORKSPACEKIT_WRAP_NETNS=true")
 
 		socketFN := filepath.Join(os.TempDir(), fmt.Sprintf("workspacekit-ring1-%d.unix", time.Now().UnixNano()))
 		skt, err := net.Listen("unix", socketFN)
@@ -411,28 +439,30 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 
-		client, err := connectToInWorkspaceDaemonService(ctx)
-		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon from ring1")
-			return
-		}
-		_, err = client.MountProc(ctx, &daemonapi.MountProcRequest{
-			Target: procLoc,
-			Pid:    int64(cmd.Process.Pid),
-		})
-		if err != nil {
-			client.Close()
-			log.WithError(err).Error("cannot mount proc")
-			return
-		}
+		/*
+			client, err := connectToInWorkspaceDaemonService(ctx)
+			if err != nil {
+				log.WithError(err).Error("cannot connect to daemon from ring1")
+				return
+			}
+			_, err = client.MountProc(ctx, &daemonapi.MountProcRequest{
+				Target: procLoc,
+				Pid:    int64(cmd.Process.Pid),
+			})
+			if err != nil {
+				client.Close()
+				log.WithError(err).Error("cannot mount proc")
+				return
+			}
 
-		_, err = client.EvacuateCGroup(ctx, &daemonapi.EvacuateCGroupRequest{})
-		if err != nil {
+			_, err = client.EvacuateCGroup(ctx, &daemonapi.EvacuateCGroupRequest{})
+			if err != nil {
+				client.Close()
+				log.WithError(err).Error("cannot evacuate cgroup")
+				return
+			}
 			client.Close()
-			log.WithError(err).Error("cannot evacuate cgroup")
-			return
-		}
-		client.Close()
+		*/
 
 		// We have to wait for ring2 to come back to us and connect to the socket we've passed along.
 		// There's a chance that ring2 crashes or misbehaves, so we don't want to wait forever, hence
@@ -480,68 +510,72 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 
-		client, err = connectToInWorkspaceDaemonService(ctx)
-		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon from ring1 after ring2")
-			return
-		}
-		_, err = client.SetupPairVeths(ctx, &daemonapi.SetupPairVethsRequest{Pid: int64(cmd.Process.Pid)})
-		if err != nil {
-			log.WithError(err).Error("cannot setup pair of veths")
-			return
-		}
-		client.Close()
+		/*
+			client, err = connectToInWorkspaceDaemonService(ctx)
+			if err != nil {
+				log.WithError(err).Error("cannot connect to daemon from ring1 after ring2")
+				return
+			}
+			_, err = client.SetupPairVeths(ctx, &daemonapi.SetupPairVethsRequest{Pid: int64(cmd.Process.Pid)})
+			if err != nil {
+				log.WithError(err).Error("cannot setup pair of veths")
+				return
+			}
+			client.Close()
+		*/
 
 		log.Info("signaling to child process")
 		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{
 			Stage:   1,
 			Rootfs:  ring2Root,
-			FSShift: fsshift,
+			FSShift: api.FSShiftMethod_FUSE,
 		})
 		if err != nil {
 			log.WithError(err).Error("cannot send ring sync msg to ring2")
 			return
 		}
 
-		log.Info("awaiting seccomp fd")
-		scmpfd, err := receiveSeccmpFd(ring2Conn)
-		if err != nil {
-			log.WithError(err).Error("did not receive seccomp fd from ring2")
-			return
-		}
-
-		if scmpfd == 0 {
-			log.Warn("received 0 as ring2 seccomp fd - syscall handling is broken")
-		} else {
-			handler := &seccomp.InWorkspaceHandler{
-				FD: scmpfd,
-				Daemon: func(ctx context.Context) (seccomp.InWorkspaceServiceClient, error) {
-					return connectToInWorkspaceDaemonService(ctx)
-				},
-				Ring2PID:    cmd.Process.Pid,
-				Ring2Rootfs: ring2Root,
-				BindEvents:  make(chan seccomp.BindEvent),
-				WorkspaceId: wsid,
+		/*
+			log.Info("awaiting seccomp fd")
+			scmpfd, err := receiveSeccmpFd(ring2Conn)
+			if err != nil {
+				log.WithError(err).Error("did not receive seccomp fd from ring2")
+				return
 			}
 
-			stp, errchan := seccomp.Handle(scmpfd, handler, wsid)
-			defer close(stp)
-			go func() {
-				t := time.NewTicker(100 * time.Microsecond)
-				defer t.Stop()
-				for {
-					// We use the ticker to rate-limit the errors from the syscall handler.
-					// We're only handling low-frequency syscalls (e.g. mount), and don't want
-					// the handler to hog the CPU because it fails on its fd.
-					<-t.C
-					err := <-errchan
-					if err == nil {
-						return
-					}
-					log.WithError(err).Warn("syscall handler error")
+			if scmpfd == 0 {
+				log.Warn("received 0 as ring2 seccomp fd - syscall handling is broken")
+			} else {
+				handler := &seccomp.InWorkspaceHandler{
+					FD: scmpfd,
+					Daemon: func(ctx context.Context) (seccomp.InWorkspaceServiceClient, error) {
+						return connectToInWorkspaceDaemonService(ctx)
+					},
+					Ring2PID:    cmd.Process.Pid,
+					Ring2Rootfs: ring2Root,
+					BindEvents:  make(chan seccomp.BindEvent),
+					WorkspaceId: wsid,
 				}
-			}()
-		}
+
+				stp, errchan := seccomp.Handle(scmpfd, handler, wsid)
+				defer close(stp)
+				go func() {
+					t := time.NewTicker(100 * time.Microsecond)
+					defer t.Stop()
+					for {
+						// We use the ticker to rate-limit the errors from the syscall handler.
+						// We're only handling low-frequency syscalls (e.g. mount), and don't want
+						// the handler to hog the CPU because it fails on its fd.
+						<-t.C
+						err := <-errchan
+						if err == nil {
+							return
+						}
+						log.WithError(err).Warn("syscall handler error")
+					}
+				}()
+			}
+		*/
 
 		if enclave := os.Getenv("WORKSPACEKIT_RING2_ENCLAVE"); enclave != "" {
 			ecmd := exec.Command("/proc/self/exe", append([]string{"nsenter", "--target", strconv.Itoa(cmd.Process.Pid), "--mount", "--net"}, strings.Fields(enclave)...)...)
@@ -682,6 +716,7 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 	return mounts, scanner.Err()
 }
 
+/*
 // copyRing2Root copies <fn> to <ring2root>/<fn>
 func copyRing2Root(ring2root string, fn string) error {
 	stat, err := os.Stat(fn)
@@ -708,7 +743,8 @@ func copyRing2Root(ring2root string, fn string) error {
 
 	return nil
 }
-
+*/
+/*
 func makeHostnameLocal(ring2root string) error {
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -736,7 +772,8 @@ func makeHostnameLocal(ring2root string) error {
 	}
 	return ioutil.WriteFile(path, []byte(strings.Join(lines, "\n")), stat.Mode())
 }
-
+*/
+/*
 func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
 	buf := make([]byte, unix.CmsgSpace(4))
 
@@ -775,6 +812,7 @@ func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
 
 	return libseccomp.ScmpFd(fds[0]), nil
 }
+*/
 
 var ring2Opts struct {
 	SupervisorPath string
