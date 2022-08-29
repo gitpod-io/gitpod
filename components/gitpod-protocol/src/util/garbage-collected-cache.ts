@@ -37,6 +37,11 @@ export class GarbageCollectedCache<T> {
         if (!entry) {
             return undefined;
         }
+        // Still valid?
+        if (entry.expiryDate < Date.now()) {
+            this.store.delete(entry.key);
+            return undefined;
+        }
         return entry.value;
     }
 

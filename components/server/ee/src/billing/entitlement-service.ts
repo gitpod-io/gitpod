@@ -43,7 +43,6 @@ export class EntitlementServiceImpl implements EntitlementService {
             const verification = await this.verificationService.needsVerification(user);
             if (verification) {
                 return {
-                    mayStart: false,
                     needsVerification: true,
                 };
             }

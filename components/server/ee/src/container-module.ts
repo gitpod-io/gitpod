@@ -94,13 +94,13 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     // GitpodServerImpl (stateful per user)
     rebind(GitpodServerImpl).to(GitpodServerEEImpl).inRequestScope();
     bind(EligibilityService).toSelf().inRequestScope();
-    bind(AccountStatementProvider).toSelf().inRequestScope();
 
     // various
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();
     rebind(BlockedUserFilter).toService(EMailDomainService);
     bind(SnapshotService).toSelf().inSingletonScope();
+    bind(AccountStatementProvider).toSelf().inSingletonScope();
 
     bind(UserDeletionServiceEE).toSelf().inSingletonScope();
     rebind(UserDeletionService).to(UserDeletionServiceEE).inSingletonScope();
