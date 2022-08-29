@@ -28,7 +28,7 @@ message UpdateInvoicesRequest {
   google.protobuf.Timestamp start_time = 1;
   google.protobuf.Timestamp end_time = 2;
 
-  repeated BilledSession sessions = 3;
+  repeated BilledSession sessions = 3 [deprecated=true];
   // report_id is a unique identifier of the usage report for this UpdateInvoicesRequest
   string report_id = 4;
 }

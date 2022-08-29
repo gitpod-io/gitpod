@@ -65,7 +65,7 @@ message ReconcileUsageRequest {
 }
 
 message ReconcileUsageResponse {
-    repeated BilledSession sessions = 1;
+    repeated BilledSession sessions = 1 [deprecated=true];
     // ID of the UsageReport generated for this reconcile run.
     string report_id = 2;
 }
