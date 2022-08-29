@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -21,12 +24,15 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "iteration": 1643631956016,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -35,6 +41,15 @@
       },
       "id": 42,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "server Metrics",
       "type": "row"
     },
@@ -76,7 +91,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "9.1.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -86,6 +101,9 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "sum(rate(gitpod_server_api_calls_total{cluster=~\"$cluster\", pod=~\"$pod\", method=~\"$method\"}[5m])) by (method)",
           "interval": "",
@@ -164,7 +182,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "9.1.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -174,6 +192,9 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "expr": "sum(\n  rate(gitpod_server_api_calls_total{cluster=~\"$cluster\", pod=~\"$pod\", method=~\"$method\", statusCode!~\"2..|429\"}[5m])\n) by (method)\n/\nsum(\n  rate(gitpod_server_api_calls_total{cluster=~\"$cluster\", pod=~\"$pod\", method=~\"$method\"}[5m])\n) by (method)",
           "interval": "",
           "legendFormat": "{{method}}",
@@ -197,14 +218,15 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:62",
           "decimals": 2,
-          "format": "percentunit",
+          "format": "reqps",
           "logBase": 1,
-          "max": "1",
           "min": "0",
           "show": true
         },
         {
+          "$$hashKey": "object:63",
           "format": "short",
           "logBase": 1,
           "show": true
@@ -226,6 +248,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -285,10 +309,12 @@
         "legend": {
           "calcs": [],
           "displayMode": "table",
-          "placement": "right"
+          "placement": "right",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "8.3.3",
@@ -351,6 +377,21 @@
         "uid": "${datasource}"
       },
       "description": "A heatmap of the API requests duration.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -364,7 +405,43 @@
       "legend": {
         "show": false
       },
-      "pluginVersion": "8.3.3",
+      "options": {
+        "calculate": false,
+        "calculation": {},
+        "cellGap": 2,
+        "cellValues": {},
+        "color": {
+          "exponent": 0.5,
+          "fill": "#b4ff00",
+          "mode": "scheme",
+          "scale": "exponential",
+          "scheme": "Greens",
+          "steps": 128
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-9
+        },
+        "legend": {
+          "show": false
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "showValue": "never",
+        "tooltip": {
+          "show": true,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "s"
+        }
+      },
+      "pluginVersion": "9.1.0",
       "reverseYBuckets": false,
       "targets": [
         {
@@ -408,6 +485,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -470,10 +549,12 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "8.3.1",
@@ -505,6 +586,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -560,14 +643,19 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "sum(rate(gitpod_server_api_connections_closed_total{cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (cluster, pod)",
           "hide": false,
@@ -590,6 +678,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -645,14 +735,19 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "sum(rate(gitpod_server_api_connections_total{cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (cluster, pod)",
           "interval": "",
@@ -699,7 +794,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "9.1.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -781,6 +876,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -839,14 +936,19 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "multi",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "sum (server_websocket_connection_count{cluster=~\"$cluster\", pod=~\"$pod\"}) by (cluster, pod)",
           "interval": "",
@@ -868,6 +970,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -926,14 +1030,19 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "multi",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "sum(server_websocket_connection_count{cluster=~\"$cluster\", pod=~\"$pod\"}) by (cluster, clientType)",
           "interval": "",
@@ -954,6 +1063,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -1009,14 +1120,19 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "sum(rate(gitpod_server_api_calls_user_total{cluster=~\"$cluster\", method=~\"ts.*\"}[5m])) by (cluster, method) * 60",
           "interval": "",
@@ -1037,6 +1153,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -1093,14 +1211,19 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "sum (gitpod_version_info{}) by (cluster, gitpod_version)",
           "interval": "",
@@ -1121,6 +1244,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -1176,14 +1301,19 @@
         "legend": {
           "calcs": [],
           "displayMode": "table",
-          "placement": "right"
+          "placement": "right",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "kube_pod_container_info{cluster=~\"$cluster\", pod=~\"$pod\", image=~\".+\", container=\"server\"}",
           "interval": "",
@@ -1197,6 +1327,10 @@
     },
     {
       "collapsed": true,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1250,6 +1384,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "process_resident_memory_bytes{cluster=~\"$cluster\", pod=~\"$pod\", job=\"server\"}",
               "interval": "",
               "legendFormat": "{{cluster}} - {{pod}}",
@@ -1339,6 +1476,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "rate(process_cpu_seconds_total{cluster=~\"$cluster\", job=\"server\", pod=~\"$pod\"}[1m])",
               "interval": "",
               "intervalFactor": 2,
@@ -1434,6 +1574,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "nodejs_eventloop_lag_seconds{cluster=~\"$cluster\", job=\"server\", pod=~\"$pod\"}",
               "interval": "",
               "legendFormat": "{{cluster}} - {{pod}}",
@@ -1522,6 +1665,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "nodejs_active_handles_total{cluster=~\"$cluster\", job=\"server\", pod=~\"$pod\"}",
               "interval": "",
               "legendFormat": "{{cluster}} - {{pod}}",
@@ -1560,11 +1706,24 @@
           }
         }
       ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Node.js Runtime Metrics",
       "type": "row"
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1573,6 +1732,15 @@
       },
       "id": 50,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "HTTP Metrics",
       "type": "row"
     },
@@ -1743,6 +1911,9 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "expr": "histogram_quantile(0.99, \n  sum(rate(gitpod_server_http_request_duration_seconds_bucket{cluster=~\"$cluster\", route=~\"$http_route\"}[5m])) by (cluster, le)\n )",
           "interval": "",
           "legendFormat": "{{cluster}} - 99th percentile",
@@ -1750,6 +1921,9 @@
           "refId": "A"
         },
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "expr": "histogram_quantile(0.95, \n  sum(rate(gitpod_server_http_request_duration_seconds_bucket{cluster=~\"$cluster\", route=~\"$http_route\"}[5m])) by (cluster, le)\n )",
           "hide": false,
           "interval": "",
@@ -1758,6 +1932,9 @@
           "refId": "B"
         },
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "expr": "histogram_quantile(0.50, \n  sum(rate(gitpod_server_http_request_duration_seconds_bucket{cluster=~\"$cluster\", route=~\"$http_route\"}[5m])) by (cluster, le)\n )",
           "hide": false,
           "interval": "",
@@ -1766,6 +1943,9 @@
           "refId": "C"
         },
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "expr": "sum(rate(gitpod_server_http_request_duration_seconds_sum{cluster=~\"$cluster\", route=~\"$http_route\"}[5m])) by (cluster)\n/\nsum(rate(gitpod_server_http_request_duration_seconds_count{cluster=~\"$cluster\", route=~\"$http_route\"}[5m])) by (cluster)",
           "hide": false,
           "interval": "",
@@ -1806,6 +1986,10 @@
     },
     {
       "collapsed": true,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1859,6 +2043,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "sum(container_memory_working_set_bytes{container!=\"POD\", container!=\"\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}) by (pod, cluster, node)",
               "interval": "",
               "legendFormat": "{{cluster}} - {{node}} - {{pod}}",
@@ -1945,6 +2132,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "sum(\n  rate(container_cpu_usage_seconds_total{container!=\"POD\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}[1m])\n) by (pod, cluster, node)",
               "interval": "",
               "legendFormat": "{{cluster}} - {{node}} - {{pod}} - Cores being used",
@@ -2057,7 +2247,8 @@
                 "max"
               ],
               "displayMode": "table",
-              "placement": "bottom"
+              "placement": "bottom",
+              "showLegend": true
             },
             "tooltip": {
               "mode": "single"
@@ -2126,6 +2317,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "sum (\n  rate(container_network_receive_bytes_total{container!=\"POD\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}[1m])\n) by (pod, cluster, node)",
               "interval": "",
               "legendFormat": "{{cluster}} - {{node}} - {{pod}} - Received",
@@ -2133,6 +2327,9 @@
               "refId": "A"
             },
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "sum (\n  rate(container_network_transmit_bytes_total{container!=\"POD\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}[1m])\n) by (pod, cluster, node)",
               "interval": "",
               "legendFormat": "{{cluster}} - {{node}} - {{pod}} - Transmitted",
@@ -2217,6 +2414,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "sum (\n  rate(container_network_receive_packets_dropped_total{container!=\"POD\", pod!=\"\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}[1m])\n) by (pod, cluster, node)",
               "interval": "",
               "legendFormat": "{{cluster}} - {{node}} - {{pod}} - Receive",
@@ -2224,6 +2424,9 @@
               "refId": "A"
             },
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "sum (\n  rate(container_network_transmit_packets_dropped_total{container!=\"POD\", pod!=\"\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}[1m])\n) by (pod, cluster, node)",
               "interval": "",
               "legendFormat": "{{cluster}} - {{node}} - {{pod}} - Transmit",
@@ -2308,6 +2511,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "sum (\n  rate(container_network_receive_errors_total{container!=\"POD\", pod!=\"\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}[1m])\n) by (pod, cluster, node)",
               "interval": "",
               "legendFormat": "{{cluster}} - {{node}} - {{pod}} - Received",
@@ -2315,6 +2521,9 @@
               "refId": "A"
             },
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "sum (\n  rate(container_network_transmit_errors_total{container!=\"POD\", pod!=\"\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}[1m])\n) by (pod, cluster, node)",
               "interval": "",
               "legendFormat": "{{cluster}} - {{node}} - {{pod}} - Transmitted",
@@ -2401,6 +2610,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "rate(kube_pod_container_status_restarts_total{cluster=~\"$cluster\", pod=~\"$pod\"}[1m])",
               "interval": "",
               "legendFormat": "{{cluster}} - {{kubernetes_pod_node_name}} - {{pod}} ",
@@ -2487,6 +2699,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "kube_pod_container_status_running{cluster=~\"$cluster\", pod=~\"$pod\"} == 1 ",
               "interval": "",
               "legendFormat": "{{pod}}  - RUNNING",
@@ -2494,6 +2709,9 @@
               "refId": "A"
             },
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "(\n  sum by (pod) (kube_pod_container_status_terminated{cluster=~\"$cluster\", pod=~\"$pod\"}) == 1\n) * on(pod) group_left(reason) (\n  sum by (pod, reason) (kube_pod_container_status_terminated_reason{cluster=~\"$cluster\", pod=~\"$pod\"}) == 1\n)",
               "interval": "",
               "legendFormat": "{{pod}}  - TERMINATED -> {{reason}}",
@@ -2501,6 +2719,9 @@
               "refId": "B"
             },
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "(\n  sum by (pod) (kube_pod_container_status_waiting{cluster=~\"$cluster\", pod=~\"$pod\"}) == 1\n) * on(pod) group_left(reason) (\n  sum by (pod, reason) (kube_pod_container_status_waiting_reason{cluster=~\"$cluster\", pod=~\"$pod\"}) == 1\n)",
               "interval": "",
               "legendFormat": "{{pod}}  - WAITING -> {{reason}}",
@@ -2585,6 +2806,9 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "kube_deployment_spec_replicas{cluster=~\"$cluster\", deployment=\"server\"}",
               "interval": "",
               "legendFormat": "{{cluster}} - {{deployment}} - Desired",
@@ -2592,6 +2816,9 @@
               "refId": "C"
             },
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "kube_deployment_status_replicas_available{cluster=~\"$cluster\", deployment=\"server\"}",
               "interval": "",
               "legendFormat": "{{cluster}} - {{deployment}} - Available replicas",
@@ -2599,6 +2826,9 @@
               "refId": "A"
             },
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "kube_deployment_status_replicas_unavailable{cluster=~\"$cluster\", deployment=\"server\"}",
               "interval": "",
               "legendFormat": "{{cluster}} - {{deployment}} - Unvailable replicas",
@@ -2638,12 +2868,21 @@
           }
         }
       ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Pod Metrics",
       "type": "row"
     }
   ],
   "refresh": false,
-  "schemaVersion": 34,
+  "schemaVersion": 37,
   "style": "dark",
   "tags": [
     "gitpod-mixin"
