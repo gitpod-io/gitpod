@@ -27,8 +27,9 @@ func TestServerCanReceiveLargeMessages(t *testing.T) {
 	require.NoError(t, err)
 
 	usageClient := v1.NewUsageServiceClient(conn)
+	billingClient := v1.NewBillingServiceClient(conn)
 
-	v1.RegisterBillingServiceServer(srv.GRPC(), NewBillingService(&stripe.Client{}, time.Time{}, &gorm.DB{}, usageClient))
+	v1.RegisterBillingServiceServer(srv.GRPC(), NewBillingService(&stripe.Client{}, time.Time{}, &gorm.DB{}, usageClient, billingClient))
 	baseserver.StartServerForTests(t, srv)
 
 	client := v1.NewBillingServiceClient(conn)

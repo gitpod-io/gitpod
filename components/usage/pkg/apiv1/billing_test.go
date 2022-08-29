@@ -30,13 +30,18 @@ func TestCreditSummaryForTeams(t *testing.T) {
 		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
 	)
 	generator := NewReportGenerator(dbconn, DefaultWorkspacePricer)
-	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, generator, nil))
+
+	usageSvc := NewUsageService(dbconn, generator, nil)
+	billingSvc := NewBillingService(nil, time.Time{}, dbconn, usageClient, billingClient)
+	v1.RegisterUsageServiceServer(srv.GRPC(), usageSvc)
+	v1.RegisterBillingServiceServer(srv.GRPC(), billingSvc)
 	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 
 	usageClient := v1.NewUsageServiceClient(conn)
+	billingClient := v1.NewBillingServiceClient(conn)
 
 	teamID_A, teamID_B := uuid.New().String(), uuid.New().String()
 	teamAttributionID_A, teamAttributionID_B := db.NewTeamAttributionID(teamID_A), db.NewTeamAttributionID(teamID_B)
@@ -63,13 +68,13 @@ func TestCreditSummaryForTeams(t *testing.T) {
 		Name              string
 		Sessions          []*v1.BilledSession
 		BillSessionsAfter time.Time
-		Expected          map[string]map[string]float64
+		Expected          map[string]stripe.CreditSummary
 	}{
 		{
 			Name:              "no instances in report, no summary",
 			BillSessionsAfter: time.Time{},
 			Sessions:          []*v1.BilledSession{},
-			Expected:          map[string]map[string]float64{},
+			Expected:          map[string]stripe.CreditSummary{},
 		},
 		{
 			Name:              "skips user attributions",
@@ -79,7 +84,7 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					AttributionId: string(db.NewUserAttributionID(uuid.New().String())),
 				},
 			},
-			Expected: map[string]map[string]float64{},
+			Expected: map[string]stripe.CreditSummary{},
 		},
 		{
 			Name:              "two workspace instances",
@@ -98,12 +103,12 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					TeamId:        string(teamAttributionID_A),
 				},
 			},
-			Expected: map[string]map[string]float64{
+			Expected: map[string]stripe.CreditSummary{
 				// total of 2 days runtime, at 10 credits per hour, that's 480 credits
 				teamID_A: {
-					"creditsUsed":     480,
-					"spendingLimit":   float64(read.SpendingLimit),
-					"upcomingInvoice": 500,
+					CreditsUsed:              480,
+					SpendingLimitInCredits:   float64(read.SpendingLimit),
+					UpcomingInvoiceInCredits: 500,
 				},
 			},
 		},
@@ -124,17 +129,17 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					TeamId:        string(teamAttributionID_B),
 				},
 			},
-			Expected: map[string]map[string]float64{
+			Expected: map[string]stripe.CreditSummary{
 				// total of 2 days runtime, at 10 credits per hour, that's 480 credits
 				teamID_A: {
-					"creditsUsed":     120,
-					"spendingLimit":   float64(read.SpendingLimit),
-					"upcomingInvoice": 120,
+					CreditsUsed:              120,
+					SpendingLimitInCredits:   float64(read.SpendingLimit),
+					UpcomingInvoiceInCredits: 120,
 				},
 				teamID_B: {
-					"creditsUsed":     240,
-					"spendingLimit":   float64(read.SpendingLimit),
-					"upcomingInvoice": 240,
+					CreditsUsed:              240,
+					SpendingLimitInCredits:   float64(read.SpendingLimit),
+					UpcomingInvoiceInCredits: 240,
 				},
 			},
 		},
@@ -157,11 +162,11 @@ func TestCreditSummaryForTeams(t *testing.T) {
 					TeamId:        string(teamAttributionID_A),
 				},
 			},
-			Expected: map[string]map[string]float64{
+			Expected: map[string]stripe.CreditSummary{
 				teamID_A: {
-					"creditsUsed":     120,
-					"spendingLimit":   float64(read.SpendingLimit),
-					"upcomingInvoice": 130,
+					CreditsUsed:              120,
+					SpendingLimitInCredits:   float64(read.SpendingLimit),
+					UpcomingInvoiceInCredits: 130,
 				},
 			},
 		},
@@ -169,7 +174,7 @@ func TestCreditSummaryForTeams(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
-			svc := NewBillingService(&testStripeClient{}, s.BillSessionsAfter, &gorm.DB{}, usageClient)
+			svc :=
 			actual, err := svc.creditSummaryForTeams(ctx, s.Sessions)
 			require.NoError(t, err)
 			require.Equal(t, s.Expected["creditsUsed"], actual["creditsUsed"])

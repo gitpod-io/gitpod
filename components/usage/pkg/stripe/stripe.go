@@ -16,6 +16,10 @@ import (
 	"github.com/stripe/stripe-go/v72/client"
 )
 
+type Interface interface {
+	UpdateUsage(ctx context.Context, creditsPerTeam map[string]CreditSummary) error
+}
+
 type Client struct {
 	sc *client.API
 }
@@ -58,9 +62,15 @@ type Invoice struct {
 	Credits        int64
 }
 
+type CreditSummary struct {
+	CreditsUsed              float64
+	SpendingLimitInCredits   float64
+	UpcomingInvoiceInCredits float64
+}
+
 // UpdateUsage updates teams' Stripe subscriptions with usage data
 // `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
-func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]map[string]float64) error {
+func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]CreditSummary) error {
 	teamIds := make([]string, 0, len(creditsPerTeam))
 	for k := range creditsPerTeam {
 		teamIds = append(teamIds, k)
@@ -79,7 +89,7 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]map[
 			teamID := customer.Metadata["teamId"]
 			log.Infof("Found customer %q for teamId %q", customer.Name, teamID)
 
-			_, err := c.updateUsageForCustomer(ctx, customer, int64(creditsPerTeam[teamID]["creditsUsed"]))
+			_, err := c.updateUsageForCustomer(ctx, customer, int64(creditsPerTeam[teamID].CreditsUsed))
 			if err != nil {
 				log.WithField("customer_id", customer.ID).
 					WithField("customer_name", customer.Name).

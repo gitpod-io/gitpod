@@ -22,26 +22,23 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewBillingService(stripeClient StripeClient, billInstancesAfter time.Time, conn *gorm.DB, usageClient v1.UsageServiceClient) *BillingService {
+func NewBillingService(stripeClient *stripe.Client, billInstancesAfter time.Time, conn *gorm.DB, usageClient v1.UsageServiceClient, billingClient v1.BillingServiceClient) *BillingService {
 	return &BillingService{
 		stripeClient:       stripeClient,
+		billingClient:      billingClient,
 		billInstancesAfter: billInstancesAfter,
 		conn:               conn,
 		usageClient:        usageClient,
 	}
 }
 
-type StripeClient interface {
-	GetUpcomingInvoice(ctx context.Context, customerID string) (*stripe.Invoice, error)
-	UpdateUsage(ctx context.Context, creditsPerTeam map[string]map[string]float64) error
-	GetCustomerByTeamID(ctx context.Context, teamID string) (*stripesdk.Customer, error)
-	GetCustomerByUserID(ctx context.Context, userID string) (*stripesdk.Customer, error)
-}
 type BillingService struct {
 	conn               *gorm.DB
-	stripeClient       StripeClient
+	stripeClient       *stripe.Client
 	billInstancesAfter time.Time
-	usageClient        v1.UsageServiceClient
+
+	usageClient   v1.UsageServiceClient
+	billingClient v1.BillingServiceClient
 
 	v1.UnimplementedBillingServiceServer
 }
@@ -98,7 +95,7 @@ func (s *BillingService) GetUpcomingInvoice(ctx context.Context, in *v1.GetUpcom
 	}, nil
 }
 
-func (s *BillingService) creditSummaryForTeams(ctx context.Context, sessions []*v1.BilledSession) (map[string]map[string]float64, error) {
+func (s *BillingService) creditSummaryForTeams(ctx context.Context, sessions []*v1.BilledSession) (map[string]stripe.CreditSummary, error) {
 	creditsPerTeamID := map[string]float64{}
 	var spendingLimit float64
 	var upcomingInvoice float64
@@ -123,9 +120,14 @@ func (s *BillingService) creditSummaryForTeams(ctx context.Context, sessions []*
 		}
 
 		creditsPerTeamID[id] += session.GetCredits()
+	}
 
+	rounded := map[string]stripe.CreditSummary{}
+	for teamID, credits := range creditsPerTeamID {
+
+		attributionID := string(db.NewTeamAttributionID(teamID))
 		// get additional data
-		result, err := s.usageClient.GetCostCenter(ctx, &v1.GetCostCenterRequest{AttributionId: session.AttributionId})
+		result, err := s.usageClient.GetCostCenter(ctx, &v1.GetCostCenterRequest{AttributionId: attributionID})
 		if err != nil {
 			if errors.Is(err, db.CostCenterNotFound) {
 				return nil, status.Errorf(codes.NotFound, "Cost center not found: %s", err.Error())
@@ -133,22 +135,23 @@ func (s *BillingService) creditSummaryForTeams(ctx context.Context, sessions []*
 			return nil, status.Errorf(codes.Internal, "Failed to get cost center %s from DB: %s", attributionID, err.Error())
 		}
 
-		invoiceResult, err := s.GetUpcomingInvoice(ctx, &v1.GetUpcomingInvoiceRequest{Identifier: &v1.GetUpcomingInvoiceRequest_TeamId{TeamId: session.TeamId}})
+		invoice, err := s.billingClient.GetUpcomingInvoice(ctx, &v1.GetUpcomingInvoiceRequest{
+			Identifier: &v1.GetUpcomingInvoiceRequest_TeamId{
+				TeamId: teamID,
+			},
+		})
+
 		if err != nil {
 			return nil, fmt.Errorf("failed to get upcoming invoice: %w", err)
 		}
 
 		spendingLimit = float64(result.CostCenter.SpendingLimit)
-		upcomingInvoice = float64(invoiceResult.Credits)
+		upcomingInvoice = float64(invoice.Credits)
 
-	}
-
-	rounded := map[string]map[string]float64{}
-	for teamID, credits := range creditsPerTeamID {
-		rounded[teamID] = map[string]float64{
-			"creditsUsed":     float64(math.Ceil(credits)),
-			"spendingLimit":   spendingLimit,
-			"upcomingInvoice": upcomingInvoice,
+		rounded[teamID] = stripe.CreditSummary{
+			CreditsUsed:              math.Ceil(credits),
+			SpendingLimitInCredits:   spendingLimit,
+			UpcomingInvoiceInCredits: upcomingInvoice,
 		}
 	}
 
