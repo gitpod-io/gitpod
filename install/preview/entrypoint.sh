@@ -15,11 +15,11 @@ export USER_ID
 
 if [ "$1" != "logging" ]; then
   $0 logging 2>&1 | /prettylog
-  exit
+  exiit
 fi
 
 # fail if its arm64
-if [ "$(uname -m)" = 'arm64' ]; then
+if [ "$(uname -m)" = "arm64" ]; then
     echo "Gitpod local preview does not work on arm64 CPU's (including M1 Mac's)"
     exit 1
 fi
