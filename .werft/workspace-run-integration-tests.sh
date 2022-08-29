@@ -143,6 +143,7 @@ for TEST_PATH in "${WK_TEST_LIST[@]}"
 do
     TEST_NAME=$(basename "${TEST_PATH}")
     echo "running integration for ${TEST_NAME}" | werft log slice "test-${TEST_NAME}"
+    RUN_COUNT=$((RUN_COUNT+1))
 
     cd "${TEST_PATH}"
     set +e
@@ -150,7 +151,6 @@ do
     RC=${PIPESTATUS[0]}
     set -e
 
-    RUN_COUNT=$((RUN_COUNT+1))
     if [ "${RC}" -ne "0" ]; then
       FAILURE_COUNT=$((FAILURE_COUNT+1))
       FAILURE_TESTS["${TEST_NAME}"]=$(grep "\-\-\- FAIL: " "${TEST_PATH}"/"${TEST_NAME}".log)
