@@ -194,7 +194,7 @@ documentaion](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step
 
 ### KOTS pods fail to deploy
 
-Sometimes, the pods deployed when executing `kubectl kots install gitpod` fail to deploy due to issues with mounting their disks.
+Sometimes, the pods deployed when executing `kubectl kots install gitpod` fail to deploy due to issues with mounting their disks:
 
 ```lucas@Lucass-MBP aws % kubectl get pods -A
 NAMESPACE      NAME                                       READY   STATUS              RESTARTS   AGE
