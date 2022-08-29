@@ -99,6 +99,36 @@ spec:
     - Ingress
 
 ---
+# networking.k8s.io/v1/NetworkPolicy ide-metrics
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-metrics
+  name: ide-metrics
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: proxy
+        - podSelector:
+            matchLabels:
+              component: ide-proxy
+      ports:
+        - port: 3000
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: ide-metrics
+  policyTypes:
+    - Ingress
+
+---
 # networking.k8s.io/v1/NetworkPolicy image-builder-mk3
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -1819,6 +1849,16 @@ data:
         app: gitpod
         component: ide-metrics
         kind: service
+      name: ide-metrics
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-metrics
       name: ide-metrics
       namespace: default
     ---
