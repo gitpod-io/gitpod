@@ -57,15 +57,11 @@ func (r *UsageAndBillingReconciler) Reconcile() (err error) {
 		return fmt.Errorf("failed to reconcile usage: %w", err)
 	}
 
-	sessions := usageResp.GetSessions()
-	reportSessionsRetrievedTotal(len(sessions))
-
 	reportID := usageResp.GetReportId()
 
 	_, err = r.billingClient.UpdateInvoices(ctx, &v1.UpdateInvoicesRequest{
 		StartTime: timestamppb.New(startOfCurrentMonth),
 		EndTime:   timestamppb.New(startOfNextMonth),
-		Sessions:  sessions,
 		ReportId:  reportID,
 	})
 	if err != nil {

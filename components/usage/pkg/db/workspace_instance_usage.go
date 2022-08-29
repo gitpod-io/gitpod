@@ -89,3 +89,5 @@ func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, 
 	}
 	return usageRecords, nil
 }
+
+type UsageReport []WorkspaceInstanceUsage
