@@ -591,12 +591,11 @@ export class WorkspaceStarter {
             if (rethrow) {
                 throw err;
             } else {
-                log.error("error starting instance", err, { instanceId: instance.id });
-                let failedReason: FailedInstanceStartReason = "other";
+                TraceContext.setError({ span }, err);
+                log.error({ userId: user.id, instanceId: instance.id }, "error starting instance", err);
                 if (err instanceof StartInstanceError) {
-                    failedReason = err.reason;
+                    increaseFailedInstanceStartCounter(err.reason);
                 }
-                increaseFailedInstanceStartCounter(failedReason);
             }
 
             return { instanceID: instance.id };
@@ -765,7 +764,7 @@ export class WorkspaceStarter {
         ideConfig: IDEConfig,
         pvcEnabledForPrebuilds: boolean,
     ): Promise<WorkspaceInstance> {
-        const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
+        const span = TraceContext.startSpan("newInstance", ctx);
         //#endregion IDE resolution TODO(ak) move to IDE service
         // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
         delete ideConfig.ideOptions.options["code-latest"];
@@ -1264,7 +1263,7 @@ export class WorkspaceStarter {
 
             TraceContext.setError({ span }, err);
             const looksLikeUserError = (msg: string): boolean => {
-                return msg.startsWith("build failed:");
+                return msg.startsWith("build failed:") || msg.startsWith("headless task failed:");
             };
             if (looksLikeUserError(message)) {
                 log.debug(
@@ -1272,10 +1271,11 @@ export class WorkspaceStarter {
                     `workspace image build failed: ${message}`,
                 );
             } else {
-                log.warn(
+                log.error(
                     { instanceId: instance.id, userId: user.id, workspaceId: workspace.id },
                     `workspace image build failed: ${message}`,
                 );
+                err = new StartInstanceError("imageBuildFailed", err);
             }
             this.analytics.track({
                 userId: user.id,
