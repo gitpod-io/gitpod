@@ -33,12 +33,6 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
 <!--
 Optional annotations to add to the werft job.
 
-If you would like to add additional annotations, each one has to be on a separate line:
-/werft with-preview
-/werft with-payment
-Not:
-/werft with-preview with-payment
-
 * with-preview - whether to create a preview environment for this PR
 -->
 - [ ] /werft with-preview
