@@ -125,13 +125,7 @@ func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsag
 		return nil, status.Error(codes.Internal, "failed to persist usage report to content service")
 	}
 
-	var sessions []*v1.BilledSession
-	for _, instance := range report.UsageRecords {
-		sessions = append(sessions, usageRecordToBilledUsageProto(instance))
-	}
-
 	return &v1.ReconcileUsageResponse{
-		Sessions: sessions,
 		ReportId: filename,
 	}, nil
 
@@ -172,26 +166,6 @@ func NewUsageService(conn *gorm.DB, reportGenerator *ReportGenerator, contentSvc
 		conn:            conn,
 		reportGenerator: reportGenerator,
 		contentService:  contentSvc,
-	}
-}
-
-func usageRecordToBilledUsageProto(usageRecord db.WorkspaceInstanceUsage) *v1.BilledSession {
-	var endTime *timestamppb.Timestamp
-	if usageRecord.StoppedAt.Valid {
-		endTime = timestamppb.New(usageRecord.StoppedAt.Time)
-	}
-	return &v1.BilledSession{
-		AttributionId:  string(usageRecord.AttributionID),
-		UserId:         usageRecord.UserID.String(),
-		WorkspaceId:    usageRecord.WorkspaceID,
-		TeamId:         "",
-		WorkspaceType:  string(usageRecord.WorkspaceType),
-		ProjectId:      usageRecord.ProjectID,
-		InstanceId:     usageRecord.InstanceID.String(),
-		WorkspaceClass: usageRecord.WorkspaceClass,
-		StartTime:      timestamppb.New(usageRecord.StartedAt),
-		EndTime:        endTime,
-		Credits:        usageRecord.CreditsUsed,
 	}
 }
 

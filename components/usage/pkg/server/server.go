@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/content-service/api"
 	"net"
 	"os"
 	"time"
@@ -131,7 +132,11 @@ func Start(cfg Config) error {
 
 	var contentService contentservice.Interface = &contentservice.NoOpClient{}
 	if cfg.ContentServiceAddress != "" {
-		contentService = contentservice.New(cfg.ContentServiceAddress)
+		contentServiceConn, err := grpc.Dial(cfg.ContentServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return fmt.Errorf("failed to dial contentservice: %w", err)
+		}
+		contentService = contentservice.New(api.NewUsageReportServiceClient(contentServiceConn))
 	}
 
 	reportGenerator := apiv1.NewReportGenerator(conn, pricer)

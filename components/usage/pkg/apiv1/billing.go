@@ -6,7 +6,7 @@ package apiv1
 
 import (
 	"context"
-	"fmt"
+	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"math"
 	"time"
 
@@ -34,11 +34,22 @@ type BillingService struct {
 	stripeClient       *stripe.Client
 	billInstancesAfter time.Time
 
+	contentService contentservice.Interface
+
 	v1.UnimplementedBillingServiceServer
 }
 
 func (s *BillingService) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoicesRequest) (*v1.UpdateInvoicesResponse, error) {
-	credits, err := s.creditSummaryForTeams(in.GetSessions())
+	if in.GetReportId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Missing report ID")
+	}
+
+	report, err := s.contentService.DownloadUsageReport(ctx, in.GetReportId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to download usage report with ID: %s", in.GetReportId())
+	}
+
+	credits, err := s.creditSummaryForTeams(report)
 	if err != nil {
 		log.Log.WithError(err).Errorf("Failed to compute credit summary.")
 		return nil, status.Errorf(codes.InvalidArgument, "failed to compute credit summary")
@@ -89,20 +100,15 @@ func (s *BillingService) GetUpcomingInvoice(ctx context.Context, in *v1.GetUpcom
 	}, nil
 }
 
-func (s *BillingService) creditSummaryForTeams(sessions []*v1.BilledSession) (map[string]int64, error) {
+func (s *BillingService) creditSummaryForTeams(sessions db.UsageReport) (map[string]int64, error) {
 	creditsPerTeamID := map[string]float64{}
 
 	for _, session := range sessions {
-		if session.StartTime.AsTime().Before(s.billInstancesAfter) {
+		if session.StartedAt.Before(s.billInstancesAfter) {
 			continue
 		}
 
-		attributionID, err := db.ParseAttributionID(session.AttributionId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse attribution ID: %w", err)
-		}
-
-		entity, id := attributionID.Values()
+		entity, id := session.AttributionID.Values()
 		if entity != db.AttributionEntity_Team {
 			continue
 		}
@@ -111,7 +117,7 @@ func (s *BillingService) creditSummaryForTeams(sessions []*v1.BilledSession) (ma
 			creditsPerTeamID[id] = 0
 		}
 
-		creditsPerTeamID[id] += session.GetCredits()
+		creditsPerTeamID[id] += session.CreditsUsed
 	}
 
 	rounded := map[string]int64{}

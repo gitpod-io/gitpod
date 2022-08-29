@@ -8,12 +8,10 @@ import (
 	"testing"
 	"time"
 
-	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
@@ -23,22 +21,22 @@ func TestCreditSummaryForTeams(t *testing.T) {
 
 	scenarios := []struct {
 		Name              string
-		Sessions          []*v1.BilledSession
+		Sessions          db.UsageReport
 		BillSessionsAfter time.Time
 		Expected          map[string]int64
 	}{
 		{
 			Name:              "no instances in report, no summary",
 			BillSessionsAfter: time.Time{},
-			Sessions:          []*v1.BilledSession{},
+			Sessions:          nil,
 			Expected:          map[string]int64{},
 		},
 		{
 			Name:              "skips user attributions",
 			BillSessionsAfter: time.Time{},
-			Sessions: []*v1.BilledSession{
+			Sessions: []db.WorkspaceInstanceUsage{
 				{
-					AttributionId: string(db.NewUserAttributionID(uuid.New().String())),
+					AttributionID: db.NewUserAttributionID(uuid.New().String()),
 				},
 			},
 			Expected: map[string]int64{},
@@ -46,16 +44,16 @@ func TestCreditSummaryForTeams(t *testing.T) {
 		{
 			Name:              "two workspace instances",
 			BillSessionsAfter: time.Time{},
-			Sessions: []*v1.BilledSession{
+			Sessions: []db.WorkspaceInstanceUsage{
 				{
 					// has 1 day and 23 hours of usage
-					AttributionId: string(teamAttributionID_A),
-					Credits:       (24 + 23) * 10,
+					AttributionID: teamAttributionID_A,
+					CreditsUsed:   (24 + 23) * 10,
 				},
 				{
 					// has 1 hour of usage
-					AttributionId: string(teamAttributionID_A),
-					Credits:       10,
+					AttributionID: teamAttributionID_A,
+					CreditsUsed:   10,
 				},
 			},
 			Expected: map[string]int64{
@@ -66,16 +64,16 @@ func TestCreditSummaryForTeams(t *testing.T) {
 		{
 			Name:              "multiple teams",
 			BillSessionsAfter: time.Time{},
-			Sessions: []*v1.BilledSession{
+			Sessions: []db.WorkspaceInstanceUsage{
 				{
 					// has 12 hours of usage
-					AttributionId: string(teamAttributionID_A),
-					Credits:       (12) * 10,
+					AttributionID: teamAttributionID_A,
+					CreditsUsed:   (12) * 10,
 				},
 				{
 					// has 1 day of usage
-					AttributionId: string(teamAttributionID_B),
-					Credits:       (24) * 10,
+					AttributionID: teamAttributionID_B,
+					CreditsUsed:   (24) * 10,
 				},
 			},
 			Expected: map[string]int64{
@@ -87,18 +85,18 @@ func TestCreditSummaryForTeams(t *testing.T) {
 		{
 			Name:              "two instances, same team, one of which started too early to be considered",
 			BillSessionsAfter: time.Now().AddDate(0, 0, -2),
-			Sessions: []*v1.BilledSession{
+			Sessions: []db.WorkspaceInstanceUsage{
 				{
 					// has 12 hours of usage, started yesterday
-					AttributionId: string(teamAttributionID_A),
-					Credits:       (12) * 10,
-					StartTime:     timestamppb.New(time.Now().AddDate(0, 0, -1)),
+					AttributionID: teamAttributionID_A,
+					CreditsUsed:   (12) * 10,
+					StartedAt:     time.Now().AddDate(0, 0, -1),
 				},
 				{
 					// has 1 day of usage, but started three days ago
-					AttributionId: string(teamAttributionID_A),
-					Credits:       (24) * 10,
-					StartTime:     timestamppb.New(time.Now().AddDate(0, 0, -3)),
+					AttributionID: teamAttributionID_A,
+					CreditsUsed:   (24) * 10,
+					StartedAt:     time.Now().AddDate(0, 0, -3),
 				},
 			},
 			Expected: map[string]int64{

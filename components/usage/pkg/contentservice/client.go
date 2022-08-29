@@ -31,7 +31,7 @@ func New(service api.UsageReportServiceClient) *Client {
 }
 
 func (c *Client) UploadUsageReport(ctx context.Context, filename string, report db.UsageReport) error {
-	uploadURLResp, err := c.service.UploadURL(ctx, &api.UsageReportUploadURLRequest{Name: key})
+	uploadURLResp, err := c.service.UploadURL(ctx, &api.UsageReportUploadURLRequest{Name: filename})
 	if err != nil {
 		return fmt.Errorf("failed to get upload URL from usage report service: %w", err)
 	}
@@ -61,7 +61,7 @@ func (c *Client) UploadUsageReport(ctx context.Context, filename string, report 
 		return fmt.Errorf("failed to make http request: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected http response code: %s", uploadURLResp.Status)
+		return fmt.Errorf("unexpected http response code: %s", resp.Status)
 	}
 	log.Info("Upload complete")
 
@@ -76,7 +76,17 @@ func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (db.U
 		return nil, fmt.Errorf("failed to get download URL: %w", err)
 	}
 
-	resp, err := http.Get(downloadURlResp.GetUrl())
+	req, err := http.NewRequest(http.MethodGet, downloadURlResp.GetUrl(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct request: %w", err)
+	}
+
+	// We want to receive it as gzip, this disables transcoding of the response
+	req.Header.Set("Accept-Encoding", "gzip")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request to download usage report: %w", err)
 	}
@@ -88,13 +98,13 @@ func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (db.U
 	body := resp.Body
 	defer body.Close()
 
-	decomressor, err := gzip.NewReader(body)
+	decompressor, err := gzip.NewReader(body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to construct gzip decompressor from response: %w", err)
 	}
-	defer decomressor.Close()
+	defer decompressor.Close()
 
-	decoder := json.NewDecoder(decomressor)
+	decoder := json.NewDecoder(body)
 	var records []db.WorkspaceInstanceUsage
 	if err := decoder.Decode(&records); err != nil {
 		return nil, fmt.Errorf("failed to deserialize report: %w", err)
