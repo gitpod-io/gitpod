@@ -15,26 +15,25 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Interface interface {
-	UploadUsageReport(ctx context.Context, filename string, report []db.WorkspaceInstanceUsage) error
+	UploadUsageReport(ctx context.Context, filename string, report db.UsageReport) error
+	DownloadUsageReport(ctx context.Context, filename string) (db.UsageReport, error)
 }
 
 type Client struct {
-	url string
+	service api.UsageReportServiceClient
 }
 
-func New(url string) *Client {
-	return &Client{url: url}
+func New(service api.UsageReportServiceClient) *Client {
+	return &Client{service: service}
 }
 
-func (c *Client) UploadUsageReport(ctx context.Context, filename string, report []db.WorkspaceInstanceUsage) error {
-	url, err := c.getSignedUploadUrl(ctx, filename)
+func (c *Client) UploadUsageReport(ctx context.Context, filename string, report db.UsageReport) error {
+	uploadURLResp, err := c.service.UploadURL(ctx, &api.UsageReportUploadURLRequest{Name: key})
 	if err != nil {
-		return fmt.Errorf("failed to obtain signed upload URL: %w", err)
+		return fmt.Errorf("failed to get upload URL from usage report service: %w", err)
 	}
 
 	reportBytes := &bytes.Buffer{}
@@ -48,7 +47,7 @@ func (c *Client) UploadUsageReport(ctx context.Context, filename string, report 
 		return fmt.Errorf("failed to compress usage report: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPut, url, reportBytes)
+	req, err := http.NewRequest(http.MethodPut, uploadURLResp.GetUrl(), reportBytes)
 	if err != nil {
 		return fmt.Errorf("failed to construct http request: %w", err)
 	}
@@ -62,26 +61,44 @@ func (c *Client) UploadUsageReport(ctx context.Context, filename string, report 
 		return fmt.Errorf("failed to make http request: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected http response code: %s", resp.Status)
+		return fmt.Errorf("unexpected http response code: %s", uploadURLResp.Status)
 	}
 	log.Info("Upload complete")
 
 	return nil
 }
 
-func (c *Client) getSignedUploadUrl(ctx context.Context, key string) (string, error) {
-	conn, err := grpc.Dial(c.url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (db.UsageReport, error) {
+	downloadURlResp, err := c.service.DownloadURL(ctx, &api.UsageReportDownloadURLRequest{
+		Name: filename,
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to dial content-service gRPC server: %w", err)
-	}
-	defer conn.Close()
-
-	uc := api.NewUsageReportServiceClient(conn)
-
-	resp, err := uc.UploadURL(ctx, &api.UsageReportUploadURLRequest{Name: key})
-	if err != nil {
-		return "", fmt.Errorf("failed RPC to content service: %w", err)
+		return nil, fmt.Errorf("failed to get download URL: %w", err)
 	}
 
-	return resp.Url, nil
+	resp, err := http.Get(downloadURlResp.GetUrl())
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request to download usage report: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("request to download usage report returned non 200 status code: %d", resp.StatusCode)
+	}
+
+	body := resp.Body
+	defer body.Close()
+
+	decomressor, err := gzip.NewReader(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct gzip decompressor from response: %w", err)
+	}
+	defer decomressor.Close()
+
+	decoder := json.NewDecoder(decomressor)
+	var records []db.WorkspaceInstanceUsage
+	if err := decoder.Decode(&records); err != nil {
+		return nil, fmt.Errorf("failed to deserialize report: %w", err)
+	}
+
+	return records, nil
 }
