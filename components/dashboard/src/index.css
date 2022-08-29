@@ -79,6 +79,7 @@
 
     textarea,
     input[type="text"],
+    input[type="tel"],
     input[type="number"],
     input[type="search"],
     input[type="password"],
@@ -87,12 +88,14 @@
     }
     textarea::placeholder,
     input[type="text"]::placeholder,
+    input[type="tel"]::placeholder,
     input[type="number"]::placeholder,
     input[type="search"]::placeholder,
     input[type="password"]::placeholder {
         @apply text-gray-400 dark:text-gray-500;
     }
     input[type="text"].error,
+    input[type="tel"].error,
     input[type="number"].error,
     input[type="search"].error,
     input[type="password"].error,

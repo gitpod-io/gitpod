@@ -4,10 +4,12 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useEffect } from "react";
 import Alert from "../components/Alert";
 import gitpodIconUA from "../icons/gitpod.svg";
 import { gitpodHostUrl } from "../service/service";
+import { VerifyModal } from "./VerifyModal";
 
 export enum StartPhase {
     Checking = 0,
@@ -106,6 +108,7 @@ export function StartPage(props: StartPageProps) {
                 {typeof phase === "number" && phase < StartPhase.IdeReady && (
                     <ProgressBar phase={phase} error={!!error} />
                 )}
+                {error && error.code === ErrorCodes.NEEDS_VERIFICATION && <VerifyModal />}
                 {error && <StartError error={error} />}
                 {props.children}
                 {props.showLatestIdeWarning && (

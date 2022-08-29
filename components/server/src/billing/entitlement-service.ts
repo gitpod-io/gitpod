@@ -20,6 +20,8 @@ export interface MayStartWorkspaceResult {
 
     oufOfCredits?: boolean;
 
+    needsVerification?: boolean;
+
     /** Usage-Based Pricing: AttributionId of the CostCenter that reached it's spending limit */
     spendingLimitReachedOnCostCenter?: AttributionId;
 }

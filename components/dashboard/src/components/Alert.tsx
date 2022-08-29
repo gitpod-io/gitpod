@@ -9,8 +9,11 @@ import { ReactComponent as Exclamation } from "../images/exclamation.svg";
 import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 import { ReactComponent as InfoSvg } from "../images/info.svg";
 import { ReactComponent as XSvg } from "../images/x.svg";
+import { ReactComponent as Check } from "../images/check-circle.svg";
 
 export type AlertType =
+    // Green
+    | "success"
     // Yellow
     | "warning"
     // Gray alert
@@ -40,6 +43,12 @@ interface AlertInfo {
 }
 
 const infoMap: Record<AlertType, AlertInfo> = {
+    success: {
+        bgCls: "bg-green-100 dark:bg-green-800",
+        txtCls: "text-green-700 dark:text-green-50",
+        icon: <Check className="w-4 h-4"></Check>,
+        iconColor: "text-green-700 dark:text-green-100",
+    },
     warning: {
         bgCls: "bg-yellow-100 dark:bg-yellow-700",
         txtCls: "text-yellow-600 dark:text-yellow-50",

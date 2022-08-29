@@ -84,4 +84,16 @@ export class DBUser implements User {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     usageAttributionId?: string;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    lastVerificationTime?: string;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    verificationPhoneNumber?: string;
 }

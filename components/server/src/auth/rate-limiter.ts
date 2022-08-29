@@ -14,7 +14,7 @@ type GitpodServerMethodType =
     | keyof Omit<GitpodServer, "dispose" | "setClient">
     | typeof accessCodeSyncStorage
     | typeof accessHeadlessLogs;
-type GroupKey = "default" | "startWorkspace" | "createWorkspace";
+type GroupKey = "default" | "startWorkspace" | "createWorkspace" | "phoneVerification";
 type GroupsConfig = {
     [key: string]: {
         points: number;
@@ -46,11 +46,17 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
             points: 3, // 3 workspace creates per user per 10s
             durationsSec: 10,
         },
+        phoneVerification: {
+            points: 10,
+            durationsSec: 10,
+        },
     };
     const defaultFunctions: FunctionsConfig = {
         getLoggedInUser: { group: "default", points: 1 },
         getTerms: { group: "default", points: 1 },
         updateLoggedInUser: { group: "default", points: 1 },
+        sendPhoneNumberVerificationToken: { group: "phoneVerification", points: 1 },
+        verifyPhoneNumberVerificationToken: { group: "phoneVerification", points: 1 },
         getAuthProviders: { group: "default", points: 1 },
         getOwnAuthProviders: { group: "default", points: 1 },
         updateOwnAuthProvider: { group: "default", points: 1 },

@@ -266,6 +266,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (result.mayStart) {
             return; // green light from entitlement service
         }
+        if (!!result.needsVerification) {
+            throw new ResponseError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
+        }
         if (!!result.oufOfCredits) {
             throw new ResponseError(
                 ErrorCodes.NOT_ENOUGH_CREDIT,

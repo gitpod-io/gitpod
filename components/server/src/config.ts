@@ -178,6 +178,15 @@ export interface ConfigSerialized {
      * Supported workspace classes
      */
     workspaceClasses: WorkspaceClassesConfig;
+
+    /**
+     * configuration for twilio
+     */
+    twilioConfig?: {
+        serviceID: string;
+        accountSID: string;
+        authToken: string;
+    };
 }
 
 export namespace ConfigFile {
@@ -252,6 +261,16 @@ export namespace ConfigFile {
             }
         }
 
+        const twilioConfigPath = "/twilio-config/config.json";
+        let twilioConfig: Config["twilioConfig"];
+        if (fs.existsSync(filePathTelepresenceAware(twilioConfigPath))) {
+            try {
+                twilioConfig = JSON.parse(fs.readFileSync(filePathTelepresenceAware(twilioConfigPath), "utf-8"));
+            } catch (error) {
+                log.error("Could not load Twilio config", error);
+            }
+        }
+
         WorkspaceClasses.validate(config.workspaceClasses);
 
         return {
@@ -262,6 +281,7 @@ export namespace ConfigFile {
             chargebeeProviderOptions,
             stripeSecrets,
             stripeConfig,
+            twilioConfig,
             license,
             workspaceGarbageCollection: {
                 ...config.workspaceGarbageCollection,
