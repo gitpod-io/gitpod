@@ -297,7 +297,12 @@ function BillingSetupModal(props: { onClose: () => void }) {
     return (
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="flex">Upgrade Billing</h3>
-            <div className="border-t border-gray-200 dark:border-gray-800 mt-4 pt-2 h-96 -mx-6 px-6 flex flex-col">
+            <div className="border-t border-gray-200 dark:border-gray-800 mt-4 pt-2 -mx-6 px-6 flex flex-col">
+                {(!stripePromise || !stripeSetupIntentClientSecret) && (
+                    <div className="h-80 flex items-center justify-center">
+                        <Spinner className="h-5 w-5 animate-spin" />
+                    </div>
+                )}
                 {!!stripePromise && !!stripeSetupIntentClientSecret && (
                     <Elements
                         stripe={stripePromise}
