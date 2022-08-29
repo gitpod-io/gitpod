@@ -32,6 +32,13 @@ func TestRunDocker(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			t.Cleanup(func() {
+				err = integration.DeleteWorkspace(ctx, api, ws.Req.Id)
+				if err != nil {
+					t.Fatal(err)
+				}
+				_, _ = integration.WaitForWorkspaceStop(ctx, api, ws.Req.Id)
+			})
 
 			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(ws.Req.Id), integration.WithWorkspacekitLift(true))
 			if err != nil {
@@ -55,11 +62,6 @@ func TestRunDocker(t *testing.T) {
 
 			if resp.ExitCode != 0 {
 				t.Fatalf("docker run failed: %s\n%s", resp.Stdout, resp.Stderr)
-			}
-
-			err = integration.DeleteWorkspace(ctx, api, ws.Req.Id)
-			if err != nil {
-				t.Fatal(err)
 			}
 
 			return ctx
