@@ -175,6 +175,7 @@ import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { BillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol/lib/usage";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
+import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 // shortcut
@@ -243,6 +244,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
 
     @inject(IDEConfigService) protected readonly ideConfigService: IDEConfigService;
+
+    @inject(VerificationService) protected readonly verificationService: VerificationService;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -462,6 +465,27 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         return user;
+    }
+
+    public async sendPhoneNumberVerificationToken(ctx: TraceContext, phoneNumber: string): Promise<void> {
+        this.checkUser("sendPhoneNumberVerificationToken");
+        return this.verificationService.sendVerificationToken(phoneNumber);
+    }
+
+    public async verifyPhoneNumberVerificationToken(
+        ctx: TraceContext,
+        phoneNumber: string,
+        token: string,
+    ): Promise<boolean> {
+        const user = this.checkUser("verifyPhoneNumberVerificationToken");
+        const checked = await this.verificationService.verifyVerificationToken(phoneNumber, token);
+        if (!checked) {
+            return false;
+        }
+        this.verificationService.markVerified(user);
+        user.verificationPhoneNumber = phoneNumber;
+        await this.userDB.updateUserPartial(user);
+        return true;
     }
 
     public async getClientRegion(ctx: TraceContext): Promise<string | undefined> {

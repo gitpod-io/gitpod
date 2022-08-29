@@ -12,6 +12,7 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
+import { VerificationService } from "../../../src/auth/verification-service";
 import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { Config } from "../../../src/config";
 import { BillingModes } from "./billing-mode";
@@ -31,6 +32,7 @@ export class EntitlementServiceImpl implements EntitlementService {
     @inject(EntitlementServiceChargebee) protected readonly chargebee: EntitlementServiceChargebee;
     @inject(EntitlementServiceLicense) protected readonly license: EntitlementServiceLicense;
     @inject(EntitlementServiceUBP) protected readonly ubp: EntitlementServiceUBP;
+    @inject(VerificationService) protected readonly verificationService: VerificationService;
 
     async mayStartWorkspace(
         user: User,
@@ -38,6 +40,13 @@ export class EntitlementServiceImpl implements EntitlementService {
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
         try {
+            const verification = await this.verificationService.needsVerification(user);
+            if (verification) {
+                return {
+                    mayStart: false,
+                    needsVerification: true,
+                };
+            }
             const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             let result;
             switch (billingMode.mode) {

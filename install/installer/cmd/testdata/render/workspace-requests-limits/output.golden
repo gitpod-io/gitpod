@@ -8171,6 +8171,9 @@ spec:
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
+        - mountPath: /twilio-config
+          name: twilio-secret-volume
+          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -8278,6 +8281,10 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
+      - name: twilio-secret-volume
+        secret:
+          optional: true
+          secretName: twilio-secret
 status: {}
 ---
 # apps/v1/Deployment ws-manager

@@ -74,6 +74,7 @@ export interface AuthUser {
     readonly name?: string;
     readonly avatarUrl?: string;
     readonly company?: string;
+    readonly created_at?: string;
 }
 
 export const AuthProvider = Symbol("AuthProvider");

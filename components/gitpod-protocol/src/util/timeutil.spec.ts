@@ -7,10 +7,16 @@
 import * as chai from "chai";
 const expect = chai.expect;
 import { suite, test } from "mocha-typescript";
-import { oneMonthLater } from "./timeutil";
+import { daysBefore, hoursBefore, oneMonthLater } from "./timeutil";
 
 @suite()
 export class TimeutilSpec {
+    @test
+    testDaysBefore() {
+        const now = new Date().toISOString();
+        expect(daysBefore(now, 2)).to.be.eq(hoursBefore(now, 48));
+    }
+
     @test
     testTimeutil() {
         // targeting a 1st, 1th of Jan => 1st of Feb

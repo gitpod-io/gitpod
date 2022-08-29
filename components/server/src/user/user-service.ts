@@ -32,6 +32,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { StripeService } from "../../ee/src/user/stripe-service";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { VerificationService } from "../auth/verification-service";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -72,6 +73,7 @@ export class UserService {
     @inject(CostCenterDB) protected readonly costCenterDb: CostCenterDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(StripeService) protected readonly stripeService: StripeService;
+    @inject(VerificationService) protected readonly verificationService: VerificationService;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User

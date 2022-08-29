@@ -123,6 +123,7 @@ export default function UserDetail(p: { user: User }) {
                             <h3>{user.fullName}</h3>
                             {user.blocked ? <Label text="Blocked" color="red" /> : null}{" "}
                             {user.markedDeleted ? <Label text="Deleted" color="red" /> : null}
+                            {user.lastVerificationTime ? <Label text="Verified" color="green" /> : null}
                         </div>
                         <p>
                             {user.identities

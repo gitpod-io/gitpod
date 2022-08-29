@@ -85,6 +85,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getLoggedInUser(): Promise<User>;
     getTerms(): Promise<Terms>;
     updateLoggedInUser(user: Partial<User>): Promise<User>;
+    sendPhoneNumberVerificationToken(phoneNumber: string): Promise<void>;
+    verifyPhoneNumberVerificationToken(phoneNumber: string, token: string): Promise<boolean>;
     getAuthProviders(): Promise<AuthProviderInfo[]>;
     getOwnAuthProviders(): Promise<AuthProviderEntry[]>;
     updateOwnAuthProvider(params: GitpodServer.UpdateOwnAuthProviderParams): Promise<AuthProviderEntry>;

@@ -34,6 +34,8 @@ import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-pr
 import { EnforcementControllerServerFactory } from "./enforcement-endpoint";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ResponseError } from "vscode-jsonrpc";
+import { VerificationService } from "../auth/verification-service";
+import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 @injectable()
 export class UserController {
@@ -53,6 +55,7 @@ export class UserController {
     @inject(WorkspaceManagerClientProvider)
     protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
     @inject(EnforcementControllerServerFactory) private readonly serverFactory: EnforcementControllerServerFactory;
+    @inject(VerificationService) protected readonly verificationService: VerificationService;
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -670,6 +673,10 @@ export class UserController {
         newUser.fullName = authUser.name || undefined;
         newUser.avatarUrl = authUser.avatarUrl;
         newUser.blocked = newUser.blocked || tosFlowInfo.isBlocked;
+        if (authUser.created_at && isDateSmaller(authUser.created_at, daysBefore(new Date().toISOString(), 30))) {
+            // people with an account older than 30 days are treated as trusted
+            this.verificationService.markVerified(newUser);
+        }
     }
 
     protected getSorryUrl(message: string) {

@@ -114,6 +114,7 @@ import {
     ConfigCatClientFactory,
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { VerificationService } from "./auth/verification-service";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -284,4 +285,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
             return () => getExperimentsClientForBackend();
         })
         .inSingletonScope();
+
+    bind(VerificationService).toSelf().inSingletonScope();
 });

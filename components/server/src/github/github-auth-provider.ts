@@ -88,13 +88,11 @@ export class GitHubAuthProvider extends GenericAuthProvider {
         const userEmailsPromise = this.retry(() => fetchUserEmails());
 
         try {
-            const [
-                {
-                    data: { id, login, avatar_url, name, company },
-                    headers,
-                },
-                userEmails,
-            ] = await Promise.all([currentUserPromise, userEmailsPromise]);
+            const [currentUser, userEmails] = await Promise.all([currentUserPromise, userEmailsPromise]);
+            const {
+                data: { id, login, avatar_url, name, company, created_at },
+                headers,
+            } = currentUser;
 
             // https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
             // e.g. X-OAuth-Scopes: repo, user
@@ -124,6 +122,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                     name,
                     primaryEmail: filterPrimaryEmail(userEmails),
                     company,
+                    created_at: created_at ? new Date(created_at).toISOString() : undefined,
                 },
                 currentScopes,
             };
