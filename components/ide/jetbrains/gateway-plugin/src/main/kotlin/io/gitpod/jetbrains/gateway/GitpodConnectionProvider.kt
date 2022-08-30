@@ -244,9 +244,9 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         if (thinClientJob == null && update.status.phase == "running") {
                             thinClientJob = launch {
                                 try {
-                                    val updatedIdeUrl = URL(update.ideUrl);
+                                    val updatedIdeUrl = URL(update.ideUrl)
                                     val sshHostUrl =
-                                        URL(update.ideUrl.replace(update.workspaceId, "${update.workspaceId}.ssh"));
+                                        URL(update.ideUrl.replace(update.workspaceId, "${update.workspaceId}.ssh"))
                                     val hostKeys = resolveHostKeys(updatedIdeUrl, connectParams)
                                     if (hostKeys.isNullOrEmpty()) {
                                         setErrorMessage("${connectParams.gitpodHost} installation does not allow SSH access, public keys cannot be found")
