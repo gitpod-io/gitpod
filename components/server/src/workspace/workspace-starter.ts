@@ -595,10 +595,15 @@ export class WorkspaceStarter {
                 throw err;
             } else {
                 TraceContext.setError({ span }, err);
-                log.error({ userId: user.id, instanceId: instance.id }, "error starting instance", err);
+                let reason: FailedInstanceStartReason | undefined = undefined;
                 if (err instanceof StartInstanceError) {
+                    reason = err.reason;
                     increaseFailedInstanceStartCounter(err.reason);
                 }
+                log.error({ userId: user.id, instanceId: instance.id }, "error starting instance", err, {
+                    failedInstanceStartReason: reason,
+                });
+                span.setTag("failedInstanceStartReason", reason);
             }
 
             return { instanceID: instance.id };
