@@ -25,6 +25,20 @@ pod:
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       env:
+        - name: GOPROXY
+          value: http://athens-athens-proxy.athens.svc.cluster.local:9999
+        - name: GOCACHE
+          value: /go-build-cache
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: NPM_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: npm-auth-token
+              key: npm-auth-token.json
+
         - name: NODENAME
           valueFrom:
             fieldRef:
