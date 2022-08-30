@@ -92,6 +92,7 @@ pod:
 
           export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
 
+          sudo chown -R gitpod:gitpod /workspace
           mkdir /workspace/.ssh
 
           cd .werft
