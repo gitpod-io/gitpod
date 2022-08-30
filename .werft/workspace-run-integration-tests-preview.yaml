@@ -85,6 +85,11 @@ pod:
         - name: go-build-cache
           mountPath: /go-build-cache
           readOnly: false
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-sh-release-token
+              key: token
       command:
         - bash
         - -c
