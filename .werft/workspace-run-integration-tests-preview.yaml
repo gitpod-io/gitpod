@@ -19,10 +19,6 @@ pod:
       secret:
         defaultMode: 420
         secretName: github-token-gitpod-bot
-    - name: go-build-cache
-      hostPath:
-        path: /mnt/disks/ssd0/go-build-cache
-        type: DirectoryOrCreate
     - name: monitoring-satellite-preview-token
       secret:
         secretName: monitoring-satellite-preview-token
@@ -124,9 +120,6 @@ pod:
         - name: gpsh-harvester-license
           mountPath: /mnt/secrets/gpsh-harvester
           readOnly: true
-        - name: go-build-cache
-          mountPath: /go-build-cache
-          readOnly: false
         - name: harvester-kubeconfig
           mountPath: /mnt/secrets/harvester-kubeconfig
         - name: harvester-vm-ssh-keys
