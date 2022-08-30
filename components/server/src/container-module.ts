@@ -115,6 +115,7 @@ import {
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { VerificationService } from "./auth/verification-service";
+import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -287,4 +288,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         .inSingletonScope();
 
     bind(VerificationService).toSelf().inSingletonScope();
+
+    bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();
 });

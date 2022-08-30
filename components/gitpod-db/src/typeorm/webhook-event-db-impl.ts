@@ -51,4 +51,20 @@ export class WebhookEventDBImpl implements WebhookEventDB {
         query.limit(limit);
         return query.getMany();
     }
+
+    public async deleteOldEvents(ageInDays: number, limit?: number): Promise<void> {
+        const repo = await this.getRepo();
+        const d = new Date();
+        d.setDate(d.getDate() - ageInDays);
+        const expirationDate = d.toISOString();
+        const query = repo
+            .createQueryBuilder("event")
+            .update()
+            .set({ deleted: true })
+            .where("event.creationTime < :expirationDate", { expirationDate });
+        if (typeof limit === "number") {
+            query.limit(limit);
+        }
+        await query.execute();
+    }
 }
