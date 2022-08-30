@@ -68,14 +68,7 @@ async function wipePreviewEnvironmentInstaller(namespace: string, kubeconfig: st
         }).code === 0;
     if (hasGitpodConfigmap) {
         werft.log(slice, `${namespace} has Gitpod configmap, proceeding with removal`);
-        const inWerftFolder = exec(`pwd`, { slice, dontCheckRc: true }).stdout.trim().endsWith(".werft");
-        if (inWerftFolder) {
-            // used in .werft/wipe-devstaging.yaml on preview environment clean-up
-            exec(`./util/uninstall-gitpod.sh ${namespace} ${kubeconfig}`, { slice });
-        } else {
-            // used in .werft/build.yaml on 'with-clean-slate-deployment=true'
-            exec(`./.werft/util/uninstall-gitpod.sh ${namespace} ${kubeconfig}`, { slice });
-        }
+        exec(`./util/uninstall-gitpod.sh ${namespace} ${kubeconfig}`, { slice });
     } else {
         werft.log(slice, `There is no Gitpod configmap, moving on`);
     }
