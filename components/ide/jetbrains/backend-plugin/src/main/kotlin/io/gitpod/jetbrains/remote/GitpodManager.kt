@@ -4,6 +4,7 @@
 
 package io.gitpod.jetbrains.remote
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -53,6 +54,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import javax.websocket.DeploymentException
 
+@Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 @Service
 class GitpodManager : Disposable {
 
@@ -258,9 +260,12 @@ class GitpodManager : Disposable {
         val tokenResponse = retry(3) {
             val request = Token.GetTokenRequest.newBuilder()
                     .setHost(info.gitpodApi.host)
-                    .addScope("function:sendHeartBeat")
-                    .addScope("function:trackEvent")
                     .addScope("function:openPort")
+                    .addScope("function:sendHeartBeat")
+                    .addScope("function:setWorkspaceTimeout")
+                    .addScope("function:stopWorkspace")
+                    .addScope("function:takeSnapshot")
+                    .addScope("function:trackEvent")
                     .setKind("gitpod")
                     .build()
 
@@ -392,5 +397,11 @@ class GitpodManager : Disposable {
         lifetime.onTerminationOrNow {
             metricsJob.cancel()
         }
+    }
+
+    /** Opens the give URL in the Browser and records an event indicating it was open from a custom IntelliJ Action. */
+    fun openUrlFromAction(url: String) {
+        trackEvent("jb_perform_action_open_url", mapOf("url" to url))
+        BrowserUtil.browse(url)
     }
 }

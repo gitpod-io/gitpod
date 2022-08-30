@@ -37,4 +37,16 @@ public interface GitpodServer {
 
     @JsonRequest
     CompletableFuture<WorkspaceInstancePort> openPort(String workspaceId, WorkspaceInstancePort port);
+
+    @JsonRequest
+    CompletableFuture<String> takeSnapshot(TakeSnapshotOptions options);
+
+    @JsonRequest
+    CompletableFuture<Void> waitForSnapshot(String snapshotId);
+
+    @JsonRequest
+    CompletableFuture<SetWorkspaceTimeoutResult> setWorkspaceTimeout(String workspaceId, String duration);
+
+    @JsonRequest
+    CompletableFuture<Void> stopWorkspace(String workspaceId);
 }
