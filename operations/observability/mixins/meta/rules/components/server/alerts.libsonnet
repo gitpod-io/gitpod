@@ -82,6 +82,21 @@
               description: 'Websocket connection rate high',
             },
           },
+          {
+            alert: 'MessagebusNotRunning',
+            expr: 'up{job="messagebus"} < 1',
+            'for': '30s',
+            labels: {
+              // sent to the team internal channel until we fine tuned it
+              severity: 'warning',
+              team: 'webapp'
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/MessagebusNotRunning.md',
+              summary: 'The messagebus pod is not running. Investigation required.',
+              description: 'Messagebus pod not running',
+            },
+          },
         ],
       },
     ],
