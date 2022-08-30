@@ -5,7 +5,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"net/http"
@@ -94,11 +93,5 @@ func readStripeWebhookSecret(path string) (string, error) {
 		return "", fmt.Errorf("failed to read stripe webhook secret: %w", err)
 	}
 
-	var stripeSecret string
-	err = json.Unmarshal(b, &stripeSecret)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse stripe webhook secret: %w", err)
-	}
-
-	return strings.TrimSpace(stripeSecret), nil
+	return strings.TrimSpace(string(b)), nil
 }
