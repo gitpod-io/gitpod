@@ -19,6 +19,11 @@ pod:
       secret:
         defaultMode: 420
         secretName: github-token-gitpod-bot
+    - name: go-build-cache
+      hostPath:
+        path: /mnt/disks/ssd0/go-build-cache
+        type: DirectoryOrCreate
+
   containers:
     - name: gcloud
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-dl.1
@@ -77,6 +82,9 @@ pod:
           readOnly: false
         - mountPath: /mnt/secrets/github-token-gitpod-bot
           name: github-token-gitpod-bot
+        - name: go-build-cache
+          mountPath: /go-build-cache
+          readOnly: false
       command:
         - bash
         - -c
