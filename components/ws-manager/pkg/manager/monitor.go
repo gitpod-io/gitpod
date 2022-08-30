@@ -1055,6 +1055,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		deletedPVC                   bool
 		pvcFeatureEnabled            bool
 		markVolumeSnapshotAnnotation bool
+		markedDisposalStatusStarted  bool
 		// volume snapshot name is 1:1 mapped to workspace id
 		pvcVolumeSnapshotName        string = workspaceID
 		pvcVolumeSnapshotContentName string
@@ -1104,6 +1105,21 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		if err != nil {
 			tracing.LogError(span, err)
 			return nil, err
+		}
+
+		// only set status to started if we actually confirmed that workspace is ready and we are about to do actual disposal
+		// otherwise we risk overwriting previous disposal status
+		if !markedDisposalStatusStarted {
+			statusStarted := &workspaceDisposalStatus{
+				Status: DisposalStarted,
+			}
+			err = m.manager.markDisposalStatus(ctx, workspaceID, statusStarted)
+			if err != nil {
+				tracing.LogError(span, err)
+				log.WithError(err).Error("was unable to update pod's start disposal status - this might cause an incorrect disposal status")
+			} else {
+				markedDisposalStatusStarted = true
+			}
 		}
 
 		if pvcFeatureEnabled {
@@ -1276,14 +1292,6 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	)
 	t := time.Now()
 
-	disposalStatus = &workspaceDisposalStatus{
-		Status: DisposalStarted,
-	}
-	err = m.manager.markDisposalStatus(ctx, workspaceID, disposalStatus)
-	if err != nil {
-		tracing.LogError(span, err)
-		log.WithError(err).Error("was unable to update pod's start disposal status - this might cause an incorrect disposal status")
-	}
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		span.LogKV("attempt", i)
 		gs, err := doFinalize()
@@ -1304,6 +1312,14 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		st, isGRPCError := grpc_status.FromError(err)
 		if !isGRPCError {
 			break
+		}
+
+		if st.Code() == codes.NotFound {
+			// workspace state not found, that is normal.
+			// it can happen if previous finalizeWorkspaceContent already disposed the workspace
+			span.LogKV("not found", true)
+			// we want to bail out from finalizeWorkspaceContent function now and do not update disposal status or metrics
+			return
 		}
 
 		if (err != nil && strings.Contains(err.Error(), context.DeadlineExceeded.Error())) ||
@@ -1331,9 +1347,6 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				dataloss = true
 			case codes.FailedPrecondition:
 				// the workspace content was not in the state we thought it was
-				dataloss = true
-			case codes.NotFound:
-				// something else might have deleted workspace state already and we were not able to do a backup
 				dataloss = true
 			}
 		}
