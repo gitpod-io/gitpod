@@ -144,8 +144,6 @@ pod:
           (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
           printf '{{ toJson . }}' > context.json
 
-          npx ts-node .werft/build.ts
-
-          ./workspace-run-integration-tests-preview.sh "{{ .Name }}" "{{ .Repository.Repo }}"
+          ./workspace-run-integration-tests-preview.sh "main.4462" "{{ .Repository.Repo }}"
 plugins:
   cron: "@midnight"
