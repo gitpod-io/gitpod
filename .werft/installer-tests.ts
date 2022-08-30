@@ -479,7 +479,6 @@ export function sendFailureSlackAlert(phase: string, err: Error, hook: string): 
         return
     }
 
-    const repo = context.Repository.host + "/" + context.Repository.owner + "/" + context.Repository.repo;
     const data = JSON.stringify({
         blocks: [
             {

@@ -6,7 +6,6 @@ import { renderPayment } from "../payment/render";
 import { CORE_DEV_KUBECONFIG_PATH } from "../const";
 
 const BLOCK_NEW_USER_CONFIG_PATH = "./blockNewUsers";
-const WORKSPACE_SIZE_CONFIG_PATH = "./workspaceSizing";
 const PROJECT_NAME = "gitpod-core-dev";
 const CONTAINER_REGISTRY_URL = `eu.gcr.io/${PROJECT_NAME}/build/`;
 const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";

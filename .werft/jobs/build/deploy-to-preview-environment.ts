@@ -1,15 +1,11 @@
 import { createHash, randomBytes } from "crypto";
-import * as shell from "shelljs";
 import * as fs from "fs";
 import { exec, ExecOptions } from "../../util/shell";
 import { MonitoringSatelliteInstaller } from "../../observability/monitoring-satellite";
 import {
-    wipeAndRecreateNamespace,
     setKubectlContextNamespace,
-    deleteNonNamespaceObjects,
     findFreeHostPorts,
     createNamespace,
-    helmInstallName,
     findLastHostPort,
     waitUntilAllPodsAreReady,
     waitForApiserver,
@@ -251,7 +247,7 @@ async function deployToDevWithInstaller(
 ) {
     // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:
     // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/jobs/build/installer/post-process.sh -a with-clean-slate-deployment=true
-    const { version, destname, namespace, domain, monitoringDomain, url, withObservability } = deploymentConfig;
+    const { version, destname, namespace, domain } = deploymentConfig;
     const deploymentKubeconfig = PREVIEW_K3S_KUBECONFIG_PATH;
 
     // find free ports
@@ -268,20 +264,13 @@ async function deployToDevWithInstaller(
         deploymentKubeconfig,
         metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }),
     );
-    let nodeExporterPort = findLastHostPort(
-        namespace,
-        "node-exporter",
-        deploymentKubeconfig,
-        metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }),
-    );
 
     if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta)) {
         werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
-        [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = await findFreeHostPorts(
+        [wsdaemonPortMeta, registryNodePortMeta] = await findFreeHostPorts(
             [
                 { start: 10000, end: 11000 },
                 { start: 30000, end: 31000 },
-                { start: 31001, end: 32000 },
             ],
             deploymentKubeconfig,
             metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }),
@@ -379,24 +368,6 @@ async function deployToDevWithInstaller(
     addAgentSmithToken(werft, deploymentConfig.namespace, installer.options.kubeconfigPath, tokenHash);
 
     werft.done(phases.DEPLOY);
-
-    async function cleanStateEnv(kubeconfig: string, shellOpts: ExecOptions) {
-        await wipeAndRecreateNamespace(helmInstallName, namespace, kubeconfig, {
-            ...shellOpts,
-            slice: installerSlices.CLEAN_ENV_STATE,
-        });
-        // cleanup non-namespace objects
-        werft.log(installerSlices.CLEAN_ENV_STATE, "removing old unnamespaced objects - this might take a while");
-        try {
-            await deleteNonNamespaceObjects(namespace, destname, kubeconfig, {
-                ...shellOpts,
-                slice: installerSlices.CLEAN_ENV_STATE,
-            });
-            werft.done(installerSlices.CLEAN_ENV_STATE);
-        } catch (err) {
-            werft.fail(installerSlices.CLEAN_ENV_STATE, err);
-        }
-    }
 }
 
 /*  A hash is caclulated from the branch name and a subset of that string is parsed to a number x,
