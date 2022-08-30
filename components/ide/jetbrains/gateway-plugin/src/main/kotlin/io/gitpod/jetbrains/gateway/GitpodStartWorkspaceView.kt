@@ -76,7 +76,7 @@ class GitpodStartWorkspaceView(
                 if (contextUrl.component.text.isNotBlank()) {
                     backendsModel.selectedItem?.let {
                         backendToId[it]?.let { backend ->
-                            BrowserUtil.browse("https://${settings.gitpodHost}#referrer:jetbrains-gateway:${backend}/${contextUrl.component.text}")
+                            BrowserUtil.browse("https://${settings.gitpodHost}#referrer:jetbrains-gateway:$backend/${contextUrl.component.text}")
                         }
                     }
                 }
