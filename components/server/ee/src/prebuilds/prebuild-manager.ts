@@ -95,7 +95,7 @@ export class PrebuildManager {
 
         try {
             if (user.blocked) {
-                throw new Error("Blocked users cannot start prebuilds.");
+                throw new Error(`Blocked users cannot start prebuilds (${user.name})`);
             }
             const existingPB = await this.workspaceDB
                 .trace({ span })
