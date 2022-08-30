@@ -21,11 +21,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewBillingService(stripeClient *stripe.Client, billInstancesAfter time.Time, conn *gorm.DB) *BillingService {
+func NewBillingService(stripeClient *stripe.Client, billInstancesAfter time.Time, conn *gorm.DB, contentService contentservice.Interface) *BillingService {
 	return &BillingService{
 		stripeClient:       stripeClient,
 		billInstancesAfter: billInstancesAfter,
 		conn:               conn,
+		contentService:     contentService,
 	}
 }
 

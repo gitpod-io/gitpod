@@ -120,7 +120,7 @@ func TestCreditSummaryForTeams(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.Name, func(t *testing.T) {
-			svc := NewBillingService(&stripe.Client{}, s.BillSessionsAfter, &gorm.DB{})
+			svc := NewBillingService(&stripe.Client{}, s.BillSessionsAfter, &gorm.DB{}, nil)
 			actual, err := svc.creditSummaryForTeams(s.Sessions, reportID)
 			require.NoError(t, err)
 			require.Equal(t, s.Expected, actual)
