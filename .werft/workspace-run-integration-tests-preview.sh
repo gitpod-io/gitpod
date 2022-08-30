@@ -59,7 +59,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="/home/gitpod/.config/gcloud/legacy_creden
 
 git config --global user.name roboquat
 git config --global user.email roboquat@gitpod.io
-git remote set-url origin https://oauth2:"${ROBOQUAT_TOKEN}"@github.com/gitpod-io/gitpod.git
+git remote set-url origin https://oauth2:"${ROBOQUAT_TOKEN}"@github.com/gitpod-io/workspace-preview.git
 
 werft log phase "workspace-preview" "workspace-preview"
 
