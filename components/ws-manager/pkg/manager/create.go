@@ -30,6 +30,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -626,7 +627,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			annotations[kubernetes.WorkspaceNetConnLimitAnnotation] = util.BooleanTrueString
 
 		default:
-			return nil, xerrors.Errorf("unknown feature flag: %v", feature)
+			log.Warnf("Unknown feature flag %v", feature)
 		}
 	}
 
