@@ -1,4 +1,4 @@
-import { exec, ExecResult } from "../util/shell";
+import { exec } from "../util/shell";
 import { getGlobalWerftInstance, Werft } from "../util/werft";
 import * as fs from "fs";
 import { ObservabilityInstallationMethod } from "../jobs/build/job-config";

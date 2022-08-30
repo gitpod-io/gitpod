@@ -117,7 +117,6 @@ function createVM(werft: Werft, config: JobConfig) {
 }
 
 function applyLoadBalancer(option: { name: string }) {
-    const namespace = `preview-${option.name}`;
     function kubectlApplyManifest(manifest: string, options?: { validate?: boolean }) {
         exec(`
             cat <<EOF | kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply --validate=${!!options?.validate} -f -
