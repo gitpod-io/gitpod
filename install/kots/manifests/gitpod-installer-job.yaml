@@ -64,6 +64,18 @@ spec:
               value: /run/containerd/containerd.sock
             - name: GITPOD_OBJECTS
               value: /tmp/gitpod
+            - name: REG_DOCKER_CONFIG_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: custom-registry-credentials
+                  key: .dockerconfigjson
+                  optional: true
+            - name: LOCAL_REGISTRY_IMAGE_PULL_DOCKER_CONFIG_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: repl{{ LocalRegistryImagePullSecret | quote }}
+                  key: .dockerconfigjson
+                  optional: true
           envFrom:
             - configMapRef:
                 name: gitpod-kots-config
