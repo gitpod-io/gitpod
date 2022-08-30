@@ -66,6 +66,22 @@
               description: 'JSON RPC API error rate high',
             },
           },
+          {
+            alert: 'WebsocketConnectionRateHigh',
+            // Reasoning: the values are taken from past data
+            expr: 'sum(rate(server_websocket_connection_count[2m])) > 30',
+            'for': '5m',
+            labels: {
+              // sent to the team internal channel until we fine tuned it
+              severity: 'warning',
+              team: 'webapp'
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebsocketConnectionRateHigh.md',
+              summary: 'The websocket connection rate is higher than usual. Investigation required.',
+              description: 'Websocket connection rate high',
+            },
+          },
         ],
       },
     ],
