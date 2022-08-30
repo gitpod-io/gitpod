@@ -10,6 +10,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/installer/pkg/containerd"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 
 	corev1 "k8s.io/api/core/v1"
@@ -62,8 +63,8 @@ func (v version) Defaults(in interface{}) error {
 		corev1.ResourceMemory: resource.MustParse("2Gi"),
 	}
 	cfg.Workspace.Runtime.FSShiftMethod = FSShiftFuseFS
-	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
-	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
+	cfg.Workspace.Runtime.ContainerDSocket = containerd.ContainerdSocketLocationDefault.String()
+	cfg.Workspace.Runtime.ContainerDRuntimeDir = containerd.ContainerdLocationDefault.String()
 	cfg.Workspace.MaxLifetime = util.Duration(36 * time.Hour)
 	cfg.Workspace.PVC.Size = resource.MustParse("30Gi")
 	cfg.Workspace.PVC.StorageClass = ""
