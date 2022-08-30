@@ -49,6 +49,23 @@
               description: 'Server cannot start workspace instances on workspace clusters.',
             },
           },
+          // Rollout alerts
+          {
+            alert: 'JsonRpcApiErrorRates',
+            // Reasoning: the values are taken from past data
+            expr: 'sum (rate(gitpod_server_api_calls_total{statusCode!~"2..|429"}[5m])) / sum(rate(gitpod_server_api_calls_total[5m])) > 0.04',
+            'for': '5m',
+            labels: {
+              // sent to the team internal channel until we fine tuned it
+              severity: 'warning',
+              team: 'webapp'
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodApiErrorRate.md',
+              summary: 'The error rate of the JSON RPC API is high. Investigation required.',
+              description: 'JSON RPC API error rate high',
+            },
+          },
         ],
       },
     ],
