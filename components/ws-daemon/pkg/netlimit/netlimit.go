@@ -7,6 +7,7 @@ package netlimit
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 
 	"runtime"
@@ -36,12 +37,12 @@ func NewConnLimiter(config Config, prom prometheus.Registerer) *ConnLimiter {
 		droppedBytes: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "netlimit_connections_dropped_bytes",
 			Help: "Number of bytes dropped due to connection limiting",
-		}, []string{"workspace"}),
+		}, []string{"node", "workspace"}),
 
 		droppedPackets: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "netlimit_connections_dropped_packets",
 			Help: "Number of packets dropped due to connection limiting",
-		}, []string{"workspace"}),
+		}, []string{"node", "workspace"}),
 		limited: map[string]struct{}{},
 	}
 
@@ -155,8 +156,9 @@ func (c *ConnLimiter) limitWorkspace(ctx context.Context, ws *dispatch.Workspace
 					continue
 				}
 
-				c.droppedBytes.WithLabelValues(ws.InstanceID).Set(float64(counter.Bytes))
-				c.droppedPackets.WithLabelValues(ws.InstanceID).Set(float64(counter.Packets))
+				nodeName := os.Getenv("NODENAME")
+				c.droppedBytes.WithLabelValues(nodeName, ws.Pod.Name).Set(float64(counter.Bytes))
+				c.droppedPackets.WithLabelValues(nodeName, ws.Pod.Name).Set(float64(counter.Packets))
 
 			case <-ctx.Done():
 				c.mu.Lock()
