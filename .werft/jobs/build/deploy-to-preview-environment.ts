@@ -26,7 +26,7 @@ import { previewNameFromBranchName } from "../../util/preview";
 import { createDNSRecord } from "../../util/gcloud";
 import { SpanStatusCode } from "@opentelemetry/api";
 
-// used by both deploys (helm and Installer)
+// used by Installer
 const PROXY_SECRET_NAME = "proxy-config-certificates";
 const IMAGE_PULL_SECRET_NAME = "gcp-sa-registry-auth";
 const STACKDRIVER_SERVICEACCOUNT = JSON.parse(
