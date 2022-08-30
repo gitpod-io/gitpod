@@ -36,6 +36,12 @@ type WorkspaceInstanceUsage struct {
 	Deleted bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
+type ListUsageResult struct {
+	UsageRecords     []WorkspaceInstanceUsage
+	Count            int64
+	TotalCreditsUsed float64
+}
+
 // TableName sets the insert table name for this struct type
 func (u *WorkspaceInstanceUsage) TableName() string {
 	return "d_b_workspace_instance_usage"
@@ -65,12 +71,16 @@ const (
 	AscendingOrder
 )
 
-func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to time.Time, sort Order) ([]WorkspaceInstanceUsage, error) {
+func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to time.Time, sort Order, offset int64, limit int64) (*ListUsageResult, error) {
+	var listUsageResult = new(ListUsageResult)
 	db := conn.WithContext(ctx)
 
-	var usageRecords []WorkspaceInstanceUsage
-	result := db.
+	var totalCreditsUsed sql.NullFloat64
+	var count sql.NullInt64
+	countResult, err := db.
 		WithContext(ctx).
+		Table((&WorkspaceInstanceUsage{}).TableName()).
+		Select("sum(creditsUsed) as totalCreditsUsed", "count(*) as count").
 		Order(fmt.Sprintf("startedAt %s", sort.ToSQL())).
 		Where("attributionId = ?", attributionId).
 		Where(
@@ -83,11 +93,46 @@ func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, 
 				// started before query range, still running
 				Or("startedAt <= ? AND (stoppedAt > ? OR stoppedAt IS NULL)", from, to),
 		).
+		Rows()
+	if err != nil || !countResult.Next() {
+		return nil, fmt.Errorf("failed to get count of usage records: %s", err)
+	}
+	err = countResult.Scan(&totalCreditsUsed, &count)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get count of usage records: %s", err)
+	}
+	if totalCreditsUsed.Valid {
+		listUsageResult.TotalCreditsUsed = totalCreditsUsed.Float64
+	}
+	if count.Valid {
+		listUsageResult.Count = count.Int64
+	}
+
+	var usageRecords []WorkspaceInstanceUsage
+	result := db.
+		WithContext(ctx).
+		Table((&WorkspaceInstanceUsage{}).TableName()).
+		Order(fmt.Sprintf("startedAt %s", sort.ToSQL())).
+		Where("attributionId = ?", attributionId).
+		Where(
+			// started before, finished inside query range
+			conn.Where("? <= stoppedAt AND stoppedAt < ?", from, to).
+				// started inside query range, finished inside
+				Or("startedAt >= ? AND stoppedAt < ?", from, to).
+				// started inside query range, finished outside
+				Or("? <= startedAt AND startedAt < ?", from, to).
+				// started before query range, still running
+				Or("startedAt <= ? AND (stoppedAt > ? OR stoppedAt IS NULL)", from, to),
+		).
+		Offset(int(offset)).
+		Limit(int(limit)).
 		Find(&usageRecords)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get usage records: %s", result.Error)
 	}
-	return usageRecords, nil
+	listUsageResult.UsageRecords = usageRecords
+
+	return listUsageResult, nil
 }
 
 type UsageReport []WorkspaceInstanceUsage

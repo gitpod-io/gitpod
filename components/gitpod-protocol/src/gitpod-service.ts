@@ -61,7 +61,7 @@ import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./
 import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
 import { Currency } from "./plans";
-import { BillableSession, BillableSessionRequest } from "./usage";
+import { ListBilledUsageResponse, ListBilledUsageRequest } from "./usage";
 import { SupportedWorkspaceClass } from "./workspace-class";
 import { BillingMode } from "./billing-mode";
 
@@ -297,7 +297,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getSpendingLimitForTeam(teamId: string): Promise<number | undefined>;
     setSpendingLimitForTeam(teamId: string, spendingLimit: number): Promise<void>;
 
-    listBilledUsage(req: BillableSessionRequest): Promise<BillableSession[]>;
+    listBilledUsage(req: ListBilledUsageRequest): Promise<ListBilledUsageResponse>;
 
     setUsageAttribution(usageAttribution: string): Promise<void>;
 

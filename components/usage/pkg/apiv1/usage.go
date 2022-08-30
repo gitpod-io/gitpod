@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -54,18 +55,26 @@ func (s *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUsa
 		return nil, status.Errorf(codes.InvalidArgument, "Maximum range exceeded. Range specified can be at most %s", maxQuerySize.String())
 	}
 
-	var order db.Order
-	switch in.Order {
-	case v1.ListBilledUsageRequest_ORDERING_ASCENDING:
+	var order db.Order = db.DescendingOrder
+	if in.Order == v1.ListBilledUsageRequest_ORDERING_ASCENDING {
 		order = db.AscendingOrder
-	default:
-		order = db.DescendingOrder
 	}
 
-	usageRecords, err := db.ListUsage(ctx, s.conn, db.AttributionID(in.GetAttributionId()), from, to, order)
+	var limit int64 = 1000
+	var page int64 = 0
+	var offset int64 = 0
+	if in.Pagination != nil {
+		limit = in.Pagination.PerPage
+		page = in.Pagination.Page
+		offset = limit * (int64(math.Max(0, float64(page-1))))
+	}
+
+	listUsageResult, err := db.ListUsage(ctx, s.conn, db.AttributionID(in.GetAttributionId()), from, to, order, offset, limit)
 	if err != nil {
 		log.Log.
 			WithField("attribution_id", in.AttributionId).
+			WithField("perPage", limit).
+			WithField("page", page).
 			WithField("from", from).
 			WithField("to", to).
 			WithError(err).Error("Failed to list usage.")
@@ -73,7 +82,7 @@ func (s *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUsa
 	}
 
 	var billedSessions []*v1.BilledSession
-	for _, usageRecord := range usageRecords {
+	for _, usageRecord := range listUsageResult.UsageRecords {
 		var endTime *timestamppb.Timestamp
 		if usageRecord.StoppedAt.Valid {
 			endTime = timestamppb.New(usageRecord.StoppedAt.Time)
@@ -93,8 +102,19 @@ func (s *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUsa
 		billedSessions = append(billedSessions, billedSession)
 	}
 
+	var totalPages = int64(math.Ceil(float64(listUsageResult.Count) / float64(limit)))
+
+	var pagination = v1.PaginatedResponse{
+		PerPage:    limit,
+		Page:       page,
+		TotalPages: totalPages,
+		Total:      listUsageResult.Count,
+	}
+
 	return &v1.ListBilledUsageResponse{
-		Sessions: billedSessions,
+		Sessions:         billedSessions,
+		TotalCreditsUsed: listUsageResult.TotalCreditsUsed,
+		Pagination:       &pagination,
 	}, nil
 }
 

@@ -71,7 +71,8 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import { ExtendedBillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol/lib/usage";
+import { ListBilledUsageRequest, ListBilledUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
+import { ListBilledUsageRequest as ListBilledUsage } from "@gitpod/usage-api/lib/usage/v1/usage_pb";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -2149,8 +2150,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return result;
     }
 
-    async listBilledUsage(ctx: TraceContext, req: BillableSessionRequest): Promise<ExtendedBillableSession[]> {
-        const { attributionId, startedTimeOrder, from, to } = req;
+    async listBilledUsage(ctx: TraceContext, req: ListBilledUsageRequest): Promise<ListBilledUsageResponse> {
+        const { attributionId, fromDate, toDate, perPage, page } = req;
         traceAPIParams(ctx, { attributionId });
         let timestampFrom;
         let timestampTo;
@@ -2158,39 +2159,52 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
-        if (from) {
-            timestampFrom = Timestamp.fromDate(new Date(from));
+        if (fromDate) {
+            timestampFrom = Timestamp.fromDate(new Date(fromDate));
         }
-        if (to) {
-            timestampTo = Timestamp.fromDate(new Date(to));
+        if (toDate) {
+            timestampTo = Timestamp.fromDate(new Date(toDate));
         }
         const usageClient = this.usageServiceClientProvider.getDefault();
         const response = await usageClient.listBilledUsage(
             ctx,
             attributionId,
-            startedTimeOrder as number,
+            ListBilledUsage.Ordering.ORDERING_DESCENDING,
+            perPage,
+            page,
             timestampFrom,
             timestampTo,
         );
-        const sessions = response.getSessionsList().map((s) => UsageService.mapBilledSession(s));
-        const extendedSessions = await Promise.all(
-            sessions.map(async (session) => {
-                const ws = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(session.workspaceId);
-                let profile: User.Profile | undefined = undefined;
-                if (session.workspaceType === "regular" && session.userId) {
-                    const user = await this.userDB.findUserById(session.userId);
-                    if (user) {
-                        profile = User.getProfile(user);
+        const sessions = await Promise.all(
+            response
+                .getSessionsList()
+                .map((s) => UsageService.mapBilledSession(s))
+                .map(async (session) => {
+                    const ws = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(session.workspaceId);
+                    let profile: User.Profile | undefined = undefined;
+                    if (session.workspaceType === "regular" && session.userId) {
+                        // TODO add caching to void repeated loading of same profile details here
+                        const user = await this.userDB.findUserById(session.userId);
+                        if (user) {
+                            profile = User.getProfile(user);
+                        }
                     }
-                }
-                return {
-                    ...session,
-                    contextURL: ws?.contextURL,
-                    user: profile ? <User.Profile>{ name: profile.name, avatarURL: profile.avatarURL } : undefined,
-                };
-            }),
+                    return {
+                        ...session,
+                        contextURL: ws?.contextURL,
+                        user: profile,
+                    };
+                }),
         );
-        return extendedSessions;
+        const pagination = response.getPagination();
+        return {
+            sessions,
+            totalSessions: pagination?.getTotal() || 0,
+            totalPages: pagination?.getTotalPages() || 0,
+            page: pagination?.getPage() || 0,
+            perPage: pagination?.getPerPage() || 0,
+            totalCreditsUsed: response.getTotalCreditsUsed(),
+        };
     }
 
     protected async guardCostCenterAccess(

@@ -29,6 +29,11 @@ export class ListBilledUsageRequest extends jspb.Message {
     getOrder(): ListBilledUsageRequest.Ordering;
     setOrder(value: ListBilledUsageRequest.Ordering): ListBilledUsageRequest;
 
+    hasPagination(): boolean;
+    clearPagination(): void;
+    getPagination(): PaginatedRequest | undefined;
+    setPagination(value?: PaginatedRequest): ListBilledUsageRequest;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListBilledUsageRequest.AsObject;
     static toObject(includeInstance: boolean, msg: ListBilledUsageRequest): ListBilledUsageRequest.AsObject;
@@ -45,6 +50,7 @@ export namespace ListBilledUsageRequest {
         from?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         to?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         order: ListBilledUsageRequest.Ordering,
+        pagination?: PaginatedRequest.AsObject,
     }
 
     export enum Ordering {
@@ -54,11 +60,41 @@ export namespace ListBilledUsageRequest {
 
 }
 
+export class PaginatedRequest extends jspb.Message {
+    getPerPage(): number;
+    setPerPage(value: number): PaginatedRequest;
+    getPage(): number;
+    setPage(value: number): PaginatedRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): PaginatedRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: PaginatedRequest): PaginatedRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: PaginatedRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): PaginatedRequest;
+    static deserializeBinaryFromReader(message: PaginatedRequest, reader: jspb.BinaryReader): PaginatedRequest;
+}
+
+export namespace PaginatedRequest {
+    export type AsObject = {
+        perPage: number,
+        page: number,
+    }
+}
+
 export class ListBilledUsageResponse extends jspb.Message {
     clearSessionsList(): void;
     getSessionsList(): Array<BilledSession>;
     setSessionsList(value: Array<BilledSession>): ListBilledUsageResponse;
     addSessions(value?: BilledSession, index?: number): BilledSession;
+    getTotalCreditsUsed(): number;
+    setTotalCreditsUsed(value: number): ListBilledUsageResponse;
+
+    hasPagination(): boolean;
+    clearPagination(): void;
+    getPagination(): PaginatedResponse | undefined;
+    setPagination(value?: PaginatedResponse): ListBilledUsageResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListBilledUsageResponse.AsObject;
@@ -73,6 +109,37 @@ export class ListBilledUsageResponse extends jspb.Message {
 export namespace ListBilledUsageResponse {
     export type AsObject = {
         sessionsList: Array<BilledSession.AsObject>,
+        totalCreditsUsed: number,
+        pagination?: PaginatedResponse.AsObject,
+    }
+}
+
+export class PaginatedResponse extends jspb.Message {
+    getPerPage(): number;
+    setPerPage(value: number): PaginatedResponse;
+    getTotalPages(): number;
+    setTotalPages(value: number): PaginatedResponse;
+    getTotal(): number;
+    setTotal(value: number): PaginatedResponse;
+    getPage(): number;
+    setPage(value: number): PaginatedResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): PaginatedResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: PaginatedResponse): PaginatedResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: PaginatedResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): PaginatedResponse;
+    static deserializeBinaryFromReader(message: PaginatedResponse, reader: jspb.BinaryReader): PaginatedResponse;
+}
+
+export namespace PaginatedResponse {
+    export type AsObject = {
+        perPage: number,
+        totalPages: number,
+        total: number,
+        page: number,
     }
 }
 

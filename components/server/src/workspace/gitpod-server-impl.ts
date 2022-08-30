@@ -173,7 +173,7 @@ import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { BillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol/lib/usage";
+import { ListBilledUsageRequest, ListBilledUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
@@ -3227,7 +3227,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 
-    async listBilledUsage(ctx: TraceContext, req: BillableSessionRequest): Promise<BillableSession[]> {
+    async listBilledUsage(ctx: TraceContext, req: ListBilledUsageRequest): Promise<ListBilledUsageResponse> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 

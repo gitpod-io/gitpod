@@ -40,16 +40,24 @@ export interface ExtendedBillableSession extends BillableSession {
     user?: Pick<User.Profile, "name" | "avatarURL">;
 }
 
-export interface BillableSessionRequest {
+/**
+ * This is a paginated request
+ */
+export interface ListBilledUsageRequest {
     attributionId: string;
-    startedTimeOrder: SortOrder;
-    from?: number;
-    to?: number;
+    fromDate?: number;
+    toDate?: number;
+    perPage: number;
+    page: number;
+}
+
+export interface ListBilledUsageResponse {
+    sessions: ExtendedBillableSession[];
+    totalCreditsUsed: number;
+    totalPages: number;
+    totalSessions: number;
+    perPage: number;
+    page: number;
 }
 
 export type BillableWorkspaceType = WorkspaceType;
-
-export enum SortOrder {
-    Descending = 0,
-    Ascending = 1,
-}

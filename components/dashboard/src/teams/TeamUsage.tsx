@@ -9,10 +9,10 @@ import { useLocation } from "react-router";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import {
-    BillableSessionRequest,
+    ListBilledUsageRequest,
     BillableWorkspaceType,
     ExtendedBillableSession,
-    SortOrder,
+    ListBilledUsageResponse,
 } from "@gitpod/gitpod-protocol/lib/usage";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
@@ -21,7 +21,6 @@ import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ReactComponent as CreditsSvg } from "../images/credits.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
-import { ReactComponent as SortArrow } from "../images/sort-arrow.svg";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { toRemoteURL } from "../projects/render-utils";
@@ -31,17 +30,15 @@ function TeamUsage() {
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
-    const [billedUsage, setBilledUsage] = useState<ExtendedBillableSession[]>([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [resultsPerPage] = useState(50);
+    const [usagePage, setUsagePage] = useState<ListBilledUsageResponse | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState("");
     const today = new Date();
     const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const timestampStartOfCurrentMonth = startOfCurrentMonth.getTime();
     const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(timestampStartOfCurrentMonth);
     const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(Date.now());
+    const [totalCreditsUsed, setTotalCreditsUsed] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [isStartedTimeDescending, setIsStartedTimeDescending] = useState<boolean>(true);
 
     useEffect(() => {
         if (!team) {
@@ -57,30 +54,8 @@ function TeamUsage() {
         if (!team) {
             return;
         }
-        if (billedUsage.length === 0) {
-            setIsLoading(true);
-        }
-        (async () => {
-            const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
-            const request: BillableSessionRequest = {
-                attributionId,
-                startedTimeOrder: isStartedTimeDescending ? SortOrder.Descending : SortOrder.Ascending,
-                from: startDateOfBillMonth,
-                to: endDateOfBillMonth,
-            };
-            try {
-                const { server } = getGitpodService();
-                const billedUsageResult = await server.listBilledUsage(request);
-                setBilledUsage(billedUsageResult);
-            } catch (error) {
-                if (error.code === ErrorCodes.PERMISSION_DENIED) {
-                    setErrorMessage("Access to usage details is restricted to team owners.");
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        })();
-    }, [team, startDateOfBillMonth, endDateOfBillMonth, isStartedTimeDescending]);
+        loadPage(1);
+    }, [team, startDateOfBillMonth, endDateOfBillMonth]);
 
     useEffect(() => {
         if (!teamBillingMode) {
@@ -90,6 +65,37 @@ function TeamUsage() {
             window.location.href = gitpodHostUrl.asDashboard().toString();
         }
     }, [teamBillingMode]);
+
+    const loadPage = async (page: number = 1) => {
+        if (!team) {
+            return;
+        }
+        if (usagePage === undefined) {
+            setIsLoading(true);
+            setTotalCreditsUsed(0);
+        }
+        const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
+        const request: ListBilledUsageRequest = {
+            attributionId,
+            fromDate: startDateOfBillMonth,
+            toDate: endDateOfBillMonth,
+            perPage: 50,
+            page,
+        };
+        try {
+            const page = await getGitpodService().server.listBilledUsage(request);
+            setUsagePage(page);
+            setTotalCreditsUsed(Math.ceil(page.totalCreditsUsed));
+        } catch (error) {
+            if (error.code === ErrorCodes.PERMISSION_DENIED) {
+                setErrorMessage("Access to usage details is restricted to team owners.");
+            } else {
+                setErrorMessage(`Error: ${error?.message}`);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const getType = (type: BillableWorkspaceType) => {
         if (type === "regular") {
@@ -109,12 +115,6 @@ function TeamUsage() {
         const lengthOfUsage = Math.floor(end - start);
         const inMinutes = (lengthOfUsage / (1000 * 60)).toFixed(1);
         return inMinutes + " min";
-    };
-
-    const calculateTotalUsage = () => {
-        let totalCredits = 0;
-        billedUsage.forEach((session) => (totalCredits += session.credits));
-        return totalCredits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
     const handleMonthClick = (start: any, end: any) => {
@@ -155,10 +155,7 @@ function TeamUsage() {
         return new Date(time).toLocaleDateString(undefined, options).replace("at ", "");
     };
 
-    const lastResultOnCurrentPage = currentPage * resultsPerPage;
-    const firstResultOnCurrentPage = lastResultOnCurrentPage - resultsPerPage;
-    const totalNumberOfPages = Math.ceil(billedUsage.length / resultsPerPage);
-    const currentPaginatedResults = billedUsage.slice(firstResultOnCurrentPage, lastResultOnCurrentPage);
+    const currentPaginatedResults = usagePage?.sessions ?? [];
 
     return (
         <>
@@ -181,16 +178,18 @@ function TeamUsage() {
                                     <div className="text-base text-gray-500 truncate">Previous Months</div>
                                     {getBillingHistory()}
                                 </div>
-                                <div className="flex flex-col truncate">
-                                    <div className="text-base text-gray-500">Total usage</div>
-                                    <div className="flex text-lg text-gray-600 font-semibold">
-                                        <CreditsSvg className="my-auto mr-1" />
-                                        <span>{calculateTotalUsage()} Credits</span>
+                                {!isLoading && (
+                                    <div className="flex flex-col truncate">
+                                        <div className="text-base text-gray-500">Total usage</div>
+                                        <div className="flex text-lg text-gray-600 font-semibold">
+                                            <CreditsSvg className="my-auto mr-1" />
+                                            <span>{totalCreditsUsed} Credits</span>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
-                        {!isLoading && billedUsage.length === 0 && !errorMessage && (
+                        {!isLoading && usagePage === undefined && !errorMessage && (
                             <div className="flex flex-col w-full mb-8">
                                 <h3 className="text-center text-gray-500 mt-8">No sessions found.</h3>
                                 <p className="text-center text-gray-500 mt-1">
@@ -215,7 +214,7 @@ function TeamUsage() {
                                 <Spinner className="m-2 h-5 w-5 animate-spin" />
                             </div>
                         )}
-                        {billedUsage.length > 0 && !isLoading && (
+                        {!isLoading && currentPaginatedResults.length > 0 && (
                             <div className="flex flex-col w-full mb-8">
                                 <ItemsList className="mt-2 text-gray-400 dark:text-gray-500">
                                     <Item
@@ -233,17 +232,7 @@ function TeamUsage() {
                                         </ItemField>
                                         <ItemField className="my-auto" />
                                         <ItemField className="col-span-3 my-auto cursor-pointer">
-                                            <span
-                                                className="flex my-auto"
-                                                onClick={() => setIsStartedTimeDescending(!isStartedTimeDescending)}
-                                            >
-                                                Timestamp
-                                                <SortArrow
-                                                    className={`ml-2 h-4 w-4 my-auto ${
-                                                        isStartedTimeDescending ? "" : " transform rotate-180"
-                                                    }`}
-                                                />
-                                            </span>
+                                            <span>Timestamp</span>
                                         </ItemField>
                                     </Item>
                                     {currentPaginatedResults &&
@@ -310,12 +299,11 @@ function TeamUsage() {
                                             );
                                         })}
                                 </ItemsList>
-                                {billedUsage.length > resultsPerPage && (
+                                {usagePage && usagePage.totalPages > 1 && (
                                     <Pagination
-                                        totalResults={billedUsage.length}
-                                        currentPage={currentPage}
-                                        setCurrentPage={setCurrentPage}
-                                        totalNumberOfPages={totalNumberOfPages}
+                                        currentPage={usagePage.page}
+                                        setPage={(page) => loadPage(page)}
+                                        totalNumberOfPages={usagePage.totalPages}
                                     />
                                 )}
                             </div>
