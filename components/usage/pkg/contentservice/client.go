@@ -14,12 +14,11 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 )
 
 type Interface interface {
-	UploadUsageReport(ctx context.Context, filename string, report db.UsageReport) error
-	DownloadUsageReport(ctx context.Context, filename string) (db.UsageReport, error)
+	UploadUsageReport(ctx context.Context, filename string, report UsageReport) error
+	DownloadUsageReport(ctx context.Context, filename string) (UsageReport, error)
 }
 
 type Client struct {
@@ -30,7 +29,7 @@ func New(service api.UsageReportServiceClient) *Client {
 	return &Client{service: service}
 }
 
-func (c *Client) UploadUsageReport(ctx context.Context, filename string, report db.UsageReport) error {
+func (c *Client) UploadUsageReport(ctx context.Context, filename string, report UsageReport) error {
 	uploadURLResp, err := c.service.UploadURL(ctx, &api.UsageReportUploadURLRequest{Name: filename})
 	if err != nil {
 		return fmt.Errorf("failed to get upload URL from usage report service: %w", err)
@@ -68,17 +67,17 @@ func (c *Client) UploadUsageReport(ctx context.Context, filename string, report 
 	return nil
 }
 
-func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (db.UsageReport, error) {
+func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (UsageReport, error) {
 	downloadURlResp, err := c.service.DownloadURL(ctx, &api.UsageReportDownloadURLRequest{
 		Name: filename,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get download URL: %w", err)
+		return UsageReport{}, fmt.Errorf("failed to get download URL: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodGet, downloadURlResp.GetUrl(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to construct request: %w", err)
+		return UsageReport{}, fmt.Errorf("failed to construct request: %w", err)
 	}
 
 	// We want to receive it as gzip, this disables transcoding of the response
@@ -88,11 +87,11 @@ func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (db.U
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to make request to download usage report: %w", err)
+		return UsageReport{}, fmt.Errorf("failed to make request to download usage report: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("request to download usage report returned non 200 status code: %d", resp.StatusCode)
+		return UsageReport{}, fmt.Errorf("request to download usage report returned non 200 status code: %d", resp.StatusCode)
 	}
 
 	body := resp.Body
@@ -100,15 +99,15 @@ func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (db.U
 
 	decompressor, err := gzip.NewReader(body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to construct gzip decompressor from response: %w", err)
+		return UsageReport{}, fmt.Errorf("failed to construct gzip decompressor from response: %w", err)
 	}
 	defer decompressor.Close()
 
 	decoder := json.NewDecoder(body)
-	var records []db.WorkspaceInstanceUsage
-	if err := decoder.Decode(&records); err != nil {
-		return nil, fmt.Errorf("failed to deserialize report: %w", err)
+	var report UsageReport
+	if err := decoder.Decode(&report); err != nil {
+		return UsageReport{}, fmt.Errorf("failed to deserialize report: %w", err)
 	}
 
-	return records, nil
+	return report, nil
 }

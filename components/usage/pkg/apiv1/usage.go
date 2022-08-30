@@ -119,7 +119,7 @@ func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsag
 	}
 
 	filename := fmt.Sprintf("%s.gz", time.Now().Format(time.RFC3339))
-	err = s.contentService.UploadUsageReport(ctx, filename, report.UsageRecords)
+	err = s.contentService.UploadUsageReport(ctx, filename, report)
 	if err != nil {
 		log.Log.WithError(err).Error("Failed to persist usage report to content service.")
 		return nil, status.Error(codes.Internal, "failed to persist usage report to content service")
