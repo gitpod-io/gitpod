@@ -30,6 +30,11 @@ pod:
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-sh-release-token
+              key: token
         - name: GOPROXY
           value: http://athens-athens-proxy.athens.svc.cluster.local:9999
         - name: GOCACHE
@@ -85,11 +90,6 @@ pod:
         - name: go-build-cache
           mountPath: /go-build-cache
           readOnly: false
-        - name: GITHUB_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: github-sh-release-token
-              key: token
       command:
         - bash
         - -c
