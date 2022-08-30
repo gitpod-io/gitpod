@@ -81,7 +81,11 @@ pod:
           name: github-token-gitpod-bot
         - name: monitoring-satellite-preview-token
           mountPath: /mnt/secrets/monitoring-satellite-preview-token
-
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-sh-release-token
+              key: token
       command:
         - bash
         - .werft/workspace-run-integration-tests.sh
