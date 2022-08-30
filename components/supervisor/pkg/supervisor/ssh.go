@@ -190,13 +190,10 @@ func prepareSSHKey(ctx context.Context, sshkey string) error {
 }
 
 func writeSSHEnv(cfg *Config, envvars []string) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
+	home := "/home/gitpod"
 
 	d := filepath.Join(home, ".ssh")
-	err = os.MkdirAll(d, 0o700)
+	err := os.MkdirAll(d, 0o700)
 	if err != nil {
 		return xerrors.Errorf("cannot create $HOME/.ssh: %w", err)
 	}
