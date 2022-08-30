@@ -7,6 +7,7 @@ package apiv1
 import (
 	"context"
 	"database/sql"
+	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"reflect"
 	"testing"
 	"time"
@@ -327,7 +328,7 @@ func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
 		return Must(db.NewVarcharTimeFromStr(timestampAsStr))
 	}
 	type Expectation struct {
-		custom       *func(t *testing.T, report *UsageReport)
+		custom       func(t *testing.T, report contentservice.UsageReport)
 		usageRecords []db.WorkspaceInstanceUsage
 	}
 
@@ -433,7 +434,7 @@ func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
 			// Custom expectations
 			customTestFunction := test.expectation.custom
 			if customTestFunction != nil {
-				(*customTestFunction)(t, report)
+				customTestFunction(t, report)
 				require.NoError(t, err)
 			}
 		})

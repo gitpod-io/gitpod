@@ -7,6 +7,7 @@ package apiv1
 import (
 	"context"
 	"fmt"
+	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -15,23 +16,6 @@ import (
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
-
-type InvalidSession struct {
-	Reason  string
-	Session db.WorkspaceInstanceForUsage
-}
-
-type UsageReport struct {
-	GenerationTime time.Time
-
-	From time.Time
-	To   time.Time
-
-	RawSessions     []db.WorkspaceInstanceForUsage
-	InvalidSessions []InvalidSession
-
-	UsageRecords []db.WorkspaceInstanceUsage
-}
 
 func NewReportGenerator(conn *gorm.DB, pricer *WorkspacePricer) *ReportGenerator {
 	return &ReportGenerator{
@@ -47,12 +31,12 @@ type ReportGenerator struct {
 	nowFunc func() time.Time
 }
 
-func (g *ReportGenerator) GenerateUsageReport(ctx context.Context, from, to time.Time) (*UsageReport, error) {
+func (g *ReportGenerator) GenerateUsageReport(ctx context.Context, from, to time.Time) (contentservice.UsageReport, error) {
 	now := g.nowFunc().UTC()
 
 	// Sanity check: from <= now
 	if now.Before(from) {
-		return nil, status.Errorf(codes.InvalidArgument, "Now must be after (or be equal to) from")
+		return contentservice.UsageReport{}, status.Errorf(codes.InvalidArgument, "Now must be after (or be equal to) from")
 	}
 
 	// Enforce: to <= now
@@ -61,7 +45,7 @@ func (g *ReportGenerator) GenerateUsageReport(ctx context.Context, from, to time
 	}
 	log.Infof("Gathering usage data from %s to %s (%s)", from, to, now)
 
-	report := &UsageReport{
+	report := contentservice.UsageReport{
 		GenerationTime: now,
 		From:           from,
 		To:             to,
@@ -87,14 +71,14 @@ func (g *ReportGenerator) GenerateUsageReport(ctx context.Context, from, to time
 	return report, nil
 }
 
-func validateInstances(instances []db.WorkspaceInstanceForUsage) (valid []db.WorkspaceInstanceForUsage, invalid []InvalidSession) {
+func validateInstances(instances []db.WorkspaceInstanceForUsage) (valid []db.WorkspaceInstanceForUsage, invalid []contentservice.InvalidSession) {
 	for _, i := range instances {
 		// i is a pointer to the current element, we need to assign it to ensure we're copying the value, not the current pointer.
 		instance := i
 
 		// Each instance must have a start time, without it, we do not have a baseline for usage computation.
 		if !instance.CreationTime.IsSet() {
-			invalid = append(invalid, InvalidSession{
+			invalid = append(invalid, contentservice.InvalidSession{
 				Reason:  "missing creation time",
 				Session: instance,
 			})
@@ -107,7 +91,7 @@ func validateInstances(instances []db.WorkspaceInstanceForUsage) (valid []db.Wor
 		if instance.StoppingTime.IsSet() {
 			stop := instance.StoppingTime.Time()
 			if stop.Before(start) {
-				invalid = append(invalid, InvalidSession{
+				invalid = append(invalid, contentservice.InvalidSession{
 					Reason:  "stop time is before start time",
 					Session: instance,
 				})

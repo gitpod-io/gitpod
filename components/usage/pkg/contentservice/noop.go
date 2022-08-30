@@ -7,18 +7,16 @@ package contentservice
 import (
 	"context"
 	"errors"
-
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 )
 
 var notImplementedError = errors.New("not implemented")
 
 type NoOpClient struct{}
 
-func (c *NoOpClient) UploadUsageReport(ctx context.Context, filename string, report db.UsageReport) error {
+func (c *NoOpClient) UploadUsageReport(ctx context.Context, filename string, report UsageReport) error {
 	return notImplementedError
 }
 
-func (c *NoOpClient) DownloadUsageReport(ctx context.Context, filename string) (db.UsageReport, error) {
-	return nil, notImplementedError
+func (c *NoOpClient) DownloadUsageReport(ctx context.Context, filename string) (UsageReport, error) {
+	return UsageReport{}, notImplementedError
 }
