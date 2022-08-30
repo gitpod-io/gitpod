@@ -66,7 +66,8 @@ werft log phase "workspace-preview" "workspace-preview"
 sudo curl -sSL https://github.com/go-acme/lego/releases/download/v4.5.3/lego_v4.5.3_linux_amd64.tar.gz | sudo tar -xvz -C /usr/local/bin
 sudo install-packages netcat
 
-git clone https://github.com/gitpod-io/workspace-preview
+git clone https://oauth2:"${ROBOQUAT_TOKEN}"@github.com/gitpod-io/workspace-preview.git
+
 pushd workspace-preview
 ./new-vm.sh -v "${context_name}" | werft log slice "workspace-preview"
 source ${PWD}/vm.env
