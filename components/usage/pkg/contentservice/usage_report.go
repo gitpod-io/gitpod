@@ -15,7 +15,7 @@ type InvalidSession struct {
 }
 
 type UsageReport struct {
-	GenerationTime time.Time `json:"generation_time"`
+	GenerationTime time.Time `json:"generationTime"`
 
 	From time.Time `json:"from"`
 	To   time.Time `json:"to"`
