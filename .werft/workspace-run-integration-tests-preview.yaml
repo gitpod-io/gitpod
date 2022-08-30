@@ -19,34 +19,6 @@ pod:
       secret:
         defaultMode: 420
         secretName: github-token-gitpod-bot
-    - name: monitoring-satellite-preview-token
-      secret:
-        secretName: monitoring-satellite-preview-token
-    - name: monitoring-satellite-stackdriver-credentials
-      secret:
-        secretName: monitoring-satellite-stackdriver-credentials
-    - name: prometheus-remote-write-auth
-      secret:
-        secretName: prometheus-remote-write-auth
-    - name: gpsh-harvester-license
-      secret:
-        secretName: gpsh-harvester-license
-    - name: payment-provider-secret
-      secret:
-        secretName: payment-provider-secret
-    - name: go-build-cache
-      hostPath:
-        path: /mnt/disks/ssd0/go-build-cache
-        type: DirectoryOrCreate
-    - name: harvester-kubeconfig
-      secret:
-        secretName: harvester-kubeconfig
-    - name: harvester-vm-ssh-keys
-      secret:
-        secretName: harvester-vm-ssh-keys
-    - name: harvester-k3s-dockerhub-pull-account
-      secret:
-        secretName: harvester-k3s-dockerhub-pull-account
   containers:
     - name: gcloud
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-dl.1
@@ -110,34 +82,15 @@ pod:
           readOnly: false
         - mountPath: /mnt/secrets/github-token-gitpod-bot
           name: github-token-gitpod-bot
-        - name: go-build-cache
-          mountPath: /go-build-cache
-          readOnly: false
-        - name: monitoring-satellite-stackdriver-credentials
-          mountPath: /mnt/secrets/monitoring-satellite-stackdriver-credentials
-        - name: monitoring-satellite-preview-token
-          mountPath: /mnt/secrets/monitoring-satellite-preview-token
-        - name: gpsh-harvester-license
-          mountPath: /mnt/secrets/gpsh-harvester
-          readOnly: true
-        - name: harvester-kubeconfig
-          mountPath: /mnt/secrets/harvester-kubeconfig
-        - name: harvester-vm-ssh-keys
-          mountPath: /mnt/secrets/harvester-vm-ssh-keys
-        - name: harvester-k3s-dockerhub-pull-account
-          mountPath: /mnt/secrets/harvester-k3s-dockerhub-pull-account
       command:
         - bash
         - -c
         - |
           sleep 1
           set -Eeuo pipefail
+          set -x
 
-          sudo chown gitpod:gitpod $GOCACHE
           export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
-
-          export DOCKER_HOST=tcp://$NODENAME:2375
-          sudo chown -R gitpod:gitpod /workspace
 
           mkdir /workspace/.ssh
 

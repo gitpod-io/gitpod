@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+set -x
 
 FAILURE_COUNT=0
 RUN_COUNT=0
