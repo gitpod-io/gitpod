@@ -33,11 +33,14 @@ func TestRunDocker(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
-				err = integration.DeleteWorkspace(ctx, api, ws.Req.Id)
+				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer scancel()
+
+				err = integration.DeleteWorkspace(sctx, api, ws.Req.Id)
 				if err != nil {
 					t.Fatal(err)
 				}
-				_, _ = integration.WaitForWorkspaceStop(ctx, api, ws.Req.Id)
+				_, _ = integration.WaitForWorkspaceStop(sctx, api, ws.Req.Id)
 			})
 
 			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(ws.Req.Id), integration.WithWorkspacekitLift(true))
@@ -53,7 +56,7 @@ func TestRunDocker(t *testing.T) {
 				Command: "bash",
 				Args: []string{
 					"-c",
-					"docker run --rm alpine:latest",
+					"docker run --rm hello-world",
 				},
 			}, &resp)
 			if err != nil {
