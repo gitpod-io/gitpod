@@ -95,6 +95,7 @@ func getStripeConfig(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMoun
 	mount = corev1.VolumeMount{
 		Name:      "stripe-secret",
 		MountPath: stripeSecretMountPath,
+		SubPath:   "stripe-webhook-secret",
 		ReadOnly:  true,
 	}
 
