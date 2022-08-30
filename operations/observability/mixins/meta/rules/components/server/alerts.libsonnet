@@ -82,6 +82,25 @@
               description: 'Websocket connection rate high',
             },
           },
+          /**
+          * TODO(gpl) This will be true for US all the time. Can we exclude that cluster somehow?
+          * {
+          *   alert: 'db-sync not running',
+          *   expr: 'sum (kube_pod_status_phase{pod=~"db-sync.*"}) by (pod) < 1',
+          *   'for': '5m',
+          *   labels: {
+          *     // sent to the team internal channel until we fine tuned it
+          *     severity: 'warning',
+          *     team: 'webapp'
+          *   },
+          *   annotations: {
+          *     runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/DbSyncNotRunning.md',
+          *     summary: 'The db-sync pod is not running. Investigation required.',
+          *     description: 'db-sync pod not running',
+          *   },
+          * },
+          *
+          */
           {
             alert: 'MessagebusNotRunning',
             expr: 'up{job="messagebus"} < 1',
