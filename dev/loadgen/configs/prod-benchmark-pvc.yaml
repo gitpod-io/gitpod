@@ -1,7 +1,7 @@
 ## start with
 ##    loadgen benchmark prod-benchmark.yaml
 
-workspaces: 1
+workspaces: 100
 ideImage: eu.gcr.io/gitpod-core-dev/build/ide/code:commit-ff263e14024f00d0ed78386b4417dfa6bcd4ae2f
 waitForRunning: "600s"
 waitForStopping: "600s"
@@ -81,7 +81,9 @@ repos:
     cloneTarget: main
     score: 20
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:e764b1a602dc4123d9a027358367b5c4a35b62043e3c630731702144b7d37f77
+    workspaceClass: "gitpodio-internal-xl"
   - cloneURL: https://github.com/gitpod-io/template-python-flask
     score: 20
     cloneTarget: main
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:32b2dc5f2707904a9338a97c77a039706df661b5c5e4a5851f1ee74f06a38fd3
+    workspaceClass: "default"
