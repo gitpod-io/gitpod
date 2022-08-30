@@ -141,8 +141,7 @@ pod:
 
           mkdir /workspace/.ssh
 
-          (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
-          printf '{{ toJson . }}' > context.json
+          cd .werft
 
           ./workspace-run-integration-tests-preview.sh "main.4462" "{{ .Repository.Repo }}"
 plugins:
