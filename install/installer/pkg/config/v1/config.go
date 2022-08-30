@@ -34,6 +34,13 @@ func (v version) Factory() interface{} {
 		},
 	}
 }
+
+const (
+	defaultRepositoryUrl  = "eu.gcr.io/gitpod-core-dev/build"
+	defaultOpenVSXURL     = "https://open-vsx.org"
+	defaultMetadataRegion = "local"
+)
+
 func (v version) Defaults(in interface{}) error {
 	cfg, ok := in.(*Config)
 	if !ok {
@@ -41,14 +48,14 @@ func (v version) Defaults(in interface{}) error {
 	}
 
 	cfg.Kind = InstallationFull
-	cfg.Repository = "eu.gcr.io/gitpod-core-dev/build"
+	cfg.Repository = defaultRepositoryUrl
 	cfg.Observability = Observability{
 		LogLevel: LogLevelInfo,
 	}
 	cfg.Certificate.Kind = ObjectRefSecret
 	cfg.Certificate.Name = "https-certificates"
 	cfg.Database.InCluster = pointer.Bool(true)
-	cfg.Metadata.Region = "local"
+	cfg.Metadata.Region = defaultMetadataRegion
 	cfg.Metadata.InstallationShortname = InstallationShortNameOldDefault // TODO(gpl): we're tied to "default" here because that's what we put into static bridges in the past
 	cfg.ObjectStorage.InCluster = pointer.Bool(true)
 	cfg.ObjectStorage.Resources = &Resources{
@@ -69,7 +76,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.PVC.Size = resource.MustParse("30Gi")
 	cfg.Workspace.PVC.StorageClass = ""
 	cfg.Workspace.PVC.SnapshotClass = ""
-	cfg.OpenVSX.URL = "https://open-vsx.org"
+	cfg.OpenVSX.URL = defaultOpenVSXURL
 	cfg.DisableDefinitelyGP = true
 
 	return nil
