@@ -9,7 +9,7 @@ import { BillingServiceClient } from "./billing_grpc_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
-import { BilledSession, ListBilledUsageRequest, ListBilledUsageResponse } from "./usage_pb";
+import { BilledSession, ListBilledUsageRequest, ListBilledUsageResponse, PaginatedRequest } from "./usage_pb";
 import {
     GetUpcomingInvoiceRequest,
     GetUpcomingInvoiceResponse,
@@ -153,14 +153,21 @@ export class PromisifiedUsageServiceClient {
         _ctx: TraceContext,
         attributionId: string,
         order: ListBilledUsageRequest.Ordering,
+        perPage: number,
+        page: number,
         from?: Timestamp,
         to?: Timestamp,
     ): Promise<ListBilledUsageResponse> {
         const ctx = TraceContext.childContext(`/usage-service/listBilledUsage`, _ctx);
 
         try {
+            const pagination = new PaginatedRequest();
+            pagination.setPerPage(perPage);
+            pagination.setPage(page);
+
             const req = new ListBilledUsageRequest();
             req.setAttributionId(attributionId);
+            req.setPagination(pagination);
             req.setFrom(from);
             req.setTo(to);
             req.setOrder(order);

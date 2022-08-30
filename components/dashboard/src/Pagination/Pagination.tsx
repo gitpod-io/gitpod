@@ -8,20 +8,19 @@ import { getPaginationNumbers } from "./getPagination";
 import Arrow from "../components/Arrow";
 
 interface PaginationProps {
-    totalResults: number;
     totalNumberOfPages: number;
     currentPage: number;
-    setCurrentPage: any;
+    setPage: (page: number) => void;
 }
 
-function Pagination({ totalNumberOfPages, currentPage, setCurrentPage }: PaginationProps) {
+function Pagination({ totalNumberOfPages, currentPage, setPage }: PaginationProps) {
     const calculatedPagination = getPaginationNumbers(totalNumberOfPages, currentPage);
 
     const nextPage = () => {
-        if (currentPage !== totalNumberOfPages) setCurrentPage(currentPage + 1);
+        if (currentPage !== totalNumberOfPages) setPage(currentPage + 1);
     };
     const prevPage = () => {
-        if (currentPage !== 1) setCurrentPage(currentPage - 1);
+        if (currentPage !== 1) setPage(currentPage - 1);
     };
     const getClassnames = (pageNumber: string | number) => {
         if (pageNumber === currentPage) {
@@ -47,8 +46,8 @@ function Pagination({ totalNumberOfPages, currentPage, setCurrentPage }: Paginat
                         return <li className={getClassnames(pn)}>&#8230;</li>;
                     }
                     return (
-                        <li key={i} className={getClassnames(pn)}>
-                            <span onClick={() => setCurrentPage(pn)}>{pn}</span>
+                        <li key={i} className={getClassnames(pn)} onClick={() => typeof pn === "number" && setPage(pn)}>
+                            <span>{pn}</span>
                         </li>
                     );
                 })}

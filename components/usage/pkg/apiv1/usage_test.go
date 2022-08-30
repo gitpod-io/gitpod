@@ -170,6 +170,158 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 	}
 }
 
+func TestUsageService_ListBilledUsage_Pagination(t *testing.T) {
+	ctx := context.Background()
+
+	type Expectation struct {
+		count      int64
+		total      int64
+		totalPages int64
+		page       int64
+		perPage    int64
+	}
+
+	type Scenario struct {
+		name    string
+		Request *v1.ListBilledUsageRequest
+		Expect  Expectation
+	}
+
+	start := time.Date(2022, 07, 1, 13, 0, 0, 0, time.UTC)
+	attrID := db.NewTeamAttributionID(uuid.New().String())
+	var instances []db.WorkspaceInstanceUsage
+	for i := 1; i <= 14; i++ {
+		instance := dbtest.NewWorkspaceInstanceUsage(t, db.WorkspaceInstanceUsage{
+			AttributionID: attrID,
+			StartedAt:     start.Add(time.Duration(i) * time.Minute),
+			StoppedAt: sql.NullTime{
+				Time:  start.Add(time.Duration(i)*time.Minute + time.Hour),
+				Valid: true,
+			},
+		})
+		instances = append(instances, instance)
+	}
+
+	scenarios := []Scenario{
+		(func() Scenario {
+
+			return Scenario{
+				name: "first page",
+				Request: &v1.ListBilledUsageRequest{
+					AttributionId: string(attrID),
+					From:          timestamppb.New(start),
+					To:            timestamppb.New(start.Add(20*time.Minute + 2*time.Hour)),
+					Pagination: &v1.PaginatedRequest{
+						PerPage: int64(5),
+						Page:    int64(1),
+					},
+				},
+				Expect: Expectation{
+					count:      int64(5),
+					total:      int64(14),
+					totalPages: int64(3),
+					page:       int64(1),
+					perPage:    int64(5),
+				},
+			}
+		})(),
+		(func() Scenario {
+
+			return Scenario{
+				name: "second page",
+				Request: &v1.ListBilledUsageRequest{
+					AttributionId: string(attrID),
+					From:          timestamppb.New(start),
+					To:            timestamppb.New(start.Add(20*time.Minute + 2*time.Hour)),
+					Pagination: &v1.PaginatedRequest{
+						PerPage: int64(5),
+						Page:    int64(2),
+					},
+				},
+				Expect: Expectation{
+					count:      int64(5),
+					total:      int64(14),
+					totalPages: int64(3),
+					page:       int64(2),
+					perPage:    int64(5),
+				},
+			}
+		})(),
+		(func() Scenario {
+
+			return Scenario{
+				name: "third page",
+				Request: &v1.ListBilledUsageRequest{
+					AttributionId: string(attrID),
+					From:          timestamppb.New(start),
+					To:            timestamppb.New(start.Add(20*time.Minute + 2*time.Hour)),
+					Pagination: &v1.PaginatedRequest{
+						PerPage: int64(5),
+						Page:    int64(3),
+					},
+				},
+				Expect: Expectation{
+					count:      int64(4),
+					total:      int64(14),
+					totalPages: int64(3),
+					page:       int64(3),
+					perPage:    int64(5),
+				},
+			}
+		})(),
+		(func() Scenario {
+
+			return Scenario{
+				name: "fourth page",
+				Request: &v1.ListBilledUsageRequest{
+					AttributionId: string(attrID),
+					From:          timestamppb.New(start),
+					To:            timestamppb.New(start.Add(20*time.Minute + 2*time.Hour)),
+					Pagination: &v1.PaginatedRequest{
+						PerPage: int64(5),
+						Page:    int64(4),
+					},
+				},
+				Expect: Expectation{
+					count:      int64(0),
+					total:      int64(14),
+					totalPages: int64(3),
+					page:       int64(4),
+					perPage:    int64(5),
+				},
+			}
+		})(),
+	}
+
+	dbconn := dbtest.ConnectForTests(t)
+	dbtest.CreateWorkspaceInstanceUsageRecords(t, dbconn, instances...)
+
+	srv := baseserver.NewForTests(t,
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
+
+	generator := NewReportGenerator(dbconn, DefaultWorkspacePricer)
+	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, generator, nil))
+	baseserver.StartServerForTests(t, srv)
+
+	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+
+			client := v1.NewUsageServiceClient(conn)
+
+			resp, err := client.ListBilledUsage(ctx, scenario.Request)
+			require.NoError(t, err)
+			require.NotNil(t, resp.Pagination)
+
+			require.Equal(t, scenario.Expect.total, resp.Pagination.Total)
+			require.Equal(t, scenario.Expect.totalPages, resp.Pagination.TotalPages)
+		})
+	}
+}
+
 func TestInstanceToUsageRecords(t *testing.T) {
 	maxStopTime := time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)
 	teamID, ownerID, projectID := uuid.New().String(), uuid.New(), uuid.New()

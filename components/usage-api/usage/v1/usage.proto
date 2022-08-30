@@ -34,10 +34,26 @@ message ListBilledUsageRequest {
     }
 
     Ordering order = 4;
+
+    PaginatedRequest pagination = 5;
+}
+
+message PaginatedRequest {
+    int64 per_page = 1;
+    int64 page = 2;
 }
 
 message ListBilledUsageResponse {
     repeated BilledSession sessions = 1;
+    double total_credits_used = 2;
+    PaginatedResponse pagination = 3;
+}
+
+message PaginatedResponse {
+    int64 per_page = 2;
+    int64 total_pages = 3;
+    int64 total = 4;
+    int64 page = 5;
 }
 
 message BilledSession {
