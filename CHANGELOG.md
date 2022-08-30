@@ -1,6 +1,8 @@
 # Change Log
 
 ## August 2022
+- [local-preview] Check and exit if M1 Mac ([#12468](https://github.com/gitpod-io/gitpod/pull/12468)) - [@Pothulapati](https://github.com/Pothulapati)
+- Added phone number verification in SaaS, to help mitigate abuse. ([#12258](https://github.com/gitpod-io/gitpod/pull/12258)) - [@svenefftinge](https://github.com/svenefftinge)
 - experimental: enable the feature flag PVC, the files/folders under .git/ folder user:group permission is incorrect ([#12422](https://github.com/gitpod-io/gitpod/pull/12422)) - [@jenting](https://github.com/jenting)
 - [kots] load dockerConfigJson reigstry names into `privateBaseImageAllowList` ([#12398](https://github.com/gitpod-io/gitpod/pull/12398)) - [@Pothulapati](https://github.com/Pothulapati)
 - Upgrade runc to 1.1.4 ([#12417](https://github.com/gitpod-io/gitpod/pull/12417)) - [@utam0k](https://github.com/utam0k)
