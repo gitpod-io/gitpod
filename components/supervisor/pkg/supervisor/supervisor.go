@@ -1327,7 +1327,6 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 	fnReady := "/workspace/.gitpod/ready"
 	if _, err := os.Stat("/.workspace/.gitpod/content.json"); !os.IsNotExist(err) {
 		fn = "/.workspace/.gitpod/content.json"
-		fnReady = "/.workspace/.gitpod/ready"
 		log.Info("Detected content.json in /.workspace folder, assuming PVC feature enabled")
 	}
 
