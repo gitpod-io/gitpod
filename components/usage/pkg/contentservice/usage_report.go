@@ -20,8 +20,7 @@ type UsageReport struct {
 	From time.Time `json:"from"`
 	To   time.Time `json:"to"`
 
-	RawSessions     []db.WorkspaceInstanceForUsage `json:"rawSessions"`
-	InvalidSessions []InvalidSession               `json:"invalidSessions"`
+	InvalidSessions []InvalidSession `json:"invalidSessions"`
 
 	UsageRecords []db.WorkspaceInstanceUsage `json:"usageRecords"`
 }
