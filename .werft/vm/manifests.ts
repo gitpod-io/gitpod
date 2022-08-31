@@ -342,6 +342,10 @@ write_files:
       kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
       kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
 
+      # install CSI snapshotter CRDs and snapshot controller
+      kubectl apply -f /var/lib/gitpod/manifests/csi-driver.yaml || true
+      kubectl apply -f /var/lib/gitpod/manifests/csi-config.yaml || true
+
       cat <<EOF >> /etc/bash.bashrc
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
       EOF
