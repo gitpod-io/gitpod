@@ -129,6 +129,7 @@ import { CachingBillingServiceClientProvider } from "@gitpod/usage-api/lib/usage
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { System } from "@gitpod/usage-api/lib/usage/v1/billing_pb";
+import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -304,6 +305,7 @@ export class WorkspaceStarter {
         }
 
         options = options || {};
+        let instanceId: string | undefined = undefined;
         try {
             await this.checkBlockedRepository(user, workspace.contextURL);
 
@@ -371,6 +373,7 @@ export class WorkspaceStarter {
                     ),
                 );
             span.log({ newInstance: instance.id });
+            instanceId = instance.id;
 
             const forceRebuild = !!workspace.context.forceImageBuild;
 
@@ -427,12 +430,7 @@ export class WorkspaceStarter {
                 forceRebuild,
             );
         } catch (e) {
-            let failedReason: FailedInstanceStartReason = "other";
-            if (e instanceof StartInstanceError) {
-                failedReason = e.reason;
-            }
-            increaseFailedInstanceStartCounter(failedReason);
-            TraceContext.setError({ span }, e);
+            this.logAndTraceStartWorkspaceError({ span }, { userId: user.id, instanceId }, e);
             throw e;
         } finally {
             span.finish();
@@ -594,22 +592,27 @@ export class WorkspaceStarter {
             if (rethrow) {
                 throw err;
             } else {
-                TraceContext.setError({ span }, err);
-                let reason: FailedInstanceStartReason | undefined = undefined;
-                if (err instanceof StartInstanceError) {
-                    reason = err.reason;
-                    increaseFailedInstanceStartCounter(err.reason);
-                }
-                log.error({ userId: user.id, instanceId: instance.id }, "error starting instance", err, {
-                    failedInstanceStartReason: reason,
-                });
-                span.setTag("failedInstanceStartReason", reason);
+                this.logAndTraceStartWorkspaceError({ span }, { userId: user.id, instanceId: instance.id }, err);
             }
 
             return { instanceID: instance.id };
         } finally {
             span.finish();
         }
+    }
+
+    protected logAndTraceStartWorkspaceError(ctx: TraceContext, logCtx: LogContext, err: any) {
+        TraceContext.setError(ctx, err);
+
+        let reason: FailedInstanceStartReason | undefined = undefined;
+        if (err instanceof StartInstanceError) {
+            reason = err.reason;
+            increaseFailedInstanceStartCounter(reason);
+        }
+        log.error(logCtx, "error starting instance", err, {
+            failedInstanceStartReason: reason,
+        });
+        ctx.span?.setTag("failedInstanceStartReason", reason);
     }
 
     protected async createMetadata(workspace: Workspace): Promise<WorkspaceMetadata> {
@@ -1275,12 +1278,13 @@ export class WorkspaceStarter {
 
             TraceContext.setError({ span }, err);
             const looksLikeUserError = (msg: string): boolean => {
-                return msg.startsWith("build failed:") || msg.startsWith("headless task failed:");
+                return msg.startsWith("build failed:") || msg.includes("headless task failed:");
             };
             if (looksLikeUserError(message)) {
-                log.debug(
+                log.info(
                     { instanceId: instance.id, userId: user.id, workspaceId: workspace.id },
                     `workspace image build failed: ${message}`,
+                    { looksLikeUserError: true },
                 );
             } else {
                 log.error(
