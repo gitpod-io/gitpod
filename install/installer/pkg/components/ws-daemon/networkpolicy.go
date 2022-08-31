@@ -38,6 +38,10 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 							{
 								PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(common.WSManagerComponent)},
 							},
+						},
+					},
+					{
+						From: []networkingv1.NetworkPolicyPeer{
 							{
 								PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels("workspace")},
 							},
