@@ -1,6 +1,9 @@
 # Change Log
 
 ## August 2022
+- Terminal tabs running Gitpod Tasks now have their title updated to reflect what's currently running on it. ([#12401](https://github.com/gitpod-io/gitpod/pull/12401)) - [@felladrin](https://github.com/felladrin)
+- [gp-cli] provide workspace class info in `gp top` command ([#12338](https://github.com/gitpod-io/gitpod/pull/12338)) - [@mustard-mh](https://github.com/mustard-mh)
+- [supervisor] support ssh gateway on not gitpod base image ([#12498](https://github.com/gitpod-io/gitpod/pull/12498)) - [@iQQBot](https://github.com/iQQBot)
 - [local-preview] Check and exit if M1 Mac ([#12468](https://github.com/gitpod-io/gitpod/pull/12468)) - [@Pothulapati](https://github.com/Pothulapati)
 - Added phone number verification in SaaS, to help mitigate abuse. ([#12258](https://github.com/gitpod-io/gitpod/pull/12258)) - [@svenefftinge](https://github.com/svenefftinge)
 - experimental: enable the feature flag PVC, the files/folders under .git/ folder user:group permission is incorrect ([#12422](https://github.com/gitpod-io/gitpod/pull/12422)) - [@jenting](https://github.com/jenting)
