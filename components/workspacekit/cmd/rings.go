@@ -1032,7 +1032,7 @@ func connectToInWorkspaceDaemonService(ctx context.Context) (*inWorkspaceService
 	}
 
 	addr := strings.TrimSpace(string(data))
-	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, "tcp://"+addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
