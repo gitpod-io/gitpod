@@ -67,7 +67,8 @@ var benchmarkCommand = &cobra.Command{
 			Spec: &api.StartWorkspaceSpec{
 				DeprecatedIdeImage: scenario.IDEImage,
 				IdeImage: &api.IDEImage{
-					WebRef: scenario.IDEImage,
+					WebRef:        scenario.IDEImage,
+					SupervisorRef: "eu.gcr.io/gitpod-core-dev/dev/supervisor:commit-4b58b01c275da7df1ec39f921066214c7a853007",
 				},
 				Admission: api.AdmissionLevel_ADMIT_OWNER_ONLY,
 				Git: &api.GitSpec{
@@ -77,7 +78,7 @@ var benchmarkCommand = &cobra.Command{
 				FeatureFlags:      scenario.FeatureFlags,
 				Timeout:           "5m",
 				WorkspaceImage:    "will-be-overriden",
-				WorkspaceLocation: "workspace-stress",
+				WorkspaceLocation: "template-python-flask",
 				Envvars:           scenario.Environment,
 				Class:             scenario.WorkspaceClass,
 			},
