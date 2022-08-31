@@ -694,7 +694,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	mountPropagation := corev1.MountPropagationHostToContainer
 
 	var (
-		command        = []string{"/.supervisor/workspacekit", "ring0"}
+		command        = []string{"/.supervisor/supervisor", "init"}
 		readinessProbe = &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
