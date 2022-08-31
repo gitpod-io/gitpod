@@ -462,44 +462,6 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 	case <-done:
 	}
 
-	// wait for the Theia service to be properly deleted
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	var (
-		start       = time.Now()
-		serviceGone bool
-	)
-
-	// NOTE: this needs to be kept in sync with components/ws-manager/pkg/manager/manager.go:getTheiaServiceName()
-	// TODO(rl) expose it?
-	theiaName := fmt.Sprintf("ws-%s-theia", strings.TrimSpace(strings.ToLower(workspaceID)))
-	for time.Since(start) < 1*time.Minute {
-		var svc corev1.Service
-		err := api.client.Resources().Get(ctx, fmt.Sprintf("ws-%s-theia", workspaceID), api.namespace, &svc)
-		if errors.IsNotFound(err) {
-			serviceGone = true
-			break
-		}
-		time.Sleep(200 * time.Millisecond)
-	}
-	if !serviceGone {
-		return nil, xerrors.Errorf("workspace service did not disappear in time (theia)")
-	}
-	// Wait for the theia endpoints to be properly deleted (i.e. syncing)
-	var endpointGone bool
-	for time.Since(start) < 1*time.Minute {
-		var svc corev1.Endpoints
-		err := api.client.Resources().Get(ctx, theiaName, api.namespace, &svc)
-		if errors.IsNotFound(err) {
-			endpointGone = true
-			break
-		}
-		time.Sleep(200 * time.Millisecond)
-	}
-	if !endpointGone {
-		return nil, xerrors.Errorf("Theia endpoint:%s did not disappear in time", theiaName)
-	}
-
 	return
 }
 
