@@ -392,6 +392,10 @@ spec:
             matchLabels:
               app: gitpod
               component: ws-manager
+        - podSelector:
+            matchLabels:
+              app: gitpod
+              component: workspace
       ports:
         - port: 8080
           protocol: TCP
@@ -5686,6 +5690,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: POD_IP_ADDRESS
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -5775,10 +5783,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: POD_IP_ADDRESS
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
         image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
         imagePullPolicy: IfNotPresent
         lifecycle:
