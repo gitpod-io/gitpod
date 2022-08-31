@@ -116,7 +116,7 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 			return
 		}
 		// TODO (aledbf): refactor to remove the need of manual chown
-		args := []string{"-R", "-L", "gitpod", ws.Location}
+		args := []string{"-R", "-L", "133332", ws.Location}
 		cmd := exec.Command("chown", args...)
 		res, cerr := cmd.CombinedOutput()
 		if cerr != nil && !process.IsNotChildProcess(cerr) {
