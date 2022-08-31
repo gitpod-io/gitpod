@@ -5,7 +5,6 @@
 package contentservice
 
 import (
-	"database/sql"
 	"encoding/json"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
@@ -20,24 +19,6 @@ func TestUsageReport_ToJSON(t *testing.T) {
 		GenerationTime: time.Now().UTC(),
 		From:           time.Now().UTC(),
 		To:             time.Now().UTC(),
-		RawSessions: []db.WorkspaceInstanceForUsage{
-			{
-				ID:          uuid.New(),
-				WorkspaceID: dbtest.GenerateWorkspaceID(),
-				OwnerID:     uuid.New(),
-				ProjectID: sql.NullString{
-					String: "project-id",
-					Valid:  true,
-				},
-				WorkspaceClass:     "workspace-class",
-				Type:               "regular",
-				UsageAttributionID: db.NewTeamAttributionID(uuid.New().String()),
-				CreationTime:       db.NewVarcharTime(time.Now()),
-				StartedTime:        db.NewVarcharTime(time.Now()),
-				StoppingTime:       db.NewVarcharTime(time.Now()),
-				StoppedTime:        db.NewVarcharTime(time.Now()),
-			},
-		},
 		InvalidSessions: []InvalidSession{
 			{
 				Reason:  "some-reason",

@@ -55,7 +55,6 @@ func (g *ReportGenerator) GenerateUsageReport(ctx context.Context, from, to time
 	if err != nil {
 		return report, fmt.Errorf("failed to list instances from db: %w", err)
 	}
-	report.RawSessions = instances
 
 	valid, invalid := validateInstances(instances)
 	report.InvalidSessions = invalid

@@ -433,7 +433,6 @@ func TestReportGenerator_GenerateUsageReport(t *testing.T) {
 	require.Equal(t, nowFunc(), report.GenerationTime)
 	require.Equal(t, startOfMay, report.From)
 	// require.Equal(t, startOfJune, report.To) TODO(gpl) This is not true anymore - does it really make sense to test for it?
-	require.Len(t, report.RawSessions, 3)
 	require.Len(t, report.InvalidSessions, 1)
 	require.Len(t, report.UsageRecords, 2)
 }
