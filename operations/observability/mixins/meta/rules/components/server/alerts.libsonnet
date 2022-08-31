@@ -148,6 +148,21 @@
               description: 'WebApp Services execcisve CPU USAGE',
             },
           },
+          {
+            alert: 'WebAppServicesCrashlooping',
+            expr: 'sum(rate(container_cpu_usage_seconds_total{container!="POD", node=~".*", pod=~"(content-service|dashboard|db|db-sync|messagebus|payment-endpoint|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (pod, node) > 0.80',
+            'for': '15m',
+            labels: {
+              // sent to the team internal channel until we fine tuned it
+              severity: 'warning',
+              team: 'webapp'
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesCrashlooping.md',
+              summary: 'Pod is crash looping.',
+              description: 'Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 5 minutes',
+            },
+          },
         ],
       },
     ],
