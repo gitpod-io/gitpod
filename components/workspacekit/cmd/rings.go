@@ -112,8 +112,8 @@ var ring0Cmd = &cobra.Command{
 
 		cmd := exec.Command("/proc/self/exe", "ring1")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig:  syscall.SIGKILL,
-			Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | unix.CLONE_NEWCGROUP,
+			Pdeathsig: syscall.SIGKILL,
+			//Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | unix.CLONE_NEWCGROUP,
 		}
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -410,15 +410,15 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 		defer skt.Close()
-
-		var (
-			cloneFlags uintptr = syscall.CLONE_NEWNS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNET
-		)
-
+		/*
+			var (
+				cloneFlags uintptr = syscall.CLONE_NEWNS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNET
+			)
+		*/
 		cmd := exec.Command("/proc/self/exe", "ring2", socketFN)
 		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig:  syscall.SIGKILL,
-			Cloneflags: cloneFlags,
+			Pdeathsig: syscall.SIGKILL,
+			//Cloneflags: cloneFlags,
 		}
 		cmd.Dir = ring2Root
 		cmd.Stdin = os.Stdin
