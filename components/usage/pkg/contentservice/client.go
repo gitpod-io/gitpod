@@ -103,7 +103,7 @@ func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (Usag
 	}
 	defer decompressor.Close()
 
-	decoder := json.NewDecoder(body)
+	decoder := json.NewDecoder(decompressor)
 	var report UsageReport
 	if err := decoder.Decode(&report); err != nil {
 		return UsageReport{}, fmt.Errorf("failed to deserialize report: %w", err)
