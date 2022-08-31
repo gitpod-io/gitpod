@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/api"
@@ -29,7 +30,12 @@ func New(service api.UsageReportServiceClient) *Client {
 	return &Client{service: service}
 }
 
-func (c *Client) UploadUsageReport(ctx context.Context, filename string, report UsageReport) error {
+func (c *Client) UploadUsageReport(ctx context.Context, filename string, report UsageReport) (err error) {
+	start := time.Now()
+	defer func() {
+		observeReportUploadDuration(time.Since(start), err)
+	}()
+
 	uploadURLResp, err := c.service.UploadURL(ctx, &api.UsageReportUploadURLRequest{Name: filename})
 	if err != nil {
 		return fmt.Errorf("failed to get upload URL from usage report service: %w", err)
@@ -67,7 +73,12 @@ func (c *Client) UploadUsageReport(ctx context.Context, filename string, report 
 	return nil
 }
 
-func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (UsageReport, error) {
+func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (report UsageReport, err error) {
+	start := time.Now()
+	defer func() {
+		observeReportDownloadDuration(time.Since(start), err)
+	}()
+
 	downloadURlResp, err := c.service.DownloadURL(ctx, &api.UsageReportDownloadURLRequest{
 		Name: filename,
 	})
@@ -104,7 +115,6 @@ func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (Usag
 	defer decompressor.Close()
 
 	decoder := json.NewDecoder(decompressor)
-	var report UsageReport
 	if err := decoder.Decode(&report); err != nil {
 		return UsageReport{}, fmt.Errorf("failed to deserialize report: %w", err)
 	}

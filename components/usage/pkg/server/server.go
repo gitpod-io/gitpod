@@ -130,6 +130,10 @@ func Start(cfg Config) error {
 		log.Info("No controller schedule specified, controller will be disabled.")
 	}
 
+	err = contentservice.RegisterMetrics(srv.MetricsRegistry())
+	if err != nil {
+		return fmt.Errorf("failed to register content service metrics: %w", err)
+	}
 	var contentService contentservice.Interface = &contentservice.NoOpClient{}
 	if cfg.ContentServiceAddress != "" {
 		contentServiceConn, err := grpc.Dial(cfg.ContentServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
