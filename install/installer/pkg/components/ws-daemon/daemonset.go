@@ -294,6 +294,7 @@ fi
 				},
 				Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 					common.NodeNameEnv(ctx),
+					common.PodIPAddressEnv(ctx),
 				)),
 				ImagePullPolicy: corev1.PullIfNotPresent,
 				Lifecycle: &corev1.Lifecycle{

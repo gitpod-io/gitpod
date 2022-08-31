@@ -613,3 +613,12 @@ func NodeNameEnv(context *RenderContext) []corev1.EnvVar {
 		},
 	}}
 }
+
+func PodIPAddressEnv(context *RenderContext) []corev1.EnvVar {
+	return []corev1.EnvVar{{
+		Name: "POD_IP_ADDRESS",
+		ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{FieldPath: "status.podIP"},
+		},
+	}}
+}

@@ -161,7 +161,9 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 		// Let's clean up after them.
 		_ = os.Remove(socketFN)
 	}
-	sckt, err := net.Listen("tcp", ":0")
+
+	ipAddr := os.Getenv("POD_IP_ADDRESS")
+	sckt, err := net.Listen("tcp", fmt.Sprintf("%v:0", ipAddr))
 	if err != nil {
 		return xerrors.Errorf("cannot create IWS socket: %w", err)
 	}
