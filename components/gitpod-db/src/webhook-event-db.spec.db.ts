@@ -52,6 +52,22 @@ export class WebhookEventDBSpec {
         expect(updated.type, "type should not be updated").to.equal("push");
         expect(updated.rawEvent, "rawEvent should not be updated").to.equal("payload as string");
     }
+
+    @test public async testDeleteOldEvents() {
+        const cloneUrl = "http://gitlab.local/project/repo";
+        await this.db.createEvent({
+            rawEvent: "payload as string",
+            status: "received",
+            type: "push",
+            cloneUrl,
+        });
+
+        await this.db.deleteOldEvents(0, 1);
+
+        const event = (await this.db.findByCloneUrl(cloneUrl))[0];
+        expect(event, "should be found").to.be.not.undefined;
+        expect((event as DBWebhookEvent).deleted, "should be marked as deleted").to.be.true;
+    }
 }
 
 module.exports = WebhookEventDBSpec;
