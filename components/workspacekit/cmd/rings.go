@@ -82,8 +82,8 @@ var ring0Cmd = &cobra.Command{
 		// test
 		log.Info("ring0: running chown")
 		chown_args := []string{"133332", "/workspace"}
-		cmd := exec.Command("chown", chown_args...)
-		res, cerr := cmd.CombinedOutput()
+		chown_cmd := exec.Command("chown", chown_args...)
+		res, cerr := chown_cmd.CombinedOutput()
 		if cerr != nil && !process.IsNotChildProcess(cerr) {
 			log.WithError(cerr).WithField("res", string(res)).Error("cannot chown workspace")
 		}
