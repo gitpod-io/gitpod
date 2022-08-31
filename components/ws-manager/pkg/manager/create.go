@@ -40,7 +40,7 @@ import (
 // Protobuf structures often require pointer to boolean values (as that's Go's best means of expression optionallity).
 var (
 	boolFalse = false
-	boolTrue  = true
+	//boolTrue  = true
 )
 
 const (
