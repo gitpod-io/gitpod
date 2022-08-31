@@ -8,6 +8,7 @@
                 "app": "gitpod",
                 "component": "workspace",
                 "gitpod.io/networkpolicy": "default",
+                "gitpod.io/pvcFeature": "true",
                 "gitpod.io/workspaceClass": "default",
                 "gpwsman": "true",
                 "headless": "false",
@@ -39,9 +40,8 @@
             "volumes": [
                 {
                     "name": "vol-this-workspace",
-                    "hostPath": {
-                        "path": "/tmp/workspaces/test",
-                        "type": "DirectoryOrCreate"
+                    "persistentVolumeClaim": {
+                        "claimName": "ws-test"
                     }
                 },
                 {
@@ -57,8 +57,7 @@
                     "name": "workspace",
                     "image": "registry-facade:8080/remote/test",
                     "command": [
-                        "/.supervisor/workspacekit",
-                        "ring0"
+                        "/.supervisor/prepare-workspace.sh"
                     ],
                     "ports": [
                         {
@@ -193,14 +192,15 @@
                     },
                     "volumeMounts": [
                         {
-                            "name": "vol-this-workspace",
-                            "mountPath": "/workspace",
-                            "mountPropagation": "HostToContainer"
-                        },
-                        {
                             "name": "daemon-mount",
                             "mountPath": "/.workspace",
                             "mountPropagation": "HostToContainer"
+                        }
+                    ],
+                    "volumeDevices": [
+                        {
+                            "name": "vol-this-workspace",
+                            "devicePath": "/dev/workspace"
                         }
                     ],
                     "readinessProbe": {
@@ -216,46 +216,12 @@
                         "failureThreshold": 600
                     },
                     "terminationMessagePolicy": "File",
-                    "imagePullPolicy": "IfNotPresent",
-                    "securityContext": {
-                        "capabilities": {
-                            "add": [
-                                "AUDIT_WRITE",
-                                "FSETID",
-                                "KILL",
-                                "NET_BIND_SERVICE",
-                                "SYS_PTRACE"
-                            ],
-                            "drop": [
-                                "SETPCAP",
-                                "CHOWN",
-                                "NET_RAW",
-                                "DAC_OVERRIDE",
-                                "FOWNER",
-                                "SYS_CHROOT",
-                                "SETFCAP",
-                                "SETUID",
-                                "SETGID"
-                            ]
-                        },
-                        "privileged": false,
-                        "runAsUser": 33333,
-                        "runAsGroup": 33333,
-                        "runAsNonRoot": true,
-                        "readOnlyRootFilesystem": false,
-                        "allowPrivilegeEscalation": true
-                    }
+                    "imagePullPolicy": "IfNotPresent"
                 }
             ],
             "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
-            "securityContext": {
-                "seccompProfile": {
-                    "type": "Localhost",
-                    "localhostProfile": "workspace-default"
-                }
-            },
             "hostname": "foobar",
             "affinity": {
                 "nodeAffinity": {

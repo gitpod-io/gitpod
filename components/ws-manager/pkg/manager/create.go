@@ -755,10 +755,6 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
-				Name:      workspaceVolumeName,
-				MountPath: "/dev/workspace",
-			},
-			{
 				MountPath:        "/.workspace",
 				Name:             "daemon-mount",
 				MountPropagation: &mountPropagation,

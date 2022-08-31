@@ -27,7 +27,8 @@
                     "storage": "30Gi"
                 }
             },
-            "storageClassName": "test-storage"
+            "storageClassName": "test-storage",
+            "volumeMode": "Block"
         },
         "status": {}
     }

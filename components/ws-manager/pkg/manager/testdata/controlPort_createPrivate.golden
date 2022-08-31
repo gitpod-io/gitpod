@@ -1,9 +1,3 @@
 {
-    "response": {},
-    "postChangeStatus": [
-        {
-            "port": 3000,
-            "url": "3000-foobar-servicePrefix-gitpod.io"
-        }
-    ]
+    "error": "cannot find workspace: pod for workspace foobar not found"
 }

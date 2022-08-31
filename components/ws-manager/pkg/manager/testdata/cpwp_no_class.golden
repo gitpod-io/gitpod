@@ -26,7 +26,8 @@
                 "requests": {
                     "storage": "0"
                 }
-            }
+            },
+            "volumeMode": "Block"
         },
         "status": {}
     }
