@@ -104,7 +104,7 @@
           {
             alert: 'MessagebusNotRunning',
             expr: 'up{job="messagebus"} < 1',
-            'for': '30s',
+            'for': '2m',
             labels: {
               // sent to the team internal channel until we fine tuned it
               severity: 'warning',
@@ -112,7 +112,7 @@
             },
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/MessagebusNotRunning.md',
-              summary: 'The messagebus pod is not running. Investigation required.',
+              summary: 'The messagebus pod is not running. Workspace information is not being correctly propagated into web app clusters. Investigation required.',
               description: 'Messagebus pod not running',
             },
           },
@@ -145,7 +145,7 @@
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesHighCPUUsage.md',
               summary: 'WebApp services consume excessive amounts of CPU. Investigation required.',
-              description: 'WebApp Services execcisve CPU USAGE',
+              description: 'WebApp Services execcisve CPU usage',
             },
           },
           {
