@@ -38,6 +38,9 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 							{
 								PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(common.WSManagerComponent)},
 							},
+							{
+								PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels("workspace")},
+							},
 						},
 					},
 					common.PrometheusIngressRule,

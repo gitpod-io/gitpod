@@ -205,6 +205,7 @@ fi
 					common.DefaultEnv(&cfg),
 					common.WorkspaceTracingEnv(ctx),
 					common.NodeNameEnv(ctx),
+					common.PodIPAddressEnv(ctx),
 				)),
 				Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{Requests: corev1.ResourceList{
 					"cpu":    resource.MustParse("500m"),
@@ -294,7 +295,6 @@ fi
 				},
 				Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 					common.NodeNameEnv(ctx),
-					common.PodIPAddressEnv(ctx),
 				)),
 				ImagePullPolicy: corev1.PullIfNotPresent,
 				Lifecycle: &corev1.Lifecycle{
