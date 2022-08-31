@@ -104,7 +104,7 @@ const (
 	// workspaceVolume is the name of the workspace volume
 	workspaceVolumeName = "vol-this-workspace"
 	// workspaceDir is the path within all containers where workspaceVolume is mounted to
-	workspaceDir = "/workspace"
+	//workspaceDir = "/workspace"
 	// MarkerLabel is the label by which we identify pods which belong to ws-manager
 	markerLabel = "gpwsman"
 	// headlessLabel marks a workspace as headless
@@ -252,11 +252,13 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	span.LogKV("event", "pod created", "name", pod.Name, "namespace", pod.Namespace)
 
 	var (
-		createPVC          bool
+		//createPVC          bool
 		pvc                *corev1.PersistentVolumeClaim
 		startTime, endTime time.Time // the start time and end time of PVC restoring from VolumeSnapshot
 	)
-	_, createPVC = pod.Labels[pvcWorkspaceFeatureLabel]
+	//_, createPVC = pod.Labels[pvcWorkspaceFeatureLabel]
+
+	const createPVC = true
 
 	if createPVC {
 		if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {

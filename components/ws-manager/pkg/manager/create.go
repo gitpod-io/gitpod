@@ -26,7 +26,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -42,7 +41,7 @@ import (
 // Protobuf structures often require pointer to boolean values (as that's Go's best means of expression optionallity).
 var (
 	boolFalse = false
-	boolTrue  = true
+	//boolTrue  = true
 )
 
 const (
@@ -264,6 +263,8 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 		PVCConfig = startContext.Class.PVC
 	}
 
+	blockVolume := corev1.PersistentVolumeBlock
+
 	PVC := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
@@ -277,6 +278,7 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 					corev1.ResourceName(corev1.ResourceStorage): PVCConfig.Size,
 				},
 			},
+			VolumeMode: &blockVolume,
 		},
 	}
 	if PVCConfig.StorageClass != "" {
@@ -309,12 +311,17 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 
 	// Beware: this allows setuid binaries in the workspace - supervisor needs to set no_new_privs now.
 	// However: the whole user workload now runs in a user namespace, which makes this acceptable.
-	workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
-
-	workspaceVolume, err := m.createWorkspaceVolumes(startContext)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create workspace volumes: %w", err)
-	}
+	//workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
+	workspaceContainer.VolumeDevices = append(workspaceContainer.VolumeDevices, corev1.VolumeDevice{
+		Name:       workspaceVolumeName,
+		DevicePath: "/dev/workspace",
+	})
+	/*
+		workspaceVolume, err := m.createWorkspaceVolumes(startContext)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create workspace volumes: %w", err)
+		}
+	*/
 
 	labels := make(map[string]string)
 	labels["gitpod.io/networkpolicy"] = "default"
@@ -413,9 +420,17 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		hostPathOrCreate = corev1.HostPathDirectoryOrCreate
 		daemonVolumeName = "daemon-mount"
 	)
+
 	volumes := []corev1.Volume{
-		workspaceVolume,
+		//workspaceVolume,
 		{
+			Name: workspaceVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: podName(req),
+				},
+			},
+		}, {
 			Name: daemonVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				HostPath: &corev1.HostPathVolumeSource{
@@ -516,14 +531,17 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
 			Affinity:                     affinity,
-			SecurityContext: &corev1.PodSecurityContext{
-				// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
-				// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
-				SeccompProfile: &corev1.SeccompProfile{
-					Type:             corev1.SeccompProfileTypeLocalhost,
-					LocalhostProfile: pointer.String(m.Config.SeccompProfile),
-				},
-			},
+			/*
+				SecurityContext:              &corev1.PodSecurityContext{
+
+						// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
+						// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
+						SeccompProfile: &corev1.SeccompProfile{
+							Type:             corev1.SeccompProfileTypeLocalhost,
+							LocalhostProfile: pointer.String(m.Config.SeccompProfile),
+						},
+
+				},*/
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
@@ -569,28 +587,28 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			pod.Labels[fullWorkspaceBackupLabel] = util.BooleanTrueString
 
 		case api.WorkspaceFeatureFlag_NOOP:
+			/*
+				case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
+					pod.Labels[pvcWorkspaceFeatureLabel] = util.BooleanTrueString
 
-		case api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM:
-			pod.Labels[pvcWorkspaceFeatureLabel] = util.BooleanTrueString
+					// update volume to use persistent volume claim, and name of it is the same as pod's name
+					pvcName := pod.ObjectMeta.Name
+					pod.Spec.Volumes[0].VolumeSource = corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: pvcName,
+						},
+					}
 
-			// update volume to use persistent volume claim, and name of it is the same as pod's name
-			pvcName := pod.ObjectMeta.Name
-			pod.Spec.Volumes[0].VolumeSource = corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pvcName,
-				},
-			}
+					// SubPath so that lost+found is not visible
+					pod.Spec.Containers[0].VolumeMounts[0].SubPath = "workspace"
+					// not needed, since it is using dedicated disk
+					pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
 
-			// SubPath so that lost+found is not visible
-			pod.Spec.Containers[0].VolumeMounts[0].SubPath = "workspace"
-			// not needed, since it is using dedicated disk
-			pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
-
-			// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
-			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
-			gitpodGUID := int64(133332)
-			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
-
+					// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
+					// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
+					//gitpodGUID := int64(133332)
+					//pod.Spec.SecurityContext.FSGroup = &gitpodGUID
+			*/
 		case api.WorkspaceFeatureFlag_PROTECTED_SECRETS:
 			for _, c := range pod.Spec.Containers {
 				if c.Name != "workspace" {
@@ -631,6 +649,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			log.Warnf("Unknown feature flag %v", feature)
 		}
 	}
+
+	pod.Labels[pvcWorkspaceFeatureLabel] = util.BooleanTrueString
 
 	if req.Type == api.WorkspaceType_IMAGEBUILD {
 		pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
@@ -689,14 +709,16 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace env: %w", err)
 	}
-	sec, err := m.createDefaultSecurityContext()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create Theia env: %w", err)
-	}
+	/*
+		sec, err := m.createDefaultSecurityContext()
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create Theia env: %w", err)
+		}
+	*/
 	mountPropagation := corev1.MountPropagationHostToContainer
 
 	var (
-		command        = []string{"/.supervisor/workspacekit", "ring0"}
+		command        = []string{"/.supervisor/prepare-workspace.sh"}
 		readinessProbe = &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
@@ -719,9 +741,9 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
 
 	return &corev1.Container{
-		Name:            "workspace",
-		Image:           image,
-		SecurityContext: sec,
+		Name:  "workspace",
+		Image: image,
+		//SecurityContext: sec,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports: []corev1.ContainerPort{
 			{ContainerPort: startContext.IDEPort},
@@ -733,10 +755,8 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
-				Name:             workspaceVolumeName,
-				MountPath:        workspaceDir,
-				ReadOnly:         false,
-				MountPropagation: &mountPropagation,
+				Name:      workspaceVolumeName,
+				MountPath: "/dev/workspace",
 			},
 			{
 				MountPath:        "/.workspace",
@@ -870,6 +890,7 @@ func isProtectedEnvVar(name string) bool {
 	}
 }
 
+/*
 func (m *Manager) createWorkspaceVolumes(startContext *startWorkspaceContext) (workspace corev1.Volume, err error) {
 	// silly protobuf structure design - this needs to be a reference to a string,
 	// so we have to assign it to a variable first to take the address
@@ -888,7 +909,9 @@ func (m *Manager) createWorkspaceVolumes(startContext *startWorkspaceContext) (w
 	err = nil
 	return
 }
+*/
 
+/*
 func (m *Manager) createDefaultSecurityContext() (*corev1.SecurityContext, error) {
 	gitpodGUID := int64(33333)
 
@@ -923,6 +946,7 @@ func (m *Manager) createDefaultSecurityContext() (*corev1.SecurityContext, error
 
 	return res, nil
 }
+*/
 
 func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWorkspaceRequest) (res *startWorkspaceContext, err error) {
 	span, _ := tracing.FromContext(ctx, "newStartWorkspaceContext")

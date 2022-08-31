@@ -801,7 +801,8 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 
 	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupLabel]
-	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureLabel]
+	//_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureLabel]
+	const pvcFeatureEnabled = true
 
 	span.SetTag("fullWorkspaceBackup", fullWorkspaceBackup)
 	span.SetTag("pvcFeatureEnabled", pvcFeatureEnabled)
@@ -1064,7 +1065,8 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		volumeSnapshotTime time.Time
 	)
 	if wso.Pod != nil {
-		_, pvcFeatureEnabled = wso.Pod.Labels[pvcWorkspaceFeatureLabel]
+		//_, pvcFeatureEnabled = wso.Pod.Labels[pvcWorkspaceFeatureLabel]
+		pvcFeatureEnabled = true
 
 		if _, ok := wso.Pod.Labels[workspaceClassLabel]; ok {
 			wsClassName := wso.Pod.Labels[workspaceClassLabel]
