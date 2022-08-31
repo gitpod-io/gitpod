@@ -26,7 +26,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -307,7 +306,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 
 	// Beware: this allows setuid binaries in the workspace - supervisor needs to set no_new_privs now.
 	// However: the whole user workload now runs in a user namespace, which makes this acceptable.
-	workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
+	//workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
 
 	workspaceVolume, err := m.createWorkspaceVolumes(startContext)
 	if err != nil {
@@ -511,14 +510,16 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
 			Affinity:                     affinity,
-			SecurityContext: &corev1.PodSecurityContext{
-				// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
-				// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
-				SeccompProfile: &corev1.SeccompProfile{
-					Type:             corev1.SeccompProfileTypeLocalhost,
-					LocalhostProfile: pointer.String(m.Config.SeccompProfile),
+			/*
+				SecurityContext: &corev1.PodSecurityContext{
+					// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
+					// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
+					SeccompProfile: &corev1.SeccompProfile{
+						Type:             corev1.SeccompProfileTypeLocalhost,
+						LocalhostProfile: pointer.String(m.Config.SeccompProfile),
+					},
 				},
-			},
+			*/
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
@@ -684,10 +685,12 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace env: %w", err)
 	}
-	sec, err := m.createDefaultSecurityContext()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create Theia env: %w", err)
-	}
+	/*
+		sec, err := m.createDefaultSecurityContext()
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create Theia env: %w", err)
+		}
+	*/
 	mountPropagation := corev1.MountPropagationHostToContainer
 
 	var (
@@ -714,9 +717,9 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
 
 	return &corev1.Container{
-		Name:            "workspace",
-		Image:           image,
-		SecurityContext: sec,
+		Name:  "workspace",
+		Image: image,
+		//SecurityContext: sec,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports: []corev1.ContainerPort{
 			{ContainerPort: startContext.IDEPort},
