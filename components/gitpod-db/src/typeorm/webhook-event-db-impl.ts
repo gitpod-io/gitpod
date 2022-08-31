@@ -58,10 +58,10 @@ export class WebhookEventDBImpl implements WebhookEventDB {
         d.setDate(d.getDate() - ageInDays);
         const expirationDate = d.toISOString();
         const query = repo
-            .createQueryBuilder("event")
+            .createQueryBuilder()
             .update()
             .set({ deleted: true })
-            .where("event.creationTime < :expirationDate", { expirationDate });
+            .where("creationTime <= :expirationDate", { expirationDate });
         if (typeof limit === "number") {
             query.limit(limit);
         }
