@@ -9,6 +9,9 @@ import Stripe from "stripe";
 import { Team, User } from "@gitpod/gitpod-protocol";
 import { Config } from "../../../src/config";
 
+const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
+const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
+
 @injectable()
 export class StripeService {
     @inject(Config) protected readonly config: Config;
@@ -61,6 +64,14 @@ export class StripeService {
                 userId: user.id,
             },
         });
+        // Wait for the customer to show up in Stripe search results before proceeding
+        let attempts = 0;
+        while (!(await this.findCustomerByUserId(user.id))) {
+            await new Promise((resolve) => setTimeout(resolve, POLL_CREATED_CUSTOMER_INTERVAL_MS));
+            if (++attempts > POLL_CREATED_CUSTOMER_MAX_ATTEMPTS) {
+                throw new Error(`Could not confirm Stripe customer creation for user '${user.id}'`);
+            }
+        }
         return customer;
     }
 
@@ -77,6 +88,14 @@ export class StripeService {
                 teamId: team.id,
             },
         });
+        // Wait for the customer to show up in Stripe search results before proceeding
+        let attempts = 0;
+        while (!(await this.findCustomerByTeamId(team.id))) {
+            await new Promise((resolve) => setTimeout(resolve, POLL_CREATED_CUSTOMER_INTERVAL_MS));
+            if (++attempts > POLL_CREATED_CUSTOMER_MAX_ATTEMPTS) {
+                throw new Error(`Could not confirm Stripe customer creation for team '${team.id}'`);
+            }
+        }
         return customer;
     }
 
