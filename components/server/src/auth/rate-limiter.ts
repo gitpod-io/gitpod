@@ -150,6 +150,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         adminGetUser: { group: "default", points: 1 },
         adminBlockUser: { group: "default", points: 1 },
         adminDeleteUser: { group: "default", points: 1 },
+        adminVerifyUser: { group: "default", points: 1 },
         adminModifyRoleOrPermission: { group: "default", points: 1 },
         adminModifyPermanentWorkspaceFeatureFlag: { group: "default", points: 1 },
         adminGetTeams: { group: "default", points: 1 },

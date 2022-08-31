@@ -644,6 +644,23 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.censorUser(targetUser);
     }
 
+    async adminVerifyUser(ctx: TraceContext, userId: string): Promise<User> {
+        await this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
+        try {
+            const user = await this.userDB.findUserById(userId);
+            if (!user) {
+                throw new ResponseError(ErrorCodes.NOT_FOUND, `No user with id ${userId} found.`);
+            }
+            this.verificationService.markVerified(user);
+            await this.userDB.updateUserPartial(user);
+            return user;
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
     async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
         traceAPIParams(ctx, { userId });
 
