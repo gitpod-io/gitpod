@@ -105,12 +105,10 @@ function TeamUsage() {
     };
 
     const getMinutes = (usage: ExtendedBillableSession) => {
-        let end;
         if (!usage.endTime) {
-            end = new Date(Date.now()).getTime();
-        } else {
-            end = new Date(usage.endTime).getTime();
+            return "running";
         }
+        const end = new Date(usage.endTime).getTime();
         const start = new Date(usage.startTime).getTime();
         const lengthOfUsage = Math.floor(end - start);
         const inMinutes = (lengthOfUsage / (1000 * 60)).toFixed(1);
