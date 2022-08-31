@@ -221,35 +221,37 @@ var ring1Cmd = &cobra.Command{
 			}
 		*/
 
-		if !ring1Opts.MappingEstablished {
-			/*
-				client, err := connectToInWorkspaceDaemonService(ctx)
-				if err != nil {
-					log.WithError(err).Error("cannot connect to daemon from ring1 when mappings not established")
-					return
-				}
-				defer client.Close()
+		/*
+			if !ring1Opts.MappingEstablished {
+				/*
+					client, err := connectToInWorkspaceDaemonService(ctx)
+					if err != nil {
+						log.WithError(err).Error("cannot connect to daemon from ring1 when mappings not established")
+						return
+					}
+					defer client.Close()
 
-				_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: false, Mapping: mapping})
+					_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: false, Mapping: mapping})
+					if err != nil {
+						log.WithError(err).Error("cannot establish UID mapping")
+						return
+					}
+					_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: true, Mapping: mapping})
+					if err != nil {
+						log.WithError(err).Error("cannot establish GID mapping")
+						return
+					}
+
+
+				err := syscall.Exec("/proc/self/exe", append(os.Args, "--mapping-established"), os.Environ())
 				if err != nil {
-					log.WithError(err).Error("cannot establish UID mapping")
-					return
-				}
-				_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: true, Mapping: mapping})
-				if err != nil {
-					log.WithError(err).Error("cannot establish GID mapping")
+					log.WithError(err).Error("cannot exec /proc/self/exe")
 					return
 				}
 
-			*/
-			err := syscall.Exec("/proc/self/exe", append(os.Args, "--mapping-established"), os.Environ())
-			if err != nil {
-				log.WithError(err).Error("cannot exec /proc/self/exe")
 				return
 			}
-
-			return
-		}
+		*/
 
 		// The parent calls child with Pdeathsig, but it is cleared when the UID/GID mapping is written.
 		// (see also https://github.com/rootless-containers/rootlesskit/issues/65#issuecomment-492343646).
