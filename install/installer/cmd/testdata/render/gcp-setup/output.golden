@@ -327,6 +327,12 @@ spec:
           podSelector:
             matchLabels:
               k8s-app: coredns
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app: gitpod
+              component: ws-daemon
   ingress:
     - from:
         - podSelector:
