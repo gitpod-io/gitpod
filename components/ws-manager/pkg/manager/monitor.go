@@ -1131,6 +1131,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      pvcVolumeSnapshotName,
 						Namespace: m.manager.Config.Namespace,
+						Labels:    wso.Pod.Labels,
 					},
 					Spec: volumesnapshotv1.VolumeSnapshotSpec{
 						Source: volumesnapshotv1.VolumeSnapshotSource{
