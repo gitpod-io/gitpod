@@ -37,7 +37,6 @@ import (
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/process"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/lift"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/seccomp"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
@@ -78,16 +77,6 @@ var ring0Cmd = &cobra.Command{
 		defer handleExit(&exitCode)
 
 		defer log.Info("ring0 stopped")
-
-		// test
-		log.Info("ring0: running chown")
-		chown_args := []string{"133332", "/workspace"}
-		chown_cmd := exec.Command("chown", chown_args...)
-		res, cerr := chown_cmd.CombinedOutput()
-		if cerr != nil && !process.IsNotChildProcess(cerr) {
-			log.WithError(cerr).WithField("res", string(res)).Error("cannot chown workspace")
-		}
-		log.Info("ring0: chown down")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 		defer cancel()
