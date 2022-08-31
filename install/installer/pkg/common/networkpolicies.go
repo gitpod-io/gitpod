@@ -78,3 +78,19 @@ func AllowWSManagerEgressRule() v1.NetworkPolicyEgressRule {
 
 	return dnsEgressRule
 }
+
+func AllowWSDaemonEgressRule() v1.NetworkPolicyEgressRule {
+	egressRule := v1.NetworkPolicyEgressRule{
+		To: []v1.NetworkPolicyPeer{{
+			PodSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app":       AppName,
+					"component": WSDaemonComponent,
+				},
+			},
+			NamespaceSelector: &metav1.LabelSelector{},
+		}},
+	}
+
+	return egressRule
+}

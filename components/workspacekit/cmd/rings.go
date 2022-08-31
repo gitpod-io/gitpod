@@ -1026,7 +1026,13 @@ func connectToInWorkspaceDaemonService(ctx context.Context) (*inWorkspaceService
 		}
 	}
 
-	conn, err := grpc.DialContext(ctx, "unix://"+socketFN, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	data, err := os.ReadFile(socketFN)
+	if err != nil {
+		return nil, err
+	}
+
+	addr := strings.TrimSpace(string(data))
+	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}

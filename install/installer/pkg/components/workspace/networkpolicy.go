@@ -102,6 +102,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				common.AllowKubeDnsEgressRule(),
+				common.AllowWSDaemonEgressRule(),
 			},
 		},
 	}}, nil

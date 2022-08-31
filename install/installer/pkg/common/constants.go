@@ -42,6 +42,7 @@ const (
 	SystemNodeCritical          = "system-node-critical"
 	PublicApiComponent          = "public-api-server"
 	WSManagerComponent          = "ws-manager"
+	WSDaemonComponent           = "ws-daemon"
 	WSManagerBridgeComponent    = "ws-manager-bridge"
 	WSProxyComponent            = "ws-proxy"
 	ImageBuilderComponent       = "image-builder-mk3"
