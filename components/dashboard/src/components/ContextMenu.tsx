@@ -35,7 +35,7 @@ function ContextMenu(props: ContextMenuProps) {
         setExpanded(!expanded);
     };
 
-    const handler = (evt: KeyboardEvent) => {
+    const keydownHandler = (evt: KeyboardEvent) => {
         if (evt.key === "Escape") {
             setExpanded(false);
         }
@@ -55,11 +55,11 @@ function ContextMenu(props: ContextMenuProps) {
     };
 
     useEffect(() => {
-        window.addEventListener("keydown", handler);
+        window.addEventListener("keydown", keydownHandler);
         window.addEventListener("click", clickHandler);
         // Remove event listeners on cleanup
         return () => {
-            window.removeEventListener("keydown", handler);
+            window.removeEventListener("keydown", keydownHandler);
             window.removeEventListener("click", clickHandler);
         };
     }, []); // Empty array ensures that effect is only run on mount and unmount
