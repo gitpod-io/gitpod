@@ -13,7 +13,7 @@ import (
 
 func NewVarcharTime(t time.Time) VarcharTime {
 	return VarcharTime{
-		t:     t,
+		t:     t.UTC(),
 		valid: true,
 	}
 }
@@ -92,12 +92,35 @@ func (n VarcharTime) String() string {
 	return ""
 }
 
-func (u VarcharTime) MarshalJSON() ([]byte, error) {
-	if !u.IsSet() {
-		return []byte(""), nil
+var null = "null"
+
+func (n VarcharTime) MarshalJSON() ([]byte, error) {
+	if !n.IsSet() {
+		return []byte(null), nil
 	}
 
-	return u.Time().MarshalJSON()
+	return n.Time().UTC().MarshalJSON()
+}
+
+func (n *VarcharTime) UnmarshalJSON(data []byte) error {
+	if string(data) == null {
+		n.valid = false
+		return nil
+	}
+
+	t := time.Time{}
+	if err := t.UnmarshalJSON(data); err != nil {
+		return fmt.Errorf("failed to unmarshal VarcharTime %s: %w", string(data), err)
+	}
+
+	if t.IsZero() {
+		return nil
+	}
+
+	n.valid = true
+	n.t = t.UTC()
+
+	return nil
 }
 
 const ISO8601Format = "2006-01-02T15:04:05.000Z"
