@@ -192,12 +192,14 @@ func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 	out.Spec.Initializer = &csapi.WorkspaceInitializer{
 		Spec: &csapi.WorkspaceInitializer_Git{
 			Git: &csapi.GitInitializer{
-				CheckoutLocation: "",
+				CheckoutLocation: "template-python-flask",
 				CloneTaget:       repo.CloneTarget,
 				RemoteUri:        repo.CloneURL,
 				TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
 				Config: &csapi.GitConfig{
-					Authentication: csapi.GitAuthMethod_NO_AUTH,
+					Authentication: csapi.GitAuthMethod_BASIC_AUTH,
+					AuthUser:       "oauth2",
+					AuthPassword:   "<yourPassword>",
 				},
 			},
 		},
