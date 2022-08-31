@@ -590,6 +590,20 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			gitpodGUID := int64(133332)
 			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
 
+			pod.Spec.InitContainers = append(pod.Spec.InitContainers, corev1.Container{
+				Name:            "init-pvc",
+				Image:           "alpine:3",
+				ImagePullPolicy: corev1.PullIfNotPresent,
+				Command:         []string{"chown", "133332:133332", "/workspace"},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      workspaceVolumeName,
+						MountPath: workspaceDir,
+						SubPath:   "workspace",
+					},
+				},
+			})
+
 		case api.WorkspaceFeatureFlag_PROTECTED_SECRETS:
 			for _, c := range pod.Spec.Containers {
 				if c.Name != "workspace" {
