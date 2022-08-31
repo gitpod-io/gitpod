@@ -30,19 +30,7 @@ metadata:
   namespace: default
 spec:
   ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              component: proxy
-        - podSelector:
-            matchLabels:
-              component: ws-proxy
-        - podSelector:
-            matchLabels:
-              component: ide-proxy
-      ports:
-        - port: 32224
-          protocol: TCP
+    - {}
   podSelector:
     matchLabels:
       app: gitpod
