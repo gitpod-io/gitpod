@@ -131,7 +131,7 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		args := []string{"-R", "-L", "gitpod", ws.Location}
 		cmd := exec.Command("chown", args...)
 		res, cerr := cmd.CombinedOutput()
-		log.WithField("location", ws.Location).Info("GitInitializer::Chown result: %s", string(res))
+		log.WithField("location", ws.Location).Infof("GitInitializer::Chown result: %s", string(res))
 		if cerr != nil && !process.IsNotChildProcess(cerr) {
 			err = git.OpFailedError{
 				Args:       args,
