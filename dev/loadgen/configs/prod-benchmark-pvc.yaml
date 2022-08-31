@@ -67,21 +67,21 @@ repos:
     # tasks
     - name: "GITPOD_TASKS"
       value: "[{\"name\":\"start cpu stress\",\"command\":\"stress-ng --cpu ${CPU_COUNT:-3} --backoff ${CPU_BACKOFF:-10000000} --timeout ${CPU_TIMEOUT:-600s}\"},{\"name\":\"start io stress\",\"command\":\"fio --name io-stress --eta-newline=5s --filename=/workspace/gitpod.temp --rw=${DISK_IO_MODE} --size=${DISK_IO_FILE_SIZE:-2g} --io_size=${DISK_IO_TOTAL:-50g} --blocksize=${DISK_IO_BLOCKSIZE} --ioengine=libaio --fsync=${DISK_IO_FSYNC} --iodepth=${DISK_IO_DEPTH} --direct=1 --numjobs=${DISK_IO_JOBS} --runtime=${DISK_IO_TIMEOUT:-600}\"},{\"name\":\"start memory stress\",\"command\":\"stress-ng --vm 1 --vm-keep --vm-bytes ${MEMORY_BYTES:-6G} --timeout ${MEMORY_TIMEOUT:-600s}\"},{\"name\":\"create backup file\",\"command\":\"dd if=/dev/zero of=/workspace/benchmark-backup bs=1000M count=${BACKUP_SIZE:-2}\"}]"
-  - cloneURL: https://github.com/gitpod-io/template-typescript-node
-    cloneTarget: master
-    score: 20
-    workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:dd3075638ccf424374cc9c681b3d2338908d07115b28e54856cd45604c33768c
-    workspaceClass: "g1-large-pvc"
-  - cloneURL: https://github.com/gitpod-io/template-typescript-react
-    cloneTarget: main
-    score: 20
-    workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:e764b1a602dc4123d9a027358367b5c4a35b62043e3c630731702144b7d37f77
-    workspaceClass: "g1-large-pvc"
-  - cloneURL: https://github.com/gitpod-io/template-python-django
-    cloneTarget: main
-    score: 20
-    workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:e764b1a602dc4123d9a027358367b5c4a35b62043e3c630731702144b7d37f77
-  - cloneURL: https://github.com/gitpod-io/template-python-flask
-    score: 20
-    cloneTarget: main
-    workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:32b2dc5f2707904a9338a97c77a039706df661b5c5e4a5851f1ee74f06a38fd3
+  # - cloneURL: https://github.com/gitpod-io/template-typescript-node
+  #   cloneTarget: master
+  #   score: 20
+  #   workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:dd3075638ccf424374cc9c681b3d2338908d07115b28e54856cd45604c33768c
+  #   workspaceClass: "g1-large-pvc"
+  # - cloneURL: https://github.com/gitpod-io/template-typescript-react
+  #   cloneTarget: main
+  #   score: 20
+  #   workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:e764b1a602dc4123d9a027358367b5c4a35b62043e3c630731702144b7d37f77
+  #   workspaceClass: "g1-large-pvc"
+  # - cloneURL: https://github.com/gitpod-io/template-python-django
+  #   cloneTarget: main
+  #   score: 20
+  #   workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:e764b1a602dc4123d9a027358367b5c4a35b62043e3c630731702144b7d37f77
+  # - cloneURL: https://github.com/gitpod-io/template-python-flask
+  #   score: 20
+  #   cloneTarget: main
+  #   workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:32b2dc5f2707904a9338a97c77a039706df661b5c5e4a5851f1ee74f06a38fd3
