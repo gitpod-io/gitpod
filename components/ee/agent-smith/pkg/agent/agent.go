@@ -184,6 +184,7 @@ func (ws InfringingWorkspace) DescribeInfringements(charCount int) string {
 type Infringement struct {
 	Description string
 	Kind        config.GradedInfringementKind
+	CommandLine []string
 }
 
 // defaultRuleset is the name ("remote origin URL") of the default enforcement rules
@@ -280,7 +281,11 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 				InstanceID:    proc.Workspace.InstanceID,
 				GitRemoteURL:  []string{proc.Workspace.GitURL},
 				Infringements: []Infringement{
-					{Kind: config.GradeKind(config.InfringementExec, common.Severity(cl.Level)), Description: fmt.Sprintf("%s: %s", cl.Classifier, cl.Message)},
+					{
+						Kind:        config.GradeKind(config.InfringementExec, common.Severity(cl.Level)),
+						Description: fmt.Sprintf("%s: %s", cl.Classifier, cl.Message),
+						CommandLine: proc.CommandLine,
+					},
 				},
 			})
 		}
