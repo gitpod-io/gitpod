@@ -64,6 +64,8 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	span.SetTag("isGitWS", isGitWS)
 	defer tracing.FinishSpan(span, &err)
 
+	log.WithField("location", ws.Location).Info("GitInitializer::Run called")
+
 	src = csapi.WorkspaceInitFromOther
 	if isGitWS {
 		log.WithField("stage", "init").WithField("location", ws.Location).Info("Not running git clone. Workspace is already a Git workspace")
@@ -71,12 +73,13 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	}
 
 	gitClone := func() error {
+		log.WithField("location", ws.Location).Info("gitClone called")
 		if err := os.MkdirAll(ws.Location, 0775); err != nil {
 			log.WithError(err).WithField("location", ws.Location).Error("cannot create directory")
 			return err
 		}
 
-		log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
+		log.WithField("stage", "init").WithField("location", ws.Location).Info("Running git clone on workspace")
 		err = ws.Clone(ctx)
 		if err != nil {
 			if strings.Contains(err.Error(), "Access denied") {
@@ -85,9 +88,13 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 				}
 			}
 		}
+		defer func() {
+			log.WithField("location", ws.Location).Info("GitInitializer::Run finished")
+		}()
 		return err
 	}
 	onGitCloneFailure := func(e error, d time.Duration) {
+		log.WithField("location", ws.Location).Info("GitInitializer::onGitCloneFailure called")
 		if err := os.RemoveAll(ws.Location); err != nil {
 			log.
 				WithField("stage", "init").
@@ -111,16 +118,20 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	}
 
 	defer func() {
+		log.WithField("location", ws.Location).Info("GitInitializer::Chown called")
 		span.SetTag("Chown", ws.Chown)
 		if !ws.Chown {
 			return
 		}
 		// TODO(toru): dbg
+		log.WithField("location", ws.Location).Info("Sleep start")
 		time.Sleep(10 * time.Second)
+		log.WithField("location", ws.Location).Info("Sleep end")
 		// TODO (aledbf): refactor to remove the need of manual chown
 		args := []string{"-R", "-L", "gitpod", ws.Location}
 		cmd := exec.Command("chown", args...)
 		res, cerr := cmd.CombinedOutput()
+		log.WithField("location", ws.Location).Info("GitInitializer::Chown result: %s", string(res))
 		if cerr != nil && !process.IsNotChildProcess(cerr) {
 			err = git.OpFailedError{
 				Args:       args,
@@ -132,17 +143,20 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		}
 	}()
 
+	log.WithField("location", ws.Location).Info("GitInitializer::realizeCloneTarget called")
 	if err := ws.realizeCloneTarget(ctx); err != nil {
 		return src, xerrors.Errorf("git initializer clone: %w", err)
 	}
+	log.WithField("location", ws.Location).Info("GitInitializer::UpdateRemote called")
 	if err := ws.UpdateRemote(ctx); err != nil {
 		return src, xerrors.Errorf("git initializer updateRemote: %w", err)
 	}
+	log.WithField("location", ws.Location).Info("GitInitializer::UpdateSubmodules called")
 	if err := ws.UpdateSubmodules(ctx); err != nil {
 		log.WithError(err).Warn("error while updating submodules - continuing")
 	}
 
-	log.WithField("stage", "init").WithField("location", ws.Location).Debug("Git operations complete")
+	log.WithField("stage", "init").WithField("location", ws.Location).Info("Git operations complete")
 	return
 }
 
@@ -158,6 +172,9 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 	defer func() error {
 		err = checkGitStatus(err)
 		return err
+	}()
+	defer func() {
+		log.WithField("location", ws.Location).Info("GitInitializer::realizeCloneTarget finished")
 	}()
 
 	// checkout branch
