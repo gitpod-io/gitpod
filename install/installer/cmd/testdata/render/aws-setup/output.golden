@@ -392,13 +392,14 @@ spec:
             matchLabels:
               app: gitpod
               component: ws-manager
+      ports:
+        - port: 8080
+          protocol: TCP
+    - from:
         - podSelector:
             matchLabels:
               app: gitpod
               component: workspace
-      ports:
-        - port: 8080
-          protocol: TCP
     - from:
         - podSelector:
             matchLabels:
