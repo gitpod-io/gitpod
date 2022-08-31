@@ -6,14 +6,10 @@ package blobserve
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	ideproxy "github.com/gitpod-io/gitpod/installer/pkg/components/ide-proxy"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
-	wsproxy "github.com/gitpod-io/gitpod/installer/pkg/components/ws-proxy"
 
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -29,26 +25,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Spec: networkingv1.NetworkPolicySpec{
 			PodSelector: metav1.LabelSelector{MatchLabels: labels},
 			PolicyTypes: []networkingv1.PolicyType{"Ingress"},
-			Ingress: []networkingv1.NetworkPolicyIngressRule{{
-				Ports: []networkingv1.NetworkPolicyPort{{
-					Protocol: common.TCPProtocol,
-					Port:     &intstr.IntOrString{IntVal: ContainerPort},
-				}},
-				From: []networkingv1.NetworkPolicyPeer{{
-					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-						"component": proxy.Component,
-					}},
-				}, {
-					// TODO: (pd) delete this after all workspace cluster deployed
-					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-						"component": wsproxy.Component,
-					}},
-				}, {
-					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-						"component": ideproxy.Component,
-					}},
-				}},
-			}},
+			Ingress:     []networkingv1.NetworkPolicyIngressRule{{}},
 		},
 	}}, nil
 }
