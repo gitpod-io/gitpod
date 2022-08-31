@@ -51,8 +51,8 @@
                     "name": "workspace",
                     "image": "registry-facade:8080/remote/test",
                     "command": [
-                        "/.supervisor/workspacekit",
-                        "ring0"
+                        "/.supervisor/supervisor",
+                        "init"
                     ],
                     "ports": [
                         {

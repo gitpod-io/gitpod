@@ -57,8 +57,8 @@
                     "name": "workspace",
                     "image": "registry-facade:8080/remote/foobar",
                     "command": [
-                        "/.supervisor/workspacekit",
-                        "ring0"
+                        "/.supervisor/supervisor",
+                        "init"
                     ],
                     "ports": [
                         {
