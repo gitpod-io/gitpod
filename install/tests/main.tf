@@ -17,8 +17,8 @@ variable "eks_node_image_id" {
   default = null
 }
 
-variable "domain" { default = "tests.gitpod-self-hosted.com" }
-variable "gcp_zone" { default = "tests-gitpod-self-hosted-com" }
+variable "domain" { default = "tests.doptig.com" }
+variable "gcp_zone" { default = "tests-doptig-com" }
 
 variable "k3s_node_image_id" {
   default = null

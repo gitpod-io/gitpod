@@ -7,7 +7,7 @@ TOPDIR=$(shell pwd)
 
 KUBECONFIG := "$(TOPDIR)/kubeconfig"
 
-DOMAIN := tests.gitpod-self-hosted.com
+DOMAIN := tests.doptig.com
 
 check-env-sub-domain:
 ifndef TF_VAR_TEST_ID

@@ -20,7 +20,7 @@ const upgrade: string = annotations.upgrade || "false"; // setting to true will 
 const skipTests: string = annotations.skipTests || "false"; // setting to true skips the integration tests
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
 
-const baseDomain: string = "tests.gitpod-self-hosted.com"
+const baseDomain: string = "tests.doptig.com"
 
 const slackHook = new Map<string, string>([
     ["self-hosted-jobs", process.env.SH_SLACK_NOTIFICATION_PATH.trim()],
