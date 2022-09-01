@@ -1,6 +1,7 @@
 # Change Log
 
 ## August 2022
+- Speed up the Usage page for teams. ([#12501](https://github.com/gitpod-io/gitpod/pull/12501)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Terminal tabs running Gitpod Tasks now have their title updated to reflect what's currently running on it. ([#12401](https://github.com/gitpod-io/gitpod/pull/12401)) - [@felladrin](https://github.com/felladrin)
 - [gp-cli] provide workspace class info in `gp top` command ([#12338](https://github.com/gitpod-io/gitpod/pull/12338)) - [@mustard-mh](https://github.com/mustard-mh)
 - [supervisor] support ssh gateway on not gitpod base image ([#12498](https://github.com/gitpod-io/gitpod/pull/12498)) - [@iQQBot](https://github.com/iQQBot)
