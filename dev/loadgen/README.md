@@ -41,6 +41,9 @@ In order to configure the benchmark, you can use the configuration file
 | successRate | Percentage of started workspaces that should enter running state to count as a successful run |
 | environment | Global environment variables that will be set for all repositories |
 | workspaceClass | The workspace class to use for workspaces. This setting can be overriden for individual repositories |
+| repoAuth | The authentication for a repository. This setting can be overriden for individual repositories |
+| repoAuth.authUser | The user that should be used for authentication |
+| repoAuth.authPassword | The password that should be used for authentication |
 | featureFlags | The feature flag passed when creating the workspace |
 | repos | The repositories that will be used to create workspaces |
 | repo.cloneURL | The url of the repository |
@@ -49,6 +52,9 @@ In order to configure the benchmark, you can use the configuration file
 | repo.workspaceImage | The docker image that will be used for the workspace |
 | repo.environment | Environment variables that will only be set for this repository |
 | repo.workspaceClass | The workspace class to use for the workspace that will be created for this repository |
+| repo.auth | The authentication for the repository |
+| repo.auth.authUser | The user that should be used for authentication |
+| repo.auth.authPassword | The password that should be used for authentication |
 
 After the benchmark has completed, you will find a benchmark-result.json file in your working directory, that contains information about every started workspace.
 

@@ -74,12 +74,11 @@ var benchmarkCommand = &cobra.Command{
 					Email:    "test@gitpod.io",
 					Username: "foobar",
 				},
-				FeatureFlags:      scenario.FeatureFlags,
-				Timeout:           "5m",
-				WorkspaceImage:    "will-be-overriden",
-				WorkspaceLocation: "workspace-stress",
-				Envvars:           scenario.Environment,
-				Class:             scenario.WorkspaceClass,
+				FeatureFlags:   scenario.FeatureFlags,
+				Timeout:        "5m",
+				WorkspaceImage: "will-be-overriden",
+				Envvars:        scenario.Environment,
+				Class:          scenario.WorkspaceClass,
 			},
 			Type: api.WorkspaceType_REGULAR,
 		}
@@ -125,7 +124,10 @@ var benchmarkCommand = &cobra.Command{
 			Load: load,
 			Specs: &loadgen.MultiWorkspaceGenerator{
 				Template: template,
-				Repos:    scenario.Repos,
+				Config: loadgen.MultiGeneratorConfig{
+					Repos: scenario.Repos,
+					Auth:  scenario.RepositoryAuth,
+				},
 			},
 			Worker: 5,
 			Observer: []chan<- *loadgen.SessionEvent{
@@ -198,6 +200,7 @@ type BenchmarkScenario struct {
 	SuccessRate     float32                    `json:"successRate"`
 	WorkspaceClass  string                     `json:"workspaceClass"`
 	FeatureFlags    []api.WorkspaceFeatureFlag `json:"featureFlags"`
+	RepositoryAuth  *loadgen.RepositoryAuth    `json:"repoAuth,omitempty"`
 }
 
 func handleWorkspaceDeletion(timeout string, executor loadgen.Executor, canceled bool) error {
