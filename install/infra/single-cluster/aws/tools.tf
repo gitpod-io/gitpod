@@ -20,3 +20,12 @@ module "cluster-issuer" {
   secretAccessKey     = module.eks.secretAccessKey
   issuer_name         = "route53"
 }
+
+module "cluster-autoscaler" {
+  source            = "../../modules/tools/aws-cluster-autoscaler"
+  kubeconfig        = var.kubeconfig
+  region            = var.region
+  cluster_name      = var.cluster_name
+  cluster_id        = module.eks.cluster_id
+  oidc_provider_arn = module.eks.oidc_provider_arn
+}
