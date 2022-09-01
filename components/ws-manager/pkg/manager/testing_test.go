@@ -42,6 +42,9 @@ func forTestingOnlyManagerConfig() config.Configuration {
 		RegistryFacadeHost:       "registry-facade:8080",
 		WorkspaceClasses: map[string]*config.WorkspaceClass{
 			config.DefaultWorkspaceClass: {
+				Runtime: config.RuntimeConfiguration{
+					Kind: config.RuntimeConfigurationKindWorkspacekit,
+				},
 				Container: config.ContainerConfiguration{
 					Limits: &config.ResourceLimitConfiguration{
 						CPU: &config.CpuResourceLimit{

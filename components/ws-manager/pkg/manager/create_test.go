@@ -35,6 +35,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 		RegularTemplate    *corev1.Pod                          `json:"regularTemplate,omitempty"`
 		ResourceRequests   *config.ResourceRequestConfiguration `json:"resourceRequests,omitempty"`
 		ResourceLimits     *config.ResourceLimitConfiguration   `json:"resourceLimits,omitempty"`
+		RuntimeKind        config.RuntimeConfigurationKind      `json:"runtimeKind,omitempty"`
 	}
 	type tpl struct {
 		FN      string
@@ -93,6 +94,11 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 				var cfgCls config.WorkspaceClass
 				cfgCls.Container.Requests = cls.ResourceRequests
 				cfgCls.Container.Limits = cls.ResourceLimits
+				if cls.RuntimeKind != "" {
+					cfgCls.Runtime.Kind = cls.RuntimeKind
+				} else {
+					cfgCls.Runtime.Kind = config.RuntimeConfigurationKindWorkspacekit
+				}
 
 				files = append(files, toTpl(n, cls, &cfgCls.Templates)...)
 				mgmtCfg.WorkspaceClasses[n] = &cfgCls

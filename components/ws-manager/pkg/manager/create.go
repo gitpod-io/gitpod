@@ -501,6 +501,29 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	var (
+		runtimeClass    *string
+		securityContext *corev1.PodSecurityContext
+	)
+	switch startContext.Class.Runtime.Kind {
+	case config.RuntimeConfigurationKindWorkspacekit:
+		securityContext = &corev1.PodSecurityContext{
+			// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
+			// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
+			SeccompProfile: &corev1.SeccompProfile{
+				Type:             corev1.SeccompProfileTypeLocalhost,
+				LocalhostProfile: pointer.String(m.Config.SeccompProfile),
+			},
+		}
+	case config.RuntimeConfigurationKindKata:
+		runtimeClass = pointer.String("kata-qemu")
+		securityContext = &corev1.PodSecurityContext{
+			FSGroup:      pointer.Int64(33333),
+			RunAsNonRoot: pointer.Bool(false),
+			RunAsUser:    pointer.Int64(0),
+		}
+	}
+
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        podName(req),
@@ -516,14 +539,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
 			Affinity:                     affinity,
-			SecurityContext: &corev1.PodSecurityContext{
-				// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
-				// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
-				SeccompProfile: &corev1.SeccompProfile{
-					Type:             corev1.SeccompProfileTypeLocalhost,
-					LocalhostProfile: pointer.String(m.Config.SeccompProfile),
-				},
-			},
+			RuntimeClassName:             runtimeClass,
+			SecurityContext:              securityContext,
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
@@ -693,6 +710,13 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create Theia env: %w", err)
 	}
+	if startContext.Class.Runtime.Kind == config.RuntimeConfigurationKindKata {
+		sec.RunAsUser = pointer.Int64(0)
+		sec.RunAsGroup = pointer.Int64(0)
+		sec.RunAsNonRoot = pointer.Bool(false)
+		sec.AllowPrivilegeEscalation = pointer.Bool(true)
+		sec.Capabilities = &corev1.Capabilities{}
+	}
 	mountPropagation := corev1.MountPropagationHostToContainer
 
 	var (
@@ -717,6 +741,10 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	)
 
 	image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
+
+	if startContext.Class.Runtime.Kind == config.RuntimeConfigurationKindKata {
+		command = []string{"/.supervisor/supervisor", "init"}
+	}
 
 	return &corev1.Container{
 		Name:            "workspace",
