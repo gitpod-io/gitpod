@@ -187,6 +187,11 @@ func (s *Containerd) handleNewContainer(c containers.Container) {
 	if podName == "" {
 		return
 	}
+	containerName := c.Labels[containerLabelK8sContainerName]
+	// skip any init container
+	if strings.HasPrefix(containerName, "init-") {
+		return
+	}
 
 	if c.Labels[containerLabelCRIKind] == "sandbox" && c.Labels[wsk8s.WorkspaceIDLabel] != "" {
 		s.cond.L.Lock()

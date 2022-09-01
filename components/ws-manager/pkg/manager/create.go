@@ -591,7 +591,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
 
 			pod.Spec.InitContainers = append(pod.Spec.InitContainers, corev1.Container{
-				Name:            "z-init-pvc",
+				Name:            "init-pvc",
 				Image:           "alpine:3",
 				ImagePullPolicy: corev1.PullIfNotPresent,
 				Command:         []string{"chown", "133332:133332", "/workspace"},
