@@ -81,15 +81,17 @@ func TestLaunchWorkspaceDirectly(t *testing.T) {
 				api.Done(t)
 			})
 
-			nfo, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			_, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			err = integration.DeleteWorkspace(ctx, api, nfo.Req.Id)
-			if err != nil {
-				t.Fatal(err)
-			}
+			t.Cleanup(func() {
+				err = stopWs(true)
+				if err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
+			})
 
 			return ctx
 		}).

@@ -187,20 +187,21 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 	}
 
 	execErrs := make(chan error, 1)
-	go func() {
+	execF := func() {
 		defer close(execErrs)
 		_, _, _, execErr := podExec.ExecCmd(cmd, podName, namespace, containerName)
 		if execErr != nil {
 			execErrs <- execErr
 		}
-	}()
+	}
+	go execF()
 	select {
 	case err := <-execErrs:
 		if err != nil {
 			return nil, closer, err
 		}
 		return nil, closer, fmt.Errorf("agent stopped unexepectedly")
-	case <-time.After(1 * time.Second):
+	case <-time.After(30 * time.Second):
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -230,7 +231,7 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 
 	var res *rpc.Client
 	var lastError error
-	waitErr := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+	waitErr := wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
 		res, lastError = rpc.DialHTTP("tcp", fmt.Sprintf("localhost:%d", localAgentPort))
 		if lastError != nil {
 			return false, nil

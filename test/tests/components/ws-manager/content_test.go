@@ -23,7 +23,7 @@ import (
 func TestBackup(t *testing.T) {
 	f := features.New("backup").
 		Assess("it should start a workspace, create a file and successfully create a backup", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -31,22 +31,21 @@ func TestBackup(t *testing.T) {
 				api.Done(t)
 			})
 
-			wsm, err := api.WorkspaceManager()
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			ws, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
-				integration.WithInstanceID(ws.Req.Id),
+				integration.WithInstanceID(ws1.Req.Id),
 				integration.WithContainer("workspace"),
 				integration.WithWorkspacekitLift(true),
 			)
 			if err != nil {
+				err = stopWs1(true)
+				if err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
 				t.Fatal(err)
 			}
 			integration.DeferCloser(t, closer)
@@ -57,52 +56,45 @@ func TestBackup(t *testing.T) {
 				Content: []byte("hello world"),
 				Mode:    0644,
 			}, &resp)
-			if err != nil {
-				_, _ = wsm.StopWorkspace(ctx, &wsapi.StopWorkspaceRequest{Id: ws.Req.Id})
-				t.Fatal(err)
-			}
 			rsa.Close()
+			if err != nil {
+				err = stopWs1(true)
+				if err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
+				t.Fatal(err)
+			}
 
-			_, err = wsm.StopWorkspace(ctx, &wsapi.StopWorkspaceRequest{
-				Id: ws.Req.Id,
-			})
+			err = stopWs1(true)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			_, err = integration.WaitForWorkspaceStop(ctx, api, ws.Req.Id)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			ws, err = integration.LaunchWorkspaceDirectly(ctx, api,
+			ws2, stopWs2, err := integration.LaunchWorkspaceDirectly(ctx, api,
 				integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
-					w.ServicePrefix = ws.Req.ServicePrefix
-					w.Metadata.MetaId = ws.Req.Metadata.MetaId
-					w.Metadata.Owner = ws.Req.Metadata.Owner
+					w.ServicePrefix = ws1.Req.ServicePrefix
+					w.Metadata.MetaId = ws1.Req.Metadata.MetaId
+					w.Metadata.Owner = ws1.Req.Metadata.Owner
 					return nil
 				}),
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
+			t.Cleanup(func() {
+				err = stopWs2(true)
+				if err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
+			})
 
 			rsa, closer, err = integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
-				integration.WithInstanceID(ws.Req.Id),
+				integration.WithInstanceID(ws2.Req.Id),
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
 			integration.DeferCloser(t, closer)
-
-			defer func() {
-				t.Log("Cleaning up on TestBackup exit")
-				sctx, scancel := context.WithTimeout(ctx, 5*time.Second)
-				defer scancel()
-				_, _ = wsm.StopWorkspace(sctx, &wsapi.StopWorkspaceRequest{
-					Id: ws.Req.Id,
-				})
-			}()
 
 			var ls agent.ListDirResponse
 			err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
@@ -146,13 +138,17 @@ func TestMissingBackup(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			wsm, err := api.WorkspaceManager()
 			if err != nil {
+				err = stopWs(true)
+				if err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
 				t.Fatal(err)
 			}
 
@@ -189,7 +185,7 @@ func TestMissingBackup(t *testing.T) {
 			}
 			for _, test := range tests {
 				t.Run(test.Name+"_backup_init", func(t *testing.T) {
-					testws, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
+					testws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
 						w.ServicePrefix = ws.Req.ServicePrefix
 						w.Metadata.MetaId = ws.Req.Metadata.MetaId
 						w.Metadata.Owner = ws.Req.Metadata.Owner
@@ -210,6 +206,10 @@ func TestMissingBackup(t *testing.T) {
 						return
 					}
 					if testws.LastStatus.Conditions.Failed == "" {
+						err = stopWs(true)
+						if err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
+						}
 						t.Errorf("restarted workspace did not fail despite missing backup, %v", testws)
 					}
 				})

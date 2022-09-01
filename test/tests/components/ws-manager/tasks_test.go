@@ -68,24 +68,24 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 						return nil
 					}
 
-					nfo, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(addInitTask))
+					nfo, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(addInitTask))
 					if err != nil {
 						t.Fatal(err)
 					}
 
-					t.Cleanup(func() {
-						err = integration.DeleteWorkspace(ctx, api, nfo.Req.Id)
-						if err == nil {
-							_, _ = integration.WaitForWorkspaceStop(ctx, api, nfo.Req.Id)
+					defer func() {
+						err = stopWs(true)
+						if err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
 						}
-					})
+					}()
 
 					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.Req.Id))
+					integration.DeferCloser(t, closer)
 					if err != nil {
 						t.Fatalf("unexpected error instrumenting workspace: %v", err)
 					}
 					defer rsa.Close()
-					integration.DeferCloser(t, closer)
 
 					var parsedResp struct {
 						Result struct {

@@ -6,9 +6,7 @@ package integration
 
 import (
 	"context"
-	"fmt"
 	"io"
-	"strings"
 	"sync"
 	"time"
 
@@ -16,8 +14,6 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -28,7 +24,7 @@ import (
 
 const (
 	gitpodBuiltinUserID = "builtin-user-workspace-probe-0000000"
-	perCallTimeout      = 1 * time.Minute
+	perCallTimeout      = 3 * time.Minute
 )
 
 type launchWorkspaceDirectlyOptions struct {
@@ -97,48 +93,53 @@ type LaunchWorkspaceDirectlyResult struct {
 // LaunchWorkspaceDirectly starts a workspace pod by talking directly to ws-manager.
 // Whenever possible prefer this function over LaunchWorkspaceFromContextURL, because
 // it has fewer prerequisites.
-func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...LaunchWorkspaceDirectlyOpt) (*LaunchWorkspaceDirectlyResult, error) {
+func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...LaunchWorkspaceDirectlyOpt) (*LaunchWorkspaceDirectlyResult, func(waitForStop bool) error, error) {
 	options := launchWorkspaceDirectlyOptions{
 		BaseImage: "docker.io/gitpod/workspace-full:latest",
 	}
 	for _, o := range opts {
 		err := o(&options)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	instanceID, err := uuid.NewRandom()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 
 	}
 	workspaceID, err := namegen.GenerateWorkspaceID()
 	if err != nil {
-		return nil, err
-
+		return nil, nil, err
 	}
 
 	var workspaceImage string
 	if options.BaseImage != "" {
-		workspaceImage, err = resolveOrBuildImage(ctx, api, options.BaseImage)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot resolve base image: %v", err)
+		for {
+			workspaceImage, err = resolveOrBuildImage(ctx, api, options.BaseImage)
+			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				time.Sleep(5 * time.Second)
+				continue
+			} else if err != nil {
+				return nil, nil, xerrors.Errorf("cannot resolve base image: %v", err)
+			}
+			break
 		}
 	}
 	if workspaceImage == "" {
-		return nil, xerrors.Errorf("cannot start workspaces without a workspace image (required by registry-facade resolver)")
+		return nil, nil, xerrors.Errorf("cannot start workspaces without a workspace image (required by registry-facade resolver)")
 	}
 
 	ideImage := options.IdeImage
 	if ideImage == "" {
 		cfg, err := GetServerIDEConfig(api.namespace, api.client)
 		if err != nil {
-			return nil, xerrors.Errorf("cannot find server IDE config: %q", err)
+			return nil, nil, xerrors.Errorf("cannot find server IDE config: %q", err)
 		}
 		ideImage = cfg.IDEOptions.Options.Code.Image
 		if ideImage == "" {
-			return nil, xerrors.Errorf("cannot start workspaces without an IDE image (required by registry-facade resolver)")
+			return nil, nil, xerrors.Errorf("cannot start workspaces without an IDE image (required by registry-facade resolver)")
 		}
 	}
 
@@ -173,7 +174,7 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 	for _, m := range options.Mods {
 		err := m(req)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -182,26 +183,56 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 
 	wsm, err := api.WorkspaceManager()
 	if err != nil {
-		return nil, xerrors.Errorf("cannot start workspace manager: %q", err)
+		return nil, nil, xerrors.Errorf("cannot start workspace manager: %q", err)
 	}
 
 	sresp, err := wsm.StartWorkspace(sctx, req)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot start workspace: %q", err)
+		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)
 	}
+
+	stopWs := func(waitForStop bool) error {
+		tctx, tcancel := context.WithTimeout(context.Background(), perCallTimeout)
+		defer tcancel()
+
+		for {
+			err = DeleteWorkspace(tctx, api, req.Id)
+			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				time.Sleep(5 * time.Second)
+				continue
+			} else if err != nil {
+				return err
+			}
+			break
+		}
+		for {
+			_, err = WaitForWorkspaceStop(tctx, api, req.Id)
+			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				time.Sleep(5 * time.Second)
+				continue
+			} else if err != nil {
+				return err
+			}
+			break
+		}
+		return err
+	}
+	defer func() {
+		if err != nil {
+			stopWs(false)
+		}
+	}()
 
 	lastStatus, err := WaitForWorkspaceStart(ctx, instanceID.String(), api, options.WaitForOpts...)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot wait for workspace start: %q", err)
+		return nil, nil, xerrors.Errorf("cannot wait for workspace start: %q", err)
 	}
-
-	// it.t.Logf("workspace is running: instanceID=%s", instanceID.String())
 
 	return &LaunchWorkspaceDirectlyResult{
 		Req:        req,
 		IdeURL:     sresp.Url,
 		LastStatus: lastStatus,
-	}, nil
+	}, stopWs, nil
 }
 
 // LaunchWorkspaceFromContextURL force-creates a new workspace using the Gitpod server API,
@@ -246,9 +277,6 @@ func LaunchWorkspaceFromContextURL(ctx context.Context, contextURL string, usern
 		sctx, scancel := context.WithTimeout(ctx, perCallTimeout)
 		_ = server.StopWorkspace(sctx, resp.CreatedWorkspaceID)
 		scancel()
-		//if err != nil {
-		//it.t.Errorf("cannot stop workspace: %q", err)
-		//}
 
 		if waitForStop {
 			_, _ = WaitForWorkspaceStop(ctx, api, nfo.LatestInstance.ID)
@@ -413,7 +441,6 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 		_ = sub.CloseSend()
 	}()
 
-	var workspaceID string
 	done := make(chan struct{})
 	errCh := make(chan error)
 	go func() {
@@ -432,7 +459,6 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 				continue
 			}
 
-			workspaceID = status.Metadata.MetaId
 			if status.Conditions.Failed != "" {
 				errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
 				return
@@ -441,6 +467,8 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 				lastStatus = status
 				return
 			}
+
+			time.Sleep(10 * time.Second)
 		}
 	}()
 
