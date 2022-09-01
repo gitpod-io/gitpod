@@ -1373,7 +1373,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	defer contentFile.Close()
 
-	log.Info("supervisor: running content service  executor with content descriptor")
+	log.Info("supervisor: running content service executor with content descriptor")
 	var src csapi.WorkspaceInitSource
 	src, err = executor.Execute(ctx, "/workspace", contentFile, false)
 	if err != nil {
