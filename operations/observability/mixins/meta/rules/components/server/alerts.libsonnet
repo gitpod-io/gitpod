@@ -134,8 +134,9 @@
           },
           {
             alert: 'WebAppServicesCrashlooping',
-            expr: 'sum(rate(container_cpu_usage_seconds_total{container!="POD", node=~".*", pod=~"(content-service|dashboard|db|db-sync|messagebus|payment-endpoint|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (pod, node) > 0.80',
-            'for': '15m',
+            // Reasoning: alert if any pod is restarting more than 3 times / 5 minutes.
+            expr: 'increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|db-sync|messagebus|payment-endpoint|proxy|server|ws-manager-bridge|usage)-.*"}[5m]) > 3',
+            'for': '5m',
             labels: {
               // sent to the team internal channel until we fine tuned it
               severity: 'warning',
