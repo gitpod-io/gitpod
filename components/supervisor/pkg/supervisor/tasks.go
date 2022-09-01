@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"regexp"
 	"strconv"
@@ -467,7 +468,7 @@ func (tm *tasksManager) watch(task *task, term *terminal.Term) {
 
 		duration := ""
 		if elapsed >= 1*time.Minute {
-			elapsedInMinutes := strconv.Itoa(int(elapsed.Minutes()))
+			elapsedInMinutes := strconv.Itoa(int(math.Round(elapsed.Minutes())))
 			duration = "🎉 Well done on saving " + elapsedInMinutes + " minute"
 			if elapsedInMinutes != "1" {
 				duration += "s"
