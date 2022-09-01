@@ -8,7 +8,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/rpc"
 	"os"
@@ -53,14 +55,23 @@ func NewPodExec(config rest.Config, clientset *kubernetes.Clientset) *PodExec {
 }
 
 func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*bytes.Buffer, *bytes.Buffer, *bytes.Buffer, error) {
-	ioStreams, in, out, errOut := genericclioptions.NewTestIOStreams()
-	copyOptions := kubectlcp.NewCopyOptions(ioStreams)
-	copyOptions.Clientset = p.Clientset
-	copyOptions.ClientConfig = p.RestConfig
-	copyOptions.Container = containername
-	err := copyOptions.Run([]string{src, dst})
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Could not run copy operation: %v", err)
+	var in, out, errOut *bytes.Buffer
+	var ioStreams genericclioptions.IOStreams
+	for {
+		ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
+		copyOptions := kubectlcp.NewCopyOptions(ioStreams)
+		copyOptions.Clientset = p.Clientset
+		copyOptions.ClientConfig = p.RestConfig
+		copyOptions.Container = containername
+		err := copyOptions.Run([]string{src, dst})
+		if err != nil {
+			if !errors.Is(err, io.EOF) {
+				return nil, nil, nil, fmt.Errorf("Could not run copy operation: %v", err)
+			}
+			time.Sleep(10 * time.Second)
+			continue
+		}
+		break
 	}
 	return in, out, errOut, nil
 }
