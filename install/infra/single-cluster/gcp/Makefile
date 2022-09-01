@@ -71,9 +71,9 @@ output-database:
 	@echo ""
 	@echo "Database:"
 	@echo "========"
+	@echo "Tick the option 'Use Google Cloud SQL Proxy' if using this database"
 	@terraform output -json database | jq
 	@echo ""
-	@echo "Tick the option 'Use Google Cloud SQL Proxy', if using this database"
 
 output-issuer:
 	@echo ""
