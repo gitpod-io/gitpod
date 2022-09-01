@@ -188,6 +188,7 @@ func (s *Containerd) handleNewContainer(c containers.Container) {
 		return
 	}
 	containerName := c.Labels[containerLabelK8sContainerName]
+	log.Infof("container labels: %v", c.Labels)
 	// skip any init container
 	if strings.HasPrefix(containerName, "init-") {
 		return
