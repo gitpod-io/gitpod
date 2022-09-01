@@ -164,11 +164,6 @@
                             "name": "vol-this-workspace",
                             "mountPath": "/workspace",
                             "mountPropagation": "HostToContainer"
-                        },
-                        {
-                            "name": "daemon-mount",
-                            "mountPath": "/.workspace",
-                            "mountPropagation": "HostToContainer"
                         }
                     ],
                     "readinessProbe": {

@@ -710,14 +710,31 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create Theia env: %w", err)
 	}
+
+	mountPropagation := corev1.MountPropagationHostToContainer
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:             workspaceVolumeName,
+			MountPath:        workspaceDir,
+			ReadOnly:         false,
+			MountPropagation: &mountPropagation,
+		},
+	}
+
 	if startContext.Class.Runtime.Kind == config.RuntimeConfigurationKindKata {
 		sec.RunAsUser = pointer.Int64(0)
 		sec.RunAsGroup = pointer.Int64(0)
 		sec.RunAsNonRoot = pointer.Bool(false)
 		sec.AllowPrivilegeEscalation = pointer.Bool(true)
 		sec.Capabilities = &corev1.Capabilities{}
+	} else {
+		// add daemon/IWS socket
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			MountPath:        "/.workspace",
+			Name:             "daemon-mount",
+			MountPropagation: &mountPropagation,
+		})
 	}
-	mountPropagation := corev1.MountPropagationHostToContainer
 
 	var (
 		command        = []string{"/.supervisor/workspacekit", "ring0"}
@@ -759,19 +776,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			Limits:   limits,
 			Requests: requests,
 		},
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				Name:             workspaceVolumeName,
-				MountPath:        workspaceDir,
-				ReadOnly:         false,
-				MountPropagation: &mountPropagation,
-			},
-			{
-				MountPath:        "/.workspace",
-				Name:             "daemon-mount",
-				MountPropagation: &mountPropagation,
-			},
-		},
+		VolumeMounts:             volumeMounts,
 		ReadinessProbe:           readinessProbe,
 		Env:                      env,
 		Command:                  command,
