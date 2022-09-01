@@ -28,19 +28,15 @@ func TestRunDocker(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
-				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Second)
-				defer scancel()
-
-				err = integration.DeleteWorkspace(sctx, api, ws.Req.Id)
+				err = stopWs(true)
 				if err != nil {
-					t.Fatal(err)
+					t.Errorf("cannot stop workspace: %q", err)
 				}
-				_, _ = integration.WaitForWorkspaceStop(sctx, api, ws.Req.Id)
 			})
 
 			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(ws.Req.Id), integration.WithWorkspacekitLift(true))
