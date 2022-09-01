@@ -98,8 +98,12 @@
       "id": 1,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
+          "calcs": [
+            "max",
+            "mean",
+            "last"
+          ],
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
@@ -115,10 +119,9 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum(rate(gitpod_supervisor_frontend_error_total[2m])) by (error, resource)/sum(rate(gitpod_supervisor_frontend_client_total[2m]))",
-          "instant": true,
-          "key": "Q-cd2b24a6-efd9-497d-9899-79b25341167e-0",
-          "legendFormat": "__auto",
+          "expr": "sum(rate(gitpod_supervisor_frontend_error_total{cluster=~\"$cluster\"}[2m])) by (error, resource) / sum(rate(gitpod_supervisor_frontend_client_total{cluster=~\"$cluster\"}[2m]))",
+          "hide": false,
+          "legendFormat": "{{error}} - {{resource}}",
           "range": true,
           "refId": "A"
         }
@@ -131,7 +134,39 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "P4169E866C3094E38"
+        },
+        "definition": "label_values(up{job=\"ide-metrics\"}, cluster)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Cluster",
+        "multi": true,
+        "name": "cluster",
+        "options": [],
+        "query": {
+          "query": "label_values(up{job=\"ide-metrics\"}, cluster)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -141,6 +176,6 @@
   "timezone": "",
   "title": "Browser Overview",
   "uid": "2wGfMlWVz",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
