@@ -84,14 +84,12 @@ func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, 
 		Order(fmt.Sprintf("startedAt %s", sort.ToSQL())).
 		Where("attributionId = ?", attributionId).
 		Where(
-			// started before, finished inside query range
+			// finished inside query range
 			conn.Where("? <= stoppedAt AND stoppedAt < ?", from, to).
-				// started inside query range, finished inside
-				Or("startedAt >= ? AND stoppedAt < ?", from, to).
-				// started inside query range, finished outside
+				// started inside query range
 				Or("? <= startedAt AND startedAt < ?", from, to).
-				// started before query range, still running
-				Or("startedAt <= ? AND (stoppedAt > ? OR stoppedAt IS NULL)", from, to),
+				// started inside or before query range, still running
+				Or("startedAt < ? AND stoppedAt IS NULL", to),
 		).
 		Rows()
 	if err != nil || !countResult.Next() {
@@ -115,14 +113,12 @@ func ListUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, 
 		Order(fmt.Sprintf("startedAt %s", sort.ToSQL())).
 		Where("attributionId = ?", attributionId).
 		Where(
-			// started before, finished inside query range
+			// finished inside query range
 			conn.Where("? <= stoppedAt AND stoppedAt < ?", from, to).
-				// started inside query range, finished inside
-				Or("startedAt >= ? AND stoppedAt < ?", from, to).
-				// started inside query range, finished outside
+				// started inside query range
 				Or("? <= startedAt AND startedAt < ?", from, to).
-				// started before query range, still running
-				Or("startedAt <= ? AND (stoppedAt > ? OR stoppedAt IS NULL)", from, to),
+				// started inside or before query range, still running
+				Or("startedAt < ? AND stoppedAt IS NULL", to),
 		).
 		Offset(int(offset)).
 		Limit(int(limit)).
