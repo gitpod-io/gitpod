@@ -351,7 +351,7 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 		return nil, nil, xerrors.Errorf("no backup found")
 	}
 
-	return nil, nil, xerrors.Errorf("no backup or valid initializer present")
+	return nil, nil, nil
 }
 
 func (s *Provider) getSnapshotContentLayer(ctx context.Context, sp *csapi.SnapshotInitializer) (l []Layer, manifest *csapi.WorkspaceContentManifest, err error) {
