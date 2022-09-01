@@ -321,3 +321,43 @@ export namespace CostCenter {
         spendingLimit: number,
     }
 }
+
+export class LastUsageReconcilationTimeRequest extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): LastUsageReconcilationTimeRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: LastUsageReconcilationTimeRequest): LastUsageReconcilationTimeRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: LastUsageReconcilationTimeRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): LastUsageReconcilationTimeRequest;
+    static deserializeBinaryFromReader(message: LastUsageReconcilationTimeRequest, reader: jspb.BinaryReader): LastUsageReconcilationTimeRequest;
+}
+
+export namespace LastUsageReconcilationTimeRequest {
+    export type AsObject = {
+    }
+}
+
+export class LastUsageReconcilationTimeResponse extends jspb.Message {
+
+    hasTimestamp(): boolean;
+    clearTimestamp(): void;
+    getTimestamp(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setTimestamp(value?: google_protobuf_timestamp_pb.Timestamp): LastUsageReconcilationTimeResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): LastUsageReconcilationTimeResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: LastUsageReconcilationTimeResponse): LastUsageReconcilationTimeResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: LastUsageReconcilationTimeResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): LastUsageReconcilationTimeResponse;
+    static deserializeBinaryFromReader(message: LastUsageReconcilationTimeResponse, reader: jspb.BinaryReader): LastUsageReconcilationTimeResponse;
+}
+
+export namespace LastUsageReconcilationTimeResponse {
+    export type AsObject = {
+        timestamp?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+    }
+}

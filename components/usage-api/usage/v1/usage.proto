@@ -13,6 +13,9 @@ service UsageService {
     // ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
     rpc ReconcileUsage(ReconcileUsageRequest) returns (ReconcileUsageResponse) {}
 
+    // LastUsageReconcilationTime returns the last time the usage reconciler ran.
+    rpc LastUsageReconcilationTime(LastUsageReconcilationTimeRequest) returns (LastUsageReconcilationTimeResponse) {}
+
     // GetCostCenter retrieves the spending limit with its associated attributionID
     rpc GetCostCenter(GetCostCenterRequest) returns (GetCostCenterResponse) {}
 }
@@ -97,4 +100,11 @@ message GetCostCenterResponse {
 message CostCenter {
     string attribution_id = 1;
     int32 spending_limit = 2;
+}
+
+message LastUsageReconcilationTimeRequest {
+}
+
+message LastUsageReconcilationTimeResponse {
+  google.protobuf.Timestamp timestamp = 1;
 }

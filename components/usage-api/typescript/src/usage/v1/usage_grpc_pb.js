@@ -33,6 +33,28 @@ function deserialize_usage_v1_GetCostCenterResponse(buffer_arg) {
   return usage_v1_usage_pb.GetCostCenterResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_usage_v1_LastUsageReconcilationTimeRequest(arg) {
+  if (!(arg instanceof usage_v1_usage_pb.LastUsageReconcilationTimeRequest)) {
+    throw new Error('Expected argument of type usage.v1.LastUsageReconcilationTimeRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_LastUsageReconcilationTimeRequest(buffer_arg) {
+  return usage_v1_usage_pb.LastUsageReconcilationTimeRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_usage_v1_LastUsageReconcilationTimeResponse(arg) {
+  if (!(arg instanceof usage_v1_usage_pb.LastUsageReconcilationTimeResponse)) {
+    throw new Error('Expected argument of type usage.v1.LastUsageReconcilationTimeResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_LastUsageReconcilationTimeResponse(buffer_arg) {
+  return usage_v1_usage_pb.LastUsageReconcilationTimeResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_usage_v1_ListBilledUsageRequest(arg) {
   if (!(arg instanceof usage_v1_usage_pb.ListBilledUsageRequest)) {
     throw new Error('Expected argument of type usage.v1.ListBilledUsageRequest');
@@ -102,6 +124,18 @@ reconcileUsage: {
     requestDeserialize: deserialize_usage_v1_ReconcileUsageRequest,
     responseSerialize: serialize_usage_v1_ReconcileUsageResponse,
     responseDeserialize: deserialize_usage_v1_ReconcileUsageResponse,
+  },
+  // LastUsageReconcilationTime returns the last time the usage reconciler ran.
+lastUsageReconcilationTime: {
+    path: '/usage.v1.UsageService/LastUsageReconcilationTime',
+    requestStream: false,
+    responseStream: false,
+    requestType: usage_v1_usage_pb.LastUsageReconcilationTimeRequest,
+    responseType: usage_v1_usage_pb.LastUsageReconcilationTimeResponse,
+    requestSerialize: serialize_usage_v1_LastUsageReconcilationTimeRequest,
+    requestDeserialize: deserialize_usage_v1_LastUsageReconcilationTimeRequest,
+    responseSerialize: serialize_usage_v1_LastUsageReconcilationTimeResponse,
+    responseDeserialize: deserialize_usage_v1_LastUsageReconcilationTimeResponse,
   },
   // GetCostCenter retrieves the spending limit with its associated attributionID
 getCostCenter: {

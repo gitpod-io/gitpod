@@ -30,6 +30,8 @@ type UsageServiceClient interface {
 	ListBilledUsage(ctx context.Context, in *ListBilledUsageRequest, opts ...grpc.CallOption) (*ListBilledUsageResponse, error)
 	// ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
 	ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error)
+	// LastUsageReconcilationTime returns the last time the usage reconciler ran.
+	LastUsageReconcilationTime(ctx context.Context, in *LastUsageReconcilationTimeRequest, opts ...grpc.CallOption) (*LastUsageReconcilationTimeResponse, error)
 	// GetCostCenter retrieves the spending limit with its associated attributionID
 	GetCostCenter(ctx context.Context, in *GetCostCenterRequest, opts ...grpc.CallOption) (*GetCostCenterResponse, error)
 }
@@ -60,6 +62,15 @@ func (c *usageServiceClient) ReconcileUsage(ctx context.Context, in *ReconcileUs
 	return out, nil
 }
 
+func (c *usageServiceClient) LastUsageReconcilationTime(ctx context.Context, in *LastUsageReconcilationTimeRequest, opts ...grpc.CallOption) (*LastUsageReconcilationTimeResponse, error) {
+	out := new(LastUsageReconcilationTimeResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/LastUsageReconcilationTime", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *usageServiceClient) GetCostCenter(ctx context.Context, in *GetCostCenterRequest, opts ...grpc.CallOption) (*GetCostCenterResponse, error) {
 	out := new(GetCostCenterResponse)
 	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/GetCostCenter", in, out, opts...)
@@ -77,6 +88,8 @@ type UsageServiceServer interface {
 	ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error)
 	// ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
 	ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error)
+	// LastUsageReconcilationTime returns the last time the usage reconciler ran.
+	LastUsageReconcilationTime(context.Context, *LastUsageReconcilationTimeRequest) (*LastUsageReconcilationTimeResponse, error)
 	// GetCostCenter retrieves the spending limit with its associated attributionID
 	GetCostCenter(context.Context, *GetCostCenterRequest) (*GetCostCenterResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
@@ -91,6 +104,9 @@ func (UnimplementedUsageServiceServer) ListBilledUsage(context.Context, *ListBil
 }
 func (UnimplementedUsageServiceServer) ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReconcileUsage not implemented")
+}
+func (UnimplementedUsageServiceServer) LastUsageReconcilationTime(context.Context, *LastUsageReconcilationTimeRequest) (*LastUsageReconcilationTimeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LastUsageReconcilationTime not implemented")
 }
 func (UnimplementedUsageServiceServer) GetCostCenter(context.Context, *GetCostCenterRequest) (*GetCostCenterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCostCenter not implemented")
@@ -144,6 +160,24 @@ func _UsageService_ReconcileUsage_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageService_LastUsageReconcilationTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LastUsageReconcilationTimeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).LastUsageReconcilationTime(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/LastUsageReconcilationTime",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).LastUsageReconcilationTime(ctx, req.(*LastUsageReconcilationTimeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UsageService_GetCostCenter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetCostCenterRequest)
 	if err := dec(in); err != nil {
@@ -176,6 +210,10 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReconcileUsage",
 			Handler:    _UsageService_ReconcileUsage_Handler,
+		},
+		{
+			MethodName: "LastUsageReconcilationTime",
+			Handler:    _UsageService_LastUsageReconcilationTime_Handler,
 		},
 		{
 			MethodName: "GetCostCenter",
