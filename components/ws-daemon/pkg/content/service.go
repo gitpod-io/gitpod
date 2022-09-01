@@ -265,12 +265,13 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			// required for this operation.
 			//
 			// With FWB this bit becomes unneccesary.
-			UID: (wsinit.GitpodUID + 100000 - 1),
-			GID: (wsinit.GitpodGID + 100000 - 1),
-			IdMappings: []archive.IDMapping{
-				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
-				{ContainerID: 1, HostID: 100000, Size: 65534},
-			},
+
+			// UID: (wsinit.GitpodUID + 100000 - 1),
+			// GID: (wsinit.GitpodGID + 100000 - 1),
+			// IdMappings: []archive.IDMapping{
+			// 	{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
+			// 	{ContainerID: 1, HostID: 100000, Size: 65534},
+			// },
 			OWI: OWI{
 				Owner:       req.Metadata.Owner,
 				WorkspaceID: req.Metadata.MetaId,
