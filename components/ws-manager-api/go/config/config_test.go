@@ -34,7 +34,11 @@ func TestValidate(t *testing.T) {
 				Interrupted:         util.Duration(10 * time.Second),
 			},
 			WorkspaceClasses: map[string]*WorkspaceClass{
-				DefaultWorkspaceClass: {},
+				DefaultWorkspaceClass: {
+					Runtime: RuntimeConfiguration{
+						Kind: RuntimeConfigurationKindWorkspacekit,
+					},
+				},
 			},
 			HeartbeatInterval:    util.Duration(10 * time.Second),
 			GitpodHostURL:        "https://gitpod.io",

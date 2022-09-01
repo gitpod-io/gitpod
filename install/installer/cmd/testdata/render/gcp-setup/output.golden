@@ -3703,6 +3703,9 @@ data:
               "size": "30Gi",
               "storageClass": "",
               "snapshotClass": ""
+            },
+            "runtime": {
+              "kind": "workspacekit"
             }
           }
         }
@@ -7464,7 +7467,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: ff12fcd029119d3d0900803abce70dd9a95d746776f14796a5bac3baf03ca8f6
+        gitpod.io/checksum_config: e1ec74f0ea7de340fab2681300f5a3d36428c89521be01607bc8604da088ea65
       creationTimestamp: null
       labels:
         app: gitpod

@@ -124,7 +124,28 @@ type WorkspaceClass struct {
 	Container ContainerConfiguration            `json:"container"`
 	Templates WorkspacePodTemplateConfiguration `json:"templates"`
 	PVC       PVCConfiguration                  `json:"pvc"`
+	Runtime   RuntimeConfiguration              `json:"runtime"`
 }
+
+type RuntimeConfiguration struct {
+	Kind RuntimeConfigurationKind `json:"kind"`
+}
+
+func (rtc RuntimeConfiguration) Validate() error {
+	switch rtc.Kind {
+	case RuntimeConfigurationKindWorkspacekit, RuntimeConfigurationKindKata:
+	default:
+		return xerrors.Errorf("unknown runtime configuration kind: %v", rtc.Kind)
+	}
+	return nil
+}
+
+type RuntimeConfigurationKind string
+
+const (
+	RuntimeConfigurationKindWorkspacekit = "workspacekit"
+	RuntimeConfigurationKindKata         = "kata"
+)
 
 // WorkspaceTimeoutConfiguration configures the timeout behaviour of workspaces
 type WorkspaceTimeoutConfiguration struct {
@@ -227,6 +248,9 @@ func (c *Configuration) Validate() error {
 			return xerrors.Errorf("workspace class name \"%s\" is invalid: %v", name, errs)
 		}
 		if err := class.Container.Validate(); err != nil {
+			return xerrors.Errorf("workspace class %s: %w", name, err)
+		}
+		if err := class.Runtime.Validate(); err != nil {
 			return xerrors.Errorf("workspace class %s: %w", name, err)
 		}
 

@@ -86,5 +86,12 @@ func getConfig() *config.ServiceConfiguration {
 		log.WithError(err).Fatal("cannot decode configuration. Maybe missing --config?")
 	}
 
+	// default runtime to workspacekit
+	for _, v := range cfg.Manager.WorkspaceClasses {
+		if v.Runtime.Kind == "" {
+			v.Runtime.Kind = config.RuntimeConfigurationKindWorkspacekit
+		}
+	}
+
 	return &cfg
 }
