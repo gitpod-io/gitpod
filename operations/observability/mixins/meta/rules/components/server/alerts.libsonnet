@@ -69,8 +69,8 @@
           {
             alert: 'WebsocketConnectionRateHigh',
             // Reasoning: the values are taken from past data
-            expr: 'sum(rate(server_websocket_connection_count[2m])) > 30',
-            'for': '5m',
+            expr: 'sum(rate(gitpod_server_api_connections_total[2m])) by (pod) > 5',
+            'for': '10m',
             labels: {
               // sent to the team internal channel until we fine tuned it
               severity: 'warning',
