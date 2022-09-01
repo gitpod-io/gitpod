@@ -586,7 +586,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
 
 			// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
-			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
+			// We set this magical  ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
 			gitpodGUID := int64(133332)
 			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
 
