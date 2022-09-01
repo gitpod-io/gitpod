@@ -137,7 +137,7 @@ args=()
 args+=( "-kubeconfig=/home/gitpod/.kube/config" )
 args+=( "-namespace=default" )
 [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
-args+=( "-timeout=30m" )
+args+=( "-timeout=60m" )
 args+=( "-p=1" )
 
 WK_TEST_LIST=(/workspace/test/tests/components/content-service /workspace/test/tests/components/image-builder /workspace/test/tests/components/ws-daemon /workspace/test/tests/components/ws-manager /workspace/test/tests/workspace)
