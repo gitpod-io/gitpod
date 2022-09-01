@@ -10,6 +10,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/google/go-cmp/cmp"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func TestMarkWorkspace(t *testing.T) {
@@ -46,6 +47,8 @@ func TestMarkWorkspace(t *testing.T) {
 			for k, v := range test.InitialState {
 				pod.Annotations[k] = v
 			}
+
+			pod.Spec.Containers[0].VolumeDevices = []corev1.VolumeDevice{}
 
 			err = manager.Clientset.Create(context.Background(), pod)
 			if err != nil {
@@ -116,6 +119,8 @@ func TestModifyFinalizer(t *testing.T) {
 				return
 			}
 			pod.Finalizers = test.InitialSet
+
+			pod.Spec.Containers[0].VolumeDevices = []corev1.VolumeDevice{}
 
 			err = manager.Clientset.Create(context.Background(), pod)
 			if err != nil {
