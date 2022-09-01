@@ -32,6 +32,8 @@ type UsageService struct {
 
 	reportGenerator *ReportGenerator
 
+	lastReconciliation time.Time
+
 	v1.UnimplementedUsageServiceServer
 }
 
@@ -126,6 +128,7 @@ func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsag
 		return nil, status.Errorf(codes.InvalidArgument, "End time must be after start time")
 	}
 
+	s.lastReconciliation = time.Now()
 	report, err := s.reportGenerator.GenerateUsageReport(ctx, from, to)
 	if err != nil {
 		log.Log.WithError(err).Error("Failed to reconcile time range.")
@@ -148,7 +151,6 @@ func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsag
 	return &v1.ReconcileUsageResponse{
 		ReportId: filename,
 	}, nil
-
 }
 
 func (s *UsageService) GetCostCenter(ctx context.Context, in *v1.GetCostCenterRequest) (*v1.GetCostCenterResponse, error) {
@@ -219,4 +221,10 @@ func instancesToUsageRecords(instances []db.WorkspaceInstanceForUsage, pricer *W
 	}
 
 	return usageRecords
+}
+
+func (s *UsageService) LastUsageReconcilationTime(ctx context.Context, in *v1.LastUsageReconcilationTimeRequest) (*v1.LastUsageReconcilationTimeResponse, error) {
+	return &v1.LastUsageReconcilationTimeResponse{
+		Timestamp: timestamppb.New(s.lastReconciliation),
+	}, nil
 }
