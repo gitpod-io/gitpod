@@ -110,7 +110,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 
 					// t.Parallel()
 
-					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+					ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 					defer cancel()
 
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

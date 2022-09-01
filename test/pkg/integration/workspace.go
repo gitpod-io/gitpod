@@ -24,7 +24,7 @@ import (
 
 const (
 	gitpodBuiltinUserID = "builtin-user-workspace-probe-0000000"
-	perCallTimeout      = 3 * time.Minute
+	perCallTimeout      = 5 * time.Minute
 )
 
 type launchWorkspaceDirectlyOptions struct {
