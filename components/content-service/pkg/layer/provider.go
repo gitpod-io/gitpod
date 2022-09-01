@@ -242,6 +242,8 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 		}
 	}()
 
+	span.LogKV("initializer", initializer.Spec)
+
 	// check if workspace has an FWB
 	bucket := s.Storage.Bucket(owner)
 	span.LogKV("bucket", bucket)
