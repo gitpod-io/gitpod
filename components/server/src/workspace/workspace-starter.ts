@@ -859,10 +859,25 @@ export class WorkspaceStarter {
                 }
             }
 
-            let workspaceClass = "";
             const userTeams = await this.teamDB.findTeamsByUser(user.id);
+            const wsConnectionLimitingEnabled = await getExperimentsClientForBackend().getValueAsync(
+                "workspace_connection_limiting",
+                false,
+                { user, teams: userTeams },
+            );
+            if (wsConnectionLimitingEnabled) {
+                const shouldLimitNetworkConnections = await this.entitlementService.limitNetworkConnections(
+                    user,
+                    new Date(),
+                );
+                if (shouldLimitNetworkConnections) {
+                    featureFlags = featureFlags.concat(["workspace_connection_limiting"]);
+                }
+            }
+
+            let workspaceClass = "";
             let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
-                user: user,
+                user,
                 teams: userTeams,
             });
             const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
