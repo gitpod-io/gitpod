@@ -1,5 +1,5 @@
 import { exec } from "../util/shell";
-import { getGlobalWerftInstance, Werft } from "../util/werft";
+import { Werft } from "../util/werft";
 import * as fs from "fs";
 
 type MonitoringSatelliteInstallerOptions = {
@@ -26,11 +26,7 @@ export class MonitoringSatelliteInstaller {
         const {
             werft,
             branch,
-            satelliteNamespace,
-            stackdriverServiceAccount,
-            previewDomain,
             previewName,
-            nodeExporterPort,
         } = this.options;
 
         werft.log(
