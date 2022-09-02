@@ -305,7 +305,8 @@ proto.wsdaemon.InitWorkspaceRequest.toObject = function(includeInstance, msg) {
     contentManifest: msg.getContentManifest_asB64(),
     remoteStorageDisabled: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
     storageQuotaBytes: jspb.Message.getFieldWithDefault(msg, 8, 0),
-    persistentVolumeClaim: jspb.Message.getBooleanFieldWithDefault(msg, 9, false)
+    persistentVolumeClaim: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
+    runtimeClassName: jspb.Message.getFieldWithDefault(msg, 10, "")
   };
 
   if (includeInstance) {
@@ -375,6 +376,10 @@ proto.wsdaemon.InitWorkspaceRequest.deserializeBinaryFromReader = function(msg, 
     case 9:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setPersistentVolumeClaim(value);
+      break;
+    case 10:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setRuntimeClassName(value);
       break;
     default:
       reader.skipField();
@@ -460,6 +465,13 @@ proto.wsdaemon.InitWorkspaceRequest.serializeBinaryToWriter = function(message, 
   if (f) {
     writer.writeBool(
       9,
+      f
+    );
+  }
+  f = message.getRuntimeClassName();
+  if (f.length > 0) {
+    writer.writeString(
+      10,
       f
     );
   }
@@ -669,6 +681,24 @@ proto.wsdaemon.InitWorkspaceRequest.prototype.getPersistentVolumeClaim = functio
  */
 proto.wsdaemon.InitWorkspaceRequest.prototype.setPersistentVolumeClaim = function(value) {
   return jspb.Message.setProto3BooleanField(this, 9, value);
+};
+
+
+/**
+ * optional string runtime_class_name = 10;
+ * @return {string}
+ */
+proto.wsdaemon.InitWorkspaceRequest.prototype.getRuntimeClassName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
+ */
+proto.wsdaemon.InitWorkspaceRequest.prototype.setRuntimeClassName = function(value) {
+  return jspb.Message.setProto3StringField(this, 10, value);
 };
 
 

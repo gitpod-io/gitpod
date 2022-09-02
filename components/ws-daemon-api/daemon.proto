@@ -60,6 +60,9 @@ message InitWorkspaceRequest {
     // happens inside workspacekit instead of in ws-daemon. We also use k8s Snapshots to store\restore workspace content
     // instead of GCS\tar.
     bool persistent_volume_claim = 9;
+
+    // runtime_class_name describe a custom container runtime selected to run the workspace
+    string runtime_class_name = 10;
 }
 
 // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
