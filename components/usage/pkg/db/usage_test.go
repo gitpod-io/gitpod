@@ -47,3 +47,65 @@ func TestFindUsageInRange(t *testing.T) {
 	require.Equal(t, 1, len(listResult))
 	require.Equal(t, []db.Usage{entryInside}, listResult)
 }
+
+func TestUpsertUsage_FailsWhenNoIDSet(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	entry := &db.Usage{
+		AttributionID: db.NewUserAttributionID(uuid.New().String()),
+		Description:   "",
+		CreditCents:   0,
+		//EffectiveTime: db.NewVarcharTime(start.Add(-1 * 23 * time.Hour)),
+		Kind:     "",
+		Draft:    true,
+		Metadata: nil,
+	}
+
+	updated, err := db.UpsertUsage(context.Background(), conn, entry)
+	require.NoError(t, err)
+	require.Equal(t, entry, updated)
+}
+
+func TestUpsertUsage_FailsWhenKindIsWorkspaceInstanceButIDMissing(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	entry := &db.Usage{
+		ID:            uuid.New(),
+		AttributionID: db.NewUserAttributionID(uuid.New().String()),
+		Description:   "some description",
+		CreditCents:   -5,
+		EffectiveTime: db.NewVarcharTime(time.Now()),
+		Kind:          db.UsageKind_WorkspaceInstance,
+		Draft:         false,
+		Metadata:      nil,
+	}
+
+	_, err := db.UpsertUsage(context.Background(), conn, entry)
+	require.Error(t, err)
+}
+
+func TestUpsertUsage_CreatesWhenEntryDoesNotExist(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	entry := &db.Usage{
+		ID:                  uuid.New(),
+		AttributionID:       db.NewUserAttributionID(uuid.New().String()),
+		Description:         "some description",
+		CreditCents:         -5,
+		EffectiveTime:       db.NewVarcharTime(time.Now()),
+		Kind:                db.UsageKind_WorkspaceInstance,
+		WorkspaceInstanceID: uuid.New(),
+		Draft:               false,
+		Metadata:            nil,
+	}
+
+	updated, err := db.UpsertUsage(context.Background(), conn, entry)
+	require.NoError(t, err)
+	require.Equal(t, entry, updated)
+
+	stored := db.Usage{}
+	tx := conn.First(&stored, entry.ID)
+	require.NoError(t, tx.Error)
+
+	require.Equal(t, entry, stored)
+}

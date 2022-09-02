@@ -6,12 +6,21 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"gorm.io/gorm/clause"
 
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
+
+const (
+	UsageKind_WorkspaceInstance UsageKind = "workspace_instance"
+	UsageKind_Invoice                     = "invoice"
+)
+
+type UsageKind string
 
 type Usage struct {
 	ID                  uuid.UUID      `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
@@ -19,7 +28,7 @@ type Usage struct {
 	Description         string         `gorm:"column:description;type:varchar;size:255;" json:"description"`
 	CreditCents         int64          `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
 	EffectiveTime       VarcharTime    `gorm:"column:effectiveTime;type:varchar;size:255;" json:"effectiveTime"`
-	Kind                string         `gorm:"column:kind;type:char;size:10;" json:"kind"`
+	Kind                UsageKind      `gorm:"column:kind;type:char;size:10;" json:"kind"`
 	WorkspaceInstanceID uuid.UUID      `gorm:"column:workspaceInstanceId;type:char;size:36;" json:"workspaceInstanceId"`
 	Draft               bool           `gorm:"column:draft;type:boolean;" json:"draft"`
 	Metadata            datatypes.JSON `gorm:"column:metadata;type:text;size:65535" json:"metadata"`
@@ -50,4 +59,31 @@ func FindUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, 
 		return nil, fmt.Errorf("failed to get usage records: %s", result.Error)
 	}
 	return usageRecords, nil
+}
+
+func UpsertUsage(ctx context.Context, conn *gorm.DB, usage *Usage) (*Usage, error) {
+	if usage.ID.ID() == 0 {
+		return nil, errors.New("usage record ID not set, required")
+	}
+
+	switch usage.Kind {
+	case UsageKind_WorkspaceInstance:
+		// ensure there is a workspace instance ID
+		if usage.WorkspaceInstanceID.ID() == 0 {
+			return nil, errors.New(fmt.Sprintf("Usage record is of %s kind, but does not have a workspace instance ID set", UsageKind_WorkspaceInstance))
+		}
+	default:
+		return nil, errors.New(fmt.Sprintf("unknown usage kind: %s", usage.Kind))
+	}
+
+	db := conn.WithContext(ctx).Clauses(clause.OnConflict{
+		UpdateAll: true,
+	})
+
+	tx := db.Create(usage)
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to upsert usage record: %w", tx.Error)
+	}
+
+	return usage, nil
 }
