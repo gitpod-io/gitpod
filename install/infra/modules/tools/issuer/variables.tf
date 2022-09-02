@@ -11,6 +11,10 @@ variable "secretAccessKey" {
     default     = null
 }
 
+variable "gcp_credentials" {
+    default     = null
+}
+
 variable "issuer_name" {
     default     = "route53"
 }

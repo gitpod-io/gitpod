@@ -39,29 +39,3 @@ resource "helm_release" "cert" {
     command = "echo 'Waiting for cert-manager validating webhook to get its CA injected, so we can start to apply custom resources ...' && sleep 60"
   }
 }
-
-# the following is only for GCP managed DNS setup
-
-data local_file "gcp_credentials" {
-  count    = var.credentials == null ? 0 : 1
-  filename = var.credentials
-}
-
-provider "kubernetes" {
-  config_path = var.kubeconfig
-}
-
-resource "kubernetes_secret" "dns_solver" {
-  count    = var.credentials == null ? 0 : 1
-  depends_on = [
-    helm_release.cert,
-    data.local_file.gcp_credentials,
-  ]
-  metadata {
-    name      = "clouddns-dns01-solver"
-    namespace = "cert-manager"
-  }
-  data = {
-    "keys.json" = "${data.local_file.gcp_credentials[0].content}"
-  }
-}

@@ -7,7 +7,6 @@ domain_name = "your_domain_name.com"
 region      = "europe-west1"
 zone        = "europe-west1-d"
 project     = "my-gcp-project"
-credentials = "/path/to/account/key.json"
 
 cluster_version = "1.22"
 
