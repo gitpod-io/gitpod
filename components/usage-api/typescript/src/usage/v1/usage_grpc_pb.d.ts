@@ -18,6 +18,7 @@ interface IUsageServiceService extends grpc.ServiceDefinition<grpc.UntypedServic
     listBilledUsage: IUsageServiceService_IListBilledUsage;
     reconcileUsage: IUsageServiceService_IReconcileUsage;
     getCostCenter: IUsageServiceService_IGetCostCenter;
+    reconcileUsageWithLedger: IUsageServiceService_IReconcileUsageWithLedger;
 }
 
 interface IUsageServiceService_IListBilledUsage extends grpc.MethodDefinition<usage_v1_usage_pb.ListBilledUsageRequest, usage_v1_usage_pb.ListBilledUsageResponse> {
@@ -47,6 +48,15 @@ interface IUsageServiceService_IGetCostCenter extends grpc.MethodDefinition<usag
     responseSerialize: grpc.serialize<usage_v1_usage_pb.GetCostCenterResponse>;
     responseDeserialize: grpc.deserialize<usage_v1_usage_pb.GetCostCenterResponse>;
 }
+interface IUsageServiceService_IReconcileUsageWithLedger extends grpc.MethodDefinition<usage_v1_usage_pb.ReconcileUsageWithLedgerRequest, usage_v1_usage_pb.ReconcileUsageWithLedgerResponse> {
+    path: "/usage.v1.UsageService/ReconcileUsageWithLedger";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<usage_v1_usage_pb.ReconcileUsageWithLedgerRequest>;
+    requestDeserialize: grpc.deserialize<usage_v1_usage_pb.ReconcileUsageWithLedgerRequest>;
+    responseSerialize: grpc.serialize<usage_v1_usage_pb.ReconcileUsageWithLedgerResponse>;
+    responseDeserialize: grpc.deserialize<usage_v1_usage_pb.ReconcileUsageWithLedgerResponse>;
+}
 
 export const UsageServiceService: IUsageServiceService;
 
@@ -54,6 +64,7 @@ export interface IUsageServiceServer extends grpc.UntypedServiceImplementation {
     listBilledUsage: grpc.handleUnaryCall<usage_v1_usage_pb.ListBilledUsageRequest, usage_v1_usage_pb.ListBilledUsageResponse>;
     reconcileUsage: grpc.handleUnaryCall<usage_v1_usage_pb.ReconcileUsageRequest, usage_v1_usage_pb.ReconcileUsageResponse>;
     getCostCenter: grpc.handleUnaryCall<usage_v1_usage_pb.GetCostCenterRequest, usage_v1_usage_pb.GetCostCenterResponse>;
+    reconcileUsageWithLedger: grpc.handleUnaryCall<usage_v1_usage_pb.ReconcileUsageWithLedgerRequest, usage_v1_usage_pb.ReconcileUsageWithLedgerResponse>;
 }
 
 export interface IUsageServiceClient {
@@ -66,6 +77,9 @@ export interface IUsageServiceClient {
     getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
     getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
     getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
+    reconcileUsageWithLedger(request: usage_v1_usage_pb.ReconcileUsageWithLedgerRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageWithLedgerResponse) => void): grpc.ClientUnaryCall;
+    reconcileUsageWithLedger(request: usage_v1_usage_pb.ReconcileUsageWithLedgerRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageWithLedgerResponse) => void): grpc.ClientUnaryCall;
+    reconcileUsageWithLedger(request: usage_v1_usage_pb.ReconcileUsageWithLedgerRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageWithLedgerResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class UsageServiceClient extends grpc.Client implements IUsageServiceClient {
@@ -79,4 +93,7 @@ export class UsageServiceClient extends grpc.Client implements IUsageServiceClie
     public getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
     public getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
     public getCostCenter(request: usage_v1_usage_pb.GetCostCenterRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.GetCostCenterResponse) => void): grpc.ClientUnaryCall;
+    public reconcileUsageWithLedger(request: usage_v1_usage_pb.ReconcileUsageWithLedgerRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageWithLedgerResponse) => void): grpc.ClientUnaryCall;
+    public reconcileUsageWithLedger(request: usage_v1_usage_pb.ReconcileUsageWithLedgerRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageWithLedgerResponse) => void): grpc.ClientUnaryCall;
+    public reconcileUsageWithLedger(request: usage_v1_usage_pb.ReconcileUsageWithLedgerRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_usage_pb.ReconcileUsageWithLedgerResponse) => void): grpc.ClientUnaryCall;
 }

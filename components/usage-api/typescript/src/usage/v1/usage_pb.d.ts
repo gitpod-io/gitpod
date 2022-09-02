@@ -13,6 +13,52 @@
 import * as jspb from "google-protobuf";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 
+export class ReconcileUsageWithLedgerRequest extends jspb.Message {
+
+    hasFrom(): boolean;
+    clearFrom(): void;
+    getFrom(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setFrom(value?: google_protobuf_timestamp_pb.Timestamp): ReconcileUsageWithLedgerRequest;
+
+    hasTo(): boolean;
+    clearTo(): void;
+    getTo(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setTo(value?: google_protobuf_timestamp_pb.Timestamp): ReconcileUsageWithLedgerRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ReconcileUsageWithLedgerRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: ReconcileUsageWithLedgerRequest): ReconcileUsageWithLedgerRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ReconcileUsageWithLedgerRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ReconcileUsageWithLedgerRequest;
+    static deserializeBinaryFromReader(message: ReconcileUsageWithLedgerRequest, reader: jspb.BinaryReader): ReconcileUsageWithLedgerRequest;
+}
+
+export namespace ReconcileUsageWithLedgerRequest {
+    export type AsObject = {
+        from?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        to?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+    }
+}
+
+export class ReconcileUsageWithLedgerResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ReconcileUsageWithLedgerResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: ReconcileUsageWithLedgerResponse): ReconcileUsageWithLedgerResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ReconcileUsageWithLedgerResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ReconcileUsageWithLedgerResponse;
+    static deserializeBinaryFromReader(message: ReconcileUsageWithLedgerResponse, reader: jspb.BinaryReader): ReconcileUsageWithLedgerResponse;
+}
+
+export namespace ReconcileUsageWithLedgerResponse {
+    export type AsObject = {
+    }
+}
+
 export class ListBilledUsageRequest extends jspb.Message {
     getAttributionId(): string;
     setAttributionId(value: string): ListBilledUsageRequest;

@@ -15,7 +15,21 @@ service UsageService {
 
     // GetCostCenter retrieves the spending limit with its associated attributionID
     rpc GetCostCenter(GetCostCenterRequest) returns (GetCostCenterResponse) {}
+
+    // Triggers reconciliation of usage with ledger implementation.
+    rpc ReconcileUsageWithLedger(ReconcileUsageWithLedgerRequest) returns (ReconcileUsageWithLedgerResponse) {}
+
 }
+
+message ReconcileUsageWithLedgerRequest {
+    // from specifies the starting time range for this request.
+    google.protobuf.Timestamp from = 1;
+
+    // to specifies the end time range for this request.
+    google.protobuf.Timestamp to = 2;
+}
+
+message ReconcileUsageWithLedgerResponse {}
 
 message ListBilledUsageRequest {
     string attribution_id = 1;
