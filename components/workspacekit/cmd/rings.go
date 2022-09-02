@@ -95,7 +95,7 @@ var ring0Cmd = &cobra.Command{
 		client.Close()
 
 		defer func() {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 			defer cancel()
 
 			client, err := connectToInWorkspaceDaemonService(ctx)
@@ -210,7 +210,7 @@ var ring1Cmd = &cobra.Command{
 
 		defer log.Info("ring1 stopped")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 
 		mapping := []*daemonapi.WriteIDMappingRequest_Mapping{
