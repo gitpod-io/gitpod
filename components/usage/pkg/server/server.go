@@ -126,6 +126,17 @@ func Start(cfg Config) error {
 			return fmt.Errorf("failed to start usage controller: %w", err)
 		}
 		defer ctrl.Stop()
+
+		ledgerCtrl, err := controller.New(schedule, &controller.LedgerReconciler{})
+		if err != nil {
+			return fmt.Errorf("failed to initialize ledger controller: %w", err)
+		}
+
+		err = ledgerCtrl.Start()
+		if err != nil {
+			return fmt.Errorf("failed tostart ledger controller: %w", err)
+		}
+		defer ledgerCtrl.Stop()
 	} else {
 		log.Info("No controller schedule specified, controller will be disabled.")
 	}
