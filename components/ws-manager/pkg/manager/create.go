@@ -517,14 +517,14 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				LocalhostProfile: pointer.String(m.Config.SeccompProfile),
 			},
 		}
+	case config.RuntimeConfigurationKindKata:
+		runtimeClass = pointer.String("kata-qemu")
 		/*
-			case config.RuntimeConfigurationKindKata:
-				runtimeClass = pointer.String("kata-qemu")
-				securityContext = &corev1.PodSecurityContext{
-					FSGroup:      pointer.Int64(33333),
-					RunAsNonRoot: pointer.Bool(false),
-					RunAsUser:    pointer.Int64(0),
-				}
+			securityContext = &corev1.PodSecurityContext{
+				FSGroup:      pointer.Int64(33333),
+				RunAsNonRoot: pointer.Bool(false),
+				RunAsUser:    pointer.Int64(0),
+			}
 		*/
 	}
 
