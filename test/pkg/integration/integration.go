@@ -36,6 +36,8 @@ import (
 	kubectlexec "k8s.io/kubectl/pkg/cmd/exec"
 	"sigs.k8s.io/e2e-framework/klient"
 
+	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
+
 	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
@@ -500,4 +502,28 @@ func isPodReady(s *corev1.PodStatus) bool {
 	}
 
 	return false
+}
+
+func FindVolumeSnapshot(instanceID, namespace string, client klient.Client) (string, string, error) {
+	vsClient, err := volumesnapshotv1.NewForConfig(client.RESTConfig())
+	if err != nil {
+		return "", "", err
+	}
+
+	volumeSnapshots, err := vsClient.SnapshotV1().VolumeSnapshots(namespace).List(context.Background(), metav1.ListOptions{
+		LabelSelector: "workspaceID=" + instanceID,
+	})
+	if err != nil {
+		return "", "", xerrors.Errorf("cannot list volume snapshots: %w", err)
+	}
+	if len(volumeSnapshots.Items) == 0 {
+		return "", "", xerrors.Errorf("no volume snapshot for instance %s", instanceID)
+	}
+
+	var volumeSnapshot, volumeSnapshotContent string
+	volumeSnapshot = volumeSnapshots.Items[0].Name
+	if volumeSnapshots.Items[0].Status != nil && volumeSnapshots.Items[0].Status.BoundVolumeSnapshotContentName != nil {
+		volumeSnapshotContent = *volumeSnapshots.Items[0].Status.BoundVolumeSnapshotContentName
+	}
+	return volumeSnapshot, volumeSnapshotContent, nil
 }
