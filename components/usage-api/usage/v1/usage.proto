@@ -15,6 +15,66 @@ service UsageService {
 
     // GetCostCenter retrieves the spending limit with its associated attributionID
     rpc GetCostCenter(GetCostCenterRequest) returns (GetCostCenterResponse) {}
+
+    // Triggers reconciliation of usage with ledger implementation.
+    rpc ReconcileUsageWithLedger(ReconcileUsageWithLedgerRequest) returns (ReconcileUsageWithLedgerResponse) {}
+
+    // Creates, or updates, a Usage record
+    rpc UpsertUsage(UpsertUsageRequest) returns (UpsertUsageResponse) {}
+}
+
+enum UsageKind {
+    USAGE_KIND_UNKNOWN = 0;
+    USAGE_KIND_WORKSPACE_INSTANCE = 1;
+    USAGE_KIND_INVOICE = 2;
+}
+
+message Usage {
+    // UUID identifier of the Usage event. Required.
+    string id = 1;
+
+    // Attribution ID for the usage record. Required.
+    string attribution_id = 2;
+
+    // Description of the Usage event for humans.
+    string description = 3;
+
+    // Positive, or negative amount of credits for the Usage event.
+    // Credits are accepted with full precision, but returned with two decimal point precision.
+    double credits = 4;
+
+    // effective_time is the time when this record has taken effect.
+    google.protobuf.Timestamp effective_time = 5;
+
+    // Type of usage record.
+    UsageKind kind = 6;
+
+    // Workspace Instance Identifier. Present only when kind is USAGE_KIND_WORKSPACE_INSTANCE
+    string workspace_instance_id = 7;
+
+    // Indicator whether the Usage record is a draft record.
+    bool draft = 8;
+
+    // Metadata are additional information for this Usage record. Metadata are JSON encoded and only inteded to be interpreted for known kinds.
+    string metadata = 9;
+}
+
+message ReconcileUsageWithLedgerRequest {
+    // from specifies the starting time range for this request.
+    google.protobuf.Timestamp from = 1;
+
+    // to specifies the end time range for this request.
+    google.protobuf.Timestamp to = 2;
+}
+
+message ReconcileUsageWithLedgerResponse {}
+
+message UpsertUsageRequest {
+    Usage usage = 1;
+}
+
+message UpsertUsageResponse {
+    Usage usage = 1;
 }
 
 message ListBilledUsageRequest {

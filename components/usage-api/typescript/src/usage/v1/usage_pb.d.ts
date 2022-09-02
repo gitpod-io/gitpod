@@ -13,6 +13,145 @@
 import * as jspb from "google-protobuf";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 
+export class Usage extends jspb.Message {
+    getId(): string;
+    setId(value: string): Usage;
+    getAttributionId(): string;
+    setAttributionId(value: string): Usage;
+    getDescription(): string;
+    setDescription(value: string): Usage;
+    getCredits(): number;
+    setCredits(value: number): Usage;
+
+    hasEffectiveTime(): boolean;
+    clearEffectiveTime(): void;
+    getEffectiveTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setEffectiveTime(value?: google_protobuf_timestamp_pb.Timestamp): Usage;
+    getKind(): UsageKind;
+    setKind(value: UsageKind): Usage;
+    getWorkspaceInstanceId(): string;
+    setWorkspaceInstanceId(value: string): Usage;
+    getDraft(): boolean;
+    setDraft(value: boolean): Usage;
+    getMetadata(): string;
+    setMetadata(value: string): Usage;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): Usage.AsObject;
+    static toObject(includeInstance: boolean, msg: Usage): Usage.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: Usage, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): Usage;
+    static deserializeBinaryFromReader(message: Usage, reader: jspb.BinaryReader): Usage;
+}
+
+export namespace Usage {
+    export type AsObject = {
+        id: string,
+        attributionId: string,
+        description: string,
+        credits: number,
+        effectiveTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        kind: UsageKind,
+        workspaceInstanceId: string,
+        draft: boolean,
+        metadata: string,
+    }
+}
+
+export class ReconcileUsageWithLedgerRequest extends jspb.Message {
+
+    hasFrom(): boolean;
+    clearFrom(): void;
+    getFrom(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setFrom(value?: google_protobuf_timestamp_pb.Timestamp): ReconcileUsageWithLedgerRequest;
+
+    hasTo(): boolean;
+    clearTo(): void;
+    getTo(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setTo(value?: google_protobuf_timestamp_pb.Timestamp): ReconcileUsageWithLedgerRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ReconcileUsageWithLedgerRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: ReconcileUsageWithLedgerRequest): ReconcileUsageWithLedgerRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ReconcileUsageWithLedgerRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ReconcileUsageWithLedgerRequest;
+    static deserializeBinaryFromReader(message: ReconcileUsageWithLedgerRequest, reader: jspb.BinaryReader): ReconcileUsageWithLedgerRequest;
+}
+
+export namespace ReconcileUsageWithLedgerRequest {
+    export type AsObject = {
+        from?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        to?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+    }
+}
+
+export class ReconcileUsageWithLedgerResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ReconcileUsageWithLedgerResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: ReconcileUsageWithLedgerResponse): ReconcileUsageWithLedgerResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ReconcileUsageWithLedgerResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ReconcileUsageWithLedgerResponse;
+    static deserializeBinaryFromReader(message: ReconcileUsageWithLedgerResponse, reader: jspb.BinaryReader): ReconcileUsageWithLedgerResponse;
+}
+
+export namespace ReconcileUsageWithLedgerResponse {
+    export type AsObject = {
+    }
+}
+
+export class UpsertUsageRequest extends jspb.Message {
+
+    hasUsage(): boolean;
+    clearUsage(): void;
+    getUsage(): Usage | undefined;
+    setUsage(value?: Usage): UpsertUsageRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UpsertUsageRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: UpsertUsageRequest): UpsertUsageRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UpsertUsageRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UpsertUsageRequest;
+    static deserializeBinaryFromReader(message: UpsertUsageRequest, reader: jspb.BinaryReader): UpsertUsageRequest;
+}
+
+export namespace UpsertUsageRequest {
+    export type AsObject = {
+        usage?: Usage.AsObject,
+    }
+}
+
+export class UpsertUsageResponse extends jspb.Message {
+
+    hasUsage(): boolean;
+    clearUsage(): void;
+    getUsage(): Usage | undefined;
+    setUsage(value?: Usage): UpsertUsageResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UpsertUsageResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: UpsertUsageResponse): UpsertUsageResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UpsertUsageResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UpsertUsageResponse;
+    static deserializeBinaryFromReader(message: UpsertUsageResponse, reader: jspb.BinaryReader): UpsertUsageResponse;
+}
+
+export namespace UpsertUsageResponse {
+    export type AsObject = {
+        usage?: Usage.AsObject,
+    }
+}
+
 export class ListBilledUsageRequest extends jspb.Message {
     getAttributionId(): string;
     setAttributionId(value: string): ListBilledUsageRequest;
@@ -320,4 +459,10 @@ export namespace CostCenter {
         attributionId: string,
         spendingLimit: number,
     }
+}
+
+export enum UsageKind {
+    USAGE_KIND_UNKNOWN = 0,
+    USAGE_KIND_WORKSPACE_INSTANCE = 1,
+    USAGE_KIND_INVOICE = 2,
 }

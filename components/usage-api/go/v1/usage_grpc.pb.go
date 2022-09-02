@@ -32,6 +32,10 @@ type UsageServiceClient interface {
 	ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error)
 	// GetCostCenter retrieves the spending limit with its associated attributionID
 	GetCostCenter(ctx context.Context, in *GetCostCenterRequest, opts ...grpc.CallOption) (*GetCostCenterResponse, error)
+	// Triggers reconciliation of usage with ledger implementation.
+	ReconcileUsageWithLedger(ctx context.Context, in *ReconcileUsageWithLedgerRequest, opts ...grpc.CallOption) (*ReconcileUsageWithLedgerResponse, error)
+	// Creates, or updates, a Usage record
+	UpsertUsage(ctx context.Context, in *UpsertUsageRequest, opts ...grpc.CallOption) (*UpsertUsageResponse, error)
 }
 
 type usageServiceClient struct {
@@ -69,6 +73,24 @@ func (c *usageServiceClient) GetCostCenter(ctx context.Context, in *GetCostCente
 	return out, nil
 }
 
+func (c *usageServiceClient) ReconcileUsageWithLedger(ctx context.Context, in *ReconcileUsageWithLedgerRequest, opts ...grpc.CallOption) (*ReconcileUsageWithLedgerResponse, error) {
+	out := new(ReconcileUsageWithLedgerResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/ReconcileUsageWithLedger", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usageServiceClient) UpsertUsage(ctx context.Context, in *UpsertUsageRequest, opts ...grpc.CallOption) (*UpsertUsageResponse, error) {
+	out := new(UpsertUsageResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/UpsertUsage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsageServiceServer is the server API for UsageService service.
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
@@ -79,6 +101,10 @@ type UsageServiceServer interface {
 	ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error)
 	// GetCostCenter retrieves the spending limit with its associated attributionID
 	GetCostCenter(context.Context, *GetCostCenterRequest) (*GetCostCenterResponse, error)
+	// Triggers reconciliation of usage with ledger implementation.
+	ReconcileUsageWithLedger(context.Context, *ReconcileUsageWithLedgerRequest) (*ReconcileUsageWithLedgerResponse, error)
+	// Creates, or updates, a Usage record
+	UpsertUsage(context.Context, *UpsertUsageRequest) (*UpsertUsageResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
 }
 
@@ -94,6 +120,12 @@ func (UnimplementedUsageServiceServer) ReconcileUsage(context.Context, *Reconcil
 }
 func (UnimplementedUsageServiceServer) GetCostCenter(context.Context, *GetCostCenterRequest) (*GetCostCenterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCostCenter not implemented")
+}
+func (UnimplementedUsageServiceServer) ReconcileUsageWithLedger(context.Context, *ReconcileUsageWithLedgerRequest) (*ReconcileUsageWithLedgerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReconcileUsageWithLedger not implemented")
+}
+func (UnimplementedUsageServiceServer) UpsertUsage(context.Context, *UpsertUsageRequest) (*UpsertUsageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertUsage not implemented")
 }
 func (UnimplementedUsageServiceServer) mustEmbedUnimplementedUsageServiceServer() {}
 
@@ -162,6 +194,42 @@ func _UsageService_GetCostCenter_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageService_ReconcileUsageWithLedger_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReconcileUsageWithLedgerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).ReconcileUsageWithLedger(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/ReconcileUsageWithLedger",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).ReconcileUsageWithLedger(ctx, req.(*ReconcileUsageWithLedgerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsageService_UpsertUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertUsageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).UpsertUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/UpsertUsage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).UpsertUsage(ctx, req.(*UpsertUsageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UsageService_ServiceDesc is the grpc.ServiceDesc for UsageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -180,6 +248,14 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCostCenter",
 			Handler:    _UsageService_GetCostCenter_Handler,
+		},
+		{
+			MethodName: "ReconcileUsageWithLedger",
+			Handler:    _UsageService_ReconcileUsageWithLedger_Handler,
+		},
+		{
+			MethodName: "UpsertUsage",
+			Handler:    _UsageService_UpsertUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
