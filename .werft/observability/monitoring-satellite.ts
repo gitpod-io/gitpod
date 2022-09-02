@@ -116,5 +116,9 @@ export class MonitoringSatelliteInstaller {
                 werft.failSlice(sliceName, err)
                 return
             }
+
+            // The grafana YAML files we're importing have nodeSelector tied to a nodepool that don't exist in previews
+            // We're hot-patching the removal os such nodeSelector to make sure Grafana starts
+            exec(`kubectl patch deployments.apps -n monitoring-satellite grafana --type=json -p="[{'op': 'remove', 'path': '/spec/template/spec/nodeSelector'}]"`)
     }
 }
