@@ -77,6 +77,28 @@ function deserialize_usage_v1_ReconcileUsageResponse(buffer_arg) {
   return usage_v1_usage_pb.ReconcileUsageResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_usage_v1_ReconcileUsageWithLedgerRequest(arg) {
+  if (!(arg instanceof usage_v1_usage_pb.ReconcileUsageWithLedgerRequest)) {
+    throw new Error('Expected argument of type usage.v1.ReconcileUsageWithLedgerRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_ReconcileUsageWithLedgerRequest(buffer_arg) {
+  return usage_v1_usage_pb.ReconcileUsageWithLedgerRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_usage_v1_ReconcileUsageWithLedgerResponse(arg) {
+  if (!(arg instanceof usage_v1_usage_pb.ReconcileUsageWithLedgerResponse)) {
+    throw new Error('Expected argument of type usage.v1.ReconcileUsageWithLedgerResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_ReconcileUsageWithLedgerResponse(buffer_arg) {
+  return usage_v1_usage_pb.ReconcileUsageWithLedgerResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 
 var UsageServiceService = exports.UsageServiceService = {
   // ListBilledUsage retrieves all usage for the specified attributionId
@@ -114,6 +136,18 @@ getCostCenter: {
     requestDeserialize: deserialize_usage_v1_GetCostCenterRequest,
     responseSerialize: serialize_usage_v1_GetCostCenterResponse,
     responseDeserialize: deserialize_usage_v1_GetCostCenterResponse,
+  },
+  // Triggers reconciliation of usage with ledger implementation.
+reconcileUsageWithLedger: {
+    path: '/usage.v1.UsageService/ReconcileUsageWithLedger',
+    requestStream: false,
+    responseStream: false,
+    requestType: usage_v1_usage_pb.ReconcileUsageWithLedgerRequest,
+    responseType: usage_v1_usage_pb.ReconcileUsageWithLedgerResponse,
+    requestSerialize: serialize_usage_v1_ReconcileUsageWithLedgerRequest,
+    requestDeserialize: deserialize_usage_v1_ReconcileUsageWithLedgerRequest,
+    responseSerialize: serialize_usage_v1_ReconcileUsageWithLedgerResponse,
+    responseDeserialize: deserialize_usage_v1_ReconcileUsageWithLedgerResponse,
   },
 };
 
