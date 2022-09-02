@@ -212,7 +212,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         previewName: previewNameFromBranchName(jobConfig.repository.branch),
         stackdriverServiceAccount: STACKDRIVER_SERVICEACCOUNT,
         werft: werft,
-        installationMethod: jobConfig.observability.installationMethod,
     });
     const sliceID = "observability";
     monitoringSatelliteInstaller
