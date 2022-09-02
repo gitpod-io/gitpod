@@ -29,7 +29,7 @@ service MetricsService {
 message AddCounterRequest {
     string name = 1;
     map<string, string> labels = 2;
-    optional int32 value = 3;
+    int32 value = 3;
 }
 
 message AddCounterResponse {}
