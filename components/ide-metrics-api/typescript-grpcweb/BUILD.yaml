@@ -2,8 +2,11 @@ packages:
   - name: lib
     type: yarn
     srcs:
+      - src/**
       - package.json
       - build.sh
+      - webpack.config.js
+      - tsconfig.json
     deps:
       - components/ide-metrics-api:proto
     env:

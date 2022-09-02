@@ -1,26 +1,14 @@
 {
     "compilerOptions": {
-        "rootDir": "src",
-        "experimentalDecorators": true,
-        "outDir": "lib",
+        "module": "commonjs",
+        "target": "es6",
         "lib": [
             "es6",
-            "esnext.asynciterable"
+            "ES2020.Promise"
         ],
-        "strict": true,
-        "noEmitOnError": false,
-        "noUnusedLocals": true,
-        "emitDecoratorMetadata": true,
-        "strictPropertyInitialization": false,
-        "downlevelIteration": true,
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "target": "es6",
-        "jsx": "react",
+        "outDir": "lib",
         "sourceMap": true,
         "declaration": true,
-        "declarationMap": true,
-        "skipLibCheck": true,
         "useUnknownInCatchVariables": false
     },
     "include": [

@@ -24,6 +24,7 @@ window.addEventListener('error', (event) => {
         // If the event has a `target`, it means that it wasn't a script error
         if (resourceSource) {
             if (resourceSource.match(new RegExp(/\/build\/ide\/code:.+\/__files__\//g))) {
+                // TODO(ak) reconsider how to hide knowledge of VS Code from supervisor frontend, i.e instrument amd loader instead
                 labels['resource'] = 'vscode-web-workbench';
             }
             labels['error'] = 'LoadError';
@@ -126,6 +127,10 @@ const toStop = new DisposableCollection();
     toStop.push({ dispose: () => window.removeEventListener('message', hideDesktopIdeEventListener) });
 
     //#region gitpod browser telemetry
+    // TODO(ak) get rid of it
+    // it is bad usage of window.postMessage
+    // VS Code should use Segment directly here and publish to production/staging untrusted
+    // supervisor frontend should not care about IDE specifics
     window.addEventListener("message", async (event) => {
         const type = event.data.type;
         if (type === "vscode_telemetry") {
