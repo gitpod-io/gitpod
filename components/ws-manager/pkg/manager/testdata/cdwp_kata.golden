@@ -159,18 +159,6 @@
                             "cpu": "900m"
                         }
                     },
-                    "volumeMounts": [
-                        {
-                            "name": "vol-this-workspace",
-                            "mountPath": "/workspace",
-                            "mountPropagation": "HostToContainer"
-                        },
-                        {
-                            "name": "daemon-mount",
-                            "mountPath": "/.workspace",
-                            "mountPropagation": "HostToContainer"
-                        }
-                    ],
                     "readinessProbe": {
                         "httpGet": {
                             "path": "/_supervisor/v1/status/content/wait/true",
