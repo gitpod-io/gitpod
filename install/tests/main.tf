@@ -34,7 +34,6 @@ module "gke" {
 
   cluster_name    = "gp-${var.TEST_ID}"
   project         = var.project
-  credentials     = var.sa_creds
   kubeconfig      = var.kubeconfig
   region          = "europe-west1"
   zone            = "europe-west1-d"
@@ -60,6 +59,7 @@ module "k3s" {
 module "gcp-issuer" {
   source      = "../infra/modules/tools/issuer"
   kubeconfig  = var.kubeconfig
+  gcp_credentials = var.dns_sa_creds
   issuer_name = "cloudDNS"
   cert_manager_issuer = {
     project = "dns-for-playgrounds"
@@ -107,7 +107,6 @@ module "certmanager" {
   source = "../infra/modules/tools/cert-manager"
 
   kubeconfig  = var.kubeconfig
-  credentials = var.dns_sa_creds
 }
 
 module "clouddns-externaldns" {

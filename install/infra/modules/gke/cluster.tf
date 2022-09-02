@@ -1,0 +1,171 @@
+resource "google_service_account" "cluster_sa" {
+  account_id   = local.gke_sa
+  display_name = "Service Account managed by TF for GKE cluster"
+}
+
+resource "google_project_iam_member" "gke-sa-iam-storage" {
+  project = var.project
+  role = "roles/storage.admin"
+
+  member = "serviceAccount:${google_service_account.cluster_sa.email}"
+}
+
+resource "google_project_iam_member" "gke-sa-iam-log" {
+  project = var.project
+  role = "roles/logging.logWriter"
+
+  member = "serviceAccount:${google_service_account.cluster_sa.email}"
+}
+
+resource "google_project_iam_member" "gke-sa-iam-metrics" {
+  project = var.project
+  role = "roles/monitoring.metricWriter"
+
+  member = "serviceAccount:${google_service_account.cluster_sa.email}"
+}
+
+resource "google_project_iam_member" "gke-sa-iam-container" {
+  project = var.project
+  role = "roles/container.admin"
+
+  member = "serviceAccount:${google_service_account.cluster_sa.email}"
+}
+
+resource "google_container_cluster" "gitpod-cluster" {
+  name     = var.cluster_name
+  location = var.zone == null ? var.region : var.zone
+
+  min_master_version = var.cluster_version
+
+  remove_default_node_pool = true
+
+  network    = google_compute_network.vpc.name
+  subnetwork = google_compute_subnetwork.subnet.name
+
+  initial_node_count = 1
+  release_channel {
+    channel = "UNSPECIFIED"
+  }
+
+  ip_allocation_policy {
+    cluster_secondary_range_name  = "cluster-secondary-ip-range"
+    services_secondary_range_name = "services-secondary-ip-range"
+  }
+
+  network_policy {
+    enabled  = true
+    provider = "CALICO"
+  }
+
+  addons_config {
+    http_load_balancing {
+      disabled = false
+    }
+
+    horizontal_pod_autoscaling {
+      disabled = false
+    }
+
+    dns_cache_config {
+      enabled = true
+    }
+  }
+}
+
+resource "google_container_node_pool" "services" {
+  name               = "services-${var.cluster_name}"
+  location           = google_container_cluster.gitpod-cluster.location
+  cluster            = google_container_cluster.gitpod-cluster.name
+  version            = var.cluster_version // kubernetes version
+  initial_node_count = 1
+  max_pods_per_node  = 110
+
+  node_config {
+    service_account = google_service_account.cluster_sa.email
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+
+    labels = {
+      "gitpod.io/workload_meta" = true
+      "gitpod.io/workload_ide"  = true
+    }
+
+    preemptible  = false
+    image_type   = "UBUNTU_CONTAINERD"
+    disk_type    = "pd-ssd"
+    disk_size_gb = var.services_disk_size_gb
+    machine_type = var.services_machine_type
+    tags         = ["gke-node", "${var.project}-gke"]
+    metadata = {
+      disable-legacy-endpoints = "true"
+    }
+  }
+
+  autoscaling {
+    min_node_count = 1
+    max_node_count = var.max_node_count_services
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = false
+  }
+}
+
+resource "google_container_node_pool" "workspaces" {
+  name               = "workspaces-${var.cluster_name}"
+  location           = google_container_cluster.gitpod-cluster.location
+  cluster            = google_container_cluster.gitpod-cluster.name
+  version            = var.cluster_version // kubernetes version
+  initial_node_count = 1
+  max_pods_per_node  = 110
+
+  node_config {
+    service_account = google_service_account.cluster_sa.email
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+
+    labels = {
+      "gitpod.io/workload_workspace_services" = true
+      "gitpod.io/workload_workspace_regular"  = true
+      "gitpod.io/workload_workspace_headless" = true
+    }
+
+    preemptible  = false
+    image_type   = "UBUNTU_CONTAINERD"
+    disk_type    = "pd-ssd"
+    disk_size_gb = var.workspaces_disk_size_gb
+    machine_type = var.workspaces_machine_type
+    tags         = ["gke-node", "${var.project}-gke"]
+    metadata = {
+      disable-legacy-endpoints = "true"
+    }
+  }
+
+  autoscaling {
+    min_node_count = 1
+    max_node_count = var.max_node_count_workspaces
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = false
+  }
+}
+
+module "gke_auth" {
+  depends_on = [google_container_node_pool.workspaces]
+
+  source = "terraform-google-modules/kubernetes-engine/google//modules/auth"
+
+  project_id   = var.project
+  location     = google_container_cluster.gitpod-cluster.location
+  cluster_name = var.cluster_name
+}
+
+resource "local_file" "kubeconfig" {
+  filename = var.kubeconfig
+  content  = module.gke_auth.kubeconfig_raw
+}

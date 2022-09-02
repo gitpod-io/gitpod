@@ -28,7 +28,7 @@ output "database" {
     instance            = "${var.project}:${var.region}:${google_sql_database_instance.gitpod[0].name}"
     username            = "${google_sql_user.users[0].name}"
     password            = random_password.password[0].result
-    service_account_key = "Upload the JSON file corresponding the service account credentials"
+    service_account_key_path = "./mysql-credentials.json"
   }, "No database created")
 }
 
@@ -38,8 +38,13 @@ output "registry" {
     url      = data.google_container_registry_repository.gitpod[0].repository_url
     server   = regex("[^/?#]*", data.google_container_registry_repository.gitpod[0].repository_url)
     username = "_json_key"
-    password = "Copy paste the content of the service account credentials JSON file"
+    password = "Copy the output of the command: cat ./gs-credentials.json | tr -s '\n' ' '"
   }, "No container registry created")
+}
+
+output "dns_credentials_path" {
+  sensitive = false
+  value = var.domain_name == null ? "" : "./dns-credentials.json"
 }
 
 output "storage" {
@@ -47,6 +52,6 @@ output "storage" {
   value = try({
     region      = var.region
     project     = var.project
-    credentials = "Upload the JSON file corresponding the service account credentials"
+    service_account_key_path = "./gs-credentials.json"
   }, "No GCS bucket created for object storage")
 }

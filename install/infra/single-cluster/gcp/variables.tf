@@ -1,7 +1,3 @@
-variable "credentials" {
-  description = "Path to JSON file authenticating to GCP service account"
-}
-
 variable "project" {
   description = "GCP project to create the resources in"
 }

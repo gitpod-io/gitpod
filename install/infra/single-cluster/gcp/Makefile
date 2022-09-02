@@ -7,10 +7,10 @@ init:
 	@terraform init
 
 touch-kubeconfig:
-	@touch kubeconfig
+	@touch kubeconfig ./dns-credentials.json
 
 cleanup-kubeconfig:
-	@rm kubeconfig
+	@rm kubeconfig ./dns-credentials.json
 
 .PHONY: plan
 plan: touch-kubeconfig plan-cluster plan-cm-edns cleanup-kubeconfig
