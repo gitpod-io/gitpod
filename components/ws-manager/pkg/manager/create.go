@@ -309,7 +309,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 
 	// Beware: this allows setuid binaries in the workspace - supervisor needs to set no_new_privs now.
 	// However: the whole user workload now runs in a user namespace, which makes this acceptable.
-	workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
+	if workspaceContainer.SecurityContext != nil {
+		workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
+	}
 
 	workspaceVolume, err := m.createWorkspaceVolumes(startContext)
 	if err != nil {
