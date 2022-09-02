@@ -279,7 +279,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			},
 		}
 
-		if pod.RuntimeClassName == nil {
+		if req.RuntimeClassName == "" {
 			opts.UID = (wsinit.GitpodUID + 100000 - 1)
 			opts.GID = (wsinit.GitpodGID + 100000 - 1)
 			opts.IdMappings = []archive.IDMapping{
