@@ -7,7 +7,9 @@ package common
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os/exec"
 	"strings"
@@ -49,12 +51,20 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 		command.Stderr = &serr
 		err := command.Start()
 		if err != nil {
-			errchan <- xerrors.Errorf("unexpected error starting port-forward: %w, args: %v, stdout: %s, stderr: %s", err, args, sout, serr)
+			if errors.Is(errors.New(serr.String()), io.EOF) {
+				errchan <- io.EOF
+			} else {
+				errchan <- xerrors.Errorf("unexpected error string port-forward: %w", err)
+			}
 		}
 
 		err = command.Wait()
 		if err != nil {
-			errchan <- xerrors.Errorf("unexpected error running port-forward: %w, args: %v, stdout: %s, stderr: %s", err, args, sout, serr)
+			if errors.Is(errors.New(serr.String()), io.EOF) {
+				errchan <- io.EOF
+			} else {
+				errchan <- xerrors.Errorf("unexpected error running port-forward: %w", err)
+			}
 		}
 	}()
 

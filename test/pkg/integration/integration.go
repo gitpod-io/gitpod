@@ -20,6 +20,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"golang.org/x/xerrors"
@@ -200,22 +201,13 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 	}
 
 	execErrs := make(chan error, 1)
-	execF := func() {
+	go func() {
 		defer close(execErrs)
 		_, _, _, execErr := podExec.ExecCmd(cmd, podName, namespace, containerName)
 		if execErr != nil {
 			execErrs <- execErr
 		}
-	}
-	go execF()
-	select {
-	case err := <-execErrs:
-		if err != nil {
-			return nil, closer, err
-		}
-		return nil, closer, fmt.Errorf("agent stopped unexepectedly")
-	case <-time.After(30 * time.Second):
-	}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer func() {
@@ -228,23 +220,29 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 			cancel()
 		}
 	}()
-
-	fwdReady, fwdErr := common.ForwardPortOfPod(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
-	select {
-	case <-fwdReady:
-	case err := <-execErrs:
-		if err != nil {
-			return nil, closer, err
-		}
-	case err := <-fwdErr:
-		if err != nil {
-			return nil, closer, err
+L:
+	for {
+		fwdReady, fwdErr := common.ForwardPortOfPod(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
+		select {
+		case <-fwdReady:
+			break L
+		case err := <-execErrs:
+			if err != nil {
+				return nil, closer, err
+			}
+		case err := <-fwdErr:
+			var eno syscall.Errno
+			if errors.Is(err, io.EOF) || (errors.As(err, &eno) && eno == syscall.ECONNREFUSED) {
+				time.Sleep(10 * time.Second)
+			} else if err != nil {
+				return nil, closer, err
+			}
 		}
 	}
 
 	var res *rpc.Client
 	var lastError error
-	waitErr := wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
+	waitErr := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
 		res, lastError = rpc.DialHTTP("tcp", fmt.Sprintf("localhost:%d", localAgentPort))
 		if lastError != nil {
 			return false, nil
