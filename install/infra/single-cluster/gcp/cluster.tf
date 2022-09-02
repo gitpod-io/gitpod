@@ -1,7 +1,6 @@
 module "gke" {
   source = "../../modules/gke"
 
-  credentials     = var.credentials
   cluster_name    = var.cluster_name
   kubeconfig      = var.kubeconfig
   cluster_version = var.cluster_version

@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "gitpod-tf"
+    bucket = "<gcs-bucket-name>"
     prefix = "gcp/terraform.state"
   }
 

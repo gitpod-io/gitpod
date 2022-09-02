@@ -68,11 +68,6 @@ variable "workspaces_disk_size_gb" {
   default     = 512
 }
 
-variable "credentials" {
-  description = "Path to the JSON file storing Google service account credentials"
-  default     = ""
-}
-
 variable "domain_name" {
   description = "Domain name register with Cloud DNS, leave empty if you want to manage it yourself"
   default     = null

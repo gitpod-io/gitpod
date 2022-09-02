@@ -37,11 +37,11 @@ Before starting the installation process, you need:
 * Store the JSON credentials corresponding to the service account locally in a file
 * Create and configure GCS bucket for terraform backend
   * Create a [GCS bucket](https://cloud.google.com/storage) to store the terraform backend state
-  * Replace the name of the bucket in [`main.tf`](./main.tf) - currently it is set as `gitpod-tf`
-  * Provide [credentials to access the bucket](https://www.terraform.io/language/settings/backends/gcs#credentials) for terraform by running:
-    ```
-    export GOOGLE_BACKEND_CREDENTIALS=/path/to/the/account/key.json
-    ```
+  * Replace the name of the bucket in [`main.tf`](./main.tf) - currently there is this placeholder there `<gcs-bucket-name>`
+* Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to point to the downloaded JSON key of the service account to authenticate terraform:
+  ```
+  export GOOGLE_APPLICATION_CREDENTIALS=/path/to/account/key.json
+  ```
 
 ## Update the `terraform.tfvars` file with appropriate values
 
@@ -50,13 +50,14 @@ by terraform to create the cluster. While some of them are fairly
 straightforward like the name of the cluster(`cluster_name`), others need a bit
 more attention:
 
-### Credentials and project configuration
+### Project configuration
 
 To configure against a standing GCP account, we expect the the key corresponding
 to the service account stored as a JSON file. The path to the JSON file is
-expected to be provided as a value to the `credentials` field. Alongside, one is
+expected to be set as value to the environment variable `GOOGLE_APPLICATION_CREDENTIALS` as explained above.
+Alongside, one is
 expected to provide the name of the project(`project` field) corresponding to
-this service account and region in with the cluster to be created(`region`
+this service account and region in with the cluster is to be created(`region`
 field). If you want your cluster to be zonal(only existing in one zone), you can
 provide a zone corresponding to the project(`zone` field), else the cluster will
 be regional.

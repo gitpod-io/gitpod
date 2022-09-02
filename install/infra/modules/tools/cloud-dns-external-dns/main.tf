@@ -2,17 +2,6 @@ provider "kubernetes" {
   config_path = var.kubeconfig
 }
 
-data local_file "gcp_credentials" {
-  filename = var.credentials
-}
-
-provider "google" {
-  credentials = var.credentials
-  project = var.project
-  region  = var.region
-  zone    = var.zone
-}
-
 provider "helm" {
   kubernetes {
     config_path = var.kubeconfig
@@ -35,7 +24,7 @@ resource "kubernetes_secret" "external_dns" {
     namespace = "external-dns"
   }
   data = {
-    "credentials.json" = data.local_file.gcp_credentials.content
+    "credentials.json" = var.credentials
   }
 }
 
