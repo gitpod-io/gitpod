@@ -42,22 +42,6 @@ resource "google_container_cluster" "gitpod-cluster" {
   name     = var.cluster_name
   location = var.zone == null ? var.region : var.zone
 
-  cluster_autoscaling {
-    enabled = true
-
-    resource_limits {
-      resource_type = "cpu"
-      minimum       = 2
-      maximum       = 16
-    }
-
-    resource_limits {
-      resource_type = "memory"
-      minimum       = 4
-      maximum       = 64
-    }
-  }
-
   min_master_version = var.cluster_version
 
   remove_default_node_pool = true
@@ -87,6 +71,10 @@ resource "google_container_cluster" "gitpod-cluster" {
 
     horizontal_pod_autoscaling {
       disabled = false
+    }
+
+    dns_cache_config {
+      enabled = true
     }
   }
 }
