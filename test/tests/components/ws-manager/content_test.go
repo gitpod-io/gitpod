@@ -7,16 +7,17 @@ package wsmanager
 import (
 	"context"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
-	content_service_api "github.com/gitpod-io/gitpod/content-service/api"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // TestBackup tests a basic start/modify/restart cycle
@@ -31,92 +32,131 @@ func TestBackup(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(ctx, api)
-			if err != nil {
-				t.Fatal(err)
+			tests := []struct {
+				Name string
+				FF   []wsmanapi.WorkspaceFeatureFlag
+			}{
+				{Name: "classic"},
+				{Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
 			}
+			for _, test := range tests {
+				t.Run(test.Name+"_backup", func(t *testing.T) {
+					ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
+						w.Spec.FeatureFlags = test.FF
+						w.Spec.Initializer = &csapi.WorkspaceInitializer{
+							Spec: &csapi.WorkspaceInitializer_Git{
+								Git: &csapi.GitInitializer{
+									RemoteUri:        "https://github.com/gitpod-io/gitpod.git",
+									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
+									CloneTaget:       "main",
+									CheckoutLocation: "gitpod",
+									Config:           &csapi.GitConfig{},
+								},
+							},
+						}
+						w.Spec.WorkspaceLocation = "gitpod"
+						return nil
+					}))
+					if err != nil {
+						t.Fatal(err)
+					}
 
-			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
-				integration.WithInstanceID(ws1.Req.Id),
-				integration.WithContainer("workspace"),
-				integration.WithWorkspacekitLift(true),
-			)
-			if err != nil {
-				err = stopWs1(true)
-				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
-				}
-				t.Fatal(err)
+					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
+						integration.WithInstanceID(ws1.Req.Id),
+						integration.WithContainer("workspace"),
+						integration.WithWorkspacekitLift(true),
+					)
+					if err != nil {
+						if err := stopWs1(true); err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
+						}
+						t.Fatal(err)
+					}
+					integration.DeferCloser(t, closer)
+
+					var resp agent.WriteFileResponse
+					err = rsa.Call("WorkspaceAgent.WriteFile", &agent.WriteFileRequest{
+						Path:    "/workspace/gitpod/foobar.txt",
+						Content: []byte("hello world"),
+						Mode:    0644,
+					}, &resp)
+					rsa.Close()
+					if err != nil {
+						if err = stopWs1(true); err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
+						}
+						t.Fatal(err)
+					}
+
+					err = stopWs1(true)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					ws2, stopWs2, err := integration.LaunchWorkspaceDirectly(ctx, api,
+						integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
+							w.ServicePrefix = ws1.Req.ServicePrefix
+							w.Metadata.MetaId = ws1.Req.Metadata.MetaId
+							w.Metadata.Owner = ws1.Req.Metadata.Owner
+							w.Spec.FeatureFlags = ws1.Req.Spec.FeatureFlags
+							w.Spec.Initializer = ws1.Req.Spec.Initializer
+							w.Spec.WorkspaceLocation = ws1.Req.Spec.WorkspaceLocation
+
+							if !reflect.DeepEqual(w.Spec.FeatureFlags, []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}) {
+								return nil
+							}
+
+							// PVC: find VolumeSnapshot by workspace ID
+							volumeSnapshot, volumeSnapshotContent, err := integration.FindVolumeSnapshot(ws1.Req.Id, cfg.Namespace(), cfg.Client())
+							if err != nil {
+								return err
+							}
+							if volumeSnapshot != "" && volumeSnapshotContent != "" {
+								w.Spec.VolumeSnapshot = &wsmanapi.VolumeSnapshotInfo{VolumeSnapshotName: volumeSnapshot, VolumeSnapshotHandle: volumeSnapshotContent}
+							}
+							return nil
+						}),
+					)
+					if err != nil {
+						t.Fatal(err)
+					}
+					t.Cleanup(func() {
+						err = stopWs2(true)
+						if err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
+						}
+					})
+
+					rsa, closer, err = integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
+						integration.WithInstanceID(ws2.Req.Id),
+					)
+					if err != nil {
+						t.Fatal(err)
+					}
+					integration.DeferCloser(t, closer)
+
+					var ls agent.ListDirResponse
+					err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
+						Dir: "/workspace/gitpod",
+					}, &ls)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					rsa.Close()
+
+					var found bool
+					for _, f := range ls.Files {
+						if filepath.Base(f) == "foobar.txt" {
+							found = true
+							break
+						}
+					}
+					if !found {
+						t.Fatal("did not find foobar.txt from previous workspace instance")
+					}
+				})
 			}
-			integration.DeferCloser(t, closer)
-
-			var resp agent.WriteFileResponse
-			err = rsa.Call("WorkspaceAgent.WriteFile", &agent.WriteFileRequest{
-				Path:    "/workspace/foobar.txt",
-				Content: []byte("hello world"),
-				Mode:    0644,
-			}, &resp)
-			rsa.Close()
-			if err != nil {
-				err = stopWs1(true)
-				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
-				}
-				t.Fatal(err)
-			}
-
-			err = stopWs1(true)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			ws2, stopWs2, err := integration.LaunchWorkspaceDirectly(ctx, api,
-				integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
-					w.ServicePrefix = ws1.Req.ServicePrefix
-					w.Metadata.MetaId = ws1.Req.Metadata.MetaId
-					w.Metadata.Owner = ws1.Req.Metadata.Owner
-					return nil
-				}),
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Cleanup(func() {
-				err = stopWs2(true)
-				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
-				}
-			})
-
-			rsa, closer, err = integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
-				integration.WithInstanceID(ws2.Req.Id),
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
-			integration.DeferCloser(t, closer)
-
-			var ls agent.ListDirResponse
-			err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
-				Dir: "/workspace",
-			}, &ls)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			rsa.Close()
-
-			var found bool
-			for _, f := range ls.Files {
-				if filepath.Base(f) == "foobar.txt" {
-					found = true
-					break
-				}
-			}
-			if !found {
-				t.Fatal("did not find foobar.txt from previous workspace instance")
-			}
-
 			return ctx
 		}).
 		Feature()
@@ -152,7 +192,7 @@ func TestMissingBackup(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			_, err = wsm.StopWorkspace(ctx, &wsapi.StopWorkspaceRequest{Id: ws.Req.Id})
+			_, err = wsm.StopWorkspace(ctx, &wsmanapi.StopWorkspaceRequest{Id: ws.Req.Id})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -167,7 +207,7 @@ func TestMissingBackup(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			_, err = contentSvc.DeleteWorkspace(ctx, &content_service_api.DeleteWorkspaceRequest{
+			_, err = contentSvc.DeleteWorkspace(ctx, &csapi.DeleteWorkspaceRequest{
 				OwnerId:     ws.Req.Metadata.Owner,
 				WorkspaceId: ws.Req.Metadata.MetaId,
 			})
@@ -177,21 +217,21 @@ func TestMissingBackup(t *testing.T) {
 
 			tests := []struct {
 				Name string
-				FF   []wsapi.WorkspaceFeatureFlag
+				FF   []wsmanapi.WorkspaceFeatureFlag
 			}{
 				{Name: "classic"},
-				{Name: "fwb", FF: []wsapi.WorkspaceFeatureFlag{wsapi.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP}},
-				{Name: "pvc", FF: []wsapi.WorkspaceFeatureFlag{wsapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
+				{Name: "fwb", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP}},
+				{Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
 			}
 			for _, test := range tests {
 				t.Run(test.Name+"_backup_init", func(t *testing.T) {
-					testws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
+					testws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 						w.ServicePrefix = ws.Req.ServicePrefix
 						w.Metadata.MetaId = ws.Req.Metadata.MetaId
 						w.Metadata.Owner = ws.Req.Metadata.Owner
-						w.Spec.Initializer = &content_service_api.WorkspaceInitializer{
-							Spec: &content_service_api.WorkspaceInitializer_Backup{
-								Backup: &content_service_api.FromBackupInitializer{},
+						w.Spec.Initializer = &csapi.WorkspaceInitializer{
+							Spec: &csapi.WorkspaceInitializer_Backup{
+								Backup: &csapi.FromBackupInitializer{},
 							},
 						}
 						w.Spec.FeatureFlags = test.FF
