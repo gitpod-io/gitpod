@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -806,6 +807,11 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	span.SetTag("fullWorkspaceBackup", fullWorkspaceBackup)
 	span.SetTag("pvcFeatureEnabled", pvcFeatureEnabled)
 
+	runtimeClassName := pointer.StringDeref(pod.Spec.RuntimeClassName, "")
+	if strings.HasPrefix(runtimeClassName, "kata") {
+		span.SetTag("kata", runtimeClassName)
+	}
+
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
 		return xerrors.Errorf("pod %s has no %s annotation", pod.Name, workspaceIDAnnotation)
@@ -898,6 +904,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		span.SetTag("alreadyInitializing", true)
 		return nil
 	}
+
 	t := time.Now()
 	err = retryIfUnavailable(ctx, func(ctx context.Context) error {
 		_, err = snc.InitWorkspace(ctx, &wsdaemon.InitWorkspaceRequest{
@@ -912,6 +919,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			ContentManifest:       contentManifest,
 			RemoteStorageDisabled: shouldDisableRemoteStorage(pod),
 			StorageQuotaBytes:     storage.Value(),
+			RuntimeClassName:      pointer.StringDeref(pod.Spec.RuntimeClassName, ""),
 		})
 		return err
 	})

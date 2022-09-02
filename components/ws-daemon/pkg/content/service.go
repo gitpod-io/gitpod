@@ -279,6 +279,15 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			},
 		}
 
+		if pod.RuntimeClassName == nil {
+			opts.UID = (wsinit.GitpodUID + 100000 - 1)
+			opts.GID = (wsinit.GitpodGID + 100000 - 1)
+			opts.IdMappings = []archive.IDMapping{
+				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
+				{ContainerID: 1, HostID: 100000, Size: 65534},
+			}
+		}
+
 		err = RunInitializer(ctx, workspace.Location, req.Initializer, remoteContent, opts)
 		if err != nil {
 			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
