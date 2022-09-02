@@ -240,6 +240,7 @@
                     "8.8.8.8"
                 ]
             },
+            "runtimeClassName": "kata-qemu",
             "enableServiceLinks": false
         },
         "status": {}
