@@ -460,6 +460,11 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 			}
 
 			if status.Conditions.Failed != "" {
+				// TODO(toru): we have to fix https://github.com/gitpod-io/gitpod/issues/12021
+				if status.Conditions.Failed == "container could not be located when the pod was terminated" {
+					lastStatus = status
+					return
+				}
 				errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
 				return
 			}
