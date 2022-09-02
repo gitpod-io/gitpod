@@ -157,7 +157,7 @@ function TeamUsage() {
 
     return (
         <>
-            <Header title="Usage" subtitle="Manage team usage." />
+            <Header title="Usage" subtitle="View usage details (updated every 15 minutes)." />
             <div className="app-container pt-5">
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
                 {!errorMessage && (
