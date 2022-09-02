@@ -563,3 +563,45 @@ func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
 		})
 	}
 }
+
+func TestUsageService_LastUsageReconcilationTimeIsIncreasing(t *testing.T) {
+	ctx := context.Background()
+	dbconn := dbtest.ConnectForTests(t)
+
+	srv := baseserver.NewForTests(t,
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
+
+	generator := NewReportGenerator(dbconn, DefaultWorkspacePricer)
+	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, generator, &stubContentService{}))
+	baseserver.StartServerForTests(t, srv)
+
+	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+
+	client := v1.NewUsageServiceClient(conn)
+
+	resp, err := client.LastUsageReconcilationTime(ctx, &v1.LastUsageReconcilationTimeRequest{})
+	require.NoError(t, err)
+	for i := 0; i < 10; i++ {
+		previousTimestamp := resp.GetTimestamp()
+		_, err = client.ReconcileUsage(ctx, &v1.ReconcileUsageRequest{
+			StartTime: timestamppb.New(time.Now().Add(-1 * time.Hour)),
+			EndTime:   timestamppb.New(time.Now()),
+		})
+		require.NoError(t, err)
+		resp, err = client.LastUsageReconcilationTime(ctx, &v1.LastUsageReconcilationTimeRequest{})
+		require.NoError(t, err)
+		require.Truef(t, resp.GetTimestamp().AsTime().After(previousTimestamp.AsTime()), "timestamp of last usage reconciliation was not monotonically increasing")
+	}
+}
+
+type stubContentService struct{}
+
+func (c *stubContentService) UploadUsageReport(ctx context.Context, filename string, report contentservice.UsageReport) error {
+	return nil
+}
+
+func (c *stubContentService) DownloadUsageReport(ctx context.Context, filename string) (contentservice.UsageReport, error) {
+	return contentservice.UsageReport{}, nil
+}
