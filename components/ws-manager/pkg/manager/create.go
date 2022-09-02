@@ -515,13 +515,15 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				LocalhostProfile: pointer.String(m.Config.SeccompProfile),
 			},
 		}
-	case config.RuntimeConfigurationKindKata:
-		runtimeClass = pointer.String("kata-qemu")
-		securityContext = &corev1.PodSecurityContext{
-			FSGroup:      pointer.Int64(33333),
-			RunAsNonRoot: pointer.Bool(false),
-			RunAsUser:    pointer.Int64(0),
-		}
+		/*
+			case config.RuntimeConfigurationKindKata:
+				runtimeClass = pointer.String("kata-qemu")
+				securityContext = &corev1.PodSecurityContext{
+					FSGroup:      pointer.Int64(33333),
+					RunAsNonRoot: pointer.Bool(false),
+					RunAsUser:    pointer.Int64(0),
+				}
+		*/
 	}
 
 	pod := corev1.Pod{
@@ -605,8 +607,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 
 			// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
 			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
-			gitpodGUID := int64(133332)
-			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
+			//gitpodGUID := int64(133332)
+			//pod.Spec.SecurityContext.FSGroup = &gitpodGUID
 
 		case api.WorkspaceFeatureFlag_PROTECTED_SECRETS:
 			for _, c := range pod.Spec.Containers {
@@ -706,21 +708,11 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace env: %w", err)
 	}
-	sec, err := m.createDefaultSecurityContext()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create Theia env: %w", err)
-	}
 
 	mountPropagation := corev1.MountPropagationHostToContainer
 	var volumeMounts []corev1.VolumeMount
 
-	if startContext.Class.Runtime.Kind == config.RuntimeConfigurationKindKata {
-		sec.RunAsUser = pointer.Int64(0)
-		sec.RunAsGroup = pointer.Int64(0)
-		sec.RunAsNonRoot = pointer.Bool(false)
-		sec.AllowPrivilegeEscalation = pointer.Bool(true)
-		sec.Capabilities = &corev1.Capabilities{}
-	} else {
+	if startContext.Class.Runtime.Kind != config.RuntimeConfigurationKindKata {
 		// add daemon/IWS socket
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:             workspaceVolumeName,
@@ -763,10 +755,9 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		command = []string{"/.supervisor/supervisor", "init"}
 	}
 
-	return &corev1.Container{
+	container := &corev1.Container{
 		Name:            "workspace",
 		Image:           image,
-		SecurityContext: sec,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports: []corev1.ContainerPort{
 			{ContainerPort: startContext.IDEPort},
@@ -781,7 +772,18 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		Env:                      env,
 		Command:                  command,
 		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
-	}, nil
+	}
+
+	if startContext.Class.Runtime.Kind != config.RuntimeConfigurationKindKata {
+		sec, err := m.createDefaultSecurityContext()
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create Theia env: %w", err)
+		}
+
+		container.SecurityContext = sec
+	}
+
+	return container, nil
 }
 
 func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext) ([]corev1.EnvVar, error) {
