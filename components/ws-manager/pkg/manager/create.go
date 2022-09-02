@@ -727,6 +727,8 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		sec.RunAsNonRoot = pointer.Bool(false)
 		sec.AllowPrivilegeEscalation = pointer.Bool(true)
 		sec.Capabilities = &corev1.Capabilities{}
+		sec.Privileged = pointer.Bool(true)
+		sec.ReadOnlyRootFilesystem = pointer.Bool(false)
 	} else {
 		// add daemon/IWS socket
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
