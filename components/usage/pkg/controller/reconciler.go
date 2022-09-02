@@ -7,6 +7,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
@@ -68,5 +69,13 @@ func (r *UsageAndBillingReconciler) Reconcile() (err error) {
 		return fmt.Errorf("failed to update invoices: %w", err)
 	}
 
+	return nil
+}
+
+type LedgerReconciler struct {
+}
+
+func (r *LedgerReconciler) Reconcile() (err error) {
+	log.Info("Running ledger reconciler tick.")
 	return nil
 }
