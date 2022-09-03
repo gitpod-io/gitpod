@@ -1,6 +1,8 @@
 # Change Log
 
 ## September 2022
+- Fixed JetBrains connection loop when connecting twice to the same workspace ([#12232](https://github.com/gitpod-io/gitpod/pull/12232)) - [@]()
+- [single-cluster/eks] Add `cluster-autoscaler` ([#12577](https://github.com/gitpod-io/gitpod/pull/12577)) - [@Pothulapati](https://github.com/Pothulapati)
 - Update stable VSCode Browser to `1.71` ([#12604](https://github.com/gitpod-io/gitpod/pull/12604)) - [@mustard-mh](https://github.com/mustard-mh)
 - [installer]: move the kots install script into a bash file in Installer ([#12202](https://github.com/gitpod-io/gitpod/pull/12202)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Fix for Webhook Event GC ([#12559](https://github.com/gitpod-io/gitpod/pull/12559)) - [@AlexTugarev](https://github.com/AlexTugarev)
