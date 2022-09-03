@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/rpc"
 	"os/exec"
 	"strings"
 	"time"
@@ -72,12 +73,17 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 	go func() {
 		localPort := strings.Split(port, ":")[0]
 		for {
-			conn, _ := net.DialTimeout("tcp", net.JoinHostPort("", localPort), time.Second)
+			conn, _ := net.DialTimeout("tcp", net.JoinHostPort("localhost", localPort), time.Second)
 			if conn != nil {
 				conn.Close()
 				break
 			}
-			time.Sleep(500 * time.Millisecond)
+			client, _ := rpc.DialHTTP("tcp", net.JoinHostPort("localhost", localPort))
+			if client != nil {
+				client.Close()
+				break
+			}
+			time.Sleep(5 * time.Second)
 		}
 
 		readychan <- struct{}{}
