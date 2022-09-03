@@ -190,6 +190,37 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		return nil, closer, err
 	}
 
+	var res *rpc.Client
+	var cl []func() error
+	for i := 0; i < 5; i++ {
+		res, cl, err = portfw(podExec, kubeconfig, podName, namespace, containerName, tgtFN, options)
+		closer = append(closer, cl...)
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return nil, closer, err
+	}
+
+	closer = append(closer, func() error {
+		err := res.Call(MethodTestAgentShutdown, new(TestAgentShutdownRequest), new(TestAgentShutdownResponse))
+		if err != nil && strings.Contains(err.Error(), "connection is shut down") {
+			return nil
+		}
+
+		if err != nil {
+			return xerrors.Errorf("cannot shutdown agent: %w", err)
+		}
+		return nil
+	})
+
+	return res, closer, nil
+}
+
+func portfw(podExec *PodExec, kubeconfig string, podName string, namespace string, containerName string, tgtFN string, options instrumentOptions) (*rpc.Client, []func() error, error) {
+	var closer []func() error
+
 	localAgentPort, err := getFreePort()
 	if err != nil {
 		return nil, closer, err
@@ -242,7 +273,7 @@ L:
 
 	var res *rpc.Client
 	var lastError error
-	waitErr := wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+	waitErr := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
 		res, lastError = rpc.DialHTTP("tcp", fmt.Sprintf("localhost:%d", localAgentPort))
 		if lastError != nil {
 			return false, nil
@@ -256,18 +287,6 @@ L:
 	if waitErr != nil {
 		return nil, closer, err
 	}
-
-	closer = append(closer, func() error {
-		err := res.Call(MethodTestAgentShutdown, new(TestAgentShutdownRequest), new(TestAgentShutdownResponse))
-		if err != nil && strings.Contains(err.Error(), "connection is shut down") {
-			return nil
-		}
-
-		if err != nil {
-			return xerrors.Errorf("cannot shutdown agent: %w", err)
-		}
-		return nil
-	})
 
 	return res, closer, nil
 }

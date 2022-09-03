@@ -20,7 +20,7 @@ import (
 
 const (
 	K3S_VERSION = "1.23.4"
-	TIME_OUT    = 5 * time.Minute
+	TIME_OUT    = 10 * time.Minute
 )
 
 func TestK3s(t *testing.T) {

@@ -461,7 +461,7 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 
 			if status.Conditions.Failed != "" {
 				// TODO(toru): we have to fix https://github.com/gitpod-io/gitpod/issues/12021
-				if status.Conditions.Failed == "container could not be located when the pod was terminated" {
+				if status.Conditions.Failed == "The container could not be located when the pod was deleted.  The container used to be Running" || status.Conditions.Failed == "The container could not be located when the pod was terminated" {
 					lastStatus = status
 					return
 				}
