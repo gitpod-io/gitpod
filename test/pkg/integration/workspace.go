@@ -593,6 +593,7 @@ func resolveOrBuildImage(ctx context.Context, api *ComponentAPI, baseRef string)
 	}
 
 	bld, err := cl.Build(ctx, &imgbldr.BuildRequest{
+		TriggeredBy: "integration-test",
 		Source: &imgbldr.BuildSource{
 			From: &imgbldr.BuildSource_Ref{
 				Ref: &imgbldr.BuildSourceReference{
