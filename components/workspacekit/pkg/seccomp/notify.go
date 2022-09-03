@@ -217,6 +217,7 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 		"id":               req.ID,
 	})
 
+	log.Info(("RECEIVED MOUNT CALL"))
 	memFile, err := readarg.OpenMem(req.Pid)
 	if err != nil {
 		log.WithError(err).Error("cannot open mem")
@@ -256,10 +257,12 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 		// When a process wants to mount proc relative to `/proc/self` that path has no meaning outside of the processes' context.
 		// runc started doing this in https://github.com/opencontainers/runc/commit/0ca91f44f1664da834bc61115a849b56d22f595f
 		// TODO(cw): there must be a better way to handle this. Find one.
+		log.Infof("source: %v, dest: %v, fs: %v", source, dest, filesystem)
 		target := filepath.Join(h.Ring2Rootfs, dest)
 		if strings.HasPrefix(dest, "/proc/self/") {
 			target = filepath.Join("/proc", strconv.Itoa(int(req.Pid)), strings.TrimPrefix(dest, "/proc/self/"))
 		}
+		log.Infof("The target is %v", target)
 
 		stat, err := os.Lstat(target)
 		if errors.Is(err, fs.ErrNotExist) {
