@@ -26,7 +26,8 @@
                 "requests": {
                     "storage": "30Gi"
                 }
-            }
+            },
+            "volumeMode": "Block"
         },
         "status": {}
     }

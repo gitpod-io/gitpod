@@ -259,12 +259,13 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 		prefix = "ws"
 	}
 
-	PVCConfig := m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC
+	pvcConfig := m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC
 	if startContext.Class != nil {
-		PVCConfig = startContext.Class.PVC
+		pvcConfig = startContext.Class.PVC
 	}
 
-	PVC := &corev1.PersistentVolumeClaim{
+	volumeMode := corev1.PersistentVolumeBlock
+	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
 			Namespace: m.Config.Namespace,
@@ -272,30 +273,31 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			VolumeMode:  &volumeMode,
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceName(corev1.ResourceStorage): PVCConfig.Size,
+					corev1.ResourceName(corev1.ResourceStorage): pvcConfig.Size,
 				},
 			},
 		},
 	}
-	if PVCConfig.StorageClass != "" {
+	if pvcConfig.StorageClass != "" {
 		// Specify the storageClassName when the storage class is non-empty.
 		// This way, the Kubernetes uses the default StorageClass within the cluster.
 		// Otherwise, the Kubernetes would try to request the PVC with no class.
-		PVC.Spec.StorageClassName = &PVCConfig.StorageClass
+		pvc.Spec.StorageClassName = &pvcConfig.StorageClass
 	}
 
 	if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
 		snapshotApiGroup := volumesnapshotv1.GroupName
-		PVC.Spec.DataSource = &corev1.TypedLocalObjectReference{
+		pvc.Spec.DataSource = &corev1.TypedLocalObjectReference{
 			APIGroup: &snapshotApiGroup,
 			Kind:     "VolumeSnapshot",
 			Name:     startContext.VolumeSnapshot.VolumeSnapshotName,
 		}
 	}
 
-	return PVC, nil
+	return pvc, nil
 }
 
 // createDefiniteWorkspacePod creates a workspace pod without regard for any template.
@@ -598,15 +600,26 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				},
 			}
 
-			// SubPath so that lost+found is not visible
-			pod.Spec.Containers[0].VolumeMounts[0].SubPath = "workspace"
-			// not needed, since it is using dedicated disk
-			pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
+			if startContext.Class.Runtime.Kind == config.RuntimeConfigurationKindKata {
+				// remove PVC volume mount
+				pod.Spec.Containers[0].VolumeMounts = pod.Spec.Containers[0].VolumeMounts[1:]
 
-			// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
-			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
-			gitpodGUID := int64(133332)
-			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
+				// add as device instead
+				pod.Spec.Containers[0].VolumeDevices = append(pod.Spec.Containers[0].VolumeDevices, corev1.VolumeDevice{
+					Name:       workspaceVolumeName,
+					DevicePath: "/dev/workspace",
+				})
+			} else {
+				// SubPath so that lost+found is not visible
+				pod.Spec.Containers[0].VolumeMounts[0].SubPath = "workspace"
+				// not needed, since it is using dedicated disk
+				pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
+
+				// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
+				// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
+				gitpodGUID := int64(133332)
+				pod.Spec.SecurityContext.FSGroup = &gitpodGUID
+			}
 
 		case api.WorkspaceFeatureFlag_PROTECTED_SECRETS:
 			for _, c := range pod.Spec.Containers {
@@ -647,6 +660,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		default:
 			log.Warnf("Unknown feature flag %v", feature)
 		}
+
 	}
 
 	if req.Type == api.WorkspaceType_IMAGEBUILD {
@@ -762,7 +776,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
 
 	if startContext.Class.Runtime.Kind == config.RuntimeConfigurationKindKata {
-		command = []string{"/.supervisor/supervisor", "init"}
+		command = []string{"/.supervisor/workspacekit", "fsprep"}
 	}
 
 	return &corev1.Container{
