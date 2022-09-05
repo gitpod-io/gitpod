@@ -72,10 +72,35 @@ func (r *UsageAndBillingReconciler) Reconcile() (err error) {
 	return nil
 }
 
-type LedgerReconciler struct {
+func NewLedgerReconciler(usageClient v1.UsageServiceClient) *LedgerReconciler {
+	return &LedgerReconciler{
+		usageClient: usageClient,
+	}
 }
 
-func (r *LedgerReconciler) Reconcile() (err error) {
-	log.Info("Running ledger reconciler tick.")
+type LedgerReconciler struct {
+	usageClient v1.UsageServiceClient
+}
+
+func (r *LedgerReconciler) Reconcile() error {
+	ctx := context.Background()
+
+	now := time.Now().UTC()
+	hourAgo := now.Add(-1 * time.Hour)
+
+	logger := log.
+		WithField("from", hourAgo).
+		WithField("to", now)
+
+	logger.Info("Starting ledger reconciliation.")
+	_, err := r.usageClient.ReconcileUsageWithLedger(ctx, &v1.ReconcileUsageWithLedgerRequest{
+		From: timestamppb.New(hourAgo),
+		To:   timestamppb.New(now),
+	})
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to reconcile usage with ledger.")
+		return fmt.Errorf("failed to reconcile usage with ledger: %w", err)
+	}
+
 	return nil
 }

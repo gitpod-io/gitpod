@@ -113,8 +113,9 @@ func Start(cfg Config) error {
 			return fmt.Errorf("failed to parse schedule duration: %w", err)
 		}
 
+		usageClient := v1.NewUsageServiceClient(selfConnection)
 		ctrl, err := controller.New(schedule, controller.NewUsageAndBillingReconciler(
-			v1.NewUsageServiceClient(selfConnection),
+			usageClient,
 			v1.NewBillingServiceClient(selfConnection),
 		))
 		if err != nil {
@@ -127,7 +128,7 @@ func Start(cfg Config) error {
 		}
 		defer ctrl.Stop()
 
-		ledgerCtrl, err := controller.New(schedule, &controller.LedgerReconciler{})
+		ledgerCtrl, err := controller.New(schedule, controller.NewLedgerReconciler(usageClient))
 		if err != nil {
 			return fmt.Errorf("failed to initialize ledger controller: %w", err)
 		}
