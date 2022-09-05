@@ -109,6 +109,10 @@ export class MonitoringSatelliteInstaller {
                         },
                         {
                             "gitURL": "https://github.com/gitpod-io/gitpod",
+                            "path": "operations/observability/mixins/workspace/rules",
+                        },
+                        {
+                            "gitURL": "https://github.com/gitpod-io/gitpod",
                             "path": "operations/observability/mixins/meta/rules",
                         },
                         {
