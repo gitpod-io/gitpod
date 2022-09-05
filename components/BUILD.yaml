@@ -16,7 +16,6 @@ packages:
       - install/preview:docker
       - install/kots:lint
       - components/gitpod-protocol:all
-      - operations/observability/mixins:lint
   - name: docker-versions
     type: docker
     config:
