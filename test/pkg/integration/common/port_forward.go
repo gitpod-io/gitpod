@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/rpc"
 	"os/exec"
 	"strings"
 	"time"
@@ -56,10 +55,14 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 		if err != nil {
 			if strings.TrimSuffix(serr.String(), "\n") == errorDialingBackend {
 				errchan <- io.EOF
-				command.Process.Kill()
+				if command.Process != nil {
+					_ = command.Process.Kill()
+				}
 			} else {
 				errchan <- fmt.Errorf("unexpected error string port-forward: %w", errors.New(serr.String()))
-				command.Process.Kill()
+				if command.Process != nil {
+					_ = command.Process.Kill()
+				}
 			}
 		}
 
@@ -67,10 +70,14 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 		if err != nil {
 			if strings.TrimSuffix(serr.String(), "\n") == errorDialingBackend {
 				errchan <- io.EOF
-				command.Process.Kill()
+				if command.Process != nil {
+					_ = command.Process.Kill()
+				}
 			} else {
 				errchan <- fmt.Errorf("unexpected error running port-forward: %w", errors.New(serr.String()))
-				command.Process.Kill()
+				if command.Process != nil {
+					_ = command.Process.Kill()
+				}
 			}
 		}
 	}()
@@ -82,11 +89,6 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 			conn, _ := net.DialTimeout("tcp", net.JoinHostPort("localhost", localPort), time.Second)
 			if conn != nil {
 				conn.Close()
-				break
-			}
-			client, _ := rpc.DialHTTP("tcp", net.JoinHostPort("localhost", localPort))
-			if client != nil {
-				client.Close()
 				break
 			}
 			time.Sleep(5 * time.Second)

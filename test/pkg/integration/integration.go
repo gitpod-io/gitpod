@@ -203,14 +203,20 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		return nil, closer, err
 	}
 
-	var res *rpc.Client
-	var cl []func() error
-	for i := 0; i < 5; i++ {
+	var (
+		res *rpc.Client
+		cl  []func() error
+	)
+	for i := 0; i < 10; i++ {
 		res, cl, err = portfw(podExec, kubeconfig, podName, namespace, containerName, tgtFN, options)
-		closer = append(closer, cl...)
 		if err == nil {
+			closer = append(closer, cl...)
 			break
 		}
+		for _, c := range cl {
+			_ = c()
+		}
+		time.Sleep(5 * time.Second)
 	}
 	if err != nil {
 		return nil, closer, err
@@ -287,7 +293,7 @@ L:
 	var res *rpc.Client
 	var lastError error
 	waitErr := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		res, lastError = rpc.DialHTTP("tcp", fmt.Sprintf("localhost:%d", localAgentPort))
+		res, lastError = rpc.DialHTTP("tcp", net.JoinHostPort("localhost", strconv.Itoa(localAgentPort)))
 		if lastError != nil {
 			return false, nil
 		}
