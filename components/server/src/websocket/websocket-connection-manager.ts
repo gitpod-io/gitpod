@@ -25,7 +25,7 @@ import * as express from "express";
 import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "vscode-jsonrpc";
 import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "../auth/function-access";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { RateLimiter, RateLimiterConfig, UserRateLimiter } from "../auth/rate-limiter";
+import { isValidFunctionName, RateLimiter, RateLimiterConfig, UserRateLimiter } from "../auth/rate-limiter";
 import {
     CompositeResourceAccessGuard,
     OwnerResourceGuard,
@@ -410,6 +410,11 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                     method,
                     retryAfter: Math.round(rlRejected.msBeforeNext / 1000) || 1,
                 });
+            }
+
+            // explicitly guard against wrong method names
+            if (!isValidFunctionName(method)) {
+                throw new ResponseError(ErrorCodes.BAD_REQUEST, `Unknown method '${method}'`);
             }
 
             // access guard
