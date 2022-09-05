@@ -287,14 +287,11 @@ func LaunchWorkspaceFromContextURL(ctx context.Context, contextURL string, usern
 			stopWs(false)
 		}
 	}()
-	// it.t.Logf("created workspace: workspaceID=%s url=%s", resp.CreatedWorkspaceID, resp.WorkspaceURL)
 
 	_, err = WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)
 	}
-
-	// it.t.Logf("workspace is running: instanceID=%s", nfo.LatestInstance.ID)
 
 	return nfo, stopWs, nil
 }

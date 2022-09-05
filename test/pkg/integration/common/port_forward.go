@@ -15,8 +15,10 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+)
 
-	"golang.org/x/xerrors"
+const (
+	errorDialingBackend = "error upgrading connection: error dialing backend: EOF"
 )
 
 // ForwardPortOfPod establishes a TCP port forwarding to a Kubernetes pod
@@ -52,19 +54,23 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 		command.Stderr = &serr
 		err := command.Start()
 		if err != nil {
-			if errors.Is(errors.New(serr.String()), io.EOF) {
+			if strings.TrimSuffix(serr.String(), "\n") == errorDialingBackend {
 				errchan <- io.EOF
+				command.Process.Kill()
 			} else {
-				errchan <- xerrors.Errorf("unexpected error string port-forward: %w", err)
+				errchan <- fmt.Errorf("unexpected error string port-forward: %w", errors.New(serr.String()))
+				command.Process.Kill()
 			}
 		}
 
 		err = command.Wait()
 		if err != nil {
-			if errors.Is(errors.New(serr.String()), io.EOF) {
+			if strings.TrimSuffix(serr.String(), "\n") == errorDialingBackend {
 				errchan <- io.EOF
+				command.Process.Kill()
 			} else {
-				errchan <- xerrors.Errorf("unexpected error running port-forward: %w", err)
+				errchan <- fmt.Errorf("unexpected error running port-forward: %w", errors.New(serr.String()))
+				command.Process.Kill()
 			}
 		}
 	}()
