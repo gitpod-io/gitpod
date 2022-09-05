@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"math"
 	"time"
 
@@ -26,7 +27,9 @@ import (
 var _ v1.UsageServiceServer = (*UsageService)(nil)
 
 type UsageService struct {
-	conn *gorm.DB
+	conn    *gorm.DB
+	nowFunc func() time.Time
+	pricer  *WorkspacePricer
 
 	contentService contentservice.Interface
 
@@ -193,12 +196,16 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 		return nil, status.Errorf(codes.InvalidArgument, "To must not be before From")
 	}
 
+	now := s.nowFunc()
+
+	var instances []db.WorkspaceInstanceForUsage
 	stopped, err := db.FindStoppedWorkspaceInstancesInRange(ctx, s.conn, from, to)
 	if err != nil {
 		logger.WithError(err).Errorf("Failed to find stopped workspace instances.")
 		return nil, status.Errorf(codes.Internal, "failed to query for stopped instances")
 	}
 	logger.Infof("Found %d stopped workspace instances in range.", len(stopped))
+	instances = append(instances, stopped...)
 
 	running, err := db.FindRunningWorkspaceInstances(ctx, s.conn)
 	if err != nil {
@@ -206,6 +213,7 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 		return nil, status.Errorf(codes.Internal, "failed to query for running instances")
 	}
 	logger.Infof("Found %d running workspaces since the beginning of time.", len(running))
+	instances = append(instances, running...)
 
 	usageDrafts, err := db.FindAllDraftUsage(ctx, s.conn)
 	if err != nil {
@@ -214,12 +222,99 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 	}
 	logger.Infof("Found %d draft usage records.", len(usageDrafts))
 
+	instancesWithUsageInDraft, err := db.FindWorkspaceInstancesByIds(ctx, s.conn, collectWorkspaceInstanceIDs(usageDrafts))
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to find workspace instances for usage records in draft.")
+		return nil, status.Errorf(codes.Internal, "failed to find workspace instances for usage records in draft state")
+	}
+	logger.Infof("Found %d workspaces instances for usage records in draft.", len(instancesWithUsageInDraft))
+	instances = append(instances, instancesWithUsageInDraft...)
+
+	inserts, updates := reconcileUsageWithLedger(instances, usageDrafts, s.pricer, now)
+	logger.WithField("inserts", inserts).WithField("updates", updates).Infof("Identified %d inserts and %d updates against usage records.", len(inserts), len(updates))
+
 	return &v1.ReconcileUsageWithLedgerResponse{}, nil
 }
 
-func NewUsageService(conn *gorm.DB, reportGenerator *ReportGenerator, contentSvc contentservice.Interface) *UsageService {
+func reconcileUsageWithLedger(instances []db.WorkspaceInstanceForUsage, drafts []db.Usage, pricer *WorkspacePricer, now time.Time) (inserts []db.Usage, updates []db.Usage) {
+
+	instancesByID := dedupeWorkspaceInstancesForUsage(instances)
+
+	draftsByWorkspaceID := map[uuid.UUID]db.Usage{}
+	for _, draft := range drafts {
+		draftsByWorkspaceID[draft.WorkspaceInstanceID] = draft
+	}
+
+	for instanceID, instance := range instancesByID {
+		if usage, exists := draftsByWorkspaceID[instanceID]; exists {
+			updates = append(updates, updateUsageFromInstance(instance, usage, pricer, now))
+			continue
+		}
+
+		inserts = append(inserts, newUsageFromInstance(instance, pricer, now))
+	}
+
+	return inserts, updates
+}
+
+const usageDescriptionFromController = "Usage collected by automated system."
+
+func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *WorkspacePricer, now time.Time) db.Usage {
+	draft := true
+	if instance.StoppingTime.IsSet() {
+		draft = false
+	}
+
+	effectiveTime := now
+	if instance.StoppingTime.IsSet() {
+		effectiveTime = instance.StoppingTime.Time()
+	}
+
+	return db.Usage{
+		ID:                  uuid.New(),
+		AttributionID:       instance.UsageAttributionID,
+		Description:         usageDescriptionFromController,
+		CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
+		EffectiveTime:       db.NewVarcharTime(effectiveTime),
+		Kind:                db.WorkspaceInstanceUsageKind,
+		WorkspaceInstanceID: instance.ID,
+		Draft:               draft,
+		Metadata:            nil,
+	}
+}
+
+func updateUsageFromInstance(instance db.WorkspaceInstanceForUsage, usage db.Usage, pricer *WorkspacePricer, now time.Time) db.Usage {
+	// We construct a new record to ensure we always take the data from the source of truth - the workspace instance
+	updated := newUsageFromInstance(instance, pricer, now)
+	// but we override the ID to the one we already have
+	updated.ID = usage.ID
+
+	return updated
+}
+
+func collectWorkspaceInstanceIDs(usage []db.Usage) []uuid.UUID {
+	var ids []uuid.UUID
+	for _, u := range usage {
+		ids = append(ids, u.WorkspaceInstanceID)
+	}
+	return ids
+}
+
+func dedupeWorkspaceInstancesForUsage(instances []db.WorkspaceInstanceForUsage) map[uuid.UUID]db.WorkspaceInstanceForUsage {
+	set := map[uuid.UUID]db.WorkspaceInstanceForUsage{}
+	for _, instance := range instances {
+		set[instance.ID] = instance
+	}
+	return set
+}
+
+func NewUsageService(conn *gorm.DB, reportGenerator *ReportGenerator, contentSvc contentservice.Interface, pricer *WorkspacePricer) *UsageService {
 	return &UsageService{
-		conn:            conn,
+		conn: conn,
+		nowFunc: func() time.Time {
+			return time.Now().UTC()
+		},
+		pricer:          pricer,
 		reportGenerator: reportGenerator,
 		contentService:  contentSvc,
 	}

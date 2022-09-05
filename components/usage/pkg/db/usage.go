@@ -7,6 +7,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
@@ -21,11 +22,22 @@ const (
 	InvoiceUsageKind                     = "invoice"
 )
 
+func NewCreditCents(n float64) CreditCents {
+	inCents := n * 100
+	return CreditCents(int64(math.Round(inCents)))
+}
+
+type CreditCents int64
+
+func (cc CreditCents) ToCredits() float64 {
+	return float64(cc) / 100
+}
+
 type Usage struct {
 	ID                  uuid.UUID      `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
 	AttributionID       AttributionID  `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
 	Description         string         `gorm:"column:description;type:varchar;size:255;" json:"description"`
-	CreditCents         int64          `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
+	CreditCents         CreditCents    `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
 	EffectiveTime       VarcharTime    `gorm:"column:effectiveTime;type:varchar;size:255;" json:"effectiveTime"`
 	Kind                UsageKind      `gorm:"column:kind;type:char;size:10;" json:"kind"`
 	WorkspaceInstanceID uuid.UUID      `gorm:"column:workspaceInstanceId;type:char;size:36;" json:"workspaceInstanceId"`

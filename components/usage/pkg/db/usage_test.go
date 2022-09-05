@@ -137,3 +137,61 @@ func TestFindAllDraftUsage(t *testing.T) {
 		require.True(t, usage.Draft)
 	}
 }
+
+func TestCreditCents(t *testing.T) {
+	for _, s := range []struct {
+		value           float64
+		expected        db.CreditCents
+		expectedAsFloat float64
+	}{
+		{
+			value:           0,
+			expected:        0,
+			expectedAsFloat: 0,
+		},
+		{
+			value:           0.1,
+			expected:        10,
+			expectedAsFloat: 0.1,
+		},
+		{
+			value:           1.1111,
+			expected:        111,
+			expectedAsFloat: 1.11,
+		},
+		{
+			value:           1.4999,
+			expected:        150,
+			expectedAsFloat: 1.50,
+		},
+		{
+			value:           1.500,
+			expected:        150,
+			expectedAsFloat: 1.50,
+		},
+		{
+			value:           1.501,
+			expected:        150,
+			expectedAsFloat: 1.50,
+		},
+		{
+			value:           1.50999,
+			expected:        151,
+			expectedAsFloat: 1.51,
+		},
+		{
+			value:           1.9999,
+			expected:        200,
+			expectedAsFloat: 2.00,
+		},
+		{
+			value:           -1.9999,
+			expected:        -200,
+			expectedAsFloat: -2.00,
+		},
+	} {
+		cc := db.NewCreditCents(s.value)
+		require.Equal(t, s.expected, cc)
+		require.Equal(t, s.expectedAsFloat, cc.ToCredits())
+	}
+}

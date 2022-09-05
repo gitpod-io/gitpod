@@ -144,7 +144,7 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 			)
 
 			generator := NewReportGenerator(dbconn, DefaultWorkspacePricer)
-			v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, generator, nil))
+			v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, generator, nil, DefaultWorkspacePricer))
 			baseserver.StartServerForTests(t, srv)
 
 			conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -275,7 +275,7 @@ func TestUsageService_ListBilledUsage_Pagination(t *testing.T) {
 			)
 
 			generator := NewReportGenerator(dbconn, DefaultWorkspacePricer)
-			v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, generator, nil))
+			v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, generator, nil, DefaultWorkspacePricer))
 			baseserver.StartServerForTests(t, srv)
 
 			conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -580,7 +580,7 @@ func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
 	)
 
-	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, nil, nil))
+	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, nil, nil, DefaultWorkspacePricer))
 	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -593,4 +593,106 @@ func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 		To:   timestamppb.New(to),
 	})
 	require.NoError(t, err)
+}
+
+func TestReconcileWithLedger(t *testing.T) {
+	now := time.Date(2022, 9, 1, 10, 0, 0, 0, time.UTC)
+	pricer, err := NewWorkspacePricer(map[string]float64{
+		"default":              0.1666666667,
+		"g1-standard":          0.1666666667,
+		"g1-standard-pvc":      0.1666666667,
+		"g1-large":             0.3333333333,
+		"g1-large-pvc":         0.3333333333,
+		"gitpodio-internal-xl": 0.3333333333,
+	})
+	require.NoError(t, err)
+
+	t.Run("no action with no instances and no drafts", func(t *testing.T) {
+		inserts, updates := reconcileUsageWithLedger(nil, nil, pricer, now)
+		require.Len(t, inserts, 0)
+		require.Len(t, updates, 0)
+	})
+
+	t.Run("no action with no instances but existing drafts", func(t *testing.T) {
+		drafts := []db.Usage{dbtest.NewUsage(t, db.Usage{})}
+		inserts, updates := reconcileUsageWithLedger(nil, drafts, pricer, now)
+		require.Len(t, inserts, 0)
+		require.Len(t, updates, 0)
+	})
+
+	t.Run("creates a new usage record when no draft exists, removing duplicates", func(t *testing.T) {
+		instance := db.WorkspaceInstanceForUsage{
+			ID:          uuid.New(),
+			WorkspaceID: dbtest.GenerateWorkspaceID(),
+			OwnerID:     uuid.New(),
+			ProjectID: sql.NullString{
+				String: "my-project",
+				Valid:  true,
+			},
+			WorkspaceClass:     db.WorkspaceClass_Default,
+			Type:               db.WorkspaceType_Regular,
+			UsageAttributionID: db.NewTeamAttributionID(uuid.New().String()),
+			CreationTime:       db.NewVarcharTime(now.Add(1 * time.Minute)),
+		}
+
+		inserts, updates := reconcileUsageWithLedger([]db.WorkspaceInstanceForUsage{instance, instance}, nil, pricer, now)
+		require.Len(t, inserts, 1)
+		require.Len(t, updates, 0)
+		require.Equal(t, db.Usage{
+			ID:                  inserts[0].ID,
+			AttributionID:       instance.UsageAttributionID,
+			Description:         usageDescriptionFromController,
+			CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
+			EffectiveTime:       db.NewVarcharTime(now),
+			Kind:                db.WorkspaceInstanceUsageKind,
+			WorkspaceInstanceID: instance.ID,
+			Draft:               true,
+			Metadata:            nil,
+		}, inserts[0])
+	})
+
+	t.Run("updates a usage record when a draft exists", func(t *testing.T) {
+		instance := db.WorkspaceInstanceForUsage{
+			ID:          uuid.New(),
+			WorkspaceID: dbtest.GenerateWorkspaceID(),
+			OwnerID:     uuid.New(),
+			ProjectID: sql.NullString{
+				String: "my-project",
+				Valid:  true,
+			},
+			WorkspaceClass:     db.WorkspaceClass_Default,
+			Type:               db.WorkspaceType_Regular,
+			UsageAttributionID: db.NewTeamAttributionID(uuid.New().String()),
+			CreationTime:       db.NewVarcharTime(now.Add(1 * time.Minute)),
+		}
+
+		// the fields in the usage record deliberately do not match the instance, except for the Instance ID.
+		// we do this to test that the fields in the usage records get updated to reflect the true values from the source of truth - instances.
+		draft := dbtest.NewUsage(t, db.Usage{
+			ID:                  uuid.New(),
+			AttributionID:       db.NewUserAttributionID(uuid.New().String()),
+			Description:         "Some description",
+			CreditCents:         1,
+			EffectiveTime:       db.VarcharTime{},
+			Kind:                db.WorkspaceInstanceUsageKind,
+			WorkspaceInstanceID: instance.ID,
+			Draft:               true,
+			Metadata:            nil,
+		})
+
+		inserts, updates := reconcileUsageWithLedger([]db.WorkspaceInstanceForUsage{instance}, []db.Usage{draft}, pricer, now)
+		require.Len(t, inserts, 0)
+		require.Len(t, updates, 1)
+		require.Equal(t, db.Usage{
+			ID:                  draft.ID,
+			AttributionID:       instance.UsageAttributionID,
+			Description:         usageDescriptionFromController,
+			CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
+			EffectiveTime:       db.NewVarcharTime(now),
+			Kind:                db.WorkspaceInstanceUsageKind,
+			WorkspaceInstanceID: instance.ID,
+			Draft:               true,
+			Metadata:            nil,
+		}, updates[0])
+	})
 }
