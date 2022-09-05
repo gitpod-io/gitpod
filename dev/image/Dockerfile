@@ -2,9 +2,9 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full:2022-08-04-13-40-17
+FROM gitpod/workspace-full:2022-09-03-08-31-56
 
-ENV TRIGGER_REBUILD 20
+ENV TRIGGER_REBUILD 21
 
 USER root
 
@@ -149,7 +149,7 @@ ARG GCS_DIR=/opt/google-cloud-sdk
 ENV PATH=$GCS_DIR/bin:$PATH
 RUN sudo chown gitpod: /opt \
     && mkdir $GCS_DIR \
-    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-393.0.0-linux-x86_64.tar.gz \
+    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-400.0.0-linux-x86_64.tar.gz \
     | tar -xzvC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
     --additional-components gke-gcloud-auth-plugin docker-credential-gcr alpha beta \
