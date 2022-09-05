@@ -42,6 +42,11 @@ import (
 	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
+const (
+	connectFailureMaxTries = 5
+	errorDialingBackendEOF = "error dialing backend: EOF"
+)
+
 type PodExec struct {
 	RestConfig *rest.Config
 	*kubernetes.Clientset
@@ -60,7 +65,7 @@ func NewPodExec(config rest.Config, clientset *kubernetes.Clientset) *PodExec {
 func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*bytes.Buffer, *bytes.Buffer, *bytes.Buffer, error) {
 	var in, out, errOut *bytes.Buffer
 	var ioStreams genericclioptions.IOStreams
-	for {
+	for count := 0; ; count++ {
 		ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
 		copyOptions := kubectlcp.NewCopyOptions(ioStreams)
 		copyOptions.Clientset = p.Clientset
@@ -68,15 +73,23 @@ func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*by
 		copyOptions.Container = containername
 		err := copyOptions.Run([]string{src, dst})
 		if err != nil {
-			if !errors.Is(err, io.EOF) {
-				return nil, nil, nil, fmt.Errorf("Could not run copy operation: %v", err)
+			if !shouldRetry(count, err) {
+				return nil, nil, nil, fmt.Errorf("could not run copy operation: %v", err)
 			}
 			time.Sleep(10 * time.Second)
+			count = count + 1
 			continue
 		}
 		break
 	}
 	return in, out, errOut, nil
+}
+
+func shouldRetry(count int, err error) bool {
+	if count < connectFailureMaxTries {
+		return err.Error() == errorDialingBackendEOF
+	}
+	return false
 }
 
 func (p *PodExec) ExecCmd(command []string, podname string, namespace string, containername string) (*bytes.Buffer, *bytes.Buffer, *bytes.Buffer, error) {
