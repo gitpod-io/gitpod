@@ -7,10 +7,11 @@ package apiv1
 import (
 	"context"
 	"database/sql"
-	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
@@ -104,7 +105,6 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 			start := time.Date(2022, 07, 1, 13, 0, 0, 0, time.UTC)
 			attrID := db.NewTeamAttributionID(uuid.New().String())
 			var instances []db.WorkspaceInstanceUsage
-			var instanceIDs []string
 			for i := 0; i < 3; i++ {
 				instance := dbtest.NewWorkspaceInstanceUsage(t, db.WorkspaceInstanceUsage{
 					AttributionID: attrID,
@@ -115,8 +115,6 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 					},
 				})
 				instances = append(instances, instance)
-
-				instanceIDs = append(instanceIDs, instance.InstanceID.String())
 			}
 
 			return Scenario{
@@ -395,25 +393,20 @@ func TestReportGenerator_GenerateUsageReport(t *testing.T) {
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:                 uuid.New(),
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
-			CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 1, 00, 00, 00, 00, time.UTC)),
 			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 1, 00, 01, 00, 00, time.UTC)),
 			StoppingTime:       db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-			StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 1, 0, 0, time.UTC)),
 		}),
 		// Still running
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:                 uuid.New(),
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
-			CreationTime:       db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC)),
 			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 30, 00, 01, 00, 00, time.UTC)),
 		}),
 		// No creation time, invalid record
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:                 uuid.New(),
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
-			StartedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 1, 0, 0, time.UTC)),
 			StoppingTime:       db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-			StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 1, 0, 0, time.UTC)),
 		}),
 	}
 

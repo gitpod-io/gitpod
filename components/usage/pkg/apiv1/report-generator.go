@@ -7,8 +7,9 @@ package apiv1
 import (
 	"context"
 	"fmt"
-	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"time"
+
+	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
@@ -76,15 +77,15 @@ func validateInstances(instances []db.WorkspaceInstanceForUsage) (valid []db.Wor
 		instance := i
 
 		// Each instance must have a start time, without it, we do not have a baseline for usage computation.
-		if !instance.CreationTime.IsSet() {
+		if !instance.StartedTime.IsSet() {
 			invalid = append(invalid, contentservice.InvalidSession{
-				Reason:  "missing creation time",
+				Reason:  "missing started time",
 				Session: instance,
 			})
 			continue
 		}
 
-		start := instance.CreationTime.Time()
+		start := instance.StartedTime.Time()
 
 		// Currently running instances do not have a stopped time set, so we ignore these.
 		if instance.StoppingTime.IsSet() {
