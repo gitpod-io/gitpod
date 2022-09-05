@@ -22,7 +22,7 @@ var (
 	startOfJune = time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
 )
 
-func TestListWorkspaceInstancesInRange(t *testing.T) {
+func TestFindStoppedWorkspaceInstancesInRange(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
 	workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{}))[0]
@@ -31,81 +31,58 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 		// In the middle of May
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			WorkspaceID:  workspace.ID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}),
 		// Start of May
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
 			WorkspaceID:  workspace.ID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)),
 		}),
 		// End of May
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
 			WorkspaceID:  workspace.ID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 59, 59, 999999, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 59, 59, 999999, time.UTC)),
 		}),
 		// Started in April, but continued into May
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
 			WorkspaceID:  workspace.ID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 1, 0, 0, 0, 0, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 0, 0, 0, 0, time.UTC)),
+		}),
+	}
+	invalid := []db.WorkspaceInstance{
+		// Started in April, no stop time, still running
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:          uuid.New(),
+			WorkspaceID: workspace.ID,
+			StartedTime: db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
 		}),
 		// Started in May, but continued into June
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
 			WorkspaceID:  workspace.ID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 		}),
 		// Started in April, but continued into June (ran for all of May)
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
 			WorkspaceID:  workspace.ID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 		}),
-		// Stopped in May, no creation time, should be retrieved but this is a poor data quality record.
-		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			ID:           uuid.New(),
-			WorkspaceID:  workspace.ID,
-			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
-			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 1, 0, 0, 0, time.UTC)),
-		}),
-		// Started in April, no stop time, still running
-		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			ID:           uuid.New(),
-			WorkspaceID:  workspace.ID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
-			StartedTime:  db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
-		}),
-	}
-	invalid := []db.WorkspaceInstance{
 		// Start of June
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
 			WorkspaceID:  workspace.ID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 06, 1, 00, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 00, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 		}),
 	}
 
@@ -115,7 +92,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 
 	dbtest.CreateWorkspaceInstances(t, conn, all...)
 
-	retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
+	retrieved, err := db.FindStoppedWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
 	require.NoError(t, err)
 
 	require.Len(t, retrieved, len(valid))
@@ -129,10 +106,8 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 		workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{}))[0]
 		instance := dbtest.CreateWorkspaceInstances(t, conn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			WorkspaceID:  workspace.ID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}))[0]
 
 		retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
@@ -165,10 +140,8 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 		}))[0]
 		instance := dbtest.CreateWorkspaceInstances(t, conn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			WorkspaceID:  workspace.ID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}))[0]
 
 		retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
@@ -204,10 +177,8 @@ func TestListWorkspaceInstancesInRange_InBatches(t *testing.T) {
 		instances = append(instances, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:           uuid.New(),
 			WorkspaceID:  workspaceID,
-			CreationTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
-			StoppedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}))
 
 	}
@@ -239,4 +210,160 @@ func TestAttributionID_Values(t *testing.T) {
 			require.Equal(t, s.ExpectedID, id)
 		})
 	}
+}
+
+func TestListWorkspaceInstancesInRange(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{}))[0]
+
+	valid := []db.WorkspaceInstance{
+		// In the middle of May
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			WorkspaceID:  workspace.ID,
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
+		}),
+		// Start of May
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:           uuid.New(),
+			WorkspaceID:  workspace.ID,
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)),
+		}),
+		// End of May
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:           uuid.New(),
+			WorkspaceID:  workspace.ID,
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 31, 23, 59, 59, 999999, time.UTC)),
+		}),
+		// Started in April, but continued into May
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:           uuid.New(),
+			WorkspaceID:  workspace.ID,
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 1, 0, 0, 0, 0, time.UTC)),
+		}),
+		// Started in May, but continued into June
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:           uuid.New(),
+			WorkspaceID:  workspace.ID,
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+		}),
+		// Started in April, but continued into June (ran for all of May)
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:           uuid.New(),
+			WorkspaceID:  workspace.ID,
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
+		}),
+		// Still Running
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:          uuid.New(),
+			WorkspaceID: workspace.ID,
+			StartedTime: db.NewVarcharTime(time.Date(2022, 06, 1, 00, 00, 00, 00, time.UTC)),
+		}),
+	}
+	invalid := []db.WorkspaceInstance{
+		// Started in April, no stop time, still running
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:          uuid.New(),
+			WorkspaceID: workspace.ID,
+			StartedTime: db.NewVarcharTime(time.Date(2022, 04, 31, 23, 00, 00, 00, time.UTC)),
+		}),
+	}
+
+	var all []db.WorkspaceInstance
+	all = append(all, valid...)
+	all = append(all, invalid...)
+
+	dbtest.CreateWorkspaceInstances(t, conn, all...)
+
+	retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
+	require.NoError(t, err)
+
+	ids := []uuid.UUID{}
+	for _, ws := range retrieved {
+		ids = append(ids, ws.ID)
+	}
+
+	require.Len(t, retrieved, len(valid))
+}
+
+func TestFindRunningWorkspace(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{}))[0]
+
+	all := []db.WorkspaceInstance{
+		// one stopped instance
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			WorkspaceID:  workspace.ID,
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
+		}),
+		// Two running instances
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:          uuid.New(),
+			WorkspaceID: workspace.ID,
+			StartedTime: db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
+		}),
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:          uuid.New(),
+			WorkspaceID: workspace.ID,
+			StartedTime: db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
+		}),
+	}
+
+	dbtest.CreateWorkspaceInstances(t, conn, all...)
+
+	retrieved, err := db.FindRunningWorkspaceInstances(context.Background(), conn)
+	require.NoError(t, err)
+
+	require.Equal(t, 2, len(retrieved))
+	for _, ws := range retrieved {
+		require.False(t, ws.StoppingTime.IsSet())
+	}
+
+}
+
+func TestFindWorkspacesByInstanceId(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{}))[0]
+
+	all := []db.WorkspaceInstance{
+		// one stopped instance
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			WorkspaceID:  workspace.ID,
+			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
+		}),
+		// Two running instances
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:          uuid.New(),
+			WorkspaceID: workspace.ID,
+			StartedTime: db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
+		}),
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			ID:          uuid.New(),
+			WorkspaceID: workspace.ID,
+			StartedTime: db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
+		}),
+	}
+
+	twoIds := []uuid.UUID{all[0].ID, all[1].ID}
+
+	dbtest.CreateWorkspaceInstances(t, conn, all...)
+
+	retrieved, err := db.FindWorkspaceInstancesByIds(context.Background(), conn, twoIds)
+	require.NoError(t, err)
+
+	require.Equal(t, 2, len(retrieved))
+	for _, ws := range retrieved {
+		require.NotEqual(t, all[2].ID, ws.ID)
+	}
+
 }

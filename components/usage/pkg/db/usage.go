@@ -36,7 +36,7 @@ func (u *Usage) TableName() string {
 }
 
 func InsertUsage(ctx context.Context, conn *gorm.DB, records ...Usage) error {
-	return conn.WithContext(ctx).Debug().
+	return conn.WithContext(ctx).
 		Clauses(clause.OnConflict{DoNothing: true}).
 		CreateInBatches(records, 1000).Error
 }
@@ -47,10 +47,15 @@ func UpdateUsage(ctx context.Context, conn *gorm.DB, record Usage) error {
 
 func FindAllDraftUsage(ctx context.Context, conn *gorm.DB) ([]Usage, error) {
 	var usageRecords []Usage
+	var usageRecordsBatch []Usage
+
 	result := conn.WithContext(ctx).
 		Where("draft = TRUE").
 		Order("effectiveTime DESC").
-		Find(&usageRecords)
+		FindInBatches(&usageRecordsBatch, 1000, func(_ *gorm.DB, _ int) error {
+			usageRecords = append(usageRecords, usageRecordsBatch...)
+			return nil
+		})
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get usage records: %s", result.Error)
 	}
@@ -58,16 +63,19 @@ func FindAllDraftUsage(ctx context.Context, conn *gorm.DB) ([]Usage, error) {
 }
 
 func FindUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to VarcharTime, offset int64, limit int64) ([]Usage, error) {
-	db := conn.WithContext(ctx)
-
 	var usageRecords []Usage
-	result := db.
+	var usageRecordsBatch []Usage
+
+	result := conn.WithContext(ctx).
 		Where("attributionId = ?", attributionId).
 		Where("? <= effectiveTime AND effectiveTime < ?", from.String(), to.String()).
 		Order("effectiveTime DESC").
 		Offset(int(offset)).
 		Limit(int(limit)).
-		Find(&usageRecords)
+		FindInBatches(&usageRecordsBatch, 1000, func(_ *gorm.DB, _ int) error {
+			usageRecords = append(usageRecords, usageRecordsBatch...)
+			return nil
+		})
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get usage records: %s", result.Error)
 	}

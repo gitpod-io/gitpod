@@ -6,12 +6,13 @@ package dbtest
 
 import (
 	"database/sql"
+	"testing"
+	"time"
+
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"testing"
-	"time"
 )
 
 var (
@@ -34,6 +35,8 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 	creationTime := db.VarcharTime{}
 	if instance.CreationTime.IsSet() {
 		creationTime = instance.CreationTime
+	} else if instance.StartedTime.IsSet() {
+		creationTime = instance.StartedTime
 	}
 
 	startedTime := db.VarcharTime{}
@@ -49,6 +52,8 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 	stoppedTime := db.VarcharTime{}
 	if instance.StoppedTime.IsSet() {
 		stoppedTime = instance.StoppedTime
+	} else if instance.StoppingTime.IsSet() {
+		creationTime = instance.StoppingTime
 	}
 
 	stoppingTime := db.VarcharTime{}
