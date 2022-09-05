@@ -47,3 +47,93 @@ func TestFindUsageInRange(t *testing.T) {
 	require.Equal(t, 1, len(listResult))
 	require.Equal(t, []db.Usage{entryInside}, listResult)
 }
+
+func TestInsertUsageRecords(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
+	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
+
+	usage := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		Draft:         true,
+	})
+
+	dbtest.CreateUsageRecords(t, conn, usage)
+	updatedDesc := "Updated Description"
+	usage.Description = updatedDesc
+
+	require.NoError(t, db.InsertUsage(context.Background(), conn, usage))
+
+	drafts, err := db.FindAllDraftUsage(context.Background(), conn)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(drafts))
+	require.NotEqual(t, updatedDesc, drafts[0].Description)
+}
+
+func TestUpdateUsageRecords(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
+	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
+
+	usage := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		Draft:         true,
+	})
+
+	dbtest.CreateUsageRecords(t, conn, usage)
+	updatedDesc := "Updated Description"
+	usage.Description = updatedDesc
+
+	require.NoError(t, db.UpdateUsage(context.Background(), conn, usage))
+
+	drafts, err := db.FindAllDraftUsage(context.Background(), conn)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(drafts))
+	require.Equal(t, updatedDesc, drafts[0].Description)
+}
+
+func TestFindAllDraftUsage(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
+	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
+
+	usage1 := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		Draft:         true,
+	})
+	usage2 := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		Draft:         true,
+	})
+	usage3 := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		Draft:         false,
+	})
+
+	dbtest.CreateUsageRecords(t, conn, usage1, usage2, usage3)
+	drafts, err := db.FindAllDraftUsage(context.Background(), conn)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(drafts))
+	for _, usage := range drafts {
+		require.True(t, usage.Draft)
+	}
+
+	// let's finalize one record
+	usage2.Draft = false
+	require.NoError(t, db.UpdateUsage(context.Background(), conn, usage2))
+
+	drafts, err = db.FindAllDraftUsage(context.Background(), conn)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(drafts))
+	for _, usage := range drafts {
+		require.True(t, usage.Draft)
+	}
+}

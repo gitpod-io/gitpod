@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Usage struct {
@@ -34,12 +35,33 @@ func (u *Usage) TableName() string {
 	return "d_b_usage"
 }
 
+func InsertUsage(ctx context.Context, conn *gorm.DB, records ...Usage) error {
+	return conn.WithContext(ctx).Debug().
+		Clauses(clause.OnConflict{DoNothing: true}).
+		CreateInBatches(records, 1000).Error
+}
+
+func UpdateUsage(ctx context.Context, conn *gorm.DB, record Usage) error {
+	return conn.WithContext(ctx).Save(record).Error
+}
+
+func FindAllDraftUsage(ctx context.Context, conn *gorm.DB) ([]Usage, error) {
+	var usageRecords []Usage
+	result := conn.WithContext(ctx).
+		Where("draft = TRUE").
+		Order("effectiveTime DESC").
+		Find(&usageRecords)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to get usage records: %s", result.Error)
+	}
+	return usageRecords, nil
+}
+
 func FindUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to VarcharTime, offset int64, limit int64) ([]Usage, error) {
 	db := conn.WithContext(ctx)
 
 	var usageRecords []Usage
 	result := db.
-		WithContext(ctx).
 		Where("attributionId = ?", attributionId).
 		Where("? <= effectiveTime AND effectiveTime < ?", from.String(), to.String()).
 		Order("effectiveTime DESC").

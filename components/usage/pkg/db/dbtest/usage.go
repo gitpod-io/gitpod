@@ -5,6 +5,7 @@
 package dbtest
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
@@ -67,8 +68,7 @@ func CreateUsageRecords(t *testing.T, conn *gorm.DB, entries ...db.Usage) []db.U
 		ids = append(ids, record.ID.String())
 	}
 
-	require.NoError(t, conn.CreateInBatches(&records, 1000).Error)
-
+	require.NoError(t, db.InsertUsage(context.Background(), conn, entries...))
 	t.Cleanup(func() {
 		require.NoError(t, conn.Where(ids).Delete(&db.Usage{}).Error)
 	})
