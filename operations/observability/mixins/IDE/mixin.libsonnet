@@ -3,5 +3,4 @@
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
-(import './rules.libsonnet') +
 (import './dashboards.libsonnet')

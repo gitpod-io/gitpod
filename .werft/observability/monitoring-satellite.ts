@@ -114,7 +114,12 @@ export class MonitoringSatelliteInstaller {
                         {
                             "gitURL": "https://github.com/gitpod-io/observability",
                             "path": "monitoring-satellite/manifests/probers",
-                    }],
+                        },
+                        {
+                            "gitURL": "https://github.com/gitpod-io/gitpod",
+                            "path": "operations/observability/mixins/IDE/rules",
+                        },
+                    ],
                 },
             }' | go run main.go render --config - | kubectl --kubeconfig ${this.options.kubeconfigPath} apply -f -`;
             const renderingResult = exec(observabilityInstallerRenderCmd, { silent: false, dontCheckRc: true});
