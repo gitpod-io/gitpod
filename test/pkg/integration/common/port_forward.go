@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	errorDialingBackend = "error upgrading connection: error dialing backend: EOF"
+	errorDialingBackend = "error: error upgrading connection: error dialing backend: EOF"
 )
 
 // ForwardPortOfPod establishes a TCP port forwarding to a Kubernetes pod
