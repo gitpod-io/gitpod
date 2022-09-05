@@ -194,7 +194,7 @@ func TestGitLFSSupport(t *testing.T) {
 	integration.SkipWithoutUserToken(t, userToken)
 
 	f := features.New("GitLFSSupport").
-		WithLabel("component", "server").
+		WithLabel("component", "workspace").
 		Assess("it can open a repo with Git LFS support", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
@@ -204,17 +204,36 @@ func TestGitLFSSupport(t *testing.T) {
 				api.Done(t)
 			})
 
-			_, err := api.CreateUser(username, userToken)
-			if err != nil {
-				t.Fatal(err)
+			ffs := []struct {
+				Name string
+				FF   string
+			}{
+				{Name: "classic"},
+				{Name: "pvc", FF: "persistent_volume_claim"},
 			}
 
-			_, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/atduarte/lfs-test", username, api)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer stopWs(true)
+			for _, ff := range ffs {
+				t.Run(ff.Name, func(t *testing.T) {
+					username := username + ff.Name
+					userId, err := api.CreateUser(username, userToken)
+					if err != nil {
+						t.Fatal(err)
+					}
 
+					if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
+						t.Fatal(err)
+					}
+
+					_, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/atduarte/lfs-test", username, api)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					t.Cleanup(func() {
+						stopWS(true)
+					})
+				})
+			}
 			return ctx
 		}).
 		Feature()
