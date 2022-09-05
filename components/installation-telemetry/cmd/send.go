@@ -58,6 +58,7 @@ var sendCmd = &cobra.Command{
 		properties := analytics.NewProperties().
 			Set("version", versionId).
 			Set("totalUsers", data.TotalUsers).
+			Set("activeUsers", data.ActiveUsers).
 			Set("totalWorkspaces", data.TotalWorkspaces).
 			Set("totalInstances", data.TotalInstances).
 			Set("platform", platform)
