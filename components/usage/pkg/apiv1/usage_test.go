@@ -411,7 +411,7 @@ func TestReportGenerator_GenerateUsageReport(t *testing.T) {
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:                 uuid.New(),
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
-			StartedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 1, 0, 0, time.UTC)),
+			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 1, 00, 01, 00, 00, time.UTC)),
 			StoppingTime:       db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
 			StoppedTime:        db.NewVarcharTime(time.Date(2022, 06, 1, 1, 1, 0, 0, time.UTC)),
 		}),
