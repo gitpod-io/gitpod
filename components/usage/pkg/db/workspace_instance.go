@@ -79,8 +79,8 @@ func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to 
 		Where(
 			conn.Where("wsi.stoppingTime >= ?", TimeToISO8601(from)).Or("wsi.stoppingTime = ?", ""),
 		).
-		Where("wsi.creationTime < ?", TimeToISO8601(to)).
 		Where("wsi.startedTime != ?", "").
+		Where("wsi.startedTime < ?", TimeToISO8601(to)).
 		Where("wsi.usageAttributionId != ?", "").
 		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
 			instances = append(instances, instancesInBatch...)
