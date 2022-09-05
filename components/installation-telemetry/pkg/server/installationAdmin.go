@@ -21,6 +21,7 @@ type InstallationAdminSettings struct {
 type Data struct {
 	InstallationAdmin InstallationAdmin `json:"installationAdmin"`
 	TotalUsers        int64             `json:"totalUsers"`
+	ActiveUsers       int64             `json:"activeUsers"`
 	TotalWorkspaces   int64             `json:"totalWorkspaces"`
 	TotalInstances    int64             `json:"totalInstances"`
 	LicenseType       string            `json:"licenseType"`

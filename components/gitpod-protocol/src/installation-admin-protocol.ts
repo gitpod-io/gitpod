@@ -27,6 +27,7 @@ export interface InstallationAdmin {
 export interface TelemetryData {
     installationAdmin: InstallationAdmin;
     totalUsers: number;
+    activeUsers: number;
     totalWorkspaces: number;
     totalInstances: number;
     licenseType: string;
