@@ -181,6 +181,42 @@ func (s *UsageService) GetCostCenter(ctx context.Context, in *v1.GetCostCenterRe
 	}, nil
 }
 
+func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.ReconcileUsageWithLedgerRequest) (*v1.ReconcileUsageWithLedgerResponse, error) {
+	from := req.GetFrom().AsTime()
+	to := req.GetTo().AsTime()
+
+	logger := log.
+		WithField("from", from).
+		WithField("to", to)
+
+	if to.Before(from) {
+		return nil, status.Errorf(codes.InvalidArgument, "To must not be before From")
+	}
+
+	stopped, err := db.FindStoppedWorkspaceInstancesInRange(ctx, s.conn, from, to)
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to find stopped workspace instances.")
+		return nil, status.Errorf(codes.Internal, "failed to query for stopped instances")
+	}
+	logger.Infof("Found %d stopped workspace instances in range.", len(stopped))
+
+	running, err := db.FindRunningWorkspaceInstances(ctx, s.conn)
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to find running workspace instances.")
+		return nil, status.Errorf(codes.Internal, "failed to query for running instances")
+	}
+	logger.Infof("Found %d running workspaces since the beginning of time.", len(running))
+
+	usageDrafts, err := db.FindAllDraftUsage(ctx, s.conn)
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to find all draft usage records.")
+		return nil, status.Errorf(codes.Internal, "failed to find all draft usage records")
+	}
+	logger.Infof("Found %d draft usage records.", len(usageDrafts))
+
+	return &v1.ReconcileUsageWithLedgerResponse{}, nil
+}
+
 func NewUsageService(conn *gorm.DB, reportGenerator *ReportGenerator, contentSvc contentservice.Interface) *UsageService {
 	return &UsageService{
 		conn:            conn,

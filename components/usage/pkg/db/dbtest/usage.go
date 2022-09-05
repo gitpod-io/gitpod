@@ -23,7 +23,7 @@ func NewUsage(t *testing.T, record db.Usage) db.Usage {
 		Description:         "some description",
 		CreditCents:         42,
 		EffectiveTime:       db.VarcharTime{},
-		Kind:                "workspaceinstance",
+		Kind:                db.WorkspaceInstanceUsageKind,
 		WorkspaceInstanceID: uuid.New(),
 	}
 

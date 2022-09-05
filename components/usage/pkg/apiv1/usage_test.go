@@ -556,3 +556,41 @@ func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
 		})
 	}
 }
+
+func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
+	dbconn := dbtest.ConnectForTests(t)
+	from := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
+	to := time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)
+
+	// stopped instances
+	dbtest.CreateWorkspaceInstances(t, dbconn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+		StoppingTime: db.NewVarcharTime(from.Add(1 * time.Minute)),
+	}))
+
+	// running instances
+	dbtest.CreateWorkspaceInstances(t, dbconn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{}))
+
+	// usage drafts
+	dbtest.CreateUsageRecords(t, dbconn, dbtest.NewUsage(t, db.Usage{
+		Kind:  db.WorkspaceInstanceUsageKind,
+		Draft: true,
+	}))
+
+	srv := baseserver.NewForTests(t,
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
+
+	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, nil, nil))
+	baseserver.StartServerForTests(t, srv)
+
+	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+
+	client := v1.NewUsageServiceClient(conn)
+
+	_, err = client.ReconcileUsageWithLedger(context.Background(), &v1.ReconcileUsageWithLedgerRequest{
+		From: timestamppb.New(from),
+		To:   timestamppb.New(to),
+	})
+	require.NoError(t, err)
+}
