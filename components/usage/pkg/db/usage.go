@@ -14,13 +14,20 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+type UsageKind string
+
+const (
+	WorkspaceInstanceUsageKind UsageKind = "workspaceinstance"
+	InvoiceUsageKind                     = "invoice"
+)
+
 type Usage struct {
 	ID                  uuid.UUID      `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
 	AttributionID       AttributionID  `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
 	Description         string         `gorm:"column:description;type:varchar;size:255;" json:"description"`
 	CreditCents         int64          `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
 	EffectiveTime       VarcharTime    `gorm:"column:effectiveTime;type:varchar;size:255;" json:"effectiveTime"`
-	Kind                string         `gorm:"column:kind;type:char;size:10;" json:"kind"`
+	Kind                UsageKind      `gorm:"column:kind;type:char;size:10;" json:"kind"`
 	WorkspaceInstanceID uuid.UUID      `gorm:"column:workspaceInstanceId;type:char;size:36;" json:"workspaceInstanceId"`
 	Draft               bool           `gorm:"column:draft;type:boolean;" json:"draft"`
 	Metadata            datatypes.JSON `gorm:"column:metadata;type:text;size:65535" json:"metadata"`
