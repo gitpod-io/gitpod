@@ -108,7 +108,7 @@ func TestBackup(t *testing.T) {
 							}
 
 							// PVC: find VolumeSnapshot by workspace ID
-							volumeSnapshot, volumeSnapshotContent, err := integration.FindVolumeSnapshot(ws1.Req.Id, cfg.Namespace(), cfg.Client())
+							volumeSnapshot, volumeSnapshotContent, err := integration.FindVolumeSnapshot(ctx, ws1.Req.Id, cfg.Namespace(), cfg.Client())
 							if err != nil {
 								return err
 							}

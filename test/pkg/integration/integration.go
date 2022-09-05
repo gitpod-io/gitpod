@@ -504,13 +504,13 @@ func isPodReady(s *corev1.PodStatus) bool {
 	return false
 }
 
-func FindVolumeSnapshot(instanceID, namespace string, client klient.Client) (string, string, error) {
+func FindVolumeSnapshot(ctx context.Context, instanceID, namespace string, client klient.Client) (string, string, error) {
 	vsClient, err := volumesnapshotv1.NewForConfig(client.RESTConfig())
 	if err != nil {
 		return "", "", err
 	}
 
-	volumeSnapshots, err := vsClient.SnapshotV1().VolumeSnapshots(namespace).List(context.Background(), metav1.ListOptions{
+	volumeSnapshots, err := vsClient.SnapshotV1().VolumeSnapshots(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "workspaceID=" + instanceID,
 	})
 	if err != nil {
