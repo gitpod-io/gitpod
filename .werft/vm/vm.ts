@@ -243,8 +243,11 @@ export function stopKubectlPortForwards() {
  * Install Rook/Ceph storage that supports CSI snapshot
  */
 export function installRookCeph(options: { kubeconfig: string }) {
-    exec(
-        `kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/crds.yaml -f .werft/vm/manifests/rook-ceph/common.yaml -f .werft/vm/manifests/rook-ceph/operator.yaml`,
+    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/crds.yaml --server-side --force-conflicts`
+    );
+    exec(`kubectl --kubeconfig ${options.kubeconfig} wait --for condition=established --timeout=120s crd/cephclusters.ceph.rook.io`
+    );
+    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/common.yaml -f .werft/vm/manifests/rook-ceph/operator.yaml`
     );
     exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/cluster-test.yaml`);
     exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/storageclass-test.yaml`);
