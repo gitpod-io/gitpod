@@ -78,7 +78,7 @@ function setLocalStorageObject(key: string, object: Object, expiresInSeconds: nu
     try {
         window.localStorage.setItem(
             key,
-            JSON.stringify({ expirationTime: Date.now() + expiresInSeconds * (1000 * 60), value: object }),
+            JSON.stringify({ expirationTime: Date.now() + expiresInSeconds * 1000, value: object }),
         );
     } catch (error) {
         console.error("Setting localstorage item failed", key, object, error);
