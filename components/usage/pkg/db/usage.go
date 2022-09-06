@@ -200,3 +200,33 @@ func GetUsageSummary(ctx context.Context, conn *gorm.DB, attributionId Attributi
 		CreditCentsBalanceAtEnd:   creditCentsBalanceAtStart.Int64 + creditCentsBalanceInPeriod.Int64,
 	}, nil
 }
+
+type Balance struct {
+	AttributionID AttributionID `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
+	CreditCents   CreditCents   `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
+}
+
+func ListBalance(ctx context.Context, conn *gorm.DB) ([]Balance, error) {
+	var balances []Balance
+	rows, err := conn.WithContext(ctx).
+		Model(&Usage{}).
+		Select("attributionId as attributionId, sum(creditCents) as creditCents").
+		Group("attributionId").
+		Order("attributionId").
+		Rows()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rows for list balance query: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var balance Balance
+		err = conn.ScanRows(rows, &balance)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan row into Balance struct: %w", err)
+		}
+		balances = append(balances, balance)
+	}
+
+	return balances, nil
+}
