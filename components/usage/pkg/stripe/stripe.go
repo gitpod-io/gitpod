@@ -152,18 +152,6 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 		return nil, fmt.Errorf("failed to register usage for customer %q on subscription item %s", customer.Name, subscriptionItemId)
 	}
 
-	invoice, err := c.GetUpcomingInvoice(ctx, customer.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find upcoming invoice for customer %s: %w", customer.ID, err)
-	}
-
-	_, err = c.UpdateInvoiceMetadata(ctx, invoice.ID, map[string]string{
-		ReportIDMetadataKey: summary.ReportID,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to udpate invoice %s metadata with report ID: %w", invoice.ID, err)
-	}
-
 	return &UsageRecord{
 		SubscriptionItemID: subscriptionItemId,
 		Quantity:           summary.Credits,
