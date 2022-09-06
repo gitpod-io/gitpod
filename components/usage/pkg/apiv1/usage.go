@@ -342,7 +342,7 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 	instances = append(instances, instancesWithUsageInDraft...)
 
 	inserts, updates := reconcileUsageWithLedger(instances, usageDrafts, s.pricer, now)
-	logger.WithField("inserts", inserts).WithField("updates", updates).Infof("Identified %d inserts and %d updates against usage records.", len(inserts), len(updates))
+	logger.Infof("Identified %d inserts and %d updates against usage records.", len(inserts), len(updates))
 
 	if len(inserts) > 0 {
 		err = db.InsertUsage(ctx, s.conn, inserts...)
