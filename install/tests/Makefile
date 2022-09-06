@@ -146,10 +146,11 @@ add-ns-record: check-env-cloud
 	terraform apply -target=module.$(cloud)-add-dns-record  -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done adding NS record"
 
+self_signed ?= "false"
 .PHONY:
 ## cluster-issuer: Creates a cluster issuer for the correspondign provider
 cluster-issuer: check-env-cloud
-ifneq ($(self_signed),)
+ifneq ($(self_signed), "false")
 	@echo "Skipped creating cluster issuer"
 else
 	terraform init --upgrade && \
@@ -206,8 +207,8 @@ get-kubeconfig:
 get-github-config:
 ifneq ($(GITHUB_SCM_OAUTH),)
 	export SCM_OAUTH=./manifests/github-oauth.yaml && \
-	cat $$GITHUB_SCM_OAUTH/provider > $$SCM_OAUTH && \
-	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' http://${TF_VAR_TEST_ID}.${TF_VAR_domain}/auth/github.com/callback && \
+	cat $$GITHUB_SCM_OAUTH > $$SCM_OAUTH && \
+	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' https://scm.${DOMAIN}/auth/github.com/callback?state=${TF_VAR_TEST_ID} && \
 	kubectl --kubeconfig=${KUBECONFIG} create namespace gitpod || echo "Gitpod namespace already exist" && \
 	kubectl --kubeconfig=${KUBECONFIG} delete secret github-oauth -n gitpod || echo "gitpod-oauth secret needs to be created" && \
 	kubectl --kubeconfig=${KUBECONFIG} create secret generic "github-oauth" --namespace gitpod --from-literal=provider="$$(cat $$SCM_OAUTH)" && \
@@ -218,7 +219,7 @@ endif
 
 KOTS_KONFIG := "./manifests/kots-config.yaml"
 
-get-base-config: get-github-config
+get-base-config:
 	export CONFIG_PATCH=./manifests/config-patch.yaml && \
 	export DOMAIN=${TF_VAR_domain} && \
 	export PATCH=$$(cat $$CONFIG_PATCH | base64 -w 0) || export PATCH="" && \
@@ -329,6 +330,8 @@ endif
 storage ?= incluster
 registry ?= incluster
 db ?= incluster
+runTests ?= "false"
+self_signed ?= "false"
 .PHONY:
 generate-kots-config: cloud_storage = $(if $(findstring external,$(storage)),$(cloud),incluster)
 generate-kots-config: cloud_registry = $(if $(findstring external,$(registry)),$(cloud),incluster)
@@ -338,9 +341,8 @@ generate-kots-config: select-workspace check-env-cloud get-base-config check-env
 	$(MAKE) storage-config-${cloud_storage}
 	$(MAKE) db-config-${cloud_db}
 	$(MAKE) registry-config-${cloud_registry}
-ifneq ($(self_signed),)
-	$(MAKE) self-signed-config
-endif
+	if [[ $$self_signed == "true" ]]; then $(MAKE) self-signed-config; fi
+	if [[ $$runTests == "true" ]]; then $(MAKE) get-github-config; fi
 
 license_community_beta := "../licenses/Community (Beta).yaml"
 license_community_stable := "../licenses/Community.yaml"
