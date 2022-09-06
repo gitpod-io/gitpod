@@ -55,6 +55,28 @@ function deserialize_usage_v1_ListBilledUsageResponse(buffer_arg) {
   return usage_v1_usage_pb.ListBilledUsageResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_usage_v1_ListUsageRequest(arg) {
+  if (!(arg instanceof usage_v1_usage_pb.ListUsageRequest)) {
+    throw new Error('Expected argument of type usage.v1.ListUsageRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_ListUsageRequest(buffer_arg) {
+  return usage_v1_usage_pb.ListUsageRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_usage_v1_ListUsageResponse(arg) {
+  if (!(arg instanceof usage_v1_usage_pb.ListUsageResponse)) {
+    throw new Error('Expected argument of type usage.v1.ListUsageResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_ListUsageResponse(buffer_arg) {
+  return usage_v1_usage_pb.ListUsageResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_usage_v1_ReconcileUsageRequest(arg) {
   if (!(arg instanceof usage_v1_usage_pb.ReconcileUsageRequest)) {
     throw new Error('Expected argument of type usage.v1.ReconcileUsageRequest');
@@ -148,6 +170,18 @@ reconcileUsageWithLedger: {
     requestDeserialize: deserialize_usage_v1_ReconcileUsageWithLedgerRequest,
     responseSerialize: serialize_usage_v1_ReconcileUsageWithLedgerResponse,
     responseDeserialize: deserialize_usage_v1_ReconcileUsageWithLedgerResponse,
+  },
+  // ListUsage retrieves all usage for the specified attributionId and theb given time range
+listUsage: {
+    path: '/usage.v1.UsageService/ListUsage',
+    requestStream: false,
+    responseStream: false,
+    requestType: usage_v1_usage_pb.ListUsageRequest,
+    responseType: usage_v1_usage_pb.ListUsageResponse,
+    requestSerialize: serialize_usage_v1_ListUsageRequest,
+    requestDeserialize: deserialize_usage_v1_ListUsageRequest,
+    responseSerialize: serialize_usage_v1_ListUsageResponse,
+    responseDeserialize: deserialize_usage_v1_ListUsageResponse,
   },
 };
 

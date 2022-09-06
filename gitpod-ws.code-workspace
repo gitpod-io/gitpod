@@ -17,6 +17,7 @@
         { "path": "components/service-waiter" },
         { "path": "components/supervisor" },
         { "path": "components/usage" },
+        { "path": "components/usage-api" },
         { "path": "components/workspacekit" },
         { "path": "components/ws-daemon" },
         { "path": "components/ws-manager" },

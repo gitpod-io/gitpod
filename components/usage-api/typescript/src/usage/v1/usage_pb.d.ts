@@ -189,6 +189,140 @@ export namespace PaginatedResponse {
     }
 }
 
+export class ListUsageRequest extends jspb.Message {
+    getAttributionId(): string;
+    setAttributionId(value: string): ListUsageRequest;
+
+    hasFrom(): boolean;
+    clearFrom(): void;
+    getFrom(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setFrom(value?: google_protobuf_timestamp_pb.Timestamp): ListUsageRequest;
+
+    hasTo(): boolean;
+    clearTo(): void;
+    getTo(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setTo(value?: google_protobuf_timestamp_pb.Timestamp): ListUsageRequest;
+    getOrder(): ListUsageRequest.Ordering;
+    setOrder(value: ListUsageRequest.Ordering): ListUsageRequest;
+
+    hasPagination(): boolean;
+    clearPagination(): void;
+    getPagination(): PaginatedRequest | undefined;
+    setPagination(value?: PaginatedRequest): ListUsageRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ListUsageRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: ListUsageRequest): ListUsageRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ListUsageRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ListUsageRequest;
+    static deserializeBinaryFromReader(message: ListUsageRequest, reader: jspb.BinaryReader): ListUsageRequest;
+}
+
+export namespace ListUsageRequest {
+    export type AsObject = {
+        attributionId: string,
+        from?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        to?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        order: ListUsageRequest.Ordering,
+        pagination?: PaginatedRequest.AsObject,
+    }
+
+    export enum Ordering {
+    ORDERING_DESCENDING = 0,
+    ORDERING_ASCENDING = 1,
+    }
+
+}
+
+export class ListUsageResponse extends jspb.Message {
+    clearUsageEntriesList(): void;
+    getUsageEntriesList(): Array<Usage>;
+    setUsageEntriesList(value: Array<Usage>): ListUsageResponse;
+    addUsageEntries(value?: Usage, index?: number): Usage;
+
+    hasPagination(): boolean;
+    clearPagination(): void;
+    getPagination(): PaginatedResponse | undefined;
+    setPagination(value?: PaginatedResponse): ListUsageResponse;
+    getCreditBalanceAtStart(): number;
+    setCreditBalanceAtStart(value: number): ListUsageResponse;
+    getCreditBalanceAtEnd(): number;
+    setCreditBalanceAtEnd(value: number): ListUsageResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ListUsageResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: ListUsageResponse): ListUsageResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ListUsageResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ListUsageResponse;
+    static deserializeBinaryFromReader(message: ListUsageResponse, reader: jspb.BinaryReader): ListUsageResponse;
+}
+
+export namespace ListUsageResponse {
+    export type AsObject = {
+        usageEntriesList: Array<Usage.AsObject>,
+        pagination?: PaginatedResponse.AsObject,
+        creditBalanceAtStart: number,
+        creditBalanceAtEnd: number,
+    }
+}
+
+export class Usage extends jspb.Message {
+    getId(): string;
+    setId(value: string): Usage;
+    getAttributionId(): string;
+    setAttributionId(value: string): Usage;
+    getDescription(): string;
+    setDescription(value: string): Usage;
+    getCredits(): number;
+    setCredits(value: number): Usage;
+
+    hasEffectiveTime(): boolean;
+    clearEffectiveTime(): void;
+    getEffectiveTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
+    setEffectiveTime(value?: google_protobuf_timestamp_pb.Timestamp): Usage;
+    getKind(): Usage.Kind;
+    setKind(value: Usage.Kind): Usage;
+    getWorkspaceInstanceId(): string;
+    setWorkspaceInstanceId(value: string): Usage;
+    getDraft(): boolean;
+    setDraft(value: boolean): Usage;
+    getMetadata(): string;
+    setMetadata(value: string): Usage;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): Usage.AsObject;
+    static toObject(includeInstance: boolean, msg: Usage): Usage.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: Usage, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): Usage;
+    static deserializeBinaryFromReader(message: Usage, reader: jspb.BinaryReader): Usage;
+}
+
+export namespace Usage {
+    export type AsObject = {
+        id: string,
+        attributionId: string,
+        description: string,
+        credits: number,
+        effectiveTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        kind: Usage.Kind,
+        workspaceInstanceId: string,
+        draft: boolean,
+        metadata: string,
+    }
+
+    export enum Kind {
+    KIND_WORKSPACE_INSTANCE = 0,
+    KIND_INVOICE = 1,
+    }
+
+}
+
 export class BilledSession extends jspb.Message {
     getAttributionId(): string;
     setAttributionId(value: string): BilledSession;

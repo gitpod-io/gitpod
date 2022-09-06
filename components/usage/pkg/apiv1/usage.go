@@ -9,9 +9,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"math"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
@@ -118,6 +119,116 @@ func (s *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUsa
 		Sessions:         billedSessions,
 		TotalCreditsUsed: listUsageResult.TotalCreditsUsed,
 		Pagination:       &pagination,
+	}, nil
+}
+
+func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (*v1.ListUsageResponse, error) {
+	to := time.Now()
+	if in.To != nil {
+		to = in.To.AsTime()
+	}
+	from := to.Add(-maxQuerySize)
+	if in.From != nil {
+		from = in.From.AsTime()
+	}
+
+	if from.After(to) {
+		return nil, status.Errorf(codes.InvalidArgument, "Specified From timestamp is after To. Please ensure From is always before To")
+	}
+
+	if to.Sub(from) > maxQuerySize {
+		return nil, status.Errorf(codes.InvalidArgument, "Maximum range exceeded. Range specified can be at most %s", maxQuerySize.String())
+	}
+
+	if in.Pagination.PerPage < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "Number of items perPage needs to be positive (was %d).", in.Pagination.PerPage)
+	}
+
+	if in.Pagination.Page < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "Page number needs to be 0 or greater (was %d).", in.Pagination.Page)
+	}
+
+	attributionId, err := db.ParseAttributionID(in.AttributionId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "AttributionID '%s' couldn't be parsed (error: %s).", in.AttributionId, err)
+	}
+
+	order := db.DescendingOrder
+	if in.Order == v1.ListUsageRequest_ORDERING_ASCENDING {
+		order = db.AscendingOrder
+	}
+
+	var perPage int64 = 50
+	if in.Pagination.PerPage > 0 {
+		perPage = in.Pagination.PerPage
+	}
+	var page int64 = in.Pagination.Page
+	var offset int64 = perPage * page
+
+	listUsageResult, err := db.FindUsage(ctx, s.conn, &db.FindUsageParams{
+		AttributionId: db.AttributionID(in.GetAttributionId()),
+		From:          from,
+		To:            to,
+		Order:         order,
+		Offset:        offset,
+		Limit:         perPage,
+	})
+	logger := log.Log.
+		WithField("attribution_id", in.AttributionId).
+		WithField("perPage", perPage).
+		WithField("page", page).
+		WithField("from", from).
+		WithField("to", to)
+	if err != nil {
+		logger.WithError(err).Error("Failed to fetch usage.")
+		return nil, status.Error(codes.Internal, "unable to retrieve usage")
+	}
+
+	var usageData []*v1.Usage
+	for _, usageRecord := range listUsageResult {
+		kind := v1.Usage_KIND_WORKSPACE_INSTANCE
+		if usageRecord.Kind == db.InvoiceUsageKind {
+			kind = v1.Usage_KIND_INVOICE
+		}
+		usageDataEntry := &v1.Usage{
+			Id:            usageRecord.ID.String(),
+			AttributionId: string(usageRecord.AttributionID),
+			EffectiveTime: timestamppb.New(usageRecord.EffectiveTime.Time()),
+			// convert cents back to full credits
+			Credits:             usageRecord.CreditCents.ToCredits(),
+			Kind:                kind,
+			WorkspaceInstanceId: usageRecord.WorkspaceInstanceID.String(),
+			Draft:               usageRecord.Draft,
+			Metadata:            string(usageRecord.Metadata),
+		}
+		usageData = append(usageData, usageDataEntry)
+	}
+
+	usageSummary, err := db.GetUsageSummary(ctx, s.conn,
+		db.AttributionID(string(attributionId)),
+		from,
+		to,
+		true,
+	)
+
+	if err != nil {
+		logger.WithError(err).Error("Failed to fetch usage metadata.")
+		return nil, status.Error(codes.Internal, "unable to retrieve usage")
+	}
+	totalPages := int64(math.Ceil(float64(usageSummary.NumRecordsInRange) / float64(perPage)))
+
+	pagination := v1.PaginatedResponse{
+		PerPage:    perPage,
+		Page:       page,
+		TotalPages: totalPages,
+		Total:      int64(usageSummary.NumRecordsInRange),
+	}
+
+	return &v1.ListUsageResponse{
+		UsageEntries:         usageData,
+		CreditBalanceAtStart: float64(usageSummary.CreditCentsBalanceAtStart) / 100,
+		CreditBalanceAtEnd:   float64(usageSummary.CreditCentsBalanceAtEnd) / 100,
+		Pagination:           &pagination,
 	}, nil
 }
 
