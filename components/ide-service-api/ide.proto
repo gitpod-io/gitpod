@@ -1,0 +1,20 @@
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package ide_service_api;
+
+option go_package = "github.com/gitpod-io/gitpod/ide-service/api";
+option java_package = "io.gitpod.ideservice.api";
+
+service IDEService {
+    rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
+}
+
+message GetConfigRequest {}
+
+message GetConfigResponse {
+    string content = 1;
+}
