@@ -67,6 +67,37 @@ func (s *BillingService) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoic
 	return &v1.UpdateInvoicesResponse{}, nil
 }
 
+func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {
+	balances, err := db.ListBalance(ctx, s.conn)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to reconcile invoices.")
+		return nil, status.Errorf(codes.Internal, "Failed to reconcile invoices.")
+	}
+
+	creditSummaryForTeams := map[string]stripe.CreditSummary{}
+	for _, balance := range balances {
+		entity, id := balance.AttributionID.Values()
+
+		// TODO: Support updating of user attribution IDs
+		if entity != db.AttributionEntity_Team {
+			continue
+		}
+
+		creditSummaryForTeams[id] = stripe.CreditSummary{
+			Credits:  int64(math.Ceil(balance.CreditCents.ToCredits())),
+			ReportID: "no-report",
+		}
+	}
+
+	err = s.stripeClient.UpdateUsage(ctx, creditSummaryForTeams)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to udpate usage in stripe.")
+		return nil, status.Errorf(codes.Internal, "Failed to update usage in stripe")
+	}
+
+	return &v1.ReconcileInvoicesResponse{}, nil
+}
+
 func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInvoiceRequest) (*v1.FinalizeInvoiceResponse, error) {
 	logger := log.WithField("invoice_id", in.GetInvoiceId())
 
