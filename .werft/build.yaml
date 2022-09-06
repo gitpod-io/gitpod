@@ -221,6 +221,18 @@ pod:
       value: "/mnt/secrets/github-token-gitpod-bot/token"
     - name: WERFT_CREDENTIAL_HELPER
       value: "/workspace/dev/preview/werft-credential-helper.sh"
+    # When running the build with 'with-integration-tests' these are used
+    # to specify what Gitpod user to use in those tests.
+    - name: INTEGRATION_TEST_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: integration-test-user
+          key: username
+    - name: INTEGRATION_TEST_USER_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: integration-test-user
+          key: token
     command:
       - bash
       - -c

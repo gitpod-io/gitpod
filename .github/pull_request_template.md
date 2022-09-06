@@ -36,3 +36,5 @@ Optional annotations to add to the werft job.
 * with-preview - whether to create a preview environment for this PR
 -->
 - [ ] /werft with-preview
+- [ ] /werft with-integration-tests=all
+      Valid options are `all`, `workspace`, `webapp`, `ide`

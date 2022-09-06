@@ -2,6 +2,8 @@ import { exec } from "../../util/shell";
 import { Werft } from "../../util/werft";
 import { previewNameFromBranchName } from "../../util/preview";
 
+type WithIntegrationTests = "skip" | "all" | "workspace" | "ide" | "webapp";
+
 export interface JobConfig {
     analytics: string;
     buildConfig: any;
@@ -23,7 +25,7 @@ export interface JobConfig {
     storage: string;
     version: string;
     withContrib: boolean;
-    withIntegrationTests: boolean;
+    withIntegrationTests: WithIntegrationTests;
     withUpgradeTests: boolean;
     withSelfHostedPreview: boolean;
     withObservability: boolean;
@@ -78,7 +80,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withContrib = "with-contrib" in buildConfig || mainBuild;
     const withPreview = "with-preview" in buildConfig && !mainBuild;
     const storage = buildConfig["storage"] || "";
-    const withIntegrationTests = "with-integration-tests" in buildConfig && !mainBuild;
+    const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
     const withUpgradeTests = "with-upgrade-tests" in buildConfig && !mainBuild;
     const fromVersion = withUpgradeTests ? buildConfig["from-version"] : "";
     const replicatedChannel = buildConfig["channel"];
@@ -151,7 +153,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     };
 
     werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));
-    werft.log(sliceId, "Expand to see the parsed configuration")
+    werft.log(sliceId, "Expand to see the parsed configuration");
     const globalAttributes = Object.fromEntries(
         Object.entries(jobConfig).map((kv) => {
             const [key, value] = kv;
@@ -178,4 +180,24 @@ function parseVersion(context: any) {
         version = version.substr(PREFIX_TO_STRIP.length);
     }
     return version;
+}
+
+export function parseWithIntegrationTests(werft: Werft, sliceID: string, value?: string): WithIntegrationTests {
+    switch (value) {
+        case null:
+        case undefined:
+            return "skip";
+        case "skip":
+        case "all":
+        case "webapp":
+        case "ide":
+        case "webapp":
+            return value;
+        case "":
+            werft.log(sliceID, "with-integration-tests was set but no value was provided - falling back to 'all'");
+            return "all";
+        default:
+            werft.log(sliceID, `Unknown value for with-integration-tests: '${value}' - falling back to 'all'`);
+            return "all";
+    }
 }
