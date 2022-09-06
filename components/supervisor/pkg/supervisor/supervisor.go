@@ -14,6 +14,7 @@ import (
 	"io"
 	"io/fs"
 	"io/ioutil"
+	"math"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -249,16 +250,17 @@ func Run(options ...RunOption) {
 		internalPorts...,
 	)
 
+	topService := NewTopService()
+	topService.Observe(ctx)
+
 	if opts.RunGP {
 		cstate.MarkContentReady(csapi.WorkspaceInitFromOther)
 	} else {
 		analytics := analytics.NewFromEnvironment()
 		defer analytics.Close()
 		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService, gitpodService)
+		go analysePerfChanges(ctx, cfg, analytics, topService, gitpodService)
 	}
-
-	topService := NewTopService()
-	topService.Observe(ctx)
 
 	termMux := terminal.NewMux()
 	termMuxSrv := terminal.NewMuxTerminalService(termMux)
@@ -1518,10 +1520,73 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 	}
 }
 
+type PerfAnalyzer struct {
+	label   string
+	defs    []int
+	buckets []int
+}
+
+func (a *PerfAnalyzer) analyze(used float64) bool {
+	var buckets []int
+	usedBucket := int(math.Ceil(used))
+	for _, bucket := range a.defs {
+		if usedBucket >= bucket {
+			buckets = append(buckets, bucket)
+		}
+	}
+	if len(buckets) <= len(a.buckets) {
+		return false
+	}
+	a.buckets = buckets
+	return true
+}
+
+func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, topService *TopService, gitpodAPI gitpod.APIInterface) {
+	info, err := gitpodAPI.GetWorkspace(ctx, wscfg.WorkspaceID)
+	if err != nil {
+		log.WithError(err).Error("gitpod perf analytics: failed to resolve workspace info")
+		return
+	}
+
+	analyze := func(analyzer *PerfAnalyzer, used float64) {
+		if !analyzer.analyze(used) {
+			return
+		}
+		log.WithField("buckets", analyzer.buckets).WithField("used", used).WithField("label", analyzer.label).Debug("gitpod perf analytics: changed")
+		w.Track(analytics.TrackMessage{
+			Identity: analytics.Identity{UserID: info.Workspace.OwnerID},
+			Event:    "gitpod_" + analyzer.label + "_changed",
+			Properties: map[string]interface{}{
+				"used":        used,
+				"buckets":     analyzer.buckets,
+				"instanceId":  wscfg.WorkspaceInstanceID,
+				"workspaceId": wscfg.WorkspaceID,
+			},
+		})
+	}
+
+	cpuAnalyzer := &PerfAnalyzer{label: "cpu", defs: []int{1, 2, 3, 4, 5, 6}}
+	memoryAnalyzer := &PerfAnalyzer{label: "memory", defs: []int{1, 2, 4, 8, 16}}
+	ticker := time.NewTicker(1 * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			data := topService.data
+			if data == nil {
+				continue
+			}
+			analyze(cpuAnalyzer, float64(data.Cpu.Used)/1000)
+			analyze(memoryAnalyzer, float64(data.Memory.Used)/(1024*1024*1024))
+		}
+	}
+}
+
 func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface, gitpodAPI gitpod.APIInterface) {
 	info, err := gitpodAPI.GetWorkspace(ctx, wscfg.WorkspaceID)
 	if err != nil {
-		log.WithError(err).Error("gitpod config analytics: failed to track config changes")
+		log.WithError(err).Error("gitpod config analytics: failed to resolve workspace info")
 		return
 	}
 
