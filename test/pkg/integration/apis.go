@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -206,13 +207,21 @@ func (c *ComponentAPI) Supervisor(instanceID string) (grpc.ClientConnInterface, 
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:22999", localPort))
-	select {
-	case err = <-errc:
-		cancel()
-		return nil, err
-	case <-ready:
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+L:
+	for {
+		ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+		select {
+		case err := <-errc:
+			if err == io.EOF {
+				time.Sleep(10 * time.Second)
+			} else {
+				cancel()
+				return nil, err
+			}
+		case <-ready:
+			break L
+		}
 	}
 	c.appendCloser(func() error { cancel(); return nil })
 
@@ -645,13 +654,21 @@ func (c *ComponentAPI) WorkspaceManager() (wsmanapi.WorkspaceManagerClient, erro
 			return nil, err
 		}
 
-		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
-		select {
-		case err := <-errc:
-			cancel()
-			return nil, err
-		case <-ready:
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	L:
+		for {
+			ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+			select {
+			case err := <-errc:
+				if err == io.EOF {
+					time.Sleep(10 * time.Second)
+				} else {
+					cancel()
+					return nil, err
+				}
+			case <-ready:
+				break L
+			}
 		}
 		c.appendCloser(func() error { cancel(); return nil })
 		c.wsmanStatus.Port = localPort
@@ -718,13 +735,21 @@ func (c *ComponentAPI) BlobService() (csapi.BlobServiceClient, error) {
 			return nil, err
 		}
 
-		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
-		select {
-		case err := <-errc:
-			cancel()
-			return nil, err
-		case <-ready:
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	L:
+		for {
+			ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+			select {
+			case err := <-errc:
+				if err == io.EOF {
+					time.Sleep(10 * time.Second)
+				} else {
+					cancel()
+					return nil, err
+				}
+			case <-ready:
+				break L
+			}
 		}
 		c.appendCloser(func() error { cancel(); return nil })
 		c.contentServiceStatus.Port = localPort
@@ -771,13 +796,21 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 
 	// if configured: setup local port-forward to DB pod
 	if config.ForwardPort != nil {
-		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, config.ForwardPort.PodName, fmt.Sprintf("%d:%d", config.Port, config.ForwardPort.RemotePort))
-		select {
-		case err := <-errc:
-			cancel()
-			return nil, err
-		case <-ready:
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	L:
+		for {
+			ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, config.ForwardPort.PodName, fmt.Sprintf("%d:%d", config.Port, config.ForwardPort.RemotePort))
+			select {
+			case err := <-errc:
+				if err == io.EOF {
+					time.Sleep(10 * time.Second)
+				} else {
+					cancel()
+					return nil, err
+				}
+			case <-ready:
+				break L
+			}
 		}
 		c.appendCloser(func() error { cancel(); return nil })
 	}
@@ -1017,13 +1050,21 @@ func (c *ComponentAPI) ImageBuilder(opts ...APIImageBuilderOpt) (imgbldr.ImageBu
 				return err
 			}
 
-			ctx, cancel := context.WithCancel(context.Background())
-			ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
-			select {
-			case err = <-errc:
-				cancel()
-				return err
-			case <-ready:
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		L:
+			for {
+				ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+				select {
+				case err := <-errc:
+					if err == io.EOF {
+						time.Sleep(10 * time.Second)
+					} else {
+						cancel()
+						return err
+					}
+				case <-ready:
+					break L
+				}
 			}
 			c.appendCloser(func() error { cancel(); return nil })
 			c.imgbldStatus.Port = localPort
@@ -1065,14 +1106,21 @@ func (c *ComponentAPI) ContentService() (ContentService, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
-		select {
-		case err := <-errc:
-			cancel()
-			return nil, err
-		case <-ready:
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	L:
+		for {
+			ready, errc := common.ForwardPortOfPod(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+			select {
+			case err := <-errc:
+				if err == io.EOF {
+					time.Sleep(10 * time.Second)
+				} else {
+					cancel()
+					return nil, err
+				}
+			case <-ready:
+				break L
+			}
 		}
 		c.appendCloser(func() error { cancel(); return nil })
 		c.contentServiceStatus.Port = localPort

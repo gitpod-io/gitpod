@@ -24,6 +24,8 @@ import (
 	"time"
 
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -283,6 +285,8 @@ L:
 		case err := <-fwdErr:
 			var eno syscall.Errno
 			if errors.Is(err, io.EOF) || (errors.As(err, &eno) && eno == syscall.ECONNREFUSED) {
+				time.Sleep(10 * time.Second)
+			} else if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 				time.Sleep(10 * time.Second)
 			} else if err != nil {
 				return nil, closer, err

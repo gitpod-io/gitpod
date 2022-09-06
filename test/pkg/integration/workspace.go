@@ -290,7 +290,7 @@ func LaunchWorkspaceFromContextURL(ctx context.Context, contextURL string, usern
 
 	_, err = WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
 	if err != nil {
-		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)
+		return nil, nil, xerrors.Errorf("failed to wait for the workspace to start up: %w", err)
 	}
 
 	return nfo, stopWs, nil
@@ -329,7 +329,7 @@ func WaitForWorkspaceStart(ctx context.Context, instanceID string, api *Componen
 			continue
 		}
 		if err != nil {
-			return nil, xerrors.Errorf("cannot listen for workspace updates: %q", err)
+			return nil, xerrors.Errorf("cannot listen for workspace updates: %w", err)
 		}
 		defer func() {
 			_ = sub.CloseSend()
@@ -350,9 +350,10 @@ func WaitForWorkspaceStart(ctx context.Context, instanceID string, api *Componen
 			resp, err := sub.Recv()
 			if err != nil {
 				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+					time.Sleep(10 * time.Second)
 					continue
 				}
-				errStatus <- xerrors.Errorf("workspace update error: %q", err)
+				errStatus <- xerrors.Errorf("workspace update error: %w", err)
 				return
 			}
 
@@ -387,6 +388,7 @@ func WaitForWorkspaceStart(ctx context.Context, instanceID string, api *Componen
 			}
 			if s.Phase != wsmanapi.WorkspacePhase_RUNNING {
 				// we're still starting
+				time.Sleep(10 * time.Second)
 				continue
 			}
 
@@ -414,7 +416,7 @@ func WaitForWorkspaceStart(ctx context.Context, instanceID string, api *Componen
 
 	select {
 	case <-ctx.Done():
-		return nil, xerrors.Errorf("cannot wait for workspace: %q", ctx.Err())
+		return nil, xerrors.Errorf("cannot wait for workspace: %w", ctx.Err())
 	case s := <-done:
 		return s, nil
 	case err := <-errStatus:
