@@ -563,6 +563,10 @@ func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 	to := time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)
 	attributionID := db.NewTeamAttributionID(uuid.New().String())
 
+	t.Cleanup(func() {
+		require.NoError(t, dbconn.Where("attributionId = ?", attributionID).Delete(&db.Usage{}).Error)
+	})
+
 	// stopped instances
 	instance := dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 		UsageAttributionID: attributionID,
@@ -572,7 +576,9 @@ func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 	dbtest.CreateWorkspaceInstances(t, dbconn, instance)
 
 	// running instances
-	dbtest.CreateWorkspaceInstances(t, dbconn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{}))
+	dbtest.CreateWorkspaceInstances(t, dbconn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+		UsageAttributionID: attributionID,
+	}))
 
 	// usage drafts
 	dbtest.CreateUsageRecords(t, dbconn, dbtest.NewUsage(t, db.Usage{
