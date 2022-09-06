@@ -223,6 +223,20 @@ gcloud auth activate-service-account --key-file=/path/to/account/key.json
 gcloud container clusters get-credentials <cluster_name> --region <region> --zone <zone> --project <project>
 ```
 
+### Failed to install helm charts to the cluster
+
+If you see errors like:
+
+```
+Error: clusterroles.rbac.authorization.k8s.io is forbidden: User "xxxxx@developer.gserviceaccount.com" cannot create resource "clusterroles" in API group "rbac.authorization.k8s.io" at the cluster scope: requires one of ["container.clusterRoles.create"] permission(s).
+│
+│   with module.certmanager.helm_release.cert,
+│   on ../../modules/tools/cert-manager/main.tf line 17, in resource "helm_release" "cert":
+│   17: resource "helm_release" "cert" {
+│
+```
+After running `make apply`, ensure that the service account you are using has the `Kubernetes Engine Admin` role. See the [GCP IAM documentation](https://cloud.google.com/iam/docs/granting-changing-revoking-access) to learn how to associate roles with a service account.
+
 ## Cleanup
 
 Make sure you first delete the `gitpod` resources in the cluster so things like load balancer created by the k8s `service` gets deleted. Otherwise terraform will not be able to delete the VPC.
