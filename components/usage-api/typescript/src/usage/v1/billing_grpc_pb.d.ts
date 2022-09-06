@@ -17,6 +17,7 @@ import * as usage_v1_usage_pb from "../../usage/v1/usage_pb";
 
 interface IBillingServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     updateInvoices: IBillingServiceService_IUpdateInvoices;
+    reconcileInvoices: IBillingServiceService_IReconcileInvoices;
     getUpcomingInvoice: IBillingServiceService_IGetUpcomingInvoice;
     finalizeInvoice: IBillingServiceService_IFinalizeInvoice;
     setBilledSession: IBillingServiceService_ISetBilledSession;
@@ -30,6 +31,15 @@ interface IBillingServiceService_IUpdateInvoices extends grpc.MethodDefinition<u
     requestDeserialize: grpc.deserialize<usage_v1_billing_pb.UpdateInvoicesRequest>;
     responseSerialize: grpc.serialize<usage_v1_billing_pb.UpdateInvoicesResponse>;
     responseDeserialize: grpc.deserialize<usage_v1_billing_pb.UpdateInvoicesResponse>;
+}
+interface IBillingServiceService_IReconcileInvoices extends grpc.MethodDefinition<usage_v1_billing_pb.ReconcileInvoicesRequest, usage_v1_billing_pb.ReconcileInvoicesResponse> {
+    path: "/usage.v1.BillingService/ReconcileInvoices";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<usage_v1_billing_pb.ReconcileInvoicesRequest>;
+    requestDeserialize: grpc.deserialize<usage_v1_billing_pb.ReconcileInvoicesRequest>;
+    responseSerialize: grpc.serialize<usage_v1_billing_pb.ReconcileInvoicesResponse>;
+    responseDeserialize: grpc.deserialize<usage_v1_billing_pb.ReconcileInvoicesResponse>;
 }
 interface IBillingServiceService_IGetUpcomingInvoice extends grpc.MethodDefinition<usage_v1_billing_pb.GetUpcomingInvoiceRequest, usage_v1_billing_pb.GetUpcomingInvoiceResponse> {
     path: "/usage.v1.BillingService/GetUpcomingInvoice";
@@ -63,6 +73,7 @@ export const BillingServiceService: IBillingServiceService;
 
 export interface IBillingServiceServer extends grpc.UntypedServiceImplementation {
     updateInvoices: grpc.handleUnaryCall<usage_v1_billing_pb.UpdateInvoicesRequest, usage_v1_billing_pb.UpdateInvoicesResponse>;
+    reconcileInvoices: grpc.handleUnaryCall<usage_v1_billing_pb.ReconcileInvoicesRequest, usage_v1_billing_pb.ReconcileInvoicesResponse>;
     getUpcomingInvoice: grpc.handleUnaryCall<usage_v1_billing_pb.GetUpcomingInvoiceRequest, usage_v1_billing_pb.GetUpcomingInvoiceResponse>;
     finalizeInvoice: grpc.handleUnaryCall<usage_v1_billing_pb.FinalizeInvoiceRequest, usage_v1_billing_pb.FinalizeInvoiceResponse>;
     setBilledSession: grpc.handleUnaryCall<usage_v1_billing_pb.SetBilledSessionRequest, usage_v1_billing_pb.SetBilledSessionResponse>;
@@ -72,6 +83,9 @@ export interface IBillingServiceClient {
     updateInvoices(request: usage_v1_billing_pb.UpdateInvoicesRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.UpdateInvoicesResponse) => void): grpc.ClientUnaryCall;
     updateInvoices(request: usage_v1_billing_pb.UpdateInvoicesRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.UpdateInvoicesResponse) => void): grpc.ClientUnaryCall;
     updateInvoices(request: usage_v1_billing_pb.UpdateInvoicesRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.UpdateInvoicesResponse) => void): grpc.ClientUnaryCall;
+    reconcileInvoices(request: usage_v1_billing_pb.ReconcileInvoicesRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.ReconcileInvoicesResponse) => void): grpc.ClientUnaryCall;
+    reconcileInvoices(request: usage_v1_billing_pb.ReconcileInvoicesRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.ReconcileInvoicesResponse) => void): grpc.ClientUnaryCall;
+    reconcileInvoices(request: usage_v1_billing_pb.ReconcileInvoicesRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.ReconcileInvoicesResponse) => void): grpc.ClientUnaryCall;
     getUpcomingInvoice(request: usage_v1_billing_pb.GetUpcomingInvoiceRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetUpcomingInvoiceResponse) => void): grpc.ClientUnaryCall;
     getUpcomingInvoice(request: usage_v1_billing_pb.GetUpcomingInvoiceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetUpcomingInvoiceResponse) => void): grpc.ClientUnaryCall;
     getUpcomingInvoice(request: usage_v1_billing_pb.GetUpcomingInvoiceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetUpcomingInvoiceResponse) => void): grpc.ClientUnaryCall;
@@ -88,6 +102,9 @@ export class BillingServiceClient extends grpc.Client implements IBillingService
     public updateInvoices(request: usage_v1_billing_pb.UpdateInvoicesRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.UpdateInvoicesResponse) => void): grpc.ClientUnaryCall;
     public updateInvoices(request: usage_v1_billing_pb.UpdateInvoicesRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.UpdateInvoicesResponse) => void): grpc.ClientUnaryCall;
     public updateInvoices(request: usage_v1_billing_pb.UpdateInvoicesRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.UpdateInvoicesResponse) => void): grpc.ClientUnaryCall;
+    public reconcileInvoices(request: usage_v1_billing_pb.ReconcileInvoicesRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.ReconcileInvoicesResponse) => void): grpc.ClientUnaryCall;
+    public reconcileInvoices(request: usage_v1_billing_pb.ReconcileInvoicesRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.ReconcileInvoicesResponse) => void): grpc.ClientUnaryCall;
+    public reconcileInvoices(request: usage_v1_billing_pb.ReconcileInvoicesRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.ReconcileInvoicesResponse) => void): grpc.ClientUnaryCall;
     public getUpcomingInvoice(request: usage_v1_billing_pb.GetUpcomingInvoiceRequest, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetUpcomingInvoiceResponse) => void): grpc.ClientUnaryCall;
     public getUpcomingInvoice(request: usage_v1_billing_pb.GetUpcomingInvoiceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetUpcomingInvoiceResponse) => void): grpc.ClientUnaryCall;
     public getUpcomingInvoice(request: usage_v1_billing_pb.GetUpcomingInvoiceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: usage_v1_billing_pb.GetUpcomingInvoiceResponse) => void): grpc.ClientUnaryCall;

@@ -56,6 +56,28 @@ function deserialize_usage_v1_GetUpcomingInvoiceResponse(buffer_arg) {
   return usage_v1_billing_pb.GetUpcomingInvoiceResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_usage_v1_ReconcileInvoicesRequest(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.ReconcileInvoicesRequest)) {
+    throw new Error('Expected argument of type usage.v1.ReconcileInvoicesRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_ReconcileInvoicesRequest(buffer_arg) {
+  return usage_v1_billing_pb.ReconcileInvoicesRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_usage_v1_ReconcileInvoicesResponse(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.ReconcileInvoicesResponse)) {
+    throw new Error('Expected argument of type usage.v1.ReconcileInvoicesResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_ReconcileInvoicesResponse(buffer_arg) {
+  return usage_v1_billing_pb.ReconcileInvoicesResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_usage_v1_SetBilledSessionRequest(arg) {
   if (!(arg instanceof usage_v1_billing_pb.SetBilledSessionRequest)) {
     throw new Error('Expected argument of type usage.v1.SetBilledSessionRequest');
@@ -115,6 +137,19 @@ updateInvoices: {
     requestDeserialize: deserialize_usage_v1_UpdateInvoicesRequest,
     responseSerialize: serialize_usage_v1_UpdateInvoicesResponse,
     responseDeserialize: deserialize_usage_v1_UpdateInvoicesResponse,
+  },
+  // ReconcileInvoices retrieves current credit balance and reflects it in billing system.
+// Internal RPC, not intended for general consumption.
+reconcileInvoices: {
+    path: '/usage.v1.BillingService/ReconcileInvoices',
+    requestStream: false,
+    responseStream: false,
+    requestType: usage_v1_billing_pb.ReconcileInvoicesRequest,
+    responseType: usage_v1_billing_pb.ReconcileInvoicesResponse,
+    requestSerialize: serialize_usage_v1_ReconcileInvoicesRequest,
+    requestDeserialize: deserialize_usage_v1_ReconcileInvoicesRequest,
+    responseSerialize: serialize_usage_v1_ReconcileInvoicesResponse,
+    responseDeserialize: deserialize_usage_v1_ReconcileInvoicesResponse,
   },
   // GetUpcomingInvoice retrieves the latest invoice for a given query.
 getUpcomingInvoice: {

@@ -13,6 +13,10 @@ service BillingService {
   // This is an Internal RPC used by the usage reconciler and not intended for general consumption.
   rpc UpdateInvoices(UpdateInvoicesRequest) returns (UpdateInvoicesResponse) {};
 
+  // ReconcileInvoices retrieves current credit balance and reflects it in billing system.
+  // Internal RPC, not intended for general consumption.
+  rpc ReconcileInvoices(ReconcileInvoicesRequest) returns (ReconcileInvoicesResponse) {};
+
   // GetUpcomingInvoice retrieves the latest invoice for a given query.
   rpc GetUpcomingInvoice(GetUpcomingInvoiceRequest) returns (GetUpcomingInvoiceResponse) {};
 
@@ -35,6 +39,10 @@ message UpdateInvoicesRequest {
 
 message UpdateInvoicesResponse {
 }
+
+message ReconcileInvoicesRequest {}
+
+message ReconcileInvoicesResponse {}
 
 message GetUpcomingInvoiceRequest {
   oneof identifier {
