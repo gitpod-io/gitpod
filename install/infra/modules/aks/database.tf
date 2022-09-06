@@ -1,18 +1,18 @@
 resource "random_integer" "db" {
-  count = var.enable_external_database ? 1 : 0
+  count = var.create_external_database ? 1 : 0
 
   min = 10000
   max = 99999
 }
 
 resource "random_password" "db" {
-  count = var.enable_external_database ? 1 : 0
+  count = var.create_external_database ? 1 : 0
 
   length = 32
 }
 
 resource "azurerm_mysql_server" "db" {
-  count = var.enable_external_database ? 1 : 0
+  count = var.create_external_database ? 1 : 0
 
   name                = "gitpod-${random_integer.db[count.index].result}"
   location            = azurerm_resource_group.gitpod.location
@@ -30,7 +30,7 @@ resource "azurerm_mysql_server" "db" {
 }
 
 resource "azurerm_mysql_firewall_rule" "db" {
-  count = var.enable_external_database ? 1 : 0
+  count = var.create_external_database ? 1 : 0
 
   name                = "Azure_Resource"
   resource_group_name = azurerm_resource_group.gitpod.name
@@ -40,7 +40,7 @@ resource "azurerm_mysql_firewall_rule" "db" {
 }
 
 resource "azurerm_mysql_database" "db" {
-  count = var.enable_external_database ? 1 : 0
+  count = var.create_external_database ? 1 : 0
 
   name                = "gitpod"
   resource_group_name = azurerm_resource_group.gitpod.name

@@ -88,16 +88,18 @@ output "region" {
 output "registry" {
   sensitive = true
   value = try({
+    url      = azurerm_container_registry.registry.0.login_server
     server   = azurerm_container_registry.registry.0.login_server
-    password = azurerm_container_registry.registry.0.admin_password
     username = azurerm_container_registry.registry.0.admin_username
+    password = azurerm_container_registry.registry.0.admin_password
   }, {})
 }
 
 output "storage" {
   sensitive = true
   value = try({
-    username = azurerm_storage_account.storage.0.name
-    password = azurerm_storage_account.storage.0.primary_access_key
+    storage_region = var.location
+    account_name   = azurerm_storage_account.storage.0.name
+    account_key    = azurerm_storage_account.storage.0.primary_access_key
   }, {})
 }

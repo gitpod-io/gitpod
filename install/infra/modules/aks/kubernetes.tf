@@ -1,5 +1,5 @@
 resource "azurerm_role_assignment" "k8s" {
-  count = var.dns_enabled ? 1 : 0
+  count = local.dns_enabled ? 1 : 0
 
   principal_id         = azurerm_kubernetes_cluster.k8s.kubelet_identity[count.index].object_id
   role_definition_name = "DNS Zone Contributor"
@@ -7,7 +7,7 @@ resource "azurerm_role_assignment" "k8s" {
 }
 
 resource "azurerm_role_assignment" "k8s_reader" {
-  count = var.dns_enabled ? 1 : 0
+  count = local.dns_enabled ? 1 : 0
 
   principal_id         = azurerm_kubernetes_cluster.k8s.kubelet_identity[count.index].object_id
   role_definition_name = "Reader"

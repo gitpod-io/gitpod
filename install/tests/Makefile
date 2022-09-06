@@ -54,8 +54,7 @@ gcp-kubeconfig:
 azure-kubeconfig:
 	az login --service-principal -u $$ARM_CLIENT_ID -p $$ARM_CLIENT_SECRET  --tenant $$ARM_TENANT_ID
 	export KUBECONFIG=${KUBECONFIG} && \
-	export resource=$$(echo "$$TF_VAR_TEST_ID" | sed "s/[\\W\\-]//g") && \
-	az aks get-credentials --name test-cluster-$$resource --resource-group sh-test-$$resource --file ${KUBECONFIG} || echo "No cluster present"
+	az aks get-credentials --name p$$TF_VAR_TEST_ID-cluster --resource-group p$$TF_VAR_TEST_ID --file ${KUBECONFIG} || echo "No cluster present"
 
 ## aws-kubeconfig: Get the kubeconfig configuration for AWS EKS
 aws-kubeconfig:
@@ -202,14 +201,16 @@ db-config-gcp:
 
 registry-config-azure:
 	export SERVER=$$(terraform output -json azure_registry | yq r - 'server') && \
+	export URL=$$(terraform output -json azure_registry | yq r - 'url') && \
 	export PASSWORD=$$(terraform output -json azure_registry | yq r - 'password') && \
 	export USERNAME=$$(terraform output -json azure_registry | yq r - 'username') && \
 	envsubst < ./manifests/kots-config-azure-registry.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
 
 storage-config-azure:
-	export PASSWORD=$$(terraform output -json azure_storage | yq r - 'password') && \
-	export USERNAME=$$(terraform output -json azure_storage | yq r - 'username') && \
+	export PASSWORD=$$(terraform output -json azure_storage | yq r - 'account_name') && \
+	export USERNAME=$$(terraform output -json azure_storage | yq r - 'account_key') && \
+	export REGION=$$(terraform output -json azure_storage | yq r - 'storage_region') && \
 	envsubst < ./manifests/kots-config-azure-storage.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
 
