@@ -16,7 +16,7 @@ import {
 import { inject, injectable } from "inversify";
 import { UserService } from "../../../src/user/user-service";
 
-export interface SpendingLimitReachedResult {
+export interface UsageLimitReachedResult {
     reached: boolean;
     almostReached?: boolean;
     attributionId: AttributionId;
@@ -31,7 +31,7 @@ export class BillingService {
     @inject(CachingBillingServiceClientProvider)
     protected readonly billingServiceClientProvider: CachingBillingServiceClientProvider;
 
-    async checkSpendingLimitReached(user: User): Promise<SpendingLimitReachedResult> {
+    async checkUsageLimitReached(user: User): Promise<UsageLimitReachedResult> {
         const attributionId = await this.userService.getWorkspaceUsageAttributionId(user);
         const costCenter = await this.costCenterDB.findById(AttributionId.render(attributionId));
         if (!costCenter) {
@@ -47,20 +47,20 @@ export class BillingService {
         const upcomingInvoice = await this.getUpcomingInvoice(attributionId);
         const currentInvoiceCredits = upcomingInvoice.getCredits();
         if (currentInvoiceCredits >= costCenter.spendingLimit) {
-            log.info({ userId: user.id }, "Spending limit reached", {
+            log.info({ userId: user.id }, "Usage limit reached", {
                 attributionId,
                 currentInvoiceCredits,
-                spendingLimit: costCenter.spendingLimit,
+                usageLimit: costCenter.spendingLimit,
             });
             return {
                 reached: true,
                 attributionId,
             };
         } else if (currentInvoiceCredits > costCenter.spendingLimit * 0.8) {
-            log.info({ userId: user.id }, "Spending limit almost reached", {
+            log.info({ userId: user.id }, "Usage limit almost reached", {
                 attributionId,
                 currentInvoiceCredits,
-                spendingLimit: costCenter.spendingLimit,
+                usageLimit: costCenter.spendingLimit,
             });
             return {
                 reached: false,
