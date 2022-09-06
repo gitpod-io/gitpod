@@ -51,6 +51,9 @@ pod:
   - name: sh-playground-dns-perm
     secret:
       secretName: sh-playground-dns-perm
+  - name: self-hosted-github-oauth
+    secret:
+      secretName: self-hosted-github-oauth
   containers:
   - name: nightly-test
     image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-dl.1
@@ -61,6 +64,8 @@ pod:
       mountPath: /mnt/secrets/sh-playground-sa-perm
     - name: sh-playground-dns-perm # this sa is used for the DNS management
       mountPath: /mnt/secrets/sh-playground-dns-perm
+    - name: self-hosted-github-oauth
+      mountPath: "/mnt/secrets/github-oauth"
     env:
       - name: GOOGLE_APPLICATION_CREDENTIALS
         value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
@@ -68,6 +73,8 @@ pod:
         value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
       - name: TF_VAR_dns_sa_creds
         value: "/mnt/secrets/sh-playground-dns-perm/sh-dns-sa.json"
+      - name: GITHUB_SCM_OAUTH
+        value: "/mnt/secrets/github-oauth/provider"
       - name: NODENAME
         valueFrom:
           fieldRef:
@@ -117,7 +124,7 @@ pod:
         export domain="{{ .Annotations.subdomain }}"
 
         if [[ "$domain" == "<no value>" ]]; then
-          export TF_VAR_TEST_ID="$(echo $RANDOM | md5sum | head -c 5; echo)-k3s"
+          export TF_VAR_TEST_ID="p$(echo $RANDOM | md5sum | head -c 5; echo)-k3s"
         else
           export TF_VAR_TEST_ID="$domain"
         fi

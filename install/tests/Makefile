@@ -161,8 +161,8 @@ get-kubeconfig: ${cloud}-kubeconfig
 get-github-config:
 ifneq ($(GITHUB_SCM_OAUTH),)
 	export SCM_OAUTH=./manifests/github-oauth.yaml && \
-	cat $$GITHUB_SCM_OAUTH/provider > $$SCM_OAUTH && \
-	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' http://${TF_VAR_TEST_ID}.${DOMAIN}/auth/github.com/callback && \
+	cat $$GITHUB_SCM_OAUTH > $$SCM_OAUTH && \
+	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' http://sh-preview.gitpod-dev.com/auth/github.com/callback/${TF_VAR_TEST_ID} && \
 	kubectl --kubeconfig=${KUBECONFIG} create namespace gitpod || echo "Gitpod namespace already exist" && \
 	kubectl --kubeconfig=${KUBECONFIG} delete secret github-oauth -n gitpod || echo "gitpod-oauth secret needs to be created" && \
 	kubectl --kubeconfig=${KUBECONFIG} create secret generic "github-oauth" --namespace gitpod --from-literal=provider="$$(cat $$SCM_OAUTH)" && \
