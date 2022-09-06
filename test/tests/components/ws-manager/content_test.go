@@ -25,14 +25,6 @@ func TestBackup(t *testing.T) {
 	f := features.New("backup").
 		WithLabel("component", "ws-manager").
 		Assess("it should start a workspace, create a file and successfully create a backup", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-			defer cancel()
-
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
-
 			tests := []struct {
 				Name string
 				FF   []wsmanapi.WorkspaceFeatureFlag
@@ -40,6 +32,14 @@ func TestBackup(t *testing.T) {
 				{Name: "classic"},
 				{Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
 			}
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+			defer cancel()
+
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			t.Cleanup(func() {
+				api.Done(t)
+			})
+
 			for _, test := range tests {
 				t.Run(test.Name+"_backup", func(t *testing.T) {
 					ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {

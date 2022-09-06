@@ -7,6 +7,7 @@ package wsmanager
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -23,39 +24,14 @@ import (
 func TestRegularWorkspaceTasks(t *testing.T) {
 	tests := []struct {
 		Name        string
-		Task        gitpod.TasksItems
-		LookForFile string
+		Task        []gitpod.TasksItems
+		LookForFile []string
 		FF          []wsmanapi.WorkspaceFeatureFlag
 	}{
 		{
-			Name:        "classic-init",
-			Task:        gitpod.TasksItems{Init: "touch /workspace/gitpod/init-ran; exit"},
-			LookForFile: "init-ran",
-		},
-		{
-			Name:        "classic-before",
-			Task:        gitpod.TasksItems{Before: "touch /workspace/gitpod/before-ran; exit"},
-			LookForFile: "before-ran",
-		},
-		{
-			Name:        "classic-command",
-			Task:        gitpod.TasksItems{Command: "touch /workspace/gitpod/command-ran; exit"},
-			LookForFile: "command-ran",
-		},
-		{
-			Name:        "pvc-init",
-			Task:        gitpod.TasksItems{Init: "touch /workspace/gitpod/init-ran; exit"},
-			LookForFile: "init-ran",
-		},
-		{
-			Name:        "pvc-before",
-			Task:        gitpod.TasksItems{Before: "touch /workspace/gitpod/before-ran; exit"},
-			LookForFile: "before-ran",
-		},
-		{
-			Name:        "pvc-command",
-			Task:        gitpod.TasksItems{Command: "touch /workspace/gitpod/command-ran; exit"},
-			LookForFile: "command-ran",
+			Name:        "classic",
+			Task:        []gitpod.TasksItems{{Init: "touch /workspace/gitpod/init-ran; exit"}, {Before: "touch /workspace/gitpod/before-ran; exit"}, {Command: "touch /workspace/gitpod/command-ran; exit"}},
+			LookForFile: []string{"init-ran", "before-ran", "command-ran"},
 		},
 	}
 
@@ -63,7 +39,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 		WithLabel("component", "ws-manager").
 		WithLabel("type", "tasks").
 		Assess("it can run workspace tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -74,7 +50,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
 					addInitTask := func(swr *wsmanapi.StartWorkspaceRequest) error {
-						tasks, err := json.Marshal([]gitpod.TasksItems{test.Task})
+						tasks, err := json.Marshal(test.Task)
 						if err != nil {
 							return err
 						}
@@ -141,7 +117,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 							t.Fatalf("cannot decode supervisor status response: %s", err)
 						}
 
-						if len(parsedResp.Result.Tasks) != 1 {
+						if len(parsedResp.Result.Tasks) != len(test.Task) {
 							t.Fatalf("expected one task to run, but got %d", len(parsedResp.Result.Tasks))
 						}
 						if parsedResp.Result.Tasks[0].State == supervisorapi.TaskState_name[int32(supervisorapi.TaskState_closed)] {
@@ -163,15 +139,18 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					var foundMaker bool
-					for _, f := range ls.Files {
-						if f == test.LookForFile {
-							foundMaker = true
-							break
+					for _, lff := range test.LookForFile {
+						var foundMaker bool
+						fmt.Println(ls.Files)
+						for _, f := range ls.Files {
+							if f == lff {
+								foundMaker = true
+								break
+							}
 						}
-					}
-					if !foundMaker {
-						t.Fatal("task seems to have run, but cannot find the file it should have created")
+						if !foundMaker {
+							t.Fatalf("task seems to have run, but cannot find %s it should have created", lff)
+						}
 					}
 				})
 			}
