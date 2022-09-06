@@ -71,8 +71,13 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import { ListBilledUsageRequest, ListBilledUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
-import { ListBilledUsageRequest as ListBilledUsage } from "@gitpod/usage-api/lib/usage/v1/usage_pb";
+import {
+    ListBilledUsageRequest,
+    ListBilledUsageResponse,
+    ListUsageRequest,
+    ListUsageResponse,
+} from "@gitpod/gitpod-protocol/lib/usage";
+import * as usage_grpc from "@gitpod/usage-api/lib/usage/v1/usage_pb";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -2182,6 +2187,60 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return result;
     }
 
+    async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
+        const { attributionId, from, to } = req;
+        traceAPIParams(ctx, { attributionId });
+        const user = this.checkAndBlockUser("listBilledUsage");
+
+        await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
+
+        const timestampFrom = from ? Timestamp.fromDate(new Date(from)) : undefined;
+        const timestampTo = to ? Timestamp.fromDate(new Date(to)) : undefined;
+
+        const usageClient = this.usageServiceClientProvider.getDefault();
+        const request = new usage_grpc.ListBilledUsageRequest();
+        request.setAttributionId(attributionId);
+        request.setFrom(timestampFrom);
+        if (to) {
+            request.setTo(timestampTo);
+        }
+        request.setOrder(req.order);
+        if (req.pagination) {
+            const paginatedRequest = new usage_grpc.PaginatedRequest();
+            paginatedRequest.setPage(req.pagination.page);
+            paginatedRequest.setPerPage(req.pagination.perPage);
+            request.setPagination(paginatedRequest);
+        }
+        const response = await usageClient.listUsage(ctx, request);
+        const pagination = response.getPagination();
+        return {
+            usageEntriesList: response.getUsageEntriesList().map((u) => {
+                return {
+                    id: u.getId(),
+                    attributionId: u.getAttributionId(),
+                    effectiveTime: u.getEffectiveTime()!.toDate().getTime(),
+                    credits: u.getCredits(),
+                    description: u.getDescription(),
+                    draft: u.getDraft(),
+                    workspaceInstanceId: u.getWorkspaceInstanceId(),
+                    kind:
+                        u.getKind() === usage_grpc.Usage.Kind.KIND_WORKSPACE_INSTANCE ? "workspaceinstance" : "invoice",
+                    metadata: JSON.parse(u.getMetadata()),
+                };
+            }),
+            pagination: pagination
+                ? {
+                      page: pagination.getPage(),
+                      perPage: pagination.getPerPage(),
+                      total: pagination.getTotal(),
+                      totalPages: pagination.getTotalPages(),
+                  }
+                : undefined,
+            creditBalanceAtEnd: response.getCreditBalanceAtEnd(),
+            creditBalanceAtStart: response.getCreditBalanceAtStart(),
+        };
+    }
+
     async listBilledUsage(ctx: TraceContext, req: ListBilledUsageRequest): Promise<ListBilledUsageResponse> {
         const { attributionId, fromDate, toDate, perPage, page } = req;
         traceAPIParams(ctx, { attributionId });
@@ -2201,7 +2260,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const response = await usageClient.listBilledUsage(
             ctx,
             attributionId,
-            ListBilledUsage.Ordering.ORDERING_DESCENDING,
+            usage_grpc.ListBilledUsageRequest.Ordering.ORDERING_DESCENDING,
             perPage,
             page,
             timestampFrom,

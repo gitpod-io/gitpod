@@ -172,7 +172,12 @@ import { InstallationAdminTelemetryDataProvider } from "../installation-admin/te
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { ListBilledUsageRequest, ListBilledUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
+import {
+    ListBilledUsageRequest,
+    ListBilledUsageResponse,
+    ListUsageRequest,
+    ListUsageResponse,
+} from "@gitpod/gitpod-protocol/lib/usage";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
@@ -3229,6 +3234,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async listBilledUsage(ctx: TraceContext, req: ListBilledUsageRequest): Promise<ListBilledUsageResponse> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+
+    async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 

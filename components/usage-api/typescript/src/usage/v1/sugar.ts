@@ -9,7 +9,7 @@ import { BillingServiceClient } from "./billing_grpc_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
-import { BilledSession, ListBilledUsageRequest, ListBilledUsageResponse, PaginatedRequest } from "./usage_pb";
+import { BilledSession, ListBilledUsageRequest, ListBilledUsageResponse, ListUsageRequest, ListUsageResponse, PaginatedRequest } from "./usage_pb";
 import {
     GetUpcomingInvoiceRequest,
     GetUpcomingInvoiceResponse,
@@ -177,6 +177,34 @@ export class PromisifiedUsageServiceClient {
                     req,
                     withTracing(ctx),
                     (err: grpc.ServiceError | null, response: ListBilledUsageResponse) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve(response);
+                    },
+                );
+            });
+            return response;
+        } catch (err) {
+            TraceContext.setError(ctx, err);
+            throw err;
+        } finally {
+            ctx.span.finish();
+        }
+    }
+
+    public async listUsage(
+        _ctx: TraceContext,
+        request: ListUsageRequest,
+    ): Promise<ListUsageResponse> {
+        const ctx = TraceContext.childContext(`/usage-service/listUsage`, _ctx);
+        try {
+            const response = await new Promise<ListUsageResponse>((resolve, reject) => {
+                this.client.listUsage(
+                    request,
+                    withTracing(ctx),
+                    (err: grpc.ServiceError | null, response: ListUsageResponse) => {
                         if (err) {
                             reject(err);
                             return;

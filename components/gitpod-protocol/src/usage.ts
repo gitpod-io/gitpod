@@ -61,3 +61,68 @@ export interface ListBilledUsageResponse {
 }
 
 export type BillableWorkspaceType = WorkspaceType;
+
+// types below are copied over from components/usage-api/typescript/src/usage/v1/usage_pb.d.ts
+
+export interface ListUsageRequest {
+    attributionId: string;
+    from?: number;
+    to?: number;
+    order: Ordering;
+    pagination?: PaginationRequest;
+}
+
+export enum Ordering {
+    ORDERING_DESCENDING = 0,
+    ORDERING_ASCENDING = 1,
+}
+
+export interface PaginationRequest {
+    perPage: number;
+    page: number;
+}
+
+export interface ListUsageResponse {
+    usageEntriesList: Usage[];
+    pagination?: PaginationResponse;
+    creditBalanceAtStart: number;
+    creditBalanceAtEnd: number;
+}
+
+export interface PaginationResponse {
+    perPage: number;
+    totalPages: number;
+    total: number;
+    page: number;
+}
+
+export type UsageKind = "workspaceinstance" | "invoice";
+export interface Usage {
+    id: string;
+    attributionId: string;
+    description: string;
+    credits: number;
+    effectiveTime?: number;
+    kind: UsageKind;
+    workspaceInstanceId: string;
+    draft: boolean;
+    metadata: WorkspaceInstanceUsageData | InvoiceUsageData;
+}
+
+// the equivalent golang shape is maintained in `/workspace/gitpod/`components/usage/pkg/db/usage.go`
+export interface WorkspaceInstanceUsageData {
+    workspaceId: string;
+    workspaceType: WorkspaceType;
+    workspaceClass: string;
+    contextURL: string;
+    startTime: string;
+    endTime?: string;
+    userName: string;
+    userAvatarURL: string;
+}
+
+export interface InvoiceUsageData {
+    invoiceId: string;
+    startDate: string;
+    endDate: string;
+}
