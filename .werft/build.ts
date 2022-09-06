@@ -8,7 +8,7 @@ import { buildAndPublish } from "./jobs/build/build-and-publish";
 import { validateChanges } from "./jobs/build/validate-changes";
 import { prepare } from "./jobs/build/prepare";
 import { deployToPreviewEnvironment } from "./jobs/build/deploy-to-preview-environment";
-import { triggerIntegrationTests } from "./jobs/build/trigger-integration-tests";
+import { runIntegrationTests } from "./jobs/build/trigger-integration-tests";
 import { triggerSelfHostedPreview, triggerUpgradeTests } from "./jobs/build/self-hosted-upgrade-tests";
 import { jobConfig } from "./jobs/build/job-config";
 
@@ -81,5 +81,5 @@ async function run(context: any) {
         throw e;
     }
 
-    await triggerIntegrationTests(werft, config, context.Owner);
+    await runIntegrationTests(werft, config, context.Owner);
 }
