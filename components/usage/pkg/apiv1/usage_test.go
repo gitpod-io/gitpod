@@ -561,19 +561,26 @@ func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 	dbconn := dbtest.ConnectForTests(t)
 	from := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
 	to := time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
 
 	// stopped instances
-	dbtest.CreateWorkspaceInstances(t, dbconn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-		StoppingTime: db.NewVarcharTime(from.Add(1 * time.Minute)),
-	}))
+	instance := dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+		UsageAttributionID: attributionID,
+		CreationTime:       db.NewVarcharTime(from),
+		StoppingTime:       db.NewVarcharTime(to.Add(-1 * time.Minute)),
+	})
+	dbtest.CreateWorkspaceInstances(t, dbconn, instance)
 
 	// running instances
 	dbtest.CreateWorkspaceInstances(t, dbconn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{}))
 
 	// usage drafts
 	dbtest.CreateUsageRecords(t, dbconn, dbtest.NewUsage(t, db.Usage{
-		Kind:  db.WorkspaceInstanceUsageKind,
-		Draft: true,
+		ID:                  uuid.New(),
+		AttributionID:       attributionID,
+		WorkspaceInstanceID: instance.ID,
+		Kind:                db.WorkspaceInstanceUsageKind,
+		Draft:               true,
 	}))
 
 	srv := baseserver.NewForTests(t,
@@ -593,6 +600,15 @@ func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 		To:   timestamppb.New(to),
 	})
 	require.NoError(t, err)
+
+	usage, err := db.FindUsage(context.Background(), dbconn, &db.FindUsageParams{
+		AttributionId: attributionID,
+		From:          from,
+		To:            to,
+		ExcludeDrafts: false,
+	})
+	require.NoError(t, err)
+	require.Len(t, usage, 1)
 }
 
 func TestReconcileWithLedger(t *testing.T) {

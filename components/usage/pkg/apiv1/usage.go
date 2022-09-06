@@ -344,6 +344,24 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 	inserts, updates := reconcileUsageWithLedger(instances, usageDrafts, s.pricer, now)
 	logger.WithField("inserts", inserts).WithField("updates", updates).Infof("Identified %d inserts and %d updates against usage records.", len(inserts), len(updates))
 
+	if len(inserts) > 0 {
+		err = db.InsertUsage(ctx, s.conn, inserts...)
+		if err != nil {
+			logger.WithError(err).Errorf("Failed to insert %d usage records into the database.", len(inserts))
+			return nil, status.Errorf(codes.Internal, "Failed to insert usage records into the database.")
+		}
+		logger.Infof("Inserted %d new Usage records into the database.", len(inserts))
+	}
+
+	if len(updates) > 0 {
+		err = db.UpdateUsage(ctx, s.conn, updates...)
+		if err != nil {
+			logger.WithError(err).Error("Failed to update usage records in the database.")
+			return nil, status.Errorf(codes.Internal, "Failed to update usage records in the database.")
+		}
+		logger.Infof("Updated %d Usage records in the database.", len(updates))
+	}
+
 	return &v1.ReconcileUsageWithLedgerResponse{}, nil
 }
 

@@ -73,7 +73,5 @@ func CreateUsageRecords(t *testing.T, conn *gorm.DB, entries ...db.Usage) []db.U
 		require.NoError(t, conn.Where(ids).Delete(&db.Usage{}).Error)
 	})
 
-	t.Logf("stored %d", len(entries))
-
 	return records
 }
