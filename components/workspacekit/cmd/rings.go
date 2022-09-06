@@ -823,7 +823,7 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 
-		err = pivotRoot(msg.Rootfs, msg.FSShift)
+		err = pivotRoot(msg.Rootfs)
 		if err != nil {
 			log.WithError(err).Error("cannot pivot root")
 			return
@@ -866,7 +866,7 @@ var ring2Cmd = &cobra.Command{
 // filesystem, and everything else is cleaned up.
 //
 // copied from runc: https://github.com/opencontainers/runc/blob/cf6c074115d00c932ef01dedb3e13ba8b8f964c3/libcontainer/rootfs_linux.go#L760
-func pivotRoot(rootfs string, fsshift api.FSShiftMethod) error {
+func pivotRoot(rootfs string) error {
 	// While the documentation may claim otherwise, pivot_root(".", ".") is
 	// actually valid. What this results in is / being the new root but
 	// /proc/self/cwd being the old root. Since we can play around with the cwd
