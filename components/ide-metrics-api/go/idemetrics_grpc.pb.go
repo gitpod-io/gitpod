@@ -28,6 +28,7 @@ const _ = grpc.SupportPackageIsVersion7
 type MetricsServiceClient interface {
 	AddCounter(ctx context.Context, in *AddCounterRequest, opts ...grpc.CallOption) (*AddCounterResponse, error)
 	ObserveHistogram(ctx context.Context, in *ObserveHistogramRequest, opts ...grpc.CallOption) (*ObserveHistogramResponse, error)
+	ReportError(ctx context.Context, in *ReportErrorRequest, opts ...grpc.CallOption) (*ReportErrorResponse, error)
 }
 
 type metricsServiceClient struct {
@@ -56,12 +57,22 @@ func (c *metricsServiceClient) ObserveHistogram(ctx context.Context, in *Observe
 	return out, nil
 }
 
+func (c *metricsServiceClient) ReportError(ctx context.Context, in *ReportErrorRequest, opts ...grpc.CallOption) (*ReportErrorResponse, error) {
+	out := new(ReportErrorResponse)
+	err := c.cc.Invoke(ctx, "/ide_metrics_api.MetricsService/reportError", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MetricsServiceServer is the server API for MetricsService service.
 // All implementations must embed UnimplementedMetricsServiceServer
 // for forward compatibility
 type MetricsServiceServer interface {
 	AddCounter(context.Context, *AddCounterRequest) (*AddCounterResponse, error)
 	ObserveHistogram(context.Context, *ObserveHistogramRequest) (*ObserveHistogramResponse, error)
+	ReportError(context.Context, *ReportErrorRequest) (*ReportErrorResponse, error)
 	mustEmbedUnimplementedMetricsServiceServer()
 }
 
@@ -74,6 +85,9 @@ func (UnimplementedMetricsServiceServer) AddCounter(context.Context, *AddCounter
 }
 func (UnimplementedMetricsServiceServer) ObserveHistogram(context.Context, *ObserveHistogramRequest) (*ObserveHistogramResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ObserveHistogram not implemented")
+}
+func (UnimplementedMetricsServiceServer) ReportError(context.Context, *ReportErrorRequest) (*ReportErrorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportError not implemented")
 }
 func (UnimplementedMetricsServiceServer) mustEmbedUnimplementedMetricsServiceServer() {}
 
@@ -124,6 +138,24 @@ func _MetricsService_ObserveHistogram_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetricsService_ReportError_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReportErrorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetricsServiceServer).ReportError(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ide_metrics_api.MetricsService/reportError",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetricsServiceServer).ReportError(ctx, req.(*ReportErrorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MetricsService_ServiceDesc is the grpc.ServiceDesc for MetricsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -138,6 +170,10 @@ var MetricsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ObserveHistogram",
 			Handler:    _MetricsService_ObserveHistogram_Handler,
+		},
+		{
+			MethodName: "reportError",
+			Handler:    _MetricsService_ReportError_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
