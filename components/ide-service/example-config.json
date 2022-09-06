@@ -1,0 +1,10 @@
+{
+  "server": {
+    "services": {
+      "grpc": {
+        "address": ":3000"
+      }
+    }
+  },
+  "ideConfigPath": "./example-ide-config.json"
+}
