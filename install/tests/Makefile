@@ -52,6 +52,7 @@ gcp-kubeconfig:
 
 ## azure-kubeconfig: Get the kubeconfig configuration for Azure AKS
 azure-kubeconfig:
+	az login --service-principal -u $$ARM_CLIENT_ID -p $$ARM_CLIENT_SECRET  --tenant $$ARM_TENANT_ID
 	export KUBECONFIG=${KUBECONFIG} && \
 	export resource=$$(echo "$$TF_VAR_TEST_ID" | sed "s/[\\W\\-]//g") && \
 	az aks get-credentials --name test-cluster-$$resource --resource-group sh-test-$$resource --file ${KUBECONFIG} || echo "No cluster present"
