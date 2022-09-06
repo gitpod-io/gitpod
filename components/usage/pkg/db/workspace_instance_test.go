@@ -122,10 +122,8 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 			WorkspaceClass:     instance.WorkspaceClass,
 			Type:               workspace.Type,
 			UsageAttributionID: instance.UsageAttributionID,
-			CreationTime:       instance.CreationTime,
 			StartedTime:        instance.StartedTime,
 			StoppingTime:       instance.StoppingTime,
-			StoppedTime:        instance.StoppedTime,
 		}, retrieved[0])
 	})
 
@@ -159,10 +157,8 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 			WorkspaceClass:     instance.WorkspaceClass,
 			Type:               workspace.Type,
 			UsageAttributionID: instance.UsageAttributionID,
-			CreationTime:       instance.CreationTime,
 			StartedTime:        instance.StartedTime,
 			StoppingTime:       instance.StoppingTime,
-			StoppedTime:        instance.StoppedTime,
 		}, retrieved[0])
 	})
 
