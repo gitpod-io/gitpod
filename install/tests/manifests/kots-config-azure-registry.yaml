@@ -6,7 +6,7 @@ spec:
         value: "0"
         data: "reg_incluster"
       reg_url:
-        value: ${SERVER}
+        value: ${URL}
         data: "reg_url"
       reg_username:
         value: ${USERNAME}

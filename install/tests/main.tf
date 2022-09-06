@@ -82,11 +82,10 @@ module "aks" {
 
   domain_name              = "${var.TEST_ID}.${var.domain}"
   enable_airgapped         = false
-  enable_external_database = true
-  enable_external_registry = true
-  enable_external_storage  = true
-  dns_enabled              = true
-  workspace_name           = var.TEST_ID
+  create_external_database = true
+  create_external_registry = true
+  create_external_storage  = true
+  resource_group_name      = "p${var.TEST_ID}"
   kubeconfig               = var.kubeconfig
   cluster_version          = var.cluster_version
 }

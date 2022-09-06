@@ -13,7 +13,7 @@ resource "azurerm_subnet" "network" {
 }
 
 resource "azurerm_dns_zone" "dns" {
-  count = var.dns_enabled ? 1 : 0
+  count = local.dns_enabled ? 1 : 0
 
   name                = var.domain_name
   resource_group_name = azurerm_resource_group.gitpod.name

@@ -6,7 +6,7 @@ spec:
         value: azure
         data: "store_provider"
       store_region:
-        value: "northeurope"
+        value: ${REGION}
         data: "store_region"
       store_azure_account_name:
         value: ${USERNAME}

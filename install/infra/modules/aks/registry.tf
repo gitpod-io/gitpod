@@ -1,12 +1,12 @@
 resource "random_integer" "registry" {
-  count = var.enable_external_registry ? 1 : 0
+  count = var.create_external_registry ? 1 : 0
 
   min = 10000
   max = 99999
 }
 
 resource "azurerm_container_registry" "registry" {
-  count = var.enable_external_registry ? 1 : 0
+  count = var.create_external_registry ? 1 : 0
 
   name                = "gitpod${random_integer.registry[count.index].result}"
   resource_group_name = azurerm_resource_group.gitpod.name
@@ -16,7 +16,7 @@ resource "azurerm_container_registry" "registry" {
 }
 
 resource "azurerm_role_assignment" "registry" {
-  count = var.enable_external_registry ? 1 : 0
+  count = var.create_external_registry ? 1 : 0
 
   principal_id                     = azurerm_kubernetes_cluster.k8s.kubelet_identity[0].object_id
   role_definition_name             = "AcrPush"

@@ -7,15 +7,12 @@ locals {
     workspace_headless : "gitpod.io/workload_workspace_headless"
   })
   dns_enabled = var.domain_name != null
+
   name_format = join("-", [
-    "test",
+    var.resource_group_name,
     "%s", # name
-    local.workspace_name
   ])
-  name_format_global = join("-", [
-    "sh-test",
-    local.workspace_name
-  ])
+
   workspace_name = replace(terraform.workspace, "/[\\W\\-]/", "") # alphanumeric workspace name
   db       = "GP_Gen5_2"
   location = substr(var.location, 0, 3) # Short code for location
