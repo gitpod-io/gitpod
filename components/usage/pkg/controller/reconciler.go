@@ -23,55 +23,6 @@ func (f ReconcilerFunc) Reconcile() error {
 	return f()
 }
 
-func NewUsageAndBillingReconciler(usageClient v1.UsageServiceClient, billingClient v1.BillingServiceClient) *UsageAndBillingReconciler {
-	return &UsageAndBillingReconciler{
-		nowFunc:       time.Now,
-		usageClient:   usageClient,
-		billingClient: billingClient,
-	}
-}
-
-type UsageAndBillingReconciler struct {
-	nowFunc func() time.Time
-
-	usageClient   v1.UsageServiceClient
-	billingClient v1.BillingServiceClient
-}
-
-func (r *UsageAndBillingReconciler) Reconcile() (err error) {
-	ctx := context.Background()
-	now := r.nowFunc().UTC()
-
-	reportUsageReconcileStarted()
-	defer func() {
-		reportUsageReconcileFinished(time.Since(now), err)
-	}()
-
-	startOfCurrentMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-	startOfNextMonth := startOfCurrentMonth.AddDate(0, 1, 0)
-
-	usageResp, err := r.usageClient.ReconcileUsage(ctx, &v1.ReconcileUsageRequest{
-		StartTime: timestamppb.New(startOfCurrentMonth),
-		EndTime:   timestamppb.New(startOfNextMonth),
-	})
-	if err != nil {
-		return fmt.Errorf("failed to reconcile usage: %w", err)
-	}
-
-	reportID := usageResp.GetReportId()
-
-	_, err = r.billingClient.UpdateInvoices(ctx, &v1.UpdateInvoicesRequest{
-		StartTime: timestamppb.New(startOfCurrentMonth),
-		EndTime:   timestamppb.New(startOfNextMonth),
-		ReportId:  reportID,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to update invoices: %w", err)
-	}
-
-	return nil
-}
-
 func NewLedgerReconciler(usageClient v1.UsageServiceClient, billingClient v1.BillingServiceClient) *LedgerReconciler {
 	return &LedgerReconciler{
 		usageClient:   usageClient,
@@ -84,18 +35,23 @@ type LedgerReconciler struct {
 	billingClient v1.BillingServiceClient
 }
 
-func (r *LedgerReconciler) Reconcile() error {
+func (r *LedgerReconciler) Reconcile() (err error) {
 	ctx := context.Background()
 
 	now := time.Now().UTC()
 	hourAgo := now.Add(-1 * time.Hour)
+
+	reportUsageReconcileStarted()
+	defer func() {
+		reportUsageReconcileFinished(time.Since(now), err)
+	}()
 
 	logger := log.
 		WithField("from", hourAgo).
 		WithField("to", now)
 
 	logger.Info("Starting ledger reconciliation.")
-	_, err := r.usageClient.ReconcileUsageWithLedger(ctx, &v1.ReconcileUsageWithLedgerRequest{
+	_, err = r.usageClient.ReconcileUsageWithLedger(ctx, &v1.ReconcileUsageWithLedgerRequest{
 		From: timestamppb.New(hourAgo),
 		To:   timestamppb.New(now),
 	})
