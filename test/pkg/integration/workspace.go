@@ -192,7 +192,7 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 	}
 
 	stopWs := func(waitForStop bool) error {
-		tctx, tcancel := context.WithTimeout(context.Background(), perCallTimeout)
+		tctx, tcancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer tcancel()
 
 		for {
@@ -447,6 +447,10 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 		for {
 			resp, err := sub.Recv()
 			if err != nil {
+				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+					time.Sleep(10 * time.Second)
+					continue
+				}
 				errCh <- xerrors.Errorf("workspace update error: %q", err)
 				return
 			}
@@ -515,10 +519,10 @@ func WaitForWorkspace(ctx context.Context, api *ComponentAPI, instanceID string,
 
 	var once sync.Once
 	go func() {
-		var status *wsmanapi.WorkspaceStatus
+		var s *wsmanapi.WorkspaceStatus
 		defer func() {
 			once.Do(func() {
-				done <- status
+				done <- s
 				close(done)
 			})
 			_ = sub.CloseSend()
@@ -529,18 +533,22 @@ func WaitForWorkspace(ctx context.Context, api *ComponentAPI, instanceID string,
 				return
 			}
 			if err != nil {
+				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+					time.Sleep(10 * time.Second)
+					continue
+				}
 				errCh <- xerrors.Errorf("workspace update error: %q", err)
 				return
 			}
-			status = resp.GetStatus()
-			if status == nil {
+			s = resp.GetStatus()
+			if s == nil {
 				continue
 			}
-			if status.Id != instanceID {
+			if s.Id != instanceID {
 				continue
 			}
 
-			if condition(status) {
+			if condition(s) {
 				return
 			}
 		}

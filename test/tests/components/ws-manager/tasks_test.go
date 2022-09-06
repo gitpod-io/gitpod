@@ -7,7 +7,6 @@ package wsmanager
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -141,7 +140,6 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 
 					for _, lff := range test.LookForFile {
 						var foundMaker bool
-						fmt.Println(ls.Files)
 						for _, f := range ls.Files {
 							if f == lff {
 								foundMaker = true

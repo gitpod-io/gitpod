@@ -180,13 +180,21 @@ func (c *ComponentAPI) Storage(connUrl string) (string, error) {
 		return "", err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	ready, errc := common.ForwardPortOfSvc(ctx, c.kubeconfig, c.namespace, serviceName, fmt.Sprintf("%d:%s", localPort, port))
-	select {
-	case err = <-errc:
-		cancel()
-		return "", err
-	case <-ready:
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+L:
+	for {
+		ready, errc := common.ForwardPortOfSvc(ctx, c.kubeconfig, c.namespace, serviceName, fmt.Sprintf("%d:%s", localPort, port))
+		select {
+		case err := <-errc:
+			if err == io.EOF {
+				time.Sleep(10 * time.Second)
+			} else {
+				cancel()
+				return "", err
+			}
+		case <-ready:
+			break L
+		}
 	}
 	c.appendCloser(func() error { cancel(); return nil })
 
