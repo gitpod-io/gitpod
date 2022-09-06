@@ -341,7 +341,11 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 	logger.Infof("Found %d workspaces instances for usage records in draft.", len(instancesWithUsageInDraft))
 	instances = append(instances, instancesWithUsageInDraft...)
 
-	inserts, updates := reconcileUsageWithLedger(instances, usageDrafts, s.pricer, now)
+	inserts, updates, err := reconcileUsageWithLedger(instances, usageDrafts, s.pricer, now)
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to reconcile usage with ledger.")
+		return nil, status.Errorf(codes.Internal, "Failed to reconcile usage with ledger.")
+	}
 	logger.Infof("Identified %d inserts and %d updates against usage records.", len(inserts), len(updates))
 
 	if len(inserts) > 0 {
@@ -365,7 +369,7 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 	return &v1.ReconcileUsageWithLedgerResponse{}, nil
 }
 
-func reconcileUsageWithLedger(instances []db.WorkspaceInstanceForUsage, drafts []db.Usage, pricer *WorkspacePricer, now time.Time) (inserts []db.Usage, updates []db.Usage) {
+func reconcileUsageWithLedger(instances []db.WorkspaceInstanceForUsage, drafts []db.Usage, pricer *WorkspacePricer, now time.Time) (inserts []db.Usage, updates []db.Usage, err error) {
 
 	instancesByID := dedupeWorkspaceInstancesForUsage(instances)
 
@@ -376,19 +380,27 @@ func reconcileUsageWithLedger(instances []db.WorkspaceInstanceForUsage, drafts [
 
 	for instanceID, instance := range instancesByID {
 		if usage, exists := draftsByWorkspaceID[instanceID]; exists {
-			updates = append(updates, updateUsageFromInstance(instance, usage, pricer, now))
+			updatedUsage, err := updateUsageFromInstance(instance, usage, pricer, now)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to construct updated usage record: %w", err)
+			}
+			updates = append(updates, updatedUsage)
 			continue
 		}
 
-		inserts = append(inserts, newUsageFromInstance(instance, pricer, now))
+		usage, err := newUsageFromInstance(instance, pricer, now)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to construct usage record: %w", err)
+		}
+		inserts = append(inserts, usage)
 	}
 
-	return inserts, updates
+	return inserts, updates, nil
 }
 
 const usageDescriptionFromController = "Usage collected by automated system."
 
-func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *WorkspacePricer, now time.Time) db.Usage {
+func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *WorkspacePricer, now time.Time) (db.Usage, error) {
 	draft := true
 	if instance.StoppingTime.IsSet() {
 		draft = false
@@ -399,7 +411,7 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 		effectiveTime = instance.StoppingTime.Time()
 	}
 
-	return db.Usage{
+	usage := db.Usage{
 		ID:                  uuid.New(),
 		AttributionID:       instance.UsageAttributionID,
 		Description:         usageDescriptionFromController,
@@ -408,17 +420,43 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 		Kind:                db.WorkspaceInstanceUsageKind,
 		WorkspaceInstanceID: instance.ID,
 		Draft:               draft,
-		Metadata:            nil,
 	}
+
+	startedTime := ""
+	if instance.StartedTime.IsSet() {
+		startedTime = db.TimeToISO8601(instance.StartedTime.Time())
+	}
+	endTime := ""
+	if instance.StoppingTime.IsSet() {
+		endTime = db.TimeToISO8601(instance.StoppingTime.Time())
+	}
+	err := usage.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		WorkspaceId:    instance.WorkspaceID,
+		WorkspaceType:  instance.Type,
+		WorkspaceClass: instance.WorkspaceClass,
+		ContextURL:     "",
+		StartTime:      startedTime,
+		EndTime:        endTime,
+		UserName:       "",
+		UserAvatarURL:  "",
+	})
+	if err != nil {
+		return db.Usage{}, fmt.Errorf("failed to serialize workspace instance metadata: %w", err)
+	}
+
+	return usage, nil
 }
 
-func updateUsageFromInstance(instance db.WorkspaceInstanceForUsage, usage db.Usage, pricer *WorkspacePricer, now time.Time) db.Usage {
+func updateUsageFromInstance(instance db.WorkspaceInstanceForUsage, usage db.Usage, pricer *WorkspacePricer, now time.Time) (db.Usage, error) {
 	// We construct a new record to ensure we always take the data from the source of truth - the workspace instance
-	updated := newUsageFromInstance(instance, pricer, now)
+	updated, err := newUsageFromInstance(instance, pricer, now)
+	if err != nil {
+		return db.Usage{}, fmt.Errorf("failed to construct updated usage record: %w", err)
+	}
 	// but we override the ID to the one we already have
 	updated.ID = usage.ID
 
-	return updated
+	return updated, nil
 }
 
 func collectWorkspaceInstanceIDs(usage []db.Usage) []uuid.UUID {
