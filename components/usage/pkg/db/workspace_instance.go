@@ -134,7 +134,6 @@ func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to 
 		Where(
 			conn.Where("wsi.stoppingTime >= ?", TimeToISO8601(from)).Or("wsi.stoppingTime = ?", ""),
 		).
-		Where("wsi.startedTime != ?", "").
 		Where("wsi.startedTime < ?", TimeToISO8601(to)).
 		Where("wsi.usageAttributionId != ?", "").
 		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
@@ -151,17 +150,19 @@ func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to 
 func queryWorkspaceInstanceForUsage(ctx context.Context, conn *gorm.DB) *gorm.DB {
 	return conn.WithContext(ctx).
 		Table(fmt.Sprintf("%s as wsi", (&WorkspaceInstance{}).TableName())).
-		Select("wsi.id as id, " +
-			"ws.projectId as projectId, " +
-			"ws.type as workspaceType, " +
-			"wsi.workspaceClass as workspaceClass, " +
-			"wsi.usageAttributionId as usageAttributionId, " +
-			"wsi.startedTime as startedTime, " +
-			"wsi.stoppingTime as stoppingTime, " +
-			"ws.ownerId as ownerId, " +
+		Select("wsi.id as id, "+
+			"ws.projectId as projectId, "+
+			"ws.type as workspaceType, "+
+			"wsi.workspaceClass as workspaceClass, "+
+			"wsi.usageAttributionId as usageAttributionId, "+
+			"wsi.startedTime as startedTime, "+
+			"wsi.stoppingTime as stoppingTime, "+
+			"ws.ownerId as ownerId, "+
 			"ws.id as workspaceId",
 		).
-		Joins(fmt.Sprintf("LEFT JOIN %s AS ws ON wsi.workspaceId = ws.id", (&Workspace{}).TableName()))
+		Joins(fmt.Sprintf("LEFT JOIN %s AS ws ON wsi.workspaceId = ws.id", (&Workspace{}).TableName())).
+		// Instances without a StartedTime never actually started, we're not interested in these.
+		Where("wsi.startedTime != ?", "")
 }
 
 const (

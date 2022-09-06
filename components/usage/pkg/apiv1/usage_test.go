@@ -564,13 +564,14 @@ func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 	// stopped instances
 	instance := dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 		UsageAttributionID: attributionID,
-		CreationTime:       db.NewVarcharTime(from),
+		StartedTime:        db.NewVarcharTime(from),
 		StoppingTime:       db.NewVarcharTime(to.Add(-1 * time.Minute)),
 	})
 	dbtest.CreateWorkspaceInstances(t, dbconn, instance)
 
 	// running instances
 	dbtest.CreateWorkspaceInstances(t, dbconn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+		StartedTime:        db.NewVarcharTime(to.Add(-1 * time.Minute)),
 		UsageAttributionID: attributionID,
 	}))
 
