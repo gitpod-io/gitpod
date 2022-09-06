@@ -20,8 +20,8 @@ args:
   desc: "Version of gitpod to install(in the case of upgrade tests, this is the initial install version and will later get upgraded to latest"
   required: false
   default: ""
-- name: skipTests
-  desc: "Set this to true to skip integration tests"
+- name: runTests
+  desc: "Set this to true to run integration tests"
   required: false
   default: false
 - name: selfSigned
@@ -123,6 +123,21 @@ pod:
         secretKeyRef:
           name: replicated
           key: app
+    - name: ROBOQUAT_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-roboquat-automatic-changelog
+          key: token
+    - name: USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: integration-test-user
+          key: username
+    - name: USER_TOKEN # this is for the integration tests
+      valueFrom:
+        secretKeyRef:
+          name: integration-test-user
+          key: token
     command:
       - bash
       - -c

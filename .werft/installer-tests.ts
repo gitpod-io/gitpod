@@ -18,8 +18,8 @@ const kotsApp: string = annotations.replicatedApp || "gitpod";
 const version: string = annotations.version || "-";
 const preview: string = annotations.preview || "false"; // setting to true will not destroy the setup
 const upgrade: string = annotations.upgrade || "false"; // setting to true will not KOTS upgrade to the latest version. Set the channel to beta or stable in this case.
-const skipTests: string = annotations.skipTests || "false"; // setting to true skips the integration tests
-const selfSigned: Boolean = annotations.selfSigned === "true";
+const runTests: string = annotations.runTests || "false"; // setting to true runs the integration tests
+const selfSigned: string = annotations.selfSigned || "false";
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
 
 const baseDomain: string = annotations.domain || "tests.gitpod-self-hosted.com";
@@ -155,12 +155,12 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     GENERATE_KOTS_CONFIG: {
         phase: "generate-kots-config",
-        makeTarget: `generate-kots-config storage=${randDeps()} registry=${randDeps()} db=${randDeps()}`,
+        makeTarget: `generate-kots-config storage=${randDeps()} registry=${randDeps()} db=${randDeps()} runTests=${runTests} self_signed=${selfSigned}`,
         description: `Generate KOTS Config file`,
     },
     CLUSTER_ISSUER: {
         phase: "setup-cluster-issuer",
-        makeTarget: `cluster-issuer`,
+        makeTarget: `cluster-issuer self_signed=${selfSigned}`,
         description: `Deploys ClusterIssuer for ${cloud}`,
     },
     EXTERNALDNS: {
@@ -319,7 +319,7 @@ export async function installerTests(config: TestConfig) {
         }
     }
 
-    if (skipTests === "true") {
+    if (runTests === "false") {
         console.log("Skipping integration tests");
     } else {
         runIntegrationTests();
@@ -551,7 +551,7 @@ export function sendFailureSlackAlert(phase: string, err: Error, hook: string): 
             {
                 hostname: "hooks.slack.com",
                 port: 443,
-                path: process.env.SH_SLACK_NOTIFICATION_PATH.trim(),
+                path: hook,
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
