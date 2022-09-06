@@ -114,28 +114,16 @@ func Start(cfg Config) error {
 		}
 
 		usageClient := v1.NewUsageServiceClient(selfConnection)
-		billingClient := v1.NewBillingServiceClient(selfConnection)
-		ctrl, err := controller.New(schedule, controller.NewUsageAndBillingReconciler(usageClient, billingClient))
-		if err != nil {
-			return fmt.Errorf("failed to initialize usage controller: %w", err)
-		}
-
-		err = ctrl.Start()
-		if err != nil {
-			return fmt.Errorf("failed to start usage controller: %w", err)
-		}
-		defer ctrl.Stop()
-
-		ledgerCtrl, err := controller.New(schedule, controller.NewLedgerReconciler(usageClient, billingClient))
+		ctrl, err := controller.New(schedule, controller.NewLedgerReconciler(usageClient, v1.NewBillingServiceClient(selfConnection)))
 		if err != nil {
 			return fmt.Errorf("failed to initialize ledger controller: %w", err)
 		}
 
-		err = ledgerCtrl.Start()
+		err = ctrl.Start()
 		if err != nil {
 			return fmt.Errorf("failed tostart ledger controller: %w", err)
 		}
-		defer ledgerCtrl.Stop()
+		defer ctrl.Stop()
 	} else {
 		log.Info("No controller schedule specified, controller will be disabled.")
 	}
@@ -153,9 +141,7 @@ func Start(cfg Config) error {
 		contentService = contentservice.New(api.NewUsageReportServiceClient(contentServiceConn))
 	}
 
-	reportGenerator := apiv1.NewReportGenerator(conn, pricer)
-
-	err = registerGRPCServices(srv, conn, stripeClient, reportGenerator, contentService, pricer, *cfg.BillInstancesAfter)
+	err = registerGRPCServices(srv, conn, stripeClient, contentService, pricer, *cfg.BillInstancesAfter)
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
@@ -178,8 +164,8 @@ func Start(cfg Config) error {
 	return nil
 }
 
-func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, reportGenerator *apiv1.ReportGenerator, contentSvc contentservice.Interface, pricer *apiv1.WorkspacePricer, billInstancesAfter time.Time) error {
-	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn, reportGenerator, contentSvc, pricer))
+func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, contentSvc contentservice.Interface, pricer *apiv1.WorkspacePricer, billInstancesAfter time.Time) error {
+	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn, pricer))
 	if stripeClient == nil {
 		v1.RegisterBillingServiceServer(srv.GRPC(), &apiv1.BillingServiceNoop{})
 	} else {

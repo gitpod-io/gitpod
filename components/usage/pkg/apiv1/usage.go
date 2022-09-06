@@ -6,7 +6,6 @@ package apiv1
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"math"
@@ -15,8 +14,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
-
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"google.golang.org/grpc/codes"
@@ -31,10 +28,6 @@ type UsageService struct {
 	conn    *gorm.DB
 	nowFunc func() time.Time
 	pricer  *WorkspacePricer
-
-	contentService contentservice.Interface
-
-	reportGenerator *ReportGenerator
 
 	v1.UnimplementedUsageServiceServer
 }
@@ -153,39 +146,6 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 		CreditBalanceAtEnd:   float64(usageSummary.CreditCentsBalanceAtEnd) / 100,
 		Pagination:           &pagination,
 	}, nil
-}
-
-func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsageRequest) (*v1.ReconcileUsageResponse, error) {
-	from := req.GetStartTime().AsTime()
-	to := req.GetEndTime().AsTime()
-
-	if to.Before(from) {
-		return nil, status.Errorf(codes.InvalidArgument, "End time must be after start time")
-	}
-
-	report, err := s.reportGenerator.GenerateUsageReport(ctx, from, to)
-	if err != nil {
-		log.Log.WithError(err).Error("Failed to reconcile time range.")
-		return nil, status.Error(codes.Internal, "failed to reconcile time range")
-	}
-
-	err = db.CreateUsageRecords(ctx, s.conn, report.UsageRecords)
-	if err != nil {
-		log.Log.WithError(err).Error("Failed to persist usage records.")
-		return nil, status.Error(codes.Internal, "failed to persist usage records")
-	}
-
-	filename := fmt.Sprintf("%s.gz", time.Now().Format(time.RFC3339))
-	err = s.contentService.UploadUsageReport(ctx, filename, report)
-	if err != nil {
-		log.Log.WithError(err).Error("Failed to persist usage report to content service.")
-		return nil, status.Error(codes.Internal, "failed to persist usage report to content service")
-	}
-
-	return &v1.ReconcileUsageResponse{
-		ReportId: filename,
-	}, nil
-
 }
 
 func (s *UsageService) GetCostCenter(ctx context.Context, in *v1.GetCostCenterRequest) (*v1.GetCostCenterResponse, error) {
@@ -399,46 +359,12 @@ func dedupeWorkspaceInstancesForUsage(instances []db.WorkspaceInstanceForUsage) 
 	return set
 }
 
-func NewUsageService(conn *gorm.DB, reportGenerator *ReportGenerator, contentSvc contentservice.Interface, pricer *WorkspacePricer) *UsageService {
+func NewUsageService(conn *gorm.DB, pricer *WorkspacePricer) *UsageService {
 	return &UsageService{
 		conn: conn,
 		nowFunc: func() time.Time {
 			return time.Now().UTC()
 		},
-		pricer:          pricer,
-		reportGenerator: reportGenerator,
-		contentService:  contentSvc,
+		pricer: pricer,
 	}
-}
-
-func instancesToUsageRecords(instances []db.WorkspaceInstanceForUsage, pricer *WorkspacePricer, now time.Time) []db.WorkspaceInstanceUsage {
-	var usageRecords []db.WorkspaceInstanceUsage
-
-	for _, instance := range instances {
-		var stoppedAt sql.NullTime
-		if instance.StoppingTime.IsSet() {
-			stoppedAt = sql.NullTime{Time: instance.StoppingTime.Time(), Valid: true}
-		}
-
-		projectID := ""
-		if instance.ProjectID.Valid {
-			projectID = instance.ProjectID.String
-		}
-
-		usageRecords = append(usageRecords, db.WorkspaceInstanceUsage{
-			InstanceID:     instance.ID,
-			AttributionID:  instance.UsageAttributionID,
-			WorkspaceID:    instance.WorkspaceID,
-			ProjectID:      projectID,
-			UserID:         instance.OwnerID,
-			WorkspaceType:  instance.Type,
-			WorkspaceClass: instance.WorkspaceClass,
-			StartedAt:      instance.StartedTime.Time(),
-			StoppedAt:      stoppedAt,
-			CreditsUsed:    pricer.CreditsUsedByInstance(&instance, now),
-			GenerationID:   0,
-		})
-	}
-
-	return usageRecords
 }

@@ -122,13 +122,6 @@ func CreateWorkspaceInstances(t *testing.T, conn *gorm.DB, instances ...db.Works
 	return records
 }
 
-// ListWorkspaceInstancesInRange filters out instances by workspaceID to make tests robust and work only on their own data
-func ListWorkspaceInstancesInRange(t *testing.T, conn *gorm.DB, from, to time.Time, workspaceID string) []db.WorkspaceInstanceForUsage {
-	all, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, from, to)
-	require.NoError(t, err)
-	return filterByWorkspaceId(all, workspaceID)
-}
-
 func FindStoppedWorkspaceInstancesInRange(t *testing.T, conn *gorm.DB, from, to time.Time, workspaceID string) []db.WorkspaceInstanceForUsage {
 	all, err := db.FindStoppedWorkspaceInstancesInRange(context.Background(), conn, from, to)
 	require.NoError(t, err)
@@ -142,7 +135,7 @@ func FindRunningWorkspaceInstances(t *testing.T, conn *gorm.DB, workspaceID stri
 }
 
 func filterByWorkspaceId(all []db.WorkspaceInstanceForUsage, workspaceID string) []db.WorkspaceInstanceForUsage {
-	result := []db.WorkspaceInstanceForUsage{}
+	var result []db.WorkspaceInstanceForUsage
 	for _, candidate := range all {
 		if candidate.WorkspaceID == workspaceID {
 			result = append(result, candidate)

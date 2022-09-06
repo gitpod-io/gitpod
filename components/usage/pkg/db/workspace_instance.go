@@ -120,33 +120,6 @@ func FindWorkspaceInstancesByIds(ctx context.Context, conn *gorm.DB, workspaceIn
 	return instances, nil
 }
 
-// ListWorkspaceInstancesInRange lists WorkspaceInstances between from (inclusive) and to (exclusive).
-// This results in all instances which have existed in the specified period, regardless of their current status, this includes:
-// - terminated
-// - running
-// - instances which only just terminated after the start period
-// - instances which only just started in the period specified
-func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstanceForUsage, error) {
-	var instances []WorkspaceInstanceForUsage
-	var instancesInBatch []WorkspaceInstanceForUsage
-
-	tx := queryWorkspaceInstanceForUsage(ctx, conn).
-		Where(
-			conn.Where("wsi.stoppingTime >= ?", TimeToISO8601(from)).Or("wsi.stoppingTime = ?", ""),
-		).
-		Where("wsi.startedTime < ?", TimeToISO8601(to)).
-		Where("wsi.usageAttributionId != ?", "").
-		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
-			instances = append(instances, instancesInBatch...)
-			return nil
-		})
-	if tx.Error != nil {
-		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
-	}
-
-	return instances, nil
-}
-
 func queryWorkspaceInstanceForUsage(ctx context.Context, conn *gorm.DB) *gorm.DB {
 	return conn.WithContext(ctx).
 		Table(fmt.Sprintf("%s as wsi", (&WorkspaceInstance{}).TableName())).
