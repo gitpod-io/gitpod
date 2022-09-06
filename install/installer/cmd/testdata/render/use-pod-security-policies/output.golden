@@ -4326,7 +4326,12 @@ data:
               30
             ]
           }
-        ]
+        ],
+        "errorReporting": {
+          "allowComponents": [
+            "supervisor-frontend"
+          ]
+        }
       },
       "debug": false,
       "pprof": {
@@ -8425,7 +8430,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: eca723709a6407bcb546d40271986d74a615e9d48894864f7e344100a905dbcf
+        gitpod.io/checksum_config: 5f647d019f026f04a85e04ad8e695083db2a70f97ee7199143859879d5d40ebe
       creationTimestamp: null
       labels:
         app: gitpod
