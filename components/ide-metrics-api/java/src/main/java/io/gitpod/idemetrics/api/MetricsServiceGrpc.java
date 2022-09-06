@@ -81,6 +81,37 @@ public final class MetricsServiceGrpc {
     return getObserveHistogramMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest,
+      io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse> getReportErrorMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "reportError",
+      requestType = io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest.class,
+      responseType = io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest,
+      io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse> getReportErrorMethod() {
+    io.grpc.MethodDescriptor<io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest, io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse> getReportErrorMethod;
+    if ((getReportErrorMethod = MetricsServiceGrpc.getReportErrorMethod) == null) {
+      synchronized (MetricsServiceGrpc.class) {
+        if ((getReportErrorMethod = MetricsServiceGrpc.getReportErrorMethod) == null) {
+          MetricsServiceGrpc.getReportErrorMethod = getReportErrorMethod =
+              io.grpc.MethodDescriptor.<io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest, io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "reportError"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse.getDefaultInstance()))
+              .setSchemaDescriptor(new MetricsServiceMethodDescriptorSupplier("reportError"))
+              .build();
+        }
+      }
+    }
+    return getReportErrorMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -143,6 +174,13 @@ public final class MetricsServiceGrpc {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getObserveHistogramMethod(), responseObserver);
     }
 
+    /**
+     */
+    public void reportError(io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest request,
+        io.grpc.stub.StreamObserver<io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getReportErrorMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -159,6 +197,13 @@ public final class MetricsServiceGrpc {
                 io.gitpod.idemetrics.api.Idemetrics.ObserveHistogramRequest,
                 io.gitpod.idemetrics.api.Idemetrics.ObserveHistogramResponse>(
                   this, METHODID_OBSERVE_HISTOGRAM)))
+          .addMethod(
+            getReportErrorMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest,
+                io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse>(
+                  this, METHODID_REPORT_ERROR)))
           .build();
     }
   }
@@ -192,6 +237,14 @@ public final class MetricsServiceGrpc {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getObserveHistogramMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void reportError(io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest request,
+        io.grpc.stub.StreamObserver<io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getReportErrorMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -220,6 +273,13 @@ public final class MetricsServiceGrpc {
     public io.gitpod.idemetrics.api.Idemetrics.ObserveHistogramResponse observeHistogram(io.gitpod.idemetrics.api.Idemetrics.ObserveHistogramRequest request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getObserveHistogramMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse reportError(io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getReportErrorMethod(), getCallOptions(), request);
     }
   }
 
@@ -252,10 +312,19 @@ public final class MetricsServiceGrpc {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getObserveHistogramMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse> reportError(
+        io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getReportErrorMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_ADD_COUNTER = 0;
   private static final int METHODID_OBSERVE_HISTOGRAM = 1;
+  private static final int METHODID_REPORT_ERROR = 2;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -281,6 +350,10 @@ public final class MetricsServiceGrpc {
         case METHODID_OBSERVE_HISTOGRAM:
           serviceImpl.observeHistogram((io.gitpod.idemetrics.api.Idemetrics.ObserveHistogramRequest) request,
               (io.grpc.stub.StreamObserver<io.gitpod.idemetrics.api.Idemetrics.ObserveHistogramResponse>) responseObserver);
+          break;
+        case METHODID_REPORT_ERROR:
+          serviceImpl.reportError((io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest) request,
+              (io.grpc.stub.StreamObserver<io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -345,6 +418,7 @@ public final class MetricsServiceGrpc {
               .setSchemaDescriptor(new MetricsServiceFileDescriptorSupplier())
               .addMethod(getAddCounterMethod())
               .addMethod(getObserveHistogramMethod())
+              .addMethod(getReportErrorMethod())
               .build();
         }
       }
