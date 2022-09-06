@@ -75,8 +75,15 @@ func InsertUsage(ctx context.Context, conn *gorm.DB, records ...Usage) error {
 		CreateInBatches(records, 1000).Error
 }
 
-func UpdateUsage(ctx context.Context, conn *gorm.DB, record Usage) error {
-	return conn.WithContext(ctx).Save(record).Error
+func UpdateUsage(ctx context.Context, conn *gorm.DB, records ...Usage) error {
+	for _, record := range records {
+		err := conn.WithContext(ctx).Save(record).Error
+		if err != nil {
+			return fmt.Errorf("failed to update usage record ID: %s: %w", record.ID, err)
+		}
+	}
+
+	return nil
 }
 
 func FindAllDraftUsage(ctx context.Context, conn *gorm.DB) ([]Usage, error) {
@@ -110,7 +117,7 @@ func FindUsage(ctx context.Context, conn *gorm.DB, params *FindUsageParams) ([]U
 
 	db := conn.WithContext(ctx).
 		Where("attributionId = ?", params.AttributionId).
-		Where("? <= effectiveTime AND effectiveTime < ?", params.From, params.To)
+		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To))
 	if params.ExcludeDrafts {
 		db = db.Where("draft = ?", false)
 	}
@@ -143,7 +150,7 @@ func GetUsageSummary(ctx context.Context, conn *gorm.DB, attributionId Attributi
 	query1 := db.Table((&Usage{}).TableName()).
 		Select("sum(creditCents) as creditCentsBalanceAtStart").
 		Where("attributionId = ?", attributionId).
-		Where("effectiveTime < ?", from)
+		Where("effectiveTime < ?", TimeToISO8601(from))
 	if excludeDrafts {
 		query1 = query1.Where("draft = ?", false)
 	}
@@ -156,7 +163,7 @@ func GetUsageSummary(ctx context.Context, conn *gorm.DB, attributionId Attributi
 	query2 := db.Table((&Usage{}).TableName()).
 		Select("sum(creditCents) as creditCentsBalanceInPeriod", "count(id) as numRecordsInRange").
 		Where("attributionId = ?", attributionId).
-		Where("? <= effectiveTime AND effectiveTime < ?", from, to)
+		Where("? <= effectiveTime AND effectiveTime < ?", TimeToISO8601(from), TimeToISO8601(to))
 	if excludeDrafts {
 		query2 = query2.Where("draft = ?", false)
 	}
