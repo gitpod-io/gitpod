@@ -271,3 +271,41 @@ func TestCreditCents(t *testing.T) {
 		require.Equal(t, s.expectedAsFloat, cc.ToCredits())
 	}
 }
+
+func TestListBalance(t *testing.T) {
+	teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
+	userAttributionID := db.NewUserAttributionID(uuid.New().String())
+
+	conn := dbtest.ConnectForTests(t)
+	dbtest.CreateUsageRecords(t, conn,
+		dbtest.NewUsage(t, db.Usage{
+			AttributionID: teamAttributionID,
+			CreditCents:   100,
+		}),
+		dbtest.NewUsage(t, db.Usage{
+			AttributionID: teamAttributionID,
+			CreditCents:   900,
+		}),
+		dbtest.NewUsage(t, db.Usage{
+			AttributionID: userAttributionID,
+			CreditCents:   450,
+		}),
+		dbtest.NewUsage(t, db.Usage{
+			AttributionID: userAttributionID,
+			CreditCents:   -500,
+			Kind:          db.InvoiceUsageKind,
+		}),
+	)
+
+	balances, err := db.ListBalance(context.Background(), conn)
+	require.NoError(t, err)
+	require.Len(t, balances, 2)
+	require.Contains(t, balances, db.Balance{
+		AttributionID: teamAttributionID,
+		CreditCents:   1000,
+	})
+	require.Contains(t, balances, db.Balance{
+		AttributionID: userAttributionID,
+		CreditCents:   -50,
+	})
+}
