@@ -10,7 +10,8 @@ const commit = require('../../config.json').commit;
 
 export enum MetricsName {
     SupervisorFrontendClientTotal = "gitpod_supervisor_frontend_client_total",
-    SupervisorFrontendErrorTotal = "gitpod_supervisor_frontend_error_total"
+    SupervisorFrontendErrorTotal = "gitpod_supervisor_frontend_error_total",
+    SupervisorFrontendLoadTotal = "gitpod_vscode_web_load_total",
 }
 
 const MetricsUrl = serverUrl.asIDEMetrics().toString();

@@ -47,6 +47,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 		{
+			Name: "gitpod_vscode_web_load_total",
+			Help: "Total count of attempts to load VS Code Web workbench",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "status",
+					AllowValues: []string{"loading", "failed"},
+				},
+			},
+		},
+		{
 			Name: "gitpod_supervisor_frontend_client_total",
 			Help: "Total count of supervisor frontend client",
 		},
