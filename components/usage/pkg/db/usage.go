@@ -6,8 +6,10 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
@@ -19,7 +21,7 @@ type UsageKind string
 
 const (
 	WorkspaceInstanceUsageKind UsageKind = "workspaceinstance"
-	InvoiceUsageKind                     = "invoice"
+	InvoiceUsageKind           UsageKind = "invoice"
 )
 
 func NewCreditCents(n float64) CreditCents {
@@ -81,22 +83,79 @@ func FindAllDraftUsage(ctx context.Context, conn *gorm.DB) ([]Usage, error) {
 	return usageRecords, nil
 }
 
-func FindUsage(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to VarcharTime, offset int64, limit int64) ([]Usage, error) {
+type FindUsageParams struct {
+	AttributionId AttributionID
+	From, To      time.Time
+	ExcludeDrafts bool
+	Order         Order
+	Offset, Limit int64
+}
+
+func FindUsage(ctx context.Context, conn *gorm.DB, params *FindUsageParams) ([]Usage, error) {
 	var usageRecords []Usage
 	var usageRecordsBatch []Usage
 
-	result := conn.WithContext(ctx).
-		Where("attributionId = ?", attributionId).
-		Where("? <= effectiveTime AND effectiveTime < ?", from.String(), to.String()).
-		Order("effectiveTime DESC").
-		Offset(int(offset)).
-		Limit(int(limit)).
-		FindInBatches(&usageRecordsBatch, 1000, func(_ *gorm.DB, _ int) error {
-			usageRecords = append(usageRecords, usageRecordsBatch...)
-			return nil
-		})
+	db := conn.WithContext(ctx).
+		Where("attributionId = ?", params.AttributionId).
+		Where("? <= effectiveTime AND effectiveTime < ?", params.From, params.To)
+	if params.ExcludeDrafts {
+		db = db.Where("draft = ?", false)
+	}
+	db = db.Order(fmt.Sprintf("effectiveTime %s", params.Order.ToSQL()))
+	if params.Offset != 0 {
+		db = db.Offset(int(params.Offset))
+	}
+	if params.Limit != 0 {
+		db = db.Limit(int(params.Limit))
+	}
+
+	result := db.FindInBatches(&usageRecordsBatch, 1000, func(_ *gorm.DB, _ int) error {
+		usageRecords = append(usageRecords, usageRecordsBatch...)
+		return nil
+	})
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get usage records: %s", result.Error)
 	}
 	return usageRecords, nil
+}
+
+type UsageSummary struct {
+	NumRecordsInRange         int
+	CreditCentsBalanceAtStart int64
+	CreditCentsBalanceAtEnd   int64
+}
+
+func GetUsageSummary(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to time.Time, excludeDrafts bool) (*UsageSummary, error) {
+	db := conn.WithContext(ctx)
+	query1 := db.Table((&Usage{}).TableName()).
+		Select("sum(creditCents) as creditCentsBalanceAtStart").
+		Where("attributionId = ?", attributionId).
+		Where("effectiveTime < ?", from)
+	if excludeDrafts {
+		query1 = query1.Where("draft = ?", false)
+	}
+	var creditCentsBalanceAtStart sql.NullInt64
+	err := query1.Row().Scan(&creditCentsBalanceAtStart)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get usage meta data: %s", err)
+	}
+
+	query2 := db.Table((&Usage{}).TableName()).
+		Select("sum(creditCents) as creditCentsBalanceInPeriod", "count(id) as numRecordsInRange").
+		Where("attributionId = ?", attributionId).
+		Where("? <= effectiveTime AND effectiveTime < ?", from, to)
+	if excludeDrafts {
+		query2 = query2.Where("draft = ?", false)
+	}
+	var creditCentsBalanceInPeriod sql.NullInt64
+	var numRecordsInRange sql.NullInt32
+	err = query2.Row().Scan(&creditCentsBalanceInPeriod, &numRecordsInRange)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get usage meta data: %s", err)
+	}
+	return &UsageSummary{
+		NumRecordsInRange:         int(numRecordsInRange.Int32),
+		CreditCentsBalanceAtStart: creditCentsBalanceAtStart.Int64,
+		CreditCentsBalanceAtEnd:   creditCentsBalanceAtStart.Int64 + creditCentsBalanceInPeriod.Int64,
+	}, nil
 }

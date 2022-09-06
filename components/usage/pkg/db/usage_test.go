@@ -6,6 +6,7 @@ package db_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -41,11 +42,86 @@ func TestFindUsageInRange(t *testing.T) {
 
 	usageEntries := []db.Usage{entryBefore, entryInside, entryAfter}
 	dbtest.CreateUsageRecords(t, conn, usageEntries...)
-	listResult, err := db.FindUsage(context.Background(), conn, attributionID, db.NewVarcharTime(start), db.NewVarcharTime(end), 0, 10)
+	listResult, err := db.FindUsage(context.Background(), conn, &db.FindUsageParams{
+		AttributionId: attributionID,
+		From:          start,
+		To:            end,
+	})
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(listResult))
 	require.Equal(t, []db.Usage{entryInside}, listResult)
+}
+
+func TestFindUsageMetadata(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC)
+
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
+
+	draftBefore := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(-1 * 23 * time.Hour)),
+		CreditCents:   100,
+		Draft:         true,
+	})
+	nondraftBefore := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(-1 * 23 * time.Hour)),
+		CreditCents:   200,
+		Draft:         false,
+	})
+
+	draftInside := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		CreditCents:   300,
+		Draft:         true,
+	})
+	nonDraftInside := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		CreditCents:   400,
+		Draft:         false,
+	})
+
+	nonDraftAfter := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(end.Add(2 * time.Hour)),
+		CreditCents:   1000,
+	})
+
+	dbtest.CreateUsageRecords(t, conn, draftBefore, nondraftBefore, draftInside, nonDraftInside, nonDraftAfter)
+
+	tests := []struct {
+		start, end    time.Time
+		excludeDrafts bool
+		// expectations
+		creditsAtStart int64
+		creditsAtEnd   int64
+		recordsInRange int
+	}{
+		{start, end, false, 300, 1000, 2},
+		{start, end, true, 200, 600, 1},
+		{end, end, false, 1000, 1000, 0},
+		{end, end, true, 600, 600, 0},
+		{start, start, false, 300, 300, 0},
+		{start.Add(-500 * 24 * time.Hour), end, false, 0, 1000, 4},
+		{start.Add(-500 * 24 * time.Hour), end.Add(500 * 24 * time.Hour), false, 0, 2000, 5},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("Running test no %d", i+1), func(t *testing.T) {
+			metaData, err := db.GetUsageSummary(context.Background(), conn, attributionID, test.start, test.end, test.excludeDrafts)
+			require.NoError(t, err)
+
+			require.Equal(t, test.creditsAtStart, metaData.CreditCentsBalanceAtStart)
+			require.Equal(t, test.creditsAtEnd, metaData.CreditCentsBalanceAtEnd)
+			require.Equal(t, test.recordsInRange, metaData.NumRecordsInRange)
+		})
+	}
 }
 
 func TestInsertUsageRecords(t *testing.T) {
@@ -64,7 +140,7 @@ func TestInsertUsageRecords(t *testing.T) {
 	updatedDesc := "Updated Description"
 	usage.Description = updatedDesc
 
-	require.NoError(t, db.InsertUsage(context.Background(), conn, usage))
+	dbtest.CreateUsageRecords(t, conn, usage)
 
 	drafts, err := db.FindAllDraftUsage(context.Background(), conn)
 	require.NoError(t, err)

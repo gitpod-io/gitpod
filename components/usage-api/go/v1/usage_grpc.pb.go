@@ -34,6 +34,8 @@ type UsageServiceClient interface {
 	GetCostCenter(ctx context.Context, in *GetCostCenterRequest, opts ...grpc.CallOption) (*GetCostCenterResponse, error)
 	// Triggers reconciliation of usage with ledger implementation.
 	ReconcileUsageWithLedger(ctx context.Context, in *ReconcileUsageWithLedgerRequest, opts ...grpc.CallOption) (*ReconcileUsageWithLedgerResponse, error)
+	// ListUsage retrieves all usage for the specified attributionId and theb given time range
+	ListUsage(ctx context.Context, in *ListUsageRequest, opts ...grpc.CallOption) (*ListUsageResponse, error)
 }
 
 type usageServiceClient struct {
@@ -80,6 +82,15 @@ func (c *usageServiceClient) ReconcileUsageWithLedger(ctx context.Context, in *R
 	return out, nil
 }
 
+func (c *usageServiceClient) ListUsage(ctx context.Context, in *ListUsageRequest, opts ...grpc.CallOption) (*ListUsageResponse, error) {
+	out := new(ListUsageResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/ListUsage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsageServiceServer is the server API for UsageService service.
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
@@ -92,6 +103,8 @@ type UsageServiceServer interface {
 	GetCostCenter(context.Context, *GetCostCenterRequest) (*GetCostCenterResponse, error)
 	// Triggers reconciliation of usage with ledger implementation.
 	ReconcileUsageWithLedger(context.Context, *ReconcileUsageWithLedgerRequest) (*ReconcileUsageWithLedgerResponse, error)
+	// ListUsage retrieves all usage for the specified attributionId and theb given time range
+	ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
 }
 
@@ -110,6 +123,9 @@ func (UnimplementedUsageServiceServer) GetCostCenter(context.Context, *GetCostCe
 }
 func (UnimplementedUsageServiceServer) ReconcileUsageWithLedger(context.Context, *ReconcileUsageWithLedgerRequest) (*ReconcileUsageWithLedgerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReconcileUsageWithLedger not implemented")
+}
+func (UnimplementedUsageServiceServer) ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUsage not implemented")
 }
 func (UnimplementedUsageServiceServer) mustEmbedUnimplementedUsageServiceServer() {}
 
@@ -196,6 +212,24 @@ func _UsageService_ReconcileUsageWithLedger_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageService_ListUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUsageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).ListUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/ListUsage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).ListUsage(ctx, req.(*ListUsageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UsageService_ServiceDesc is the grpc.ServiceDesc for UsageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -218,6 +252,10 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReconcileUsageWithLedger",
 			Handler:    _UsageService_ReconcileUsageWithLedger_Handler,
+		},
+		{
+			MethodName: "ListUsage",
+			Handler:    _UsageService_ListUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
