@@ -3502,6 +3502,20 @@ data:
             ]
           },
           {
+            "name": "gitpod_vscode_web_load_total",
+            "help": "Total count of attempts to load VS Code Web workbench",
+            "labels": [
+              {
+                "name": "status",
+                "allowValues": [
+                  "loading",
+                  "failed"
+                ],
+                "defaultValue": ""
+              }
+            ]
+          },
+          {
             "name": "gitpod_supervisor_frontend_client_total",
             "help": "Total count of supervisor frontend client",
             "labels": null
@@ -8209,7 +8223,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 5f647d019f026f04a85e04ad8e695083db2a70f97ee7199143859879d5d40ebe
+        gitpod.io/checksum_config: 9294988d9eda9035b1f1feabbe3743d7f56366a821fe43a1736c209bcce70c85
       creationTimestamp: null
       labels:
         app: gitpod

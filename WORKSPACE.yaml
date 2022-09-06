@@ -7,7 +7,7 @@ defaultArgs:
   jbMarketplacePublishTrigger: "false"
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: 43d126af25499c63c7462d0b7a961dfd797f896e
+  codeCommit: e2c3ab18a37bed1b4e43609a2c5a771ed4f07dbc
   codeQuality: stable
   noVerifyJBPlugin: false
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.2.2.tar.gz"
