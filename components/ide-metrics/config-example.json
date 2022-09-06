@@ -26,7 +26,10 @@
         ],
         "buckets": [1, 10, 100]
       }
-    ]
+    ],
+    "errorReporting": {
+      "allowComponents": ["supervisor-frontend"]
+    }
   },
   "prometheus": {
     "addr": "127.0.0.1:9500"

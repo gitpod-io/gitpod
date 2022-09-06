@@ -24,6 +24,7 @@ type MetricsServerConfiguration struct {
 	RateLimits       map[string]grpc.RateLimit       `json:"ratelimits"`
 	CounterMetrics   []CounterMetricsConfiguration   `json:"counterMetrics"`
 	HistogramMetrics []HistogramMetricsConfiguration `json:"histogramMetrics"`
+	ErrorReporting   ErrorReportingConfiguration     `json:"errorReporting"`
 }
 
 type CounterMetricsConfiguration struct {
@@ -37,6 +38,10 @@ type HistogramMetricsConfiguration struct {
 	Help    string           `json:"help"`
 	Labels  []LabelAllowList `json:"labels"`
 	Buckets []float64        `json:"buckets"`
+}
+
+type ErrorReportingConfiguration struct {
+	AllowComponents []string `json:"allowComponents"`
 }
 
 type ServiceConfiguration struct {
