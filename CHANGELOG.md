@@ -1,6 +1,8 @@
 # Change Log
 
 ## September 2022
+- NONOE ([#12648](https://github.com/gitpod-io/gitpod/pull/12648)) - [@akosyakov](https://github.com/akosyakov)
+- JetBrains: Provide workspace class info in Backend Control Center ([#12568](https://github.com/gitpod-io/gitpod/pull/12568)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - Fixed JetBrains connection loop when connecting twice to the same workspace ([#12232](https://github.com/gitpod-io/gitpod/pull/12232)) - [@]()
 - [single-cluster/eks] Add `cluster-autoscaler` ([#12577](https://github.com/gitpod-io/gitpod/pull/12577)) - [@Pothulapati](https://github.com/Pothulapati)
 - Update stable VSCode Browser to `1.71` ([#12604](https://github.com/gitpod-io/gitpod/pull/12604)) - [@mustard-mh](https://github.com/mustard-mh)
