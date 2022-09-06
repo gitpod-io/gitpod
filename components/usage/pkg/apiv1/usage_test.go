@@ -624,14 +624,16 @@ func TestReconcileWithLedger(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("no action with no instances and no drafts", func(t *testing.T) {
-		inserts, updates := reconcileUsageWithLedger(nil, nil, pricer, now)
+		inserts, updates, err := reconcileUsageWithLedger(nil, nil, pricer, now)
+		require.NoError(t, err)
 		require.Len(t, inserts, 0)
 		require.Len(t, updates, 0)
 	})
 
 	t.Run("no action with no instances but existing drafts", func(t *testing.T) {
 		drafts := []db.Usage{dbtest.NewUsage(t, db.Usage{})}
-		inserts, updates := reconcileUsageWithLedger(nil, drafts, pricer, now)
+		inserts, updates, err := reconcileUsageWithLedger(nil, drafts, pricer, now)
+		require.NoError(t, err)
 		require.Len(t, inserts, 0)
 		require.Len(t, updates, 0)
 	})
@@ -648,12 +650,14 @@ func TestReconcileWithLedger(t *testing.T) {
 			WorkspaceClass:     db.WorkspaceClass_Default,
 			Type:               db.WorkspaceType_Regular,
 			UsageAttributionID: db.NewTeamAttributionID(uuid.New().String()),
+			StartedTime:        db.NewVarcharTime(now.Add(1 * time.Minute)),
 		}
 
-		inserts, updates := reconcileUsageWithLedger([]db.WorkspaceInstanceForUsage{instance, instance}, nil, pricer, now)
+		inserts, updates, err := reconcileUsageWithLedger([]db.WorkspaceInstanceForUsage{instance, instance}, nil, pricer, now)
+		require.NoError(t, err)
 		require.Len(t, inserts, 1)
 		require.Len(t, updates, 0)
-		require.Equal(t, db.Usage{
+		expectedUsage := db.Usage{
 			ID:                  inserts[0].ID,
 			AttributionID:       instance.UsageAttributionID,
 			Description:         usageDescriptionFromController,
@@ -663,7 +667,18 @@ func TestReconcileWithLedger(t *testing.T) {
 			WorkspaceInstanceID: instance.ID,
 			Draft:               true,
 			Metadata:            nil,
-		}, inserts[0])
+		}
+		require.NoError(t, expectedUsage.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+			WorkspaceId:    instance.WorkspaceID,
+			WorkspaceType:  instance.Type,
+			WorkspaceClass: instance.WorkspaceClass,
+			ContextURL:     "",
+			StartTime:      db.TimeToISO8601(instance.StartedTime.Time()),
+			EndTime:        "",
+			UserName:       "",
+			UserAvatarURL:  "",
+		}))
+		require.EqualValues(t, expectedUsage, inserts[0])
 	})
 
 	t.Run("updates a usage record when a draft exists", func(t *testing.T) {
@@ -678,6 +693,7 @@ func TestReconcileWithLedger(t *testing.T) {
 			WorkspaceClass:     db.WorkspaceClass_Default,
 			Type:               db.WorkspaceType_Regular,
 			UsageAttributionID: db.NewTeamAttributionID(uuid.New().String()),
+			StartedTime:        db.NewVarcharTime(now.Add(1 * time.Minute)),
 		}
 
 		// the fields in the usage record deliberately do not match the instance, except for the Instance ID.
@@ -694,10 +710,12 @@ func TestReconcileWithLedger(t *testing.T) {
 			Metadata:            nil,
 		})
 
-		inserts, updates := reconcileUsageWithLedger([]db.WorkspaceInstanceForUsage{instance}, []db.Usage{draft}, pricer, now)
+		inserts, updates, err := reconcileUsageWithLedger([]db.WorkspaceInstanceForUsage{instance}, []db.Usage{draft}, pricer, now)
+		require.NoError(t, err)
 		require.Len(t, inserts, 0)
 		require.Len(t, updates, 1)
-		require.Equal(t, db.Usage{
+
+		expectedUsage := db.Usage{
 			ID:                  draft.ID,
 			AttributionID:       instance.UsageAttributionID,
 			Description:         usageDescriptionFromController,
@@ -707,6 +725,17 @@ func TestReconcileWithLedger(t *testing.T) {
 			WorkspaceInstanceID: instance.ID,
 			Draft:               true,
 			Metadata:            nil,
-		}, updates[0])
+		}
+		require.NoError(t, expectedUsage.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+			WorkspaceId:    instance.WorkspaceID,
+			WorkspaceType:  instance.Type,
+			WorkspaceClass: instance.WorkspaceClass,
+			ContextURL:     "",
+			StartTime:      db.TimeToISO8601(instance.StartedTime.Time()),
+			EndTime:        "",
+			UserName:       "",
+			UserAvatarURL:  "",
+		}))
+		require.EqualValues(t, expectedUsage, updates[0])
 	})
 }

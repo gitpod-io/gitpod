@@ -7,6 +7,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"math"
 	"time"
@@ -45,6 +46,26 @@ type Usage struct {
 	WorkspaceInstanceID uuid.UUID      `gorm:"column:workspaceInstanceId;type:char;size:36;" json:"workspaceInstanceId"`
 	Draft               bool           `gorm:"column:draft;type:boolean;" json:"draft"`
 	Metadata            datatypes.JSON `gorm:"column:metadata;type:text;size:65535" json:"metadata"`
+}
+
+func (u *Usage) SetMetadataWithWorkspaceInstance(data WorkspaceInstanceUsageData) error {
+	b, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("failed to serialize workspace instance usage data into json: %w", err)
+	}
+
+	u.Metadata = b
+	return nil
+}
+
+func (u *Usage) GetMetadataAsWorkspaceInstanceData() (WorkspaceInstanceUsageData, error) {
+	var data WorkspaceInstanceUsageData
+	err := json.Unmarshal(u.Metadata, &data)
+	if err != nil {
+		return WorkspaceInstanceUsageData{}, fmt.Errorf("failed unmarshal metadata into wokrspace instance data: %w", err)
+	}
+
+	return data, nil
 }
 
 // WorkspaceInstanceUsageData represents the shape of metadata for usage entries of kind "workspaceinstance"
