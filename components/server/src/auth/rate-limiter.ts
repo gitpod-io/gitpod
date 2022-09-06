@@ -210,6 +210,7 @@ const defaultFunctions: FunctionsConfig = {
     subscribeTeamToStripe: { group: "default", points: 1 },
     getStripePortalUrlForTeam: { group: "default", points: 1 },
     listBilledUsage: { group: "default", points: 1 },
+    listUsage: { group: "default", points: 1 },
     getBillingModeForTeam: { group: "default", points: 1 },
     getBillingModeForUser: { group: "default", points: 1 },
 

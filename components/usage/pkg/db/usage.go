@@ -47,6 +47,19 @@ type Usage struct {
 	Metadata            datatypes.JSON `gorm:"column:metadata;type:text;size:65535" json:"metadata"`
 }
 
+// WorkspaceInstanceUsageData represents the shape of metadata for usage entries of kind "workspaceinstance"
+// the equivalent TypeScript definition is maintained in `components/gitpod-protocol/src/usage.ts“
+type WorkspaceInstanceUsageData struct {
+	WorkspaceId    string        `json:"workspaceId"`
+	WorkspaceType  WorkspaceType `json:"workspaceType"`
+	WorkspaceClass string        `json:"workspaceClass"`
+	ContextURL     string        `json:"contextURL"`
+	StartTime      string        `json:"startTime"`
+	EndTime        string        `json:"endTime"`
+	UserName       string        `json:"userName"`
+	UserAvatarURL  string        `json:"userAvatarURL"`
+}
+
 type FindUsageResult struct {
 	UsageEntries []Usage
 }
