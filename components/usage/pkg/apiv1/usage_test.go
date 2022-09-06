@@ -299,10 +299,8 @@ func TestInstanceToUsageRecords(t *testing.T) {
 	workspaceID := dbtest.GenerateWorkspaceID()
 	teamAttributionID := db.NewTeamAttributionID(teamID)
 	instanceId := uuid.New()
-	creationTime := db.NewVarcharTime(time.Date(2022, 05, 30, 00, 00, 00, 00, time.UTC))
 	startedTime := db.NewVarcharTime(time.Date(2022, 05, 30, 00, 01, 00, 00, time.UTC))
 	stoppingTime := db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC))
-	stoppedTime := db.NewVarcharTime(time.Date(2022, 06, 1, 1, 1, 0, 0, time.UTC))
 
 	scenarios := []struct {
 		Name     string
@@ -320,10 +318,8 @@ func TestInstanceToUsageRecords(t *testing.T) {
 					WorkspaceClass:     defaultWorkspaceClass,
 					Type:               db.WorkspaceType_Prebuild,
 					UsageAttributionID: teamAttributionID,
-					CreationTime:       creationTime,
 					StartedTime:        startedTime,
 					StoppingTime:       stoppingTime,
-					StoppedTime:        stoppedTime,
 				},
 			},
 			Expected: []db.WorkspaceInstanceUsage{{
@@ -352,10 +348,8 @@ func TestInstanceToUsageRecords(t *testing.T) {
 					Type:               db.WorkspaceType_Regular,
 					WorkspaceID:        workspaceID,
 					UsageAttributionID: teamAttributionID,
-					CreationTime:       creationTime,
 					StartedTime:        startedTime,
 					StoppingTime:       db.VarcharTime{},
-					StoppedTime:        db.VarcharTime{},
 				},
 			},
 			Expected: []db.WorkspaceInstanceUsage{{
@@ -402,7 +396,7 @@ func TestReportGenerator_GenerateUsageReport(t *testing.T) {
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
 			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 30, 00, 01, 00, 00, time.UTC)),
 		}),
-		// No creation time, invalid record
+		// No creation time, invalid record, ignored
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:                 uuid.New(),
 			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
@@ -426,7 +420,7 @@ func TestReportGenerator_GenerateUsageReport(t *testing.T) {
 	require.Equal(t, nowFunc(), report.GenerationTime)
 	require.Equal(t, startOfMay, report.From)
 	// require.Equal(t, startOfJune, report.To) TODO(gpl) This is not true anymore - does it really make sense to test for it?
-	require.Len(t, report.InvalidSessions, 1)
+	require.Len(t, report.InvalidSessions, 0)
 	require.Len(t, report.UsageRecords, 2)
 }
 
@@ -654,7 +648,6 @@ func TestReconcileWithLedger(t *testing.T) {
 			WorkspaceClass:     db.WorkspaceClass_Default,
 			Type:               db.WorkspaceType_Regular,
 			UsageAttributionID: db.NewTeamAttributionID(uuid.New().String()),
-			CreationTime:       db.NewVarcharTime(now.Add(1 * time.Minute)),
 		}
 
 		inserts, updates := reconcileUsageWithLedger([]db.WorkspaceInstanceForUsage{instance, instance}, nil, pricer, now)
@@ -685,7 +678,6 @@ func TestReconcileWithLedger(t *testing.T) {
 			WorkspaceClass:     db.WorkspaceClass_Default,
 			Type:               db.WorkspaceType_Regular,
 			UsageAttributionID: db.NewTeamAttributionID(uuid.New().String()),
-			CreationTime:       db.NewVarcharTime(now.Add(1 * time.Minute)),
 		}
 
 		// the fields in the usage record deliberately do not match the instance, except for the Instance ID.

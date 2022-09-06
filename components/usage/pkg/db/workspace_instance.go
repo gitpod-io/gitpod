@@ -134,6 +134,7 @@ func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to 
 		Where(
 			conn.Where("wsi.stoppingTime >= ?", TimeToISO8601(from)).Or("wsi.stoppingTime = ?", ""),
 		).
+		Where("wsi.startedTime != ?", "").
 		Where("wsi.startedTime < ?", TimeToISO8601(to)).
 		Where("wsi.usageAttributionId != ?", "").
 		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
@@ -155,10 +156,8 @@ func queryWorkspaceInstanceForUsage(ctx context.Context, conn *gorm.DB) *gorm.DB
 			"ws.type as workspaceType, " +
 			"wsi.workspaceClass as workspaceClass, " +
 			"wsi.usageAttributionId as usageAttributionId, " +
-			"wsi.creationTime as creationTime, " +
 			"wsi.startedTime as startedTime, " +
 			"wsi.stoppingTime as stoppingTime, " +
-			"wsi.stoppedTime as stoppedTime, " +
 			"ws.ownerId as ownerId, " +
 			"ws.id as workspaceId",
 		).
@@ -224,10 +223,8 @@ type WorkspaceInstanceForUsage struct {
 	Type               WorkspaceType  `gorm:"column:workspaceType;type:char;size:16;default:regular;" json:"workspaceType"`
 	UsageAttributionID AttributionID  `gorm:"column:usageAttributionId;type:varchar;size:60;" json:"usageAttributionId"`
 
-	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	StartedTime  VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
 	StoppingTime VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
-	StoppedTime  VarcharTime `gorm:"column:stoppedTime;type:varchar;size:255;" json:"stoppedTime"`
 }
 
 // WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.
