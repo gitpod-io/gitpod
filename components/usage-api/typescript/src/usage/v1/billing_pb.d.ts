@@ -68,6 +68,40 @@ export namespace UpdateInvoicesResponse {
     }
 }
 
+export class ReconcileInvoicesRequest extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ReconcileInvoicesRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: ReconcileInvoicesRequest): ReconcileInvoicesRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ReconcileInvoicesRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ReconcileInvoicesRequest;
+    static deserializeBinaryFromReader(message: ReconcileInvoicesRequest, reader: jspb.BinaryReader): ReconcileInvoicesRequest;
+}
+
+export namespace ReconcileInvoicesRequest {
+    export type AsObject = {
+    }
+}
+
+export class ReconcileInvoicesResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ReconcileInvoicesResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: ReconcileInvoicesResponse): ReconcileInvoicesResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ReconcileInvoicesResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ReconcileInvoicesResponse;
+    static deserializeBinaryFromReader(message: ReconcileInvoicesResponse, reader: jspb.BinaryReader): ReconcileInvoicesResponse;
+}
+
+export namespace ReconcileInvoicesResponse {
+    export type AsObject = {
+    }
+}
+
 export class GetUpcomingInvoiceRequest extends jspb.Message {
 
     hasTeamId(): boolean;
