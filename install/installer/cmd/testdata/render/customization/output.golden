@@ -4468,7 +4468,12 @@ data:
               30
             ]
           }
-        ]
+        ],
+        "errorReporting": {
+          "allowComponents": [
+            "supervisor-frontend"
+          ]
+        }
       },
       "debug": false,
       "pprof": {
@@ -8653,7 +8658,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 7aca852c0c589f808186529f22f534f9db9fa4ae31546cedc307f7e26ec9c4cf
+        gitpod.io/checksum_config: 8beda82ff6c689641e3e3d74cfa333942daf49ba5617133a5c6ec21a44408f22
         hello: world
       creationTimestamp: null
       labels:

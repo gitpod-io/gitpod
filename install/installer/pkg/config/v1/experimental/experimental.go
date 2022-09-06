@@ -255,13 +255,20 @@ type WebAppWorkspaceClass struct {
 
 type IDEConfig struct {
 	// Disable resolution of latest images and use bundled latest versions instead
-	ResolveLatest  *bool           `json:"resolveLatest,omitempty"`
-	IDEProxyConfig *IDEProxyConfig `json:"ideProxy,omitempty"`
-	VSXProxyConfig *VSXProxyConfig `json:"openvsxProxy,omitempty"`
+	ResolveLatest    *bool             `json:"resolveLatest,omitempty"`
+	IDEProxyConfig   *IDEProxyConfig   `json:"ideProxy,omitempty"`
+	VSXProxyConfig   *VSXProxyConfig   `json:"openvsxProxy,omitempty"`
+	IDEMetricsConfig *IDEMetricsConfig `json:"ideMetrics,omitempty"`
 }
 
 type IDEProxyConfig struct {
 	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
+}
+
+type IDEMetricsConfig struct {
+	EnabledErrorReporting bool   `json:"enabledErrorReporting,omitempty"`
+	GCPProject            string `json:"gcpProject,omitempty"`
+	GCPADCSecret          string `json:"gcpAdcSecret,omitempty"`
 }
 
 type VSXProxyConfig struct {

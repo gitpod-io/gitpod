@@ -109,12 +109,19 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
+	errorReporting := config.ErrorReportingConfiguration{
+		AllowComponents: []string{
+			"supervisor-frontend",
+		},
+	}
+
 	cfg := config.ServiceConfiguration{
 		Server: config.MetricsServerConfiguration{
 			Port: ContainerPort,
 			// RateLimits: , // TODO(pd) ratelimit
 			CounterMetrics:   counterMetrics,
 			HistogramMetrics: histogramMetrics,
+			ErrorReporting:   errorReporting,
 		},
 		Prometheus: struct {
 			Addr string `json:"addr"`

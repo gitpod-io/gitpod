@@ -167,6 +167,7 @@ EOF`);
 
     private configureIDE(slice: string) {
         exec(`yq w -i ${this.options.installerConfigPath} experimental.ide.resolveLatest false`, { slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.ide.ideMetrics.enabledErrorReporting true`, { slice });
     }
 
     private configureObservability(slice: string) {
