@@ -1,0 +1,96 @@
+{
+  "type": "object",
+  "properties": {
+    "supervisorImage": {
+      "type": "string"
+    },
+    "ideOptions": {
+      "type": "object",
+      "properties": {
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "orderKey": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["desktop", "browser"]
+              },
+              "logo": {
+                "type": "string"
+              },
+              "tooltip": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "hidden": {
+                "type": "boolean"
+              },
+              "image": {
+                "type": "string"
+              },
+              "latestImage": {
+                "type": "string"
+              },
+              "resolveImageDigest": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "title",
+              "type",
+              "logo",
+              "image"
+            ]
+          }
+        },
+        "defaultIde": {
+          "type": "string"
+        },
+        "defaultDesktopIde": {
+          "type": "string"
+        },
+        "clients": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "defaultDesktopIDE": {
+                "type": "string"
+              },
+              "desktopIDEs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "options",
+        "defaultIde",
+        "defaultDesktopIde"
+      ]
+    }
+  },
+  "required": [
+    "supervisorImage",
+    "ideOptions"
+  ]
+}
