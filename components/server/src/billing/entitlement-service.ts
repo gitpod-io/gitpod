@@ -19,8 +19,8 @@ export interface MayStartWorkspaceResult {
 
     needsVerification?: boolean;
 
-    /** Usage-Based Pricing: AttributionId of the CostCenter that reached it's spending limit */
-    spendingLimitReachedOnCostCenter?: AttributionId;
+    /** Usage-Based Pricing: AttributionId of the CostCenter that reached it's usage limit */
+    usageLimitReachedOnCostCenter?: AttributionId;
 }
 
 export interface HitParallelWorkspaceLimit {

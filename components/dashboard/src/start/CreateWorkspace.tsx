@@ -205,7 +205,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                 case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
                     error = undefined; // to hide the error (otherwise rendered behind the modal)
                     phase = StartPhase.Stopped;
-                    statusMessage = <SpendingLimitReachedModal hints={this.state?.error?.data} />;
+                    statusMessage = <UsageLimitReachedModal hints={this.state?.error?.data} />;
                     break;
                 default:
                     statusMessage = (
@@ -366,7 +366,7 @@ function LimitReachedOutOfHours() {
         </LimitReachedModal>
     );
 }
-function SpendingLimitReachedModal(p: { hints: any }) {
+function UsageLimitReachedModal(p: { hints: any }) {
     const { teams } = useContext(TeamsContext);
     // const [attributionId, setAttributionId] = useState<AttributionId | undefined>();
     const [attributedTeam, setAttributedTeam] = useState<Team | undefined>();
@@ -390,7 +390,7 @@ function SpendingLimitReachedModal(p: { hints: any }) {
             </h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-6">
                 <Alert type="error" className="app-container rounded-md">
-                    You have reached the <strong>spending limit</strong> of your billing account.
+                    You have reached the <strong>usage limit</strong> of your billing account.
                 </Alert>
                 <p className="mt-3 text-base text-gray-600 dark:text-gray-300">
                     {"Contact a team owner "}
@@ -399,7 +399,7 @@ function SpendingLimitReachedModal(p: { hints: any }) {
                             of <strong>{attributedTeamName} </strong>
                         </>
                     )}
-                    to increase the spending limit, or change your <a href="/billing">billing settings</a>.
+                    to increase the usage limit, or change your <a href="/billing">billing settings</a>.
                 </p>
             </div>
             <div className="flex justify-end mt-6 space-x-2">

@@ -31,7 +31,7 @@ export default function TeamUsageBasedBilling() {
     const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
-    const [spendingLimit, setSpendingLimit] = useState<number | undefined>();
+    const [usageLimit, setUsageLimit] = useState<number | undefined>();
 
     useEffect(() => {
         if (!team) {
@@ -62,10 +62,10 @@ export default function TeamUsageBasedBilling() {
         (async () => {
             const [portalUrl, spendingLimit] = await Promise.all([
                 getGitpodService().server.getStripePortalUrlForTeam(team.id),
-                getGitpodService().server.getSpendingLimitForTeam(team.id),
+                getGitpodService().server.getUsageLimitForTeam(team.id),
             ]);
             setStripePortalUrl(portalUrl);
-            setSpendingLimit(spendingLimit);
+            setUsageLimit(spendingLimit);
         })();
     }, [team, stripeSubscriptionId]);
 
@@ -155,14 +155,14 @@ export default function TeamUsageBasedBilling() {
         if (!team) {
             return;
         }
-        const oldLimit = spendingLimit;
-        setSpendingLimit(newLimit);
+        const oldLimit = usageLimit;
+        setUsageLimit(newLimit);
         try {
-            await getGitpodService().server.setSpendingLimitForTeam(team.id, newLimit);
+            await getGitpodService().server.setUsageLimitForTeam(team.id, newLimit);
         } catch (error) {
-            setSpendingLimit(oldLimit);
+            setUsageLimit(oldLimit);
             console.error(error);
-            alert(error?.message || "Failed to update spending limit. See console for error message.");
+            alert(error?.message || "Failed to update usage limit. See console for error message.");
         }
         setShowUpdateLimitModal(false);
     };
@@ -170,7 +170,7 @@ export default function TeamUsageBasedBilling() {
     return (
         <div className="mb-16">
             <h3>Usage-Based Billing</h3>
-            <h2 className="text-gray-500">Manage usage-based billing, spending limit, and payment method.</h2>
+            <h2 className="text-gray-500">Manage usage-based billing, usage limit, and payment method.</h2>
             <div className="max-w-xl flex flex-col">
                 {showSpinner && (
                     <div className="flex flex-col mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
@@ -202,10 +202,10 @@ export default function TeamUsageBasedBilling() {
                         </div>
                         <div className="flex flex-col w-72 mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
                             <div className="uppercase text-sm text-gray-400 dark:text-gray-500">
-                                Spending Limit (Credits)
+                                Usage Limit (Credits)
                             </div>
                             <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
-                                {spendingLimit || "–"}
+                                {usageLimit || "–"}
                             </div>
                             <button className="self-end" onClick={() => setShowUpdateLimitModal(true)}>
                                 Update Limit
@@ -219,7 +219,7 @@ export default function TeamUsageBasedBilling() {
             )}
             {showUpdateLimitModal && (
                 <UpdateLimitModal
-                    currentValue={spendingLimit}
+                    currentValue={usageLimit}
                     onClose={() => setShowUpdateLimitModal(false)}
                     onUpdate={(newLimit) => doUpdateLimit(newLimit)}
                 />
@@ -245,9 +245,9 @@ function UpdateLimitModal(props: {
 
     return (
         <Modal visible={true} onClose={props.onClose}>
-            <h3 className="flex">Update Spending Limit</h3>
+            <h3 className="flex">Usage Limit</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
-                <p className="pb-4 text-gray-500 text-base">Set spending limit in total credits per month.</p>
+                <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
 
                 <label className="font-medium">
                     Credits

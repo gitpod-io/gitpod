@@ -280,14 +280,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`,
             );
         }
-        if (!!result.spendingLimitReachedOnCostCenter) {
-            throw new ResponseError(
-                ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
-                "Increase spending limit and try again.",
-                {
-                    attributionId: result.spendingLimitReachedOnCostCenter,
-                },
-            );
+        if (!!result.usageLimitReachedOnCostCenter) {
+            throw new ResponseError(ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED, "Increase usage limit and try again.", {
+                attributionId: result.usageLimitReachedOnCostCenter,
+            });
         }
         if (!!result.hitParallelWorkspaceLimit) {
             throw new ResponseError(
@@ -2137,8 +2133,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async getSpendingLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
-        const user = this.checkAndBlockUser("getSpendingLimitForTeam");
+    async getUsageLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
+        const user = this.checkAndBlockUser("getUsageLimitForTeam");
         const team = await this.guardTeamOperation(teamId, "get");
         await this.ensureStripeApiIsAllowed({ team });
 
@@ -2152,19 +2148,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return undefined;
     }
 
-    async setSpendingLimitForTeam(ctx: TraceContext, teamId: string, spendingLimit: number): Promise<void> {
-        const user = this.checkAndBlockUser("setSpendingLimitForTeam");
+    async setUsageLimitForTeam(ctx: TraceContext, teamId: string, usageLimit: number): Promise<void> {
+        const user = this.checkAndBlockUser("setUsageLimitForTeam");
         const team = await this.guardTeamOperation(teamId, "update");
         await this.ensureStripeApiIsAllowed({ team });
-        if (typeof spendingLimit !== "number" || spendingLimit < 0) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unexpected `spendingLimit` value.");
+        if (typeof usageLimit !== "number" || usageLimit < 0) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unexpected `usageLimit` value.");
         }
         const attributionId = AttributionId.render({ kind: "team", teamId });
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "update");
 
         await this.costCenterDB.storeEntry({
             id: AttributionId.render({ kind: "team", teamId }),
-            spendingLimit,
+            spendingLimit: usageLimit,
         });
     }
 
@@ -2174,13 +2170,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
         if (billingMode.mode === "usage-based") {
-            const limit = await this.billingService.checkSpendingLimitReached(user);
+            const limit = await this.billingService.checkUsageLimitReached(user);
             const costCenter = await this.costCenterDB.findById(AttributionId.render(limit.attributionId));
             if (costCenter) {
                 if (limit.reached) {
-                    result.unshift("The spending limit is reached.");
+                    result.unshift("The usage limit is reached.");
                 } else if (limit.almostReached) {
-                    result.unshift("The spending limit is almost reached.");
+                    result.unshift("The usage limit is almost reached.");
                 }
             }
         }

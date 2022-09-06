@@ -57,18 +57,18 @@ export class EntitlementServiceUBP implements EntitlementService {
                 return undefined;
             }
         };
-        const [spendingLimitReachedOnCostCenter, hitParallelWorkspaceLimit] = await Promise.all([
-            this.checkSpendingLimitReached(user, date),
+        const [usageLimitReachedOnCostCenter, hitParallelWorkspaceLimit] = await Promise.all([
+            this.checkUsageLimitReached(user, date),
             hasHitParallelWorkspaceLimit(),
         ]);
         return {
-            spendingLimitReachedOnCostCenter,
+            usageLimitReachedOnCostCenter: usageLimitReachedOnCostCenter,
             hitParallelWorkspaceLimit,
         };
     }
 
-    protected async checkSpendingLimitReached(user: User, date: Date): Promise<AttributionId | undefined> {
-        const result = await this.billingService.checkSpendingLimitReached(user);
+    protected async checkUsageLimitReached(user: User, date: Date): Promise<AttributionId | undefined> {
+        const result = await this.billingService.checkUsageLimitReached(user);
         if (result.reached) {
             return result.attributionId;
         }
