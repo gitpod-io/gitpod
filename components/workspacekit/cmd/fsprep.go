@@ -182,8 +182,7 @@ func preStart() error {
 	}
 	defer os.Remove(f.Name())
 
-	_, err = f.WriteString(`
-#!/bin/bash
+	_, err = f.WriteString(`#!/bin/bash
 
 # needed so that the IDE can produce the /workspace/.vscode-remote directory
 mkdir -p /workspace
@@ -204,10 +203,15 @@ touch /dev/kmsg
 
 	f.Close()
 
-	cmd := exec.Command("bash", "-c", f.Name())
+	err = os.Chmod(f.Name(), 0755)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command(f.Name())
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.WithError(err).WithField("out", out).Error("cannot obtain details from the workspace disk")
+		log.WithError(err).WithField("out", out).Error("cannot run preStart script")
 	}
 
 	return nil
