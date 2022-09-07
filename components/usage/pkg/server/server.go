@@ -114,10 +114,8 @@ func Start(cfg Config) error {
 		}
 
 		usageClient := v1.NewUsageServiceClient(selfConnection)
-		ctrl, err := controller.New(schedule, controller.NewUsageAndBillingReconciler(
-			usageClient,
-			v1.NewBillingServiceClient(selfConnection),
-		))
+		billingClient := v1.NewBillingServiceClient(selfConnection)
+		ctrl, err := controller.New(schedule, controller.NewUsageAndBillingReconciler(usageClient, billingClient))
 		if err != nil {
 			return fmt.Errorf("failed to initialize usage controller: %w", err)
 		}
@@ -128,7 +126,7 @@ func Start(cfg Config) error {
 		}
 		defer ctrl.Stop()
 
-		ledgerCtrl, err := controller.New(schedule, controller.NewLedgerReconciler(usageClient))
+		ledgerCtrl, err := controller.New(schedule, controller.NewLedgerReconciler(usageClient, billingClient))
 		if err != nil {
 			return fmt.Errorf("failed to initialize ledger controller: %w", err)
 		}

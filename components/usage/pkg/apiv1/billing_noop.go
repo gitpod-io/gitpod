@@ -16,6 +16,11 @@ type BillingServiceNoop struct {
 }
 
 func (s *BillingServiceNoop) UpdateInvoices(_ context.Context, _ *v1.UpdateInvoicesRequest) (*v1.UpdateInvoicesResponse, error) {
-	log.Log.Infof("UpdateInvoices RPC invoked in no-op mode, no invoices will be updated.")
+	log.Infof("UpdateInvoices RPC invoked in no-op mode, no invoices will be updated.")
 	return &v1.UpdateInvoicesResponse{}, nil
+}
+
+func (s *BillingServiceNoop) ReconcileInvoices(_ context.Context, _ *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {
+	log.Infof("ReconcileInvoices RPC invoked in no-op mode, no invoices will be updated.")
+	return &v1.ReconcileInvoicesResponse{}, nil
 }
