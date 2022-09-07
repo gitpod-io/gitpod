@@ -23,6 +23,152 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+func TestUsageService_ListUsage(t *testing.T) {
+	ctx := context.Background()
+
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
+
+	type Expectation struct {
+		Code                 codes.Code
+		InstanceIds          []string
+		CreditBalanceAtStart float64
+		CreditBalanceAtEnd   float64
+	}
+
+	type Scenario struct {
+		name      string
+		Instances []db.Usage
+		Request   *v1.ListUsageRequest
+		Expect    Expectation
+	}
+
+	scenarios := []Scenario{
+		{
+			name:      "fails when From is after To",
+			Instances: nil,
+			Request: &v1.ListUsageRequest{
+				AttributionId: string(attributionID),
+				From:          timestamppb.New(time.Date(2022, 07, 1, 13, 0, 0, 0, time.UTC)),
+				To:            timestamppb.New(time.Date(2022, 07, 1, 12, 0, 0, 0, time.UTC)),
+			},
+			Expect: Expectation{
+				Code:        codes.InvalidArgument,
+				InstanceIds: nil,
+			},
+		},
+		{
+			name:      "fails when time range is greater than 300 days",
+			Instances: nil,
+			Request: &v1.ListUsageRequest{
+				AttributionId: string(attributionID),
+				From:          timestamppb.New(time.Date(2021, 7, 1, 13, 0, 0, 0, time.UTC)),
+				To:            timestamppb.New(time.Date(2022, 8, 1, 13, 0, 1, 0, time.UTC)),
+			},
+			Expect: Expectation{
+				Code:        codes.InvalidArgument,
+				InstanceIds: nil,
+			},
+		},
+		(func() Scenario {
+			start := time.Date(2022, 07, 1, 13, 0, 0, 0, time.UTC)
+			attrID := db.NewTeamAttributionID(uuid.New().String())
+			var instances []db.Usage
+			for i := 0; i < 4; i++ {
+				instance := dbtest.NewUsage(t, db.Usage{
+					AttributionID: attrID,
+					EffectiveTime: db.NewVarcharTime(start.Add(time.Duration(i) * 24 * time.Hour)),
+					CreditCents:   20,
+				})
+				instances = append(instances, instance)
+			}
+
+			return Scenario{
+				name:      "filters results to specified time range, ascending",
+				Instances: instances,
+				Request: &v1.ListUsageRequest{
+					AttributionId: string(attrID),
+					From:          timestamppb.New(start),
+					To:            timestamppb.New(start.Add(3 * 24 * time.Hour)),
+					Order:         v1.ListUsageRequest_ORDERING_ASCENDING,
+				},
+				Expect: Expectation{
+					Code:                 codes.OK,
+					InstanceIds:          []string{instances[0].ID.String(), instances[1].ID.String(), instances[2].ID.String()},
+					CreditBalanceAtStart: 0,
+					CreditBalanceAtEnd:   0.6,
+				},
+			}
+		})(),
+		(func() Scenario {
+			start := time.Date(2022, 07, 1, 13, 0, 0, 0, time.UTC)
+			attrID := db.NewTeamAttributionID(uuid.New().String())
+			var instances []db.Usage
+			for i := 0; i < 3; i++ {
+				instance := dbtest.NewUsage(t, db.Usage{
+					AttributionID: attrID,
+					EffectiveTime: db.NewVarcharTime(start.Add(time.Duration(i) * 24 * time.Hour)),
+					CreditCents:   60,
+				})
+				instances = append(instances, instance)
+			}
+
+			return Scenario{
+				name:      "filters results to specified time range, descending",
+				Instances: instances,
+				Request: &v1.ListUsageRequest{
+					AttributionId: string(attrID),
+					From:          timestamppb.New(start),
+					To:            timestamppb.New(start.Add(5 * 24 * time.Hour)),
+					Order:         v1.ListUsageRequest_ORDERING_DESCENDING,
+				},
+				Expect: Expectation{
+					Code:                 codes.OK,
+					InstanceIds:          []string{instances[2].ID.String(), instances[1].ID.String(), instances[0].ID.String()},
+					CreditBalanceAtStart: 0,
+					CreditBalanceAtEnd:   1.8,
+				},
+			}
+		})(),
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			dbconn := dbtest.ConnectForTests(t)
+			dbtest.CreateUsageRecords(t, dbconn, scenario.Instances...)
+
+			srv := baseserver.NewForTests(t,
+				baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+			)
+
+			generator := NewReportGenerator(dbconn, DefaultWorkspacePricer)
+			v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, generator, nil, DefaultWorkspacePricer))
+			baseserver.StartServerForTests(t, srv)
+
+			conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+			require.NoError(t, err)
+
+			client := v1.NewUsageServiceClient(conn)
+
+			resp, err := client.ListUsage(ctx, scenario.Request)
+			require.Equal(t, scenario.Expect.Code, status.Code(err), err)
+
+			if err != nil {
+				return
+			}
+
+			var instanceIds []string
+			for _, usageEntry := range resp.UsageEntries {
+				instanceIds = append(instanceIds, usageEntry.Id)
+			}
+
+			require.Equal(t, scenario.Expect.InstanceIds, instanceIds)
+
+			require.Equal(t, scenario.Expect.CreditBalanceAtStart, resp.CreditBalanceAtStart, "creditBalanceAtStart")
+			require.Equal(t, scenario.Expect.CreditBalanceAtEnd, resp.CreditBalanceAtEnd, "creditBalanceAtEnd")
+		})
+	}
+}
+
 func TestUsageService_ListBilledUsage(t *testing.T) {
 	ctx := context.Background()
 
@@ -55,11 +201,11 @@ func TestUsageService_ListBilledUsage(t *testing.T) {
 			},
 		},
 		{
-			name:      "fails when time range is greater than 31 days",
+			name:      "fails when time range is greater than 300 days",
 			Instances: nil,
 			Request: &v1.ListBilledUsageRequest{
 				AttributionId: string(attributionID),
-				From:          timestamppb.New(time.Date(2022, 7, 1, 13, 0, 0, 0, time.UTC)),
+				From:          timestamppb.New(time.Date(2021, 7, 1, 13, 0, 0, 0, time.UTC)),
 				To:            timestamppb.New(time.Date(2022, 8, 1, 13, 0, 1, 0, time.UTC)),
 			},
 			Expect: Expectation{

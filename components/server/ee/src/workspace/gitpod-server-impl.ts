@@ -2194,7 +2194,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const timestampTo = to ? Timestamp.fromDate(new Date(to)) : undefined;
 
         const usageClient = this.usageServiceClientProvider.getDefault();
-        const request = new usage_grpc.ListBilledUsageRequest();
+        const request = new usage_grpc.ListUsageRequest();
         request.setAttributionId(attributionId);
         request.setFrom(timestampFrom);
         if (to) {

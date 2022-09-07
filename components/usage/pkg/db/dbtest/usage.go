@@ -70,7 +70,9 @@ func CreateUsageRecords(t *testing.T, conn *gorm.DB, entries ...db.Usage) []db.U
 
 	require.NoError(t, db.InsertUsage(context.Background(), conn, entries...))
 	t.Cleanup(func() {
-		require.NoError(t, conn.Where(ids).Delete(&db.Usage{}).Error)
+		if len(ids) > 0 {
+			require.NoError(t, conn.Where(ids).Delete(&db.Usage{}).Error)
+		}
 	})
 
 	return records
