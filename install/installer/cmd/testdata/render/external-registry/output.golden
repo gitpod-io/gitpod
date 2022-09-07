@@ -117,6 +117,29 @@ spec:
     - Ingress
 
 ---
+# networking.k8s.io/v1/NetworkPolicy ide-service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-service
+  name: ide-service
+  namespace: default
+spec:
+  ingress:
+    - ports:
+        - port: 9001
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: ide-service
+  policyTypes:
+    - Ingress
+
+---
 # networking.k8s.io/v1/NetworkPolicy image-builder-mk3
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -771,6 +794,18 @@ metadata:
   name: ide-proxy
   namespace: default
 ---
+# v1/ServiceAccount ide-service
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-service
+  name: ide-service
+  namespace: default
+---
 # v1/ServiceAccount image-builder-mk3
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1386,6 +1421,9 @@ data:
           "ideMetrics": {
             "version": "test"
           },
+          "ideService": {
+            "version": "test"
+          },
           "imageBuilder": {
             "version": ""
           },
@@ -1941,6 +1979,85 @@ data:
         app: gitpod
         component: ide-metrics
       name: ide-metrics
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-service
+      name: ide-service
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-service
+      name: ide-service
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-service
+      name: default-ide-service-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-service
+      name: ide-service
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-service
+      name: ide-service
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-service
+        kind: service
+      name: ide-service
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-service
+      name: ide-service
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-service
+      name: ide-service
       namespace: default
     ---
     apiVersion: apps/v1
@@ -3845,6 +3962,29 @@ metadata:
   name: ide-metrics
   namespace: default
 ---
+# v1/ConfigMap ide-service
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:9001"
+          }
+        }
+      },
+      "ideConfigPath": "/ide-config/config.json"
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-service
+  name: ide-service
+  namespace: default
+---
 # v1/ConfigMap image-builder-mk3-config
 apiVersion: v1
 data:
@@ -4899,6 +5039,24 @@ subjects:
   name: ide-metrics
   namespace: default
 ---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ide-service-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-service
+  name: default-ide-service-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: ide-service
+  namespace: default
+---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-image-builder-mk3-proxy-kube-rbac-proxy
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -5113,6 +5271,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ide-metrics
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding ide-service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-service
+  name: ide-service
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ide-service
+subjects:
+- kind: ServiceAccount
+  name: ide-service
   namespace: default
 ---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding ws-manager
@@ -5440,6 +5616,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ide-proxy
+---
+# rbac.authorization.k8s.io/v1/RoleBinding ide-service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-service
+  name: ide-service
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:restricted-root-user
+subjects:
+- kind: ServiceAccount
+  name: ide-service
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding image-builder-mk3
 apiVersion: rbac.authorization.k8s.io/v1
@@ -5854,6 +6048,30 @@ spec:
   selector:
     app: gitpod
     component: ide-proxy
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+# v1/Service ide-service
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-service
+    kind: service
+  name: ide-service
+  namespace: default
+spec:
+  ports:
+  - name: grpc
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  selector:
+    app: gitpod
+    component: ide-service
   type: ClusterIP
 status:
   loadBalancer: {}
@@ -7881,6 +8099,130 @@ spec:
       restartPolicy: Always
       serviceAccountName: ide-proxy
       terminationGracePeriodSeconds: 30
+status: {}
+---
+# apps/v1/Deployment ide-service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-service
+  name: ide-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: ide-service
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: 96f0e9e2b0ef57685361631147d448545bddf8e1230493ac99530513b2fe7783
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-service
+      name: ide-service
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config
+        - /config/config.json
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        image: eu.gcr.io/gitpod-core-dev/build/ide-service:test
+        imagePullPolicy: IfNotPresent
+        name: ide-service
+        ports:
+        - containerPort: 9001
+          name: grpc
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 9501
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /config
+          name: config
+          readOnly: true
+        - mountPath: /ide-config
+          name: ide-config
+          readOnly: true
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      restartPolicy: Always
+      serviceAccountName: ide-service
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: ide-service
+        name: config
+      - configMap:
+          name: server-ide-config
+        name: ide-config
 status: {}
 ---
 # apps/v1/Deployment image-builder-mk3
