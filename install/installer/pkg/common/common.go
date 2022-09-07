@@ -28,6 +28,32 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// getProxyServerEnvvar get the proxy server envvars in both upper and lowercase form for maximum compatiblity
+func getProxyServerEnvvar(cfg *config.Config, envvarName string, key string) []corev1.EnvVar {
+	env := corev1.EnvVar{
+		Name: strings.ToUpper(envvarName),
+		ValueFrom: &corev1.EnvVarSource{
+			SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: cfg.HTTPProxy.Name,
+				},
+				Key:      key,
+				Optional: pointer.Bool(true),
+			},
+		},
+	}
+
+	return []corev1.EnvVar{
+		env,
+		func() corev1.EnvVar {
+			envLower := env.DeepCopy()
+			envLower.Name = strings.ToLower(envvarName)
+
+			return *envLower
+		}(),
+	}
+}
+
 func DefaultLabels(component string) map[string]string {
 	return map[string]string{
 		"app":       AppName,
@@ -42,25 +68,48 @@ func MergeEnv(envs ...[]corev1.EnvVar) (res []corev1.EnvVar) {
 	return
 }
 
+func ProxyEnv(cfg *config.Config) []corev1.EnvVar {
+	if cfg.HTTPProxy == nil {
+		return []corev1.EnvVar{}
+	}
+
+	// The hard-coded values are the gRPC service names and the licence server
+	noProxyValue := "ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)"
+
+	return MergeEnv(
+		getProxyServerEnvvar(cfg, "HTTP_PROXY", "httpProxy"),
+		getProxyServerEnvvar(cfg, "HTTPS_PROXY", "httpsProxy"),
+		getProxyServerEnvvar(cfg, "CUSTOM_NO_PROXY", "noProxy"),
+		[]corev1.EnvVar{
+			// This must come after the CUSTOM_NO_PROXY definition
+			{Name: "NO_PROXY", Value: noProxyValue},
+			{Name: "no_proxy", Value: noProxyValue},
+		},
+	)
+}
+
 func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 	logLevel := "info"
 	if cfg.Observability.LogLevel != "" {
 		logLevel = string(cfg.Observability.LogLevel)
 	}
 
-	return []corev1.EnvVar{
-		{Name: "GITPOD_DOMAIN", Value: cfg.Domain},
-		{Name: "GITPOD_INSTALLATION_SHORTNAME", Value: cfg.Metadata.InstallationShortname},
-		{Name: "GITPOD_REGION", Value: cfg.Metadata.Region},
-		{Name: "HOST_URL", Value: "https://" + cfg.Domain},
-		{Name: "KUBE_NAMESPACE", ValueFrom: &corev1.EnvVarSource{
-			FieldRef: &corev1.ObjectFieldSelector{
-				FieldPath: "metadata.namespace",
-			},
-		}},
-		{Name: "KUBE_DOMAIN", Value: "svc.cluster.local"},
-		{Name: "LOG_LEVEL", Value: strings.ToLower(logLevel)},
-	}
+	return MergeEnv(
+		[]corev1.EnvVar{
+			{Name: "GITPOD_DOMAIN", Value: cfg.Domain},
+			{Name: "GITPOD_INSTALLATION_SHORTNAME", Value: cfg.Metadata.InstallationShortname},
+			{Name: "GITPOD_REGION", Value: cfg.Metadata.Region},
+			{Name: "HOST_URL", Value: "https://" + cfg.Domain},
+			{Name: "KUBE_NAMESPACE", ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "metadata.namespace",
+				},
+			}},
+			{Name: "KUBE_DOMAIN", Value: "svc.cluster.local"},
+			{Name: "LOG_LEVEL", Value: strings.ToLower(logLevel)},
+		},
+		ProxyEnv(cfg),
+	)
 }
 
 func WorkspaceTracingEnv(context *RenderContext) (res []corev1.EnvVar) {
@@ -335,6 +384,7 @@ func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 		},
 		Env: MergeEnv(
 			DatabaseEnv(&ctx.Config),
+			ProxyEnv(&ctx.Config),
 		),
 	}
 }
@@ -353,6 +403,7 @@ func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 		},
 		Env: MergeEnv(
 			MessageBusEnv(&ctx.Config),
+			ProxyEnv(&ctx.Config),
 		),
 	}
 }
@@ -373,16 +424,19 @@ func KubeRBACProxyContainerWithConfig(ctx *RenderContext) *corev1.Container {
 		Ports: []corev1.ContainerPort{
 			{Name: baseserver.BuiltinMetricsPortName, ContainerPort: baseserver.BuiltinMetricsPort},
 		},
-		Env: []corev1.EnvVar{
-			{
-				Name: "IP",
-				ValueFrom: &corev1.EnvVarSource{
-					FieldRef: &corev1.ObjectFieldSelector{
-						FieldPath: "status.podIP",
+		Env: MergeEnv(
+			[]corev1.EnvVar{
+				{
+					Name: "IP",
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							FieldPath: "status.podIP",
+						},
 					},
 				},
 			},
-		},
+			ProxyEnv(&ctx.Config),
+		),
 		Resources: corev1.ResourceRequirements{Requests: corev1.ResourceList{
 			corev1.ResourceCPU:    resource.MustParse("1m"),
 			corev1.ResourceMemory: resource.MustParse("30Mi"),

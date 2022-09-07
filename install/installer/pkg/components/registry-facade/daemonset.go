@@ -307,6 +307,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 								common.NodeNameEnv(ctx),
+								common.ProxyEnv(&ctx.Config),
 							)),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Lifecycle: &corev1.Lifecycle{
