@@ -77,6 +77,13 @@ spec:
           - |
             CONNECTION="error"
 
+            export http_proxy="{{repl HTTPProxy }}"
+            export HTTP_PROXY="{{repl HTTPProxy }}"
+            export https_proxy="{{repl HTTPSProxy }}"
+            export HTTPS_PROXY="{{repl HTTPSProxy }}"
+            export no_proxy="{{repl NoProxy }}"
+            export NO_PROXY="{{repl NoProxy }}"
+
             if [ '{{repl HasLocalRegistry }}' = "true" ];
             then
               # Don't test for airgapped

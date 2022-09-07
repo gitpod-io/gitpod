@@ -76,6 +76,10 @@ yq e -i ".domain = \"${DOMAIN}\"" "${CONFIG_FILE}"
 yq e -i '.license.kind = "secret"' "${CONFIG_FILE}"
 yq e -i '.license.name = "gitpod-license"' "${CONFIG_FILE}"
 
+echo "Gitpod: Inject the HTTP_PROXY settings secret"
+yq e -i '.httpProxy.kind = "secret"' "${CONFIG_FILE}"
+yq e -i '.httpProxy.name = "http-proxy-settings"' "${CONFIG_FILE}"
+
 if [ "${OPEN_VSX_URL}" != "" ];
 then
     echo "Gitpod: Setting Open VSX Registry URL"
