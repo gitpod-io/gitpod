@@ -72,9 +72,8 @@ export class Installer {
             this.configureSSHGateway(slice);
             this.configurePublicAPIServer(slice);
             this.configureUsage(slice);
-            this.configureConfigCat(slice);
-
             this.configureDefaultTemplate(slice);
+            this.configureConfigCat(slice);
 
             if (this.options.analytics) {
                 this.includeAnalytics(slice);
@@ -247,10 +246,13 @@ EOF`);
 
     private configureConfigCat(slice: string) {
         // This key is not a secret, it is a unique identifier of our ConfigCat application
+        const configcatKey = "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw";
         exec(
-            `yq w -i ${this.options.installerConfigPath} experimental.webapp.configcatKey "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw"`,
+            `yq w -i ${this.options.installerConfigPath} experimental.webapp.configcatKey "${configcatKey}"`,
             { slice: slice },
         );
+        exec(`yq w -i ${this.options.installerConfigPath} 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' GITPOD_CONFIGCAT_SDK_KEY`);
+        exec(`yq w -i ${this.options.installerConfigPath} 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_CONFIGCAT_SDK_KEY).value' "${configcatKey}"`);
     }
 
     private includeAnalytics(slice: string): void {
