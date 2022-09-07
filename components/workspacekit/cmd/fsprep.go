@@ -70,6 +70,11 @@ var fsPrepCmd = &cobra.Command{
 			return xerrors.Errorf("cannot change to root directory after pivot root: %w", err)
 		}
 
+		err = preStart()
+		if err != nil {
+			log.WithError(err).Error("unexpected error running script")
+		}
+
 		err = unix.Exec("/.supervisor/supervisor", []string{"supervisor", "init"}, os.Environ())
 		if err != nil {
 			return xerrors.Errorf("cannot start supervisor: %w", err)
@@ -168,4 +173,42 @@ func bindMount(path, target string) {
 	if err := unix.Mount(path, location, "bind", unix.MS_BIND|unix.MS_REC, ""); err != nil {
 		log.WithError(err).WithField("path", location).Fatalf("cannot bind mount %v", path)
 	}
+}
+
+func preStart() error {
+	f, err := os.CreateTemp("", "prestart")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f.Name())
+
+	_, err = f.WriteString(`
+#!/bin/bash
+
+# needed so that the IDE can produce the /workspace/.vscode-remote directory
+mkdir -p /workspace
+chown gitpod:gitpod /workspace
+
+# create missing devices
+mknod /dev/fuse -m 0666 c 10 229
+
+mkdir -p /dev/net
+mknod /dev/net/tun c 10 200
+chmod 600 /dev/net/tun
+
+touch /dev/kmsg
+`)
+	if err != nil {
+		return err
+	}
+
+	f.Close()
+
+	cmd := exec.Command("bash", "-c", f.Name())
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.WithError(err).WithField("out", out).Error("cannot obtain details from the workspace disk")
+	}
+
+	return nil
 }
