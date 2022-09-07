@@ -71,12 +71,7 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import {
-    ListBilledUsageRequest,
-    ListBilledUsageResponse,
-    ListUsageRequest,
-    ListUsageResponse,
-} from "@gitpod/gitpod-protocol/lib/usage";
+import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import * as usage_grpc from "@gitpod/usage-api/lib/usage/v1/usage_pb";
 import {
     AssigneeIdentityIdentifier,
@@ -112,7 +107,7 @@ import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { CachingUsageServiceClientProvider, UsageService } from "@gitpod/usage-api/lib/usage/v1/sugar";
+import { CachingUsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
@@ -2186,7 +2181,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
         const { attributionId, from, to } = req;
         traceAPIParams(ctx, { attributionId });
-        const user = this.checkAndBlockUser("listBilledUsage");
+        const user = this.checkAndBlockUser("listUsage");
 
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
@@ -2234,63 +2229,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 : undefined,
             creditBalanceAtEnd: response.getCreditBalanceAtEnd(),
             creditBalanceAtStart: response.getCreditBalanceAtStart(),
-        };
-    }
-
-    async listBilledUsage(ctx: TraceContext, req: ListBilledUsageRequest): Promise<ListBilledUsageResponse> {
-        const { attributionId, fromDate, toDate, perPage, page } = req;
-        traceAPIParams(ctx, { attributionId });
-        let timestampFrom;
-        let timestampTo;
-        const user = this.checkAndBlockUser("listBilledUsage");
-
-        await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
-
-        if (fromDate) {
-            timestampFrom = Timestamp.fromDate(new Date(fromDate));
-        }
-        if (toDate) {
-            timestampTo = Timestamp.fromDate(new Date(toDate));
-        }
-        const usageClient = this.usageServiceClientProvider.getDefault();
-        const response = await usageClient.listBilledUsage(
-            ctx,
-            attributionId,
-            usage_grpc.ListBilledUsageRequest.Ordering.ORDERING_DESCENDING,
-            perPage,
-            page,
-            timestampFrom,
-            timestampTo,
-        );
-        const sessions = await Promise.all(
-            response
-                .getSessionsList()
-                .map((s) => UsageService.mapBilledSession(s))
-                .map(async (session) => {
-                    const ws = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(session.workspaceId);
-                    let profile: User.Profile | undefined = undefined;
-                    if (session.workspaceType === "regular" && session.userId) {
-                        // TODO add caching to void repeated loading of same profile details here
-                        const user = await this.userDB.findUserById(session.userId);
-                        if (user) {
-                            profile = User.getProfile(user);
-                        }
-                    }
-                    return {
-                        ...session,
-                        contextURL: ws?.contextURL,
-                        user: profile,
-                    };
-                }),
-        );
-        const pagination = response.getPagination();
-        return {
-            sessions,
-            totalSessions: pagination?.getTotal() || 0,
-            totalPages: pagination?.getTotalPages() || 0,
-            page: pagination?.getPage() || 0,
-            perPage: pagination?.getPerPage() || 0,
-            totalCreditsUsed: response.getTotalCreditsUsed(),
         };
     }
 

@@ -59,53 +59,6 @@ export namespace ReconcileUsageWithLedgerResponse {
     }
 }
 
-export class ListBilledUsageRequest extends jspb.Message {
-    getAttributionId(): string;
-    setAttributionId(value: string): ListBilledUsageRequest;
-
-    hasFrom(): boolean;
-    clearFrom(): void;
-    getFrom(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setFrom(value?: google_protobuf_timestamp_pb.Timestamp): ListBilledUsageRequest;
-
-    hasTo(): boolean;
-    clearTo(): void;
-    getTo(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setTo(value?: google_protobuf_timestamp_pb.Timestamp): ListBilledUsageRequest;
-    getOrder(): ListBilledUsageRequest.Ordering;
-    setOrder(value: ListBilledUsageRequest.Ordering): ListBilledUsageRequest;
-
-    hasPagination(): boolean;
-    clearPagination(): void;
-    getPagination(): PaginatedRequest | undefined;
-    setPagination(value?: PaginatedRequest): ListBilledUsageRequest;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): ListBilledUsageRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: ListBilledUsageRequest): ListBilledUsageRequest.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: ListBilledUsageRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): ListBilledUsageRequest;
-    static deserializeBinaryFromReader(message: ListBilledUsageRequest, reader: jspb.BinaryReader): ListBilledUsageRequest;
-}
-
-export namespace ListBilledUsageRequest {
-    export type AsObject = {
-        attributionId: string,
-        from?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-        to?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-        order: ListBilledUsageRequest.Ordering,
-        pagination?: PaginatedRequest.AsObject,
-    }
-
-    export enum Ordering {
-    ORDERING_DESCENDING = 0,
-    ORDERING_ASCENDING = 1,
-    }
-
-}
-
 export class PaginatedRequest extends jspb.Message {
     getPerPage(): number;
     setPerPage(value: number): PaginatedRequest;
@@ -126,37 +79,6 @@ export namespace PaginatedRequest {
     export type AsObject = {
         perPage: number,
         page: number,
-    }
-}
-
-export class ListBilledUsageResponse extends jspb.Message {
-    clearSessionsList(): void;
-    getSessionsList(): Array<BilledSession>;
-    setSessionsList(value: Array<BilledSession>): ListBilledUsageResponse;
-    addSessions(value?: BilledSession, index?: number): BilledSession;
-    getTotalCreditsUsed(): number;
-    setTotalCreditsUsed(value: number): ListBilledUsageResponse;
-
-    hasPagination(): boolean;
-    clearPagination(): void;
-    getPagination(): PaginatedResponse | undefined;
-    setPagination(value?: PaginatedResponse): ListBilledUsageResponse;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): ListBilledUsageResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: ListBilledUsageResponse): ListBilledUsageResponse.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: ListBilledUsageResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): ListBilledUsageResponse;
-    static deserializeBinaryFromReader(message: ListBilledUsageResponse, reader: jspb.BinaryReader): ListBilledUsageResponse;
-}
-
-export namespace ListBilledUsageResponse {
-    export type AsObject = {
-        sessionsList: Array<BilledSession.AsObject>,
-        totalCreditsUsed: number,
-        pagination?: PaginatedResponse.AsObject,
     }
 }
 

@@ -33,28 +33,6 @@ function deserialize_usage_v1_GetCostCenterResponse(buffer_arg) {
   return usage_v1_usage_pb.GetCostCenterResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_usage_v1_ListBilledUsageRequest(arg) {
-  if (!(arg instanceof usage_v1_usage_pb.ListBilledUsageRequest)) {
-    throw new Error('Expected argument of type usage.v1.ListBilledUsageRequest');
-  }
-  return Buffer.from(arg.serializeBinary());
-}
-
-function deserialize_usage_v1_ListBilledUsageRequest(buffer_arg) {
-  return usage_v1_usage_pb.ListBilledUsageRequest.deserializeBinary(new Uint8Array(buffer_arg));
-}
-
-function serialize_usage_v1_ListBilledUsageResponse(arg) {
-  if (!(arg instanceof usage_v1_usage_pb.ListBilledUsageResponse)) {
-    throw new Error('Expected argument of type usage.v1.ListBilledUsageResponse');
-  }
-  return Buffer.from(arg.serializeBinary());
-}
-
-function deserialize_usage_v1_ListBilledUsageResponse(buffer_arg) {
-  return usage_v1_usage_pb.ListBilledUsageResponse.deserializeBinary(new Uint8Array(buffer_arg));
-}
-
 function serialize_usage_v1_ListUsageRequest(arg) {
   if (!(arg instanceof usage_v1_usage_pb.ListUsageRequest)) {
     throw new Error('Expected argument of type usage.v1.ListUsageRequest');
@@ -123,18 +101,6 @@ function deserialize_usage_v1_ReconcileUsageWithLedgerResponse(buffer_arg) {
 
 
 var UsageServiceService = exports.UsageServiceService = {
-  // ListBilledUsage retrieves all usage for the specified attributionId
-listBilledUsage: {
-    path: '/usage.v1.UsageService/ListBilledUsage',
-    requestStream: false,
-    responseStream: false,
-    requestType: usage_v1_usage_pb.ListBilledUsageRequest,
-    responseType: usage_v1_usage_pb.ListBilledUsageResponse,
-    requestSerialize: serialize_usage_v1_ListBilledUsageRequest,
-    requestDeserialize: deserialize_usage_v1_ListBilledUsageRequest,
-    responseSerialize: serialize_usage_v1_ListBilledUsageResponse,
-    responseDeserialize: deserialize_usage_v1_ListBilledUsageResponse,
-  },
   // ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
 reconcileUsage: {
     path: '/usage.v1.UsageService/ReconcileUsage',
