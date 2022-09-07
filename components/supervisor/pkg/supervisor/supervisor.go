@@ -1565,8 +1565,8 @@ func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, 
 		})
 	}
 
-	cpuAnalyzer := &PerfAnalyzer{label: "cpu", defs: []int{1, 2, 3, 4, 5, 6}}
-	memoryAnalyzer := &PerfAnalyzer{label: "memory", defs: []int{1, 2, 4, 8, 16}}
+	cpuAnalyzer := &PerfAnalyzer{label: "cpu", defs: []int{0, 1, 2, 3, 4, 5, 6}}
+	memoryAnalyzer := &PerfAnalyzer{label: "memory", defs: []int{0, 1, 2, 4, 8, 16}}
 	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
