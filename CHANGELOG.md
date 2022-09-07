@@ -1,6 +1,8 @@
 # Change Log
 
 ## September 2022
+- Reword "Spending Limit" to "Usage Limit" ([#12669](https://github.com/gitpod-io/gitpod/pull/12669)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [local-preview] set low memory & cpu requirements ([#12657](https://github.com/gitpod-io/gitpod/pull/12657)) - [@Pothulapati](https://github.com/Pothulapati)
 - NONOE ([#12648](https://github.com/gitpod-io/gitpod/pull/12648)) - [@akosyakov](https://github.com/akosyakov)
 - JetBrains: Provide workspace class info in Backend Control Center ([#12568](https://github.com/gitpod-io/gitpod/pull/12568)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - Fixed JetBrains connection loop when connecting twice to the same workspace ([#12232](https://github.com/gitpod-io/gitpod/pull/12232)) - [@]()
