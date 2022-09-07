@@ -23,8 +23,8 @@ import (
 
 // TestBackup tests a basic start/modify/restart cycle
 func TestBackup(t *testing.T) {
-	testRepo := "https://github.com/gitpod-io/template-golang-cli"
-	testRepoName := "template-golang-cli"
+	testRepo := "https://github.com/gitpod-io/empty"
+	testRepoName := "empty"
 	wsLoc := fmt.Sprintf("/workspace/%s", testRepoName)
 	f := features.New("backup").
 		WithLabel("component", "ws-manager").
@@ -39,13 +39,13 @@ func TestBackup(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
-
 			for _, test := range tests {
 				t.Run(test.Name+"_backup", func(t *testing.T) {
+					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+					t.Cleanup(func() {
+						api.Done(t)
+					})
+
 					ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 						w.Spec.FeatureFlags = test.FF
 						w.Spec.Initializer = &csapi.WorkspaceInitializer{
@@ -125,12 +125,12 @@ func TestBackup(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					t.Cleanup(func() {
+					defer func() {
 						err = stopWs2(true)
 						if err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
-					})
+					}()
 
 					rsa, closer, err = integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
 						integration.WithInstanceID(ws2.Req.Id),
@@ -172,8 +172,8 @@ func TestBackup(t *testing.T) {
 
 // TestExistingWorkspaceEnablePVC tests enable PVC feature flag on the existing workspace
 func TestExistingWorkspaceEnablePVC(t *testing.T) {
-	testRepo := "https://github.com/gitpod-io/template-golang-cli"
-	testRepoName := "template-golang-cli"
+	testRepo := "https://github.com/gitpod-io/empty"
+	testRepoName := "empty"
 	wsLoc := fmt.Sprintf("/workspace/%s", testRepoName)
 	f := features.New("backup").
 		WithLabel("component", "ws-manager").

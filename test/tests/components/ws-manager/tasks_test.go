@@ -22,8 +22,8 @@ import (
 )
 
 func TestRegularWorkspaceTasks(t *testing.T) {
-	testRepo := "https://github.com/gitpod-io/template-golang-cli"
-	testRepoName := "template-golang-cli"
+	testRepo := "https://github.com/gitpod-io/empty"
+	testRepoName := "empty"
 	wsLoc := fmt.Sprintf("/workspace/%s", testRepoName)
 	tests := []struct {
 		Name        string

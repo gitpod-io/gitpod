@@ -6,6 +6,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -192,7 +193,7 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 	}
 
 	stopWs := func(waitForStop bool) error {
-		tctx, tcancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		tctx, tcancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer tcancel()
 
 		for {
@@ -645,6 +646,7 @@ func resolveOrBuildImage(ctx context.Context, api *ComponentAPI, baseRef string)
 func DeleteWorkspace(ctx context.Context, api *ComponentAPI, instanceID string) error {
 	wm, err := api.WorkspaceManager()
 	if err != nil {
+		fmt.Println("Failed to get wsmnger")
 		return err
 	}
 
