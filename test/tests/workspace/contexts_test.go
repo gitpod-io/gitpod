@@ -119,11 +119,6 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
-
 			ffs := []struct {
 				Name string
 				FF   string
@@ -135,6 +130,11 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 			for _, ff := range ffs {
 				for _, test := range tests {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
+						api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						t.Cleanup(func() {
+							api.Done(t)
+						})
+
 						if test.Skip {
 							t.SkipNow()
 						}

@@ -32,19 +32,18 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 				req.Type = wsmanapi.WorkspaceType_PREBUILD
 				req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
 					Name:  "GITPOD_TASKS",
-					Value: `[{ "init": "echo \"some output\" > someFile; sleep 20; exit 0;" }]`,
+					Value: `[{ "init": "echo \"some output\" > someFile; sleep 5; exit 0;" }]`,
 				})
 				return nil
 			}))
 			if err != nil {
 				t.Fatalf("cannot launch a workspace: %q", err)
 			}
-			t.Cleanup(func() {
-				err = stopWs(true)
-				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
-				}
-			})
+
+			err = stopWs(true)
+			if err != nil {
+				t.Errorf("cannot stop workspace: %q", err)
+			}
 
 			return ctx
 		}).
