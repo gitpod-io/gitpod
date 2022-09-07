@@ -264,8 +264,12 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 		if err != nil {
 			return nil, nil, err
 		}
+		layerReady, err := workspaceReadyLayerPVC(csapi.WorkspaceInitFromBackup)
+		if err != nil {
+			return nil, nil, err
+		}
 
-		l = []Layer{*layer}
+		l = []Layer{*layer, *layerReady}
 		return l, manifest, nil
 	}
 
@@ -274,8 +278,12 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 		if err != nil {
 			return nil, nil, err
 		}
+		layerReady, err := workspaceReadyLayerPVC(csapi.WorkspaceInitFromBackup)
+		if err != nil {
+			return nil, nil, err
+		}
 
-		l = []Layer{*layer}
+		l = []Layer{*layer, *layerReady}
 		return l, manifest, nil
 	}
 
@@ -287,8 +295,12 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 			if err != nil {
 				return nil, nil, err
 			}
+			layerReady, err := workspaceReadyLayerPVC(csapi.WorkspaceInitFromBackup)
+			if err != nil {
+				return nil, nil, err
+			}
 
-			l = []Layer{*layer}
+			l = []Layer{*layer, *layerReady}
 			return l, manifest, nil
 		}
 		return s.getSnapshotContentLayer(ctx, gis)
@@ -299,8 +311,13 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 			if err != nil {
 				return nil, nil, err
 			}
+			layerReady, err := workspaceReadyLayerPVC(csapi.WorkspaceInitFromPrebuild)
+			if err != nil {
+				return nil, nil, err
+			}
 
-			l = []Layer{*layer}
+			l = []Layer{*layer, *layerReady}
+
 			return l, manifest, nil
 		}
 		l, manifest, err = s.getPrebuildContentLayer(ctx, pis, true)
@@ -341,7 +358,11 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 		if err != nil {
 			return nil, nil, err
 		}
-		return []Layer{*layer}, nil, nil
+		layerReady, err := workspaceReadyLayerPVC(csapi.WorkspaceInitFromOther)
+		if err != nil {
+			return nil, nil, err
+		}
+		return []Layer{*layer, *layerReady}, nil, nil
 	}
 	if initializer.GetBackup() != nil {
 		// We were asked to restore a backup and have tried above. We've failed to restore the backup,
@@ -508,6 +529,8 @@ git log --pretty=%H -n 1 > /.workspace/prestophookdata/git_log_2.txt
 cp /workspace/.gitpod/prebuild-log* /.workspace/prestophookdata/
 `
 
+var pvcEnabledFile = `PVC`
+
 // version of this function for persistent volume claim feature
 // we cannot use /workspace folder as when mounting /workspace folder through PVC
 // it will mask anything that was in container layer, hence we are using /.workspace instead here
@@ -515,12 +538,29 @@ func contentDescriptorToLayerPVC(cdesc []byte) (*Layer, error) {
 	layers := []fileInLayer{
 		{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
 		{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		{&tar.Header{Typeflag: tar.TypeReg, Name: "/.workspace/.gitpod/pvc", Uid: 0, Gid: 0, Mode: 0775, Size: int64(len(pvcEnabledFile))}, []byte(pvcEnabledFile)},
 		{&tar.Header{Typeflag: tar.TypeReg, Name: "/.supervisor/prestophook.sh", Uid: 0, Gid: 0, Mode: 0775, Size: int64(len(prestophookScript))}, []byte(prestophookScript)},
 	}
 	if len(cdesc) > 0 {
 		layers = append(layers, fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/.workspace/.gitpod/content.json", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(cdesc))}, cdesc})
 	}
 	return layerFromContent(layers...)
+}
+
+func workspaceReadyLayerPVC(src csapi.WorkspaceInitSource) (*Layer, error) {
+	msg := csapi.WorkspaceReadyMessage{
+		Source: src,
+	}
+	ctnt, err := json.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return layerFromContent(
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
+		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/.workspace/.gitpod/ready", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(ctnt))}, []byte(ctnt)},
+	)
 }
 
 func workspaceReadyLayer(src csapi.WorkspaceInitSource) (*Layer, error) {
