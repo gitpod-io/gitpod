@@ -72,14 +72,16 @@ func (r *UsageAndBillingReconciler) Reconcile() (err error) {
 	return nil
 }
 
-func NewLedgerReconciler(usageClient v1.UsageServiceClient) *LedgerReconciler {
+func NewLedgerReconciler(usageClient v1.UsageServiceClient, billingClient v1.BillingServiceClient) *LedgerReconciler {
 	return &LedgerReconciler{
-		usageClient: usageClient,
+		usageClient:   usageClient,
+		billingClient: billingClient,
 	}
 }
 
 type LedgerReconciler struct {
-	usageClient v1.UsageServiceClient
+	usageClient   v1.UsageServiceClient
+	billingClient v1.BillingServiceClient
 }
 
 func (r *LedgerReconciler) Reconcile() error {
@@ -100,6 +102,13 @@ func (r *LedgerReconciler) Reconcile() error {
 	if err != nil {
 		logger.WithError(err).Errorf("Failed to reconcile usage with ledger.")
 		return fmt.Errorf("failed to reconcile usage with ledger: %w", err)
+	}
+
+	logger.Info("Starting invoice reconciliation.")
+	_, err = r.billingClient.ReconcileInvoices(ctx, &v1.ReconcileInvoicesRequest{})
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to reconcile invoices.")
+		return fmt.Errorf("failed to reconcile invoices: %w", err)
 	}
 
 	return nil
