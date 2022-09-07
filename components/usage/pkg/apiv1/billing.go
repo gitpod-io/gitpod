@@ -6,6 +6,7 @@ package apiv1
 
 import (
 	"context"
+	"fmt"
 
 	"math"
 	"time"
@@ -19,7 +20,6 @@ import (
 	stripesdk "github.com/stripe/stripe-go/v72"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
@@ -80,13 +80,6 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		return nil, status.Errorf(codes.NotFound, "Failed to get invoice with ID %s: %s", in.GetInvoiceId(), err.Error())
 	}
 
-	reportID, found := invoice.Metadata[stripe.ReportIDMetadataKey]
-	if !found {
-		logger.Error("Failed to find report ID metadata on invoice from Stripe.")
-		return nil, status.Errorf(codes.NotFound, "Invoice %s does not contain reportID", in.GetInvoiceId())
-	}
-	logger = logger.WithField("report_id", reportID)
-
 	subscription := invoice.Subscription
 	if subscription == nil {
 		logger.Error("No subscription information available for invoice.")
@@ -100,34 +93,44 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 	}
 	logger = logger.WithField("team_id", teamID)
 
-	attributionID := db.NewTeamAttributionID(teamID)
-
 	// To support individual `user`s, we'll need to also extract the `userId` from metadata here and handle separately.
+	attributionID := db.NewTeamAttributionID(teamID)
+	finalizedAt := time.Unix(invoice.StatusTransitions.FinalizedAt, 0)
 
-	report, err := s.contentService.DownloadUsageReport(ctx, reportID)
+	logger = logger.
+		WithField("attribution_id", attributionID).
+		WithField("invoice_finalized_at", finalizedAt)
+
+	if invoice.Lines == nil || len(invoice.Lines.Data) == 0 {
+		logger.Errorf("Invoice %s did not contain any lines  so we cannot extract quantity to reflect it in usage.", invoice.ID)
+		return nil, status.Errorf(codes.Internal, "Invoice did not contain any lines.")
+	}
+
+	lines := invoice.Lines.Data
+	if len(lines) != 1 {
+		logger.Error("Invoice did not contain exactly 1 line item, we cannot extract quantity to reflect in usage.")
+		return nil, status.Errorf(codes.Internal, "Invoice did not contain exactly one line item.")
+	}
+
+	creditsOnInvoice := lines[0].Quantity
+
+	usage := db.Usage{
+		ID:            uuid.New(),
+		AttributionID: attributionID,
+		Description:   fmt.Sprintf("Invoice %s finalized in Stripe", invoice.ID),
+		CreditCents:   db.NewCreditCents(float64(creditsOnInvoice)),
+		EffectiveTime: db.NewVarcharTime(finalizedAt),
+		Kind:          db.InvoiceUsageKind,
+		Draft:         false,
+		Metadata:      nil,
+	}
+	err = db.InsertUsage(ctx, s.conn, usage)
 	if err != nil {
-		logger.WithError(err).Error("Failed to retrieve usage report from content service.")
-		return nil, status.Errorf(codes.Internal, "Failed to download usage report.")
+		logger.WithError(err).Errorf("Failed to insert Invoice usage record into the db.")
+		return nil, status.Errorf(codes.Internal, "Failed to insert Invoice into usage records.")
 	}
 
-	invoicedSessions := report.GetUsageRecordsForAttributionID(attributionID)
-	var errors []error
-	for _, session := range invoicedSessions {
-		_, err := s.SetBilledSession(ctx, &v1.SetBilledSessionRequest{
-			InstanceId: session.InstanceID.String(),
-			From:       timestamppb.New(session.StartedAt),
-			System:     v1.System_SYSTEM_STRIPE,
-		})
-		if err != nil {
-			logger.WithField("workspace_ignstance_id", session.InstanceID).WithError(err).Error("Failed to mark session as billed by Stripe.")
-			errors = append(errors, err)
-		}
-	}
-
-	if len(errors) != 0 {
-		logger.Errorf("Failed to mark %d sessions as billed. You have to update them manually!", len(errors))
-		return nil, status.Errorf(codes.Internal, "Failed to mark %d sessions as billed by stripe.", len(errors))
-	}
+	logger.WithField("usage_id", usage.ID).Infof("Inserted usage record into database for %d credits against %s attribution", creditsOnInvoice, attributionID)
 
 	return &v1.FinalizeInvoiceResponse{}, nil
 }
