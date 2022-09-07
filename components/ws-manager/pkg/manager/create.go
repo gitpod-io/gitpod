@@ -58,6 +58,13 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 	var templates config.WorkspacePodTemplateConfiguration
 	if startContext.Class != nil {
 		templates = startContext.Class.Templates
+
+		if startContext.Class.Runtime.Kind == config.RuntimeConfigurationKindKata {
+			startContext.Request.Spec.FeatureFlags = append(
+				startContext.Request.Spec.FeatureFlags,
+				api.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM,
+			)
+		}
 	}
 
 	podTemplate, err := config.GetWorkspacePodTemplate(templates.DefaultPath)

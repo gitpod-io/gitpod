@@ -70,7 +70,7 @@ var fsPrepCmd = &cobra.Command{
 			return xerrors.Errorf("cannot change to root directory after pivot root: %w", err)
 		}
 
-		err = unix.Exec("/.supervisor/supervisor", []string{"init"}, os.Environ())
+		err = unix.Exec("/.supervisor/supervisor", []string{"supervisor", "init"}, os.Environ())
 		if err != nil {
 			return xerrors.Errorf("cannot start supervisor: %w", err)
 		}

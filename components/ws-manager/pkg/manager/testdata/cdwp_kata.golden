@@ -8,6 +8,7 @@
                 "app": "gitpod",
                 "component": "workspace",
                 "gitpod.io/networkpolicy": "default",
+                "gitpod.io/pvcFeature": "true",
                 "gitpod.io/workspaceClass": "gitpodio-internal-foobar",
                 "gpwsman": "true",
                 "headless": "false",
@@ -39,9 +40,8 @@
             "volumes": [
                 {
                     "name": "vol-this-workspace",
-                    "hostPath": {
-                        "path": "/tmp/workspaces/test",
-                        "type": "DirectoryOrCreate"
+                    "persistentVolumeClaim": {
+                        "claimName": "ws-test"
                     }
                 },
                 {
@@ -159,11 +159,10 @@
                             "cpu": "900m"
                         }
                     },
-                    "volumeMounts": [
+                    "volumeDevices": [
                         {
                             "name": "vol-this-workspace",
-                            "mountPath": "/workspace",
-                            "mountPropagation": "HostToContainer"
+                            "devicePath": "/dev/workspace"
                         }
                     ],
                     "readinessProbe": {
