@@ -829,6 +829,14 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 
+		rlimit := syscall.Rlimit{
+			Cur: 0,
+			Max: 0,
+		}
+		if err := syscall.Setrlimit(syscall.RLIMIT_CORE, &rlimit); err != nil {
+			log.WithError(err).Error("cannot disable core dumps")
+		}
+
 		// Now that we're in our new root filesystem, including proc and all, we can load
 		// our seccomp filter, and tell our parent about it.
 		scmpFd, err := seccomp.LoadFilter()
