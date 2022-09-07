@@ -5,7 +5,7 @@
 FROM moby/buildkit:v0.10.4
 
 USER root
-RUN apk --no-cache add sudo bash \
+RUN apk --no-cache add sudo bash util-linux-misc blkid e2fsprogs \
     && addgroup -g 33333 gitpod \
     && adduser -D -h /home/gitpod -s /bin/sh -u 33333 -G gitpod gitpod \
     && echo "gitpod ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/gitpod \

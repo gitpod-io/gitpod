@@ -94,7 +94,7 @@ var (
 
 func prepareWorkspaceDevice(device string) error {
 	var stderr bytes.Buffer
-	cmd := exec.Command("mkfs", "-m1", "-t", "ext4", device)
+	cmd := exec.Command("mkfs.ext4", "-m1", device)
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		log.WithError(err).WithField("reason", stderr.String()).Error("cannot mount workspace disk")
