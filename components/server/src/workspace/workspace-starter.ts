@@ -1591,6 +1591,7 @@ export class WorkspaceStarter {
             "function:getSSHPublicKeys",
             "function:addSSHPublicKey",
             "function:deleteSSHPublicKey",
+            "function:getTeams",
             "function:trackEvent",
             "function:getSupportedWorkspaceClasses",
 
