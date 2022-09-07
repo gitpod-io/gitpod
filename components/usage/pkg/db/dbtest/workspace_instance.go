@@ -5,6 +5,7 @@
 package dbtest
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -23,7 +24,7 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 	t.Helper()
 
 	id := uuid.New()
-	if instance.ID.ID() != 0 { // empty value
+	if instance.ID != uuid.Nil {
 		id = instance.ID
 	}
 
@@ -119,4 +120,33 @@ func CreateWorkspaceInstances(t *testing.T, conn *gorm.DB, instances ...db.Works
 	})
 
 	return records
+}
+
+// ListWorkspaceInstancesInRange filters out instances by workspaceID to make tests robust and work only on their own data
+func ListWorkspaceInstancesInRange(t *testing.T, conn *gorm.DB, from, to time.Time, workspaceID string) []db.WorkspaceInstanceForUsage {
+	all, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, from, to)
+	require.NoError(t, err)
+	return filterByWorkspaceId(all, workspaceID)
+}
+
+func FindStoppedWorkspaceInstancesInRange(t *testing.T, conn *gorm.DB, from, to time.Time, workspaceID string) []db.WorkspaceInstanceForUsage {
+	all, err := db.FindStoppedWorkspaceInstancesInRange(context.Background(), conn, from, to)
+	require.NoError(t, err)
+	return filterByWorkspaceId(all, workspaceID)
+}
+
+func FindRunningWorkspaceInstances(t *testing.T, conn *gorm.DB, workspaceID string) []db.WorkspaceInstanceForUsage {
+	all, err := db.FindRunningWorkspaceInstances(context.Background(), conn)
+	require.NoError(t, err)
+	return filterByWorkspaceId(all, workspaceID)
+}
+
+func filterByWorkspaceId(all []db.WorkspaceInstanceForUsage, workspaceID string) []db.WorkspaceInstanceForUsage {
+	result := []db.WorkspaceInstanceForUsage{}
+	for _, candidate := range all {
+		if candidate.WorkspaceID == workspaceID {
+			result = append(result, candidate)
+		}
+	}
+	return result
 }

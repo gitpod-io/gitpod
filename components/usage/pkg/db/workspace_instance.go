@@ -152,15 +152,20 @@ func queryWorkspaceInstanceForUsage(ctx context.Context, conn *gorm.DB) *gorm.DB
 		Table(fmt.Sprintf("%s as wsi", (&WorkspaceInstance{}).TableName())).
 		Select("wsi.id as id, "+
 			"ws.projectId as projectId, "+
+			"ws.contextUrl as contextUrl, "+
 			"ws.type as workspaceType, "+
 			"wsi.workspaceClass as workspaceClass, "+
 			"wsi.usageAttributionId as usageAttributionId, "+
 			"wsi.startedTime as startedTime, "+
 			"wsi.stoppingTime as stoppingTime, "+
 			"ws.ownerId as ownerId, "+
-			"ws.id as workspaceId",
+			"wsi.workspaceId as workspaceId, "+
+			"ws.ownerId as userId, "+
+			"u.name as userName, "+
+			"u.avatarURL as userAvatarURL ",
 		).
 		Joins(fmt.Sprintf("LEFT JOIN %s AS ws ON wsi.workspaceId = ws.id", (&Workspace{}).TableName())).
+		Joins(fmt.Sprintf("LEFT JOIN %s AS u ON ws.ownerId = u.id", "d_b_user")).
 		// Instances without a StartedTime never actually started, we're not interested in these.
 		Where("wsi.startedTime != ?", "")
 }
@@ -223,6 +228,10 @@ type WorkspaceInstanceForUsage struct {
 	WorkspaceClass     string         `gorm:"column:workspaceClass;type:varchar;size:255;" json:"workspaceClass"`
 	Type               WorkspaceType  `gorm:"column:workspaceType;type:char;size:16;default:regular;" json:"workspaceType"`
 	UsageAttributionID AttributionID  `gorm:"column:usageAttributionId;type:varchar;size:60;" json:"usageAttributionId"`
+	ContextURL         string         `gorm:"column:contextUrl;type:varchar;size:255;" json:"contextUrl"`
+	UserID             uuid.UUID      `gorm:"column:userId;type:varchar;size:255;" json:"userId"`
+	UserName           string         `gorm:"column:userName;type:varchar;size:255;" json:"userName"`
+	UserAvatarURL      string         `gorm:"column:userAvatarURL;type:varchar;size:255;" json:"userAvatarURL"`
 
 	StartedTime  VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
 	StoppingTime VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`

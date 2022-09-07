@@ -92,8 +92,7 @@ func TestFindStoppedWorkspaceInstancesInRange(t *testing.T) {
 
 	dbtest.CreateWorkspaceInstances(t, conn, all...)
 
-	retrieved, err := db.FindStoppedWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
-	require.NoError(t, err)
+	retrieved := dbtest.FindStoppedWorkspaceInstancesInRange(t, conn, startOfMay, startOfJune, workspace.ID)
 
 	require.Len(t, retrieved, len(valid))
 }
@@ -103,15 +102,18 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 	t.Run("no project results in empty string", func(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 
-		workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{}))[0]
+		user := dbtest.CreatUser(t, conn, dbtest.User{})[0]
+		workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{
+			ContextURL: "my-context-URL",
+			OwnerID:    user.ID,
+		}))[0]
 		instance := dbtest.CreateWorkspaceInstances(t, conn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			WorkspaceID:  workspace.ID,
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}))[0]
 
-		retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
-		require.NoError(t, err)
+		retrieved := dbtest.ListWorkspaceInstancesInRange(t, conn, startOfMay, startOfJune, workspace.ID)
 
 		require.Len(t, retrieved, 1)
 		require.Equal(t, db.WorkspaceInstanceForUsage{
@@ -122,6 +124,10 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 			WorkspaceClass:     instance.WorkspaceClass,
 			Type:               workspace.Type,
 			UsageAttributionID: instance.UsageAttributionID,
+			ContextURL:         workspace.ContextURL,
+			UserID:             user.ID,
+			UserName:           user.Name,
+			UserAvatarURL:      user.AvatarURL,
 			StartedTime:        instance.StartedTime,
 			StoppingTime:       instance.StoppingTime,
 		}, retrieved[0])
@@ -130,7 +136,10 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 	t.Run("with project", func(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 
+		user := dbtest.CreatUser(t, conn, dbtest.User{})[0]
 		workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{
+			ContextURL: "my-context-URL",
+			OwnerID:    user.ID,
 			ProjectID: sql.NullString{
 				String: uuid.New().String(),
 				Valid:  true,
@@ -142,8 +151,7 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}))[0]
 
-		retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
-		require.NoError(t, err)
+		retrieved := dbtest.ListWorkspaceInstancesInRange(t, conn, startOfMay, startOfJune, workspace.ID)
 
 		require.Len(t, retrieved, 1)
 		require.Equal(t, db.WorkspaceInstanceForUsage{
@@ -157,6 +165,10 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 			WorkspaceClass:     instance.WorkspaceClass,
 			Type:               workspace.Type,
 			UsageAttributionID: instance.UsageAttributionID,
+			ContextURL:         workspace.ContextURL,
+			UserID:             user.ID,
+			UserName:           user.Name,
+			UserAvatarURL:      user.AvatarURL,
 			StartedTime:        instance.StartedTime,
 			StoppingTime:       instance.StoppingTime,
 		}, retrieved[0])
@@ -181,8 +193,7 @@ func TestListWorkspaceInstancesInRange_InBatches(t *testing.T) {
 
 	dbtest.CreateWorkspaceInstances(t, conn, instances...)
 
-	results, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
-	require.NoError(t, err)
+	results := dbtest.ListWorkspaceInstancesInRange(t, conn, startOfMay, startOfJune, workspaceID)
 	require.Len(t, results, len(instances))
 }
 
@@ -277,13 +288,7 @@ func TestListWorkspaceInstancesInRange(t *testing.T) {
 
 	dbtest.CreateWorkspaceInstances(t, conn, all...)
 
-	retrieved, err := db.ListWorkspaceInstancesInRange(context.Background(), conn, startOfMay, startOfJune)
-	require.NoError(t, err)
-
-	ids := []uuid.UUID{}
-	for _, ws := range retrieved {
-		ids = append(ids, ws.ID)
-	}
+	retrieved := dbtest.ListWorkspaceInstancesInRange(t, conn, startOfMay, startOfJune, workspace.ID)
 
 	require.Len(t, retrieved, len(valid))
 }
@@ -315,8 +320,7 @@ func TestFindRunningWorkspace(t *testing.T) {
 
 	dbtest.CreateWorkspaceInstances(t, conn, all...)
 
-	retrieved, err := db.FindRunningWorkspaceInstances(context.Background(), conn)
-	require.NoError(t, err)
+	retrieved := dbtest.FindRunningWorkspaceInstances(t, conn, workspace.ID)
 
 	require.Equal(t, 2, len(retrieved))
 	for _, ws := range retrieved {

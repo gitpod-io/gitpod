@@ -117,6 +117,7 @@ export interface WorkspaceInstanceUsageData {
     contextURL: string;
     startTime: string;
     endTime?: string;
+    userId: string;
     userName: string;
     userAvatarURL: string;
 }
