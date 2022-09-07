@@ -143,8 +143,8 @@ func (rtc RuntimeConfiguration) Validate() error {
 type RuntimeConfigurationKind string
 
 const (
-	RuntimeConfigurationKindWorkspacekit = "workspacekit"
-	RuntimeConfigurationKindKata         = "kata"
+	RuntimeConfigurationKindWorkspacekit RuntimeConfigurationKind = "workspacekit"
+	RuntimeConfigurationKindKata         RuntimeConfigurationKind = "kata"
 )
 
 // WorkspaceTimeoutConfiguration configures the timeout behaviour of workspaces

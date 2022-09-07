@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
+	wsmancfg "github.com/gitpod-io/gitpod/ws-manager/api/config"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -68,6 +69,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.PVC.Size = resource.MustParse("30Gi")
 	cfg.Workspace.PVC.StorageClass = ""
 	cfg.Workspace.PVC.SnapshotClass = ""
+	cfg.Workspace.Runtime.Kind = wsmancfg.RuntimeConfigurationKindWorkspacekit
 	cfg.OpenVSX.URL = "https://open-vsx.org"
 	cfg.DisableDefinitelyGP = true
 
@@ -320,6 +322,8 @@ type WorkspaceRuntime struct {
 	ContainerDRuntimeDir string `json:"containerdRuntimeDir" validate:"required,startswith=/"`
 	// The location of containerd socket on the host machine
 	ContainerDSocket string `json:"containerdSocket" validate:"required,startswith=/"`
+
+	Kind wsmancfg.RuntimeConfigurationKind `json:"kind"`
 }
 
 type WorkspaceResources struct {
