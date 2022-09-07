@@ -77,6 +77,7 @@ type WorkspaceInstanceUsageData struct {
 	ContextURL     string        `json:"contextURL"`
 	StartTime      string        `json:"startTime"`
 	EndTime        string        `json:"endTime"`
+	UserID         uuid.UUID     `json:"userId"`
 	UserName       string        `json:"userName"`
 	UserAvatarURL  string        `json:"userAvatarURL"`
 }

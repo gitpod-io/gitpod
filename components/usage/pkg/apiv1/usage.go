@@ -434,11 +434,12 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 		WorkspaceId:    instance.WorkspaceID,
 		WorkspaceType:  instance.Type,
 		WorkspaceClass: instance.WorkspaceClass,
-		ContextURL:     "",
+		ContextURL:     instance.ContextURL,
 		StartTime:      startedTime,
 		EndTime:        endTime,
-		UserName:       "",
-		UserAvatarURL:  "",
+		UserID:         instance.UserID,
+		UserName:       instance.UserName,
+		UserAvatarURL:  instance.UserAvatarURL,
 	})
 	if err != nil {
 		return db.Usage{}, fmt.Errorf("failed to serialize workspace instance metadata: %w", err)

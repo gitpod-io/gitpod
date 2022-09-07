@@ -7,11 +7,8 @@ package apiv1
 import (
 	"context"
 	"database/sql"
-	"reflect"
 	"testing"
 	"time"
-
-	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
@@ -375,182 +372,6 @@ func TestInstanceToUsageRecords(t *testing.T) {
 	}
 }
 
-func TestReportGenerator_GenerateUsageReport(t *testing.T) {
-	startOfMay := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
-	startOfJune := time.Date(2022, 06, 1, 0, 00, 00, 00, time.UTC)
-
-	teamID := uuid.New()
-	scenarioRunTime := time.Date(2022, 05, 31, 23, 00, 00, 00, time.UTC)
-
-	instances := []db.WorkspaceInstance{
-		// Ran throughout the reconcile period
-		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			ID:                 uuid.New(),
-			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
-			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 1, 00, 01, 00, 00, time.UTC)),
-			StoppingTime:       db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-		}),
-		// Still running
-		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			ID:                 uuid.New(),
-			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
-			StartedTime:        db.NewVarcharTime(time.Date(2022, 05, 30, 00, 01, 00, 00, time.UTC)),
-		}),
-		// No creation time, invalid record, ignored
-		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			ID:                 uuid.New(),
-			UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
-			StoppingTime:       db.NewVarcharTime(time.Date(2022, 06, 1, 1, 0, 0, 0, time.UTC)),
-		}),
-	}
-
-	conn := dbtest.ConnectForTests(t)
-	dbtest.CreateWorkspaceInstances(t, conn, instances...)
-
-	nowFunc := func() time.Time { return scenarioRunTime }
-	generator := &ReportGenerator{
-		nowFunc: nowFunc,
-		conn:    conn,
-		pricer:  DefaultWorkspacePricer,
-	}
-
-	report, err := generator.GenerateUsageReport(context.Background(), startOfMay, startOfJune)
-	require.NoError(t, err)
-
-	require.Equal(t, nowFunc(), report.GenerationTime)
-	require.Equal(t, startOfMay, report.From)
-	// require.Equal(t, startOfJune, report.To) TODO(gpl) This is not true anymore - does it really make sense to test for it?
-	require.Len(t, report.InvalidSessions, 0)
-	require.Len(t, report.UsageRecords, 2)
-}
-
-func TestReportGenerator_GenerateUsageReportTable(t *testing.T) {
-	teamID := uuid.New()
-	instanceID := uuid.New()
-
-	Must := func(ti db.VarcharTime, err error) db.VarcharTime {
-		if err != nil {
-			t.Fatal(err)
-		}
-		return ti
-	}
-	Timestamp := func(timestampAsStr string) db.VarcharTime {
-		return Must(db.NewVarcharTimeFromStr(timestampAsStr))
-	}
-	type Expectation struct {
-		custom       func(t *testing.T, report contentservice.UsageReport)
-		usageRecords []db.WorkspaceInstanceUsage
-	}
-
-	type TestCase struct {
-		name        string
-		from        time.Time
-		to          time.Time
-		runtime     time.Time
-		instances   []db.WorkspaceInstance
-		expectation Expectation
-	}
-	tests := []TestCase{
-		{
-			name:    "real example taken from DB: runtime _before_ instance.startedTime",
-			from:    time.Date(2022, 8, 1, 0, 00, 00, 00, time.UTC),
-			to:      time.Date(2022, 9, 1, 0, 00, 00, 00, time.UTC),
-			runtime: Timestamp("2022-08-17T09:38:28Z").Time(),
-			instances: []db.WorkspaceInstance{
-				dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-					ID:                 instanceID,
-					UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
-					CreationTime:       Timestamp("2022-08-17T09:40:47.316Z"),
-					StartedTime:        Timestamp("2022-08-17T09:40:53.115Z"),
-					StoppingTime:       Timestamp("2022-08-17T09:42:36.292Z"),
-					StoppedTime:        Timestamp("2022-08-17T09:43:04.874Z"),
-				}),
-			},
-			expectation: Expectation{
-				usageRecords: nil,
-				// usageRecords: []db.WorkspaceInstanceUsage{
-				// 	{
-				// 		InstanceID: instanceID,
-				// 		AttributionID: db.NewTeamAttributionID(teamID.String()),
-				// 		StartedAt: Timestamp("2022-08-17T09:40:53.115Z").Time(),
-				// 		StoppedAt: sql.NullTime{ Time: Timestamp("2022-08-17T09:43:04.874Z").Time(), Valid: true },
-				// 		WorkspaceClass: "default",
-				// 		CreditsUsed: 3.0,
-				// 	},
-				// },
-			},
-		},
-		{
-			name:    "same as above, but with runtime _after_ startedTime",
-			from:    time.Date(2022, 8, 1, 0, 00, 00, 00, time.UTC),
-			to:      time.Date(2022, 9, 1, 0, 00, 00, 00, time.UTC),
-			runtime: Timestamp("2022-08-17T09:41:00Z").Time(),
-			instances: []db.WorkspaceInstance{
-				dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-					ID:                 instanceID,
-					UsageAttributionID: db.NewTeamAttributionID(teamID.String()),
-					CreationTime:       Timestamp("2022-08-17T09:40:47.316Z"),
-					StartedTime:        Timestamp("2022-08-17T09:40:53.115Z"),
-					StoppingTime:       Timestamp("2022-08-17T09:42:36.292Z"),
-					StoppedTime:        Timestamp("2022-08-17T09:43:04.874Z"),
-				}),
-			},
-			expectation: Expectation{
-				usageRecords: []db.WorkspaceInstanceUsage{
-					{
-						InstanceID:     instanceID,
-						AttributionID:  db.NewTeamAttributionID(teamID.String()),
-						StartedAt:      Timestamp("2022-08-17T09:40:53.115Z").Time(),
-						StoppedAt:      sql.NullTime{Time: Timestamp("2022-08-17T09:41:00Z").Time(), Valid: true},
-						WorkspaceClass: "default",
-						CreditsUsed:    0.019444444444444445,
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			conn := dbtest.ConnectForTests(t)
-			dbtest.CreateWorkspaceInstances(t, conn, test.instances...)
-
-			nowFunc := func() time.Time { return test.runtime }
-			generator := &ReportGenerator{
-				nowFunc: nowFunc,
-				conn:    conn,
-				pricer:  DefaultWorkspacePricer,
-			}
-
-			report, err := generator.GenerateUsageReport(context.Background(), test.from, test.to)
-			require.NoError(t, err)
-
-			require.Equal(t, test.runtime, report.GenerationTime)
-			require.Equal(t, test.from, report.From)
-			// require.Equal(t, test.to, report.To) TODO(gpl) This is not true anymore - does it really make sense to test for it?
-
-			// These invariants should always be true:
-			// 1. No negative usage
-			for _, rec := range report.UsageRecords {
-				if rec.CreditsUsed < 0 {
-					t.Error("Got report with negative credits!")
-				}
-			}
-
-			if !reflect.DeepEqual(test.expectation.usageRecords, report.UsageRecords) {
-				t.Errorf("report.UsageRecords: expected %v but got %v", test.expectation.usageRecords, report.UsageRecords)
-			}
-
-			// Custom expectations
-			customTestFunction := test.expectation.custom
-			if customTestFunction != nil {
-				customTestFunction(t, report)
-				require.NoError(t, err)
-			}
-		})
-	}
-}
-
 func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 	dbconn := dbtest.ConnectForTests(t)
 	from := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
@@ -673,11 +494,11 @@ func TestReconcileWithLedger(t *testing.T) {
 			WorkspaceId:    instance.WorkspaceID,
 			WorkspaceType:  instance.Type,
 			WorkspaceClass: instance.WorkspaceClass,
-			ContextURL:     "",
+			ContextURL:     instance.ContextURL,
 			StartTime:      db.TimeToISO8601(instance.StartedTime.Time()),
 			EndTime:        "",
-			UserName:       "",
-			UserAvatarURL:  "",
+			UserName:       instance.UserName,
+			UserAvatarURL:  instance.UserAvatarURL,
 		}))
 		require.EqualValues(t, expectedUsage, inserts[0])
 	})
@@ -731,11 +552,11 @@ func TestReconcileWithLedger(t *testing.T) {
 			WorkspaceId:    instance.WorkspaceID,
 			WorkspaceType:  instance.Type,
 			WorkspaceClass: instance.WorkspaceClass,
-			ContextURL:     "",
+			ContextURL:     instance.ContextURL,
 			StartTime:      db.TimeToISO8601(instance.StartedTime.Time()),
 			EndTime:        "",
-			UserName:       "",
-			UserAvatarURL:  "",
+			UserName:       instance.UserName,
+			UserAvatarURL:  instance.UserAvatarURL,
 		}))
 		require.EqualValues(t, expectedUsage, updates[0])
 	})
