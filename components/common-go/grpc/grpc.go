@@ -10,6 +10,7 @@ import (
 	"crypto/x509"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -24,8 +25,10 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/status"
 )
 
 // maxMsgSize use 16MB as the default message size limit.
@@ -97,7 +100,12 @@ func ServerOptionsWithInterceptors(stream []grpc.StreamServerInterceptor, unary 
 	)
 	unary = append(unary,
 		grpc_opentracing.UnaryServerInterceptor(tracingFilterFunc),
-		grpc_recovery.UnaryServerInterceptor(), // must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with
+		grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(
+			func(ctx context.Context, p interface{}) error {
+				log.WithField("stack", string(debug.Stack())).Errorf("[PANIC] %s", p)
+				return status.Errorf(codes.Internal, "%s", p)
+			},
+		)), // must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with
 	)
 
 	return []grpc.ServerOption{
