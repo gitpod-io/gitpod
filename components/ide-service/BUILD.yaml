@@ -9,6 +9,7 @@ packages:
       - "go.mod"
       - "go.sum"
       - "pkg/server/schema.json"
+      - "pkg/server/testdata/**"
     env:
       - CGO_ENABLED=0
       - GOOS=linux

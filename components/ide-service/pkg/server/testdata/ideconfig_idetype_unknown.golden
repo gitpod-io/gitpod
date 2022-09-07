@@ -1,0 +1,12 @@
+{
+    "Config": {
+        "supervisorImage": "",
+        "ideOptions": {
+            "options": null,
+            "defaultIde": "",
+            "defaultDesktopIde": "",
+            "clients": null
+        }
+    },
+    "Err": "invalid ide config"
+}
