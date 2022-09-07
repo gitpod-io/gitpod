@@ -903,9 +903,20 @@ export class WorkspaceStarter {
 
                 featureFlags = featureFlags.concat(["workspace_class_limiting"]);
             } else {
-                workspaceClass = "default";
-                if (await this.entitlementService.userGetsMoreResources(user)) {
-                    workspaceClass = "gitpodio-internal-xl";
+                // todo: remove this once pvc has been rolled out
+                const prebuildClass = await WorkspaceClasses.getFromPrebuild(
+                    ctx,
+                    workspace,
+                    this.workspaceDb.trace(ctx),
+                );
+                if (prebuildClass?.endsWith("-pvc")) {
+                    workspaceClass = prebuildClass;
+                    // ####
+                } else {
+                    workspaceClass = "default";
+                    if (await this.entitlementService.userGetsMoreResources(user)) {
+                        workspaceClass = "gitpodio-internal-xl";
+                    }
                 }
             }
 

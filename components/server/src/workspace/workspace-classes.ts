@@ -85,6 +85,11 @@ export namespace WorkspaceClasses {
             return getDefaultId(workspaceClasses);
         }
 
+        // todo: remove this once pvc has been rolled out
+        if (previousWorkspaceClass.endsWith("-pvc")) {
+            return previousWorkspaceClass;
+        }
+
         const config = workspaceClasses.find((c) => c.id === previousWorkspaceClass);
         if (!config) {
             log.error(
@@ -185,6 +190,11 @@ export namespace WorkspaceClasses {
 
         const current = classes.find((c) => c.id === currentClassId);
         let substitute = classes.find((c) => c.id === substituteClassId);
+
+        // todo: remove this once pvc has been rolled out
+        if (currentClassId.endsWith("-pvc")) {
+            return currentClassId;
+        }
 
         if (current?.marker?.moreResources) {
             if (substitute?.marker?.moreResources) {
