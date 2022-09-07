@@ -9,7 +9,7 @@ import { BillingServiceClient } from "./billing_grpc_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
-import { BilledSession, ListBilledUsageRequest, ListBilledUsageResponse, ListUsageRequest, ListUsageResponse, PaginatedRequest } from "./usage_pb";
+import { ListUsageRequest, ListUsageResponse } from "./usage_pb";
 import {
     GetUpcomingInvoiceRequest,
     GetUpcomingInvoiceResponse,
@@ -21,8 +21,6 @@ import { injectable, inject, optional } from "inversify";
 import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import * as grpc from "@grpc/grpc-js";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
-import { BillableSession } from "@gitpod/gitpod-protocol/lib/usage";
-import { WorkspaceType } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 export const UsageServiceClientProvider = Symbol("UsageServiceClientProvider");
@@ -149,51 +147,6 @@ export class PromisifiedUsageServiceClient {
         );
     }
 
-    public async listBilledUsage(
-        _ctx: TraceContext,
-        attributionId: string,
-        order: ListBilledUsageRequest.Ordering,
-        perPage: number,
-        page: number,
-        from?: Timestamp,
-        to?: Timestamp,
-    ): Promise<ListBilledUsageResponse> {
-        const ctx = TraceContext.childContext(`/usage-service/listBilledUsage`, _ctx);
-
-        try {
-            const pagination = new PaginatedRequest();
-            pagination.setPerPage(perPage);
-            pagination.setPage(page);
-
-            const req = new ListBilledUsageRequest();
-            req.setAttributionId(attributionId);
-            req.setPagination(pagination);
-            req.setFrom(from);
-            req.setTo(to);
-            req.setOrder(order);
-
-            const response = await new Promise<ListBilledUsageResponse>((resolve, reject) => {
-                this.client.listBilledUsage(
-                    req,
-                    withTracing(ctx),
-                    (err: grpc.ServiceError | null, response: ListBilledUsageResponse) => {
-                        if (err) {
-                            reject(err);
-                            return;
-                        }
-                        resolve(response);
-                    },
-                );
-            });
-            return response;
-        } catch (err) {
-            TraceContext.setError(ctx, err);
-            throw err;
-        } finally {
-            ctx.span.finish();
-        }
-    }
-
     public async listUsage(
         _ctx: TraceContext,
         request: ListUsageRequest,
@@ -229,30 +182,6 @@ export class PromisifiedUsageServiceClient {
     protected getDefaultUnaryOptions(): Partial<grpc.CallOptions> {
         return {
             interceptors: this.interceptor,
-        };
-    }
-}
-
-export namespace UsageService {
-    export function mapBilledSession(s: BilledSession): BillableSession {
-        function mandatory<T>(v: T, m: (v: T) => string = (s) => "" + s): string {
-            if (!v) {
-                throw new Error(`Empty value in usage.BilledSession for instanceId '${s.getInstanceId()}'`);
-            }
-            return m(v);
-        }
-        return {
-            attributionId: mandatory(s.getAttributionId()),
-            userId: s.getUserId() || undefined,
-            teamId: s.getTeamId() || undefined,
-            projectId: s.getProjectId() || undefined,
-            workspaceId: mandatory(s.getWorkspaceId()),
-            instanceId: mandatory(s.getInstanceId()),
-            workspaceType: mandatory(s.getWorkspaceType()) as WorkspaceType,
-            workspaceClass: s.getWorkspaceClass(),
-            startTime: mandatory(s.getStartTime(), (t) => t!.toDate().toISOString()),
-            endTime: s.getEndTime()?.toDate().toISOString(),
-            credits: s.getCredits(), // optional
         };
     }
 }

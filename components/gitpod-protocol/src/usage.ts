@@ -4,66 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User, WorkspaceType } from "./protocol";
-
-export interface BillableSession {
-    // The id of the one paying the bill
-    attributionId: string;
-
-    // Relevant for workspace type. When prebuild, shows "prebuild"
-    userId?: string;
-    teamId?: string;
-
-    instanceId: string;
-
-    workspaceId: string;
-
-    workspaceType: BillableWorkspaceType;
-
-    workspaceClass: string;
-
-    // When the workspace started
-    startTime: string;
-
-    // When the workspace ended. Not set when the workspace is still running.
-    endTime?: string;
-
-    // The credits used for this session
-    credits: number;
-
-    // TODO - maybe
-    projectId?: string;
-}
-
-export interface ExtendedBillableSession extends BillableSession {
-    contextURL?: string;
-    user?: Pick<User.Profile, "name" | "avatarURL">;
-}
-
-/**
- * This is a paginated request
- */
-export interface ListBilledUsageRequest {
-    attributionId: string;
-    fromDate?: number;
-    toDate?: number;
-    perPage: number;
-    page: number;
-}
-
-export interface ListBilledUsageResponse {
-    sessions: ExtendedBillableSession[];
-    totalCreditsUsed: number;
-    totalPages: number;
-    totalSessions: number;
-    perPage: number;
-    page: number;
-}
-
-export type BillableWorkspaceType = WorkspaceType;
+import { WorkspaceType } from "./protocol";
 
 // types below are copied over from components/usage-api/typescript/src/usage/v1/usage_pb.d.ts
-
 export interface ListUsageRequest {
     attributionId: string;
     from?: number;

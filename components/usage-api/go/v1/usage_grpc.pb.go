@@ -26,8 +26,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsageServiceClient interface {
-	// ListBilledUsage retrieves all usage for the specified attributionId
-	ListBilledUsage(ctx context.Context, in *ListBilledUsageRequest, opts ...grpc.CallOption) (*ListBilledUsageResponse, error)
 	// ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
 	ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error)
 	// GetCostCenter retrieves the spending limit with its associated attributionID
@@ -44,15 +42,6 @@ type usageServiceClient struct {
 
 func NewUsageServiceClient(cc grpc.ClientConnInterface) UsageServiceClient {
 	return &usageServiceClient{cc}
-}
-
-func (c *usageServiceClient) ListBilledUsage(ctx context.Context, in *ListBilledUsageRequest, opts ...grpc.CallOption) (*ListBilledUsageResponse, error) {
-	out := new(ListBilledUsageResponse)
-	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/ListBilledUsage", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *usageServiceClient) ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error) {
@@ -95,8 +84,6 @@ func (c *usageServiceClient) ListUsage(ctx context.Context, in *ListUsageRequest
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
 type UsageServiceServer interface {
-	// ListBilledUsage retrieves all usage for the specified attributionId
-	ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error)
 	// ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
 	ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error)
 	// GetCostCenter retrieves the spending limit with its associated attributionID
@@ -112,9 +99,6 @@ type UsageServiceServer interface {
 type UnimplementedUsageServiceServer struct {
 }
 
-func (UnimplementedUsageServiceServer) ListBilledUsage(context.Context, *ListBilledUsageRequest) (*ListBilledUsageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListBilledUsage not implemented")
-}
 func (UnimplementedUsageServiceServer) ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReconcileUsage not implemented")
 }
@@ -138,24 +122,6 @@ type UnsafeUsageServiceServer interface {
 
 func RegisterUsageServiceServer(s grpc.ServiceRegistrar, srv UsageServiceServer) {
 	s.RegisterService(&UsageService_ServiceDesc, srv)
-}
-
-func _UsageService_ListBilledUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListBilledUsageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UsageServiceServer).ListBilledUsage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/usage.v1.UsageService/ListBilledUsage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsageServiceServer).ListBilledUsage(ctx, req.(*ListBilledUsageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _UsageService_ReconcileUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -237,10 +203,6 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "usage.v1.UsageService",
 	HandlerType: (*UsageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "ListBilledUsage",
-			Handler:    _UsageService_ListBilledUsage_Handler,
-		},
 		{
 			MethodName: "ReconcileUsage",
 			Handler:    _UsageService_ReconcileUsage_Handler,
