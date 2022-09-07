@@ -9,10 +9,11 @@ import { useLocation } from "react-router";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import {
-    ListBilledUsageRequest,
-    BillableWorkspaceType,
-    ExtendedBillableSession,
-    ListBilledUsageResponse,
+    ListUsageRequest,
+    Ordering,
+    ListUsageResponse,
+    WorkspaceInstanceUsageData,
+    Usage,
 } from "@gitpod/gitpod-protocol/lib/usage";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
@@ -24,13 +25,14 @@ import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { toRemoteURL } from "../projects/render-utils";
+import { WorkspaceType } from "@gitpod/gitpod-protocol";
 
 function TeamUsage() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
-    const [usagePage, setUsagePage] = useState<ListBilledUsageResponse | undefined>(undefined);
+    const [usagePage, setUsagePage] = useState<ListUsageResponse | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState("");
     const today = new Date();
     const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -75,17 +77,20 @@ function TeamUsage() {
             setTotalCreditsUsed(0);
         }
         const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
-        const request: ListBilledUsageRequest = {
+        const request: ListUsageRequest = {
             attributionId,
-            fromDate: startDateOfBillMonth,
-            toDate: endDateOfBillMonth,
-            perPage: 50,
-            page,
+            from: startDateOfBillMonth,
+            to: endDateOfBillMonth,
+            order: Ordering.ORDERING_DESCENDING,
+            pagination: {
+                perPage: 50,
+                page,
+            },
         };
         try {
-            const page = await getGitpodService().server.listBilledUsage(request);
+            const page = await getGitpodService().server.listUsage(request);
             setUsagePage(page);
-            setTotalCreditsUsed(Math.ceil(page.totalCreditsUsed));
+            setTotalCreditsUsed(Math.ceil(page.creditBalanceAtEnd));
         } catch (error) {
             if (error.code === ErrorCodes.PERMISSION_DENIED) {
                 setErrorMessage("Access to usage details is restricted to team owners.");
@@ -97,19 +102,23 @@ function TeamUsage() {
         }
     };
 
-    const getType = (type: BillableWorkspaceType) => {
+    const getType = (type: WorkspaceType) => {
         if (type === "regular") {
             return "Workspace";
         }
         return "Prebuild";
     };
 
-    const getMinutes = (usage: ExtendedBillableSession) => {
-        if (!usage.endTime) {
+    const getMinutes = (usage: Usage) => {
+        if (usage.kind !== "workspaceinstance") {
+            return "";
+        }
+        const metaData = usage.metadata as WorkspaceInstanceUsageData;
+        if (!metaData.endTime) {
             return "running";
         }
-        const end = new Date(usage.endTime).getTime();
-        const start = new Date(usage.startTime).getTime();
+        const end = new Date(metaData.endTime).getTime();
+        const start = new Date(metaData.startTime).getTime();
         const lengthOfUsage = Math.floor(end - start);
         const inMinutes = (lengthOfUsage / (1000 * 60)).toFixed(1);
         return inMinutes + " min";
@@ -142,7 +151,7 @@ function TeamUsage() {
         return rows;
     };
 
-    const displayTime = (time: string) => {
+    const displayTime = (time: string | number) => {
         const options: Intl.DateTimeFormatOptions = {
             day: "numeric",
             month: "short",
@@ -153,7 +162,7 @@ function TeamUsage() {
         return new Date(time).toLocaleDateString(undefined, options).replace("at ", "");
     };
 
-    const currentPaginatedResults = usagePage?.sessions ?? [];
+    const currentPaginatedResults = usagePage?.usageEntriesList ?? [];
 
     return (
         <>
@@ -237,23 +246,34 @@ function TeamUsage() {
                                         currentPaginatedResults.map((usage) => {
                                             return (
                                                 <div
-                                                    key={usage.instanceId}
+                                                    key={usage.workspaceInstanceId}
                                                     className="flex p-3 grid grid-cols-12 gap-x-3 justify-between transition ease-in-out rounded-xl"
                                                 >
                                                     <div className="flex flex-col col-span-2 my-auto">
                                                         <span className="text-gray-600 dark:text-gray-100 text-md font-medium">
-                                                            {getType(usage.workspaceType)}
+                                                            {getType(
+                                                                (usage.metadata as WorkspaceInstanceUsageData)
+                                                                    .workspaceType,
+                                                            )}
                                                         </span>
                                                         <span className="text-sm text-gray-400 dark:text-gray-500">
-                                                            {usage.workspaceClass}
+                                                            {
+                                                                (usage.metadata as WorkspaceInstanceUsageData)
+                                                                    .workspaceClass
+                                                            }
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-col col-span-5 my-auto">
                                                         <span className="truncate text-gray-600 dark:text-gray-100 text-md font-medium">
-                                                            {usage.workspaceId}
+                                                            {(usage.metadata as WorkspaceInstanceUsageData).workspaceId}
                                                         </span>
                                                         <span className="text-sm truncate text-gray-400 dark:text-gray-500">
-                                                            {usage.contextURL && toRemoteURL(usage.contextURL)}
+                                                            {(usage.metadata as WorkspaceInstanceUsageData)
+                                                                .contextURL &&
+                                                                toRemoteURL(
+                                                                    (usage.metadata as WorkspaceInstanceUsageData)
+                                                                        .contextURL,
+                                                                )}
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-col my-auto">
@@ -267,15 +287,17 @@ function TeamUsage() {
                                                     <div className="my-auto" />
                                                     <div className="flex flex-col col-span-3 my-auto">
                                                         <span className="text-gray-400 dark:text-gray-500 truncate font-medium">
-                                                            {displayTime(usage.startTime)}
+                                                            {displayTime(usage.effectiveTime!)}
                                                         </span>
                                                         <div className="flex">
-                                                            {usage.workspaceType === "prebuild" ? (
+                                                            {(usage.metadata as WorkspaceInstanceUsageData)
+                                                                .workspaceType === "prebuild" ? (
                                                                 <UsageIcon className="my-auto w-4 h-4 mr-1" />
                                                             ) : (
                                                                 ""
                                                             )}
-                                                            {usage.workspaceType === "prebuild" ? (
+                                                            {(usage.metadata as WorkspaceInstanceUsageData)
+                                                                .workspaceType === "prebuild" ? (
                                                                 <span className="text-sm text-gray-400 dark:text-gray-500">
                                                                     Gitpod
                                                                 </span>
@@ -283,11 +305,16 @@ function TeamUsage() {
                                                                 <div className="flex">
                                                                     <img
                                                                         className="my-auto rounded-full w-4 h-4 inline-block align-text-bottom mr-1 overflow-hidden"
-                                                                        src={usage.user?.avatarURL || ""}
+                                                                        src={
+                                                                            (
+                                                                                usage.metadata as WorkspaceInstanceUsageData
+                                                                            ).userAvatarURL || ""
+                                                                        }
                                                                         alt="user avatar"
                                                                     />
                                                                     <span className="text-sm text-gray-400 dark:text-gray-500">
-                                                                        {usage.user?.name}
+                                                                        {(usage.metadata as WorkspaceInstanceUsageData)
+                                                                            .userName || ""}
                                                                     </span>
                                                                 </div>
                                                             )}
@@ -297,11 +324,11 @@ function TeamUsage() {
                                             );
                                         })}
                                 </ItemsList>
-                                {usagePage && usagePage.totalPages > 1 && (
+                                {usagePage && usagePage.pagination && usagePage.pagination.totalPages > 1 && (
                                     <Pagination
-                                        currentPage={usagePage.page}
+                                        currentPage={usagePage.pagination.page}
                                         setPage={(page) => loadPage(page)}
-                                        totalNumberOfPages={usagePage.totalPages}
+                                        totalNumberOfPages={usagePage.pagination.totalPages}
                                     />
                                 )}
                             </div>

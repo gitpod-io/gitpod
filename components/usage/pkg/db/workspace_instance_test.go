@@ -97,6 +97,19 @@ func TestFindStoppedWorkspaceInstancesInRange(t *testing.T) {
 	require.Len(t, retrieved, len(valid))
 }
 
+func filterByWorkspaceIds(toBeFiltered []db.WorkspaceInstanceForUsage, wsid ...string) []db.WorkspaceInstanceForUsage {
+	result := []db.WorkspaceInstanceForUsage{}
+	// filter out all workspaces that don't belong to this test
+	for _, id := range wsid {
+		for _, wsi := range toBeFiltered {
+			if wsi.WorkspaceID == id {
+				result = append(result, wsi)
+			}
+		}
+	}
+	return result
+}
+
 func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 
 	t.Run("no project results in empty string", func(t *testing.T) {
@@ -115,7 +128,9 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 
 		retrieved := dbtest.ListWorkspaceInstancesInRange(t, conn, startOfMay, startOfJune, workspace.ID)
 
-		require.Len(t, retrieved, 1)
+		cleaned := filterByWorkspaceIds(retrieved, workspace.ID)
+
+		require.Len(t, cleaned, 1)
 		require.Equal(t, db.WorkspaceInstanceForUsage{
 			ID:                 instance.ID,
 			WorkspaceID:        instance.WorkspaceID,
@@ -130,7 +145,7 @@ func TestListWorkspaceInstancesInRange_Fields(t *testing.T) {
 			UserAvatarURL:      user.AvatarURL,
 			StartedTime:        instance.StartedTime,
 			StoppingTime:       instance.StoppingTime,
-		}, retrieved[0])
+		}, cleaned[0])
 	})
 
 	t.Run("with project", func(t *testing.T) {

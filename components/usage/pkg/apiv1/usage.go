@@ -39,7 +39,7 @@ type UsageService struct {
 	v1.UnimplementedUsageServiceServer
 }
 
-const maxQuerySize = 31 * 24 * time.Hour
+const maxQuerySize = 300 * 24 * time.Hour
 
 func (s *UsageService) ListBilledUsage(ctx context.Context, in *v1.ListBilledUsageRequest) (*v1.ListBilledUsageResponse, error) {
 	to := time.Now()
@@ -140,12 +140,12 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 		return nil, status.Errorf(codes.InvalidArgument, "Maximum range exceeded. Range specified can be at most %s", maxQuerySize.String())
 	}
 
-	if in.Pagination.PerPage < 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "Number of items perPage needs to be positive (was %d).", in.Pagination.PerPage)
+	if in.GetPagination().GetPerPage() < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "Number of items perPage needs to be positive (was %d).", in.GetPagination().GetPerPage())
 	}
 
-	if in.Pagination.Page < 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "Page number needs to be 0 or greater (was %d).", in.Pagination.Page)
+	if in.GetPagination().GetPage() < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "Page number needs to be 0 or greater (was %d).", in.GetPagination().GetPage())
 	}
 
 	attributionId, err := db.ParseAttributionID(in.AttributionId)
@@ -159,11 +159,14 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	}
 
 	var perPage int64 = 50
-	if in.Pagination.PerPage > 0 {
-		perPage = in.Pagination.PerPage
+	if in.GetPagination().GetPerPage() > 0 {
+		perPage = in.GetPagination().GetPerPage()
 	}
-	var page int64 = in.Pagination.Page
-	var offset int64 = perPage * page
+	var page int64 = 1
+	if in.GetPagination().GetPage() > 1 {
+		page = in.GetPagination().GetPage()
+	}
+	var offset int64 = perPage * (page - 1)
 
 	listUsageResult, err := db.FindUsage(ctx, s.conn, &db.FindUsageParams{
 		AttributionId: db.AttributionID(in.GetAttributionId()),
@@ -179,6 +182,7 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 		WithField("page", page).
 		WithField("from", from).
 		WithField("to", to)
+	logger.Info("Fetching usage data")
 	if err != nil {
 		logger.WithError(err).Error("Failed to fetch usage.")
 		return nil, status.Error(codes.Internal, "unable to retrieve usage")

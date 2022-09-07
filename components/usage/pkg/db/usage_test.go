@@ -53,7 +53,7 @@ func TestFindUsageInRange(t *testing.T) {
 	require.Equal(t, []db.Usage{entryInside}, listResult)
 }
 
-func TestFindUsageMetadata(t *testing.T) {
+func TestGetUsageSummary(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
 	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
@@ -140,7 +140,7 @@ func TestInsertUsageRecords(t *testing.T) {
 	updatedDesc := "Updated Description"
 	usage.Description = updatedDesc
 
-	dbtest.CreateUsageRecords(t, conn, usage)
+	require.NoError(t, db.InsertUsage(context.Background(), conn, usage))
 
 	drafts, err := db.FindAllDraftUsage(context.Background(), conn)
 	require.NoError(t, err)
@@ -299,7 +299,6 @@ func TestListBalance(t *testing.T) {
 
 	balances, err := db.ListBalance(context.Background(), conn)
 	require.NoError(t, err)
-	require.Len(t, balances, 2)
 	require.Contains(t, balances, db.Balance{
 		AttributionID: teamAttributionID,
 		CreditCents:   1000,
