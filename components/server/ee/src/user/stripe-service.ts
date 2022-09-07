@@ -33,21 +33,17 @@ export class StripeService {
     }
 
     async findCustomerByUserId(userId: string): Promise<Stripe.Customer | undefined> {
-        const result = await this.getStripe().customers.search({
-            query: `metadata['userId']:'${userId}'`,
-        });
-        if (result.data.length > 1) {
-            throw new Error(`Found more than one Stripe customer for user '${userId}'`);
-        }
-        return result.data[0];
+        return this.findCustomerByQuery(`metadata['userId']:'${userId}'`);
     }
 
     async findCustomerByTeamId(teamId: string): Promise<Stripe.Customer | undefined> {
-        const result = await this.getStripe().customers.search({
-            query: `metadata['teamId']:'${teamId}'`,
-        });
+        return this.findCustomerByQuery(`metadata['teamId']:'${teamId}'`);
+    }
+
+    async findCustomerByQuery(query: string): Promise<Stripe.Customer | undefined> {
+        const result = await this.getStripe().customers.search({ query });
         if (result.data.length > 1) {
-            throw new Error(`Found more than one Stripe customer for team '${teamId}'`);
+            throw new Error(`Found more than one Stripe customer for query '${query}'`);
         }
         return result.data[0];
     }
