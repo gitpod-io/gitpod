@@ -20,6 +20,8 @@ components:
     version: test
   ideMetrics:
     version: test
+  ideService:
+    version: test
   ideProxy:
     version: test
   imageBuilderMk3:

@@ -11,6 +11,7 @@ require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ide-metrics-api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/ide-service-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/openvsx-proxy v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/public-api v0.0.0-00010101000000-000000000000
@@ -294,8 +295,8 @@ require (
 	google.golang.org/api v0.77.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220414192740-2d67ff6cf2b4 // indirect
-	google.golang.org/grpc v1.47.0 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
+	google.golang.org/grpc v1.49.0 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.63.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -334,6 +335,8 @@ replace github.com/gitpod-io/gitpod/content-service/api => ../../components/cont
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../../components/gitpod-protocol/go // leeway
 
 replace github.com/gitpod-io/gitpod/ide-metrics-api => ../../components/ide-metrics-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/ide-service-api => ../../components/ide-service-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-builder-api/go // leeway
 

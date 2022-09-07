@@ -12,6 +12,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database"
 	ide_metrics "github.com/gitpod-io/gitpod/installer/pkg/components/ide-metrics"
 	ide_proxy "github.com/gitpod-io/gitpod/installer/pkg/components/ide-proxy"
+	ide_service "github.com/gitpod-io/gitpod/installer/pkg/components/ide-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/migrations"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio"
 	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
@@ -29,6 +30,7 @@ var Objects = common.CompositeRenderFunc(
 	dashboard.Objects,
 	database.Objects,
 	ide_metrics.Objects,
+	ide_service.Objects,
 	ide_proxy.Objects,
 	migrations.Objects,
 	minio.Objects,
