@@ -6,6 +6,7 @@ package wsmanager
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -22,6 +23,9 @@ import (
 
 // TestBackup tests a basic start/modify/restart cycle
 func TestBackup(t *testing.T) {
+	testRepo := "https://github.com/gitpod-io/template-golang-cli"
+	testRepoName := "template-golang-cli"
+	wsLoc := fmt.Sprintf("/workspace/%s", testRepoName)
 	f := features.New("backup").
 		WithLabel("component", "ws-manager").
 		Assess("it should start a workspace, create a file and successfully create a backup", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -30,7 +34,7 @@ func TestBackup(t *testing.T) {
 				FF   []wsmanapi.WorkspaceFeatureFlag
 			}{
 				{Name: "classic"},
-				// {Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
+				{Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 			defer cancel()
@@ -47,15 +51,15 @@ func TestBackup(t *testing.T) {
 						w.Spec.Initializer = &csapi.WorkspaceInitializer{
 							Spec: &csapi.WorkspaceInitializer_Git{
 								Git: &csapi.GitInitializer{
-									RemoteUri:        "https://github.com/gitpod-io/gitpod.git",
+									RemoteUri:        testRepo,
 									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
 									CloneTaget:       "main",
-									CheckoutLocation: "gitpod",
+									CheckoutLocation: testRepoName,
 									Config:           &csapi.GitConfig{},
 								},
 							},
 						}
-						w.Spec.WorkspaceLocation = "gitpod"
+						w.Spec.WorkspaceLocation = testRepoName
 						return nil
 					}))
 					if err != nil {
@@ -77,7 +81,7 @@ func TestBackup(t *testing.T) {
 
 					var resp agent.WriteFileResponse
 					err = rsa.Call("WorkspaceAgent.WriteFile", &agent.WriteFileRequest{
-						Path:    "/workspace/gitpod/foobar.txt",
+						Path:    fmt.Sprintf("%s/foobar.txt", wsLoc),
 						Content: []byte("hello world"),
 						Mode:    0644,
 					}, &resp)
@@ -138,7 +142,7 @@ func TestBackup(t *testing.T) {
 
 					var ls agent.ListDirResponse
 					err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
-						Dir: "/workspace/gitpod",
+						Dir: wsLoc,
 					}, &ls)
 					if err != nil {
 						t.Fatal(err)
@@ -168,6 +172,9 @@ func TestBackup(t *testing.T) {
 
 // TestExistingWorkspaceEnablePVC tests enable PVC feature flag on the existing workspace
 func TestExistingWorkspaceEnablePVC(t *testing.T) {
+	testRepo := "https://github.com/gitpod-io/template-golang-cli"
+	testRepoName := "template-golang-cli"
+	wsLoc := fmt.Sprintf("/workspace/%s", testRepoName)
 	f := features.New("backup").
 		WithLabel("component", "ws-manager").
 		Assess("it should enable PVC feature flag to the existing workspace without data loss", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -184,15 +191,15 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 				w.Spec.Initializer = &csapi.WorkspaceInitializer{
 					Spec: &csapi.WorkspaceInitializer_Git{
 						Git: &csapi.GitInitializer{
-							RemoteUri:        "https://github.com/gitpod-io/gitpod.git",
+							RemoteUri:        testRepo,
 							TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
 							CloneTaget:       "main",
-							CheckoutLocation: "gitpod",
+							CheckoutLocation: testRepoName,
 							Config:           &csapi.GitConfig{},
 						},
 					},
 				}
-				w.Spec.WorkspaceLocation = "gitpod"
+				w.Spec.WorkspaceLocation = testRepoName
 				return nil
 			}))
 			if err != nil {
@@ -214,7 +221,7 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 
 			var resp agent.WriteFileResponse
 			err = rsa.Call("WorkspaceAgent.WriteFile", &agent.WriteFileRequest{
-				Path:    "/workspace/gitpod/foobar.txt",
+				Path:    fmt.Sprintf("%s/foobar.txt", wsLoc),
 				Content: []byte("hello world"),
 				Mode:    0644,
 			}, &resp)
@@ -263,7 +270,7 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 
 			var ls agent.ListDirResponse
 			err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
-				Dir: "/workspace/gitpod",
+				Dir: wsLoc,
 			}, &ls)
 			if err != nil {
 				t.Fatal(err)

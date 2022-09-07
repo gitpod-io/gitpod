@@ -7,6 +7,7 @@ package wsmanager
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -21,6 +22,9 @@ import (
 )
 
 func TestRegularWorkspaceTasks(t *testing.T) {
+	testRepo := "https://github.com/gitpod-io/template-golang-cli"
+	testRepoName := "template-golang-cli"
+	wsLoc := fmt.Sprintf("/workspace/%s", testRepoName)
 	tests := []struct {
 		Name        string
 		Task        []gitpod.TasksItems
@@ -29,7 +33,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 	}{
 		{
 			Name:        "classic",
-			Task:        []gitpod.TasksItems{{Init: "touch /workspace/gitpod/init-ran; exit"}, {Before: "touch /workspace/gitpod/before-ran; exit"}, {Command: "touch /workspace/gitpod/command-ran; exit"}},
+			Task:        []gitpod.TasksItems{{Init: fmt.Sprintf("touch %s/init-ran; exit", wsLoc)}, {Before: fmt.Sprintf("touch %s/before-ran; exit", wsLoc)}, {Command: fmt.Sprintf("touch %s/command-ran; exit", wsLoc)}},
 			LookForFile: []string{"init-ran", "before-ran", "command-ran"},
 		},
 	}
@@ -61,15 +65,15 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 						swr.Spec.Initializer = &csapi.WorkspaceInitializer{
 							Spec: &csapi.WorkspaceInitializer_Git{
 								Git: &csapi.GitInitializer{
-									RemoteUri:        "https://github.com/gitpod-io/gitpod.git",
+									RemoteUri:        testRepo,
 									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
 									CloneTaget:       "main",
-									CheckoutLocation: "gitpod",
+									CheckoutLocation: testRepoName,
 									Config:           &csapi.GitConfig{},
 								},
 							},
 						}
-						swr.Spec.WorkspaceLocation = "gitpod"
+						swr.Spec.WorkspaceLocation = testRepoName
 						return nil
 					}
 
@@ -103,7 +107,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 					for i := 1; i < 10; i++ {
 						var res agent.ExecResponse
 						err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
-							Dir:     "/workspace/gitpod",
+							Dir:     wsLoc,
 							Command: "curl",
 							// nftable rule only forwards to this ip address
 							Args: []string{"10.0.5.2:22999/_supervisor/v1/status/tasks"},
@@ -132,7 +136,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 
 					var ls agent.ListDirResponse
 					err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
-						Dir: "/workspace/gitpod",
+						Dir: wsLoc,
 					}, &ls)
 					if err != nil {
 						t.Fatal(err)
