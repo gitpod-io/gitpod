@@ -156,7 +156,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 		Service: baseserver.ServerConfiguration{
-			Address: fmt.Sprintf(":%d", ServicePort),
+			Address: fmt.Sprintf("0.0.0.0:%d", ServicePort),
 			TLS: &baseserver.TLSConfiguration{
 				CAPath:   "/certs/ca.crt",
 				CertPath: "/certs/tls.crt",

@@ -162,6 +162,8 @@ type Config struct {
 
 	Certificate ObjectRef `json:"certificate" validate:"required"`
 
+	HTTPProxy *ObjectRef `json:"httpProxy,omitempty"`
+
 	ImagePullSecrets []ObjectRef `json:"imagePullSecrets,omitempty"`
 
 	Workspace Workspace `json:"workspace" validate:"required"`
