@@ -39,7 +39,7 @@ kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-tfmk6"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-tfmk6-onereplica"}},{"metadata":{"name":"${storageClaimName}"},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"30Gi"}},"volumeMode":"Block","storageClassName":"longhorn"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-tfmk6"}},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-tfmk6-onereplica"}},{"metadata":{"name":"${storageClaimName}"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"30Gi"}},"volumeMode":"Block","storageClassName":"longhorn"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
