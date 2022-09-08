@@ -121,6 +121,8 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 		for {
 			workspaceImage, err = resolveOrBuildImage(ctx, api, options.BaseImage)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				api.imgbldStatus.Port = 0
+				api.imgbldStatus.Client = nil
 				t.Logf("got Unavailable during resolving the buildimage: %v", st)
 				time.Sleep(5 * time.Second)
 				continue
@@ -291,6 +293,8 @@ func stopWsF(t *testing.T, instanceID string) func(waitForStop bool, api *Compon
 			err = DeleteWorkspace(sctx, api, instanceID)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 				t.Logf("got Unavailable during when try to delete the workspace: %v", st)
+				api.wsmanStatus.Port = 0
+				api.wsmanStatus.Client = nil
 				time.Sleep(5 * time.Second)
 				continue
 			} else if err != nil {
@@ -304,6 +308,8 @@ func stopWsF(t *testing.T, instanceID string) func(waitForStop bool, api *Compon
 				_, err = WaitForWorkspaceStop(sctx, api, instanceID)
 				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 					t.Logf("got Unavailable during waiting for stopping workspace: %v", st)
+					api.wsmanStatus.Port = 0
+					api.wsmanStatus.Client = nil
 					time.Sleep(5 * time.Second)
 					continue
 				} else if err != nil {
@@ -370,6 +376,19 @@ func WaitForWorkspaceStart(ctx context.Context, instanceID string, api *Componen
 			resp, err := sub.Recv()
 			if err != nil {
 				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+					sub.CloseSend()
+					api.wsmanStatus.Port = 0
+					api.wsmanStatus.Client = nil
+					wsman, err := api.WorkspaceManager()
+					if err != nil {
+						errStatus <- xerrors.Errorf("cannot listen for workspace updates: %w", err)
+						return
+					}
+					sub, err = wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{})
+					if err != nil {
+						errStatus <- xerrors.Errorf("cannot listen for workspace updates: %w", err)
+						return
+					}
 					time.Sleep(10 * time.Second)
 					continue
 				}
@@ -472,6 +491,19 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 			resp, err := sub.Recv()
 			if err != nil {
 				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+					sub.CloseSend()
+					api.wsmanStatus.Port = 0
+					api.wsmanStatus.Client = nil
+					wsman, err := api.WorkspaceManager()
+					if err != nil {
+						errCh <- xerrors.Errorf("cannot listen for workspace updates: %w", err)
+						return
+					}
+					sub, err = wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{})
+					if err != nil {
+						errCh <- xerrors.Errorf("cannot listen for workspace updates: %w", err)
+						return
+					}
 					time.Sleep(10 * time.Second)
 					continue
 				}
@@ -557,6 +589,8 @@ func WaitForWorkspace(ctx context.Context, api *ComponentAPI, instanceID string,
 			}
 			if err != nil {
 				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+					api.wsmanStatus.Port = 0
+					api.wsmanStatus.Client = nil
 					time.Sleep(10 * time.Second)
 					continue
 				}
